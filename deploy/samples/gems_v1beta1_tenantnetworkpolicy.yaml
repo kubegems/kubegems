@@ -1,0 +1,7 @@
+apiVersion: kubegems.io/v1beta1
+kind: TenantNetworkPolicy
+metadata:
+  name: test-tenant
+spec:
+  tenantIsolated: true
+  tenant: test-tenant

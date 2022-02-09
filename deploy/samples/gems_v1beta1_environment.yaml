@@ -1,0 +1,15 @@
+apiVersion: kubegems.io/v1beta1
+kind: Environment
+metadata:
+  name: test-environment
+spec:
+  deletePolicy: delNamespace
+  tenant: test-tenant
+  project: test-project
+  namespace: dytest2
+  resourceQuota:
+    cpu: "2"
+    memory: 2Gi
+    requests.storage: 10Gi
+  resourceQuotaName: "default"
+  limitRangeName: "default"

@@ -1,0 +1,10 @@
+apiVersion: kubegems.io/v1beta1
+kind: Tenant
+metadata:
+  name: test-tenant
+spec:
+  tenantName: test-tenant
+  admin:
+    - test
+  members:
+    - test1
