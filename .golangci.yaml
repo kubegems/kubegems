@@ -1,0 +1,55 @@
+run:
+  # 不对test进行检查
+  tests: false
+  timeout: 3m
+  allow-parallel-runners: false
+linters:
+  disable:
+    - scopelint
+    - errchkjson
+    # 不强制使用空行
+    - wsl
+    - nlreturn
+    # 不检查全局变量
+    - gochecknoglobals
+    # 不检查TODO等特殊注释
+    - godox
+    # 不检查方法注释必须以 "." 结尾
+    - godot
+    # 不检查使用 errors.New() and fmt.Errorf()
+    - goerr113
+    # 不检查 fmt.Printf()
+    - forbidigo
+    - gci
+  presets:
+    - bugs
+    - comment
+    - complexity
+    - error
+    - format
+    - import
+    - metalinter
+    - module
+    - performance
+    - sql
+    - style
+    - test
+    - unused
+linters-settings:
+  lll:
+    line-length: 160
+  tagliatelle:
+    # Check the struck tag name case.
+    case:
+      # Use the struct field name to check the name of the struct tag.
+      # Default: false
+      use-field-name: false
+      rules:
+        # Any struct tag type can be used.
+        # Support string case: `camel`, `pascal`, `kebab`, `snake`, `goCamel`, `goPascal`, `goKebab`, `goSnake`, `upper`, `lower`
+        json: goCamel
+        yaml: goCamel
+        xml: goCamel
+        bson: goCamel
+        avro: goCamel
+        mapstructure: kebab
