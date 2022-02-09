@@ -68,11 +68,11 @@ test: generate ## Run tests.
 
 ##@ Build
 
-build: check ## Build binaries.
+build: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
-container-build: ## Build binariy in container and build container image.
+container: build ## Build container image.
 	docker build -t ${IMG} .
 
 push: ## Push docker image with the manager.
