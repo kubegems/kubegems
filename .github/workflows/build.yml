@@ -1,7 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
-name: CI
-
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -44,6 +40,8 @@ jobs:
 
       # Set up golang environment
       - uses: actions/setup-go@v2
+        with:
+          go-version: "1.17"
 
       # Cache go modules for faster builds
       # https://github.com/actions/cache/blob/main/examples.md#go---modules
