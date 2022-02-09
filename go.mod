@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/go-logr/logr v0.4.0
 	github.com/google/go-cmp v0.5.6
-	github.com/nginxinc/nginx-ingress-operator v0.1.0
+	github.com/nginxinc/nginx-ingress-operator v0.3.0
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	github.com/spf13/cobra v1.1.3
@@ -91,5 +91,5 @@ replace (
 	// https://github.com/helm/helm/blob/1b5edb69df3d3a08df77c9902dc17af864ff05d1/go.mod#L51
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/docker/docker => github.com/moby/moby v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
-	github.com/nginxinc/nginx-ingress-operator => src.cloudminds.com/gemscloud/nginx-ingress-operator v0.3.2
+	github.com/nginxinc/nginx-ingress-operator => github.com/kubegems/nginx-ingress-operator v0.3.2
 )
