@@ -8,10 +8,10 @@ import (
 	"github.com/kubegems/gems/pkg/agent/cluster"
 	"github.com/kubegems/gems/pkg/agent/collector"
 	"github.com/kubegems/gems/pkg/agent/indexer"
-	"github.com/kubegems/gems/pkg/kube"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils"
 	"github.com/kubegems/gems/pkg/utils/exporter"
+	"github.com/kubegems/gems/pkg/utils/kube"
 	"github.com/kubegems/gems/pkg/utils/pprof"
 	"github.com/kubegems/gems/pkg/utils/prometheus"
 	basecollector "github.com/kubegems/gems/pkg/utils/prometheus/collector" // http exporter

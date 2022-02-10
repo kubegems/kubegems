@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubegems/gems/pkg/kube"
 	"github.com/kubegems/gems/pkg/models"
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/httpsigs"
+	"github.com/kubegems/gems/pkg/utils/kube"
 	"github.com/kubegems/gems/pkg/utils/system"
 )
 

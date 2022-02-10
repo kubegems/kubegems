@@ -1,7 +1,6 @@
 package options
 
 import (
-	"github.com/kubegems/gems/pkg/kube"
 	"github.com/kubegems/gems/pkg/models"
 	"github.com/kubegems/gems/pkg/oauth"
 	microserviceoptions "github.com/kubegems/gems/pkg/service/handlers/microservice/options"
@@ -10,6 +9,7 @@ import (
 	"github.com/kubegems/gems/pkg/utils/chartmuseum"
 	"github.com/kubegems/gems/pkg/utils/exporter"
 	"github.com/kubegems/gems/pkg/utils/git"
+	"github.com/kubegems/gems/pkg/utils/kube"
 	"github.com/kubegems/gems/pkg/utils/msgbus"
 	"github.com/kubegems/gems/pkg/utils/redis"
 	"github.com/kubegems/gems/pkg/utils/system"

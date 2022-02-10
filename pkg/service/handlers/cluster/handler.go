@@ -8,10 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubegems/gems/pkg/agent/apis/types"
-	"github.com/kubegems/gems/pkg/kube"
 	"github.com/kubegems/gems/pkg/kubeclient"
 	"github.com/kubegems/gems/pkg/models"
 	"github.com/kubegems/gems/pkg/service/handlers"
+	"github.com/kubegems/gems/pkg/utils/kube"
 	"github.com/kubegems/gems/pkg/utils/msgbus"
 )
 
