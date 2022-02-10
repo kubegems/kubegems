@@ -3,9 +3,9 @@ package task
 import (
 	"context"
 
-	"github.com/kubegems/gems/pkg/handlers/appstore"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/models"
+	"github.com/kubegems/gems/pkg/service/handlers/appstore"
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/helm"
 	"github.com/kubegems/gems/pkg/utils/workflow"

@@ -1,11 +1,11 @@
 package define
 
 import (
-	"github.com/kubegems/gems/pkg/aaa"
-	"github.com/kubegems/gems/pkg/aaa/audit"
-	"github.com/kubegems/gems/pkg/aaa/authorization"
 	"github.com/kubegems/gems/pkg/models"
 	msgclient "github.com/kubegems/gems/pkg/msgbus/client"
+	"github.com/kubegems/gems/pkg/service/aaa"
+	"github.com/kubegems/gems/pkg/service/aaa/audit"
+	"github.com/kubegems/gems/pkg/service/aaa/authorization"
 	"github.com/kubegems/gems/pkg/service/options"
 	"github.com/kubegems/gems/pkg/utils/agents"
 	"github.com/kubegems/gems/pkg/utils/argo"

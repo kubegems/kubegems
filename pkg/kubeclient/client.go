@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kubegems/gems/pkg/handlers"
 	"github.com/kubegems/gems/pkg/log"
+	"github.com/kubegems/gems/pkg/service/handlers"
 	"github.com/kubegems/gems/pkg/utils/agents"
 )
 

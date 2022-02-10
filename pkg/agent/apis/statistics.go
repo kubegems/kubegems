@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
 	"github.com/kubegems/gems/pkg/controller/utils"
-	"github.com/kubegems/gems/pkg/datas"
+	"github.com/kubegems/gems/pkg/agent/apis/types"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -196,7 +196,7 @@ func (sth *StatisticsHandler) ClusterResourceStatistics(c *gin.Context) {
 	used[corev1.ResourceCPU] = *resource.NewMilliQuantity(usedcpu, resource.BinarySI)
 	used[corev1.ResourceMemory] = *resource.NewMilliQuantity(usedmem, resource.BinarySI)
 
-	ret := datas.ClusterResourceStatistics{
+	ret := types.ClusterResourceStatistics{
 		Capacity:        capacity,
 		Used:            used,
 		Allocated:       allocated,

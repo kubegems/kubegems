@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/kubegems/gems/pkg/agent/cluster"
 	"github.com/kubegems/gems/pkg/agent/ws"
-	"github.com/kubegems/gems/pkg/handlers"
+	"github.com/kubegems/gems/pkg/service/handlers"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes/scheme"
