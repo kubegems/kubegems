@@ -3,9 +3,9 @@ package tasks
 import (
 	"context"
 
-	"github.com/kubegems/gems/pkg/handlers/application"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/msgbus/switcher"
+	"github.com/kubegems/gems/pkg/service/handlers/application"
 	"github.com/kubegems/gems/pkg/utils/msgbus"
 	"github.com/kubegems/gems/pkg/utils/redis"
 	"github.com/kubegems/gems/pkg/utils/retry"

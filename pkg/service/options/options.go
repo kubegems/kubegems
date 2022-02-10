@@ -1,10 +1,10 @@
 package options
 
 import (
-	microserviceoptions "github.com/kubegems/gems/pkg/handlers/microservice/options"
 	"github.com/kubegems/gems/pkg/kube"
 	"github.com/kubegems/gems/pkg/models"
 	"github.com/kubegems/gems/pkg/oauth"
+	microserviceoptions "github.com/kubegems/gems/pkg/service/handlers/microservice/options"
 	"github.com/kubegems/gems/pkg/utils"
 	"github.com/kubegems/gems/pkg/utils/argo"
 	"github.com/kubegems/gems/pkg/utils/chartmuseum"

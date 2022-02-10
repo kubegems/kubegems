@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubegems/gems/pkg/datas"
+	"github.com/kubegems/gems/pkg/agent/apis/types"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
@@ -162,7 +162,7 @@ type OversoldConfig struct {
 }
 
 func ValidateTenantResourceQuota(clusterOversold []byte, clustername string, origin, need v1.ResourceList) error {
-	statistics := &datas.ClusterResourceStatistics{}
+	statistics := &types.ClusterResourceStatistics{}
 	if err := GetKubeClient().ClusterResourceStatistics(clustername, statistics); err != nil {
 		return fmt.Errorf("验证资源错误 %v", err)
 	}

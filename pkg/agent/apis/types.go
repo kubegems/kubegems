@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/handlers"
 	"github.com/kubegems/gems/pkg/log"
+	"github.com/kubegems/gems/pkg/service/handlers"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
