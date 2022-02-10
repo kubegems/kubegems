@@ -164,7 +164,7 @@ func Run(ctx context.Context, options *Options) error {
 	labelInjectorHandler := webhooks.GetLabelInjectorMutateHandler(&c, &labelInjectorLogger)
 	ws.Register("/label-injector", labelInjectorHandler)
 
-	go webhooks.CreateDefaultTenantGateway(c, ctrl.Log)
+	go webhooks.CreateDefaultTenantGateway(c, ctrl.Log.WithName("create-default-tenant-gateway"))
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctx); err != nil {
