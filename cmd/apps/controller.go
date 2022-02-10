@@ -15,7 +15,7 @@ func NewControllerCmd() *cobra.Command {
 	options := controller.NewDefaultOptions()
 	cmd := &cobra.Command{
 		Use:   "controller",
-		Short: "kubegems controller",
+		Short: "run controller",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if err := config.Parse(cmd.Flags()); err != nil {
 				return err

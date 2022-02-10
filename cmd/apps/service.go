@@ -32,14 +32,14 @@ func NewServiceCmd() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(
-		NewGenServiceCfgCmd(),
-		NewServiceMigrateCmd(),
+		newGenServiceCfgCmd(),
+		newServiceMigrateCmd(),
 	)
 	options.RegistFlags("", cmd.Flags())
 	return cmd
 }
 
-func NewGenServiceCfgCmd() *cobra.Command {
+func newGenServiceCfgCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "gencfg",
 		Short: "generate config template",
@@ -49,7 +49,7 @@ func NewGenServiceCfgCmd() *cobra.Command {
 	}
 }
 
-func NewServiceMigrateCmd() *cobra.Command {
+func newServiceMigrateCmd() *cobra.Command {
 	options := options.DefaultOptions()
 	cmd := &cobra.Command{
 		Use:   "migrate",
