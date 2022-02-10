@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/kubegems/gems/pkg/controller"
+	"github.com/kubegems/gems/pkg/utils/config"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +16,10 @@ func NewControllerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "controller",
 		Short: "kubegems controller",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if err := config.Parse(cmd.Flags()); err != nil {
+				return err
+			}
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
 			return controller.Run(ctx, options)
