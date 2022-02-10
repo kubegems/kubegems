@@ -16,8 +16,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/kubegems/gems/pkg/log"
 	"github.com/opentracing/opentracing-go"
+	"kubegems.io/pkg/log"
 )
 
 type Repository struct {

@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/log"
 	"github.com/opentracing-contrib/go-gin/ginhttp"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go/config"
+	"kubegems.io/pkg/log"
 )
 
 type logger struct{}

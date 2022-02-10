@@ -3,8 +3,8 @@ package database
 import (
 	"fmt"
 
-	"github.com/kubegems/gems/pkg/log"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/log"
 )
 
 type DatabaseHelper struct {

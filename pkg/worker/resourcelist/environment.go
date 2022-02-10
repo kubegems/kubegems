@@ -5,11 +5,11 @@ import (
 	"math"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/pkg/errors"
 	promemodel "github.com/prometheus/common/model"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/utils"
 )
 
 const (

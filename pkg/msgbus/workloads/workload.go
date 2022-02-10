@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/msgbus/switcher"
-	"github.com/kubegems/gems/pkg/utils/agents"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/msgbus/switcher"
+	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/msgbus"
 )
 
 type AgentMessageCollector struct {

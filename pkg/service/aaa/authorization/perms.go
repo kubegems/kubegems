@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/aaa/audit"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/aaa/audit"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils"
 )
 
 var normalActions = []string{

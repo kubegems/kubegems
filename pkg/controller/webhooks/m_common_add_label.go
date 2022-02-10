@@ -13,8 +13,8 @@ import (
 	meta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	gemlabels "github.com/kubegems/gems/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	gemlabels "kubegems.io/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

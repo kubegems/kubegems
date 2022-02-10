@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
+	"kubegems.io/pkg/utils/msgbus"
 )
 
 type NotifyUser struct {

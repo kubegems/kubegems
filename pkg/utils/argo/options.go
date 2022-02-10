@@ -1,9 +1,9 @@
 package argo
 
 import (
-	gemlabels "github.com/kubegems/gems/pkg/labels"
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/spf13/pflag"
+	gemlabels "kubegems.io/pkg/labels"
+	"kubegems.io/pkg/utils"
 )
 
 type Options struct {

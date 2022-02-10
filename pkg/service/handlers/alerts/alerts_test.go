@@ -3,8 +3,8 @@ package alerthandler
 import (
 	"testing"
 
-	"github.com/kubegems/gems/pkg/utils/prometheus"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 func TestAlertRule_checkAndModify(t *testing.T) {

@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"github.com/kubegems/gems/pkg/labels"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/labels"
 )
 
 func DefaultNetworkPolicy(namespace, name, cidr string) netv1.NetworkPolicy {

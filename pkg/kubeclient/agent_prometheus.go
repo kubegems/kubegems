@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/kubegems/gems/pkg/log"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"kubegems.io/pkg/log"
 )
 
 var prometheusRuleGVK = &schema.GroupVersionKind{Group: "monitoring.coreos.com", Kind: "prometheusrules", Version: "v1"}

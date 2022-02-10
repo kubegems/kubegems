@@ -1,7 +1,6 @@
 package webhooks
 
 import (
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
 	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -9,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 )
 
 var (

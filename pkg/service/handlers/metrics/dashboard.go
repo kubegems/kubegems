@@ -3,9 +3,9 @@ package metrics
 import (
 	"fmt"
 
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/prometheus"
 
 	"github.com/gin-gonic/gin"
 )

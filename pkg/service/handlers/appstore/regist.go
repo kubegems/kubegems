@@ -2,9 +2,9 @@ package appstore
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/server/define"
-	"github.com/kubegems/gems/pkg/utils/chartmuseum"
-	"github.com/kubegems/gems/pkg/utils/helm"
+	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/utils/chartmuseum"
+	"kubegems.io/pkg/utils/helm"
 )
 
 type AppstoreHandler struct {

@@ -4,9 +4,9 @@ import (
 	"io"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/msgbus"
 )
 
 // 获取各个集群的告警信息

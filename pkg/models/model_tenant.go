@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubegems/gems/pkg/agent/apis/types"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
+	"kubegems.io/pkg/agent/apis/types"
 )
 
 const (

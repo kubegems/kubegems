@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/exporter"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/exporter"
 )
 
 func RunExporter(ctx context.Context, opts *exporter.ExporterOptions, handler *exporter.Handler) error {

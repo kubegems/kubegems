@@ -1,16 +1,16 @@
 package worker
 
 import (
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/argo"
-	"github.com/kubegems/gems/pkg/utils/chartmuseum"
-	"github.com/kubegems/gems/pkg/utils/exporter"
-	"github.com/kubegems/gems/pkg/utils/git"
-	"github.com/kubegems/gems/pkg/utils/redis"
-	"github.com/kubegems/gems/pkg/utils/system"
-	"github.com/kubegems/gems/pkg/worker/dump"
 	"github.com/spf13/pflag"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/argo"
+	"kubegems.io/pkg/utils/chartmuseum"
+	"kubegems.io/pkg/utils/exporter"
+	"kubegems.io/pkg/utils/git"
+	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/pkg/utils/system"
+	"kubegems.io/pkg/worker/dump"
 )
 
 type Options struct {

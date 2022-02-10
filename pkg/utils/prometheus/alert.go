@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
 )
 
 const (

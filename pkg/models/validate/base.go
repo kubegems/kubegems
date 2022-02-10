@@ -7,8 +7,8 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	chTranslations "github.com/go-playground/validator/v10/translations/zh"
-	"github.com/kubegems/gems/pkg/models"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/models"
 )
 
 var instance *Validator

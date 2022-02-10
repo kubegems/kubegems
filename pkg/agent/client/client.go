@@ -11,10 +11,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/proxy"
-	"github.com/kubegems/gems/pkg/utils/route"
-	"github.com/kubegems/gems/pkg/utils/stream"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +19,10 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/proxy"
+	"kubegems.io/pkg/utils/route"
+	"kubegems.io/pkg/utils/stream"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"

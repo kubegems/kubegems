@@ -3,8 +3,8 @@ package system
 import (
 	"time"
 
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/spf13/pflag"
+	"kubegems.io/pkg/utils"
 )
 
 type SystemOptions struct {

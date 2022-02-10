@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/cluster"
 	v1 "k8s.io/api/batch/v1"
+	"kubegems.io/pkg/agent/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

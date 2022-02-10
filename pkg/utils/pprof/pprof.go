@@ -8,7 +8,7 @@ import (
 	"net/http/pprof"
 	"os"
 
-	"github.com/kubegems/gems/pkg/log"
+	"kubegems.io/pkg/log"
 )
 
 // ServeDebug provides a debug endpoint

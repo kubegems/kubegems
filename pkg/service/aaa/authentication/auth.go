@@ -10,15 +10,15 @@ import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/aaa"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/database"
-	"github.com/kubegems/gems/pkg/utils/redis"
-	"github.com/kubegems/gems/pkg/utils/system"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/aaa"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/pkg/utils/system"
 )
 
 var userCacheExirpreMinute = 10

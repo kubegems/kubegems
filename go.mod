@@ -1,4 +1,4 @@
-module github.com/kubegems/gems
+module kubegems.io
 
 go 1.17
 

@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	gemlabels "kubegems.io/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"

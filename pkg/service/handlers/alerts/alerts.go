@@ -13,12 +13,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/agents"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -26,6 +20,12 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

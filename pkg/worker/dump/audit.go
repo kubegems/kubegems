@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/utils"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/utils"
 )
 
 func (d *Dump) ExportAuditlogs(destDir string, dur time.Duration) {

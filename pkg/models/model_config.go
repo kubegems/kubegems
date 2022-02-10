@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 const (

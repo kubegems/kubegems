@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/kubegems/gems/pkg/log"
+	"kubegems.io/pkg/log"
 )
 
 // 竹云 用户数据同步

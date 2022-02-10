@@ -60,4 +60,4 @@ validate:
 // +kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
 
 // Package v1beta1 is the v1beta1 version of the API.
-package v1beta1 // import "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
+package v1beta1 // import "kubegems.io/pkg/apis/gems/v1beta1"

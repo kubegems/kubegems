@@ -6,9 +6,9 @@ import (
 	"path"
 	"time"
 
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/loki"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/loki"
 )
 
 // LogQueryHistory 日志查询历史

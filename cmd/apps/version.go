@@ -3,8 +3,8 @@ package apps
 import (
 	"encoding/json"
 
-	"github.com/kubegems/gems/pkg/version"
 	"github.com/spf13/cobra"
+	"kubegems.io/pkg/version"
 )
 
 func NewVersionCmd() *cobra.Command {
