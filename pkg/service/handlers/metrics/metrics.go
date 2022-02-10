@@ -225,4 +225,8 @@ func (h *MonitorHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/metrics/cluster/:cluster/namespaces/:namespace/targets", h.CheckByClusterNamespace, h.ListMetricTarget)
 	rg.POST("/metrics/cluster/:cluster/namespaces/:namespace/targets", h.CheckByClusterNamespace, h.AddOrUpdateMetricTarget)
 	rg.DELETE("/metrics/cluster/:cluster/namespaces/:namespace/targets/:name", h.CheckByClusterNamespace, h.DeleteMetricTarget)
+
+	rg.GET("/metrics/dashboard", h.ListDashborad)
+	rg.POST("/metrics/dashboard", h.CreateOrUpdateDashborad)
+	rg.DELETE("/metrics/dashboard/:dashboard_id", h.DeleteDashborad)
 }
