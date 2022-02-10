@@ -10,8 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/kube"
 	"github.com/kubegems/gems/pkg/log"
+	"github.com/kubegems/gems/pkg/utils/kube"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"

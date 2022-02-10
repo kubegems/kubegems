@@ -10,7 +10,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	kialiconfig "github.com/kiali/kiali/config"
-	_ "github.com/kubegems/gems/pkg/kube" // 用于 AddToSchema
 	"github.com/kubegems/gems/pkg/kubeclient"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/models"
@@ -29,6 +28,7 @@ import (
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/exporter"
 	"github.com/kubegems/gems/pkg/utils/git"
+	_ "github.com/kubegems/gems/pkg/utils/kube" // 用于 AddToSchema
 	"github.com/kubegems/gems/pkg/utils/pprof"
 	"github.com/kubegems/gems/pkg/utils/prometheus"
 	"github.com/kubegems/gems/pkg/utils/prometheus/collector"

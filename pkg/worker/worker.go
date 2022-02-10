@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	_ "github.com/kubegems/gems/pkg/kube"
 	"github.com/kubegems/gems/pkg/kubeclient"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/models"
@@ -15,6 +14,7 @@ import (
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/exporter"
 	"github.com/kubegems/gems/pkg/utils/git"
+	_ "github.com/kubegems/gems/pkg/utils/kube"
 	"github.com/kubegems/gems/pkg/utils/pprof"
 	"github.com/kubegems/gems/pkg/utils/prometheus"
 	"github.com/kubegems/gems/pkg/utils/redis"
