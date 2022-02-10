@@ -20,7 +20,7 @@ func main() {
 
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "gems",
+		Use:     "kubegems",
 		Short:   "kubegems allinone binary",
 		Version: version.Get().String(),
 	}
