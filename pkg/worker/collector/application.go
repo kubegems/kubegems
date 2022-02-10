@@ -6,12 +6,12 @@ import (
 	"sync"
 
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/application"
+	gemlabels "github.com/kubegems/gems/pkg/labels"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils/argo"
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/exporter"
 	"github.com/prometheus/client_golang/prometheus"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
 )
 
 var (

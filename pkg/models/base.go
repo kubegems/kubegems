@@ -48,7 +48,7 @@ func MigrateDatabaseAndInitData(opts *MySQLOptions, redisopts *redis.Options) er
 		return err
 	}
 
-	db, err := database.NewDatabase(opts, nil)
+	db, err := database.NewDatabase(opts)
 	if err != nil {
 		return err
 	}

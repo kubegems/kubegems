@@ -12,7 +12,7 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/helper/chroot"
 	"github.com/go-git/go-billy/v5/util"
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils/git"
 	"github.com/opentracing/opentracing-go"
 	appsv1 "k8s.io/api/apps/v1"
@@ -356,7 +356,7 @@ func decodeCreationTimestamp(ctx context.Context, repo Repository, manifests []M
 	}
 	if update {
 		// 后台更新
-		logr.FromContextOrDiscard(ctx).Info("init creation meta", "repo", repo.repo.CloneURL())
+		log.FromContextOrDiscard(ctx).Info("init creation meta", "repo", repo.repo.CloneURL())
 		go Commit("init meta")(ctx, repo)
 	}
 }

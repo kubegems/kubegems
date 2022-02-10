@@ -43,7 +43,7 @@ func DefaultOptions() *Options {
 }
 
 func Run(ctx context.Context, options *Options) error {
-	_ = log.Update(options.DebugMode, options.LogLevel)
+	log.SetLevel(options.LogLevel)
 
 	if options.DebugMode {
 		gin.SetMode(gin.DebugMode)

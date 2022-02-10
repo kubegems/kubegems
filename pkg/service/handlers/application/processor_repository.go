@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/go-git/go-billy/v5"
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils/git"
 )
 
@@ -36,7 +36,7 @@ func (h *ManifestProcessor) Func(ctx context.Context, ref PathRef, funcs ...Repo
 	gitref := ref.GitRef()
 	gitrepo, err := h.GitProvider.Get(ctx, gitref)
 	if err != nil {
-		logr.FromContextOrDiscard(ctx).Error(err, "get repository")
+		log.FromContextOrDiscard(ctx).Error(err, "get repository")
 		return err
 	}
 	repo := &Repository{path: gitref.Path, repo: gitrepo}

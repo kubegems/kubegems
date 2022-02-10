@@ -8,8 +8,8 @@ import (
 
 	argoapplication "github.com/argoproj/argo-cd/v2/pkg/apiclient/application"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	"github.com/go-logr/logr"
 	gemlabels "github.com/kubegems/gems/pkg/labels"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/msgbus/switcher"
 	"github.com/kubegems/gems/pkg/service/handlers/application"
 	"github.com/kubegems/gems/pkg/utils/argo"
@@ -45,7 +45,7 @@ func RunApplicationCollector(ctx context.Context, ms *switcher.MessageSwitcher, 
 func (c *ApplicationMessageCollector) Run(ctx context.Context) error {
 	// producer
 	// 重试属于正常控制流程，不算错误
-	logr.FromContextOrDiscard(ctx).Info("start watching argo application...")
+	log.FromContextOrDiscard(ctx).Info("start watching argo application...")
 
 	go retry.Always(func() error {
 		return c.runOriginWay(ctx)

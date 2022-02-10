@@ -18,7 +18,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/storage/memory"
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 )
 
 const (
@@ -86,7 +86,7 @@ func (p *SimpleLocalProvider) Get(ctx context.Context, ref RepositoryRef) (*Repo
 	}
 	target := cacheKey{Org: org, Repo: repo, Branch: branch}
 
-	logger := logr.FromContextOrDiscard(ctx)
+	logger := log.FromContextOrDiscard(ctx)
 
 	// from cache
 	obj, ok := p.caches.Load(target)

@@ -16,7 +16,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -43,7 +43,7 @@ func (r *Repository) Pull(ctx context.Context) error {
 }
 
 func (r *Repository) resetOriginLatest(ctx context.Context, resetmode git.ResetMode) error {
-	logr.FromContextOrDiscard(ctx).Info("pulling repository", "repository", r.cloneurl, "lastsync", r.lastsync)
+	log.FromContextOrDiscard(ctx).Info("pulling repository", "repository", r.cloneurl, "lastsync", r.lastsync)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -84,7 +84,7 @@ type FileDiff struct {
 }
 
 func (r *Repository) Diff(ctx context.Context, path string, hash string) ([]FileDiff, error) {
-	logr.FromContextOrDiscard(ctx).Info("diff", "path", path, "hash", hash)
+	log.FromContextOrDiscard(ctx).Info("diff", "path", path, "hash", hash)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -238,7 +238,7 @@ const MaxCommitRetry = 3
 
 func (r *Repository) CommitPushWithRetry(ctx context.Context, path string, commit *CommitMessage) error {
 	var err error
-	log := logr.FromContextOrDiscard(ctx)
+	log := log.FromContextOrDiscard(ctx)
 
 	defer func() {
 		if err != nil {
@@ -268,7 +268,7 @@ func (r *Repository) CommitPushWithRetry(ctx context.Context, path string, commi
 }
 
 func (r *Repository) CommitPush(ctx context.Context, path string, commit *CommitMessage) error {
-	logr.FromContextOrDiscard(ctx).Info("commit push", "path", path)
+	log.FromContextOrDiscard(ctx).Info("commit push", "path", path)
 
 	if commit == nil || len(commit.Message) == 0 {
 		return nil // do not commit
@@ -291,7 +291,7 @@ func (r *Repository) CommitPush(ctx context.Context, path string, commit *Commit
 		return fmt.Errorf("unable to get wt status: %w", err)
 	}
 	if !status.IsClean() {
-		logr.FromContextOrDiscard(ctx).Info("wotktree not clean do commit", "path", path)
+		log.FromContextOrDiscard(ctx).Info("wotktree not clean do commit", "path", path)
 		// add 删除的文件会失败 https://github.com/go-git/go-git/pull/242
 		// 如果该bug修好了就可以改为
 		// if err := wt.AddWithOptions(&git.AddOptions{Path: ref.Path}); err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/models"
 	"github.com/kubegems/gems/pkg/server/define"
 	"github.com/kubegems/gems/pkg/service/handlers"
@@ -214,7 +215,7 @@ func (h *BaseHandler) processfunc(c *gin.Context, body interface{}, completes []
 		}
 
 		// 注入 logger
-		logger := logr.FromContextOrDiscard(ctx)
+		logger := log.FromContextOrDiscard(ctx)
 		logger = logger.WithValues("ref", ref)
 		ctx = logr.NewContext(ctx, logger)
 

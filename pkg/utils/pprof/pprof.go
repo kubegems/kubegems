@@ -8,7 +8,7 @@ import (
 	"net/http/pprof"
 	"os"
 
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 )
 
 // ServeDebug provides a debug endpoint
@@ -44,6 +44,6 @@ func Run(ctx context.Context) error {
 		_ = server.Shutdown(ctx)
 	}()
 
-	logr.FromContextOrDiscard(ctx).Info("debug pprof listen", "addr", server.Addr)
+	log.FromContextOrDiscard(ctx).Info("debug pprof listen", "addr", server.Addr)
 	return server.ListenAndServe()
 }
