@@ -9,9 +9,9 @@ import (
 	"strconv"
 
 	"github.com/argoproj/argo-cd/v2/util/io"
-	"github.com/kubegems/gems/pkg/kube"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/service/options"
+	"github.com/kubegems/gems/pkg/utils/kube"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
