@@ -8,6 +8,7 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	driver "github.com/go-sql-driver/mysql"
 	"github.com/kubegems/gems/pkg/utils/database"
+	"github.com/kubegems/gems/pkg/utils/prometheus"
 	"github.com/kubegems/gems/pkg/utils/redis"
 	"gorm.io/gorm"
 )
@@ -86,6 +87,15 @@ func initBaseData(db *gorm.DB) error {
 	if e := db.FirstOrCreate(&admin, admin.ID).Error; e != nil {
 		return e
 	}
+
+	metricCfg := Config{
+		ID:      1,
+		Name:    MetricConfig,
+		Content: prometheus.DefaultMetricConfigContent(),
+	}
+	if err := db.FirstOrCreate(&metricCfg, metricCfg.ID).Error; err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -145,6 +155,10 @@ func migrateModels(db *gorm.DB) error {
 		&AlertInfo{},
 		// 告警消息表
 		&AlertMessage{},
+		// 监控面板表
+		&MetricDashborad{},
+		// 配置
+		&Config{},
 	)
 }
 
