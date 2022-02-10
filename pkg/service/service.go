@@ -7,8 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
 	kialiconfig "github.com/kiali/kiali/config"
 	"github.com/kubegems/gems/pkg/kubeclient"
 	"github.com/kubegems/gems/pkg/log"
@@ -34,27 +32,25 @@ import (
 	"github.com/kubegems/gems/pkg/utils/prometheus/collector"
 	"github.com/kubegems/gems/pkg/utils/redis"
 	"github.com/kubegems/gems/pkg/utils/tracing"
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 type Dependencies struct {
-	Ctx       context.Context
 	Options   *options.Options
 	Redis     *redis.Client
 	Databse   *database.Database
 	Argocli   *argo.Client
 	Git       *git.SimpleLocalProvider
 	Agentscli *agents.ClientSet
-	Logger    *zap.Logger
 }
 
 func prepareDependencies(ctx context.Context, options *options.Options) (*Dependencies, error) {
 	// logger
-	logger, err := log.NewZapLogger(options.LogLevel, options.DebugMode)
-	if err != nil {
-		return nil, err
-	}
+	log.SetLevel(options.LogLevel)
+
+	// tracing
+	tracing.Init(ctx)
+
 	// redis
 	rediscli, err := redis.NewClient(options.Redis)
 	if err != nil {
@@ -63,7 +59,7 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 
 	// database
 	models.InitRedis(rediscli) // models 中hook需要redis
-	db, err := database.NewDatabase(options.Mysql, logger)
+	db, err := database.NewDatabase(options.Mysql)
 	if err != nil {
 		return nil, err
 	}
@@ -83,13 +79,11 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 		return nil, err
 	}
 	deps := &Dependencies{
-		Ctx:       ctx,
 		Redis:     rediscli,
 		Databse:   db,
 		Argocli:   argocli,
 		Git:       gitprovider,
 		Agentscli: agentclientset,
-		Logger:    logger,
 	}
 	return deps, nil
 }
@@ -99,25 +93,21 @@ type Service struct {
 }
 
 func Run(ctx context.Context, options *options.Options) error {
+	ctx = log.NewContext(ctx, log.LogrLogger)
 	deps, err := prepareDependencies(ctx, options)
 	if err != nil {
 		return fmt.Errorf("failed init dependencies: %v", err)
 	}
-	ctx = deps.Ctx
+
 	// 初始化kubeclient实例
 	models.SetKubeClient(kubeclient.Init(deps.Agentscli))
 
-	// tracing
-	tracing.Init(ctx)
-
-	log.UpdateGlobalLogger(deps.Logger)
 	if !options.DebugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	// validator
 	validate.InitValidator(deps.Databse.DB())
-	// logger init context
-	ctx = logr.NewContext(ctx, zapr.NewLogger(deps.Logger))
+
 	// 测试模式需要初始化数据
 	if options.TestMode {
 		if err := models.MigrateDatabaseAndInitData(options.Mysql, options.Redis); err != nil {
@@ -193,7 +183,7 @@ func Run(ctx context.Context, options *options.Options) error {
 				return ctx // 注入basecontext
 			},
 		}
-		logr.FromContextOrDiscard(ctx).Info("start listen", "addr", httpserver.Addr)
+		log.FromContextOrDiscard(ctx).Info("start listen", "addr", httpserver.Addr)
 		go func() {
 			<-ctx.Done()
 			httpserver.Close()

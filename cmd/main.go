@@ -32,6 +32,5 @@ func NewRootCmd() *cobra.Command {
 		apps.NewMsgbusCmd(),
 		apps.NewWorkerCmd(),
 	)
-
 	return cmd
 }

@@ -14,6 +14,10 @@ import (
 
 // 对于 caller，如果logger使用的正确，是不需要caller的 使用 .WithName() 可以手动区分logger所在模块，且使用caller stacktrace 会增加额外的开销。
 
+var NewContext = logr.NewContext
+
+var FromContextOrDiscard = logr.FromContextOrDiscard
+
 func Error(err error, msg string, keysAndValues ...interface{}) {
 	LogrLogger.Error(err, msg, keysAndValues...)
 }
@@ -35,7 +39,6 @@ func WithValues(keysAndValues ...interface{}) logr.Logger {
 }
 
 type (
-	Field  = zap.Field
 	Logger = zap.SugaredLogger
 )
 
@@ -61,12 +64,6 @@ func Debugf(fmt string, v ...interface{}) {
 
 func Tracef(fmt string, v ...interface{}) {
 	GlobalLogger.WithOptions(zap.AddCallerSkip(1)).Sugar().Debugf(fmt, v...)
-}
-
-// Deprecated: use Error instead
-// 直接打印err是不允许的，缺失上下文和描述
-func DError(err error) {
-	GlobalLogger.WithOptions(zap.AddCallerSkip(1)).Sugar().Error(err)
 }
 
 // use .Info("",fields), or .With(fields).Info("") instead

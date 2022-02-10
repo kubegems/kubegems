@@ -8,9 +8,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/go-logr/logr"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/robfig/cron/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,7 +39,7 @@ func NewClientFromBackend(backend Backend) *Client {
 }
 
 func (c *Client) SubmitCronTask(ctx context.Context, task Task, crontabexp string) error {
-	log := logr.FromContextOrDiscard(ctx).WithValues("task", task, "cron", crontabexp)
+	log := log.FromContextOrDiscard(ctx).WithValues("task", task, "cron", crontabexp)
 	log.Info("register cron task")
 	_, err := c.crontab.AddFunc(crontabexp, func() {
 		log.Info("trigger a cron task run", "now", time.Now())

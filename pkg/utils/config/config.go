@@ -48,7 +48,9 @@ func Parse(fs *pflag.FlagSet) error {
 
 func Print(fs *pflag.FlagSet) {
 	fs.VisitAll(func(flag *pflag.Flag) {
-		log.Infof("flag: --%s=%s", flag.Name, flag.Value)
+		if flag.Changed {
+			log.Infof("config from flag: --%s=%s", flag.Name, flag.Value)
+		}
 	})
 }
 
@@ -60,6 +62,7 @@ func LoadEnv(fs *pflag.FlagSet) {
 		envname := flagNameToEnvKey(f.Name)
 		val, ok := os.LookupEnv(envname)
 		if ok {
+			log.Infof("config from env: %s=%s", envname, val)
 			_ = f.Value.Set(val)
 		}
 	})
@@ -76,13 +79,14 @@ func LoadConfigFile(fs *pflag.FlagSet) {
 	v.AddConfigPath(".")
 	v.AddConfigPath("config")
 	if err := v.ReadInConfig(); err != nil {
-		log.Warnf("can't config from config file.skipped")
+		log.Warnf("no config file found")
 	}
 
 	fs.VisitAll(func(f *pflag.Flag) {
 		filekeyname := flagNameToConfigKey(f.Name)
 		val := v.GetString(filekeyname)
 		if val != "" {
+			log.Infof("config from file: %s=%s", filekeyname, val)
 			_ = f.Value.Set(val)
 		}
 	})

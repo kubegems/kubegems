@@ -9,7 +9,7 @@ import (
 
 	rolloutsv1alpha1 "github.com/argoproj/argo-rollouts/pkg/apis/rollouts/v1alpha1"
 	"github.com/gin-gonic/gin"
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils/agents"
 	"github.com/kubegems/gems/pkg/utils/workflow"
 	appsv1 "k8s.io/api/apps/v1"
@@ -41,7 +41,7 @@ func (h *ApplicationHandler) StrategyDeploymentControl(c *gin.Context) {
 	req := &StrategyDeploymentControl{}
 
 	ctrlfunc := func(ctx context.Context, store GitStore, cli *agents.TypedClient, namespace string, ref PathRef) (interface{}, error) {
-		logr.FromContextOrDiscard(ctx).Info("strategy deployment control", "command", req.Command, "args", req.Args)
+		log.FromContextOrDiscard(ctx).Info("strategy deployment control", "command", req.Command, "args", req.Args)
 
 		deployment, err := ParseMainDeployment(ctx, store)
 		if err != nil {

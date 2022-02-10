@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/msgbus/options"
 	"github.com/kubegems/gems/pkg/msgbus/switcher"
 	"github.com/kubegems/gems/pkg/service/aaa"
@@ -55,6 +55,6 @@ func RunGinServer(ctx context.Context, options *options.Options, db *database.Da
 		<-ctx.Done()
 		httpserver.Close()
 	}()
-	logr.FromContextOrDiscard(ctx).Info("start listen", "addr", httpserver.Addr)
+	log.FromContextOrDiscard(ctx).Info("start listen", "addr", httpserver.Addr)
 	return httpserver.ListenAndServe()
 }
