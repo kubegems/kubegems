@@ -203,7 +203,7 @@ func (r *VirtuslspaceReconciler) ensureInjectLabel(ctx context.Context, namespac
 // 被管理的空间上有label
 func isManagerdNamespace(ns *corev1.Namespace) bool {
 	for k := range ns.Annotations {
-		// 仅存在 AnnotationVirtualSpace annotation的 ns 才被“管理”
+		// 仅存在 AnnotationVirtualSpace annotation的 ns 才被"管理”
 		if k == gemlabels.AnnotationVirtualSpace {
 			return true
 		}
