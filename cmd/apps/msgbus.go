@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubegems/gems/pkg/msgbus/options"
 	"github.com/kubegems/gems/pkg/msgbus"
+	"github.com/kubegems/gems/pkg/msgbus/options"
 	"github.com/kubegems/gems/pkg/utils/config"
 	"github.com/kubegems/gems/pkg/version"
 	"github.com/spf13/cobra"
