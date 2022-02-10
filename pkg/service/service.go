@@ -133,8 +133,8 @@ func Run(ctx context.Context, options *options.Options) error {
 	// 初始化审计实例
 	auditInstance := audit.NewAuditMiddleware(deps.Databse.DB())
 
-	// 初始化prometheus配置
-	prometheus.Init()
+	// 初始化数据库中的系统配置
+	models.InitConfig(deps.Databse.DB())
 
 	// 依赖的kiali库用到，需要初始化
 	// FIXME: 我们用到的配置较少，初始化时填入我们的配置，如
