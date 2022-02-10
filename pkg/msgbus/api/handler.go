@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubegems/gems/pkg/aaa"
-	"github.com/kubegems/gems/pkg/handlers"
 	"github.com/kubegems/gems/pkg/msgbus/switcher"
+	"github.com/kubegems/gems/pkg/service/aaa"
+	"github.com/kubegems/gems/pkg/service/handlers"
 	"github.com/kubegems/gems/pkg/utils/msgbus"
 )
 

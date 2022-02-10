@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/handlers"
+	"github.com/kubegems/gems/pkg/service/handlers"
 	"github.com/kubegems/gems/pkg/utils/httpsigs"
 )
 

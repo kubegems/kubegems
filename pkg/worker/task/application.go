@@ -1,7 +1,7 @@
 package task
 
 import (
-	"github.com/kubegems/gems/pkg/handlers/application"
+	"github.com/kubegems/gems/pkg/service/handlers/application"
 	"github.com/kubegems/gems/pkg/utils/argo"
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/git"

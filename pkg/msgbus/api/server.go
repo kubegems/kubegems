@@ -7,10 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-logr/logr"
-	"github.com/kubegems/gems/pkg/aaa"
-	auth "github.com/kubegems/gems/pkg/aaa/authentication"
 	"github.com/kubegems/gems/pkg/msgbus/options"
 	"github.com/kubegems/gems/pkg/msgbus/switcher"
+	"github.com/kubegems/gems/pkg/service/aaa"
+	auth "github.com/kubegems/gems/pkg/service/aaa/authentication"
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/redis"
 )
