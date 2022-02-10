@@ -11,15 +11,15 @@ import (
 	rolloutsv1alpha1 "github.com/argoproj/argo-rollouts/pkg/apis/rollouts/v1alpha1"
 	"github.com/argoproj/argo-rollouts/pkg/kubectl-argo-rollouts/info"
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/stream"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/kubectl/pkg/util/deployment"
 	"k8s.io/utils/pointer"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/stream"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

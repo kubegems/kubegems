@@ -32,9 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	"github.com/kubegems/gems/pkg/controller/utils"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/controller/utils"
+	gemlabels "kubegems.io/pkg/labels"
 )
 
 const (

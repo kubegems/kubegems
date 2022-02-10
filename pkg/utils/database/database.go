@@ -4,11 +4,11 @@ import (
 	"time"
 
 	driver "github.com/go-sql-driver/mysql"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/spf13/pflag"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
 )
 
 type MySQLOptions struct {

@@ -5,9 +5,9 @@ import (
 	"path"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/controller/utils"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	proxyutil "github.com/kubegems/gems/pkg/service/handlers/proxy/util"
+	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/service/handlers"
+	proxyutil "kubegems.io/pkg/service/handlers/proxy/util"
 )
 
 func (h *ProxyHandler) ProxyService(c *gin.Context) {

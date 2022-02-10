@@ -2,7 +2,7 @@ package tenanthandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/server/define"
+	"kubegems.io/pkg/server/define"
 )
 
 // TenantHandler 租户相关 Handler

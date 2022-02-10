@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"strings"
 
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	"github.com/kubegems/gems/pkg/controller/utils"
 	v1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/controller/utils"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

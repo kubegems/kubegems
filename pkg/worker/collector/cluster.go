@@ -3,12 +3,12 @@ package collector
 import (
 	"sync"
 
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/exporter"
 	"github.com/prometheus/client_golang/prometheus"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/exporter"
 )
 
 type ClusterCollector struct {

@@ -6,8 +6,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/gorilla/websocket"
-	"github.com/kubegems/gems/pkg/log"
 	"k8s.io/client-go/tools/remotecommand"
+	"kubegems.io/pkg/log"
 )
 
 type StreamHandler struct {

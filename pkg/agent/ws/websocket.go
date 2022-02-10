@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/kubegems/gems/pkg/log"
+	"kubegems.io/pkg/log"
 )
 
 var Upgrader = websocket.Upgrader{

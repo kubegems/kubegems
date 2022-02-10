@@ -2,11 +2,11 @@ package apis
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/controller/utils"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"kubegems.io/pkg/controller/utils"
+	gemlabels "kubegems.io/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

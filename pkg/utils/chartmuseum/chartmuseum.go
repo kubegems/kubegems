@@ -1,6 +1,6 @@
 package chartmuseum
 
-import "github.com/kubegems/gems/pkg/utils/helm"
+import "kubegems.io/pkg/utils/helm"
 
 type AppstoreOptions = helm.Options
 

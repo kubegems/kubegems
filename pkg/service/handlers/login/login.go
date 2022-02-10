@@ -5,11 +5,11 @@ import (
 
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/oauth"
-	auth "github.com/kubegems/gems/pkg/service/aaa/authentication"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/oauth"
+	auth "kubegems.io/pkg/service/aaa/authentication"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils"
 )
 
 type LoginForm struct {

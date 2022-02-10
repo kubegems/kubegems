@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
 	v1 "k8s.io/api/admission/v1"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/exporter"
 	"github.com/prometheus/client_golang/prometheus"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/exporter"
 )
 
 type basicInfo struct {

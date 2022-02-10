@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/httpsigs"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/httpsigs"
 )
 
 func SignerMiddleware() func(c *gin.Context) {

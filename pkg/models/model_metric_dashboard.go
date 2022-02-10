@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/kubegems/gems/pkg/utils/prometheus"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 // MetricDashborad 监控面板

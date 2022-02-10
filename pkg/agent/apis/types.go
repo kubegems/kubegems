@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/service/handlers"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/service/handlers"
 )
 
 // 如果是非成功的响应，使用 NotOK

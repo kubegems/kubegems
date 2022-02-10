@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/apis/types"
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/kube"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
+	"kubegems.io/pkg/agent/apis/types"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/kube"
+	"kubegems.io/pkg/utils/msgbus"
 )
 
 var (

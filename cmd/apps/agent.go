@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubegems/gems/pkg/agent"
-	"github.com/kubegems/gems/pkg/utils/config"
-	"github.com/kubegems/gems/pkg/version"
 	"github.com/spf13/cobra"
+	"kubegems.io/pkg/agent"
+	"kubegems.io/pkg/utils/config"
+	"kubegems.io/pkg/version"
 	"sigs.k8s.io/yaml"
 )
 

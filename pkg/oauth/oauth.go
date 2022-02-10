@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
+	"kubegems.io/pkg/utils"
 )
 
 var _ot *OauthTool

@@ -3,9 +3,9 @@ package systemrolehandler
 import (
 	"fmt"
 
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/msgbus"
 
 	"github.com/gin-gonic/gin"
 )

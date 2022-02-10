@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 

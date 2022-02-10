@@ -11,10 +11,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/spf13/pflag"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	helm_repo "helm.sh/helm/v3/pkg/repo"
+	"kubegems.io/pkg/utils"
 )
 
 type Options struct {

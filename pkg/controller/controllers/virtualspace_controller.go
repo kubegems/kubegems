@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	"github.com/kubegems/gems/pkg/controller/utils"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
 	istionetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	istioclinetworkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +13,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"kubegems.io/pkg/controller/utils"
+	gemlabels "kubegems.io/pkg/labels"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

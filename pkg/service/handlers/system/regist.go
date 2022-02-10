@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/server/define"
-	"github.com/kubegems/gems/pkg/service/handlers"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers"
 )
 
 type SystemHandler struct {

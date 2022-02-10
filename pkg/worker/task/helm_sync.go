@@ -3,12 +3,12 @@ package task
 import (
 	"context"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers/appstore"
-	"github.com/kubegems/gems/pkg/utils/database"
-	"github.com/kubegems/gems/pkg/utils/helm"
-	"github.com/kubegems/gems/pkg/utils/workflow"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers/appstore"
+	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/helm"
+	"kubegems.io/pkg/utils/workflow"
 )
 
 type HelmSyncTasker struct {

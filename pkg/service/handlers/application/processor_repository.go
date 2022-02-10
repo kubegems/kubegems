@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/go-git/go-billy/v5"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/git"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/git"
 )
 
 type Repository struct {

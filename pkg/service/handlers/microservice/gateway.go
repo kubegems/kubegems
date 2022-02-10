@@ -6,13 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	prototypes "github.com/gogo/protobuf/types"
-	"github.com/kubegems/gems/pkg/kubeclient"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/server/define"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/agents"
 	"istio.io/api/operator/v1alpha1"
 	"istio.io/client-go/pkg/apis/networking/v1beta1"
 	pkgv1alpha1 "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
@@ -21,6 +14,13 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"kubegems.io/pkg/kubeclient"
+	gemlabels "kubegems.io/pkg/labels"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

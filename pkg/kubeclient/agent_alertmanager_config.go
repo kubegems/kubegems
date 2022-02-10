@@ -11,12 +11,12 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 var (

@@ -7,10 +7,10 @@ import (
 
 	"github.com/VividCortex/mysqlerr"
 	driver "github.com/go-sql-driver/mysql"
-	"github.com/kubegems/gems/pkg/utils/database"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
-	"github.com/kubegems/gems/pkg/utils/redis"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/pkg/utils/redis"
 )
 
 type MySQLOptions = database.MySQLOptions

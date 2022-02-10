@@ -3,11 +3,11 @@ package models
 import (
 	"encoding/json"
 
-	"github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	"github.com/kubegems/gems/pkg/controller/utils"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
+	"kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/controller/utils"
 )
 
 const (

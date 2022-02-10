@@ -6,11 +6,11 @@ import (
 	"path"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/prometheus/common/model"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/pflag"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
 )
 
 type DumpOptions struct {

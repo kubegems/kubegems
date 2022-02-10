@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
-	"github.com/kubegems/gems/pkg/server/define"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/git"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	gemlabels "kubegems.io/pkg/labels"
+	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/git"
 )
 
 const StatusNoArgoApp = "NoArgoApp"

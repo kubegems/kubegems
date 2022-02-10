@@ -19,9 +19,6 @@ import (
 	"context"
 	"time"
 
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	gemscontroller "github.com/kubegems/gems/pkg/controller/controllers"
-	"github.com/kubegems/gems/pkg/controller/webhooks"
 	nginx_v1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	istioclinetworkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -29,6 +26,9 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	gemscontroller "kubegems.io/pkg/controller/controllers"
+	"kubegems.io/pkg/controller/webhooks"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	//+kubebuilder:scaffold:imports

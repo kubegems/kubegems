@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"kubegems.io/pkg/log"
 )
 
 var (

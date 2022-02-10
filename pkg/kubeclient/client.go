@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/agents"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/agents"
 )
 
 type KubeClient struct {

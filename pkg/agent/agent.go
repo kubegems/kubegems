@@ -4,19 +4,19 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/apis"
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/agent/collector"
-	"github.com/kubegems/gems/pkg/agent/indexer"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/exporter"
-	"github.com/kubegems/gems/pkg/utils/kube"
-	"github.com/kubegems/gems/pkg/utils/pprof"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
-	basecollector "github.com/kubegems/gems/pkg/utils/prometheus/collector" // http exporter
 	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
+	"kubegems.io/pkg/agent/apis"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/agent/collector"
+	"kubegems.io/pkg/agent/indexer"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/exporter"
+	"kubegems.io/pkg/utils/kube"
+	"kubegems.io/pkg/utils/pprof"
+	"kubegems.io/pkg/utils/prometheus"
+	basecollector "kubegems.io/pkg/utils/prometheus/collector" // http exporter
 )
 
 type Options struct {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/spf13/pflag"
+	"kubegems.io/pkg/utils"
 )
 
 type Options struct {

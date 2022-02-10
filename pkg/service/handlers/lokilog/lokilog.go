@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/loki"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/loki"
 )
 
 const LokiExportDir = "lokiExport"

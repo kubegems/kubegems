@@ -2,10 +2,10 @@ package apis
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/utils/pagination"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"kubegems.io/pkg/utils/pagination"
 )
 
 const (

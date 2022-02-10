@@ -3,13 +3,13 @@ package helmrepo
 import (
 	"context"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers/appstore"
-	"github.com/kubegems/gems/pkg/utils/chartmuseum"
-	"github.com/kubegems/gems/pkg/utils/helm"
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers/appstore"
+	"kubegems.io/pkg/utils/chartmuseum"
+	"kubegems.io/pkg/utils/helm"
 )
 
 type Options struct {

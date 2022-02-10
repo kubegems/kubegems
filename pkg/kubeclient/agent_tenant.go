@@ -3,8 +3,8 @@ package kubeclient
 import (
 	"encoding/json"
 
-	"github.com/kubegems/gems/pkg/apis/gems/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	"kubegems.io/pkg/apis/gems/v1beta1"
 )
 
 func (k KubeClient) GetTenant(cluster, name string, _ map[string]string) (*v1beta1.Tenant, error) {

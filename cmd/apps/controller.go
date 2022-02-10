@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubegems/gems/pkg/controller"
-	"github.com/kubegems/gems/pkg/utils/config"
 	"github.com/spf13/cobra"
+	"kubegems.io/pkg/controller"
+	"kubegems.io/pkg/utils/config"
 )
 
 func NewControllerCmd() *cobra.Command {

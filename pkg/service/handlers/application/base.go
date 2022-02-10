@@ -9,11 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-logr/logr"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/server/define"
-	"github.com/kubegems/gems/pkg/service/handlers"
 	"github.com/opentracing/opentracing-go"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers"
 )
 
 type Cache struct {

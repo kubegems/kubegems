@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	"github.com/kubegems/gems/pkg/controller/utils"
 	v1 "k8s.io/api/admission/v1"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/controller/utils"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

@@ -4,10 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kubegems/gems/pkg/log"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"kubegems.io/pkg/log"
 )
 
 func GetKubeClient(kubeconfig []byte) (*rest.Config, *kubernetes.Clientset, error) {

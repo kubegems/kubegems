@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/utils/plugins"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/utils/plugins"
 )
 
 type PluginHandler struct {

@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/harbor"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/harbor"
 )
 
 const (

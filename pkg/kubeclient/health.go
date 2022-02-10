@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
+	"kubegems.io/pkg/log"
 )
 
 func (k KubeClient) IsClusterHealth(cluster string) bool {
