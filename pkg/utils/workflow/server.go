@@ -13,6 +13,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils/retry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -56,7 +57,7 @@ func (s *Server) NewClient(ctx context.Context) *Client {
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	log := logr.FromContextOrDiscard(ctx)
+	log := log.FromContextOrDiscard(ctx)
 	// consume submit queue
 	return retry.OnError(retry.NotContextCancelError, func() error {
 		log.Info("starting work consumer...")
@@ -69,7 +70,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 func (s *Server) consume(ctx context.Context, _ string, val []byte) error {
-	log := logr.FromContextOrDiscard(ctx)
+	log := log.FromContextOrDiscard(ctx)
 
 	task := &jsonArgsTask{}
 	if err := json.Unmarshal(val, task); err != nil {
@@ -210,7 +211,7 @@ func (n *Server) execute(ctx context.Context, task *jsonArgsStep) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, task.Timeout)
 	defer cancel()
 
-	log := logr.FromContextOrDiscard(ctx)
+	log := log.FromContextOrDiscard(ctx)
 	log.Info("executing", "step", task.Name, "func", task.Function, "args", task.Args)
 
 	name := task.Function

@@ -7,7 +7,6 @@ import (
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils"
 	"github.com/spf13/pflag"
-	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -51,12 +50,9 @@ func (o *Database) Options() *MySQLOptions {
 	return o.options
 }
 
-func NewDatabase(options *MySQLOptions, logger *zap.Logger) (*Database, error) {
-	if logger == nil {
-		logger = zap.NewNop()
-	}
+func NewDatabase(options *MySQLOptions) (*Database, error) {
 	db, err := gorm.Open(mysql.Open(options.ToDsn()), &gorm.Config{
-		Logger: log.NewGormZapLogger(logger),
+		Logger: log.NewDefaultGormZapLogger(),
 	})
 	if err != nil {
 		return nil, err

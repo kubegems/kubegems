@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/redis"
 	"github.com/kubegems/gems/pkg/utils/workflow"
@@ -31,7 +31,7 @@ func (t *TaskArchiverTasker) ArchiveOutdated(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	log := logr.FromContextOrDiscard(ctx)
+	log := log.FromContextOrDiscard(ctx)
 	for _, task := range tasks {
 		needarchive := time.Since(task.CreationTimestamp.Time) > 5*24*time.Hour // 5 days
 		if needarchive {
@@ -53,7 +53,7 @@ func (t *TaskArchiverTasker) RemoveOffline(ctx context.Context) error {
 	// 查看长时间未连接的worker
 	streamingkey := "/workflow/submit"
 
-	log := logr.FromContextOrDiscard(ctx)
+	log := log.FromContextOrDiscard(ctx)
 
 	// https://redis.io/commands/xinfo-consumers
 	consumers, err := t.Redis.Client.XInfoConsumers(ctx, streamingkey, workflow.DefaultGroup).Result()

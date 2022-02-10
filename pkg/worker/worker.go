@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
 	"github.com/kubegems/gems/pkg/kubeclient"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/models"
@@ -36,11 +35,8 @@ type Dependencies struct {
 
 func prepareDependencies(ctx context.Context, options *Options) (*Dependencies, error) {
 	// logger
-	zaplogger, err := log.NewZapLogger(options.LogLevel, options.DebugMode)
-	if err != nil {
-		return nil, err
-	}
-	logger := zapr.NewLogger(zaplogger) // 使用 logr.Log 作为日常使用
+	log.SetLevel(options.LogLevel)
+
 	// redis
 	rediscli, err := redis.NewClient(options.Redis)
 	if err != nil {
@@ -48,7 +44,7 @@ func prepareDependencies(ctx context.Context, options *Options) (*Dependencies, 
 	}
 	// database
 	models.InitRedis(rediscli)
-	databasecli, err := database.NewDatabase(options.Mysql, zaplogger)
+	databasecli, err := database.NewDatabase(options.Mysql)
 	if err != nil {
 		return nil, err
 	}
@@ -74,17 +70,15 @@ func prepareDependencies(ctx context.Context, options *Options) (*Dependencies, 
 		Argocli:   argocli,
 		Git:       gitprovider,
 		Agentscli: agentclientset,
-		Logger:    logger,
 	}, nil
 }
 
 func Run(ctx context.Context, options *Options) error {
+	ctx = logr.NewContext(ctx, log.LogrLogger)
 	deps, err := prepareDependencies(ctx, options)
 	if err != nil {
 		return err
 	}
-	_ = log.Update(options.DebugMode, options.LogLevel)
-	ctx = logr.NewContext(ctx, log.LogrLogger)
 
 	// fixme: 初始化kubeclient,如果不调用 kubeclient 的静态方法就可以移除了
 	kubeclient.Init(deps.Agentscli)

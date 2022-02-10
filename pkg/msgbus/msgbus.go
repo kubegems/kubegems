@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	"github.com/kubegems/gems/pkg/kubeclient"
 	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/models"
@@ -23,6 +22,7 @@ import (
 )
 
 func Run(ctx context.Context, options *options.Options) error {
+	ctx = log.NewContext(ctx, log.LogrLogger)
 	// prepare
 	deps, err := prepareDependencies(ctx, options)
 	if err != nil {
@@ -31,7 +31,7 @@ func Run(ctx context.Context, options *options.Options) error {
 
 	// errgroup .WithContext(ctx) 返回的 ctx 会在任意协程返回 error时取消，其他正常退出
 	// 若要在发生错误时正常退出，所有routine 都需要能够正确处理 ctx Done() 并平滑退出
-	eg, ctx := errgroup.WithContext(deps.Ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
 		return api.RunGinServer(ctx, options, deps.Database, deps.Redis, deps.Switcher)
@@ -52,7 +52,6 @@ func Run(ctx context.Context, options *options.Options) error {
 }
 
 type Dependencies struct {
-	Ctx             context.Context
 	Database        *database.Database
 	Argo            *argo.Client
 	AgentsClientSet *agents.ClientSet
@@ -61,12 +60,7 @@ type Dependencies struct {
 }
 
 func prepareDependencies(ctx context.Context, options *options.Options) (*Dependencies, error) {
-	log.Update(options.DebugMode, options.LogLevel)
-	logger, err := log.NewLogger(options.LogLevel, options.DebugMode)
-	if err != nil {
-		return nil, err
-	}
-	ctx = logr.NewContext(ctx, logger)
+	log.SetLevel(options.LogLevel)
 
 	// 初始化Redis实例
 	rediscli, err := redis.NewClient(options.Redis)
@@ -76,7 +70,7 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 
 	// 初始化Mysql实例
 	models.InitRedis(rediscli) // 模型的hook中需要redis
-	db, err := database.NewDatabase(options.Mysql, log.GlobalLogger)
+	db, err := database.NewDatabase(options.Mysql)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +93,6 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 	switcher := switcher.NewMessageSwitch(ctx, db)
 
 	deps := &Dependencies{
-		Ctx:             ctx,
 		Database:        db,
 		Argo:            argocli,
 		AgentsClientSet: agentclientset,

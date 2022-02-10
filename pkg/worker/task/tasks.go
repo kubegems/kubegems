@@ -6,6 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils/argo"
 	"github.com/kubegems/gems/pkg/utils/database"
 	"github.com/kubegems/gems/pkg/utils/git"
@@ -44,7 +45,7 @@ func Run(ctx context.Context, rediscli *redis.Client,
 		client:    workflow.NewClientFromRedisClient(rediscli.Client),
 		rediscli:  rediscli,
 		crontasks: []CronTask{},
-		Logger:    logr.FromContextOrDiscard(ctx),
+		Logger:    log.FromContextOrDiscard(ctx),
 	}
 
 	// 注册支持的处理函数

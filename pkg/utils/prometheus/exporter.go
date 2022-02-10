@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-logr/logr"
+	"github.com/kubegems/gems/pkg/log"
 	"github.com/kubegems/gems/pkg/utils/exporter"
 )
 
@@ -26,6 +26,6 @@ func RunExporter(ctx context.Context, opts *exporter.ExporterOptions, handler *e
 		<-ctx.Done()
 		server.Close()
 	}()
-	logr.FromContextOrDiscard(ctx).Info("prometheus exporter listen on", "address", opts.Listen)
+	log.FromContextOrDiscard(ctx).Info("prometheus exporter listen on", "address", opts.Listen)
 	return server.ListenAndServe()
 }

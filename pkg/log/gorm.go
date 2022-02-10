@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"time"
 
 	"go.uber.org/zap"
@@ -11,28 +12,29 @@ import (
 	"gorm.io/gorm/utils"
 )
 
+const SlowQueryThreshold = 300 * time.Millisecond
+
+func NewDefaultGormZapLogger() *GormLogger {
+	return NewGormZapLogger(GlobalLogger)
+}
+
+func NewGormZapLogger(logger *zap.Logger) *GormLogger {
+	logger = logger.WithOptions(zap.AddCallerSkip(1))
+	return &GormLogger{
+		logger:                logger,
+		SourceField:           "source",
+		SlowThreshold:         SlowQueryThreshold,
+		SkipErrRecordNotFound: true,
+	}
+}
+
+var _ logger.Interface = &GormLogger{}
+
 type GormLogger struct {
 	logger                *zap.Logger
 	SourceField           string
 	SlowThreshold         time.Duration
 	SkipErrRecordNotFound bool
-}
-
-func NewGormLogger() *GormLogger {
-	return &GormLogger{
-		logger:                GlobalLogger.WithOptions(zap.AddCallerSkip(3)),
-		SlowThreshold:         300 * time.Millisecond,
-		SkipErrRecordNotFound: false,
-	}
-}
-
-func NewGormZapLogger(logger *zap.Logger) *GormLogger {
-	return &GormLogger{
-		logger:                logger,
-		SourceField:           "source",
-		SlowThreshold:         300 * time.Millisecond,
-		SkipErrRecordNotFound: false,
-	}
 }
 
 func (l *GormLogger) LogMode(loglevel logger.LogLevel) logger.Interface {
@@ -54,14 +56,15 @@ func (l *GormLogger) Error(ctx context.Context, s string, args ...interface{}) {
 
 func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	latency := time.Since(begin)
-	sql, _ := fc()
+	sql, effect := fc()
+	_ = effect
 
 	fields := []zap.Field{
 		zap.String("sql", sql),
 		zap.String("latency", latency.String()),
 	}
 	if l.SourceField != "" {
-		fields = append(fields, zap.String(l.SourceField, utils.FileWithLineNum()))
+		fields = append(fields, zap.String(l.SourceField, filepath.Base(utils.FileWithLineNum())))
 	}
 	if err != nil && !(errors.Is(err, gorm.ErrRecordNotFound) && l.SkipErrRecordNotFound) {
 		l.logger.Error(err.Error(), fields...)
