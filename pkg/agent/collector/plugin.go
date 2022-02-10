@@ -5,11 +5,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/exporter"
-	"github.com/kubegems/gems/pkg/utils/plugins"
 	"github.com/prometheus/client_golang/prometheus"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/exporter"
+	"kubegems.io/pkg/utils/plugins"
 )
 
 type PluginCollector struct {

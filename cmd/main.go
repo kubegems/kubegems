@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kubegems/gems/cmd/apps"
-	"github.com/kubegems/gems/pkg/version"
 	"github.com/spf13/cobra"
+	"kubegems.io/cmd/apps"
+	"kubegems.io/pkg/version"
 )
 
 const ErrExitCode = 1

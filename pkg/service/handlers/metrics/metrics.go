@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/server/define"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
-	"github.com/kubegems/gems/pkg/utils/prometheus/promql"
 	prommodel "github.com/prometheus/common/model"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/pkg/utils/prometheus/promql"
 
 	"github.com/gin-gonic/gin"
 )

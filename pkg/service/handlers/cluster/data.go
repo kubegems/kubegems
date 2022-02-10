@@ -1,8 +1,8 @@
 package clusterhandler
 
 import (
-	"github.com/kubegems/gems/pkg/agent/apis/types"
 	"gorm.io/datatypes"
+	"kubegems.io/pkg/agent/apis/types"
 )
 
 type ClusterQuota struct {

@@ -9,13 +9,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/agent/ws"
-	"github.com/kubegems/gems/pkg/service/handlers"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/agent/ws"
+	"kubegems.io/pkg/service/handlers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

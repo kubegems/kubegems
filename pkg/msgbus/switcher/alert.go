@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/database"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 type WebhookAlert struct {

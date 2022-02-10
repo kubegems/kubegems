@@ -6,14 +6,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	ut "github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers"
+	ut "kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/msgbus"
 )
 
 var (

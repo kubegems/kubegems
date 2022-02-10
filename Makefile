@@ -14,7 +14,7 @@ ifeq (${GIT_VERSION},)
 	GIT_VERSION=${GIT_BRANCH}
 endif
 
-IMAGE_REGISTRY=harbor.cloudminds.com
+IMAGE_REGISTRY?=ghcr.io
 IMAGE_TAG=${GIT_VERSION}
 ifeq (${IMAGE_TAG},master)
    IMAGE_TAG = latest
@@ -22,7 +22,7 @@ endif
 # Image URL to use all building/pushing image targets
 IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
 
-GOPACKAGE=github.com/kubegems/gems
+GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
 ldflags+=-X '${GOPACKAGE}/pkg/version.gitVersion=${GIT_VERSION}'
 ldflags+=-X '${GOPACKAGE}/pkg/version.gitCommit=${GIT_COMMIT}'

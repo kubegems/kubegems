@@ -5,11 +5,11 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/database"
 	promemodel "github.com/prometheus/common/model"
 	"github.com/robfig/cron/v3"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/database"
 )
 
 func NewResourceCache(db *database.Database) *ResourceCache {

@@ -27,15 +27,15 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	"github.com/kubegems/gems/pkg/kubeclient"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/kubeclient"
+	gemlabels "kubegems.io/pkg/labels"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/msgbus"
 )
 
 type EnvironmentAggregateData struct {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/kubegems/gems/pkg/utils/workflow"
+	"kubegems.io/pkg/utils/workflow"
 )
 
 type SampleTasker struct{}

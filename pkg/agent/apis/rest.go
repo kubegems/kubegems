@@ -9,9 +9,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/kube"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -19,6 +16,9 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

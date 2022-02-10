@@ -3,8 +3,8 @@ package prometheus
 import (
 	"fmt"
 
-	gemlabels "github.com/kubegems/gems/pkg/labels"
-	"github.com/kubegems/gems/pkg/utils"
+	gemlabels "kubegems.io/pkg/labels"
+	"kubegems.io/pkg/utils"
 )
 
 var (

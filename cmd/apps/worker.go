@@ -6,10 +6,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubegems/gems/pkg/utils/config"
-	"github.com/kubegems/gems/pkg/version"
-	"github.com/kubegems/gems/pkg/worker"
 	"github.com/spf13/cobra"
+	"kubegems.io/pkg/utils/config"
+	"kubegems.io/pkg/version"
+	"kubegems.io/pkg/worker"
 )
 
 func NewWorkerCmd() *cobra.Command {

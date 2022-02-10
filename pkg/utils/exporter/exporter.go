@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	promcollectors "github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
 )
 
 type ExporterOptions struct {

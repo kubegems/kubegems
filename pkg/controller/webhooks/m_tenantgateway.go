@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
 	v1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	gemlabels "kubegems.io/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

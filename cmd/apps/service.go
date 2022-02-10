@@ -6,12 +6,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service"
-	"github.com/kubegems/gems/pkg/service/options"
-	"github.com/kubegems/gems/pkg/utils/config"
-	"github.com/kubegems/gems/pkg/version"
 	"github.com/spf13/cobra"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service"
+	"kubegems.io/pkg/service/options"
+	"kubegems.io/pkg/utils/config"
+	"kubegems.io/pkg/version"
 )
 
 func NewServiceCmd() *cobra.Command {

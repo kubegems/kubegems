@@ -10,9 +10,9 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/kubegems/gems/pkg/log"
 	"github.com/robfig/cron/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/log"
 )
 
 type Client struct {

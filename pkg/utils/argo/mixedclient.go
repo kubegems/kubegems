@@ -12,7 +12,6 @@ import (
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/project"
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/repository"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	"github.com/kubegems/gems/pkg/utils/agents"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/utils/pointer"
+	"kubegems.io/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/log"
 )
 
 const (

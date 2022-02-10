@@ -7,10 +7,10 @@ import (
 	"time"
 
 	redisv8 "github.com/go-redis/redis/v8"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/database"
-	"github.com/kubegems/gems/pkg/utils/redis"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/redis"
 )
 
 var redisinstance *redis.Client

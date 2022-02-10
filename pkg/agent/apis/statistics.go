@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	"github.com/kubegems/gems/pkg/controller/utils"
-	"github.com/kubegems/gems/pkg/agent/apis/types"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
+	"kubegems.io/pkg/agent/apis/types"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/controller/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

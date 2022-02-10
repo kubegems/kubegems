@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kubegems/gems/pkg/log"
 	"golang.org/x/sys/unix"
+	"kubegems.io/pkg/log"
 )
 
 // Proxy forwards a TCP request to a TCP service.

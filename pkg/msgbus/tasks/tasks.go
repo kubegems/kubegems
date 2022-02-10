@@ -3,13 +3,13 @@ package tasks
 import (
 	"context"
 
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/msgbus/switcher"
-	"github.com/kubegems/gems/pkg/service/handlers/application"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
-	"github.com/kubegems/gems/pkg/utils/redis"
-	"github.com/kubegems/gems/pkg/utils/retry"
-	"github.com/kubegems/gems/pkg/utils/workflow"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/msgbus/switcher"
+	"kubegems.io/pkg/service/handlers/application"
+	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/pkg/utils/retry"
+	"kubegems.io/pkg/utils/workflow"
 )
 
 type TaskProducer struct {

@@ -1,7 +1,7 @@
 package kubeclient
 
 import (
-	"github.com/kubegems/gems/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/apis/gems/v1beta1"
 )
 
 func (k KubeClient) GetTenantNetworkPolicy(cluster, name string, _ map[string]string) (*v1beta1.TenantNetworkPolicy, error) {

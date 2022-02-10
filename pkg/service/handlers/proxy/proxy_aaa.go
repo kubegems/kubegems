@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/service/aaa/audit"
+	"kubegems.io/pkg/service/aaa/audit"
 )
 
 func g(gn string) string {

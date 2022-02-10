@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/agents"
-	"github.com/kubegems/gems/pkg/utils/pagination"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )

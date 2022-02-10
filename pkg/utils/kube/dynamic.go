@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/kubegems/gems/pkg/log"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +19,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	"kubegems.io/pkg/log"
 )
 
 func CreateByYamlOrJson(ctx context.Context, cfg *rest.Config, yamlOrJson []byte) error {

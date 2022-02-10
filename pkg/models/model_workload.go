@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubegems/gems/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"kubegems.io/pkg/utils"
 )
 
 const (

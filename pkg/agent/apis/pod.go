@@ -6,11 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/agent/ws"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/service/handlers"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -18,6 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/agent/ws"
+	gemlabels "kubegems.io/pkg/labels"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/service/handlers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

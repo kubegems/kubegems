@@ -3,7 +3,7 @@ package kubeclient
 import (
 	"net/http"
 
-	"github.com/kubegems/gems/pkg/utils/loki"
+	"kubegems.io/pkg/utils/loki"
 )
 
 type QueryResponseStruct struct {

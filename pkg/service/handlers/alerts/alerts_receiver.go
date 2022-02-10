@@ -11,14 +11,14 @@ import (
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/kubeclient"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/prometheus"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 const (

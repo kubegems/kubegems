@@ -11,11 +11,11 @@ import (
 	"github.com/containerd/containerd/reference"
 	"github.com/gin-gonic/gin"
 	"github.com/goharbor/harbor/src/pkg/scan/vuln"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/harbor"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/harbor"
 )
 
 const (

@@ -12,12 +12,12 @@ import (
 	"path"
 	"strings"
 
-	"github.com/kubegems/gems/pkg/log"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"kubegems.io/pkg/log"
 )
 
 /*

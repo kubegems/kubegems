@@ -16,9 +16,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
-	"github.com/kubegems/gems/pkg/agent/ws"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/loki"
+	"kubegems.io/pkg/agent/ws"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/loki"
 )
 
 var cstZone = time.FixedZone("GMT", 8*3600)

@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/cluster"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -18,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/client-go/kubernetes"
 	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
+	"kubegems.io/pkg/agent/cluster"
 )
 
 const ChangeCauseAnnotation = "kubernetes.io/change-cause"

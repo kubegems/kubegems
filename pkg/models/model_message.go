@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kubegems/gems/pkg/utils"
 	"gorm.io/datatypes"
+	"kubegems.io/pkg/utils"
 )
 
 type UserMessageStatus struct {

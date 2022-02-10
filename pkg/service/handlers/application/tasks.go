@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils/workflow"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/workflow"
 )
 
 type TaskHandler struct {

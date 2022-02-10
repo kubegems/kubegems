@@ -8,7 +8,6 @@ import (
 
 	rolloutsv1alpha1 "github.com/argoproj/argo-rollouts/pkg/apis/rollouts/v1alpha1"
 	rolloutannotations "github.com/argoproj/argo-rollouts/utils/annotations"
-	"github.com/kubegems/gems/pkg/log"
 	istionetworkingv1alpha3 "istio.io/api/networking/v1alpha3"
 	istioclinetworkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"istio.io/istio/pkg/config/schema/gvk"
@@ -23,6 +22,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	"k8s.io/utils/pointer"
+	"kubegems.io/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

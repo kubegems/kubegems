@@ -5,10 +5,10 @@ import (
 
 	"github.com/cloudflare/cfssl/certinfo"
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/utils/pagination"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

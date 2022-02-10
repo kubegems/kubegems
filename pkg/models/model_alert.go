@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
 	"gorm.io/datatypes"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/msgbus"
 )
 
 type AlertInfo struct {

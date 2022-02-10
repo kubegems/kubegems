@@ -12,15 +12,15 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/agent/client"
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/agent/middleware"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/utils"
-	"github.com/kubegems/gems/pkg/utils/prometheus/collector"
-	"github.com/kubegems/gems/pkg/utils/route"
-	"github.com/kubegems/gems/pkg/version"
 	"github.com/spf13/pflag"
+	"kubegems.io/pkg/agent/client"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/agent/middleware"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/prometheus/collector"
+	"kubegems.io/pkg/utils/route"
+	"kubegems.io/pkg/version"
 )
 
 type DebugOptions struct {

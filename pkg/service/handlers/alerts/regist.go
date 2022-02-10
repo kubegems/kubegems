@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/server/define"
-	"github.com/kubegems/gems/pkg/utils/agents"
+	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/utils/agents"
 )
 
 type AlertsHandler struct {

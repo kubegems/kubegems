@@ -8,15 +8,15 @@ import (
 
 	argoapplication "github.com/argoproj/argo-cd/v2/pkg/apiclient/application"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/msgbus/switcher"
-	"github.com/kubegems/gems/pkg/service/handlers/application"
-	"github.com/kubegems/gems/pkg/utils/argo"
-	"github.com/kubegems/gems/pkg/utils/msgbus"
-	"github.com/kubegems/gems/pkg/utils/retry"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	gemlabels "kubegems.io/pkg/labels"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/msgbus/switcher"
+	"kubegems.io/pkg/service/handlers/application"
+	"kubegems.io/pkg/utils/argo"
+	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/pkg/utils/retry"
 )
 
 var DefaultBackoff = wait.Backoff{

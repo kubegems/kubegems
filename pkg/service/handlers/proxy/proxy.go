@@ -9,11 +9,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubegems/gems/pkg/log"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/server/define"
-	"github.com/kubegems/gems/pkg/service/handlers"
-	"github.com/kubegems/gems/pkg/utils/agents"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/agents"
 )
 
 const (

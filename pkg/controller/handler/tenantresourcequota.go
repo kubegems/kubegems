@@ -2,11 +2,11 @@ package handler
 
 import (
 	"github.com/go-logr/logr"
-	gemsv1beta1 "github.com/kubegems/gems/pkg/apis/gems/v1beta1"
-	gemlabels "github.com/kubegems/gems/pkg/labels"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	gemlabels "kubegems.io/pkg/labels"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"

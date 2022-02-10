@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubegems/gems/pkg/utils/harbor"
-	"github.com/kubegems/gems/pkg/utils/workflow"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/utils/harbor"
+	"kubegems.io/pkg/utils/workflow"
 )
 
 // @Tags Application

@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/kubegems/gems/pkg/agent/cluster"
-	"github.com/kubegems/gems/pkg/log"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/log"
 )
 
 const (

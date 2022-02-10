@@ -10,14 +10,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/kubegems/gems/pkg/models"
-	"github.com/kubegems/gems/pkg/models/validate"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/models/validate"
 )
 
 var namer = schema.NamingStrategy{}

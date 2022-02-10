@@ -11,9 +11,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kubegems/gems/pkg/log"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/repo"
+	"kubegems.io/pkg/log"
 	"sigs.k8s.io/yaml"
 )
 
