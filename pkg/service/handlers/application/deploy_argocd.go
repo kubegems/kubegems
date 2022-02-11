@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	gemlabels "kubegems.io/pkg/labels"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/argo"
@@ -455,7 +456,7 @@ func (h *ApplicationHandler) resourceTreeListToTree(ctx context.Context,
 					Version:   v1alpha1.SchemeGroupVersion.Version,
 					Kind:      v1alpha1.ApplicationSchemaGroupVersionKind.Kind,
 					Name:      argoappname,
-					Namespace: h.ArgoCD.Options.Namespace,
+					Namespace: gemlabels.NamespaceWorkflow,
 				},
 				CreatedAt:       &argoappstate.CreationTimestamp,
 				Health:          &argoappstate.Status.Health,

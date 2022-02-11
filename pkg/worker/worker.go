@@ -60,7 +60,7 @@ func prepareDependencies(ctx context.Context, options *Options) (*Dependencies, 
 	}
 
 	// argo
-	argocli, err := argo.NewClient(ctx, options.Argo, agentclientset)
+	argocli, err := argo.NewClient(ctx, options.Argo)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func Run(ctx context.Context, options *Options) error {
 		return prometheus.RunExporter(ctx, options.Exporter, exporterHandler)
 	})
 	eg.Go(func() error {
-		return task.Run(ctx, deps.Redis, deps.Databse, deps.Git, deps.Argocli, options.Appstore)
+		return task.Run(ctx, deps.Redis, deps.Databse, deps.Git, deps.Argocli, options.Appstore, deps.Agentscli)
 	})
 	return eg.Wait()
 }

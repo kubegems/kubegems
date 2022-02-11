@@ -74,7 +74,7 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 		return nil, err
 	}
 	// argo
-	argocli, err := argo.NewClient(ctx, options.Argo, agentclientset)
+	argocli, err := argo.NewClient(ctx, options.Argo)
 	if err != nil {
 		return nil, err
 	}
