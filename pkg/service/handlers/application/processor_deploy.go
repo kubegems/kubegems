@@ -8,12 +8,9 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	"github.com/argoproj/gitops-engine/pkg/health"
-	"github.com/argoproj/gitops-engine/pkg/sync/common"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/helper/chroot"
 	"github.com/go-git/go-billy/v5/util"
@@ -29,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/watch"
 	gemlabels "kubegems.io/pkg/labels"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
@@ -44,11 +40,9 @@ import (
 const TaskGroupApplication = "application"
 
 const (
-	TaskFunction_Application_UpdateImages      = "application_update_images"
-	TaskFunction_Application_Sync              = "application_sync"
-	TaskFunction_Application_BatchUpdateImages = "application_batch_update_images"
-	// TaskFunction_Application_WaitSync                  = "application_waitsync"
-	// TaskFunction_Application_WaitHealthy               = "application_waithealthy"
+	TaskFunction_Application_UpdateImages              = "application_update_images"
+	TaskFunction_Application_Sync                      = "application_sync"
+	TaskFunction_Application_BatchUpdateImages         = "application_batch_update_images"
 	TaskFunction_Application_PrepareDeploymentStrategy = "application_preparedeploymentstrategy"
 	TaskFunction_Application_WaitRollouts              = "application_wait_rollouts"
 	TaskFunction_Application_Undo                      = "application_undo"
@@ -57,10 +51,8 @@ const (
 // ProvideFuntions 用于对异步任务框架指出所使用的方法
 func (p *ApplicationProcessor) ProvideFuntions() map[string]interface{} {
 	return map[string]interface{}{
-		TaskFunction_Application_UpdateImages: p.UpdateImages,
-		TaskFunction_Application_Sync:         p.Sync,
-		// TaskFunction_Application_WaitSync:                  p.WaitSync,
-		// TaskFunction_Application_WaitHealthy:               p.WaitHealthy,
+		TaskFunction_Application_UpdateImages:              p.UpdateImages,
+		TaskFunction_Application_Sync:                      p.Sync,
 		TaskFunction_Application_BatchUpdateImages:         p.BatchUpdateImages,
 		TaskFunction_Application_PrepareDeploymentStrategy: p.PrepareDeploymentStrategyWithImages,
 		TaskFunction_Application_WaitRollouts:              p.WaitRollouts,
@@ -97,93 +89,6 @@ func (p *ApplicationProcessor) UpdateImages(ctx context.Context, ref PathRef, im
 		return UpdateContentImages(ctx, store, images, version)
 	}
 	return p.Manifest.StoreUpdateFunc(ctx, ref, updatefunc, fmt.Sprintf("set images[%s],version[%s]", images, version))
-}
-
-func (p *ApplicationProcessor) WaitHealthy(ctx context.Context, ref PathRef) error {
-	timeout := time.Minute * 3
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	watcher, err := p.Argo.WatchAppK8s(ctx, ref.FullName())
-	if err != nil {
-		return err
-	}
-	defer watcher.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("wait healthy timeout after %s: %v", timeout, ctx.Err())
-		case e, ok := <-watcher.ResultChan():
-			if !ok {
-				return fmt.Errorf("watcher channel closed")
-			}
-			switch e.Type {
-			case watch.Error:
-				return fmt.Errorf("watch error: %v", e)
-			default:
-				if app, ok := e.Object.(*v1alpha1.Application); ok && app.Name == ref.FullName() {
-					// wait finished and healthy
-					if app.Status.OperationState.Phase == common.OperationSucceeded && app.Status.Health.Status == health.HealthStatusHealthy {
-						return nil
-					}
-				}
-			}
-		}
-	}
-}
-
-func (p *ApplicationProcessor) WaitSync(ctx context.Context, ref PathRef) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	if true {
-		watcher, err := p.Argo.WatchAppK8s(ctx, ref.FullName())
-		if err != nil {
-			return err
-		}
-		defer watcher.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-			case e, ok := <-watcher.ResultChan():
-				if !ok {
-					return fmt.Errorf("watcher channel closed")
-				}
-				switch e.Type {
-				case watch.Error:
-					return fmt.Errorf("watch error: %v", e)
-				default:
-					if app, ok := e.Object.(*v1alpha1.Application); ok && app.Name == ref.FullName() {
-						if app.Status.OperationState.FinishedAt != nil {
-							return nil
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// 由于使用argo cd watch client 时经常出现 transport is closing，且无法更改相关配置，所以使用k8s资源的方式
-
-	watcher, err := p.Argo.WatchArgoApp(ctx, ref.FullName())
-	if err != nil {
-		return err
-	}
-	for {
-		event, err := watcher.Recv()
-		if err != nil {
-			return err
-		}
-		app := event.Application
-		switch event.Type {
-		case watch.Modified:
-			if app.Status.OperationState.FinishedAt != nil {
-				return nil
-			}
-		case watch.Deleted:
-			return nil
-		}
-	}
 }
 
 type AppStoreDeployForm struct {
@@ -656,8 +561,7 @@ func (h *ApplicationProcessor) deployArgoApplication(ctx context.Context, ref Pa
 			APIVersion: v1alpha1.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      ref.FullName(),
-			Namespace: h.Argo.Options.Namespace,
+			Name: ref.FullName(),
 			Labels: map[string]string{
 				ArgoLabelApplication: ref.Name,
 				ArgoLabelTenant:      ref.Tenant,
@@ -740,7 +644,7 @@ func (p *ApplicationProcessor) BatchUpdateImages(ctx context.Context, ref PathRe
 	)
 	// 根据结果产生新的tasks
 	gitStep := workflow.Step{
-		Name:   "update-image(backgroud)",
+		Name:   "update-image(background)",
 		Status: &workflow.TaskStatus{StartTimestamp: v1.Now(), FinishTimestamp: v1.Now(), Status: workflow.TaskStatusSuccess},
 	}
 	if err != nil {
@@ -774,11 +678,6 @@ func (p *ApplicationProcessor) BatchUpdateImages(ctx context.Context, ref PathRe
 				Function: TaskFunction_Application_Sync,
 				Args:     workflow.ArgsOf(iref),
 			},
-			// {
-			// 	Name:     "wait-healthy",
-			// 	Function: TaskFunction_Application_WaitHealthy,
-			// 	Args:     workflow.ArgsOf(iref),
-			// },
 		}
 
 		eg.Go(func() error {
