@@ -39,13 +39,13 @@ func (o *OauthOptions) RegistFlags(prefix string, fs *pflag.FlagSet) {
 func NewDefaultOauthOptions() *OauthOptions {
 	return &OauthOptions{
 		Kind:          "gitlab",
-		UserInfoURL:   "https://src.cloudminds.com/api/v4/user",
+		UserInfoURL:   "https://git.kubegems.io/api/v4/user",
 		Appid:         "",
 		Appsecret:     "",
 		Scopes:        []string{"api", "email"},
-		TokenURL:      "https://src.cloudminds.com/oauth/token",
-		AuthURL:       "https://src.cloudminds.com/oauth/authorize",
-		RedirectURL:   "https://gemdev.cloudminds.com/oauth/callback",
+		TokenURL:      "https://git.kubegems.io/oauth/token",
+		AuthURL:       "https://git.kubegems.io/oauth/authorize",
+		RedirectURL:   "https://kubegems.io/oauth/callback",
 		BambooOptions: NewDefaultBambooOptions(),
 	}
 }

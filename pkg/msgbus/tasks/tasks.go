@@ -3,6 +3,7 @@ package tasks
 import (
 	"context"
 
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/msgbus/switcher"
 	"kubegems.io/pkg/service/handlers/application"
@@ -44,7 +45,7 @@ func (p *TaskProducer) runapplicationtasks(ctx context.Context) error {
 			EventKind:   msgbus.Update,
 			InvolvedObject: &msgbus.InvolvedObject{
 				Cluster: task.Addtionals[application.AnnotationCluster],
-				Group:   "gems.cloudminds.com",
+				Group:   gems.GroupName,
 				Kind:    "Task",
 				NamespacedName: msgbus.NamespacedNameFrom(
 					task.Addtionals[application.AnnotationNamespace],

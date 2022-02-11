@@ -21,8 +21,8 @@ import (
 
 const (
 	DebugAgentNamespace = "debug-tools"
-	DebugAgentImage     = "harbor.cloudminds.com/library/debug-agent:latest"
-	DebugToolsImage     = "harbor.cloudminds.com/library/debug-tools:latest"
+	DebugAgentImage     = "kubegems/debug-agent:latest"
+	DebugToolsImage     = "kubegems/debug-tools:latest"
 )
 
 // ExecContainer 调试容器(websocket)

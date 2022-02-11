@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	gemlabels "kubegems.io/pkg/apis/gems"
+	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/models"
@@ -25,11 +26,9 @@ import (
 )
 
 const (
-	virtualSpaceKey = "gems.cloudminds.com/virtualSpace"
-	istioGatewayKey = "gems.cloudminds.com/istioGateway"
-
-	istioGatewayNamespace = gemlabels.NamespaceGateway
-
+	virtualSpaceKey        = networking.AnnotationVirtualSpace
+	istioGatewayKey        = networking.AnnotationIstioGateway
+	istioGatewayNamespace  = gemlabels.NamespaceGateway
 	istioOperatorNamespace = "istio-system"
 	istioOperatorName      = "gems-istio"
 )

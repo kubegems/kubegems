@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/apis/networking"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -37,8 +38,8 @@ func tgDefault(tg *gemsv1beta1.TenantGateway) {
 	if tg.Labels[gemlabels.LabelTenant] == "" {
 		tg.Labels[gemlabels.LabelTenant] = tg.Spec.Tenant
 	}
-	if tg.Labels[gemlabels.LabelIngressClass] == "" {
-		tg.Labels[gemlabels.LabelIngressClass] = tg.Name + "-" + tg.Spec.Tenant
+	if tg.Labels[networking.LabelIngressClass] == "" {
+		tg.Labels[networking.LabelIngressClass] = tg.Name + "-" + tg.Spec.Tenant
 	}
 
 	if tg.Spec.Replicas == nil || *tg.Spec.Replicas <= 0 {

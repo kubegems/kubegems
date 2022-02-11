@@ -16,6 +16,7 @@ import (
 	"kubegems.io/pkg/agent/client"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/agent/middleware"
+	"kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/prometheus/collector"
@@ -91,7 +92,7 @@ func DefaultOptions() *Options {
 			MyNamespace:     debugNamespace,
 			MyPod:           debugPodname,
 			MyContainer:     "gems-agent-kubectl",
-			DebugToolsImage: "harbor.cloudminds.com/library/debug-tools:latest",
+			DebugToolsImage: "kubegems/debug-tools:latest",
 		},
 		CertDir: "certs",
 		Cert:    "tls.crt",
@@ -258,9 +259,9 @@ func Run(ctx context.Context, cluster cluster.Interface, options *Options) error
 	routes.register("core", "v1", "secrets", ActionList, secretHandler.List)
 
 	pluginHandler := PluginHandler{cluster: cluster}
-	routes.register("plugins.gems.cloudminds.com", "v1alpha1", "plugins", ActionList, pluginHandler.List)
-	routes.register("plugins.gems.cloudminds.com", "v1alpha1", "plugins", ActionEnable, pluginHandler.Enable)
-	routes.register("plugins.gems.cloudminds.com", "v1alpha1", "plugins", ActionDisable, pluginHandler.Disable)
+	routes.register(plugins.GroupName, "v1alpha1", "plugins", ActionList, pluginHandler.List)
+	routes.register(plugins.GroupName, "v1alpha1", "plugins", ActionEnable, pluginHandler.Enable)
+	routes.register(plugins.GroupName, "v1alpha1", "plugins", ActionDisable, pluginHandler.Disable)
 
 	argoRolloutHandler := &ArgoRolloutHandler{cluster: cluster}
 	routes.register("argoproj.io", "v1alpha1", "rollouts", "info", argoRolloutHandler.GetRolloutInfo)

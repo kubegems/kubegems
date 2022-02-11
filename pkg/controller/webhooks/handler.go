@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/apis/networking"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -141,7 +142,7 @@ func CreateDefaultTenantGateway(client client.Client, log logr.Logger) {
 			Name:      defaultGatewayName,
 			Namespace: gemlabels.NamespaceGateway,
 			Labels: map[string]string{
-				gemlabels.LabelIngressClass: defaultGatewayName,
+				networking.LabelIngressClass: defaultGatewayName,
 			},
 		},
 		Spec: gemsv1beta1.TenantGatewaySpec{

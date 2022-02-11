@@ -18,6 +18,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/server/define"
@@ -755,7 +756,7 @@ func isIstioInjected(podtemplate corev1.PodTemplateSpec) bool {
 	return inject
 }
 
-const GemsAnnotationVirtualspace = "gems.cloudminds.com/virtualspace"
+const GemsAnnotationVirtualspace = networking.AnnotationVirtualSpace
 
 // 保证环境在虚拟空间中的存在/不存在
 func (h *VirtualSpaceHandler) ensureEnvirment(ctx context.Context, env *models.Environment, vs *models.VirtualSpace, exist bool) error {
@@ -829,7 +830,7 @@ func (h *VirtualSpaceHandler) ensureEnvirment(ctx context.Context, env *models.E
 var virtualdomainInjectTemplateAnnotationPatchTemplate = string(`[
     {
         "op": "add",
-        "path": "/metadata/annotations/gems.cloudminds.com~1virtualdomain",
+        "path": "/metadata/annotations/networking.kubegems.io~1virtualdomain",
         "value": "%s"
     }
 ]`)
@@ -837,7 +838,7 @@ var virtualdomainInjectTemplateAnnotationPatchTemplate = string(`[
 var virtualdomainUninjectTemplateAnnotationPatch = []byte(`[
     {
         "op": "remove",
-        "path": "/metadata/annotations/gems.cloudminds.com~1virtualdomain"
+        "path": "/metadata/annotations/networking.kubegems.io~1virtualdomain"
     }
 ]`)
 
@@ -856,7 +857,7 @@ var virtualdomainUninjectTemplateAnnotationPatch = []byte(`[
 // @Security JWT
 func (h *VirtualSpaceHandler) InjectVirtualDomain(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
-		// 为workload 设置虚拟空间会为其 *同名service* 增加annotation: gems.cloudminds.com/virtualdomain={domain}
+		// 为workload 设置虚拟空间会为其 *同名service* 增加annotation
 		cli, err := h.clientOf(ctx, env.Cluster.ClusterName)
 		if err != nil {
 			return nil, err

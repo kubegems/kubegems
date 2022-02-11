@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/agents"
@@ -80,7 +81,7 @@ const (
 	metricTargetStatefulset = "statefulset"
 	metricTargetDaemonset   = "daemonset"
 
-	annotationsTargetNameKey = "gems.cloudminds.com/metricTargetName"
+	annotationsTargetNameKey = gems.AnnotationsMetricsTargetNameKey
 	allNamespace             = "_all"
 )
 

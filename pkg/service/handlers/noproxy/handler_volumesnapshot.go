@@ -9,6 +9,7 @@ import (
 	v1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+	"kubegems.io/pkg/apis/storage"
 	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/service/handlers"
 )
@@ -92,7 +93,7 @@ func (vh *VolumeSnapshotHandler) Snapshot(c *gin.Context) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: req.Name,
 			Annotations: map[string]string{
-				VolumeSnapshotAnnotationKeyPersistentVolumeClaim: string(pvcbytes),
+				storage.AnnotationVolumeSnapshotAnnotationKeyPersistentVolumeClaim: string(pvcbytes),
 			},
 		},
 		Spec: v1.VolumeSnapshotSpec{

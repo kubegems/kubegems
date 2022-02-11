@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/apis/application"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils"
@@ -21,7 +22,7 @@ const (
 	syncKindUpsert = "upsert"
 	syncKindDelete = "delete"
 
-	imagePullSecretKeyPrefix  = "gems.cloudminds.com/imagePullSecrets-"
+	imagePullSecretKeyPrefix  = application.AnnotationImagePullSecretKeyPrefix
 	defaultServiceAccountName = "default"
 )
 

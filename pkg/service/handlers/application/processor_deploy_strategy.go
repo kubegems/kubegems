@@ -22,13 +22,14 @@ import (
 	"k8s.io/client-go/util/retry"
 	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	"k8s.io/utils/pointer"
+	"kubegems.io/pkg/apis/application"
 	"kubegems.io/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	AnnotationGeneratedByPlatformKey           = "app.gems.cloudminds.com/is-generated-by" // 表示该资源是为了{for}自动生成的，需要在特定的时刻被清理
-	AnnotationGeneratedByPlatformValueRollouts = "rollouts"                                // 表示该资源是为了rollouts而生成的
+	AnnotationGeneratedByPlatformKey           = application.AnnotationGeneratedByPlatformKey           // 表示该资源是为了{for}自动生成的，需要在特定的时刻被清理
+	AnnotationGeneratedByPlatformValueRollouts = application.AnnotationGeneratedByPlatformValueRollouts // 表示该资源是为了rollouts而生成的
 )
 
 type DeploymentStrategyType string
