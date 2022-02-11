@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/argoproj/argo-cd/v2/pkg/apis/application"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/argoproj/gitops-engine/pkg/health"
 	"github.com/argoproj/gitops-engine/pkg/sync/common"
@@ -539,6 +540,10 @@ func (h *ApplicationProcessor) createArgoProjectForEnvironment(ctx context.Conte
 	defer span.Finish()
 
 	argoprj := &v1alpha1.AppProject{
+		TypeMeta: v1.TypeMeta{
+			Kind:       application.AppProjectKind,
+			APIVersion: v1alpha1.SchemeGroupVersion.String(),
+		},
 		ObjectMeta: v1.ObjectMeta{
 			Name: GenArgoPrjNameFromRef(ref),
 			Labels: map[string]string{
@@ -646,6 +651,10 @@ func (h *ApplicationProcessor) deployArgoApplication(ctx context.Context, ref Pa
 
 	// create argo application
 	argoapplication := &v1alpha1.Application{
+		TypeMeta: v1.TypeMeta{
+			Kind:       application.ApplicationKind,
+			APIVersion: v1alpha1.SchemeGroupVersion.String(),
+		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      ref.FullName(),
 			Namespace: h.Argo.Options.Namespace,
