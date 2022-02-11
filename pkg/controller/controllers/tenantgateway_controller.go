@@ -57,8 +57,8 @@ type TenantGatewayReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=kubegems.io,resources=tenantgateways,verbs=get;list;watch;create;update;patch;delete;deletecollection
-//+kubebuilder:rbac:groups=kubegems.io,resources=tenantgateways/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantgateways,verbs=get;list;watch;create;update;patch;delete;deletecollection
+//+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantgateways/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=k8s.nginx.org,resources=nginxingresscontrollers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingressclasses,verbs=get;list;watch;create;update;patch;delete

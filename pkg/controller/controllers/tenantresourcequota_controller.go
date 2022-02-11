@@ -44,8 +44,8 @@ type TenantResourceQuotaReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=kubegems.io,resources=tenantresourcequotas,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kubegems.io,resources=tenantresourcequotas/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantresourcequotas,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantresourcequotas/status,verbs=get;update;patch
 
 func (r *TenantResourceQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	/*

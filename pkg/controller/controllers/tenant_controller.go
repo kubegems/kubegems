@@ -46,8 +46,8 @@ type TenantReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=kubegems.io,resources=tenants,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kubegems.io,resources=tenants/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenants,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenants/status,verbs=get;update;patch
 
 func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	/*
