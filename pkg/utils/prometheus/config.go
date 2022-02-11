@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"encoding/json"
 	"fmt"
 
 	gemlabels "kubegems.io/pkg/labels"
@@ -97,8 +98,8 @@ func (cfg GemsMetricConfig) Reload() error {
 	return nil
 }
 
-func DefaultMetricConfigContent() []byte {
-	return []byte(`{
+func DefaultMetricConfigContent() GemsMetricConfig {
+	bts := []byte(`{
 		"units": {
 		  "percent": "%",
 		  "core": "核",
@@ -783,4 +784,7 @@ func DefaultMetricConfigContent() []byte {
 		  }
 		}
 	  }`)
+	ret := GemsMetricConfig{}
+	json.Unmarshal(bts, &ret)
+	return ret
 }
