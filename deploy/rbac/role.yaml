@@ -259,19 +259,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - k8s.nginx.org
-  resources:
-  - nginxingresscontrollers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - environments
   verbs:
@@ -284,7 +272,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - environments/status
   verbs:
@@ -292,7 +280,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantgateways
   verbs:
@@ -305,7 +293,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantgateways/status
   verbs:
@@ -313,7 +301,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantnetworkpolicies
   verbs:
@@ -325,7 +313,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantnetworkpolicies/status
   verbs:
@@ -333,7 +321,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantresourcequotas
   verbs:
@@ -345,7 +333,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantresourcequotas/status
   verbs:
@@ -353,7 +341,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenants
   verbs:
@@ -365,13 +353,25 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenants/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - nginxingresscontrollers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - networking.istio.io
   resources:
