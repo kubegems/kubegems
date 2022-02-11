@@ -9,7 +9,6 @@ import (
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/redis"
 )
 
@@ -88,12 +87,10 @@ func initBaseData(db *gorm.DB) error {
 		return e
 	}
 
-	metricCfg := Config{
-		ID:      1,
-		Name:    MetricConfig,
-		Content: prometheus.DefaultMetricConfigContent(),
+	if err := db.FirstOrCreate(&defaultMetricConfig, defaultMetricConfig.ID).Error; err != nil {
+		return err
 	}
-	if err := db.FirstOrCreate(&metricCfg, metricCfg.ID).Error; err != nil {
+	if err := db.FirstOrCreate(&defaultSMTPConfig, defaultSMTPConfig.ID).Error; err != nil {
 		return err
 	}
 	return nil
