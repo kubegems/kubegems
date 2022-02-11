@@ -29,10 +29,10 @@ const (
 	ArgoLabelValueFromApp      = gemlabels.ArgoLabelValueFromApp
 	ArgoLabelValueFromAppStore = gemlabels.ArgoLabelValueFromAppStore
 	// argo annotations
-	ArgoAnnotationKeyCreator = gemlabels.ArgoLabelKeyCreator   // 创建人,仅用于当前部署实时更新，从kustomize部署的历史需要从gitcommit取得
-	AnnotationRef            = "gems.cloudminds.com/ref"       // 标志这个资源所属的项目环境，避免使用过多label造成干扰
-	AnnotationCluster        = "gems.cloudminds.com/cluster"   // 标志这个资源所属集群
-	AnnotationNamespace      = "gems.cloudminds.com/namespace" // 标志这个资源所属namespace
+	ArgoAnnotationKeyCreator = gemlabels.ArgoLabelKeyCreator // 创建人,仅用于当前部署实时更新，从kustomize部署的历史需要从gitcommit取得
+	AnnotationRef            = "gems.kubegems.io/ref"        // 标志这个资源所属的项目环境，避免使用过多label造成干扰
+	AnnotationCluster        = "gems.kubegems.io/cluster"    // 标志这个资源所属集群
+	AnnotationNamespace      = "gems.kubegems.io/namespace"  // 标志这个资源所属namespace
 )
 
 type DeploiedManifest struct {
@@ -73,6 +73,7 @@ func MustNewApplicationDeployHandler(server define.ServerInterface) *Application
 	}
 	database := server.GetDataBase()
 	argocli := server.GetArgocdClient()
+	agents := server.GetAgentsClientSet()
 	redis := server.GetRedis()
 
 	h := &ApplicationHandler{
@@ -83,7 +84,7 @@ func MustNewApplicationDeployHandler(server define.ServerInterface) *Application
 			ManifestProcessor: &ManifestProcessor{GitProvider: provider},
 		},
 		Task:                 NewTaskHandler(base),
-		ApplicationProcessor: NewApplicationProcessor(database, provider, argocli, redis, argocli.AgentsCli),
+		ApplicationProcessor: NewApplicationProcessor(database, provider, argocli, redis, agents),
 	}
 	return h
 }

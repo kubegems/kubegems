@@ -8,6 +8,7 @@ import (
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/git"
@@ -38,6 +39,7 @@ func Run(ctx context.Context, rediscli *redis.Client,
 	gitp *git.SimpleLocalProvider,
 	argocd *argo.Client,
 	helmOptions *helm.Options,
+	agents *agents.ClientSet,
 ) error {
 
 	p := &ProcessorContext{
@@ -53,7 +55,7 @@ func Run(ctx context.Context, rediscli *redis.Client,
 		// 示例
 		&SampleTasker{},
 		// application 应用部署相关
-		MustNewApplicationTasker(db, gitp, argocd, rediscli),
+		MustNewApplicationTasker(db, gitp, argocd, rediscli, agents),
 		// task-archive 持久化过期任务至database
 		NewTaskArchiverTasker(db, rediscli),
 		// chart-sync 同步helmchart
