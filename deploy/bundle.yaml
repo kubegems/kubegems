@@ -932,19 +932,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - k8s.nginx.org
-  resources:
-  - nginxingresscontrollers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - environments
   verbs:
@@ -957,7 +945,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - environments/status
   verbs:
@@ -965,7 +953,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantgateways
   verbs:
@@ -978,7 +966,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantgateways/status
   verbs:
@@ -986,7 +974,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantnetworkpolicies
   verbs:
@@ -998,7 +986,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantnetworkpolicies/status
   verbs:
@@ -1006,7 +994,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantresourcequotas
   verbs:
@@ -1018,7 +1006,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenantresourcequotas/status
   verbs:
@@ -1026,7 +1014,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenants
   verbs:
@@ -1038,13 +1026,25 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kubegems.io
+  - gems.kubegems.io
   resources:
   - tenants/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - nginxingresscontrollers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - networking.istio.io
   resources:
@@ -1327,7 +1327,7 @@ webhooks:
   name: mutate.resourcequota.dev
   rules:
   - apiGroups:
-    - kubegems.io
+    - gems.kubegems.io
     apiVersions:
     - v1beta1
     operations:
@@ -1347,7 +1347,7 @@ webhooks:
   name: mutate.environment.dev
   rules:
   - apiGroups:
-    - kubegems.io
+    - gems.kubegems.io
     apiVersions:
     - v1beta1
     operations:
@@ -1367,7 +1367,7 @@ webhooks:
   name: mutate.gateway.dev
   rules:
   - apiGroups:
-    - kubegems.io
+    - gems.kubegems.io
     apiVersions:
     - v1beta1
     operations:
@@ -1447,7 +1447,7 @@ webhooks:
   name: validate.tenant.dev
   rules:
   - apiGroups:
-    - kubegems.io
+    - gems.kubegems.io
     apiVersions:
     - v1beta1
     operations:
@@ -1466,7 +1466,7 @@ webhooks:
   name: validate.tenantresourcequota.dev
   rules:
   - apiGroups:
-    - kubegems.io
+    - gems.kubegems.io
     apiVersions:
     - v1beta1
     operations:
@@ -1487,7 +1487,7 @@ webhooks:
   name: validate.tenantnetworkpolicy.dev
   rules:
   - apiGroups:
-    - kubegems.io
+    - gems.kubegems.io
     apiVersions:
     - v1beta1
     operations:
@@ -1508,7 +1508,7 @@ webhooks:
   name: validate.tenantgateway.dev
   rules:
   - apiGroups:
-    - kubegems.io
+    - gems.kubegems.io
     apiVersions:
     - v1beta1
     operations:
@@ -1529,7 +1529,7 @@ webhooks:
   name: validate.environment.dev
   rules:
   - apiGroups:
-    - kubegems.io
+    - gems.kubegems.io
     apiVersions:
     - v1beta1
     operations:

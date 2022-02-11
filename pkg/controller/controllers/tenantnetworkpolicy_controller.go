@@ -68,8 +68,8 @@ type TenantNetworkPolicyReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=kubegems.io,resources=tenantnetworkpolicies,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kubegems.io,resources=tenantnetworkpolicies/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantnetworkpolicies,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantnetworkpolicies/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 
 func (r *TenantNetworkPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
