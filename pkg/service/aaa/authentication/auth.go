@@ -11,6 +11,7 @@ import (
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/aaa"
@@ -141,7 +142,7 @@ func InitAuthMiddleware(system *system.SystemOptions, database *database.Databas
 	redis *redis.Client, uif aaa.UserInterface) (*Middleware, error) {
 	db := database.DB()
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
-		Realm:            "gems.cloudminds.com",
+		Realm:            gems.GroupName,
 		Key:              []byte{},
 		SigningAlgorithm: "RS256",
 		Timeout:          system.JwtExpire,                   // 有效时间

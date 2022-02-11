@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package gems
+package plugins
 
 // GroupName is the group name used in this package
-const GroupName = "gems.kubegems.io"
+const GroupName = "plugins.kubegems.io"

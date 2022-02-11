@@ -7,13 +7,8 @@ import (
 	v1snap "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"kubegems.io/pkg/apis/storage"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	annotationInUse              = "pvc.cloudminds.com/in-use"
-	annotationAllowSnapshot      = "pvc.cloudminds.com/allow-snapshot"
-	annotationStorageProvisioner = "volume.beta.kubernetes.io/storage-provisioner"
 )
 
 type PvcHandler struct {
@@ -112,14 +107,14 @@ func (h *PvcHandler) annotatePVC(c *gin.Context, pvc *v1.PersistentVolumeClaim,
 		inUse = true
 	}
 
-	if provisioner := pvc.GetAnnotations()[annotationStorageProvisioner]; len(provisioner) > 0 {
+	if provisioner := pvc.GetAnnotations()[storage.AnnotationStorageProvisioner]; len(provisioner) > 0 {
 		if _, ok := snapClassInUse[provisioner]; ok {
 			allowSnapshot = true
 		}
 	}
 
-	pvc.Annotations[annotationInUse] = strconv.FormatBool(inUse)
-	pvc.Annotations[annotationAllowSnapshot] = strconv.FormatBool(allowSnapshot)
+	pvc.Annotations[storage.AnnotationInUse] = strconv.FormatBool(inUse)
+	pvc.Annotations[storage.AnnotationAllowSnapshot] = strconv.FormatBool(allowSnapshot)
 }
 
 func (h *PvcHandler) getMapForSnapAndPod(c *gin.Context, ns string) (map[string]int, map[string]int, error) {

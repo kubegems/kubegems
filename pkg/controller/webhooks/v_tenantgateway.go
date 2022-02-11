@@ -10,8 +10,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
-	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/controller/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -52,7 +52,7 @@ func (r *ResourceValidate) ValidateTenantGateway(ctx context.Context, req admiss
 		// 校验gateway、ingress是否同步
 		ingressList := ext_v1beta1.IngressList{}
 		if err := r.Client.List(ctx, &ingressList, client.MatchingLabels(map[string]string{
-			gemlabels.LabelIngressClass: tg.Labels[gemlabels.LabelIngressClass],
+			networking.LabelIngressClass: tg.Labels[networking.LabelIngressClass],
 		})); err != nil {
 			return admission.Denied(err.Error())
 		}
@@ -73,7 +73,7 @@ func (r *ResourceValidate) ValidateTenantGateway(ctx context.Context, req admiss
 
 		ingressList := ext_v1beta1.IngressList{}
 		if err := r.Client.List(ctx, &ingressList, client.MatchingLabels(map[string]string{
-			gemlabels.LabelIngressClass: tg.Labels[gemlabels.LabelIngressClass],
+			networking.LabelIngressClass: tg.Labels[networking.LabelIngressClass],
 		})); err != nil {
 			return admission.Denied(err.Error())
 		}

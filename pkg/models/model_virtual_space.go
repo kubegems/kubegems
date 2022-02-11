@@ -2,38 +2,6 @@ package models
 
 import "time"
 
-// {
-//     "meta": {
-//         "name": "hello",
-//         "creationTimestamp": "2021-10-13T09:38:18Z",
-//         "labels": {
-//             "gems.cloudminds.com/creator": "admin"
-//         }
-//     },
-//     "spec": {
-//         "Environments": [
-//             {
-//                 "tenant": "tenant1",
-//                 "project": "project2",
-//                 "name": "ssss"
-//             }
-//         ],
-//         "DomainRef": null
-//     },
-//     "status": {
-//         "environments": [
-//             {
-//                 "phase": "OK",
-//                 "environment": {
-//                     "tenant": "tenant1",
-//                     "project": "project2",
-//                     "name": "ssss"
-//                 }
-//             }
-//         ]
-//     }
-// }
-
 const (
 	ResVirtualSpace        = "virtualSpace"
 	VirtualSpaceRoleAdmin  = "admin"

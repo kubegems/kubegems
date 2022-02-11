@@ -42,7 +42,7 @@ type ImageHandler struct {
 // @Produce json
 // @Param tenant_id      path  int    true "tenaut id"
 // @Param project_id     path  int    true "project id"
-// @Param image          query  string true "eg. harbor.cloudminds.com/lib/nginx:v1.14"
+// @Param image          query  string true "eg. kubegems/nginx:v1.14"
 // @Success 200 {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
 // @Router /v1/tenant/{tenant_id}/project/{project_id}/images/vulnerabilities [get]
 // @Security JWT
@@ -87,7 +87,7 @@ type ImageSummaryItem struct {
 // @Produce json
 // @Param tenant_id      path  int    true "tenaut id"
 // @Param project_id     path  int    true "project id"
-// @Param image          query  string true "eg. harbor.cloudminds.com/lib/nginx:v1.14"
+// @Param image          query  string true "eg. kubegems/nginx:v1.14"
 // @Success 200 {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
 // @Router /v1/tenant/{tenant_id}/project/{project_id}/images/summary [get]
 // @Security JWT
@@ -151,7 +151,7 @@ func (h *ImageHandler) Summary(c *gin.Context) {
 // @Produce json
 // @Param tenant_id      path  int    true "tenaut id"
 // @Param project_id     path  int    true "project id"
-// @Param image          query  string true "eg. harbor.cloudminds.com/lib/nginx:v1.14"
+// @Param image          query  string true "eg. kubegems/nginx:v1.14"
 // @Success 200 {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
 // @Router /v1/tenant/{tenant_id}/project/{project_id}/images/unpublishable [get]
 // @Security JWT
@@ -182,7 +182,7 @@ func (h *ImageHandler) Unpublishable(c *gin.Context) {
 // @Produce json
 // @Param tenant_id      path  int    true "tenaut id"
 // @Param project_id     path  int    true "project id"
-// @Param image          query  string true "eg. harbor.cloudminds.com/lib/nginx:v1.14"
+// @Param image          query  string true "eg. kubegems/nginx:v1.14"
 // @Success 200 {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
 // @Router /v1/tenant/{tenant_id}/project/{project_id}/images/scan [post]
 // @Security JWT
@@ -207,7 +207,7 @@ func (h *ImageHandler) Scan(c *gin.Context) {
 // @Param tenant_id      path  int    true "tenaut id"
 // @Param project_id     path  int    true "project id"
 // @Param application_id path  int    true "application id"
-// @Param image          query  string true "eg. harbor.cloudminds.com/lib/nginx:v1.14"
+// @Param image          query  string true "eg. kubegems/nginx:v1.14"
 // @Success 200 {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
 // @Router /v1/tenant/{tenant_id}/project/{project_id}/images/tags [post]
 // @Security JWT

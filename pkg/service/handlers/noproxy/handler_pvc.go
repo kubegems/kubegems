@@ -7,12 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	snapv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	v1 "k8s.io/api/core/v1"
+	"kubegems.io/pkg/apis/storage"
 	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/service/handlers"
-)
-
-const (
-	VolumeSnapshotAnnotationKeyPersistentVolumeClaim = "gems.cloudminds.com/persistentvolumevlaim"
 )
 
 type PersistentVolumeClaimRequest struct {
@@ -56,7 +53,7 @@ func (h *PersistentVolumeClaimHandler) Create(c *gin.Context) {
 		return
 	}
 
-	pvcbytes := volumesnapshot.Annotations[VolumeSnapshotAnnotationKeyPersistentVolumeClaim]
+	pvcbytes := volumesnapshot.Annotations[storage.AnnotationVolumeSnapshotAnnotationKeyPersistentVolumeClaim]
 
 	pvc := &v1.PersistentVolumeClaim{}
 	if err := json.Unmarshal([]byte(pvcbytes), pvc); err != nil {
