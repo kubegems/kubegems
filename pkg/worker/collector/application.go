@@ -7,7 +7,8 @@ import (
 
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/application"
 	"github.com/prometheus/client_golang/prometheus"
-	gemlabels "kubegems.io/pkg/labels"
+	kubegemsapp "kubegems.io/pkg/apis/application"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
@@ -62,8 +63,8 @@ func (c *ApplicationCollector) Update(ch chan<- prometheus.Metric) error {
 			1,
 
 			v.Labels[gemlabels.LabelApplication],
-			v.Labels[gemlabels.ArgoLabelKeyCreator],
-			v.Labels[gemlabels.ArgoLabelKeyFrom],
+			v.Labels[kubegemsapp.AnnotationCreator],
+			v.Labels[kubegemsapp.LabelFrom],
 			env,
 			proj,
 			tenant,

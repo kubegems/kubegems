@@ -92,8 +92,8 @@ func initSampleManifest(fs billy.Filesystem, name, kind string) error {
 	var sample interface{}
 
 	labels := map[string]string{
-		CommonLabelApplication: name,
-		"app":                  name, // kubernetes app
+		LabelApplication: name,
+		"app":            name, // kubernetes app
 	}
 
 	podTemplate := corev1.PodTemplateSpec{

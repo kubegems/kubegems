@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/agent/ws"
-	gemlabels "kubegems.io/pkg/labels"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"sigs.k8s.io/controller-runtime/pkg/client"

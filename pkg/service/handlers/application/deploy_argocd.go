@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	gemlabels "kubegems.io/pkg/labels"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/argo"
@@ -202,15 +202,15 @@ func StringsContain(list []string, i string) bool {
 
 func (h *ApplicationHandler) listArgoHistories(ctx context.Context, ref PathRef) ([]*ArgoHistory, error) {
 	selector := labels.Set{
-		ArgoLabelKeyFrom: ArgoLabelValueFromApp,
-		ArgoLabelTenant:  ref.Tenant,
-		ArgoLabelProject: ref.Project,
+		LabelKeyFrom: LabelValueFromApp,
+		LabelTenant:  ref.Tenant,
+		LabelProject: ref.Project,
 	}
 	if ref.Env != "" {
-		selector[ArgoLabelEnvironment] = ref.Env
+		selector[LabelEnvironment] = ref.Env
 	}
 	if ref.Name != "" {
-		selector[ArgoLabelApplication] = ref.Name
+		selector[LabelApplication] = ref.Name
 	}
 
 	argoappList, err := h.ArgoCD.ListArgoApp(ctx, selector.AsSelector())
@@ -220,9 +220,9 @@ func (h *ApplicationHandler) listArgoHistories(ctx context.Context, ref PathRef)
 
 	ret := make([]*ArgoHistory, 0, len(argoappList.Items))
 	for _, argo := range argoappList.Items {
-		applicationName := argo.Labels[ArgoLabelApplication]
-		env := argo.Labels[ArgoLabelEnvironment]
-		tenant := argo.Labels[ArgoLabelTenant]
+		applicationName := argo.Labels[LabelApplication]
+		env := argo.Labels[LabelEnvironment]
+		tenant := argo.Labels[LabelTenant]
 		// 添加当前版本
 
 		cref := PathRef{Tenant: ref.Project, Project: ref.Project, Env: env, Name: applicationName}

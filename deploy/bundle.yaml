@@ -254,7 +254,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                       requests:
                         additionalProperties:
@@ -266,7 +266,7 @@ spec:
                         description: 'Requests describes the minimum amount of compute
                           resources required. If Requests is omitted for a container,
                           it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
                 type: object
@@ -1241,8 +1241,8 @@ spec:
         - --metrics-addr=127.0.0.1:8080
         - --enable-leader-election
         command:
-        - /manager
-        image: harbor.cloudminds.com/gemscloud/gems-controller:v0.3.5-3-g2af124d-dirty
+        - controller
+        image: kubegems/kubegems
         name: manager
         ports:
         - containerPort: 9443
@@ -1250,7 +1250,7 @@ spec:
           protocol: TCP
         resources:
           limits:
-            cpu: 1
+            cpu: "1"
             memory: 1Gi
           requests:
             cpu: 100m
@@ -1270,7 +1270,7 @@ spec:
         - containerPort: 8443
           name: https
       imagePullSecrets:
-      - name: gems-regcred
+      - name: kubegems-regcred
       terminationGracePeriodSeconds: 10
       volumes:
       - name: cert

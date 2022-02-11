@@ -113,16 +113,16 @@ func (p PathRef) IsEmpty() bool {
 }
 
 func (p *PathRef) FromAnnotations(annotations map[string]string) {
-	if tenant, exist := annotations[ArgoLabelTenant]; exist {
+	if tenant, exist := annotations[LabelTenant]; exist {
 		p.Tenant = tenant
 	}
-	if project, exist := annotations[ArgoLabelProject]; exist {
+	if project, exist := annotations[LabelProject]; exist {
 		p.Project = project
 	}
-	if env, exist := annotations[ArgoLabelEnvironment]; exist {
+	if env, exist := annotations[LabelEnvironment]; exist {
 		p.Env = env
 	}
-	if app, exist := annotations[ArgoLabelApplication]; exist {
+	if app, exist := annotations[LabelApplication]; exist {
 		p.Name = app
 	}
 }
@@ -131,8 +131,8 @@ func (p *PathRef) FromArgoLabel(labels map[string]string) {
 	if labels == nil {
 		return
 	}
-	p.Tenant = labels[ArgoLabelTenant]
-	p.Project = labels[ArgoLabelProject]
-	p.Env = labels[ArgoLabelEnvironment]
-	p.Name = labels[ArgoLabelApplication]
+	p.Tenant = labels[LabelTenant]
+	p.Project = labels[LabelProject]
+	p.Env = labels[LabelEnvironment]
+	p.Name = labels[LabelApplication]
 }

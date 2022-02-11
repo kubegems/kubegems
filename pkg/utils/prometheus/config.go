@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	gemlabels "kubegems.io/pkg/labels"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/utils"
 )
 

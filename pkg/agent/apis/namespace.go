@@ -5,8 +5,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/controller/utils"
-	gemlabels "kubegems.io/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
