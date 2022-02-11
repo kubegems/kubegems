@@ -33,7 +33,7 @@ func (a PluginCollect) Less(i, j int) bool { return a[i].Name < a[j].Name }
 // @Param cluster path string true "cluster"
 // @Param simple query bool true "simple"
 // @Success 200 {object} handlers.ResponseStruct{Data=PluginsRet} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.gems.cloudminds.com/v1alpha1/plugins [get]
+// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1alpha1/plugins [get]
 // @Security JWT
 func (h *PluginHandler) List(c *gin.Context) {
 	gemsplugins, err := plugins.GetPlugins(h.cluster)
@@ -102,7 +102,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Param name path string true "name"
 // @Param type query string true "type"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.gems.cloudminds.com/v1alpha1/plugins/{name}/actions/enable [post]
+// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1alpha1/plugins/{name}/actions/enable [post]
 // @Security JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	plugintype := c.Query("type")
@@ -152,7 +152,7 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Param name path string true "name"
 // @Param type query string true "type"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.gems.cloudminds.com/v1alpha1/plugins/{name}/actions/disable [post]
+// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1alpha1/plugins/{name}/actions/disable [post]
 // @Security JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
 	plugintype := c.Query("type")

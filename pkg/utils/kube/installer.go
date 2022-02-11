@@ -158,9 +158,9 @@ const installYAML = `
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: installers.plugins.gems.cloudminds.com
+  name: installers.plugins.kubegems.io
 spec:
-  group: plugins.gems.cloudminds.com
+  group: plugins.kubegems.io
   names:
     kind: Installer
     listKind: InstallerList
@@ -281,7 +281,7 @@ rules:
       - update
       - watch
   - apiGroups:
-      - plugins.gems.cloudminds.com
+      - plugins.kubegems.io
     resources:
       - installers
       - installers/status
@@ -374,7 +374,7 @@ data:
       bindAddress: 127.0.0.1:8080
     leaderElection:
       leaderElect: true
-      resourceName: 811c9dc5.gems.cloudminds.com
+      resourceName: 811c9dc5.gems.kubegems.io
 kind: ConfigMap
 metadata:
   name: kubegems-installer-manager-config
@@ -427,7 +427,7 @@ spec:
         - upstream=http://127.0.0.1:8081/
         - logtostderr=true
         - v=10
-        image: harbor.cloudminds.com/library/kube-rbac-proxy:v0.8.0
+        image: harbor.kubegems.io/library/kube-rbac-proxy:v0.8.0
         imagePullPolicy: IfNotPresent
         name: kube-rbac-proxy
         ports:
@@ -444,7 +444,7 @@ spec:
           value: explicit
         - name: ENABLED_KUBEGEMS_DOCS
           value: "off"
-        image: harbor.cloudminds.com/library/installer-operator:{{ .InstallerOptions.Version }}
+        image: harbor.kubegems.io/library/installer-operator:{{ .InstallerOptions.Version }}
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
@@ -479,7 +479,7 @@ spec:
 `
 
 const pluginYAML = `
-apiVersion: plugins.gems.cloudminds.com/v1alpha1
+apiVersion: plugins.kubegems.io/v1alpha1
 kind: Installer
 metadata:
   name: kubegems-plugins
@@ -500,7 +500,7 @@ spec:
       operator:
         alertmanager: gemcloud
         image:
-          repository: harbor.cloudminds.com/library/alertmanager
+          repository: harbor.kubegems.io/library/alertmanager
         persistent:
           size: 10Gi
           # Specify stralgeclass to use, local-path was default value
@@ -557,7 +557,7 @@ spec:
       enabled: true
       manual:
         image:
-          repository: harbor.cloudminds.com/gemscloud/gems-agent
+          repository: kubegems/kubegems
       namespace: gemcloud-system
       status:
         deployment:
@@ -571,7 +571,7 @@ spec:
       enabled: true
       manual:
         image:
-          repository: harbor.cloudminds.com/gemscloud/gems-controller
+          repository: kubegems/kubegems
       namespace: gemcloud-system
       status:
         deployment:
@@ -633,7 +633,7 @@ spec:
       operator:
         apply_rules: true
         image:
-          repository: harbor.cloudminds.com/library/prometheus
+          repository: harbor.kubegems.io/library/prometheus
         resources:
           cpu: 4000m
           memory: 16Gi
@@ -659,7 +659,7 @@ spec:
       enabled: true
       manual:
         image:
-          repository: harbor.cloudminds.com/gemscloud/gems-eventer
+          repository: kubegems/kubegems
       namespace: gemcloud-logging-system
       status:
         deployment:
@@ -672,7 +672,7 @@ spec:
       enabled: true
       manual:
         image:
-          repository: harbor.cloudminds.com/library/kube-state-metrics
+          repository: harbor.kubegems.io/library/kube-state-metrics
       namespace: kube-system
       status:
         deployment:
@@ -699,7 +699,7 @@ spec:
       enabled: true
       manual:
         image:
-          repository: harbor.cloudminds.com/library/metrics-server
+          repository: harbor.kubegems.io/library/metrics-server
       namespace: kube-system
       status:
         deployment:
@@ -713,7 +713,7 @@ spec:
       enabled: true
       manual:
         image:
-          repository: harbor.cloudminds.com/library/node-exporter
+          repository: harbor.kubegems.io/library/node-exporter
       namespace: gemcloud-monitoring-system
       status:
         daemonset:
@@ -726,7 +726,7 @@ spec:
       enabled: false
       manual:
         image:
-          repository: harbor.cloudminds.com/library/node-problem-detector
+          repository: harbor.kubegems.io/library/node-problem-detector
       namespace: kube-system
       status:
         daemonset:

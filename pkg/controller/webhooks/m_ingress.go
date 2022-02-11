@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/controller/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -45,7 +46,7 @@ func (r *ResourceMutate) MutateIngress(ctx context.Context, req admission.Reques
 		// ingress生成随机域名
 		var tgs gemsv1beta1.TenantGatewayList
 		if err := r.Client.List(ctx, &tgs, client.MatchingLabels{
-			gemlabels.LabelIngressClass: ingressClassName,
+			networking.LabelIngressClass: ingressClassName,
 		}); err != nil {
 			log.Log.Error(err, "list gateway failed")
 			return admission.Denied(fmt.Sprintf("list gateway failed: %v", err))
@@ -87,7 +88,7 @@ func (r *ResourceMutate) MutateIngress(ctx context.Context, req admission.Reques
 				ingress.Labels[label] = v
 			}
 		}
-		ingress.Labels[gemlabels.LabelIngressClass] = ingressClassName
+		ingress.Labels[networking.LabelIngressClass] = ingressClassName
 
 		modifyed, _ := json.Marshal(ingress)
 		return admission.PatchResponseFromRaw(req.Object.Raw, modifyed)

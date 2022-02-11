@@ -1,5 +1,5 @@
 /*
-Copyright 2021 cloudminds.com.
+Copyright 2021 kubegems.io.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import (
 )
 
 const (
-	NginxImageRepo = "harbor.cloudminds.com/library/nginx/nginx-ingress"
+	NginxImageRepo = "kubegems/nginx-ingress"
 	NginxImageTag  = "1.11.1"
 )
 

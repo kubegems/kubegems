@@ -13,6 +13,7 @@ import (
 	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/models"
@@ -1289,7 +1290,9 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 
 	if ingressClass != "" {
 		tglist, err := kubeclient.GetClient().GetTenantGatewayList(cluster.ClusterName,
-			map[string]string{"gems.cloudminds.com/ingressClass": ingressClass},
+			map[string]string{
+				networking.LabelIngressClass: ingressClass,
+			},
 		)
 		if err != nil {
 			handlers.NotOK(c, err)

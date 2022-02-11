@@ -1,6 +1,9 @@
 package networking
 
 const (
-	AnnotationVirtualDomain = "networking.kubegems.io/virtualdomain"
-	AnnotationVirtualSpace  = "networking.kubegems.io/virtualspace"
+	AnnotationVirtualDomain = GroupName + "/virtualdomain"
+	AnnotationVirtualSpace  = GroupName + "/virtualspace"
+	AnnotationIstioGateway  = GroupName + "/istioGateway"
+
+	LabelIngressClass = GroupName + "/ingressClass" // ingress打标签用以筛选
 )

@@ -16,8 +16,8 @@ const (
 	TypeCorePlugins       = "core"
 	TypeKubernetesPlugins = "kubernetes"
 
-	pluginURL1 = "/apis/plugins.gems.cloudminds.com/v1alpha1/namespaces/gemcloud-system/installers/plugin-installer"
-	pluginURL2 = "/apis/plugins.gems.cloudminds.com/v1alpha1/namespaces/kubegems-installer/installers/kubegems-plugins"
+	pluginURL1 = "/apis/plugins.kubegems.io/v1alpha1/namespaces/gemcloud-system/installers/plugin-installer"
+	pluginURL2 = "/apis/plugins.kubegems.io/v1alpha1/namespaces/kubegems-installer/installers/kubegems-plugins"
 )
 
 var (

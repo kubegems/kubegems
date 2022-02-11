@@ -26,6 +26,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	gemscontroller "kubegems.io/pkg/controller/controllers"
 	"kubegems.io/pkg/controller/webhooks"
@@ -75,7 +76,7 @@ func Run(ctx context.Context, options *Options) error {
 		LeaseDuration:      &leaseDuration,
 		RenewDeadline:      &renewDeadline,
 		LeaderElection:     options.EnableLeaderElection,
-		LeaderElectionID:   "gems.kubegems.io",
+		LeaderElectionID:   gems.GroupName,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

@@ -1,13 +1,12 @@
 package gems
 
 const (
-	LabelTenant       = "gems.kubegems.io/tenant"
-	LabelProject      = "gems.kubegems.io/project"
-	LabelEnvironment  = "gems.kubegems.io/environment"
-	LabelApplication  = "gems.kubegems.io/application"
-	LabelZone         = "gems.kubegems.io/zone"
-	LabelPlugins      = "gems.kubegems.io/plugins"
-	LabelIngressClass = "gems.kubegems.io/ingressClass" // ingress打标签用以筛选
+	LabelTenant      = GroupName + "/tenant"
+	LabelProject     = GroupName + "/project"
+	LabelEnvironment = GroupName + "/environment"
+	LabelApplication = GroupName + "/application"
+	LabelZone        = GroupName + "/zone"
+	LabelPlugins     = GroupName + "/plugins"
 
 	NamespaceSystem   = "gemcloud-system"
 	NamespaceMonitor  = "gemcloud-monitoring-system"
@@ -23,10 +22,12 @@ var CommonLabels = []string{
 }
 
 const (
-	FinalizerNamespace     = "finalizer.gems.kubegems.io/namespace"
-	FinalizerResourceQuota = "finalizer.gems.kubegems.io/resourcequota"
-	FinalizerGateway       = "finalizer.gems.kubegems.io/gateway"
-	FinalizerNetworkPolicy = "finalizer.gems.kubegems.io/networkpolicy"
-	FinalizerLimitrange    = "finalizer.gems.kubegems.io/limitrange"
-	FinalizerEnvironment   = "finalizer.gems.kubegems.io/environment"
+	FinalizerNamespace     = "finalizer." + GroupName + "/namespace"
+	FinalizerResourceQuota = "finalizer." + GroupName + "/resourcequota"
+	FinalizerGateway       = "finalizer." + GroupName + "/gateway"
+	FinalizerNetworkPolicy = "finalizer." + GroupName + "/networkpolicy"
+	FinalizerLimitrange    = "finalizer." + GroupName + "/limitrange"
+	FinalizerEnvironment   = "finalizer." + GroupName + "/environment"
 )
+
+const AnnotationsMetricsTargetNameKey = GroupName + "/metricTargetName"
