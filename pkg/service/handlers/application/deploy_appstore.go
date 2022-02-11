@@ -42,10 +42,10 @@ func (h *ApplicationHandler) ListAppstoreApp(c *gin.Context) {
 	h.NoNameRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		// list argo apps
 		applist, err := h.ArgoCD.ListArgoApp(ctx, labels.Set{
-			ArgoLabelKeyFrom:     ArgoLabelValueFromAppStore,
-			ArgoLabelTenant:      ref.Tenant,
-			ArgoLabelProject:     ref.Project,
-			ArgoLabelEnvironment: ref.Env,
+			LabelKeyFrom:     LabelValueFromAppStore,
+			LabelTenant:      ref.Tenant,
+			LabelProject:     ref.Project,
+			LabelEnvironment: ref.Env,
 		}.AsSelector())
 		if err != nil {
 			return nil, err

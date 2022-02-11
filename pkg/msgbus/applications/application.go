@@ -10,7 +10,7 @@ import (
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
-	gemlabels "kubegems.io/pkg/labels"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/msgbus/switcher"
 	"kubegems.io/pkg/service/handlers/application"

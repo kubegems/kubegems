@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	gemlabels "kubegems.io/pkg/labels"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
@@ -117,10 +117,10 @@ func (h *ApplicationProcessor) List(ctx context.Context, ref PathRef) ([]*Deploi
 
 	// list argo apps
 	selector := labels.Set{
-		ArgoLabelKeyFrom:     ArgoLabelValueFromApp,
-		ArgoLabelTenant:      ref.Tenant,
-		ArgoLabelProject:     ref.Project,
-		ArgoLabelEnvironment: ref.Env,
+		LabelKeyFrom:     LabelValueFromApp,
+		LabelTenant:      ref.Tenant,
+		LabelProject:     ref.Project,
+		LabelEnvironment: ref.Env,
 	}.AsSelector()
 	applist, err := h.Argo.ListArgoApp(ctx, selector)
 	if err != nil {
@@ -140,7 +140,7 @@ func (h *ApplicationProcessor) List(ctx context.Context, ref PathRef) ([]*Deploi
 
 	// argo 覆盖git
 	for _, app := range applist.Items {
-		appname := app.Labels[ArgoLabelApplication]
+		appname := app.Labels[LabelApplication]
 		if appname == "" {
 			continue
 		}
@@ -182,7 +182,7 @@ func CompleteDeploiedManifestRuntime(app *v1alpha1.Application, status *Deploied
 		status.Runtime.Status = StatusNoArgoApp
 		return status
 	}
-	if creator, ok := app.Annotations[ArgoAnnotationKeyCreator]; ok {
+	if creator, ok := app.Annotations[AnnotationKeyCreator]; ok {
 		status.Runtime.Creator = creator
 
 		if status.Creator == "" {
@@ -190,7 +190,7 @@ func CompleteDeploiedManifestRuntime(app *v1alpha1.Application, status *Deploied
 		}
 	}
 	// 当编排不存在时从runtime回填
-	if name, ok := app.Labels[ArgoLabelApplication]; status.Name == "" && ok {
+	if name, ok := app.Labels[LabelApplication]; status.Name == "" && ok {
 		status.Name = name
 	}
 	status.Runtime.CreateAt = app.CreationTimestamp
@@ -271,7 +271,7 @@ func (h *ApplicationProcessor) deployHelmApplication(ctx context.Context, ref Pa
 	}
 
 	sethelmfunc := func(app *v1alpha1.Application) error {
-		app.Labels[ArgoLabelKeyFrom] = ArgoLabelValueFromAppStore // is from app
+		app.Labels[LabelKeyFrom] = LabelValueFromAppStore // is from app
 		app.Spec.Source = v1alpha1.ApplicationSource{
 			RepoURL:        form.RepoURL,
 			TargetRevision: form.ChartVersion,
@@ -311,7 +311,7 @@ func (h *ApplicationProcessor) deployKustomizeApplication(ctx context.Context, r
 		return nil, fmt.Errorf("create argo repo: %w", err)
 	}
 	setkustomizefunc := func(app *v1alpha1.Application) error {
-		app.Labels[ArgoLabelKeyFrom] = ArgoLabelValueFromApp // is from app
+		app.Labels[LabelKeyFrom] = LabelValueFromApp // is from app
 		// https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/#integrating-with-gitops
 		app.Spec.IgnoreDifferences = []v1alpha1.ResourceIgnoreDifferences{
 			{
@@ -563,13 +563,13 @@ func (h *ApplicationProcessor) deployArgoApplication(ctx context.Context, ref Pa
 		ObjectMeta: v1.ObjectMeta{
 			Name: ref.FullName(),
 			Labels: map[string]string{
-				ArgoLabelApplication: ref.Name,
-				ArgoLabelTenant:      ref.Tenant,
-				ArgoLabelProject:     ref.Project,
-				ArgoLabelEnvironment: ref.Env,
+				LabelApplication: ref.Name,
+				LabelTenant:      ref.Tenant,
+				LabelProject:     ref.Project,
+				LabelEnvironment: ref.Env,
 			},
 			Annotations: map[string]string{
-				ArgoAnnotationKeyCreator: AuthorFromContext(ctx).Name,
+				AnnotationKeyCreator: AuthorFromContext(ctx).Name,
 			},
 			Finalizers: []string{
 				v1alpha1.ResourcesFinalizerName, // 设置级联删除策略

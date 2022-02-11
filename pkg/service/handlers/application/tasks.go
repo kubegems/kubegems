@@ -120,7 +120,7 @@ func (h *TaskHandler) BatchList(c *gin.Context) {
 		// convert
 		apptasks := map[string][]ApplicationTask{}
 		for _, task := range tasks {
-			appname := task.Addtionals[ArgoLabelApplication]
+			appname := task.Addtionals[LabelApplication]
 			if appname == "" {
 				continue
 			}

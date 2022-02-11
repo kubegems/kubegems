@@ -15,8 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/controller/utils"
-	gemlabels "kubegems.io/pkg/labels"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -114,11 +114,11 @@ func (r *ServiceentryReconciler) OnChange(ctx context.Context, svc *corev1.Servi
 		}
 	}
 	// namespace 指定 domain
-	if val, ok := ns.Annotations[gemlabels.AnnotationVirtualDomain]; ok {
+	if val, ok := ns.Annotations[networking.AnnotationVirtualDomain]; ok {
 		addtohosts(val)
 	}
 	// service 指定 domain
-	if val, ok := svc.Annotations[gemlabels.AnnotationVirtualDomain]; ok {
+	if val, ok := svc.Annotations[networking.AnnotationVirtualDomain]; ok {
 		addtohosts(val)
 	}
 

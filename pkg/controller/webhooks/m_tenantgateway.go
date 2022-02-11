@@ -7,8 +7,8 @@ import (
 
 	v1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	gemlabels "kubegems.io/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
