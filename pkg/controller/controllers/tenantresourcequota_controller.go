@@ -30,10 +30,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/controller/handler"
 	"kubegems.io/pkg/controller/utils"
-	gemlabels "kubegems.io/pkg/labels"
 )
 
 // TenantResourceQuotaReconciler reconciles a TenantResourceQuota object

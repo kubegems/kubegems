@@ -8,7 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	gemlabels "kubegems.io/pkg/labels"
+	"kubegems.io/pkg/apis/application"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/git"
@@ -17,22 +18,22 @@ import (
 const StatusNoArgoApp = "NoArgoApp"
 
 const (
-	// 应用common label
-	CommonLabelApplication = gemlabels.LabelApplication
+	// labels
+	LabelTenant      = gems.LabelTenant
+	LabelProject     = gems.LabelProject
+	LabelApplication = gems.LabelApplication
+	LabelEnvironment = gems.LabelEnvironment
 
-	// argo labels
-	ArgoLabelTenant            = gemlabels.LabelTenant
-	ArgoLabelProject           = gemlabels.LabelProject
-	ArgoLabelApplication       = gemlabels.LabelApplication
-	ArgoLabelEnvironment       = gemlabels.LabelEnvironment
-	ArgoLabelKeyFrom           = gemlabels.ArgoLabelKeyFrom // 区分是从 appstore 还是从应用 app 部署的argo
-	ArgoLabelValueFromApp      = gemlabels.ArgoLabelValueFromApp
-	ArgoLabelValueFromAppStore = gemlabels.ArgoLabelValueFromAppStore
-	// argo annotations
-	ArgoAnnotationKeyCreator = gemlabels.ArgoLabelKeyCreator // 创建人,仅用于当前部署实时更新，从kustomize部署的历史需要从gitcommit取得
-	AnnotationRef            = "gems.kubegems.io/ref"        // 标志这个资源所属的项目环境，避免使用过多label造成干扰
-	AnnotationCluster        = "gems.kubegems.io/cluster"    // 标志这个资源所属集群
-	AnnotationNamespace      = "gems.kubegems.io/namespace"  // 标志这个资源所属namespace
+	// application label
+	LabelKeyFrom           = application.LabelFrom // 区分是从 appstore 还是从应用 app 部署的argo
+	LabelValueFromApp      = application.LabelValueFromApp
+	LabelValueFromAppStore = application.LabelValueFromAppStore
+
+	// annotations
+	AnnotationKeyCreator = application.AnnotationCreator   // 创建人,仅用于当前部署实时更新，从kustomize部署的历史需要从gitcommit取得
+	AnnotationRef        = application.AnnotationRef       // 标志这个资源所属的项目环境，避免使用过多label造成干扰
+	AnnotationCluster    = application.AnnotationCluster   // 标志这个资源所属集群
+	AnnotationNamespace  = application.AnnotationNamespace // 标志这个资源所属namespace
 )
 
 type DeploiedManifest struct {

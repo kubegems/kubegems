@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"k8s.io/apimachinery/pkg/types"
-	gemlabels "kubegems.io/pkg/labels"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

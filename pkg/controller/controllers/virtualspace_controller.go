@@ -13,8 +13,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/controller/utils"
-	gemlabels "kubegems.io/pkg/labels"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -66,7 +66,7 @@ func (r *VirtuslspaceReconciler) OnChange(ctx context.Context, ns *corev1.Namesp
 	// 统计虚拟空间下有哪些 ns
 	virtualspacenamespaces := map[string][]string{}
 	for _, ns := range namespaces.Items {
-		if val, ok := ns.Annotations[gemlabels.AnnotationVirtualSpace]; ok {
+		if val, ok := ns.Annotations[networking.AnnotationVirtualSpace]; ok {
 			isvirtualspacedns[ns.Name] = true
 			for _, vs := range strings.Split(val, ",") {
 				if vs == "" {
@@ -204,7 +204,7 @@ func (r *VirtuslspaceReconciler) ensureInjectLabel(ctx context.Context, namespac
 func isManagerdNamespace(ns *corev1.Namespace) bool {
 	for k := range ns.Annotations {
 		// 仅存在 AnnotationVirtualSpace annotation的 ns 才被"管理”
-		if k == gemlabels.AnnotationVirtualSpace {
+		if k == networking.AnnotationVirtualSpace {
 			return true
 		}
 	}

@@ -16,17 +16,17 @@ spec:
         control-plane: controller-manager
     spec:
       imagePullSecrets:
-        - name: gems-regcred
+        - name: kubegems-regcred
       containers:
-        - command:
-            - /manager
+        - name: manager
+          image: kubegems/kubegems
+          command:
+            - controller
           args:
             - --enable-leader-election
-          image: controller
-          name: manager
           resources:
             limits:
-              cpu: 1
+              cpu: "1"
               memory: 1Gi
             requests:
               cpu: 100m

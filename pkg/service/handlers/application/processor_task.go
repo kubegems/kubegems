@@ -28,7 +28,7 @@ func (p *TaskProcessor) SubmitTask(ctx context.Context, ref PathRef, typ string,
 			TaskAddtionalKeyCommiter: AuthorFromContext(ctx).Name, // 用于在异步任务中拿到 committer 在更改编排时带入
 			AnnotationCluster:        cluster,                     // 以下三个 用于msgbus中按照 cluster namespace name 进行消息分发
 			AnnotationNamespace:      namespace,
-			ArgoLabelApplication:     ref.Name,
+			LabelApplication:     ref.Name,
 		},
 	}
 	return p.Workflowcli.SubmitTask(ctx, task)

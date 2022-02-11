@@ -48,7 +48,7 @@ func (p *TaskProducer) runapplicationtasks(ctx context.Context) error {
 				Kind:    "Task",
 				NamespacedName: msgbus.NamespacedNameFrom(
 					task.Addtionals[application.AnnotationNamespace],
-					task.Addtionals[application.ArgoLabelApplication],
+					task.Addtionals[application.LabelApplication],
 				),
 			},
 			Content: task,
