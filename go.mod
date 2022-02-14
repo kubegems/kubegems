@@ -5,6 +5,7 @@ go 1.17
 require (
 	code.gitea.io/sdk/gitea v0.15.0
 	github.com/VividCortex/mysqlerr v1.0.0
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/alicebob/miniredis/v2 v2.17.0
 	github.com/appleboy/gin-jwt/v2 v2.6.4
 	github.com/argoproj/argo-cd/v2 v2.1.10
@@ -55,6 +56,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
 	github.com/swaggo/gin-swagger v1.3.1
+	github.com/swaggo/swag v1.5.1
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
@@ -252,7 +254,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
-	github.com/swaggo/swag v1.5.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go/codec v1.1.13 // indirect
