@@ -9,8 +9,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/repo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/pagination"
 )
 

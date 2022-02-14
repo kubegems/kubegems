@@ -8,8 +8,8 @@ import (
 	snapv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	v1 "k8s.io/api/core/v1"
 	"kubegems.io/pkg/apis/storage"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/kubeclient"
 )
 
 type PersistentVolumeClaimRequest struct {

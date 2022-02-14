@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"kubegems.io/pkg/apis/storage"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/kubeclient"
 )
 
 type VolumeSnapshotRequest struct {

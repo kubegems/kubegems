@@ -14,10 +14,10 @@ import (
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/msgbus"
 )

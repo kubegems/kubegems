@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 )
 
 type VirtualDomainHandler struct {

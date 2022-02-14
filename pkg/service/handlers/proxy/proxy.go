@@ -10,9 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 )
 

@@ -2,36 +2,36 @@ package worker
 
 import (
 	"github.com/spf13/pflag"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/chartmuseum"
+	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/git"
+	"kubegems.io/pkg/utils/helm"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/system"
 	"kubegems.io/pkg/worker/dump"
 )
 
 type Options struct {
-	Mysql     *models.MySQLOptions         `yaml:"mysql"`
-	Exporter  *exporter.ExporterOptions    `yaml:"exporter"`
-	Argo      *argo.Options                `yaml:"argo"`
-	Appstore  *chartmuseum.AppstoreOptions `yaml:"appstore"`
-	Dump      *dump.DumpOptions            `yaml:"dump"`
-	System    *system.SystemOptions        `yaml:"system" head_comment:"系统配置"`
-	DebugMode bool                         `yaml:"debugmode"` // enable debug mode
-	LogLevel  string                       `yaml:"loglevel"`
-	Redis     *redis.Options               `yaml:"redis" head_comment:"redis 缓存配置"`
-	Git       *git.Options                 `yaml:"git" head_comment:"git server"`
+	Mysql     *database.MySQLOptions    `yaml:"mysql"`
+	Exporter  *exporter.ExporterOptions `yaml:"exporter"`
+	Argo      *argo.Options             `yaml:"argo"`
+	Appstore  *helm.Options             `yaml:"appstore"`
+	Dump      *dump.DumpOptions         `yaml:"dump"`
+	System    *system.SystemOptions     `yaml:"system" head_comment:"系统配置"`
+	DebugMode bool                      `yaml:"debugmode"` // enable debug mode
+	LogLevel  string                    `yaml:"loglevel"`
+	Redis     *redis.Options            `yaml:"redis" head_comment:"redis 缓存配置"`
+	Git       *git.Options              `yaml:"git" head_comment:"git server"`
 }
 
 func DefaultOptions() *Options {
 	return &Options{
-		Mysql:     models.NewDefaultMySQLOptions(),
+		Mysql:     database.NewDefaultMySQLOptions(),
 		Exporter:  exporter.DefaultExporterOptions(),
 		Argo:      argo.NewDefaultArgoOptions(),
-		Appstore:  chartmuseum.NewDefaultAppstoreOptions(),
+		Appstore:  helm.NewDefaultOptions(),
 		Dump:      dump.NewDefaultDumpOptions(),
 		System:    system.NewDefaultOptions(),
 		DebugMode: false,

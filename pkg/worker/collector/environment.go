@@ -5,7 +5,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/exporter"
 )
 

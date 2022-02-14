@@ -6,14 +6,13 @@ import (
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers/appstore"
-	"kubegems.io/pkg/utils/chartmuseum"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/helm"
 )
 
 type Options struct {
-	Appstore *chartmuseum.AppstoreOptions
+	Appstore *helm.Options
 	Database *gorm.DB
 }
 

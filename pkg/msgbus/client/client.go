@@ -11,7 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/msgbus"
 )

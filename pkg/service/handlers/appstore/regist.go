@@ -3,13 +3,12 @@ package appstore
 import (
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/server/define"
-	"kubegems.io/pkg/utils/chartmuseum"
 	"kubegems.io/pkg/utils/helm"
 )
 
 type AppstoreHandler struct {
 	define.ServerInterface
-	AppStoreOpt       *chartmuseum.AppstoreOptions
+	AppStoreOpt       *helm.Options
 	ChartmuseumClient *helm.ChartmuseumClient
 }
 

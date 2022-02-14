@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 	_ "kubegems.io/docs/swagger"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/config"
 	"kubegems.io/pkg/version"

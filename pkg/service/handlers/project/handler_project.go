@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/msgbus"
 )

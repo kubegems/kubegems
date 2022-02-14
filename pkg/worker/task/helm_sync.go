@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers/appstore"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/helm"
 	"kubegems.io/pkg/utils/workflow"

@@ -8,10 +8,10 @@ import (
 	"time"
 
 	prommodel "github.com/prometheus/common/model"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/prometheus/promql"
 
