@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	_ "kubegems.io/docs/swagger"
 	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service"
 	"kubegems.io/pkg/service/options"
