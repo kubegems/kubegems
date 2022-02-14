@@ -14,7 +14,7 @@ ifeq (${GIT_VERSION},)
 	GIT_VERSION=${GIT_BRANCH}
 endif
 
-IMAGE_REGISTRY?=ghcr.io
+IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
 ifeq (${IMAGE_TAG},master)
    IMAGE_TAG = latest

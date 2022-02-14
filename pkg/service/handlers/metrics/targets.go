@@ -26,7 +26,7 @@ type MetricTarget struct {
 
 	TargetType      string            `json:"target_type"`      // 采集器类型, service/deployment/statefulset/daemonset
 	TargetNamespace string            `json:"target_namespace"` // 要采集的目标namespace, 支持所有namespace: _all
-	TargetName      string            `json:"target_name"`      // 要采集的service or workload名
+	TargetName      string            `json:"target_name"`      // 要采集的service/deployment/statefulset/daemonset名
 	TargetLabels    map[string]string `json:"target_labels"`    // 标签筛选
 
 	TargetEndpoints []TargetEndpoint `json:"target_endpoints"`
@@ -184,7 +184,7 @@ func (h *MonitorHandler) AddOrUpdateMetricTarget(c *gin.Context) {
 // @Param cluster path string true "cluster"
 // @Param namespace path string true "namespace"
 // @Param name path string true "采集器名"
-// @Param type query string true "采集器类型, service or workload"
+// @Param type query string true "采集器类型, service/deployment/statefulset/daemonset"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets/{name} [delete]
 // @Security JWT
