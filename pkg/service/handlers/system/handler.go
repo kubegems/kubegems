@@ -19,7 +19,7 @@ type SystemHandler struct {
 // @Description 获取系统配置
 // @Accept json
 // @Produce json
-// @Param name path string true "配置名, metric"
+// @Param name path string true "配置名, monitor/smtp"
 // @Success 200 {object} handlers.ResponseStruct{Data=models.Config} "Metrics配置"
 // @Router /v1/system/config/{name} [get]
 // @Security JWT
@@ -38,7 +38,7 @@ func (h *SystemHandler) GetConfig(c *gin.Context) {
 // @Description 修改系统配置
 // @Accept json
 // @Produce json
-// @Param name path string true "配置名, metric"
+// @Param name path string true "配置名, monitor/smtp"
 // @Param from body models.Config true "配置内容"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "Metrics配置"
 // @Router /v1/system/config/{name} [put]

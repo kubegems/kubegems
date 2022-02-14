@@ -61,7 +61,7 @@ var (
 				Required:    true,
 				Description: "发件人邮箱密码",
 				Content:     "password",
-				InputType:   "hidden",
+				InputType:   Hidden,
 			},
 		},
 	}
