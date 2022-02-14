@@ -17,7 +17,7 @@ type HttpClient struct {
 	*http.Client
 }
 
-func NewHttpClientFrom(c *Client) *HttpClient {
+func NewHttpClientFrom(c *WrappedClient) *HttpClient {
 	return &HttpClient{
 		BaseAddr: c.BaseAddr.String(),
 		Client: &http.Client{

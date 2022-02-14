@@ -12,8 +12,10 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/models"
-	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/handlers/base"
+	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/redis"
 )
 
 type Cache struct {
@@ -33,8 +35,10 @@ func (c *Cache) Get(key string) (interface{}, error) {
 }
 
 type BaseHandler struct {
-	define.ServerInterface
-	dbcahce *Cache
+	base.BaseHandler
+	Database *database.Database
+	Redis    *redis.Client
+	dbcahce  *Cache
 }
 
 func (h *BaseHandler) DirectNamedRefFunc(c *gin.Context, body interface{}, fun func(ctx context.Context, ref PathRef) (interface{}, error)) {
@@ -76,7 +80,7 @@ func (h *BaseHandler) BindTenantProjectedRefFunc(c *gin.Context, ref *PathRef) e
 	key := fmt.Sprintf("project|%d", params.ProjectID)
 	if obj, err := h.dbcahce.Get(key); err != nil {
 		// try db
-		if err := h.GetDB().Where(project).Preload("Tenant").Take(project).Error; err != nil {
+		if err := h.Database.DB().Where(project).Preload("Tenant").Take(project).Error; err != nil {
 			return err
 		}
 		// save cache
@@ -127,13 +131,13 @@ func (h *BaseHandler) DirectRefNameFunc(c *gin.Context, ref *PathRef) error {
 		proj models.Project
 		env  models.Environment
 	)
-	if err := h.GetDB().First(&ten, models.Tenant{TenantName: ref.Tenant}).Error; err != nil {
+	if err := h.Database.DB().First(&ten, models.Tenant{TenantName: ref.Tenant}).Error; err != nil {
 		return fmt.Errorf("tenant with name %s not exist", ref.Tenant)
 	}
-	if err := h.GetDB().First(&proj, models.Project{ProjectName: ref.Project, TenantID: ten.ID}).Error; err != nil {
+	if err := h.Database.DB().First(&proj, models.Project{ProjectName: ref.Project, TenantID: ten.ID}).Error; err != nil {
 		return fmt.Errorf("no project named %s belong to tenant %s", ref.Project, ref.Tenant)
 	}
-	if err := h.GetDB().First(&env, models.Environment{EnvironmentName: ref.Env, ProjectID: proj.ID}).Error; err != nil {
+	if err := h.Database.DB().First(&env, models.Environment{EnvironmentName: ref.Env, ProjectID: proj.ID}).Error; err != nil {
 		return fmt.Errorf("no environment named %s belong to project %s", ref.Env, ref.Project)
 	}
 
@@ -163,7 +167,7 @@ func (h *BaseHandler) MayBindEnvRefFunc(c *gin.Context, ref *PathRef) error {
 		key := fmt.Sprintf("environment|%d", *params.EnvironmentID)
 		if obj, err := h.dbcahce.Get(key); err != nil {
 			// try db
-			if err := h.GetDB().Preload("Cluster").Take(env).Error; err != nil {
+			if err := h.Database.DB().Preload("Cluster").Take(env).Error; err != nil {
 				return err
 			}
 			// save cache
