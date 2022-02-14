@@ -7,8 +7,8 @@ import (
 
 	promemodel "github.com/prometheus/common/model"
 	"github.com/robfig/cron/v3"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/utils/database"
 )
 

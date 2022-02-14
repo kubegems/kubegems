@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"gorm.io/gorm"
-	"kubegems.io/pkg/models"
 	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/aaa"
 	"kubegems.io/pkg/service/aaa/audit"
 	"kubegems.io/pkg/service/aaa/authorization"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"

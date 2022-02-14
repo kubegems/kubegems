@@ -2,7 +2,7 @@ package aaa
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/models"
 )
 
 type UserInterface interface {

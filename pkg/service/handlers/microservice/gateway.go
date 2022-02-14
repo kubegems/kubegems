@@ -16,11 +16,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/networking"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

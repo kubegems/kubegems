@@ -7,7 +7,7 @@ import (
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"kubegems.io/pkg/kubeclient"
+	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 )

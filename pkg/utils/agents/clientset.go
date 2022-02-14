@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/httpsigs"
 	"kubegems.io/pkg/utils/kube"

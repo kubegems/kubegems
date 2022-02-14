@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 
 	"github.com/gin-gonic/gin"
 )

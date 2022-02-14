@@ -4,9 +4,9 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/exporter"
 )

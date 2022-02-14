@@ -2,7 +2,7 @@ package application
 
 import (
 	"gorm.io/gorm"
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/models"
 )
 
 type DatabseProcessor struct {

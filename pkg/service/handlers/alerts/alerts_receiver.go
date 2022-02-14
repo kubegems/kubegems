@@ -15,9 +15,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/kubeclient"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/prometheus"
 )
 

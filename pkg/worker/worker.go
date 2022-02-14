@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"golang.org/x/sync/errgroup"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"

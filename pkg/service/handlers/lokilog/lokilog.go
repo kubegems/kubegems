@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/kubeclient"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/loki"
 )

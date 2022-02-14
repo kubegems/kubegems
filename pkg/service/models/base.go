@@ -12,10 +12,6 @@ import (
 	"kubegems.io/pkg/utils/redis"
 )
 
-type MySQLOptions = database.MySQLOptions
-
-var NewDefaultMySQLOptions = database.NewDefaultMySQLOptions
-
 func createDatabaseIfNotExists(dsn, dbname string) error {
 	tmpdb, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -32,7 +28,7 @@ func createDatabaseIfNotExists(dsn, dbname string) error {
 	return nil
 }
 
-func MigrateDatabaseAndInitData(opts *MySQLOptions, redisopts *redis.Options) error {
+func MigrateDatabaseAndInitData(opts *database.MySQLOptions, redisopts *redis.Options) error {
 	rediscli, err := redis.NewClient(redisopts)
 	if err != nil {
 		return err

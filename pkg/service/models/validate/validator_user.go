@@ -2,7 +2,7 @@ package validate
 
 import (
 	"github.com/go-playground/validator/v10"
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/models"
 )
 
 func (v *Validator) UserStructLevelValidation(sl validator.StructLevel) {

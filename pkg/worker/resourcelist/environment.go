@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	promemodel "github.com/prometheus/common/model"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 )
 

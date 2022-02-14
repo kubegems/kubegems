@@ -2,14 +2,14 @@ package options
 
 import (
 	"github.com/spf13/pflag"
-	"kubegems.io/pkg/models"
-	"kubegems.io/pkg/oauth"
 	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
+	"kubegems.io/pkg/service/oauth"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/chartmuseum"
+	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/git"
+	"kubegems.io/pkg/utils/helm"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/msgbus"
 	"kubegems.io/pkg/utils/redis"
@@ -21,9 +21,9 @@ type Options struct {
 	DebugMode    bool                                     `yaml:"debugmode" head_comment:"debug模式开关"`
 	TestMode     bool                                     `yaml:"testmode" head_comment:"测试模式"`
 	System       *system.SystemOptions                    `yaml:"system" head_comment:"系统配置"`
-	Mysql        *models.MySQLOptions                     `yaml:"mysql" head_comment:"数据库配置"`
+	Mysql        *database.MySQLOptions                   `yaml:"mysql" head_comment:"数据库配置"`
 	Redis        *redis.Options                           `yaml:"redis" head_comment:"redis 缓存配置"`
-	Appstore     *chartmuseum.AppstoreOptions             `yaml:"appstore" head_comment:"appstore helm地址配置"`
+	Appstore     *helm.Options                            `yaml:"appstore" head_comment:"appstore helm地址配置"`
 	Oauth        *oauth.OauthOptions                      `yaml:"oauth" head_comment:"oauth配置"`
 	Git          *git.Options                             `yaml:"git" head_comment:"git 配置"`
 	Argo         *argo.Options                            `yaml:"argo" head_comment:"argo 相关配置"`
@@ -41,9 +41,9 @@ func DefaultOptions() *Options {
 		Git:          git.NewDefaultOptions(),
 		Argo:         argo.NewDefaultArgoOptions(),
 		Redis:        redis.NewDefaultOptions(),
-		Appstore:     chartmuseum.NewDefaultAppstoreOptions(),
+		Appstore:     helm.NewDefaultOptions(),
 		Oauth:        oauth.NewDefaultOauthOptions(),
-		Mysql:        models.NewDefaultMySQLOptions(),
+		Mysql:        database.NewDefaultMySQLOptions(),
 		Exporter:     exporter.DefaultExporterOptions(),
 		Msgbus:       msgbus.DefaultMsgbusOptions(),
 		Installer:    kube.DefaultInstallerOptions(),
