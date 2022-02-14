@@ -2,12 +2,14 @@ package application
 
 import (
 	"github.com/gin-gonic/gin"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 )
 
 type ApplicationHandler struct {
 	BaseHandler
 	ApplicationProcessor *ApplicationProcessor
+	Agents               *agents.ClientSet
 	Manifest             ManifestHandler
 	Task                 *TaskHandler
 	// self cluster cli

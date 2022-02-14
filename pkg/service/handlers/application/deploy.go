@@ -12,6 +12,7 @@ import (
 	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/utils/git"
 )
 
@@ -67,15 +68,17 @@ func MustNewApplicationDeployHandler(server define.ServerInterface) *Application
 	if err != nil {
 		panic(err)
 	}
-
-	base := BaseHandler{
-		ServerInterface: server,
-		dbcahce:         &Cache{},
-	}
 	database := server.GetDataBase()
 	argocli := server.GetArgocdClient()
 	agents := server.GetAgentsClientSet()
 	redis := server.GetRedis()
+
+	base := BaseHandler{
+		dbcahce:     &Cache{},
+		BaseHandler: *base.NewBaseHandler(server, server, server),
+		Database:    database,
+		Redis:       redis,
+	}
 
 	h := &ApplicationHandler{
 		BaseHandler: base,

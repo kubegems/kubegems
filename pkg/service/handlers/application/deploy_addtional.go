@@ -42,7 +42,7 @@ type IngressPorts struct {
 // @Security JWT
 func (h *ApplicationHandler) ListRelatedService(c *gin.Context) {
 	h.LocalAndRemoteCliFunc(c, nil,
-		func(ctx context.Context, local GitStore, remote *agents.TypedClient, namespace string, _ PathRef) (interface{}, error) {
+		func(ctx context.Context, local GitStore, remote agents.Client, namespace string, _ PathRef) (interface{}, error) {
 			// 从local拿到 service
 			localsvcs := &corev1.ServiceList{}
 			_ = local.List(ctx, localsvcs)

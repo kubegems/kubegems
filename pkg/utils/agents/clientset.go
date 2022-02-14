@@ -52,9 +52,9 @@ func (h *ClientSet) Clusters() []string {
 	return ret
 }
 
-func (h *ClientSet) ClientOf(ctx context.Context, name string) (*Client, error) {
+func (h *ClientSet) ClientOf(ctx context.Context, name string) (*WrappedClient, error) {
 	if v, ok := h.clients.Load(name); ok {
-		return v.(*Client), nil
+		return v.(*WrappedClient), nil
 	}
 	if client, err := h.newclient(ctx, name); err != nil {
 		return nil, err
@@ -67,13 +67,13 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (*Client, error) 
 	}
 }
 
-func (h *ClientSet) extendClients(cli *Client) {
+func (h *ClientSet) extendClients(cli *WrappedClient) {
 	cli.HttpClient = NewHttpClientFrom(cli)
 	cli.ProxyClient = NewProxyClientFrom(cli)
 	cli.TypedClient = NewTypedClientFrom(cli)
 }
 
-func (h *ClientSet) ClientOfManager(ctx context.Context) (*Client, error) {
+func (h *ClientSet) ClientOfManager(ctx context.Context) (*WrappedClient, error) {
 	ret := []string{}
 	cluster := &models.Cluster{Primary: true}
 	if err := h.databse.DB().Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
@@ -86,7 +86,7 @@ func (h *ClientSet) ClientOfManager(ctx context.Context) (*Client, error) {
 	return h.ClientOf(ctx, managerclustername)
 }
 
-func (h *ClientSet) newclient(ctx context.Context, name string) (*Client, error) {
+func (h *ClientSet) newclient(ctx context.Context, name string) (*WrappedClient, error) {
 	cluster := &models.Cluster{}
 	if err := h.databse.DB().First(&cluster, "cluster_name = ?", name).Error; err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (h *ClientSet) newclient(ctx context.Context, name string) (*Client, error)
 		if err != nil {
 			return nil, err
 		}
-		cli := &Client{
+		cli := &WrappedClient{
 			Name:     name,
 			BaseAddr: baseurl,
 			Timeout:  time.Second * time.Duration(h.options.AgentTimeout),
@@ -129,7 +129,7 @@ func (h *ClientSet) newclient(ctx context.Context, name string) (*Client, error)
 		if err != nil {
 			return nil, err
 		}
-		cli := &Client{
+		cli := &WrappedClient{
 			Name:     name,
 			Timeout:  time.Second * time.Duration(h.options.AgentTimeout),
 			BaseAddr: baseurl,
@@ -144,7 +144,7 @@ func (h *ClientSet) newclient(ctx context.Context, name string) (*Client, error)
 		if err != nil {
 			return nil, err
 		}
-		cli := &Client{
+		cli := &WrappedClient{
 			Name:     name,
 			Timeout:  time.Second * time.Duration(h.options.AgentTimeout),
 			BaseAddr: baseurl,
