@@ -56,6 +56,11 @@ generate: ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefiniti
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"					# Generate DeepCopy, DeepCopyInto, DeepCopyObject
 	$(KUSTOMIZE) build ./deploy/default > deploy/bundle.yaml										# Build bundle.yaml
 
+swagger:
+	# go mod vendor
+	# 需要 go install github.com/swaggo/swag/cmd/swag@v1.6.7 其他版本不太行
+	swag i --parseVendor -g cmd/main.go -o docs/swagger
+
 check: linter ## Static code check.
 	${LINTER} run ./...
 

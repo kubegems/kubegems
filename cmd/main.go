@@ -1,5 +1,15 @@
 package main
 
+// @title kubegems
+// @version 1.0
+// @description kubegems apis swagger doc
+
+// @BasePath /
+
+// @securityDefinitions.apikey JWT
+// @in header
+// @name Authorization
+
 import (
 	"fmt"
 	"os"
