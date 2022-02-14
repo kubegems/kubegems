@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/aaa/audit"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 )
 

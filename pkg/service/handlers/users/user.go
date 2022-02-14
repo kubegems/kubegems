@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 
 	"github.com/gin-gonic/gin"

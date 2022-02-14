@@ -13,8 +13,8 @@ import (
 	"github.com/goharbor/harbor/src/pkg/scan/vuln"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/harbor"
 )
 

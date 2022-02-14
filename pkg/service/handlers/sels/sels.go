@@ -2,8 +2,8 @@ package sels
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 )
 
 /*

@@ -1,8 +1,8 @@
 package logqueryhandler
 
 import (
-	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/models"
 
 	"github.com/gin-gonic/gin"
 )
