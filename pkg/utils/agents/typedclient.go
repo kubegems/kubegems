@@ -30,7 +30,7 @@ import (
 
 const jsonContentType = "application/json"
 
-func NewTypedClientFrom(client *Client) *TypedClient {
+func NewTypedClientFrom(client *WrappedClient) *TypedClient {
 	return &TypedClient{
 		serveraddr: client.BaseAddr.String(),
 		http:       &http.Client{Transport: client.transport.Clone()},
@@ -44,7 +44,7 @@ type TypedClient struct {
 	serveraddr string
 }
 
-var _ client.Client = &TypedClient{}
+var _ Client = &TypedClient{}
 
 func (c *TypedClient) RESTMapper() meta.RESTMapper {
 	panic("not implemented") // TODO: Implement

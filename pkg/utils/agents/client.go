@@ -1,12 +1,16 @@
 package agents
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Client struct {
+type WrappedClient struct {
 	Name      string
 	BaseAddr  *url.URL
 	Timeout   time.Duration
@@ -15,4 +19,14 @@ type Client struct {
 	TypedClient *TypedClient
 	ProxyClient *ProxyClient
 	HttpClient  *HttpClient
+}
+
+type Client interface {
+	client.Client
+	ClientExtend
+}
+
+type ClientExtend interface {
+	DoRequest(ctx context.Context, method, path string, body io.Reader, into interface{}) error
+	DoRawRequest(ctx context.Context, method, path string, body io.Reader) (*http.Response, error)
 }

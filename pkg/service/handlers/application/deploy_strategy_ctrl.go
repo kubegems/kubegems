@@ -40,7 +40,7 @@ type StrategyDeploymentControl struct {
 func (h *ApplicationHandler) StrategyDeploymentControl(c *gin.Context) {
 	req := &StrategyDeploymentControl{}
 
-	ctrlfunc := func(ctx context.Context, store GitStore, cli *agents.TypedClient, namespace string, ref PathRef) (interface{}, error) {
+	ctrlfunc := func(ctx context.Context, store GitStore, cli agents.Client, namespace string, ref PathRef) (interface{}, error) {
 		log.FromContextOrDiscard(ctx).Info("strategy deployment control", "command", req.Command, "args", req.Args)
 
 		deployment, err := ParseMainDeployment(ctx, store)

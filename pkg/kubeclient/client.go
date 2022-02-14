@@ -31,11 +31,6 @@ func DoRequest(method, cluster, url string, body interface{}, into interface{}) 
 }
 
 // Deprecated: 将依赖内置到调用方内部，避免使用全局单例
-func GetTypedClient(ctx context.Context, cluster string) (*agents.TypedClient, error) {
-	return _kubeClient.GetTypedClient(ctx, cluster)
-}
-
-// Deprecated: 将依赖内置到调用方内部，避免使用全局单例
 func GetClient() *KubeClient {
 	return _kubeClient
 }

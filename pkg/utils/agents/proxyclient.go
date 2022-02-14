@@ -14,10 +14,10 @@ import (
 type ProxyClient struct {
 	HTTPProxy       *httputil.ReverseProxy
 	WebsockerDialer *websocket.Dialer
-	cli             *Client
+	cli             *WrappedClient
 }
 
-func NewProxyClientFrom(client *Client) *ProxyClient {
+func NewProxyClientFrom(client *WrappedClient) *ProxyClient {
 	name := client.Name
 	targetURL := client.BaseAddr
 	p := &httputil.ReverseProxy{

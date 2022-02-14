@@ -196,7 +196,7 @@ type DeploymentStrategyWithDeployment struct {
 // @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/analysistemplate [get]
 // @Security JWT
 func (h *ApplicationHandler) ListAnalysisTemplate(c *gin.Context) {
-	h.RemoteCliFunc(c, nil, func(ctx context.Context, cli *agents.TypedClient, _ string, _ PathRef) (interface{}, error) {
+	h.RemoteCliFunc(c, nil, func(ctx context.Context, cli agents.Client, _ string, _ PathRef) (interface{}, error) {
 		analysisTemplateList := &rolloutsv1alpha1.ClusterAnalysisTemplateList{}
 		if err := cli.List(ctx, analysisTemplateList); err != nil {
 			return nil, err
@@ -219,7 +219,7 @@ func (h *ApplicationHandler) ListAnalysisTemplate(c *gin.Context) {
 // @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/application/{name}/strategydeploystatus [get]
 // @Security JWT
 func (h *ApplicationHandler) StrategyDeploymentStatus(c *gin.Context) {
-	h.LocalAndRemoteCliFunc(c, nil, func(ctx context.Context, store GitStore, cli *agents.TypedClient, namespace string, _ PathRef) (interface{}, error) {
+	h.LocalAndRemoteCliFunc(c, nil, func(ctx context.Context, store GitStore, cli agents.Client, namespace string, _ PathRef) (interface{}, error) {
 		deployment, err := ParseMainDeployment(ctx, store)
 		if err != nil {
 			return nil, err
@@ -273,15 +273,15 @@ func (h *ApplicationHandler) StrategyDeploymentStatus(c *gin.Context) {
 }
 
 type (
-	LocalAndRemoteStoreFunc func(ctx context.Context, local GitStore, remote *agents.TypedClient, namespace string, ref PathRef) (interface{}, error)
-	RemoteStoreFunc         func(ctx context.Context, remote *agents.TypedClient, namespace string, ref PathRef) (interface{}, error)
+	LocalAndRemoteStoreFunc func(ctx context.Context, local GitStore, remote agents.Client, namespace string, ref PathRef) (interface{}, error)
+	RemoteStoreFunc         func(ctx context.Context, remote agents.Client, namespace string, ref PathRef) (interface{}, error)
 	LocalStoreFunc          func(ctx context.Context, store GitStore, ref PathRef) (interface{}, error)
 )
 
 func (h *ApplicationHandler) RemoteCliFunc(c *gin.Context, body interface{}, fun RemoteStoreFunc) {
 	h.NamedRefFunc(c, body, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		cluster, namespace := ClusterNamespaceFromCtx(ctx)
-		p, err := h.GetAgentsClientSet().ClientOf(ctx, cluster)
+		p, err := h.Agents.ClientOf(ctx, cluster)
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +291,7 @@ func (h *ApplicationHandler) RemoteCliFunc(c *gin.Context, body interface{}, fun
 }
 
 func (h *ApplicationHandler) LocalAndRemoteCliFunc(c *gin.Context, body interface{}, fun LocalAndRemoteStoreFunc, msg string) {
-	h.RemoteCliFunc(c, body, func(ctx context.Context, remote *agents.TypedClient, namespace string, ref PathRef) (interface{}, error) {
+	h.RemoteCliFunc(c, body, func(ctx context.Context, remote agents.Client, namespace string, ref PathRef) (interface{}, error) {
 		var data interface{}
 		updategfsfunc := func(ctx context.Context, store GitStore) error {
 			got, err := fun(ctx, store, remote, namespace, ref)

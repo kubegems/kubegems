@@ -327,7 +327,7 @@ func (h *ImageHandler) completeRegistryOption(options *RegistryOptions, imgname 
 	hostname := spec.Hostname()
 	registries := []models.Registry{}
 
-	if err := h.GetDB().Where(&models.Registry{ProjectID: projectid}).Find(&registries).Error; err != nil {
+	if err := h.Database.DB().Where(&models.Registry{ProjectID: projectid}).Find(&registries).Error; err != nil {
 		return err
 	}
 	for _, registry := range registries {
