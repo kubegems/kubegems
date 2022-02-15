@@ -19,11 +19,11 @@ var NewContext = logr.NewContext
 var FromContextOrDiscard = logr.FromContextOrDiscard
 
 func Error(err error, msg string, keysAndValues ...interface{}) {
-	LogrLogger.Error(err, msg, keysAndValues...)
+	logr.WithCallDepth(LogrLogger, 1).Error(err, msg, keysAndValues...)
 }
 
 func Info(msg string, keysAndValues ...interface{}) {
-	LogrLogger.Info(msg, keysAndValues...)
+	logr.WithCallDepth(LogrLogger, 1).Info(msg, keysAndValues...)
 }
 
 func V(level int) logr.Logger {

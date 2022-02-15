@@ -197,7 +197,7 @@ func Run(ctx context.Context, options *options.Options) error {
 		return prometheus.RunExporter(ctx, options.Exporter, exporterHandler)
 	})
 	eg.Go(func() error {
-		return auditInstance.Consumer()
+		return auditInstance.Consumer(ctx)
 	})
 	return eg.Wait()
 }

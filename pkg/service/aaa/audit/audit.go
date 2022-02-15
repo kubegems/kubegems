@@ -2,6 +2,7 @@ package audit
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -150,12 +151,17 @@ func (audit *AuditInstance) Log(username, module, tenant, operation, name string
 	audit.logQueue <- auditLog
 }
 
-func (audit *AuditInstance) Consumer() error {
+func (audit *AuditInstance) Consumer(ctx context.Context) error {
 	for {
-		auditLog := <-audit.logQueue
-		if err := audit.db.Create(&auditLog).Error; err != nil {
-			o, _ := json.Marshal(auditLog)
-			log.Errorf("can't record audit log: (%s), err: %v", string(o), err)
+		select {
+		case <-ctx.Done():
+			log.Info("audit log consumer exit")
+			return nil
+		case auditLog := <-audit.logQueue:
+			if err := audit.db.Create(&auditLog).Error; err != nil {
+				o, _ := json.Marshal(auditLog)
+				log.Errorf("can't record audit log: (%s), err: %v", string(o), err)
+			}
 		}
 	}
 }
