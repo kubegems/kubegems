@@ -38,12 +38,13 @@ func Run(ctx context.Context) error {
 			return ctx
 		},
 	}
+	log := log.FromContextOrDiscard(ctx)
 
 	go func() {
 		<-ctx.Done()
 		_ = server.Shutdown(ctx)
+		log.Info("pprof stopped")
 	}()
-
-	log.FromContextOrDiscard(ctx).Info("debug pprof listen", "addr", server.Addr)
+	log.Info("debug pprof listen", "addr", server.Addr)
 	return server.ListenAndServe()
 }
