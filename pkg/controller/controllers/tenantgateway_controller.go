@@ -42,12 +42,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-const (
-	NginxImageRepo = "kubegems/nginx-ingress"
-	NginxImageTag  = "1.11.1"
-)
+type TenantGatewayOptions struct {
+	NginxImageRepo   string
+	NginxImageTag    string
+	NginxMetricsPort uint16
+}
 
-var nginxMetricsPort uint16 = 9113 // 默认也是9113
+func DefaultTenantGatewayOptions() TenantGatewayOptions {
+	return TenantGatewayOptions{
+		NginxImageRepo:   "kubegems/nginx-ingress",
+		NginxImageTag:    "1.11.1",
+		NginxMetricsPort: 9113,
+	}
+}
 
 // TenantGatewayReconciler reconciles a TenantGateway object
 type TenantGatewayReconciler struct {
@@ -55,6 +62,7 @@ type TenantGatewayReconciler struct {
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+	Opts     TenantGatewayOptions
 }
 
 //+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantgateways,verbs=get;list;watch;create;update;patch;delete;deletecollection
@@ -112,7 +120,7 @@ func (r *TenantGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}, found); err != nil {
 		if apierrors.IsNotFound(err) {
 			// 没有nic，执行create
-			nic := nginxIngressControllerForTenantGateway(&tg)
+			nic := r.nginxIngressControllerForTenantGateway(&tg)
 			if err := r.Create(ctx, nic); err != nil {
 				r.Recorder.Eventf(&tg, corev1.EventTypeWarning, utils.ReasonFailedCreate, "Failed to create NginxIngressController %s: %v", nic.Name, err)
 				log.Info("Error create NginxIngressController")
@@ -124,8 +132,8 @@ func (r *TenantGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	} else {
 		// 找到该gateway，执行更新
-		if hasNginxIngressControllerChanged(found, &tg) {
-			updated := updateNginxIngressController(found, &tg)
+		if r.hasNginxIngressControllerChanged(found, &tg) {
+			updated := r.updateNginxIngressController(found, &tg)
 			if err := r.Update(ctx, updated); err != nil {
 				r.Recorder.Eventf(&tg, corev1.EventTypeWarning, utils.ReasonFailedCreate, "Failed to update NginxIngressController %s: %v", found.Name, err)
 				log.Error(err, "Error update NginxIngressController")
@@ -181,7 +189,7 @@ func (r *TenantGatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func hasNginxIngressControllerChanged(nic *nginx_v1alpha1.NginxIngressController, tg *gemsv1beta1.TenantGateway) bool {
+func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1alpha1.NginxIngressController, tg *gemsv1beta1.TenantGateway) bool {
 	// label
 	if nic.Labels[gemlabels.LabelTenant] != tg.Spec.Tenant {
 		return true
@@ -192,7 +200,7 @@ func hasNginxIngressControllerChanged(nic *nginx_v1alpha1.NginxIngressController
 		return true
 	}
 
-	if strings.ToLower(nic.Spec.Type) != "deploymennt" {
+	if strings.ToLower(nic.Spec.Type) != "deployment" {
 		return true
 	}
 
@@ -220,7 +228,7 @@ func hasNginxIngressControllerChanged(nic *nginx_v1alpha1.NginxIngressController
 	}
 
 	// image
-	if nic.Spec.Image.Repository != NginxImageRepo || nic.Spec.Image.Tag != NginxImageTag {
+	if nic.Spec.Image.Repository != r.Opts.NginxImageRepo || nic.Spec.Image.Tag != r.Opts.NginxImageTag {
 		return true
 	}
 
@@ -241,7 +249,7 @@ func hasNginxIngressControllerChanged(nic *nginx_v1alpha1.NginxIngressController
 	return false
 }
 
-func nginxIngressControllerForTenantGateway(tg *gemsv1beta1.TenantGateway) *nginx_v1alpha1.NginxIngressController {
+func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gemsv1beta1.TenantGateway) *nginx_v1alpha1.NginxIngressController {
 	return &nginx_v1alpha1.NginxIngressController{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tg.Name,
@@ -259,21 +267,21 @@ func nginxIngressControllerForTenantGateway(tg *gemsv1beta1.TenantGateway) *ngin
 			IngressClass: tg.Spec.IngressClass,
 			Service:      (*nginx_v1alpha1.Service)(tg.Spec.Service),
 			Image: nginx_v1alpha1.Image{
-				Repository: NginxImageRepo,
-				Tag:        NginxImageTag,
-				PullPolicy: string(corev1.PullAlways),
+				Repository: r.Opts.NginxImageRepo,
+				Tag:        r.Opts.NginxImageTag,
+				PullPolicy: string(corev1.PullIfNotPresent),
 			},
 			Workload:      (*nginx_v1alpha1.Workload)(tg.Spec.Workload),
 			ConfigMapData: tg.Spec.ConfigMapData,
 			Prometheus: &nginx_v1alpha1.Prometheus{
 				Enable: true,
-				Port:   &nginxMetricsPort,
+				Port:   &r.Opts.NginxMetricsPort,
 			},
 		},
 	}
 }
 
-func updateNginxIngressController(nic *nginx_v1alpha1.NginxIngressController, tg *gemsv1beta1.TenantGateway) *nginx_v1alpha1.NginxIngressController {
+func (r *TenantGatewayReconciler) updateNginxIngressController(nic *nginx_v1alpha1.NginxIngressController, tg *gemsv1beta1.TenantGateway) *nginx_v1alpha1.NginxIngressController {
 	nic.SetLabels(map[string]string{
 		gemlabels.LabelTenant:      tg.Spec.Tenant,
 		gemlabels.LabelApplication: tg.Name,
@@ -285,15 +293,15 @@ func updateNginxIngressController(nic *nginx_v1alpha1.NginxIngressController, tg
 	nic.Spec.IngressClass = tg.Spec.IngressClass
 	nic.Spec.Service = (*nginx_v1alpha1.Service)(tg.Spec.Service)
 	nic.Spec.Image = nginx_v1alpha1.Image{
-		Repository: NginxImageRepo,
-		Tag:        NginxImageTag,
-		PullPolicy: "Always",
+		Repository: r.Opts.NginxImageRepo,
+		Tag:        r.Opts.NginxImageTag,
+		PullPolicy: string(corev1.PullIfNotPresent),
 	}
 	nic.Spec.Workload = (*nginx_v1alpha1.Workload)(tg.Spec.Workload)
 	nic.Spec.ConfigMapData = tg.Spec.ConfigMapData
 	nic.Spec.Prometheus = &nginx_v1alpha1.Prometheus{
 		Enable: true,
-		Port:   &nginxMetricsPort,
+		Port:   &r.Opts.NginxMetricsPort,
 	}
 	return nic
 }
