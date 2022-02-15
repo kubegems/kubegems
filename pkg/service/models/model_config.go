@@ -13,6 +13,8 @@ import (
 const (
 	monitorConfigName = "monitor"
 	smtpConfigName    = "smtp"
+
+	metricsYamlKey = "metrics.yaml"
 )
 
 var (
@@ -21,7 +23,7 @@ var (
 		Name:        monitorConfigName,
 		Description: "监控告警",
 		Items: map[string]ConfigItem{
-			"metrics.yaml": {
+			metricsYamlKey: {
 				Title:       "监控告警规则",
 				Required:    true,
 				Description: "监控告警规则配置yaml",
@@ -78,7 +80,7 @@ func InitConfig(db *gorm.DB) {
 	}
 	for i := range cfgs {
 		if cfgs[i].Name == monitorConfigName {
-			if item, ok := cfgs[i].Items["metrics.yaml"]; ok {
+			if item, ok := cfgs[i].Items[metricsYamlKey]; ok {
 				// content取出来是map[string]interface{}，要转为struct才能reload
 				bts, err := json.Marshal(item.Content)
 				if err != nil {
@@ -145,7 +147,7 @@ func (c ConfigItems) GormDataType() string {
 // 由于metric做了缓存，需要reload
 func (c *Config) AfterSave(tx *gorm.DB) error {
 	if c.Name == monitorConfigName {
-		if item, ok := c.Items["metrics.yaml"]; ok {
+		if item, ok := c.Items[metricsYamlKey]; ok {
 			switch v := item.Content.(type) {
 			case prometheus.GemsMetricConfig:
 				return v.Reload()

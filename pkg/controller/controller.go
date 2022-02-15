@@ -28,6 +28,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/controller/controllers"
 	gemscontroller "kubegems.io/pkg/controller/controllers"
 	"kubegems.io/pkg/controller/webhooks"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -57,12 +58,14 @@ func init() {
 type Options struct {
 	MetricsAddr          string
 	EnableLeaderElection bool
+	TenantGatewayOptions controllers.TenantGatewayOptions
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
 		MetricsAddr:          ":8080",
 		EnableLeaderElection: false,
+		TenantGatewayOptions: controllers.DefaultTenantGatewayOptions(),
 	}
 }
 
@@ -115,6 +118,7 @@ func Run(ctx context.Context, options *Options) error {
 		Log:      ctrl.Log.WithName("controllers").WithName("TenantGateway"),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("TenantGateway"),
+		Opts:     options.TenantGatewayOptions,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TenantGateway")
 		return err
