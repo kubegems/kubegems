@@ -404,38 +404,6 @@ func (h *ProjectHandler) DeleteProjectUser(c *gin.Context) {
 	handlers.NoContent(c, nil)
 }
 
-// PostProjectApplication 创建一个属于 Project 的Application
-// @Tags Project
-// @Summary 创建一个属于 Project 的Application
-// @Description 创建一个属于 Project 的Application
-// @Accept json
-// @Produce json
-// @Param project_id path uint true "project_id"
-// @Param param body models.Application true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.Application} "models.Application"
-// @Router /v1/project/{project_id}/application [post]
-// @Security JWT
-func (h *ProjectHandler) PostProjectApplication(c *gin.Context) {
-	var app models.Application
-	if err := c.BindJSON(&app); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	if strconv.Itoa(int(app.ProjectID)) != c.Param(PrimaryKeyName) {
-		handlers.NotOK(c, fmt.Errorf("请求体参数和URL参数ID不同"))
-		return
-	}
-	if err := h.GetDB().Create(&app).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	h.SetAuditData(c, "创建", "应用", app.ApplicationName)
-	h.SetExtraAuditData(c, models.ResProject, app.ProjectID)
-
-	handlers.Created(c, app)
-}
-
 // ListProjectEnvironment 获取属于Project的 Environment 列表
 // @Tags Project
 // @Summary 获取属于 Project 的 Environment 列表

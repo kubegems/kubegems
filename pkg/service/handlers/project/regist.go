@@ -29,9 +29,6 @@ func (h *ProjectHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.DELETE("/project/:project_id/user/:user_id",
 		h.CheckByProjectID, h.DeleteProjectUser)
 
-	rg.POST("/project/:project_id/application/:application_id",
-		h.CheckByProjectID, h.PostProjectApplication)
-
 	rg.GET("/project/:project_id/environment", h.CheckByProjectID, h.ListProjectEnvironment)
 	rg.GET("/project/:project_id/environment/:environment_id", h.CheckByEnvironmentID, h.RetrieveProjectEnvironment)
 	rg.POST("/project/:project_id/environment",

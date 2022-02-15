@@ -27,6 +27,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	gemlabels "kubegems.io/pkg/apis/gems"
+	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
@@ -109,7 +110,7 @@ func (h *ApplicationProcessor) Get(ctx context.Context, ref PathRef) (*DeploiedM
 	return CompleteDeploiedManifestRuntime(app, dm), nil
 }
 
-func (h *ApplicationProcessor) List(ctx context.Context, ref PathRef) ([]*DeploiedManifest, error) {
+func (h *ApplicationProcessor) List(ctx context.Context, ref PathRef) ([]DeploiedManifest, error) {
 	manifests, err := h.Manifest.List(ctx, ref, WithImages())
 	if err != nil {
 		return nil, err
@@ -151,9 +152,9 @@ func (h *ApplicationProcessor) List(ctx context.Context, ref PathRef) ([]*Deploi
 		}
 	}
 	// tolist
-	deploiedManifests := make([]*DeploiedManifest, 0, len(statusmap))
+	deploiedManifests := make([]DeploiedManifest, 0, len(statusmap))
 	for _, item := range statusmap {
-		deploiedManifests = append(deploiedManifests, item)
+		deploiedManifests = append(deploiedManifests, *item)
 	}
 
 	// sort
@@ -170,6 +171,12 @@ func (h *ApplicationProcessor) List(ctx context.Context, ref PathRef) ([]*Deploi
 		}
 		return strings.Compare(deploiedManifests[i].Name, deploiedManifests[j].Name) < 1
 	})
+
+	// sync database
+	if err := h.DataBase.SyncDeploies(ctx, ref, deploiedManifests); err != nil {
+		log.Error(err, "sync database failed")
+	}
+
 	return deploiedManifests, nil
 }
 
@@ -220,6 +227,10 @@ func (h *ApplicationProcessor) Create(ctx context.Context, ref PathRef) error {
 	// 先git copy
 	files := []FileContent{}
 
+	manifest, err := h.Manifest.Get(ctx, ref)
+	if err != nil {
+		return err
+	}
 	// copy from src
 	srcref := PathRef{Tenant: ref.Tenant, Project: ref.Project, Env: "", Name: ref.Name} // base env
 	if err := h.Manifest.ContentFunc(ctx, srcref, func(ctx context.Context, fs billy.Filesystem) error {
@@ -257,6 +268,12 @@ func (h *ApplicationProcessor) Create(ctx context.Context, ref PathRef) error {
 			return err
 		}
 	}
+
+	// sync database
+	if err := h.DataBase.SyncDeploy(ctx, ref, DeploiedManifest{Manifest: *manifest}); err != nil {
+		log.Error(err, "sync database failed")
+	}
+
 	return nil
 }
 
@@ -599,6 +616,11 @@ func (h *ApplicationProcessor) deployArgoApplication(ctx context.Context, ref Pa
 }
 
 func (h *ApplicationProcessor) Remove(ctx context.Context, ref PathRef) error {
+	manifest, err := h.Manifest.Get(ctx, ref)
+	if err != nil {
+		return err
+	}
+
 	// 删除 argo app
 	if err := h.Argo.RemoveArgoApp(ctx, ref.FullName()); err != nil {
 		if !errors.IsNotFound(err) && grpcstatus.Code(err) != codes.NotFound {
@@ -609,6 +631,12 @@ func (h *ApplicationProcessor) Remove(ctx context.Context, ref PathRef) error {
 	if err := h.Manifest.Remove(ctx, ref); err != nil {
 		return err
 	}
+
+	// sync database
+	if err := h.DataBase.RemoveDeploy(ctx, ref, DeploiedManifest{Manifest: *manifest}); err != nil {
+		log.Error(err, "remove database failed")
+	}
+
 	return nil
 }
 
