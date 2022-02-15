@@ -53,3 +53,18 @@ linters-settings:
         bson: goCamel
         avro: goCamel
         mapstructure: kebab
+  gomnd:
+    # List of enabled checks, see https://github.com/tommy-muehle/go-mnd/#checks for description.
+    # The numbers should be written as string.
+    # Values always ignored: "1", "1.0", "0" and "0.0"
+    ignored-numbers:
+      - '0666'
+      - '0755'
+    # List of file patterns to exclude from analysis.
+    # Values always ignored: `.+_test.go`
+    ignored-files:
+      - '*.generate.go'
+    # List of function patterns to exclude from analysis.
+    # Values always ignored: `time.Time`
+    ignored-functions:
+      - log.V*

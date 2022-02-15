@@ -32,7 +32,7 @@ func (h *ApplicationHandler) ListImages(c *gin.Context) {
 		ret := make([]DeployImages, 0, len(dm))
 		// 转换为仅镜像格式
 		for i := range dm {
-			ret = append(ret, ConvertDeploiedManifestToView(*dm[i]))
+			ret = append(ret, ConvertDeploiedManifestToView(dm[i]))
 		}
 		return ret, nil
 	})
