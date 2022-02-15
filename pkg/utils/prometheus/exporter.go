@@ -25,6 +25,7 @@ func RunExporter(ctx context.Context, opts *exporter.ExporterOptions, handler *e
 	go func() {
 		<-ctx.Done()
 		server.Close()
+		log.Info("prometheus exporter stopped")
 	}()
 	log.FromContextOrDiscard(ctx).Info("prometheus exporter listen on", "address", opts.Listen)
 	return server.ListenAndServe()
