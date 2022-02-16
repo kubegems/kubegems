@@ -31,7 +31,7 @@ import (
 
 type VirtualSpaceHandler struct {
 	define.ServerInterface
-	Logger *log.Logger
+	Agents *agents.ClientSet
 }
 
 var (
@@ -410,7 +410,7 @@ func (h *VirtualSpaceHandler) GetWorkload(c *gin.Context) {
 		// list workload
 		cli, err := h.clientOf(ctx, env.Cluster.ClusterName)
 		if err != nil {
-			h.Logger.Errorf("failed get client of cluster %s: %s", env.Cluster.ClusterName, err.Error())
+			log.Errorf("failed get client of cluster %s: %s", env.Cluster.ClusterName, err.Error())
 			return nil, err
 		}
 
@@ -481,7 +481,7 @@ func (h *VirtualSpaceHandler) ListWorkload(c *gin.Context) {
 		// list workload
 		cli, err := h.clientOf(ctx, env.Cluster.ClusterName)
 		if err != nil {
-			h.Logger.Errorf("failed get client of cluster %s: %s", env.Cluster.ClusterName, err.Error())
+			log.Errorf("failed get client of cluster %s: %s", env.Cluster.ClusterName, err.Error())
 			return nil, err
 		}
 
@@ -975,12 +975,8 @@ func (h *VirtualSpaceHandler) ListIstioResources(c *gin.Context) {
 	})
 }
 
-func (h *VirtualSpaceHandler) clientOf(ctx context.Context, cluster string) (*agents.TypedClient, error) {
-	cli, err := h.GetAgentsClientSet().ClientOf(ctx, cluster)
-	if err != nil {
-		return nil, err
-	}
-	return cli.TypedClient, nil
+func (h *VirtualSpaceHandler) clientOf(ctx context.Context, cluster string) (agents.Client, error) {
+	return h.GetAgentsClientSet().ClientOf(ctx, cluster)
 }
 
 func (h *VirtualSpaceHandler) RegistRouter(rg *gin.RouterGroup) {

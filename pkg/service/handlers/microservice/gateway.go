@@ -75,7 +75,7 @@ func (h *IstioGatewayHandler) ListGateway(c *gin.Context) {
 	op := pkgv1alpha1.IstioOperator{}
 	deps := appsv1.DeploymentList{} // 获取副本数
 	svcs := corev1.ServiceList{}    // 获取端口
-	if err := kubeclient.Execute(ctx, cluster.ClusterName, func(tc *agents.TypedClient) error {
+	if err := kubeclient.Execute(ctx, cluster.ClusterName, func(tc agents.Client) error {
 		if err := tc.Get(ctx, types.NamespacedName{
 			Namespace: istioOperatorNamespace,
 			Name:      istioOperatorName,
@@ -159,7 +159,7 @@ func (h *IstioGatewayHandler) GetGateway(c *gin.Context) {
 	dep := appsv1.Deployment{} // 获取副本数
 	svc := corev1.Service{}    // 获取端口
 	podlist := corev1.PodList{}
-	if err := kubeclient.Execute(ctx, cluster.ClusterName, func(tc *agents.TypedClient) error {
+	if err := kubeclient.Execute(ctx, cluster.ClusterName, func(tc agents.Client) error {
 		if err := tc.Get(ctx, types.NamespacedName{
 			Namespace: istioOperatorNamespace,
 			Name:      istioOperatorName,
@@ -284,7 +284,7 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	op := pkgv1alpha1.IstioOperator{}
-	if err := kubeclient.Execute(ctx, cluster.ClusterName, func(tc *agents.TypedClient) error {
+	if err := kubeclient.Execute(ctx, cluster.ClusterName, func(tc agents.Client) error {
 		if err := tc.Get(ctx, types.NamespacedName{
 			Namespace: istioOperatorNamespace,
 			Name:      istioOperatorName,
@@ -349,7 +349,7 @@ func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	op := pkgv1alpha1.IstioOperator{}
-	if err := kubeclient.Execute(ctx, cluster.ClusterName, func(tc *agents.TypedClient) error {
+	if err := kubeclient.Execute(ctx, cluster.ClusterName, func(tc agents.Client) error {
 		if err := tc.Get(ctx, types.NamespacedName{
 			Namespace: istioOperatorNamespace,
 			Name:      istioOperatorName,

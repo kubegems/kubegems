@@ -105,7 +105,7 @@ func (h *MonitorHandler) ListMetricTarget(c *gin.Context) {
 	ctx := c.Request.Context()
 	pms := v1.PodMonitorList{}
 	sms := v1.ServiceMonitorList{}
-	if err := kubeclient.Execute(ctx, cluster, func(tc *agents.TypedClient) error {
+	if err := kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
 		g := errgroup.Group{}
 		g.Go(func() error {
 			return tc.List(ctx, &pms, client.InNamespace(namespace))
@@ -158,13 +158,13 @@ func (h *MonitorHandler) AddOrUpdateMetricTarget(c *gin.Context) {
 			sm := &v1.ServiceMonitor{
 				ObjectMeta: req.getMeta(),
 			}
-			_, err := controllerutil.CreateOrUpdate(ctx, tc.TypedClient, sm, mutateServiceMonitorFunc(req, sm))
+			_, err := controllerutil.CreateOrUpdate(ctx, tc, sm, mutateServiceMonitorFunc(req, sm))
 			return err
 		case metricTargetDeployment, metricTargetStatefulset, metricTargetDaemonset:
 			pm := &v1.PodMonitor{
 				ObjectMeta: req.getMeta(),
 			}
-			_, err := controllerutil.CreateOrUpdate(ctx, tc.TypedClient, pm, mutatePodMonitorFunc(req, pm))
+			_, err := controllerutil.CreateOrUpdate(ctx, tc, pm, mutatePodMonitorFunc(req, pm))
 			return err
 		}
 		return nil
@@ -207,7 +207,7 @@ func (h *MonitorHandler) DeleteMetricTarget(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := tc.TypedClient.Delete(ctx, obj); err != nil {
+	if err := tc.Delete(ctx, obj); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
