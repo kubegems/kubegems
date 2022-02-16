@@ -13,7 +13,7 @@ type MicroServiceHandler struct {
 
 func NewMicroServiceHandler(si define.ServerInterface) *MicroServiceHandler {
 	return &MicroServiceHandler{
-		vsh: &VirtualSpaceHandler{ServerInterface: si},
+		vsh: &VirtualSpaceHandler{ServerInterface: si, Agents: si.GetAgentsClientSet()},
 		vdh: &VirtualDomainHandler{ServerInterface: si},
 		igh: &IstioGatewayHandler{ServerInterface: si},
 	}

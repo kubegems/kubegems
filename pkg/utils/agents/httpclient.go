@@ -12,6 +12,12 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+type SingleResponseStruct struct {
+	Message   string
+	Data      interface{}
+	ErrorData interface{}
+}
+
 type HttpClient struct {
 	BaseAddr string
 	*http.Client

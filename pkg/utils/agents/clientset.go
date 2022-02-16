@@ -52,9 +52,9 @@ func (h *ClientSet) Clusters() []string {
 	return ret
 }
 
-func (h *ClientSet) ClientOf(ctx context.Context, name string) (*WrappedClient, error) {
+func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 	if v, ok := h.clients.Load(name); ok {
-		return v.(*WrappedClient), nil
+		return v.(*WrappedClient).TypedClient, nil
 	}
 	if client, err := h.newclient(ctx, name); err != nil {
 		return nil, err
@@ -63,17 +63,16 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (*WrappedClient, 
 		h.extendClients(client)
 
 		h.clients.Store(name, client)
-		return client, nil
+		return client.TypedClient, nil
 	}
 }
 
 func (h *ClientSet) extendClients(cli *WrappedClient) {
 	cli.HttpClient = NewHttpClientFrom(cli)
-	cli.ProxyClient = NewProxyClientFrom(cli)
-	cli.TypedClient = NewTypedClientFrom(cli)
+	cli.TypedClient = NewTypedClientFrom(cli.BaseAddr, cli.transport)
 }
 
-func (h *ClientSet) ClientOfManager(ctx context.Context) (*WrappedClient, error) {
+func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
 	ret := []string{}
 	cluster := &models.Cluster{Primary: true}
 	if err := h.databse.DB().Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {

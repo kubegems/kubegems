@@ -2,7 +2,7 @@ package proxy
 
 import (
 	"net/http"
-	"net/url"
+	"net/http/httputil"
 	"path"
 	"strconv"
 	"strings"
@@ -37,6 +37,7 @@ func NewProxyHandler(server define.ServerInterface) *ProxyHandler {
 
 // 不需要swagger
 func (h *ProxyHandler) Proxy(c *gin.Context) {
+	// TODO: 可以根据schema判断
 	if isstream, _ := strconv.ParseBool(c.Query("stream")); isstream {
 		h.ProxyWebsocket(c)
 	} else {
@@ -64,7 +65,35 @@ func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	v.ProxyClient.HTTPProxy.ServeHTTP(c.Writer, c.Request)
+	h.ReverseProxyOn(v).ServeHTTP(c.Writer, c.Request)
+}
+
+func (h *ProxyHandler) ReverseProxyOn(cli agents.Client) *httputil.ReverseProxy {
+	return &httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			req.URL.Path = getTargetPath(name, req)
+		},
+		Transport: RoundTripOf(cli),
+	}
+}
+
+// RoundTripOf
+func RoundTripOf(cli agents.Client) http.RoundTripper {
+	return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		return cli.DoRawRequest(req.Context(), agents.Request{
+			Method:  req.Method,
+			Path:    req.URL.Path,
+			Query:   req.URL.Query(),
+			Headers: req.Header,
+			Body:    req.Body,
+		})
+	})
+}
+
+type RoundTripperFunc func(req *http.Request) (*http.Response, error)
+
+func (c RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return c(req)
 }
 
 func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
@@ -85,27 +114,13 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 		}
 	}
 
-	agentBaseAddr := v.BaseAddr
-
-	var scheme string
-	if agentBaseAddr.Scheme == "http" {
-		scheme = "ws"
-	} else {
-		scheme = "wss"
-	}
 	headers := http.Header{}
 	for key, values := range c.Request.URL.Query() {
-		v := strings.Join(values, ",")
-		headers.Add(key, v)
-	}
-	wsu := &url.URL{
-		Scheme:   scheme,
-		Host:     agentBaseAddr.Host,
-		Path:     path.Join(agentBaseAddr.Path + proxyPath),
-		RawQuery: c.Request.URL.Query().Encode(),
+		headers.Add(key, strings.Join(values, ","))
 	}
 
-	proxyConn, _, err := v.ProxyClient.WebsockerDialer.DialContext(c.Request.Context(), wsu.String(), headers)
+	wsu := proxyPath + "/" + c.Request.URL.RawQuery
+	proxyConn, _, err := v.DialWebsocket(c.Request.Context(), wsu, headers)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -131,4 +146,14 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 		auditFunc = h.WebsocketAuditFunc(user.Username, nil, c.ClientIP(), proxyobj)
 	}
 	Transport(localConn, proxyConn, c, user, auditFunc)
+}
+
+func getTargetPath(name string, req *http.Request) (realpath string) {
+	prefix := path.Join("/v1/proxy/cluster", name)
+	trimed := strings.TrimPrefix(req.URL.Path, prefix)
+	if strings.HasPrefix(trimed, "/custom") {
+		return trimed
+	} else {
+		return "/v1" + trimed
+	}
 }
