@@ -90,7 +90,7 @@ func (r *PluginStatusController) OnChange(ctx context.Context, crd *apiextension
 	// 判断istio operator是否被安装 istiooperators.install.istio.io
 	case istiooperatorv1alpha1.SchemeGroupVersion.Group:
 		PluginStatusInstance.istioOperatorEnabled = exist
-		r.Log.Info("istio plugin enabled=%t", exist)
+		r.Log.Info("istio plugin status", "enabled", exist)
 	}
 	return ctrl.Result{}, nil
 }
