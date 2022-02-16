@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-resty/resty/v2"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -77,7 +76,7 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 
 		configNamespaceMap := map[string]*v1alpha1.AlertmanagerConfig{}
 		silenceNamespaceMap := map[string][]*alertmanagertypes.Silence{}
-		if err := kubeclient.Execute(ctx, cluster, func(tc *agents.TypedClient) error {
+		if err := kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
 			if err := tc.List(ctx, &ruleList, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.PrometheusRuleSelector)); err != nil {
 				return err
 			}
@@ -798,19 +797,23 @@ func (h *AlertsHandler) listSilences(ctx context.Context, cluster string, labels
 	if err != nil {
 		return nil, err
 	}
-	allSilences := []alertmanagertypes.Silence{}
-	cli := resty.NewWithClient(agentcli.HttpClient.Client).R().
-		SetHeaders(alertProxyHeader)
-	values := url.Values{}
-	for k, v := range labels {
-		values.Add("filter", fmt.Sprintf(`%s="%s"`, k, v))
-	}
-	// 由于filter是数组，不能直接SetQueryParam
-	cli.SetQueryParamsFromValues(values)
 
-	_, err = cli.SetResult(&allSilences).
-		Get(fmt.Sprintf("%s/v1/service-proxy/api/v2/silences", agentcli.BaseAddr))
-	if err != nil {
+	allSilences := []alertmanagertypes.Silence{}
+
+	req := agents.Request{
+		Path: "/v1/service-proxy/api/v2/silences",
+		Query: func() url.Values {
+			values := url.Values{}
+			for k, v := range labels {
+				values.Add("filter", fmt.Sprintf(`%s="%s"`, k, v))
+			}
+			return values
+		}(),
+		Headers: agents.HeadersFrom(alertProxyHeader),
+		Into:    &allSilences,
+	}
+
+	if err := agentcli.DoRequest(ctx, req); err != nil {
 		return nil, fmt.Errorf("list silence by %v, %w", labels, err)
 	}
 	// 只返回活跃的
@@ -834,8 +837,6 @@ func (h *AlertsHandler) createOrUpdateSilenceIfNotExist(ctx context.Context, clu
 		return err
 	}
 	silence := convertBlackListToSilence(req)
-	cli := resty.NewWithClient(agentcli.HttpClient.Client).R().
-		SetHeaders(alertProxyHeader)
 	switch len(silenceList) {
 	case 0:
 		break
@@ -844,13 +845,16 @@ func (h *AlertsHandler) createOrUpdateSilenceIfNotExist(ctx context.Context, clu
 	default:
 		return fmt.Errorf("too many silences for alert: %v", req)
 	}
-	resp, err := cli.SetBody(silence).
-		Post(fmt.Sprintf("%s/v1/service-proxy/api/v2/silences", agentcli.BaseAddr))
-	if err != nil {
-		return err
+
+	agentreq := agents.Request{
+		Method:  http.MethodPost,
+		Path:    "/v1/service-proxy/api/v2/silences",
+		Body:    silence,
+		Headers: agents.HeadersFrom(alertProxyHeader),
 	}
-	if resp.IsError() {
-		return fmt.Errorf("failed to create silence, code %d, body %s", resp.StatusCode(), string(resp.Body()))
+
+	if err := agentcli.DoRequest(ctx, agentreq); err != nil {
+		return fmt.Errorf("create silence:%w", err)
 	}
 	return nil
 }
@@ -868,10 +872,12 @@ func (h *AlertsHandler) deleteSilenceIfExist(ctx context.Context, cluster string
 		if err != nil {
 			return err
 		}
-		_, err = resty.NewWithClient(agentcli.HttpClient.Client).R().
-			SetHeaders(alertProxyHeader).
-			Delete(fmt.Sprintf("%s/v1/service-proxy/api/v2/silences/%s", agentcli.BaseAddr, silenceList[0].ID))
-		return err
+		agentreq := agents.Request{
+			Method:  http.MethodDelete,
+			Path:    fmt.Sprintf("/v1/service-proxy/api/v2/silences/%s", silenceList[0].ID),
+			Headers: agents.HeadersFrom(alertProxyHeader),
+		}
+		return agentcli.DoRequest(ctx, agentreq)
 	default:
 		return fmt.Errorf("too many silences for alert: %v", req)
 	}

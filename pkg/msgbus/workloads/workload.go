@@ -3,8 +3,6 @@ package workloads
 import (
 	"context"
 	"io/ioutil"
-	"net/url"
-	"path"
 	"sync"
 	"time"
 
@@ -86,30 +84,32 @@ func (c *AgentMessageCollector) Run() error {
 }
 
 func (c *AgentMessageCollector) MessageChan(ctx context.Context, clustername string, stopch chan struct{}) {
+	log := log.FromContextOrDiscard(ctx).WithValues("cluster", clustername)
 	uri := "/notify"
 	for {
 		func() error {
 			clusterProxy, err := c.clientsSet.ClientOf(ctx, clustername)
 			if err != nil {
-				log.WithField("cluster", clustername).Warnf("get proxy failed: %v", err)
+				log.Error(err, "get client")
 				return err
 			}
-			url := getUrl(clusterProxy.BaseAddr, uri)
-			conn, resp, err := clusterProxy.ProxyClient.WebsockerDialer.DialContext(ctx, url, nil)
+			conn, resp, err := clusterProxy.DialWebsocket(ctx, uri, nil)
 			if err != nil {
 				content := ""
 				if resp != nil {
 					t, _ := ioutil.ReadAll(resp.Body)
 					content = string(t)
 				}
-				log.WithField("cluster", clustername).Warnf("connect failed: %s %v %s", url, err, content)
+				log.Error(err, "dial websocket", "content", content)
 				return err
 			}
+			defer resp.Body.Close()
+			defer conn.Close()
+
 			for {
 				tmp := msgbus.NotifyMessage{}
 				if err := conn.ReadJSON(&tmp); err != nil {
-					conn.Close()
-					log.WithField("cluster", clustername).Warnf("read failed: %s %v", url, err)
+					log.Error(err, "decode json")
 					return err
 				}
 				switch tmp.MessageType {
@@ -129,19 +129,4 @@ func (c *AgentMessageCollector) MessageChan(ctx context.Context, clustername str
 			time.Sleep(time.Second * 5)
 		}
 	}
-}
-
-func getUrl(baseaddr *url.URL, uri string) string {
-	var scheme string
-	if baseaddr.Scheme == "http" {
-		scheme = "ws"
-	} else {
-		scheme = "wss"
-	}
-	wsu := &url.URL{
-		Scheme: scheme,
-		Host:   baseaddr.Host,
-		Path:   path.Join(baseaddr.Path + uri),
-	}
-	return wsu.String()
 }

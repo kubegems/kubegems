@@ -36,7 +36,7 @@ func GetClient() *KubeClient {
 }
 
 // Deprecated: 将依赖内置到调用方内部，避免使用全局单例
-func Execute(ctx context.Context, cluster string, fn func(*agents.TypedClient) error) error {
+func Execute(ctx context.Context, cluster string, fn func(agents.Client) error) error {
 	tc, err := _kubeClient.GetTypedClient(ctx, cluster)
 	if err != nil {
 		return err
@@ -48,12 +48,12 @@ func Execute(ctx context.Context, cluster string, fn func(*agents.TypedClient) e
 	return nil
 }
 
-func (k KubeClient) GetTypedClient(ctx context.Context, cluster string) (*agents.TypedClient, error) {
+func (k KubeClient) GetTypedClient(ctx context.Context, cluster string) (agents.Client, error) {
 	cli, err := k.agentsClientSet.ClientOf(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
-	return cli.TypedClient, nil
+	return cli, nil
 }
 
 // 获取集群的 代理客户端
@@ -62,7 +62,8 @@ func (k KubeClient) GetAgentClient(clusterName string) (*agents.HttpClient, erro
 	if err != nil {
 		return nil, err
 	}
-	return cli.HttpClient, nil
+	_ = cli
+	return nil, nil
 }
 
 func (k KubeClient) DoRequest(method, cluster, url string, body interface{}, into interface{}) error {

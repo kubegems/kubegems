@@ -107,14 +107,14 @@ func (p *ApplicationProcessor) WaitRollouts(ctx context.Context, ref PathRef) er
 	// 等待检查是否存在
 	// 间隔 5s ，执行三次，总耗时 10s
 	err = retry.OnError(wait.Backoff{Duration: 5 * time.Second, Steps: 3}, errors.IsNotFound, func() error {
-		return cli.TypedClient.Get(ctx, client.ObjectKeyFromObject(rollout), rollout)
+		return cli.Get(ctx, client.ObjectKeyFromObject(rollout), rollout)
 	})
 	if err != nil {
 		return err
 	}
 
 	rolloutsList := &rolloutsv1alpha1.RolloutList{}
-	watcher, err := cli.TypedClient.Watch(ctx, rolloutsList, client.InNamespace(rollout.Namespace))
+	watcher, err := cli.Watch(ctx, rolloutsList, client.InNamespace(rollout.Namespace))
 	if err != nil {
 		return err
 	}
@@ -693,7 +693,7 @@ func (h *ApplicationProcessor) Undo(ctx context.Context, ref PathRef, targetrev 
 	if err != nil {
 		return err
 	}
-	runtimecli := cli.TypedClient
+	runtimecli := cli
 
 	// 更新
 	updategfsfunc := func(ctx context.Context, store GitStore) error {

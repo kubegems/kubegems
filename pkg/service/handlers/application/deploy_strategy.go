@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
+	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/stream"
 	"kubegems.io/pkg/utils/workflow"
@@ -243,8 +244,10 @@ func (h *ApplicationHandler) StrategyDeploymentStatus(c *gin.Context) {
 		name := deployment.Name
 		if iswatch, _ := strconv.ParseBool(c.Query("watch")); iswatch {
 			// watch rollout info
-			path := fmt.Sprintf(pathtemplate, namespace, name, true)
-			resp, err := cli.DoRawRequest(ctx, http.MethodGet, path, nil)
+			resp, err := cli.DoRawRequest(ctx, agents.Request{
+				Method: http.MethodGet,
+				Path:   fmt.Sprintf(pathtemplate, namespace, name, true),
+			})
 			if err != nil {
 				return nil, err
 			}
@@ -264,7 +267,13 @@ func (h *ApplicationHandler) StrategyDeploymentStatus(c *gin.Context) {
 			// get rollout info
 			path := fmt.Sprintf(pathtemplate, namespace, name)
 			item := &rollout.RolloutInfo{}
-			if err := cli.DoRequest(ctx, http.MethodGet, path, nil, item); err != nil {
+
+			req := agents.Request{
+				Method: http.MethodGet,
+				Path:   path,
+				Into:   &handlers.ResponseStruct{Data: item},
+			}
+			if err := cli.DoRequest(ctx, req); err != nil {
 				return nil, err
 			}
 			return item, nil
@@ -285,7 +294,7 @@ func (h *ApplicationHandler) RemoteCliFunc(c *gin.Context, body interface{}, fun
 		if err != nil {
 			return nil, err
 		}
-		remotecli := p.TypedClient
+		remotecli := p
 		return fun(ctx, remotecli, namespace, ref)
 	})
 }

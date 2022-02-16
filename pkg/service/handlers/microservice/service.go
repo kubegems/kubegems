@@ -65,7 +65,7 @@ func (h *VirtualSpaceHandler) ListServices(c *gin.Context) {
 		gatewayList := networkingpkgv1alpha3.GatewayList{}
 		podList := v1.PodList{}
 		deploymentsList := appsv1.DeploymentList{}
-		if err := kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc *agents.TypedClient) error {
+		if err := kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
 			g := new(errgroup.Group)
 			g.Go(func() error {
 				return tc.List(ctx, &svcList, client.InNamespace(env.Namespace))
@@ -168,7 +168,7 @@ func (h *VirtualSpaceHandler) ServiceRequestRouting(c *gin.Context) {
 			return nil, err
 		}
 
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc *agents.TypedClient) error {
+		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_request_routing,
 				ctx,
@@ -214,7 +214,7 @@ func (h *VirtualSpaceHandler) ServiceFaultInjection(c *gin.Context) {
 				},
 			}
 		}
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc *agents.TypedClient) error {
+		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_fault_injection,
 				ctx,
@@ -251,7 +251,7 @@ func (h *VirtualSpaceHandler) ServiceTrafficShifting(c *gin.Context) {
 			return nil, err
 		}
 
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc *agents.TypedClient) error {
+		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_traffic_shifting,
 				ctx,
@@ -298,7 +298,7 @@ func (h *VirtualSpaceHandler) ServiceTCPTrafficShifting(c *gin.Context) {
 			return nil, err
 		}
 
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc *agents.TypedClient) error {
+		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_tcp_traffic_shifting,
 				ctx,
@@ -344,7 +344,7 @@ func (h *VirtualSpaceHandler) ServiceRequestTimeout(c *gin.Context) {
 				},
 			}
 		}
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc *agents.TypedClient) error {
+		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_request_timeouts,
 				ctx,
@@ -375,7 +375,7 @@ func (h *VirtualSpaceHandler) ServicetReset(c *gin.Context) {
 		if err != nil {
 			return nil, err
 		}
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc *agents.TypedClient) error {
+		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
 			for _, v := range svcDetails.VirtualServices {
 				if err := tc.Delete(ctx, &v); err != nil {
 					return err
@@ -395,7 +395,7 @@ func updateOrCreateDrAndVs(
 	svcDetail kialimodels.ServiceDetails,
 	kiali_wizard_value string,
 	ctx context.Context,
-	tc *agents.TypedClient,
+	tc agents.Client,
 	mutateVirtualService func(vs *networkingpkgv1alpha3.VirtualService),
 ) error {
 	dr := &networkingpkgv1alpha3.DestinationRule{
@@ -488,7 +488,7 @@ func getServiceDetails(ctx context.Context, cluster, namespace, name string) (ki
 	dsList := appsv1.DaemonSetList{}
 	podList := v1.PodList{}
 	kialisvc := kialimodels.ServiceDetails{}
-	if err := kubeclient.Execute(ctx, cluster, func(tc *agents.TypedClient) error {
+	if err := kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
 		g := new(errgroup.Group)
 		g.Go(func() error {
 			return tc.Get(ctx, types.NamespacedName{
