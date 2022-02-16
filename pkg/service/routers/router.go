@@ -20,6 +20,7 @@ import (
 	approveHandler "kubegems.io/pkg/service/handlers/approve"
 	appstorehandler "kubegems.io/pkg/service/handlers/appstore"
 	auditloghandler "kubegems.io/pkg/service/handlers/auditlog"
+	"kubegems.io/pkg/service/handlers/base"
 	clusterhandler "kubegems.io/pkg/service/handlers/cluster"
 	environmenthandler "kubegems.io/pkg/service/handlers/environment"
 	eventhandler "kubegems.io/pkg/service/handlers/event"
@@ -86,6 +87,8 @@ func NewRouter(_ *options.Options) *gin.Engine {
 }
 
 func RegistRouter(router *gin.Engine, opts *options.Options, server define.ServerInterface, middlewares ...func(*gin.Context)) error {
+	basehandler := base.NewHandler(server)
+
 	// 健康检测，版本
 	router.Use(RealClientIPMiddleware())
 	router.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "healthy"}) })
@@ -109,114 +112,114 @@ func RegistRouter(router *gin.Engine, opts *options.Options, server define.Serve
 		rg.Use(mw)
 	}
 	// 选项
-	systemHandler := systemhandler.SystemHandler{ServerInterface: server}
+	systemHandler := systemhandler.SystemHandler{BaseHandler: basehandler}
 	systemHandler.RegistRouter(rg)
 
 	// 用户
-	userHandler := &userhandler.UserHandler{ServerInterface: server}
+	userHandler := &userhandler.UserHandler{BaseHandler: basehandler}
 	userHandler.RegistRouter(rg)
 
 	// 系统角色
-	systemroleHandler := &systemrolehandler.SystemRoleHandler{ServerInterface: server}
+	systemroleHandler := &systemrolehandler.SystemRoleHandler{BaseHandler: basehandler}
 	systemroleHandler.RegistRouter(rg)
 
 	// 集群
-	clusterHandler := &clusterhandler.ClusterHandler{ServerInterface: server}
+	clusterHandler := &clusterhandler.ClusterHandler{BaseHandler: basehandler, InstallerOptions: server.GetOptions().Installer}
 	clusterHandler.RegistRouter(rg)
 
 	// 审计
-	auditlogHandler := &auditloghandler.AuditLogHandler{ServerInterface: server}
+	auditlogHandler := &auditloghandler.AuditLogHandler{BaseHandler: basehandler}
 	auditlogHandler.RegistRouter(rg)
 
 	// 租户
-	tenantHandler := &tenanthandler.TenantHandler{ServerInterface: server}
+	tenantHandler := &tenanthandler.TenantHandler{BaseHandler: basehandler}
 	tenantHandler.RegistRouter(rg)
 
 	// 项目
-	projectHandler := &projecthandler.ProjectHandler{ServerInterface: server}
+	projectHandler := &projecthandler.ProjectHandler{BaseHandler: basehandler}
 	projectHandler.RegistRouter(rg)
 
 	// 消息
-	messageHandler := &messagehandler.MessageHandler{ServerInterface: server}
+	messageHandler := &messagehandler.MessageHandler{BaseHandler: basehandler}
 	messageHandler.RegistRouter(rg)
 
 	// 消息
-	approveHandler := &approveHandler.ApproveHandler{ServerInterface: server}
+	approveHandler := &approveHandler.ApproveHandler{BaseHandler: basehandler}
 	approveHandler.RegistRouter(rg)
 
 	// 事件
-	eventHandler := &eventhandler.EventHandler{ServerInterface: server}
+	eventHandler := &eventhandler.EventHandler{BaseHandler: basehandler}
 	eventHandler.RegistRouter(rg)
 
 	// 告警规则
-	alertRuleHandler := &alerthandler.AlertsHandler{ServerInterface: server, ClientSet: server.GetAgentsClientSet()}
+	alertRuleHandler := &alerthandler.AlertsHandler{BaseHandler: basehandler}
 	alertRuleHandler.RegistRouter(rg)
 
-	metricsHandler := &metrics.MonitorHandler{ServerInterface: server}
+	metricsHandler := &metrics.MonitorHandler{BaseHandler: basehandler}
 	metricsHandler.RegistRouter(rg)
 
 	// 告警
-	alertmgrHandler := &alerthandler.AlertmanagerConfigHandler{ServerInterface: server}
+	alertmgrHandler := &alerthandler.AlertmanagerConfigHandler{AlertsHandler: alertRuleHandler}
 	alertmgrHandler.RegistRouter(rg)
 
 	// 环境
-	environmentHandler := &environmenthandler.EnvironmentHandler{ServerInterface: server}
+	environmentHandler := &environmenthandler.EnvironmentHandler{BaseHandler: basehandler}
 	environmentHandler.RegistRouter(rg)
 
 	// 当前个人信息
-	myHandler := &myinfohandler.MyHandler{ServerInterface: server}
+	myHandler := &myinfohandler.MyHandler{BaseHandler: basehandler}
 	myHandler.RegistRouter(rg)
 
 	// 应用商店
-	appstoreHandler := &appstorehandler.AppstoreHandler{ServerInterface: server, AppStoreOpt: opts.Appstore}
+	appstoreHandler := &appstorehandler.AppstoreHandler{BaseHandler: basehandler, AppStoreOpt: opts.Appstore}
 	appstoreHandler.RegistRouter(rg)
 
 	// 镜像仓库
-	registryHandler := &registryhandler.RegistryHandler{ServerInterface: server}
+	registryHandler := &registryhandler.RegistryHandler{BaseHandler: basehandler}
 	registryHandler.RegistRouter(rg)
 
 	// 日志
-	lokilogHandler := &lokiloghandler.LogHandler{ServerInterface: server}
+	lokilogHandler := &lokiloghandler.LogHandler{BaseHandler: basehandler}
 	lokilogHandler.RegistRouter(rg)
 
 	// 日志查询历史
-	logqueryhistoryHandler := &logqueryhandler.LogQueryHistoryHandler{ServerInterface: server}
+	logqueryhistoryHandler := &logqueryhandler.LogQueryHistoryHandler{BaseHandler: basehandler}
 	logqueryhistoryHandler.RegistRouter(rg)
 
 	// 日志查询快照
-	logquerysnapshotHandler := &logqueryhandler.LogQuerySnapshotHandler{ServerInterface: server}
+	logquerysnapshotHandler := &logqueryhandler.LogQuerySnapshotHandler{BaseHandler: basehandler}
 	logquerysnapshotHandler.RegistRouter(rg)
 
 	// 非反向代理资源[HPA]
-	hpaHandler := &noproxyhandler.HpaHandler{ServerInterface: server}
+	hpaHandler := &noproxyhandler.HpaHandler{BaseHandler: basehandler}
 	hpaHandler.RegistRouter(rg)
 
 	// 非反向代理资源[PVC]
-	pvcHandler := &noproxyhandler.PersistentVolumeClaimHandler{ServerInterface: server}
+	pvcHandler := &noproxyhandler.PersistentVolumeClaimHandler{BaseHandler: basehandler}
 	pvcHandler.RegistRouter(rg)
 
 	// 非反向代理资源[卷快照]
-	volumeSnapshotHandler := &noproxyhandler.VolumeSnapshotHandler{ServerInterface: server}
+	volumeSnapshotHandler := &noproxyhandler.VolumeSnapshotHandler{BaseHandler: basehandler}
 	volumeSnapshotHandler.RegistRouter(rg)
 
 	//  资源统计相关
-	workloadHandler := &workloadreshandler.WorkloadHandler{ServerInterface: server}
+	workloadHandler := &workloadreshandler.WorkloadHandler{BaseHandler: basehandler}
 	workloadHandler.RegistRouter(rg)
 
 	// sels
-	selHandler := &sel.SelsHandler{ServerInterface: server}
+	selHandler := &sel.SelsHandler{BaseHandler: basehandler}
 	selHandler.RegistRouter(rg)
 
 	// app handler
-	appHandler := applicationhandler.MustNewApplicationDeployHandler(server)
+	appHandler := applicationhandler.MustNewApplicationDeployHandler(server, basehandler)
 	appHandler.RegistRouter(rg)
 
 	// microservice  handler
-	microservicehandler := microservice.NewMicroServiceHandler(server)
+	microservicehandler := microservice.NewMicroServiceHandler(basehandler, server.GetOptions().Microservice)
 	microservicehandler.RegistRouter(rg)
 
 	// workload 的反向代理
-	proxyHandler := proxyhandler.NewProxyHandler(server)
+	proxyHandler := proxyhandler.ProxyHandler{BaseHandler: basehandler}
 	rg.Any("/proxy/cluster/:cluster/*action", proxyHandler.Proxy)
 	router.Any("/v1/service-proxy/cluster/:cluster/namespace/:namespace/service/:service/port/:port/*action", proxyHandler.ProxyService)
 

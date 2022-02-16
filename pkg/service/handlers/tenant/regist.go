@@ -2,12 +2,12 @@ package tenanthandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 // TenantHandler 租户相关 Handler
 type TenantHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *TenantHandler) RegistRouter(rg *gin.RouterGroup) {

@@ -2,11 +2,11 @@ package projecthandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type ProjectHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *ProjectHandler) RegistRouter(rg *gin.RouterGroup) {

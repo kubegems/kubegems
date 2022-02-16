@@ -770,12 +770,14 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 	trq.Cluster = nil
 	trq.Tenant = nil
 
+	ctx := c.Request.Context()
+
 	if err := c.ShouldBind(&trq); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	json.Unmarshal(trq.Content, &need)
-	if err := models.ValidateTenantResourceQuota(oversold, clustername, origin, need); err != nil {
+	if err := h.ValidateTenantResourceQuota(ctx, oversold, clustername, origin, need); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -1135,6 +1137,8 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 		u = &models.User{}
 	}
 
+	ctx := c.Request.Context()
+
 	// 没有就新建，有就更新
 	if quota.TenantResourceQuotaApplyID == nil {
 		quota.TenantResourceQuotaApply = &models.TenantResourceQuotaApply{}
@@ -1147,7 +1151,7 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 	origin := v1.ResourceList{}
 	json.Unmarshal(req.Content, &need)
 	json.Unmarshal(quota.Content, &origin)
-	if err := models.ValidateTenantResourceQuota(quota.Cluster.OversoldConfig, quota.Cluster.ClusterName, origin, need); err != nil {
+	if err := h.ValidateTenantResourceQuota(ctx, quota.Cluster.OversoldConfig, quota.Cluster.ClusterName, origin, need); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

@@ -2,11 +2,11 @@ package userhandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type UserHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *UserHandler) RegistRouter(rg *gin.RouterGroup) {

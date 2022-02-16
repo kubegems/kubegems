@@ -2,11 +2,11 @@ package myinfohandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type MyHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *MyHandler) RegistRouter(rg *gin.RouterGroup) {

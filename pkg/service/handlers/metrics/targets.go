@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -12,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -105,7 +105,7 @@ func (h *MonitorHandler) ListMetricTarget(c *gin.Context) {
 	ctx := c.Request.Context()
 	pms := v1.PodMonitorList{}
 	sms := v1.ServiceMonitorList{}
-	if err := kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
+	if err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
 		g := errgroup.Group{}
 		g.Go(func() error {
 			return tc.List(ctx, &pms, client.InNamespace(namespace))
@@ -148,7 +148,7 @@ func (h *MonitorHandler) ListMetricTarget(c *gin.Context) {
 func (h *MonitorHandler) AddOrUpdateMetricTarget(c *gin.Context) {
 	if err := withMetricTargetReq(c, func(req *MetricTarget) error {
 		ctx := c.Request.Context()
-		tc, err := h.GetAgentsClientSet().ClientOf(ctx, req.Cluster)
+		tc, err := h.GetAgents().ClientOf(ctx, req.Cluster)
 		if err != nil {
 			return err
 		}
@@ -202,7 +202,7 @@ func (h *MonitorHandler) DeleteMetricTarget(c *gin.Context) {
 		return
 	}
 	ctx := c.Request.Context()
-	tc, err := h.GetAgentsClientSet().ClientOf(ctx, req.Cluster)
+	tc, err := h.GetAgents().ClientOf(ctx, req.Cluster)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return

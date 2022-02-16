@@ -85,7 +85,7 @@ func Run(ctx context.Context, options *Options) error {
 
 	collector.Init(deps.Argocli, deps.Databse)
 	exporter.SetNamespace("gems_worker")
-	exporter.RegisterCollector("cluster", true, collector.NewClusterCollector())
+	exporter.RegisterCollector("cluster", true, collector.NewClusterCollector(deps.Agentscli))
 	exporter.RegisterCollector("environment", true, collector.NewEnvironmentCollector())
 	exporter.RegisterCollector("user", true, collector.NewUserCollector())
 	exporter.RegisterCollector("application", true, collector.NewApplicationCollector())

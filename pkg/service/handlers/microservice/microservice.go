@@ -2,7 +2,8 @@ package microservice
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
+	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
 )
 
 type MicroServiceHandler struct {
@@ -11,11 +12,11 @@ type MicroServiceHandler struct {
 	igh *IstioGatewayHandler
 }
 
-func NewMicroServiceHandler(si define.ServerInterface) *MicroServiceHandler {
+func NewMicroServiceHandler(si base.BaseHandler, options *microserviceoptions.MicroserviceOptions) *MicroServiceHandler {
 	return &MicroServiceHandler{
-		vsh: &VirtualSpaceHandler{ServerInterface: si, Agents: si.GetAgentsClientSet()},
-		vdh: &VirtualDomainHandler{ServerInterface: si},
-		igh: &IstioGatewayHandler{ServerInterface: si},
+		vsh: &VirtualSpaceHandler{BaseHandler: si, MicroserviceOptions: options},
+		vdh: &VirtualDomainHandler{BaseHandler: si},
+		igh: &IstioGatewayHandler{BaseHandler: si},
 	}
 }
 

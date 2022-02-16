@@ -2,12 +2,12 @@ package systemrolehandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 // SystemRoleHandler generated handler
 type SystemRoleHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *SystemRoleHandler) RegistRouter(rg *gin.RouterGroup) {

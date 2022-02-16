@@ -19,7 +19,7 @@ func NewTaskHandler(base BaseHandler) *TaskHandler {
 	return &TaskHandler{
 		BaseHandler: base,
 		Processor: &TaskProcessor{
-			workflow.NewClientFromBackend(workflow.NewRedisBackendFromClient(base.Redis.Client)),
+			workflow.NewClientFromBackend(workflow.NewRedisBackendFromClient(base.GetRedis().Client)),
 		},
 	}
 }

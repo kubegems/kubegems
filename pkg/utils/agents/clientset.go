@@ -10,19 +10,12 @@ import (
 	"net/url"
 	"path"
 	"sync"
-	"time"
 
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/httpsigs"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/system"
-)
-
-const (
-	AgentModeApiServer = "apiServerProxy"
-	AgentModeAHTTP     = "http"
-	AgentModeHTTPS     = "https"
 )
 
 type ClientSet struct {
@@ -54,22 +47,20 @@ func (h *ClientSet) Clusters() []string {
 
 func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 	if v, ok := h.clients.Load(name); ok {
-		return v.(*WrappedClient).TypedClient, nil
+		if cli, ok := v.(Client); ok {
+			return cli, nil
+		}
+		return nil, fmt.Errorf("invalid client type: %T", v)
 	}
-	if client, err := h.newclient(ctx, name); err != nil {
+
+	meta, err := h.newClientMeta(ctx, name)
+	if err != nil {
 		return nil, err
-	} else {
-		// extend
-		h.extendClients(client)
-
-		h.clients.Store(name, client)
-		return client.TypedClient, nil
 	}
-}
+	cli := newClient(*meta)
 
-func (h *ClientSet) extendClients(cli *WrappedClient) {
-	cli.HttpClient = NewHttpClientFrom(cli)
-	cli.TypedClient = NewTypedClientFrom(cli.BaseAddr, cli.transport)
+	h.clients.Store(name, cli)
+	return cli, nil
 }
 
 func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
@@ -85,16 +76,17 @@ func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
 	return h.ClientOf(ctx, managerclustername)
 }
 
-func (h *ClientSet) newclient(ctx context.Context, name string) (*WrappedClient, error) {
+func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta, error) {
 	cluster := &models.Cluster{}
 	if err := h.databse.DB().First(&cluster, "cluster_name = ?", name).Error; err != nil {
 		return nil, err
 	}
-	addr, mode, cert, key, ca, kubeconfig := cluster.AgentAddr, cluster.Mode,
-		[]byte(cluster.AgentCert), []byte(cluster.AgentKey), []byte(cluster.AgentCA), []byte(cluster.KubeConfig)
+	addr, mode := cluster.AgentAddr, cluster.Mode
+
+	cert, key, ca, kubeconfig := []byte(cluster.AgentCert), []byte(cluster.AgentKey), []byte(cluster.AgentCA), []byte(cluster.KubeConfig)
 
 	switch mode {
-	case AgentModeApiServer:
+	case AgentModeApiServer, "apiserver":
 		apiserver, kubecliCert, kubecliKey, kubeca, err := kube.GetKubeconfigInfos(kubeconfig)
 		if err != nil {
 			return nil, err
@@ -108,11 +100,10 @@ func (h *ClientSet) newclient(ctx context.Context, name string) (*WrappedClient,
 		if err != nil {
 			return nil, err
 		}
-		cli := &WrappedClient{
+		cli := &ClientMeta{
 			Name:     name,
 			BaseAddr: baseurl,
-			Timeout:  time.Second * time.Duration(h.options.AgentTimeout),
-			transport: &http.Transport{
+			Transport: &http.Transport{
 				TLSClientConfig: tlsconfig,
 				Proxy:           getRequestProxy(h.apiserverProxyPath()),
 			},
@@ -128,11 +119,10 @@ func (h *ClientSet) newclient(ctx context.Context, name string) (*WrappedClient,
 		if err != nil {
 			return nil, err
 		}
-		cli := &WrappedClient{
+		cli := &ClientMeta{
 			Name:     name,
-			Timeout:  time.Second * time.Duration(h.options.AgentTimeout),
 			BaseAddr: baseurl,
-			transport: &http.Transport{
+			Transport: &http.Transport{
 				TLSClientConfig: tlsconfig,
 				Proxy:           getRequestProxy(path.Join("/v1/proxy/cluster", name)),
 			},
@@ -143,11 +133,10 @@ func (h *ClientSet) newclient(ctx context.Context, name string) (*WrappedClient,
 		if err != nil {
 			return nil, err
 		}
-		cli := &WrappedClient{
+		cli := &ClientMeta{
 			Name:     name,
-			Timeout:  time.Second * time.Duration(h.options.AgentTimeout),
 			BaseAddr: baseurl,
-			transport: &http.Transport{
+			Transport: &http.Transport{
 				Proxy: getRequestProxy(path.Join("/v1/proxy/cluster", name)),
 			},
 		}
