@@ -1,16 +1,20 @@
 package clusterhandler
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
+	"gorm.io/datatypes"
 	"kubegems.io/pkg/agent/apis/types"
+	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/msgbus"
 )
@@ -49,7 +53,7 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 		SearchFields:  SearchFields,
 		PreloadFields: []string{"Environments", "TenantResourceQuotas"},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -68,24 +72,38 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 // @Security JWT
 func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 	var clusters []*models.Cluster
-	if err := h.GetDB().Find(&clusters).Error; err != nil {
+	if err := h.GetDataBase().DB().Find(&clusters).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	var wg sync.WaitGroup
+	ctx := c.Request.Context()
+
 	ret := map[string]bool{}
-	m := sync.Mutex{}
+
+	eg := &errgroup.Group{}
+	mu := sync.Mutex{}
 	for _, cluster := range clusters {
-		wg.Add(1)
-		go func(clus *models.Cluster) { // 必须把i传进去
-			m.Lock()
-			defer m.Unlock()
-			ret[clus.ClusterName] = kubeclient.GetClient().IsClusterHealth(clus.ClusterName)
-			wg.Done()
-		}(cluster)
+		name := cluster.ClusterName
+		eg.Go(func() error {
+			cli, err := h.GetAgents().ClientOf(ctx, name)
+			if err != nil {
+				log.Error(err, "unable get agents client", "cluster", name)
+				return nil
+			}
+			if err := cli.Extend().Healthy(ctx); err != nil {
+				log.Error(err, "cluster unhealthy", "cluster", name)
+				return nil
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
+			ret[name] = true
+			return nil
+		})
 	}
-	wg.Wait()
+	_ = eg.Wait()
+
 	handlers.OK(c, ret)
 }
 
@@ -101,7 +119,7 @@ func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 // @Security JWT
 func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 	var obj models.Cluster
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -121,7 +139,7 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 // @Security JWT
 func (h *ClusterHandler) PutCluster(c *gin.Context) {
 	var obj models.Cluster
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -134,7 +152,7 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("ID不匹配"))
 		return
 	}
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDataBase().DB().Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -154,7 +172,7 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 // @Security JWT
 func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 	var obj models.Cluster
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
@@ -172,23 +190,23 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 	}
 
 	trqs := []models.TenantResourceQuota{}
-	h.GetDB().Where("cluster_id = ?", obj.ID).Find(&trqs)
+	h.GetDataBase().DB().Where("cluster_id = ?", obj.ID).Find(&trqs)
 	if len(trqs) != 0 {
 		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的租户资源，删除失败", obj.ClusterName))
 		return
 	}
 
 	envs := []models.Environment{}
-	h.GetDB().Where("cluster_id = ?", obj.ID).Find(&envs)
+	h.GetDataBase().DB().Where("cluster_id = ?", obj.ID).Find(&envs)
 	if len(envs) != 0 {
 		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的环境，删除失败", obj.ClusterName))
 		return
 	}
 
 	// 删除installer
-	_ = (kube.NewClusterInstaller(restconfig, client, &obj, h.GetOptions().Installer)).Uninstall()
+	_ = (kube.NewClusterInstaller(restconfig, client, &obj, h.InstallerOptions)).Uninstall()
 
-	if err := h.GetDB().Delete(&obj).Error; err != nil {
+	if err := h.GetDataBase().DB().Delete(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -234,7 +252,7 @@ func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 		PreloadFields: []string{"Project", "Cluster", "Creator", "Applications", "Users"},
 		Where:         []*handlers.QArgs{handlers.Args("cluster_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -269,7 +287,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 		PreloadFields: []string{"Cluster", "Creator"},
 		Where:         []*handlers.QArgs{handlers.Args("cluster_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -298,7 +316,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 	any_value(filter_json) as filter_json,
 	any_value(label_json) as label_json,
 	count(*) as total from log_query_histories where creator_id = ? and cluster_id = ? and create_at > ? group by log_ql order by total desc;`
-	if err := h.GetDB().Raw(rawsql, user.ID, c.Param("cluster_id"), before15d).Scan(&list).Error; err != nil {
+	if err := h.GetDataBase().DB().Raw(rawsql, user.ID, c.Param("cluster_id"), before15d).Scan(&list).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -332,7 +350,7 @@ func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 		PreloadFields: []string{"Cluster", "Creator"},
 		Where:         []*handlers.QArgs{handlers.Args("cluster_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -382,7 +400,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	}
 
 	clusters := []models.Cluster{}
-	h.GetDB().Where("api_server = ?", apiserver).Find(&clusters)
+	h.GetDataBase().DB().Where("api_server = ?", apiserver).Find(&clusters)
 	if len(clusters) > 0 {
 		handlers.NotOK(c, fmt.Errorf("已有apiserver为%s的集群%s", apiserver, clusters[0].ClusterName))
 		return
@@ -390,20 +408,20 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	// 非控制集群才安装插件
 	if obj.Primary {
 		primarys := []models.Cluster{}
-		h.GetDB().Where("primary = ?", true).Find(&primarys)
+		h.GetDataBase().DB().Where("primary = ?", true).Find(&primarys)
 		if len(clusters) > 0 {
 			handlers.NotOK(c, fmt.Errorf("控制集群只能有一个"))
 			return
 		}
 	} else {
-		installer := kube.NewClusterInstaller(restconfig, client, &obj, h.GetOptions().Installer)
+		installer := kube.NewClusterInstaller(restconfig, client, &obj, h.InstallerOptions)
 		if e := installer.Install(); e != nil {
 			handlers.NotOK(c, fmt.Errorf("初始化集群错误, %v", err))
 			return
 		}
 	}
 
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDataBase().DB().Save(&obj).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("保存集群配置错误, %v", err))
 		return
 	}
@@ -422,6 +440,13 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	handlers.Created(c, obj)
 }
 
+type ClusterQuota struct {
+	Version        string                          `json:"version"`
+	OversoldConfig datatypes.JSON                  `json:"oversoldConfig"`
+	Resoruces      types.ClusterResourceStatistics `json:"resources"`
+	Workloads      types.ClusterWorkloadStatistics `json:"workloads"`
+}
+
 // ClusterStatistics 集群资源状态
 // @Tags Cluster
 // @Summary 集群资源状态
@@ -433,29 +458,23 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 // @Router /v1/cluster/{cluster_id}/quota [get]
 // @Security JWT
 func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
-	var cluster models.Cluster
-	if err := h.GetDB().First(&cluster, c.Param(PrimaryKeyName)).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	resources := &types.ClusterResourceStatistics{}
-	if err := kubeclient.GetClient().ClusterResourceStatistics(cluster.ClusterName, resources); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
+		resources := types.ClusterResourceStatistics{}
+		if err := cli.Extend().ClusterResourceStatistics(ctx, &resources); err != nil {
+			return nil, err
+		}
+		workloads := types.ClusterWorkloadStatistics{}
+		if err := cli.Extend().ClusterWorkloadStatistics(ctx, &workloads); err != nil {
+			return nil, err
+		}
 
-	workloads := types.ClusterWorkloadStatistics{}
-	if err := kubeclient.GetClient().ClusterWorkloadStatistics(cluster.ClusterName, &workloads); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	data := ClusterQuota{
-		Version:        cluster.Version,
-		Resoruces:      *resources,
-		OversoldConfig: cluster.OversoldConfig,
-		Workloads:      workloads,
-	}
-	handlers.OK(c, data)
+		return ClusterQuota{
+			Version:        cluster.Version,
+			Resoruces:      resources,
+			OversoldConfig: cluster.OversoldConfig,
+			Workloads:      workloads,
+		}, nil
+	})
 }
 
 // @Tags Agent.Plugin
@@ -468,18 +487,9 @@ func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 // @Router /v1/cluster/{cluster_id}/plugins [get]
 // @Security JWT
 func (h *ClusterHandler) ListPligins(c *gin.Context) {
-	var cluster models.Cluster
-	if err := h.GetDB().First(&cluster, c.Param(PrimaryKeyName)).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	ret, err := kubeclient.GetClient().ListPlugins(cluster.ClusterName)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	handlers.OK(c, ret)
+	h.cluster(c, func(ctx context.Context, _ models.Cluster, cli agents.Client) (interface{}, error) {
+		return cli.Extend().ListPlugins(ctx)
+	})
 }
 
 // @Tags Agent.Plugin
@@ -494,35 +504,32 @@ func (h *ClusterHandler) ListPligins(c *gin.Context) {
 // @Router /v1/cluster/{cluster_id}/plugins/{name}/actions/enable [post]
 // @Security JWT
 func (h *ClusterHandler) EnablePlugin(c *gin.Context) {
-	var cluster models.Cluster
-	if err := h.GetDB().First(&cluster, c.Param(PrimaryKeyName)).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
+		plugintype := c.Query("type")
+		pluginname := c.Param("name")
 
-	plugintype := c.Query("type")
-	pluginname := c.Param("name")
-	h.SetAuditData(c, "启用", "集群插件", fmt.Sprintf("集群[%v]/插件[%v]", cluster.ClusterName, pluginname))
-	err := kubeclient.GetClient().EnablePlugin(cluster.ClusterName, plugintype, pluginname)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		h.SetAuditData(c, "启用", "集群插件", fmt.Sprintf("集群[%v]/插件[%v]", cluster.ClusterName, pluginname))
 
-	if plugintype == "core" {
-		h.GetMessageBusClient().
-			GinContext(c).
-			MessageType(msgbus.Message).
-			ActionType(msgbus.Update).
-			ResourceType(msgbus.Cluster).
-			ResourceID(cluster.ID).
-			Content(fmt.Sprintf("启用了集群%s中的插件%s", cluster.ClusterName, pluginname)).
-			SetUsersToSend(
-				h.GetDataBase().SystemAdmins(),
-			).
-			Send()
-	}
-	handlers.OK(c, "")
+		if err := cli.Extend().EnablePlugin(ctx, plugintype, pluginname); err != nil {
+			return nil, err
+		}
+
+		if plugintype == "core" {
+			h.GetMessageBusClient().
+				GinContext(c).
+				MessageType(msgbus.Message).
+				ActionType(msgbus.Update).
+				ResourceType(msgbus.Cluster).
+				ResourceID(cluster.ID).
+				Content(fmt.Sprintf("启用了集群%s中的插件%s", cluster.ClusterName, pluginname)).
+				SetUsersToSend(
+					h.GetDataBase().SystemAdmins(),
+				).
+				Send()
+		}
+
+		return "", nil
+	})
 }
 
 // @Tags Agent.Plugin
@@ -537,33 +544,42 @@ func (h *ClusterHandler) EnablePlugin(c *gin.Context) {
 // @Router /v1/cluster/{cluster_id}/plugins/{name}/actions/disable [post]
 // @Security JWT
 func (h *ClusterHandler) DisablePlugin(c *gin.Context) {
+	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
+		plugintype := c.Query("type")
+		pluginname := c.Param("name")
+
+		h.SetAuditData(c, "禁用", "集群插件", fmt.Sprintf("集群[%v]/插件[%v]", cluster.ClusterName, pluginname))
+
+		if err := cli.Extend().DisablePlugin(ctx, plugintype, pluginname); err != nil {
+			return nil, err
+		}
+
+		if plugintype == "core" {
+			h.GetMessageBusClient().
+				GinContext(c).
+				MessageType(msgbus.Message).
+				ActionType(msgbus.Update).
+				ResourceType(msgbus.Cluster).
+				ResourceID(cluster.ID).
+				Content(fmt.Sprintf("卸载了集群%s中的插件%s", cluster.ClusterName, pluginname)).
+				SetUsersToSend(
+					h.GetDataBase().SystemAdmins(),
+				).
+				Send()
+		}
+
+		return "", nil
+	})
+}
+
+func (h *ClusterHandler) cluster(c *gin.Context, fun func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error)) {
 	var cluster models.Cluster
-	if err := h.GetDB().First(&cluster, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDataBase().DB().First(&cluster, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	plugintype := c.Query("type")
-	pluginname := c.Param("name")
-	h.SetAuditData(c, "禁用", "集群插件", fmt.Sprintf("集群[%v]/插件[%v]", cluster.ClusterName, pluginname))
-	err := kubeclient.GetClient().DisablePlugin(cluster.ClusterName, plugintype, pluginname)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	if plugintype == "core" {
-		h.GetMessageBusClient().
-			GinContext(c).
-			MessageType(msgbus.Message).
-			ActionType(msgbus.Update).
-			ResourceType(msgbus.Cluster).
-			ResourceID(cluster.ID).
-			Content(fmt.Sprintf("卸载了集群%s中的插件%s", cluster.ClusterName, pluginname)).
-			SetUsersToSend(
-				h.GetDataBase().SystemAdmins(),
-			).
-			Send()
-	}
-	handlers.OK(c, "")
+	h.ClusterFunc(cluster.ClusterName, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		return fun(ctx, cluster, cli)
+	})(c)
 }

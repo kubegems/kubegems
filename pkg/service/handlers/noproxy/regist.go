@@ -2,19 +2,19 @@ package noproxy
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type HpaHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 type PersistentVolumeClaimHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 type VolumeSnapshotHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *HpaHandler) RegistRouter(rg *gin.RouterGroup) {

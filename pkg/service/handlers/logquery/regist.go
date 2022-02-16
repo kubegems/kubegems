@@ -2,15 +2,15 @@ package logqueryhandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type LogQuerySnapshotHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 type LogQueryHistoryHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *LogQueryHistoryHandler) RegistRouter(rg *gin.RouterGroup) {

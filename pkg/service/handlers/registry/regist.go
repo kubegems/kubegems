@@ -2,11 +2,11 @@ package registryhandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type RegistryHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *RegistryHandler) RegistRouter(rg *gin.RouterGroup) {

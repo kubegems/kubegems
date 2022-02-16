@@ -7,15 +7,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	prommodel "github.com/prometheus/common/model"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/prometheus/promql"
-
-	"github.com/gin-gonic/gin"
 )
 
 // Config 获取metric配置
@@ -214,7 +213,7 @@ func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryR
 }
 
 type MonitorHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *MonitorHandler) RegistRouter(rg *gin.RouterGroup) {

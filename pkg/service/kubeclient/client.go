@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 
-	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/agents"
 )
@@ -33,27 +32,6 @@ func DoRequest(method, cluster, url string, body interface{}, into interface{}) 
 // Deprecated: 将依赖内置到调用方内部，避免使用全局单例
 func GetClient() *KubeClient {
 	return _kubeClient
-}
-
-// Deprecated: 将依赖内置到调用方内部，避免使用全局单例
-func Execute(ctx context.Context, cluster string, fn func(agents.Client) error) error {
-	tc, err := _kubeClient.GetTypedClient(ctx, cluster)
-	if err != nil {
-		return err
-	}
-	if err := fn(tc); err != nil {
-		log.Error(err, "k8s execute failed")
-		return err
-	}
-	return nil
-}
-
-func (k KubeClient) GetTypedClient(ctx context.Context, cluster string) (agents.Client, error) {
-	cli, err := k.agentsClientSet.ClientOf(ctx, cluster)
-	if err != nil {
-		return nil, err
-	}
-	return cli, nil
 }
 
 // 获取集群的 代理客户端

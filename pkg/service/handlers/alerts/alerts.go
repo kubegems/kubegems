@@ -76,7 +76,8 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 
 		configNamespaceMap := map[string]*v1alpha1.AlertmanagerConfig{}
 		silenceNamespaceMap := map[string][]*alertmanagertypes.Silence{}
-		if err := kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
+
+		fun := func(ctx context.Context, tc agents.Client) error {
 			if err := tc.List(ctx, &ruleList, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.PrometheusRuleSelector)); err != nil {
 				return err
 			}
@@ -125,12 +126,14 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 				}
 			}
 			return nil
-		}); err != nil {
+		}
+
+		if err := h.Execute(c, cluster, fun); err != nil {
 			handlers.NotOK(c, err)
 			return
 		}
 	} else {
-		raw, err := getRawAlertResource(ctx, cluster, namespace)
+		raw, err := h.getRawAlertResource(ctx, cluster, namespace)
 		if err != nil {
 			handlers.NotOK(c, err)
 			return
@@ -174,7 +177,7 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 	name := c.Param("name")
 
 	ctx := c.Request.Context()
-	raw, err := getRawAlertResource(ctx, cluster, namespace)
+	raw, err := h.getRawAlertResource(ctx, cluster, namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -283,7 +286,7 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 
 	// get、update、commit
 	ctx := c.Request.Context()
-	raw, err := getRawAlertResource(ctx, cluster, namespace)
+	raw, err := h.getRawAlertResource(ctx, cluster, namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -294,7 +297,7 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 		return
 	}
 
-	if err := commitToK8s(ctx, cluster, raw); err != nil {
+	if err := h.commitToK8s(ctx, cluster, raw); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -333,7 +336,7 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 
 	// get、update、commit
 	ctx := c.Request.Context()
-	raw, err := getRawAlertResource(ctx, cluster, namespace)
+	raw, err := h.getRawAlertResource(ctx, cluster, namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -344,7 +347,7 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 		return
 	}
 
-	if err := commitToK8s(ctx, cluster, raw); err != nil {
+	if err := h.commitToK8s(ctx, cluster, raw); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -375,7 +378,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 
 	// get、update、commit
 	ctx := c.Request.Context()
-	raw, err := getRawAlertResource(ctx, cluster, namespace)
+	raw, err := h.getRawAlertResource(ctx, cluster, namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -386,7 +389,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 		return
 	}
 
-	if err := commitToK8s(ctx, cluster, raw); err != nil {
+	if err := h.commitToK8s(ctx, cluster, raw); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -793,7 +796,7 @@ func (h *AlertsHandler) withBlackListReq(c *gin.Context, f func(req models.Alert
 }
 
 func (h *AlertsHandler) listSilences(ctx context.Context, cluster string, labels map[string]string) ([]alertmanagertypes.Silence, error) {
-	agentcli, err := h.ClientOf(ctx, cluster)
+	agentcli, err := h.GetAgents().ClientOf(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -832,7 +835,7 @@ func (h *AlertsHandler) createOrUpdateSilenceIfNotExist(ctx context.Context, clu
 	if err != nil {
 		return err
 	}
-	agentcli, err := h.ClientOf(ctx, cluster)
+	agentcli, err := h.GetAgents().ClientOf(ctx, cluster)
 	if err != nil {
 		return err
 	}
@@ -868,7 +871,7 @@ func (h *AlertsHandler) deleteSilenceIfExist(ctx context.Context, cluster string
 	case 0:
 		return nil
 	case 1:
-		agentcli, err := h.ClientOf(ctx, cluster)
+		agentcli, err := h.GetAgents().ClientOf(ctx, cluster)
 		if err != nil {
 			return err
 		}

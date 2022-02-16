@@ -2,11 +2,11 @@ package eventhandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type EventHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *EventHandler) RegistRouter(rg *gin.RouterGroup) {

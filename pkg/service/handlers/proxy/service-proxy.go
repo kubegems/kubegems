@@ -15,7 +15,7 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 	namespace := c.Param("namespace")
 	service := c.Param("service")
 	port := c.Param("port")
-	agentcli, err := h.clients.ClientOf(c.Request.Context(), cluster)
+	agentcli, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
 	if err != nil {
 		handlers.NotOK(c, err)
 	}

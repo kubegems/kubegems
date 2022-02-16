@@ -2,11 +2,11 @@ package auditloghandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type AuditLogHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *AuditLogHandler) RegistRouter(rg *gin.RouterGroup) {

@@ -62,7 +62,7 @@ type ManifestDeploy struct {
 	Contents  []unstructured.Unstructured
 }
 
-func MustNewApplicationDeployHandler(server define.ServerInterface) *ApplicationHandler {
+func MustNewApplicationDeployHandler(server define.ServerInterface, commonbase base.BaseHandler) *ApplicationHandler {
 	opts := server.GetOptions().Git
 	provider, err := git.NewProvider(opts)
 	if err != nil {
@@ -74,13 +74,13 @@ func MustNewApplicationDeployHandler(server define.ServerInterface) *Application
 	redis := server.GetRedis()
 
 	base := BaseHandler{
-		dbcahce:     &Cache{},
-		BaseHandler: *base.NewBaseHandler(server, server, server),
-		Database:    database,
-		Redis:       redis,
+		BaseHandler: commonbase,
+
+		dbcahce: &Cache{},
 	}
 
 	h := &ApplicationHandler{
+		Agents:      commonbase.GetAgents(),
 		BaseHandler: base,
 		ArgoCD:      argocli,
 		Manifest: ManifestHandler{

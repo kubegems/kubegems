@@ -29,7 +29,7 @@ type KialiAPIRequest struct {
 // @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/kiali/{kiaklipath} [get]
 // @Security JWT
 func (h *VirtualSpaceHandler) KialiAPI(c *gin.Context) {
-	options := h.ServerInterface.GetOptions().Microservice
+	options := h.MicroserviceOptions
 	kialisvc, kialinamespace := options.KialiName, options.KialiNamespace
 	// get and check env
 	env := models.Environment{}
