@@ -2,11 +2,11 @@ package lokiloghandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type LogHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *LogHandler) RegistRouter(rg *gin.RouterGroup) {

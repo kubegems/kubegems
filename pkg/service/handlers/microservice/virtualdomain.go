@@ -5,13 +5,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/models"
 )
 
 type VirtualDomainHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 // ListVirtualDomain 列表 VirtualDomain

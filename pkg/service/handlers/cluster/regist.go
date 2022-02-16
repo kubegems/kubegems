@@ -2,11 +2,13 @@ package clusterhandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
+	"kubegems.io/pkg/utils/kube"
 )
 
 type ClusterHandler struct {
-	define.ServerInterface
+	base.BaseHandler
+	InstallerOptions *kube.InstallerOptions
 }
 
 func (h *ClusterHandler) RegistRouter(rg *gin.RouterGroup) {

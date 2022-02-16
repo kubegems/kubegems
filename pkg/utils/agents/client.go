@@ -7,53 +7,63 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type WrappedClient struct {
-	Name      string
-	BaseAddr  *url.URL
-	Timeout   time.Duration
-	transport *http.Transport
-
-	TypedClient *TypedClient
-	HttpClient  *HttpClient
-}
+const (
+	AgentModeApiServer = "apiServerProxy"
+	AgentModeAHTTP     = "http"
+	AgentModeHTTPS     = "https"
+)
 
 type Client interface {
 	client.WithWatch
-	ClientExtend
-}
-
-type Request struct {
-	Method  string
-	Path    string // queries 可以放在 path 中
-	Query   url.Values
-	Headers http.Header
-	Body    interface{}
-	Into    interface{}
-}
-
-type ClientExtend interface {
 	DoRequest(ctx context.Context, req Request) error
-	DoRawRequest(ctx context.Context, req Request) (*http.Response, error)
+	DoRawRequest(ctx context.Context, clientreq Request) (*http.Response, error)
 	DialWebsocket(ctx context.Context, path string, headers ...http.Header) (*websocket.Conn, *http.Response, error)
-	// Deprecated: remove this method
+	Extend() *ExtendClient
+	// Deprecated: remove
 	Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error
 }
 
-func QueryFrom(kvs map[string]string) url.Values {
-	value := url.Values{}
-	for k, v := range kvs {
-		value.Add(k, v)
-	}
-	return value
+var _ Client = &DelegateClient{}
+
+type DelegateClient struct {
+	*TypedClient
+	extend *ExtendClient
 }
 
-func HeadersFrom(kvs map[string]string) http.Header {
-	header := http.Header{}
-	for k, v := range kvs {
-		header.Add(k, v)
+type ClientMeta struct {
+	Name      string
+	BaseAddr  *url.URL
+	Transport *http.Transport
+}
+
+func (c *DelegateClient) Extend() *ExtendClient {
+	return c.extend
+}
+
+func newClient(meta ClientMeta) Client {
+	transport := meta.Transport
+
+	typed := &TypedClient{
+		ClientMeta: meta,
+		http: &http.Client{
+			Transport: transport,
+		},
+		websocket: &websocket.Dialer{
+			Proxy:            transport.Proxy,
+			HandshakeTimeout: 45 * time.Second,
+			TLSClientConfig:  transport.TLSClientConfig,
+		},
+		scheme: scheme.Scheme,
 	}
-	return header
+
+	return &DelegateClient{
+		TypedClient: typed,
+		extend: &ExtendClient{
+			TypedClient: typed,
+		},
+	}
 }

@@ -23,16 +23,6 @@ type HttpClient struct {
 	*http.Client
 }
 
-func NewHttpClientFrom(c *WrappedClient) *HttpClient {
-	return &HttpClient{
-		BaseAddr: c.BaseAddr.String(),
-		Client: &http.Client{
-			Transport: c.transport.Clone(),
-			Timeout:   c.Timeout,
-		},
-	}
-}
-
 type ListResponseStruct struct {
 	Message   string
 	Data      PageData

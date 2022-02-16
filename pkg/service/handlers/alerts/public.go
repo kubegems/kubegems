@@ -32,13 +32,13 @@ var (
 	nullReceiver     = v1alpha1.Receiver{Name: nullReceiverName}
 )
 
-func getRawAlertResource(ctx context.Context, cluster, namespace string) (*prometheus.RawAlertResource, error) {
-	amcfg, err := getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
+func (h *AlertsHandler) getRawAlertResource(ctx context.Context, cluster, namespace string) (*prometheus.RawAlertResource, error) {
+	amcfg, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	promerule, err := getOrCreatePrometheusRule(ctx, cluster, namespace)
+	promerule, err := h.getOrCreatePrometheusRule(ctx, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -55,9 +55,9 @@ func getRawAlertResource(ctx context.Context, cluster, namespace string) (*prome
 	}, nil
 }
 
-func getOrCreateAlertmanagerConfig(ctx context.Context, cluster, namespace string) (*v1alpha1.AlertmanagerConfig, error) {
+func (h *AlertsHandler) getOrCreateAlertmanagerConfig(ctx context.Context, cluster, namespace string) (*v1alpha1.AlertmanagerConfig, error) {
 	aconfig := &v1alpha1.AlertmanagerConfig{}
-	err := kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
+	err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
 		err := tc.Get(ctx, types.NamespacedName{Namespace: namespace, Name: prometheus.AlertmanagerConfigName}, aconfig)
 		if kerrors.IsNotFound(err) {
 			// 初始化
@@ -75,9 +75,9 @@ func getOrCreateAlertmanagerConfig(ctx context.Context, cluster, namespace strin
 	return aconfig, err
 }
 
-func getOrCreatePrometheusRule(ctx context.Context, cluster, namespace string) (*monitoringv1.PrometheusRule, error) {
+func (h *AlertsHandler) getOrCreatePrometheusRule(ctx context.Context, cluster, namespace string) (*monitoringv1.PrometheusRule, error) {
 	prule := &monitoringv1.PrometheusRule{}
-	err := kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
+	err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
 		err := tc.Get(ctx, types.NamespacedName{Namespace: namespace, Name: prometheus.PrometheusRuleName}, prule)
 		if kerrors.IsNotFound(err) {
 			prule = prometheus.GetBasePrometheusRule(namespace)
@@ -90,12 +90,12 @@ func getOrCreatePrometheusRule(ctx context.Context, cluster, namespace string) (
 	return prule, err
 }
 
-func commitToK8s(ctx context.Context, cluster string, raw *prometheus.RawAlertResource) error {
+func (h *AlertsHandler) commitToK8s(ctx context.Context, cluster string, raw *prometheus.RawAlertResource) error {
 	if err := kubeclient.GetClient().CheckAlertmanagerConfig(cluster, raw.AlertmanagerConfig); err != nil {
 		return err
 	}
 
-	return kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
+	return h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
 		if err := tc.Update(ctx, raw.PrometheusRule); err != nil {
 			return err
 		}

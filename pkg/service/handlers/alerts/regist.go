@@ -4,13 +4,11 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
-	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type AlertsHandler struct {
-	define.ServerInterface
-	*agents.ClientSet
+	base.BaseHandler
 }
 
 func (h *AlertsHandler) RegistRouter(rg *gin.RouterGroup) {
@@ -39,7 +37,8 @@ func (h *AlertsHandler) RegistRouter(rg *gin.RouterGroup) {
 }
 
 type AlertmanagerConfigHandler struct {
-	define.ServerInterface
+	*AlertsHandler
+
 	m sync.Mutex
 }
 

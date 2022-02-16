@@ -1,7 +1,6 @@
 package models
 
 import (
-	v1 "k8s.io/api/core/v1"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 )
 
@@ -25,7 +24,4 @@ type KubeClient interface {
 	CreateOrUpdateSecret(clustername, namespace, name string, data map[string][]byte) error
 	DeleteSecretIfExist(clustername, namespace, name string) error
 	DeleteTenant(clustername, tenantname string) error
-	ClusterResourceStatistics(cluster string, ret interface{}) error
-	GetServiceAccount(cluster, namespace, name string, labels map[string]string) (*v1.ServiceAccount, error)
-	PatchServiceAccount(cluster, namespace, name string, data *v1.ServiceAccount) (*v1.ServiceAccount, error)
 }

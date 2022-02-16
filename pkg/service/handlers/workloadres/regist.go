@@ -2,11 +2,11 @@ package workloadreshandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type WorkloadHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *WorkloadHandler) RegistRouter(rg *gin.RouterGroup) {

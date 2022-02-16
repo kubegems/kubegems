@@ -10,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 )
@@ -27,12 +27,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type ProxyHandler struct {
-	define.ServerInterface
-	clients *agents.ClientSet
-}
-
-func NewProxyHandler(server define.ServerInterface) *ProxyHandler {
-	return &ProxyHandler{clients: server.GetAgentsClientSet(), ServerInterface: server}
+	base.BaseHandler
 }
 
 // 不需要swagger
@@ -60,7 +55,7 @@ func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
 			return
 		}
 	}
-	v, err := h.GetAgentsClientSet().ClientOf(c.Request.Context(), cluster)
+	v, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -100,7 +95,7 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 	cluster := c.Param("cluster")
 	proxyPath := c.Param("action")
 
-	v, err := h.GetAgentsClientSet().ClientOf(c.Request.Context(), cluster)
+	v, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return

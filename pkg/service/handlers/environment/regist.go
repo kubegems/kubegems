@@ -2,11 +2,11 @@ package environmenthandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/server/define"
+	"kubegems.io/pkg/service/handlers/base"
 )
 
 type EnvironmentHandler struct {
-	define.ServerInterface
+	base.BaseHandler
 }
 
 func (h *EnvironmentHandler) RegistRouter(rg *gin.RouterGroup) {

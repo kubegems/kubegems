@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/istio"
@@ -65,7 +64,7 @@ func (h *VirtualSpaceHandler) ListServices(c *gin.Context) {
 		gatewayList := networkingpkgv1alpha3.GatewayList{}
 		podList := v1.PodList{}
 		deploymentsList := appsv1.DeploymentList{}
-		if err := kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
+		if err := h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 			g := new(errgroup.Group)
 			g.Go(func() error {
 				return tc.List(ctx, &svcList, client.InNamespace(env.Namespace))
@@ -122,7 +121,7 @@ func (h *VirtualSpaceHandler) ListServices(c *gin.Context) {
 // @Security JWT
 func (h *VirtualSpaceHandler) GetService(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
-		return getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
+		return h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
 	})
 }
 
@@ -159,7 +158,7 @@ type HTTPRoute struct {
 // @Security JWT
 func (h *VirtualSpaceHandler) ServiceRequestRouting(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
-		svcDetails, err := getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
+		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
 		if err != nil {
 			return nil, err
 		}
@@ -168,7 +167,7 @@ func (h *VirtualSpaceHandler) ServiceRequestRouting(c *gin.Context) {
 			return nil, err
 		}
 
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
+		return "ok", h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_request_routing,
 				ctx,
@@ -196,7 +195,7 @@ func (h *VirtualSpaceHandler) ServiceRequestRouting(c *gin.Context) {
 // @Security JWT
 func (h *VirtualSpaceHandler) ServiceFaultInjection(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
-		svcDetails, err := getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
+		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
 		if err != nil {
 			return nil, err
 		}
@@ -214,7 +213,7 @@ func (h *VirtualSpaceHandler) ServiceFaultInjection(c *gin.Context) {
 				},
 			}
 		}
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
+		return "ok", h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_fault_injection,
 				ctx,
@@ -242,7 +241,7 @@ func (h *VirtualSpaceHandler) ServiceFaultInjection(c *gin.Context) {
 // @Security JWT
 func (h *VirtualSpaceHandler) ServiceTrafficShifting(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
-		svcDetails, err := getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
+		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
 		if err != nil {
 			return nil, err
 		}
@@ -251,7 +250,7 @@ func (h *VirtualSpaceHandler) ServiceTrafficShifting(c *gin.Context) {
 			return nil, err
 		}
 
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
+		return "ok", h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_traffic_shifting,
 				ctx,
@@ -289,7 +288,7 @@ type TCPRoute struct {
 // @Security JWT
 func (h *VirtualSpaceHandler) ServiceTCPTrafficShifting(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
-		svcDetails, err := getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
+		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +297,7 @@ func (h *VirtualSpaceHandler) ServiceTCPTrafficShifting(c *gin.Context) {
 			return nil, err
 		}
 
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
+		return "ok", h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_tcp_traffic_shifting,
 				ctx,
@@ -326,7 +325,7 @@ func (h *VirtualSpaceHandler) ServiceTCPTrafficShifting(c *gin.Context) {
 // @Security JWT
 func (h *VirtualSpaceHandler) ServiceRequestTimeout(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
-		svcDetails, err := getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
+		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
 		if err != nil {
 			return nil, err
 		}
@@ -344,7 +343,7 @@ func (h *VirtualSpaceHandler) ServiceRequestTimeout(c *gin.Context) {
 				},
 			}
 		}
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
+		return "ok", h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 			return updateOrCreateDrAndVs(svcDetails,
 				kiali_wizard_request_timeouts,
 				ctx,
@@ -371,11 +370,11 @@ func (h *VirtualSpaceHandler) ServiceRequestTimeout(c *gin.Context) {
 // @Security JWT
 func (h *VirtualSpaceHandler) ServicetReset(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
-		svcDetails, err := getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
+		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
 		if err != nil {
 			return nil, err
 		}
-		return "ok", kubeclient.Execute(ctx, env.Cluster.ClusterName, func(tc agents.Client) error {
+		return "ok", h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 			for _, v := range svcDetails.VirtualServices {
 				if err := tc.Delete(ctx, &v); err != nil {
 					return err
@@ -477,7 +476,7 @@ func constructHostFQDN(namespace, name string) string {
 	return fmt.Sprintf("%s.%s.%s", name, namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
 }
 
-func getServiceDetails(ctx context.Context, cluster, namespace, name string) (kialimodels.ServiceDetails, error) {
+func (h *VirtualSpaceHandler) getServiceDetails(ctx context.Context, cluster, namespace, name string) (kialimodels.ServiceDetails, error) {
 	svc := v1.Service{}
 	ep := v1.Endpoints{}
 	destionationRuleList := networkingpkgv1alpha3.DestinationRuleList{}
@@ -488,7 +487,7 @@ func getServiceDetails(ctx context.Context, cluster, namespace, name string) (ki
 	dsList := appsv1.DaemonSetList{}
 	podList := v1.PodList{}
 	kialisvc := kialimodels.ServiceDetails{}
-	if err := kubeclient.Execute(ctx, cluster, func(tc agents.Client) error {
+	if err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
 		g := new(errgroup.Group)
 		g.Go(func() error {
 			return tc.Get(ctx, types.NamespacedName{

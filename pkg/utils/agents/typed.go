@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -18,51 +17,35 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 const jsonContentType = "application/json"
 
-func NewTypedClientFrom(baseaddr *url.URL, transport *http.Transport) *TypedClient {
-	return &TypedClient{
-		serveraddr: baseaddr,
-		http: &http.Client{
-			Transport: transport.Clone(),
-		},
-		websocket: &websocket.Dialer{
-			Proxy:            transport.Proxy,
-			HandshakeTimeout: 45 * time.Second,
-			TLSClientConfig:  transport.TLSClientConfig,
-		},
-		scheme: scheme.Scheme,
-	}
-}
-
 type TypedClient struct {
-	scheme     *runtime.Scheme
-	http       *http.Client
-	websocket  *websocket.Dialer
-	serveraddr *url.URL
+	ClientMeta
+	scheme    *runtime.Scheme
+	http      *http.Client
+	websocket *websocket.Dialer
 }
 
-var _ Client = &TypedClient{}
+var _ client.WithWatch = TypedClient{}
 
-func (c *TypedClient) RESTMapper() meta.RESTMapper {
+func (c TypedClient) RESTMapper() meta.RESTMapper {
 	panic("not implemented") // TODO: Implement
 }
 
-func (c *TypedClient) Scheme() *runtime.Scheme {
+func (c TypedClient) Scheme() *runtime.Scheme {
 	return c.scheme
 }
 
-func (c *TypedClient) Status() client.StatusWriter {
+func (c TypedClient) Status() client.StatusWriter {
 	return &StatusTypedClient{c: c}
 }
 
 type StatusTypedClient struct {
-	c *TypedClient
+	c TypedClient
 }
 
 func (c *StatusTypedClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
@@ -89,14 +72,14 @@ func (c *StatusTypedClient) Patch(ctx context.Context, obj client.Object, patch 
 // Get retrieves an obj for the given object key from the Kubernetes Cluster.
 // obj must be a struct pointer so that obj can be updated with the response
 // returned by the Server.
-func (c *TypedClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (c TypedClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
 	return c.request(ctx, http.MethodGet, jsonContentType, obj, key.Namespace, key.Name, nil, nil)
 }
 
 // List retrieves list of objects for a given namespace and list options. On a
 // successful call, Items field in the list will be populated with the
 // result returned from the server.
-func (c *TypedClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+func (c TypedClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	options := client.ListOptions{}
 	options.ApplyOptions(opts)
 
@@ -104,7 +87,7 @@ func (c *TypedClient) List(ctx context.Context, list client.ObjectList, opts ...
 	return c.request(ctx, http.MethodGet, jsonContentType, list, options.Namespace, "", queries, nil)
 }
 
-func (c *TypedClient) listOptionToQueries(opts []client.ListOption) map[string]string {
+func (c TypedClient) listOptionToQueries(opts []client.ListOption) map[string]string {
 	options := client.ListOptions{}
 	options.ApplyOptions(opts)
 
@@ -124,13 +107,13 @@ func (c *TypedClient) listOptionToQueries(opts []client.ListOption) map[string]s
 }
 
 // Create saves the object obj in the Kubernetes cluster.
-func (c *TypedClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+func (c TypedClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	return c.request(ctx, http.MethodPost, jsonContentType, obj, obj.GetNamespace(), obj.GetName(), nil, nil)
 }
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (c *TypedClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (c TypedClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 	options := client.PatchOptions{}
 	options.ApplyOptions(opts)
 
@@ -149,12 +132,12 @@ func (c *TypedClient) Patch(ctx context.Context, obj client.Object, patch client
 
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (c *TypedClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+func (c TypedClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
 	return c.request(ctx, http.MethodPut, jsonContentType, obj, obj.GetNamespace(), obj.GetName(), nil, nil)
 }
 
 // Delete deletes the given obj from Kubernetes cluster.
-func (c *TypedClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+func (c TypedClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	options := client.DeleteOptions{}
 	options.ApplyOptions(opts)
 
@@ -169,11 +152,11 @@ func (c *TypedClient) Delete(ctx context.Context, obj client.Object, opts ...cli
 }
 
 // DeleteAllOf deletes all objects of the given type matching the given options.
-func (c *TypedClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
+func (c TypedClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
 	panic("not implemented") // TODO: Implement
 }
 
-func (c *TypedClient) request(ctx context.Context, method, contenttype string,
+func (c TypedClient) request(ctx context.Context, method, contenttype string,
 	obj runtime.Object, namespace, name string, queries map[string]string, data []byte,
 ) error {
 	addr, err := c.requestAddr(obj, method, namespace, name, queries)
@@ -222,7 +205,7 @@ func (c *TypedClient) request(ctx context.Context, method, contenttype string,
 	return nil
 }
 
-func (c *TypedClient) requestAddr(obj runtime.Object, method string, namespace, name string, queries map[string]string) (string, error) {
+func (c TypedClient) requestAddr(obj runtime.Object, method string, namespace, name string, queries map[string]string) (string, error) {
 	gvk, err := apiutil.GVKForObject(obj, c.scheme)
 	if err != nil {
 		return "", err
@@ -231,7 +214,7 @@ func (c *TypedClient) requestAddr(obj runtime.Object, method string, namespace, 
 
 	sb := &strings.Builder{}
 	// assumes without a suffix '/'
-	sb.WriteString(c.serveraddr.String())
+	sb.WriteString(c.BaseAddr.String())
 	sb.WriteString("/internal")
 	if gvk.Group == "" {
 		sb.WriteString("/core")
@@ -293,7 +276,7 @@ func (c *TypedClient) requestAddr(obj runtime.Object, method string, namespace, 
 	}
 */
 //
-func (c *TypedClient) Watch(ctx context.Context, obj client.ObjectList, opts ...client.ListOption) (watch.Interface, error) {
+func (c TypedClient) Watch(ctx context.Context, obj client.ObjectList, opts ...client.ListOption) (watch.Interface, error) {
 	options := client.ListOptions{}
 	options.ApplyOptions(opts)
 

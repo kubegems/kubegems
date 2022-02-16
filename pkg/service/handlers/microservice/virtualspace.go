@@ -20,8 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/handlers/base"
+	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/msgbus"
@@ -30,8 +31,8 @@ import (
 )
 
 type VirtualSpaceHandler struct {
-	define.ServerInterface
-	Agents *agents.ClientSet
+	base.BaseHandler
+	MicroserviceOptions *microserviceoptions.MicroserviceOptions
 }
 
 var (
@@ -976,7 +977,7 @@ func (h *VirtualSpaceHandler) ListIstioResources(c *gin.Context) {
 }
 
 func (h *VirtualSpaceHandler) clientOf(ctx context.Context, cluster string) (agents.Client, error) {
-	return h.GetAgentsClientSet().ClientOf(ctx, cluster)
+	return h.GetAgents().ClientOf(ctx, cluster)
 }
 
 func (h *VirtualSpaceHandler) RegistRouter(rg *gin.RouterGroup) {

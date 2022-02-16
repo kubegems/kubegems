@@ -109,7 +109,7 @@ func (h *AlertmanagerConfigHandler) ListReceiver(c *gin.Context) {
 			}
 		}
 	} else {
-		config, err := getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
+		config, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
 		if err != nil {
 			handlers.NotOK(c, err)
 			return
@@ -161,7 +161,7 @@ func (h *AlertmanagerConfigHandler) CreateReceiver(c *gin.Context) {
 	ctx := c.Request.Context()
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 	h.SetAuditData(c, "创建", "告警接收器", "")
-	aconfig, err := getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
+	aconfig, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -216,7 +216,7 @@ func (h *AlertmanagerConfigHandler) DeleteReceiver(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("receiver name must not be empty"))
 		return
 	}
-	aconfig, err := getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
+	aconfig, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -252,7 +252,7 @@ func (h *AlertmanagerConfigHandler) ModifyReceiver(c *gin.Context) {
 	ctx := c.Request.Context()
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 	h.SetAuditData(c, "修改", "告警接收器", name)
-	aconfig, err := getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
+	aconfig, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
