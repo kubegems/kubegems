@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
 
 const (
@@ -51,20 +50,4 @@ type ProjectUserRels struct {
 
 	// 项目级角色(管理员admin, 开发dev, 测试test, 运维ops)
 	Role string `gorm:"type:varchar(30)" binding:"required,eq=admin|eq=test|eq=dev|eq=ops"`
-}
-
-/*
-	删除项目后
-	删除各个集群的环境(tenv),tenv本身删除是Controller自带垃圾回收的，其ns下所有资源将清空
-*/
-func (p *Project) AfterDelete(tx *gorm.DB) error {
-	for _, env := range p.Environments {
-		e := GetKubeClient().DeleteEnvironment(env.Cluster.ClusterName, env.EnvironmentName)
-		if e != nil {
-			return e
-		}
-	}
-	// TODO: 删除 GIT 中的数据
-	// TODO: 删除 ARGO 中的数据
-	return nil
 }

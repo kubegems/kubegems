@@ -22,20 +22,24 @@ package projecthandler
 */
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/service/handlers/environment"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/msgbus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type EnvironmentAggregateData struct {
@@ -99,6 +103,8 @@ func (h *ProjectHandler) ProjectStatistics(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	envTotal := len(proj.Environments)
 	if envTotal == 0 {
 		handlers.OK(c, GetResourceCount())
@@ -109,7 +115,7 @@ func (h *ProjectHandler) ProjectStatistics(c *gin.Context) {
 	wg.Add(envTotal)
 	for idx, env := range proj.Environments {
 		go func(env *models.Environment, idx int) {
-			rq, err := kubeclient.GetClient().GetResourceQuota(env.Cluster.ClusterName, env.Namespace, "default", nil)
+			rq, err := h.getDefaultResourceQuota(ctx, env.Cluster.ClusterName, env.Namespace)
 			if err != nil {
 				ret[idx] = nil
 			}
@@ -153,7 +159,8 @@ func (h *ProjectHandler) EnvironmentStatistics(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	rq, err := kubeclient.GetClient().GetResourceQuota(env.Cluster.ClusterName, env.Namespace, "default", nil)
+
+	rq, err := h.getDefaultResourceQuota(c.Request.Context(), env.Cluster.ClusterName, env.Namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -417,7 +424,7 @@ func (h *ProjectHandler) GetEnvironmentResourceQuota(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	quota, err := kubeclient.GetClient().GetResourceQuota(env.Cluster.ClusterName, env.Namespace, "default", nil)
+	quota, err := h.getDefaultResourceQuota(c.Request.Context(), env.Cluster.ClusterName, env.Namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -448,7 +455,7 @@ func (h *ProjectHandler) GetEnvironmentResourceQuotas(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	rets, err := h.getProjectNoAggretateQuota(projid)
+	rets, err := h.getProjectNoAggretateQuota(c.Request.Context(), projid)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -472,7 +479,7 @@ func (h *ProjectHandler) GetProjectResourceQuota(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	ret, err := h.getProjectAggretateQuota(projid)
+	ret, err := h.getProjectAggretateQuota(c.Request.Context(), projid)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -511,7 +518,7 @@ func (h *ProjectHandler) GetProjectListResourceQuotas(c *gin.Context) {
 		return
 	}
 	for _, proj := range projects {
-		tmpret, err := h.getProjectAggretateQuota(int(proj.ID))
+		tmpret, err := h.getProjectAggretateQuota(c.Request.Context(), int(proj.ID))
 		if err != nil {
 			handlers.NotOK(c, err)
 			return
@@ -531,7 +538,7 @@ type res struct {
 	Resoruce map[string]interface{} `json:"resource"`
 }
 
-func (h *ProjectHandler) getProjectNoAggretateQuota(projectId int) (map[string]res, error) {
+func (h *ProjectHandler) getProjectNoAggretateQuota(ctx context.Context, projectId int) (map[string]res, error) {
 	ret := map[string]res{}
 	var proj models.Project
 	if err := h.GetDB().Preload("Tenant").Preload("Environments.Cluster").First(&proj, "id = ?", projectId).Error; err != nil {
@@ -555,7 +562,7 @@ func (h *ProjectHandler) getProjectNoAggretateQuota(projectId int) (map[string]r
 	}
 
 	for _, env := range proj.Environments {
-		quota, err := kubeclient.GetClient().GetResourceQuota(env.Cluster.ClusterName, env.Namespace, "default", nil)
+		quota, err := h.getDefaultResourceQuota(ctx, env.Cluster.ClusterName, env.Namespace)
 		if err != nil {
 			ret[env.EnvironmentName] = res{
 				Quota: nil,
@@ -582,7 +589,7 @@ type projectRes struct {
 }
 
 // 获取项目在各个环境下的资源的聚合数据
-func (h *ProjectHandler) getProjectAggretateQuota(projectId int) (*projectRes, error) {
+func (h *ProjectHandler) getProjectAggretateQuota(ctx context.Context, projectId int) (*projectRes, error) {
 	var proj models.Project
 	if err := h.GetDB().Preload("Tenant").Preload("Environments.Cluster").First(&proj, "id = ?", projectId).Error; err != nil {
 		return nil, err
@@ -621,11 +628,15 @@ func (h *ProjectHandler) getProjectAggretateQuota(projectId int) (*projectRes, e
 		gemlabels.LabelProject: proj.ProjectName,
 	}
 	for cluster := range clusterMap {
-		quotas, err := kubeclient.GetClient().GetResourceQuotaList(cluster, "", labels)
+
+		quotas := &v1.ResourceQuotaList{}
+		err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+			return cli.List(ctx, quotas, client.MatchingLabels(labels))
+		})
 		if err != nil {
 			continue
 		}
-		for _, quota := range *quotas {
+		for _, quota := range quotas.Items {
 			for k, v := range quota.Status.Hard {
 				if rv, rexist := ret.ResourceQuotaStatus.Hard[k]; rexist {
 					rv.Add(v)
@@ -675,10 +686,19 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 		return
 	}
 	env.LimitRange = models.FillDefaultLimigrange(&env)
-	if err := h.GetDB().Save(&env).Error; err != nil {
+
+	ctx := c.Request.Context()
+	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&env).Error; err != nil {
+			return err
+		}
+		return environment.AfterEnvironmentSave(ctx, h.BaseHandler, tx, &env)
+	})
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+
 	t := h.GetCacheLayer().GetGlobalResourceTree()
 	t.UpsertEnvironment(obj.ID, env.ID, env.EnvironmentName, cluster.ClusterName, env.Namespace)
 
@@ -724,6 +744,7 @@ func (h *ProjectHandler) ProjectEnvironments(c *gin.Context) {
 		handlers.NotOK(c, e)
 		return
 	}
+	ctx := c.Request.Context()
 
 	for _, env := range environments {
 		env.Cluster.KubeConfig = nil
@@ -745,12 +766,17 @@ func (h *ProjectHandler) ProjectEnvironments(c *gin.Context) {
 		}
 	}
 	for key, cluster := range ret {
-		netpol, _ := kubeclient.GetClient().GetTenantNetworkPolicy(cluster.ClusterName, proj.Tenant.TenantName, nil)
+
+		netpol := &gemsv1beta1.TenantNetworkPolicy{}
+		_ = h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+			return cli.Get(ctx, client.ObjectKey{Name: proj.Tenant.TenantName}, netpol)
+		})
+
 		tmp := ret[key]
 		tmp.NetworkPolicy = netpol
 		ret[key] = tmp
 		for idx, env := range tmp.Environments {
-			quota, _ := kubeclient.GetClient().GetResourceQuota(cluster.ClusterName, env.Env.Namespace, "default", nil)
+			quota, _ := h.getDefaultResourceQuota(c.Request.Context(), cluster.ClusterName, env.Env.Namespace)
 			tmp.Environments[idx].ResourceQuota = quota
 		}
 	}
@@ -788,31 +814,37 @@ func (h *ProjectHandler) ProjectSwitch(c *gin.Context) {
 
 	h.SetAuditData(c, "更新", "项目网络隔离", proj.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, proj.ID)
-	tnetpol, err := kubeclient.GetClient().GetTenantNetworkPolicy(cluster.ClusterName, proj.Tenant.TenantName, nil)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	index := -1
-	for idx, projpol := range tnetpol.Spec.ProjectNetworkPolicies {
-		if projpol.Name == proj.ProjectName {
-			index = idx
+
+	ctx := c.Request.Context()
+
+	tnetpol := &gemsv1beta1.TenantNetworkPolicy{}
+	err := h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		if err := cli.Get(ctx, client.ObjectKey{Name: proj.Tenant.TenantName}, tnetpol); err != nil {
+			return err
 		}
-	}
-	if index == -1 && form.Isolate {
-		tnetpol.Spec.ProjectNetworkPolicies = append(tnetpol.Spec.ProjectNetworkPolicies, gemsv1beta1.ProjectNetworkPolicy{
-			Name: proj.ProjectName,
-		})
-	}
-	if index != -1 && !form.Isolate {
-		tnetpol.Spec.ProjectNetworkPolicies = append(tnetpol.Spec.ProjectNetworkPolicies[:index], tnetpol.Spec.ProjectNetworkPolicies[index+1:]...)
-	}
-	ret, err := kubeclient.GetClient().PatchTenantNetworkPolicy(cluster.ClusterName, proj.Tenant.TenantName, tnetpol)
+
+		index := -1
+		for idx, projpol := range tnetpol.Spec.ProjectNetworkPolicies {
+			if projpol.Name == proj.ProjectName {
+				index = idx
+			}
+		}
+		if index == -1 && form.Isolate {
+			tnetpol.Spec.ProjectNetworkPolicies = append(tnetpol.Spec.ProjectNetworkPolicies, gemsv1beta1.ProjectNetworkPolicy{
+				Name: proj.ProjectName,
+			})
+		}
+		if index != -1 && !form.Isolate {
+			tnetpol.Spec.ProjectNetworkPolicies = append(tnetpol.Spec.ProjectNetworkPolicies[:index], tnetpol.Spec.ProjectNetworkPolicies[index+1:]...)
+		}
+
+		return cli.Update(ctx, tnetpol)
+	})
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, ret)
+	handlers.OK(c, tnetpol)
 }
 
 // TenantProjectListResourceQuotas 租户下所有项目的资源统计列表[quota]
@@ -836,7 +868,7 @@ func (h *ProjectHandler) TenantProjectListResourceQuotas(c *gin.Context) {
 
 	}
 	for _, proj := range projects {
-		tmpret, err := h.getProjectAggretateQuota(int(proj.ID))
+		tmpret, err := h.getProjectAggretateQuota(c.Request.Context(), int(proj.ID))
 		if err != nil {
 			handlers.NotOK(c, err)
 			return
@@ -849,4 +881,12 @@ func (h *ProjectHandler) TenantProjectListResourceQuotas(c *gin.Context) {
 		ret = append(ret, item)
 	}
 	handlers.OK(c, ret)
+}
+
+func (h *ProjectHandler) getDefaultResourceQuota(ctx context.Context, cluster, namespace string) (*v1.ResourceQuota, error) {
+	rq := &v1.ResourceQuota{}
+	err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Get(ctx, client.ObjectKey{Namespace: namespace, Name: "default"}, rq)
+	})
+	return rq, err
 }

@@ -12,7 +12,6 @@ import (
 	"kubegems.io/pkg/msgbus/switcher"
 	"kubegems.io/pkg/msgbus/tasks"
 	"kubegems.io/pkg/msgbus/workloads"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
@@ -80,8 +79,6 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 	if err != nil {
 		return nil, err
 	}
-	// fixme: 初始化kubeclient,如果不调用 kubeclient 的静态方法就可以移除了
-	kubeclient.Init(agentclientset)
 
 	// argo 客户端
 	argocli, err := argo.NewClient(ctx, options.Argo)

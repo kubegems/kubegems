@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -18,12 +19,12 @@ import (
 	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/msgbus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
@@ -185,17 +186,35 @@ func (h *TenantHandler) DeleteTenant(c *gin.Context) {
 		return
 	}
 
-	if err := h.GetDB().Delete(&obj).Error; err != nil {
+	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(&obj).Error; err != nil {
+			return err
+		}
+		return h.afterTenantDelete(c.Request.Context(), tx, &obj)
+	})
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	h.SetAuditData(c, "更新", "租户", obj.TenantName)
+	h.SetAuditData(c, "删除", "租户", obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
 	h.GetCacheLayer().GetGlobalResourceTree().DelTenant(obj.ID)
 
 	handlers.NoContent(c, nil)
+}
+
+/*
+	删除租户后，需要删除这个租户在各个集群下占用的资源
+*/
+func (h *TenantHandler) afterTenantDelete(ctx context.Context, tx *gorm.DB, t *models.Tenant) error {
+	for _, quota := range t.ResourceQuotas {
+		if err := h.afterTenantResourceQuotaDelete(ctx, tx, quota); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ListTenantUser 获取属于Tenant的 User 列表
@@ -729,6 +748,15 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("请求体的租户ID和路由中的租户ID不匹配"))
 		return
 	}
+	ctx := c.Request.Context()
+
+	h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&obj).Error; err != nil {
+			return err
+		}
+		return h.afterTenantResourceQuotaSave(ctx, tx, &obj)
+	})
+
 	if err := h.GetDB().Create(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -740,6 +768,73 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 	h.SetExtraAuditData(c, models.ResTenant, obj.TenantID)
 
 	handlers.Created(c, obj)
+}
+
+func (h *TenantHandler) afterTenantResourceQuotaSave(ctx context.Context, tx *gorm.DB, trq *models.TenantResourceQuota) error {
+	var (
+		tenant  models.Tenant
+		cluster models.Cluster
+		rels    []models.TenantUserRels
+	)
+	tx.First(&cluster, "id = ?", trq.ClusterID)
+	tx.First(&tenant, "id = ?", trq.TenantID)
+	tx.Preload("User").Find(&rels, "tenant_id = ?", trq.TenantID)
+
+	admins := []string{}
+	members := []string{}
+	for _, rel := range rels {
+		if rel.Role == models.TenantRoleAdmin {
+			admins = append(admins, rel.User.Username)
+		} else {
+			members = append(members, rel.User.Username)
+		}
+	}
+	// 创建or更新 租户
+	if err := h.CreateOrUpdateTenant(ctx, cluster.ClusterName, tenant.TenantName, admins, members); err != nil {
+		return err
+	}
+	// 这儿有个坑，controller还没有成功创建出来TenantResourceQuota，就去更新租户资源，会报错404；先睡会儿把
+	<-time.NewTimer(time.Second * 2).C
+	// 创建or更新 租户资源
+	if err := h.CreateOrUpdateTenantResourceQuota(ctx, cluster.ClusterName, tenant.TenantName, trq.Content); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *TenantHandler) CreateOrUpdateTenant(ctx context.Context, clustername, tenantname string, admins, members []string) error {
+	return h.Execute(ctx, clustername, func(ctx context.Context, cli agents.Client) error {
+		crdTenant := &v1beta1.Tenant{
+			ObjectMeta: metav1.ObjectMeta{Name: tenantname},
+		}
+		_, err := controllerutil.CreateOrUpdate(ctx, cli, crdTenant, func() error {
+			crdTenant.Spec = v1beta1.TenantSpec{
+				TenantName: tenantname,
+				Admin:      admins,
+				Members:    members,
+			}
+			return nil
+		})
+		return err
+	})
+}
+
+func (h *TenantHandler) CreateOrUpdateTenantResourceQuota(ctx context.Context, clustername, tenantname string, data []byte) error {
+	var hard v1.ResourceList
+	if err := json.Unmarshal(data, &hard); err != nil {
+		return err
+	}
+
+	return h.Execute(ctx, clustername, func(ctx context.Context, cli agents.Client) error {
+		tquota := &v1beta1.TenantResourceQuota{
+			ObjectMeta: metav1.ObjectMeta{Name: tenantname},
+		}
+		_, err := controllerutil.CreateOrUpdate(ctx, cli, tquota, func() error {
+			tquota.Spec = v1beta1.TenantResourceQuotaSpec{Hard: hard}
+			return nil
+		})
+		return err
+	})
 }
 
 // PatchTenantTenantResourceQuota 修改一个属于 Tenant 的TenantResourceQuota
@@ -816,7 +911,14 @@ func (h *TenantHandler) DeleteTenantResourceQuota(c *gin.Context) {
 		handlers.NoContent(c, err)
 		return
 	}
-	if err := h.GetDB().Delete(&trq).Error; err != nil {
+	ctx := c.Request.Context()
+	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(&trq).Error; err != nil {
+			return err
+		}
+		return h.afterTenantResourceQuotaDelete(ctx, tx, &trq)
+	})
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -825,6 +927,19 @@ func (h *TenantHandler) DeleteTenantResourceQuota(c *gin.Context) {
 	h.SetExtraAuditData(c, models.ResTenant, trq.TenantID)
 
 	handlers.NoContent(c, nil)
+}
+
+/*
+	同步删除对应集群的资源
+*/
+func (h *TenantHandler) afterTenantResourceQuotaDelete(ctx context.Context, tx *gorm.DB, trq *models.TenantResourceQuota) error {
+	return h.Execute(ctx, trq.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		return cli.Delete(ctx, &v1beta1.Tenant{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: trq.Tenant.TenantName,
+			},
+		})
+	})
 }
 
 // TenantEnvironments 获取租户下所有的环境
@@ -853,6 +968,8 @@ func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 		projectids = append(projectids, proj.ID)
 	}
 
+	ctx := c.Request.Context()
+
 	search := c.Query("search")
 	q := h.GetDB().Preload("Project").Preload(
 		"Creator",
@@ -878,11 +995,15 @@ func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 
 	quotaMap := map[string]interface{}{}
 	for cluster := range clusterMap {
-		quotas, err := kubeclient.GetClient().GetResourceQuotaList(cluster, "", labels)
+
+		quotas := &v1.ResourceQuotaList{}
+		err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+			return cli.List(ctx, quotas, client.MatchingLabels(labels))
+		})
 		if err != nil {
 			continue
 		}
-		for _, quota := range *quotas {
+		for _, quota := range quotas.Items {
 			envname, exist := quota.Labels[gemlabels.LabelEnvironment]
 			if !exist {
 				continue
@@ -985,6 +1106,9 @@ func (h *TenantHandler) TenantStatistics(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("租户id %v 对应的租户不存在", c.Param("tenant_id")))
 		return
 	}
+
+	ctx := c.Request.Context()
+
 	h.GetDB().Model(&models.TenantUserRels{}).Where("tenant_id = ?", c.Param("tenant_id")).Count(&usercount)
 	pids := []uint{}
 	for _, p := range tenant.Projects {
@@ -999,13 +1123,16 @@ func (h *TenantHandler) TenantStatistics(c *gin.Context) {
 		for _, trq := range tenant.ResourceQuotas {
 			wg.Add(1)
 			go func(clustername string) {
-				quotas, err := kubeclient.GetClient().GetResourceQuotaList(clustername, "", map[string]string{
-					gemlabels.LabelTenant: tenant.TenantName,
+				quotas := &v1.ResourceQuotaList{}
+				err := h.Execute(ctx, clustername, func(ctx context.Context, cli agents.Client) error {
+					return cli.List(ctx, quotas, client.MatchingLabels{
+						gemlabels.LabelTenant: tenant.TenantName,
+					})
 				})
 				if err != nil {
 					log.Error(err, "get resource quotas failed")
 				}
-				allQuotas <- quotas
+				allQuotas <- &quotas.Items
 				wg.Done()
 			}(trq.Cluster.ClusterName)
 		}
@@ -1090,18 +1217,20 @@ func (h *TenantHandler) TenantSwitch(c *gin.Context) {
 	h.SetAuditData(c, "更新", "租户网络隔离", tenant.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 
-	tnetpol, err := kubeclient.GetClient().GetTenantNetworkPolicy(cluster.ClusterName, tenant.TenantName, nil)
+	ctx := c.Request.Context()
+	tnetpol := &v1beta1.TenantNetworkPolicy{}
+	err := h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		if err := cli.Get(ctx, client.ObjectKey{Name: tenant.TenantName}, tnetpol); err != nil {
+			return err
+		}
+		tnetpol.Spec.TenantIsolated = form.Isolate
+		return cli.Update(ctx, tnetpol)
+	})
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	tnetpol.Spec.TenantIsolated = form.Isolate
-	ret, err := kubeclient.GetClient().PatchTenantNetworkPolicy(cluster.ClusterName, tenant.TenantName, tnetpol)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, ret)
+	handlers.OK(c, tnetpol)
 }
 
 // CreateTenantTenantResourceQuotaApply  创建or修改租户集群资源变更申请
@@ -1254,7 +1383,7 @@ func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("集群%s不存在", clusterid))
 		return
 	}
-
+	ctx := c.Request.Context()
 	// _all 不筛选租户
 	tenantidStr := c.Param("tenant_id")
 	selector := map[string]string{}
@@ -1268,12 +1397,50 @@ func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 		selector[gemlabels.LabelTenant+"__in"] = tenant.TenantName + "," + defaultGatewayTenant
 	}
 
-	tgList, err := kubeclient.GetClient().GetTenantGatewayList(cluster.ClusterName, selector)
+	tgList, err := h.listGateways(ctx, cluster.ClusterName, selector)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	handlers.OK(c, tgList)
+}
+
+func (h *TenantHandler) listGateways(ctx context.Context, cluster string, selector map[string]string) ([]v1beta1.TenantGateway, error) {
+	gatewaylist := &v1beta1.TenantGatewayList{}
+	err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.List(ctx, gatewaylist, client.MatchingLabels(selector))
+	})
+	return gatewaylist.Items, err
+}
+
+func (h *TenantHandler) getGateway(ctx context.Context, cluster string, name string) (*v1beta1.TenantGateway, error) {
+	gateway := &v1beta1.TenantGateway{}
+	err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Get(ctx, client.ObjectKey{Name: name}, gateway)
+	})
+	return gateway, err
+}
+
+func (h *TenantHandler) createGateway(ctx context.Context, cluster string, gateway *v1beta1.TenantGateway) error {
+	return h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Create(ctx, gateway)
+	})
+}
+
+func (h *TenantHandler) updateGateway(ctx context.Context, cluster string, gateway *v1beta1.TenantGateway) error {
+	return h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Update(ctx, gateway)
+	})
+}
+
+func (h *TenantHandler) deleteGateway(ctx context.Context, cluster string, name string) error {
+	return h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Delete(ctx, &v1beta1.TenantGateway{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+			},
+		})
+	})
 }
 
 // @Tags Tenant
@@ -1296,8 +1463,10 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	if ingressClass != "" {
-		tglist, err := kubeclient.GetClient().GetTenantGatewayList(cluster.ClusterName,
+		tglist, err := h.listGateways(ctx, cluster.ClusterName,
 			map[string]string{
 				networking.LabelIngressClass: ingressClass,
 			},
@@ -1306,7 +1475,7 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 			handlers.NotOK(c, err)
 			return
 		}
-		tmp := *tglist
+		tmp := tglist
 		if len(tmp) == 0 {
 			handlers.NotOK(c, fmt.Errorf("can't find gateway by ingressClass %s", ingressClass))
 			return
@@ -1314,7 +1483,7 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 
 		handlers.OK(c, tmp[0])
 	} else {
-		tg, err := kubeclient.GetClient().GetTenantGateway(cluster.ClusterName, c.Param("name"), nil)
+		tg, err := h.getGateway(ctx, cluster.ClusterName, c.Param("name"))
 		if err != nil {
 			handlers.NotOK(c, err)
 			return
@@ -1357,13 +1526,13 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 
 	h.SetAuditData(c, "创建", "集群租户网关", fmt.Sprintf("集群[%v]/租户[%v]", cluster.ClusterName, tenant.TenantName))
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
+	ctx := c.Request.Context()
 
-	ret, err := kubeclient.GetClient().CreateTenantGateway(cluster.ClusterName, tg.Name, &tg)
-	if err != nil {
+	if err := h.createGateway(ctx, cluster.ClusterName, &tg); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, ret)
+	handlers.OK(c, tg)
 }
 
 // @Tags Tenant
@@ -1390,6 +1559,8 @@ func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	u, _ := h.GetContextUser(c)
 	auth := h.GetCacheLayer().GetUserAuthority(u)
 	// 非管理员不能编辑默认网关
@@ -1409,12 +1580,12 @@ func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 		h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 	}
 
-	ret, err := kubeclient.GetClient().UpdateTenantGateway(cluster.ClusterName, tg.Name, &tg)
+	err := h.updateGateway(ctx, cluster.ClusterName, &tg)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, ret)
+	handlers.OK(c, &tg)
 }
 
 // @Tags Tenant
@@ -1451,7 +1622,7 @@ func (h *TenantHandler) DeleteTenantGateway(c *gin.Context) {
 	h.SetAuditData(c, "删除", "集群租户网关", fmt.Sprintf("集群[%v]/租户[%v]", cluster.ClusterName, tenant.TenantName))
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 
-	err := kubeclient.GetClient().DeleteTenantGateway(cluster.ClusterName, name)
+	err := h.deleteGateway(c.Request.Context(), cluster.ClusterName, name)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -1491,7 +1662,7 @@ func (h *TenantHandler) GetObjectTenantGatewayAddr(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	tg, err := kubeclient.GetClient().GetTenantGateway(cluster.ClusterName, c.Param("name"), nil)
+	tg, err := h.getGateway(ctx, cluster.ClusterName, c.Param("name"))
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
