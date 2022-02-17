@@ -161,43 +161,6 @@ func (h *ProjectHandler) EnvironmentStatistics(c *gin.Context) {
 	handlers.OK(c, GetResourceCount(rq))
 }
 
-// EnvironmentStatistics 项目环境资源top N
-// @Tags Project
-// @Summary 项目环境资源top N
-// @Description 项目环境资源top N
-// @Accept json
-// @Produce json
-// @Param project_id path int true "project_id"
-// @Param environment_id path int true "environment_id"
-// @Param n query int false "top n"
-// @Param by query string false "排序字段，默认cpu; choice:cpu,memory"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "top"
-// @Router /v1/project/{project_id}/environment/{environment_id}/top [get]
-// @Security JWT
-func (h *ProjectHandler) EnvironmentStatisticsTop(c *gin.Context) {
-	var (
-		env models.Environment
-		ret []interface{}
-	)
-	if err := h.GetDB().Preload("Cluster").First(&env, "project_id = ? and id = ?", c.Param("project_id"), c.Param("environment_id")).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	podMetrics, err := kubeclient.GetClient().GetPodsMetrics(env.Cluster.ClusterName, env.Namespace)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	for _, mc := range *podMetrics {
-		podUsage := containerTotal(mc.Containers)
-		ret = append(ret, gin.H{
-			"pod": mc.Name,
-			"res": podUsage,
-		})
-	}
-	handlers.OK(c, ret)
-}
-
 type ResourceCount struct {
 	Total v1.ResourceList
 	Used  v1.ResourceList

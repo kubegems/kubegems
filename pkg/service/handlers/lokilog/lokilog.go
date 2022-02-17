@@ -1,4 +1,4 @@
-package lokiloghandler
+package lokilog
 
 import (
 	"encoding/json"
@@ -14,7 +14,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/loki"
 )
@@ -62,7 +61,8 @@ func (l *LogHandler) QueryRange(c *gin.Context) {
 		return
 	}
 
-	queryData, err := kubeclient.GetClient().QueryRange(c.Param("cluster_name"), query.ToMap())
+	ctx := c.Request.Context()
+	queryData, err := l.LokiQueryRange(ctx, c.Param("cluster_name"), query.ToMap())
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -195,7 +195,7 @@ func (l *LogHandler) Labels(c *gin.Context) {
 		return
 	}
 
-	labelData, err := kubeclient.GetClient().Labels(c.Param("cluster_name"), query.ToMap())
+	labelData, err := l.LokiLabels(c.Request.Context(), c.Param("cluster_name"), query.ToMap())
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -224,7 +224,7 @@ func (l *LogHandler) LabelValues(c *gin.Context) {
 		return
 	}
 
-	labelData, err := kubeclient.GetClient().LabelValues(c.Param("cluster_name"), c.Param("label"), query.ToMap())
+	labelData, err := l.LokiLabelValues(c.Request.Context(), c.Param("cluster_name"), c.Param("label"), query.ToMap())
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -288,6 +288,8 @@ func (l *LogHandler) Export(c *gin.Context) {
 	res := make(map[string]interface{})
 	res["exist"] = true
 
+	ctx := c.Request.Context()
+
 	length := 1
 	index := 0
 	for {
@@ -299,7 +301,7 @@ func (l *LogHandler) Export(c *gin.Context) {
 			break
 		}
 
-		queryData, err := kubeclient.GetClient().QueryRange(c.Param("cluster_name"), query.ToMap())
+		queryData, err := l.LokiQueryRange(ctx, c.Param("cluster_name"), query.ToMap())
 		if err != nil {
 			index--
 			continue
@@ -371,7 +373,7 @@ func (l *LogHandler) Context(c *gin.Context) {
 		return
 	}
 
-	queryData, err := kubeclient.GetClient().QueryRange(c.Param("cluster_name"), query.ToMap())
+	queryData, err := l.LokiQueryRange(c.Request.Context(), c.Param("cluster_name"), query.ToMap())
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -424,7 +426,7 @@ func (l *LogHandler) QueryLanguage(c *gin.Context) {
 	end := fmt.Sprintf("%d", time.Now().UTC().UnixNano())
 
 	queryExprArray := []string{}
-	labelRes, _ := kubeclient.GetClient().Labels(c.Param("cluster_name"), map[string]string{"start": start, "end": end})
+	labelRes, _ := l.LokiLabels(c.Request.Context(), c.Param("cluster_name"), map[string]string{"start": start, "end": end})
 	for _, label := range labelRes {
 		if c.DefaultQuery(label, "") != "" {
 			queryExprArray = append(queryExprArray, loki.GetExpr(label, c.DefaultQuery(label, "")))
@@ -468,7 +470,7 @@ func (l *LogHandler) Series(c *gin.Context) {
 		return
 	}
 
-	seriesData, err := kubeclient.GetClient().Series(c.Param("cluster_name"), query.ToMap())
+	seriesData, err := l.LokiSeries(c.Request.Context(), c.Param("cluster_name"), query.ToMap())
 	if err != nil {
 		handlers.NotOK(c, err)
 		return

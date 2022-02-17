@@ -147,8 +147,12 @@ func RegistRouter(router *gin.Engine, opts *options.Options, server define.Serve
 	approveHandler := &approveHandler.ApproveHandler{BaseHandler: basehandler}
 	approveHandler.RegistRouter(rg)
 
+	// 日志
+	lokilogHandler := &lokiloghandler.LogHandler{BaseHandler: basehandler}
+	lokilogHandler.RegistRouter(rg)
+
 	// 事件
-	eventHandler := &eventhandler.EventHandler{BaseHandler: basehandler}
+	eventHandler := &eventhandler.EventHandler{LogHandler: lokilogHandler}
 	eventHandler.RegistRouter(rg)
 
 	// 告警规则
@@ -177,10 +181,6 @@ func RegistRouter(router *gin.Engine, opts *options.Options, server define.Serve
 	// 镜像仓库
 	registryHandler := &registryhandler.RegistryHandler{BaseHandler: basehandler}
 	registryHandler.RegistRouter(rg)
-
-	// 日志
-	lokilogHandler := &lokiloghandler.LogHandler{BaseHandler: basehandler}
-	lokilogHandler.RegistRouter(rg)
 
 	// 日志查询历史
 	logqueryhistoryHandler := &logqueryhandler.LogQueryHistoryHandler{BaseHandler: basehandler}

@@ -96,7 +96,7 @@ func Run(ctx context.Context, options *Options) error {
 	dump.Start()
 
 	// resource cache
-	cache := resourcelist.NewResourceCache(deps.Databse)
+	cache := resourcelist.NewResourceCache(deps.Databse, deps.Agentscli)
 	cache.Start()
 
 	http.HandleFunc("/refresh", func(w http.ResponseWriter, _ *http.Request) {

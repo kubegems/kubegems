@@ -20,7 +20,6 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -439,37 +438,45 @@ func (h *IstioGatewayHandler) DeleteGateway(c *gin.Context) {
 	}
 	gwName := c.Param("name")
 
-	op, err := kubeclient.GetClient().GetIstioOperator(cluster.ClusterName, istioOperatorNamespace, istioOperatorName, nil)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	if op.Spec.Components == nil {
-		op.Spec.Components = &v1alpha1.IstioComponentSetSpec{}
-	}
+	ctx := c.Request.Context()
 
-	found := false
-	index := 0
-	for i, v := range op.Spec.Components.IngressGateways {
-		if v.Name == gwName {
-			found = true
-			index = i
-			break
+	op := &pkgv1alpha1.IstioOperator{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      istioOperatorName,
+			Namespace: istioOperatorNamespace,
+		},
+	}
+	err := h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		if err := cli.Get(ctx, client.ObjectKeyFromObject(op), op); err != nil {
+			return err
 		}
-	}
-	if !found {
-		handlers.NotOK(c, fmt.Errorf("网关%s不存在", gwName))
-		return
-	}
 
-	op.Spec.Components.IngressGateways = append(op.Spec.Components.IngressGateways[:index],
-		op.Spec.Components.IngressGateways[index+1:]...)
-	_, err = kubeclient.GetClient().UpdateIstioOperator(cluster.ClusterName, op.Namespace, op.Name, op)
+		if op.Spec.Components == nil {
+			op.Spec.Components = &v1alpha1.IstioComponentSetSpec{}
+		}
+
+		found := false
+		index := 0
+		for i, v := range op.Spec.Components.IngressGateways {
+			if v.Name == gwName {
+				found = true
+				index = i
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("gateway %s not found", gwName)
+		}
+
+		op.Spec.Components.IngressGateways = append(op.Spec.Components.IngressGateways[:index],
+			op.Spec.Components.IngressGateways[index+1:]...)
+
+		return cli.Update(ctx, op)
+	})
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	handlers.OK(c, "ok")
 }
 

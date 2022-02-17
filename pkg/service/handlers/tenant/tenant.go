@@ -1,6 +1,7 @@
 package tenanthandler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
 	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
@@ -19,7 +21,9 @@ import (
 	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/msgbus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -1484,13 +1488,24 @@ func (h *TenantHandler) GetObjectTenantGatewayAddr(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
 		return
 	}
+
+	ctx := c.Request.Context()
+
 	tg, err := kubeclient.GetClient().GetTenantGateway(cluster.ClusterName, c.Param("name"), nil)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	svc, err := kubeclient.GetClient().GetService(cluster.ClusterName, gemlabels.NamespaceGateway, tg.Name, nil)
+	svc := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tg.Name,
+			Namespace: gemlabels.NamespaceGateway,
+		},
+	}
+	err = h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		return cli.Get(ctx, client.ObjectKeyFromObject(svc), svc)
+	})
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -1508,8 +1523,13 @@ func (h *TenantHandler) GetObjectTenantGatewayAddr(c *gin.Context) {
 	}
 	switch svc.Spec.Type {
 	case v1.ServiceTypeNodePort:
-		nodes, _ := kubeclient.GetClient().GetNodeList(cluster.ClusterName, nil)
-		for _, node := range *nodes {
+
+		nodes := &v1.NodeList{}
+		_ = h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+			return cli.List(ctx, nodes)
+		})
+
+		for _, node := range nodes.Items {
 			status := "notready"
 			ready := false
 			for _, v := range node.Status.Conditions {

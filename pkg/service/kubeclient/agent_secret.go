@@ -19,16 +19,6 @@ func (k KubeClient) GetSecret(cluster, namespace, name string, labels map[string
 	return obj, err
 }
 
-func (k KubeClient) GetSecretList(cluster, namespace string, labelSet map[string]string) (*[]v1.Secret, error) {
-	agentClient, err := k.GetAgentClient(cluster)
-	if err != nil {
-		return nil, err
-	}
-	list := []v1.Secret{}
-	err = agentClient.GetObjectList(secretGVK, &list, &namespace, labelSet)
-	return &list, err
-}
-
 func (k KubeClient) DeleteSecret(cluster, namespace, name string) error {
 	agentClient, err := k.GetAgentClient(cluster)
 	if err != nil {
@@ -45,17 +35,6 @@ func (k KubeClient) CreateSecret(cluster, namespace, name string, data *v1.Secre
 	data.SetName(name)
 	data.SetNamespace(namespace)
 	err = agentClient.CreateObject(secretGVK, data, &namespace, &name)
-	return data, err
-}
-
-func (k KubeClient) UpdateSecret(cluster, namespace, name string, data *v1.Secret) (*v1.Secret, error) {
-	agentClient, err := k.GetAgentClient(cluster)
-	if err != nil {
-		return nil, err
-	}
-	data.SetName(name)
-	data.SetNamespace(namespace)
-	err = agentClient.UpdateObject(secretGVK, data, &namespace, &name)
 	return data, err
 }
 

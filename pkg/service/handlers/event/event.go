@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/utils/loki"
 )
 
@@ -40,7 +39,7 @@ func (l *EventHandler) Event(c *gin.Context) {
 		return
 	}
 
-	queryData, err := kubeclient.GetClient().QueryRange(clustername, query.ToMap())
+	queryData, err := l.LokiQueryRange(c.Request.Context(), clustername, query.ToMap())
 	if err != nil {
 		handlers.NotOK(c, err)
 		return

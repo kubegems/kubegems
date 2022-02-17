@@ -1,6 +1,7 @@
 package alerthandler
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"sort"
@@ -18,7 +19,9 @@ import (
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -87,19 +90,26 @@ func (h *AlertmanagerConfigHandler) ListReceiver(c *gin.Context) {
 
 	ret := ReceiverConfigs{}
 	if namespace == allNamespace {
-		configs, err := kubeclient.GetClient().GetAlertmanagerConfigList(cluster, v1.NamespaceAll, prometheus.AlertmanagerConfigSelector)
-		if err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-		secrets, err := kubeclient.GetClient().GetSecretList(cluster, corev1.NamespaceAll, emailSecretLabel)
+
+		configlist := &v1alpha1.AlertmanagerConfigList{}
+		emailsecretlist := &corev1.SecretList{}
+
+		err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+			if err := cli.List(ctx, configlist, client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
+				return err
+			}
+			if err := cli.List(ctx, emailsecretlist, client.MatchingLabels(emailSecretLabel)); err != nil {
+				return err
+			}
+			return nil
+		})
 		if err != nil {
 			handlers.NotOK(c, err)
 			return
 		}
 
-		for _, config := range *configs {
-			secret := filterSecretByNamespace(secrets, config.Namespace)
+		for _, config := range configlist.Items {
+			secret := filterSecretByNamespace(&emailsecretlist.Items, config.Namespace)
 			for _, rec := range config.Spec.Receivers {
 				if rec.Name != nullReceiverName {
 					if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
@@ -114,7 +124,16 @@ func (h *AlertmanagerConfigHandler) ListReceiver(c *gin.Context) {
 			handlers.NotOK(c, err)
 			return
 		}
-		secret, err := kubeclient.GetClient().GetSecret(cluster, namespace, emailSecretName, nil)
+
+		secret := &corev1.Secret{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      emailSecretName,
+				Namespace: namespace,
+			},
+		}
+		err = h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+			return cli.Get(ctx, client.ObjectKeyFromObject(secret), secret)
+		})
 		if err != nil {
 			if !kerrors.IsNotFound(err) {
 				handlers.NotOK(c, err)
@@ -181,7 +200,7 @@ func (h *AlertmanagerConfigHandler) CreateReceiver(c *gin.Context) {
 	}
 
 	receiver := toAlertmanagerReceiver(req)
-	if err := h.modify(aconfig, &receiver, cluster, prometheus.Add); err != nil {
+	if err := h.modify(ctx, aconfig, &receiver, cluster, prometheus.Add); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -226,7 +245,7 @@ func (h *AlertmanagerConfigHandler) DeleteReceiver(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("%s is being used, can't delete", name))
 		return
 	}
-	if err := h.modify(aconfig, &receiver, cluster, prometheus.Delete); err != nil {
+	if err := h.modify(ctx, aconfig, &receiver, cluster, prometheus.Delete); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -269,7 +288,7 @@ func (h *AlertmanagerConfigHandler) ModifyReceiver(c *gin.Context) {
 	}
 
 	receiver := toAlertmanagerReceiver(req)
-	if err := h.modify(aconfig, &receiver, cluster, prometheus.Update); err != nil {
+	if err := h.modify(ctx, aconfig, &receiver, cluster, prometheus.Update); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -315,7 +334,7 @@ func findReceiverIndex(rules []v1alpha1.Receiver, name string) int {
 	return index
 }
 
-func (h *AlertmanagerConfigHandler) modify(aconfig *v1alpha1.AlertmanagerConfig, receiver *v1alpha1.Receiver, cluster string, act prometheus.Action) error {
+func (h *AlertmanagerConfigHandler) modify(ctx context.Context, aconfig *v1alpha1.AlertmanagerConfig, receiver *v1alpha1.Receiver, cluster string, act prometheus.Action) error {
 	if receiver == nil {
 		return nil
 	}
@@ -341,14 +360,14 @@ func (h *AlertmanagerConfigHandler) modify(aconfig *v1alpha1.AlertmanagerConfig,
 		}
 		aconfig.Spec.Receivers = append(aconfig.Spec.Receivers, *receiver)
 		aconfig.Spec.Route.Receiver = nullReceiverName
-		_, err := kubeclient.GetClient().UpdateAlertmanagerConfig(cluster, aconfig)
+		_, err := h.UpdateAlertmanagerConfig(ctx, cluster, aconfig)
 		return err
 	case prometheus.Delete:
 		index := findReceiverIndex(aconfig.Spec.Receivers, receiver.Name)
 		if index != -1 {
 			toDelete := aconfig.Spec.Receivers[index]
 			aconfig.Spec.Receivers = append(aconfig.Spec.Receivers[:index], aconfig.Spec.Receivers[index+1:]...)
-			if _, err := kubeclient.GetClient().UpdateAlertmanagerConfig(cluster, aconfig); err != nil {
+			if _, err := h.UpdateAlertmanagerConfig(ctx, cluster, aconfig); err != nil {
 				return err
 			}
 
@@ -362,7 +381,7 @@ func (h *AlertmanagerConfigHandler) modify(aconfig *v1alpha1.AlertmanagerConfig,
 		}
 		aconfig.Spec.Receivers[index] = *receiver
 		aconfig.Spec.Route.Receiver = nullReceiverName
-		_, err := kubeclient.GetClient().UpdateAlertmanagerConfig(cluster, aconfig)
+		_, err := h.UpdateAlertmanagerConfig(ctx, cluster, aconfig)
 		return err
 	}
 	return nil
