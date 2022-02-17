@@ -10,6 +10,7 @@ import (
 	promemodel "github.com/prometheus/common/model"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/database"
 )
 
@@ -51,7 +52,8 @@ const (
 )
 
 type ResourceCache struct {
-	DB *database.Database
+	DB     *database.Database
+	Agents *agents.ClientSet
 }
 
 func (c *ResourceCache) WorkloadSync() error {
@@ -64,37 +66,37 @@ func (c *ResourceCache) WorkloadSync() error {
 	}
 	for _, cluster := range clusters {
 		// 数据太多，按namespace分片
-		for _, ns := range collectNamespaces(cluster.ClusterName) {
-			cpuPercentResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPUPercent_LastWeek)
+		for _, ns := range c.collectNamespaces(cluster.ClusterName) {
+			cpuPercentResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPUPercent_LastWeek)
 			if err != nil {
 				return errors.Wrap(err, "failed to exec promql")
 			}
-			memoryPercentResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryPercent_LastWeek)
+			memoryPercentResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryPercent_LastWeek)
 			if err != nil {
 				return errors.Wrap(err, "failed to exec promql")
 			}
-			cpuUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPUUsageCore_LastWeek)
+			cpuUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPUUsageCore_LastWeek)
 			if err != nil {
 				return errors.Wrap(err, "failed to exec promql")
 			}
-			memoryUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryUsageBytes_LastWeek)
+			memoryUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryUsageBytes_LastWeek)
 			if err != nil {
 				return errors.Wrap(err, "failed to exec promql")
 			}
 			// 由于是当前的cpu、内存限制，与上面的数据有出入
-			cpuLimitResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPULimitCore)
+			cpuLimitResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPULimitCore)
 			if err != nil {
 				return errors.Wrap(err, "failed to exec promql")
 			}
-			memoryLimitResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryLimitBytes)
+			memoryLimitResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryLimitBytes)
 			if err != nil {
 				return errors.Wrap(err, "failed to exec promql")
 			}
-			cpuLimitStdvarResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, ns, workloadCPULimitStdVar)
+			cpuLimitStdvarResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, workloadCPULimitStdVar)
 			if err != nil {
 				return errors.Wrap(err, "failed to exec promql")
 			}
-			memoryLimitStdvarResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, ns, workloadMemoryLimitStdVar)
+			memoryLimitStdvarResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, workloadMemoryLimitStdVar)
 			if err != nil {
 				return errors.Wrap(err, "failed to exec promql")
 			}

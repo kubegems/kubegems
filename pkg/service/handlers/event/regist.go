@@ -2,11 +2,11 @@ package eventhandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers/base"
+	"kubegems.io/pkg/service/handlers/lokilog"
 )
 
 type EventHandler struct {
-	base.BaseHandler
+	*lokilog.LogHandler
 }
 
 func (h *EventHandler) RegistRouter(rg *gin.RouterGroup) {

@@ -1,17 +1,21 @@
 package noproxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	v1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/api/storage/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"kubegems.io/pkg/apis/storage"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/utils/agents"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type VolumeSnapshotRequest struct {
@@ -45,6 +49,7 @@ func (vh *VolumeSnapshotHandler) Snapshot(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	ctx := c.Request.Context()
 
 	if req.Name == "" {
 		req.Name = req.PersistentVolumeClaimName + "-" + time.Now().Format("20060102150405")
@@ -53,61 +58,67 @@ func (vh *VolumeSnapshotHandler) Snapshot(c *gin.Context) {
 	vh.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 	vh.SetAuditData(c, "创建", "持久卷快照", req.Name)
 
-	pvc, err := kubeclient.GetClient().GetPersistentVolumeClaim(cluster, namespace, req.PersistentVolumeClaimName, nil)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	var volumeSnapshotClassName *string
-	storageclass, err := kubeclient.GetClient().GetStorageClass(cluster, *pvc.Spec.StorageClassName, nil)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	snapshotclasses, err := kubeclient.GetClient().GetVolumeSnapshotClassList(cluster, nil)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	for _, snapshotclass := range *snapshotclasses {
-		if snapshotclass.Driver == storageclass.Provisioner {
-			volumeSnapshotClassName = pointer.String(snapshotclass.Name)
+	err := vh.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		pvc := &corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      req.PersistentVolumeClaimName,
+				Namespace: namespace,
+			},
 		}
-	}
+		if err := cli.Get(ctx, client.ObjectKeyFromObject(pvc), pvc); err != nil {
+			return err
+		}
 
-	if volumeSnapshotClassName == nil {
-		handlers.NotOK(c, fmt.Errorf("无法找到 pvc %s Provisioner=%s,的VolumeSnapshotClass", pvc.GetName(), storageclass.Provisioner))
-		return
-	}
+		storageclass := &v1beta1.StorageClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: *pvc.Spec.StorageClassName,
+			},
+		}
 
-	// todo(likun): replace with runtime.Encode()
-	pvcbytes, err := json.Marshal(pvc)
+		if err := cli.Get(ctx, client.ObjectKeyFromObject(storageclass), storageclass); err != nil {
+			return err
+		}
+		snapshotclasses := &v1.VolumeSnapshotClassList{}
+		if err := cli.List(ctx, snapshotclasses); err != nil {
+			return err
+		}
+
+		var volumeSnapshotClassName *string
+		for _, snapshotclass := range snapshotclasses.Items {
+			if snapshotclass.Driver == storageclass.Provisioner {
+				volumeSnapshotClassName = pointer.String(snapshotclass.Name)
+			}
+		}
+		if volumeSnapshotClassName == nil {
+			return fmt.Errorf("unable to find VolumeSnapshotClass of pvc %s Provisioner=%s", pvc.GetName(), storageclass.Provisioner)
+		}
+
+		pvcbytes, err := json.Marshal(pvc)
+		if err != nil {
+			return err
+		}
+
+		volumeSnapshot := &v1.VolumeSnapshot{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: req.Name,
+				Annotations: map[string]string{
+					storage.AnnotationVolumeSnapshotAnnotationKeyPersistentVolumeClaim: string(pvcbytes),
+				},
+				Namespace: namespace,
+			},
+			Spec: v1.VolumeSnapshotSpec{
+				Source: v1.VolumeSnapshotSource{
+					PersistentVolumeClaimName: &req.PersistentVolumeClaimName,
+				},
+				VolumeSnapshotClassName: volumeSnapshotClassName,
+			},
+		}
+
+		return cli.Create(ctx, volumeSnapshot)
+	})
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-
-	volumeSnapshot := &v1.VolumeSnapshot{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: req.Name,
-			Annotations: map[string]string{
-				storage.AnnotationVolumeSnapshotAnnotationKeyPersistentVolumeClaim: string(pvcbytes),
-			},
-		},
-		Spec: v1.VolumeSnapshotSpec{
-			Source: v1.VolumeSnapshotSource{
-				PersistentVolumeClaimName: &req.PersistentVolumeClaimName,
-			},
-			VolumeSnapshotClassName: volumeSnapshotClassName,
-		},
-	}
-
-	createdVolumeSnapshot, err := kubeclient.GetClient().CreateVolumeSnapshot(cluster, namespace, req.Name, volumeSnapshot)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, createdVolumeSnapshot)
+	handlers.OK(c, "ok")
 }

@@ -1,19 +1,22 @@
 package resourcelist
 
 import (
-	"net/http"
+	"context"
 	"net/url"
 	"strings"
 
 	promemodel "github.com/prometheus/common/model"
 	"github.com/robfig/cron/v3"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/database"
 )
 
-func NewResourceCache(db *database.Database) *ResourceCache {
-	return &ResourceCache{DB: db}
+func NewResourceCache(db *database.Database, agents *agents.ClientSet) *ResourceCache {
+	return &ResourceCache{
+		DB:     db,
+		Agents: agents,
+	}
 }
 
 func (c *ResourceCache) Start() {
@@ -41,23 +44,33 @@ type PromeResp struct {
 	ErrorData         interface{} `json:"ErrorData"`
 }
 
-func getPrometheusResponseWithCluster(cluster, namespace, promql string) (PromeResp, error) {
+func (c *ResourceCache) getPrometheusResponseWithCluster(cluster, namespace, promql string) (PromeResp, error) {
 	promql = strings.ReplaceAll(promql, "__namespace__", namespace)
 	values := url.Values{}
 	values.Add("query", promql)
-	u := "/custom/prometheus/v1/vector?" + values.Encode()
+
+	ctx := context.TODO()
+
 	ret := promemodel.Vector{}
-	err := kubeclient.DoRequest(http.MethodGet, cluster, u, nil, &ret)
+	cli, err := c.Agents.ClientOf(ctx, cluster)
 	if err != nil {
+		return PromeResp{Vector: ret}, err
+	}
+	if err := cli.DoRequest(ctx, agents.Request{
+		Path:  "/custom/prometheus/v1/vector",
+		Query: values,
+		Into:  agents.WrappedResponse(&ret),
+	}); err != nil {
 		log.Error(err, "exec", "cluster", cluster, "promql", promql)
 	}
+
 	return PromeResp{Vector: ret}, err
 }
 
 // 只返回有环境标签的namespace
-func collectNamespaces(cluster string) []string {
+func (c *ResourceCache) collectNamespaces(cluster string) []string {
 	ret := []string{}
-	resp, err := getPrometheusResponseWithCluster(cluster, "", `gems_namespace_labels{environment !=""}`)
+	resp, err := c.getPrometheusResponseWithCluster(cluster, "", `gems_namespace_labels{environment !=""}`)
 	if err != nil {
 		log.Error(err, "get prometheus response")
 		return ret

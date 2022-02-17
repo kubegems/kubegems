@@ -53,7 +53,6 @@ func (h *ProjectHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/project/:project_id/resources", h.CheckByProjectID, h.GetProjectResource)
 
 	rg.GET("/project/:project_id/environment/:environment_id/statistics", h.CheckByProjectID, h.EnvironmentStatistics)
-	rg.GET("/project/:project_id/environment/:environment_id/top", h.CheckByProjectID, h.EnvironmentStatisticsTop)
 	rg.GET("/project/:project_id/environment/:environment_id/quota", h.CheckByProjectID, h.GetEnvironmentResourceQuota)
 	rg.GET("/project/:project_id/environment/:environment_id/quotas", h.CheckByProjectID, h.GetEnvironmentResourceQuotas)
 

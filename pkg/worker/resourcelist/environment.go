@@ -41,49 +41,49 @@ func (c *ResourceCache) EnvironmentSync() error {
 	}
 
 	for _, cluster := range clusters {
-		maxCPUUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Max)
+		maxCPUUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Max)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		maxMemoryUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Max)
+		maxMemoryUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Max)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		minCPUUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Min)
+		minCPUUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Min)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		minMemoryUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Min)
+		minMemoryUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Min)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		avgCPUUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Avg)
+		avgCPUUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Avg)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		avgMemoryUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Avg)
-		if err != nil {
-			return errors.Wrap(err, "failed to exec promql")
-		}
-
-		maxPVCUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Max)
-		if err != nil {
-			return errors.Wrap(err, "failed to exec promql")
-		}
-		minPVCUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Min)
-		if err != nil {
-			return errors.Wrap(err, "failed to exec promql")
-		}
-		avgPVCUsageResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Avg)
+		avgMemoryUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Avg)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
 
-		networkRecvResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentNetworkReceiveByte_LastDay)
+		maxPVCUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Max)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		networkSendResp, err := getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentNetworkTransmitByte_LastDay)
+		minPVCUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Min)
+		if err != nil {
+			return errors.Wrap(err, "failed to exec promql")
+		}
+		avgPVCUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Avg)
+		if err != nil {
+			return errors.Wrap(err, "failed to exec promql")
+		}
+
+		networkRecvResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentNetworkReceiveByte_LastDay)
+		if err != nil {
+			return errors.Wrap(err, "failed to exec promql")
+		}
+		networkSendResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentNetworkTransmitByte_LastDay)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}

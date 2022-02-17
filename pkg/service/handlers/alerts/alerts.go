@@ -21,7 +21,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
@@ -65,7 +64,12 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 	promeAlertRules := map[string]prometheus.RealTimeAlertRule{}
 	done := make(chan struct{})
 	go func() {
-		kubeclient.DoRequest(http.MethodGet, cluster, "/custom/prometheus/v1/alertrule", nil, &promeAlertRules)
+		h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+			return cli.DoRequest(ctx, agents.Request{
+				Path: "/custom/prometheus/v1/alertrule",
+				Into: agents.WrappedResponse(&promeAlertRules),
+			})
+		})
 		close(done)
 	}()
 
@@ -93,7 +97,7 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 			}
 
 			// 按照namespace分组
-			allSilences, err := kubeclient.GetClient().ListSilences(cluster, "")
+			allSilences, err := h.ListSilences(ctx, cluster, "")
 			if err != nil {
 				return err
 			}
@@ -190,9 +194,14 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 	}
 
 	// get realtime alert
-	u := fmt.Sprintf("/custom/prometheus/v1/alertrule?name=%s", name)
 	promeAlertRules := map[string]prometheus.RealTimeAlertRule{}
-	kubeclient.DoRequest(http.MethodGet, cluster, u, nil, &promeAlertRules)
+	h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.DoRequest(ctx, agents.Request{
+			Path: fmt.Sprintf("/custom/prometheus/v1/alertrule?name=%s", name),
+			Into: agents.WrappedResponse(&promeAlertRules),
+		})
+	})
+
 	realtimeAertRule := promeAlertRules[prometheus.RealTimeAlertKey(namespace, name)]
 	sort.Sort(&realtimeAertRule)
 
@@ -227,7 +236,7 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 func (h *AlertsHandler) DisableAlertRule(c *gin.Context) {
 	h.SetAuditData(c, "禁用", "告警规则", c.Param("name"))
 	h.SetExtraAuditDataByClusterNamespace(c, c.Param("cluster"), c.Param("namespace"))
-	if err := kubeclient.GetClient().CreateSilenceIfNotExist(c.Param("cluster"), c.Param("namespace"), c.Param("name")); err != nil {
+	if err := h.CreateSilenceIfNotExist(c.Request.Context(), c.Param("cluster"), c.Param("namespace"), c.Param("name")); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -249,7 +258,7 @@ func (h *AlertsHandler) DisableAlertRule(c *gin.Context) {
 func (h *AlertsHandler) EnableAlertRule(c *gin.Context) {
 	h.SetAuditData(c, "启用", "告警规则", c.Param("name"))
 	h.SetExtraAuditDataByClusterNamespace(c, c.Param("cluster"), c.Param("namespace"))
-	if err := kubeclient.GetClient().DeleteSilenceIfExist(c.Param("cluster"), c.Param("namespace"), c.Param("name")); err != nil {
+	if err := h.DeleteSilenceIfExist(c.Request.Context(), c.Param("cluster"), c.Param("namespace"), c.Param("name")); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -395,7 +404,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 	}
 
 	// 清理silence规则
-	if err := kubeclient.GetClient().DeleteSilenceIfExist(cluster, namespace, name); err != nil {
+	if err := h.DeleteSilenceIfExist(ctx, cluster, namespace, name); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

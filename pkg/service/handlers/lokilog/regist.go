@@ -1,4 +1,4 @@
-package lokiloghandler
+package lokilog
 
 import (
 	"github.com/gin-gonic/gin"
