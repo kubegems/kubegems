@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -20,23 +21,14 @@ var (
 )
 
 type ModelClientIface interface {
-	// 注册关系
-	RegistRelation(source, target, via ObjectTypeIfe, kind RelationKind)
-	Exist(obj Object, opts ...Option) bool
-
-	Get(obj Object, opts ...Option) error
-	Delete(obj Object, opts ...Option) error
-	Update(obj Object, opts ...Option) error
-	Create(obj Object, opts ...Option) error
-	CreateInBatches(objs ObjectListIfe, opts ...Option) error
-	List(olist ObjectListIfe, opts ...Option) error
-	Count(o ObjectTypeIfe, q *Query, t *int64) error
-
-	CountSubResource(obj Object, olist ObjectListIfe, relation Relation, q *Query, t *int64) error
-	ListSubResource(obj Object, olist ObjectListIfe, opts ...Option) error
-
-	DelM2MRelation(relation RelationShip) error
-	ExistM2MRelation(relation RelationShip) bool
+	Create(ctx context.Context, obj Object, opts ...Option) error
+	Get(ctx context.Context, obj Object, opts ...Option) error
+	Update(ctx context.Context, obj Object, opts ...Option) error
+	Delete(ctx context.Context, obj Object, opts ...Option) error
+	CreateInBatches(ctx context.Context, objs ObjectListIfe, opts ...Option) error
+	List(ctx context.Context, olist ObjectListIfe, opts ...Option) error
+	Count(ctx context.Context, o ObjectTypeIfe, t *int64, opts ...Option) error
+	Exist(ctx context.Context, obj Object, opts ...Option) bool
 }
 
 type KubeClientIfe interface {

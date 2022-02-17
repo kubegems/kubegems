@@ -11,6 +11,7 @@ import (
 	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/model/validate"
 	clusterhandler "kubegems.io/pkg/services/handlers/clusters"
+	tenanthandler "kubegems.io/pkg/services/handlers/tenants"
 	userhandler "kubegems.io/pkg/services/handlers/users"
 )
 
@@ -25,6 +26,10 @@ func ServiceContainer(modelClient client.ModelClientIface) *restful.Container {
 		},
 		&clusterhandler.Handler{
 			Path:        "clusters",
+			ModelClient: modelClient,
+		},
+		&tenanthandler.Handler{
+			Path:        "tenants",
 			ModelClient: modelClient,
 		},
 	)
@@ -45,6 +50,7 @@ func regist(c *restful.Container, h ...handlerIface) {
 
 func Run() {
 	loger := log.NewDefaultGormZapLogger()
+	log.SetLevel("debug")
 	db, err := gorm.Open(sqlite.Open("gorm.sqlite3"), &gorm.Config{
 		Logger: loger,
 	})

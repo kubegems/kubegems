@@ -44,11 +44,11 @@ func (c *Client) RegistHooks() {
 	c.registHook(&Registry{}, client.AfterDelete, AfterRegistryDelete)
 }
 
-func (c *Client) executeHook(obj client.Object, phase client.HookPhase, tx *gorm.DB) error {
+func (c *Client) executeHook(obj client.Object, phase client.HookPhase) error {
 	key := fmt.Sprintf("%s_%s", *obj.GetKind(), phase)
 	hook, exist := c.hooks[key]
 	if exist {
-		return hook(tx, obj)
+		return hook(c.db, obj)
 	}
 	return nil
 }

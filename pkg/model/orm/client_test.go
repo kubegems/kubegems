@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -45,11 +46,11 @@ func TestClient_Exist(t *testing.T) {
 	}
 	user1 := User{ID: 2}
 	mock.ExpectQuery("SELECT count(*) FROM `users` WHERE `users`.`id` = ?").WithArgs(2).WillReturnRows(sqlmock.NewRows([]string{"cout(*)"}).AddRow(1))
-	assert.True(t, c.Exist(&user1))
+	assert.True(t, c.Exist(context.Background(), &user1))
 
 	user2 := User{ID: 33}
 	mock.ExpectQuery("SELECT count(*) FROM `users` WHERE `users`.`id` = ?").WithArgs(33).WillReturnRows(sqlmock.NewRows([]string{"cout(*)"}).AddRow(0))
-	assert.False(t, c.Exist(&user2))
+	assert.False(t, c.Exist(context.Background(), &user2))
 }
 
 func TestClient_Get(t *testing.T) {
@@ -61,7 +62,7 @@ func TestClient_Get(t *testing.T) {
 	mock.ExpectQuery(
 		"SELECT * FROM `users` WHERE `users`.`id` = ? ORDER BY `users`.`id` LIMIT 1",
 	).WithArgs(2).WillReturnRows(sqlmock.NewRows([]string{"id", "username"}).AddRow(1, "test"))
-	c.Get(&user1)
+	c.Get(context.Background(), &user1)
 	assert.Equal(t, user1.Username, "test")
 }
 
@@ -74,7 +75,7 @@ func TestClient_List(t *testing.T) {
 	mock.ExpectQuery(
 		"SELECT * FROM `users`",
 	).WillReturnRows(sqlmock.NewRows([]string{"id", "username"}).AddRow(1, "test"))
-	c.List(&list)
+	c.List(context.Background(), &list)
 	assert.Equal(t, list.Items[0].Username, "test")
 }
 

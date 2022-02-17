@@ -2,8 +2,8 @@ package orm
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"kubegems.io/pkg/model/utils"
@@ -33,53 +33,64 @@ func NewOrmClient(db *gorm.DB) *Client {
 		relations: make(map[string]*client.Relation),
 		hooks:     make(map[string]func(*gorm.DB, client.Object) error),
 	}
-	c.RegistRelation(&User{}, &TenantList{}, &TenantUserRel{}, client.RelationM2M)
 	c.RegistHooks()
 	return c
 }
 
-func (c *Client) RegistRelation(source, target, via client.ObjectTypeIfe, kind client.RelationKind) {
-	rel := client.GetRelation(source, target, via, kind)
-	c.relations[rel.Key] = &rel
-}
-
-func (c *Client) getRelation(s, t client.ObjectTypeIfe) *client.Relation {
-	key := client.RelationKey(s, t)
-	return c.relations[key]
-}
-
-func (c *Client) Exist(obj client.Object, opts ...client.Option) bool {
-	var total int64
-	if err := c.db.Table(tableName(obj)).Where(obj).Count(&total).Error; err != nil {
-		// TODO： log
-		return false
+func (c *Client) Create(ctx context.Context, obj client.Object, opts ...client.Option) error {
+	tx := c.db.WithContext(ctx).Begin()
+	tdb := tx.Scopes(
+		scopeTable(tableName(obj)),
+		scopeOmitAssociations,
+	)
+	if err := c.executeHook(obj, client.BeforeCreate); err != nil {
+		tx.Rollback()
+		return err
 	}
-	return total > 0
+	if err := tdb.Create(obj).Error; err != nil {
+		return err
+	}
+	if err := c.executeHook(obj, client.AfterCreate); err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
 }
 
-func (c *Client) Get(obj client.Object, opts ...client.Option) error {
-	tdb := c.db.Table(tableName(obj))
+func (c *Client) Update(ctx context.Context, obj client.Object, opts ...client.Option) error {
+	tx := c.db.WithContext(ctx).Begin()
+	tdb := tx.Scopes(
+		scopeOmitAssociations,
+		scopeTable(tableName(obj)),
+	)
+	if err := c.executeHook(obj, client.BeforeUpdate); err != nil {
+		tx.Rollback()
+		return err
+	}
 	q := utils.GetQuery(opts...)
-	validPreloads := obj.ValidPreloads()
-	for _, preloadField := range q.Preloads {
-		if contains(*validPreloads, preloadField) {
-			tdb = tdb.Preload(preloadField)
-		}
+	tdb = tdb.Scopes(
+		scopeCond(q.Where, tableName(obj)),
+	)
+	if err := tdb.Updates(obj).Error; err != nil {
+		tx.Rollback()
+		return err
 	}
-	for _, where := range q.Where {
-		tdb.Where(where.AsQuery())
+	if err := c.executeHook(obj, client.AfterUpdate); err != nil {
+		tx.Rollback()
+		return err
 	}
-	return tdb.First(obj).Error
+	return tx.Commit().Error
 }
 
-func (c *Client) Delete(obj client.Object, opts ...client.Option) error {
-	tx := c.db.Begin()
-	tdb := tx.Table(tableName(obj))
+func (c *Client) Delete(ctx context.Context, obj client.Object, opts ...client.Option) error {
+	tx := c.db.WithContext(ctx).Begin()
+	tName := tableName(obj)
 	q := utils.GetQuery(opts...)
-	for _, where := range q.Where {
-		tdb.Where(where.AsQuery())
-	}
-	if err := c.executeHook(obj, client.BeforeDelete, tx); err != nil {
+	tdb := tx.Scopes(
+		scopeTable(tName),
+		scopeCond(q.Where, tName),
+	)
+	if err := c.executeHook(obj, client.BeforeDelete); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -87,175 +98,224 @@ func (c *Client) Delete(obj client.Object, opts ...client.Option) error {
 		tx.Rollback()
 		return err
 	}
-	if err := c.executeHook(obj, client.AfterDelete, tx); err != nil {
+	if err := c.executeHook(obj, client.AfterDelete); err != nil {
 		tx.Rollback()
 		return err
 	}
 	return tx.Commit().Error
 }
 
-func (c *Client) Update(obj client.Object, opts ...client.Option) error {
-	tdb := c.db.Table(tableName(obj)).Omit(clause.Associations)
-	q := utils.GetQuery(opts...)
-	for _, where := range q.Where {
-		tdb.Where(where.AsQuery())
-	}
-	return tdb.Updates(obj).Error
-}
-
-func (c *Client) Create(obj client.Object, opts ...client.Option) error {
-	tdb := c.db.Table(tableName(obj)).Omit(clause.Associations)
-	// q := GetQuery(opts...)
-	return tdb.Create(obj).Error
-}
-
-func (c *Client) CreateInBatches(obj client.ObjectListIfe, opts ...client.Option) error {
-	tdb := c.db.Table(tableName(obj)).Omit(clause.Associations)
+func (c *Client) CreateInBatches(ctx context.Context, obj client.ObjectListIfe, opts ...client.Option) error {
+	// NOTICE: no hook here, if need, just add it
+	tdb := c.db.WithContext(ctx)
+	tdb = tdb.Scopes(
+		scopeTable(tableName(obj)),
+		scopeOmitAssociations,
+	)
 	return tdb.CreateInBatches(obj.DataPtr(), 1000).Error
 }
 
-func (c *Client) List(olist client.ObjectListIfe, opts ...client.Option) error {
-	tdb := c.db.Table(tableName(olist))
+func (c *Client) Get(ctx context.Context, obj client.Object, opts ...client.Option) error {
 	q := utils.GetQuery(opts...)
-	for _, preload := range q.Preloads {
-		tdb = tdb.Preload(preload)
-	}
-	for _, where := range q.Where {
-		tdb = tdb.Where(where.AsQuery())
-	}
-	for _, orderStr := range q.Orders {
-		tdb = tdb.Order(orderStr)
-	}
-	if q.Size > 0 && q.Page > 0 {
-		offset := q.Size * (q.Page - 1)
-		olist.SetPageSize(q.Page, q.Size)
-		tdb.Offset(int(offset)).Limit(int(q.Size))
-		var total int64
-		if e := c.Count(olist, q, &total); e != nil {
-			return e
-		}
-		olist.SetTotal(total)
-	}
+	tdb := c.db.WithContext(ctx)
+	tdb = tdb.Scopes(
+		scopeTable(tableName(obj)),
+		scopePreload(q.Preloads, *obj.ValidPreloads()),
+		scopeCond(q.Where, tableName(obj)),
+	)
+	return tdb.First(obj).Error
+}
+
+func (c *Client) List(ctx context.Context, olist client.ObjectListIfe, opts ...client.Option) error {
+	tdb := c.db.WithContext(ctx)
+	q := utils.GetQuery(opts...)
+
+	tdb = tdb.Scopes(
+		scopeTable(tableName(olist)),
+		scopeBelong(q.Belong, tableName(olist)),
+		scopeOrder(q.Orders),
+		scopeRelation(q.RelationOptions, olist),
+		scopePreload(q.Preloads, nil),
+		scopeCond(q.Where, tableName(olist)),
+		scopePageSize(q.Page, q.Size, olist),
+	)
+
+	var total int64
+	c.Count(ctx, olist, &total, opts...)
+	olist.SetTotal(total)
+
 	return tdb.Find(olist.DataPtr()).Error
 }
 
-func (c *Client) Count(o client.ObjectTypeIfe, q *client.Query, t *int64) error {
-	tdb := c.db.Table(tableName(o))
-	for _, where := range q.Where {
-		tdb.Where(where.AsQuery())
-	}
-	return tdb.Count(t).Error
-}
-
-func (c *Client) CountSubResource(obj client.Object, olist client.ObjectListIfe, relation client.Relation, q *client.Query, t *int64) error {
-	tdb := c.db.Table(tableName(olist))
-	if relation.Kind == client.RelationM2M {
-		joinTable := tableName(relation.Via)
-		joinstr := fmt.Sprintf("JOIN %s on %s.%s_%s = %s.%s", joinTable, joinTable, *olist.GetKind(), *olist.GetPKField(), tableName(olist), *olist.GetPKField())
-		tdb = tdb.Joins(joinstr)
-	}
-	for _, where := range q.Where {
-		tdb.Where(where.AsQuery())
-	}
-	return tdb.Count(t).Error
-}
-
-func (c *Client) ListSubResource(obj client.Object, olist client.ObjectListIfe, opts ...client.Option) error {
-	tdb := c.db.Table(tableName(olist))
-	relation := c.getRelation(obj, olist)
-	if relation == nil {
-		return fmt.Errorf("failed to load relation between %s and %s", *obj.GetKind(), *olist.GetKind())
-	}
-	if relation.Kind == client.RelationM2M {
-		joinTable := tableName(relation.Via)
-		joinstr := fmt.Sprintf("LEFT JOIN %s on %s.%s_%s = %s.%s", joinTable, joinTable, *olist.GetKind(), *olist.GetPKField(), tableName(olist), *olist.GetPKField())
-		tdb = tdb.Joins(joinstr)
-		opts = append(opts, client.Where(fmt.Sprintf("%s.%s_%s", joinTable, *obj.GetKind(), *obj.GetPKField()), client.Eq, obj.GetPKValue()))
-	} else {
-		opts = append(opts, client.Where(objIDFiled(obj), client.Eq, obj.GetPKValue()))
-	}
+func (c *Client) Exist(ctx context.Context, obj client.Object, opts ...client.Option) bool {
+	var total int64
 	q := utils.GetQuery(opts...)
-	if relation.Kind == client.RelationM2M && len(q.RelationFields) > 0 {
-		joinTable := tableName(relation.Via)
-		rfields := []string{}
-		for _, field := range q.RelationFields {
-			rfields = append(rfields, fmt.Sprintf("%s.%s", joinTable, field))
-		}
-		tdb = tdb.Select(fmt.Sprintf("%s.*, %s", tableName(olist), strings.Join(rfields, ",")))
-	}
-
-	for _, preload := range q.Preloads {
-		tdb = tdb.Preload(preload)
-	}
-	for _, where := range q.Where {
-		tdb.Where(where.AsQuery())
-	}
-	for _, orderStr := range q.Orders {
-		tdb = tdb.Order(orderStr)
-	}
-	if q.Size > 0 && q.Page > 0 {
-		offset := q.Size * (q.Page - 1)
-		olist.SetPageSize(q.Page, q.Size)
-		tdb.Offset(int(offset)).Limit(int(q.Size))
-		var total int64
-		if e := c.CountSubResource(obj, olist, *relation, q, &total); e != nil {
-			return e
-		}
-		olist.SetTotal(total)
-	}
-	return tdb.Find(olist.DataPtr()).Error
-}
-
-func (c *Client) DelM2MRelation(relation client.RelationShip) error {
-	q := fmt.Sprintf("%s = ? and %s = ?", objIDFiled(relation.Left()), objIDFiled(relation.Right()))
-	return c.db.Table(tableName(relation)).Where(q, relation.Left().GetPKValue(), relation.Right().GetPKValue()).Delete(nil).Error
-}
-
-func (c *Client) ExistM2MRelation(relation client.RelationShip) bool {
-	q := fmt.Sprintf("%s = ? and %s = ?", objIDFiled(relation.Left()), objIDFiled(relation.Right()))
-
-	var t int64
-	if e := c.db.Table(tableName(relation)).Where(q, relation.Left().GetPKValue(), relation.Right().GetPKValue()).Count(&t).Error; e != nil {
+	tdb := c.db.WithContext(ctx)
+	tName := tableName(obj)
+	tdb.Scopes(
+		scopeTable(tName),
+		scopeCond(q.Where, tName),
+	)
+	if err := tdb.Count(&total).Error; err != nil {
 		return false
 	}
-	return t > 0
+	return total > 0
+}
+
+func (c *Client) Count(ctx context.Context, o client.ObjectTypeIfe, t *int64, opts ...client.Option) error {
+	q := utils.GetQuery(opts...)
+	tdb := c.db.WithContext(ctx)
+	tName := tableName(o)
+	tdb = tdb.Scopes(
+		scopeTable(tName),
+		scopeCond(q.Where, tName),
+	)
+	return tdb.Count(t).Error
+}
+
+func scopeCond(conds []*client.Cond, mytable string) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if len(conds) == 0 {
+			return tx
+		}
+		qs := []string{}
+		vs := []interface{}{}
+		for idx := range conds {
+			q, v := conds[idx].AsQuery()
+			qs = append(qs, mytable+"."+q)
+			vs = append(vs, v)
+		}
+		return tx.Where(strings.Join(qs, " AND "), vs...)
+
+	}
+}
+
+func scopePreload(preloads, validPreloads []string) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		tdb := tx
+		for _, preloadField := range preloads {
+			if validPreloads == nil {
+				tdb = tdb.Preload(preloadField)
+			} else {
+				if contains(validPreloads, preloadField) {
+					tdb = tdb.Preload(preloadField)
+				}
+			}
+		}
+		return tdb
+	}
+}
+
+func scopeOrder(orders []string) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		tdb := tx
+		for _, orderStr := range orders {
+			tdb = tdb.Order(orderStr)
+		}
+		return tdb
+	}
+}
+
+func scopePageSize(page, size int64, ol client.ObjectListIfe) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		tdb := tx
+		if size > 0 && page > 0 {
+			offset := size * (page - 1)
+			ol.SetPageSize(page, size)
+			tdb.Offset(int(offset)).Limit(int(size))
+		}
+		return tdb
+	}
+}
+
+func scopeBelong(belongs []client.Object, mytable string) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if len(belongs) == 0 {
+			return tx
+		}
+		tdb := tx
+		for _, obj := range belongs {
+			fieldName := fmt.Sprintf("%s_%s", *obj.GetKind(), *obj.GetPKField())
+			if *obj.GetPKField() == "id" {
+				q := fmt.Sprintf("%s = ?", fieldName)
+				tdb = tx.Where(q, obj.GetPKValue())
+			} else {
+				rightTable := tableName(obj)
+				joinQ := fmt.Sprintf("LEFT JOIN %s ON %s.id = %s.%s", rightTable, rightTable, mytable, fieldName)
+				tdb = tdb.Joins(joinQ)
+				q := fmt.Sprintf("%s = ?", rightTable+"."+fieldName)
+				tdb = tdb.Where(q, obj.GetPKValue())
+			}
+		}
+		return tdb
+	}
 }
 
 /*
-ListCluster
-GetByName
-GetManagerCluster
-实现ClusterGetter接口
+m2m relations
+eg:
+	tables:
+	1. table tenants
+		id 			uint
+		tenant_name string
+
+	2. table users
+		id 			uint
+		username	string
+
+	3. table tenant_user_rels
+		tenant_id	int
+		user_id 	int
+		role		string
+
+	query:
+	1. all members of tenant{id: 1, name: "egTenant"}
+		use id case, only once join:
+		select * from users
+			left join tenant_user_rels on tenant_user_rels.user_id = users.id
+			where tenant_user_rels.tenant_id = 1
+		use other filed case, more than one times join:
+		select * from users
+			left join tenant_user_rels on tenant_user_rels.user_id = users.id
+			left join tenants on tenants.id = tenant_user_rels.tenant_id
+			where tenants.tenant_name = "egTenant"
+
 */
-
-func (c *Client) ListCluster() []string {
-	var clusters []string
-	c.db.Table(tableName(&Cluster{})).Pluck("cluster_name", &clusters)
-	return clusters
+func scopeRelation(rels []client.RelationCondition, ol client.ObjectTypeIfe) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		tdb := tx
+		if len(rels) == 0 {
+			return tx
+		}
+		selfTable := tableName(ol)
+		for _, rel := range rels {
+			relTable := relTableName(rel.Target, ol)
+			rightKey := *ol.GetKind() + "_id"
+			joinQ := fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.id", relTable, relTable, rightKey, selfTable)
+			tdb = tdb.Joins(joinQ)
+			if rel.Key != "" {
+				q := fmt.Sprintf("%s.%s = ?", relTable, rel.Key)
+				tdb = tdb.Where(q, rel.Value)
+			}
+			if !isEmpty(rel.Target.GetPKValue()) {
+				q := fmt.Sprintf("%s.%s", relTable, *rel.Target.GetKind()+"_id")
+				tdb = tdb.Where(q, rel.Target.GetPKValue())
+			}
+		}
+		return tdb
+	}
 }
 
-func (c *Client) GetByName(name string) (agentAddr, mode string, agentcert, agentkey, agentca, kubeconfig []byte, err error) {
-	var cluster Cluster
-	if err = c.db.First(&cluster, "cluster_name = ?", name).Error; err != nil {
-		return
+func scopeTable(tablename string) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		return tx.Table(tablename)
 	}
-	agentcert = []byte(cluster.AgentCert)
-	agentkey = []byte(cluster.AgentKey)
-	agentca = []byte(cluster.AgentCA)
-	agentAddr = cluster.AgentAddr
-	mode = cluster.Mode
-	kubeconfig = []byte(cluster.KubeConfig)
-	return
 }
 
-func (c *Client) GetManagerCluster(ctx context.Context) (string, error) {
-	ret := []string{}
-	cluster := &Cluster{Primary: true}
-	if err := c.db.Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
-		return "", err
-	}
-	if len(ret) == 0 {
-		return "", errors.New("no manager cluster found")
-	}
-	return ret[0], nil
+func scopeOmitAssociations(tx *gorm.DB) *gorm.DB {
+	return tx.Omit(clause.Associations)
+}
+
+func isEmpty(v interface{}) bool {
+	return reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface())
 }
