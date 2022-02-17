@@ -19,8 +19,6 @@ const (
 	GlobalAlertNamespace = gemlabels.NamespaceMonitor
 	// namespace
 	PromqlNamespaceKey = "namespace"
-	// 配置路径写死
-	configPath = "config/metricconfig.yaml"
 )
 
 func GetGemsMetricConfig(adminConfig bool) GemsMetricConfig {
