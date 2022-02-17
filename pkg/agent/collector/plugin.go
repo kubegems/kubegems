@@ -2,14 +2,13 @@ package collector
 
 import (
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/exporter"
-	"kubegems.io/pkg/utils/plugins"
+	"kubegems.io/pkg/utils/gemsplugin"
 )
 
 type PluginCollector struct {
@@ -48,36 +47,43 @@ func (c *PluginCollector) Update(ch chan<- prometheus.Metric) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	gemsplugins, err := plugins.GetPlugins(c.clus)
+	gemsplugins, err := gemsplugin.GetPlugins(c.clus)
 	if err != nil {
 		log.Error(err, "get plugins failed")
 		return err
 	}
 
-	allPlugins := map[string]plugins.PluginDetail{}
+	allPlugins := map[string]*gemsplugin.Plugin{}
 	for k, v := range gemsplugins.Spec.CorePlugins {
-		v.Type = plugins.TypeCorePlugins
+		v.Type = gemsplugin.TypeCorePlugins
 		allPlugins[k] = v
 	}
 	for k, v := range gemsplugins.Spec.KubernetesPlugins {
-		v.Type = plugins.TypeKubernetesPlugins
+		v.Type = gemsplugin.TypeKubernetesPlugins
 		allPlugins[k] = v
 	}
-	for pluginName, details := range allPlugins {
-		var status pluginstatus
-		if plugins.IsPluginHelthy(c.clus, details) {
-			status = statusOK
-		} else {
-			status = statusUnhealthy
-		}
 
-		ch <- prometheus.MustNewConstMetric(
-			c.pluginStatus,
-			prometheus.GaugeValue,
-			float64(status),
-			details.Type, strings.ReplaceAll(pluginName, "_", "-"), details.Namespace, strconv.FormatBool(details.Enabled), details.Version,
-		)
+	wg := sync.WaitGroup{}
+	for pluginName, plugin := range allPlugins {
+		plugin.Name = pluginName
+		wg.Add(1)
+		go func(p *gemsplugin.Plugin) {
+			defer wg.Done()
+
+			ch <- prometheus.MustNewConstMetric(
+				c.pluginStatus,
+				prometheus.GaugeValue,
+				func() float64 {
+					if gemsplugin.IsPluginHelthy(c.clus, p) {
+						return 1
+					}
+					return 0
+				}(),
+				p.Type, p.Name, p.Namespace, strconv.FormatBool(p.Enabled), p.Version,
+			)
+		}(plugin)
 	}
+	wg.Wait()
 
 	return nil
 }

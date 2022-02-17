@@ -1,4 +1,4 @@
-package plugins
+package gemsplugin
 
 import (
 	"context"
@@ -15,14 +15,18 @@ import (
 const (
 	TypeCorePlugins       = "core"
 	TypeKubernetesPlugins = "kubernetes"
-
-	pluginURL1 = "/apis/plugins.kubegems.io/v1alpha1/namespaces/gemcloud-system/installers/plugin-installer"
-	pluginURL2 = "/apis/plugins.kubegems.io/v1alpha1/namespaces/kubegems-installer/installers/kubegems-plugins"
 )
 
 var (
-	once          sync.Once
-	realPluginURL = pluginURL1 // 默认用gemcloud-system的
+	once       sync.Once
+	pluginURLs = []string{
+		// The two url will be Deprecate, but some cluster are still in use.
+		"/apis/plugins.gems.cloudminds.com/v1alpha1/namespaces/gemcloud-system/installers/plugin-installer",
+		"/apis/plugins.gems.cloudminds.com/v1alpha1/namespaces/kubegems-installer/installers/kubegems-plugins",
+
+		"/apis/plugins.kubegems.io/v1alpha1/namespaces/kubegems-installer/installers/kubegems-plugins",
+	}
+	realPluginURL string // real plugin resource position
 )
 
 type Plugins struct {
@@ -32,16 +36,16 @@ type Plugins struct {
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	Spec struct {
-		ClusterName       string                  `json:"cluster_name"`
-		Runtime           string                  `json:"runtime"`
-		CorePlugins       map[string]PluginDetail `json:"core_plugins"`
-		KubernetesPlugins map[string]PluginDetail `json:"kubernetes_plugins"`
+		ClusterName       string             `json:"cluster_name"`
+		Runtime           string             `json:"runtime"`
+		CorePlugins       map[string]*Plugin `json:"core_plugins"`
+		KubernetesPlugins map[string]*Plugin `json:"kubernetes_plugins"`
 	} `json:"spec"`
 
 	Status interface{} `json:"status"`
 }
 
-type PluginDetail struct {
+type Plugin struct {
 	Name         string `json:"name,omitempty"` // 返回给前端
 	Enabled      bool   `json:"enabled"`
 	Namespace    string `json:"namespace"`
@@ -72,23 +76,18 @@ type Status struct {
 func GetPlugins(clus cluster.Interface) (*Plugins, error) {
 	ctx := context.TODO()
 	once.Do(func() {
-		_, err := clus.Discovery().RESTClient().Get().AbsPath(pluginURL1).Do(ctx).Raw()
-		if err == nil {
-			realPluginURL = pluginURL1
-			log.Infof("use plugin url: %s", pluginURL1)
-			return
+		for _, pluginURL := range pluginURLs {
+			_, err := clus.Discovery().RESTClient().Get().AbsPath(pluginURL).Do(ctx).Raw()
+			if err == nil {
+				realPluginURL = pluginURL
+				log.Infof("use plugin url: %s", pluginURL)
+				return
+			}
+			log.Errorf("plugins url %s error: %v", pluginURL, err)
 		}
-		log.Errorf("plugins url %s error: %v", pluginURL1, err)
-
-		_, err = clus.Discovery().RESTClient().Get().AbsPath(pluginURL2).Do(ctx).Raw()
-		if err == nil {
-			realPluginURL = pluginURL2
-			log.Infof("use plugin url: %s", pluginURL2)
-			return
-		}
-		log.Errorf("plugins url %s error: %v", pluginURL2, err)
 		log.Fatalf("all plugin urls failed, please check installer position")
 	})
+
 	obj, err := clus.Discovery().RESTClient().Get().AbsPath(realPluginURL).Do(ctx).Raw()
 	if err != nil {
 		log.Errorf("error getting plugins: %v", err)
@@ -116,39 +115,39 @@ func UpdatePlugins(clus cluster.Interface, plugins *Plugins) error {
 	return nil
 }
 
-func IsPluginHelthy(clus cluster.Interface, details PluginDetail) bool {
-	if !details.Enabled {
+func IsPluginHelthy(clus cluster.Interface, plugin *Plugin) bool {
+	if !plugin.Enabled {
 		return false
 	}
-	if len(details.Deployment)+len(details.Statefulset)+len(details.Daemonset) == 0 {
+	if len(plugin.Deployment)+len(plugin.Statefulset)+len(plugin.Daemonset) == 0 {
 		return false
 	}
 
 	ctx := context.TODO()
-	for _, v := range details.Deployment {
+	for _, v := range plugin.Deployment {
 		obj := appsv1.Deployment{}
 		err := clus.GetClient().Get(ctx, types.NamespacedName{
-			Namespace: details.Namespace,
+			Namespace: plugin.Namespace,
 			Name:      v,
 		}, &obj)
 		if err != nil || obj.Spec.Replicas == nil || obj.Status.ReadyReplicas != *obj.Spec.Replicas {
 			return false
 		}
 	}
-	for _, v := range details.Statefulset {
+	for _, v := range plugin.Statefulset {
 		obj := appsv1.StatefulSet{}
 		err := clus.GetClient().Get(ctx, types.NamespacedName{
-			Namespace: details.Namespace,
+			Namespace: plugin.Namespace,
 			Name:      v,
 		}, &obj)
 		if err != nil || obj.Spec.Replicas == nil || obj.Status.ReadyReplicas != *obj.Spec.Replicas {
 			return false
 		}
 	}
-	for _, v := range details.Daemonset {
+	for _, v := range plugin.Daemonset {
 		obj := appsv1.DaemonSet{}
 		err := clus.GetClient().Get(ctx, types.NamespacedName{
-			Namespace: details.Namespace,
+			Namespace: plugin.Namespace,
 			Name:      v,
 		}, &obj)
 		if err != nil || obj.Status.NumberReady != obj.Status.DesiredNumberScheduled {
