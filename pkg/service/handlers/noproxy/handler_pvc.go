@@ -1,15 +1,18 @@
 package noproxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
 	snapv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/apis/storage"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/utils/agents"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PersistentVolumeClaimRequest struct {
@@ -43,42 +46,50 @@ func (h *PersistentVolumeClaimHandler) Create(c *gin.Context) {
 
 	volumeSnapshotName := req.VolumeSnapshotName
 
-	volumesnapshot, err := kubeclient.GetClient().GetVolumeSnapshot(cluster, namespace, volumeSnapshotName, nil)
+	ctx := c.Request.Context()
+
+	err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		volumesnapshot := &snapv1.VolumeSnapshot{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      volumeSnapshotName,
+				Namespace: namespace,
+			},
+		}
+
+		if err := cli.Get(ctx, client.ObjectKeyFromObject(volumesnapshot), volumesnapshot); err != nil {
+			return err
+		}
+		if volumesnapshot.Status.ReadyToUse != nil && !*volumesnapshot.Status.ReadyToUse {
+			return fmt.Errorf("volumesnapshot %v status is %v", volumeSnapshotName, volumesnapshot.Status.ReadyToUse)
+		}
+
+		pvcbytes := volumesnapshot.Annotations[storage.AnnotationVolumeSnapshotAnnotationKeyPersistentVolumeClaim]
+
+		pvc := &v1.PersistentVolumeClaim{}
+		if err := json.Unmarshal([]byte(pvcbytes), pvc); err != nil {
+			return err
+		}
+
+		pvc.DeletionTimestamp = nil
+		pvc.Name = req.Name
+		pvc.Namespace = namespace
+		pvc.ResourceVersion = ""
+		pvc.Annotations = map[string]string{}
+		group := snapv1.GroupName
+		pvc.Spec.DataSource = &v1.TypedLocalObjectReference{
+			APIGroup: &group,
+			Kind:     "VolumeSnapshot",
+			Name:     volumesnapshot.Name,
+		}
+		// reset bind volume
+		pvc.Spec.VolumeName = ""
+		pvc.Status = v1.PersistentVolumeClaimStatus{}
+
+		return cli.Create(ctx, pvc)
+	})
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if volumesnapshot.Status.ReadyToUse != nil && !*volumesnapshot.Status.ReadyToUse {
-		handlers.NotOK(c, fmt.Errorf("volumesnapshot %v status is %v", volumeSnapshotName, volumesnapshot.Status.ReadyToUse))
-		return
-	}
-
-	pvcbytes := volumesnapshot.Annotations[storage.AnnotationVolumeSnapshotAnnotationKeyPersistentVolumeClaim]
-
-	pvc := &v1.PersistentVolumeClaim{}
-	if err := json.Unmarshal([]byte(pvcbytes), pvc); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	pvc.DeletionTimestamp = nil
-	pvc.Name = req.Name
-	pvc.ResourceVersion = ""
-	pvc.Annotations = map[string]string{}
-	group := snapv1.GroupName
-	pvc.Spec.DataSource = &v1.TypedLocalObjectReference{
-		APIGroup: &group,
-		Kind:     "VolumeSnapshot",
-		Name:     volumesnapshot.Name,
-	}
-	// reset bind volume
-	pvc.Spec.VolumeName = ""
-	pvc.Status = v1.PersistentVolumeClaimStatus{}
-
-	pvc, err = kubeclient.GetClient().CreatePersistentVolumeClaim(cluster, namespace, pvc.Name, pvc)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, pvc)
+	handlers.OK(c, "ok")
 }

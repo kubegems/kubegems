@@ -1,8 +1,8 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -12,7 +12,7 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
-	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/prometheus/promql"
 )
@@ -87,12 +87,18 @@ func (h *MonitorHandler) QueryRange(c *gin.Context) {
 		values.Add("start", req.Start)
 		values.Add("end", req.End)
 		values.Add("step", req.Step)
-		err := kubeclient.DoRequest(http.MethodGet, req.Cluster,
-			fmt.Sprintf("/custom/prometheus/v1/matrix?%s", values.Encode()), nil, &ret)
-		if err != nil {
-			return fmt.Errorf("prometheus query range failed, cluster: %s, promql: %s, %w", req.Cluster, req.Promql, err)
-		}
-		return nil
+
+		return h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
+			err := cli.DoRequest(ctx, agents.Request{
+				Path:  "/custom/prometheus/v1/matrix",
+				Query: values,
+				Into:  agents.WrappedResponse(&ret),
+			})
+			if err != nil {
+				return fmt.Errorf("prometheus query range failed, cluster: %s, promql: %s, %w", req.Cluster, req.Promql, err)
+			}
+			return nil
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -128,8 +134,14 @@ func (h *MonitorHandler) LabelValues(c *gin.Context) {
 		values.Add("start", req.Start)
 		values.Add("end", req.End)
 		values.Add("label", req.Label)
-		err := kubeclient.DoRequest(http.MethodGet, req.Cluster,
-			fmt.Sprintf("/custom/prometheus/v1/labelvalues?%s", values.Encode()), nil, &ret)
+
+		err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
+			return cli.DoRequest(ctx, agents.Request{
+				Path:  "/custom/prometheus/v1/label/values",
+				Query: values,
+				Into:  agents.WrappedResponse(&ret),
+			})
+		})
 		if err != nil {
 			return fmt.Errorf("prometheus label values failed, cluster: %s, promql: %s, %w", req.Cluster, req.Promql, err)
 		}

@@ -34,25 +34,3 @@ func (k KubeClient) DeleteResourceQuota(cluster, namespace, name string) error {
 	}
 	return agentClient.DeleteObject(rqGVK, &namespace, &name)
 }
-
-func (k KubeClient) CreateResourceQuota(cluster, namespace, name string, data *v1.ResourceQuota) (*v1.ResourceQuota, error) {
-	agentClient, err := k.GetAgentClient(cluster)
-	if err != nil {
-		return nil, err
-	}
-	data.SetName(name)
-	data.SetNamespace(namespace)
-	err = agentClient.CreateObject(rqGVK, data, &namespace, &name)
-	return data, err
-}
-
-func (k KubeClient) PatchResourceQuota(cluster, namespace, name string, data *v1.ResourceQuota) (*v1.ResourceQuota, error) {
-	agentClient, err := k.GetAgentClient(cluster)
-	if err != nil {
-		return nil, err
-	}
-	data.SetName(name)
-	data.SetNamespace(namespace)
-	err = agentClient.PatchObject(rqGVK, data, &namespace, &name)
-	return data, err
-}
