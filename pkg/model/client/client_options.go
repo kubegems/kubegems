@@ -11,49 +11,9 @@ type PageSizeOption struct {
 	size int64
 }
 
-type WhereOption struct {
-	where *Cond
-}
-
-type PreloadOption struct {
-	preloads []string
-}
-
-type OrderOption struct {
-	order string
-}
-
-type SearchOption struct {
-	search string
-}
-
-type RelationFieldOption struct {
-	field string
-}
-
 func (p *PageSizeOption) Apply(q *Query) {
 	q.Page = p.page
 	q.Size = p.size
-}
-
-func (w *WhereOption) Apply(q *Query) {
-	q.Where = append(q.Where, w.where)
-}
-
-func (p *PreloadOption) Apply(q *Query) {
-	q.Preloads = p.preloads
-}
-
-func (o *OrderOption) Apply(q *Query) {
-	q.Orders = append(q.Orders, o.order)
-}
-
-func (o *RelationFieldOption) Apply(q *Query) {
-	q.RelationFields = append(q.RelationFields, o.field)
-}
-
-func (o *SearchOption) Apply(q *Query) {
-	q.Search = o.search
 }
 
 func PageSize(page, size int64) *PageSizeOption {
@@ -63,10 +23,26 @@ func PageSize(page, size int64) *PageSizeOption {
 	}
 }
 
+type WhereOption struct {
+	where *Cond
+}
+
+func (w *WhereOption) Apply(q *Query) {
+	q.Where = append(q.Where, w.where)
+}
+
 func Where(field string, op ConditionOperator, value interface{}) *WhereOption {
 	return &WhereOption{
 		where: &Cond{Field: field, Op: op, Value: value},
 	}
+}
+
+type PreloadOption struct {
+	preloads []string
+}
+
+func (p *PreloadOption) Apply(q *Query) {
+	q.Preloads = p.preloads
 }
 
 // 预加载关联资源
@@ -74,6 +50,14 @@ func Preloads(preloads []string) *PreloadOption {
 	return &PreloadOption{
 		preloads: preloads,
 	}
+}
+
+type OrderOption struct {
+	order string
+}
+
+func (o *OrderOption) Apply(q *Query) {
+	q.Orders = append(q.Orders, o.order)
 }
 
 // 对字段正序排序
@@ -90,16 +74,57 @@ func OrderDesc(field string) *OrderOption {
 	}
 }
 
-// 只有对多对多关系生效，选择中间表的字段到结果中
-func RelationField(field string) *RelationFieldOption {
-	return &RelationFieldOption{
-		field: field,
-	}
+type SearchOption struct {
+	search string
+}
+
+func (o *SearchOption) Apply(q *Query) {
+	q.Search = o.search
 }
 
 // 搜索内容
 func Search(value string) *SearchOption {
 	return &SearchOption{
 		search: value,
+	}
+}
+
+type BelongToOption struct {
+	belongTo Object
+}
+
+func (o *BelongToOption) Apply(q *Query) {
+	q.Belong = append(q.Belong, o.belongTo)
+}
+
+func BelongTo(obj Object) *BelongToOption {
+	return &BelongToOption{
+		belongTo: obj,
+	}
+}
+
+type RelationOption struct {
+	rel RelationCondition
+}
+
+func (o *RelationOption) Apply(q *Query) {
+	q.RelationOptions = append(q.RelationOptions, o.rel)
+}
+
+func ExistRelation(obj Object) *RelationOption {
+	return &RelationOption{
+		rel: RelationCondition{
+			Target: obj,
+		},
+	}
+}
+
+func ExistRelationWithKeyValue(obj Object, key string, value interface{}) *RelationOption {
+	return &RelationOption{
+		rel: RelationCondition{
+			Key:    key,
+			Value:  value,
+			Target: obj,
+		},
 	}
 }

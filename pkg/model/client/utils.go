@@ -29,17 +29,6 @@ func (cond *Cond) AsQuery() (string, interface{}) {
 	return fmt.Sprintf("%s %s ?", cond.Field, cond.Op), cond.Value
 }
 
-type Query struct {
-	Page           int64
-	Size           int64
-	Search         string
-	SearchFields   []string
-	Orders         []string
-	Preloads       []string
-	Where          []*Cond
-	RelationFields []string
-}
-
 func RelationKey(obj1, obj2 ObjectTypeIfe) string {
 	keys := []string{*obj1.GetKind(), *obj2.GetKind()}
 	sort.Slice(keys, func(i, j int) bool {
@@ -60,4 +49,22 @@ func GetRelation(source, target, via ObjectTypeIfe, relkind RelationKind) Relati
 		ret.Via = nil
 	}
 	return ret
+}
+
+type RelationCondition struct {
+	Key    string
+	Value  interface{}
+	Target Object
+}
+
+type Query struct {
+	Page            int64
+	Size            int64
+	Search          string
+	SearchFields    []string
+	Orders          []string
+	Preloads        []string
+	Where           []*Cond
+	Belong          []Object
+	RelationOptions []RelationCondition
 }
