@@ -1,14 +1,19 @@
 package projecthandler
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/msgbus"
 )
 
@@ -147,7 +152,15 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	h.SetAuditData(c, "删除", "项目", obj.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, obj.ID)
 
-	if err := h.GetDB().Delete(&obj).Error; err != nil {
+	ctx := c.Request.Context()
+
+	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(&obj).Error; err != nil {
+			return err
+		}
+		return h.afterProjectDelete(ctx, tx, &obj)
+	})
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -169,6 +182,27 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 		).
 		Send()
 	handlers.NoContent(c, nil)
+}
+
+/*
+	删除项目后
+	删除各个集群的环境(tenv),tenv本身删除是Controller自带垃圾回收的，其ns下所有资源将清空
+*/
+func (h *ProjectHandler) afterProjectDelete(ctx context.Context, tx *gorm.DB, p *models.Project) error {
+	for _, env := range p.Environments {
+		err := h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+			environment := &v1beta1.Environment{
+				ObjectMeta: metav1.ObjectMeta{Name: env.EnvironmentName},
+			}
+			return cli.Delete(ctx, environment)
+		})
+		if err != nil {
+			return err
+		}
+	}
+	// TODO: 删除 GIT 中的数据
+	// TODO: 删除 ARGO 中的数据
+	return nil
 }
 
 // ListProjectUser 获取属于Project的 User 列表

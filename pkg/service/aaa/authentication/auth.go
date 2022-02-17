@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"time"
 
@@ -80,7 +81,7 @@ func getIdentityHandler(db *gorm.DB, redis *redis.Client, uif aaa.UserInterface)
 		claims := jwt.ExtractClaims(c)
 		username := claims[identityKey].(string)
 		u := models.User{}
-		cacheKey := models.UserInfoCacheKey(username)
+		cacheKey := UserInfoCacheKey(username)
 		if err := redis.Get(context.Background(), cacheKey).Scan(&u); err != nil {
 			log.Debugf("get userinfo cache failed for user %v, will get from database: %v", cacheKey, err)
 			if err := db.Preload("SystemRole").First(&u, "username = ?", username).Error; err != nil {
@@ -88,13 +89,25 @@ func getIdentityHandler(db *gorm.DB, redis *redis.Client, uif aaa.UserInterface)
 				return ""
 			} else {
 				uif.SetContextUser(c, &u)
-				_ = u.RefreshUserInfoCache(userCacheExirpreMinute)
+				RefreshUserInfoCache(redis, u, userCacheExirpreMinute)
 			}
 		} else {
 			uif.SetContextUser(c, &u)
 		}
 		return username
 	}
+}
+
+func UserInfoCacheKey(username string) string {
+	return fmt.Sprintf("userinfo_cahce_%s", username)
+}
+
+func RefreshUserInfoCache(redis *redis.Client, u models.User, timeout int) error {
+	_, err := redis.SetEX(context.TODO(), UserInfoCacheKey(u.Username), u, time.Duration(timeout)*time.Minute).Result()
+	if err != nil {
+		log.Warnf("failed to fresh userinfo cache for user %v: %v", u.Username, err)
+	}
+	return err
 }
 
 func getPayloadFunc() func(data interface{}) jwt.MapClaims {

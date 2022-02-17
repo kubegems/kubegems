@@ -1,13 +1,8 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"time"
-
-	"gorm.io/gorm"
-	"kubegems.io/pkg/log"
 )
 
 const (
@@ -45,10 +40,6 @@ type UserSel struct {
 	Email    string
 }
 
-func UserInfoCacheKey(username string) string {
-	return fmt.Sprintf("userinfo_cahce_%s", username)
-}
-
 // implement redis
 func (u *User) MarshalBinary() ([]byte, error) {
 	return json.Marshal(u)
@@ -56,16 +47,4 @@ func (u *User) MarshalBinary() ([]byte, error) {
 
 func (u *User) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &u)
-}
-
-func (u *User) AfterSave(tx *gorm.DB) error {
-	return u.RefreshUserInfoCache(10)
-}
-
-func (u *User) RefreshUserInfoCache(timeout int) error {
-	_, err := redisinstance.SetEX(context.TODO(), UserInfoCacheKey(u.Username), u, time.Duration(timeout)*time.Minute).Result()
-	if err != nil {
-		log.Warnf("failed to fresh userinfo cache for user %v: %v", u.Username, err)
-	}
-	return err
 }

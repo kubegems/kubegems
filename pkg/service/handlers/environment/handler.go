@@ -1,19 +1,26 @@
-package environmenthandler
+package environment
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/models"
 	ut "kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/msgbus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
@@ -121,15 +128,89 @@ func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("请求体参数和URL参数中ID不同"))
 		return
 	}
+	ctx := c.Request.Context()
 	// 不保存集群数据
 	cluster := models.Cluster{}
 	h.GetDB().First(&cluster, obj.ClusterID)
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+
+	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&obj).Error; err != nil {
+			return err
+		}
+		return AfterEnvironmentSave(ctx, h.BaseHandler, tx, &obj)
+	})
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	h.GetCacheLayer().GetGlobalResourceTree().UpsertEnvironment(obj.ProjectID, obj.ID, obj.EnvironmentName, cluster.ClusterName, obj.Namespace)
 	handlers.OK(c, obj)
+}
+
+/*
+环境的创建，修改，删除，都会触发hook，将状态同步到对应的集群下
+*/
+func AfterEnvironmentSave(ctx context.Context, h base.BaseHandler, tx *gorm.DB, env *models.Environment) error {
+	var (
+		project       models.Project
+		cluster       models.Cluster
+		spec          v1beta1.EnvironmentSpec
+		tmpLimitRange map[string]v1.LimitRangeItem
+		limitRange    []v1.LimitRangeItem
+		resourceQuota v1.ResourceList
+	)
+	if e := tx.Preload("Tenant").First(&project, "id = ?", env.ProjectID).Error; e != nil {
+		return e
+	}
+	if e := tx.First(&cluster, "id = ?", env.ClusterID).Error; e != nil {
+		return e
+	}
+
+	if env.LimitRange != nil {
+		e := json.Unmarshal(env.LimitRange, &tmpLimitRange)
+		if e != nil {
+			return e
+		}
+	}
+	if env.ResourceQuota != nil {
+		e := json.Unmarshal(env.ResourceQuota, &resourceQuota)
+		if e != nil {
+			return e
+		}
+	}
+
+	for key, v := range tmpLimitRange {
+		v.Type = v1.LimitType(key)
+		limitRange = append(limitRange, v)
+	}
+	spec.Namespace = env.Namespace
+	spec.Project = project.ProjectName
+	spec.Tenant = project.Tenant.TenantName
+	spec.LimitRageName = "default"
+	spec.ResourceQuotaName = "default"
+	spec.DeletePolicy = env.DeletePolicy
+	spec.ResourceQuota = resourceQuota
+	if len(limitRange) > 0 {
+		spec.LimitRage = limitRange
+	}
+
+	if e := createOrUpdateEnvironment(ctx, h, cluster.ClusterName, env.EnvironmentName, spec); e != nil {
+		return e
+	}
+	return nil
+}
+
+func createOrUpdateEnvironment(ctx context.Context, h base.BaseHandler, clustername, environment string, spec v1beta1.EnvironmentSpec) error {
+	return h.Execute(ctx, clustername, func(ctx context.Context, cli agents.Client) error {
+		env := &v1beta1.Environment{
+			ObjectMeta: metav1.ObjectMeta{Name: environment},
+		}
+		_, err := controllerutil.CreateOrUpdate(ctx, cli, env, func() error {
+			env.Spec = spec
+			return nil
+		})
+		return err
+	})
 }
 
 // DeleteEnvironment 删除 Environment
@@ -153,7 +234,15 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 	envUsers := h.GetDataBase().EnvUsers(obj.ID)
 	projAdmins := h.GetDataBase().ProjectAdmins(obj.ProjectID)
 
-	if err := h.GetDB().Delete(&obj).Error; err != nil {
+	ctx := c.Request.Context()
+
+	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(&obj).Error; err != nil {
+			return err
+		}
+		return h.afterEnvironmentDelete(ctx, tx, &obj)
+	})
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -175,6 +264,17 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 		).
 		Send()
 	handlers.NoContent(c, nil)
+}
+
+// 环境删除,同步删除CRD
+func (h *EnvironmentHandler) afterEnvironmentDelete(ctx context.Context, tx *gorm.DB, env *models.Environment) error {
+	return h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		return cli.Delete(ctx, &v1beta1.Environment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: env.EnvironmentName,
+			},
+		})
+	})
 }
 
 // ListEnvironmentUser 获取属于Environment的 User 列表
@@ -442,30 +542,36 @@ func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 		return
 	}
 	h.SetAuditData(c, "开启", "环境网络隔离", env.EnvironmentName)
-	tnetpol, err := kubeclient.GetClient().GetTenantNetworkPolicy(env.Cluster.ClusterName, env.Project.Tenant.TenantName, nil)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	index := -1
-	for idx, envpol := range tnetpol.Spec.EnvironmentNetworkPolicies {
-		if envpol.Name == env.EnvironmentName {
-			index = idx
+
+	ctx := c.Request.Context()
+
+	tnetpol := &v1beta1.TenantNetworkPolicy{}
+	err := h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		if err := cli.Get(ctx, client.ObjectKey{Name: env.Project.Tenant.TenantName}, tnetpol); err != nil {
+			return err
 		}
-	}
-	if index == -1 && form.Isolate {
-		tnetpol.Spec.EnvironmentNetworkPolicies = append(tnetpol.Spec.EnvironmentNetworkPolicies, v1beta1.EnvironmentNetworkPolicy{
-			Name:    env.EnvironmentName,
-			Project: env.Project.ProjectName,
-		})
-	}
-	if index != -1 && !form.Isolate {
-		tnetpol.Spec.EnvironmentNetworkPolicies = append(tnetpol.Spec.EnvironmentNetworkPolicies[:index], tnetpol.Spec.EnvironmentNetworkPolicies[index+1:]...)
-	}
-	ret, err := kubeclient.GetClient().PatchTenantNetworkPolicy(env.Cluster.ClusterName, env.Project.Tenant.TenantName, tnetpol)
+
+		index := -1
+		for idx, envpol := range tnetpol.Spec.EnvironmentNetworkPolicies {
+			if envpol.Name == env.EnvironmentName {
+				index = idx
+			}
+		}
+		if index == -1 && form.Isolate {
+			tnetpol.Spec.EnvironmentNetworkPolicies = append(tnetpol.Spec.EnvironmentNetworkPolicies, v1beta1.EnvironmentNetworkPolicy{
+				Name:    env.EnvironmentName,
+				Project: env.Project.ProjectName,
+			})
+		}
+		if index != -1 && !form.Isolate {
+			tnetpol.Spec.EnvironmentNetworkPolicies = append(tnetpol.Spec.EnvironmentNetworkPolicies[:index], tnetpol.Spec.EnvironmentNetworkPolicies[index+1:]...)
+		}
+
+		return cli.Update(ctx, tnetpol)
+	})
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, ret)
+	handlers.OK(c, tnetpol)
 }
