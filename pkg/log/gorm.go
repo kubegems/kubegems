@@ -38,7 +38,6 @@ type GormLogger struct {
 }
 
 func (l *GormLogger) LogMode(loglevel logger.LogLevel) logger.Interface {
-	// all level share a logger
 	return l
 }
 

@@ -26,7 +26,7 @@ func (h *Handler) Create(req *restful.Request, resp *restful.Response) {
 		utils.BadRequest(resp, err)
 		return
 	}
-	if err := h.ModelClient.Create(user.AsObject()); err != nil {
+	if err := h.ModelClient.Create(req.Request.Context(), user.AsObject()); err != nil {
 		resp.WriteError(http.StatusBadRequest, err)
 		return
 	}
@@ -36,7 +36,7 @@ func (h *Handler) Create(req *restful.Request, resp *restful.Response) {
 func (h *Handler) List(req *restful.Request, resp *restful.Response) {
 	userList := forms.UserCommonList{}
 	l := userList.AsListObject()
-	if err := h.ModelClient.List(l, handlers.QueryToOptions(req.Request.URL.Query())...); err != nil {
+	if err := h.ModelClient.List(req.Request.Context(), l, handlers.CommonOptions(req)...); err != nil {
 		resp.WriteError(http.StatusBadRequest, err)
 		return
 	}
@@ -58,7 +58,7 @@ func (h *Handler) Delete(req *restful.Request, resp *restful.Response) {
 	} else {
 		cond = client.Where("id", client.Eq, uid)
 	}
-	if err := h.ModelClient.Delete(user.AsObject(), cond); err != nil {
+	if err := h.ModelClient.Delete(req.Request.Context(), user.AsObject(), cond); err != nil {
 		resp.WriteError(http.StatusBadRequest, err)
 		return
 	}

@@ -1,13 +1,12 @@
 package handlers
 
 import (
-	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/pkg/model/client"
+	"kubegems.io/pkg/utils"
 )
 
 const (
@@ -24,60 +23,33 @@ const (
 	gte = "__gte"
 	lt  = "__lt"
 	lte = "__lte"
+	in  = "__in"
 )
 
-func Options(c *gin.Context) []client.Option {
-	return QueryToOptions(c.Request.URL.Query())
-}
-
-func QueryToOptions(query url.Values) []client.Option {
+func CommonOptions(req *restful.Request) []client.Option {
 	opts := []client.Option{}
-	pagesizeOption := parsePageSize(query)
+	pagesizeOption := PageSizeOption(req)
 	if pagesizeOption != nil {
 		opts = append(opts, pagesizeOption)
 	}
 
-	orderOpts := parseOrder(query)
-	if len(orderOpts) > 0 {
-		opts = append(opts, orderOpts...)
-	}
+	orderOpts := OrderOption(req)
+	opts = append(opts, orderOpts...)
 
-	searchOpt := parseSearch(query)
+	searchOpt := SearchOption(req)
 	if searchOpt != nil {
 		opts = append(opts, searchOpt)
 	}
 
-	preloadOpt := parsePreload(query)
+	preloadOpt := PreloadOption(req)
 	if preloadOpt != nil {
 		opts = append(opts, preloadOpt)
-	}
-
-	for key, value := range query {
-		switch key {
-		case page, size, order, search, preload:
-			continue
-		default:
-			var v string
-			if len(value) >= 1 {
-				v = value[0]
-			}
-			if strings.HasSuffix(v, gt) {
-				opts = append(opts, client.Where(key, client.Gt, strings.TrimSuffix(v, gt)))
-			} else if strings.HasSuffix(v, gte) {
-				opts = append(opts, client.Where(key, client.Gte, strings.TrimSuffix(v, gte)))
-			} else if strings.HasSuffix(v, lt) {
-				opts = append(opts, client.Where(key, client.Lt, strings.TrimSuffix(v, lt)))
-			} else if strings.HasSuffix(v, lte) {
-				opts = append(opts, client.Where(key, client.Lte, strings.TrimSuffix(v, lte)))
-			} else {
-				opts = append(opts, client.Where(key, client.Eq, v))
-			}
-		}
 	}
 	return opts
 }
 
-func parsePageSize(query url.Values) client.Option {
+func PageSizeOption(req *restful.Request) client.Option {
+	query := req.Request.URL.Query()
 	pagestr := query.Get(page)
 	sizestr := query.Get(size)
 	if pagestr == "" {
@@ -97,7 +69,9 @@ func parsePageSize(query url.Values) client.Option {
 	return client.PageSize(page, size)
 }
 
-func parseOrder(query url.Values) []client.Option {
+//TODO: handler order priority, "order by id, age" vs "order by age, id"
+func OrderOption(req *restful.Request) []client.Option {
+	query := req.Request.URL.Query()
 	orderstrs, exist := query[order]
 	if !exist {
 		return nil
@@ -128,7 +102,8 @@ func parseOrder(query url.Values) []client.Option {
 	return opts
 }
 
-func parsePreload(query url.Values) client.Option {
+func PreloadOption(req *restful.Request) client.Option {
+	query := req.Request.URL.Query()
 	preloadstr, exist := query[preload]
 	if !exist {
 		return nil
@@ -136,7 +111,8 @@ func parsePreload(query url.Values) client.Option {
 	return client.Preloads(preloadstr)
 }
 
-func parseSearch(query url.Values) client.Option {
+func SearchOption(req *restful.Request) client.Option {
+	query := req.Request.URL.Query()
 	searchStr := query.Get(search)
 	if searchStr == "" {
 		return nil
@@ -144,26 +120,45 @@ func parseSearch(query url.Values) client.Option {
 	return client.Search(searchStr)
 }
 
-func GetID(c *gin.Context, key string) (uint, error) {
-	kstr := c.Param(key)
-	uid, err := strconv.ParseUint(kstr, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid id: %s", kstr)
+func WhereOptions(req *restful.Request, queryWhiteList []string) []client.Option {
+	query := req.Request.URL.Query()
+	opts := []client.Option{}
+	for key, value := range query {
+		switch key {
+		case page, size, order, search, preload:
+			continue
+		default:
+			if strings.HasSuffix(key, gt) {
+				realKey := strings.TrimSuffix(key, gt)
+				if utils.ContainStr(queryWhiteList, realKey) {
+					opts = append(opts, client.Where(realKey, client.Gt, value[0]))
+				}
+			} else if strings.HasSuffix(key, gte) {
+				realKey := strings.TrimSuffix(key, gte)
+				if utils.ContainStr(queryWhiteList, realKey) {
+					opts = append(opts, client.Where(realKey, client.Gte, value[0]))
+				}
+			} else if strings.HasSuffix(key, lt) {
+				realKey := strings.TrimSuffix(key, lt)
+				if utils.ContainStr(queryWhiteList, realKey) {
+					opts = append(opts, client.Where(realKey, client.Lt, value[0]))
+				}
+			} else if strings.HasSuffix(key, lte) {
+				realKey := strings.TrimSuffix(key, lte)
+				if utils.ContainStr(queryWhiteList, realKey) {
+					opts = append(opts, client.Where(realKey, client.Lte, value[0]))
+				}
+			} else if strings.HasSuffix(key, in) {
+				realKey := strings.TrimSuffix(key, in)
+				if utils.ContainStr(queryWhiteList, realKey) {
+					opts = append(opts, client.Where(realKey, client.In, value))
+				}
+			} else {
+				if utils.ContainStr(queryWhiteList, key) {
+					opts = append(opts, client.Where(key, client.Eq, value[0]))
+				}
+			}
+		}
 	}
-	if uid == 0 {
-		return 0, fmt.Errorf("invalid id: %s", kstr)
-	}
-	return uint(uid), nil
-}
-
-func MustGetID(c *gin.Context, key string) uint {
-	kstr := c.Param(key)
-	uid, err := strconv.ParseUint(kstr, 10, 64)
-	if err != nil {
-		return 0
-	}
-	if uid == 0 {
-		return 0
-	}
-	return uint(uid)
+	return opts
 }
