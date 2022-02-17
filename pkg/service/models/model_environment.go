@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 
 	"gorm.io/datatypes"
-	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/controller/utils"
 )
 
@@ -70,63 +68,6 @@ type EnvironmentUserRels struct {
 
 	// 环境级角色("reader", "operator")
 	Role string `binding:"required,eq=reader|eq=operator"`
-}
-
-/*
-环境的创建，修改，删除，都会触发hook，将状态同步到对应的集群下
-*/
-func (env *Environment) AfterSave(tx *gorm.DB) error {
-	var (
-		project       Project
-		cluster       Cluster
-		spec          v1beta1.EnvironmentSpec
-		tmpLimitRange map[string]v1.LimitRangeItem
-		limitRange    []v1.LimitRangeItem
-		resourceQuota v1.ResourceList
-	)
-	if e := tx.Preload("Tenant").First(&project, "id = ?", env.ProjectID).Error; e != nil {
-		return e
-	}
-	if e := tx.First(&cluster, "id = ?", env.ClusterID).Error; e != nil {
-		return e
-	}
-
-	if env.LimitRange != nil {
-		e := json.Unmarshal(env.LimitRange, &tmpLimitRange)
-		if e != nil {
-			return e
-		}
-	}
-	if env.ResourceQuota != nil {
-		e := json.Unmarshal(env.ResourceQuota, &resourceQuota)
-		if e != nil {
-			return e
-		}
-	}
-
-	for key, v := range tmpLimitRange {
-		v.Type = v1.LimitType(key)
-		limitRange = append(limitRange, v)
-	}
-	spec.Namespace = env.Namespace
-	spec.Project = project.ProjectName
-	spec.Tenant = project.Tenant.TenantName
-	spec.LimitRageName = "default"
-	spec.ResourceQuotaName = "default"
-	spec.DeletePolicy = env.DeletePolicy
-	spec.ResourceQuota = resourceQuota
-	if len(limitRange) > 0 {
-		spec.LimitRage = limitRange
-	}
-	if e := GetKubeClient().CreateOrUpdateEnvironment(cluster.ClusterName, env.EnvironmentName, spec); e != nil {
-		return e
-	}
-	return nil
-}
-
-// 环境删除,同步删除CRD
-func (env *Environment) AfterDelete(tx *gorm.DB) error {
-	return GetKubeClient().DeleteEnvironment(env.Cluster.ClusterName, env.EnvironmentName)
 }
 
 func FillDefaultLimigrange(env *Environment) []byte {

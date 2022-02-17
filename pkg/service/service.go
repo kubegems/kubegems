@@ -16,7 +16,6 @@ import (
 	"kubegems.io/pkg/service/aaa/audit"
 	auth "kubegems.io/pkg/service/aaa/authentication"
 	"kubegems.io/pkg/service/aaa/authorization"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/service/models/validate"
 	"kubegems.io/pkg/service/oauth"
@@ -98,9 +97,6 @@ func Run(ctx context.Context, options *options.Options) error {
 	if err != nil {
 		return fmt.Errorf("failed init dependencies: %v", err)
 	}
-
-	// 初始化kubeclient实例
-	models.SetKubeClient(kubeclient.Init(deps.Agentscli))
 
 	if !options.DebugMode {
 		gin.SetMode(gin.ReleaseMode)

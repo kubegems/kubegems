@@ -10,7 +10,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
+	"kubegems.io/pkg/utils/agents"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const apiVersion = "apps/v1"
@@ -93,7 +95,11 @@ func (h *HpaHandler) GetObjectHpa(c *gin.Context) {
 		Exist:     false,
 	}
 	hpaname := FormatHPAName(query.Kind, query.Name)
-	hpa, err := kubeclient.GetClient().GetHPA(cluster, namespace, hpaname)
+
+	hpa := &v2beta1.HorizontalPodAutoscaler{}
+	err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Get(ctx, client.ObjectKey{Namespace: namespace, Name: hpaname}, hpa)
+	})
 	if err != nil {
 		handlers.OK(c, hpaform)
 		return
@@ -108,8 +114,21 @@ func (h *HpaHandler) GetObjectHpa(c *gin.Context) {
 }
 
 func (h *HpaHandler) createOrUpdateHPA(ctx context.Context, form *hpaForm) (*v2beta1.HorizontalPodAutoscaler, error) {
-	hpa := form.FillDefault()
-	return kubeclient.GetClient().CreateOrUpdateHPA(form.Cluster, hpa, form.Namespace, form.Name)
+	hpa := &v2beta1.HorizontalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      FormatHPAName(form.Kind, form.Name),
+			Namespace: form.Namespace,
+		},
+	}
+
+	err := h.Execute(ctx, form.Cluster, func(ctx context.Context, cli agents.Client) error {
+		_, err := controllerutil.CreateOrUpdate(ctx, cli, hpa, func() error {
+			return form.Update(hpa)
+		})
+		return err
+	})
+
+	return hpa, err
 }
 
 func getHPAPercent(hpa *v2beta1.HorizontalPodAutoscaler) (int32, int32) {
@@ -128,7 +147,7 @@ func getHPAPercent(hpa *v2beta1.HorizontalPodAutoscaler) (int32, int32) {
 	return cpu, memory
 }
 
-func (form *hpaForm) FillDefault() *v2beta1.HorizontalPodAutoscaler {
+func (form *hpaForm) Update(in *v2beta1.HorizontalPodAutoscaler) error {
 	var metrics []v2beta1.MetricSpec
 	if form.Cpu > 0 {
 		metrics = append(metrics, v2beta1.MetricSpec{
@@ -148,22 +167,16 @@ func (form *hpaForm) FillDefault() *v2beta1.HorizontalPodAutoscaler {
 			},
 		})
 	}
-	return &v2beta1.HorizontalPodAutoscaler{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      FormatHPAName(form.Kind, form.Name),
-			Namespace: form.Namespace,
-		},
-		Spec: v2beta1.HorizontalPodAutoscalerSpec{
-			MinReplicas: &form.MinReplicas,
-			MaxReplicas: form.MaxReplicas,
-			ScaleTargetRef: v2beta1.CrossVersionObjectReference{
-				Kind:       form.Kind,
-				Name:       form.Name,
-				APIVersion: apiVersion,
-			},
-			Metrics: metrics,
-		},
+
+	in.Spec.Metrics = metrics
+	in.Spec.MinReplicas = &form.MinReplicas
+	in.Spec.MaxReplicas = form.MaxReplicas
+	in.Spec.ScaleTargetRef = v2beta1.CrossVersionObjectReference{
+		Kind:       form.Kind,
+		Name:       form.Name,
+		APIVersion: apiVersion,
 	}
+	return nil
 }
 
 func FormatHPAName(kind, targetName string) string {

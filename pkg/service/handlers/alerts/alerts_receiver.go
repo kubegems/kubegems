@@ -14,14 +14,15 @@ import (
 	"github.com/gin-gonic/gin"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/kubeclient"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -126,7 +127,7 @@ func (h *AlertmanagerConfigHandler) ListReceiver(c *gin.Context) {
 		}
 
 		secret := &corev1.Secret{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      emailSecretName,
 				Namespace: namespace,
 			},
@@ -194,7 +195,7 @@ func (h *AlertmanagerConfigHandler) CreateReceiver(c *gin.Context) {
 		return
 	}
 
-	if err := req.createOrUpdateSecret(cluster, namespace); err != nil {
+	if err := h.createOrUpdateSecret(c.Request.Context(), cluster, namespace, &req); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -282,7 +283,7 @@ func (h *AlertmanagerConfigHandler) ModifyReceiver(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := req.createOrUpdateSecret(cluster, namespace); err != nil {
+	if err := h.createOrUpdateSecret(c.Request.Context(), cluster, namespace, &req); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -371,7 +372,7 @@ func (h *AlertmanagerConfigHandler) modify(ctx context.Context, aconfig *v1alpha
 				return err
 			}
 
-			return deleteSecret(cluster, aconfig.Namespace, toDelete)
+			return h.deleteSecret(ctx, cluster, aconfig.Namespace, toDelete)
 		}
 		return nil
 	case prometheus.Update:
@@ -403,55 +404,43 @@ func isReceiverUsed(route *v1alpha1.Route, receiver v1alpha1.Receiver) bool {
 	return false
 }
 
-func (rec *ReceiverConfig) createOrUpdateSecret(cluster, namespace string) error {
+func (h *AlertmanagerConfigHandler) createOrUpdateSecret(ctx context.Context, cluster, namespace string, rec *ReceiverConfig) error {
 	var m sync.Mutex
 	m.Lock()
 	defer m.Unlock()
 
-	sec, err := kubeclient.GetClient().GetSecret(cluster, namespace, emailSecretName, nil)
-	if err != nil {
-		if kerrors.IsNotFound(err) {
-			if _, err := kubeclient.GetClient().CreateSecret(cluster, namespace, emailSecretName, &corev1.Secret{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      emailSecretName,
-					Namespace: namespace,
-					Labels:    emailSecretLabel,
-				},
-				Type: corev1.SecretTypeOpaque,
-				Data: rec.secretData(),
-			}); err != nil {
-				return err
-			}
-			return nil
+	return h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		sec := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      emailSecretName,
+				Namespace: namespace,
+				Labels:    emailSecretLabel,
+			},
+			Type: corev1.SecretTypeOpaque,
 		}
+		_, err := controllerutil.CreateOrUpdate(ctx, cli, sec, func() error {
+			return rec.UpdateSecretData(sec)
+		})
 		return err
-	}
-
-	if sec.Data == nil {
-		sec.Data = make(map[string][]byte)
-	}
-	for k, v := range rec.secretData() {
-		sec.Data[k] = v
-	}
-
-	if _, err := kubeclient.GetClient().PatchSecret(cluster, namespace, emailSecretName, sec); err != nil {
-		return err
-	}
-	return nil
+	})
 }
 
-func deleteSecret(cluster, namespace string, rec v1alpha1.Receiver) error {
-	sec, err := kubeclient.GetClient().GetSecret(cluster, namespace, emailSecretName, nil)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range rec.EmailConfigs {
-		delete(sec.Data, emailSecretKey(rec.Name, v.From))
-	}
-
-	_, err = kubeclient.GetClient().PatchSecret(cluster, namespace, emailSecretName, sec)
-	return err
+func (h *AlertmanagerConfigHandler) deleteSecret(ctx context.Context, cluster, namespace string, rec v1alpha1.Receiver) error {
+	return h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		sec := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      emailSecretName,
+				Namespace: namespace,
+			},
+		}
+		if err := cli.Get(ctx, client.ObjectKeyFromObject(sec), sec); err != nil {
+			return err
+		}
+		for _, v := range rec.EmailConfigs {
+			delete(sec.Data, emailSecretKey(rec.Name, v.From))
+		}
+		return cli.Update(ctx, sec)
+	})
 }
 
 func emailSecretKey(receverName, from string) string {
@@ -464,6 +453,16 @@ func (rec *ReceiverConfig) secretData() map[string][]byte {
 		ret[emailSecretKey(rec.Name, v.From)] = []byte(v.AuthPassword) // 不需要encode
 	}
 	return ret
+}
+
+func (rec *ReceiverConfig) UpdateSecretData(in *v1.Secret) error {
+	if in.Data == nil {
+		in.Data = make(map[string][]byte)
+	}
+	for _, v := range rec.EmailConfigs {
+		in.Data[emailSecretKey(rec.Name, v.From)] = []byte(v.AuthPassword) // 不需要encode
+	}
+	return nil
 }
 
 func toGemsReceiver(rec v1alpha1.Receiver, namespace string, sec *corev1.Secret) ReceiverConfig {

@@ -1,4 +1,4 @@
-package environmenthandler
+package environment
 
 import (
 	"github.com/gin-gonic/gin"
