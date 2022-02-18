@@ -124,7 +124,7 @@ func RegistRouter(router *gin.Engine, opts *options.Options, server define.Serve
 	systemroleHandler.RegistRouter(rg)
 
 	// 集群
-	clusterHandler := &clusterhandler.ClusterHandler{BaseHandler: basehandler, InstallerOptions: server.GetOptions().Installer}
+	clusterHandler := &clusterhandler.ClusterHandler{BaseHandler: basehandler}
 	clusterHandler.RegistRouter(rg)
 
 	// 审计
