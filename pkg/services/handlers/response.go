@@ -15,7 +15,7 @@ type PageData struct {
 	CurrentSize int64       `json:"size"`
 }
 
-func PageList(l client.ObjectListIfe, data interface{}) *PageData {
+func PageList(l client.ObjectListIface, data interface{}) *PageData {
 	page, size := l.GetPageSize()
 	return &PageData{
 		Total:       *l.GetTotal(),

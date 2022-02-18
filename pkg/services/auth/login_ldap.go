@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 
@@ -20,7 +21,7 @@ func (ut *LdapLoginUtils) LoginAddr() string {
 	return DefaultLoginURL
 }
 
-func (ut *LdapLoginUtils) GetUserInfo(cred *Credential) (ret *UserInfo, err error) {
+func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (ret *UserInfo, err error) {
 	if !ut.ValidateCredential(cred) {
 		return nil, fmt.Errorf("invalid credential")
 	}

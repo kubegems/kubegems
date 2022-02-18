@@ -25,8 +25,8 @@ func NewDatabaseInstance(opts *MySQLOptions) (*gorm.DB, error) {
 		Addr:                 opts.Addr,
 		DBName:               opts.Database,
 		Net:                  "tcp",
-		ParseTime:            true,              // 不支持配置，否则出问题
-		Collation:            "utf8_general_ci", // 不支持配置，否则出问题
+		ParseTime:            true,
+		Collation:            "utf8_general_ci",
 		Loc:                  time.Local,
 		AllowNativePasswords: true,
 	}
@@ -41,8 +41,8 @@ func ExecuteMigrate(opts *MySQLOptions) error {
 		Passwd:               opts.Password,
 		Addr:                 opts.Addr,
 		Net:                  "tcp",
-		ParseTime:            true,              // 不支持配置，否则出问题
-		Collation:            "utf8_general_ci", // 不支持配置，否则出问题
+		ParseTime:            true,
+		Collation:            "utf8_general_ci",
 		Loc:                  time.Local,
 		AllowNativePasswords: true,
 	}

@@ -15,7 +15,7 @@ func UserStructLevelValidation(sl validator.StructLevel) {
 	opts := []client.Option{}
 	if user.ID == 0 && len(user.Username) > 0 {
 		opts = append(opts, client.Where("username", client.Eq, user.Username))
-		modelClient.Count(context.Background(), user.AsObject(), &c, opts...)
+		modelClient.Count(context.Background(), user.Object(), &c, opts...)
 		if c > 0 {
 			sl.ReportError("username", "用户名", "Username", "dbuniq", "用户")
 		}
@@ -23,7 +23,7 @@ func UserStructLevelValidation(sl validator.StructLevel) {
 	// 修改用户的时候，不能用户名不能重名
 	if user.ID != 0 {
 		opts = append(opts, client.Where("id", client.Eq, user.ID))
-		modelClient.Count(context.Background(), user.AsObject(), &c, opts...)
+		modelClient.Count(context.Background(), user.Object(), &c, opts...)
 		if c > 0 {
 			sl.ReportError("username", "用户名", "Username", "dbuniq", "用户")
 		}
