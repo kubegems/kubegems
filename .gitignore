@@ -9,3 +9,4 @@ config/*.yaml
 _.yaml
 *.sqlite3
 *.bak
+local_debug.go

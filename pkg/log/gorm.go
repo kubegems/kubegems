@@ -56,10 +56,10 @@ func (l *GormLogger) Error(ctx context.Context, s string, args ...interface{}) {
 func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	latency := time.Since(begin)
 	sql, effect := fc()
-	_ = effect
 
 	fields := []zap.Field{
 		zap.String("sql", sql),
+		zap.Int64("rows", effect),
 		zap.String("latency", latency.String()),
 	}
 	if l.SourceField != "" {

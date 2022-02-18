@@ -16,7 +16,7 @@ func EnvironmentUserRelStructLevelValidation(sl validator.StructLevel) {
 			client.Where("user_id", client.Eq, rel.UserID),
 			client.Where("environment_id", client.Eq, rel.EnvironmentID),
 		}
-		modelClient.Count(context.Background(), rel.AsObject(), &count, cond...)
+		modelClient.Count(context.Background(), rel.Object(), &count, cond...)
 		if count > 0 {
 			sl.ReportError(rel.Role, "用户", "Role", "reluniq", "环境")
 		}

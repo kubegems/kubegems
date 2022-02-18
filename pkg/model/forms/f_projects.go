@@ -9,46 +9,43 @@ import (
 // +genform object:Project
 type ProjectCommon struct {
 	BaseForm
-	ID uint
-	// 创建时间
-	CreatedAt *time.Time
-	// 项目名字
-	ProjectName string
-	// 项目别名
-	ProjectAlias string
-	// 项目备注
-	Remark string
-	// 项目资源限制
+	ID           uint       `json:"id"`
+	CreatedAt    *time.Time `json:"createAt"`
+	ProjectName  string     `json:"projectName"`
+	ProjectAlias string     `json:"projectAlias"`
+	Remark       string     `json:"remark"`
 }
 
 // +genform object:Project
 type ProjectDetail struct {
 	BaseForm
-	ID uint
-	// 创建时间
-	CreatedAt *time.Time
-	// 项目名字
-	ProjectName string
-	// 项目别名
-	ProjectAlias string
-	// 项目备注
-	Remark        string
-	ResourceQuota datatypes.JSON
-	Applications  []*ApplicationCommon
-	Environments  []*EnvironmentCommon
-	Users         []*UserCommon
-	Tenant        *TenantCommon
-	// 所属的租户ID
-	TenantID uint
+	ID            uint                 `json:"id"`
+	CreatedAt     *time.Time           `json:"createAt"`
+	ProjectName   string               `json:"projectName"`
+	ProjectAlias  string               `json:"projectAlias"`
+	Remark        string               `json:"remark"`
+	ResourceQuota datatypes.JSON       `json:"resourecQuota"`
+	Applications  []*ApplicationCommon `json:"applications,omitempty"`
+	Environments  []*EnvironmentCommon `json:"environments,omitempty"`
+	Users         []*UserCommon        `json:"users,omitempty"`
+	Tenant        *TenantCommon        `json:"tenant,omitempty"`
+	TenantID      uint                 `json:"tenantId,omitempty"`
 }
 
 // +genform object:ProjectUserRel
 type ProjectUserRelCommon struct {
 	BaseForm
-	ID        uint
-	User      *UserCommon
-	Project   *ProjectCommon
-	UserID    uint
-	ProjectID uint
-	Role      string
+	ID        uint           `json:"id"`
+	User      *UserCommon    `json:"user,omitempty"`
+	Project   *ProjectCommon `json:"project,emitempty"`
+	UserID    uint           `json:"userId"`
+	ProjectID uint           `json:"projectId"`
+	Role      string         `json:"role"`
+}
+
+type ProjectCreateForm struct {
+	BaseForm
+	Name          string `json:"name" validate:"required"`
+	Remark        string `json:"remark" validate:"required"`
+	ResourceQuota string `json:"quota" validate:"json"`
 }

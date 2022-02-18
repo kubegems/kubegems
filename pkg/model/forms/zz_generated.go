@@ -10,17 +10,29 @@ type WorkloadCommonList struct {
 	Items []*WorkloadCommon
 }
 
-func (ul *WorkloadCommonList) AsListObject() client.ObjectListIfe {
+func (ul *WorkloadCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.WorkloadList{}
 	return ul.objectlist
 }
 
-func (ul *WorkloadCommonList) AsListData() []*WorkloadCommon {
+func (ul *WorkloadCommonList) Data() []*WorkloadCommon {
+	if ul.data != nil {
+		return ul.data.([]*WorkloadCommon)
+	}
 	us := ul.objectlist.(*orm.WorkloadList)
-	return Convert_Workload_WorkloadCommon_arr(us.Items)
+	tmp := Convert_Workload_WorkloadCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *WorkloadCommon) AsObject() client.Object {
+func (ul *WorkloadCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *WorkloadCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -30,7 +42,16 @@ func (r *WorkloadCommon) AsObject() client.Object {
 }
 
 func (u *WorkloadCommon) Data() *WorkloadCommon {
-	return Convert_Workload_WorkloadCommon(u.object.(*orm.Workload))
+	if u.data != nil {
+		return u.data.(*WorkloadCommon)
+	}
+	tmp := Convert_Workload_WorkloadCommon(u.object.(*orm.Workload))
+	u.data = tmp
+	return tmp
+}
+
+func (u *WorkloadCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_WorkloadCommon_Workload(f *WorkloadCommon) *orm.Workload {
@@ -39,15 +60,15 @@ func Convert_WorkloadCommon_Workload(f *WorkloadCommon) *orm.Workload {
 		return nil
 	}
 	f.object = r
-	r.CreatedAt = f.CreatedAt
-	r.ClusterName = f.ClusterName
-	r.Namespace = f.Namespace
-	r.Containers = Convert_ContainerCommon_Container_arr(f.Containers)
-	r.ID = f.ID
-	r.Type = f.Type
-	r.Name = f.Name
 	r.CPULimitStdvar = f.CPULimitStdvar
+	r.ClusterName = f.ClusterName
+	r.Containers = Convert_ContainerCommon_Container_slice(f.Containers)
+	r.CreatedAt = f.CreatedAt
+	r.ID = f.ID
 	r.MemoryLimitStdvar = f.MemoryLimitStdvar
+	r.Name = f.Name
+	r.Namespace = f.Namespace
+	r.Type = f.Type
 	return r
 }
 func Convert_Workload_WorkloadCommon(f *orm.Workload) *WorkloadCommon {
@@ -55,18 +76,18 @@ func Convert_Workload_WorkloadCommon(f *orm.Workload) *WorkloadCommon {
 		return nil
 	}
 	var r WorkloadCommon
-	r.CreatedAt = f.CreatedAt
-	r.ClusterName = f.ClusterName
-	r.Namespace = f.Namespace
-	r.Containers = Convert_Container_ContainerCommon_arr(f.Containers)
-	r.ID = f.ID
-	r.Type = f.Type
-	r.Name = f.Name
 	r.CPULimitStdvar = f.CPULimitStdvar
+	r.ClusterName = f.ClusterName
+	r.Containers = Convert_Container_ContainerCommon_slice(f.Containers)
+	r.CreatedAt = f.CreatedAt
+	r.ID = f.ID
 	r.MemoryLimitStdvar = f.MemoryLimitStdvar
+	r.Name = f.Name
+	r.Namespace = f.Namespace
+	r.Type = f.Type
 	return &r
 }
-func Convert_WorkloadCommon_Workload_arr(arr []*WorkloadCommon) []*orm.Workload {
+func Convert_WorkloadCommon_Workload_slice(arr []*WorkloadCommon) []*orm.Workload {
 	r := []*orm.Workload{}
 	for _, u := range arr {
 		r = append(r, Convert_WorkloadCommon_Workload(u))
@@ -74,7 +95,7 @@ func Convert_WorkloadCommon_Workload_arr(arr []*WorkloadCommon) []*orm.Workload 
 	return r
 }
 
-func Convert_Workload_WorkloadCommon_arr(arr []*orm.Workload) []*WorkloadCommon {
+func Convert_Workload_WorkloadCommon_slice(arr []*orm.Workload) []*WorkloadCommon {
 	r := []*WorkloadCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Workload_WorkloadCommon(u))
@@ -87,17 +108,29 @@ type VirtualSpaceUserRelCommonList struct {
 	Items []*VirtualSpaceUserRelCommon
 }
 
-func (ul *VirtualSpaceUserRelCommonList) AsListObject() client.ObjectListIfe {
+func (ul *VirtualSpaceUserRelCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.VirtualSpaceUserRelList{}
 	return ul.objectlist
 }
 
-func (ul *VirtualSpaceUserRelCommonList) AsListData() []*VirtualSpaceUserRelCommon {
+func (ul *VirtualSpaceUserRelCommonList) Data() []*VirtualSpaceUserRelCommon {
+	if ul.data != nil {
+		return ul.data.([]*VirtualSpaceUserRelCommon)
+	}
 	us := ul.objectlist.(*orm.VirtualSpaceUserRelList)
-	return Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon_arr(us.Items)
+	tmp := Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *VirtualSpaceUserRelCommon) AsObject() client.Object {
+func (ul *VirtualSpaceUserRelCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *VirtualSpaceUserRelCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -107,7 +140,16 @@ func (r *VirtualSpaceUserRelCommon) AsObject() client.Object {
 }
 
 func (u *VirtualSpaceUserRelCommon) Data() *VirtualSpaceUserRelCommon {
-	return Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon(u.object.(*orm.VirtualSpaceUserRel))
+	if u.data != nil {
+		return u.data.(*VirtualSpaceUserRelCommon)
+	}
+	tmp := Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon(u.object.(*orm.VirtualSpaceUserRel))
+	u.data = tmp
+	return tmp
+}
+
+func (u *VirtualSpaceUserRelCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_VirtualSpaceUserRelCommon_VirtualSpaceUserRel(f *VirtualSpaceUserRelCommon) *orm.VirtualSpaceUserRel {
@@ -116,12 +158,12 @@ func Convert_VirtualSpaceUserRelCommon_VirtualSpaceUserRel(f *VirtualSpaceUserRe
 		return nil
 	}
 	f.object = r
-	r.UserID = f.UserID
-	r.User = Convert_UserCommon_User(f.User)
-	r.Role = f.Role
 	r.ID = f.ID
-	r.VirtualSpaceID = f.VirtualSpaceID
+	r.Role = f.Role
+	r.User = Convert_UserCommon_User(f.User)
+	r.UserID = f.UserID
 	r.VirtualSpace = Convert_VirtualSpaceCommon_VirtualSpace(f.VirtualSpace)
+	r.VirtualSpaceID = f.VirtualSpaceID
 	return r
 }
 func Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon(f *orm.VirtualSpaceUserRel) *VirtualSpaceUserRelCommon {
@@ -129,15 +171,15 @@ func Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon(f *orm.VirtualSpaceUs
 		return nil
 	}
 	var r VirtualSpaceUserRelCommon
-	r.User = Convert_User_UserCommon(f.User)
-	r.Role = f.Role
 	r.ID = f.ID
-	r.VirtualSpaceID = f.VirtualSpaceID
-	r.VirtualSpace = Convert_VirtualSpace_VirtualSpaceCommon(f.VirtualSpace)
+	r.Role = f.Role
+	r.User = Convert_User_UserCommon(f.User)
 	r.UserID = f.UserID
+	r.VirtualSpace = Convert_VirtualSpace_VirtualSpaceCommon(f.VirtualSpace)
+	r.VirtualSpaceID = f.VirtualSpaceID
 	return &r
 }
-func Convert_VirtualSpaceUserRelCommon_VirtualSpaceUserRel_arr(arr []*VirtualSpaceUserRelCommon) []*orm.VirtualSpaceUserRel {
+func Convert_VirtualSpaceUserRelCommon_VirtualSpaceUserRel_slice(arr []*VirtualSpaceUserRelCommon) []*orm.VirtualSpaceUserRel {
 	r := []*orm.VirtualSpaceUserRel{}
 	for _, u := range arr {
 		r = append(r, Convert_VirtualSpaceUserRelCommon_VirtualSpaceUserRel(u))
@@ -145,7 +187,7 @@ func Convert_VirtualSpaceUserRelCommon_VirtualSpaceUserRel_arr(arr []*VirtualSpa
 	return r
 }
 
-func Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon_arr(arr []*orm.VirtualSpaceUserRel) []*VirtualSpaceUserRelCommon {
+func Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon_slice(arr []*orm.VirtualSpaceUserRel) []*VirtualSpaceUserRelCommon {
 	r := []*VirtualSpaceUserRelCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_VirtualSpaceUserRel_VirtualSpaceUserRelCommon(u))
@@ -158,17 +200,29 @@ type VirtualSpaceCommonList struct {
 	Items []*VirtualSpaceCommon
 }
 
-func (ul *VirtualSpaceCommonList) AsListObject() client.ObjectListIfe {
+func (ul *VirtualSpaceCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.VirtualSpaceList{}
 	return ul.objectlist
 }
 
-func (ul *VirtualSpaceCommonList) AsListData() []*VirtualSpaceCommon {
+func (ul *VirtualSpaceCommonList) Data() []*VirtualSpaceCommon {
+	if ul.data != nil {
+		return ul.data.([]*VirtualSpaceCommon)
+	}
 	us := ul.objectlist.(*orm.VirtualSpaceList)
-	return Convert_VirtualSpace_VirtualSpaceCommon_arr(us.Items)
+	tmp := Convert_VirtualSpace_VirtualSpaceCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *VirtualSpaceCommon) AsObject() client.Object {
+func (ul *VirtualSpaceCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *VirtualSpaceCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -178,7 +232,16 @@ func (r *VirtualSpaceCommon) AsObject() client.Object {
 }
 
 func (u *VirtualSpaceCommon) Data() *VirtualSpaceCommon {
-	return Convert_VirtualSpace_VirtualSpaceCommon(u.object.(*orm.VirtualSpace))
+	if u.data != nil {
+		return u.data.(*VirtualSpaceCommon)
+	}
+	tmp := Convert_VirtualSpace_VirtualSpaceCommon(u.object.(*orm.VirtualSpace))
+	u.data = tmp
+	return tmp
+}
+
+func (u *VirtualSpaceCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_VirtualSpaceCommon_VirtualSpace(f *VirtualSpaceCommon) *orm.VirtualSpace {
@@ -187,8 +250,8 @@ func Convert_VirtualSpaceCommon_VirtualSpace(f *VirtualSpaceCommon) *orm.Virtual
 		return nil
 	}
 	f.object = r
-	r.VirtualSpaceName = f.VirtualSpaceName
 	r.ID = f.ID
+	r.VirtualSpaceName = f.VirtualSpaceName
 	return r
 }
 func Convert_VirtualSpace_VirtualSpaceCommon(f *orm.VirtualSpace) *VirtualSpaceCommon {
@@ -200,7 +263,7 @@ func Convert_VirtualSpace_VirtualSpaceCommon(f *orm.VirtualSpace) *VirtualSpaceC
 	r.VirtualSpaceName = f.VirtualSpaceName
 	return &r
 }
-func Convert_VirtualSpaceCommon_VirtualSpace_arr(arr []*VirtualSpaceCommon) []*orm.VirtualSpace {
+func Convert_VirtualSpaceCommon_VirtualSpace_slice(arr []*VirtualSpaceCommon) []*orm.VirtualSpace {
 	r := []*orm.VirtualSpace{}
 	for _, u := range arr {
 		r = append(r, Convert_VirtualSpaceCommon_VirtualSpace(u))
@@ -208,7 +271,7 @@ func Convert_VirtualSpaceCommon_VirtualSpace_arr(arr []*VirtualSpaceCommon) []*o
 	return r
 }
 
-func Convert_VirtualSpace_VirtualSpaceCommon_arr(arr []*orm.VirtualSpace) []*VirtualSpaceCommon {
+func Convert_VirtualSpace_VirtualSpaceCommon_slice(arr []*orm.VirtualSpace) []*VirtualSpaceCommon {
 	r := []*VirtualSpaceCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_VirtualSpace_VirtualSpaceCommon(u))
@@ -221,17 +284,29 @@ type VirtualDomainCommonList struct {
 	Items []*VirtualDomainCommon
 }
 
-func (ul *VirtualDomainCommonList) AsListObject() client.ObjectListIfe {
+func (ul *VirtualDomainCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.VirtualDomainList{}
 	return ul.objectlist
 }
 
-func (ul *VirtualDomainCommonList) AsListData() []*VirtualDomainCommon {
+func (ul *VirtualDomainCommonList) Data() []*VirtualDomainCommon {
+	if ul.data != nil {
+		return ul.data.([]*VirtualDomainCommon)
+	}
 	us := ul.objectlist.(*orm.VirtualDomainList)
-	return Convert_VirtualDomain_VirtualDomainCommon_arr(us.Items)
+	tmp := Convert_VirtualDomain_VirtualDomainCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *VirtualDomainCommon) AsObject() client.Object {
+func (ul *VirtualDomainCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *VirtualDomainCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -241,7 +316,16 @@ func (r *VirtualDomainCommon) AsObject() client.Object {
 }
 
 func (u *VirtualDomainCommon) Data() *VirtualDomainCommon {
-	return Convert_VirtualDomain_VirtualDomainCommon(u.object.(*orm.VirtualDomain))
+	if u.data != nil {
+		return u.data.(*VirtualDomainCommon)
+	}
+	tmp := Convert_VirtualDomain_VirtualDomainCommon(u.object.(*orm.VirtualDomain))
+	u.data = tmp
+	return tmp
+}
+
+func (u *VirtualDomainCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_VirtualDomainCommon_VirtualDomain(f *VirtualDomainCommon) *orm.VirtualDomain {
@@ -250,12 +334,12 @@ func Convert_VirtualDomainCommon_VirtualDomain(f *VirtualDomainCommon) *orm.Virt
 		return nil
 	}
 	f.object = r
-	r.ID = f.ID
-	r.VirtualDomainName = f.VirtualDomainName
 	r.CreatedAt = f.CreatedAt
-	r.UpdatedAt = f.UpdatedAt
-	r.IsActive = f.IsActive
 	r.CreatedBy = f.CreatedBy
+	r.ID = f.ID
+	r.IsActive = f.IsActive
+	r.UpdatedAt = f.UpdatedAt
+	r.VirtualDomainName = f.VirtualDomainName
 	return r
 }
 func Convert_VirtualDomain_VirtualDomainCommon(f *orm.VirtualDomain) *VirtualDomainCommon {
@@ -263,15 +347,15 @@ func Convert_VirtualDomain_VirtualDomainCommon(f *orm.VirtualDomain) *VirtualDom
 		return nil
 	}
 	var r VirtualDomainCommon
-	r.ID = f.ID
-	r.VirtualDomainName = f.VirtualDomainName
 	r.CreatedAt = f.CreatedAt
-	r.UpdatedAt = f.UpdatedAt
-	r.IsActive = f.IsActive
 	r.CreatedBy = f.CreatedBy
+	r.ID = f.ID
+	r.IsActive = f.IsActive
+	r.UpdatedAt = f.UpdatedAt
+	r.VirtualDomainName = f.VirtualDomainName
 	return &r
 }
-func Convert_VirtualDomainCommon_VirtualDomain_arr(arr []*VirtualDomainCommon) []*orm.VirtualDomain {
+func Convert_VirtualDomainCommon_VirtualDomain_slice(arr []*VirtualDomainCommon) []*orm.VirtualDomain {
 	r := []*orm.VirtualDomain{}
 	for _, u := range arr {
 		r = append(r, Convert_VirtualDomainCommon_VirtualDomain(u))
@@ -279,7 +363,7 @@ func Convert_VirtualDomainCommon_VirtualDomain_arr(arr []*VirtualDomainCommon) [
 	return r
 }
 
-func Convert_VirtualDomain_VirtualDomainCommon_arr(arr []*orm.VirtualDomain) []*VirtualDomainCommon {
+func Convert_VirtualDomain_VirtualDomainCommon_slice(arr []*orm.VirtualDomain) []*VirtualDomainCommon {
 	r := []*VirtualDomainCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_VirtualDomain_VirtualDomainCommon(u))
@@ -292,17 +376,29 @@ type UserSettingList struct {
 	Items []*UserSetting
 }
 
-func (ul *UserSettingList) AsListObject() client.ObjectListIfe {
+func (ul *UserSettingList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.UserList{}
 	return ul.objectlist
 }
 
-func (ul *UserSettingList) AsListData() []*UserSetting {
+func (ul *UserSettingList) Data() []*UserSetting {
+	if ul.data != nil {
+		return ul.data.([]*UserSetting)
+	}
 	us := ul.objectlist.(*orm.UserList)
-	return Convert_User_UserSetting_arr(us.Items)
+	tmp := Convert_User_UserSetting_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *UserSetting) AsObject() client.Object {
+func (ul *UserSettingList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *UserSetting) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -312,7 +408,16 @@ func (r *UserSetting) AsObject() client.Object {
 }
 
 func (u *UserSetting) Data() *UserSetting {
-	return Convert_User_UserSetting(u.object.(*orm.User))
+	if u.data != nil {
+		return u.data.(*UserSetting)
+	}
+	tmp := Convert_User_UserSetting(u.object.(*orm.User))
+	u.data = tmp
+	return tmp
+}
+
+func (u *UserSetting) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_UserSetting_User(f *UserSetting) *orm.User {
@@ -321,13 +426,13 @@ func Convert_UserSetting_User(f *UserSetting) *orm.User {
 		return nil
 	}
 	f.object = r
-	r.Phone = f.Phone
 	r.Email = f.Email
-	r.Password = f.Password
+	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.Password = f.Password
+	r.Phone = f.Phone
 	r.SystemRole = Convert_SystemRoleCommon_SystemRole(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
-	r.ID = f.ID
 	r.Username = f.Username
 	return r
 }
@@ -336,17 +441,17 @@ func Convert_User_UserSetting(f *orm.User) *UserSetting {
 		return nil
 	}
 	var r UserSetting
-	r.ID = f.ID
-	r.Username = f.Username
-	r.Phone = f.Phone
 	r.Email = f.Email
-	r.Password = f.Password
+	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.Password = f.Password
+	r.Phone = f.Phone
 	r.SystemRole = Convert_SystemRole_SystemRoleCommon(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
+	r.Username = f.Username
 	return &r
 }
-func Convert_UserSetting_User_arr(arr []*UserSetting) []*orm.User {
+func Convert_UserSetting_User_slice(arr []*UserSetting) []*orm.User {
 	r := []*orm.User{}
 	for _, u := range arr {
 		r = append(r, Convert_UserSetting_User(u))
@@ -354,7 +459,7 @@ func Convert_UserSetting_User_arr(arr []*UserSetting) []*orm.User {
 	return r
 }
 
-func Convert_User_UserSetting_arr(arr []*orm.User) []*UserSetting {
+func Convert_User_UserSetting_slice(arr []*orm.User) []*UserSetting {
 	r := []*UserSetting{}
 	for _, u := range arr {
 		r = append(r, Convert_User_UserSetting(u))
@@ -367,17 +472,29 @@ type UserMessageStatusCommonList struct {
 	Items []*UserMessageStatusCommon
 }
 
-func (ul *UserMessageStatusCommonList) AsListObject() client.ObjectListIfe {
+func (ul *UserMessageStatusCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.UserMessageStatusList{}
 	return ul.objectlist
 }
 
-func (ul *UserMessageStatusCommonList) AsListData() []*UserMessageStatusCommon {
+func (ul *UserMessageStatusCommonList) Data() []*UserMessageStatusCommon {
+	if ul.data != nil {
+		return ul.data.([]*UserMessageStatusCommon)
+	}
 	us := ul.objectlist.(*orm.UserMessageStatusList)
-	return Convert_UserMessageStatus_UserMessageStatusCommon_arr(us.Items)
+	tmp := Convert_UserMessageStatus_UserMessageStatusCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *UserMessageStatusCommon) AsObject() client.Object {
+func (ul *UserMessageStatusCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *UserMessageStatusCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -387,7 +504,16 @@ func (r *UserMessageStatusCommon) AsObject() client.Object {
 }
 
 func (u *UserMessageStatusCommon) Data() *UserMessageStatusCommon {
-	return Convert_UserMessageStatus_UserMessageStatusCommon(u.object.(*orm.UserMessageStatus))
+	if u.data != nil {
+		return u.data.(*UserMessageStatusCommon)
+	}
+	tmp := Convert_UserMessageStatus_UserMessageStatusCommon(u.object.(*orm.UserMessageStatus))
+	u.data = tmp
+	return tmp
+}
+
+func (u *UserMessageStatusCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_UserMessageStatusCommon_UserMessageStatus(f *UserMessageStatusCommon) *orm.UserMessageStatus {
@@ -396,12 +522,12 @@ func Convert_UserMessageStatusCommon_UserMessageStatus(f *UserMessageStatusCommo
 		return nil
 	}
 	f.object = r
-	r.IsRead = f.IsRead
 	r.ID = f.ID
-	r.UserID = f.UserID
-	r.User = Convert_UserCommon_User(f.User)
-	r.MessageID = f.MessageID
+	r.IsRead = f.IsRead
 	r.Message = Convert_MessageCommon_Message(f.Message)
+	r.MessageID = f.MessageID
+	r.User = Convert_UserCommon_User(f.User)
+	r.UserID = f.UserID
 	return r
 }
 func Convert_UserMessageStatus_UserMessageStatusCommon(f *orm.UserMessageStatus) *UserMessageStatusCommon {
@@ -410,14 +536,14 @@ func Convert_UserMessageStatus_UserMessageStatusCommon(f *orm.UserMessageStatus)
 	}
 	var r UserMessageStatusCommon
 	r.ID = f.ID
-	r.UserID = f.UserID
-	r.User = Convert_User_UserCommon(f.User)
-	r.MessageID = f.MessageID
-	r.Message = Convert_Message_MessageCommon(f.Message)
 	r.IsRead = f.IsRead
+	r.Message = Convert_Message_MessageCommon(f.Message)
+	r.MessageID = f.MessageID
+	r.User = Convert_User_UserCommon(f.User)
+	r.UserID = f.UserID
 	return &r
 }
-func Convert_UserMessageStatusCommon_UserMessageStatus_arr(arr []*UserMessageStatusCommon) []*orm.UserMessageStatus {
+func Convert_UserMessageStatusCommon_UserMessageStatus_slice(arr []*UserMessageStatusCommon) []*orm.UserMessageStatus {
 	r := []*orm.UserMessageStatus{}
 	for _, u := range arr {
 		r = append(r, Convert_UserMessageStatusCommon_UserMessageStatus(u))
@@ -425,7 +551,7 @@ func Convert_UserMessageStatusCommon_UserMessageStatus_arr(arr []*UserMessageSta
 	return r
 }
 
-func Convert_UserMessageStatus_UserMessageStatusCommon_arr(arr []*orm.UserMessageStatus) []*UserMessageStatusCommon {
+func Convert_UserMessageStatus_UserMessageStatusCommon_slice(arr []*orm.UserMessageStatus) []*UserMessageStatusCommon {
 	r := []*UserMessageStatusCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_UserMessageStatus_UserMessageStatusCommon(u))
@@ -438,17 +564,29 @@ type UserInternalList struct {
 	Items []*UserInternal
 }
 
-func (ul *UserInternalList) AsListObject() client.ObjectListIfe {
+func (ul *UserInternalList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.UserList{}
 	return ul.objectlist
 }
 
-func (ul *UserInternalList) AsListData() []*UserInternal {
+func (ul *UserInternalList) Data() []*UserInternal {
+	if ul.data != nil {
+		return ul.data.([]*UserInternal)
+	}
 	us := ul.objectlist.(*orm.UserList)
-	return Convert_User_UserInternal_arr(us.Items)
+	tmp := Convert_User_UserInternal_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *UserInternal) AsObject() client.Object {
+func (ul *UserInternalList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *UserInternal) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -458,7 +596,16 @@ func (r *UserInternal) AsObject() client.Object {
 }
 
 func (u *UserInternal) Data() *UserInternal {
-	return Convert_User_UserInternal(u.object.(*orm.User))
+	if u.data != nil {
+		return u.data.(*UserInternal)
+	}
+	tmp := Convert_User_UserInternal(u.object.(*orm.User))
+	u.data = tmp
+	return tmp
+}
+
+func (u *UserInternal) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_UserInternal_User(f *UserInternal) *orm.User {
@@ -467,18 +614,18 @@ func Convert_UserInternal_User(f *UserInternal) *orm.User {
 		return nil
 	}
 	f.object = r
-	r.Username = f.Username
-	r.Password = f.Password
 	r.CreatedAt = f.CreatedAt
-	r.LastLoginAt = f.LastLoginAt
-	r.SystemRoleID = f.SystemRoleID
-	r.ID = f.ID
 	r.Email = f.Email
-	r.Role = f.Role
-	r.Phone = f.Phone
-	r.Source = f.Source
+	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.LastLoginAt = f.LastLoginAt
+	r.Password = f.Password
+	r.Phone = f.Phone
+	r.Role = f.Role
+	r.Source = f.Source
 	r.SystemRole = Convert_SystemRoleCommon_SystemRole(f.SystemRole)
+	r.SystemRoleID = f.SystemRoleID
+	r.Username = f.Username
 	return r
 }
 func Convert_User_UserInternal(f *orm.User) *UserInternal {
@@ -486,21 +633,21 @@ func Convert_User_UserInternal(f *orm.User) *UserInternal {
 		return nil
 	}
 	var r UserInternal
+	r.CreatedAt = f.CreatedAt
+	r.Email = f.Email
+	r.ID = f.ID
+	r.IsActive = f.IsActive
+	r.LastLoginAt = f.LastLoginAt
+	r.Password = f.Password
+	r.Phone = f.Phone
+	r.Role = f.Role
+	r.Source = f.Source
+	r.SystemRole = Convert_SystemRole_SystemRoleCommon(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
 	r.Username = f.Username
-	r.Password = f.Password
-	r.CreatedAt = f.CreatedAt
-	r.LastLoginAt = f.LastLoginAt
-	r.Source = f.Source
-	r.IsActive = f.IsActive
-	r.SystemRole = Convert_SystemRole_SystemRoleCommon(f.SystemRole)
-	r.ID = f.ID
-	r.Email = f.Email
-	r.Role = f.Role
-	r.Phone = f.Phone
 	return &r
 }
-func Convert_UserInternal_User_arr(arr []*UserInternal) []*orm.User {
+func Convert_UserInternal_User_slice(arr []*UserInternal) []*orm.User {
 	r := []*orm.User{}
 	for _, u := range arr {
 		r = append(r, Convert_UserInternal_User(u))
@@ -508,7 +655,7 @@ func Convert_UserInternal_User_arr(arr []*UserInternal) []*orm.User {
 	return r
 }
 
-func Convert_User_UserInternal_arr(arr []*orm.User) []*UserInternal {
+func Convert_User_UserInternal_slice(arr []*orm.User) []*UserInternal {
 	r := []*UserInternal{}
 	for _, u := range arr {
 		r = append(r, Convert_User_UserInternal(u))
@@ -521,17 +668,29 @@ type UserDetailList struct {
 	Items []*UserDetail
 }
 
-func (ul *UserDetailList) AsListObject() client.ObjectListIfe {
+func (ul *UserDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.UserList{}
 	return ul.objectlist
 }
 
-func (ul *UserDetailList) AsListData() []*UserDetail {
+func (ul *UserDetailList) Data() []*UserDetail {
+	if ul.data != nil {
+		return ul.data.([]*UserDetail)
+	}
 	us := ul.objectlist.(*orm.UserList)
-	return Convert_User_UserDetail_arr(us.Items)
+	tmp := Convert_User_UserDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *UserDetail) AsObject() client.Object {
+func (ul *UserDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *UserDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -541,7 +700,16 @@ func (r *UserDetail) AsObject() client.Object {
 }
 
 func (u *UserDetail) Data() *UserDetail {
-	return Convert_User_UserDetail(u.object.(*orm.User))
+	if u.data != nil {
+		return u.data.(*UserDetail)
+	}
+	tmp := Convert_User_UserDetail(u.object.(*orm.User))
+	u.data = tmp
+	return tmp
+}
+
+func (u *UserDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_UserDetail_User(f *UserDetail) *orm.User {
@@ -550,17 +718,17 @@ func Convert_UserDetail_User(f *UserDetail) *orm.User {
 		return nil
 	}
 	f.object = r
-	r.Username = f.Username
-	r.Email = f.Email
-	r.LastLoginAt = f.LastLoginAt
-	r.SystemRoleID = f.SystemRoleID
-	r.Role = f.Role
-	r.ID = f.ID
-	r.Phone = f.Phone
-	r.Source = f.Source
-	r.IsActive = f.IsActive
 	r.CreatedAt = f.CreatedAt
+	r.Email = f.Email
+	r.ID = f.ID
+	r.IsActive = f.IsActive
+	r.LastLoginAt = f.LastLoginAt
+	r.Phone = f.Phone
+	r.Role = f.Role
+	r.Source = f.Source
 	r.SystemRole = Convert_SystemRoleCommon_SystemRole(f.SystemRole)
+	r.SystemRoleID = f.SystemRoleID
+	r.Username = f.Username
 	return r
 }
 func Convert_User_UserDetail(f *orm.User) *UserDetail {
@@ -568,20 +736,20 @@ func Convert_User_UserDetail(f *orm.User) *UserDetail {
 		return nil
 	}
 	var r UserDetail
-	r.Role = f.Role
-	r.Username = f.Username
-	r.Email = f.Email
-	r.LastLoginAt = f.LastLoginAt
-	r.SystemRoleID = f.SystemRoleID
 	r.CreatedAt = f.CreatedAt
-	r.SystemRole = Convert_SystemRole_SystemRoleCommon(f.SystemRole)
+	r.Email = f.Email
 	r.ID = f.ID
-	r.Phone = f.Phone
-	r.Source = f.Source
 	r.IsActive = f.IsActive
+	r.LastLoginAt = f.LastLoginAt
+	r.Phone = f.Phone
+	r.Role = f.Role
+	r.Source = f.Source
+	r.SystemRole = Convert_SystemRole_SystemRoleCommon(f.SystemRole)
+	r.SystemRoleID = f.SystemRoleID
+	r.Username = f.Username
 	return &r
 }
-func Convert_UserDetail_User_arr(arr []*UserDetail) []*orm.User {
+func Convert_UserDetail_User_slice(arr []*UserDetail) []*orm.User {
 	r := []*orm.User{}
 	for _, u := range arr {
 		r = append(r, Convert_UserDetail_User(u))
@@ -589,7 +757,7 @@ func Convert_UserDetail_User_arr(arr []*UserDetail) []*orm.User {
 	return r
 }
 
-func Convert_User_UserDetail_arr(arr []*orm.User) []*UserDetail {
+func Convert_User_UserDetail_slice(arr []*orm.User) []*UserDetail {
 	r := []*UserDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_User_UserDetail(u))
@@ -602,17 +770,29 @@ type UserCommonList struct {
 	Items []*UserCommon
 }
 
-func (ul *UserCommonList) AsListObject() client.ObjectListIfe {
+func (ul *UserCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.UserList{}
 	return ul.objectlist
 }
 
-func (ul *UserCommonList) AsListData() []*UserCommon {
+func (ul *UserCommonList) Data() []*UserCommon {
+	if ul.data != nil {
+		return ul.data.([]*UserCommon)
+	}
 	us := ul.objectlist.(*orm.UserList)
-	return Convert_User_UserCommon_arr(us.Items)
+	tmp := Convert_User_UserCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *UserCommon) AsObject() client.Object {
+func (ul *UserCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *UserCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -622,7 +802,16 @@ func (r *UserCommon) AsObject() client.Object {
 }
 
 func (u *UserCommon) Data() *UserCommon {
-	return Convert_User_UserCommon(u.object.(*orm.User))
+	if u.data != nil {
+		return u.data.(*UserCommon)
+	}
+	tmp := Convert_User_UserCommon(u.object.(*orm.User))
+	u.data = tmp
+	return tmp
+}
+
+func (u *UserCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_UserCommon_User(f *UserCommon) *orm.User {
@@ -631,10 +820,10 @@ func Convert_UserCommon_User(f *UserCommon) *orm.User {
 		return nil
 	}
 	f.object = r
-	r.Username = f.Username
 	r.Email = f.Email
-	r.Role = f.Role
 	r.ID = f.ID
+	r.Role = f.Role
+	r.Username = f.Username
 	return r
 }
 func Convert_User_UserCommon(f *orm.User) *UserCommon {
@@ -642,13 +831,13 @@ func Convert_User_UserCommon(f *orm.User) *UserCommon {
 		return nil
 	}
 	var r UserCommon
-	r.ID = f.ID
-	r.Username = f.Username
 	r.Email = f.Email
+	r.ID = f.ID
 	r.Role = f.Role
+	r.Username = f.Username
 	return &r
 }
-func Convert_UserCommon_User_arr(arr []*UserCommon) []*orm.User {
+func Convert_UserCommon_User_slice(arr []*UserCommon) []*orm.User {
 	r := []*orm.User{}
 	for _, u := range arr {
 		r = append(r, Convert_UserCommon_User(u))
@@ -656,7 +845,7 @@ func Convert_UserCommon_User_arr(arr []*UserCommon) []*orm.User {
 	return r
 }
 
-func Convert_User_UserCommon_arr(arr []*orm.User) []*UserCommon {
+func Convert_User_UserCommon_slice(arr []*orm.User) []*UserCommon {
 	r := []*UserCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_User_UserCommon(u))
@@ -669,17 +858,29 @@ type TenantUserRelCommonList struct {
 	Items []*TenantUserRelCommon
 }
 
-func (ul *TenantUserRelCommonList) AsListObject() client.ObjectListIfe {
+func (ul *TenantUserRelCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.TenantUserRelList{}
 	return ul.objectlist
 }
 
-func (ul *TenantUserRelCommonList) AsListData() []*TenantUserRelCommon {
+func (ul *TenantUserRelCommonList) Data() []*TenantUserRelCommon {
+	if ul.data != nil {
+		return ul.data.([]*TenantUserRelCommon)
+	}
 	us := ul.objectlist.(*orm.TenantUserRelList)
-	return Convert_TenantUserRel_TenantUserRelCommon_arr(us.Items)
+	tmp := Convert_TenantUserRel_TenantUserRelCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *TenantUserRelCommon) AsObject() client.Object {
+func (ul *TenantUserRelCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *TenantUserRelCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -689,7 +890,16 @@ func (r *TenantUserRelCommon) AsObject() client.Object {
 }
 
 func (u *TenantUserRelCommon) Data() *TenantUserRelCommon {
-	return Convert_TenantUserRel_TenantUserRelCommon(u.object.(*orm.TenantUserRel))
+	if u.data != nil {
+		return u.data.(*TenantUserRelCommon)
+	}
+	tmp := Convert_TenantUserRel_TenantUserRelCommon(u.object.(*orm.TenantUserRel))
+	u.data = tmp
+	return tmp
+}
+
+func (u *TenantUserRelCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_TenantUserRelCommon_TenantUserRel(f *TenantUserRelCommon) *orm.TenantUserRel {
@@ -699,11 +909,11 @@ func Convert_TenantUserRelCommon_TenantUserRel(f *TenantUserRelCommon) *orm.Tena
 	}
 	f.object = r
 	r.ID = f.ID
+	r.Role = f.Role
 	r.Tenant = Convert_TenantCommon_Tenant(f.Tenant)
 	r.TenantID = f.TenantID
 	r.User = Convert_UserCommon_User(f.User)
 	r.UserID = f.UserID
-	r.Role = f.Role
 	return r
 }
 func Convert_TenantUserRel_TenantUserRelCommon(f *orm.TenantUserRel) *TenantUserRelCommon {
@@ -711,15 +921,15 @@ func Convert_TenantUserRel_TenantUserRelCommon(f *orm.TenantUserRel) *TenantUser
 		return nil
 	}
 	var r TenantUserRelCommon
+	r.ID = f.ID
+	r.Role = f.Role
 	r.Tenant = Convert_Tenant_TenantCommon(f.Tenant)
 	r.TenantID = f.TenantID
 	r.User = Convert_User_UserCommon(f.User)
 	r.UserID = f.UserID
-	r.Role = f.Role
-	r.ID = f.ID
 	return &r
 }
-func Convert_TenantUserRelCommon_TenantUserRel_arr(arr []*TenantUserRelCommon) []*orm.TenantUserRel {
+func Convert_TenantUserRelCommon_TenantUserRel_slice(arr []*TenantUserRelCommon) []*orm.TenantUserRel {
 	r := []*orm.TenantUserRel{}
 	for _, u := range arr {
 		r = append(r, Convert_TenantUserRelCommon_TenantUserRel(u))
@@ -727,7 +937,7 @@ func Convert_TenantUserRelCommon_TenantUserRel_arr(arr []*TenantUserRelCommon) [
 	return r
 }
 
-func Convert_TenantUserRel_TenantUserRelCommon_arr(arr []*orm.TenantUserRel) []*TenantUserRelCommon {
+func Convert_TenantUserRel_TenantUserRelCommon_slice(arr []*orm.TenantUserRel) []*TenantUserRelCommon {
 	r := []*TenantUserRelCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_TenantUserRel_TenantUserRelCommon(u))
@@ -740,17 +950,29 @@ type TenantResourceQuotaCommonList struct {
 	Items []*TenantResourceQuotaCommon
 }
 
-func (ul *TenantResourceQuotaCommonList) AsListObject() client.ObjectListIfe {
+func (ul *TenantResourceQuotaCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.TenantResourceQuotaList{}
 	return ul.objectlist
 }
 
-func (ul *TenantResourceQuotaCommonList) AsListData() []*TenantResourceQuotaCommon {
+func (ul *TenantResourceQuotaCommonList) Data() []*TenantResourceQuotaCommon {
+	if ul.data != nil {
+		return ul.data.([]*TenantResourceQuotaCommon)
+	}
 	us := ul.objectlist.(*orm.TenantResourceQuotaList)
-	return Convert_TenantResourceQuota_TenantResourceQuotaCommon_arr(us.Items)
+	tmp := Convert_TenantResourceQuota_TenantResourceQuotaCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *TenantResourceQuotaCommon) AsObject() client.Object {
+func (ul *TenantResourceQuotaCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *TenantResourceQuotaCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -760,7 +982,16 @@ func (r *TenantResourceQuotaCommon) AsObject() client.Object {
 }
 
 func (u *TenantResourceQuotaCommon) Data() *TenantResourceQuotaCommon {
-	return Convert_TenantResourceQuota_TenantResourceQuotaCommon(u.object.(*orm.TenantResourceQuota))
+	if u.data != nil {
+		return u.data.(*TenantResourceQuotaCommon)
+	}
+	tmp := Convert_TenantResourceQuota_TenantResourceQuotaCommon(u.object.(*orm.TenantResourceQuota))
+	u.data = tmp
+	return tmp
+}
+
+func (u *TenantResourceQuotaCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_TenantResourceQuotaCommon_TenantResourceQuota(f *TenantResourceQuotaCommon) *orm.TenantResourceQuota {
@@ -769,12 +1000,12 @@ func Convert_TenantResourceQuotaCommon_TenantResourceQuota(f *TenantResourceQuot
 		return nil
 	}
 	f.object = r
-	r.ID = f.ID
-	r.Content = f.Content
-	r.TenantID = f.TenantID
-	r.ClusterID = f.ClusterID
-	r.Tenant = Convert_TenantCommon_Tenant(f.Tenant)
 	r.Cluster = Convert_ClusterCommon_Cluster(f.Cluster)
+	r.ClusterID = f.ClusterID
+	r.Content = f.Content
+	r.ID = f.ID
+	r.Tenant = Convert_TenantCommon_Tenant(f.Tenant)
+	r.TenantID = f.TenantID
 	r.TenantResourceQuotaApply = Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply(f.TenantResourceQuotaApply)
 	r.TenantResourceQuotaApplyID = f.TenantResourceQuotaApplyID
 	return r
@@ -784,17 +1015,17 @@ func Convert_TenantResourceQuota_TenantResourceQuotaCommon(f *orm.TenantResource
 		return nil
 	}
 	var r TenantResourceQuotaCommon
-	r.TenantResourceQuotaApplyID = f.TenantResourceQuotaApplyID
-	r.ID = f.ID
-	r.Content = f.Content
-	r.TenantID = f.TenantID
-	r.ClusterID = f.ClusterID
-	r.Tenant = Convert_Tenant_TenantCommon(f.Tenant)
 	r.Cluster = Convert_Cluster_ClusterCommon(f.Cluster)
+	r.ClusterID = f.ClusterID
+	r.Content = f.Content
+	r.ID = f.ID
+	r.Tenant = Convert_Tenant_TenantCommon(f.Tenant)
+	r.TenantID = f.TenantID
 	r.TenantResourceQuotaApply = Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(f.TenantResourceQuotaApply)
+	r.TenantResourceQuotaApplyID = f.TenantResourceQuotaApplyID
 	return &r
 }
-func Convert_TenantResourceQuotaCommon_TenantResourceQuota_arr(arr []*TenantResourceQuotaCommon) []*orm.TenantResourceQuota {
+func Convert_TenantResourceQuotaCommon_TenantResourceQuota_slice(arr []*TenantResourceQuotaCommon) []*orm.TenantResourceQuota {
 	r := []*orm.TenantResourceQuota{}
 	for _, u := range arr {
 		r = append(r, Convert_TenantResourceQuotaCommon_TenantResourceQuota(u))
@@ -802,7 +1033,7 @@ func Convert_TenantResourceQuotaCommon_TenantResourceQuota_arr(arr []*TenantReso
 	return r
 }
 
-func Convert_TenantResourceQuota_TenantResourceQuotaCommon_arr(arr []*orm.TenantResourceQuota) []*TenantResourceQuotaCommon {
+func Convert_TenantResourceQuota_TenantResourceQuotaCommon_slice(arr []*orm.TenantResourceQuota) []*TenantResourceQuotaCommon {
 	r := []*TenantResourceQuotaCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_TenantResourceQuota_TenantResourceQuotaCommon(u))
@@ -815,17 +1046,29 @@ type TenantResourceQuotaApplyCommonList struct {
 	Items []*TenantResourceQuotaApplyCommon
 }
 
-func (ul *TenantResourceQuotaApplyCommonList) AsListObject() client.ObjectListIfe {
+func (ul *TenantResourceQuotaApplyCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.TenantResourceQuotaApplyList{}
 	return ul.objectlist
 }
 
-func (ul *TenantResourceQuotaApplyCommonList) AsListData() []*TenantResourceQuotaApplyCommon {
+func (ul *TenantResourceQuotaApplyCommonList) Data() []*TenantResourceQuotaApplyCommon {
+	if ul.data != nil {
+		return ul.data.([]*TenantResourceQuotaApplyCommon)
+	}
 	us := ul.objectlist.(*orm.TenantResourceQuotaApplyList)
-	return Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon_arr(us.Items)
+	tmp := Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *TenantResourceQuotaApplyCommon) AsObject() client.Object {
+func (ul *TenantResourceQuotaApplyCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *TenantResourceQuotaApplyCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -835,7 +1078,16 @@ func (r *TenantResourceQuotaApplyCommon) AsObject() client.Object {
 }
 
 func (u *TenantResourceQuotaApplyCommon) Data() *TenantResourceQuotaApplyCommon {
-	return Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(u.object.(*orm.TenantResourceQuotaApply))
+	if u.data != nil {
+		return u.data.(*TenantResourceQuotaApplyCommon)
+	}
+	tmp := Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(u.object.(*orm.TenantResourceQuotaApply))
+	u.data = tmp
+	return tmp
+}
+
+func (u *TenantResourceQuotaApplyCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply(f *TenantResourceQuotaApplyCommon) *orm.TenantResourceQuotaApply {
@@ -844,11 +1096,11 @@ func Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply(f *TenantRe
 		return nil
 	}
 	f.object = r
-	r.Username = f.Username
-	r.UpdatedAt = f.UpdatedAt
-	r.ID = f.ID
 	r.Content = f.Content
+	r.ID = f.ID
 	r.Status = f.Status
+	r.UpdatedAt = f.UpdatedAt
+	r.Username = f.Username
 	return r
 }
 func Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(f *orm.TenantResourceQuotaApply) *TenantResourceQuotaApplyCommon {
@@ -856,14 +1108,14 @@ func Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(f *orm.Tena
 		return nil
 	}
 	var r TenantResourceQuotaApplyCommon
-	r.ID = f.ID
 	r.Content = f.Content
+	r.ID = f.ID
 	r.Status = f.Status
-	r.Username = f.Username
 	r.UpdatedAt = f.UpdatedAt
+	r.Username = f.Username
 	return &r
 }
-func Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply_arr(arr []*TenantResourceQuotaApplyCommon) []*orm.TenantResourceQuotaApply {
+func Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply_slice(arr []*TenantResourceQuotaApplyCommon) []*orm.TenantResourceQuotaApply {
 	r := []*orm.TenantResourceQuotaApply{}
 	for _, u := range arr {
 		r = append(r, Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply(u))
@@ -871,7 +1123,7 @@ func Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply_arr(arr []*
 	return r
 }
 
-func Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon_arr(arr []*orm.TenantResourceQuotaApply) []*TenantResourceQuotaApplyCommon {
+func Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon_slice(arr []*orm.TenantResourceQuotaApply) []*TenantResourceQuotaApplyCommon {
 	r := []*TenantResourceQuotaApplyCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(u))
@@ -884,17 +1136,29 @@ type TenantDetailList struct {
 	Items []*TenantDetail
 }
 
-func (ul *TenantDetailList) AsListObject() client.ObjectListIfe {
+func (ul *TenantDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.TenantList{}
 	return ul.objectlist
 }
 
-func (ul *TenantDetailList) AsListData() []*TenantDetail {
+func (ul *TenantDetailList) Data() []*TenantDetail {
+	if ul.data != nil {
+		return ul.data.([]*TenantDetail)
+	}
 	us := ul.objectlist.(*orm.TenantList)
-	return Convert_Tenant_TenantDetail_arr(us.Items)
+	tmp := Convert_Tenant_TenantDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *TenantDetail) AsObject() client.Object {
+func (ul *TenantDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *TenantDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -904,7 +1168,16 @@ func (r *TenantDetail) AsObject() client.Object {
 }
 
 func (u *TenantDetail) Data() *TenantDetail {
-	return Convert_Tenant_TenantDetail(u.object.(*orm.Tenant))
+	if u.data != nil {
+		return u.data.(*TenantDetail)
+	}
+	tmp := Convert_Tenant_TenantDetail(u.object.(*orm.Tenant))
+	u.data = tmp
+	return tmp
+}
+
+func (u *TenantDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_TenantDetail_Tenant(f *TenantDetail) *orm.Tenant {
@@ -913,11 +1186,11 @@ func Convert_TenantDetail_Tenant(f *TenantDetail) *orm.Tenant {
 		return nil
 	}
 	f.object = r
-	r.IsActive = f.IsActive
-	r.Users = Convert_UserCommon_User_arr(f.Users)
 	r.ID = f.ID
-	r.TenantName = f.TenantName
+	r.IsActive = f.IsActive
 	r.Remark = f.Remark
+	r.TenantName = f.TenantName
+	r.Users = Convert_UserCommon_User_slice(f.Users)
 	return r
 }
 func Convert_Tenant_TenantDetail(f *orm.Tenant) *TenantDetail {
@@ -926,13 +1199,13 @@ func Convert_Tenant_TenantDetail(f *orm.Tenant) *TenantDetail {
 	}
 	var r TenantDetail
 	r.ID = f.ID
-	r.TenantName = f.TenantName
-	r.Remark = f.Remark
 	r.IsActive = f.IsActive
-	r.Users = Convert_User_UserCommon_arr(f.Users)
+	r.Remark = f.Remark
+	r.TenantName = f.TenantName
+	r.Users = Convert_User_UserCommon_slice(f.Users)
 	return &r
 }
-func Convert_TenantDetail_Tenant_arr(arr []*TenantDetail) []*orm.Tenant {
+func Convert_TenantDetail_Tenant_slice(arr []*TenantDetail) []*orm.Tenant {
 	r := []*orm.Tenant{}
 	for _, u := range arr {
 		r = append(r, Convert_TenantDetail_Tenant(u))
@@ -940,7 +1213,7 @@ func Convert_TenantDetail_Tenant_arr(arr []*TenantDetail) []*orm.Tenant {
 	return r
 }
 
-func Convert_Tenant_TenantDetail_arr(arr []*orm.Tenant) []*TenantDetail {
+func Convert_Tenant_TenantDetail_slice(arr []*orm.Tenant) []*TenantDetail {
 	r := []*TenantDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_Tenant_TenantDetail(u))
@@ -953,17 +1226,29 @@ type TenantCommonList struct {
 	Items []*TenantCommon
 }
 
-func (ul *TenantCommonList) AsListObject() client.ObjectListIfe {
+func (ul *TenantCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.TenantList{}
 	return ul.objectlist
 }
 
-func (ul *TenantCommonList) AsListData() []*TenantCommon {
+func (ul *TenantCommonList) Data() []*TenantCommon {
+	if ul.data != nil {
+		return ul.data.([]*TenantCommon)
+	}
 	us := ul.objectlist.(*orm.TenantList)
-	return Convert_Tenant_TenantCommon_arr(us.Items)
+	tmp := Convert_Tenant_TenantCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *TenantCommon) AsObject() client.Object {
+func (ul *TenantCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *TenantCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -973,7 +1258,16 @@ func (r *TenantCommon) AsObject() client.Object {
 }
 
 func (u *TenantCommon) Data() *TenantCommon {
-	return Convert_Tenant_TenantCommon(u.object.(*orm.Tenant))
+	if u.data != nil {
+		return u.data.(*TenantCommon)
+	}
+	tmp := Convert_Tenant_TenantCommon(u.object.(*orm.Tenant))
+	u.data = tmp
+	return tmp
+}
+
+func (u *TenantCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_TenantCommon_Tenant(f *TenantCommon) *orm.Tenant {
@@ -982,8 +1276,8 @@ func Convert_TenantCommon_Tenant(f *TenantCommon) *orm.Tenant {
 		return nil
 	}
 	f.object = r
-	r.TenantName = f.TenantName
 	r.ID = f.ID
+	r.TenantName = f.TenantName
 	return r
 }
 func Convert_Tenant_TenantCommon(f *orm.Tenant) *TenantCommon {
@@ -995,7 +1289,7 @@ func Convert_Tenant_TenantCommon(f *orm.Tenant) *TenantCommon {
 	r.TenantName = f.TenantName
 	return &r
 }
-func Convert_TenantCommon_Tenant_arr(arr []*TenantCommon) []*orm.Tenant {
+func Convert_TenantCommon_Tenant_slice(arr []*TenantCommon) []*orm.Tenant {
 	r := []*orm.Tenant{}
 	for _, u := range arr {
 		r = append(r, Convert_TenantCommon_Tenant(u))
@@ -1003,7 +1297,7 @@ func Convert_TenantCommon_Tenant_arr(arr []*TenantCommon) []*orm.Tenant {
 	return r
 }
 
-func Convert_Tenant_TenantCommon_arr(arr []*orm.Tenant) []*TenantCommon {
+func Convert_Tenant_TenantCommon_slice(arr []*orm.Tenant) []*TenantCommon {
 	r := []*TenantCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Tenant_TenantCommon(u))
@@ -1016,17 +1310,29 @@ type SystemRoleDetailList struct {
 	Items []*SystemRoleDetail
 }
 
-func (ul *SystemRoleDetailList) AsListObject() client.ObjectListIfe {
+func (ul *SystemRoleDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.SystemRoleList{}
 	return ul.objectlist
 }
 
-func (ul *SystemRoleDetailList) AsListData() []*SystemRoleDetail {
+func (ul *SystemRoleDetailList) Data() []*SystemRoleDetail {
+	if ul.data != nil {
+		return ul.data.([]*SystemRoleDetail)
+	}
 	us := ul.objectlist.(*orm.SystemRoleList)
-	return Convert_SystemRole_SystemRoleDetail_arr(us.Items)
+	tmp := Convert_SystemRole_SystemRoleDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *SystemRoleDetail) AsObject() client.Object {
+func (ul *SystemRoleDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *SystemRoleDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1036,7 +1342,16 @@ func (r *SystemRoleDetail) AsObject() client.Object {
 }
 
 func (u *SystemRoleDetail) Data() *SystemRoleDetail {
-	return Convert_SystemRole_SystemRoleDetail(u.object.(*orm.SystemRole))
+	if u.data != nil {
+		return u.data.(*SystemRoleDetail)
+	}
+	tmp := Convert_SystemRole_SystemRoleDetail(u.object.(*orm.SystemRole))
+	u.data = tmp
+	return tmp
+}
+
+func (u *SystemRoleDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_SystemRoleDetail_SystemRole(f *SystemRoleDetail) *orm.SystemRole {
@@ -1046,9 +1361,9 @@ func Convert_SystemRoleDetail_SystemRole(f *SystemRoleDetail) *orm.SystemRole {
 	}
 	f.object = r
 	r.ID = f.ID
-	r.RoleName = f.RoleName
 	r.RoleCode = f.RoleCode
-	r.Users = Convert_UserCommon_User_arr(f.Users)
+	r.RoleName = f.RoleName
+	r.Users = Convert_UserCommon_User_slice(f.Users)
 	return r
 }
 func Convert_SystemRole_SystemRoleDetail(f *orm.SystemRole) *SystemRoleDetail {
@@ -1057,12 +1372,12 @@ func Convert_SystemRole_SystemRoleDetail(f *orm.SystemRole) *SystemRoleDetail {
 	}
 	var r SystemRoleDetail
 	r.ID = f.ID
-	r.RoleName = f.RoleName
 	r.RoleCode = f.RoleCode
-	r.Users = Convert_User_UserCommon_arr(f.Users)
+	r.RoleName = f.RoleName
+	r.Users = Convert_User_UserCommon_slice(f.Users)
 	return &r
 }
-func Convert_SystemRoleDetail_SystemRole_arr(arr []*SystemRoleDetail) []*orm.SystemRole {
+func Convert_SystemRoleDetail_SystemRole_slice(arr []*SystemRoleDetail) []*orm.SystemRole {
 	r := []*orm.SystemRole{}
 	for _, u := range arr {
 		r = append(r, Convert_SystemRoleDetail_SystemRole(u))
@@ -1070,7 +1385,7 @@ func Convert_SystemRoleDetail_SystemRole_arr(arr []*SystemRoleDetail) []*orm.Sys
 	return r
 }
 
-func Convert_SystemRole_SystemRoleDetail_arr(arr []*orm.SystemRole) []*SystemRoleDetail {
+func Convert_SystemRole_SystemRoleDetail_slice(arr []*orm.SystemRole) []*SystemRoleDetail {
 	r := []*SystemRoleDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_SystemRole_SystemRoleDetail(u))
@@ -1083,17 +1398,29 @@ type SystemRoleCommonList struct {
 	Items []*SystemRoleCommon
 }
 
-func (ul *SystemRoleCommonList) AsListObject() client.ObjectListIfe {
+func (ul *SystemRoleCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.SystemRoleList{}
 	return ul.objectlist
 }
 
-func (ul *SystemRoleCommonList) AsListData() []*SystemRoleCommon {
+func (ul *SystemRoleCommonList) Data() []*SystemRoleCommon {
+	if ul.data != nil {
+		return ul.data.([]*SystemRoleCommon)
+	}
 	us := ul.objectlist.(*orm.SystemRoleList)
-	return Convert_SystemRole_SystemRoleCommon_arr(us.Items)
+	tmp := Convert_SystemRole_SystemRoleCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *SystemRoleCommon) AsObject() client.Object {
+func (ul *SystemRoleCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *SystemRoleCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1103,7 +1430,16 @@ func (r *SystemRoleCommon) AsObject() client.Object {
 }
 
 func (u *SystemRoleCommon) Data() *SystemRoleCommon {
-	return Convert_SystemRole_SystemRoleCommon(u.object.(*orm.SystemRole))
+	if u.data != nil {
+		return u.data.(*SystemRoleCommon)
+	}
+	tmp := Convert_SystemRole_SystemRoleCommon(u.object.(*orm.SystemRole))
+	u.data = tmp
+	return tmp
+}
+
+func (u *SystemRoleCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_SystemRoleCommon_SystemRole(f *SystemRoleCommon) *orm.SystemRole {
@@ -1113,8 +1449,8 @@ func Convert_SystemRoleCommon_SystemRole(f *SystemRoleCommon) *orm.SystemRole {
 	}
 	f.object = r
 	r.ID = f.ID
-	r.RoleName = f.RoleName
 	r.RoleCode = f.RoleCode
+	r.RoleName = f.RoleName
 	return r
 }
 func Convert_SystemRole_SystemRoleCommon(f *orm.SystemRole) *SystemRoleCommon {
@@ -1123,11 +1459,11 @@ func Convert_SystemRole_SystemRoleCommon(f *orm.SystemRole) *SystemRoleCommon {
 	}
 	var r SystemRoleCommon
 	r.ID = f.ID
-	r.RoleName = f.RoleName
 	r.RoleCode = f.RoleCode
+	r.RoleName = f.RoleName
 	return &r
 }
-func Convert_SystemRoleCommon_SystemRole_arr(arr []*SystemRoleCommon) []*orm.SystemRole {
+func Convert_SystemRoleCommon_SystemRole_slice(arr []*SystemRoleCommon) []*orm.SystemRole {
 	r := []*orm.SystemRole{}
 	for _, u := range arr {
 		r = append(r, Convert_SystemRoleCommon_SystemRole(u))
@@ -1135,7 +1471,7 @@ func Convert_SystemRoleCommon_SystemRole_arr(arr []*SystemRoleCommon) []*orm.Sys
 	return r
 }
 
-func Convert_SystemRole_SystemRoleCommon_arr(arr []*orm.SystemRole) []*SystemRoleCommon {
+func Convert_SystemRole_SystemRoleCommon_slice(arr []*orm.SystemRole) []*SystemRoleCommon {
 	r := []*SystemRoleCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_SystemRole_SystemRoleCommon(u))
@@ -1148,17 +1484,29 @@ type RegistryDetailList struct {
 	Items []*RegistryDetail
 }
 
-func (ul *RegistryDetailList) AsListObject() client.ObjectListIfe {
+func (ul *RegistryDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.RegistryList{}
 	return ul.objectlist
 }
 
-func (ul *RegistryDetailList) AsListData() []*RegistryDetail {
+func (ul *RegistryDetailList) Data() []*RegistryDetail {
+	if ul.data != nil {
+		return ul.data.([]*RegistryDetail)
+	}
 	us := ul.objectlist.(*orm.RegistryList)
-	return Convert_Registry_RegistryDetail_arr(us.Items)
+	tmp := Convert_Registry_RegistryDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *RegistryDetail) AsObject() client.Object {
+func (ul *RegistryDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *RegistryDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1168,7 +1516,16 @@ func (r *RegistryDetail) AsObject() client.Object {
 }
 
 func (u *RegistryDetail) Data() *RegistryDetail {
-	return Convert_Registry_RegistryDetail(u.object.(*orm.Registry))
+	if u.data != nil {
+		return u.data.(*RegistryDetail)
+	}
+	tmp := Convert_Registry_RegistryDetail(u.object.(*orm.Registry))
+	u.data = tmp
+	return tmp
+}
+
+func (u *RegistryDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_RegistryDetail_Registry(f *RegistryDetail) *orm.Registry {
@@ -1177,17 +1534,17 @@ func Convert_RegistryDetail_Registry(f *RegistryDetail) *orm.Registry {
 		return nil
 	}
 	f.object = r
+	r.Creator = Convert_UserCommon_User(f.Creator)
+	r.CreatorID = f.CreatorID
+	r.ID = f.ID
+	r.IsDefault = f.IsDefault
+	r.Password = f.Password
 	r.Project = Convert_ProjectCommon_Project(f.Project)
 	r.ProjectID = f.ProjectID
-	r.IsDefault = f.IsDefault
 	r.RegistryAddress = f.RegistryAddress
-	r.Username = f.Username
-	r.CreatorID = f.CreatorID
-	r.Creator = Convert_UserCommon_User(f.Creator)
-	r.UpdateTime = f.UpdateTime
-	r.ID = f.ID
 	r.RegistryName = f.RegistryName
-	r.Password = f.Password
+	r.UpdateTime = f.UpdateTime
+	r.Username = f.Username
 	return r
 }
 func Convert_Registry_RegistryDetail(f *orm.Registry) *RegistryDetail {
@@ -1195,20 +1552,20 @@ func Convert_Registry_RegistryDetail(f *orm.Registry) *RegistryDetail {
 		return nil
 	}
 	var r RegistryDetail
-	r.RegistryAddress = f.RegistryAddress
-	r.Username = f.Username
+	r.Creator = Convert_User_UserCommon(f.Creator)
 	r.CreatorID = f.CreatorID
+	r.ID = f.ID
+	r.IsDefault = f.IsDefault
+	r.Password = f.Password
 	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
-	r.IsDefault = f.IsDefault
-	r.ID = f.ID
+	r.RegistryAddress = f.RegistryAddress
 	r.RegistryName = f.RegistryName
-	r.Password = f.Password
-	r.Creator = Convert_User_UserCommon(f.Creator)
 	r.UpdateTime = f.UpdateTime
+	r.Username = f.Username
 	return &r
 }
-func Convert_RegistryDetail_Registry_arr(arr []*RegistryDetail) []*orm.Registry {
+func Convert_RegistryDetail_Registry_slice(arr []*RegistryDetail) []*orm.Registry {
 	r := []*orm.Registry{}
 	for _, u := range arr {
 		r = append(r, Convert_RegistryDetail_Registry(u))
@@ -1216,7 +1573,7 @@ func Convert_RegistryDetail_Registry_arr(arr []*RegistryDetail) []*orm.Registry 
 	return r
 }
 
-func Convert_Registry_RegistryDetail_arr(arr []*orm.Registry) []*RegistryDetail {
+func Convert_Registry_RegistryDetail_slice(arr []*orm.Registry) []*RegistryDetail {
 	r := []*RegistryDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_Registry_RegistryDetail(u))
@@ -1229,17 +1586,29 @@ type RegistryCommonList struct {
 	Items []*RegistryCommon
 }
 
-func (ul *RegistryCommonList) AsListObject() client.ObjectListIfe {
+func (ul *RegistryCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.RegistryList{}
 	return ul.objectlist
 }
 
-func (ul *RegistryCommonList) AsListData() []*RegistryCommon {
+func (ul *RegistryCommonList) Data() []*RegistryCommon {
+	if ul.data != nil {
+		return ul.data.([]*RegistryCommon)
+	}
 	us := ul.objectlist.(*orm.RegistryList)
-	return Convert_Registry_RegistryCommon_arr(us.Items)
+	tmp := Convert_Registry_RegistryCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *RegistryCommon) AsObject() client.Object {
+func (ul *RegistryCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *RegistryCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1249,7 +1618,16 @@ func (r *RegistryCommon) AsObject() client.Object {
 }
 
 func (u *RegistryCommon) Data() *RegistryCommon {
-	return Convert_Registry_RegistryCommon(u.object.(*orm.Registry))
+	if u.data != nil {
+		return u.data.(*RegistryCommon)
+	}
+	tmp := Convert_Registry_RegistryCommon(u.object.(*orm.Registry))
+	u.data = tmp
+	return tmp
+}
+
+func (u *RegistryCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_RegistryCommon_Registry(f *RegistryCommon) *orm.Registry {
@@ -1258,15 +1636,15 @@ func Convert_RegistryCommon_Registry(f *RegistryCommon) *orm.Registry {
 		return nil
 	}
 	f.object = r
-	r.RegistryName = f.RegistryName
-	r.Project = Convert_ProjectCommon_Project(f.Project)
-	r.ProjectID = f.ProjectID
-	r.ID = f.ID
-	r.RegistryAddress = f.RegistryAddress
-	r.UpdateTime = f.UpdateTime
 	r.Creator = Convert_UserCommon_User(f.Creator)
 	r.CreatorID = f.CreatorID
+	r.ID = f.ID
 	r.IsDefault = f.IsDefault
+	r.Project = Convert_ProjectCommon_Project(f.Project)
+	r.ProjectID = f.ProjectID
+	r.RegistryAddress = f.RegistryAddress
+	r.RegistryName = f.RegistryName
+	r.UpdateTime = f.UpdateTime
 	return r
 }
 func Convert_Registry_RegistryCommon(f *orm.Registry) *RegistryCommon {
@@ -1274,18 +1652,18 @@ func Convert_Registry_RegistryCommon(f *orm.Registry) *RegistryCommon {
 		return nil
 	}
 	var r RegistryCommon
-	r.ID = f.ID
-	r.RegistryAddress = f.RegistryAddress
-	r.UpdateTime = f.UpdateTime
 	r.Creator = Convert_User_UserCommon(f.Creator)
 	r.CreatorID = f.CreatorID
+	r.ID = f.ID
 	r.IsDefault = f.IsDefault
-	r.RegistryName = f.RegistryName
 	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
+	r.RegistryAddress = f.RegistryAddress
+	r.RegistryName = f.RegistryName
+	r.UpdateTime = f.UpdateTime
 	return &r
 }
-func Convert_RegistryCommon_Registry_arr(arr []*RegistryCommon) []*orm.Registry {
+func Convert_RegistryCommon_Registry_slice(arr []*RegistryCommon) []*orm.Registry {
 	r := []*orm.Registry{}
 	for _, u := range arr {
 		r = append(r, Convert_RegistryCommon_Registry(u))
@@ -1293,7 +1671,7 @@ func Convert_RegistryCommon_Registry_arr(arr []*RegistryCommon) []*orm.Registry 
 	return r
 }
 
-func Convert_Registry_RegistryCommon_arr(arr []*orm.Registry) []*RegistryCommon {
+func Convert_Registry_RegistryCommon_slice(arr []*orm.Registry) []*RegistryCommon {
 	r := []*RegistryCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Registry_RegistryCommon(u))
@@ -1306,17 +1684,29 @@ type ProjectUserRelCommonList struct {
 	Items []*ProjectUserRelCommon
 }
 
-func (ul *ProjectUserRelCommonList) AsListObject() client.ObjectListIfe {
+func (ul *ProjectUserRelCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ProjectUserRelList{}
 	return ul.objectlist
 }
 
-func (ul *ProjectUserRelCommonList) AsListData() []*ProjectUserRelCommon {
+func (ul *ProjectUserRelCommonList) Data() []*ProjectUserRelCommon {
+	if ul.data != nil {
+		return ul.data.([]*ProjectUserRelCommon)
+	}
 	us := ul.objectlist.(*orm.ProjectUserRelList)
-	return Convert_ProjectUserRel_ProjectUserRelCommon_arr(us.Items)
+	tmp := Convert_ProjectUserRel_ProjectUserRelCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ProjectUserRelCommon) AsObject() client.Object {
+func (ul *ProjectUserRelCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ProjectUserRelCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1326,7 +1716,16 @@ func (r *ProjectUserRelCommon) AsObject() client.Object {
 }
 
 func (u *ProjectUserRelCommon) Data() *ProjectUserRelCommon {
-	return Convert_ProjectUserRel_ProjectUserRelCommon(u.object.(*orm.ProjectUserRel))
+	if u.data != nil {
+		return u.data.(*ProjectUserRelCommon)
+	}
+	tmp := Convert_ProjectUserRel_ProjectUserRelCommon(u.object.(*orm.ProjectUserRel))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ProjectUserRelCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ProjectUserRelCommon_ProjectUserRel(f *ProjectUserRelCommon) *orm.ProjectUserRel {
@@ -1335,12 +1734,12 @@ func Convert_ProjectUserRelCommon_ProjectUserRel(f *ProjectUserRelCommon) *orm.P
 		return nil
 	}
 	f.object = r
+	r.ID = f.ID
 	r.Project = Convert_ProjectCommon_Project(f.Project)
-	r.UserID = f.UserID
 	r.ProjectID = f.ProjectID
 	r.Role = f.Role
-	r.ID = f.ID
 	r.User = Convert_UserCommon_User(f.User)
+	r.UserID = f.UserID
 	return r
 }
 func Convert_ProjectUserRel_ProjectUserRelCommon(f *orm.ProjectUserRel) *ProjectUserRelCommon {
@@ -1348,15 +1747,15 @@ func Convert_ProjectUserRel_ProjectUserRelCommon(f *orm.ProjectUserRel) *Project
 		return nil
 	}
 	var r ProjectUserRelCommon
+	r.ID = f.ID
 	r.Project = Convert_Project_ProjectCommon(f.Project)
-	r.UserID = f.UserID
 	r.ProjectID = f.ProjectID
 	r.Role = f.Role
-	r.ID = f.ID
 	r.User = Convert_User_UserCommon(f.User)
+	r.UserID = f.UserID
 	return &r
 }
-func Convert_ProjectUserRelCommon_ProjectUserRel_arr(arr []*ProjectUserRelCommon) []*orm.ProjectUserRel {
+func Convert_ProjectUserRelCommon_ProjectUserRel_slice(arr []*ProjectUserRelCommon) []*orm.ProjectUserRel {
 	r := []*orm.ProjectUserRel{}
 	for _, u := range arr {
 		r = append(r, Convert_ProjectUserRelCommon_ProjectUserRel(u))
@@ -1364,7 +1763,7 @@ func Convert_ProjectUserRelCommon_ProjectUserRel_arr(arr []*ProjectUserRelCommon
 	return r
 }
 
-func Convert_ProjectUserRel_ProjectUserRelCommon_arr(arr []*orm.ProjectUserRel) []*ProjectUserRelCommon {
+func Convert_ProjectUserRel_ProjectUserRelCommon_slice(arr []*orm.ProjectUserRel) []*ProjectUserRelCommon {
 	r := []*ProjectUserRelCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_ProjectUserRel_ProjectUserRelCommon(u))
@@ -1377,17 +1776,29 @@ type ProjectDetailList struct {
 	Items []*ProjectDetail
 }
 
-func (ul *ProjectDetailList) AsListObject() client.ObjectListIfe {
+func (ul *ProjectDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ProjectList{}
 	return ul.objectlist
 }
 
-func (ul *ProjectDetailList) AsListData() []*ProjectDetail {
+func (ul *ProjectDetailList) Data() []*ProjectDetail {
+	if ul.data != nil {
+		return ul.data.([]*ProjectDetail)
+	}
 	us := ul.objectlist.(*orm.ProjectList)
-	return Convert_Project_ProjectDetail_arr(us.Items)
+	tmp := Convert_Project_ProjectDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ProjectDetail) AsObject() client.Object {
+func (ul *ProjectDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ProjectDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1397,7 +1808,16 @@ func (r *ProjectDetail) AsObject() client.Object {
 }
 
 func (u *ProjectDetail) Data() *ProjectDetail {
-	return Convert_Project_ProjectDetail(u.object.(*orm.Project))
+	if u.data != nil {
+		return u.data.(*ProjectDetail)
+	}
+	tmp := Convert_Project_ProjectDetail(u.object.(*orm.Project))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ProjectDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ProjectDetail_Project(f *ProjectDetail) *orm.Project {
@@ -1406,17 +1826,17 @@ func Convert_ProjectDetail_Project(f *ProjectDetail) *orm.Project {
 		return nil
 	}
 	f.object = r
-	r.Applications = Convert_ApplicationCommon_Application_arr(f.Applications)
-	r.Environments = Convert_EnvironmentCommon_Environment_arr(f.Environments)
-	r.Users = Convert_UserCommon_User_arr(f.Users)
+	r.Applications = Convert_ApplicationCommon_Application_slice(f.Applications)
+	r.CreatedAt = f.CreatedAt
+	r.Environments = Convert_EnvironmentCommon_Environment_slice(f.Environments)
 	r.ID = f.ID
 	r.ProjectAlias = f.ProjectAlias
+	r.ProjectName = f.ProjectName
 	r.Remark = f.Remark
+	r.ResourceQuota = f.ResourceQuota
 	r.Tenant = Convert_TenantCommon_Tenant(f.Tenant)
 	r.TenantID = f.TenantID
-	r.CreatedAt = f.CreatedAt
-	r.ProjectName = f.ProjectName
-	r.ResourceQuota = f.ResourceQuota
+	r.Users = Convert_UserCommon_User_slice(f.Users)
 	return r
 }
 func Convert_Project_ProjectDetail(f *orm.Project) *ProjectDetail {
@@ -1424,20 +1844,20 @@ func Convert_Project_ProjectDetail(f *orm.Project) *ProjectDetail {
 		return nil
 	}
 	var r ProjectDetail
+	r.Applications = Convert_Application_ApplicationCommon_slice(f.Applications)
+	r.CreatedAt = f.CreatedAt
+	r.Environments = Convert_Environment_EnvironmentCommon_slice(f.Environments)
+	r.ID = f.ID
+	r.ProjectAlias = f.ProjectAlias
+	r.ProjectName = f.ProjectName
+	r.Remark = f.Remark
 	r.ResourceQuota = f.ResourceQuota
 	r.Tenant = Convert_Tenant_TenantCommon(f.Tenant)
 	r.TenantID = f.TenantID
-	r.CreatedAt = f.CreatedAt
-	r.ProjectName = f.ProjectName
-	r.Remark = f.Remark
-	r.Applications = Convert_Application_ApplicationCommon_arr(f.Applications)
-	r.Environments = Convert_Environment_EnvironmentCommon_arr(f.Environments)
-	r.Users = Convert_User_UserCommon_arr(f.Users)
-	r.ID = f.ID
-	r.ProjectAlias = f.ProjectAlias
+	r.Users = Convert_User_UserCommon_slice(f.Users)
 	return &r
 }
-func Convert_ProjectDetail_Project_arr(arr []*ProjectDetail) []*orm.Project {
+func Convert_ProjectDetail_Project_slice(arr []*ProjectDetail) []*orm.Project {
 	r := []*orm.Project{}
 	for _, u := range arr {
 		r = append(r, Convert_ProjectDetail_Project(u))
@@ -1445,7 +1865,7 @@ func Convert_ProjectDetail_Project_arr(arr []*ProjectDetail) []*orm.Project {
 	return r
 }
 
-func Convert_Project_ProjectDetail_arr(arr []*orm.Project) []*ProjectDetail {
+func Convert_Project_ProjectDetail_slice(arr []*orm.Project) []*ProjectDetail {
 	r := []*ProjectDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_Project_ProjectDetail(u))
@@ -1458,17 +1878,29 @@ type ProjectCommonList struct {
 	Items []*ProjectCommon
 }
 
-func (ul *ProjectCommonList) AsListObject() client.ObjectListIfe {
+func (ul *ProjectCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ProjectList{}
 	return ul.objectlist
 }
 
-func (ul *ProjectCommonList) AsListData() []*ProjectCommon {
+func (ul *ProjectCommonList) Data() []*ProjectCommon {
+	if ul.data != nil {
+		return ul.data.([]*ProjectCommon)
+	}
 	us := ul.objectlist.(*orm.ProjectList)
-	return Convert_Project_ProjectCommon_arr(us.Items)
+	tmp := Convert_Project_ProjectCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ProjectCommon) AsObject() client.Object {
+func (ul *ProjectCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ProjectCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1478,7 +1910,16 @@ func (r *ProjectCommon) AsObject() client.Object {
 }
 
 func (u *ProjectCommon) Data() *ProjectCommon {
-	return Convert_Project_ProjectCommon(u.object.(*orm.Project))
+	if u.data != nil {
+		return u.data.(*ProjectCommon)
+	}
+	tmp := Convert_Project_ProjectCommon(u.object.(*orm.Project))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ProjectCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ProjectCommon_Project(f *ProjectCommon) *orm.Project {
@@ -1488,10 +1929,10 @@ func Convert_ProjectCommon_Project(f *ProjectCommon) *orm.Project {
 	}
 	f.object = r
 	r.CreatedAt = f.CreatedAt
-	r.ProjectName = f.ProjectName
-	r.ProjectAlias = f.ProjectAlias
-	r.Remark = f.Remark
 	r.ID = f.ID
+	r.ProjectAlias = f.ProjectAlias
+	r.ProjectName = f.ProjectName
+	r.Remark = f.Remark
 	return r
 }
 func Convert_Project_ProjectCommon(f *orm.Project) *ProjectCommon {
@@ -1499,14 +1940,14 @@ func Convert_Project_ProjectCommon(f *orm.Project) *ProjectCommon {
 		return nil
 	}
 	var r ProjectCommon
-	r.ID = f.ID
 	r.CreatedAt = f.CreatedAt
-	r.ProjectName = f.ProjectName
+	r.ID = f.ID
 	r.ProjectAlias = f.ProjectAlias
+	r.ProjectName = f.ProjectName
 	r.Remark = f.Remark
 	return &r
 }
-func Convert_ProjectCommon_Project_arr(arr []*ProjectCommon) []*orm.Project {
+func Convert_ProjectCommon_Project_slice(arr []*ProjectCommon) []*orm.Project {
 	r := []*orm.Project{}
 	for _, u := range arr {
 		r = append(r, Convert_ProjectCommon_Project(u))
@@ -1514,7 +1955,7 @@ func Convert_ProjectCommon_Project_arr(arr []*ProjectCommon) []*orm.Project {
 	return r
 }
 
-func Convert_Project_ProjectCommon_arr(arr []*orm.Project) []*ProjectCommon {
+func Convert_Project_ProjectCommon_slice(arr []*orm.Project) []*ProjectCommon {
 	r := []*ProjectCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Project_ProjectCommon(u))
@@ -1527,17 +1968,29 @@ type OpenAPPDetailList struct {
 	Items []*OpenAPPDetail
 }
 
-func (ul *OpenAPPDetailList) AsListObject() client.ObjectListIfe {
+func (ul *OpenAPPDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.OpenAPPList{}
 	return ul.objectlist
 }
 
-func (ul *OpenAPPDetailList) AsListData() []*OpenAPPDetail {
+func (ul *OpenAPPDetailList) Data() []*OpenAPPDetail {
+	if ul.data != nil {
+		return ul.data.([]*OpenAPPDetail)
+	}
 	us := ul.objectlist.(*orm.OpenAPPList)
-	return Convert_OpenAPP_OpenAPPDetail_arr(us.Items)
+	tmp := Convert_OpenAPP_OpenAPPDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *OpenAPPDetail) AsObject() client.Object {
+func (ul *OpenAPPDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *OpenAPPDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1547,7 +2000,16 @@ func (r *OpenAPPDetail) AsObject() client.Object {
 }
 
 func (u *OpenAPPDetail) Data() *OpenAPPDetail {
-	return Convert_OpenAPP_OpenAPPDetail(u.object.(*orm.OpenAPP))
+	if u.data != nil {
+		return u.data.(*OpenAPPDetail)
+	}
+	tmp := Convert_OpenAPP_OpenAPPDetail(u.object.(*orm.OpenAPP))
+	u.data = tmp
+	return tmp
+}
+
+func (u *OpenAPPDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_OpenAPPDetail_OpenAPP(f *OpenAPPDetail) *orm.OpenAPP {
@@ -1556,13 +2018,13 @@ func Convert_OpenAPPDetail_OpenAPP(f *OpenAPPDetail) *orm.OpenAPP {
 		return nil
 	}
 	f.object = r
-	r.PermScopes = f.PermScopes
-	r.TenantScope = f.TenantScope
-	r.RequestLimiter = f.RequestLimiter
-	r.Name = f.Name
-	r.ID = f.ID
 	r.AppID = f.AppID
 	r.AppSecret = f.AppSecret
+	r.ID = f.ID
+	r.Name = f.Name
+	r.PermScopes = f.PermScopes
+	r.RequestLimiter = f.RequestLimiter
+	r.TenantScope = f.TenantScope
 	return r
 }
 func Convert_OpenAPP_OpenAPPDetail(f *orm.OpenAPP) *OpenAPPDetail {
@@ -1570,16 +2032,16 @@ func Convert_OpenAPP_OpenAPPDetail(f *orm.OpenAPP) *OpenAPPDetail {
 		return nil
 	}
 	var r OpenAPPDetail
-	r.PermScopes = f.PermScopes
-	r.TenantScope = f.TenantScope
-	r.RequestLimiter = f.RequestLimiter
-	r.Name = f.Name
-	r.ID = f.ID
 	r.AppID = f.AppID
 	r.AppSecret = f.AppSecret
+	r.ID = f.ID
+	r.Name = f.Name
+	r.PermScopes = f.PermScopes
+	r.RequestLimiter = f.RequestLimiter
+	r.TenantScope = f.TenantScope
 	return &r
 }
-func Convert_OpenAPPDetail_OpenAPP_arr(arr []*OpenAPPDetail) []*orm.OpenAPP {
+func Convert_OpenAPPDetail_OpenAPP_slice(arr []*OpenAPPDetail) []*orm.OpenAPP {
 	r := []*orm.OpenAPP{}
 	for _, u := range arr {
 		r = append(r, Convert_OpenAPPDetail_OpenAPP(u))
@@ -1587,7 +2049,7 @@ func Convert_OpenAPPDetail_OpenAPP_arr(arr []*OpenAPPDetail) []*orm.OpenAPP {
 	return r
 }
 
-func Convert_OpenAPP_OpenAPPDetail_arr(arr []*orm.OpenAPP) []*OpenAPPDetail {
+func Convert_OpenAPP_OpenAPPDetail_slice(arr []*orm.OpenAPP) []*OpenAPPDetail {
 	r := []*OpenAPPDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_OpenAPP_OpenAPPDetail(u))
@@ -1600,17 +2062,29 @@ type OpenAPPCommonList struct {
 	Items []*OpenAPPCommon
 }
 
-func (ul *OpenAPPCommonList) AsListObject() client.ObjectListIfe {
+func (ul *OpenAPPCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.OpenAPPList{}
 	return ul.objectlist
 }
 
-func (ul *OpenAPPCommonList) AsListData() []*OpenAPPCommon {
+func (ul *OpenAPPCommonList) Data() []*OpenAPPCommon {
+	if ul.data != nil {
+		return ul.data.([]*OpenAPPCommon)
+	}
 	us := ul.objectlist.(*orm.OpenAPPList)
-	return Convert_OpenAPP_OpenAPPCommon_arr(us.Items)
+	tmp := Convert_OpenAPP_OpenAPPCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *OpenAPPCommon) AsObject() client.Object {
+func (ul *OpenAPPCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *OpenAPPCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1620,7 +2094,16 @@ func (r *OpenAPPCommon) AsObject() client.Object {
 }
 
 func (u *OpenAPPCommon) Data() *OpenAPPCommon {
-	return Convert_OpenAPP_OpenAPPCommon(u.object.(*orm.OpenAPP))
+	if u.data != nil {
+		return u.data.(*OpenAPPCommon)
+	}
+	tmp := Convert_OpenAPP_OpenAPPCommon(u.object.(*orm.OpenAPP))
+	u.data = tmp
+	return tmp
+}
+
+func (u *OpenAPPCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_OpenAPPCommon_OpenAPP(f *OpenAPPCommon) *orm.OpenAPP {
@@ -1629,12 +2112,12 @@ func Convert_OpenAPPCommon_OpenAPP(f *OpenAPPCommon) *orm.OpenAPP {
 		return nil
 	}
 	f.object = r
-	r.Name = f.Name
-	r.ID = f.ID
 	r.AppID = f.AppID
+	r.ID = f.ID
+	r.Name = f.Name
 	r.PermScopes = f.PermScopes
-	r.TenantScope = f.TenantScope
 	r.RequestLimiter = f.RequestLimiter
+	r.TenantScope = f.TenantScope
 	return r
 }
 func Convert_OpenAPP_OpenAPPCommon(f *orm.OpenAPP) *OpenAPPCommon {
@@ -1642,15 +2125,15 @@ func Convert_OpenAPP_OpenAPPCommon(f *orm.OpenAPP) *OpenAPPCommon {
 		return nil
 	}
 	var r OpenAPPCommon
-	r.ID = f.ID
 	r.AppID = f.AppID
-	r.PermScopes = f.PermScopes
-	r.TenantScope = f.TenantScope
-	r.RequestLimiter = f.RequestLimiter
+	r.ID = f.ID
 	r.Name = f.Name
+	r.PermScopes = f.PermScopes
+	r.RequestLimiter = f.RequestLimiter
+	r.TenantScope = f.TenantScope
 	return &r
 }
-func Convert_OpenAPPCommon_OpenAPP_arr(arr []*OpenAPPCommon) []*orm.OpenAPP {
+func Convert_OpenAPPCommon_OpenAPP_slice(arr []*OpenAPPCommon) []*orm.OpenAPP {
 	r := []*orm.OpenAPP{}
 	for _, u := range arr {
 		r = append(r, Convert_OpenAPPCommon_OpenAPP(u))
@@ -1658,7 +2141,7 @@ func Convert_OpenAPPCommon_OpenAPP_arr(arr []*OpenAPPCommon) []*orm.OpenAPP {
 	return r
 }
 
-func Convert_OpenAPP_OpenAPPCommon_arr(arr []*orm.OpenAPP) []*OpenAPPCommon {
+func Convert_OpenAPP_OpenAPPCommon_slice(arr []*orm.OpenAPP) []*OpenAPPCommon {
 	r := []*OpenAPPCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_OpenAPP_OpenAPPCommon(u))
@@ -1671,17 +2154,29 @@ type MessageCommonList struct {
 	Items []*MessageCommon
 }
 
-func (ul *MessageCommonList) AsListObject() client.ObjectListIfe {
+func (ul *MessageCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.MessageList{}
 	return ul.objectlist
 }
 
-func (ul *MessageCommonList) AsListData() []*MessageCommon {
+func (ul *MessageCommonList) Data() []*MessageCommon {
+	if ul.data != nil {
+		return ul.data.([]*MessageCommon)
+	}
 	us := ul.objectlist.(*orm.MessageList)
-	return Convert_Message_MessageCommon_arr(us.Items)
+	tmp := Convert_Message_MessageCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *MessageCommon) AsObject() client.Object {
+func (ul *MessageCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *MessageCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1691,7 +2186,16 @@ func (r *MessageCommon) AsObject() client.Object {
 }
 
 func (u *MessageCommon) Data() *MessageCommon {
-	return Convert_Message_MessageCommon(u.object.(*orm.Message))
+	if u.data != nil {
+		return u.data.(*MessageCommon)
+	}
+	tmp := Convert_Message_MessageCommon(u.object.(*orm.Message))
+	u.data = tmp
+	return tmp
+}
+
+func (u *MessageCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_MessageCommon_Message(f *MessageCommon) *orm.Message {
@@ -1700,11 +2204,11 @@ func Convert_MessageCommon_Message(f *MessageCommon) *orm.Message {
 		return nil
 	}
 	f.object = r
-	r.Title = f.Title
 	r.Content = f.Content
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
 	r.MessageType = f.MessageType
+	r.Title = f.Title
 	return r
 }
 func Convert_Message_MessageCommon(f *orm.Message) *MessageCommon {
@@ -1712,14 +2216,14 @@ func Convert_Message_MessageCommon(f *orm.Message) *MessageCommon {
 		return nil
 	}
 	var r MessageCommon
+	r.Content = f.Content
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
 	r.MessageType = f.MessageType
 	r.Title = f.Title
-	r.Content = f.Content
 	return &r
 }
-func Convert_MessageCommon_Message_arr(arr []*MessageCommon) []*orm.Message {
+func Convert_MessageCommon_Message_slice(arr []*MessageCommon) []*orm.Message {
 	r := []*orm.Message{}
 	for _, u := range arr {
 		r = append(r, Convert_MessageCommon_Message(u))
@@ -1727,7 +2231,7 @@ func Convert_MessageCommon_Message_arr(arr []*MessageCommon) []*orm.Message {
 	return r
 }
 
-func Convert_Message_MessageCommon_arr(arr []*orm.Message) []*MessageCommon {
+func Convert_Message_MessageCommon_slice(arr []*orm.Message) []*MessageCommon {
 	r := []*MessageCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Message_MessageCommon(u))
@@ -1740,17 +2244,29 @@ type LogQuerySnapshotCommonList struct {
 	Items []*LogQuerySnapshotCommon
 }
 
-func (ul *LogQuerySnapshotCommonList) AsListObject() client.ObjectListIfe {
+func (ul *LogQuerySnapshotCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.LogQuerySnapshotList{}
 	return ul.objectlist
 }
 
-func (ul *LogQuerySnapshotCommonList) AsListData() []*LogQuerySnapshotCommon {
+func (ul *LogQuerySnapshotCommonList) Data() []*LogQuerySnapshotCommon {
+	if ul.data != nil {
+		return ul.data.([]*LogQuerySnapshotCommon)
+	}
 	us := ul.objectlist.(*orm.LogQuerySnapshotList)
-	return Convert_LogQuerySnapshot_LogQuerySnapshotCommon_arr(us.Items)
+	tmp := Convert_LogQuerySnapshot_LogQuerySnapshotCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *LogQuerySnapshotCommon) AsObject() client.Object {
+func (ul *LogQuerySnapshotCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *LogQuerySnapshotCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1760,7 +2276,16 @@ func (r *LogQuerySnapshotCommon) AsObject() client.Object {
 }
 
 func (u *LogQuerySnapshotCommon) Data() *LogQuerySnapshotCommon {
-	return Convert_LogQuerySnapshot_LogQuerySnapshotCommon(u.object.(*orm.LogQuerySnapshot))
+	if u.data != nil {
+		return u.data.(*LogQuerySnapshotCommon)
+	}
+	tmp := Convert_LogQuerySnapshot_LogQuerySnapshotCommon(u.object.(*orm.LogQuerySnapshot))
+	u.data = tmp
+	return tmp
+}
+
+func (u *LogQuerySnapshotCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_LogQuerySnapshotCommon_LogQuerySnapshot(f *LogQuerySnapshotCommon) *orm.LogQuerySnapshot {
@@ -1771,16 +2296,16 @@ func Convert_LogQuerySnapshotCommon_LogQuerySnapshot(f *LogQuerySnapshotCommon) 
 	f.object = r
 	r.Cluster = Convert_ClusterCommon_Cluster(f.Cluster)
 	r.ClusterID = f.ClusterID
-	r.CreatorID = f.CreatorID
-	r.ID = f.ID
-	r.SourceFile = f.SourceFile
-	r.SnapshotCount = f.SnapshotCount
-	r.DownloadURL = f.DownloadURL
-	r.StartTime = f.StartTime
-	r.EndTime = f.EndTime
 	r.CreateAt = f.CreateAt
 	r.Creator = Convert_UserCommon_User(f.Creator)
+	r.CreatorID = f.CreatorID
+	r.DownloadURL = f.DownloadURL
+	r.EndTime = f.EndTime
+	r.ID = f.ID
+	r.SnapshotCount = f.SnapshotCount
 	r.SnapshotName = f.SnapshotName
+	r.SourceFile = f.SourceFile
+	r.StartTime = f.StartTime
 	return r
 }
 func Convert_LogQuerySnapshot_LogQuerySnapshotCommon(f *orm.LogQuerySnapshot) *LogQuerySnapshotCommon {
@@ -1788,21 +2313,21 @@ func Convert_LogQuerySnapshot_LogQuerySnapshotCommon(f *orm.LogQuerySnapshot) *L
 		return nil
 	}
 	var r LogQuerySnapshotCommon
-	r.CreateAt = f.CreateAt
-	r.Creator = Convert_User_UserCommon(f.Creator)
-	r.SnapshotName = f.SnapshotName
-	r.SourceFile = f.SourceFile
-	r.SnapshotCount = f.SnapshotCount
-	r.DownloadURL = f.DownloadURL
-	r.StartTime = f.StartTime
-	r.EndTime = f.EndTime
-	r.ID = f.ID
 	r.Cluster = Convert_Cluster_ClusterCommon(f.Cluster)
 	r.ClusterID = f.ClusterID
+	r.CreateAt = f.CreateAt
+	r.Creator = Convert_User_UserCommon(f.Creator)
 	r.CreatorID = f.CreatorID
+	r.DownloadURL = f.DownloadURL
+	r.EndTime = f.EndTime
+	r.ID = f.ID
+	r.SnapshotCount = f.SnapshotCount
+	r.SnapshotName = f.SnapshotName
+	r.SourceFile = f.SourceFile
+	r.StartTime = f.StartTime
 	return &r
 }
-func Convert_LogQuerySnapshotCommon_LogQuerySnapshot_arr(arr []*LogQuerySnapshotCommon) []*orm.LogQuerySnapshot {
+func Convert_LogQuerySnapshotCommon_LogQuerySnapshot_slice(arr []*LogQuerySnapshotCommon) []*orm.LogQuerySnapshot {
 	r := []*orm.LogQuerySnapshot{}
 	for _, u := range arr {
 		r = append(r, Convert_LogQuerySnapshotCommon_LogQuerySnapshot(u))
@@ -1810,7 +2335,7 @@ func Convert_LogQuerySnapshotCommon_LogQuerySnapshot_arr(arr []*LogQuerySnapshot
 	return r
 }
 
-func Convert_LogQuerySnapshot_LogQuerySnapshotCommon_arr(arr []*orm.LogQuerySnapshot) []*LogQuerySnapshotCommon {
+func Convert_LogQuerySnapshot_LogQuerySnapshotCommon_slice(arr []*orm.LogQuerySnapshot) []*LogQuerySnapshotCommon {
 	r := []*LogQuerySnapshotCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_LogQuerySnapshot_LogQuerySnapshotCommon(u))
@@ -1823,17 +2348,29 @@ type LogQueryHistoryCommonList struct {
 	Items []*LogQueryHistoryCommon
 }
 
-func (ul *LogQueryHistoryCommonList) AsListObject() client.ObjectListIfe {
+func (ul *LogQueryHistoryCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.LogQueryHistoryList{}
 	return ul.objectlist
 }
 
-func (ul *LogQueryHistoryCommonList) AsListData() []*LogQueryHistoryCommon {
+func (ul *LogQueryHistoryCommonList) Data() []*LogQueryHistoryCommon {
+	if ul.data != nil {
+		return ul.data.([]*LogQueryHistoryCommon)
+	}
 	us := ul.objectlist.(*orm.LogQueryHistoryList)
-	return Convert_LogQueryHistory_LogQueryHistoryCommon_arr(us.Items)
+	tmp := Convert_LogQueryHistory_LogQueryHistoryCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *LogQueryHistoryCommon) AsObject() client.Object {
+func (ul *LogQueryHistoryCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *LogQueryHistoryCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1843,7 +2380,16 @@ func (r *LogQueryHistoryCommon) AsObject() client.Object {
 }
 
 func (u *LogQueryHistoryCommon) Data() *LogQueryHistoryCommon {
-	return Convert_LogQueryHistory_LogQueryHistoryCommon(u.object.(*orm.LogQueryHistory))
+	if u.data != nil {
+		return u.data.(*LogQueryHistoryCommon)
+	}
+	tmp := Convert_LogQueryHistory_LogQueryHistoryCommon(u.object.(*orm.LogQueryHistory))
+	u.data = tmp
+	return tmp
+}
+
+func (u *LogQueryHistoryCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_LogQueryHistoryCommon_LogQueryHistory(f *LogQueryHistoryCommon) *orm.LogQueryHistory {
@@ -1852,15 +2398,15 @@ func Convert_LogQueryHistoryCommon_LogQueryHistory(f *LogQueryHistoryCommon) *or
 		return nil
 	}
 	f.object = r
-	r.FilterJSON = f.FilterJSON
-	r.LogQL = f.LogQL
-	r.Creator = Convert_UserCommon_User(f.Creator)
-	r.ID = f.ID
 	r.Cluster = Convert_ClusterCommon_Cluster(f.Cluster)
 	r.ClusterID = f.ClusterID
-	r.LabelJSON = f.LabelJSON
 	r.CreateAt = f.CreateAt
+	r.Creator = Convert_UserCommon_User(f.Creator)
 	r.CreatorID = f.CreatorID
+	r.FilterJSON = f.FilterJSON
+	r.ID = f.ID
+	r.LabelJSON = f.LabelJSON
+	r.LogQL = f.LogQL
 	return r
 }
 func Convert_LogQueryHistory_LogQueryHistoryCommon(f *orm.LogQueryHistory) *LogQueryHistoryCommon {
@@ -1868,18 +2414,18 @@ func Convert_LogQueryHistory_LogQueryHistoryCommon(f *orm.LogQueryHistory) *LogQ
 		return nil
 	}
 	var r LogQueryHistoryCommon
-	r.ID = f.ID
 	r.Cluster = Convert_Cluster_ClusterCommon(f.Cluster)
 	r.ClusterID = f.ClusterID
-	r.LabelJSON = f.LabelJSON
 	r.CreateAt = f.CreateAt
+	r.Creator = Convert_User_UserCommon(f.Creator)
 	r.CreatorID = f.CreatorID
 	r.FilterJSON = f.FilterJSON
+	r.ID = f.ID
+	r.LabelJSON = f.LabelJSON
 	r.LogQL = f.LogQL
-	r.Creator = Convert_User_UserCommon(f.Creator)
 	return &r
 }
-func Convert_LogQueryHistoryCommon_LogQueryHistory_arr(arr []*LogQueryHistoryCommon) []*orm.LogQueryHistory {
+func Convert_LogQueryHistoryCommon_LogQueryHistory_slice(arr []*LogQueryHistoryCommon) []*orm.LogQueryHistory {
 	r := []*orm.LogQueryHistory{}
 	for _, u := range arr {
 		r = append(r, Convert_LogQueryHistoryCommon_LogQueryHistory(u))
@@ -1887,7 +2433,7 @@ func Convert_LogQueryHistoryCommon_LogQueryHistory_arr(arr []*LogQueryHistoryCom
 	return r
 }
 
-func Convert_LogQueryHistory_LogQueryHistoryCommon_arr(arr []*orm.LogQueryHistory) []*LogQueryHistoryCommon {
+func Convert_LogQueryHistory_LogQueryHistoryCommon_slice(arr []*orm.LogQueryHistory) []*LogQueryHistoryCommon {
 	r := []*LogQueryHistoryCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_LogQueryHistory_LogQueryHistoryCommon(u))
@@ -1900,17 +2446,29 @@ type EnvironmentUserRelCommonList struct {
 	Items []*EnvironmentUserRelCommon
 }
 
-func (ul *EnvironmentUserRelCommonList) AsListObject() client.ObjectListIfe {
+func (ul *EnvironmentUserRelCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.EnvironmentUserRelList{}
 	return ul.objectlist
 }
 
-func (ul *EnvironmentUserRelCommonList) AsListData() []*EnvironmentUserRelCommon {
+func (ul *EnvironmentUserRelCommonList) Data() []*EnvironmentUserRelCommon {
+	if ul.data != nil {
+		return ul.data.([]*EnvironmentUserRelCommon)
+	}
 	us := ul.objectlist.(*orm.EnvironmentUserRelList)
-	return Convert_EnvironmentUserRel_EnvironmentUserRelCommon_arr(us.Items)
+	tmp := Convert_EnvironmentUserRel_EnvironmentUserRelCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *EnvironmentUserRelCommon) AsObject() client.Object {
+func (ul *EnvironmentUserRelCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *EnvironmentUserRelCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1920,7 +2478,16 @@ func (r *EnvironmentUserRelCommon) AsObject() client.Object {
 }
 
 func (u *EnvironmentUserRelCommon) Data() *EnvironmentUserRelCommon {
-	return Convert_EnvironmentUserRel_EnvironmentUserRelCommon(u.object.(*orm.EnvironmentUserRel))
+	if u.data != nil {
+		return u.data.(*EnvironmentUserRelCommon)
+	}
+	tmp := Convert_EnvironmentUserRel_EnvironmentUserRelCommon(u.object.(*orm.EnvironmentUserRel))
+	u.data = tmp
+	return tmp
+}
+
+func (u *EnvironmentUserRelCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_EnvironmentUserRelCommon_EnvironmentUserRel(f *EnvironmentUserRelCommon) *orm.EnvironmentUserRel {
@@ -1930,11 +2497,11 @@ func Convert_EnvironmentUserRelCommon_EnvironmentUserRel(f *EnvironmentUserRelCo
 	}
 	f.object = r
 	r.Environment = Convert_EnvironmentCommon_Environment(f.Environment)
-	r.UserID = f.UserID
 	r.EnvironmentID = f.EnvironmentID
-	r.Role = f.Role
 	r.ID = f.ID
+	r.Role = f.Role
 	r.User = Convert_UserCommon_User(f.User)
+	r.UserID = f.UserID
 	return r
 }
 func Convert_EnvironmentUserRel_EnvironmentUserRelCommon(f *orm.EnvironmentUserRel) *EnvironmentUserRelCommon {
@@ -1942,15 +2509,15 @@ func Convert_EnvironmentUserRel_EnvironmentUserRelCommon(f *orm.EnvironmentUserR
 		return nil
 	}
 	var r EnvironmentUserRelCommon
-	r.User = Convert_User_UserCommon(f.User)
 	r.Environment = Convert_Environment_EnvironmentCommon(f.Environment)
-	r.UserID = f.UserID
 	r.EnvironmentID = f.EnvironmentID
-	r.Role = f.Role
 	r.ID = f.ID
+	r.Role = f.Role
+	r.User = Convert_User_UserCommon(f.User)
+	r.UserID = f.UserID
 	return &r
 }
-func Convert_EnvironmentUserRelCommon_EnvironmentUserRel_arr(arr []*EnvironmentUserRelCommon) []*orm.EnvironmentUserRel {
+func Convert_EnvironmentUserRelCommon_EnvironmentUserRel_slice(arr []*EnvironmentUserRelCommon) []*orm.EnvironmentUserRel {
 	r := []*orm.EnvironmentUserRel{}
 	for _, u := range arr {
 		r = append(r, Convert_EnvironmentUserRelCommon_EnvironmentUserRel(u))
@@ -1958,7 +2525,7 @@ func Convert_EnvironmentUserRelCommon_EnvironmentUserRel_arr(arr []*EnvironmentU
 	return r
 }
 
-func Convert_EnvironmentUserRel_EnvironmentUserRelCommon_arr(arr []*orm.EnvironmentUserRel) []*EnvironmentUserRelCommon {
+func Convert_EnvironmentUserRel_EnvironmentUserRelCommon_slice(arr []*orm.EnvironmentUserRel) []*EnvironmentUserRelCommon {
 	r := []*EnvironmentUserRelCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_EnvironmentUserRel_EnvironmentUserRelCommon(u))
@@ -1971,17 +2538,29 @@ type EnvironmentResourceCommonList struct {
 	Items []*EnvironmentResourceCommon
 }
 
-func (ul *EnvironmentResourceCommonList) AsListObject() client.ObjectListIfe {
+func (ul *EnvironmentResourceCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.EnvironmentResourceList{}
 	return ul.objectlist
 }
 
-func (ul *EnvironmentResourceCommonList) AsListData() []*EnvironmentResourceCommon {
+func (ul *EnvironmentResourceCommonList) Data() []*EnvironmentResourceCommon {
+	if ul.data != nil {
+		return ul.data.([]*EnvironmentResourceCommon)
+	}
 	us := ul.objectlist.(*orm.EnvironmentResourceList)
-	return Convert_EnvironmentResource_EnvironmentResourceCommon_arr(us.Items)
+	tmp := Convert_EnvironmentResource_EnvironmentResourceCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *EnvironmentResourceCommon) AsObject() client.Object {
+func (ul *EnvironmentResourceCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *EnvironmentResourceCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -1991,7 +2570,16 @@ func (r *EnvironmentResourceCommon) AsObject() client.Object {
 }
 
 func (u *EnvironmentResourceCommon) Data() *EnvironmentResourceCommon {
-	return Convert_EnvironmentResource_EnvironmentResourceCommon(u.object.(*orm.EnvironmentResource))
+	if u.data != nil {
+		return u.data.(*EnvironmentResourceCommon)
+	}
+	tmp := Convert_EnvironmentResource_EnvironmentResourceCommon(u.object.(*orm.EnvironmentResource))
+	u.data = tmp
+	return tmp
+}
+
+func (u *EnvironmentResourceCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_EnvironmentResourceCommon_EnvironmentResource(f *EnvironmentResourceCommon) *orm.EnvironmentResource {
@@ -2000,23 +2588,23 @@ func Convert_EnvironmentResourceCommon_EnvironmentResource(f *EnvironmentResourc
 		return nil
 	}
 	f.object = r
-	r.ProjectName = f.ProjectName
-	r.EnvironmentName = f.EnvironmentName
-	r.MaxCPUUsageCore = f.MaxCPUUsageCore
-	r.MinPVCUsageByte = f.MinPVCUsageByte
-	r.ClusterName = f.ClusterName
-	r.TenantName = f.TenantName
-	r.MinCPUUsageCore = f.MinCPUUsageCore
+	r.AvgCPUUsageCore = f.AvgCPUUsageCore
 	r.AvgMemoryUsageByte = f.AvgMemoryUsageByte
+	r.AvgPVCUsageByte = f.AvgPVCUsageByte
+	r.ClusterName = f.ClusterName
+	r.CreatedAt = f.CreatedAt
+	r.EnvironmentName = f.EnvironmentName
+	r.ID = f.ID
+	r.MaxCPUUsageCore = f.MaxCPUUsageCore
+	r.MaxMemoryUsageByte = f.MaxMemoryUsageByte
+	r.MaxPVCUsageByte = f.MaxPVCUsageByte
+	r.MinCPUUsageCore = f.MinCPUUsageCore
+	r.MinMemoryUsageByte = f.MinMemoryUsageByte
+	r.MinPVCUsageByte = f.MinPVCUsageByte
 	r.NetworkReceiveByte = f.NetworkReceiveByte
 	r.NetworkSendByte = f.NetworkSendByte
-	r.AvgPVCUsageByte = f.AvgPVCUsageByte
-	r.ID = f.ID
-	r.CreatedAt = f.CreatedAt
-	r.MaxMemoryUsageByte = f.MaxMemoryUsageByte
-	r.AvgCPUUsageCore = f.AvgCPUUsageCore
-	r.MinMemoryUsageByte = f.MinMemoryUsageByte
-	r.MaxPVCUsageByte = f.MaxPVCUsageByte
+	r.ProjectName = f.ProjectName
+	r.TenantName = f.TenantName
 	return r
 }
 func Convert_EnvironmentResource_EnvironmentResourceCommon(f *orm.EnvironmentResource) *EnvironmentResourceCommon {
@@ -2025,25 +2613,25 @@ func Convert_EnvironmentResource_EnvironmentResourceCommon(f *orm.EnvironmentRes
 	}
 	var r EnvironmentResourceCommon
 	r.AvgCPUUsageCore = f.AvgCPUUsageCore
+	r.AvgMemoryUsageByte = f.AvgMemoryUsageByte
+	r.AvgPVCUsageByte = f.AvgPVCUsageByte
+	r.ClusterName = f.ClusterName
+	r.CreatedAt = f.CreatedAt
+	r.EnvironmentName = f.EnvironmentName
+	r.ID = f.ID
+	r.MaxCPUUsageCore = f.MaxCPUUsageCore
+	r.MaxMemoryUsageByte = f.MaxMemoryUsageByte
+	r.MaxPVCUsageByte = f.MaxPVCUsageByte
+	r.MinCPUUsageCore = f.MinCPUUsageCore
+	r.MinMemoryUsageByte = f.MinMemoryUsageByte
+	r.MinPVCUsageByte = f.MinPVCUsageByte
 	r.NetworkReceiveByte = f.NetworkReceiveByte
 	r.NetworkSendByte = f.NetworkSendByte
-	r.AvgPVCUsageByte = f.AvgPVCUsageByte
-	r.ID = f.ID
-	r.CreatedAt = f.CreatedAt
-	r.MaxMemoryUsageByte = f.MaxMemoryUsageByte
-	r.MinMemoryUsageByte = f.MinMemoryUsageByte
-	r.MaxPVCUsageByte = f.MaxPVCUsageByte
 	r.ProjectName = f.ProjectName
-	r.EnvironmentName = f.EnvironmentName
-	r.MaxCPUUsageCore = f.MaxCPUUsageCore
-	r.AvgMemoryUsageByte = f.AvgMemoryUsageByte
-	r.MinPVCUsageByte = f.MinPVCUsageByte
-	r.ClusterName = f.ClusterName
 	r.TenantName = f.TenantName
-	r.MinCPUUsageCore = f.MinCPUUsageCore
 	return &r
 }
-func Convert_EnvironmentResourceCommon_EnvironmentResource_arr(arr []*EnvironmentResourceCommon) []*orm.EnvironmentResource {
+func Convert_EnvironmentResourceCommon_EnvironmentResource_slice(arr []*EnvironmentResourceCommon) []*orm.EnvironmentResource {
 	r := []*orm.EnvironmentResource{}
 	for _, u := range arr {
 		r = append(r, Convert_EnvironmentResourceCommon_EnvironmentResource(u))
@@ -2051,7 +2639,7 @@ func Convert_EnvironmentResourceCommon_EnvironmentResource_arr(arr []*Environmen
 	return r
 }
 
-func Convert_EnvironmentResource_EnvironmentResourceCommon_arr(arr []*orm.EnvironmentResource) []*EnvironmentResourceCommon {
+func Convert_EnvironmentResource_EnvironmentResourceCommon_slice(arr []*orm.EnvironmentResource) []*EnvironmentResourceCommon {
 	r := []*EnvironmentResourceCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_EnvironmentResource_EnvironmentResourceCommon(u))
@@ -2064,17 +2652,29 @@ type EnvironmentDetailList struct {
 	Items []*EnvironmentDetail
 }
 
-func (ul *EnvironmentDetailList) AsListObject() client.ObjectListIfe {
+func (ul *EnvironmentDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.EnvironmentList{}
 	return ul.objectlist
 }
 
-func (ul *EnvironmentDetailList) AsListData() []*EnvironmentDetail {
+func (ul *EnvironmentDetailList) Data() []*EnvironmentDetail {
+	if ul.data != nil {
+		return ul.data.([]*EnvironmentDetail)
+	}
 	us := ul.objectlist.(*orm.EnvironmentList)
-	return Convert_Environment_EnvironmentDetail_arr(us.Items)
+	tmp := Convert_Environment_EnvironmentDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *EnvironmentDetail) AsObject() client.Object {
+func (ul *EnvironmentDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *EnvironmentDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2084,7 +2684,16 @@ func (r *EnvironmentDetail) AsObject() client.Object {
 }
 
 func (u *EnvironmentDetail) Data() *EnvironmentDetail {
-	return Convert_Environment_EnvironmentDetail(u.object.(*orm.Environment))
+	if u.data != nil {
+		return u.data.(*EnvironmentDetail)
+	}
+	tmp := Convert_Environment_EnvironmentDetail(u.object.(*orm.Environment))
+	u.data = tmp
+	return tmp
+}
+
+func (u *EnvironmentDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_EnvironmentDetail_Environment(f *EnvironmentDetail) *orm.Environment {
@@ -2093,24 +2702,24 @@ func Convert_EnvironmentDetail_Environment(f *EnvironmentDetail) *orm.Environmen
 		return nil
 	}
 	f.object = r
-	r.DeletePolicy = f.DeletePolicy
-	r.ClusterID = f.ClusterID
-	r.VirtualSpaceID = f.VirtualSpaceID
-	r.CreatorID = f.CreatorID
-	r.VirtualSpace = Convert_VirtualSpaceCommon_VirtualSpace(f.VirtualSpace)
-	r.EnvironmentName = f.EnvironmentName
-	r.Remark = f.Remark
+	r.Applications = Convert_ApplicationCommon_Application_slice(f.Applications)
 	r.Cluster = Convert_ClusterCommon_Cluster(f.Cluster)
-	r.Project = Convert_ProjectCommon_Project(f.Project)
-	r.Namespace = f.Namespace
-	r.MetaType = f.MetaType
-	r.LimitRange = f.LimitRange
-	r.ProjectID = f.ProjectID
-	r.Users = Convert_UserCommon_User_arr(f.Users)
-	r.ID = f.ID
+	r.ClusterID = f.ClusterID
 	r.Creator = Convert_UserCommon_User(f.Creator)
+	r.CreatorID = f.CreatorID
+	r.DeletePolicy = f.DeletePolicy
+	r.EnvironmentName = f.EnvironmentName
+	r.ID = f.ID
+	r.LimitRange = f.LimitRange
+	r.MetaType = f.MetaType
+	r.Namespace = f.Namespace
+	r.Project = Convert_ProjectCommon_Project(f.Project)
+	r.ProjectID = f.ProjectID
+	r.Remark = f.Remark
 	r.ResourceQuota = f.ResourceQuota
-	r.Applications = Convert_ApplicationCommon_Application_arr(f.Applications)
+	r.Users = Convert_UserCommon_User_slice(f.Users)
+	r.VirtualSpace = Convert_VirtualSpaceCommon_VirtualSpace(f.VirtualSpace)
+	r.VirtualSpaceID = f.VirtualSpaceID
 	return r
 }
 func Convert_Environment_EnvironmentDetail(f *orm.Environment) *EnvironmentDetail {
@@ -2118,27 +2727,27 @@ func Convert_Environment_EnvironmentDetail(f *orm.Environment) *EnvironmentDetai
 		return nil
 	}
 	var r EnvironmentDetail
-	r.Users = Convert_User_UserCommon_arr(f.Users)
-	r.ID = f.ID
-	r.Creator = Convert_User_UserCommon(f.Creator)
-	r.ResourceQuota = f.ResourceQuota
-	r.Applications = Convert_Application_ApplicationCommon_arr(f.Applications)
-	r.DeletePolicy = f.DeletePolicy
-	r.ClusterID = f.ClusterID
-	r.VirtualSpaceID = f.VirtualSpaceID
-	r.CreatorID = f.CreatorID
-	r.VirtualSpace = Convert_VirtualSpace_VirtualSpaceCommon(f.VirtualSpace)
-	r.EnvironmentName = f.EnvironmentName
-	r.Remark = f.Remark
+	r.Applications = Convert_Application_ApplicationCommon_slice(f.Applications)
 	r.Cluster = Convert_Cluster_ClusterCommon(f.Cluster)
-	r.Project = Convert_Project_ProjectCommon(f.Project)
-	r.Namespace = f.Namespace
-	r.MetaType = f.MetaType
+	r.ClusterID = f.ClusterID
+	r.Creator = Convert_User_UserCommon(f.Creator)
+	r.CreatorID = f.CreatorID
+	r.DeletePolicy = f.DeletePolicy
+	r.EnvironmentName = f.EnvironmentName
+	r.ID = f.ID
 	r.LimitRange = f.LimitRange
+	r.MetaType = f.MetaType
+	r.Namespace = f.Namespace
+	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
+	r.Remark = f.Remark
+	r.ResourceQuota = f.ResourceQuota
+	r.Users = Convert_User_UserCommon_slice(f.Users)
+	r.VirtualSpace = Convert_VirtualSpace_VirtualSpaceCommon(f.VirtualSpace)
+	r.VirtualSpaceID = f.VirtualSpaceID
 	return &r
 }
-func Convert_EnvironmentDetail_Environment_arr(arr []*EnvironmentDetail) []*orm.Environment {
+func Convert_EnvironmentDetail_Environment_slice(arr []*EnvironmentDetail) []*orm.Environment {
 	r := []*orm.Environment{}
 	for _, u := range arr {
 		r = append(r, Convert_EnvironmentDetail_Environment(u))
@@ -2146,7 +2755,7 @@ func Convert_EnvironmentDetail_Environment_arr(arr []*EnvironmentDetail) []*orm.
 	return r
 }
 
-func Convert_Environment_EnvironmentDetail_arr(arr []*orm.Environment) []*EnvironmentDetail {
+func Convert_Environment_EnvironmentDetail_slice(arr []*orm.Environment) []*EnvironmentDetail {
 	r := []*EnvironmentDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_Environment_EnvironmentDetail(u))
@@ -2159,17 +2768,29 @@ type EnvironmentCommonList struct {
 	Items []*EnvironmentCommon
 }
 
-func (ul *EnvironmentCommonList) AsListObject() client.ObjectListIfe {
+func (ul *EnvironmentCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.EnvironmentList{}
 	return ul.objectlist
 }
 
-func (ul *EnvironmentCommonList) AsListData() []*EnvironmentCommon {
+func (ul *EnvironmentCommonList) Data() []*EnvironmentCommon {
+	if ul.data != nil {
+		return ul.data.([]*EnvironmentCommon)
+	}
 	us := ul.objectlist.(*orm.EnvironmentList)
-	return Convert_Environment_EnvironmentCommon_arr(us.Items)
+	tmp := Convert_Environment_EnvironmentCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *EnvironmentCommon) AsObject() client.Object {
+func (ul *EnvironmentCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *EnvironmentCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2179,7 +2800,16 @@ func (r *EnvironmentCommon) AsObject() client.Object {
 }
 
 func (u *EnvironmentCommon) Data() *EnvironmentCommon {
-	return Convert_Environment_EnvironmentCommon(u.object.(*orm.Environment))
+	if u.data != nil {
+		return u.data.(*EnvironmentCommon)
+	}
+	tmp := Convert_Environment_EnvironmentCommon(u.object.(*orm.Environment))
+	u.data = tmp
+	return tmp
+}
+
+func (u *EnvironmentCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_EnvironmentCommon_Environment(f *EnvironmentCommon) *orm.Environment {
@@ -2188,12 +2818,12 @@ func Convert_EnvironmentCommon_Environment(f *EnvironmentCommon) *orm.Environmen
 		return nil
 	}
 	f.object = r
+	r.DeletePolicy = f.DeletePolicy
+	r.EnvironmentName = f.EnvironmentName
+	r.ID = f.ID
+	r.MetaType = f.MetaType
 	r.Namespace = f.Namespace
 	r.Remark = f.Remark
-	r.MetaType = f.MetaType
-	r.DeletePolicy = f.DeletePolicy
-	r.ID = f.ID
-	r.EnvironmentName = f.EnvironmentName
 	return r
 }
 func Convert_Environment_EnvironmentCommon(f *orm.Environment) *EnvironmentCommon {
@@ -2201,15 +2831,15 @@ func Convert_Environment_EnvironmentCommon(f *orm.Environment) *EnvironmentCommo
 		return nil
 	}
 	var r EnvironmentCommon
-	r.MetaType = f.MetaType
 	r.DeletePolicy = f.DeletePolicy
-	r.ID = f.ID
 	r.EnvironmentName = f.EnvironmentName
+	r.ID = f.ID
+	r.MetaType = f.MetaType
 	r.Namespace = f.Namespace
 	r.Remark = f.Remark
 	return &r
 }
-func Convert_EnvironmentCommon_Environment_arr(arr []*EnvironmentCommon) []*orm.Environment {
+func Convert_EnvironmentCommon_Environment_slice(arr []*EnvironmentCommon) []*orm.Environment {
 	r := []*orm.Environment{}
 	for _, u := range arr {
 		r = append(r, Convert_EnvironmentCommon_Environment(u))
@@ -2217,7 +2847,7 @@ func Convert_EnvironmentCommon_Environment_arr(arr []*EnvironmentCommon) []*orm.
 	return r
 }
 
-func Convert_Environment_EnvironmentCommon_arr(arr []*orm.Environment) []*EnvironmentCommon {
+func Convert_Environment_EnvironmentCommon_slice(arr []*orm.Environment) []*EnvironmentCommon {
 	r := []*EnvironmentCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Environment_EnvironmentCommon(u))
@@ -2230,17 +2860,29 @@ type ContainerCommonList struct {
 	Items []*ContainerCommon
 }
 
-func (ul *ContainerCommonList) AsListObject() client.ObjectListIfe {
+func (ul *ContainerCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ContainerList{}
 	return ul.objectlist
 }
 
-func (ul *ContainerCommonList) AsListData() []*ContainerCommon {
+func (ul *ContainerCommonList) Data() []*ContainerCommon {
+	if ul.data != nil {
+		return ul.data.([]*ContainerCommon)
+	}
 	us := ul.objectlist.(*orm.ContainerList)
-	return Convert_Container_ContainerCommon_arr(us.Items)
+	tmp := Convert_Container_ContainerCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ContainerCommon) AsObject() client.Object {
+func (ul *ContainerCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ContainerCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2250,7 +2892,16 @@ func (r *ContainerCommon) AsObject() client.Object {
 }
 
 func (u *ContainerCommon) Data() *ContainerCommon {
-	return Convert_Container_ContainerCommon(u.object.(*orm.Container))
+	if u.data != nil {
+		return u.data.(*ContainerCommon)
+	}
+	tmp := Convert_Container_ContainerCommon(u.object.(*orm.Container))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ContainerCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ContainerCommon_Container(f *ContainerCommon) *orm.Container {
@@ -2259,17 +2910,17 @@ func Convert_ContainerCommon_Container(f *ContainerCommon) *orm.Container {
 		return nil
 	}
 	f.object = r
-	r.PodName = f.PodName
 	r.CPULimitCore = f.CPULimitCore
-	r.MemoryLimitBytes = f.MemoryLimitBytes
 	r.CPUPercent = f.CPUPercent
-	r.MemoryUsageBytes = f.MemoryUsageBytes
-	r.MemoryPercent = f.MemoryPercent
-	r.ID = f.ID
-	r.Name = f.Name
-	r.WorkloadID = f.WorkloadID
 	r.CPUUsageCore = f.CPUUsageCore
+	r.ID = f.ID
+	r.MemoryLimitBytes = f.MemoryLimitBytes
+	r.MemoryPercent = f.MemoryPercent
+	r.MemoryUsageBytes = f.MemoryUsageBytes
+	r.Name = f.Name
+	r.PodName = f.PodName
 	r.Workload = Convert_WorkloadCommon_Workload(f.Workload)
+	r.WorkloadID = f.WorkloadID
 	return r
 }
 func Convert_Container_ContainerCommon(f *orm.Container) *ContainerCommon {
@@ -2277,20 +2928,20 @@ func Convert_Container_ContainerCommon(f *orm.Container) *ContainerCommon {
 		return nil
 	}
 	var r ContainerCommon
-	r.CPUUsageCore = f.CPUUsageCore
-	r.Workload = Convert_Workload_WorkloadCommon(f.Workload)
+	r.CPULimitCore = f.CPULimitCore
 	r.CPUPercent = f.CPUPercent
-	r.MemoryUsageBytes = f.MemoryUsageBytes
-	r.MemoryPercent = f.MemoryPercent
+	r.CPUUsageCore = f.CPUUsageCore
 	r.ID = f.ID
+	r.MemoryLimitBytes = f.MemoryLimitBytes
+	r.MemoryPercent = f.MemoryPercent
+	r.MemoryUsageBytes = f.MemoryUsageBytes
 	r.Name = f.Name
 	r.PodName = f.PodName
-	r.CPULimitCore = f.CPULimitCore
-	r.MemoryLimitBytes = f.MemoryLimitBytes
+	r.Workload = Convert_Workload_WorkloadCommon(f.Workload)
 	r.WorkloadID = f.WorkloadID
 	return &r
 }
-func Convert_ContainerCommon_Container_arr(arr []*ContainerCommon) []*orm.Container {
+func Convert_ContainerCommon_Container_slice(arr []*ContainerCommon) []*orm.Container {
 	r := []*orm.Container{}
 	for _, u := range arr {
 		r = append(r, Convert_ContainerCommon_Container(u))
@@ -2298,7 +2949,7 @@ func Convert_ContainerCommon_Container_arr(arr []*ContainerCommon) []*orm.Contai
 	return r
 }
 
-func Convert_Container_ContainerCommon_arr(arr []*orm.Container) []*ContainerCommon {
+func Convert_Container_ContainerCommon_slice(arr []*orm.Container) []*ContainerCommon {
 	r := []*ContainerCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Container_ContainerCommon(u))
@@ -2311,17 +2962,29 @@ type ClusterDetailList struct {
 	Items []*ClusterDetail
 }
 
-func (ul *ClusterDetailList) AsListObject() client.ObjectListIfe {
+func (ul *ClusterDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ClusterList{}
 	return ul.objectlist
 }
 
-func (ul *ClusterDetailList) AsListData() []*ClusterDetail {
+func (ul *ClusterDetailList) Data() []*ClusterDetail {
+	if ul.data != nil {
+		return ul.data.([]*ClusterDetail)
+	}
 	us := ul.objectlist.(*orm.ClusterList)
-	return Convert_Cluster_ClusterDetail_arr(us.Items)
+	tmp := Convert_Cluster_ClusterDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ClusterDetail) AsObject() client.Object {
+func (ul *ClusterDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ClusterDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2331,7 +2994,16 @@ func (r *ClusterDetail) AsObject() client.Object {
 }
 
 func (u *ClusterDetail) Data() *ClusterDetail {
-	return Convert_Cluster_ClusterDetail(u.object.(*orm.Cluster))
+	if u.data != nil {
+		return u.data.(*ClusterDetail)
+	}
+	tmp := Convert_Cluster_ClusterDetail(u.object.(*orm.Cluster))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ClusterDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ClusterDetail_Cluster(f *ClusterDetail) *orm.Cluster {
@@ -2340,21 +3012,21 @@ func Convert_ClusterDetail_Cluster(f *ClusterDetail) *orm.Cluster {
 		return nil
 	}
 	f.object = r
-	r.ID = f.ID
-	r.Mode = f.Mode
-	r.Environments = Convert_EnvironmentCommon_Environment_arr(f.Environments)
-	r.Primary = f.Primary
 	r.APIServer = f.APIServer
 	r.AgentAddr = f.AgentAddr
+	r.AgentCA = f.AgentCA
 	r.AgentCert = f.AgentCert
 	r.AgentKey = f.AgentKey
-	r.Runtime = f.Runtime
-	r.OversoldConfig = f.OversoldConfig
-	r.ClusterResourceQuota = f.ClusterResourceQuota
 	r.ClusterName = f.ClusterName
+	r.ClusterResourceQuota = f.ClusterResourceQuota
+	r.Environments = Convert_EnvironmentCommon_Environment_slice(f.Environments)
+	r.ID = f.ID
 	r.KubeConfig = f.KubeConfig
+	r.Mode = f.Mode
+	r.OversoldConfig = f.OversoldConfig
+	r.Primary = f.Primary
+	r.Runtime = f.Runtime
 	r.Version = f.Version
-	r.AgentCA = f.AgentCA
 	return r
 }
 func Convert_Cluster_ClusterDetail(f *orm.Cluster) *ClusterDetail {
@@ -2364,22 +3036,22 @@ func Convert_Cluster_ClusterDetail(f *orm.Cluster) *ClusterDetail {
 	var r ClusterDetail
 	r.APIServer = f.APIServer
 	r.AgentAddr = f.AgentAddr
-	r.AgentCert = f.AgentCert
-	r.OversoldConfig = f.OversoldConfig
-	r.ClusterResourceQuota = f.ClusterResourceQuota
-	r.ClusterName = f.ClusterName
-	r.KubeConfig = f.KubeConfig
-	r.Version = f.Version
 	r.AgentCA = f.AgentCA
+	r.AgentCert = f.AgentCert
 	r.AgentKey = f.AgentKey
-	r.Runtime = f.Runtime
+	r.ClusterName = f.ClusterName
+	r.ClusterResourceQuota = f.ClusterResourceQuota
+	r.Environments = Convert_Environment_EnvironmentCommon_slice(f.Environments)
 	r.ID = f.ID
+	r.KubeConfig = f.KubeConfig
 	r.Mode = f.Mode
-	r.Environments = Convert_Environment_EnvironmentCommon_arr(f.Environments)
+	r.OversoldConfig = f.OversoldConfig
 	r.Primary = f.Primary
+	r.Runtime = f.Runtime
+	r.Version = f.Version
 	return &r
 }
-func Convert_ClusterDetail_Cluster_arr(arr []*ClusterDetail) []*orm.Cluster {
+func Convert_ClusterDetail_Cluster_slice(arr []*ClusterDetail) []*orm.Cluster {
 	r := []*orm.Cluster{}
 	for _, u := range arr {
 		r = append(r, Convert_ClusterDetail_Cluster(u))
@@ -2387,7 +3059,7 @@ func Convert_ClusterDetail_Cluster_arr(arr []*ClusterDetail) []*orm.Cluster {
 	return r
 }
 
-func Convert_Cluster_ClusterDetail_arr(arr []*orm.Cluster) []*ClusterDetail {
+func Convert_Cluster_ClusterDetail_slice(arr []*orm.Cluster) []*ClusterDetail {
 	r := []*ClusterDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_Cluster_ClusterDetail(u))
@@ -2400,17 +3072,29 @@ type ClusterCommonList struct {
 	Items []*ClusterCommon
 }
 
-func (ul *ClusterCommonList) AsListObject() client.ObjectListIfe {
+func (ul *ClusterCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ClusterList{}
 	return ul.objectlist
 }
 
-func (ul *ClusterCommonList) AsListData() []*ClusterCommon {
+func (ul *ClusterCommonList) Data() []*ClusterCommon {
+	if ul.data != nil {
+		return ul.data.([]*ClusterCommon)
+	}
 	us := ul.objectlist.(*orm.ClusterList)
-	return Convert_Cluster_ClusterCommon_arr(us.Items)
+	tmp := Convert_Cluster_ClusterCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ClusterCommon) AsObject() client.Object {
+func (ul *ClusterCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ClusterCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2420,7 +3104,16 @@ func (r *ClusterCommon) AsObject() client.Object {
 }
 
 func (u *ClusterCommon) Data() *ClusterCommon {
-	return Convert_Cluster_ClusterCommon(u.object.(*orm.Cluster))
+	if u.data != nil {
+		return u.data.(*ClusterCommon)
+	}
+	tmp := Convert_Cluster_ClusterCommon(u.object.(*orm.Cluster))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ClusterCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ClusterCommon_Cluster(f *ClusterCommon) *orm.Cluster {
@@ -2429,12 +3122,12 @@ func Convert_ClusterCommon_Cluster(f *ClusterCommon) *orm.Cluster {
 		return nil
 	}
 	f.object = r
-	r.ID = f.ID
-	r.ClusterName = f.ClusterName
-	r.Primary = f.Primary
 	r.APIServer = f.APIServer
-	r.Version = f.Version
+	r.ClusterName = f.ClusterName
+	r.ID = f.ID
+	r.Primary = f.Primary
 	r.Runtime = f.Runtime
+	r.Version = f.Version
 	return r
 }
 func Convert_Cluster_ClusterCommon(f *orm.Cluster) *ClusterCommon {
@@ -2442,15 +3135,15 @@ func Convert_Cluster_ClusterCommon(f *orm.Cluster) *ClusterCommon {
 		return nil
 	}
 	var r ClusterCommon
-	r.ID = f.ID
-	r.ClusterName = f.ClusterName
-	r.Primary = f.Primary
 	r.APIServer = f.APIServer
-	r.Version = f.Version
+	r.ClusterName = f.ClusterName
+	r.ID = f.ID
+	r.Primary = f.Primary
 	r.Runtime = f.Runtime
+	r.Version = f.Version
 	return &r
 }
-func Convert_ClusterCommon_Cluster_arr(arr []*ClusterCommon) []*orm.Cluster {
+func Convert_ClusterCommon_Cluster_slice(arr []*ClusterCommon) []*orm.Cluster {
 	r := []*orm.Cluster{}
 	for _, u := range arr {
 		r = append(r, Convert_ClusterCommon_Cluster(u))
@@ -2458,7 +3151,7 @@ func Convert_ClusterCommon_Cluster_arr(arr []*ClusterCommon) []*orm.Cluster {
 	return r
 }
 
-func Convert_Cluster_ClusterCommon_arr(arr []*orm.Cluster) []*ClusterCommon {
+func Convert_Cluster_ClusterCommon_slice(arr []*orm.Cluster) []*ClusterCommon {
 	r := []*ClusterCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Cluster_ClusterCommon(u))
@@ -2471,17 +3164,29 @@ type ChartRepoCommonList struct {
 	Items []*ChartRepoCommon
 }
 
-func (ul *ChartRepoCommonList) AsListObject() client.ObjectListIfe {
+func (ul *ChartRepoCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ChartRepoList{}
 	return ul.objectlist
 }
 
-func (ul *ChartRepoCommonList) AsListData() []*ChartRepoCommon {
+func (ul *ChartRepoCommonList) Data() []*ChartRepoCommon {
+	if ul.data != nil {
+		return ul.data.([]*ChartRepoCommon)
+	}
 	us := ul.objectlist.(*orm.ChartRepoList)
-	return Convert_ChartRepo_ChartRepoCommon_arr(us.Items)
+	tmp := Convert_ChartRepo_ChartRepoCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ChartRepoCommon) AsObject() client.Object {
+func (ul *ChartRepoCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ChartRepoCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2491,7 +3196,16 @@ func (r *ChartRepoCommon) AsObject() client.Object {
 }
 
 func (u *ChartRepoCommon) Data() *ChartRepoCommon {
-	return Convert_ChartRepo_ChartRepoCommon(u.object.(*orm.ChartRepo))
+	if u.data != nil {
+		return u.data.(*ChartRepoCommon)
+	}
+	tmp := Convert_ChartRepo_ChartRepoCommon(u.object.(*orm.ChartRepo))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ChartRepoCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ChartRepoCommon_ChartRepo(f *ChartRepoCommon) *orm.ChartRepo {
@@ -2501,11 +3215,11 @@ func Convert_ChartRepoCommon_ChartRepo(f *ChartRepoCommon) *orm.ChartRepo {
 	}
 	f.object = r
 	r.ChartRepoName = f.ChartRepoName
-	r.URL = f.URL
-	r.LastSync = f.LastSync
-	r.SyncStatus = f.SyncStatus
-	r.SyncMessage = f.SyncMessage
 	r.ID = f.ID
+	r.LastSync = f.LastSync
+	r.SyncMessage = f.SyncMessage
+	r.SyncStatus = f.SyncStatus
+	r.URL = f.URL
 	return r
 }
 func Convert_ChartRepo_ChartRepoCommon(f *orm.ChartRepo) *ChartRepoCommon {
@@ -2513,15 +3227,15 @@ func Convert_ChartRepo_ChartRepoCommon(f *orm.ChartRepo) *ChartRepoCommon {
 		return nil
 	}
 	var r ChartRepoCommon
-	r.ID = f.ID
 	r.ChartRepoName = f.ChartRepoName
-	r.URL = f.URL
+	r.ID = f.ID
 	r.LastSync = f.LastSync
-	r.SyncStatus = f.SyncStatus
 	r.SyncMessage = f.SyncMessage
+	r.SyncStatus = f.SyncStatus
+	r.URL = f.URL
 	return &r
 }
-func Convert_ChartRepoCommon_ChartRepo_arr(arr []*ChartRepoCommon) []*orm.ChartRepo {
+func Convert_ChartRepoCommon_ChartRepo_slice(arr []*ChartRepoCommon) []*orm.ChartRepo {
 	r := []*orm.ChartRepo{}
 	for _, u := range arr {
 		r = append(r, Convert_ChartRepoCommon_ChartRepo(u))
@@ -2529,7 +3243,7 @@ func Convert_ChartRepoCommon_ChartRepo_arr(arr []*ChartRepoCommon) []*orm.ChartR
 	return r
 }
 
-func Convert_ChartRepo_ChartRepoCommon_arr(arr []*orm.ChartRepo) []*ChartRepoCommon {
+func Convert_ChartRepo_ChartRepoCommon_slice(arr []*orm.ChartRepo) []*ChartRepoCommon {
 	r := []*ChartRepoCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_ChartRepo_ChartRepoCommon(u))
@@ -2542,17 +3256,29 @@ type AuthSourceCommonList struct {
 	Items []*AuthSourceCommon
 }
 
-func (ul *AuthSourceCommonList) AsListObject() client.ObjectListIfe {
+func (ul *AuthSourceCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.AuthSourceList{}
 	return ul.objectlist
 }
 
-func (ul *AuthSourceCommonList) AsListData() []*AuthSourceCommon {
+func (ul *AuthSourceCommonList) Data() []*AuthSourceCommon {
+	if ul.data != nil {
+		return ul.data.([]*AuthSourceCommon)
+	}
 	us := ul.objectlist.(*orm.AuthSourceList)
-	return Convert_AuthSource_AuthSourceCommon_arr(us.Items)
+	tmp := Convert_AuthSource_AuthSourceCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *AuthSourceCommon) AsObject() client.Object {
+func (ul *AuthSourceCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *AuthSourceCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2562,7 +3288,16 @@ func (r *AuthSourceCommon) AsObject() client.Object {
 }
 
 func (u *AuthSourceCommon) Data() *AuthSourceCommon {
-	return Convert_AuthSource_AuthSourceCommon(u.object.(*orm.AuthSource))
+	if u.data != nil {
+		return u.data.(*AuthSourceCommon)
+	}
+	tmp := Convert_AuthSource_AuthSourceCommon(u.object.(*orm.AuthSource))
+	u.data = tmp
+	return tmp
+}
+
+func (u *AuthSourceCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_AuthSourceCommon_AuthSource(f *AuthSourceCommon) *orm.AuthSource {
@@ -2571,12 +3306,13 @@ func Convert_AuthSourceCommon_AuthSource(f *AuthSourceCommon) *orm.AuthSource {
 		return nil
 	}
 	f.object = r
-	r.ID = f.ID
-	r.Name = f.Name
-	r.Kind = f.Kind
 	r.Config = f.Config
-	r.Enabled = f.Enabled
 	r.CreatedAt = f.CreatedAt
+	r.Enabled = f.Enabled
+	r.ID = f.ID
+	r.Kind = f.Kind
+	r.Name = f.Name
+	r.TokenType = f.TokenType
 	r.UpdatedAt = f.UpdatedAt
 	return r
 }
@@ -2586,15 +3322,16 @@ func Convert_AuthSource_AuthSourceCommon(f *orm.AuthSource) *AuthSourceCommon {
 	}
 	var r AuthSourceCommon
 	r.Config = f.Config
-	r.Enabled = f.Enabled
 	r.CreatedAt = f.CreatedAt
-	r.UpdatedAt = f.UpdatedAt
+	r.Enabled = f.Enabled
 	r.ID = f.ID
-	r.Name = f.Name
 	r.Kind = f.Kind
+	r.Name = f.Name
+	r.TokenType = f.TokenType
+	r.UpdatedAt = f.UpdatedAt
 	return &r
 }
-func Convert_AuthSourceCommon_AuthSource_arr(arr []*AuthSourceCommon) []*orm.AuthSource {
+func Convert_AuthSourceCommon_AuthSource_slice(arr []*AuthSourceCommon) []*orm.AuthSource {
 	r := []*orm.AuthSource{}
 	for _, u := range arr {
 		r = append(r, Convert_AuthSourceCommon_AuthSource(u))
@@ -2602,7 +3339,7 @@ func Convert_AuthSourceCommon_AuthSource_arr(arr []*AuthSourceCommon) []*orm.Aut
 	return r
 }
 
-func Convert_AuthSource_AuthSourceCommon_arr(arr []*orm.AuthSource) []*AuthSourceCommon {
+func Convert_AuthSource_AuthSourceCommon_slice(arr []*orm.AuthSource) []*AuthSourceCommon {
 	r := []*AuthSourceCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_AuthSource_AuthSourceCommon(u))
@@ -2615,17 +3352,29 @@ type AuditLogCommonList struct {
 	Items []*AuditLogCommon
 }
 
-func (ul *AuditLogCommonList) AsListObject() client.ObjectListIfe {
+func (ul *AuditLogCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.AuditLogList{}
 	return ul.objectlist
 }
 
-func (ul *AuditLogCommonList) AsListData() []*AuditLogCommon {
+func (ul *AuditLogCommonList) Data() []*AuditLogCommon {
+	if ul.data != nil {
+		return ul.data.([]*AuditLogCommon)
+	}
 	us := ul.objectlist.(*orm.AuditLogList)
-	return Convert_AuditLog_AuditLogCommon_arr(us.Items)
+	tmp := Convert_AuditLog_AuditLogCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *AuditLogCommon) AsObject() client.Object {
+func (ul *AuditLogCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *AuditLogCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2635,7 +3384,16 @@ func (r *AuditLogCommon) AsObject() client.Object {
 }
 
 func (u *AuditLogCommon) Data() *AuditLogCommon {
-	return Convert_AuditLog_AuditLogCommon(u.object.(*orm.AuditLog))
+	if u.data != nil {
+		return u.data.(*AuditLogCommon)
+	}
+	tmp := Convert_AuditLog_AuditLogCommon(u.object.(*orm.AuditLog))
+	u.data = tmp
+	return tmp
+}
+
+func (u *AuditLogCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_AuditLogCommon_AuditLog(f *AuditLogCommon) *orm.AuditLog {
@@ -2644,19 +3402,19 @@ func Convert_AuditLogCommon_AuditLog(f *AuditLogCommon) *orm.AuditLog {
 		return nil
 	}
 	f.object = r
-	r.ID = f.ID
+	r.Action = f.Action
+	r.ClientIP = f.ClientIP
+	r.CreatedAt = f.CreatedAt
 	r.DeletedAt = f.DeletedAt
-	r.Username = f.Username
+	r.ID = f.ID
+	r.Labels = f.Labels
 	r.Module = f.Module
 	r.Name = f.Name
 	r.RawData = f.RawData
-	r.CreatedAt = f.CreatedAt
-	r.UpdatedAt = f.UpdatedAt
-	r.Tenant = f.Tenant
-	r.Action = f.Action
 	r.Success = f.Success
-	r.ClientIP = f.ClientIP
-	r.Labels = f.Labels
+	r.Tenant = f.Tenant
+	r.UpdatedAt = f.UpdatedAt
+	r.Username = f.Username
 	return r
 }
 func Convert_AuditLog_AuditLogCommon(f *orm.AuditLog) *AuditLogCommon {
@@ -2664,22 +3422,22 @@ func Convert_AuditLog_AuditLogCommon(f *orm.AuditLog) *AuditLogCommon {
 		return nil
 	}
 	var r AuditLogCommon
-	r.Username = f.Username
+	r.Action = f.Action
+	r.ClientIP = f.ClientIP
+	r.CreatedAt = f.CreatedAt
+	r.DeletedAt = f.DeletedAt
+	r.ID = f.ID
+	r.Labels = f.Labels
 	r.Module = f.Module
 	r.Name = f.Name
 	r.RawData = f.RawData
-	r.ID = f.ID
-	r.DeletedAt = f.DeletedAt
-	r.Tenant = f.Tenant
-	r.Action = f.Action
 	r.Success = f.Success
-	r.ClientIP = f.ClientIP
-	r.Labels = f.Labels
-	r.CreatedAt = f.CreatedAt
+	r.Tenant = f.Tenant
 	r.UpdatedAt = f.UpdatedAt
+	r.Username = f.Username
 	return &r
 }
-func Convert_AuditLogCommon_AuditLog_arr(arr []*AuditLogCommon) []*orm.AuditLog {
+func Convert_AuditLogCommon_AuditLog_slice(arr []*AuditLogCommon) []*orm.AuditLog {
 	r := []*orm.AuditLog{}
 	for _, u := range arr {
 		r = append(r, Convert_AuditLogCommon_AuditLog(u))
@@ -2687,7 +3445,7 @@ func Convert_AuditLogCommon_AuditLog_arr(arr []*AuditLogCommon) []*orm.AuditLog 
 	return r
 }
 
-func Convert_AuditLog_AuditLogCommon_arr(arr []*orm.AuditLog) []*AuditLogCommon {
+func Convert_AuditLog_AuditLogCommon_slice(arr []*orm.AuditLog) []*AuditLogCommon {
 	r := []*AuditLogCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_AuditLog_AuditLogCommon(u))
@@ -2700,17 +3458,29 @@ type ApplicationDetailList struct {
 	Items []*ApplicationDetail
 }
 
-func (ul *ApplicationDetailList) AsListObject() client.ObjectListIfe {
+func (ul *ApplicationDetailList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ApplicationList{}
 	return ul.objectlist
 }
 
-func (ul *ApplicationDetailList) AsListData() []*ApplicationDetail {
+func (ul *ApplicationDetailList) Data() []*ApplicationDetail {
+	if ul.data != nil {
+		return ul.data.([]*ApplicationDetail)
+	}
 	us := ul.objectlist.(*orm.ApplicationList)
-	return Convert_Application_ApplicationDetail_arr(us.Items)
+	tmp := Convert_Application_ApplicationDetail_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ApplicationDetail) AsObject() client.Object {
+func (ul *ApplicationDetailList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ApplicationDetail) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2720,7 +3490,16 @@ func (r *ApplicationDetail) AsObject() client.Object {
 }
 
 func (u *ApplicationDetail) Data() *ApplicationDetail {
-	return Convert_Application_ApplicationDetail(u.object.(*orm.Application))
+	if u.data != nil {
+		return u.data.(*ApplicationDetail)
+	}
+	tmp := Convert_Application_ApplicationDetail(u.object.(*orm.Application))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ApplicationDetail) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ApplicationDetail_Application(f *ApplicationDetail) *orm.Application {
@@ -2729,21 +3508,21 @@ func Convert_ApplicationDetail_Application(f *ApplicationDetail) *orm.Applicatio
 		return nil
 	}
 	f.object = r
-	r.Project = Convert_ProjectCommon_Project(f.Project)
-	r.Images = f.Images
-	r.ID = f.ID
-	r.Manifest = f.Manifest
-	r.Kind = f.Kind
-	r.Remark = f.Remark
-	r.Creator = f.Creator
 	r.ApplicationName = f.ApplicationName
 	r.CreatedAt = f.CreatedAt
-	r.EnvironmentID = f.EnvironmentID
+	r.Creator = f.Creator
 	r.Enabled = f.Enabled
-	r.Labels = f.Labels
-	r.UpdatedAt = f.UpdatedAt
 	r.Environment = Convert_EnvironmentCommon_Environment(f.Environment)
+	r.EnvironmentID = f.EnvironmentID
+	r.ID = f.ID
+	r.Images = f.Images
+	r.Kind = f.Kind
+	r.Labels = f.Labels
+	r.Manifest = f.Manifest
+	r.Project = Convert_ProjectCommon_Project(f.Project)
 	r.ProjectID = f.ProjectID
+	r.Remark = f.Remark
+	r.UpdatedAt = f.UpdatedAt
 	return r
 }
 func Convert_Application_ApplicationDetail(f *orm.Application) *ApplicationDetail {
@@ -2751,24 +3530,24 @@ func Convert_Application_ApplicationDetail(f *orm.Application) *ApplicationDetai
 		return nil
 	}
 	var r ApplicationDetail
-	r.ID = f.ID
-	r.Manifest = f.Manifest
-	r.Kind = f.Kind
-	r.Images = f.Images
 	r.ApplicationName = f.ApplicationName
 	r.CreatedAt = f.CreatedAt
-	r.EnvironmentID = f.EnvironmentID
-	r.Remark = f.Remark
 	r.Creator = f.Creator
-	r.UpdatedAt = f.UpdatedAt
-	r.Environment = Convert_Environment_EnvironmentCommon(f.Environment)
-	r.ProjectID = f.ProjectID
 	r.Enabled = f.Enabled
+	r.Environment = Convert_Environment_EnvironmentCommon(f.Environment)
+	r.EnvironmentID = f.EnvironmentID
+	r.ID = f.ID
+	r.Images = f.Images
+	r.Kind = f.Kind
 	r.Labels = f.Labels
+	r.Manifest = f.Manifest
 	r.Project = Convert_Project_ProjectCommon(f.Project)
+	r.ProjectID = f.ProjectID
+	r.Remark = f.Remark
+	r.UpdatedAt = f.UpdatedAt
 	return &r
 }
-func Convert_ApplicationDetail_Application_arr(arr []*ApplicationDetail) []*orm.Application {
+func Convert_ApplicationDetail_Application_slice(arr []*ApplicationDetail) []*orm.Application {
 	r := []*orm.Application{}
 	for _, u := range arr {
 		r = append(r, Convert_ApplicationDetail_Application(u))
@@ -2776,7 +3555,7 @@ func Convert_ApplicationDetail_Application_arr(arr []*ApplicationDetail) []*orm.
 	return r
 }
 
-func Convert_Application_ApplicationDetail_arr(arr []*orm.Application) []*ApplicationDetail {
+func Convert_Application_ApplicationDetail_slice(arr []*orm.Application) []*ApplicationDetail {
 	r := []*ApplicationDetail{}
 	for _, u := range arr {
 		r = append(r, Convert_Application_ApplicationDetail(u))
@@ -2789,17 +3568,29 @@ type ApplicationCommonList struct {
 	Items []*ApplicationCommon
 }
 
-func (ul *ApplicationCommonList) AsListObject() client.ObjectListIfe {
+func (ul *ApplicationCommonList) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.ApplicationList{}
 	return ul.objectlist
 }
 
-func (ul *ApplicationCommonList) AsListData() []*ApplicationCommon {
+func (ul *ApplicationCommonList) Data() []*ApplicationCommon {
+	if ul.data != nil {
+		return ul.data.([]*ApplicationCommon)
+	}
 	us := ul.objectlist.(*orm.ApplicationList)
-	return Convert_Application_ApplicationCommon_arr(us.Items)
+	tmp := Convert_Application_ApplicationCommon_slice(us.Items)
+	ul.data = tmp
+	return tmp
 }
 
-func (r *ApplicationCommon) AsObject() client.Object {
+func (ul *ApplicationCommonList) DataPtr() interface{} {
+	return ul.Data()
+}
+
+func (r *ApplicationCommon) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -2809,7 +3600,16 @@ func (r *ApplicationCommon) AsObject() client.Object {
 }
 
 func (u *ApplicationCommon) Data() *ApplicationCommon {
-	return Convert_Application_ApplicationCommon(u.object.(*orm.Application))
+	if u.data != nil {
+		return u.data.(*ApplicationCommon)
+	}
+	tmp := Convert_Application_ApplicationCommon(u.object.(*orm.Application))
+	u.data = tmp
+	return tmp
+}
+
+func (u *ApplicationCommon) DataPtr() interface{} {
+	return u.Data()
 }
 
 func Convert_ApplicationCommon_Application(f *ApplicationCommon) *orm.Application {
@@ -2818,9 +3618,9 @@ func Convert_ApplicationCommon_Application(f *ApplicationCommon) *orm.Applicatio
 		return nil
 	}
 	f.object = r
-	r.ID = f.ID
 	r.ApplicationName = f.ApplicationName
 	r.CreatedAt = f.CreatedAt
+	r.ID = f.ID
 	r.UpdatedAt = f.UpdatedAt
 	return r
 }
@@ -2829,13 +3629,13 @@ func Convert_Application_ApplicationCommon(f *orm.Application) *ApplicationCommo
 		return nil
 	}
 	var r ApplicationCommon
-	r.UpdatedAt = f.UpdatedAt
-	r.ID = f.ID
 	r.ApplicationName = f.ApplicationName
 	r.CreatedAt = f.CreatedAt
+	r.ID = f.ID
+	r.UpdatedAt = f.UpdatedAt
 	return &r
 }
-func Convert_ApplicationCommon_Application_arr(arr []*ApplicationCommon) []*orm.Application {
+func Convert_ApplicationCommon_Application_slice(arr []*ApplicationCommon) []*orm.Application {
 	r := []*orm.Application{}
 	for _, u := range arr {
 		r = append(r, Convert_ApplicationCommon_Application(u))
@@ -2843,7 +3643,7 @@ func Convert_ApplicationCommon_Application_arr(arr []*ApplicationCommon) []*orm.
 	return r
 }
 
-func Convert_Application_ApplicationCommon_arr(arr []*orm.Application) []*ApplicationCommon {
+func Convert_Application_ApplicationCommon_slice(arr []*orm.Application) []*ApplicationCommon {
 	r := []*ApplicationCommon{}
 	for _, u := range arr {
 		r = append(r, Convert_Application_ApplicationCommon(u))

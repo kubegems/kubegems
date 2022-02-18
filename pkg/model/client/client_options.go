@@ -2,9 +2,7 @@ package client
 
 type ConditionOperator string
 
-var (
-	Eq, Gt, Lt, Neq, Gte, Lte, In, Like ConditionOperator = "=", ">", "<", "<>", ">=", "<=", "in", "like"
-)
+var Eq, Gt, Lt, Neq, Gte, Lte, In, Like ConditionOperator = "=", ">", "<", "<>", ">=", "<=", "in", "like"
 
 type PageSizeOption struct {
 	page int64
@@ -34,6 +32,12 @@ func (w *WhereOption) Apply(q *Query) {
 func Where(field string, op ConditionOperator, value interface{}) *WhereOption {
 	return &WhereOption{
 		where: &Cond{Field: field, Op: op, Value: value},
+	}
+}
+
+func WhereEqual(field string, value interface{}) *WhereOption {
+	return &WhereOption{
+		where: &Cond{Field: field, Op: Eq, Value: value},
 	}
 }
 

@@ -167,20 +167,20 @@ import (
 
 		r = append(r, gen_FORM_LIST(k))
 		r = append(r, gen_FORM_LIST_FUNCS(k, v.Object))
-		r = append(r, gen_AsObject(k, v.Object))
+		r = append(r, gen_ToObject(k, v.Object))
 		r = append(r, gen_Data(k, v.Object))
 		r = append(r, gen_Convert_FORM_ORM(k, v.Object, v.Fields, orm.Fields, forms))
 		r = append(r, gen_Convert_ORM_FORM(k, v.Object, v.Fields, orm.Fields, forms))
-		r = append(r, gen_Convert_FORM_ORM_arr(k, v.Object, v.Fields, orm.Fields, forms))
-		r = append(r, gen_Convert_ORM_FORM_arr(k, v.Object, v.Fields, orm.Fields, forms))
+		r = append(r, gen_Convert_FORM_ORM_slice(k, v.Object, v.Fields, orm.Fields, forms))
+		r = append(r, gen_Convert_ORM_FORM_slice(k, v.Object, v.Fields, orm.Fields, forms))
 	}
 	code := strings.Join(r, "\n")
 	writeCode(code, "../forms/zz_generated.go")
 
 }
 
-func gen_AsObject(formtype, ormtype string) string {
-	tpl := `func (r *%s) AsObject() client.Object {
+func gen_ToObject(formtype, ormtype string) string {
+	tpl := `func (r *%s) Object() client.Object {
 	if r.object != nil {
 		return r.object
 	} else {
@@ -194,23 +194,34 @@ func gen_AsObject(formtype, ormtype string) string {
 }
 
 func gen_Data(formtype, ormtype string) string {
-	tpl := `func (u *%s) Data() *%s {
-	return Convert_%s_%s(u.object.(*orm.%s))
-}
+	tpl := `func (u *{{ .FormType }}) Data() *{{ .FormType }} {
+	if u.data != nil {
+		return u.data.(*{{ .FormType }})
+	}
+	tmp := Convert_{{ .OrmType }}_{{ .FormType }}(u.object.(*orm.{{ .OrmType }}))
+	u.data = tmp
+	return tmp
+	}
+
+	func (u *{{ .FormType }}) DataPtr() interface{} {
+		return u.Data()
+	}
 `
-	return fmt.Sprintf(tpl, formtype, formtype, ormtype, formtype, ormtype)
+	return Render(tpl, map[string]string{"FormType": formtype, "OrmType": ormtype})
 }
 
 func gen_Convert_FORM_ORM(formtype, ormtype string, fields, ofields map[string]string, forms map[string]TypeDefine) string {
 	fs := []string{}
-	for field, ftype := range fields {
+	sortedFields := sortedFields(fields)
+	for _, field := range sortedFields {
+		ftype := fields[field]
 		if _, exist := ofields[field]; !exist {
 			continue
 		}
 		rftype, isarr := getRealType((ftype))
 		if define, exist := forms[rftype]; exist {
 			if isarr {
-				fs = append(fs, fmt.Sprintf("r.%s = Convert_%s_%s_arr(f.%s)", field, rftype, define.Object, field))
+				fs = append(fs, fmt.Sprintf("r.%s = Convert_%s_%s_slice(f.%s)", field, rftype, define.Object, field))
 			} else {
 				fs = append(fs, fmt.Sprintf("r.%s = Convert_%s_%s(f.%s)", field, rftype, define.Object, field))
 			}
@@ -235,14 +246,16 @@ func gen_Convert_FORM_ORM(formtype, ormtype string, fields, ofields map[string]s
 
 func gen_Convert_ORM_FORM(formtype, ormtype string, fields, ofields map[string]string, forms map[string]TypeDefine) string {
 	fs := []string{}
-	for field, ftype := range fields {
+	sortedFields := sortedFields(fields)
+	for _, field := range sortedFields {
+		ftype := fields[field]
 		if _, exist := ofields[field]; !exist {
 			continue
 		}
 		rftype, isarr := getRealType((ftype))
 		if define, exist := forms[rftype]; exist {
 			if isarr {
-				fs = append(fs, fmt.Sprintf("r.%s = Convert_%s_%s_arr(f.%s)", field, define.Object, rftype, field))
+				fs = append(fs, fmt.Sprintf("r.%s = Convert_%s_%s_slice(f.%s)", field, define.Object, rftype, field))
 			} else {
 				fs = append(fs, fmt.Sprintf("r.%s = Convert_%s_%s(f.%s)", field, define.Object, rftype, field))
 			}
@@ -264,8 +277,8 @@ func gen_Convert_ORM_FORM(formtype, ormtype string, fields, ofields map[string]s
 	return Render(tpl, ctx)
 }
 
-func gen_Convert_ORM_FORM_arr(formtype, ormtype string, fields, ofileds map[string]string, forms map[string]TypeDefine) string {
-	tpl := `func Convert_{{ .OrmType }}_{{ .FormType }}_arr(arr []*orm.{{ .OrmType }}) []*{{ .FormType }} {
+func gen_Convert_ORM_FORM_slice(formtype, ormtype string, fields, ofileds map[string]string, forms map[string]TypeDefine) string {
+	tpl := `func Convert_{{ .OrmType }}_{{ .FormType }}_slice(arr []*orm.{{ .OrmType }}) []*{{ .FormType }} {
 	r := []*{{ .FormType }}{}
 	for _, u := range arr {
 		r = append(r, Convert_{{ .OrmType }}_{{ .FormType }}(u))
@@ -277,8 +290,8 @@ func gen_Convert_ORM_FORM_arr(formtype, ormtype string, fields, ofileds map[stri
 	return Render(tpl, ctx)
 }
 
-func gen_Convert_FORM_ORM_arr(formtype, ormtype string, fields, ofileds map[string]string, forms map[string]TypeDefine) string {
-	tpl := `func Convert_{{ .FormType }}_{{ .OrmType }}_arr(arr []*{{ .FormType }}) []*orm.{{ .OrmType }} {
+func gen_Convert_FORM_ORM_slice(formtype, ormtype string, fields, ofileds map[string]string, forms map[string]TypeDefine) string {
+	tpl := `func Convert_{{ .FormType }}_{{ .OrmType }}_slice(arr []*{{ .FormType }}) []*orm.{{ .OrmType }} {
 	r := []*orm.{{ .OrmType }}{}
 	for _, u := range arr {
 		r = append(r, Convert_{{ .FormType }}_{{ .OrmType }}(u))
@@ -301,14 +314,26 @@ func gen_FORM_LIST(formtype string) string {
 }
 
 func gen_FORM_LIST_FUNCS(formtype, ormtype string) string {
-	tpl := `func (ul *{{ .FormType }}List) AsListObject() client.ObjectListIfe {
+	tpl := `func (ul *{{ .FormType }}List) Object() client.ObjectListIface {
+	if ul.objectlist != nil {
+		return ul.objectlist
+	}
 	ul.objectlist = &orm.{{ .OrmType }}List{}
 	return ul.objectlist
 }
 
-func (ul *{{ .FormType }}List) AsListData() []*{{ .FormType }} {
+func (ul *{{ .FormType }}List) Data() []*{{ .FormType }} {
+	if ul.data != nil {
+		return ul.data.([]*{{ .FormType }})
+	}
 	us := ul.objectlist.(*orm.{{ .OrmType }}List)
-	return Convert_{{ .OrmType }}_{{ .FormType }}_arr(us.Items)
+	tmp := Convert_{{ .OrmType }}_{{ .FormType }}_slice(us.Items)
+	ul.data = tmp
+	return tmp
+}
+
+func (ul *{{ .FormType }}List) DataPtr() interface{} {
+	return ul.Data()
 }
 `
 	ctx := map[string]string{"FormType": formtype, "OrmType": ormtype}
@@ -338,4 +363,13 @@ func getRealType(s string) (string, bool) {
 	r = strings.TrimLeft(s, "[]* ")
 
 	return r, isarr
+}
+
+func sortedFields(m map[string]string) []string {
+	ret := []string{}
+	for field := range m {
+		ret = append(ret, field)
+	}
+	sort.Strings(ret)
+	return ret
 }

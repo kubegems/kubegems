@@ -27,3 +27,10 @@ type TenantUserRelCommon struct {
 	UserID   uint
 	Role     string
 }
+
+type TenantUserCreateModifyForm struct {
+	BaseForm
+	Tenant string `json:"tenant" validate:"required"`
+	User   string `json:"user" validate:"required"`
+	Role   string `json:"role" validate:"required"`
+}

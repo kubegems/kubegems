@@ -50,9 +50,9 @@ func (ot *OauthLoginUtils) LoginAddr() string {
 	return url
 }
 
-func (ot *OauthLoginUtils) GetUserInfo(cred *Credential) (*UserInfo, error) {
-	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, ot.client)
-	token, err := ot.OauthConfig.Exchange(ctx, cred.Code)
+func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*UserInfo, error) {
+	ctxinner := context.WithValue(ctx, oauth2.HTTPClient, ot.client)
+	token, err := ot.OauthConfig.Exchange(ctxinner, cred.Code)
 	if err != nil {
 		return nil, err
 	}

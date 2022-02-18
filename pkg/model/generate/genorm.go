@@ -153,15 +153,15 @@ func (obj *%s) GetKind() *string {
 	return &%sKind
 }
 
-func (obj *%s) GetPKField() *string {
+func (obj *%s) PrimaryKeyField() *string {
 	return &%sPrimaryKey
 }
 
-func (obj *%s) GetPKValue() interface{} {
+func (obj *%s) PrimaryKeyValue() interface{} {
 	return obj.%s
 }
 
-func (obj *%s) ValidPreloads() *[]string {
+func (obj *%s) PreloadFields() *[]string {
 	return &%sValidPreloads
 }
 `
@@ -187,7 +187,7 @@ func genObjectListFunctions(typename string, optionMap map[string]string) string
 	return &%sKind
 }
 
-func (obj *%sList) GetPKField() *string {
+func (obj *%sList) PrimaryKeyField() *string {
 	return &%sPrimaryKey
 }
 
