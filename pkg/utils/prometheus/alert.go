@@ -31,7 +31,7 @@ const (
 	valueAnnotationKey    = "value"
 
 	alertRuleKeyFormat = "gems-%s-%s"
-	AlertClusterKey    = "k8s_cloud_cluster"
+	AlertClusterKey    = "cluster"
 
 	// 告警消息发送范围
 	AlertScopeLabel  = "gems_alert_scope"
