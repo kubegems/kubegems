@@ -10,7 +10,6 @@ import (
 	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/git"
 	"kubegems.io/pkg/utils/helm"
-	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/msgbus"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/system"
@@ -29,7 +28,6 @@ type Options struct {
 	Argo         *argo.Options                            `yaml:"argo" head_comment:"argo 相关配置"`
 	Exporter     *exporter.ExporterOptions                `yaml:"exporter" head_comment:"prometheus exporter 配置"`
 	Msgbus       *msgbus.MsgbusOptions                    `yaml:"msgbus" head_comment:"msgbus 实时消息网关配置"`
-	Installer    *kube.InstallerOptions                   `yaml:"installer" head_comment:"installer 集群安装配置"`
 	Microservice *microserviceoptions.MicroserviceOptions `yaml:"microservice" head_comment:"microservice 配置"`
 }
 
@@ -46,7 +44,6 @@ func DefaultOptions() *Options {
 		Mysql:        database.NewDefaultMySQLOptions(),
 		Exporter:     exporter.DefaultExporterOptions(),
 		Msgbus:       msgbus.DefaultMsgbusOptions(),
-		Installer:    kube.DefaultInstallerOptions(),
 		Microservice: microserviceoptions.NewDefaultOptions(),
 	}
 }
@@ -64,6 +61,5 @@ func (o *Options) RegistFlags(prefix string, fs *pflag.FlagSet) {
 	o.Argo.RegistFlags("argo", fs)
 	o.Exporter.RegistFlags("exporter", fs)
 	o.Msgbus.RegistFlags("msgbus", fs)
-	o.Installer.RegistFlags("installer", fs)
 	o.Microservice.RegistFlags("microservice", fs)
 }

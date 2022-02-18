@@ -1,8 +1,10 @@
 package clusterhandler
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -10,6 +12,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"kubegems.io/pkg/agent/apis/types"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
@@ -17,6 +25,7 @@ import (
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/pkg/version"
 )
 
 var (
@@ -171,58 +180,67 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 // @Router /v1/cluster/{cluster_id} [delete]
 // @Security JWT
 func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
-	var obj models.Cluster
-	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	cluster := &models.Cluster{}
+	if err := h.GetDataBase().DB().First(cluster, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
-	h.SetAuditData(c, "删除", "集群", obj.ClusterName)
+	h.SetAuditData(c, "删除", "集群", cluster.ClusterName)
 
-	if obj.Primary {
+	if cluster.Primary {
 		handlers.NotOK(c, fmt.Errorf("不允许删除控制集群"))
 		return
 	}
 
-	restconfig, client, err := kube.GetKubeClient(obj.KubeConfig)
-	if err != nil {
-		handlers.NotOK(c, fmt.Errorf("通过kubeconfig 获取resetclient失败, %v", err))
-		return
-	}
-
 	trqs := []models.TenantResourceQuota{}
-	h.GetDataBase().DB().Where("cluster_id = ?", obj.ID).Find(&trqs)
+	h.GetDataBase().DB().Where("cluster_id = ?", cluster.ID).Find(&trqs)
 	if len(trqs) != 0 {
-		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的租户资源，删除失败", obj.ClusterName))
+		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的租户资源，删除失败", cluster.ClusterName))
 		return
 	}
 
 	envs := []models.Environment{}
-	h.GetDataBase().DB().Where("cluster_id = ?", obj.ID).Find(&envs)
+	h.GetDataBase().DB().Where("cluster_id = ?", cluster.ID).Find(&envs)
 	if len(envs) != 0 {
-		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的环境，删除失败", obj.ClusterName))
+		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的环境，删除失败", cluster.ClusterName))
 		return
 	}
 
-	// 删除installer
-	_ = (kube.NewClusterInstaller(restconfig, client, &obj, h.InstallerOptions)).Uninstall()
+	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
+			if err := h.GetDataBase().DB().Delete(cluster).Error; err != nil {
+				return err
+			}
 
-	if err := h.GetDataBase().DB().Delete(&obj).Error; err != nil {
+			installer := ClusterInstaller{
+				Cluster:         cluster,
+				Clientset:       clientSet,
+				Config:          config,
+				KubegemsVersion: version.Get(),
+			}
+			return installer.UnInstall(ctx)
+		}); err != nil {
+			log.Error(err, "delete cluster")
+			return err
+		}
+
+		h.GetMessageBusClient().
+			GinContext(c).
+			MessageType(msgbus.Message).
+			ActionType(msgbus.Delete).
+			ResourceType(msgbus.Cluster).
+			ResourceID(cluster.ID).
+			Content(fmt.Sprintf("删除了集群%s", cluster.ClusterName)).
+			SetUsersToSend(
+				h.GetDataBase().SystemAdmins(),
+			).
+			Send()
+		handlers.NoContent(c, nil)
+		return nil
+	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Delete).
-		ResourceType(msgbus.Cluster).
-		ResourceID(obj.ID).
-		Content(fmt.Sprintf("删除了集群%s", obj.ClusterName)).
-		SetUsersToSend(
-			h.GetDataBase().SystemAdmins(),
-		).
-		Send()
-	handlers.NoContent(c, nil)
 }
 
 // ListClusterEnvironment 获取属于Cluster的 Environment 列表
@@ -369,75 +387,63 @@ func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 // @Router /v1/cluster [post]
 // @Security JWT
 func (h *ClusterHandler) PostCluster(c *gin.Context) {
-	var obj models.Cluster
-	if err := c.BindJSON(&obj); err != nil {
+	cluster := &models.Cluster{}
+	if err := c.BindJSON(cluster); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "创建", "集群", obj.ClusterName)
-	if obj.Runtime == "" {
-		obj.Runtime = "containerd" // 默认containerd
-	}
-	apiserver, _, _, _, err := kube.GetKubeconfigInfos(obj.KubeConfig)
-	if err != nil {
-		handlers.NotOK(c, fmt.Errorf("kubeconfig 格式错误, %v", err))
-		return
-	}
-	restconfig, client, err := kube.GetKubeClient(obj.KubeConfig)
-	if err != nil {
-		handlers.NotOK(c, fmt.Errorf("通过kubeconfig 获取resetclient失败, %v", err))
-		return
-	}
-	info, err := client.ServerVersion()
-	if err != nil {
-		handlers.NotOK(c, fmt.Errorf("获取serverInfo失败, %v", err))
-		return
-	}
-	obj.Version = info.String()
-	obj.APIServer = apiserver
-	if obj.Mode != models.ClusterModeService {
-		obj.Mode = models.ClusterModeProxy
-	}
+	h.SetAuditData(c, "创建", "集群", cluster.ClusterName)
 
-	clusters := []models.Cluster{}
-	h.GetDataBase().DB().Where("api_server = ?", apiserver).Find(&clusters)
-	if len(clusters) > 0 {
-		handlers.NotOK(c, fmt.Errorf("已有apiserver为%s的集群%s", apiserver, clusters[0].ClusterName))
-		return
-	}
-	// 非控制集群才安装插件
-	if obj.Primary {
+	// 控制集群只检验
+	if cluster.Primary {
 		primarys := []models.Cluster{}
-		h.GetDataBase().DB().Where("primary = ?", true).Find(&primarys)
-		if len(clusters) > 0 {
+		if err := h.GetDataBase().DB().Where("primary = ?", true).Find(&primarys).Error; err != nil {
+			handlers.NotOK(c, err)
+			return
+		}
+		if len(primarys) > 0 {
 			handlers.NotOK(c, fmt.Errorf("控制集群只能有一个"))
 			return
 		}
-	} else {
-		installer := kube.NewClusterInstaller(restconfig, client, &obj, h.InstallerOptions)
-		if e := installer.Install(); e != nil {
-			handlers.NotOK(c, fmt.Errorf("初始化集群错误, %v", err))
-			return
-		}
-	}
-
-	if err := h.GetDataBase().DB().Save(&obj).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("保存集群配置错误, %v", err))
+		handlers.Created(c, cluster)
 		return
 	}
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Add).
-		ResourceType(msgbus.Cluster).
-		ResourceID(obj.ID).
-		Content(fmt.Sprintf("添加了集群%s", obj.ClusterName)).
-		SetUsersToSend(
-			h.GetDataBase().SystemAdmins(),
-		).
-		Send()
-	handlers.Created(c, obj)
+	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
+			if err := h.GetDataBase().DB().Save(cluster).Error; err != nil {
+				return err
+			}
+
+			installer := ClusterInstaller{
+				Cluster:         cluster,
+				Clientset:       clientSet,
+				Config:          config,
+				KubegemsVersion: version.Get(),
+			}
+			return installer.Install(ctx)
+		}); err != nil {
+			log.Error(err, "create cluster")
+			return err
+		}
+
+		h.GetMessageBusClient().
+			GinContext(c).
+			MessageType(msgbus.Message).
+			ActionType(msgbus.Add).
+			ResourceType(msgbus.Cluster).
+			ResourceID(cluster.ID).
+			Content(fmt.Sprintf("添加了集群%s", cluster.ClusterName)).
+			SetUsersToSend(
+				h.GetDataBase().SystemAdmins(),
+			).
+			Send()
+		handlers.Created(c, cluster)
+		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 }
 
 type ClusterQuota struct {
@@ -582,4 +588,131 @@ func (h *ClusterHandler) cluster(c *gin.Context, fun func(ctx context.Context, c
 	h.ClusterFunc(cluster.ClusterName, func(ctx context.Context, cli agents.Client) (interface{}, error) {
 		return fun(ctx, cluster, cli)
 	})(c)
+}
+
+func withClusterAndK8sClient(
+	c *gin.Context,
+	cluster *models.Cluster,
+	f func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error,
+) error {
+	// 获取clientSet
+	apiserver, _, _, _, err := kube.GetKubeconfigInfos(cluster.KubeConfig)
+	if err != nil {
+		return fmt.Errorf("kubeconfig 格式错误, %w", err)
+	}
+	restconfig, clientSet, err := kube.GetKubeClient(cluster.KubeConfig)
+	if err != nil {
+		return fmt.Errorf("通过kubeconfig 获取restclient失败, %v", err)
+	}
+	serverSersion, err := clientSet.ServerVersion()
+	if err != nil {
+		return fmt.Errorf("获取serverInfo失败, %v", err)
+	}
+	ctx := c.Request.Context()
+	nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("list node failed: %w", err)
+	}
+
+	cluster.APIServer = apiserver
+	cluster.Version = serverSersion.String()
+	if cluster.Mode != models.ClusterModeService {
+		cluster.Mode = models.ClusterModeProxy
+	}
+	// get container runtime
+	reg := regexp.MustCompile("(.*)://(.*)")
+	for _, n := range nodes.Items {
+		matches := reg.FindStringSubmatch(n.Status.NodeInfo.ContainerRuntimeVersion)
+		if len(matches) == 3 {
+			cluster.Runtime = matches[1]
+			break
+		}
+	}
+	return f(ctx, clientSet, restconfig)
+}
+
+const (
+	kubegemsInstallerNamespace = "kubegems-installer"
+)
+
+func (i *ClusterInstaller) CreateNamespaceIfNotExists(ctx context.Context) error {
+	_, err := i.Clientset.CoreV1().Namespaces().Get(ctx, kubegemsInstallerNamespace, metav1.GetOptions{})
+	if err == nil {
+		return nil
+	}
+	if errors.IsNotFound(err) {
+		if _, err = i.Clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: kubegemsInstallerNamespace,
+			},
+		}, metav1.CreateOptions{}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type ClusterInstaller struct {
+	Cluster         *models.Cluster
+	Clientset       *kubernetes.Clientset
+	Config          *rest.Config
+	KubegemsVersion version.Version
+}
+
+func (i *ClusterInstaller) getInstallerBts() ([]byte, error) {
+	installerbuf := new(bytes.Buffer)
+	if err := installerTpl.Execute(installerbuf, i); err != nil {
+		log.Error(err, "installer template")
+		return nil, err
+	}
+	return installerbuf.Bytes(), nil
+}
+
+func (i *ClusterInstaller) getPluginsBts() ([]byte, error) {
+	pluginBuf := new(bytes.Buffer)
+	if err := installerTpl.Execute(pluginBuf, i); err != nil {
+		log.Error(err, "plugins template")
+		return nil, err
+	}
+	return pluginBuf.Bytes(), nil
+}
+
+func (i *ClusterInstaller) Install(ctx context.Context) error {
+	// install crd
+	if err := i.CreateNamespaceIfNotExists(ctx); err != nil {
+		return err
+	}
+	installerBts, err := i.getInstallerBts()
+	if err != nil {
+		return err
+	}
+	if err := kube.CreateByYamlOrJson(ctx, i.Config, installerBts); err != nil {
+		log.Error(err, "create installer yaml")
+		return err
+	}
+
+	// install plugin, 与crd分开部署，以刷新restmap
+	pluginsBts, err := i.getPluginsBts()
+	if err != nil {
+		return err
+	}
+	return kube.CreateByYamlOrJson(ctx, i.Config, pluginsBts)
+}
+
+func (i *ClusterInstaller) UnInstall(ctx context.Context) error {
+	installerBts, err := i.getInstallerBts()
+	if err != nil {
+		return err
+	}
+	if err := kube.DeleteByYamlOrJson(ctx, i.Config, installerBts); err != nil {
+		log.Error(err, "create installer yaml")
+		return err
+	}
+
+	pluginsBts, err := i.getPluginsBts()
+	if err != nil {
+		return err
+	}
+	return kube.DeleteByYamlOrJson(ctx, i.Config, pluginsBts)
 }
