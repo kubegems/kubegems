@@ -91,13 +91,13 @@ func contains(arr []string, t string) bool {
 	return false
 }
 
-func tableName(objType client.ObjectTypeIfe) string {
+func tableName(objType client.ObjectTypeIface) string {
 	// 默认情况下都是类型名字复数
 	return *objType.GetKind() + "s"
 }
 
 // 关联表的名字
-func relTableName(obj1, obj2 client.ObjectTypeIfe) string {
+func relTableName(obj1, obj2 client.ObjectTypeIface) string {
 	// 默认情况下都是类型名字复数
 	return *obj1.GetKind() + "_" + *obj2.GetKind() + "_rels"
 }

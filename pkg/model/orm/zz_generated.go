@@ -17,15 +17,15 @@ func (obj *Application) GetKind() *string {
 	return &applicationKind
 }
 
-func (obj *Application) GetPKField() *string {
+func (obj *Application) PrimaryKeyField() *string {
 	return &applicationPrimaryKey
 }
 
-func (obj *Application) GetPKValue() interface{} {
+func (obj *Application) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Application) ValidPreloads() *[]string {
+func (obj *Application) PreloadFields() *[]string {
 	return &applicationValidPreloads
 }
 
@@ -38,7 +38,7 @@ func (objList *ApplicationList) GetKind() *string {
 	return &applicationKind
 }
 
-func (obj *ApplicationList) GetPKField() *string {
+func (obj *ApplicationList) PrimaryKeyField() *string {
 	return &applicationPrimaryKey
 }
 
@@ -78,15 +78,15 @@ func (obj *AuditLog) GetKind() *string {
 	return &auditLogKind
 }
 
-func (obj *AuditLog) GetPKField() *string {
+func (obj *AuditLog) PrimaryKeyField() *string {
 	return &auditLogPrimaryKey
 }
 
-func (obj *AuditLog) GetPKValue() interface{} {
+func (obj *AuditLog) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *AuditLog) ValidPreloads() *[]string {
+func (obj *AuditLog) PreloadFields() *[]string {
 	return &auditLogValidPreloads
 }
 
@@ -99,7 +99,7 @@ func (objList *AuditLogList) GetKind() *string {
 	return &auditLogKind
 }
 
-func (obj *AuditLogList) GetPKField() *string {
+func (obj *AuditLogList) PrimaryKeyField() *string {
 	return &auditLogPrimaryKey
 }
 
@@ -139,15 +139,15 @@ func (obj *AuthSource) GetKind() *string {
 	return &authSourceKind
 }
 
-func (obj *AuthSource) GetPKField() *string {
+func (obj *AuthSource) PrimaryKeyField() *string {
 	return &authSourcePrimaryKey
 }
 
-func (obj *AuthSource) GetPKValue() interface{} {
+func (obj *AuthSource) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *AuthSource) ValidPreloads() *[]string {
+func (obj *AuthSource) PreloadFields() *[]string {
 	return &authSourceValidPreloads
 }
 
@@ -160,7 +160,7 @@ func (objList *AuthSourceList) GetKind() *string {
 	return &authSourceKind
 }
 
-func (obj *AuthSourceList) GetPKField() *string {
+func (obj *AuthSourceList) PrimaryKeyField() *string {
 	return &authSourcePrimaryKey
 }
 
@@ -200,15 +200,15 @@ func (obj *ChartRepo) GetKind() *string {
 	return &chartRepoKind
 }
 
-func (obj *ChartRepo) GetPKField() *string {
+func (obj *ChartRepo) PrimaryKeyField() *string {
 	return &chartRepoPrimaryKey
 }
 
-func (obj *ChartRepo) GetPKValue() interface{} {
+func (obj *ChartRepo) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *ChartRepo) ValidPreloads() *[]string {
+func (obj *ChartRepo) PreloadFields() *[]string {
 	return &chartRepoValidPreloads
 }
 
@@ -221,7 +221,7 @@ func (objList *ChartRepoList) GetKind() *string {
 	return &chartRepoKind
 }
 
-func (obj *ChartRepoList) GetPKField() *string {
+func (obj *ChartRepoList) PrimaryKeyField() *string {
 	return &chartRepoPrimaryKey
 }
 
@@ -261,15 +261,15 @@ func (obj *Cluster) GetKind() *string {
 	return &clusterKind
 }
 
-func (obj *Cluster) GetPKField() *string {
+func (obj *Cluster) PrimaryKeyField() *string {
 	return &clusterPrimaryKey
 }
 
-func (obj *Cluster) GetPKValue() interface{} {
+func (obj *Cluster) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Cluster) ValidPreloads() *[]string {
+func (obj *Cluster) PreloadFields() *[]string {
 	return &clusterValidPreloads
 }
 
@@ -282,7 +282,7 @@ func (objList *ClusterList) GetKind() *string {
 	return &clusterKind
 }
 
-func (obj *ClusterList) GetPKField() *string {
+func (obj *ClusterList) PrimaryKeyField() *string {
 	return &clusterPrimaryKey
 }
 
@@ -322,15 +322,15 @@ func (obj *Container) GetKind() *string {
 	return &containerKind
 }
 
-func (obj *Container) GetPKField() *string {
+func (obj *Container) PrimaryKeyField() *string {
 	return &containerPrimaryKey
 }
 
-func (obj *Container) GetPKValue() interface{} {
+func (obj *Container) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Container) ValidPreloads() *[]string {
+func (obj *Container) PreloadFields() *[]string {
 	return &containerValidPreloads
 }
 
@@ -343,7 +343,7 @@ func (objList *ContainerList) GetKind() *string {
 	return &containerKind
 }
 
-func (obj *ContainerList) GetPKField() *string {
+func (obj *ContainerList) PrimaryKeyField() *string {
 	return &containerPrimaryKey
 }
 
@@ -383,15 +383,15 @@ func (obj *Environment) GetKind() *string {
 	return &environmentKind
 }
 
-func (obj *Environment) GetPKField() *string {
+func (obj *Environment) PrimaryKeyField() *string {
 	return &environmentPrimaryKey
 }
 
-func (obj *Environment) GetPKValue() interface{} {
+func (obj *Environment) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Environment) ValidPreloads() *[]string {
+func (obj *Environment) PreloadFields() *[]string {
 	return &environmentValidPreloads
 }
 
@@ -404,7 +404,7 @@ func (objList *EnvironmentList) GetKind() *string {
 	return &environmentKind
 }
 
-func (obj *EnvironmentList) GetPKField() *string {
+func (obj *EnvironmentList) PrimaryKeyField() *string {
 	return &environmentPrimaryKey
 }
 
@@ -444,15 +444,15 @@ func (obj *EnvironmentResource) GetKind() *string {
 	return &environmentResourceKind
 }
 
-func (obj *EnvironmentResource) GetPKField() *string {
+func (obj *EnvironmentResource) PrimaryKeyField() *string {
 	return &environmentResourcePrimaryKey
 }
 
-func (obj *EnvironmentResource) GetPKValue() interface{} {
+func (obj *EnvironmentResource) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *EnvironmentResource) ValidPreloads() *[]string {
+func (obj *EnvironmentResource) PreloadFields() *[]string {
 	return &environmentResourceValidPreloads
 }
 
@@ -465,7 +465,7 @@ func (objList *EnvironmentResourceList) GetKind() *string {
 	return &environmentResourceKind
 }
 
-func (obj *EnvironmentResourceList) GetPKField() *string {
+func (obj *EnvironmentResourceList) PrimaryKeyField() *string {
 	return &environmentResourcePrimaryKey
 }
 
@@ -505,15 +505,15 @@ func (obj *EnvironmentUserRel) GetKind() *string {
 	return &environmentUserRelKind
 }
 
-func (obj *EnvironmentUserRel) GetPKField() *string {
+func (obj *EnvironmentUserRel) PrimaryKeyField() *string {
 	return &environmentUserRelPrimaryKey
 }
 
-func (obj *EnvironmentUserRel) GetPKValue() interface{} {
+func (obj *EnvironmentUserRel) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *EnvironmentUserRel) ValidPreloads() *[]string {
+func (obj *EnvironmentUserRel) PreloadFields() *[]string {
 	return &environmentUserRelValidPreloads
 }
 
@@ -534,7 +534,7 @@ func (objList *EnvironmentUserRelList) GetKind() *string {
 	return &environmentUserRelKind
 }
 
-func (obj *EnvironmentUserRelList) GetPKField() *string {
+func (obj *EnvironmentUserRelList) PrimaryKeyField() *string {
 	return &environmentUserRelPrimaryKey
 }
 
@@ -574,15 +574,15 @@ func (obj *LogQueryHistory) GetKind() *string {
 	return &logQueryHistoryKind
 }
 
-func (obj *LogQueryHistory) GetPKField() *string {
+func (obj *LogQueryHistory) PrimaryKeyField() *string {
 	return &logQueryHistoryPrimaryKey
 }
 
-func (obj *LogQueryHistory) GetPKValue() interface{} {
+func (obj *LogQueryHistory) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *LogQueryHistory) ValidPreloads() *[]string {
+func (obj *LogQueryHistory) PreloadFields() *[]string {
 	return &logQueryHistoryValidPreloads
 }
 
@@ -595,7 +595,7 @@ func (objList *LogQueryHistoryList) GetKind() *string {
 	return &logQueryHistoryKind
 }
 
-func (obj *LogQueryHistoryList) GetPKField() *string {
+func (obj *LogQueryHistoryList) PrimaryKeyField() *string {
 	return &logQueryHistoryPrimaryKey
 }
 
@@ -635,15 +635,15 @@ func (obj *LogQuerySnapshot) GetKind() *string {
 	return &logQuerySnapshotKind
 }
 
-func (obj *LogQuerySnapshot) GetPKField() *string {
+func (obj *LogQuerySnapshot) PrimaryKeyField() *string {
 	return &logQuerySnapshotPrimaryKey
 }
 
-func (obj *LogQuerySnapshot) GetPKValue() interface{} {
+func (obj *LogQuerySnapshot) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *LogQuerySnapshot) ValidPreloads() *[]string {
+func (obj *LogQuerySnapshot) PreloadFields() *[]string {
 	return &logQuerySnapshotValidPreloads
 }
 
@@ -656,7 +656,7 @@ func (objList *LogQuerySnapshotList) GetKind() *string {
 	return &logQuerySnapshotKind
 }
 
-func (obj *LogQuerySnapshotList) GetPKField() *string {
+func (obj *LogQuerySnapshotList) PrimaryKeyField() *string {
 	return &logQuerySnapshotPrimaryKey
 }
 
@@ -696,15 +696,15 @@ func (obj *Message) GetKind() *string {
 	return &messageKind
 }
 
-func (obj *Message) GetPKField() *string {
+func (obj *Message) PrimaryKeyField() *string {
 	return &messagePrimaryKey
 }
 
-func (obj *Message) GetPKValue() interface{} {
+func (obj *Message) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Message) ValidPreloads() *[]string {
+func (obj *Message) PreloadFields() *[]string {
 	return &messageValidPreloads
 }
 
@@ -717,7 +717,7 @@ func (objList *MessageList) GetKind() *string {
 	return &messageKind
 }
 
-func (obj *MessageList) GetPKField() *string {
+func (obj *MessageList) PrimaryKeyField() *string {
 	return &messagePrimaryKey
 }
 
@@ -757,15 +757,15 @@ func (obj *OpenAPP) GetKind() *string {
 	return &openAPPKind
 }
 
-func (obj *OpenAPP) GetPKField() *string {
+func (obj *OpenAPP) PrimaryKeyField() *string {
 	return &openAPPPrimaryKey
 }
 
-func (obj *OpenAPP) GetPKValue() interface{} {
+func (obj *OpenAPP) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *OpenAPP) ValidPreloads() *[]string {
+func (obj *OpenAPP) PreloadFields() *[]string {
 	return &openAPPValidPreloads
 }
 
@@ -778,7 +778,7 @@ func (objList *OpenAPPList) GetKind() *string {
 	return &openAPPKind
 }
 
-func (obj *OpenAPPList) GetPKField() *string {
+func (obj *OpenAPPList) PrimaryKeyField() *string {
 	return &openAPPPrimaryKey
 }
 
@@ -818,15 +818,15 @@ func (obj *Project) GetKind() *string {
 	return &projectKind
 }
 
-func (obj *Project) GetPKField() *string {
+func (obj *Project) PrimaryKeyField() *string {
 	return &projectPrimaryKey
 }
 
-func (obj *Project) GetPKValue() interface{} {
+func (obj *Project) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Project) ValidPreloads() *[]string {
+func (obj *Project) PreloadFields() *[]string {
 	return &projectValidPreloads
 }
 
@@ -839,7 +839,7 @@ func (objList *ProjectList) GetKind() *string {
 	return &projectKind
 }
 
-func (obj *ProjectList) GetPKField() *string {
+func (obj *ProjectList) PrimaryKeyField() *string {
 	return &projectPrimaryKey
 }
 
@@ -879,15 +879,15 @@ func (obj *ProjectUserRel) GetKind() *string {
 	return &projectUserRelKind
 }
 
-func (obj *ProjectUserRel) GetPKField() *string {
+func (obj *ProjectUserRel) PrimaryKeyField() *string {
 	return &projectUserRelPrimaryKey
 }
 
-func (obj *ProjectUserRel) GetPKValue() interface{} {
+func (obj *ProjectUserRel) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *ProjectUserRel) ValidPreloads() *[]string {
+func (obj *ProjectUserRel) PreloadFields() *[]string {
 	return &projectUserRelValidPreloads
 }
 
@@ -908,7 +908,7 @@ func (objList *ProjectUserRelList) GetKind() *string {
 	return &projectUserRelKind
 }
 
-func (obj *ProjectUserRelList) GetPKField() *string {
+func (obj *ProjectUserRelList) PrimaryKeyField() *string {
 	return &projectUserRelPrimaryKey
 }
 
@@ -948,15 +948,15 @@ func (obj *Registry) GetKind() *string {
 	return &registryKind
 }
 
-func (obj *Registry) GetPKField() *string {
+func (obj *Registry) PrimaryKeyField() *string {
 	return &registryPrimaryKey
 }
 
-func (obj *Registry) GetPKValue() interface{} {
+func (obj *Registry) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Registry) ValidPreloads() *[]string {
+func (obj *Registry) PreloadFields() *[]string {
 	return &registryValidPreloads
 }
 
@@ -969,7 +969,7 @@ func (objList *RegistryList) GetKind() *string {
 	return &registryKind
 }
 
-func (obj *RegistryList) GetPKField() *string {
+func (obj *RegistryList) PrimaryKeyField() *string {
 	return &registryPrimaryKey
 }
 
@@ -1009,15 +1009,15 @@ func (obj *SystemRole) GetKind() *string {
 	return &systemRoleKind
 }
 
-func (obj *SystemRole) GetPKField() *string {
+func (obj *SystemRole) PrimaryKeyField() *string {
 	return &systemRolePrimaryKey
 }
 
-func (obj *SystemRole) GetPKValue() interface{} {
+func (obj *SystemRole) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *SystemRole) ValidPreloads() *[]string {
+func (obj *SystemRole) PreloadFields() *[]string {
 	return &systemRoleValidPreloads
 }
 
@@ -1030,7 +1030,7 @@ func (objList *SystemRoleList) GetKind() *string {
 	return &systemRoleKind
 }
 
-func (obj *SystemRoleList) GetPKField() *string {
+func (obj *SystemRoleList) PrimaryKeyField() *string {
 	return &systemRolePrimaryKey
 }
 
@@ -1070,15 +1070,15 @@ func (obj *Tenant) GetKind() *string {
 	return &tenantKind
 }
 
-func (obj *Tenant) GetPKField() *string {
+func (obj *Tenant) PrimaryKeyField() *string {
 	return &tenantPrimaryKey
 }
 
-func (obj *Tenant) GetPKValue() interface{} {
+func (obj *Tenant) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Tenant) ValidPreloads() *[]string {
+func (obj *Tenant) PreloadFields() *[]string {
 	return &tenantValidPreloads
 }
 
@@ -1091,7 +1091,7 @@ func (objList *TenantList) GetKind() *string {
 	return &tenantKind
 }
 
-func (obj *TenantList) GetPKField() *string {
+func (obj *TenantList) PrimaryKeyField() *string {
 	return &tenantPrimaryKey
 }
 
@@ -1131,15 +1131,15 @@ func (obj *TenantResourceQuota) GetKind() *string {
 	return &tenantResourceQuotaKind
 }
 
-func (obj *TenantResourceQuota) GetPKField() *string {
+func (obj *TenantResourceQuota) PrimaryKeyField() *string {
 	return &tenantResourceQuotaPrimaryKey
 }
 
-func (obj *TenantResourceQuota) GetPKValue() interface{} {
+func (obj *TenantResourceQuota) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *TenantResourceQuota) ValidPreloads() *[]string {
+func (obj *TenantResourceQuota) PreloadFields() *[]string {
 	return &tenantResourceQuotaValidPreloads
 }
 
@@ -1152,7 +1152,7 @@ func (objList *TenantResourceQuotaList) GetKind() *string {
 	return &tenantResourceQuotaKind
 }
 
-func (obj *TenantResourceQuotaList) GetPKField() *string {
+func (obj *TenantResourceQuotaList) PrimaryKeyField() *string {
 	return &tenantResourceQuotaPrimaryKey
 }
 
@@ -1192,15 +1192,15 @@ func (obj *TenantResourceQuotaApply) GetKind() *string {
 	return &tenantResourceQuotaApplyKind
 }
 
-func (obj *TenantResourceQuotaApply) GetPKField() *string {
+func (obj *TenantResourceQuotaApply) PrimaryKeyField() *string {
 	return &tenantResourceQuotaApplyPrimaryKey
 }
 
-func (obj *TenantResourceQuotaApply) GetPKValue() interface{} {
+func (obj *TenantResourceQuotaApply) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *TenantResourceQuotaApply) ValidPreloads() *[]string {
+func (obj *TenantResourceQuotaApply) PreloadFields() *[]string {
 	return &tenantResourceQuotaApplyValidPreloads
 }
 
@@ -1213,7 +1213,7 @@ func (objList *TenantResourceQuotaApplyList) GetKind() *string {
 	return &tenantResourceQuotaApplyKind
 }
 
-func (obj *TenantResourceQuotaApplyList) GetPKField() *string {
+func (obj *TenantResourceQuotaApplyList) PrimaryKeyField() *string {
 	return &tenantResourceQuotaApplyPrimaryKey
 }
 
@@ -1253,15 +1253,15 @@ func (obj *TenantUserRel) GetKind() *string {
 	return &tenantUserRelKind
 }
 
-func (obj *TenantUserRel) GetPKField() *string {
+func (obj *TenantUserRel) PrimaryKeyField() *string {
 	return &tenantUserRelPrimaryKey
 }
 
-func (obj *TenantUserRel) GetPKValue() interface{} {
+func (obj *TenantUserRel) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *TenantUserRel) ValidPreloads() *[]string {
+func (obj *TenantUserRel) PreloadFields() *[]string {
 	return &tenantUserRelValidPreloads
 }
 
@@ -1282,7 +1282,7 @@ func (objList *TenantUserRelList) GetKind() *string {
 	return &tenantUserRelKind
 }
 
-func (obj *TenantUserRelList) GetPKField() *string {
+func (obj *TenantUserRelList) PrimaryKeyField() *string {
 	return &tenantUserRelPrimaryKey
 }
 
@@ -1322,15 +1322,15 @@ func (obj *User) GetKind() *string {
 	return &userKind
 }
 
-func (obj *User) GetPKField() *string {
+func (obj *User) PrimaryKeyField() *string {
 	return &userPrimaryKey
 }
 
-func (obj *User) GetPKValue() interface{} {
+func (obj *User) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *User) ValidPreloads() *[]string {
+func (obj *User) PreloadFields() *[]string {
 	return &userValidPreloads
 }
 
@@ -1343,7 +1343,7 @@ func (objList *UserList) GetKind() *string {
 	return &userKind
 }
 
-func (obj *UserList) GetPKField() *string {
+func (obj *UserList) PrimaryKeyField() *string {
 	return &userPrimaryKey
 }
 
@@ -1383,15 +1383,15 @@ func (obj *UserMessageStatus) GetKind() *string {
 	return &userMessageStatusKind
 }
 
-func (obj *UserMessageStatus) GetPKField() *string {
+func (obj *UserMessageStatus) PrimaryKeyField() *string {
 	return &userMessageStatusPrimaryKey
 }
 
-func (obj *UserMessageStatus) GetPKValue() interface{} {
+func (obj *UserMessageStatus) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *UserMessageStatus) ValidPreloads() *[]string {
+func (obj *UserMessageStatus) PreloadFields() *[]string {
 	return &userMessageStatusValidPreloads
 }
 
@@ -1404,7 +1404,7 @@ func (objList *UserMessageStatusList) GetKind() *string {
 	return &userMessageStatusKind
 }
 
-func (obj *UserMessageStatusList) GetPKField() *string {
+func (obj *UserMessageStatusList) PrimaryKeyField() *string {
 	return &userMessageStatusPrimaryKey
 }
 
@@ -1444,15 +1444,15 @@ func (obj *VirtualDomain) GetKind() *string {
 	return &virtualDomainKind
 }
 
-func (obj *VirtualDomain) GetPKField() *string {
+func (obj *VirtualDomain) PrimaryKeyField() *string {
 	return &virtualDomainPrimaryKey
 }
 
-func (obj *VirtualDomain) GetPKValue() interface{} {
+func (obj *VirtualDomain) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *VirtualDomain) ValidPreloads() *[]string {
+func (obj *VirtualDomain) PreloadFields() *[]string {
 	return &virtualDomainValidPreloads
 }
 
@@ -1465,7 +1465,7 @@ func (objList *VirtualDomainList) GetKind() *string {
 	return &virtualDomainKind
 }
 
-func (obj *VirtualDomainList) GetPKField() *string {
+func (obj *VirtualDomainList) PrimaryKeyField() *string {
 	return &virtualDomainPrimaryKey
 }
 
@@ -1505,15 +1505,15 @@ func (obj *VirtualSpace) GetKind() *string {
 	return &virtualSpaceKind
 }
 
-func (obj *VirtualSpace) GetPKField() *string {
+func (obj *VirtualSpace) PrimaryKeyField() *string {
 	return &virtualSpacePrimaryKey
 }
 
-func (obj *VirtualSpace) GetPKValue() interface{} {
+func (obj *VirtualSpace) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *VirtualSpace) ValidPreloads() *[]string {
+func (obj *VirtualSpace) PreloadFields() *[]string {
 	return &virtualSpaceValidPreloads
 }
 
@@ -1526,7 +1526,7 @@ func (objList *VirtualSpaceList) GetKind() *string {
 	return &virtualSpaceKind
 }
 
-func (obj *VirtualSpaceList) GetPKField() *string {
+func (obj *VirtualSpaceList) PrimaryKeyField() *string {
 	return &virtualSpacePrimaryKey
 }
 
@@ -1566,15 +1566,15 @@ func (obj *VirtualSpaceUserRel) GetKind() *string {
 	return &virtualSpaceUserRelKind
 }
 
-func (obj *VirtualSpaceUserRel) GetPKField() *string {
+func (obj *VirtualSpaceUserRel) PrimaryKeyField() *string {
 	return &virtualSpaceUserRelPrimaryKey
 }
 
-func (obj *VirtualSpaceUserRel) GetPKValue() interface{} {
+func (obj *VirtualSpaceUserRel) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *VirtualSpaceUserRel) ValidPreloads() *[]string {
+func (obj *VirtualSpaceUserRel) PreloadFields() *[]string {
 	return &virtualSpaceUserRelValidPreloads
 }
 
@@ -1595,7 +1595,7 @@ func (objList *VirtualSpaceUserRelList) GetKind() *string {
 	return &virtualSpaceUserRelKind
 }
 
-func (obj *VirtualSpaceUserRelList) GetPKField() *string {
+func (obj *VirtualSpaceUserRelList) PrimaryKeyField() *string {
 	return &virtualSpaceUserRelPrimaryKey
 }
 
@@ -1635,15 +1635,15 @@ func (obj *Workload) GetKind() *string {
 	return &workloadKind
 }
 
-func (obj *Workload) GetPKField() *string {
+func (obj *Workload) PrimaryKeyField() *string {
 	return &workloadPrimaryKey
 }
 
-func (obj *Workload) GetPKValue() interface{} {
+func (obj *Workload) PrimaryKeyValue() interface{} {
 	return obj.ID
 }
 
-func (obj *Workload) ValidPreloads() *[]string {
+func (obj *Workload) PreloadFields() *[]string {
 	return &workloadValidPreloads
 }
 
@@ -1656,7 +1656,7 @@ func (objList *WorkloadList) GetKind() *string {
 	return &workloadKind
 }
 
-func (obj *WorkloadList) GetPKField() *string {
+func (obj *WorkloadList) PrimaryKeyField() *string {
 	return &workloadPrimaryKey
 }
 

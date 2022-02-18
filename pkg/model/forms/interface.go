@@ -3,23 +3,25 @@ package forms
 import "kubegems.io/pkg/model/client"
 
 type BaseForm struct {
-	object client.Object
+	object client.Object `json:"-"`
+	data   interface{}   `json:"-"`
 }
 
 type BaseListForm struct {
-	objectlist client.ObjectListIfe
+	objectlist client.ObjectListIface
+	data       interface{}
 }
 
 type FormInterface interface {
 	// 将表单对象转换成模型对象
-	AsObject() client.Object
+	Object() client.Object
 	// 将模型对象转换成表单对象
-	Data() FormInterface
+	DataPtr() interface{}
 }
 
 type FormListInterface interface {
 	// 将表单对象转换成模型对象
-	AsListObject() client.ObjectListIfe
+	Object() client.ObjectListIface
 	// 将模型对象转换成表单对象
-	AsListData() FormListInterface
+	DataPtr() interface{}
 }

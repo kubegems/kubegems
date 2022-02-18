@@ -105,7 +105,7 @@ func (c *Client) Delete(ctx context.Context, obj client.Object, opts ...client.O
 	return tx.Commit().Error
 }
 
-func (c *Client) CreateInBatches(ctx context.Context, obj client.ObjectListIfe, opts ...client.Option) error {
+func (c *Client) CreateInBatches(ctx context.Context, obj client.ObjectListIface, opts ...client.Option) error {
 	// NOTICE: no hook here, if need, just add it
 	tdb := c.db.WithContext(ctx)
 	tdb = tdb.Scopes(
@@ -120,13 +120,13 @@ func (c *Client) Get(ctx context.Context, obj client.Object, opts ...client.Opti
 	tdb := c.db.WithContext(ctx)
 	tdb = tdb.Scopes(
 		scopeTable(tableName(obj)),
-		scopePreload(q.Preloads, *obj.ValidPreloads()),
+		scopePreload(q.Preloads, *obj.PreloadFields()),
 		scopeCond(q.Where, tableName(obj)),
 	)
 	return tdb.First(obj).Error
 }
 
-func (c *Client) List(ctx context.Context, olist client.ObjectListIfe, opts ...client.Option) error {
+func (c *Client) List(ctx context.Context, olist client.ObjectListIface, opts ...client.Option) error {
 	tdb := c.db.WithContext(ctx)
 	q := utils.GetQuery(opts...)
 
@@ -147,22 +147,7 @@ func (c *Client) List(ctx context.Context, olist client.ObjectListIfe, opts ...c
 	return tdb.Find(olist.DataPtr()).Error
 }
 
-func (c *Client) Exist(ctx context.Context, obj client.Object, opts ...client.Option) bool {
-	var total int64
-	q := utils.GetQuery(opts...)
-	tdb := c.db.WithContext(ctx)
-	tName := tableName(obj)
-	tdb.Scopes(
-		scopeTable(tName),
-		scopeCond(q.Where, tName),
-	)
-	if err := tdb.Count(&total).Error; err != nil {
-		return false
-	}
-	return total > 0
-}
-
-func (c *Client) Count(ctx context.Context, o client.ObjectTypeIfe, t *int64, opts ...client.Option) error {
+func (c *Client) Count(ctx context.Context, o client.ObjectTypeIface, t *int64, opts ...client.Option) error {
 	q := utils.GetQuery(opts...)
 	tdb := c.db.WithContext(ctx)
 	tName := tableName(o)
@@ -216,7 +201,7 @@ func scopeOrder(orders []string) func(tx *gorm.DB) *gorm.DB {
 	}
 }
 
-func scopePageSize(page, size int64, ol client.ObjectListIfe) func(tx *gorm.DB) *gorm.DB {
+func scopePageSize(page, size int64, ol client.ObjectListIface) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		tdb := tx
 		if size > 0 && page > 0 {
@@ -235,16 +220,16 @@ func scopeBelong(belongs []client.Object, mytable string) func(tx *gorm.DB) *gor
 		}
 		tdb := tx
 		for _, obj := range belongs {
-			fieldName := fmt.Sprintf("%s_%s", *obj.GetKind(), *obj.GetPKField())
-			if *obj.GetPKField() == "id" {
+			fieldName := fmt.Sprintf("%s_%s", *obj.GetKind(), *obj.PrimaryKeyField())
+			if *obj.PrimaryKeyField() == "id" {
 				q := fmt.Sprintf("%s = ?", fieldName)
-				tdb = tx.Where(q, obj.GetPKValue())
+				tdb = tx.Where(q, obj.PrimaryKeyValue())
 			} else {
 				rightTable := tableName(obj)
 				joinQ := fmt.Sprintf("LEFT JOIN %s ON %s.id = %s.%s", rightTable, rightTable, mytable, fieldName)
 				tdb = tdb.Joins(joinQ)
 				q := fmt.Sprintf("%s = ?", rightTable+"."+fieldName)
-				tdb = tdb.Where(q, obj.GetPKValue())
+				tdb = tdb.Where(q, obj.PrimaryKeyValue())
 			}
 		}
 		return tdb
@@ -281,7 +266,7 @@ eg:
 			where tenants.tenant_name = "egTenant"
 
 */
-func scopeRelation(rels []client.RelationCondition, ol client.ObjectTypeIfe) func(tx *gorm.DB) *gorm.DB {
+func scopeRelation(rels []client.RelationCondition, ol client.ObjectTypeIface) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		tdb := tx
 		if len(rels) == 0 {
@@ -297,9 +282,9 @@ func scopeRelation(rels []client.RelationCondition, ol client.ObjectTypeIfe) fun
 				q := fmt.Sprintf("%s.%s = ?", relTable, rel.Key)
 				tdb = tdb.Where(q, rel.Value)
 			}
-			if !isEmpty(rel.Target.GetPKValue()) {
+			if !isEmpty(rel.Target.PrimaryKeyValue()) {
 				q := fmt.Sprintf("%s.%s", relTable, *rel.Target.GetKind()+"_id")
-				tdb = tdb.Where(q, rel.Target.GetPKValue())
+				tdb = tdb.Where(q, rel.Target.PrimaryKeyValue())
 			}
 		}
 		return tdb

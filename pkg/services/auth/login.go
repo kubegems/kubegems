@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 
 	"kubegems.io/pkg/model/client"
@@ -33,7 +34,7 @@ type AuthenticateIface interface {
 	// LoginAddr 获取登录地址
 	LoginAddr() string
 	// 验证凭据, 获取用户信息
-	GetUserInfo(cred *Credential) (*UserInfo, error)
+	GetUserInfo(ctx context.Context, cred *Credential) (*UserInfo, error)
 }
 
 type AuthenticateModuleIface interface {
@@ -50,10 +51,10 @@ type AuthenticateModule struct {
 	ModelClient client.ModelClientIface
 }
 
-func (l *AuthenticateModule) GetAuthenticateModule(name string) AuthenticateIface {
+func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name string) AuthenticateIface {
 	authSources := &forms.AuthSourceCommonList{}
-	l.ModelClient.List(authSources.AsListObject())
-	sources := authSources.AsListData()
+	l.ModelClient.List(ctx, authSources.Object())
+	sources := authSources.Data()
 	for _, source := range sources {
 		if source.Name == name {
 			switch source.Kind {

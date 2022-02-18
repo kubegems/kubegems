@@ -39,20 +39,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestClient_Exist(t *testing.T) {
-	c := &Client{
-		db:        gormdb,
-		relations: map[string]*client.Relation{},
-	}
-	user1 := User{ID: 2}
-	mock.ExpectQuery("SELECT count(*) FROM `users` WHERE `users`.`id` = ?").WithArgs(2).WillReturnRows(sqlmock.NewRows([]string{"cout(*)"}).AddRow(1))
-	assert.True(t, c.Exist(context.Background(), &user1))
-
-	user2 := User{ID: 33}
-	mock.ExpectQuery("SELECT count(*) FROM `users` WHERE `users`.`id` = ?").WithArgs(33).WillReturnRows(sqlmock.NewRows([]string{"cout(*)"}).AddRow(0))
-	assert.False(t, c.Exist(context.Background(), &user2))
-}
-
 func TestClient_Get(t *testing.T) {
 	c := &Client{
 		db:        gormdb,

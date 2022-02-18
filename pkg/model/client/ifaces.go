@@ -1,33 +1,23 @@
 package client
 
-type ObjectTypeIfe interface {
+type ObjectTypeIface interface {
 	GetKind() *string
-	GetPKField() *string
-}
-
-type ObjectKeyIfe interface {
-	ObjectTypeIfe
-	GetPKValue() interface{}
+	PrimaryKeyField() *string
 }
 
 type Object interface {
-	ObjectKeyIfe
-	ValidPreloads() *[]string
+	ObjectTypeIface
+	PrimaryKeyValue() interface{}
+	PreloadFields() *[]string
 }
 
-type ObjectListIfe interface {
-	ObjectTypeIfe
+type ObjectListIface interface {
+	ObjectTypeIface
 	GetPageSize() (*int64, *int64)
 	GetTotal() *int64
 	SetPageSize(int64, int64)
 	SetTotal(int64)
 	DataPtr() interface{}
-}
-
-type RelationShip interface {
-	Object
-	Left() Object
-	Right() Object
 }
 
 type Option interface {

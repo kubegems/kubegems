@@ -1,6 +1,7 @@
 package userhandler
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -21,26 +22,27 @@ type Handler struct {
 }
 
 func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
+	ctx := req.Request.Context()
 	cred := &auth.Credential{}
 	if err := utils.BindData(req, cred); err != nil {
 		utils.BadRequest(resp, err)
 		return
 	}
 	authModule := auth.NewAuthenticateModule(h.ModelClient)
-	authenticator := authModule.GetAuthenticateModule(cred.Source)
+	authenticator := authModule.GetAuthenticateModule(ctx, cred.Source)
 	if authenticator == nil {
 		utils.Unauthorized(resp, nil)
 		return
 	}
-	uinfo, err := authenticator.GetUserInfo(cred)
+	uinfo, err := authenticator.GetUserInfo(ctx, cred)
 	if err != nil {
 		utils.Unauthorized(resp, err)
 		return
 	}
-	uinternel := h.getOrCreateUser(uinfo)
+	uinternel := h.getOrCreateUser(req.Request.Context(), uinfo)
 	now := time.Now()
 	uinternel.LastLoginAt = &now
-	h.ModelClient.Update(uinternel.AsObject())
+	h.ModelClient.Update(req.Request.Context(), uinternel.Object())
 	user := &forms.UserCommon{
 		Username: uinternel.Username,
 		Email:    uinternel.Email,
@@ -55,11 +57,9 @@ func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
 	utils.OK(resp, token)
 }
 
-func (h *Handler) getOrCreateUser(uinfo *auth.UserInfo) *forms.UserInternal {
+func (h *Handler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo) *forms.UserInternal {
 	u := forms.UserInternal{}
-	uobj := u.AsObject()
-	if h.ModelClient.Exist(uobj, client.Where("username", client.Eq, uinfo.Username)) {
-		h.ModelClient.Get(uobj, client.Where("username", client.Eq, uinfo.Username))
+	if err := h.ModelClient.Get(ctx, u.Object(), client.Where("username", client.Eq, uinfo.Username)); err != nil {
 		return u.Data()
 	}
 	newUser := &forms.UserInternal{
@@ -67,7 +67,7 @@ func (h *Handler) getOrCreateUser(uinfo *auth.UserInfo) *forms.UserInternal {
 		Email:    uinfo.Email,
 		Source:   uinfo.Source,
 	}
-	h.ModelClient.Create(newUser.AsObject())
+	h.ModelClient.Create(ctx, newUser.Object())
 	return newUser.Data()
 }
 
