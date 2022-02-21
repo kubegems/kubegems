@@ -8,8 +8,8 @@ import (
 	auth "kubegems.io/pkg/service/aaa/authentication"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/oauth"
 	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/oauth"
 )
 
 type LoginForm struct {
@@ -32,7 +32,8 @@ func (h *OAuthHandler) LoginHandler(c *gin.Context) {
 }
 
 type OAuthHandler struct {
-	Midware *auth.Middleware
+	Midware   *auth.Middleware
+	OauthTool *oauth.OauthTool
 }
 
 // @Summary 获取OAUTH登录地址
@@ -43,8 +44,7 @@ type OAuthHandler struct {
 // @Success 200 {string} string	"地址"
 // @Router /v1/oauth/addr [get]
 func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
-	t := oauth.GetOauthTool()
-	handlers.OK(c, t.GetAuthAddr())
+	handlers.OK(c, h.OauthTool.GetAuthAddr())
 }
 
 // @Summary 获取OAUTH登录地址
@@ -55,7 +55,7 @@ func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 // @Success 200 {string} string	"地址"
 // @Router /v1/oauth/callback [get]
 func (h *OAuthHandler) GetOauthToken(c *gin.Context) {
-	t := oauth.GetOauthTool()
+	t := h.OauthTool
 	code := c.Query("code")
 	tok, err := t.GetAccessToken(code)
 	if err != nil {

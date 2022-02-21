@@ -22,7 +22,7 @@ type AuditActionData struct {
 }
 
 // SetAuditData 设置上下文的审计数据
-func (audit *AuditInstance) SetAuditData(c *gin.Context, action, mod, name string) {
+func (audit *DefaultAuditInstance) SetAuditData(c *gin.Context, action, mod, name string) {
 	data := &AuditActionData{
 		Action: action,
 		Module: mod,
@@ -32,8 +32,8 @@ func (audit *AuditInstance) SetAuditData(c *gin.Context, action, mod, name strin
 }
 
 // SetExtraAuditData 设置上下文的审计数据 的系统环境信息（租户，项目，环境）
-func (audit *AuditInstance) SetExtraAuditData(c *gin.Context, kind string, uid uint) {
-	cacheTree := audit.GetCacheLayer().GetGlobalResourceTree()
+func (audit *DefaultAuditInstance) SetExtraAuditData(c *gin.Context, kind string, uid uint) {
+	cacheTree := audit.cache.GetGlobalResourceTree()
 	extra := cacheTree.Tree.FindParents(kind, uid)
 	if len(extra) > 0 {
 		c.Set(AuditExtraDataKey, extra)
@@ -41,8 +41,8 @@ func (audit *AuditInstance) SetExtraAuditData(c *gin.Context, kind string, uid u
 }
 
 // SetExtraAuditDataByClusterNamespace 根据集群namesapce设置上下文的审计数据 的系统环境信息（租户，项目，环境）
-func (audit *AuditInstance) SetExtraAuditDataByClusterNamespace(c *gin.Context, cluster, namesapce string) {
-	cacheTree := audit.GetCacheLayer().GetGlobalResourceTree()
+func (audit *DefaultAuditInstance) SetExtraAuditDataByClusterNamespace(c *gin.Context, cluster, namesapce string) {
+	cacheTree := audit.cache.GetGlobalResourceTree()
 	node := cacheTree.Tree.FindNodeByClusterNamespace(cluster, namesapce)
 	if node != nil {
 		extra := cacheTree.Tree.FindParents(node.Kind, node.ID)
@@ -52,7 +52,7 @@ func (audit *AuditInstance) SetExtraAuditDataByClusterNamespace(c *gin.Context, 
 	}
 }
 
-func (audit *AuditInstance) SetProxyAuditData(c *gin.Context, pobj *ProxyObject) {
+func (audit *DefaultAuditInstance) SetProxyAuditData(c *gin.Context, pobj *ProxyObject) {
 }
 
 func GetExtraAuditData(c *gin.Context) (string, map[string]string) {
@@ -106,7 +106,7 @@ func GetProxyAuditData(c *gin.Context) (*AuditActionData, map[string]string) {
 	}, tags
 }
 
-func (audit *AuditInstance) SaveAuditLog(c *gin.Context) {
+func (audit *DefaultAuditInstance) SaveAuditLog(c *gin.Context) {
 	// 所有GET请求不审计
 	if c.Request.Method == http.MethodGet {
 		return
@@ -132,8 +132,8 @@ func (audit *AuditInstance) SaveAuditLog(c *gin.Context) {
 	audit.LogIt(c, t, rawdata)
 }
 
-func (audit *AuditInstance) LogIt(c *gin.Context, t time.Time, raw gin.H) {
-	user, _ := audit.CacheLayer.GetContextUser(c)
+func (audit *DefaultAuditInstance) LogIt(c *gin.Context, t time.Time, raw gin.H) {
+	user, _ := audit.userinterface.GetContextUser(c)
 
 	var (
 		module string

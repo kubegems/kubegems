@@ -13,9 +13,7 @@ import (
 	"kubegems.io/pkg/services/utils"
 )
 
-var (
-	tags = []string{"login"}
-)
+var tags = []string{"login"}
 
 type Handler struct {
 	Path        string

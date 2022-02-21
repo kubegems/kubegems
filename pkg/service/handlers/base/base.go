@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	msgclient "kubegems.io/pkg/msgbus/client"
-	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/aaa"
 	"kubegems.io/pkg/service/aaa/audit"
 	"kubegems.io/pkg/service/aaa/authorization"
@@ -29,16 +28,24 @@ type BaseHandler struct {
 	cachelayer *models.CacheLayer
 }
 
-func NewHandler(server define.ServerInterface) BaseHandler {
+func NewHandler(auditi audit.AuditInterface,
+	permcheck authorization.PermissionChecker,
+	userif aaa.UserInterface,
+	agents *agents.ClientSet,
+	database *database.Database,
+	redis *redis.Client,
+	msgbuscli msgclient.MessageBusInterface,
+	cachelayer *models.CacheLayer,
+) BaseHandler {
 	return BaseHandler{
-		AuditInterface:    server,
-		PermissionChecker: server,
-		UserInterface:     server,
-		agents:            server.GetAgentsClientSet(),
-		msgbuscli:         server.GetMessageBusClient(),
-		cachelayer:        server.GetCacheLayer(),
-		database:          server.GetDataBase(),
-		redis:             server.GetRedis(),
+		AuditInterface:    auditi,
+		PermissionChecker: permcheck,
+		UserInterface:     userif,
+		agents:            agents,
+		msgbuscli:         msgbuscli,
+		cachelayer:        cachelayer,
+		database:          database,
+		redis:             redis,
 	}
 }
 

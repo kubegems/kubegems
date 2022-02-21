@@ -71,6 +71,7 @@ type CommonUserIfe interface {
 	UnmarshalBinary(data []byte) error
 	MarshalBinary() (data []byte, err error)
 }
+
 type UserAuthorityIfe interface {
 	// 资源角色
 	GetResourceRole(kind string, id uint) string

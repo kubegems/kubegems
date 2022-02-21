@@ -13,14 +13,6 @@ import (
 	"kubegems.io/pkg/utils/redis"
 )
 
-var redisinstance *redis.Client
-
-// models.User 的 hook 上用到了 redis 实例，需要在使用前初始化这个redis 实例
-func InitRedis(cli *redis.Client) error {
-	redisinstance = cli
-	return nil
-}
-
 type CacheLayer struct {
 	DataBase *database.Database
 	Redis    *redis.Client

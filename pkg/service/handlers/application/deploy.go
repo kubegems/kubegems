@@ -10,9 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kubegems.io/pkg/apis/application"
 	"kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/server/define"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
+	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/git"
 )
 
@@ -62,16 +62,14 @@ type ManifestDeploy struct {
 	Contents  []unstructured.Unstructured
 }
 
-func MustNewApplicationDeployHandler(server define.ServerInterface, commonbase base.BaseHandler) *ApplicationHandler {
-	opts := server.GetOptions().Git
-	provider, err := git.NewProvider(opts)
+func MustNewApplicationDeployHandler(gitoptions *git.Options, argocli *argo.Client, commonbase base.BaseHandler) *ApplicationHandler {
+	provider, err := git.NewProvider(gitoptions)
 	if err != nil {
 		panic(err)
 	}
-	database := server.GetDataBase()
-	argocli := server.GetArgocdClient()
-	agents := server.GetAgentsClientSet()
-	redis := server.GetRedis()
+	database := commonbase.GetDataBase()
+	agents := commonbase.GetAgents()
+	redis := commonbase.GetRedis()
 
 	base := BaseHandler{
 		BaseHandler: commonbase,

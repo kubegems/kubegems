@@ -3,7 +3,6 @@ package options
 import (
 	"github.com/spf13/pflag"
 	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
-	"kubegems.io/pkg/service/oauth"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
@@ -11,6 +10,7 @@ import (
 	"kubegems.io/pkg/utils/git"
 	"kubegems.io/pkg/utils/helm"
 	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/pkg/utils/oauth"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/system"
 )

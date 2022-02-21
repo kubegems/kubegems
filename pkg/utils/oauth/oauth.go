@@ -12,8 +12,6 @@ import (
 	"kubegems.io/pkg/utils"
 )
 
-var _ot *OauthTool
-
 type OauthOptions struct {
 	Kind          string   `yaml:"kind"`
 	UserInfoURL   string   `yaml:"userinfourl"`
@@ -62,8 +60,8 @@ type GitlabUser struct {
 	Email    string `json:"email"`
 }
 
-func InitOauth(opts *OauthOptions) error {
-	_ot = &OauthTool{
+func NewOauthTool(opts *OauthOptions) *OauthTool {
+	ot := &OauthTool{
 		ClientType:  opts.Kind,
 		UserInfoURL: opts.UserInfoURL,
 		OauthConfig: &oauth2.Config{
@@ -79,12 +77,7 @@ func InitOauth(opts *OauthOptions) error {
 		},
 		client: &http.Client{},
 	}
-	InitBamBooSyncTool(opts.BambooOptions)
-	return nil
-}
-
-func GetOauthTool() *OauthTool {
-	return _ot
+	return ot
 }
 
 func (ot *OauthTool) GetAuthAddr() string {
