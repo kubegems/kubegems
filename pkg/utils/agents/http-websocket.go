@@ -91,6 +91,9 @@ func (c TypedClient) DoRawRequest(ctx context.Context, clientreq Request) (*http
 			req.Header.Add(k, v)
 		}
 	}
+	if clientreq.Headers.Get("Content-Type") == "" {
+		req.Header.Add("Content-Type", "application/json")
+	}
 
 	// queries
 	query := req.URL.Query()
@@ -123,8 +126,10 @@ func (c TypedClient) DoRequest(ctx context.Context, req Request) error {
 	}
 
 	// success
-	if err := json.NewDecoder(resp.Body).Decode(req.Into); err != nil {
-		return err
+	if req.Into != nil {
+		if err := json.NewDecoder(resp.Body).Decode(req.Into); err != nil {
+			return fmt.Errorf("decode resp: err: %w", err)
+		}
 	}
 	return nil
 }
