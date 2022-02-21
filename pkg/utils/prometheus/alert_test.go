@@ -17,7 +17,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 	type fields struct {
 		AlertmanagerConfig *v1alpha1.AlertmanagerConfig
 		PrometheusRule     *monitoringv1.PrometheusRule
-		Silences           []*alertmanagertypes.Silence
+		Silences           []alertmanagertypes.Silence
 	}
 	type args struct {
 		containOrigin bool
