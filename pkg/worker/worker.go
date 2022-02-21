@@ -7,7 +7,6 @@ import (
 	"github.com/go-logr/logr"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
@@ -42,7 +41,6 @@ func prepareDependencies(ctx context.Context, options *Options) (*Dependencies, 
 		return nil, err
 	}
 	// database
-	models.InitRedis(rediscli)
 	databasecli, err := database.NewDatabase(options.Mysql)
 	if err != nil {
 		return nil, err

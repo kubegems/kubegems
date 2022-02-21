@@ -29,15 +29,6 @@ func createDatabaseIfNotExists(dsn, dbname string) error {
 }
 
 func MigrateDatabaseAndInitData(opts *database.MySQLOptions, redisopts *redis.Options) error {
-	rediscli, err := redis.NewClient(redisopts)
-	if err != nil {
-		return err
-	}
-	// hook 中需要redis
-	if err := InitRedis(rediscli); err != nil {
-		return err
-	}
-
 	// init database schema
 	if err := createDatabaseIfNotExists(opts.ToDsnWithOutDB()); err != nil {
 		return err

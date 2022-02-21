@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/service/aaa"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 )
@@ -60,30 +61,24 @@ func (p *ProxyObject) InNamespace() bool {
 	return p.Namespace != "" && p.Namespace != "_" && p.Namespace != "_all"
 }
 
-type CacheLayer interface {
-	GetCacheLayer() *models.CacheLayer
-	GetContextUser(c *gin.Context) (*models.User, bool)
+type DefaultAuditInstance struct {
+	userinterface aaa.UserInterface
+	cache         *models.CacheLayer
+	db            *gorm.DB
+	logQueue      chan models.AuditLog
 }
 
-type AuditInstance struct {
-	CacheLayer
-	db       *gorm.DB
-	logQueue chan models.AuditLog
-}
-
-func NewAuditMiddleware(db *gorm.DB) *AuditInstance {
-	audit := &AuditInstance{
-		db:       db,
-		logQueue: make(chan models.AuditLog, 1000),
+func NewAuditMiddleware(db *gorm.DB, cache *models.CacheLayer, uinterface aaa.UserInterface) *DefaultAuditInstance {
+	audit := &DefaultAuditInstance{
+		db:            db,
+		logQueue:      make(chan models.AuditLog, 1000),
+		cache:         cache,
+		userinterface: uinterface,
 	}
 	return audit
 }
 
-func (audit *AuditInstance) SetCacheLayer(cache CacheLayer) {
-	audit.CacheLayer = cache
-}
-
-func (audit *AuditInstance) AuditProxyFunc(c *gin.Context, proxyobj *ProxyObject) {
+func (audit *DefaultAuditInstance) AuditProxyFunc(c *gin.Context, proxyobj *ProxyObject) {
 	if utils.ContainStr(normalActions, c.Request.Method) {
 		return
 	}
@@ -94,7 +89,7 @@ func (audit *AuditInstance) AuditProxyFunc(c *gin.Context, proxyobj *ProxyObject
 	if !proxyobj.InNamespace() {
 		return
 	}
-	cacheTree := audit.GetCacheLayer().GetGlobalResourceTree().Tree
+	cacheTree := audit.cache.GetGlobalResourceTree().Tree
 	n := cacheTree.FindNodeByClusterNamespace(proxyobj.Cluster, proxyobj.Namespace)
 	if n != nil {
 		extra := cacheTree.FindParents(n.Kind, n.ID)
@@ -104,7 +99,7 @@ func (audit *AuditInstance) AuditProxyFunc(c *gin.Context, proxyobj *ProxyObject
 	}
 }
 
-func (audit *AuditInstance) WebsocketAuditFunc(username string, parents models.ResourceQueue, ip string, proxyobj *ProxyObject) func(cmd string) {
+func (audit *DefaultAuditInstance) WebsocketAuditFunc(username string, parents models.ResourceQueue, ip string, proxyobj *ProxyObject) func(cmd string) {
 	var tenant string
 	tags := map[string]string{}
 	for _, p := range parents {
@@ -127,7 +122,7 @@ func (audit *AuditInstance) WebsocketAuditFunc(username string, parents models.R
 	}
 }
 
-func (audit *AuditInstance) Log(username, module, tenant, operation, name string, labels map[string]string, raw interface{}, success bool, ip string) {
+func (audit *DefaultAuditInstance) Log(username, module, tenant, operation, name string, labels map[string]string, raw interface{}, success bool, ip string) {
 	rawjson, err := json.Marshal(raw)
 	if err != nil {
 		log.Errorf("can't record audit log: (%v)", raw)
@@ -151,7 +146,7 @@ func (audit *AuditInstance) Log(username, module, tenant, operation, name string
 	audit.logQueue <- auditLog
 }
 
-func (audit *AuditInstance) Consumer(ctx context.Context) error {
+func (audit *DefaultAuditInstance) Consumer(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -166,7 +161,7 @@ func (audit *AuditInstance) Consumer(ctx context.Context) error {
 	}
 }
 
-func (audit *AuditInstance) Middleware() func(c *gin.Context) {
+func (audit *DefaultAuditInstance) Middleware() func(c *gin.Context) {
 	return audit.SaveAuditLog
 }
 

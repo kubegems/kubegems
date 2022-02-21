@@ -12,7 +12,6 @@ import (
 	"kubegems.io/pkg/msgbus/switcher"
 	"kubegems.io/pkg/msgbus/tasks"
 	"kubegems.io/pkg/msgbus/workloads"
-	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
@@ -68,7 +67,6 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 	}
 
 	// 初始化Mysql实例
-	models.InitRedis(rediscli) // 模型的hook中需要redis
 	db, err := database.NewDatabase(options.Mysql)
 	if err != nil {
 		return nil, err

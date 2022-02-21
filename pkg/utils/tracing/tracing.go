@@ -23,7 +23,7 @@ func (logger) Infof(msg string, args ...interface{}) {
 	log.WithField("jaeger", "tracing").Infof(msg, args...)
 }
 
-func Init(ctx context.Context) {
+func SetGlobal(ctx context.Context) {
 	cfg, err := config.FromEnv()
 	if err != nil {
 		log.Warnf("could not parse jaeger env vars: %s", err.Error())
