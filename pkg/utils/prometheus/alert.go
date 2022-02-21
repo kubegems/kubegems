@@ -44,7 +44,7 @@ const (
 type RawAlertResource struct {
 	*v1alpha1.AlertmanagerConfig
 	*monitoringv1.PrometheusRule
-	Silences []*alertmanagertypes.Silence
+	Silences []alertmanagertypes.Silence
 }
 
 type AlertLevel struct {
@@ -78,14 +78,6 @@ type AlertRule struct {
 	// 相关配置
 	RuleContext `json:"-"`
 	Origin      *monitoringv1.RuleGroup `json:"origin,omitempty"` // 原始的prometheusrule
-}
-
-type AlertRuleList []AlertRule
-
-func (a AlertRuleList) Len() int      { return len(a) }
-func (a AlertRuleList) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a AlertRuleList) Less(i, j int) bool {
-	return strings.ToLower(a[i].Name) < strings.ToLower(a[j].Name)
 }
 
 // TODO: unit test
@@ -177,7 +169,7 @@ func (raw *RawAlertResource) ToAlerts(containOrigin bool) ([]AlertRule, error) {
 		}
 	}
 
-	silenceMap := map[string]*alertmanagertypes.Silence{}
+	silenceMap := map[string]alertmanagertypes.Silence{}
 	for _, s := range raw.Silences {
 		// 有fingerprint- 前缀的是告警黑名单
 		if !strings.HasPrefix(s.Comment, "fingerprint-") {

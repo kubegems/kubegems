@@ -4,27 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
-	"github.com/prometheus/alertmanager/pkg/labels"
-	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/agentutils"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 /*
@@ -59,108 +51,43 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 
-	ctx := c.Request.Context()
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		promeAlertRules, err := cli.Extend().GetPromeAlertRules(ctx, "")
+		if err != nil {
+			return nil, err
+		}
 
-	promeAlertRules := map[string]prometheus.RealTimeAlertRule{}
-	done := make(chan struct{})
-	go func() {
-		h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
-			return cli.DoRequest(ctx, agents.Request{
-				Path: "/custom/prometheus/v1/alertrule",
-				Into: agents.WrappedResponse(&promeAlertRules),
-			})
-		})
-		close(done)
-	}()
-
-	ret := prometheus.AlertRuleList{}
-	if namespace == allNamespace {
-		ruleList := monitoringv1.PrometheusRuleList{}
-		configList := v1alpha1.AlertmanagerConfigList{}
-
-		configNamespaceMap := map[string]*v1alpha1.AlertmanagerConfig{}
-		silenceNamespaceMap := map[string][]*alertmanagertypes.Silence{}
-
-		fun := func(ctx context.Context, tc agents.Client) error {
-			if err := tc.List(ctx, &ruleList, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.PrometheusRuleSelector)); err != nil {
-				return err
-			}
-			if err := tc.List(ctx, &configList, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
-				return err
-			}
-
-			// 按照namespace分组
-			for _, v := range configList.Items {
-				if v.Name == prometheus.AlertmanagerConfigName {
-					configNamespaceMap[v.Namespace] = v
-				}
-			}
-
-			// 按照namespace分组
-			allSilences, err := h.ListSilences(ctx, cluster, "")
+		ret := []prometheus.AlertRule{}
+		if namespace == allNamespace {
+			ret, err = agentutils.ListAlertRule(ctx, cli)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			for _, silence := range allSilences {
-				for _, m := range silence.Matchers {
-					if m.Name == prometheus.AlertNamespaceLabel {
-						silenceNamespaceMap[m.Value] = append(silenceNamespaceMap[m.Value], silence)
-					}
-				}
-			}
-
-			for _, rule := range ruleList.Items {
-				if rule.Name == prometheus.PrometheusRuleName {
-					amconfig, ok := configNamespaceMap[rule.Namespace]
-					if !ok {
-						log.Warnf("alertmanager config: %s not found", rule.Name)
-						continue
-					}
-					raw := &prometheus.RawAlertResource{
-						PrometheusRule:     rule,
-						AlertmanagerConfig: amconfig,
-						Silences:           silenceNamespaceMap[rule.Namespace],
-					}
-
-					alerts, err := raw.ToAlerts(false)
-					if err != nil {
-						return err
-					}
-					ret = append(ret, alerts...)
-				}
-			}
-			return nil
-		}
-
-		if err := h.Execute(c, cluster, fun); err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-	} else {
-		raw, err := h.getRawAlertResource(ctx, cluster, namespace)
-		if err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-		ret, err = raw.ToAlerts(false)
-		if err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-	}
-
-	<-done
-	for i := range ret {
-		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
-		if promRule, ok := promeAlertRules[key]; ok {
-			ret[i].State = promRule.State
 		} else {
-			ret[i].State = "inactive"
+			raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+			if err != nil {
+				return nil, err
+			}
+			ret, err = raw.ToAlerts(false)
+			if err != nil {
+				return nil, err
+			}
 		}
-	}
 
-	sort.Sort(ret)
-	handlers.OK(c, ret)
+		for i := range ret {
+			key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
+			if promRule, ok := promeAlertRules[key]; ok {
+				ret[i].State = promRule.State
+			} else {
+				ret[i].State = "inactive"
+			}
+		}
+
+		sort.Slice(ret, func(i, j int) bool {
+			return ret[i].Name < ret[j].Name
+		})
+		return ret, nil
+	})(c)
 }
 
 // GetAlertRule AlertRule详情
@@ -180,45 +107,38 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	ctx := c.Request.Context()
-	raw, err := h.getRawAlertResource(ctx, cluster, namespace)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	alerts, err := raw.ToAlerts(true)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	// get realtime alert
-	promeAlertRules := map[string]prometheus.RealTimeAlertRule{}
-	h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
-		return cli.DoRequest(ctx, agents.Request{
-			Path: fmt.Sprintf("/custom/prometheus/v1/alertrule?name=%s", name),
-			Into: agents.WrappedResponse(&promeAlertRules),
-		})
-	})
-
-	realtimeAertRule := promeAlertRules[prometheus.RealTimeAlertKey(namespace, name)]
-	sort.Sort(&realtimeAertRule)
-
-	index := -1
-	for i := range alerts {
-		if alerts[i].Name == name {
-			index = i
-			break
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+		if err != nil {
+			return nil, err
 		}
-	}
-	if index == -1 {
-		handlers.NotOK(c, fmt.Errorf("alert %s not found", name))
-		return
-	}
-	alerts[index].State = realtimeAertRule.State
-	alerts[index].RealTimeAlerts = realtimeAertRule.Alerts
-	handlers.OK(c, alerts[index])
+		alerts, err := raw.ToAlerts(true)
+		if err != nil {
+			return nil, err
+		}
+		// get realtime alert
+		promeAlertRules, err := cli.Extend().GetPromeAlertRules(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+
+		realtimeAertRule := promeAlertRules[prometheus.RealTimeAlertKey(namespace, name)]
+		sort.Sort(&realtimeAertRule)
+
+		index := -1
+		for i := range alerts {
+			if alerts[i].Name == name {
+				index = i
+				break
+			}
+		}
+		if index == -1 {
+			return nil, fmt.Errorf("alert %s not found", name)
+		}
+		alerts[index].State = realtimeAertRule.State
+		alerts[index].RealTimeAlerts = realtimeAertRule.Alerts
+		return alerts[index], nil
+	})(c)
 }
 
 // GetAlertRule 禁用AlertRule
@@ -234,13 +154,19 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 // @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/actions/disable [post]
 // @Security JWT
 func (h *AlertsHandler) DisableAlertRule(c *gin.Context) {
-	h.SetAuditData(c, "禁用", "告警规则", c.Param("name"))
-	h.SetExtraAuditDataByClusterNamespace(c, c.Param("cluster"), c.Param("namespace"))
-	if err := h.CreateSilenceIfNotExist(c.Request.Context(), c.Param("cluster"), c.Param("namespace"), c.Param("name")); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, "")
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	h.SetAuditData(c, "禁用", "告警规则", name)
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		if err := createSilenceIfNotExist(ctx, namespace, name, cli); err != nil {
+			log.Error(err, "create silence", "alert name", name)
+			return nil, err
+		}
+		return "ok", nil
+	})(c)
 }
 
 // GetAlertRule 启用AlertRule
@@ -256,13 +182,19 @@ func (h *AlertsHandler) DisableAlertRule(c *gin.Context) {
 // @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/actions/enable [post]
 // @Security JWT
 func (h *AlertsHandler) EnableAlertRule(c *gin.Context) {
-	h.SetAuditData(c, "启用", "告警规则", c.Param("name"))
-	h.SetExtraAuditDataByClusterNamespace(c, c.Param("cluster"), c.Param("namespace"))
-	if err := h.DeleteSilenceIfExist(c.Request.Context(), c.Param("cluster"), c.Param("namespace"), c.Param("name")); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, "")
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	h.SetAuditData(c, "启用", "告警规则", name)
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		if err := deleteSilenceIfExist(ctx, namespace, name, cli); err != nil {
+			log.Error(err, "delete silence", "alert name", name)
+			return nil, err
+		}
+		return "ok", nil
+	})(c)
 }
 
 // CreateAlertRule 创建AlertRule
@@ -273,7 +205,7 @@ func (h *AlertsHandler) EnableAlertRule(c *gin.Context) {
 // @Produce json
 // @Param cluster path string true "cluster"
 // @Param namespace path string true "namespace"
-// @Param form body prometheus.AlertRuleList true "body"
+// @Param form body prometheus.AlertRule true "body"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "规则"
 // @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert [post]
 // @Security JWT
@@ -281,37 +213,32 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 
-	req := prometheus.AlertRule{}
-	if err := c.BindJSON(&req); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	req.Namespace = namespace
-	h.SetAuditData(c, "创建", "告警规则", req.Name)
-	if err := req.CheckAndModify(); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		req := prometheus.AlertRule{}
+		if err := c.BindJSON(&req); err != nil {
+			return nil, err
+		}
+		req.Namespace = namespace
+		h.SetAuditData(c, "创建", "告警规则", req.Name)
+		if err := req.CheckAndModify(); err != nil {
+			return nil, err
+		}
 
-	// get、update、commit
-	ctx := c.Request.Context()
-	raw, err := h.getRawAlertResource(ctx, cluster, namespace)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		// get、update、commit
+		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+		if err != nil {
+			return nil, err
+		}
 
-	if err := raw.ModifyAlertRule(req, prometheus.Add); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		if err := raw.ModifyAlertRule(req, prometheus.Add); err != nil {
+			return nil, err
+		}
 
-	if err := h.commitToK8s(ctx, cluster, raw); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	handlers.OK(c, "ok")
+		if err := agentutils.CommitToK8s(ctx, raw, cli); err != nil {
+			return nil, err
+		}
+		return "ok", nil
+	})(c)
 }
 
 // ModifyAlertRule 修改AlertRule
@@ -323,7 +250,7 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 // @Param cluster path string true "cluster"
 // @Param namespace path string true "namespace"
 // @Param name path string true "name"
-// @Param form body prometheus.AlertRuleList true "body"
+// @Param form body prometheus.AlertRule true "body"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "规则"
 // @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name} [put]
 // @Security JWT
@@ -331,37 +258,32 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 
-	req := prometheus.AlertRule{}
-	if err := c.BindJSON(&req); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	req.Namespace = namespace
-	h.SetAuditData(c, "更新", "告警规则", req.Name)
-	if err := req.CheckAndModify(); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		req := prometheus.AlertRule{}
+		if err := c.BindJSON(&req); err != nil {
+			return nil, err
+		}
+		req.Namespace = namespace
+		h.SetAuditData(c, "更新", "告警规则", req.Name)
+		if err := req.CheckAndModify(); err != nil {
+			return nil, err
+		}
 
-	// get、update、commit
-	ctx := c.Request.Context()
-	raw, err := h.getRawAlertResource(ctx, cluster, namespace)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		// get、update、commit
+		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+		if err != nil {
+			return nil, err
+		}
 
-	if err := raw.ModifyAlertRule(req, prometheus.Update); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		if err := raw.ModifyAlertRule(req, prometheus.Update); err != nil {
+			return nil, err
+		}
 
-	if err := h.commitToK8s(ctx, cluster, raw); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	handlers.OK(c, "ok")
+		if err := agentutils.CommitToK8s(ctx, raw, cli); err != nil {
+			return nil, err
+		}
+		return "ok", nil
+	})(c)
 }
 
 // DeleteAlertRule 删除AlertRule
@@ -385,30 +307,27 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 		Name:      name,
 	}
 
-	// get、update、commit
-	ctx := c.Request.Context()
-	raw, err := h.getRawAlertResource(ctx, cluster, namespace)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		// get、update、commit
+		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+		if err != nil {
+			return nil, err
+		}
 
-	if err := raw.ModifyAlertRule(req, prometheus.Delete); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		if err := raw.ModifyAlertRule(req, prometheus.Delete); err != nil {
+			return nil, err
+		}
 
-	if err := h.commitToK8s(ctx, cluster, raw); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		if err := agentutils.CommitToK8s(ctx, raw, cli); err != nil {
+			return nil, err
+		}
 
-	// 清理silence规则
-	if err := h.DeleteSilenceIfExist(ctx, cluster, namespace, name); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, "ok")
+		// 清理silence规则
+		if err := deleteSilenceIfExist(ctx, namespace, name, cli); err != nil {
+			return nil, err
+		}
+		return "ok", nil
+	})(c)
 }
 
 type AlertMessageGroup struct {
@@ -641,11 +560,6 @@ func (h *AlertsHandler) SearchAlert(c *gin.Context) {
 }
 
 var (
-	alertProxyHeader = map[string]string{
-		"namespace": "gemcloud-monitoring-system",
-		"service":   "alertmanager",
-		"port":      "9093",
-	}
 	silenceCommentPrefix = "fingerprint-"
 
 	forever = time.Date(9893, time.December, 26, 0, 0, 0, 0, time.UTC) // 伟人8000年诞辰
@@ -731,7 +645,12 @@ func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 			if err := tx.Save(&req).Error; err != nil {
 				return err
 			}
-			return h.createOrUpdateSilenceIfNotExist(c.Request.Context(), req.ClusterName, req)
+			ctx := c.Request.Context()
+			cli, err := h.GetAgents().ClientOf(ctx, req.ClusterName)
+			if err != nil {
+				return err
+			}
+			return cli.Extend().CreateOrUpdateSilenceIfNotExist(c.Request.Context(), req)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -769,7 +688,12 @@ func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 		if err := json.Unmarshal(req.Labels, &req.LabelMap); err != nil {
 			return err
 		}
-		return h.deleteSilenceIfExist(c.Request.Context(), req.ClusterName, req)
+		ctx := c.Request.Context()
+		cli, err := h.GetAgents().ClientOf(ctx, req.ClusterName)
+		if err != nil {
+			return err
+		}
+		return cli.Extend().DeleteSilenceIfExist(ctx, req)
 	})
 	handlers.OK(c, "ok")
 }
@@ -802,116 +726,4 @@ func (h *AlertsHandler) withBlackListReq(c *gin.Context, f func(req models.Alert
 		req.SilenceEndsAt = &forever
 	}
 	return f(req)
-}
-
-func (h *AlertsHandler) listSilences(ctx context.Context, cluster string, labels map[string]string) ([]alertmanagertypes.Silence, error) {
-	agentcli, err := h.GetAgents().ClientOf(ctx, cluster)
-	if err != nil {
-		return nil, err
-	}
-
-	allSilences := []alertmanagertypes.Silence{}
-
-	req := agents.Request{
-		Path: "/v1/service-proxy/api/v2/silences",
-		Query: func() url.Values {
-			values := url.Values{}
-			for k, v := range labels {
-				values.Add("filter", fmt.Sprintf(`%s="%s"`, k, v))
-			}
-			return values
-		}(),
-		Headers: agents.HeadersFrom(alertProxyHeader),
-		Into:    &allSilences,
-	}
-
-	if err := agentcli.DoRequest(ctx, req); err != nil {
-		return nil, fmt.Errorf("list silence by %v, %w", labels, err)
-	}
-	// 只返回活跃的
-	ret := []alertmanagertypes.Silence{}
-	for _, v := range allSilences {
-		if v.Status.State == alertmanagertypes.SilenceStateActive &&
-			strings.HasPrefix(v.Comment, silenceCommentPrefix) {
-			ret = append(ret, v)
-		}
-	}
-	return ret, nil
-}
-
-func (h *AlertsHandler) createOrUpdateSilenceIfNotExist(ctx context.Context, cluster string, req models.AlertInfo) error {
-	silenceList, err := h.listSilences(ctx, cluster, req.LabelMap)
-	if err != nil {
-		return err
-	}
-	agentcli, err := h.GetAgents().ClientOf(ctx, cluster)
-	if err != nil {
-		return err
-	}
-	silence := convertBlackListToSilence(req)
-	switch len(silenceList) {
-	case 0:
-		break
-	case 1:
-		silence.ID = silenceList[0].ID
-	default:
-		return fmt.Errorf("too many silences for alert: %v", req)
-	}
-
-	agentreq := agents.Request{
-		Method:  http.MethodPost,
-		Path:    "/v1/service-proxy/api/v2/silences",
-		Body:    silence,
-		Headers: agents.HeadersFrom(alertProxyHeader),
-	}
-
-	if err := agentcli.DoRequest(ctx, agentreq); err != nil {
-		return fmt.Errorf("create silence:%w", err)
-	}
-	return nil
-}
-
-func (h *AlertsHandler) deleteSilenceIfExist(ctx context.Context, cluster string, req models.AlertInfo) error {
-	silenceList, err := h.listSilences(ctx, cluster, req.LabelMap)
-	if err != nil {
-		return err
-	}
-	switch len(silenceList) {
-	case 0:
-		return nil
-	case 1:
-		agentcli, err := h.GetAgents().ClientOf(ctx, cluster)
-		if err != nil {
-			return err
-		}
-		agentreq := agents.Request{
-			Method:  http.MethodDelete,
-			Path:    fmt.Sprintf("/v1/service-proxy/api/v2/silences/%s", silenceList[0].ID),
-			Headers: agents.HeadersFrom(alertProxyHeader),
-		}
-		return agentcli.DoRequest(ctx, agentreq)
-	default:
-		return fmt.Errorf("too many silences for alert: %v", req)
-	}
-}
-
-func convertBlackListToSilence(info models.AlertInfo) alertmanagertypes.Silence {
-	ret := alertmanagertypes.Silence{
-		StartsAt:  *info.SilenceStartsAt,
-		EndsAt:    *info.SilenceEndsAt,
-		UpdatedAt: *info.SilenceUpdatedAt,
-		CreatedBy: info.SilenceCreator,
-		Comment:   fmt.Sprintf("%s%s", silenceCommentPrefix, info.Fingerprint), // comment存指纹，以便取出时做匹配
-		Matchers:  make(labels.Matchers, len(info.LabelMap)),
-	}
-	index := 0
-	for k, v := range info.LabelMap {
-		ret.Matchers[index] = &labels.Matcher{
-			Type:  labels.MatchEqual,
-			Name:  k,
-			Value: v,
-		}
-		index++
-	}
-	return ret
 }

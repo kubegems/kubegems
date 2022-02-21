@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/emersion/go-sasl"
@@ -14,9 +13,9 @@ import (
 	"github.com/gin-gonic/gin"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/agentutils"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
@@ -64,14 +63,6 @@ func (rec *ReceiverConfig) Precheck() error {
 	return nil
 }
 
-type ReceiverConfigs []ReceiverConfig
-
-func (a ReceiverConfigs) Len() int      { return len(a) }
-func (a ReceiverConfigs) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a ReceiverConfigs) Less(i, j int) bool {
-	return strings.ToLower(a[i].Name) < strings.ToLower(a[j].Name)
-}
-
 // @Tags Alert
 // @Summary 在namespace下获取receiver列表
 // @Description 在namespace下获取receiver列表
@@ -87,30 +78,48 @@ func (h *AlertmanagerConfigHandler) ListReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	search := c.Query("search")
-	ctx := c.Request.Context()
 
-	ret := ReceiverConfigs{}
-	if namespace == allNamespace {
+	ret := []ReceiverConfig{}
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		if namespace == allNamespace {
+			configlist := &v1alpha1.AlertmanagerConfigList{}
+			emailsecretlist := &corev1.SecretList{}
 
-		configlist := &v1alpha1.AlertmanagerConfigList{}
-		emailsecretlist := &corev1.SecretList{}
-
-		err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
 			if err := cli.List(ctx, configlist, client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
-				return err
+				return nil, err
 			}
 			if err := cli.List(ctx, emailsecretlist, client.MatchingLabels(emailSecretLabel)); err != nil {
-				return err
+				return nil, err
 			}
-			return nil
-		})
-		if err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
 
-		for _, config := range configlist.Items {
-			secret := filterSecretByNamespace(&emailsecretlist.Items, config.Namespace)
+			for _, config := range configlist.Items {
+				secret := filterSecretByNamespace(&emailsecretlist.Items, config.Namespace)
+				for _, rec := range config.Spec.Receivers {
+					if rec.Name != nullReceiverName {
+						if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
+							ret = append(ret, toGemsReceiver(rec, config.Namespace, secret))
+						}
+					}
+				}
+			}
+		} else {
+			config, err := agentutils.GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
+			if err != nil {
+				return nil, err
+			}
+
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      emailSecretName,
+					Namespace: namespace,
+				},
+			}
+			if err := cli.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
+				if !kerrors.IsNotFound(err) {
+					return err, nil
+				}
+			}
+
 			for _, rec := range config.Spec.Receivers {
 				if rec.Name != nullReceiverName {
 					if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
@@ -119,40 +128,13 @@ func (h *AlertmanagerConfigHandler) ListReceiver(c *gin.Context) {
 				}
 			}
 		}
-	} else {
-		config, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
-		if err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
 
-		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      emailSecretName,
-				Namespace: namespace,
-			},
-		}
-		err = h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
-			return cli.Get(ctx, client.ObjectKeyFromObject(secret), secret)
+		sort.Slice(ret, func(i, j int) bool {
+			return ret[i].Name < ret[j].Name
 		})
-		if err != nil {
-			if !kerrors.IsNotFound(err) {
-				handlers.NotOK(c, err)
-				return
-			}
-		}
+		return ret, nil
+	})(c)
 
-		for _, rec := range config.Spec.Receivers {
-			if rec.Name != nullReceiverName {
-				if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
-					ret = append(ret, toGemsReceiver(rec, config.Namespace, secret))
-				}
-			}
-		}
-	}
-
-	sort.Sort(ret)
-	handlers.OK(c, ret)
 }
 
 func filterSecretByNamespace(secrets *[]corev1.Secret, ns string) *corev1.Secret {
@@ -172,40 +154,39 @@ func filterSecretByNamespace(secrets *[]corev1.Secret, ns string) *corev1.Secret
 // @Param cluster path string true "cluster"
 // @Param namespace path string true "namespace"
 // @Param form body ReceiverConfig true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]v1alpha1.Receiver} "告警通知接收人"
+// @Success 200 {object} handlers.ResponseStruct{Data=string} "告警通知接收人"
 // @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver [post]
 // @Security JWT
 func (h *AlertmanagerConfigHandler) CreateReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
-	ctx := c.Request.Context()
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "创建", "告警接收器", "")
-	aconfig, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	req := ReceiverConfig{}
-	_ = c.BindJSON(&req)
-	h.SetAuditData(c, "创建", "告警接收器", req.Name)
 
-	if err := req.Precheck(); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		aconfig, err := agentutils.GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
+		if err != nil {
+			return nil, err
+		}
+		req := ReceiverConfig{}
+		if err := c.BindJSON(&req); err != nil {
+			return nil, err
+		}
+		h.SetAuditData(c, "创建", "告警接收器", req.Name)
 
-	if err := h.createOrUpdateSecret(c.Request.Context(), cluster, namespace, &req); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		if err := req.Precheck(); err != nil {
+			return nil, err
+		}
 
-	receiver := toAlertmanagerReceiver(req)
-	if err := h.modify(ctx, aconfig, &receiver, cluster, prometheus.Add); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, aconfig.Spec.Receivers)
+		if err := createOrUpdateSecret(c.Request.Context(), namespace, &req, cli); err != nil {
+			return nil, err
+		}
+
+		receiver := toAlertmanagerReceiver(req)
+		if err := h.modify(ctx, aconfig, &receiver, prometheus.Add, cli); err != nil {
+			return nil, err
+		}
+		return "ok", err
+	})(c)
 }
 
 // @Tags Alert
@@ -216,41 +197,36 @@ func (h *AlertmanagerConfigHandler) CreateReceiver(c *gin.Context) {
 // @Param cluster path string true "cluster"
 // @Param namespace path string true "namespace"
 // @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]v1alpha1.Receiver} "告警通知接收人"
+// @Success 200 {object} handlers.ResponseStruct{Data=string} "告警通知接收人"
 // @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name} [delete]
 // @Security JWT
 func (h *AlertmanagerConfigHandler) DeleteReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	name := c.Param("name")
-
-	if name == defaultReceiverName {
-		handlers.NotOK(c, fmt.Errorf("不能删除默认接收器"))
-		return
-	}
-
-	ctx := c.Request.Context()
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 	h.SetAuditData(c, "删除", "告警接收器", name)
-	if len(name) == 0 {
-		handlers.NotOK(c, fmt.Errorf("receiver name must not be empty"))
-		return
-	}
-	aconfig, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	receiver := v1alpha1.Receiver{Name: name}
-	if isReceiverUsed(aconfig.Spec.Route, receiver) {
-		handlers.NotOK(c, fmt.Errorf("%s is being used, can't delete", name))
-		return
-	}
-	if err := h.modify(ctx, aconfig, &receiver, cluster, prometheus.Delete); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, aconfig.Spec.Receivers)
+
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		if name == defaultReceiverName {
+			return nil, fmt.Errorf("不能删除默认接收器")
+		}
+		if len(name) == 0 {
+			return nil, fmt.Errorf("receiver name must not be empty")
+		}
+		aconfig, err := agentutils.GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
+		if err != nil {
+			return nil, err
+		}
+		receiver := v1alpha1.Receiver{Name: name}
+		if isReceiverUsed(aconfig.Spec.Route, receiver) {
+			return nil, fmt.Errorf("%s is being used, can't delete", name)
+		}
+		if err := h.modify(ctx, aconfig, &receiver, prometheus.Delete, cli); err != nil {
+			return nil, err
+		}
+		return "ok", err
+	})(c)
 }
 
 // @Tags Alert
@@ -262,38 +238,39 @@ func (h *AlertmanagerConfigHandler) DeleteReceiver(c *gin.Context) {
 // @Param namespace path string true "namespace"
 // @Param name path string true "name"
 // @Param form body ReceiverConfig true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]v1alpha1.Receiver} "告警通知接收人"
+// @Success 200 {object} handlers.ResponseStruct{Data=string} "告警通知接收人"
 // @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name} [put]
 // @Security JWT
 func (h *AlertmanagerConfigHandler) ModifyReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
-	name := c.Param("name")
-	ctx := c.Request.Context()
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "修改", "告警接收器", name)
-	aconfig, err := h.getOrCreateAlertmanagerConfig(ctx, cluster, namespace)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	req := ReceiverConfig{}
-	_ = c.BindJSON(&req)
-	if err := req.Precheck(); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	if err := h.createOrUpdateSecret(c.Request.Context(), cluster, namespace, &req); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
 
-	receiver := toAlertmanagerReceiver(req)
-	if err := h.modify(ctx, aconfig, &receiver, cluster, prometheus.Update); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, aconfig.Spec.Receivers)
+	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
+		aconfig, err := agentutils.GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
+		if err != nil {
+			return nil, err
+		}
+		req := ReceiverConfig{}
+		if err := c.BindJSON(&req); err != nil {
+			return nil, err
+		}
+		h.SetAuditData(c, "修改", "告警接收器", req.Name)
+
+		if err := req.Precheck(); err != nil {
+			return nil, err
+		}
+
+		if err := createOrUpdateSecret(c.Request.Context(), namespace, &req, cli); err != nil {
+			return nil, err
+		}
+
+		receiver := toAlertmanagerReceiver(req)
+		if err := h.modify(ctx, aconfig, &receiver, prometheus.Update, cli); err != nil {
+			return nil, err
+		}
+		return "ok", err
+	})(c)
 }
 
 // @Tags Alert
@@ -335,7 +312,7 @@ func findReceiverIndex(rules []v1alpha1.Receiver, name string) int {
 	return index
 }
 
-func (h *AlertmanagerConfigHandler) modify(ctx context.Context, aconfig *v1alpha1.AlertmanagerConfig, receiver *v1alpha1.Receiver, cluster string, act prometheus.Action) error {
+func (h *AlertmanagerConfigHandler) modify(ctx context.Context, aconfig *v1alpha1.AlertmanagerConfig, receiver *v1alpha1.Receiver, act prometheus.Action, cli agents.Client) error {
 	if receiver == nil {
 		return nil
 	}
@@ -361,18 +338,18 @@ func (h *AlertmanagerConfigHandler) modify(ctx context.Context, aconfig *v1alpha
 		}
 		aconfig.Spec.Receivers = append(aconfig.Spec.Receivers, *receiver)
 		aconfig.Spec.Route.Receiver = nullReceiverName
-		_, err := h.UpdateAlertmanagerConfig(ctx, cluster, aconfig)
+		_, err := updateAlertmanagerConfig(ctx, aconfig, cli)
 		return err
 	case prometheus.Delete:
 		index := findReceiverIndex(aconfig.Spec.Receivers, receiver.Name)
 		if index != -1 {
 			toDelete := aconfig.Spec.Receivers[index]
 			aconfig.Spec.Receivers = append(aconfig.Spec.Receivers[:index], aconfig.Spec.Receivers[index+1:]...)
-			if _, err := h.UpdateAlertmanagerConfig(ctx, cluster, aconfig); err != nil {
+			if _, err := updateAlertmanagerConfig(ctx, aconfig, cli); err != nil {
 				return err
 			}
 
-			return h.deleteSecret(ctx, cluster, aconfig.Namespace, toDelete)
+			return deleteSecret(ctx, aconfig.Namespace, toDelete, cli)
 		}
 		return nil
 	case prometheus.Update:
@@ -382,7 +359,7 @@ func (h *AlertmanagerConfigHandler) modify(ctx context.Context, aconfig *v1alpha
 		}
 		aconfig.Spec.Receivers[index] = *receiver
 		aconfig.Spec.Route.Receiver = nullReceiverName
-		_, err := h.UpdateAlertmanagerConfig(ctx, cluster, aconfig)
+		_, err := updateAlertmanagerConfig(ctx, aconfig, cli)
 		return err
 	}
 	return nil
@@ -404,65 +381,45 @@ func isReceiverUsed(route *v1alpha1.Route, receiver v1alpha1.Receiver) bool {
 	return false
 }
 
-func (h *AlertmanagerConfigHandler) createOrUpdateSecret(ctx context.Context, cluster, namespace string, rec *ReceiverConfig) error {
-	var m sync.Mutex
-	m.Lock()
-	defer m.Unlock()
-
-	return h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
-		sec := &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      emailSecretName,
-				Namespace: namespace,
-				Labels:    emailSecretLabel,
-			},
-			Type: corev1.SecretTypeOpaque,
-		}
-		_, err := controllerutil.CreateOrUpdate(ctx, cli, sec, func() error {
-			return rec.UpdateSecretData(sec)
-		})
-		return err
-	})
-}
-
-func (h *AlertmanagerConfigHandler) deleteSecret(ctx context.Context, cluster, namespace string, rec v1alpha1.Receiver) error {
-	return h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
-		sec := &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      emailSecretName,
-				Namespace: namespace,
-			},
-		}
-		if err := cli.Get(ctx, client.ObjectKeyFromObject(sec), sec); err != nil {
-			return err
+func createOrUpdateSecret(ctx context.Context, namespace string, rec *ReceiverConfig, cli agents.Client) error {
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      emailSecretName,
+			Namespace: namespace,
+			Labels:    emailSecretLabel,
+		},
+		Type: corev1.SecretTypeOpaque,
+	}
+	_, err := controllerutil.CreateOrUpdate(ctx, cli, sec, func() error {
+		if sec.Data == nil {
+			sec.Data = make(map[string][]byte)
 		}
 		for _, v := range rec.EmailConfigs {
-			delete(sec.Data, emailSecretKey(rec.Name, v.From))
+			sec.Data[emailSecretKey(rec.Name, v.From)] = []byte(v.AuthPassword) // 不需要encode
 		}
-		return cli.Update(ctx, sec)
+		return nil
 	})
+	return err
+}
+
+func deleteSecret(ctx context.Context, namespace string, rec v1alpha1.Receiver, cli agents.Client) error {
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      emailSecretName,
+			Namespace: namespace,
+		},
+	}
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(sec), sec); err != nil {
+		return err
+	}
+	for _, v := range rec.EmailConfigs {
+		delete(sec.Data, emailSecretKey(rec.Name, v.From))
+	}
+	return cli.Update(ctx, sec)
 }
 
 func emailSecretKey(receverName, from string) string {
 	return receverName + "-" + strings.ReplaceAll(from, "@", "")
-}
-
-func (rec *ReceiverConfig) secretData() map[string][]byte {
-	ret := map[string][]byte{}
-	for _, v := range rec.EmailConfigs {
-		ret[emailSecretKey(rec.Name, v.From)] = []byte(v.AuthPassword) // 不需要encode
-	}
-	return ret
-}
-
-func (rec *ReceiverConfig) UpdateSecretData(in *v1.Secret) error {
-	if in.Data == nil {
-		in.Data = make(map[string][]byte)
-	}
-	for _, v := range rec.EmailConfigs {
-		in.Data[emailSecretKey(rec.Name, v.From)] = []byte(v.AuthPassword) // 不需要encode
-	}
-	return nil
 }
 
 func toGemsReceiver(rec v1alpha1.Receiver, namespace string, sec *corev1.Secret) ReceiverConfig {
