@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -10,10 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"golang.org/x/sync/errgroup"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/server/define"
+	msgbus "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/aaa"
+	"kubegems.io/pkg/service/aaa/audit"
 	auth "kubegems.io/pkg/service/aaa/authentication"
+	"kubegems.io/pkg/service/aaa/authorization"
 	"kubegems.io/pkg/service/handlers"
 	alerthandler "kubegems.io/pkg/service/handlers/alerts"
 	applicationhandler "kubegems.io/pkg/service/handlers/application"
@@ -41,8 +45,16 @@ import (
 	tenanthandler "kubegems.io/pkg/service/handlers/tenant"
 	userhandler "kubegems.io/pkg/service/handlers/users"
 	workloadreshandler "kubegems.io/pkg/service/handlers/workloadres"
+	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/models/validate"
 	"kubegems.io/pkg/service/options"
+	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/argo"
+	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/oauth"
 	"kubegems.io/pkg/utils/prometheus/collector"
+	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/pkg/utils/tracing"
 	"kubegems.io/pkg/version"
 )
 
@@ -66,41 +78,111 @@ func RealClientIPMiddleware() gin.HandlerFunc {
 	}
 }
 
-func NewRouter(_ *options.Options) *gin.Engine {
-	router := gin.New()
-	url := ginSwagger.URL(
-		"/swagger/doc.json",
+type Router struct {
+	Opts     *options.Options
+	Agents   *agents.ClientSet
+	Database *database.Database
+	Redis    *redis.Client
+	Argo     *argo.Client
+
+	auditInstance *audit.DefaultAuditInstance
+	gin           *gin.Engine
+}
+
+func (r *Router) Run(ctx context.Context) error {
+	if err := r.Complete(); err != nil {
+		return err
+	}
+	httpserver := &http.Server{
+		Addr:    r.Opts.System.Listen,
+		Handler: r.gin,
+		BaseContext: func(l net.Listener) context.Context {
+			return ctx // 注入basecontext
+		},
+	}
+
+	// run
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		log.FromContextOrDiscard(ctx).Info("start listen", "addr", httpserver.Addr)
+		go func() {
+			<-ctx.Done()
+			httpserver.Close()
+		}()
+		return httpserver.ListenAndServe()
+	})
+	eg.Go(func() error {
+		return r.auditInstance.Consumer(ctx)
+	})
+	return eg.Wait()
+}
+
+func (r *Router) Complete() error {
+	// validator
+	validate.InitValidator(r.Database.DB())
+	// oauth
+	oauthtool := oauth.NewOauthTool(r.Opts.Oauth)
+	// user interface
+	userif := aaa.NewUserInfoHandler()
+	// cache
+	cache := &models.CacheLayer{DataBase: r.Database, Redis: r.Redis}
+	// audit
+	r.auditInstance = audit.NewAuditMiddleware(r.Database.DB(), cache, userif)
+
+	// base handler
+	basehandler := base.NewHandler(
+		r.auditInstance,
+		&authorization.DefaultPermissionChecker{Cache: cache, Userif: userif},
+		userif,
+		r.Agents,
+		r.Database,
+		r.Redis,
+		msgbus.NewMessageBusClient(r.Database, r.Opts.Msgbus),
+		cache,
 	)
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
+
+	// init gin
+	r.gin = gin.New()
+	if !r.Opts.DebugMode {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	router := r.gin
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
 
 	dir, _ := os.Getwd()
 	router.StaticFS("/lokiExport", http.Dir(dir+"/lokiExport"))
-	router.Use(
-		// 请求数统计
+
+	authMiddleware, err := auth.NewAuthMiddleware(r.Opts.System, r.Database, r.Redis, aaa.NewUserInfoHandler())
+	if err != nil {
+		return err
+	}
+
+	globalMiddlewares := []func(*gin.Context){
+		// prometheus request metrics
 		collector.GetRequestCollector().HandlerFunc(),
-		// 日志
+		// logger
 		log.DefaultGinLoggerMideare(),
-		// Panic处理
+		// panic recovery
 		gin.Recovery(),
-	)
-	return router
-}
+		// http tracing
+		tracing.GinMiddleware(),
+		// real ip tracking
+		RealClientIPMiddleware(),
+	}
+	for _, middleware := range globalMiddlewares {
+		router.Use(middleware)
+	}
 
-func RegistRouter(router *gin.Engine, opts *options.Options, server define.ServerInterface, middlewares ...func(*gin.Context)) error {
-	basehandler := base.NewHandler(server)
-
-	// 健康检测，版本
-	router.Use(RealClientIPMiddleware())
 	router.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "healthy"}) })
 	router.GET("/version", func(c *gin.Context) { c.JSON(http.StatusOK, version.Get()) })
 	router.GET("/v1/version", func(c *gin.Context) { handlers.OK(c, version.Get()) })
 
 	// 登录和认证相关
-	authMiddleware, err := auth.InitAuthMiddleware(server.GetOptions().System, server.GetDataBase(), server.GetRedis(), aaa.NewUserInfoHandler())
-	if err != nil {
-		return err
+	oauth := loginhandler.OAuthHandler{
+		Midware:   authMiddleware,
+		OauthTool: oauthtool,
 	}
-	oauth := loginhandler.OAuthHandler{Midware: authMiddleware}
 	router.POST("/v1/login", oauth.LoginHandler)
 	router.GET("/v1/oauth/addr", oauth.GetOauthAddr)
 	router.GET("/v1/oauth/callback", oauth.GetOauthToken)
@@ -108,7 +190,13 @@ func RegistRouter(router *gin.Engine, opts *options.Options, server define.Serve
 	rg := router.Group("v1")
 
 	// 注册中间件
-	for _, mw := range middlewares {
+	apiMidwares := []func(*gin.Context){
+		// authc
+		authMiddleware.MiddlewareFunc(),
+		// audit
+		r.auditInstance.Middleware(),
+	}
+	for _, mw := range apiMidwares {
 		rg.Use(mw)
 	}
 	// 选项
@@ -175,7 +263,7 @@ func RegistRouter(router *gin.Engine, opts *options.Options, server define.Serve
 	myHandler.RegistRouter(rg)
 
 	// 应用商店
-	appstoreHandler := &appstorehandler.AppstoreHandler{BaseHandler: basehandler, AppStoreOpt: opts.Appstore}
+	appstoreHandler := &appstorehandler.AppstoreHandler{BaseHandler: basehandler, AppStoreOpt: r.Opts.Appstore}
 	appstoreHandler.RegistRouter(rg)
 
 	// 镜像仓库
@@ -211,11 +299,11 @@ func RegistRouter(router *gin.Engine, opts *options.Options, server define.Serve
 	selHandler.RegistRouter(rg)
 
 	// app handler
-	appHandler := applicationhandler.MustNewApplicationDeployHandler(server, basehandler)
+	appHandler := applicationhandler.MustNewApplicationDeployHandler(r.Opts.Git, r.Argo, basehandler)
 	appHandler.RegistRouter(rg)
 
 	// microservice  handler
-	microservicehandler := microservice.NewMicroServiceHandler(basehandler, server.GetOptions().Microservice)
+	microservicehandler := microservice.NewMicroServiceHandler(basehandler, r.Opts.Microservice)
 	microservicehandler.RegistRouter(rg)
 
 	// workload 的反向代理

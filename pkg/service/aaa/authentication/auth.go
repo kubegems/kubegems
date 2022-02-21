@@ -81,7 +81,7 @@ func getIdentityHandler(db *gorm.DB, redis *redis.Client, uif aaa.UserInterface)
 		claims := jwt.ExtractClaims(c)
 		username := claims[identityKey].(string)
 		u := models.User{}
-		cacheKey := UserInfoCacheKey(username)
+		cacheKey := getUserInfoCacheKey(username)
 		if err := redis.Get(context.Background(), cacheKey).Scan(&u); err != nil {
 			log.Debugf("get userinfo cache failed for user %v, will get from database: %v", cacheKey, err)
 			if err := db.Preload("SystemRole").First(&u, "username = ?", username).Error; err != nil {
@@ -89,7 +89,7 @@ func getIdentityHandler(db *gorm.DB, redis *redis.Client, uif aaa.UserInterface)
 				return ""
 			} else {
 				uif.SetContextUser(c, &u)
-				RefreshUserInfoCache(redis, u, userCacheExirpreMinute)
+				refreshUserInfoCache(redis, u, userCacheExirpreMinute)
 			}
 		} else {
 			uif.SetContextUser(c, &u)
@@ -98,12 +98,12 @@ func getIdentityHandler(db *gorm.DB, redis *redis.Client, uif aaa.UserInterface)
 	}
 }
 
-func UserInfoCacheKey(username string) string {
+func getUserInfoCacheKey(username string) string {
 	return fmt.Sprintf("userinfo_cahce_%s", username)
 }
 
-func RefreshUserInfoCache(redis *redis.Client, u models.User, timeout int) error {
-	_, err := redis.SetEX(context.TODO(), UserInfoCacheKey(u.Username), u, time.Duration(timeout)*time.Minute).Result()
+func refreshUserInfoCache(redis *redis.Client, u models.User, timeout int) error {
+	_, err := redis.SetEX(context.TODO(), getUserInfoCacheKey(u.Username), u, time.Duration(timeout)*time.Minute).Result()
 	if err != nil {
 		log.Warnf("failed to fresh userinfo cache for user %v: %v", u.Username, err)
 	}
@@ -151,7 +151,7 @@ type Middleware struct {
 	jwt.GinJWTMiddleware
 }
 
-func InitAuthMiddleware(system *system.SystemOptions, database *database.Database,
+func NewAuthMiddleware(system *system.SystemOptions, database *database.Database,
 	redis *redis.Client, uif aaa.UserInterface) (*Middleware, error) {
 	db := database.DB()
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{

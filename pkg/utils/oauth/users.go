@@ -70,13 +70,7 @@ func NewDefaultBambooOptions() *BambooOptions {
 	}
 }
 
-var bambooOptions *BambooOptions
-
-func InitBamBooSyncTool(opts *BambooOptions) {
-	bambooOptions = opts
-}
-
-func NewBamBooSyncTool() *BamBooUserSyncTool {
+func NewBamBooSyncTool(bambooOptions *BambooOptions) *BamBooUserSyncTool {
 	host := bambooOptions.Host
 	systemCode := bambooOptions.SystemCode
 	integrationKey := bambooOptions.IntegrationKey

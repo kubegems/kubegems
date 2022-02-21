@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/pkg/service/aaa"
 	"kubegems.io/pkg/service/aaa/audit"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
@@ -37,26 +38,22 @@ type PermissionChecker interface {
 	CheckCanDeployEnvironment(c *gin.Context)
 }
 
-type CacheLayer interface {
-	GetCacheLayer() *models.CacheLayer
-	GetContextUser(c *gin.Context) (*models.User, bool)
-}
-
 type DefaultPermissionChecker struct {
-	CacheLayer
+	Cache  *models.CacheLayer
+	Userif aaa.UserInterface
 }
 
 func (defaultPermChecker *DefaultPermissionChecker) HasEnvPerm(c *gin.Context, cluster, namespace string) (hasPerm bool, objname string, currentrole string) {
-	user, exist := defaultPermChecker.GetContextUser(c)
+	user, exist := defaultPermChecker.Userif.GetContextUser(c)
 	if !exist {
 		return false, "", ""
 	}
-	userAuthoriy := defaultPermChecker.GetCacheLayer().GetUserAuthority(user)
+	userAuthoriy := defaultPermChecker.Cache.GetUserAuthority(user)
 	if userAuthoriy.IsSystemAdmin {
 		return true, "", "admin"
 	}
 
-	resourceTree := defaultPermChecker.GetCacheLayer().GetGlobalResourceTree()
+	resourceTree := defaultPermChecker.Cache.GetGlobalResourceTree()
 	env := resourceTree.Tree.FindNodeByClusterNamespace(cluster, namespace)
 	if env == nil {
 		return false, "", ""
@@ -68,20 +65,20 @@ func (defaultPermChecker *DefaultPermissionChecker) HasEnvPerm(c *gin.Context, c
 }
 
 func (defaultPermChecker *DefaultPermissionChecker) HasObjectPerm(c *gin.Context, kind string, pk uint) (hasPerm bool, objname string, currentrole string) {
-	user, exist := defaultPermChecker.GetContextUser(c)
+	user, exist := defaultPermChecker.Userif.GetContextUser(c)
 	if !exist {
 		hasPerm = false
 		currentrole = ""
 		return
 	}
-	userAuthoriy := defaultPermChecker.GetCacheLayer().GetUserAuthority(user)
+	userAuthoriy := defaultPermChecker.Cache.GetUserAuthority(user)
 	if userAuthoriy.IsSystemAdmin {
 		hasPerm = true
 		currentrole = "sysadmin"
 		return
 	}
 
-	resourceTree := defaultPermChecker.GetCacheLayer().GetGlobalResourceTree()
+	resourceTree := defaultPermChecker.Cache.GetGlobalResourceTree()
 	res := resourceTree.Tree.FindNode(kind, pk)
 	if res == nil {
 		return false, "", ""
@@ -93,7 +90,7 @@ func (defaultPermChecker *DefaultPermissionChecker) HasObjectPerm(c *gin.Context
 }
 
 func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.UserAuthority, kind string, pk uint, action string) (hasPerm bool, currenrole string) {
-	resourceTree := defaultPermChecker.GetCacheLayer().GetGlobalResourceTree()
+	resourceTree := defaultPermChecker.Cache.GetGlobalResourceTree()
 	parents := resourceTree.Tree.FindParents(kind, pk)
 	if len(parents) == 0 {
 		return true, ""
@@ -230,13 +227,13 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckByVirtualSpaceID(
 }
 
 func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsSysADMIN(c *gin.Context) {
-	user, exist := defaultPermissionChecker.GetContextUser(c)
+	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
 		handlers.Unauthorized(c, "请登录")
 		c.Abort()
 		return
 	}
-	userAuthoriy := defaultPermissionChecker.GetCacheLayer().GetUserAuthority(user)
+	userAuthoriy := defaultPermissionChecker.Cache.GetUserAuthority(user)
 	if !userAuthoriy.IsSystemAdmin {
 		handlers.Forbidden(c, "只有系统管理员可以执行当前操作")
 		c.Abort()
@@ -245,13 +242,13 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsSysADMIN(c *gin
 }
 
 func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsATenantAdmin(c *gin.Context) {
-	user, exist := defaultPermissionChecker.GetContextUser(c)
+	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
 		handlers.Unauthorized(c, "请登录")
 		c.Abort()
 		return
 	}
-	userAuthoriy := defaultPermissionChecker.GetCacheLayer().GetUserAuthority(user)
+	userAuthoriy := defaultPermissionChecker.Cache.GetUserAuthority(user)
 	if userAuthoriy.IsSystemAdmin {
 		return
 	}
@@ -268,13 +265,13 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsATenantAdmin(c 
 }
 
 func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsVirtualSpaceAdmin(c *gin.Context) {
-	user, exist := defaultPermissionChecker.GetContextUser(c)
+	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
 		handlers.Unauthorized(c, "请登录")
 		c.Abort()
 		return
 	}
-	userAuthoriy := defaultPermissionChecker.GetCacheLayer().GetUserAuthority(user)
+	userAuthoriy := defaultPermissionChecker.Cache.GetUserAuthority(user)
 	if userAuthoriy.IsSystemAdmin {
 		return
 	}
@@ -295,13 +292,13 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsVirtualSpaceAdm
 // 5. 如果是环境operator，pass
 // 6. 其他都reject
 func (defaultPermChecker *DefaultPermissionChecker) CheckCanDeployEnvironment(c *gin.Context) {
-	user, exist := defaultPermChecker.GetContextUser(c)
+	user, exist := defaultPermChecker.Userif.GetContextUser(c)
 	if !exist {
 		c.Abort()
 		handlers.Forbidden(c, "请登录")
 		return
 	}
-	userAuthoriy := defaultPermChecker.GetCacheLayer().GetUserAuthority(user)
+	userAuthoriy := defaultPermChecker.Cache.GetUserAuthority(user)
 	// 系统管理员. pass
 	if userAuthoriy.IsSystemAdmin {
 		return
@@ -316,7 +313,7 @@ func (defaultPermChecker *DefaultPermissionChecker) CheckCanDeployEnvironment(c 
 		defaultPermChecker.CheckByProjectID(c)
 		return
 	}
-	resourceTree := defaultPermChecker.GetCacheLayer().GetGlobalResourceTree()
+	resourceTree := defaultPermChecker.Cache.GetGlobalResourceTree()
 	parents := resourceTree.Tree.FindParents(models.ResEnvironment, envid)
 	if len(parents) == 0 {
 		c.Abort()
