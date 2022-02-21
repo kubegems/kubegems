@@ -37,7 +37,7 @@
 }
 ```
 
-本指南中的大部分设置均已经配置进入 [golangco.yaml](../.golangci.yaml) 中
+本指南中的大部分设置均已经配置进入 [.golangci.yaml](../.golangci.yaml) 中
 
 并且你可以在本地使用或者手动运行：
 
@@ -81,7 +81,7 @@ backend
 
 ```go
 var dns string // 众所周知的缩写
-var worfCount int // 表意明确
+var wordCount int // 表意明确
 var i int // 常用于loop 变量
 ```
 
@@ -104,12 +104,12 @@ type File struct {
 }
 
 // 错误
-// use as: backend.BackendFile, backend.Backend* 重复表意
+// use as: backend.BackendFile, backend.Backend 重复表意
 type BackendFile struct {
     FileName string // File前缀冗余
 }
 // 错误
-// use as: backend.FileBackend，backend.*Backend 重复表意
+// use as: backend.FileBackend，backend.Backend 重复表意
 type FileBackend struct {}
 ```
 
