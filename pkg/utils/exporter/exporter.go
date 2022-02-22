@@ -13,19 +13,19 @@ import (
 	"kubegems.io/pkg/log"
 )
 
+const (
+	MetricPath             = "/metrics"
+	IncludeExporterMetrics = false
+	MaxRequests            = 40
+)
+
 type ExporterOptions struct {
-	Listen                 string `json:"listen,omitempty" description:"listen address"`
-	MetricPath             string `json:"metricPath,omitempty"`
-	IncludeExporterMetrics bool   `json:"includeExporterMetrics,omitempty"` // 是否监控自身
-	MaxRequests            int    `json:"maxRequests,omitempty"`
+	Listen string `json:"listen,omitempty" description:"listen address"`
 }
 
 func DefaultExporterOptions() *ExporterOptions {
 	return &ExporterOptions{
-		Listen:                 ":9100",
-		MetricPath:             "/metrics",
-		IncludeExporterMetrics: false,
-		MaxRequests:            40,
+		Listen: ":9100",
 	}
 }
 
@@ -42,7 +42,11 @@ type Handler struct {
 	logger                  *log.Logger
 }
 
-func NewHandler(includeExporterMetrics bool, maxRequests int, logger *log.Logger) *Handler {
+func NewHandler() *Handler {
+	return NewHandlerWith(IncludeExporterMetrics, MaxRequests, log.GlobalLogger.Sugar())
+}
+
+func NewHandlerWith(includeExporterMetrics bool, maxRequests int, logger *log.Logger) *Handler {
 	h := &Handler{
 		exporterMetricsRegistry: prometheus.NewRegistry(),
 		includeExporterMetrics:  includeExporterMetrics,

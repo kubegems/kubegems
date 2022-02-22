@@ -72,7 +72,7 @@ func Run(ctx context.Context, options *Options) error {
 	exporter.SetNamespace("gems_agent")
 	exporter.RegisterCollector("plugin", true, collector.NewPluginCollectorFunc(c)) // plugin exporter
 	exporter.RegisterCollector("request", true, basecollector.NewRequestCollector)  // http exporter
-	exporterHandler := exporter.NewHandler(options.Exporter.IncludeExporterMetrics, options.Exporter.MaxRequests, log.GlobalLogger.Sugar())
+	exporterHandler := exporter.NewHandler()
 
 	eg, ctx := errgroup.WithContext(ctx)
 
