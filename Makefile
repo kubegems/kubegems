@@ -50,7 +50,7 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 generate: ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	$(CONTROLLER_GEN) paths="./pkg/..." crd  output:crd:artifacts:config=deploy/crd/bases 			# Generate CRDs
+	$(CONTROLLER_GEN) paths="./pkg/apis/..." crd  output:crd:artifacts:config=deploy/crd/bases 			# Generate CRDs
 	$(CONTROLLER_GEN) paths="./pkg/..." rbac:roleName=manager-role webhook output:dir=deploy/rbac 	# Generate RBAC
 	$(CONTROLLER_GEN) paths="./pkg/..." webhook output:dir=deploy/webhook 							# Generate Webhooks
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"					# Generate DeepCopy, DeepCopyInto, DeepCopyObject
