@@ -25,15 +25,14 @@ import (
 https://github1s.com/kubernetes/apimachinery/blob/master/pkg/util/proxy/transport.go
 */
 
-const apiServerProxyPrefix = "/api/v1/namespaces/gemcloud-system/services/gems-agent:8041/proxy"
-
 // Transport is a transport for text/html content that replaces URLs in html
 // content with the prefix of the proxy server
 type Transport struct {
-	Scheme      string
-	Host        string
-	PathPrepend string
-	AgentPrefix string
+	Scheme        string
+	Host          string
+	AgentBaseAddr string
+	PathPrepend   string
+	AgentPrefix   string
 
 	http.RoundTripper
 }
@@ -173,7 +172,7 @@ func (t *Transport) rewriteResponse(req *http.Request, resp *http.Response) (*ht
 	}
 
 	urlRewriter := func(targetUrl string) string {
-		targetUrl = strings.ReplaceAll(targetUrl, apiServerProxyPrefix, "")
+		targetUrl = strings.ReplaceAll(targetUrl, t.AgentBaseAddr, "")
 		if t.AgentPrefix != "" {
 			targetUrl = strings.ReplaceAll(targetUrl, t.AgentPrefix, "")
 		}

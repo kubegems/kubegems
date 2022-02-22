@@ -23,16 +23,16 @@ type ClientSet struct {
 	clients sync.Map // name -> *Client
 }
 
-func NewClientSet(databse *database.Database, options *Options) (*ClientSet, error) {
+func NewClientSet(databse *database.Database) (*ClientSet, error) {
 	return &ClientSet{
 		databse: databse,
-		options: options,
+		options: NewDefaultOptions(), // default options,if override by config from database
 	}, nil
 }
 
-func (h *ClientSet) apiserverProxyPath() string {
-	const apiServerProxyPrefix = "/api/v1/namespaces/%s/services/%s:%d/proxy"
-	return fmt.Sprintf(apiServerProxyPrefix, h.options.Namespace, h.options.ServiceName, h.options.ServicePort)
+func (h *ClientSet) apiServerProxyPath() string {
+	return fmt.Sprintf("/api/v1/namespaces/%s/services/%s:%d/proxy",
+		h.options.Namespace, h.options.ServiceName, h.options.ServicePort)
 }
 
 func (h *ClientSet) Clusters() []string {
@@ -75,74 +75,59 @@ func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
 	return h.ClientOf(ctx, managerclustername)
 }
 
+func (h *ClientSet) completeFromKubeconfig(ctx context.Context, cluster *models.Cluster) error {
+	kubeconfig := []byte(cluster.KubeConfig)
+	apiserver, kubecliCert, kubecliKey, kubeca, err := kube.GetKubeconfigInfos(kubeconfig)
+	if err != nil {
+		return err
+	}
+	cluster.AgentAddr = apiserver + h.apiServerProxyPath()
+	cluster.AgentCert = string(kubecliCert)
+	cluster.AgentKey = string(kubecliKey)
+	cluster.AgentCA = string(kubeca)
+
+	// update databse
+	if err := h.databse.DB().Save(cluster).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta, error) {
 	cluster := &models.Cluster{}
 	if err := h.databse.DB().First(&cluster, "cluster_name = ?", name).Error; err != nil {
 		return nil, err
 	}
-	addr, mode := cluster.AgentAddr, cluster.Mode
 
-	cert, key, ca, kubeconfig := []byte(cluster.AgentCert), []byte(cluster.AgentKey), []byte(cluster.AgentCA), []byte(cluster.KubeConfig)
-
-	switch mode {
-	case AgentModeApiServer, "apiserver":
-		apiserver, kubecliCert, kubecliKey, kubeca, err := kube.GetKubeconfigInfos(kubeconfig)
-		if err != nil {
+	// 如果 agent addr 为空，则使用 apiserver 模式回填
+	if len(cluster.AgentAddr) == 0 {
+		if err := h.completeFromKubeconfig(ctx, cluster); err != nil {
 			return nil, err
 		}
-		tlsconfig, err := tlsConfigFrom(kubecliCert, kubecliKey, kubeca)
-		if err != nil {
-			return nil, err
-		}
+	}
 
-		baseurl, err := url.Parse(apiserver + h.apiserverProxyPath())
-		if err != nil {
-			return nil, err
-		}
-		cli := &ClientMeta{
-			Name:     name,
-			BaseAddr: baseurl,
-			Transport: &http.Transport{
-				TLSClientConfig: tlsconfig,
-				Proxy:           getRequestProxy(h.apiserverProxyPath()),
-			},
-		}
-		return cli, nil
-	case "", AgentModeHTTPS:
+	baseaddr, err := url.Parse(cluster.AgentAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	climeta := &ClientMeta{
+		Name:     name,
+		BaseAddr: baseaddr,
+		Transport: &http.Transport{
+			Proxy: getRequestProxy(path.Join("/v1/proxy/cluster", name)),
+		},
+	}
+
+	if baseaddr.Scheme == "https" {
+		cert, key, ca := []byte(cluster.AgentCert), []byte(cluster.AgentKey), []byte(cluster.AgentCA)
 		tlsconfig, err := tlsConfigFrom(cert, key, ca)
 		if err != nil {
 			return nil, err
 		}
-
-		baseurl, err := url.Parse(addr)
-		if err != nil {
-			return nil, err
-		}
-		cli := &ClientMeta{
-			Name:     name,
-			BaseAddr: baseurl,
-			Transport: &http.Transport{
-				TLSClientConfig: tlsconfig,
-				Proxy:           getRequestProxy(path.Join("/v1/proxy/cluster", name)),
-			},
-		}
-		return cli, nil
-	case AgentModeAHTTP:
-		baseurl, err := url.Parse(addr)
-		if err != nil {
-			return nil, err
-		}
-		cli := &ClientMeta{
-			Name:     name,
-			BaseAddr: baseurl,
-			Transport: &http.Transport{
-				Proxy: getRequestProxy(path.Join("/v1/proxy/cluster", name)),
-			},
-		}
-		return cli, nil
-	default:
-		return nil, fmt.Errorf("unsupported agent mode")
+		climeta.Transport.TLSClientConfig = tlsconfig
 	}
+	return climeta, nil
 }
 
 func tlsConfigFrom(cert, key, ca []byte) (*tls.Config, error) {
