@@ -6,7 +6,6 @@ import (
 	"gorm.io/datatypes"
 )
 
-// UserMessageStatus 用户消息已读状态表
 // +gen type:object pkcolume:id pkfield:ID
 type UserMessageStatus struct {
 	ID        uint
@@ -17,7 +16,6 @@ type UserMessageStatus struct {
 	IsRead    bool
 }
 
-// Message 用户消息通知表
 // +gen type:object pkcolume:id pkfield:ID
 type Message struct {
 	ID          uint   `gorm:"primarykey"`

@@ -11,6 +11,7 @@ import (
 	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/model/validate"
 	clusterhandler "kubegems.io/pkg/services/handlers/clusters"
+	loginhandler "kubegems.io/pkg/services/handlers/login"
 	tenanthandler "kubegems.io/pkg/services/handlers/tenants"
 	userhandler "kubegems.io/pkg/services/handlers/users"
 )
@@ -20,16 +21,16 @@ func ServiceContainer(modelClient client.ModelClientIface) *restful.Container {
 
 	regist(
 		servicesContainer,
+		&loginhandler.Handler{
+			ModelClient: modelClient,
+		},
 		&userhandler.Handler{
-			Path:        "users",
 			ModelClient: modelClient,
 		},
 		&clusterhandler.Handler{
-			Path:        "clusters",
 			ModelClient: modelClient,
 		},
 		&tenanthandler.Handler{
-			Path:        "tenants",
 			ModelClient: modelClient,
 		},
 	)
@@ -67,5 +68,8 @@ func Run() {
 	validate.InitValidator(mc)
 
 	sr := ServiceContainer(mc)
+
+	restful.DefaultContainer.RegisteredWebServices()
+
 	http.ListenAndServe(":9090", sr)
 }

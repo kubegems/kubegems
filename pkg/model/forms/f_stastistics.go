@@ -29,33 +29,33 @@ const (
 // +genform object:Workload
 type WorkloadCommon struct {
 	BaseForm
-	ID                uint
-	CreatedAt         *time.Time
-	ClusterName       string
-	Namespace         string
-	Type              string
-	Name              string
-	CPULimitStdvar    float64
-	MemoryLimitStdvar float64
+	ID                uint       `json:"id,omitempty"`
+	Name              string     `json:"name,omitempty"`
+	CreatedAt         *time.Time `json:"createdAt,omitempty"`
+	Cluster           string     `json:"cluster,omitempty"`
+	Namespace         string     `json:"namespace,omitempty"`
+	Type              string     `json:"type,omitempty"`
+	CPULimitStdvar    float64    `json:"cpuLimitStdvar,omitempty"`
+	MemoryLimitStdvar float64    `json:"memoryLimitStdvar,omitempty"`
 
-	Containers []*ContainerCommon
-	Notice     *Notice
+	Containers []*ContainerCommon `json:"containers,omitempty"`
+	Notice     *Notice            `json:"notice,omitempty"`
 }
 
 // +genform object:Container
 type ContainerCommon struct {
 	BaseForm
-	ID               uint
-	Name             string
-	PodName          string
-	CPULimitCore     float64
-	MemoryLimitBytes int64
-	CPUUsageCore     float64
-	CPUPercent       float64
-	MemoryUsageBytes float64
-	MemoryPercent    float64
-	WorkloadID       uint
-	Workload         *WorkloadCommon
+	ID               uint            `json:"id,omitempty"`
+	Name             string          `json:"name,omitempty"`
+	Pod              string          `json:"pod,omitempty"`
+	CPULimitCore     float64         `json:"cpuLimitCore,omitempty"`
+	MemoryLimitBytes int64           `json:"memoryLimitBytes,omitempty"`
+	CPUUsageCore     float64         `json:"cpuUsageCore,omitempty"`
+	CPUPercent       float64         `json:"cpuPercent,omitempty"`
+	MemoryUsageBytes float64         `json:"memoryUsageBytes,omitempty"`
+	MemoryPercent    float64         `json:"memoryPercent,omitempty"`
+	WorkloadID       uint            `json:"workloadID,omitempty"`
+	Workload         *WorkloadCommon `json:"workload,omitempty"`
 }
 
 func (w *WorkloadCommon) AddWorkloadNotice() {
@@ -83,7 +83,7 @@ func (w *WorkloadCommon) AddWorkloadNotice() {
 			cond.MaxMemoryContainer = c
 		}
 
-		cond.Pods = append(cond.Pods, c.PodName)
+		cond.Pods = append(cond.Pods, c.Pod)
 		if c.CPULimitCore != 0 {
 			cond.CPULimitCore = c.CPULimitCore
 			cond.MemoryLimitBytes = c.MemoryLimitBytes

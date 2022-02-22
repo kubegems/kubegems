@@ -5,10 +5,10 @@ import "time"
 // +genform object:ChartRepo
 type ChartRepoCommon struct {
 	BaseForm
-	ID            uint
-	ChartRepoName string
-	URL           string
-	LastSync      *time.Time
-	SyncStatus    string
-	SyncMessage   string
+	ID          uint       `json:"id,omitempty"`
+	Name        string     `json:"name,omitempty"`
+	URL         string     `json:"url,omitempty"`
+	LastSync    *time.Time `json:"lastSync,omitempty"`
+	SyncStatus  string     `json:"syncStatus,omitempty"`
+	SyncMessage string     `json:"syncMessage,omitempty"`
 }

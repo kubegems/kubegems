@@ -2,39 +2,31 @@ package orm
 
 import "time"
 
-// Workload workload资源统计表（用于资源建议)
+// Workload workload resource stastics（for workload resoure suggestion)
 // +gen type:object pkcolume:id pkfield:ID preloads:Containers
 type Workload struct {
-	ID        uint       `gorm:"primarykey"`
-	CreatedAt *time.Time `sql:"DEFAULT:'current_timestamp'"`
-
-	ClusterName       string
+	ID                uint `gorm:"primarykey"`
+	Name              string
+	Cluster           string
 	Namespace         string
 	Type              string
-	Name              string
 	CPULimitStdvar    float64
 	MemoryLimitStdvar float64
-
-	Containers []*Container `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	CreatedAt         *time.Time   `sql:"DEFAULT:'current_timestamp'"`
+	Containers        []*Container `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
-// Container 辅助数据结构
 // +gen type:object pkcolume:id pkfield:ID
 type Container struct {
-	ID uint `gorm:"primarykey"`
-
-	Name    string
-	PodName string
-
+	ID               uint `gorm:"primarykey"`
+	Name             string
+	PodName          string
 	CPULimitCore     float64
-	MemoryLimitBytes int64 // 限制
-
-	CPUUsageCore float64
-	CPUPercent   float64 // 使用率
-
+	MemoryLimitBytes int64
+	CPUUsageCore     float64
+	CPUPercent       float64
 	MemoryUsageBytes float64
-	MemoryPercent    float64 // 使用率
-
-	WorkloadID uint
-	Workload   *Workload `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	MemoryPercent    float64
+	WorkloadID       uint
+	Workload         *Workload `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }

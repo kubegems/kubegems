@@ -49,7 +49,7 @@ func TestClient_Get(t *testing.T) {
 		"SELECT * FROM `users` WHERE `users`.`id` = ? ORDER BY `users`.`id` LIMIT 1",
 	).WithArgs(2).WillReturnRows(sqlmock.NewRows([]string{"id", "username"}).AddRow(1, "test"))
 	c.Get(context.Background(), &user1)
-	assert.Equal(t, user1.Username, "test")
+	assert.Equal(t, user1.Name, "test")
 }
 
 func TestClient_List(t *testing.T) {
@@ -62,7 +62,7 @@ func TestClient_List(t *testing.T) {
 		"SELECT * FROM `users`",
 	).WillReturnRows(sqlmock.NewRows([]string{"id", "username"}).AddRow(1, "test"))
 	c.List(context.Background(), &list)
-	assert.Equal(t, list.Items[0].Username, "test")
+	assert.Equal(t, list.Items[0].Name, "test")
 }
 
 func TestClient_Update(t *testing.T) {
