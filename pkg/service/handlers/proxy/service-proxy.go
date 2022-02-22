@@ -50,9 +50,10 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 
 	reversep := h.ReverseProxyOn(agentcli)
 	reversep.Transport = &proxyutil.Transport{
-		PathPrepend:  pathPrepend,
-		AgentPrefix:  agentPrefix,
-		RoundTripper: reversep.Transport,
+		PathPrepend:   pathPrepend,
+		AgentPrefix:   agentPrefix,
+		RoundTripper:  reversep.Transport,
+		AgentBaseAddr: agentcli.BaseAddr().Path,
 	}
 	reversep.ServeHTTP(c.Writer, req.Request)
 }
