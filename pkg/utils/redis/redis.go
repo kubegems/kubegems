@@ -9,8 +9,8 @@ import (
 )
 
 type Options struct {
-	Addr     string `yaml:"addr"`
-	Password string `yaml:"password"`
+	Addr     string `json:"addr,omitempty" description:"redis address"`
+	Password string `json:"password,omitempty" description:"redis password"`
 }
 
 func (o *Options) RegistFlags(prefix string, fs *pflag.FlagSet) {

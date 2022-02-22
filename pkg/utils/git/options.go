@@ -1,21 +1,15 @@
 package git
 
-import (
-	"github.com/spf13/pflag"
-	"kubegems.io/pkg/utils"
-)
-
 type Commiter struct {
-	Name  string
-	Email string
+	Name  string `json:"name,omitempty"`
+	Email string `json:"email,omitempty"`
 }
 
 type Options struct {
-	Host      string    `yaml:"host"`
-	Token     string    `yaml:"token"` // 暂时不支持该方式配置,argo 使用到了该处配置，argo 不支持 token 方式
-	Username  string    `yaml:"username"`
-	Password  string    `yaml:"password"`
-	Committer *Commiter `yaml:"committer"`
+	Host      string    `json:"host" description:"git host"`
+	Username  string    `json:"username" description:"git username"`
+	Password  string    `json:"password" description:"git password"`
+	Committer *Commiter `json:"committer" description:"git committer"`
 }
 
 func NewDefaultOptions() *Options {
@@ -28,10 +22,4 @@ func NewDefaultOptions() *Options {
 			Email: "service@example.com",
 		},
 	}
-}
-
-func (o *Options) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.StringVar(&o.Host, utils.JoinFlagName(prefix, "host"), o.Host, "git host")
-	fs.StringVar(&o.Username, utils.JoinFlagName(prefix, "username"), o.Username, "git username")
-	fs.StringVar(&o.Password, utils.JoinFlagName(prefix, "password"), o.Password, "git password")
 }

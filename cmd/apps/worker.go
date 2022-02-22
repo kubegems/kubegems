@@ -28,6 +28,6 @@ func NewWorkerCmd() *cobra.Command {
 			return worker.Run(ctx, options)
 		},
 	}
-	options.RegistFlags("", cmd.Flags())
+	config.AutoRegisterFlags(cmd.Flags(), "", options)
 	return cmd
 }

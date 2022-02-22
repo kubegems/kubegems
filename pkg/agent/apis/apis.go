@@ -12,68 +12,37 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/pflag"
 	"kubegems.io/pkg/agent/client"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/agent/middleware"
 	"kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/prometheus/collector"
 	"kubegems.io/pkg/utils/route"
 	"kubegems.io/pkg/version"
 )
 
 type DebugOptions struct {
-	DebugToolsImage string
-
-	MyNamespace string
-	MyPod       string
-	MyContainer string
-}
-
-func (o *DebugOptions) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.StringVar(&o.DebugToolsImage, utils.JoinFlagName(prefix, "debugtoolsimage"), o.DebugToolsImage, "debug tools image")
-	fs.StringVar(&o.MyContainer, utils.JoinFlagName(prefix, "mycontainer"), o.MyContainer, "self container name")
-	fs.StringVar(&o.MyNamespace, utils.JoinFlagName(prefix, "mynamespace"), o.MyNamespace, "self pod namespace")
-	fs.StringVar(&o.MyPod, utils.JoinFlagName(prefix, "mypod"), o.MyPod, "self pod name")
+	DebugToolsImage string `json:"debugToolsImage,omitempty"`
+	MyNamespace     string `json:"myNamespace,omitempty"`
+	MyPod           string `json:"myPod,omitempty"`
+	MyContainer     string `json:"myContainer,omitempty"`
 }
 
 type Options struct {
-	ListenTLS string
-	Cert      string
-	Key       string
-	CA        string
-	CertDir   string
-
-	Listen string
-
-	MetricsServer      string
-	PrometheusServer   string
-	AlertmanagerServer string
-	LokiServer         string
-	JaegerSerber       string
-	EnableHTTPSigs     bool
-
-	DebugOptions *DebugOptions
-}
-
-func (o *Options) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.StringVarP(&o.Listen, utils.JoinFlagName(prefix, "listen"), "l", o.Listen, "listen addr")
-	fs.StringVarP(&o.ListenTLS, utils.JoinFlagName(prefix, "listentls"), "", o.ListenTLS, "listen tls addr")
-	fs.StringVar(&o.CertDir, utils.JoinFlagName(prefix, "certdir"), o.CertDir, "cert files dir")
-	fs.StringVar(&o.CA, utils.JoinFlagName(prefix, "ca"), o.CA, "ca bundles filename")
-	fs.StringVar(&o.Cert, utils.JoinFlagName(prefix, "cert"), o.Cert, "listen cert filename")
-	fs.StringVar(&o.Key, utils.JoinFlagName(prefix, "key"), o.Key, "listen key filename")
-
-	fs.StringVar(&o.MetricsServer, utils.JoinFlagName(prefix, "metricsserver"), o.MetricsServer, "metrics server addr")
-	fs.StringVar(&o.PrometheusServer, utils.JoinFlagName(prefix, "prometheusserver"), o.PrometheusServer, "prometheus server addr")
-	fs.StringVar(&o.LokiServer, utils.JoinFlagName(prefix, "lokiserver"), o.LokiServer, "loki server addr")
-	fs.StringVar(&o.AlertmanagerServer, utils.JoinFlagName(prefix, "alertmanagerserver"), o.AlertmanagerServer, "alertmanager server addr")
-	fs.StringVar(&o.JaegerSerber, utils.JoinFlagName(prefix, "jaegerserver"), o.JaegerSerber, "jaeger server addr")
-	fs.BoolVar(&o.EnableHTTPSigs, utils.JoinFlagName(prefix, "enablehttpsigs"), o.EnableHTTPSigs, "enable http sigs")
-
-	o.DebugOptions.RegistFlags("debugoptions", fs)
+	ListenTLS          string        `json:"listenTLS,omitempty"`
+	Cert               string        `json:"cert,omitempty"`
+	Key                string        `json:"key,omitempty"`
+	CA                 string        `json:"ca,omitempty"`
+	CertDir            string        `json:"certDir,omitempty"`
+	Listen             string        `json:"listen,omitempty"`
+	MetricsServer      string        `json:"metricsServer,omitempty"`
+	PrometheusServer   string        `json:"prometheusServer,omitempty"`
+	AlertmanagerServer string        `json:"alertmanagerServer,omitempty"`
+	LokiServer         string        `json:"lokiServer,omitempty"`
+	JaegerSerber       string        `json:"jaegerSerber,omitempty"`
+	EnableHTTPSigs     bool          `json:"enableHTTPSigs,omitempty"`
+	DebugOptions       *DebugOptions `json:"debugOptions,omitempty"`
 }
 
 func DefaultOptions() *Options {

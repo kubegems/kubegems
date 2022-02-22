@@ -57,9 +57,9 @@ type BamBooUserSyncTool struct {
 }
 
 type BambooOptions struct {
-	Host           string
-	SystemCode     string
-	IntegrationKey string
+	Host           string `json:"host,omitempty"`
+	SystemCode     string `json:"systemCode,omitempty"`
+	IntegrationKey string `json:"integrationKey,omitempty"`
 }
 
 func NewDefaultBambooOptions() *BambooOptions {
@@ -71,16 +71,13 @@ func NewDefaultBambooOptions() *BambooOptions {
 }
 
 func NewBamBooSyncTool(bambooOptions *BambooOptions) *BamBooUserSyncTool {
-	host := bambooOptions.Host
-	systemCode := bambooOptions.SystemCode
-	integrationKey := bambooOptions.IntegrationKey
-	if len(host) == 0 {
+	if len(bambooOptions.Host) == 0 {
 		log.Warnf("bamboo cloud host is empty")
 	}
-	if len(systemCode) == 0 {
+	if len(bambooOptions.SystemCode) == 0 {
 		log.Warnf("bamboo cloud systemcode is empty")
 	}
-	if len(integrationKey) == 0 {
+	if len(bambooOptions.IntegrationKey) == 0 {
 		log.Warnf("bamboo cloud integrationKey is empty")
 	}
 	return &BamBooUserSyncTool{BambooOptions: *bambooOptions}

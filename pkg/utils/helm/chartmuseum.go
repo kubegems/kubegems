@@ -11,26 +11,17 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/spf13/pflag"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	helm_repo "helm.sh/helm/v3/pkg/repo"
-	"kubegems.io/pkg/utils"
 )
 
 type Options struct {
-	ChartRepoUrl string `yaml:"chartrepourl"`
-	ChartsTmp    string `yaml:"chartstmp"`
-}
-
-func (o *Options) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.StringVar(&o.ChartRepoUrl, utils.JoinFlagName(prefix, "chartrepourl"), o.ChartRepoUrl, "appstore chartrepo url")
-	fs.StringVar(&o.ChartsTmp, utils.JoinFlagName(prefix, "chartstmp"), o.ChartsTmp, "appstore charts cache dir")
+	ChartRepoURL string `json:"chartRepoURL,omitempty" description:"chart repository url"`
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		ChartRepoUrl: "http://gems-chartmuseum.gemcloud-system:8030",
-		ChartsTmp:    "chartstmp",
+		ChartRepoURL: "http://gems-chartmuseum.gemcloud-system:8030",
 	}
 }
 
@@ -48,7 +39,7 @@ func NewChartMuseumClient(cfg *RepositoryConfig) (*ChartmuseumClient, error) {
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					// todo: cert key parse
-					InsecureSkipVerify: cfg.InsecureSkipTLSverify,
+					InsecureSkipVerify: cfg.SkipTLSVerify,
 				},
 			},
 		},

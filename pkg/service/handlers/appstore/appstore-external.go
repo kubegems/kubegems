@@ -66,7 +66,7 @@ func (h *AppstoreHandler) PutExternalRepo(c *gin.Context) {
 		handlers.OK(c, repo)
 		// sync repo
 		go func() {
-			SyncCharts(context.Background(), repo, helm.RepositoryConfig{URL: h.AppStoreOpt.ChartRepoUrl}, h.GetDB())
+			SyncCharts(context.Background(), repo, helm.RepositoryConfig{URL: h.AppStoreOpt.ChartRepoURL}, h.GetDB())
 		}()
 		return
 	}
@@ -117,7 +117,7 @@ func (h *AppstoreHandler) SyncExternalRepo(c *gin.Context) {
 	}
 
 	go func() {
-		SyncCharts(context.Background(), repo, helm.RepositoryConfig{URL: h.AppStoreOpt.ChartRepoUrl}, h.GetDB())
+		SyncCharts(context.Background(), repo, helm.RepositoryConfig{URL: h.AppStoreOpt.ChartRepoURL}, h.GetDB())
 	}()
 	handlers.OK(c, fmt.Sprintf("repo %s started sync on background", reponame))
 }

@@ -82,13 +82,6 @@ func Run(ctx context.Context, options *options.Options) error {
 		return fmt.Errorf("failed init dependencies: %v", err)
 	}
 
-	// 测试模式需要初始化数据
-	if options.TestMode {
-		if err := models.MigrateDatabaseAndInitData(options.Mysql, options.Redis); err != nil {
-			return err
-		}
-	}
-
 	// 初始化数据库中的系统配置
 	models.InitConfig(deps.Databse.DB())
 

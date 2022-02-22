@@ -1,9 +1,7 @@
 package options
 
 import (
-	"github.com/spf13/pflag"
 	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
-	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/exporter"
@@ -16,19 +14,18 @@ import (
 )
 
 type Options struct {
-	LogLevel     string                                   `yaml:"loglevel" head_comment:"日志等级"`
-	DebugMode    bool                                     `yaml:"debugmode" head_comment:"debug模式开关"`
-	TestMode     bool                                     `yaml:"testmode" head_comment:"测试模式"`
-	System       *system.SystemOptions                    `yaml:"system" head_comment:"系统配置"`
-	Mysql        *database.MySQLOptions                   `yaml:"mysql" head_comment:"数据库配置"`
-	Redis        *redis.Options                           `yaml:"redis" head_comment:"redis 缓存配置"`
-	Appstore     *helm.Options                            `yaml:"appstore" head_comment:"appstore helm地址配置"`
-	Oauth        *oauth.OauthOptions                      `yaml:"oauth" head_comment:"oauth配置"`
-	Git          *git.Options                             `yaml:"git" head_comment:"git 配置"`
-	Argo         *argo.Options                            `yaml:"argo" head_comment:"argo 相关配置"`
-	Exporter     *exporter.ExporterOptions                `yaml:"exporter" head_comment:"prometheus exporter 配置"`
-	Msgbus       *msgbus.MsgbusOptions                    `yaml:"msgbus" head_comment:"msgbus 实时消息网关配置"`
-	Microservice *microserviceoptions.MicroserviceOptions `yaml:"microservice" head_comment:"microservice 配置"`
+	LogLevel     string                                   `json:"loglevel" description:"日志等级"`
+	DebugMode    bool                                     `json:"debugmode" description:"debug模式"`
+	System       *system.Options                          `json:"system" description:"系统配置"`
+	Mysql        *database.Options                        `json:"mysql" description:"数据库配置"`
+	Redis        *redis.Options                           `json:"redis" description:"redis配置"`
+	Appstore     *helm.Options                            `json:"appstore" description:"appstore配置"`
+	Oauth        *oauth.Options                           `json:"oauth" description:"oauth配置"`
+	Git          *git.Options                             `json:"git" description:"git配置"`
+	Argo         *argo.Options                            `json:"argo" description:"argo配置"`
+	Exporter     *exporter.ExporterOptions                `json:"exporter" description:"prometheus exporter配置"`
+	Msgbus       *msgbus.Options                          `json:"msgbus" description:"msgbus 实时消息网关配置"`
+	Microservice *microserviceoptions.MicroserviceOptions `json:"microservice" description:"microservice 配置"`
 }
 
 func DefaultOptions() *Options {
@@ -46,20 +43,4 @@ func DefaultOptions() *Options {
 		Msgbus:       msgbus.DefaultMsgbusOptions(),
 		Microservice: microserviceoptions.NewDefaultOptions(),
 	}
-}
-
-func (o *Options) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.BoolVar(&o.DebugMode, utils.JoinFlagName(prefix, "debugmode"), o.DebugMode, "enable debud mode")
-	fs.StringVar(&o.LogLevel, utils.JoinFlagName(prefix, "loglevel"), o.LogLevel, "log level")
-
-	o.System.RegistFlags("system", fs)
-	o.Mysql.RegistFlags("mysql", fs)
-	o.Redis.RegistFlags("redis", fs)
-	o.Appstore.RegistFlags("appstore", fs)
-	o.Oauth.RegistFlags("oauth", fs)
-	o.Git.RegistFlags("git", fs)
-	o.Argo.RegistFlags("argo", fs)
-	o.Exporter.RegistFlags("exporter", fs)
-	o.Msgbus.RegistFlags("msgbus", fs)
-	o.Microservice.RegistFlags("microservice", fs)
 }

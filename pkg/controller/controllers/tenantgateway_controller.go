@@ -43,9 +43,9 @@ import (
 )
 
 type TenantGatewayOptions struct {
-	NginxImageRepo   string
-	NginxImageTag    string
-	NginxMetricsPort uint16
+	NginxImageRepo   string `json:"nginxImageRepo,omitempty"`
+	NginxImageTag    string `json:"nginxImageTag,omitempty"`
+	NginxMetricsPort uint16 `json:"nginxMetricsPort,omitempty"`
 }
 
 func DefaultTenantGatewayOptions() TenantGatewayOptions {

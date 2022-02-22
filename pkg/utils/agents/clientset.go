@@ -19,12 +19,12 @@ import (
 )
 
 type ClientSet struct {
-	options *system.SystemOptions
+	options *system.Options
 	databse *database.Database
 	clients sync.Map // name -> *Client
 }
 
-func NewClientSet(databse *database.Database, options *system.SystemOptions) (*ClientSet, error) {
+func NewClientSet(databse *database.Database, options *system.Options) (*ClientSet, error) {
 	return &ClientSet{
 		databse: databse,
 		options: options,

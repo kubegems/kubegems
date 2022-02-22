@@ -13,7 +13,7 @@ type AppstoreHandler struct {
 }
 
 func (h *AppstoreHandler) RegistRouter(rg *gin.RouterGroup) {
-	h.ChartmuseumClient = helm.MustNewChartMuseumClient(&helm.RepositoryConfig{URL: h.AppStoreOpt.ChartRepoUrl})
+	h.ChartmuseumClient = helm.MustNewChartMuseumClient(&helm.RepositoryConfig{URL: h.AppStoreOpt.ChartRepoURL})
 
 	rg.GET("/appstore/app", h.ListApps)
 	rg.GET("/appstore/app/:name", h.AppDetail)
