@@ -1,22 +1,10 @@
 package argo
 
-import (
-	"github.com/spf13/pflag"
-	"kubegems.io/pkg/utils"
-)
-
 type Options struct {
-	Addr     string `yaml:"addr"`
-	Token    string `yaml:"token"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-}
-
-func (o *Options) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.StringVar(&o.Addr, utils.JoinFlagName(prefix, "addr"), o.Addr, "argocd host")
-	fs.StringVar(&o.Token, utils.JoinFlagName(prefix, "token"), o.Token, "argocd token")
-	fs.StringVar(&o.Username, utils.JoinFlagName(prefix, "username"), o.Username, "argocd username")
-	fs.StringVar(&o.Password, utils.JoinFlagName(prefix, "password"), o.Password, "argocd password")
+	Addr     string `json:"addr" description:"argocd host"`
+	Token    string `json:"token" description:"argocd token"`
+	Username string `json:"username" description:"argocd username"`
+	Password string `json:"password" description:"argocd password"`
 }
 
 func NewDefaultArgoOptions() *Options {

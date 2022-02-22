@@ -7,39 +7,27 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
-	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
-	"kubegems.io/pkg/utils"
 )
 
-type OauthOptions struct {
-	Kind          string   `yaml:"kind"`
-	UserInfoURL   string   `yaml:"userinfourl"`
-	Appid         string   `yaml:"appid"`
-	Appsecret     string   `yaml:"appsecret"`
-	Scopes        []string `yaml:"scopes"`
-	TokenURL      string   `yaml:"tokenurl"`
-	AuthURL       string   `yaml:"authurl"`
-	RedirectURL   string   `yaml:"redirecturl"`
-	BambooOptions *BambooOptions
+type Options struct {
+	Kind          string         `json:"kind,omitempty" description:"oauth kind"`
+	UserInfoURL   string         `json:"userInfoURL,omitempty" description:"user info url"`
+	AppID         string         `json:"appID,omitempty" description:"app id"`
+	AppSecret     string         `json:"appSecret,omitempty" description:"app secret"`
+	Scopes        []string       `json:"scopes,omitempty" description:"scopes"`
+	TokenURL      string         `json:"tokenURL,omitempty" description:"token url"`
+	AuthURL       string         `json:"authURL,omitempty" description:"auth url"`
+	RedirectURL   string         `json:"redirectURL,omitempty" description:"redirect url"`
+	BambooOptions *BambooOptions `json:"bambooOptions,omitempty" description:"bamboo options"`
 }
 
-func (o *OauthOptions) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.StringVar(&o.Kind, utils.JoinFlagName(prefix, "kind"), o.Kind, "oauth kind")
-	fs.StringVar(&o.Appid, utils.JoinFlagName(prefix, "appid"), o.Appid, "oauth client id")
-	fs.StringVar(&o.Appsecret, utils.JoinFlagName(prefix, "appsecret"), o.Appsecret, "oauth client secret")
-	fs.StringVar(&o.AuthURL, utils.JoinFlagName(prefix, "authurl"), o.AuthURL, "oauth authurl")
-	fs.StringVar(&o.TokenURL, utils.JoinFlagName(prefix, "tokenurl"), o.TokenURL, "oauth token url")
-	fs.StringVar(&o.RedirectURL, utils.JoinFlagName(prefix, "redirecturl"), o.RedirectURL, "oauth redirect url")
-	fs.StringVar(&o.UserInfoURL, utils.JoinFlagName(prefix, "userinfourl"), o.UserInfoURL, "oauth userinfo url")
-}
-
-func NewDefaultOauthOptions() *OauthOptions {
-	return &OauthOptions{
+func NewDefaultOauthOptions() *Options {
+	return &Options{
 		Kind:          "gitlab",
 		UserInfoURL:   "https://git.kubegems.io/api/v4/user",
-		Appid:         "",
-		Appsecret:     "",
+		AppID:         "",
+		AppSecret:     "",
 		Scopes:        []string{"api", "email"},
 		TokenURL:      "https://git.kubegems.io/oauth/token",
 		AuthURL:       "https://git.kubegems.io/oauth/authorize",
@@ -60,13 +48,13 @@ type GitlabUser struct {
 	Email    string `json:"email"`
 }
 
-func NewOauthTool(opts *OauthOptions) *OauthTool {
+func NewOauthTool(opts *Options) *OauthTool {
 	ot := &OauthTool{
 		ClientType:  opts.Kind,
 		UserInfoURL: opts.UserInfoURL,
 		OauthConfig: &oauth2.Config{
-			ClientID:     opts.Appid,
-			ClientSecret: opts.Appsecret,
+			ClientID:     opts.AppID,
+			ClientSecret: opts.AppSecret,
 			Scopes:       opts.Scopes,
 			Endpoint: oauth2.Endpoint{
 				TokenURL:  opts.TokenURL,

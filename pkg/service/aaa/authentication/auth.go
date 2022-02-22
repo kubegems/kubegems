@@ -151,7 +151,7 @@ type Middleware struct {
 	jwt.GinJWTMiddleware
 }
 
-func NewAuthMiddleware(system *system.SystemOptions, database *database.Database,
+func NewAuthMiddleware(system *system.Options, database *database.Database,
 	redis *redis.Client, uif aaa.UserInterface) (*Middleware, error) {
 	db := database.DB()
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{

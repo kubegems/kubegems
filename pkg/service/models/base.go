@@ -28,7 +28,7 @@ func createDatabaseIfNotExists(dsn, dbname string) error {
 	return nil
 }
 
-func MigrateDatabaseAndInitData(opts *database.MySQLOptions, redisopts *redis.Options) error {
+func MigrateDatabaseAndInitData(opts *database.Options, redisopts *redis.Options) error {
 	// init database schema
 	if err := createDatabaseIfNotExists(opts.ToDsnWithOutDB()); err != nil {
 		return err

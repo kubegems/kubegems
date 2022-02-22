@@ -9,24 +9,15 @@ import (
 	promcollectors "github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
-	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils"
 )
 
 type ExporterOptions struct {
-	Listen                 string `yaml:"listen"`
-	MetricPath             string `yaml:"metricpath"`
-	IncludeExporterMetrics bool   `yaml:"includeexportermetrics"` // 是否监控自身
-	MaxRequests            int    `yaml:"maxrequests"`
-}
-
-func (o *ExporterOptions) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.StringVar(&o.Listen, utils.JoinFlagName(prefix, "listen"), o.Listen, "gems exporter listen addr")
-	fs.StringVar(&o.MetricPath, utils.JoinFlagName(prefix, "metricpath"), o.MetricPath, "gems worker metrics path")
-	fs.BoolVar(&o.IncludeExporterMetrics, utils.JoinFlagName(prefix, "includeExporterMetrics"), o.IncludeExporterMetrics, "whether to monitor exporter self")
-	fs.IntVar(&o.MaxRequests, utils.JoinFlagName(prefix, "maxrequests"), o.MaxRequests, "exporter max request")
+	Listen                 string `json:"listen,omitempty" description:"listen address"`
+	MetricPath             string `json:"metricPath,omitempty"`
+	IncludeExporterMetrics bool   `json:"includeExporterMetrics,omitempty"` // 是否监控自身
+	MaxRequests            int    `json:"maxRequests,omitempty"`
 }
 
 func DefaultExporterOptions() *ExporterOptions {

@@ -114,7 +114,7 @@ func Run(ctx context.Context, options *Options) error {
 		return prometheus.RunExporter(ctx, options.Exporter, exporterHandler)
 	})
 	eg.Go(func() error {
-		return task.Run(ctx, deps.Redis, deps.Databse, deps.Git, deps.Argocli, options.Appstore, deps.Agentscli)
+		return task.Run(ctx, deps.Redis, deps.Databse, deps.Git, deps.Argocli, options.AppStore, deps.Agentscli)
 	})
 	return eg.Wait()
 }

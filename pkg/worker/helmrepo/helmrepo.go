@@ -37,7 +37,7 @@ func syncChartsToChartmuseum(ctx context.Context, options *Options) error {
 	}
 	for _, repo := range repos {
 		log.WithField("repo", repo.ChartRepoName).Info("start sync")
-		appstore.SyncCharts(ctx, &repo, helm.RepositoryConfig{URL: options.Appstore.ChartRepoUrl}, options.Database)
+		appstore.SyncCharts(ctx, &repo, helm.RepositoryConfig{URL: options.Appstore.ChartRepoURL}, options.Database)
 		log.WithField("repo", repo.ChartRepoName).Info("end sync")
 	}
 	return nil
