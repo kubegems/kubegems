@@ -12,6 +12,7 @@ import (
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/config"
+	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/version"
 )
 
@@ -51,14 +52,23 @@ func newGenServiceCfgCmd() *cobra.Command {
 	}
 }
 
+type MigratOptions struct {
+	Mysql    *database.Options `json:"mysql,omitempty"`
+	InitData bool              `json:"initData,omitempty" description:"insert init data into database"`
+}
+
 func newServiceMigrateCmd() *cobra.Command {
-	options := options.DefaultOptions()
+	options := &MigratOptions{
+		Mysql:    database.NewDefaultOptions(),
+		InitData: false,
+	}
+
 	cmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "execute migrate, init datbases and base data (use server config)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			config.Parse(cmd.Flags())
-			return models.MigrateDatabaseAndInitData(options.Mysql, options.Redis)
+			return models.MigrateDatabaseAndInitData(options.Mysql, options.InitData)
 		},
 	}
 	config.AutoRegisterFlags(cmd.Flags(), "", options)

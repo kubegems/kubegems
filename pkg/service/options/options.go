@@ -49,7 +49,7 @@ func DefaultOptions() *Options {
 		JWT:       oauth.NewDefaultJWTOptions(),
 		LogLevel:  "debug",
 		Msgbus:    msgbus.DefaultMsgbusOptions(),
-		Mysql:     database.NewDefaultMySQLOptions(),
+		Mysql:     database.NewDefaultOptions(),
 		Redis:     redis.NewDefaultOptions(),
 		System:    system.NewDefaultOptions(),
 	}
