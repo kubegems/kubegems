@@ -32,7 +32,7 @@ func NewClientSet(databse *database.Database, options *Options) (*ClientSet, err
 
 func (h *ClientSet) apiserverProxyPath() string {
 	const apiServerProxyPrefix = "/api/v1/namespaces/%s/services/%s:%d/proxy"
-	return fmt.Sprintf(apiServerProxyPrefix, h.options.AgentNamespace, h.options.AgentServiceName, h.options.AgentServicePort)
+	return fmt.Sprintf(apiServerProxyPrefix, h.options.Namespace, h.options.ServiceName, h.options.ServicePort)
 }
 
 func (h *ClientSet) Clusters() []string {
