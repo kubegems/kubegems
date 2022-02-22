@@ -1,4 +1,4 @@
 FROM alpine
-WORKDIR /
-COPY bin/kubegems .
-ENTRYPOINT ["/kubegems"]
+WORKDIR /serv
+COPY bin/kubegems /serv
+ENTRYPOINT ["/serv/kubegems"]
