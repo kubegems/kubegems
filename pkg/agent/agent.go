@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
@@ -28,11 +30,13 @@ type Options struct {
 }
 
 func DefaultOptions() *Options {
+	debugmode, _ := strconv.ParseBool(os.Getenv("DEBUG"))
 	defaultoptions := &Options{
-		DebugMode: false,
+		DebugMode: debugmode,
 		LogLevel:  "debug",
 		Syetem:    system.NewDefaultOptions(),
-		API:       apis.DefaultOptions(),
+		API:       apis.NewDefaultOptions(),
+		Debug:     apis.NewDefaultDebugOptions(),
 		Exporter:  exporter.DefaultExporterOptions(),
 	}
 	defaultoptions.Syetem.Listen = ":8041"
