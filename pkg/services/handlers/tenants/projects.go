@@ -1,23 +1,21 @@
 package tenanthandler
 
 import (
-	"net/http"
-
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/pkg/model/forms"
-	"kubegems.io/pkg/services/utils"
+	"kubegems.io/pkg/services/handlers"
 )
 
 func (h *Handler) CreatePorject(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	createForm := &forms.ProjectCreateForm{}
-	if err := utils.BindData(req, createForm); err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+	if err := handlers.BindData(req, createForm); err != nil {
+		handlers.BadRequest(resp, err)
 		return
 	}
-	tenant, err := h.getTenant(ctx, req.PathParameter("tenant"))
+	tenant, err := h.getTenantCommon(ctx, req.PathParameter("tenant"))
 	if err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
 	proj := forms.ProjectDetail{
@@ -28,33 +26,32 @@ func (h *Handler) CreatePorject(req *restful.Request, resp *restful.Response) {
 		Remark:        createForm.Remark,
 	}
 	if err := h.ModelClient.Create(ctx, proj.Object()); err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+		handlers.BadRequest(resp, err)
 		return
 	}
-	resp.WriteAsJson(proj)
+	handlers.Created(resp, err)
 }
 
 func (h *Handler) DeleteProject(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	proj, err := h.getTenantProject(ctx, req.PathParameter("tenant"), req.PathParameter("project"), false)
 	if err != nil {
-		utils.BadRequest(resp, err)
+		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
 	if err := h.ModelClient.Delete(ctx, proj.Object()); err != nil {
-		utils.BadRequest(resp, err)
+		handlers.BadRequest(resp, err)
 		return
 	}
-	resp.WriteAsJson(nil)
+	handlers.NoContent(resp, nil)
 }
 
 func (h *Handler) RetrieveTenantProject(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
-	detail := req.QueryParameter("detail") != ""
-	proj, err := h.getTenantProject(ctx, req.PathParameter("tenant"), req.PathParameter("project"), detail)
+	proj, err := h.getTenantProject(ctx, req.PathParameter("tenant"), req.PathParameter("project"), req.QueryParameter("detail") != "")
 	if err != nil {
-		utils.BadRequest(resp, err)
+		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	resp.WriteAsJson(proj.DataPtr())
+	handlers.OK(resp, proj.DataPtr())
 }

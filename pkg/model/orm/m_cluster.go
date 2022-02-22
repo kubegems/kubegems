@@ -2,37 +2,23 @@ package orm
 
 import "gorm.io/datatypes"
 
-// Cluster 集群表
 // +gen type:object kind:cluster pkcolume:id pkfield:ID preloads:TenantResourceQuotas
 type Cluster struct {
-	ID uint `gorm:"primarykey"`
-	// 集群名字
-	ClusterName string `gorm:"type:varchar(50);uniqueIndex" binding:"required"`
-	// APIServer地址 根据kubeconfig添加后，自动填充
-	APIServer string `gorm:"type:varchar(250);uniqueIndex"`
-	// KubeConfig 配置
-	KubeConfig datatypes.JSON `binding:"required"`
+	ID         uint   `gorm:"primarykey"`
+	Name       string `gorm:"type:varchar(50);uniqueIndex"`
+	APIServer  string `gorm:"type:varchar(250);uniqueIndex"`
+	KubeConfig datatypes.JSON
 
-	// Version 版本
-	Version string
-	// Agent地址
+	Version   string
 	AgentAddr string
-	// AgentCA
-	AgentCA string `json:"-"`
-	// Agent证书
-	AgentCert string `json:"-"`
-	// Agentkey
-	AgentKey string `json:"-"`
+	AgentCA   string
+	AgentCert string
+	AgentKey  string
+	Mode      string
+	Runtime   string // docker or containerd
+	Primary   bool   // is primary cluster
 
-	Mode string `json:"-"`
-
-	Runtime string // docker or containerd
-	// 是否主集群
-	Primary bool
-
-	// 集群资源超卖设置
-	OversoldConfig datatypes.JSON
-
+	OversoldConfig       datatypes.JSON // cluster oversold configuration
 	Environments         []*Environment
 	TenantResourceQuotas []*TenantResourceQuota
 	ClusterResourceQuota datatypes.JSON

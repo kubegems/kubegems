@@ -1,12 +1,10 @@
 package orm
 
-import "kubegems.io/pkg/model/client"
-
 var (
 	applicationKind          = "application"
 	applicationTable         = "applications"
 	applicationPrimaryKey    = "id"
-	applicationValidPreloads = []string{"SystemRole"}
+	applicationValidPreloads = []string{"Environment"}
 )
 
 func (obj *Application) TableName() *string {
@@ -372,7 +370,7 @@ var (
 	environmentKind          = "environment"
 	environmentTable         = "environments"
 	environmentPrimaryKey    = "id"
-	environmentValidPreloads = []string{"Cluster"}
+	environmentValidPreloads = []string{"Cluster", "Creator", "Project", "Applications", "VirtualSpace"}
 )
 
 func (obj *Environment) TableName() *string {
@@ -515,14 +513,6 @@ func (obj *EnvironmentUserRel) PrimaryKeyValue() interface{} {
 
 func (obj *EnvironmentUserRel) PreloadFields() *[]string {
 	return &environmentUserRelValidPreloads
-}
-
-func (obj *EnvironmentUserRel) Left() client.Object {
-	return obj.User
-}
-
-func (obj *EnvironmentUserRel) Right() client.Object {
-	return obj.Environment
 }
 
 type EnvironmentUserRelList struct {
@@ -807,7 +797,7 @@ var (
 	projectKind          = "project"
 	projectTable         = "projects"
 	projectPrimaryKey    = "id"
-	projectValidPreloads = []string{"Tenant"}
+	projectValidPreloads = []string{"Tenant", "Createor", "Tenant", "Environments"}
 )
 
 func (obj *Project) TableName() *string {
@@ -889,14 +879,6 @@ func (obj *ProjectUserRel) PrimaryKeyValue() interface{} {
 
 func (obj *ProjectUserRel) PreloadFields() *[]string {
 	return &projectUserRelValidPreloads
-}
-
-func (obj *ProjectUserRel) Left() client.Object {
-	return obj.User
-}
-
-func (obj *ProjectUserRel) Right() client.Object {
-	return obj.Project
 }
 
 type ProjectUserRelList struct {
@@ -1265,14 +1247,6 @@ func (obj *TenantUserRel) PreloadFields() *[]string {
 	return &tenantUserRelValidPreloads
 }
 
-func (obj *TenantUserRel) Left() client.Object {
-	return obj.Tenant
-}
-
-func (obj *TenantUserRel) Right() client.Object {
-	return obj.User
-}
-
 type TenantUserRelList struct {
 	Items []*TenantUserRel
 	BaseList
@@ -1494,7 +1468,7 @@ var (
 	virtualSpaceKind          = "virtual_space"
 	virtualSpaceTable         = "virtual_spaces"
 	virtualSpacePrimaryKey    = "id"
-	virtualSpaceValidPreloads = []string{"SystemRole"}
+	virtualSpaceValidPreloads = []string{}
 )
 
 func (obj *VirtualSpace) TableName() *string {
@@ -1555,7 +1529,7 @@ var (
 	virtualSpaceUserRelKind          = "virtual_space_user_rel"
 	virtualSpaceUserRelTable         = "virtual_space_user_rels"
 	virtualSpaceUserRelPrimaryKey    = "id"
-	virtualSpaceUserRelValidPreloads = []string{"SystemRole"}
+	virtualSpaceUserRelValidPreloads = []string{}
 )
 
 func (obj *VirtualSpaceUserRel) TableName() *string {
@@ -1576,14 +1550,6 @@ func (obj *VirtualSpaceUserRel) PrimaryKeyValue() interface{} {
 
 func (obj *VirtualSpaceUserRel) PreloadFields() *[]string {
 	return &virtualSpaceUserRelValidPreloads
-}
-
-func (obj *VirtualSpaceUserRel) Left() client.Object {
-	return obj.VirtualSpace
-}
-
-func (obj *VirtualSpaceUserRel) Right() client.Object {
-	return obj.User
 }
 
 type VirtualSpaceUserRelList struct {

@@ -1,4 +1,4 @@
-package utils
+package handlers
 
 import (
 	restful "github.com/emicklei/go-restful/v3"

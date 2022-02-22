@@ -26,5 +26,5 @@ func (ut *AccountLoginUtil) GetUserInfo(ctx context.Context, cred *Credential) (
 		return nil, err
 	}
 
-	return &UserInfo{Username: user.Username, Email: user.Email}, nil
+	return &UserInfo{Username: user.Name, Email: user.Email}, nil
 }

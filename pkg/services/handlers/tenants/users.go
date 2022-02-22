@@ -1,29 +1,27 @@
 package tenanthandler
 
 import (
-	"net/http"
-
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/pkg/model/client"
 	"kubegems.io/pkg/model/forms"
-	"kubegems.io/pkg/services/utils"
+	"kubegems.io/pkg/services/handlers"
 )
 
 func (h *Handler) AddTenantMember(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	createForm := &forms.TenantUserCreateModifyForm{}
-	if err := utils.BindData(req, createForm); err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+	if err := handlers.BindData(req, createForm); err != nil {
+		handlers.BadRequest(resp, err)
 		return
 	}
-	tenant, err := h.getTenant(ctx, createForm.Tenant)
+	tenant, err := h.getTenantCommon(ctx, createForm.Tenant)
 	if err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+		handlers.NotFound(resp, err)
 		return
 	}
-	user, err := h.getUser(ctx, createForm.User)
+	user, err := h.getUserCommon(ctx, createForm.User)
 	if err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+		handlers.NotFound(resp, err)
 		return
 	}
 	rel := forms.TenantUserRelCommon{
@@ -34,27 +32,27 @@ func (h *Handler) AddTenantMember(req *restful.Request, resp *restful.Response) 
 		Role:     createForm.Role,
 	}
 	if err := h.ModelClient.Create(ctx, rel.Object()); err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+		handlers.BadRequest(resp, err)
 		return
 	}
-	resp.WriteAsJson(rel)
+	handlers.Created(resp, rel)
 }
 
 func (h *Handler) ModifyTenantMember(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	createForm := &forms.TenantUserCreateModifyForm{}
-	if err := utils.BindData(req, createForm); err != nil {
-		utils.BadRequest(resp, err)
+	if err := handlers.BindData(req, createForm); err != nil {
+		handlers.BadRequest(resp, err)
 		return
 	}
-	tenant := forms.TenantCommon{}
-	user := forms.UserCommon{}
-	if err := h.ModelClient.Get(ctx, tenant.Object(), client.WhereEqual("tenant_name", createForm.Tenant)); err != nil {
-		utils.BadRequest(resp, err)
+	tenant, err := h.getTenantCommon(ctx, createForm.Tenant)
+	if err != nil {
+		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	if err := h.ModelClient.Get(ctx, user.Object(), client.WhereEqual("username", createForm.User)); err != nil {
-		utils.BadRequest(resp, err)
+	user, err := h.getUserCommon(ctx, createForm.User)
+	if err != nil {
+		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
 	rel := forms.TenantUserRelCommon{
@@ -65,7 +63,7 @@ func (h *Handler) ModifyTenantMember(req *restful.Request, resp *restful.Respons
 		Role:     createForm.Role,
 	}
 	if err := h.ModelClient.Update(ctx, rel.Object(), client.WhereEqual("tenant_id", tenant.Data().ID), client.WhereEqual("user_id", user.Data().ID)); err != nil {
-		utils.BadRequest(resp, err)
+		handlers.BadRequest(resp, err)
 		return
 	}
 	resp.WriteAsJson(rel)
@@ -76,11 +74,11 @@ func (h *Handler) DeleteTenantMember(req *restful.Request, resp *restful.Respons
 	tenant := forms.TenantCommon{}
 	user := forms.UserCommon{}
 	if err := h.ModelClient.Get(ctx, tenant.Object(), client.WhereEqual("tenant_name", req.PathParameter("tenant"))); err != nil {
-		utils.BadRequest(resp, err)
+		handlers.BadRequest(resp, err)
 		return
 	}
 	if err := h.ModelClient.Get(ctx, user.Object(), client.WhereEqual("username", req.PathParameter("user"))); err != nil {
-		utils.BadRequest(resp, err)
+		handlers.BadRequest(resp, err)
 		return
 	}
 
@@ -91,17 +89,17 @@ func (h *Handler) DeleteTenantMember(req *restful.Request, resp *restful.Respons
 		UserID:   user.Data().ID,
 	}
 	if err := h.ModelClient.Delete(ctx, rel.Object(), client.WhereEqual("tenant_id", tenant.Data().ID), client.WhereEqual("user_id", user.Data().ID)); err != nil {
-		utils.BadRequest(resp, err)
+		handlers.BadRequest(resp, err)
 		return
 	}
-	utils.NoContent(resp, nil)
+	handlers.NoContent(resp, nil)
 }
 
 func (h *Handler) ListTenantMember(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	rel := &forms.UserCommonList{}
 	tenant := &forms.TenantCommon{
-		TenantName: req.PathParameter("tenant"),
+		Name: req.PathParameter("tenant"),
 	}
 	opts := []client.Option{}
 	if role := req.QueryParameter("role"); role != "" {
@@ -110,11 +108,11 @@ func (h *Handler) ListTenantMember(req *restful.Request, resp *restful.Response)
 		opts = append(opts, client.ExistRelation(tenant.Object()))
 	}
 	if req.QueryParameter("isActive") != "" {
-		opts = append(opts, client.Where("is_active", client.Eq, false))
+		opts = append(opts, client.WhereEqual("is_active", false))
 	}
 	if err := h.ModelClient.List(ctx, rel.Object(), opts...); err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+		handlers.BadRequest(resp, err)
 		return
 	}
-	resp.WriteAsJson(rel.Data())
+	handlers.OK(resp, rel.Data())
 }

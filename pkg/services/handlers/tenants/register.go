@@ -17,7 +17,7 @@ var (
 
 func (h *Handler) Regist(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/" + h.Path)
+	ws.Path("/tenants")
 
 	ws.Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 
@@ -26,7 +26,7 @@ func (h *Handler) Regist(container *restful.Container) {
 		Doc("list tenants").
 		Metadata(restfulspec.KeyOpenAPITags, tenantTags).
 		Returns(http.StatusOK, handlers.MessageOK, handlers.PageData{
-			List: []forms.TenantCommon{},
+			List: &[]forms.TenantCommon{},
 		})))
 
 	ws.Route(ws.POST("/").
@@ -82,7 +82,9 @@ func (h *Handler) registUsers(ws *restful.WebService) {
 		Param(restful.QueryParameter("isActive", "isActive")).
 		Param(restful.QueryParameter("role", "role")).
 		Metadata(restfulspec.KeyOpenAPITags, tenantUserTags).
-		Returns(http.StatusOK, handlers.MessageOK, forms.UserCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, &handlers.PageData{
+			List: []forms.UserCommon{},
+		}))
 
 	ws.Route(ws.DELETE("/{tenant}/users/{user}").
 		To(h.DeleteTenantMember).

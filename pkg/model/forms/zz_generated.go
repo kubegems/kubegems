@@ -61,7 +61,7 @@ func Convert_WorkloadCommon_Workload(f *WorkloadCommon) *orm.Workload {
 	}
 	f.object = r
 	r.CPULimitStdvar = f.CPULimitStdvar
-	r.ClusterName = f.ClusterName
+	r.Cluster = f.Cluster
 	r.Containers = Convert_ContainerCommon_Container_slice(f.Containers)
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
@@ -77,7 +77,7 @@ func Convert_Workload_WorkloadCommon(f *orm.Workload) *WorkloadCommon {
 	}
 	var r WorkloadCommon
 	r.CPULimitStdvar = f.CPULimitStdvar
-	r.ClusterName = f.ClusterName
+	r.Cluster = f.Cluster
 	r.Containers = Convert_Container_ContainerCommon_slice(f.Containers)
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
@@ -251,7 +251,7 @@ func Convert_VirtualSpaceCommon_VirtualSpace(f *VirtualSpaceCommon) *orm.Virtual
 	}
 	f.object = r
 	r.ID = f.ID
-	r.VirtualSpaceName = f.VirtualSpaceName
+	r.Name = f.Name
 	return r
 }
 func Convert_VirtualSpace_VirtualSpaceCommon(f *orm.VirtualSpace) *VirtualSpaceCommon {
@@ -260,7 +260,7 @@ func Convert_VirtualSpace_VirtualSpaceCommon(f *orm.VirtualSpace) *VirtualSpaceC
 	}
 	var r VirtualSpaceCommon
 	r.ID = f.ID
-	r.VirtualSpaceName = f.VirtualSpaceName
+	r.Name = f.Name
 	return &r
 }
 func Convert_VirtualSpaceCommon_VirtualSpace_slice(arr []*VirtualSpaceCommon) []*orm.VirtualSpace {
@@ -338,8 +338,8 @@ func Convert_VirtualDomainCommon_VirtualDomain(f *VirtualDomainCommon) *orm.Virt
 	r.CreatedBy = f.CreatedBy
 	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.Name = f.Name
 	r.UpdatedAt = f.UpdatedAt
-	r.VirtualDomainName = f.VirtualDomainName
 	return r
 }
 func Convert_VirtualDomain_VirtualDomainCommon(f *orm.VirtualDomain) *VirtualDomainCommon {
@@ -351,8 +351,8 @@ func Convert_VirtualDomain_VirtualDomainCommon(f *orm.VirtualDomain) *VirtualDom
 	r.CreatedBy = f.CreatedBy
 	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.Name = f.Name
 	r.UpdatedAt = f.UpdatedAt
-	r.VirtualDomainName = f.VirtualDomainName
 	return &r
 }
 func Convert_VirtualDomainCommon_VirtualDomain_slice(arr []*VirtualDomainCommon) []*orm.VirtualDomain {
@@ -429,11 +429,11 @@ func Convert_UserSetting_User(f *UserSetting) *orm.User {
 	r.Email = f.Email
 	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.Name = f.Name
 	r.Password = f.Password
 	r.Phone = f.Phone
 	r.SystemRole = Convert_SystemRoleCommon_SystemRole(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
-	r.Username = f.Username
 	return r
 }
 func Convert_User_UserSetting(f *orm.User) *UserSetting {
@@ -444,11 +444,11 @@ func Convert_User_UserSetting(f *orm.User) *UserSetting {
 	r.Email = f.Email
 	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.Name = f.Name
 	r.Password = f.Password
 	r.Phone = f.Phone
 	r.SystemRole = Convert_SystemRole_SystemRoleCommon(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
-	r.Username = f.Username
 	return &r
 }
 func Convert_UserSetting_User_slice(arr []*UserSetting) []*orm.User {
@@ -619,13 +619,13 @@ func Convert_UserInternal_User(f *UserInternal) *orm.User {
 	r.ID = f.ID
 	r.IsActive = f.IsActive
 	r.LastLoginAt = f.LastLoginAt
+	r.Name = f.Name
 	r.Password = f.Password
 	r.Phone = f.Phone
 	r.Role = f.Role
 	r.Source = f.Source
 	r.SystemRole = Convert_SystemRoleCommon_SystemRole(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
-	r.Username = f.Username
 	return r
 }
 func Convert_User_UserInternal(f *orm.User) *UserInternal {
@@ -638,13 +638,13 @@ func Convert_User_UserInternal(f *orm.User) *UserInternal {
 	r.ID = f.ID
 	r.IsActive = f.IsActive
 	r.LastLoginAt = f.LastLoginAt
+	r.Name = f.Name
 	r.Password = f.Password
 	r.Phone = f.Phone
 	r.Role = f.Role
 	r.Source = f.Source
 	r.SystemRole = Convert_SystemRole_SystemRoleCommon(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
-	r.Username = f.Username
 	return &r
 }
 func Convert_UserInternal_User_slice(arr []*UserInternal) []*orm.User {
@@ -723,12 +723,12 @@ func Convert_UserDetail_User(f *UserDetail) *orm.User {
 	r.ID = f.ID
 	r.IsActive = f.IsActive
 	r.LastLoginAt = f.LastLoginAt
+	r.Name = f.Name
 	r.Phone = f.Phone
 	r.Role = f.Role
 	r.Source = f.Source
 	r.SystemRole = Convert_SystemRoleCommon_SystemRole(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
-	r.Username = f.Username
 	return r
 }
 func Convert_User_UserDetail(f *orm.User) *UserDetail {
@@ -741,12 +741,12 @@ func Convert_User_UserDetail(f *orm.User) *UserDetail {
 	r.ID = f.ID
 	r.IsActive = f.IsActive
 	r.LastLoginAt = f.LastLoginAt
+	r.Name = f.Name
 	r.Phone = f.Phone
 	r.Role = f.Role
 	r.Source = f.Source
 	r.SystemRole = Convert_SystemRole_SystemRoleCommon(f.SystemRole)
 	r.SystemRoleID = f.SystemRoleID
-	r.Username = f.Username
 	return &r
 }
 func Convert_UserDetail_User_slice(arr []*UserDetail) []*orm.User {
@@ -822,8 +822,8 @@ func Convert_UserCommon_User(f *UserCommon) *orm.User {
 	f.object = r
 	r.Email = f.Email
 	r.ID = f.ID
+	r.Name = f.Name
 	r.Role = f.Role
-	r.Username = f.Username
 	return r
 }
 func Convert_User_UserCommon(f *orm.User) *UserCommon {
@@ -833,8 +833,8 @@ func Convert_User_UserCommon(f *orm.User) *UserCommon {
 	var r UserCommon
 	r.Email = f.Email
 	r.ID = f.ID
+	r.Name = f.Name
 	r.Role = f.Role
-	r.Username = f.Username
 	return &r
 }
 func Convert_UserCommon_User_slice(arr []*UserCommon) []*orm.User {
@@ -1188,8 +1188,8 @@ func Convert_TenantDetail_Tenant(f *TenantDetail) *orm.Tenant {
 	f.object = r
 	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.Name = f.Name
 	r.Remark = f.Remark
-	r.TenantName = f.TenantName
 	r.Users = Convert_UserCommon_User_slice(f.Users)
 	return r
 }
@@ -1200,8 +1200,8 @@ func Convert_Tenant_TenantDetail(f *orm.Tenant) *TenantDetail {
 	var r TenantDetail
 	r.ID = f.ID
 	r.IsActive = f.IsActive
+	r.Name = f.Name
 	r.Remark = f.Remark
-	r.TenantName = f.TenantName
 	r.Users = Convert_User_UserCommon_slice(f.Users)
 	return &r
 }
@@ -1277,7 +1277,7 @@ func Convert_TenantCommon_Tenant(f *TenantCommon) *orm.Tenant {
 	}
 	f.object = r
 	r.ID = f.ID
-	r.TenantName = f.TenantName
+	r.Name = f.Name
 	return r
 }
 func Convert_Tenant_TenantCommon(f *orm.Tenant) *TenantCommon {
@@ -1286,7 +1286,7 @@ func Convert_Tenant_TenantCommon(f *orm.Tenant) *TenantCommon {
 	}
 	var r TenantCommon
 	r.ID = f.ID
-	r.TenantName = f.TenantName
+	r.Name = f.Name
 	return &r
 }
 func Convert_TenantCommon_Tenant_slice(arr []*TenantCommon) []*orm.Tenant {
@@ -1360,9 +1360,9 @@ func Convert_SystemRoleDetail_SystemRole(f *SystemRoleDetail) *orm.SystemRole {
 		return nil
 	}
 	f.object = r
+	r.Code = f.Code
 	r.ID = f.ID
-	r.RoleCode = f.RoleCode
-	r.RoleName = f.RoleName
+	r.Name = f.Name
 	r.Users = Convert_UserCommon_User_slice(f.Users)
 	return r
 }
@@ -1371,9 +1371,9 @@ func Convert_SystemRole_SystemRoleDetail(f *orm.SystemRole) *SystemRoleDetail {
 		return nil
 	}
 	var r SystemRoleDetail
+	r.Code = f.Code
 	r.ID = f.ID
-	r.RoleCode = f.RoleCode
-	r.RoleName = f.RoleName
+	r.Name = f.Name
 	r.Users = Convert_User_UserCommon_slice(f.Users)
 	return &r
 }
@@ -1448,9 +1448,9 @@ func Convert_SystemRoleCommon_SystemRole(f *SystemRoleCommon) *orm.SystemRole {
 		return nil
 	}
 	f.object = r
+	r.Code = f.Code
 	r.ID = f.ID
-	r.RoleCode = f.RoleCode
-	r.RoleName = f.RoleName
+	r.Name = f.Name
 	return r
 }
 func Convert_SystemRole_SystemRoleCommon(f *orm.SystemRole) *SystemRoleCommon {
@@ -1458,9 +1458,9 @@ func Convert_SystemRole_SystemRoleCommon(f *orm.SystemRole) *SystemRoleCommon {
 		return nil
 	}
 	var r SystemRoleCommon
+	r.Code = f.Code
 	r.ID = f.ID
-	r.RoleCode = f.RoleCode
-	r.RoleName = f.RoleName
+	r.Name = f.Name
 	return &r
 }
 func Convert_SystemRoleCommon_SystemRole_slice(arr []*SystemRoleCommon) []*orm.SystemRole {
@@ -1541,8 +1541,6 @@ func Convert_RegistryDetail_Registry(f *RegistryDetail) *orm.Registry {
 	r.Password = f.Password
 	r.Project = Convert_ProjectCommon_Project(f.Project)
 	r.ProjectID = f.ProjectID
-	r.RegistryAddress = f.RegistryAddress
-	r.RegistryName = f.RegistryName
 	r.UpdateTime = f.UpdateTime
 	r.Username = f.Username
 	return r
@@ -1559,8 +1557,6 @@ func Convert_Registry_RegistryDetail(f *orm.Registry) *RegistryDetail {
 	r.Password = f.Password
 	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
-	r.RegistryAddress = f.RegistryAddress
-	r.RegistryName = f.RegistryName
 	r.UpdateTime = f.UpdateTime
 	r.Username = f.Username
 	return &r
@@ -1642,8 +1638,6 @@ func Convert_RegistryCommon_Registry(f *RegistryCommon) *orm.Registry {
 	r.IsDefault = f.IsDefault
 	r.Project = Convert_ProjectCommon_Project(f.Project)
 	r.ProjectID = f.ProjectID
-	r.RegistryAddress = f.RegistryAddress
-	r.RegistryName = f.RegistryName
 	r.UpdateTime = f.UpdateTime
 	return r
 }
@@ -1658,8 +1652,6 @@ func Convert_Registry_RegistryCommon(f *orm.Registry) *RegistryCommon {
 	r.IsDefault = f.IsDefault
 	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
-	r.RegistryAddress = f.RegistryAddress
-	r.RegistryName = f.RegistryName
 	r.UpdateTime = f.UpdateTime
 	return &r
 }
@@ -1831,7 +1823,6 @@ func Convert_ProjectDetail_Project(f *ProjectDetail) *orm.Project {
 	r.Environments = Convert_EnvironmentCommon_Environment_slice(f.Environments)
 	r.ID = f.ID
 	r.ProjectAlias = f.ProjectAlias
-	r.ProjectName = f.ProjectName
 	r.Remark = f.Remark
 	r.ResourceQuota = f.ResourceQuota
 	r.Tenant = Convert_TenantCommon_Tenant(f.Tenant)
@@ -1849,7 +1840,6 @@ func Convert_Project_ProjectDetail(f *orm.Project) *ProjectDetail {
 	r.Environments = Convert_Environment_EnvironmentCommon_slice(f.Environments)
 	r.ID = f.ID
 	r.ProjectAlias = f.ProjectAlias
-	r.ProjectName = f.ProjectName
 	r.Remark = f.Remark
 	r.ResourceQuota = f.ResourceQuota
 	r.Tenant = Convert_Tenant_TenantCommon(f.Tenant)
@@ -1931,7 +1921,6 @@ func Convert_ProjectCommon_Project(f *ProjectCommon) *orm.Project {
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
 	r.ProjectAlias = f.ProjectAlias
-	r.ProjectName = f.ProjectName
 	r.Remark = f.Remark
 	return r
 }
@@ -1943,7 +1932,6 @@ func Convert_Project_ProjectCommon(f *orm.Project) *ProjectCommon {
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
 	r.ProjectAlias = f.ProjectAlias
-	r.ProjectName = f.ProjectName
 	r.Remark = f.Remark
 	return &r
 }
@@ -2302,8 +2290,8 @@ func Convert_LogQuerySnapshotCommon_LogQuerySnapshot(f *LogQuerySnapshotCommon) 
 	r.DownloadURL = f.DownloadURL
 	r.EndTime = f.EndTime
 	r.ID = f.ID
+	r.Name = f.Name
 	r.SnapshotCount = f.SnapshotCount
-	r.SnapshotName = f.SnapshotName
 	r.SourceFile = f.SourceFile
 	r.StartTime = f.StartTime
 	return r
@@ -2321,8 +2309,8 @@ func Convert_LogQuerySnapshot_LogQuerySnapshotCommon(f *orm.LogQuerySnapshot) *L
 	r.DownloadURL = f.DownloadURL
 	r.EndTime = f.EndTime
 	r.ID = f.ID
+	r.Name = f.Name
 	r.SnapshotCount = f.SnapshotCount
-	r.SnapshotName = f.SnapshotName
 	r.SourceFile = f.SourceFile
 	r.StartTime = f.StartTime
 	return &r
@@ -2591,9 +2579,9 @@ func Convert_EnvironmentResourceCommon_EnvironmentResource(f *EnvironmentResourc
 	r.AvgCPUUsageCore = f.AvgCPUUsageCore
 	r.AvgMemoryUsageByte = f.AvgMemoryUsageByte
 	r.AvgPVCUsageByte = f.AvgPVCUsageByte
-	r.ClusterName = f.ClusterName
+	r.Cluster = f.Cluster
 	r.CreatedAt = f.CreatedAt
-	r.EnvironmentName = f.EnvironmentName
+	r.Environment = f.Environment
 	r.ID = f.ID
 	r.MaxCPUUsageCore = f.MaxCPUUsageCore
 	r.MaxMemoryUsageByte = f.MaxMemoryUsageByte
@@ -2603,8 +2591,8 @@ func Convert_EnvironmentResourceCommon_EnvironmentResource(f *EnvironmentResourc
 	r.MinPVCUsageByte = f.MinPVCUsageByte
 	r.NetworkReceiveByte = f.NetworkReceiveByte
 	r.NetworkSendByte = f.NetworkSendByte
-	r.ProjectName = f.ProjectName
-	r.TenantName = f.TenantName
+	r.Project = f.Project
+	r.Tenant = f.Tenant
 	return r
 }
 func Convert_EnvironmentResource_EnvironmentResourceCommon(f *orm.EnvironmentResource) *EnvironmentResourceCommon {
@@ -2615,9 +2603,9 @@ func Convert_EnvironmentResource_EnvironmentResourceCommon(f *orm.EnvironmentRes
 	r.AvgCPUUsageCore = f.AvgCPUUsageCore
 	r.AvgMemoryUsageByte = f.AvgMemoryUsageByte
 	r.AvgPVCUsageByte = f.AvgPVCUsageByte
-	r.ClusterName = f.ClusterName
+	r.Cluster = f.Cluster
 	r.CreatedAt = f.CreatedAt
-	r.EnvironmentName = f.EnvironmentName
+	r.Environment = f.Environment
 	r.ID = f.ID
 	r.MaxCPUUsageCore = f.MaxCPUUsageCore
 	r.MaxMemoryUsageByte = f.MaxMemoryUsageByte
@@ -2627,8 +2615,8 @@ func Convert_EnvironmentResource_EnvironmentResourceCommon(f *orm.EnvironmentRes
 	r.MinPVCUsageByte = f.MinPVCUsageByte
 	r.NetworkReceiveByte = f.NetworkReceiveByte
 	r.NetworkSendByte = f.NetworkSendByte
-	r.ProjectName = f.ProjectName
-	r.TenantName = f.TenantName
+	r.Project = f.Project
+	r.Tenant = f.Tenant
 	return &r
 }
 func Convert_EnvironmentResourceCommon_EnvironmentResource_slice(arr []*EnvironmentResourceCommon) []*orm.EnvironmentResource {
@@ -2708,10 +2696,10 @@ func Convert_EnvironmentDetail_Environment(f *EnvironmentDetail) *orm.Environmen
 	r.Creator = Convert_UserCommon_User(f.Creator)
 	r.CreatorID = f.CreatorID
 	r.DeletePolicy = f.DeletePolicy
-	r.EnvironmentName = f.EnvironmentName
 	r.ID = f.ID
 	r.LimitRange = f.LimitRange
 	r.MetaType = f.MetaType
+	r.Name = f.Name
 	r.Namespace = f.Namespace
 	r.Project = Convert_ProjectCommon_Project(f.Project)
 	r.ProjectID = f.ProjectID
@@ -2733,10 +2721,10 @@ func Convert_Environment_EnvironmentDetail(f *orm.Environment) *EnvironmentDetai
 	r.Creator = Convert_User_UserCommon(f.Creator)
 	r.CreatorID = f.CreatorID
 	r.DeletePolicy = f.DeletePolicy
-	r.EnvironmentName = f.EnvironmentName
 	r.ID = f.ID
 	r.LimitRange = f.LimitRange
 	r.MetaType = f.MetaType
+	r.Name = f.Name
 	r.Namespace = f.Namespace
 	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
@@ -2819,9 +2807,9 @@ func Convert_EnvironmentCommon_Environment(f *EnvironmentCommon) *orm.Environmen
 	}
 	f.object = r
 	r.DeletePolicy = f.DeletePolicy
-	r.EnvironmentName = f.EnvironmentName
 	r.ID = f.ID
 	r.MetaType = f.MetaType
+	r.Name = f.Name
 	r.Namespace = f.Namespace
 	r.Remark = f.Remark
 	return r
@@ -2832,9 +2820,9 @@ func Convert_Environment_EnvironmentCommon(f *orm.Environment) *EnvironmentCommo
 	}
 	var r EnvironmentCommon
 	r.DeletePolicy = f.DeletePolicy
-	r.EnvironmentName = f.EnvironmentName
 	r.ID = f.ID
 	r.MetaType = f.MetaType
+	r.Name = f.Name
 	r.Namespace = f.Namespace
 	r.Remark = f.Remark
 	return &r
@@ -2918,7 +2906,6 @@ func Convert_ContainerCommon_Container(f *ContainerCommon) *orm.Container {
 	r.MemoryPercent = f.MemoryPercent
 	r.MemoryUsageBytes = f.MemoryUsageBytes
 	r.Name = f.Name
-	r.PodName = f.PodName
 	r.Workload = Convert_WorkloadCommon_Workload(f.Workload)
 	r.WorkloadID = f.WorkloadID
 	return r
@@ -2936,7 +2923,6 @@ func Convert_Container_ContainerCommon(f *orm.Container) *ContainerCommon {
 	r.MemoryPercent = f.MemoryPercent
 	r.MemoryUsageBytes = f.MemoryUsageBytes
 	r.Name = f.Name
-	r.PodName = f.PodName
 	r.Workload = Convert_Workload_WorkloadCommon(f.Workload)
 	r.WorkloadID = f.WorkloadID
 	return &r
@@ -3017,12 +3003,12 @@ func Convert_ClusterDetail_Cluster(f *ClusterDetail) *orm.Cluster {
 	r.AgentCA = f.AgentCA
 	r.AgentCert = f.AgentCert
 	r.AgentKey = f.AgentKey
-	r.ClusterName = f.ClusterName
 	r.ClusterResourceQuota = f.ClusterResourceQuota
 	r.Environments = Convert_EnvironmentCommon_Environment_slice(f.Environments)
 	r.ID = f.ID
 	r.KubeConfig = f.KubeConfig
 	r.Mode = f.Mode
+	r.Name = f.Name
 	r.OversoldConfig = f.OversoldConfig
 	r.Primary = f.Primary
 	r.Runtime = f.Runtime
@@ -3039,12 +3025,12 @@ func Convert_Cluster_ClusterDetail(f *orm.Cluster) *ClusterDetail {
 	r.AgentCA = f.AgentCA
 	r.AgentCert = f.AgentCert
 	r.AgentKey = f.AgentKey
-	r.ClusterName = f.ClusterName
 	r.ClusterResourceQuota = f.ClusterResourceQuota
 	r.Environments = Convert_Environment_EnvironmentCommon_slice(f.Environments)
 	r.ID = f.ID
 	r.KubeConfig = f.KubeConfig
 	r.Mode = f.Mode
+	r.Name = f.Name
 	r.OversoldConfig = f.OversoldConfig
 	r.Primary = f.Primary
 	r.Runtime = f.Runtime
@@ -3123,8 +3109,8 @@ func Convert_ClusterCommon_Cluster(f *ClusterCommon) *orm.Cluster {
 	}
 	f.object = r
 	r.APIServer = f.APIServer
-	r.ClusterName = f.ClusterName
 	r.ID = f.ID
+	r.Name = f.Name
 	r.Primary = f.Primary
 	r.Runtime = f.Runtime
 	r.Version = f.Version
@@ -3136,8 +3122,8 @@ func Convert_Cluster_ClusterCommon(f *orm.Cluster) *ClusterCommon {
 	}
 	var r ClusterCommon
 	r.APIServer = f.APIServer
-	r.ClusterName = f.ClusterName
 	r.ID = f.ID
+	r.Name = f.Name
 	r.Primary = f.Primary
 	r.Runtime = f.Runtime
 	r.Version = f.Version
@@ -3214,9 +3200,9 @@ func Convert_ChartRepoCommon_ChartRepo(f *ChartRepoCommon) *orm.ChartRepo {
 		return nil
 	}
 	f.object = r
-	r.ChartRepoName = f.ChartRepoName
 	r.ID = f.ID
 	r.LastSync = f.LastSync
+	r.Name = f.Name
 	r.SyncMessage = f.SyncMessage
 	r.SyncStatus = f.SyncStatus
 	r.URL = f.URL
@@ -3227,9 +3213,9 @@ func Convert_ChartRepo_ChartRepoCommon(f *orm.ChartRepo) *ChartRepoCommon {
 		return nil
 	}
 	var r ChartRepoCommon
-	r.ChartRepoName = f.ChartRepoName
 	r.ID = f.ID
 	r.LastSync = f.LastSync
+	r.Name = f.Name
 	r.SyncMessage = f.SyncMessage
 	r.SyncStatus = f.SyncStatus
 	r.URL = f.URL
@@ -3508,7 +3494,6 @@ func Convert_ApplicationDetail_Application(f *ApplicationDetail) *orm.Applicatio
 		return nil
 	}
 	f.object = r
-	r.ApplicationName = f.ApplicationName
 	r.CreatedAt = f.CreatedAt
 	r.Creator = f.Creator
 	r.Enabled = f.Enabled
@@ -3519,6 +3504,7 @@ func Convert_ApplicationDetail_Application(f *ApplicationDetail) *orm.Applicatio
 	r.Kind = f.Kind
 	r.Labels = f.Labels
 	r.Manifest = f.Manifest
+	r.Name = f.Name
 	r.Project = Convert_ProjectCommon_Project(f.Project)
 	r.ProjectID = f.ProjectID
 	r.Remark = f.Remark
@@ -3530,7 +3516,6 @@ func Convert_Application_ApplicationDetail(f *orm.Application) *ApplicationDetai
 		return nil
 	}
 	var r ApplicationDetail
-	r.ApplicationName = f.ApplicationName
 	r.CreatedAt = f.CreatedAt
 	r.Creator = f.Creator
 	r.Enabled = f.Enabled
@@ -3541,6 +3526,7 @@ func Convert_Application_ApplicationDetail(f *orm.Application) *ApplicationDetai
 	r.Kind = f.Kind
 	r.Labels = f.Labels
 	r.Manifest = f.Manifest
+	r.Name = f.Name
 	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
 	r.Remark = f.Remark
@@ -3618,9 +3604,9 @@ func Convert_ApplicationCommon_Application(f *ApplicationCommon) *orm.Applicatio
 		return nil
 	}
 	f.object = r
-	r.ApplicationName = f.ApplicationName
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
+	r.Name = f.Name
 	r.UpdatedAt = f.UpdatedAt
 	return r
 }
@@ -3629,9 +3615,9 @@ func Convert_Application_ApplicationCommon(f *orm.Application) *ApplicationCommo
 		return nil
 	}
 	var r ApplicationCommon
-	r.ApplicationName = f.ApplicationName
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
+	r.Name = f.Name
 	r.UpdatedAt = f.UpdatedAt
 	return &r
 }

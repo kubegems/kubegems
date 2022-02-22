@@ -55,7 +55,7 @@ func (c *Client) executeHook(obj client.Object, phase client.HookPhase) error {
 
 func AfterEnvironmentDelete(tx *gorm.DB, obj client.Object) error {
 	env := obj.(*Environment)
-	return kubeClient(tx).DeleteEnvironment(env.Cluster.ClusterName, env.EnvironmentName)
+	return kubeClient(tx).DeleteEnvironment(env.Cluster.Name, env.Name)
 }
 
 func AfterEnvironmentCreateOrUpdate(tx *gorm.DB, obj client.Object) error {
@@ -93,8 +93,8 @@ func AfterEnvironmentCreateOrUpdate(tx *gorm.DB, obj client.Object) error {
 		limitRange = append(limitRange, v)
 	}
 	spec.Namespace = env.Namespace
-	spec.Project = project.ProjectName
-	spec.Tenant = project.Tenant.TenantName
+	spec.Project = project.Name
+	spec.Tenant = project.Tenant.Name
 	spec.LimitRageName = "default"
 	spec.ResourceQuotaName = "default"
 	spec.DeletePolicy = env.DeletePolicy
@@ -102,7 +102,7 @@ func AfterEnvironmentCreateOrUpdate(tx *gorm.DB, obj client.Object) error {
 	if len(limitRange) > 0 {
 		spec.LimitRage = limitRange
 	}
-	if e := kubeClient(tx).CreateOrUpdateEnvironment(cluster.ClusterName, env.EnvironmentName, spec); e != nil {
+	if e := kubeClient(tx).CreateOrUpdateEnvironment(cluster.Name, env.Name, spec); e != nil {
 		return e
 	}
 	return nil
@@ -116,8 +116,8 @@ func AfterTenantDelete(tx *gorm.DB, obj client.Object) error {
 		return e
 	}
 	for _, quota := range quotas {
-		if err := kubeClient(tx).DeleteTenant(quota.Cluster.ClusterName, t.TenantName); err != nil {
-			log.Error(err, "delete crd tenant failed", "tenant", t.TenantName, "cluster", quota.Cluster.ClusterName)
+		if err := kubeClient(tx).DeleteTenant(quota.Cluster.Name, t.Name); err != nil {
+			log.Error(err, "delete crd tenant failed", "tenant", t.Name, "cluster", quota.Cluster.Name)
 			return err
 		}
 	}
@@ -126,7 +126,7 @@ func AfterTenantDelete(tx *gorm.DB, obj client.Object) error {
 
 func AfterTenantResourceQuotaDelete(tx *gorm.DB, obj client.Object) error {
 	trq := obj.(*TenantResourceQuota)
-	if err := kubeClient(tx).DeleteTenant(trq.Cluster.ClusterName, trq.Tenant.TenantName); err != nil {
+	if err := kubeClient(tx).DeleteTenant(trq.Cluster.Name, trq.Tenant.Name); err != nil {
 		return err
 	}
 	return nil
@@ -147,19 +147,19 @@ func AfterTenantResourceQuotaCreateOrUpdate(tx *gorm.DB, obj client.Object) erro
 	members := []string{}
 	for _, rel := range rels {
 		if rel.Role == TenantRoleAdmin {
-			admins = append(admins, rel.User.Username)
+			admins = append(admins, rel.User.Name)
 		} else {
-			members = append(members, rel.User.Username)
+			members = append(members, rel.User.Name)
 		}
 	}
 	// 创建or更新 租户
-	if err := kubeClient(tx).CreateOrUpdateTenant(cluster.ClusterName, tenant.TenantName, admins, members); err != nil {
+	if err := kubeClient(tx).CreateOrUpdateTenant(cluster.Name, tenant.Name, admins, members); err != nil {
 		return err
 	}
 	// 这儿有个坑，controller还没有成功创建出来TenantResourceQuota，就去更新租户资源，会报错404；先睡会儿把
 	<-time.NewTimer(time.Second * 2).C
 	// 创建or更新 租户资源
-	if err := kubeClient(tx).CreateOrUpdateTenantResourceQuota(cluster.ClusterName, tenant.TenantName, trq.Content); err != nil {
+	if err := kubeClient(tx).CreateOrUpdateTenantResourceQuota(cluster.Name, tenant.Name, trq.Content); err != nil {
 		return err
 	}
 	return nil
@@ -172,7 +172,7 @@ func AfterProjectDelete(tx *gorm.DB, obj client.Object) error {
 		return err
 	}
 	for _, env := range environments {
-		e := kubeClient(tx).DeleteEnvironment(env.Cluster.ClusterName, env.EnvironmentName)
+		e := kubeClient(tx).DeleteEnvironment(env.Cluster.Name, env.Name)
 		if e != nil {
 			return e
 		}
@@ -235,13 +235,13 @@ func syncRegistry(tx *gorm.DB, kind string, reg *Registry) error {
 	for idx := range envs {
 		env := envs[idx]
 		group.Go(func() error {
-			envObj, e := kubeClient(tx).GetEnvironment(env.Cluster.ClusterName, env.EnvironmentName, nil)
+			envObj, e := kubeClient(tx).GetEnvironment(env.Cluster.Name, env.Name, nil)
 			if e != nil {
 				return e
 			}
 
 			if kind == syncKindUpsert {
-				if e := kubeClient(tx).CreateOrUpdateSecret(env.Cluster.ClusterName, env.Namespace, secretName, secretData); e != nil {
+				if e := kubeClient(tx).CreateOrUpdateSecret(env.Cluster.Name, env.Namespace, secretName, secretData); e != nil {
 					return e
 				}
 				// 默认仓库添加annotation
@@ -252,13 +252,13 @@ func syncRegistry(tx *gorm.DB, kind string, reg *Registry) error {
 				}
 			}
 			if kind == syncKindDelete {
-				if e := kubeClient(tx).DeleteSecretIfExist(env.Cluster.ClusterName, env.Namespace, secretName); e != nil {
+				if e := kubeClient(tx).DeleteSecretIfExist(env.Cluster.Name, env.Namespace, secretName); e != nil {
 					return e
 				}
 				addOrRemoveSecret(envObj, defaultServiceAccountName, secretName, false)
 			}
 
-			if _, e := kubeClient(tx).PatchEnvironment(env.Cluster.ClusterName, env.EnvironmentName, envObj); e != nil {
+			if _, e := kubeClient(tx).PatchEnvironment(env.Cluster.Name, env.Name, envObj); e != nil {
 				return e
 			}
 			return nil
