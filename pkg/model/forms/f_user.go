@@ -8,25 +8,25 @@ import (
 // +genform object:User
 type UserCommon struct {
 	BaseForm
-	ID       uint   `json:"id"`
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Role     string `json:"role,omitempty"`
+	ID    uint   `json:"id"`
+	Name  string `json:"name" binding:"required"`
+	Email string `json:"email" binding:"required"`
+	Role  string `json:"role,omitempty"`
 }
 
 // +genform object:User
 type UserDetail struct {
 	BaseForm
-	ID           uint
-	Username     string            `json:"username" validate:"required"`
-	Email        string            `json:"email" validate:"required,email"`
-	Phone        string            `json:"phone"`
-	Source       string            `json:"source"`
-	IsActive     *bool             `json:"is_active"`
-	CreatedAt    *time.Time        `json:"created_at"`
-	LastLoginAt  *time.Time        `json:"last_login_at"`
-	SystemRole   *SystemRoleCommon `json:"system_role"`
-	SystemRoleID uint              `json:"system_role_id"`
+	ID           uint              `json:"id,omitempty"`
+	Name         string            `json:"name,omitempty"`
+	Email        string            `json:"email,omitempty"`
+	Phone        string            `json:"phone,omitempty"`
+	Source       string            `json:"source,omitempty"`
+	IsActive     *bool             `json:"isActive,omitempty"`
+	CreatedAt    *time.Time        `json:"createdAt,omitempty"`
+	LastLoginAt  *time.Time        `json:"lastLoginAt,omitempty"`
+	SystemRole   *SystemRoleCommon `json:"systemRole,omitempty"`
+	SystemRoleID uint              `json:"systemRoleID,omitempty"`
 
 	Role string `json:"role,omitempty"`
 }
@@ -34,31 +34,31 @@ type UserDetail struct {
 // +genform object:User
 type UserSetting struct {
 	BaseForm
-	ID           uint
-	Username     string `binding:"required"`
-	Phone        string `binding:"required" json:",omitempty"`
-	Email        string
-	Password     string
-	IsActive     *bool
-	SystemRole   *SystemRoleCommon
-	SystemRoleID uint
+	ID           uint              `json:"id,omitempty"`
+	Name         string            `json:"name,omitempty"`
+	Phone        string            `json:"phone,omitempty"`
+	Email        string            `json:"email,omitempty"`
+	Password     string            `json:"password,omitempty"`
+	IsActive     *bool             `json:"isActive,omitempty"`
+	SystemRole   *SystemRoleCommon `json:"systemRole,omitempty"`
+	SystemRoleID uint              `json:"systemRoleID,omitempty"`
 }
 
 // +genform object:User
 type UserInternal struct {
 	BaseForm
-	ID           uint
-	Username     string
-	Password     string
-	Email        string
-	Role         string
-	Phone        string
-	Source       string
-	IsActive     *bool
-	CreatedAt    *time.Time
-	LastLoginAt  *time.Time
-	SystemRole   *SystemRoleCommon
-	SystemRoleID uint
+	ID           uint              `json:"id,omitempty"`
+	Name         string            `json:"name,omitempty"`
+	Password     string            `json:"password,omitempty"`
+	Email        string            `json:"email,omitempty"`
+	Role         string            `json:"role,omitempty"`
+	Phone        string            `json:"phone,omitempty"`
+	Source       string            `json:"source,omitempty"`
+	IsActive     *bool             `json:"isActive,omitempty"`
+	CreatedAt    *time.Time        `json:"createdAt,omitempty"`
+	LastLoginAt  *time.Time        `json:"lastLoginAt,omitempty"`
+	SystemRole   *SystemRoleCommon `json:"systemRole,omitempty"`
+	SystemRoleID uint              `json:"systemRoleID,omitempty"`
 }
 
 func (u *UserInternal) GetID() uint {
@@ -74,7 +74,7 @@ func (u *UserInternal) GetSystemRoleID() uint {
 }
 
 func (u *UserInternal) GetUsername() string {
-	return u.Username
+	return u.Name
 }
 
 func (u *UserInternal) GetUserKind() string {

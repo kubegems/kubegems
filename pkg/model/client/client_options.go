@@ -41,6 +41,12 @@ func WhereEqual(field string, value interface{}) *WhereOption {
 	}
 }
 
+func WhereNameEqual(value interface{}) *WhereOption {
+	return &WhereOption{
+		where: &Cond{Field: "name", Op: Eq, Value: value},
+	}
+}
+
 type PreloadOption struct {
 	preloads []string
 }

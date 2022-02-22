@@ -61,8 +61,7 @@ func parseDoc(typename, doc string, vars *[]string) {
 }
 
 func genCode(list []string) {
-	code := `package orm 
-import "kubegems.io/pkg/model/client"`
+	code := `package orm `
 
 	lines := append([]string{code}, list...)
 	ret := strings.Join(lines, "\n")
@@ -99,7 +98,7 @@ func gen(typename string, optionMap map[string]string) []string {
 			case "objectrel":
 				ret = append(ret, genVars(typename, optionMap))
 				ret = append(ret, genObjectFunctions(typename, optionMap))
-				ret = append(ret, genObjectRelFunctions(typename, optionMap))
+				// ret = append(ret, genObjectRelFunctions(typename, optionMap))
 				ret = append(ret, genObjectList(typename))
 				ret = append(ret, genObjectListFunctions(typename, optionMap))
 			}
@@ -225,6 +224,7 @@ func (objList *%sList) DataPtr() interface{} {
 	return fmt.Sprintf(v, args...)
 }
 
+/*
 func genObjectRelFunctions(typename string, optionMap map[string]string) string {
 	var (
 		leftObject  string
@@ -251,6 +251,7 @@ func (obj *%s) Right() client.Object {
 
 	return fmt.Sprintf(v, args...)
 }
+*/
 
 func genObjectList(typename string) string {
 	v := `type %sList struct {

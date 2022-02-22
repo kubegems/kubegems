@@ -3,29 +3,29 @@ package forms
 // +genform object:Tenant
 type TenantCommon struct {
 	BaseForm
-	ID         uint
-	TenantName string
+	ID   uint   `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 // +genform object:Tenant
 type TenantDetail struct {
 	BaseForm
-	ID         uint
-	TenantName string
-	Remark     string
-	IsActive   bool
-	Users      []*UserCommon
+	ID       uint          `json:"id,omitempty"`
+	Name     string        `json:"name,omitempty"`
+	Remark   string        `json:"remark,omitempty"`
+	IsActive bool          `json:"isActive,omitempty"`
+	Users    []*UserCommon `json:"users,omitempty"`
 }
 
 // +genform object:TenantUserRel
 type TenantUserRelCommon struct {
 	BaseForm
-	ID       uint
-	Tenant   *TenantCommon
-	TenantID uint
-	User     *UserCommon
-	UserID   uint
-	Role     string
+	ID       uint          `json:"id,omitempty"`
+	Tenant   *TenantCommon `json:"tenant,omitempty"`
+	TenantID uint          `json:"tenantID,omitempty"`
+	User     *UserCommon   `json:"user,omitempty"`
+	UserID   uint          `json:"userID,omitempty"`
+	Role     string        `json:"role,omitempty"`
 }
 
 type TenantUserCreateModifyForm struct {

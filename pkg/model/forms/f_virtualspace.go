@@ -5,8 +5,8 @@ import "time"
 // +genform object:VirtualSpace
 type VirtualSpaceCommon struct {
 	BaseForm
-	VirtualSpaceName string
-	ID               uint
+	Name string `json:"name,omitempty"`
+	ID   uint   `json:"id,omitempty"`
 }
 
 // +genform object:VirtualSpaceUserRel
@@ -23,10 +23,10 @@ type VirtualSpaceUserRelCommon struct {
 // +genform object:VirtualDomain
 type VirtualDomainCommon struct {
 	BaseForm
-	ID                uint
-	VirtualDomainName string
-	CreatedAt         *time.Time
-	UpdatedAt         *time.Time
-	IsActive          bool
-	CreatedBy         string
+	ID        uint       `json:"id,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	IsActive  bool       `json:"isActive,omitempty"`
+	CreatedBy string     `json:"createdBy,omitempty"`
 }

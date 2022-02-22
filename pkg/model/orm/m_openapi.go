@@ -1,6 +1,5 @@
 package orm
 
-// OpenAPP 第三方的app
 // +gen type:object pkcolume:id pkfield:ID
 type OpenAPP struct {
 	Name      string `gorm:"unique"`

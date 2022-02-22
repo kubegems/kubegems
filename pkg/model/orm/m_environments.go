@@ -6,15 +6,14 @@ import (
 	"gorm.io/datatypes"
 )
 
-// Environment 审计表
-// +gen type:object pkcolume:id pkfield:ID preloads:Cluster
+// +gen type:object pkcolume:id pkfield:ID preloads:Cluster,Creator,Project,Applications,VirtualSpace
 type Environment struct {
-	ID              uint   `gorm:"primarykey"`
-	EnvironmentName string `gorm:"type:varchar(50);uniqueIndex:uniq_idx_project_env;index:environment_uniq,unique"`
-	Namespace       string `gorm:"type:varchar(50)"`
-	Remark          string
-	MetaType        string
-	DeletePolicy    string `sql:"DEFAULT:'delNamespace'"`
+	ID           uint   `gorm:"primarykey"`
+	Name         string `gorm:"type:varchar(50);uniqueIndex:uniq_idx_project_env;index:environment_uniq,unique"`
+	Namespace    string `gorm:"type:varchar(50)"`
+	Remark       string
+	MetaType     string
+	DeletePolicy string `sql:"DEFAULT:'delNamespace'"`
 
 	Creator       *User
 	Cluster       *Cluster `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
@@ -27,36 +26,30 @@ type Environment struct {
 	Applications  []*Application `gorm:"many2many:application_environment_rels;"`
 	Users         []*User        `gorm:"many2many:environment_user_rels;"`
 
-	// 虚拟空间
 	VirtualSpaceID *uint
 	VirtualSpace   *VirtualSpace `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:SET NULL;"`
 }
 
-// EnvironmentUserRels 环境用户关联关系表
-// +gen type:objectrel pkcolume:id pkfield:ID preloads:User,Environment leftfield:User rightfield:Environment
+// +gen type:objectrel pkcolume:id pkfield:ID preloads:User,Environment
 type EnvironmentUserRel struct {
-	ID          uint         `gorm:"primarykey"`
-	User        *User        `json:",omitempty"`
-	Environment *Environment `json:"omitempty" gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
-	// 用户ID
-	UserID uint `gorm:"uniqueIndex:uniq_idx_env_user_rel" binding:"required"`
-	// EnvironmentID
-	EnvironmentID uint `gorm:"uniqueIndex:uniq_idx_env_user_rel" binding:"required"`
-
+	ID            uint `gorm:"primarykey"`
+	User          *User
+	Environment   *Environment `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
+	UserID        uint         `gorm:"uniqueIndex:uniq_idx_env_user_rel"`
+	EnvironmentID uint         `gorm:"uniqueIndex:uniq_idx_env_user_rel"`
 	// 环境级角色("reader", "operator")
 	Role string `binding:"required,eq=reader|eq=operator"`
 }
 
-// EnvironmentResource 环境资源统计
 // +gen type:object pkcolume:id pkfield:ID
 type EnvironmentResource struct {
 	ID        uint       `gorm:"primarykey"`
 	CreatedAt *time.Time `sql:"DEFAULT:'current_timestamp'"`
 
-	ClusterName     string
-	TenantName      string
-	ProjectName     string
-	EnvironmentName string
+	Cluster     string
+	Tenant      string
+	Project     string
+	Environment string
 
 	MaxCPUUsageCore    float64
 	MaxMemoryUsageByte float64

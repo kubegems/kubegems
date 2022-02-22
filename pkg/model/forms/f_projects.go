@@ -37,7 +37,7 @@ type ProjectUserRelCommon struct {
 	BaseForm
 	ID        uint           `json:"id"`
 	User      *UserCommon    `json:"user,omitempty"`
-	Project   *ProjectCommon `json:"project,emitempty"`
+	Project   *ProjectCommon `json:"project,omitempty"`
 	UserID    uint           `json:"userId"`
 	ProjectID uint           `json:"projectId"`
 	Role      string         `json:"role"`
