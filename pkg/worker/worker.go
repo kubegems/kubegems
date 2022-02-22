@@ -83,7 +83,7 @@ func Run(ctx context.Context, options *Options) error {
 	exporter.RegisterCollector("environment", true, collector.NewEnvironmentCollector())
 	exporter.RegisterCollector("user", true, collector.NewUserCollector())
 	exporter.RegisterCollector("application", true, collector.NewApplicationCollector())
-	exporterHandler := exporter.NewHandler(options.Exporter.IncludeExporterMetrics, options.Exporter.MaxRequests, log.GlobalLogger.Sugar())
+	exporterHandler := exporter.NewHandler()
 
 	// dump
 	dump := &dump.Dump{Options: options.Dump, DB: deps.Databse}
