@@ -2,7 +2,7 @@ package argo
 
 type Options struct {
 	Addr     string `json:"addr" description:"argocd host"`
-	Token    string `json:"token" description:"argocd token"`
+	Token    string `json:"token" description:"argocd token,if empty generate from username password"`
 	Username string `json:"username" description:"argocd username"`
 	Password string `json:"password" description:"argocd password"`
 }
