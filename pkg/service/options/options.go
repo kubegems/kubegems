@@ -15,23 +15,23 @@ import (
 )
 
 type Options struct {
-	Agent     *agents.Options           `json:"agent"`
-	System    *system.Options           `json:"system"`
-	Appstore  *helm.Options             `json:"appstore" description:"appstore配置"`
-	Argo      *argo.Options             `json:"argo" description:"argo配置"`
-	DebugMode bool                      `json:"debugmode" description:"debug模式"`
-	Exporter  *exporter.ExporterOptions `json:"exporter" description:"prometheus exporter配置"`
-	Git       *git.Options              `json:"git" description:"git配置"`
-	JWT       *oauth.JWTOptions         `json:"jwt" description:"jwt配置"`
-	LogLevel  string                    `json:"loglevel" description:"日志等级"`
-	Msgbus    *msgbus.Options           `json:"msgbus" description:"msgbus 实时消息网关配置"`
-	Mysql     *database.Options         `json:"mysql" description:"数据库配置"`
-	Redis     *redis.Options            `json:"redis" description:"redis配置"`
+	Agent     *agents.Options           `json:"agent,omitempty"`
+	System    *system.Options           `json:"system,omitempty"`
+	Appstore  *helm.Options             `json:"appstore,omitempty"`
+	Argo      *argo.Options             `json:"argo,omitempty"`
+	DebugMode bool                      `json:"debugMode,omitempty"`
+	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
+	Git       *git.Options              `json:"git,omitempty"`
+	JWT       *oauth.JWTOptions         `json:"jwt,omitempty"`
+	LogLevel  string                    `json:"logLevel,omitempty"`
+	Msgbus    *msgbus.Options           `json:"msgbus,omitempty"`
+	Mysql     *database.Options         `json:"mysql,omitempty"`
+	Redis     *redis.Options            `json:"redis,omitempty"`
 }
 
 type OnlineOptions struct {
-	Oauth        *oauth.Options                           `json:"oauth" description:"oauth配置"`
-	Microservice *microserviceoptions.MicroserviceOptions `json:"microservice" description:"microservice 配置"`
+	Oauth        *oauth.Options                           `json:"oauth,omitempty"`
+	Microservice *microserviceoptions.MicroserviceOptions `json:"microservice,omitempty"`
 }
 
 func NewOnlineOptions() *OnlineOptions {
