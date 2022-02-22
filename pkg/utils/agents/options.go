@@ -3,9 +3,9 @@ package agents
 import "kubegems.io/pkg/apis/gems"
 
 type Options struct {
-	Namespace   string `json:"agentNamespace,omitempty" description:"agent service namespace"`
-	ServiceName string `json:"agentServiceName,omitempty" description:"agent service name"`
-	ServicePort int    `json:"agentServicePort,omitempty" description:"agent service port"`
+	Namespace   string `json:"namespace,omitempty"`
+	ServiceName string `json:"serviceName,omitempty"`
+	ServicePort int    `json:"servicePort,omitempty"`
 }
 
 func NewDefaultOptions() *Options {
