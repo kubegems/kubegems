@@ -28,7 +28,7 @@ type MessageBusInterface interface {
 	Send()
 }
 
-func NewMessageBusClient(database *database.Database, options *msgbus.MsgbusOptions) MessageBusInterface {
+func NewMessageBusClient(database *database.Database, options *msgbus.Options) MessageBusInterface {
 	return &msgBusClient{
 		Database: database,
 		options:  options,
@@ -41,7 +41,7 @@ func NewMessageBusClient(database *database.Database, options *msgbus.MsgbusOpti
 
 type msgBusClient struct {
 	c                *gin.Context
-	options          *msgbus.MsgbusOptions
+	options          *msgbus.Options
 	messageBusServer string
 	httpclient       *http.Client
 	Database         *database.Database

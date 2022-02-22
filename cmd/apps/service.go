@@ -22,10 +22,11 @@ func NewServiceCmd() *cobra.Command {
 		Short:        "run service",
 		SilenceUsage: true,
 		Version:      version.Get().String(),
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := config.Parse(cmd.Flags()); err != nil {
 				return err
 			}
+
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
 
@@ -36,7 +37,7 @@ func NewServiceCmd() *cobra.Command {
 		newGenServiceCfgCmd(),
 		newServiceMigrateCmd(),
 	)
-	options.RegistFlags("", cmd.Flags())
+	config.AutoRegisterFlags(cmd.Flags(), "", options)
 	return cmd
 }
 
@@ -60,6 +61,6 @@ func newServiceMigrateCmd() *cobra.Command {
 			return models.MigrateDatabaseAndInitData(options.Mysql, options.Redis)
 		},
 	}
-	options.RegistFlags("", cmd.Flags())
+	config.AutoRegisterFlags(cmd.Flags(), "", options)
 	return cmd
 }

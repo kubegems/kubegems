@@ -2,7 +2,6 @@ package apps
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,7 +10,6 @@ import (
 	"kubegems.io/pkg/agent"
 	"kubegems.io/pkg/utils/config"
 	"kubegems.io/pkg/version"
-	"sigs.k8s.io/yaml"
 )
 
 func NewAgentCmd() *cobra.Command {
@@ -31,7 +29,7 @@ func NewAgentCmd() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(genCfgCmd)
-	options.RegistFlags("", cmd.Flags())
+	config.AutoRegisterFlags(cmd.Flags(), "", options)
 	return cmd
 }
 
@@ -40,11 +38,7 @@ var genCfgCmd = &cobra.Command{
 	Short: "generate config template",
 	RunE: func(_ *cobra.Command, _ []string) error {
 		opts := agent.DefaultOptions()
-		tplout, err := yaml.Marshal(opts)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(tplout))
+		config.GenerateConfig(opts)
 		return nil
 	},
 }

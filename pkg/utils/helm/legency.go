@@ -18,15 +18,14 @@ import (
 )
 
 type RepositoryConfig struct {
-	Name                  string `json:"name"`
-	URL                   string `json:"url"`
-	Username              string `json:"username"`
-	Password              string `json:"password"`
-	Cert                  []byte `json:"cert"`
-	Key                   []byte `json:"key"`
-	CA                    []byte `json:"ca"`
-	InsecureSkipTLSverify bool   `json:"insecure_skip_tls_verify"`
-	PassCredentialsAll    bool   `json:"pass_credentials_all"`
+	Name          string `json:"name,omitempty"`
+	URL           string `json:"url,omitempty"`
+	Username      string `json:"username,omitempty"`
+	Password      string `json:"password,omitempty"`
+	Cert          []byte `json:"cert,omitempty"`
+	Key           []byte `json:"key,omitempty"`
+	CA            []byte `json:"ca,omitempty"`
+	SkipTLSVerify bool   `json:"skipTLSVerify,omitempty"`
 }
 
 type LegencyRepository struct {
@@ -47,7 +46,7 @@ func NewLegencyRepository(cfg *RepositoryConfig) (*LegencyRepository, error) {
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					// todo: cert key parse
-					InsecureSkipVerify: cfg.InsecureSkipTLSverify,
+					InsecureSkipVerify: cfg.SkipTLSVerify,
 				},
 			},
 		},

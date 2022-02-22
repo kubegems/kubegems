@@ -4,14 +4,12 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/pkg/agent/apis"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/agent/collector"
 	"kubegems.io/pkg/agent/indexer"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/pprof"
@@ -20,17 +18,10 @@ import (
 )
 
 type Options struct {
-	Syetem    *apis.Options
-	Exporter  *exporter.ExporterOptions
-	DebugMode bool   `yaml:"debugmode" head_comment:"enable debug mode"`
-	LogLevel  string `yaml:"loglevel"`
-}
-
-func (o *Options) RegistFlags(prefix string, fs *pflag.FlagSet) {
-	fs.BoolVar(&o.DebugMode, utils.JoinFlagName(prefix, "debugmode"), o.DebugMode, "enable debud mode")
-	fs.StringVar(&o.LogLevel, utils.JoinFlagName(prefix, "loglevel"), o.LogLevel, "log level")
-	o.Syetem.RegistFlags("system", fs)
-	o.Exporter.RegistFlags("exporter", fs)
+	DebugMode bool                      `json:"debugmode,omitempty" description:"enable debug mode"`
+	LogLevel  string                    `json:"loglevel,omitempty"`
+	Syetem    *apis.Options             `json:"syetem,omitempty"`
+	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
 }
 
 func DefaultOptions() *Options {

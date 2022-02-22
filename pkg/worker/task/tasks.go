@@ -59,7 +59,7 @@ func Run(ctx context.Context, rediscli *redis.Client,
 		// task-archive 持久化过期任务至database
 		NewTaskArchiverTasker(db, rediscli),
 		// chart-sync 同步helmchart
-		&HelmSyncTasker{DB: db, ChartRepoUrl: helmOptions.ChartRepoUrl},
+		&HelmSyncTasker{DB: db, ChartRepoUrl: helmOptions.ChartRepoURL},
 	}
 	if err := p.RegisterTasker(taskers...); err != nil {
 		return err

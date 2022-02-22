@@ -31,6 +31,6 @@ func NewMsgbusCmd() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(genCfgCmd)
-	options.RegistFlags("", cmd.Flags())
+	config.AutoRegisterFlags(cmd.Flags(), "", options)
 	return cmd
 }

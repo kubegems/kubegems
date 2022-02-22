@@ -56,9 +56,9 @@ func init() {
 }
 
 type Options struct {
-	MetricsAddr          string
-	EnableLeaderElection bool
-	TenantGatewayOptions controllers.TenantGatewayOptions
+	MetricsAddr          string                           `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
+	EnableLeaderElection bool                             `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
+	TenantGatewayOptions controllers.TenantGatewayOptions `json:"tenantGatewayOptions,omitempty"`
 }
 
 func NewDefaultOptions() *Options {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"strings"
 
@@ -52,6 +53,14 @@ func Print(fs *pflag.FlagSet) {
 			log.Infof("config from flag: --%s=%s", flag.Name, flag.Value)
 		}
 	})
+}
+
+func AutoRegisterFlags(fs *pflag.FlagSet, prefix string, data interface{}) {
+	node := ParseStruct(data)
+	if !node.Value.CanAddr() {
+		log.Error(errors.New("unaddressable value"), "must be a pointer to a struct", "data", data)
+	}
+	registerFlagSet(fs, prefix, node.Children)
 }
 
 func LoadEnv(fs *pflag.FlagSet) {

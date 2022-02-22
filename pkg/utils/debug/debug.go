@@ -77,7 +77,7 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 		if err != nil {
 			return err
 		}
-		opts.Appstore.ChartRepoUrl = "http://" + addr
+		opts.Appstore.ChartRepoURL = "http://" + addr
 		return nil
 	})
 
