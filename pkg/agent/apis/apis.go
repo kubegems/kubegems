@@ -30,9 +30,8 @@ type DebugOptions struct {
 }
 
 func NewDefaultDebugOptions() *DebugOptions {
-	debugNamespace, _ := os.LookupEnv("MY_NAMESPACE")
 	return &DebugOptions{
-		Namespace: debugNamespace,
+		Namespace: os.Getenv("MY_NAMESPACE"),
 		PodSelector: labels.SelectorFromSet(
 			labels.Set{
 				"app.kubernetes.io/name": "gems-agent-kubectl",
@@ -51,7 +50,7 @@ type Options struct {
 	EnableHTTPSigs     bool   `json:"enableHTTPSigs,omitempty"`
 }
 
-func DefaultOptions() *Options {
+func NewDefaultOptions() *Options {
 	return &Options{
 		MetricsServer:      fmt.Sprintf("http://metrics-scraper.%s:8000", gems.NamespaceMonitor),
 		PrometheusServer:   fmt.Sprintf("http://prometheus.%s:9090", gems.NamespaceMonitor),
