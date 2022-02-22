@@ -46,7 +46,7 @@ func prepareDependencies(ctx context.Context, options *Options) (*Dependencies, 
 		return nil, err
 	}
 	// agent client
-	agentclientset, err := agents.NewClientSet(databasecli, options.System)
+	agentclientset, err := agents.NewClientSet(databasecli, options.Agent)
 	if err != nil {
 		return nil, err
 	}

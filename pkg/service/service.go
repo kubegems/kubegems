@@ -51,7 +51,7 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 		return nil, err
 	}
 	// agents
-	agentclientset, err := agents.NewClientSet(db, options.System)
+	agentclientset, err := agents.NewClientSet(db, options.Agent)
 	if err != nil {
 		return nil, err
 	}
@@ -75,9 +75,11 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 	return deps, nil
 }
 
-func Run(ctx context.Context, options *options.Options) error {
+func Run(ctx context.Context, opts *options.Options) error {
+	onlineOptions := options.NewOnlineOptions() // 在线配置
+
 	ctx = log.NewContext(ctx, log.LogrLogger)
-	deps, err := prepareDependencies(ctx, options)
+	deps, err := prepareDependencies(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("failed init dependencies: %v", err)
 	}
@@ -92,16 +94,17 @@ func Run(ctx context.Context, options *options.Options) error {
 	kialiconfig.Set(kialiconfig.NewConfig())
 
 	router := &routers.Router{
-		Opts:     options,
-		Agents:   deps.Agentscli,
-		Argo:     deps.Argocli,
-		Database: deps.Databse,
-		Redis:    deps.Redis,
+		Opts:          opts,
+		OnlineOptions: onlineOptions,
+		Agents:        deps.Agentscli,
+		Argo:          deps.Argocli,
+		Database:      deps.Databse,
+		Redis:         deps.Redis,
 	}
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return router.Run(ctx)
+		return router.Run(ctx, opts.System)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)
@@ -109,9 +112,9 @@ func Run(ctx context.Context, options *options.Options) error {
 	eg.Go(func() error {
 		exporter.SetNamespace("gems_server")
 		exporter.RegisterCollector("request", true, collector.NewRequestCollector) // http exporter
-		exporterHandler := exporter.NewHandler(options.Exporter.IncludeExporterMetrics, options.Exporter.MaxRequests, log.GlobalLogger.Sugar())
+		exporterHandler := exporter.NewHandler(opts.Exporter.IncludeExporterMetrics, opts.Exporter.MaxRequests, log.GlobalLogger.Sugar())
 		// 启动prometheus exporter
-		return prometheus.RunExporter(ctx, options.Exporter, exporterHandler)
+		return prometheus.RunExporter(ctx, opts.Exporter, exporterHandler)
 	})
 	return eg.Wait()
 }

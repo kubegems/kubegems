@@ -10,6 +10,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
+
+
 type Options struct {
 	Kind          string         `json:"kind,omitempty" description:"oauth kind"`
 	UserInfoURL   string         `json:"userInfoURL,omitempty" description:"user info url"`
@@ -22,7 +24,7 @@ type Options struct {
 	BambooOptions *BambooOptions `json:"bambooOptions,omitempty" description:"bamboo options"`
 }
 
-func NewDefaultOauthOptions() *Options {
+func NewDefaultOptions() *Options {
 	return &Options{
 		Kind:          "gitlab",
 		UserInfoURL:   "https://git.kubegems.io/api/v4/user",

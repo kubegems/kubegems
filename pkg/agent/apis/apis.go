@@ -3,13 +3,10 @@ package apis
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/agent/client"
@@ -19,6 +16,7 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/prometheus/collector"
 	"kubegems.io/pkg/utils/route"
+	"kubegems.io/pkg/utils/system"
 	"kubegems.io/pkg/version"
 )
 
@@ -30,12 +28,6 @@ type DebugOptions struct {
 }
 
 type Options struct {
-	ListenTLS          string        `json:"listenTLS,omitempty"`
-	Cert               string        `json:"cert,omitempty"`
-	Key                string        `json:"key,omitempty"`
-	CA                 string        `json:"ca,omitempty"`
-	CertDir            string        `json:"certDir,omitempty"`
-	Listen             string        `json:"listen,omitempty"`
 	MetricsServer      string        `json:"metricsServer,omitempty"`
 	PrometheusServer   string        `json:"prometheusServer,omitempty"`
 	AlertmanagerServer string        `json:"alertmanagerServer,omitempty"`
@@ -49,8 +41,6 @@ func DefaultOptions() *Options {
 	debugPodname, _ := os.LookupEnv("MY_POD_NAME")
 	debugNamespace, _ := os.LookupEnv("MY_NAMESPACE")
 	return &Options{
-		Listen:             ":8041",
-		ListenTLS:          ":8040",
 		MetricsServer:      "http://metrics-scraper.gemcloud-monitoring-system:8000",
 		PrometheusServer:   "http://prometheus.gemcloud-monitoring-system:9090",
 		AlertmanagerServer: "http://alertmanager.gemcloud-monitoring-system:9093",
@@ -63,10 +53,6 @@ func DefaultOptions() *Options {
 			MyContainer:     "gems-agent-kubectl",
 			DebugToolsImage: "kubegems/debug-tools:latest",
 		},
-		CertDir: "certs",
-		Cert:    "tls.crt",
-		Key:     "tls.key",
-		CA:      "ca.crt",
 	}
 }
 
@@ -100,7 +86,7 @@ func (mu handlerMux) register(group, version, resource, action string, handler g
 }
 
 // nolint: funlen
-func Run(ctx context.Context, cluster cluster.Interface, options *Options) error {
+func Run(ctx context.Context, cluster cluster.Interface, system *system.Options, options *Options) error {
 	ginr := gin.New()
 	ginr.Use(
 		// log
@@ -251,7 +237,7 @@ func Run(ctx context.Context, cluster cluster.Interface, options *Options) error
 	clientrest := client.ClientRest{Cli: cluster.GetClient()}
 	clientrest.Register(routes.r)
 
-	if err := listen(ctx, options, ginr); err != nil {
+	if err := listen(ctx, system, ginr); err != nil {
 		return err
 	}
 	return nil
@@ -285,67 +271,35 @@ func (mu handlerMux) registerREST(cluster cluster.Interface) {
 	mu.r.PATCH("/v1/{group}/{version}/namespaces/{namespace}/{resource}/{name}/actions/scale", resthandler.Scale)
 }
 
-func listen(ctx context.Context, options *Options, handler http.Handler) error {
-	basicserver := http.Server{
+func listen(ctx context.Context, options *system.Options, handler http.Handler) error {
+	server := http.Server{
 		BaseContext: func(l net.Listener) context.Context { return ctx },
 		Addr:        options.Listen,
 		Handler:     handler,
 	}
-	tlsserver := http.Server{
-		BaseContext: func(l net.Listener) context.Context { return ctx },
-		Addr:        options.ListenTLS,
-		Handler:     handler,
-	}
 
-	errch := make(chan error)
-	go func() {
-		log.WithField("listen", options.Listen).Info("http listening")
-		errch <- basicserver.ListenAndServe()
-	}()
-	go func() {
-		if options.CA != "" && options.Cert != "" && options.Key != "" {
-			ca, cert, key := filepath.Join(options.CertDir, options.CA), filepath.Join(options.CertDir, options.Cert), filepath.Join(options.CertDir, options.Key)
-			// setup tls config and client certificate verify
-			tlsconfig, err := TLSConfigFrom(ca, cert, key)
-			if err != nil {
-				errch <- err
-				return
-			}
-			tlsserver.TLSConfig = tlsconfig
-			log.WithField("listen", options.ListenTLS).Info("https listening")
-			errch <- tlsserver.ListenAndServeTLS(cert, key)
-		} else {
-			log.Warnf("https listen not started due to no tls config")
+	if options.IsTLSConfigEnabled() {
+		tlsc, err := options.ToTLSConfig()
+		if err != nil {
+			return err
 		}
+		server.TLSConfig = tlsc
+		server.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert // enable TLS client auth
+	} else {
+		log.Info("tls config not found")
+	}
+
+	go func() {
+		<-ctx.Done()
+		log.Info("shutting down server")
+		server.Close()
 	}()
 
-	select {
-	case err := <-errch:
-		return err
-	case <-ctx.Done():
-		basicserver.Close()
-		tlsserver.Close()
-		return nil
+	if server.TLSConfig != nil {
+		log.Info("listen on https", "addr", options.Listen)
+		return server.ListenAndServeTLS("", "")
+	} else {
+		log.Info("listen on http", "addr", options.Listen)
+		return server.ListenAndServe()
 	}
-}
-
-func TLSConfigFrom(ca, cert, key string) (*tls.Config, error) {
-	capem, err := ioutil.ReadFile(ca)
-	if err != nil {
-		return nil, err
-	}
-	certPool, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, err
-	}
-	certPool.AppendCertsFromPEM(capem)
-	certificate, err := tls.LoadX509KeyPair(cert, key)
-	if err != nil {
-		return nil, err
-	}
-	return &tls.Config{
-		ClientCAs:    certPool,
-		Certificates: []tls.Certificate{certificate},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-	}, nil
 }
