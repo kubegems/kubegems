@@ -9,7 +9,6 @@ import (
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/redis"
 )
 
 func createDatabaseIfNotExists(dsn, dbname string) error {
@@ -28,7 +27,7 @@ func createDatabaseIfNotExists(dsn, dbname string) error {
 	return nil
 }
 
-func MigrateDatabaseAndInitData(opts *database.Options, redisopts *redis.Options) error {
+func MigrateDatabaseAndInitData(opts *database.Options, initData bool) error {
 	// init database schema
 	if err := createDatabaseIfNotExists(opts.ToDsnWithOutDB()); err != nil {
 		return err
@@ -43,7 +42,7 @@ func MigrateDatabaseAndInitData(opts *database.Options, redisopts *redis.Options
 		return err
 	}
 
-	if opts.InitData {
+	if initData {
 		if err := initBaseData(db.DB()); err != nil {
 			return err
 		}

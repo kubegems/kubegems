@@ -14,10 +14,9 @@ type Options struct {
 	Username string `json:"username" description:"mysql username"`
 	Password string `json:"password" description:"mysql password"`
 	Database string `json:"dataBase" description:"database to use"`
-	InitData bool   `json:"initData" description:"initdata switch"`
 }
 
-func NewDefaultMySQLOptions() *Options {
+func NewDefaultOptions() *Options {
 	return &Options{
 		Addr:     "gems-mysql:3306",
 		Username: "root",
