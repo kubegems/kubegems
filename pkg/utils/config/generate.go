@@ -13,6 +13,8 @@ import (
 	"kubegems.io/pkg/log"
 )
 
+var ErrCantRegister = errors.New("can't register flag")
+
 func GenerateConfig(opt interface{}) {
 	root := ToYamlNode(ParseStruct(opt))
 	o, e := yaml.Marshal(root)
@@ -74,36 +76,41 @@ func prefixedKey(prefix, key string, splitor ...string) string {
 
 func registerFlagSet(fs *pflag.FlagSet, prefix string, nodes []Node) {
 	for _, node := range nodes {
+		key := prefixedKey(prefix, node.Name)
 		switch node.Kind {
 		case reflect.Struct, reflect.Map:
-			registerFlagSet(fs, prefixedKey(prefix, node.Name), node.Children)
+			registerFlagSet(fs, key, node.Children)
 		default:
 			short := node.Tag.Get("short")
 			description := node.Tag.Get("description")
+			if !node.Value.CanAddr() {
+				log.Error(ErrCantRegister, "key", key, "value", node.Value.Interface())
+				continue
+			}
 			v := node.Value.Addr().Interface()
 			switch value := v.(type) {
 			case *string:
-				fs.StringVarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.StringVarP(value, key, short, *value, description)
 			case *bool:
-				fs.BoolVarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.BoolVarP(value, key, short, *value, description)
 			case *int:
-				fs.IntVarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.IntVarP(value, key, short, *value, description)
 			case *int64:
-				fs.Int64VarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.Int64VarP(value, key, short, *value, description)
 			case *uint16:
-				fs.Uint16VarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.Uint16VarP(value, key, short, *value, description)
 			case *[]bool:
-				fs.BoolSliceVarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.BoolSliceVarP(value, key, short, *value, description)
 			case *time.Duration:
-				fs.DurationVarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.DurationVarP(value, key, short, *value, description)
 			case *float32:
-				fs.Float32VarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.Float32VarP(value, key, short, *value, description)
 			case *float64:
-				fs.Float64VarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.Float64VarP(value, key, short, *value, description)
 			case *[]string:
-				fs.StringSliceVarP(value, prefixedKey(prefix, node.Name), short, *value, description)
+				fs.StringSliceVarP(value, key, short, *value, description)
 			default:
-				log.Error(errors.New("can't register flag"), "unrecognized value type", "kind", node.Kind)
+				log.Error(ErrCantRegister, "unrecognized value type", "key", key, "kind", node.Kind)
 			}
 		}
 	}

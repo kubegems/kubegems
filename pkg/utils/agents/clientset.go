@@ -15,16 +15,15 @@ import (
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/httpsigs"
 	"kubegems.io/pkg/utils/kube"
-	"kubegems.io/pkg/utils/system"
 )
 
 type ClientSet struct {
-	options *system.Options
+	options *Options
 	databse *database.Database
 	clients sync.Map // name -> *Client
 }
 
-func NewClientSet(databse *database.Database, options *system.Options) (*ClientSet, error) {
+func NewClientSet(databse *database.Database, options *Options) (*ClientSet, error) {
 	return &ClientSet{
 		databse: databse,
 		options: options,

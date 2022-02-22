@@ -18,7 +18,7 @@ import (
 func NewGinServer(opts *options.Options, database *database.Database, redis *redis.Client, ms *switcher.MessageSwitcher) (*gin.Engine, error) {
 	r := gin.Default()
 	// 初始化需要注册的中间件
-	authmidware, err := auth.NewAuthMiddleware(opts.System, database, redis, aaa.NewUserInfoHandler())
+	authmidware, err := auth.NewAuthMiddleware(opts.JWT, database, redis, aaa.NewUserInfoHandler())
 	if err != nil {
 		return nil, err
 	}

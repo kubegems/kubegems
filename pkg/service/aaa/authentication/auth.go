@@ -19,8 +19,8 @@ import (
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/oauth"
 	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/utils/system"
 )
 
 var userCacheExirpreMinute = 10
@@ -151,7 +151,7 @@ type Middleware struct {
 	jwt.GinJWTMiddleware
 }
 
-func NewAuthMiddleware(system *system.Options, database *database.Database,
+func NewAuthMiddleware(system *oauth.JWTOptions, database *database.Database,
 	redis *redis.Client, uif aaa.UserInterface) (*Middleware, error) {
 	db := database.DB()
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{

@@ -54,6 +54,7 @@ import (
 	"kubegems.io/pkg/utils/oauth"
 	"kubegems.io/pkg/utils/prometheus/collector"
 	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/pkg/utils/system"
 	"kubegems.io/pkg/utils/tracing"
 	"kubegems.io/pkg/version"
 )
@@ -79,22 +80,23 @@ func RealClientIPMiddleware() gin.HandlerFunc {
 }
 
 type Router struct {
-	Opts     *options.Options
-	Agents   *agents.ClientSet
-	Database *database.Database
-	Redis    *redis.Client
-	Argo     *argo.Client
+	Opts          *options.Options
+	OnlineOptions *options.OnlineOptions
+	Agents        *agents.ClientSet
+	Database      *database.Database
+	Redis         *redis.Client
+	Argo          *argo.Client
 
 	auditInstance *audit.DefaultAuditInstance
 	gin           *gin.Engine
 }
 
-func (r *Router) Run(ctx context.Context) error {
+func (r *Router) Run(ctx context.Context, system *system.Options) error {
 	if err := r.Complete(); err != nil {
 		return err
 	}
 	httpserver := &http.Server{
-		Addr:    r.Opts.System.Listen,
+		Addr:    system.Listen,
 		Handler: r.gin,
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx // 注入basecontext
@@ -121,7 +123,7 @@ func (r *Router) Complete() error {
 	// validator
 	validate.InitValidator(r.Database.DB())
 	// oauth
-	oauthtool := oauth.NewOauthTool(r.Opts.Oauth)
+	oauthtool := oauth.NewOauthTool(r.OnlineOptions.Oauth)
 	// user interface
 	userif := aaa.NewUserInfoHandler()
 	// cache
@@ -153,7 +155,7 @@ func (r *Router) Complete() error {
 	dir, _ := os.Getwd()
 	router.StaticFS("/lokiExport", http.Dir(dir+"/lokiExport"))
 
-	authMiddleware, err := auth.NewAuthMiddleware(r.Opts.System, r.Database, r.Redis, aaa.NewUserInfoHandler())
+	authMiddleware, err := auth.NewAuthMiddleware(r.Opts.JWT, r.Database, r.Redis, aaa.NewUserInfoHandler())
 	if err != nil {
 		return err
 	}
@@ -303,7 +305,7 @@ func (r *Router) Complete() error {
 	appHandler.RegistRouter(rg)
 
 	// microservice  handler
-	microservicehandler := microservice.NewMicroServiceHandler(basehandler, r.Opts.Microservice)
+	microservicehandler := microservice.NewMicroServiceHandler(basehandler, r.OnlineOptions.Microservice)
 	microservicehandler.RegistRouter(rg)
 
 	// workload 的反向代理
