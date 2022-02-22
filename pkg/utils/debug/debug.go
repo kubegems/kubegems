@@ -67,7 +67,7 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 		if err != nil {
 			return err
 		}
-		opts.Git.Host = "http://" + addr
+		opts.Git.Addr = "http://" + addr
 		return nil
 	})
 
@@ -77,7 +77,7 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 		if err != nil {
 			return err
 		}
-		opts.Appstore.ChartRepoURL = "http://" + addr
+		opts.Appstore.Addr = "http://" + addr
 		return nil
 	})
 
