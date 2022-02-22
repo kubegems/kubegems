@@ -112,9 +112,8 @@ func Run(ctx context.Context, opts *options.Options) error {
 	eg.Go(func() error {
 		exporter.SetNamespace("gems_server")
 		exporter.RegisterCollector("request", true, collector.NewRequestCollector) // http exporter
-		exporterHandler := exporter.NewHandler(opts.Exporter.IncludeExporterMetrics, opts.Exporter.MaxRequests, log.GlobalLogger.Sugar())
 		// 启动prometheus exporter
-		return prometheus.RunExporter(ctx, opts.Exporter, exporterHandler)
+		return prometheus.RunExporter(ctx, opts.Exporter, exporter.NewHandler())
 	})
 	return eg.Wait()
 }

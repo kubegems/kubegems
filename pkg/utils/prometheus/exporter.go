@@ -15,11 +15,11 @@ func RunExporter(ctx context.Context, opts *exporter.ExporterOptions, handler *e
 			<head><title>Gemcloud Exporter</title></head>
 			<body>
 			<h1>Gemcloud Exporter</h1>
-			<p><a href="` + opts.MetricPath + `">Metrics</a></p>
+			<p><a href="` + exporter.MetricPath + `">Metrics</a></p>
 			</body>
 			</html>`))
 	})
-	mu.Handle(opts.MetricPath, handler)
+	mu.Handle(exporter.MetricPath, handler)
 
 	server := &http.Server{Addr: opts.Listen, Handler: mu}
 	go func() {
