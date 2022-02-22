@@ -42,7 +42,7 @@ type cacheKey struct {
 }
 
 func NewProvider(options *Options) (*SimpleLocalProvider, error) {
-	giteacli, err := gitea.NewClient(options.Host, gitea.SetBasicAuth(options.Username, options.Password))
+	giteacli, err := gitea.NewClient(options.Addr, gitea.SetBasicAuth(options.Username, options.Password))
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +56,8 @@ func NewProvider(options *Options) (*SimpleLocalProvider, error) {
 			Password: options.Password,
 		},
 		committer: object.Signature{
-			Name:  options.Committer.Name,
-			Email: options.Committer.Email,
+			Name:  DefaultCommiter.Name,
+			Email: DefaultCommiter.Email,
 		},
 		cacheexpire: CacheTimeout,
 	}, nil
@@ -75,7 +75,7 @@ func (p *SimpleLocalProvider) Options() *Options {
 }
 
 func (p *SimpleLocalProvider) GenerateCloneURL(ctx context.Context, ref RepositoryRef) string {
-	return fmt.Sprintf("%s/%s/%s.git", p.options.Host, ref.Org, ref.Repo)
+	return fmt.Sprintf("%s/%s/%s.git", p.options.Addr, ref.Org, ref.Repo)
 }
 
 func (p *SimpleLocalProvider) Get(ctx context.Context, ref RepositoryRef) (*Repository, error) {

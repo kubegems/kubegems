@@ -19,19 +19,20 @@ func NewArgoCDCli(options *Options) (*argocdcli.Client, error) {
 		return nil, err
 	}
 
-	if options.Token == "" {
+	token := options.Token
+	if token == "" {
 		// create from user and password
-		token, err := GetTokenFromUserPassword(options.Addr, options.Username, options.Password)
+		tk, err := GetTokenFromUserPassword(options.Addr, options.Username, options.Password)
 		if err != nil {
 			return nil, err
 		}
-		options.Token = token
+		token = tk
 	}
 
 	cliopt := &argocdcli.ClientOptions{
 		ServerAddr: parsedurl.Host,
 		Insecure:   true, // Same with tls.SkipTLSVerify
-		AuthToken:  options.Token,
+		AuthToken:  token,
 		// https://argo-cd.readthedocs.io/en/stable/faq/#why-am-i-getting-rpc-error-code-unavailable-desc-transport-is-closing-when-using-the-cli
 		GRPCWeb: true,
 	}

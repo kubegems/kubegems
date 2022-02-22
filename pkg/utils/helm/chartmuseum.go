@@ -16,12 +16,12 @@ import (
 )
 
 type Options struct {
-	ChartRepoURL string `json:"chartRepoURL,omitempty" description:"chart repository url"`
+	Addr string `json:"addr,omitempty" description:"chart repository url"`
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		ChartRepoURL: "http://gems-chartmuseum.gemcloud-system:8030",
+		Addr: "http://gems-chartmuseum.gemcloud-system:8030",
 	}
 }
 
