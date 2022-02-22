@@ -9,9 +9,11 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/apimachinery/pkg/labels"
 	"kubegems.io/pkg/agent/client"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/agent/middleware"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/prometheus/collector"
@@ -21,38 +23,42 @@ import (
 )
 
 type DebugOptions struct {
-	DebugToolsImage string `json:"debugToolsImage,omitempty"`
-	MyNamespace     string `json:"myNamespace,omitempty"`
-	MyPod           string `json:"myPod,omitempty"`
-	MyContainer     string `json:"myContainer,omitempty"`
+	Image       string `json:"image,omitempty"`
+	Namespace   string `json:"namespace,omitempty"`
+	PodSelector string `json:"podSelector,omitempty"`
+	Container   string `json:"container,omitempty"`
+}
+
+func NewDefaultDebugOptions() *DebugOptions {
+	debugNamespace, _ := os.LookupEnv("MY_NAMESPACE")
+	return &DebugOptions{
+		Namespace: debugNamespace,
+		PodSelector: labels.SelectorFromSet(
+			labels.Set{
+				"app.kubernetes.io/name": "gems-agent-kubectl",
+			}).String(),
+		Container: "gems-agent-kubectl",
+		Image:     "kubegems/debug-tools:latest",
+	}
 }
 
 type Options struct {
-	MetricsServer      string        `json:"metricsServer,omitempty"`
-	PrometheusServer   string        `json:"prometheusServer,omitempty"`
-	AlertmanagerServer string        `json:"alertmanagerServer,omitempty"`
-	LokiServer         string        `json:"lokiServer,omitempty"`
-	JaegerSerber       string        `json:"jaegerSerber,omitempty"`
-	EnableHTTPSigs     bool          `json:"enableHTTPSigs,omitempty"`
-	DebugOptions       *DebugOptions `json:"debugOptions,omitempty"`
+	MetricsServer      string `json:"metricsServer,omitempty"`
+	PrometheusServer   string `json:"prometheusServer,omitempty"`
+	AlertmanagerServer string `json:"alertmanagerServer,omitempty"`
+	LokiServer         string `json:"lokiServer,omitempty"`
+	JaegerSerber       string `json:"jaegerSerber,omitempty"`
+	EnableHTTPSigs     bool   `json:"enableHTTPSigs,omitempty"`
 }
 
 func DefaultOptions() *Options {
-	debugPodname, _ := os.LookupEnv("MY_POD_NAME")
-	debugNamespace, _ := os.LookupEnv("MY_NAMESPACE")
 	return &Options{
-		MetricsServer:      "http://metrics-scraper.gemcloud-monitoring-system:8000",
-		PrometheusServer:   "http://prometheus.gemcloud-monitoring-system:9090",
-		AlertmanagerServer: "http://alertmanager.gemcloud-monitoring-system:9093",
-		LokiServer:         "http://loki-gateway.gemcloud-logging-system:3100",
+		MetricsServer:      fmt.Sprintf("http://metrics-scraper.%s:8000", gems.NamespaceMonitor),
+		PrometheusServer:   fmt.Sprintf("http://prometheus.%s:9090", gems.NamespaceMonitor),
+		AlertmanagerServer: fmt.Sprintf("http://alertmanager.%s:9093", gems.NamespaceMonitor),
+		LokiServer:         fmt.Sprintf("http://loki-gateway.%s:3100", gems.NamespaceLogging),
 		JaegerSerber:       "http://jaeger-query.observability:16686",
 		EnableHTTPSigs:     true,
-		DebugOptions: &DebugOptions{
-			MyNamespace:     debugNamespace,
-			MyPod:           debugPodname,
-			MyContainer:     "gems-agent-kubectl",
-			DebugToolsImage: "kubegems/debug-tools:latest",
-		},
 	}
 }
 
@@ -86,7 +92,7 @@ func (mu handlerMux) register(group, version, resource, action string, handler g
 }
 
 // nolint: funlen
-func Run(ctx context.Context, cluster cluster.Interface, system *system.Options, options *Options) error {
+func Run(ctx context.Context, cluster cluster.Interface, system *system.Options, options *Options, debugOptions *DebugOptions) error {
 	ginr := gin.New()
 	ginr.Use(
 		// log
@@ -155,7 +161,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.register("metrics.k8s.io", "v1beta1", "pods", ActionList, metricsHandler.Pods)
 	routes.register("metrics.k8s.io", "v1beta1", "pods", "recently", metricsHandler.PodList)
 
-	podHandler := PodHandler{cluster: cluster, debugoptions: options.DebugOptions}
+	podHandler := PodHandler{cluster: cluster, debugoptions: debugOptions}
 	routes.register("core", "v1", "pods", ActionList, podHandler.List)
 	routes.register("core", "v1", "pods", "shell", podHandler.ExecPods)
 	routes.register("core", "v1", "pods", "debug", podHandler.DebugPod)
@@ -169,7 +175,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.register("apps", "v1", "statefulsets", "rollback", rolloutHandler.StatefulSetRollback)
 	routes.register("apps", "v1", "deployments", "rollback", rolloutHandler.DeploymentRollback)
 
-	kubectlHandler := KubectlHandler{cluster: cluster, debugoptions: options.DebugOptions}
+	kubectlHandler := KubectlHandler{cluster: cluster, debugoptions: debugOptions}
 	routes.register("system", "v1", "kubectl", ActionList, kubectlHandler.ExecKubectl)
 
 	prometheusHandler, err := NewPrometheusHandler(options.PrometheusServer, cluster)

@@ -23,6 +23,7 @@ type Options struct {
 	LogLevel  string                    `json:"loglevel,omitempty"`
 	Syetem    *system.Options           `json:"syetem,omitempty"`
 	API       *apis.Options             `json:"api,omitempty"`
+	Debug     *apis.DebugOptions        `json:"debug,omitempty" description:"debug options"`
 	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
 }
 
@@ -72,7 +73,7 @@ func Run(ctx context.Context, options *Options) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		return apis.Run(ctx, c, options.Syetem, options.API)
+		return apis.Run(ctx, c, options.Syetem, options.API, options.Debug)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)
