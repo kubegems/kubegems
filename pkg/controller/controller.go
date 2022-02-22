@@ -63,7 +63,7 @@ type Options struct {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		MetricsAddr:          ":8080",
+		MetricsAddr:          "127.0.0.1:8080", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
 		TenantGatewayOptions: controllers.DefaultTenantGatewayOptions(),
 	}
