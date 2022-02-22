@@ -41,7 +41,7 @@ type UserSel struct {
 }
 
 // implement redis
-func (u *User) MarshalBinary() ([]byte, error) {
+func (u User) MarshalBinary() ([]byte, error) {
 	return json.Marshal(u)
 }
 
