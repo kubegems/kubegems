@@ -15,22 +15,27 @@ import (
 	"kubegems.io/pkg/utils/pprof"
 	"kubegems.io/pkg/utils/prometheus"
 	basecollector "kubegems.io/pkg/utils/prometheus/collector" // http exporter
+	"kubegems.io/pkg/utils/system"
 )
 
 type Options struct {
 	DebugMode bool                      `json:"debugmode,omitempty" description:"enable debug mode"`
 	LogLevel  string                    `json:"loglevel,omitempty"`
-	Syetem    *apis.Options             `json:"syetem,omitempty"`
+	Syetem    *system.Options           `json:"syetem,omitempty"`
+	API       *apis.Options             `json:"api,omitempty"`
 	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
 }
 
 func DefaultOptions() *Options {
-	return &Options{
+	defaultoptions := &Options{
 		DebugMode: false,
 		LogLevel:  "debug",
-		Syetem:    apis.DefaultOptions(),
+		Syetem:    system.NewDefaultOptions(),
+		API:       apis.DefaultOptions(),
 		Exporter:  exporter.DefaultExporterOptions(),
 	}
+	defaultoptions.Syetem.Listen = ":8041"
+	return defaultoptions
 }
 
 func Run(ctx context.Context, options *Options) error {
@@ -67,7 +72,7 @@ func Run(ctx context.Context, options *Options) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		return apis.Run(ctx, c, options.Syetem)
+		return apis.Run(ctx, c, options.Syetem, options.API)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)

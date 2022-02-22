@@ -73,7 +73,7 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 	}
 
 	// 初始化 agent 客户端
-	agentclientset, err := agents.NewClientSet(db, options.System)
+	agentclientset, err := agents.NewClientSet(db, options.Agent)
 	if err != nil {
 		return nil, err
 	}

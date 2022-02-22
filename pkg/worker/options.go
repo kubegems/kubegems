@@ -1,40 +1,40 @@
 package worker
 
 import (
+	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/git"
 	"kubegems.io/pkg/utils/helm"
 	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/utils/system"
 	"kubegems.io/pkg/worker/dump"
 )
 
 type Options struct {
-	Mysql     *database.Options         `json:"mysql,omitempty"`
-	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
-	Argo      *argo.Options             `json:"argo,omitempty"`
+	Agent     *agents.Options           `json:"agent,omitempty"`
 	AppStore  *helm.Options             `json:"appStore,omitempty"`
-	Dump      *dump.DumpOptions         `json:"dump,omitempty"`
-	System    *system.Options           `json:"system,omitempty"`
+	Argo      *argo.Options             `json:"argo,omitempty"`
 	DebugMode bool                      `json:"debugMode,omitempty"`
-	LogLevel  string                    `json:"logLevel,omitempty"`
-	Redis     *redis.Options            `json:"redis,omitempty"`
+	Dump      *dump.DumpOptions         `json:"dump,omitempty"`
+	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
 	Git       *git.Options              `json:"git,omitempty"`
+	LogLevel  string                    `json:"logLevel,omitempty"`
+	Mysql     *database.Options         `json:"mysql,omitempty"`
+	Redis     *redis.Options            `json:"redis,omitempty"`
 }
 
 func DefaultOptions() *Options {
 	return &Options{
-		Mysql:     database.NewDefaultMySQLOptions(),
-		Exporter:  exporter.DefaultExporterOptions(),
-		Argo:      argo.NewDefaultArgoOptions(),
+		Agent:     agents.NewDefaultOptions(),
 		AppStore:  helm.NewDefaultOptions(),
-		Dump:      dump.NewDefaultDumpOptions(),
-		System:    system.NewDefaultOptions(),
+		Argo:      argo.NewDefaultArgoOptions(),
 		DebugMode: false,
-		Redis:     redis.NewDefaultOptions(),
+		Dump:      dump.NewDefaultDumpOptions(),
+		Exporter:  exporter.DefaultExporterOptions(),
 		Git:       git.NewDefaultOptions(),
 		LogLevel:  "debug",
+		Mysql:     database.NewDefaultMySQLOptions(),
+		Redis:     redis.NewDefaultOptions(),
 	}
 }
