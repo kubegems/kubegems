@@ -2,7 +2,6 @@ package options
 
 import (
 	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
-	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/exporter"
@@ -15,7 +14,6 @@ import (
 )
 
 type Options struct {
-	Agent     *agents.Options           `json:"agent,omitempty"`
 	System    *system.Options           `json:"system,omitempty"`
 	Appstore  *helm.Options             `json:"appstore,omitempty"`
 	Argo      *argo.Options             `json:"argo,omitempty"`
@@ -43,7 +41,6 @@ func NewOnlineOptions() *OnlineOptions {
 
 func DefaultOptions() *Options {
 	defaultoptions := &Options{
-		Agent:     agents.NewDefaultOptions(),
 		Appstore:  helm.NewDefaultOptions(),
 		Argo:      argo.NewDefaultArgoOptions(),
 		DebugMode: false,
