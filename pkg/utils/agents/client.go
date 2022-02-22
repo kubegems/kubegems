@@ -23,6 +23,7 @@ type Client interface {
 	DoRawRequest(ctx context.Context, clientreq Request) (*http.Response, error)
 	DialWebsocket(ctx context.Context, path string, headers ...http.Header) (*websocket.Conn, *http.Response, error)
 	Extend() *ExtendClient
+	BaseAddr() url.URL
 	// Deprecated: remove
 	Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error
 }
@@ -42,6 +43,10 @@ type ClientMeta struct {
 
 func (c *DelegateClient) Extend() *ExtendClient {
 	return c.extend
+}
+
+func (c *DelegateClient) BaseAddr() url.URL {
+	return *c.ClientMeta.BaseAddr
 }
 
 func newClient(meta ClientMeta) Client {
