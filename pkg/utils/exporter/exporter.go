@@ -3,6 +3,7 @@ package exporter
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"sort"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,10 +12,11 @@ import (
 	"github.com/prometheus/common/version"
 	"go.uber.org/zap"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/strings"
 )
 
-const (
-	MetricPath             = "/metrics"
+var (
+	MetricPath             = strings.StrOrDef(os.Getenv("METRIC_PATH"), "/metrics")
 	IncludeExporterMetrics = false
 	MaxRequests            = 40
 )

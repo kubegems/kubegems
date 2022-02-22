@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	stringsutil "kubegems.io/pkg/utils/strings"
 )
 
 var (
@@ -18,6 +19,12 @@ var (
 	rega_z  = regexp.MustCompile("[a-z]+")
 	reg0_9  = regexp.MustCompile("[0-9]+")
 	reg_chs = regexp.MustCompile(`[!\.@#$%~]+`)
+)
+
+var (
+	ContainStr         = stringsutil.ContainStr
+	RemoveStrInReplace = stringsutil.RemoveStrInReplace
+	RemoveStr          = stringsutil.RemoveStr
 )
 
 // 保留n位小数
@@ -41,37 +48,6 @@ func ToUint(id string) uint {
 		return 0
 	}
 	return uint(idint)
-}
-
-// src中是否存在了dest字符串
-func ContainStr(src []string, dest string) bool {
-	for i := range src {
-		if src[i] == dest {
-			return true
-		}
-	}
-	return false
-}
-
-func RemoveStrInReplace(src []string, dest string) []string {
-	index := 0
-	for i := range src {
-		if src[i] != dest {
-			src[index] = src[i]
-			index++
-		}
-	}
-	return src[:index]
-}
-
-func RemoveStr(src []string, dest string) []string {
-	ret := []string{}
-	for i := range src {
-		if src[i] != dest {
-			ret = append(ret, src[i])
-		}
-	}
-	return ret
 }
 
 func ValidPassword(input string) error {
