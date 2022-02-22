@@ -73,7 +73,7 @@ func (h *PodHandler) getDebug(c *gin.Context) (remotecommand.Executor, error) {
 	namespace := c.Param("namespace")
 	pod := c.Param("name")
 
-	debugImage := getDefaultHeader(c, "debugimage", h.debugoptions.DebugToolsImage)
+	debugImage := getDefaultHeader(c, "debugimage", h.debugoptions.Image)
 	command := []string{
 		"kubectl",
 		"-n",
@@ -87,7 +87,7 @@ func (h *PodHandler) getDebug(c *gin.Context) (remotecommand.Executor, error) {
 		"--",
 		"/start.sh",
 	}
-	poname, err := getKubectlContainer(h.cluster.GetClient(), c.Request.Context(), h.debugoptions.MyNamespace)
+	poname, err := getKubectlContainer(c.Request.Context(), h.cluster.GetClient(), h.debugoptions)
 	if err != nil {
 		return nil, err
 	}
@@ -96,11 +96,11 @@ func (h *PodHandler) getDebug(c *gin.Context) (remotecommand.Executor, error) {
 		RESTClient().
 		Post().
 		Resource("pods").
-		Namespace(h.debugoptions.MyNamespace).
+		Namespace(h.debugoptions.Namespace).
 		Name(poname).
 		SubResource("exec").
 		VersionedParams(&v1.PodExecOptions{
-			Container: h.debugoptions.MyContainer,
+			Container: h.debugoptions.Container,
 			Command:   command,
 			Stdin:     true,
 			Stdout:    true,
@@ -160,7 +160,7 @@ func (h *KubectlHandler) getKubectl(c *gin.Context) (remotecommand.Executor, err
 		"-c",
 		"export LINES=20; export COLUMNS=100; TERM=xterm-256color; export TERM; [ -x /bin/bash ] && ([ -x /usr/bin/script ] && /usr/bin/script -q -c /bin/bash /dev/null || exec /bin/bash) || exec /bin/sh",
 	}
-	poname, err := getKubectlContainer(h.cluster.GetClient(), c.Request.Context(), h.debugoptions.MyNamespace)
+	poname, err := getKubectlContainer(c.Request.Context(), h.cluster.GetClient(), h.debugoptions)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (h *KubectlHandler) getKubectl(c *gin.Context) (remotecommand.Executor, err
 		RESTClient().
 		Post().
 		Resource("pods").
-		Namespace(h.debugoptions.MyNamespace).
+		Namespace(h.debugoptions.Namespace).
 		Name(poname).
 		SubResource("exec").
 		VersionedParams(&v1.PodExecOptions{
@@ -183,11 +183,15 @@ func (h *KubectlHandler) getKubectl(c *gin.Context) (remotecommand.Executor, err
 	return remotecommand.NewSPDYExecutor(h.cluster.Config(), "POST", req.URL())
 }
 
-func getKubectlContainer(ctl client.Client, ctx context.Context, namespace string) (string, error) {
+func getKubectlContainer(ctx context.Context, ctl client.Client, debug *DebugOptions) (string, error) {
+	namespace := debug.Namespace
+
 	polist := &v1.PodList{}
-	sel := labels.SelectorFromSet(map[string]string{
-		"app.kubernetes.io/name": "gems-agent-kubectl",
-	})
+	sel, err := labels.Parse(debug.PodSelector)
+	if err != nil {
+		return "", err
+	}
+
 	if err := ctl.List(ctx, polist, client.InNamespace(namespace), client.MatchingLabelsSelector{Selector: sel}); err != nil {
 		return "", fmt.Errorf("failed to get kubectl container %v", err)
 	}
