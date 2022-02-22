@@ -66,7 +66,7 @@ func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
 func (h *ProxyHandler) ReverseProxyOn(cli agents.Client) *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
-			req.URL.Path = getTargetPath(name, req)
+			req.URL.Path = getTargetPath(cli.Name(), req)
 		},
 		Transport: RoundTripOf(cli),
 	}
