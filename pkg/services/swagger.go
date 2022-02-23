@@ -17,7 +17,8 @@ func enableSwagger(c *restful.Container) {
 		AllowedHeaders: []string{"*"},
 		AllowedMethods: []string{"*"},
 		CookiesAllowed: true,
-		Container:      c}
+		Container:      c,
+	}
 	c.Filter(cors.Filter)
 	c.Add(restfulspec.NewOpenAPIService(config))
 }
@@ -37,12 +38,4 @@ func enrichSwaggerObject(swo *spec.Swagger) {
 		},
 	}
 	swo.Schemes = []string{"http", "https"}
-	swo.Tags = []spec.Tag{
-		{
-			TagProps: spec.TagProps{
-				Name:        "users",
-				Description: "users related api",
-			},
-		},
-	}
 }

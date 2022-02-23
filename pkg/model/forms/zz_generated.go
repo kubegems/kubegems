@@ -1006,8 +1006,6 @@ func Convert_TenantResourceQuotaCommon_TenantResourceQuota(f *TenantResourceQuot
 	r.ID = f.ID
 	r.Tenant = Convert_TenantCommon_Tenant(f.Tenant)
 	r.TenantID = f.TenantID
-	r.TenantResourceQuotaApply = Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply(f.TenantResourceQuotaApply)
-	r.TenantResourceQuotaApplyID = f.TenantResourceQuotaApplyID
 	return r
 }
 func Convert_TenantResourceQuota_TenantResourceQuotaCommon(f *orm.TenantResourceQuota) *TenantResourceQuotaCommon {
@@ -1021,8 +1019,6 @@ func Convert_TenantResourceQuota_TenantResourceQuotaCommon(f *orm.TenantResource
 	r.ID = f.ID
 	r.Tenant = Convert_Tenant_TenantCommon(f.Tenant)
 	r.TenantID = f.TenantID
-	r.TenantResourceQuotaApply = Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(f.TenantResourceQuotaApply)
-	r.TenantResourceQuotaApplyID = f.TenantResourceQuotaApplyID
 	return &r
 }
 func Convert_TenantResourceQuotaCommon_TenantResourceQuota_slice(arr []*TenantResourceQuotaCommon) []*orm.TenantResourceQuota {
@@ -1096,11 +1092,16 @@ func Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply(f *TenantRe
 		return nil
 	}
 	f.object = r
+	r.Cluster = Convert_ClusterCommon_Cluster(f.Cluster)
+	r.ClusterID = f.ClusterID
 	r.Content = f.Content
+	r.CreateAt = f.CreateAt
+	r.Creator = Convert_UserCommon_User(f.Creator)
+	r.CreatorID = f.CreatorID
 	r.ID = f.ID
 	r.Status = f.Status
-	r.UpdatedAt = f.UpdatedAt
-	r.Username = f.Username
+	r.Tenant = Convert_TenantCommon_Tenant(f.Tenant)
+	r.TenantID = f.TenantID
 	return r
 }
 func Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(f *orm.TenantResourceQuotaApply) *TenantResourceQuotaApplyCommon {
@@ -1108,11 +1109,16 @@ func Convert_TenantResourceQuotaApply_TenantResourceQuotaApplyCommon(f *orm.Tena
 		return nil
 	}
 	var r TenantResourceQuotaApplyCommon
+	r.Cluster = Convert_Cluster_ClusterCommon(f.Cluster)
+	r.ClusterID = f.ClusterID
 	r.Content = f.Content
+	r.CreateAt = f.CreateAt
+	r.Creator = Convert_User_UserCommon(f.Creator)
+	r.CreatorID = f.CreatorID
 	r.ID = f.ID
 	r.Status = f.Status
-	r.UpdatedAt = f.UpdatedAt
-	r.Username = f.Username
+	r.Tenant = Convert_Tenant_TenantCommon(f.Tenant)
+	r.TenantID = f.TenantID
 	return &r
 }
 func Convert_TenantResourceQuotaApplyCommon_TenantResourceQuotaApply_slice(arr []*TenantResourceQuotaApplyCommon) []*orm.TenantResourceQuotaApply {
@@ -1822,6 +1828,7 @@ func Convert_ProjectDetail_Project(f *ProjectDetail) *orm.Project {
 	r.CreatedAt = f.CreatedAt
 	r.Environments = Convert_EnvironmentCommon_Environment_slice(f.Environments)
 	r.ID = f.ID
+	r.Name = f.Name
 	r.ProjectAlias = f.ProjectAlias
 	r.Remark = f.Remark
 	r.ResourceQuota = f.ResourceQuota
@@ -1839,6 +1846,7 @@ func Convert_Project_ProjectDetail(f *orm.Project) *ProjectDetail {
 	r.CreatedAt = f.CreatedAt
 	r.Environments = Convert_Environment_EnvironmentCommon_slice(f.Environments)
 	r.ID = f.ID
+	r.Name = f.Name
 	r.ProjectAlias = f.ProjectAlias
 	r.Remark = f.Remark
 	r.ResourceQuota = f.ResourceQuota
@@ -1920,6 +1928,7 @@ func Convert_ProjectCommon_Project(f *ProjectCommon) *orm.Project {
 	f.object = r
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
+	r.Name = f.Name
 	r.ProjectAlias = f.ProjectAlias
 	r.Remark = f.Remark
 	return r
@@ -1931,6 +1940,7 @@ func Convert_Project_ProjectCommon(f *orm.Project) *ProjectCommon {
 	var r ProjectCommon
 	r.CreatedAt = f.CreatedAt
 	r.ID = f.ID
+	r.Name = f.Name
 	r.ProjectAlias = f.ProjectAlias
 	r.Remark = f.Remark
 	return &r

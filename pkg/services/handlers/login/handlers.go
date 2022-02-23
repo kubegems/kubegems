@@ -9,12 +9,13 @@ import (
 	"kubegems.io/pkg/model/forms"
 	"kubegems.io/pkg/services/auth"
 	"kubegems.io/pkg/services/handlers"
+	"kubegems.io/pkg/services/handlers/base"
 )
 
 var tags = []string{"login"}
 
 type Handler struct {
-	ModelClient client.ModelClientIface
+	base.BaseHandler
 }
 
 func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
@@ -24,7 +25,7 @@ func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	authModule := auth.NewAuthenticateModule(h.ModelClient)
+	authModule := auth.NewAuthenticateModule(h.Model())
 	authenticator := authModule.GetAuthenticateModule(ctx, cred.Source)
 	if authenticator == nil {
 		handlers.Unauthorized(resp, nil)
@@ -38,7 +39,7 @@ func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
 	uinternel := h.getOrCreateUser(req.Request.Context(), uinfo)
 	now := time.Now()
 	uinternel.LastLoginAt = &now
-	h.ModelClient.Update(req.Request.Context(), uinternel.Object())
+	h.Model().Update(req.Request.Context(), uinternel.Object())
 	user := &forms.UserCommon{
 		Name:  uinternel.Name,
 		Email: uinternel.Email,
@@ -55,7 +56,7 @@ func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
 
 func (h *Handler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo) *forms.UserInternal {
 	u := forms.UserInternal{}
-	if err := h.ModelClient.Get(ctx, u.Object(), client.Where("username", client.Eq, uinfo.Username)); err != nil {
+	if err := h.Model().Get(ctx, u.Object(), client.Where("username", client.Eq, uinfo.Username)); err != nil {
 		return u.Data()
 	}
 	newUser := &forms.UserInternal{
@@ -63,6 +64,6 @@ func (h *Handler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo) *fo
 		Email:  uinfo.Email,
 		Source: uinfo.Source,
 	}
-	h.ModelClient.Create(ctx, newUser.Object())
+	h.Model().Create(ctx, newUser.Object())
 	return newUser.Data()
 }

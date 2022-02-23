@@ -11,7 +11,7 @@ type ProjectCommon struct {
 	BaseForm
 	ID           uint       `json:"id"`
 	CreatedAt    *time.Time `json:"createAt"`
-	ProjectName  string     `json:"projectName"`
+	Name         string     `json:"projectName"`
 	ProjectAlias string     `json:"projectAlias"`
 	Remark       string     `json:"remark"`
 }
@@ -21,7 +21,7 @@ type ProjectDetail struct {
 	BaseForm
 	ID            uint                 `json:"id"`
 	CreatedAt     *time.Time           `json:"createAt"`
-	ProjectName   string               `json:"projectName"`
+	Name          string               `json:"projectName"`
 	ProjectAlias  string               `json:"projectAlias"`
 	Remark        string               `json:"remark"`
 	ResourceQuota datatypes.JSON       `json:"resourecQuota"`

@@ -9,7 +9,7 @@ import (
 
 func (h *Handler) getTenantCommon(ctx context.Context, name string) (*forms.TenantCommon, error) {
 	form := &forms.TenantCommon{}
-	err := h.ModelClient.Get(ctx, form.Object(), client.WhereNameEqual(name))
+	err := h.Model().Get(ctx, form.Object(), client.WhereNameEqual(name))
 	return form, err
 }
 
@@ -20,13 +20,13 @@ func (h *Handler) getTenant(ctx context.Context, name string, detail bool) (form
 	} else {
 		form = &forms.TenantCommon{}
 	}
-	err := h.ModelClient.Get(ctx, form.Object(), client.WhereNameEqual(name))
+	err := h.Model().Get(ctx, form.Object(), client.WhereNameEqual(name))
 	return form, err
 }
 
 func (h *Handler) getUserCommon(ctx context.Context, name string) (forms.UserCommon, error) {
 	obj := forms.UserCommon{}
-	err := h.ModelClient.Get(ctx, obj.Object(), client.WhereNameEqual(name))
+	err := h.Model().Get(ctx, obj.Object(), client.WhereNameEqual(name))
 	return obj, err
 }
 
@@ -40,6 +40,6 @@ func (h *Handler) getTenantProject(ctx context.Context, tenant, name string, det
 	tenantobj := forms.TenantCommon{
 		Name: tenant,
 	}
-	err := h.ModelClient.Get(ctx, form.Object(), client.WhereNameEqual(name), client.BelongTo(tenantobj.Object()))
+	err := h.Model().Get(ctx, form.Object(), client.WhereNameEqual(name), client.BelongTo(tenantobj.Object()))
 	return form, err
 }

@@ -2,13 +2,13 @@ package tenanthandler
 
 import (
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/client"
 	"kubegems.io/pkg/model/forms"
 	"kubegems.io/pkg/services/handlers"
+	"kubegems.io/pkg/services/handlers/base"
 )
 
 type Handler struct {
-	ModelClient client.ModelClientIface
+	base.BaseHandler
 }
 
 func (h *Handler) Create(req *restful.Request, resp *restful.Response) {
@@ -18,7 +18,7 @@ func (h *Handler) Create(req *restful.Request, resp *restful.Response) {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	if err := h.ModelClient.Create(ctx, obj.Object()); err != nil {
+	if err := h.Model().Create(ctx, obj.Object()); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
@@ -28,7 +28,7 @@ func (h *Handler) Create(req *restful.Request, resp *restful.Response) {
 func (h *Handler) List(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	ol := forms.TenantCommonList{}
-	if err := h.ModelClient.List(ctx, ol.Object(), handlers.CommonOptions(req)...); err != nil {
+	if err := h.Model().List(ctx, ol.Object(), handlers.CommonOptions(req)...); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
@@ -52,7 +52,7 @@ func (h *Handler) Delete(req *restful.Request, resp *restful.Response) {
 		handlers.NoContent(resp, nil)
 		return
 	}
-	if err := h.ModelClient.Delete(ctx, tenant.Object()); err != nil {
+	if err := h.Model().Delete(ctx, tenant.Object()); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}

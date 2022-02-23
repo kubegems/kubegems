@@ -60,9 +60,13 @@ func NotFound(resp *restful.Response, data interface{}) {
 }
 
 func NotFoundOrBadRequest(resp *restful.Response, err error) {
-	if err == gorm.ErrRecordNotFound {
+	if IsNotFound(err) {
 		NotFound(resp, err)
 	} else {
 		BadRequest(resp, err)
 	}
+}
+
+func IsNotFound(err error) bool {
+	return err == gorm.ErrRecordNotFound
 }
