@@ -14,5 +14,6 @@ func ParseError(err error) interface{} {
 			return ret
 		}
 	}
+
 	return err.Error()
 }

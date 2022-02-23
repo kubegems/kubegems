@@ -21,11 +21,11 @@ func (h *Handler) CreatePorject(req *restful.Request, resp *restful.Response) {
 	proj := forms.ProjectDetail{
 		Tenant:        tenant.Data(),
 		TenantID:      tenant.Data().ID,
-		ProjectName:   createForm.Name,
+		Name:          createForm.Name,
 		ResourceQuota: []byte(createForm.ResourceQuota),
 		Remark:        createForm.Remark,
 	}
-	if err := h.ModelClient.Create(ctx, proj.Object()); err != nil {
+	if err := h.Model().Create(ctx, proj.Object()); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
@@ -39,7 +39,7 @@ func (h *Handler) DeleteProject(req *restful.Request, resp *restful.Response) {
 		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	if err := h.ModelClient.Delete(ctx, proj.Object()); err != nil {
+	if err := h.Model().Delete(ctx, proj.Object()); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}

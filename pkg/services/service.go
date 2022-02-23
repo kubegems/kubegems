@@ -10,6 +10,8 @@ import (
 	"kubegems.io/pkg/model/client"
 	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/model/validate"
+	approvehandler "kubegems.io/pkg/services/handlers/approve"
+	"kubegems.io/pkg/services/handlers/base"
 	clusterhandler "kubegems.io/pkg/services/handlers/clusters"
 	loginhandler "kubegems.io/pkg/services/handlers/login"
 	tenanthandler "kubegems.io/pkg/services/handlers/tenants"
@@ -19,19 +21,24 @@ import (
 func ServiceContainer(modelClient client.ModelClientIface) *restful.Container {
 	servicesContainer := restful.NewContainer()
 
+	BaseHandler := base.NewBaseHandler(nil, modelClient)
+
 	regist(
 		servicesContainer,
 		&loginhandler.Handler{
-			ModelClient: modelClient,
+			BaseHandler: BaseHandler,
 		},
 		&userhandler.Handler{
-			ModelClient: modelClient,
+			BaseHandler: BaseHandler,
 		},
 		&clusterhandler.Handler{
-			ModelClient: modelClient,
+			BaseHandler: BaseHandler,
 		},
 		&tenanthandler.Handler{
-			ModelClient: modelClient,
+			BaseHandler: BaseHandler,
+		},
+		&approvehandler.Handler{
+			BaseHandler: BaseHandler,
 		},
 	)
 
