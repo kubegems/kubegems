@@ -144,10 +144,10 @@ func (r *Router) Complete() error {
 	)
 
 	// init gin
-	r.gin = gin.New()
 	if !r.Opts.DebugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
+	r.gin = gin.New()
 	router := r.gin
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
