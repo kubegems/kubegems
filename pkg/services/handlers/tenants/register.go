@@ -54,6 +54,7 @@ func (h *Handler) Regist(container *restful.Container) {
 
 	h.registUsers(ws)
 	h.registProjects(ws)
+	h.registProjectEnvironments(ws)
 	container.Add(ws)
 }
 
