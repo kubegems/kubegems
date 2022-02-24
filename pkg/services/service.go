@@ -11,6 +11,7 @@ import (
 	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/model/validate"
 	approvehandler "kubegems.io/pkg/services/handlers/approve"
+	appstorehandler "kubegems.io/pkg/services/handlers/appstore"
 	"kubegems.io/pkg/services/handlers/base"
 	clusterhandler "kubegems.io/pkg/services/handlers/clusters"
 	loginhandler "kubegems.io/pkg/services/handlers/login"
@@ -39,6 +40,12 @@ func ServiceContainer(modelClient client.ModelClientIface) *restful.Container {
 		},
 		&approvehandler.Handler{
 			BaseHandler: BaseHandler,
+		},
+		&appstorehandler.Handler{
+			// TODO:  add extra options
+			AppStoreOpt:       nil,
+			ChartMuseumClient: nil,
+			BaseHandler:       BaseHandler,
 		},
 	)
 
