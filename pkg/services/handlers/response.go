@@ -6,6 +6,7 @@ import (
 	restful "github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/model/client"
+	"kubegems.io/pkg/utils/pagination"
 )
 
 type ResponseStruct struct {
@@ -21,6 +22,8 @@ type PageData struct {
 	CurrentSize int64       `json:"size"`
 }
 
+var NewPageFromContext = pagination.NewPageDataFromContext
+
 func Page(l client.ObjectListIface, data interface{}) *PageData {
 	page, size := l.GetPageSize()
 	return &PageData{
@@ -33,6 +36,10 @@ func Page(l client.ObjectListIface, data interface{}) *PageData {
 
 func BadRequest(resp *restful.Response, err error) {
 	resp.WriteHeaderAndJson(http.StatusBadRequest, ParseError(err), restful.MIME_JSON)
+}
+
+func ServiceUnavailable(resp *restful.Response, err error) {
+	resp.WriteHeaderAndJson(http.StatusServiceUnavailable, err, restful.MIME_JSON)
 }
 
 func OK(resp *restful.Response, data interface{}) {
