@@ -10,6 +10,7 @@ import (
 	"kubegems.io/pkg/model/client"
 	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/model/validate"
+	applicationhandler "kubegems.io/pkg/services/handlers/application"
 	approvehandler "kubegems.io/pkg/services/handlers/approve"
 	appstorehandler "kubegems.io/pkg/services/handlers/appstore"
 	"kubegems.io/pkg/services/handlers/base"
@@ -22,7 +23,7 @@ import (
 func ServiceContainer(modelClient client.ModelClientIface) *restful.Container {
 	servicesContainer := restful.NewContainer()
 
-	BaseHandler := base.NewBaseHandler(nil, modelClient)
+	BaseHandler := base.NewBaseHandler(nil, modelClient, nil)
 
 	regist(
 		servicesContainer,
@@ -47,6 +48,8 @@ func ServiceContainer(modelClient client.ModelClientIface) *restful.Container {
 			ChartMuseumClient: nil,
 			BaseHandler:       BaseHandler,
 		},
+		// app handler
+		applicationhandler.MustNewApplicationDeployHandler(nil, nil, BaseHandler),
 	)
 
 	enableSwagger(servicesContainer)
