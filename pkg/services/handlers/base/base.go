@@ -7,16 +7,21 @@ import (
 	"kubegems.io/pkg/model/client"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/redis"
 )
 
 // BaseHandler is the base handler for all handlers
 type BaseHandler struct {
 	agents      *agents.ClientSet
+	redis       *redis.Client
 	modelClient client.ModelClientIface
 }
 
-func NewBaseHandler(agents *agents.ClientSet, modelClient client.ModelClientIface) BaseHandler {
-	return BaseHandler{agents: agents}
+func NewBaseHandler(agents *agents.ClientSet, modelClient client.ModelClientIface, redis *redis.Client) BaseHandler {
+	return BaseHandler{
+		agents: agents,
+		redis:  redis,
+	}
 }
 
 func (h *BaseHandler) Agents() *agents.ClientSet {
@@ -25,6 +30,10 @@ func (h *BaseHandler) Agents() *agents.ClientSet {
 
 func (h *BaseHandler) Model() client.ModelClientIface {
 	return h.modelClient
+}
+
+func (h *BaseHandler) Redis() *redis.Client {
+	return h.redis
 }
 
 type OnClusterFunc func(ctx context.Context, cli agents.Client) (interface{}, error)
