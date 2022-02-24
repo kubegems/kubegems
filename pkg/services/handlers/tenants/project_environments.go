@@ -239,11 +239,14 @@ func (h *Handler) GetEnvironmentResourceAggregate(req *restful.Request, resp *re
 }
 
 func (h *Handler) SwitchEnvironmentNetworkIsolate(req *restful.Request, resp *restful.Response) {
+	var isolate bool
+	if req.Request.Method == http.MethodPost {
+		isolate = true
+	}
 	ctx := req.Request.Context()
 	tenant := req.PathParameter("tenant")
 	project := req.PathParameter("project")
 	environment := req.PathParameter("environment")
-	isolate := req.QueryParameter("isolate") == "true"
 
 	proj := forms.ProjectCommon{Name: project}
 	env := forms.EnvironmentDetail{}
@@ -379,7 +382,7 @@ func (h *Handler) registProjectEnvironments(ws *restful.WebService) {
 		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
 		Returns(http.StatusNoContent, handlers.MessageOK, nil))
 
-	ws.Route(ws.DELETE("/{tenant}/projects/{project}/environments/{environment}/resource-aggregate").
+	ws.Route(ws.GET("/{tenant}/projects/{project}/environments/{environment}/resource-aggregate").
 		To(h.GetEnvironmentResourceAggregate).
 		Doc("get environment resource history stastics").
 		Param(restful.PathParameter("tenant", "tenant name")).
@@ -391,11 +394,19 @@ func (h *Handler) registProjectEnvironments(ws *restful.WebService) {
 
 	ws.Route(ws.POST("/{tenant}/projects/{project}/environments/{environment}/network-isolate").
 		To(h.SwitchEnvironmentNetworkIsolate).
-		Doc("switch environment network isolate").
+		Doc("enable environment network isolate").
 		Param(restful.PathParameter("tenant", "tenant name")).
 		Param(restful.PathParameter("project", "project name belong to the tenant")).
 		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).
-		Param(restful.QueryParameter("isolate", "is isolate").PossibleValues([]string{"true", "false"}).Required(true)).
+		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
+		Returns(http.StatusNoContent, handlers.MessageOK, nil))
+
+	ws.Route(ws.DELETE("/{tenant}/projects/{project}/environments/{environment}/network-isolate").
+		To(h.SwitchEnvironmentNetworkIsolate).
+		Doc("disable environment network isolate").
+		Param(restful.PathParameter("tenant", "tenant name")).
+		Param(restful.PathParameter("project", "project name belong to the tenant")).
+		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).
 		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
 		Returns(http.StatusNoContent, handlers.MessageOK, nil))
 }
