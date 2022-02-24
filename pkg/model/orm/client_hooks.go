@@ -106,7 +106,6 @@ func AfterEnvironmentCreateOrUpdate(tx *gorm.DB, obj client.Object) error {
 		return e
 	}
 	return nil
-
 }
 
 func AfterTenantDelete(tx *gorm.DB, obj client.Object) error {
@@ -197,7 +196,7 @@ func BeforeRegistryCreateOrUpdate(tx *gorm.DB, obj client.Object) error {
 	v := obj.(*Registry)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	if err := harbor.TryLogin(ctx, v.RegistryAddress, v.Username, v.Password); err != nil {
+	if err := harbor.TryLogin(ctx, v.Address, v.Username, v.Password); err != nil {
 		if err == context.DeadlineExceeded {
 			return fmt.Errorf("验证用户名和密码超时")
 		} else {
@@ -229,7 +228,7 @@ func syncRegistry(tx *gorm.DB, kind string, reg *Registry) error {
 	if e := tx.Preload("Cluster").Find(&envs, "project_id = ?", reg.ProjectID).Error; e != nil {
 		return e
 	}
-	secretName := reg.RegistryName
+	secretName := reg.Name
 
 	group := errgroup.Group{}
 	for idx := range envs {
@@ -310,7 +309,7 @@ func (v *Registry) buildSecretData() map[string][]byte {
 	authStr := base64.StdEncoding.EncodeToString([]byte(v.Username + ":" + v.Password))
 	dockerAuthContent := map[string]interface{}{
 		"auths": map[string]interface{}{
-			v.RegistryAddress: map[string]interface{}{
+			v.Address: map[string]interface{}{
 				"username": v.Username,
 				"password": v.Password,
 				"email":    "",
