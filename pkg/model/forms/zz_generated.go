@@ -1540,10 +1540,12 @@ func Convert_RegistryDetail_Registry(f *RegistryDetail) *orm.Registry {
 		return nil
 	}
 	f.object = r
+	r.Address = f.Address
 	r.Creator = Convert_UserCommon_User(f.Creator)
 	r.CreatorID = f.CreatorID
 	r.ID = f.ID
 	r.IsDefault = f.IsDefault
+	r.Name = f.Name
 	r.Password = f.Password
 	r.Project = Convert_ProjectCommon_Project(f.Project)
 	r.ProjectID = f.ProjectID
@@ -1556,10 +1558,12 @@ func Convert_Registry_RegistryDetail(f *orm.Registry) *RegistryDetail {
 		return nil
 	}
 	var r RegistryDetail
+	r.Address = f.Address
 	r.Creator = Convert_User_UserCommon(f.Creator)
 	r.CreatorID = f.CreatorID
 	r.ID = f.ID
 	r.IsDefault = f.IsDefault
+	r.Name = f.Name
 	r.Password = f.Password
 	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
@@ -1638,10 +1642,12 @@ func Convert_RegistryCommon_Registry(f *RegistryCommon) *orm.Registry {
 		return nil
 	}
 	f.object = r
+	r.Address = f.Address
 	r.Creator = Convert_UserCommon_User(f.Creator)
 	r.CreatorID = f.CreatorID
 	r.ID = f.ID
 	r.IsDefault = f.IsDefault
+	r.Name = f.Name
 	r.Project = Convert_ProjectCommon_Project(f.Project)
 	r.ProjectID = f.ProjectID
 	r.UpdateTime = f.UpdateTime
@@ -1652,10 +1658,12 @@ func Convert_Registry_RegistryCommon(f *orm.Registry) *RegistryCommon {
 		return nil
 	}
 	var r RegistryCommon
+	r.Address = f.Address
 	r.Creator = Convert_User_UserCommon(f.Creator)
 	r.CreatorID = f.CreatorID
 	r.ID = f.ID
 	r.IsDefault = f.IsDefault
+	r.Name = f.Name
 	r.Project = Convert_Project_ProjectCommon(f.Project)
 	r.ProjectID = f.ProjectID
 	r.UpdateTime = f.UpdateTime
