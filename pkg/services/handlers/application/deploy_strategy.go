@@ -259,7 +259,6 @@ func (h *ApplicationHandler) StrategyDeploymentStatus(req *restful.Request, resp
 
 				item.Reset()
 			}
-			return nil, nil
 		} else {
 			// get rollout info
 			path := fmt.Sprintf(pathtemplate, namespace, name)

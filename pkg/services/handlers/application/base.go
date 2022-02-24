@@ -10,16 +10,11 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/services/handlers/base"
-	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/redis"
 )
 
 type BaseHandler struct {
 	base.BaseHandler
-}
-
-func (h *BaseHandler) GetDataBase() *database.Database {
-	return nil // FIXME: return nil
 }
 
 func (h *BaseHandler) GetRedis() *redis.Client {

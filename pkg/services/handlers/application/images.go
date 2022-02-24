@@ -15,7 +15,6 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/model/client"
 	"kubegems.io/pkg/model/forms"
-	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/utils/harbor"
 )
@@ -324,18 +323,18 @@ func (h *ImageHandler) completeRegistryOption(ctx context.Context, options *Regi
 	hostname := spec.Hostname()
 
 	// todo: improve this query
-	registries := &orm.RegistryList{}
-	_ = h.Model().List(ctx, registries, client.BelongTo((&forms.ProjectCommon{Name: project}).Object()))
+	registries := &forms.RegistryDetailList{}
+	_ = h.Model().List(ctx, registries.Object(), client.BelongTo((&forms.ProjectCommon{Name: project}).Object()))
 
 	for _, registry := range registries.Items {
-		u, err := url.Parse(registry.RegistryAddress)
+		u, err := url.Parse(registry.Address)
 		if err != nil {
-			log.WithField("registry", registry.RegistryAddress).Warn("invalid address")
+			log.WithField("registry", registry.Address).Warn("invalid address")
 			continue
 		}
 		if u.Hostname() == hostname {
 			// found
-			options.URL = registry.RegistryAddress
+			options.URL = registry.Address
 			options.Password = registry.Password
 			options.Username = registry.Username
 			return nil
