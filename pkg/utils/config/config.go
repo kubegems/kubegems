@@ -49,7 +49,7 @@ func Parse(fs *pflag.FlagSet) error {
 func Print(fs *pflag.FlagSet) {
 	fs.VisitAll(func(flag *pflag.Flag) {
 		if flag.Changed {
-			log.Infof("config from flag: --%s=%s", flag.Name, flag.Value)
+			logConfig("flag", flag.Name, flag.Value.String())
 		}
 	})
 }
@@ -70,7 +70,7 @@ func LoadEnv(fs *pflag.FlagSet) {
 		envname := flagNameToEnvKey(f.Name)
 		val, ok := os.LookupEnv(envname)
 		if ok {
-			log.Infof("config from env: %s=%s", envname, val)
+			logConfig("env", envname, val)
 			_ = f.Value.Set(val)
 		}
 	})
@@ -94,8 +94,15 @@ func LoadConfigFile(fs *pflag.FlagSet) {
 		filekeyname := flagNameToConfigKey(f.Name)
 		val := v.GetString(filekeyname)
 		if val != "" {
-			log.Infof("config from file: %s=%s", filekeyname, val)
+			logConfig("file", filekeyname, val)
 			_ = f.Value.Set(val)
 		}
 	})
+}
+
+func logConfig(from, k, v string) {
+	if strings.Contains(strings.ToLower(k), "password") {
+		v = strings.Repeat("*", len(v))
+	}
+	log.Infof("config from %s: %s=%s", from, k, v)
 }
