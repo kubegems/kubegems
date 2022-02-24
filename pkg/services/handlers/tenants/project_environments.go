@@ -353,7 +353,7 @@ func (h *Handler) registProjectEnvironments(ws *restful.WebService) {
 
 	ws.Route(ws.GET("/{tenant}/projects/{project}/environments/{environment}/users").
 		To(h.ListEnvironmentMembers).
-		Doc("list environment member ").
+		Doc("list environment member").
 		Param(restful.PathParameter("tenant", "tenant name")).
 		Param(restful.PathParameter("project", "project name belong to the tenant")).
 		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).

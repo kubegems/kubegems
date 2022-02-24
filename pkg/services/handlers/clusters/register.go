@@ -9,7 +9,10 @@ import (
 	"kubegems.io/pkg/services/handlers"
 )
 
-var clusterTags = []string{"cluster"}
+var (
+	clusterTags       = []string{"cluster"}
+	clusterPluginTags = []string{"cluster", "cluster-plugin"}
+)
 
 func (h *Handler) Regist(container *restful.Container) {
 	ws := new(restful.WebService)
@@ -51,7 +54,7 @@ func (h *Handler) Regist(container *restful.Container) {
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
 		Returns(http.StatusOK, handlers.MessageOK, nil))
 
-	ws.Route(ws.POST("/{cluster}/plugins/type/{type}/{plugin}/action/{action}").
+	ws.Route(ws.POST("/{cluster}/plugins/{plugin}/types/{type}/action/{action}").
 		To(h.PluginSwitch).
 		Doc("switch cluster plugins").
 		Param(restful.PathParameter("name", "cluster name")).
@@ -95,5 +98,92 @@ func (h *Handler) Regist(container *restful.Container) {
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
 		Returns(http.StatusOK, handlers.MessageOK, ClusterStatusMap{"cluster": true}))
 
+	h.registLoki(ws)
 	container.Add(ws)
+}
+
+func (h *Handler) registLoki(ws *restful.WebService) {
+	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/queryrange").
+		To(h.QueryRange).
+		Doc("get cluster loki queryrange").
+		Param(restful.PathParameter("cluster", "cluster name")).
+		Param(restful.QueryParameter("start", "start time")).
+		Param(restful.QueryParameter("end", "end time")).
+		Param(restful.QueryParameter("step", "step")).
+		Param(restful.QueryParameter("interval", "interval")).
+		Param(restful.QueryParameter("query", "query")).
+		Param(restful.QueryParameter("direction", "direction")).
+		Param(restful.QueryParameter("limit", "limit")).
+		Param(restful.QueryParameter("level", "level")).
+		Param(restful.QueryParameter("filters", "filters")).
+		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
+		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+
+	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/labels").
+		To(h.Labels).
+		Doc("get cluster loki labels").
+		Param(restful.PathParameter("cluster", "cluster name")).
+		Param(restful.QueryParameter("start", "start time")).
+		Param(restful.QueryParameter("end", "end time")).
+		Param(restful.QueryParameter("label", "label")).
+		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
+		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+
+	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/export").
+		To(h.Export).
+		Doc("export cluster loki log").
+		Param(restful.PathParameter("cluster", "cluster name")).
+		Param(restful.QueryParameter("start", "start time")).
+		Param(restful.QueryParameter("end", "end time")).
+		Param(restful.QueryParameter("step", "step")).
+		Param(restful.QueryParameter("interval", "interval")).
+		Param(restful.QueryParameter("query", "query")).
+		Param(restful.QueryParameter("direction", "direction")).
+		Param(restful.QueryParameter("limit", "limit")).
+		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
+		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+
+	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/querylanguage").
+		To(h.QueryLanguage).
+		Doc("get cluster loki query language").
+		Param(restful.PathParameter("cluster", "cluster name")).
+		Param(restful.QueryParameter("filters", "filters")).
+		Param(restful.QueryParameter("pod", "pod")).
+		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
+		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+
+	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/series").
+		To(h.Series).
+		Doc("get cluster loki series values").
+		Param(restful.PathParameter("cluster", "cluster name")).
+		Param(restful.QueryParameter("start", "start time")).
+		Param(restful.QueryParameter("end", "end time")).
+		Param(restful.QueryParameter("match", "match")).
+		Param(restful.QueryParameter("label", "label")).
+		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
+		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+
+	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/context").
+		To(h.Context).
+		Doc("get cluster loki context").
+		Param(restful.PathParameter("cluster", "cluster name")).
+		Param(restful.QueryParameter("start", "start time")).
+		Param(restful.QueryParameter("end", "end time")).
+		Param(restful.QueryParameter("step", "step")).
+		Param(restful.QueryParameter("interval", "interval")).
+		Param(restful.QueryParameter("query", "query")).
+		Param(restful.QueryParameter("direction", "direction")).
+		Param(restful.QueryParameter("limit", "limit")).
+		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
+		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+
+	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/labelvalues").
+		To(h.LabelValues).
+		Doc("get cluster loki context").
+		Param(restful.PathParameter("cluster", "cluster name")).
+		Param(restful.QueryParameter("start", "start time")).
+		Param(restful.QueryParameter("end", "end time")).
+		Param(restful.QueryParameter("label", "label").Required(true)).
+		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
+		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
 }
