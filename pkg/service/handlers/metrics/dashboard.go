@@ -5,7 +5,6 @@ import (
 
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/prometheus"
 
 	"github.com/gin-gonic/gin"
 )
@@ -100,7 +99,7 @@ func (h *MonitorHandler) getDashboardReq(c *gin.Context) (*models.MetricDashbora
 		if v.Name == "" {
 			return nil, fmt.Errorf("图表名不能为空")
 		}
-		_, err := v.FindRuleContext(prometheus.GetGemsMetricConfig(true))
+		_, err := v.FindRuleContext(h.OnlineOptions.Monitor)
 		if err != nil {
 			return nil, err
 		}

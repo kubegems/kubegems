@@ -73,12 +73,6 @@ func initBaseData(db *gorm.DB) error {
 		return e
 	}
 
-	if err := db.FirstOrCreate(&defaultMetricConfig, defaultMetricConfig.ID).Error; err != nil {
-		return err
-	}
-	if err := db.FirstOrCreate(&defaultSMTPConfig, defaultSMTPConfig.ID).Error; err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -141,7 +135,7 @@ func migrateModels(db *gorm.DB) error {
 		// 监控面板表
 		&MetricDashborad{},
 		// 配置
-		&Config{},
+		&OnlineConfig{},
 	)
 }
 

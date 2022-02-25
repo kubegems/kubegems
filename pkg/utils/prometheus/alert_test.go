@@ -133,13 +133,13 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 		},
 	}
 
-	setNormalAndAdminConfig(DefaultMetricConfigContent())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			raw := &RawAlertResource{
 				AlertmanagerConfig: tt.fields.AlertmanagerConfig,
 				PrometheusRule:     tt.fields.PrometheusRule,
 				Silences:           tt.fields.Silences,
+				MonitorOptions:     DefaultMonitorOptions(),
 			}
 			got, err := raw.ToAlerts(tt.args.containOrigin)
 			if (err != nil) != tt.wantErr {

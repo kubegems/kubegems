@@ -59,12 +59,12 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 
 		ret := []prometheus.AlertRule{}
 		if namespace == allNamespace {
-			ret, err = agentutils.ListAlertRule(ctx, cli)
+			ret, err = agentutils.ListAlertRule(ctx, cli, h.MonitorOptions)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+			raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
 			if err != nil {
 				return nil, err
 			}
@@ -108,7 +108,7 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 	name := c.Param("name")
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
-		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -220,12 +220,12 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 		}
 		req.Namespace = namespace
 		h.SetAuditData(c, "创建", "告警规则", req.Name)
-		if err := req.CheckAndModify(); err != nil {
+		if err := req.CheckAndModify(h.MonitorOptions); err != nil {
 			return nil, err
 		}
 
 		// get、update、commit
-		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -265,12 +265,12 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 		}
 		req.Namespace = namespace
 		h.SetAuditData(c, "更新", "告警规则", req.Name)
-		if err := req.CheckAndModify(); err != nil {
+		if err := req.CheckAndModify(h.MonitorOptions); err != nil {
 			return nil, err
 		}
 
 		// get、update、commit
-		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -309,7 +309,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
 		// get、update、commit
-		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli)
+		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -612,15 +612,15 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 		}
 		ret[i].LabelMap = make(map[string]string)
 		_ = json.Unmarshal(ret[i].Labels, &ret[i].LabelMap)
-		ret[i].Summary = formatBlackListSummary(ret[i].LabelMap)
+		ret[i].Summary = h.formatBlackListSummary(ret[i].LabelMap)
 	}
 	handlers.OK(c, handlers.Page(total, ret, int64(page), int64(size)))
 }
 
-func formatBlackListSummary(labels map[string]string) string {
+func (h *AlertsHandler) formatBlackListSummary(labels map[string]string) string {
 	resKey := labels[prometheus.AlertResourceLabel]
 	ruleKey := labels[prometheus.AlertRuleLabel]
-	res := prometheus.GetGemsMetricConfig(true).Resources[resKey]
+	res := h.MonitorOptions.Resources[resKey]
 	rule := res.Rules[ruleKey]
 	labelStr := fmt.Sprintf("%s: [集群:%s] ", labels[prometheus.AlertNameLabel], labels[prometheus.AlertClusterKey])
 	for _, l := range rule.Labels {
@@ -674,7 +674,7 @@ func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 		Fingerprint: c.Param("fingerprint"),
 	}
 	h.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := h.GetDB().First(&req, "fingerprint = ?", req.Fingerprint).Error; err != nil {
+		if err := tx.First(&req, "fingerprint = ?", req.Fingerprint).Error; err != nil {
 			return err
 		}
 		req.SilenceCreator = ""

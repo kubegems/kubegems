@@ -5,10 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/service/handlers/base"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 type AlertsHandler struct {
 	base.BaseHandler
+	*prometheus.MonitorOptions
 }
 
 func (h *AlertsHandler) RegistRouter(rg *gin.RouterGroup) {
