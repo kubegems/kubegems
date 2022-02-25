@@ -19,8 +19,9 @@ type BaseHandler struct {
 
 func NewBaseHandler(agents *agents.ClientSet, modelClient client.ModelClientIface, redis *redis.Client) BaseHandler {
 	return BaseHandler{
-		agents: agents,
-		redis:  redis,
+		agents:      agents,
+		redis:       redis,
+		modelClient: modelClient,
 	}
 }
 

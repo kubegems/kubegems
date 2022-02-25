@@ -62,7 +62,7 @@ type ManifestDeploy struct {
 	Contents  []unstructured.Unstructured
 }
 
-func MustNewApplicationDeployHandler(gitoptions *git.Options, argocli *argo.Client, commonbase base.BaseHandler) *ApplicationHandler {
+func MustNewApplicationDeployHandler(commonbase base.BaseHandler, gitoptions *git.Options, argocli *argo.Client) *ApplicationHandler {
 	provider, err := git.NewProvider(gitoptions)
 	if err != nil {
 		panic(err)
