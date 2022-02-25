@@ -41,11 +41,14 @@ func ToYamlNode(node Node) *yaml.Node {
 		n.Kind = yaml.MappingNode
 		n.Value = node.Name
 		for _, v := range node.Children {
-			desc := v.Tag.Get("description")
+			comment := v.Tag.Get("help")
+			if comment == "" {
+				comment = v.Tag.Get("description")
+			}
 			in := &yaml.Node{
 				Kind:        yaml.ScalarNode,
 				Value:       v.Name,
-				LineComment: desc,
+				LineComment: comment,
 			}
 			n.Content = append(n.Content, in)
 			n.Content = append(n.Content, ToYamlNode(v))
@@ -162,7 +165,12 @@ func complete(node Node, v reflect.Value) Node {
 				continue
 			}
 
-			jsonopts := strings.Split(fi.Tag.Get("json"), ",")
+			opts := fi.Tag.Get("json")
+			if opts == "" {
+				opts = fi.Tag.Get("yaml")
+			}
+
+			jsonopts := strings.Split(opts, ",")
 
 			if fi.Anonymous || (len(jsonopts) > 1 && jsonopts[1] == "inline") {
 				children = append(children, complete(Node{}, v.Field(i)).Children...)
