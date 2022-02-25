@@ -23,7 +23,7 @@ import (
 type Options struct {
 	DebugMode bool                      `json:"debugmode,omitempty" description:"enable debug mode"`
 	LogLevel  string                    `json:"loglevel,omitempty"`
-	Syetem    *system.Options           `json:"syetem,omitempty"`
+	System    *system.Options           `json:"system,omitempty"`
 	API       *apis.Options             `json:"api,omitempty"`
 	Debug     *apis.DebugOptions        `json:"debug,omitempty" description:"debug options"`
 	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
@@ -34,12 +34,12 @@ func DefaultOptions() *Options {
 	defaultoptions := &Options{
 		DebugMode: debugmode,
 		LogLevel:  "debug",
-		Syetem:    system.NewDefaultOptions(),
+		System:    system.NewDefaultOptions(),
 		API:       apis.NewDefaultOptions(),
 		Debug:     apis.NewDefaultDebugOptions(),
 		Exporter:  exporter.DefaultExporterOptions(),
 	}
-	defaultoptions.Syetem.Listen = ":8041"
+	defaultoptions.System.Listen = ":8041"
 	return defaultoptions
 }
 
@@ -77,7 +77,7 @@ func Run(ctx context.Context, options *Options) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		return apis.Run(ctx, c, options.Syetem, options.API, options.Debug)
+		return apis.Run(ctx, c, options.System, options.API, options.Debug)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)
