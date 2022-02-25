@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
+	applicationv1beta1 "kubegems.io/pkg/apis/application/v1beta1"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 )
 
@@ -24,6 +25,7 @@ func AddToschema(schema *runtime.Scheme) {
 	_ = rolloutsv1alpha1.AddToScheme(schema)
 	_ = istiov1beta1.AddToScheme(schema)
 	_ = istiopkgv1alpha1.SchemeBuilder.AddToScheme(schema)
+	_ = applicationv1beta1.AddToScheme(schema)
 }
 
 func init() {
