@@ -29,7 +29,7 @@ type PluginsRet struct {
 // @Param cluster path string true "cluster"
 // @Param simple query bool true "simple"
 // @Success 200 {object} handlers.ResponseStruct{Data=PluginsRet} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1alpha1/plugins [get]
+// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
 // @Security JWT
 func (h *PluginHandler) List(c *gin.Context) {
 	allPlugins, err := gemsplugin.GetPlugins(h.cluster)
@@ -81,7 +81,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Param name path string true "name"
 // @Param type query string true "type"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1alpha1/plugins/{name}/actions/enable [post]
+// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [post]
 // @Security JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {
@@ -102,7 +102,7 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Param name path string true "name"
 // @Param type query string true "type"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1alpha1/plugins/{name}/actions/disable [post]
+// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable [post]
 // @Security JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
 	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {

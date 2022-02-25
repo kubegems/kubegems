@@ -47,7 +47,7 @@ type Options struct {
 	AlertmanagerServer string `json:"alertmanagerServer,omitempty"`
 	LokiServer         string `json:"lokiServer,omitempty"`
 	JaegerSerber       string `json:"jaegerSerber,omitempty"`
-	EnableHTTPSigs     bool   `json:"enableHTTPSigs,omitempty"`
+	EnableHTTPSigs     bool   `json:"enableHTTPSigs,omitempty" description:"check http sigs, default false"`
 }
 
 func NewDefaultOptions() *Options {
@@ -57,7 +57,7 @@ func NewDefaultOptions() *Options {
 		AlertmanagerServer: fmt.Sprintf("http://alertmanager.%s:9093", gems.NamespaceMonitor),
 		LokiServer:         fmt.Sprintf("http://loki-gateway.%s:3100", gems.NamespaceLogging),
 		JaegerSerber:       "http://jaeger-query.observability:16686",
-		EnableHTTPSigs:     true,
+		EnableHTTPSigs:     false,
 	}
 }
 
@@ -219,9 +219,9 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.register("core", "v1", "secrets", ActionList, secretHandler.List)
 
 	pluginHandler := PluginHandler{cluster: cluster}
-	routes.register(plugins.GroupName, "v1alpha1", "plugins", ActionList, pluginHandler.List)
-	routes.register(plugins.GroupName, "v1alpha1", "plugins", ActionEnable, pluginHandler.Enable)
-	routes.register(plugins.GroupName, "v1alpha1", "plugins", ActionDisable, pluginHandler.Disable)
+	routes.register(plugins.GroupName, "v1beta1", "installers", ActionList, pluginHandler.List)
+	routes.register(plugins.GroupName, "v1beta1", "installers", ActionEnable, pluginHandler.Enable)
+	routes.register(plugins.GroupName, "v1beta1", "installers", ActionDisable, pluginHandler.Disable)
 
 	argoRolloutHandler := &ArgoRolloutHandler{cluster: cluster}
 	routes.register("argoproj.io", "v1alpha1", "rollouts", "info", argoRolloutHandler.GetRolloutInfo)
