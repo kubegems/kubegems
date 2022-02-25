@@ -18,12 +18,14 @@ import (
 	loginhandler "kubegems.io/pkg/services/handlers/login"
 	tenanthandler "kubegems.io/pkg/services/handlers/tenants"
 	userhandler "kubegems.io/pkg/services/handlers/users"
+	"kubegems.io/pkg/utils/git"
+	"kubegems.io/pkg/utils/redis"
 )
 
-func ServiceContainer(modelClient client.ModelClientIface) *restful.Container {
+func ServiceContainer(modelClient client.ModelClientIface, redisClient *redis.Client, gitopts *git.Options) *restful.Container {
 	servicesContainer := restful.NewContainer()
 
-	BaseHandler := base.NewBaseHandler(nil, modelClient, nil)
+	BaseHandler := base.NewBaseHandler(nil, modelClient, redisClient)
 
 	regist(
 		servicesContainer,
@@ -49,7 +51,7 @@ func ServiceContainer(modelClient client.ModelClientIface) *restful.Container {
 			BaseHandler:       BaseHandler,
 		},
 		// app handler
-		applicationhandler.MustNewApplicationDeployHandler(nil, nil, BaseHandler),
+		applicationhandler.MustNewApplicationDeployHandler(gitopts, nil, BaseHandler),
 	)
 
 	enableSwagger(servicesContainer)
@@ -67,6 +69,24 @@ func regist(c *restful.Container, h ...handlerIface) {
 }
 
 func Run() {
+	// TODO
+	panic("Not implemented")
+}
+
+// LocalDevRun temporary use of local development
+func LocalDevRun() {
+	gitopts := &git.Options{
+		Username: "root",
+		Password: "root",
+		Addr:     "http://localhost:13000",
+	}
+	redisClient, err := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	if err != nil {
+		panic(err)
+
+	}
 	loger := log.NewDefaultGormZapLogger()
 	log.SetLevel("debug")
 	db, err := gorm.Open(sqlite.Open("gorm.sqlite3"), &gorm.Config{
@@ -84,7 +104,7 @@ func Run() {
 	// required
 	validate.InitValidator(mc)
 
-	sr := ServiceContainer(mc)
+	sr := ServiceContainer(mc, redisClient, gitopts)
 
 	restful.DefaultContainer.RegisteredWebServices()
 
