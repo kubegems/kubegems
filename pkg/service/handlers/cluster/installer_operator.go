@@ -2,7 +2,12 @@ package clusterhandler
 
 import "text/template"
 
-var installerTpl = template.Must(template.New("installer").Parse(`
+var installerOperatorTpl = template.Must(template.New("installer-operator").Parse(`
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubegems-installer
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -16,38 +21,36 @@ spec:
     singular: installer
   scope: Namespaced
   versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          description: Installer is the Schema for the installers API
-          properties:
-            apiVersion:
-              description:
-                "APIVersion defines the versioned schema of this representation
-                of an object. Servers should convert recognized schemas to the latest
-                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
-              type: string
-            kind:
-              description:
-                "Kind is a string value representing the REST resource this
-                object represents. Servers may infer this from the endpoint the client
-                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: Spec defines the desired state of Installer
-              type: object
-              x-kubernetes-preserve-unknown-fields: true
-            status:
-              description: Status defines the observed state of Installer
-              type: object
-              x-kubernetes-preserve-unknown-fields: true
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: Installer is the Schema for the installers API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec defines the desired state of Installer
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+          status:
+            description: Status defines the observed state of Installer
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -222,7 +225,7 @@ data:
       bindAddress: 127.0.0.1:8080
     leaderElection:
       leaderElect: true
-      resourceName: 811c9dc5.gems.kubegems.io
+      resourceName: 811c9dc5.kubegems.io
 kind: ConfigMap
 metadata:
   name: kubegems-installer-manager-config
@@ -275,7 +278,7 @@ spec:
         - upstream=http://127.0.0.1:8081/
         - logtostderr=true
         - v=10
-        image: harbor.kubegems.io/library/kube-rbac-proxy:v0.8.0
+        image: kubegems/kube-rbac-proxy:v0.8.0
         imagePullPolicy: IfNotPresent
         name: kube-rbac-proxy
         ports:
@@ -290,9 +293,9 @@ spec:
         env:
         - name: ANSIBLE_GATHERING
           value: explicit
-        - name: ENABLED_KUBEGEMS_DOCS
-          value: "off"
-        image: harbor.kubegems.io/library/installer-operator:{{ .InstallerOptions.Version }}
+        - name: RUNNING_MODE 
+          value: "worker"
+        image: {{ .InstallerOptions.OperatorImage }}
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3

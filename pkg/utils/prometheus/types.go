@@ -93,7 +93,7 @@ type RuleContext struct {
 }
 
 // 查询规则上下文
-func (params *BaseQueryParams) FindRuleContext(cfg GemsMetricConfig) (RuleContext, error) {
+func (params *BaseQueryParams) FindRuleContext(cfg *MonitorOptions) (RuleContext, error) {
 	ctx := RuleContext{}
 	resourceDetail, ok := cfg.Resources[params.Resource]
 	if !ok {
@@ -121,8 +121,8 @@ func (params *BaseQueryParams) FindRuleContext(cfg GemsMetricConfig) (RuleContex
 	return ctx, nil
 }
 
-func (params *CompareQueryParams) ConstructPromql(namespace string) (string, error) {
-	ruleCtx, err := params.FindRuleContext(GetGemsMetricConfig(true))
+func (params *CompareQueryParams) ConstructPromql(namespace string, opts *MonitorOptions) (string, error) {
+	ruleCtx, err := params.FindRuleContext(opts)
 	if err != nil {
 		return "", fmt.Errorf("constructPromql params: %v, err: %w", params, err)
 	}

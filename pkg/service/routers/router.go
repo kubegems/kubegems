@@ -202,7 +202,10 @@ func (r *Router) Complete() error {
 		rg.Use(mw)
 	}
 	// 选项
-	systemHandler := systemhandler.SystemHandler{BaseHandler: basehandler}
+	systemHandler := systemhandler.SystemHandler{
+		BaseHandler:   basehandler,
+		OnlineOptions: r.OnlineOptions,
+	}
 	systemHandler.RegistRouter(rg)
 
 	// 用户
@@ -214,7 +217,10 @@ func (r *Router) Complete() error {
 	systemroleHandler.RegistRouter(rg)
 
 	// 集群
-	clusterHandler := &clusterhandler.ClusterHandler{BaseHandler: basehandler}
+	clusterHandler := &clusterhandler.ClusterHandler{
+		BaseHandler:      basehandler,
+		InstallerOptions: r.OnlineOptions.Installer,
+	}
 	clusterHandler.RegistRouter(rg)
 
 	// 审计
@@ -246,10 +252,16 @@ func (r *Router) Complete() error {
 	eventHandler.RegistRouter(rg)
 
 	// 告警规则
-	alertRuleHandler := &alerthandler.AlertsHandler{BaseHandler: basehandler}
+	alertRuleHandler := &alerthandler.AlertsHandler{
+		BaseHandler:    basehandler,
+		MonitorOptions: r.OnlineOptions.Monitor,
+	}
 	alertRuleHandler.RegistRouter(rg)
 
-	metricsHandler := &metrics.MonitorHandler{BaseHandler: basehandler}
+	metricsHandler := &metrics.MonitorHandler{
+		BaseHandler:   basehandler,
+		OnlineOptions: r.OnlineOptions,
+	}
 	metricsHandler.RegistRouter(rg)
 
 	// 告警

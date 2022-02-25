@@ -3,10 +3,12 @@ package clusterhandler
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -215,7 +217,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 			installer := ClusterInstaller{
 				Cluster:         cluster,
 				Clientset:       clientSet,
-				Config:          config,
+				RestConfig:      config,
 				KubegemsVersion: version.Get(),
 			}
 			return installer.UnInstall(ctx)
@@ -416,10 +418,12 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			}
 
 			installer := ClusterInstaller{
-				Cluster:         cluster,
-				Clientset:       clientSet,
-				Config:          config,
-				KubegemsVersion: version.Get(),
+				Clientset:  clientSet,
+				RestConfig: config,
+
+				InstallerOptions: h.InstallerOptions,
+				Cluster:          cluster,
+				KubegemsVersion:  version.Get(),
 			}
 			return installer.Install(ctx)
 		}); err != nil {
@@ -653,29 +657,51 @@ func (i *ClusterInstaller) CreateNamespaceIfNotExists(ctx context.Context) error
 	return nil
 }
 
+type InstallerOptions struct {
+	OperatorImage string                 `json:"operator_image,omitempty"`
+	InstallerYaml map[string]interface{} `json:"installer_yaml,omitempty"`
+}
+
+func DefaultInstallerOptions() *InstallerOptions {
+	return &InstallerOptions{
+		OperatorImage: "kubegems/installer-operator:v2.3-release",
+		InstallerYaml: defaultInstallerObj,
+	}
+}
+
 type ClusterInstaller struct {
-	Cluster         *models.Cluster
-	Clientset       *kubernetes.Clientset
-	Config          *rest.Config
-	KubegemsVersion version.Version
+	Clientset  *kubernetes.Clientset
+	RestConfig *rest.Config
+
+	Cluster          *models.Cluster
+	InstallerOptions *InstallerOptions
+	KubegemsVersion  version.Version
+}
+
+func (i *ClusterInstaller) getInstallerOperatorBts() ([]byte, error) {
+	installerOperatorbuf := new(bytes.Buffer)
+	if err := installerOperatorTpl.Execute(installerOperatorbuf, i); err != nil {
+		log.Error(err, "installer operator template")
+		return nil, err
+	}
+	return installerOperatorbuf.Bytes(), nil
 }
 
 func (i *ClusterInstaller) getInstallerBts() ([]byte, error) {
-	installerbuf := new(bytes.Buffer)
-	if err := installerTpl.Execute(installerbuf, i); err != nil {
+	bts, err := json.Marshal(i.InstallerOptions.InstallerYaml)
+	if err != nil {
+		return nil, err
+	}
+	installerTpl, err := template.New("installer").Parse(string(bts))
+	if err != nil {
+		return nil, err
+	}
+	installerBuf := new(bytes.Buffer)
+	if err := installerTpl.Execute(installerBuf, i); err != nil {
 		log.Error(err, "installer template")
 		return nil, err
 	}
-	return installerbuf.Bytes(), nil
-}
-
-func (i *ClusterInstaller) getPluginsBts() ([]byte, error) {
-	pluginBuf := new(bytes.Buffer)
-	if err := installerTpl.Execute(pluginBuf, i); err != nil {
-		log.Error(err, "plugins template")
-		return nil, err
-	}
-	return pluginBuf.Bytes(), nil
+	return installerBuf.Bytes(), nil
 }
 
 func (i *ClusterInstaller) Install(ctx context.Context) error {
@@ -683,36 +709,36 @@ func (i *ClusterInstaller) Install(ctx context.Context) error {
 	if err := i.CreateNamespaceIfNotExists(ctx); err != nil {
 		return err
 	}
-	installerBts, err := i.getInstallerBts()
+	installerBts, err := i.getInstallerOperatorBts()
 	if err != nil {
 		return err
 	}
-	if err := kube.CreateByYamlOrJson(ctx, i.Config, installerBts); err != nil {
+	if err := kube.CreateByYamlOrJson(ctx, i.RestConfig, installerBts); err != nil {
 		log.Error(err, "create installer yaml")
 		return err
 	}
 
 	// install plugin, 与crd分开部署，以刷新restmap
-	pluginsBts, err := i.getPluginsBts()
+	pluginsBts, err := i.getInstallerBts()
 	if err != nil {
 		return err
 	}
-	return kube.CreateByYamlOrJson(ctx, i.Config, pluginsBts)
+	return kube.CreateByYamlOrJson(ctx, i.RestConfig, pluginsBts)
 }
 
 func (i *ClusterInstaller) UnInstall(ctx context.Context) error {
-	installerBts, err := i.getInstallerBts()
+	installerBts, err := i.getInstallerOperatorBts()
 	if err != nil {
 		return err
 	}
-	if err := kube.DeleteByYamlOrJson(ctx, i.Config, installerBts); err != nil {
+	if err := kube.DeleteByYamlOrJson(ctx, i.RestConfig, installerBts); err != nil {
 		log.Error(err, "create installer yaml")
 		return err
 	}
 
-	pluginsBts, err := i.getPluginsBts()
+	pluginsBts, err := i.getInstallerBts()
 	if err != nil {
 		return err
 	}
-	return kube.DeleteByYamlOrJson(ctx, i.Config, pluginsBts)
+	return kube.DeleteByYamlOrJson(ctx, i.RestConfig, pluginsBts)
 }

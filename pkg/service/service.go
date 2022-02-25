@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	kialiconfig "github.com/kiali/kiali/config"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/service/routers"
 	"kubegems.io/pkg/utils/agents"
@@ -84,8 +84,16 @@ func Run(ctx context.Context, opts *options.Options) error {
 		return fmt.Errorf("failed init dependencies: %v", err)
 	}
 
-	// 初始化数据库中的系统配置
-	models.InitConfig(deps.Databse.DB())
+	// 初始化到DB
+	if err := onlineOptions.InitToDB(deps.Databse.DB()); err != nil {
+		return fmt.Errorf("failed to save online options to db: %w", err)
+	}
+	// 先从DB加载一次最新的
+	if err := onlineOptions.LoadFromDB(deps.Databse.DB()); err != nil {
+		return fmt.Errorf("failed to load online options from db: %w", err)
+	}
+	// 开始同步
+	go onlineOptions.StartSync(deps.Databse.DB(), 1*time.Minute)
 
 	// 依赖的kiali库用到，需要初始化
 	// FIXME: 我们用到的配置较少，初始化时填入我们的配置，如
