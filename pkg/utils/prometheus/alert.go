@@ -45,6 +45,8 @@ type RawAlertResource struct {
 	*v1alpha1.AlertmanagerConfig
 	*monitoringv1.PrometheusRule
 	Silences []alertmanagertypes.Silence
+
+	*MonitorOptions
 }
 
 type AlertLevel struct {
@@ -81,17 +83,15 @@ type AlertRule struct {
 }
 
 // TODO: unit test
-func (r *AlertRule) CheckAndModify() error {
-	cfg := GetGemsMetricConfig(true)
-
+func (r *AlertRule) CheckAndModify(opts *MonitorOptions) error {
 	// check resource
-	res, ok := cfg.Resources[r.Resource]
+	res, ok := opts.Resources[r.Resource]
 	if !ok {
 		return fmt.Errorf("invalid resource: %s", r.Resource)
 	}
 
 	// check rule
-	ruleCtx, err := r.FindRuleContext(cfg)
+	ruleCtx, err := r.FindRuleContext(opts)
 	if err != nil {
 		return err
 	}
@@ -102,10 +102,10 @@ func (r *AlertRule) CheckAndModify() error {
 		return fmt.Errorf("alert level can't be null")
 	}
 	for _, v := range r.AlertLevels {
-		if !utils.ContainStr(cfg.Operators, v.CompareOp) {
+		if !utils.ContainStr(opts.Operators, v.CompareOp) {
 			return fmt.Errorf("invalid operator: %s", v.CompareOp)
 		}
-		if _, ok := cfg.Severity[v.Severity]; !ok {
+		if _, ok := opts.Severity[v.Severity]; !ok {
 			return fmt.Errorf("invalid severity: %s", v.Severity)
 		}
 	}
@@ -117,7 +117,7 @@ func (r *AlertRule) CheckAndModify() error {
 			r.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 		}
 
-		r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.RuleDetail.ShowName, `{{ $value | printf "%.1f" }}`, cfg.Units[r.Unit])
+		r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.RuleDetail.ShowName, `{{ $value | printf "%.1f" }}`, opts.Units[r.Unit])
 	}
 
 	return r.checkAndModifyReceivers()
@@ -186,7 +186,7 @@ func (raw *RawAlertResource) ToAlerts(containOrigin bool) ([]AlertRule, error) {
 		alertname := group.Name
 
 		// expr规则
-		alertrule, err := convertAlertRule(raw.PrometheusRule.Namespace, group)
+		alertrule, err := convertAlertRule(raw.PrometheusRule.Namespace, group, raw.MonitorOptions)
 		if err != nil {
 			log.Error(err, "convert prometheus rule")
 			return nil, err
@@ -225,7 +225,7 @@ func (raw *RawAlertResource) UpdateAlertRules(alertRules []AlertRule) error {
 			}
 			bts, _ := json.Marshal(expr)
 
-			promql, err := expr.ConstructPromql(alertRule.Namespace)
+			promql, err := expr.ConstructPromql(alertRule.Namespace, raw.MonitorOptions)
 			if err != nil {
 				return err
 			}
@@ -356,7 +356,7 @@ func (raw *RawAlertResource) ModifyAlertRule(newAlertRule AlertRule, act Action)
 }
 
 // TODO: unit test
-func convertAlertRule(namespace string, group monitoringv1.RuleGroup) (AlertRule, error) {
+func convertAlertRule(namespace string, group monitoringv1.RuleGroup, opts *MonitorOptions) (AlertRule, error) {
 	ret := AlertRule{}
 	tmpexpr := CompareQueryParams{}
 	for _, rule := range group.Rules {
@@ -392,14 +392,14 @@ func convertAlertRule(namespace string, group monitoringv1.RuleGroup) (AlertRule
 	}
 
 	// 填入ruleCtx
-	ruleCtx, err := ret.FindRuleContext(GetGemsMetricConfig(true))
+	ruleCtx, err := ret.FindRuleContext(opts)
 	if err != nil {
 		return ret, err
 	}
 	ret.RuleContext = ruleCtx
 
 	// 填入promql
-	promql, err := tmpexpr.ConstructPromql(namespace)
+	promql, err := tmpexpr.ConstructPromql(namespace, opts)
 	if err != nil {
 		return ret, nil
 	}

@@ -13,7 +13,7 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 		LabelPairs map[string]string
 	}
 	type args struct {
-		cfg GemsMetricConfig
+		cfg *MonitorOptions
 	}
 	tests := []struct {
 		name    string
@@ -33,7 +33,7 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 				},
 			},
 			args: args{
-				cfg: DefaultMetricConfigContent(),
+				cfg: DefaultMonitorOptions(),
 			},
 			want: RuleContext{
 				ResourceDetail: ResourceDetail{
@@ -61,7 +61,7 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 				},
 			},
 			args: args{
-				cfg: DefaultMetricConfigContent(),
+				cfg: DefaultMonitorOptions(),
 			},
 			want:    RuleContext{},
 			wantErr: true,

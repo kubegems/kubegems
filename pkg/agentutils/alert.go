@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func ListAlertRule(ctx context.Context, cli agents.Client) ([]prometheus.AlertRule, error) {
+func ListAlertRule(ctx context.Context, cli agents.Client, opts *prometheus.MonitorOptions) ([]prometheus.AlertRule, error) {
 	ruleList := monitoringv1.PrometheusRuleList{}
 	configList := v1alpha1.AlertmanagerConfigList{}
 
@@ -61,6 +61,7 @@ func ListAlertRule(ctx context.Context, cli agents.Client) ([]prometheus.AlertRu
 				PrometheusRule:     rule,
 				AlertmanagerConfig: amconfig,
 				Silences:           silenceNamespaceMap[rule.Namespace],
+				MonitorOptions:     opts,
 			}
 
 			alerts, err := raw.ToAlerts(false)
@@ -75,7 +76,7 @@ func ListAlertRule(ctx context.Context, cli agents.Client) ([]prometheus.AlertRu
 }
 
 // GetRawAlertResource get specified namespace's alert
-func GetRawAlertResource(ctx context.Context, namespace string, cli agents.Client) (*prometheus.RawAlertResource, error) {
+func GetRawAlertResource(ctx context.Context, namespace string, cli agents.Client, opts *prometheus.MonitorOptions) (*prometheus.RawAlertResource, error) {
 	amcfg, err := GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
 	if err != nil {
 		return nil, err
@@ -97,6 +98,7 @@ func GetRawAlertResource(ctx context.Context, namespace string, cli agents.Clien
 		AlertmanagerConfig: amcfg,
 		PrometheusRule:     promerule,
 		Silences:           silence,
+		MonitorOptions:     opts,
 	}, nil
 }
 

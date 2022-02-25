@@ -1,7 +1,6 @@
 package options
 
 import (
-	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/exporter"
@@ -25,18 +24,6 @@ type Options struct {
 	Msgbus    *msgbus.Options           `json:"msgbus,omitempty"`
 	Mysql     *database.Options         `json:"mysql,omitempty"`
 	Redis     *redis.Options            `json:"redis,omitempty"`
-}
-
-type OnlineOptions struct {
-	Oauth        *oauth.Options                           `json:"oauth,omitempty"`
-	Microservice *microserviceoptions.MicroserviceOptions `json:"microservice,omitempty"`
-}
-
-func NewOnlineOptions() *OnlineOptions {
-	return &OnlineOptions{
-		Oauth:        oauth.NewDefaultOptions(),
-		Microservice: microserviceoptions.NewDefaultOptions(),
-	}
 }
 
 func DefaultOptions() *Options {

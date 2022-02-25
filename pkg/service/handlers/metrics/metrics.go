@@ -12,31 +12,11 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
+	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/prometheus/promql"
 )
-
-// Config 获取metric配置
-// @Tags Metrics
-// @Summary 获取metric配置
-// @Description 不同用户，获取的配置有所不同
-// @Accept json
-// @Produce json
-// @Param isAdminView query bool false "是否在admin视图"
-// @Success 200 {object} handlers.ResponseStruct{Data=prometheus.GemsMetricConfig} "Metrics配置"
-// @Router /v1/metrics/config [get]
-// @Security JWT
-func (h *MonitorHandler) Config(c *gin.Context) {
-	isAdminView, _ := strconv.ParseBool(c.Query("isAdminView"))
-
-	u, exist := h.GetContextUser(c)
-	if !exist {
-		handlers.Unauthorized(c, "not login")
-		return
-	}
-	handlers.OK(c, prometheus.GetGemsMetricConfig(u.SystemRoleID == 1 && isAdminView))
-}
 
 type MetricQueryReq struct {
 	// 查询范围
@@ -160,8 +140,6 @@ func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryR
 		return fmt.Errorf("not login")
 	}
 
-	cfg := prometheus.GetGemsMetricConfig(u.SystemRoleID == 1)
-
 	q := &MetricQueryReq{
 		Cluster:   c.Query("cluster"),
 		Namespace: c.Query("namespace"),
@@ -184,7 +162,7 @@ func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryR
 		return fmt.Errorf("请指定查询集群")
 	}
 
-	ruleCtx, err := q.FindRuleContext(cfg)
+	ruleCtx, err := q.FindRuleContext(h.OnlineOptions.Monitor)
 	if err != nil {
 		return err
 	}
@@ -224,12 +202,122 @@ func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryR
 	return f(q)
 }
 
+// GetMetricTemplate 获取prometheu查询模板
+// @Tags Metrics
+// @Summary 获取prometheu查询模板
+// @Description 获取prometheu查询模板
+// @Accept json
+// @Produce json
+// @Param resource_name path string true "resource"
+// @Param rule_name path string true "rule"
+// @Success 200 {object} handlers.ResponseStruct{Data=prometheus.RuleDetail} "resp"
+// @Router /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [get]
+// @Security JWT
+func (h *MonitorHandler) GetMetricTemplate(c *gin.Context) {
+	resName := c.Param("resource_name")
+	ruleName := c.Param("rule_name")
+
+	resDetail, ok := h.OnlineOptions.Monitor.Resources[resName]
+	if !ok {
+		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
+		return
+	}
+	ruleDetail, ok := resDetail.Rules[ruleName]
+	if !ok {
+		handlers.NotOK(c, fmt.Errorf("rule %s not found", ruleName))
+		return
+	}
+
+	handlers.OK(c, ruleDetail)
+}
+
+// AddOrUpdateMetricTemplate 添加/更新prometheu查询模板
+// @Tags Metrics
+// @Summary 添加prometheu查询模板
+// @Description 添加prometheu查询模板
+// @Accept json
+// @Produce json
+// @Param resource_name path string true "resource"
+// @Param rule_name path string true "rule"
+// @Param from body prometheus.RuleDetail true "查询模板配置"
+// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [post]
+// @Security JWT
+func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
+	resName := c.Param("resource_name")
+	ruleName := c.Param("rule_name")
+	rule := prometheus.RuleDetail{}
+	if err := c.BindJSON(&rule); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	for _, unit := range rule.Units {
+		if _, ok := h.OnlineOptions.Monitor.Units[unit]; !ok {
+			handlers.NotOK(c, fmt.Errorf("unit %s is not valid", unit))
+			return
+		}
+	}
+
+	resDetail, ok := h.OnlineOptions.Monitor.Resources[resName]
+	if !ok {
+		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
+		return
+	}
+
+	h.OnlineOptions.Lock()
+	resDetail.Rules[ruleName] = rule
+	h.OnlineOptions.UnLock()
+
+	if err := h.OnlineOptions.SaveToDB(h.GetDB()); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
+// DeleteMetricTemplate 删除prometheu查询模板
+// @Tags Metrics
+// @Summary 删除prometheu查询模板
+// @Description 删除prometheu查询模板
+// @Accept json
+// @Produce json
+// @Param resource_name path string true "resource"
+// @Param rule_name path string true "rule"
+// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [delete]
+// @Security JWT
+func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
+	resName := c.Param("resource_name")
+	ruleName := c.Param("rule_name")
+
+	resDetail, ok := h.OnlineOptions.Monitor.Resources[resName]
+	if !ok {
+		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
+		return
+	}
+	_, ok = resDetail.Rules[ruleName]
+	if !ok {
+		handlers.NotOK(c, fmt.Errorf("rule %s not found", ruleName))
+		return
+	}
+
+	h.OnlineOptions.Lock()
+	delete(resDetail.Rules, ruleName)
+	h.OnlineOptions.UnLock()
+	if err := h.OnlineOptions.SaveToDB(h.GetDB()); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
 type MonitorHandler struct {
 	base.BaseHandler
+	*options.OnlineOptions
 }
 
 func (h *MonitorHandler) RegistRouter(rg *gin.RouterGroup) {
-	rg.GET("/metrics/config", h.Config)
 	rg.GET("/metrics/queryrange", h.QueryRange)
 	rg.GET("/metrics/labelvalues", h.LabelValues)
 
@@ -240,4 +328,8 @@ func (h *MonitorHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/metrics/dashboard", h.ListDashborad)
 	rg.POST("/metrics/dashboard", h.CreateOrUpdateDashborad)
 	rg.DELETE("/metrics/dashboard/:dashboard_id", h.DeleteDashborad)
+
+	rg.GET("/metrics/template/resources/:resource_name/rules/:rule_name", h.CheckIsSysADMIN, h.GetMetricTemplate)
+	rg.POST("/metrics/template/resources/:resource_name/rules/:rule_name", h.CheckIsSysADMIN, h.AddOrUpdateMetricTemplate)
+	rg.DELETE("/metrics/template/resources/:resource_name/rules/:rule_name", h.CheckIsSysADMIN, h.DeleteMetricTemplate)
 }
