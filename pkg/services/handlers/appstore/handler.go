@@ -24,6 +24,16 @@ type Handler struct {
 	ChartMuseumClient *helm.ChartmuseumClient
 }
 
+func MustNewHandler(base base.BaseHandler, options *helm.Options) *Handler {
+	return &Handler{
+		BaseHandler: base,
+		AppStoreOpt: options,
+		ChartMuseumClient: helm.MustNewChartMuseumClient(&helm.RepositoryConfig{
+			URL: options.Addr,
+		}),
+	}
+}
+
 type Chart struct {
 	Name        string              `json:"name"`
 	Version     string              `json:"version"`

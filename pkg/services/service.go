@@ -1,112 +1,116 @@
 package services
 
 import (
-	"net/http"
+	"context"
+	"fmt"
 
-	restful "github.com/emicklei/go-restful/v3"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	kialiconfig "github.com/kiali/kiali/config"
+	"golang.org/x/sync/errgroup"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/model/client"
 	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/model/validate"
-	applicationhandler "kubegems.io/pkg/services/handlers/application"
-	approvehandler "kubegems.io/pkg/services/handlers/approve"
-	appstorehandler "kubegems.io/pkg/services/handlers/appstore"
-	"kubegems.io/pkg/services/handlers/base"
-	clusterhandler "kubegems.io/pkg/services/handlers/clusters"
-	loginhandler "kubegems.io/pkg/services/handlers/login"
-	tenanthandler "kubegems.io/pkg/services/handlers/tenants"
-	userhandler "kubegems.io/pkg/services/handlers/users"
+	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/options"
+	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/argo"
+	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/git"
+	_ "kubegems.io/pkg/utils/kube" // 用于 AddToSchema
+	"kubegems.io/pkg/utils/pprof"
+	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/pkg/utils/prometheus/collector"
 	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/pkg/utils/tracing"
 )
 
-func ServiceContainer(modelClient client.ModelClientIface, redisClient *redis.Client, gitopts *git.Options) *restful.Container {
-	servicesContainer := restful.NewContainer()
-
-	BaseHandler := base.NewBaseHandler(nil, modelClient, redisClient)
-
-	regist(
-		servicesContainer,
-		&loginhandler.Handler{
-			BaseHandler: BaseHandler,
-		},
-		&userhandler.Handler{
-			BaseHandler: BaseHandler,
-		},
-		&clusterhandler.Handler{
-			BaseHandler: BaseHandler,
-		},
-		&tenanthandler.Handler{
-			BaseHandler: BaseHandler,
-		},
-		&approvehandler.Handler{
-			BaseHandler: BaseHandler,
-		},
-		&appstorehandler.Handler{
-			// TODO:  add extra options
-			AppStoreOpt:       nil,
-			ChartMuseumClient: nil,
-			BaseHandler:       BaseHandler,
-		},
-		// app handler
-		applicationhandler.MustNewApplicationDeployHandler(gitopts, nil, BaseHandler),
-	)
-
-	enableSwagger(servicesContainer)
-	return servicesContainer
+type Dependencies struct {
+	Options   *options.Options
+	Redis     *redis.Client
+	Databse   *database.Database
+	Argocli   *argo.Client
+	Git       *git.SimpleLocalProvider
+	Agentscli *agents.ClientSet
 }
 
-type handlerIface interface {
-	Regist(c *restful.Container)
-}
+func prepareDependencies(ctx context.Context, options *options.Options) (*Dependencies, error) {
+	// logger
+	log.SetLevel(options.LogLevel)
 
-func regist(c *restful.Container, h ...handlerIface) {
-	for idx := range h {
-		h[idx].Regist(c)
-	}
-}
+	// tracing
+	tracing.SetGlobal(ctx)
 
-func Run() {
-	// TODO
-	panic("Not implemented")
-}
-
-// LocalDevRun temporary use of local development
-func LocalDevRun() {
-	gitopts := &git.Options{
-		Username: "root",
-		Password: "root",
-		Addr:     "http://localhost:13000",
-	}
-	redisClient, err := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-	})
+	// redis
+	rediscli, err := redis.NewClient(options.Redis)
 	if err != nil {
-		panic(err)
-
+		return nil, err
 	}
-	loger := log.NewDefaultGormZapLogger()
-	log.SetLevel("debug")
-	db, err := gorm.Open(sqlite.Open("gorm.sqlite3"), &gorm.Config{
-		Logger: loger,
-	})
+	// database
+	db, err := database.NewDatabase(options.Mysql)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	if err := orm.Migrate(db); err != nil {
-		panic(err)
+	// agents
+	agentclientset, err := agents.NewClientSet(db)
+	if err != nil {
+		return nil, err
 	}
-	log.Info("start services")
-	mc := orm.NewOrmClient(db)
+	// git
+	gitprovider, err := git.NewProvider(options.Git)
+	if err != nil {
+		return nil, err
+	}
+	// argo
+	argocli, err := argo.NewClient(ctx, options.Argo)
+	if err != nil {
+		return nil, err
+	}
+	deps := &Dependencies{
+		Redis:     rediscli,
+		Databse:   db,
+		Argocli:   argocli,
+		Git:       gitprovider,
+		Agentscli: agentclientset,
+	}
+	return deps, nil
+}
 
-	// required
+func Run(ctx context.Context, opts *options.Options) error {
+	onlineOptions := options.NewOnlineOptions() // 在线配置
+	_ = onlineOptions
+
+	ctx = log.NewContext(ctx, log.LogrLogger)
+	deps, err := prepareDependencies(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("failed init dependencies: %v", err)
+	}
+
+	// 初始化数据库中的系统配置
+	models.InitConfig(deps.Databse.DB())
+
+	// 依赖的kiali库用到，需要初始化
+	// FIXME: 我们用到的配置较少，初始化时填入我们的配置，如
+	// AppLabelName、InjectionLabelName、VersionLabelName、IstioIdentityDomain
+	// 目前没啥问题
+	kialiconfig.Set(kialiconfig.NewConfig())
+
+	mc := orm.NewOrmClient(deps.Databse.DB())
 	validate.InitValidator(mc)
+	rest := NewRest(mc, deps, opts)
 
-	sr := ServiceContainer(mc, redisClient, gitopts)
-
-	restful.DefaultContainer.RegisteredWebServices()
-
-	http.ListenAndServe(":9090", sr)
+	// run
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return RunRest(ctx, opts.System, rest)
+	})
+	eg.Go(func() error {
+		return pprof.Run(ctx)
+	})
+	eg.Go(func() error {
+		exporter.SetNamespace("gems_server")
+		exporter.RegisterCollector("request", true, collector.NewRequestCollector) // http exporter
+		// 启动prometheus exporter
+		return prometheus.RunExporter(ctx, opts.Exporter, exporter.NewHandler())
+	})
+	return eg.Wait()
 }
