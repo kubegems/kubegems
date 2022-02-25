@@ -9,7 +9,6 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/model/validate"
-	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
@@ -84,9 +83,6 @@ func Run(ctx context.Context, opts *options.Options) error {
 	if err != nil {
 		return fmt.Errorf("failed init dependencies: %v", err)
 	}
-
-	// 初始化数据库中的系统配置
-	models.InitConfig(deps.Databse.DB())
 
 	// 依赖的kiali库用到，需要初始化
 	// FIXME: 我们用到的配置较少，初始化时填入我们的配置，如
