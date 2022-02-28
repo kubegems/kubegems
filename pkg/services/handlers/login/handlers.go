@@ -7,17 +7,18 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/auth"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/services/handlers/base"
+	"kubegems.io/pkg/utils/jwt"
 )
 
 var tags = []string{"login"}
 
 type Handler struct {
 	base.BaseHandler
+	JWTOptions *jwt.Options
 }
 
 func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
@@ -27,7 +28,7 @@ func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	authModule := auth.NewAuthenticateModule(h.Model())
+	authModule := auth.NewAuthenticateModule(h.DB())
 	authenticator := authModule.GetAuthenticateModule(ctx, cred.Source)
 	if authenticator == nil {
 		handlers.Unauthorized(resp, nil)
@@ -46,35 +47,35 @@ func (h *Handler) Login(req *restful.Request, resp *restful.Response) {
 	}
 	now := time.Now()
 	uinternel.LastLoginAt = &now
-	h.Model().Update(req.Request.Context(), uinternel.Object())
-	user := &forms.UserCommon{
-		Name:  uinternel.Name,
-		Email: uinternel.Email,
-		ID:    uinternel.ID,
-		Role:  uinternel.Role,
+	h.DBWithContext(req).Updates(uinternel)
+	user := &models.UserCommon{
+		Username: uinternel.Username,
+		Email:    uinternel.Email,
+		ID:       uinternel.ID,
 	}
-	jwt := &auth.JWT{}
-	token, _, err := jwt.GenerateToken(user, time.Duration(time.Hour*24))
+
+	jwtInstance := h.JWTOptions.ToJWT()
+	token, _, err := jwtInstance.GenerateToken(user, h.JWTOptions.Expire)
 	if err != nil {
 		handlers.Unauthorized(resp, err)
 	}
 	handlers.OK(resp, token)
 }
 
-func (h *Handler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo) (*forms.UserInternal, error) {
-	u := forms.UserInternal{}
-	err := h.Model().Get(ctx, u.Object(), client.WhereNameEqual(uinfo.Username))
-	if err != nil {
-		return u.Data(), nil
+func (h *Handler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo) (*models.User, error) {
+	u := &models.User{}
+	if err := h.DB().WithContext(ctx).First(u, "username = ?", uinfo.Username).Error; err != nil {
+		if !handlers.IsNotFound(err) {
+			return nil, err
+		}
+	} else {
+		return u, nil
 	}
-	if !handlers.IsNotFound(err) {
-		return nil, err
+	newUser := &models.User{
+		Username: uinfo.Username,
+		Email:    uinfo.Email,
+		Source:   uinfo.Source,
 	}
-	newUser := &forms.UserInternal{
-		Name:   uinfo.Username,
-		Email:  uinfo.Email,
-		Source: uinfo.Source,
-	}
-	err = h.Model().Create(ctx, newUser.Object())
-	return newUser.Data(), err
+	err := h.DB().WithContext(ctx).Create(newUser).Error
+	return newUser, err
 }

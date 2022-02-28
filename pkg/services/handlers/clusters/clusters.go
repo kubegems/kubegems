@@ -7,9 +7,9 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"golang.org/x/sync/errgroup"
+	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/services/handlers/base"
 )
@@ -18,63 +18,73 @@ type Handler struct {
 	base.BaseHandler
 }
 
-func (h *Handler) List(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	ol := forms.ClusterCommonList{}
-	if err := h.Model().List(ctx, ol.Object(), handlers.CommonOptions(req)...); err != nil {
+func (h *Handler) ListCluster(req *restful.Request, resp *restful.Response) {
+	ol := &[]models.Cluster{}
+	scopes := []func(*gorm.DB) *gorm.DB{
+		handlers.ScopeTable(ol),
+		handlers.ScopeOrder(req, []string{"create_at"}),
+		handlers.ScopeSearch(req, &models.Cluster{}, []string{"name"}),
+	}
+	var total int64
+	if err := h.DBWithContext(req).Scopes(scopes...).Count(&total).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.OK(resp, handlers.Page(ol.Object(), ol.Data()))
+
+	scopes = append(scopes, handlers.ScopePageSize(req))
+	db := h.DBWithContext(req).Scopes(scopes...).Find(ol)
+	if err := db.Error; err != nil {
+		handlers.BadRequest(resp, err)
+		return
+	}
+	handlers.OK(resp, handlers.Page(db, total, ol))
 }
 
-func (h *Handler) Retrieve(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	data, err := h.getCluster(ctx, req.PathParameter("cluster"), req.QueryParameter("detail") == "true")
-	if err != nil {
+func (h *Handler) RetrieveCluster(req *restful.Request, resp *restful.Response) {
+	cluster := &models.ClusterSimple{}
+	handlers.WhereNameEqual(req.PathParameter("cluster"))
+	conds := []*handlers.Cond{
+		handlers.WhereNameEqual(req.PathParameter("cluster")),
+	}
+	tx := h.DBWithContext(req).Scopes(
+		handlers.ScopeCondition(conds, cluster),
+	)
+	if err := tx.First(cluster).Error; err != nil {
 		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	handlers.OK(resp, data.DataPtr())
+	handlers.OK(resp, cluster)
 }
 
-func (h *Handler) Delete(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	cluster, err := h.getClusterDetail(ctx, req.PathParameter("cluster"))
+func (h *Handler) DeleteCluster(req *restful.Request, resp *restful.Response) {
+	cluster, err := h.getCluster(req.Request.Context(), req.PathParameter("cluster"))
 	if err != nil {
 		handlers.NoContent(resp, err)
 		return
 	}
-	if err := h.Model().Delete(ctx, cluster.Object()); err != nil {
+	if err := h.DBWithContext(req).Delete(cluster).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
 	handlers.NoContent(resp, nil)
 }
 
-func (h *Handler) Create(req *restful.Request, resp *restful.Response) {
+func (h *Handler) CreateCluster(req *restful.Request, resp *restful.Response) {
 	// todo check cluster
-	ctx := req.Request.Context()
-	cluster := &forms.ClusterDetail{}
+	cluster := &models.Cluster{}
 	if err := handlers.BindData(req, cluster); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	_, err := h.getCluster(ctx, cluster.Name, false)
-	if !handlers.IsNotFound(err) {
-		handlers.BadRequest(resp, fmt.Errorf("exist"))
-		return
-	}
-	if err := h.Model().Create(ctx, cluster.Object()); err != nil {
+	if err := h.DBWithContext(req).Create(cluster).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.Created(resp, cluster.Data())
+	handlers.Created(resp, cluster)
 }
 
-func (h *Handler) Modify(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	newCluster := &forms.ClusterDetail{}
+func (h *Handler) ModifyCluster(req *restful.Request, resp *restful.Response) {
+	newCluster := &models.Cluster{}
 	if err := handlers.BindData(req, newCluster); err != nil {
 		handlers.BadRequest(resp, err)
 		return
@@ -82,25 +92,25 @@ func (h *Handler) Modify(req *restful.Request, resp *restful.Response) {
 	if newCluster.Name != req.PathParameter("cluster") {
 		handlers.BadRequest(resp, fmt.Errorf("cluster name is invalid"))
 	}
-	newCluster.ID = 0
-	if err := h.Model().Update(ctx, newCluster.Object(), client.WhereNameEqual(newCluster.Name)); err != nil {
+	if err := h.DBWithContext(req).Scopes(
+		handlers.ScopeCondition([]*handlers.Cond{handlers.WhereNameEqual(req.PathParameter("cluster"))}, newCluster),
+	).Updates(newCluster).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
 	// todo: check cluster data
-	handlers.OK(resp, newCluster.Data())
+	handlers.OK(resp, newCluster)
 }
 
 type ClusterStatusMap map[string]bool
 
 func (h *Handler) ClusterStatus(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
-	ol := forms.ClusterCommonList{}
-	h.Model().List(ctx, ol.Object())
+	clusters := []models.Cluster{}
+	h.DBWithContext(req).Find(&clusters)
 	eg := &errgroup.Group{}
 	mu := sync.Mutex{}
 	ret := ClusterStatusMap{}
-	clusters := ol.Data()
 	for _, cluster := range clusters {
 		name := cluster.Name
 		eg.Go(func() error {
@@ -123,20 +133,11 @@ func (h *Handler) ClusterStatus(req *restful.Request, resp *restful.Response) {
 	handlers.OK(resp, ret)
 }
 
-func (h *Handler) getCluster(ctx context.Context, name string, detail bool) (forms.FormInterface, error) {
-	if detail {
-		return h.getClusterDetail(ctx, name)
-	} else {
-		return h.getClusterCommon(ctx, name)
-	}
-}
-
-func (h *Handler) getClusterDetail(ctx context.Context, name string) (*forms.ClusterDetail, error) {
-	cluster := &forms.ClusterDetail{}
-	return cluster, h.Model().Get(ctx, cluster.Object(), client.WhereNameEqual(name))
-}
-
-func (h *Handler) getClusterCommon(ctx context.Context, name string) (*forms.ClusterCommon, error) {
-	cluster := &forms.ClusterCommon{}
-	return cluster, h.Model().Get(ctx, cluster.Object(), client.WhereNameEqual(name))
+func (h *Handler) getCluster(ctx context.Context, name string) (*models.Cluster, error) {
+	cluster := &models.Cluster{}
+	conds := []*handlers.Cond{handlers.WhereNameEqual(name)}
+	err := h.DB().WithContext(ctx).Scopes(
+		handlers.ScopeCondition(conds, cluster),
+	).First(cluster).Error
+	return cluster, err
 }

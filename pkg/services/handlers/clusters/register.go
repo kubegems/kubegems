@@ -5,7 +5,7 @@ import (
 
 	restfulspec "github.com/emicklei/go-restful-openapi/v2"
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 )
 
@@ -16,36 +16,36 @@ var (
 
 func (h *Handler) Regist(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/clusters")
+	ws.Path("/v2/clusters")
 	ws.Consumes(restful.MIME_JSON)
+	ws.Produces(restful.MIME_JSON)
 
 	ws.Route(handlers.ListCommonQuery(ws.GET("").
-		To(h.List).
+		To(h.ListCluster).
 		Doc("list clusters").
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, nil)))
+		Returns(http.StatusOK, handlers.MessageOK, ClusterListResp{})))
 
 	ws.Route(ws.GET("/{cluster}").
-		To(h.Retrieve).
+		To(h.RetrieveCluster).
 		Doc("retireve clusters").
-		Param(restful.PathParameter("detail", "is detail").PossibleValues([]string{"true", "false"})).
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, nil))
+		Returns(http.StatusOK, handlers.MessageOK, ClusterInfoResp{}))
 
 	ws.Route(ws.DELETE("/{cluster}").
-		To(h.Delete).
+		To(h.DeleteCluster).
 		Doc("delete cluster").
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
 		Returns(http.StatusOK, handlers.MessageOK, nil))
 
 	ws.Route(ws.PUT("/{cluster}").
-		To(h.Modify).
+		To(h.ModifyCluster).
 		Doc("modify clusters").
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, nil))
+		Returns(http.StatusOK, handlers.MessageOK, ClusterInfoResp{}))
 
 	ws.Route(ws.GET("/{cluster}/plugins").
 		To(h.ListPlugins).
@@ -57,7 +57,7 @@ func (h *Handler) Regist(container *restful.Container) {
 	ws.Route(ws.POST("/{cluster}/plugins/{plugin}/types/{type}/action/{action}").
 		To(h.PluginSwitch).
 		Doc("switch cluster plugins").
-		Param(restful.PathParameter("name", "cluster name")).
+		Param(restful.PathParameter("cluster", "cluster name")).
 		Param(restful.PathParameter("type", "plugin type").PossibleValues([]string{"core", "kubernetes"})).
 		Param(restful.PathParameter("plugin", "plugin name")).
 		Param(restful.PathParameter("action", "action name").PossibleValues([]string{"enable", "disable"})).
@@ -69,21 +69,14 @@ func (h *Handler) Regist(container *restful.Container) {
 		Doc("list cluster environments").
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, []forms.EnvironmentCommon{}))
-
-	ws.Route(ws.GET("/{cluster}/log-query-history").
-		To(h.ListLogQueryHistory).
-		Doc("list cluster log query history").
-		Param(restful.PathParameter("cluster", "cluster name")).
-		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, []forms.LogQueryHistoryCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, models.EnvironmentCommon{}))
 
 	ws.Route(ws.GET("/{cluster}/log-query-snapshot").
 		To(h.ListLogQueryHistory).
 		Doc("list cluster log query snapshot").
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, []forms.LogQuerySnapshotCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, LogQuerySnapshotListResp{}))
 
 	ws.Route(ws.GET("/{cluster}/quota-stastics").
 		To(h.GetClusterQuotaStastic).
@@ -117,7 +110,7 @@ func (h *Handler) registLoki(ws *restful.WebService) {
 		Param(restful.QueryParameter("level", "level")).
 		Param(restful.QueryParameter("filters", "filters")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
-		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+		Returns(http.StatusOK, handlers.MessageOK, nil))
 
 	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/labels").
 		To(h.Labels).
@@ -127,7 +120,7 @@ func (h *Handler) registLoki(ws *restful.WebService) {
 		Param(restful.QueryParameter("end", "end time")).
 		Param(restful.QueryParameter("label", "label")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
-		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+		Returns(http.StatusOK, handlers.MessageOK, nil))
 
 	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/export").
 		To(h.Export).
@@ -141,7 +134,7 @@ func (h *Handler) registLoki(ws *restful.WebService) {
 		Param(restful.QueryParameter("direction", "direction")).
 		Param(restful.QueryParameter("limit", "limit")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
-		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+		Returns(http.StatusOK, handlers.MessageOK, nil))
 
 	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/querylanguage").
 		To(h.QueryLanguage).
@@ -150,7 +143,7 @@ func (h *Handler) registLoki(ws *restful.WebService) {
 		Param(restful.QueryParameter("filters", "filters")).
 		Param(restful.QueryParameter("pod", "pod")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
-		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+		Returns(http.StatusOK, handlers.MessageOK, nil))
 
 	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/series").
 		To(h.Series).
@@ -161,7 +154,7 @@ func (h *Handler) registLoki(ws *restful.WebService) {
 		Param(restful.QueryParameter("match", "match")).
 		Param(restful.QueryParameter("label", "label")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
-		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+		Returns(http.StatusOK, handlers.MessageOK, nil))
 
 	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/context").
 		To(h.Context).
@@ -175,7 +168,7 @@ func (h *Handler) registLoki(ws *restful.WebService) {
 		Param(restful.QueryParameter("direction", "direction")).
 		Param(restful.QueryParameter("limit", "limit")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
-		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+		Returns(http.StatusOK, handlers.MessageOK, nil))
 
 	ws.Route(ws.GET("/{cluster}/plugin/loki/datas/labelvalues").
 		To(h.LabelValues).
@@ -185,5 +178,5 @@ func (h *Handler) registLoki(ws *restful.WebService) {
 		Param(restful.QueryParameter("end", "end time")).
 		Param(restful.QueryParameter("label", "label").Required(true)).
 		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
-		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
+		Returns(http.StatusOK, handlers.MessageOK, nil))
 }

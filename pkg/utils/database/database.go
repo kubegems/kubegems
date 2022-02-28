@@ -13,7 +13,7 @@ type Options struct {
 	Addr     string `json:"addr" description:"mysql host addr"`
 	Username string `json:"username" description:"mysql username"`
 	Password string `json:"password" description:"mysql password"`
-	Database string `json:"dataBase" description:"database to use"`
+	Database string `json:"database" description:"database to use"`
 }
 
 func NewDefaultOptions() *Options {
@@ -72,8 +72,8 @@ func (opts *Options) ToDriverConfig() *driver.Config {
 		Net:                  "tcp",
 		Addr:                 opts.Addr,
 		DBName:               opts.Database,
-		ParseTime:            true,              // 不支持配置，否则出问题
-		Collation:            "utf8_general_ci", // 不支持配置，否则出问题
+		ParseTime:            true,
+		Collation:            "utf8_general_ci",
 		Loc:                  time.Local,
 		AllowNativePasswords: true,
 	}

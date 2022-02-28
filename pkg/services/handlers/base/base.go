@@ -4,24 +4,25 @@ import (
 	"context"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/client"
+	"gorm.io/gorm"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/redis"
 )
 
 // BaseHandler is the base handler for all handlers
 type BaseHandler struct {
-	agents      *agents.ClientSet
-	redis       *redis.Client
-	modelClient client.ModelClientIface
+	agents *agents.ClientSet
+	redis  *redis.Client
+	db     *database.Database
 }
 
-func NewBaseHandler(agents *agents.ClientSet, modelClient client.ModelClientIface, redis *redis.Client) BaseHandler {
+func NewBaseHandler(agents *agents.ClientSet, redis *redis.Client, db *database.Database) BaseHandler {
 	return BaseHandler{
-		agents:      agents,
-		redis:       redis,
-		modelClient: modelClient,
+		agents: agents,
+		redis:  redis,
+		db:     db,
 	}
 }
 
@@ -29,8 +30,16 @@ func (h *BaseHandler) Agents() *agents.ClientSet {
 	return h.agents
 }
 
-func (h *BaseHandler) Model() client.ModelClientIface {
-	return h.modelClient
+func (h *BaseHandler) Database() *database.Database {
+	return h.db
+}
+
+func (h *BaseHandler) DB() *gorm.DB {
+	return h.db.DB()
+}
+
+func (h *BaseHandler) DBWithContext(req *restful.Request) *gorm.DB {
+	return h.db.DB().WithContext(req.Request.Context())
 }
 
 func (h *BaseHandler) Redis() *redis.Client {

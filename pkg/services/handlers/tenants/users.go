@@ -2,117 +2,112 @@ package tenanthandler
 
 import (
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"gorm.io/gorm"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 )
 
 func (h *Handler) AddTenantMember(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
-	createForm := &forms.TenantUserCreateModifyForm{}
-	if err := handlers.BindData(req, createForm); err != nil {
+
+	createData := &TenantUserCreateForm{}
+	if err := handlers.BindData(req, createData); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	tenant, err := h.getTenantCommon(ctx, createForm.Tenant)
+	tenant, err := h.getTenant(ctx, req.PathParameter("tenant"))
 	if err != nil {
-		handlers.NotFound(resp, err)
+		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	user, err := h.getUserCommon(ctx, createForm.User)
+	user, err := h.getUser(ctx, createData.User)
 	if err != nil {
-		handlers.NotFound(resp, err)
+		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	rel := forms.TenantUserRelCommon{
-		Tenant:   tenant.Data(),
-		TenantID: tenant.Data().ID,
-		User:     user.Data(),
-		UserID:   user.Data().ID,
-		Role:     createForm.Role,
+	rel := models.TenantUserRels{
+		TenantID: tenant.ID,
+		UserID:   user.ID,
+		Role:     createData.Role,
 	}
-	if err := h.Model().Create(ctx, rel.Object()); err != nil {
+	if err := h.DB().WithContext(ctx).Create(rel).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.Created(resp, rel)
+	handlers.Created(resp, createData)
 }
 
 func (h *Handler) ModifyTenantMember(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
-	createForm := &forms.TenantUserCreateModifyForm{}
-	if err := handlers.BindData(req, createForm); err != nil {
+	updateData := &TenantUserCreateForm{}
+	if err := handlers.BindData(req, updateData); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	tenant, err := h.getTenantCommon(ctx, createForm.Tenant)
+	tenant, err := h.getTenant(ctx, req.PathParameter("tenant"))
 	if err != nil {
 		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	user, err := h.getUserCommon(ctx, createForm.User)
+	user, err := h.getUser(ctx, updateData.User)
 	if err != nil {
 		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	rel := forms.TenantUserRelCommon{
-		Tenant:   tenant.Data(),
-		TenantID: tenant.Data().ID,
-		User:     user.Data(),
-		UserID:   user.Data().ID,
-		Role:     createForm.Role,
-	}
-	if err := h.Model().Update(ctx, rel.Object(), client.WhereEqual("tenant_id", tenant.Data().ID), client.WhereEqual("user_id", user.Data().ID)); err != nil {
-		handlers.BadRequest(resp, err)
+	rel := &models.TenantUserRels{TenantID: tenant.ID, UserID: user.ID}
+
+	if err := h.DB().WithContext(ctx).First(rel, rel).Error; err != nil {
+		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	resp.WriteAsJson(rel)
+	rel.Role = updateData.Role
+	if err := h.DB().WithContext(ctx).Updates(rel).Error; err != nil {
+		handlers.BadRequest(resp, err)
+	}
+	handlers.OK(resp, rel)
 }
 
 func (h *Handler) DeleteTenantMember(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	tenant := forms.TenantCommon{}
-	user := forms.UserCommon{}
-	if err := h.Model().Get(ctx, tenant.Object(), client.WhereNameEqual(req.PathParameter("tenant"))); err != nil {
-		handlers.BadRequest(resp, err)
+	rel := &models.TenantUserRels{}
+	scopes := []func(*gorm.DB) *gorm.DB{
+		handlers.ScopeTable(rel),
+		handlers.ScopeBelongViaField(models.User{}, rel, handlers.WhereEqual("username", req.PathParameter("user")), "user_id"),
+		handlers.ScopeBelongViaField(models.Tenant{}, rel, handlers.WhereNameEqual(req.PathParameter("tenant")), "tenant_id"),
+	}
+	if err := h.DBWithContext(req).Scopes(scopes...).First(rel).Error; err != nil {
+		if handlers.IsNotFound(err) {
+			handlers.NoContent(resp, nil)
+		} else {
+			handlers.BadRequest(resp, err)
+		}
 		return
 	}
-	if err := h.Model().Get(ctx, user.Object(), client.WhereNameEqual(req.PathParameter("user"))); err != nil {
-		handlers.BadRequest(resp, err)
-		return
-	}
-
-	rel := forms.TenantUserRelCommon{
-		Tenant:   tenant.Data(),
-		TenantID: tenant.Data().ID,
-		User:     user.Data(),
-		UserID:   user.Data().ID,
-	}
-	if err := h.Model().Delete(ctx, rel.Object(), client.WhereEqual("tenant_id", tenant.Data().ID), client.WhereEqual("user_id", user.Data().ID)); err != nil {
+	if err := h.DBWithContext(req).Delete(rel).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
 	handlers.NoContent(resp, nil)
+
 }
 
 func (h *Handler) ListTenantMember(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	rel := &forms.UserCommonList{}
-	tenant := &forms.TenantCommon{
-		Name: req.PathParameter("tenant"),
+	ol := &[]models.UserSimple{}
+	scopes := []func(*gorm.DB) *gorm.DB{
+		handlers.ScopeTable(ol),
+		handlers.ScopeSearch(req, ol, []string{"username"}),
+		handlers.ScopeBelongM2M(models.Tenant{}, ol, models.TenantUserRels{}, handlers.WhereNameEqual(req.PathParameter("tenant")), "user_id", "tenant_id"),
 	}
-	opts := []client.Option{}
-	if role := req.QueryParameter("role"); role != "" {
-		opts = append(opts, client.ExistRelationWithKeyValue(tenant.Object(), "role", req.QueryParameter("role")))
-	} else {
-		opts = append(opts, client.ExistRelation(tenant.Object()))
-	}
-	if req.QueryParameter("isActive") != "" {
-		opts = append(opts, client.WhereEqual("is_active", false))
-	}
-	if err := h.Model().List(ctx, rel.Object(), opts...); err != nil {
+	var total int64
+	if err := h.DBWithContext(req).Scopes(scopes...).Count(&total).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.OK(resp, rel.Data())
+
+	scopes = append(scopes, handlers.ScopePageSize(req))
+	db := h.DBWithContext(req).Scopes(scopes...).Find(ol)
+	if err := db.Error; err != nil {
+		handlers.BadRequest(resp, err)
+		return
+	}
+	handlers.OK(resp, handlers.Page(db, total, ol))
 }

@@ -14,7 +14,7 @@ var approvalTags = []string{"approval"}
 
 func (h *Handler) Regist(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/approvals")
+	ws.Path("/v2/approvals")
 	ws.Consumes(restful.MIME_JSON)
 
 	ws.Route(ws.GET("").

@@ -27,7 +27,7 @@ func (h *Handler) PluginSwitch(req *restful.Request, resp *restful.Response) {
 
 func (h *Handler) cluster(req *restful.Request, resp *restful.Response, fun func(ctx context.Context, cluster string, cli agents.Client) (interface{}, error)) {
 	ctx := req.Request.Context()
-	cluster, err := h.getClusterCommon(ctx, req.PathParameter("cluster"))
+	cluster, err := h.getCluster(ctx, req.PathParameter("cluster"))
 	if err != nil {
 		handlers.BadRequest(resp, err)
 	}

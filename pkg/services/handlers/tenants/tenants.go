@@ -2,7 +2,8 @@ package tenanthandler
 
 import (
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/forms"
+	"gorm.io/gorm"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/services/handlers/base"
 )
@@ -11,60 +12,84 @@ type Handler struct {
 	base.BaseHandler
 }
 
-func (h *Handler) Create(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	obj := &forms.TenantDetail{}
+func (h *Handler) CreateTenant(req *restful.Request, resp *restful.Response) {
+	obj := &models.TenantCommon{}
 	if err := handlers.BindData(req, obj); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	if err := h.Model().Create(ctx, obj.Object()); err != nil {
+	tx := h.DBWithContext(req)
+	tx = handlers.ScopeOmitAssociations(tx)
+	if err := tx.Create(obj).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
 	handlers.Created(resp, obj)
 }
 
-func (h *Handler) List(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	ol := forms.TenantCommonList{}
-	if err := h.Model().List(ctx, ol.Object(), handlers.CommonOptions(req)...); err != nil {
+func (h *Handler) ListTenant(req *restful.Request, resp *restful.Response) {
+	ol := &[]models.TenantCommon{}
+	scopes := []func(*gorm.DB) *gorm.DB{
+		handlers.ScopeTable(ol),
+		handlers.ScopeOrder(req, []string{"create_at"}),
+		handlers.ScopeSearch(req, &models.Tenant{}, []string{"name"}),
+	}
+	var total int64
+	if err := h.DBWithContext(req).Scopes(scopes...).Count(&total).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.OK(resp, handlers.Page(ol.Object(), ol.Data()))
+
+	scopes = append(scopes, handlers.ScopePageSize(req))
+	db := h.DBWithContext(req).Scopes(scopes...).Find(ol)
+	if err := db.Error; err != nil {
+		handlers.BadRequest(resp, err)
+		return
+	}
+	handlers.OK(resp, handlers.Page(db, total, ol))
 }
 
-func (h *Handler) Retrieve(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	form, err := h.getTenant(ctx, req.PathParameter("tenant"), req.QueryParameter("detail") != "")
-	if err != nil {
+func (h *Handler) RetrieveTenant(req *restful.Request, resp *restful.Response) {
+	tx := h.DBWithContext(req)
+	tenant := &models.TenantCommon{}
+	conds := []*handlers.Cond{handlers.WhereNameEqual(req.PathParameter("tenant"))}
+	tx = tx.Scopes(
+		handlers.ScopeCondition(conds, tenant),
+	)
+	if err := tx.First(tenant).Error; err != nil {
 		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
-	resp.WriteAsJson(form.DataPtr())
+	handlers.OK(resp, tenant)
 }
 
-func (h *Handler) Delete(req *restful.Request, resp *restful.Response) {
+func (h *Handler) DeleteTenant(req *restful.Request, resp *restful.Response) {
+	tenant := &models.TenantCommon{Name: req.PathParameter("tenant")}
 	ctx := req.Request.Context()
-	tenant, err := h.getTenantCommon(ctx, req.PathParameter("tenant"))
-	if err != nil {
-		handlers.NoContent(resp, nil)
+	if err := h.DB().WithContext(ctx).First(tenant, tenant).Error; err != nil {
+		if handlers.IsNotFound(err) {
+			handlers.NoContent(resp, nil)
+		} else {
+			handlers.BadRequest(resp, err)
+		}
 		return
 	}
-	if err := h.Model().Delete(ctx, tenant.Object()); err != nil {
+	if err := h.DB().WithContext(ctx).Delete(tenant).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
 	handlers.NoContent(resp, nil)
 }
 
-func (h *Handler) Put(req *restful.Request, resp *restful.Response) {
-	msg := map[string]interface{}{"status": "put"}
-	resp.WriteAsJson(msg)
-}
-
-func (h *Handler) Patch(req *restful.Request, resp *restful.Response) {
-	msg := map[string]interface{}{"status": "patch"}
-	resp.WriteAsJson(msg)
+func (h *Handler) ModifyTenant(req *restful.Request, resp *restful.Response) {
+	tenant := &models.TenantCommon{}
+	if err := handlers.BindData(req, tenant); err != nil {
+		handlers.BadRequest(resp, err)
+		return
+	}
+	if err := h.DB().WithContext(req.Request.Context()).Where("name = ?", req.PathParameter("tenant")).Updates(tenant).Error; err != nil {
+		handlers.BadRequest(resp, err)
+		return
+	}
+	handlers.OK(resp, tenant)
 }

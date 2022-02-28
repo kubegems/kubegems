@@ -10,7 +10,6 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	chTranslations "github.com/go-playground/validator/v10/translations/zh"
-	"kubegems.io/pkg/model/client"
 	"kubegems.io/pkg/model/forms"
 )
 
@@ -19,9 +18,8 @@ type ValidatorIface interface {
 }
 
 var (
-	v           *validator.Validate
-	trans       ut.Translator
-	modelClient client.ModelClientIface
+	v     *validator.Validate
+	trans ut.Translator
 )
 
 func GetTranslator() ut.Translator {
@@ -52,7 +50,7 @@ func (v *Validator) Validate(value interface{}) map[string]string {
 	return nil
 }
 
-func InitValidator(mc client.ModelClientIface) ValidatorIface {
+func InitValidator() ValidatorIface {
 	v = validator.New()
 	zhT := zh.New()
 	enT := en.New()
@@ -74,15 +72,12 @@ func InitValidator(mc client.ModelClientIface) ValidatorIface {
 	trans = _trans
 	registCustomTags()
 	registStructValidates()
-	modelClient = mc
 	return &Validator{V: v, T: _trans}
 }
 
 func registStructValidates() {
 	// User struct validate
-	GetValidator().RegisterStructValidation(UserStructLevelValidation, forms.UserDetail{})
 	GetValidator().RegisterStructValidation(TenantStructLevelValidation, forms.TenantCommon{})
 	GetValidator().RegisterStructValidation(ProjectStructLevelValidation, forms.ProjectCommon{})
 	GetValidator().RegisterStructValidation(TenantUserRelStructLevelValidation, forms.TenantUserRelCommon{})
-	GetValidator().RegisterStructValidation(EnvironmentUserRelStructLevelValidation, forms.EnvironmentUserRelCommon{})
 }
