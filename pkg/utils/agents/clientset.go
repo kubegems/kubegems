@@ -30,9 +30,12 @@ func NewClientSet(databse *database.Database) (*ClientSet, error) {
 	}, nil
 }
 
-func (h *ClientSet) apiServerProxyPath() string {
-	return fmt.Sprintf("/api/v1/namespaces/%s/services/%s:%d/proxy",
-		h.options.Namespace, h.options.ServiceName, h.options.ServicePort)
+func (h *ClientSet) apiServerProxyPath(isHttps bool) string {
+	template := "/api/v1/namespaces/%s/services/%s:%d/proxy"
+	if isHttps {
+		template = "/api/v1/namespaces/%s/services/https:%s:%d/proxy"
+	}
+	return fmt.Sprintf(template, h.options.Namespace, h.options.ServiceName, h.options.ServicePort)
 }
 
 func (h *ClientSet) Clusters() []string {
@@ -81,7 +84,8 @@ func (h *ClientSet) completeFromKubeconfig(ctx context.Context, cluster *models.
 	if err != nil {
 		return err
 	}
-	cluster.AgentAddr = apiserver + h.apiServerProxyPath()
+	// always using https via apiserver proxy now
+	cluster.AgentAddr = apiserver + h.apiServerProxyPath(true)
 	cluster.AgentCert = string(kubecliCert)
 	cluster.AgentKey = string(kubecliKey)
 	cluster.AgentCA = string(kubeca)
