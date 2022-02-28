@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/httpsigs"
 )
@@ -14,6 +15,7 @@ func SignerMiddleware() func(c *gin.Context) {
 
 	return func(c *gin.Context) {
 		if err := signer.Validate(c.Request); err != nil {
+			log.Error(err, "signer")
 			handlers.Forbidden(c, err)
 			c.Abort()
 		}

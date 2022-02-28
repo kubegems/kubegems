@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path"
 	"sync"
 
 	"kubegems.io/pkg/service/models"
@@ -119,7 +118,7 @@ func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta
 		Name:     name,
 		BaseAddr: baseaddr,
 		Transport: &http.Transport{
-			Proxy: getRequestProxy(path.Join("/v1/proxy/cluster", name)),
+			Proxy: getRequestProxy(h.apiServerProxyPath(true)),
 		},
 	}
 
