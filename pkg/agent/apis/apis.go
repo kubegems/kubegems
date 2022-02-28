@@ -2,7 +2,6 @@ package apis
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -289,7 +288,7 @@ func listen(ctx context.Context, options *system.Options, handler http.Handler) 
 			return err
 		}
 		server.TLSConfig = tlsc
-		server.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert // enable TLS client auth
+		// server.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert // enable TLS client auth
 	} else {
 		log.Info("tls config not found")
 	}
