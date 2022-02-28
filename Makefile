@@ -78,7 +78,11 @@ build: ## Build binaries.
 	CGO_ENABLED=0 go build -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
 container: build ## Build container image.
+ifneq (, $(shell which docker))
 	docker build -t ${IMG} .
+else
+	buildah bud -t ${IMG} .
+endif
 
 push: ## Push docker image with the manager.
 	docker push ${IMG}
