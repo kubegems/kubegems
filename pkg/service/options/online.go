@@ -52,7 +52,7 @@ func (opts *OnlineOptions) StartSync(db *gorm.DB, interval time.Duration) {
 		if err := opts.LoadFromDB(db); err != nil {
 			log.Error(err, "load online options from db")
 		}
-		log.Info("load online options from db succeed")
+		log.Debugf("load online options from db succeed")
 	}
 }
 
