@@ -85,7 +85,11 @@ else
 endif
 
 push: ## Push docker image with the manager.
+ifneq (, $(shell which docker))
 	docker push ${IMG}
+else
+	buildah push ${IMG}
+endif
 
 CONTROLLER_GEN = ${BIN_DIR}/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
