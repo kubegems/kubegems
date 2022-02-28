@@ -1,11 +1,8 @@
 package userhandler
 
 import (
-	"net/http"
-
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/services/handlers/base"
 )
@@ -16,58 +13,67 @@ type Handler struct {
 	base.BaseHandler
 }
 
-func (h *Handler) Create(req *restful.Request, resp *restful.Response) {
-	user := &forms.UserDetail{}
+func (h *Handler) CreateUser(req *restful.Request, resp *restful.Response) {
+	user := models.UserCommon{}
 	if err := handlers.BindData(req, user); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	if err := h.Model().Create(req.Request.Context(), user.Object()); err != nil {
+	if err := h.DB().WithContext(req.Request.Context()).Create(user).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.Created(resp, user.Data())
+	handlers.Created(resp, user)
 }
 
-func (h *Handler) List(req *restful.Request, resp *restful.Response) {
-	userList := forms.UserCommonList{}
-	l := userList.Object()
-	if err := h.Model().List(req.Request.Context(), l, handlers.CommonOptions(req)...); err != nil {
+func (h *Handler) ListUser(req *restful.Request, resp *restful.Response) {
+	userList := []models.UserCommon{}
+	if err := h.DB().WithContext(req.Request.Context()).Find(userList).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.OK(resp, handlers.Page(l, userList.Data()))
+	handlers.OK(resp, userList)
 }
 
-func (h *Handler) Retrieve(req *restful.Request, resp *restful.Response) {
+func (h *Handler) RetrieveUser(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
-	var form forms.FormInterface
-	if req.QueryParameter("detail") != "" {
-		form = &forms.UserDetail{}
-	} else {
-		form = &forms.UserCommon{}
-	}
-	if err := h.Model().Get(ctx, form.Object(), client.WhereNameEqual(req.PathParameter("name"))); err != nil {
+	user := models.UserCommon{}
+	if err := h.DB().WithContext(ctx).First(user, "username = ?", req.PathParameter("name")).Error; err != nil {
 		handlers.NotFoundOrBadRequest(resp, err)
 	}
-	handlers.OK(resp, form.DataPtr())
+	handlers.OK(resp, user)
 }
 
-func (h *Handler) Delete(req *restful.Request, resp *restful.Response) {
-	user := forms.UserCommon{}
-	if err := h.Model().Delete(req.Request.Context(), user.Object(), client.WhereNameEqual(req.PathParameter("name"))); err != nil {
-		resp.WriteError(http.StatusBadRequest, err)
+func (h *Handler) DeleteUser(req *restful.Request, resp *restful.Response) {
+	ctx := req.Request.Context()
+	user := models.UserCommon{}
+	if err := h.DB().WithContext(ctx).Delete(user, "username = ?", req.PathParameter("name")).Error; err != nil {
+		if handlers.IsNotFound(err) {
+			handlers.NoContent(resp, nil)
+		} else {
+			handlers.BadRequest(resp, err)
+		}
 		return
 	}
 	handlers.NoContent(resp, nil)
 }
 
-func (h *Handler) Put(req *restful.Request, resp *restful.Response) {
-	msg := map[string]interface{}{"status": "put"}
-	resp.WriteAsJson(msg)
-}
+func (h *Handler) PutUser(req *restful.Request, resp *restful.Response) {
+	ctx := req.Request.Context()
+	user := &models.UserCommon{}
+	if err := h.DB().WithContext(ctx).First(user, "username = ?", req.PathParameter("name")).Error; err != nil {
+		handlers.NotFoundOrBadRequest(resp, err)
+	}
+	newUser := &models.UserCommon{}
+	if err := handlers.BindData(req, newUser); err != nil {
+		handlers.BadRequest(resp, err)
+		return
+	}
+	user.Email = newUser.Email
+	user.Phone = newUser.Phone
+	if err := h.DB().WithContext(ctx).Save(user).Error; err != nil {
+		handlers.BadRequest(resp, err)
+	}
+	handlers.OK(resp, user)
 
-func (h *Handler) Patch(req *restful.Request, resp *restful.Response) {
-	msg := map[string]interface{}{"status": "patch"}
-	resp.WriteAsJson(msg)
 }

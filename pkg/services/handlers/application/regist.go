@@ -29,6 +29,7 @@ func (h *ApplicationHandler) Regist(container *restful.Container) {
 	image := ImageHandler{BaseHandler: manifest.BaseHandler}
 
 	ws := new(restful.WebService)
+	ws.Path("/v2")
 	ws.Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 
 	routers := []*restful.RouteBuilder{

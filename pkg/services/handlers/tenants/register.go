@@ -5,7 +5,7 @@ import (
 
 	restfulspec "github.com/emicklei/go-restful-openapi/v2"
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 )
 
@@ -17,40 +17,45 @@ var (
 
 func (h *Handler) Regist(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/tenants")
+	ws.Path("/v2/tenants")
 
 	ws.Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 
 	ws.Route(handlers.ListCommonQuery(ws.GET("/").
-		To(h.List).
+		To(h.ListTenant).
 		Doc("list tenants").
 		Metadata(restfulspec.KeyOpenAPITags, tenantTags).
-		Returns(http.StatusOK, handlers.MessageOK, handlers.PageData{
-			List: &[]forms.TenantCommon{},
-		})))
+		Returns(http.StatusOK, handlers.MessageOK, TenantListResp{})))
 
 	ws.Route(ws.POST("/").
-		To(h.Create).
+		To(h.CreateTenant).
 		Doc("create tenant").
 		Metadata(restfulspec.KeyOpenAPITags, tenantTags).
-		Reads(forms.TenantDetail{}).
-		Returns(http.StatusOK, handlers.MessageOK, forms.TenantCommon{}))
+		Reads(models.TenantSimple{}).
+		Returns(http.StatusOK, handlers.MessageOK, TenantCreateResp{}))
 
-	ws.Route(handlers.ListCommonQuery(ws.GET("/{tenant}").
-		To(h.Retrieve).
+	ws.Route(ws.GET("/{tenant}").
+		To(h.RetrieveTenant).
 		Doc("retrieve tenant").
 		Notes("retrieve tenant").
-		Param(restful.QueryParameter("detail", "is show detail info")).
 		Param(restful.PathParameter("tenant", "tenant")).
 		Metadata(restfulspec.KeyOpenAPITags, tenantTags).
-		Returns(http.StatusOK, handlers.MessageOK, forms.TenantDetail{})))
+		Returns(http.StatusOK, handlers.MessageOK, TenantCommonResp{}))
 
 	ws.Route(ws.DELETE("/{tenant}").
-		To(h.Delete).
-		Doc("delete tenant via id").
+		To(h.DeleteTenant).
+		Doc("delete tenant").
 		Param(restful.PathParameter("tenant", "tenant name")).
 		Metadata(restfulspec.KeyOpenAPITags, tenantTags).
 		Returns(http.StatusOK, handlers.MessageOK, nil))
+
+	ws.Route(ws.PUT("/{tenant}").
+		To(h.ModifyTenant).
+		Doc("modify tenant").
+		Param(restful.PathParameter("tenant", "tenant")).
+		Metadata(restfulspec.KeyOpenAPITags, tenantTags).
+		Reads(models.TenantCommon{}).
+		Returns(http.StatusOK, handlers.MessageOK, TenantCommonResp{}))
 
 	h.registUsers(ws)
 	h.registProjects(ws)
@@ -64,17 +69,17 @@ func (h *Handler) registUsers(ws *restful.WebService) {
 		Doc("add user to tenant members").
 		Notes(`add user to tenant members`).
 		Param(restful.PathParameter("tenant", "tenant name")).
-		Reads(forms.TenantUserCreateModifyForm{}).
+		Reads(TenantUserCreateForm{}).
 		Metadata(restfulspec.KeyOpenAPITags, tenantUserTags).
-		Returns(http.StatusOK, handlers.MessageOK, forms.TenantUserRelCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, TenantUserCreateForm{}))
 
 	ws.Route(ws.PUT("/{tenant}/users").
 		To(h.ModifyTenantMember).
 		Doc("modify user role tenant members").
 		Param(restful.PathParameter("tenant", "tenant name")).
-		Reads(forms.TenantUserCreateModifyForm{}).
+		Reads(TenantUserCreateForm{}).
 		Metadata(restfulspec.KeyOpenAPITags, tenantUserTags).
-		Returns(http.StatusOK, handlers.MessageOK, forms.TenantUserRelCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, models.TenantUserRels{}))
 
 	ws.Route(ws.GET("/{tenant}/users").
 		To(h.ListTenantMember).
@@ -83,9 +88,7 @@ func (h *Handler) registUsers(ws *restful.WebService) {
 		Param(restful.QueryParameter("isActive", "isActive")).
 		Param(restful.QueryParameter("role", "role")).
 		Metadata(restfulspec.KeyOpenAPITags, tenantUserTags).
-		Returns(http.StatusOK, handlers.MessageOK, &handlers.PageData{
-			List: []forms.UserCommon{},
-		}))
+		Returns(http.StatusOK, handlers.MessageOK, UserSimpleListResp{}))
 
 	ws.Route(ws.DELETE("/{tenant}/users/{user}").
 		To(h.DeleteTenantMember).
@@ -97,20 +100,28 @@ func (h *Handler) registUsers(ws *restful.WebService) {
 }
 
 func (h *Handler) registProjects(ws *restful.WebService) {
+	ws.Route(ws.GET("/{tenant}/projects").
+		To(h.ListTenantProject).
+		Doc("list tenant's projects").
+		Param(restful.PathParameter("tenant", "tenant name")).
+		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
+		Returns(http.StatusOK, handlers.MessageOK, ProjectListResp{}))
+
 	ws.Route(ws.POST("/{tenant}/projects").
 		To(h.CreatePorject).
 		Doc("create a project").
 		Param(restful.PathParameter("tenant", "tenant name")).
-		Reads(forms.ProjectCreateForm{}).
+		Reads(ProjectCreateForm{}).
 		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusOK, handlers.MessageOK, forms.ProjectCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, models.Project{}))
 
 	ws.Route(ws.DELETE("/{tenant}/projects/{project}").
 		To(h.DeleteProject).
 		Doc("delete a project").
 		Param(restful.PathParameter("tenant", "tenant name")).
+		Param(restful.PathParameter("project", "project name")).
 		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusOK, handlers.MessageOK, forms.TenantUserRelCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, nil))
 
 	ws.Route(ws.GET("/{tenant}/projects/{project}").
 		To(h.RetrieveTenantProject).
@@ -119,5 +130,5 @@ func (h *Handler) registProjects(ws *restful.WebService) {
 		Param(restful.PathParameter("tenant", "tenant name")).
 		Param(restful.PathParameter("project", "project name")).
 		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusOK, handlers.MessageOK, forms.ProjectCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, models.Project{}))
 }

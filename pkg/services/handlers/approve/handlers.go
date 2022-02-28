@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"gorm.io/gorm"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/services/handlers/base"
 	"kubegems.io/pkg/utils"
@@ -35,20 +35,29 @@ const (
 	ApplyKindQuotaApply = "clusterQuota"
 )
 
-// List List TenantResouceQuotaApply which status is not approved
+// List List Approve which status is not approved
 func (h *Handler) List(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	ol := forms.TenantResourceQuotaApplyCommonList{}
-	if err := h.Model().List(ctx, ol.Object(), client.Preloads([]string{"Creator"}), client.WhereEqual("status", ApproveStatusPending)); err != nil {
+	ol := &[]models.TenantResourceQuotaApply{}
+	scopes := []func(*gorm.DB) *gorm.DB{
+		handlers.ScopeTable(ol),
+		handlers.ScopeOrder(req, []string{"create_at"}),
+	}
+	var total int64
+	if err := h.DBWithContext(req).Scopes(scopes...).Count(&total).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	ret := quotaApply2Approve(ol.Data())
-	handlers.OK(resp, ret)
+	scopes = append(scopes, handlers.ScopePageSize(req))
+	db := h.DBWithContext(req).Scopes(scopes...).Find(ol)
+	if err := db.Error; err != nil {
+		handlers.BadRequest(resp, err)
+		return
+	}
+	quotaApply2Approve(*ol)
+	handlers.OK(resp, handlers.Page(db, total, ol))
 }
 
 func (h *Handler) Action(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
 	kind := req.PathParameter("kind")
 	id := utils.ToUint(req.PathParameter("id"))
 	action := req.PathParameter("action")
@@ -63,32 +72,32 @@ func (h *Handler) Action(req *restful.Request, resp *restful.Response) {
 	}
 	switch kind {
 	case ApplyKindQuotaApply:
-		obj := forms.TenantResourceQuotaApplyCommon{Status: status}
-		h.Model().Update(ctx, obj.Object(), client.WhereEqual("id", id))
+		obj := models.TenantResourceQuotaApply{Status: status}
+		h.DBWithContext(req).Where("id = ?", id).Updates(obj)
 	default:
 		handlers.NotFound(resp, fmt.Errorf("not supported kind %s", kind))
 		return
 	}
 }
 
-func quotaApply2Approve(ol []*forms.TenantResourceQuotaApplyCommon) []Approve {
+func quotaApply2Approve(ol []models.TenantResourceQuotaApply) []Approve {
 	ret := []Approve{}
 	for idx := range ol {
 		ret = append(ret, Approve{
 			Title:   formatTitle(ol[idx]),
 			Kind:    ApplyKindQuotaApply,
 			KindID:  ol[idx].ID,
-			Content: nil,
-			Time:    *ol[idx].CreateAt,
+			Content: formatContent(ol[idx]),
+			Time:    ol[idx].CreateAt,
 		})
 	}
 	return ret
 }
 
-func formatTitle(apply *forms.TenantResourceQuotaApplyCommon) string {
-	return fmt.Sprintf("%s 发起 集群资源申请", apply.Creator.Name)
+func formatTitle(apply models.TenantResourceQuotaApply) string {
+	return fmt.Sprintf("%s 发起 集群资源申请", apply.Creator.Username)
 }
 
-func formatContent(apply *forms.TenantResourceQuotaApplyCommon) interface{} {
+func formatContent(apply models.TenantResourceQuotaApply) interface{} {
 	return apply.Content
 }

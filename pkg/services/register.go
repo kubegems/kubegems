@@ -6,8 +6,6 @@ import (
 
 	restful "github.com/emicklei/go-restful/v3"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/service/options"
 	applicationhandler "kubegems.io/pkg/services/handlers/application"
 	approvehandler "kubegems.io/pkg/services/handlers/approve"
 	appstorehandler "kubegems.io/pkg/services/handlers/appstore"
@@ -16,6 +14,7 @@ import (
 	loginhandler "kubegems.io/pkg/services/handlers/login"
 	tenanthandler "kubegems.io/pkg/services/handlers/tenants"
 	userhandler "kubegems.io/pkg/services/handlers/users"
+	"kubegems.io/pkg/services/options"
 	"kubegems.io/pkg/utils/system"
 )
 
@@ -23,11 +22,12 @@ type RestHandler interface {
 	Regist(c *restful.Container)
 }
 
-func NewRest(modelClient client.ModelClientIface, deps *Dependencies, opts *options.Options) *restful.Container {
-	base := base.NewBaseHandler(deps.Agentscli, modelClient, deps.Redis)
+func NewRest(deps *Dependencies, opts *options.Options) *restful.Container {
+	base := base.NewBaseHandler(deps.Agentscli, deps.Redis, deps.Databse)
 	handlers := []RestHandler{
 		&loginhandler.Handler{
 			BaseHandler: base,
+			JWTOptions:  opts.JWT,
 		},
 		&userhandler.Handler{
 			BaseHandler: base,
@@ -51,6 +51,7 @@ func NewRest(modelClient client.ModelClientIface, deps *Dependencies, opts *opti
 		handler.Regist(c)
 	}
 	enableSwagger(c)
+	enableFilters(c, opts)
 	return c
 }
 

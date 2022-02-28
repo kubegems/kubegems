@@ -3,22 +3,27 @@ package filters
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/services/auth"
+	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/models"
+	"kubegems.io/pkg/services/auth/user"
+	"kubegems.io/pkg/utils/jwt"
 )
 
 type AuthMiddleware struct {
 	getters []UserGetterIface
 }
 
-func NewAuthMiddleware() *AuthMiddleware {
+func NewAuthMiddleware(opts *jwt.Options) *AuthMiddleware {
 	var getters []UserGetterIface
-	getters = append(getters, &BearerTokenUserLoader{})
+	getters = append(getters, &BearerTokenUserLoader{
+		JWT: opts.ToJWT(),
+	})
 	getters = append(getters, &PrivateTokenUserLoader{})
 	return &AuthMiddleware{
 		getters: getters,
@@ -27,11 +32,14 @@ func NewAuthMiddleware() *AuthMiddleware {
 
 // UserLoader 根据凭据载入用户
 func (l *AuthMiddleware) FilterFunc(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
-	fmt.Println("TODO: before userloader")
+	if strings.HasPrefix(req.Request.URL.Path, "/docs") || strings.HasPrefix(req.Request.URL.Path, "/v2/login") {
+		chain.ProcessFilter(req, resp)
+		return
+	}
 	if len(l.getters) > 0 {
 		var (
 			loaded bool
-			user   client.CommonUserIfe
+			user   user.CommonUserIface
 		)
 		for idx := range l.getters {
 			user, loaded = l.getters[idx].GetUser(req.Request)
@@ -46,36 +54,41 @@ func (l *AuthMiddleware) FilterFunc(req *restful.Request, resp *restful.Response
 		req.SetAttribute("user", user)
 	}
 	chain.ProcessFilter(req, resp)
-	fmt.Println("TODO: after userloader")
 }
 
 // UserGetterIface 用户接口
 type UserGetterIface interface {
-	GetUser(req *http.Request) (user client.CommonUserIfe, exist bool)
+	GetUser(req *http.Request) (u user.CommonUserIface, exist bool)
 }
 
 // BearerTokenUserLoader  bearer类型
 type BearerTokenUserLoader struct {
-	JWT *auth.JWT
+	JWT *jwt.JWT
 }
 
-func (l *BearerTokenUserLoader) GetUser(req *http.Request) (user client.CommonUserIfe, exist bool) {
+func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIface, exist bool) {
 	htype, token := parseAuthorizationHeader(req)
 	if strings.ToLower(htype) != "bearer" {
 		return nil, false
 	}
 	claims, err := l.JWT.ParseToken(token)
 	if err != nil {
+		log.Error(err, "flow", "parse jwt token")
 		return nil, false
 	}
-	user, y := claims.Payload.(client.CommonUserIfe)
-	return user, y
+	bts, _ := json.Marshal(claims.Payload)
+	var user models.UserCommon
+	err = json.Unmarshal(bts, &user)
+	if err != nil {
+		log.Error(err, "failed to load userinfo", "data", string(bts))
+	}
+	return &user, err == nil
 }
 
 // PrivateTokenUserLoader private-token认证
 type PrivateTokenUserLoader struct{}
 
-func (l *PrivateTokenUserLoader) GetUser(req *http.Request) (user client.CommonUserIfe, exist bool) {
+func (l *PrivateTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIface, exist bool) {
 	ptoken := req.Header.Get("PRIVATE-TOKEN")
 	fmt.Println(ptoken)
 	// TODO: finish logic
@@ -98,13 +111,14 @@ func parseAuthorizationHeader(req *http.Request) (htype, token string) {
 // 例如 Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l
 type BasicAuthUserLoader struct{}
 
-func (l *BasicAuthUserLoader) GetUser(req *http.Request) (user client.CommonUserIfe, exist bool) {
+func (l *BasicAuthUserLoader) GetUser(req *http.Request) (userData user.CommonUserIface, exist bool) {
 	htype, token := parseAuthorizationHeader(req)
 	if strings.ToLower(htype) != "basic" {
 		return nil, false
 	}
 	bts, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
+		log.Error(err, "flow", "parse private token")
 		return nil, false
 	}
 	seps := bytes.SplitN(bts, []byte(":"), 2)

@@ -267,7 +267,7 @@ func (h *ApplicationHandler) StrategyDeploymentStatus(req *restful.Request, resp
 			req := agents.Request{
 				Method: http.MethodGet,
 				Path:   path,
-				Into:   &handlers.ResponseStruct{Data: item},
+				Into:   &handlers.Response{Data: item},
 			}
 			if err := cli.DoRequest(ctx, req); err != nil {
 				return nil, err
