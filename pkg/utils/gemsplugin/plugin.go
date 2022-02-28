@@ -24,7 +24,7 @@ var (
 		"/apis/plugins.gems.cloudminds.com/v1alpha1/namespaces/gemcloud-system/installers/plugin-installer",
 		"/apis/plugins.gems.cloudminds.com/v1alpha1/namespaces/kubegems-installer/installers/kubegems-plugins",
 
-		"/apis/plugins.kubegems.io/v1alpha1/namespaces/kubegems-installer/installers/kubegems-plugins",
+		"/apis/plugins.kubegems.io/v1beta1/namespaces/kubegems-installer/installers/kubegems-plugins",
 	}
 	realPluginURL string // real plugin resource position
 )
