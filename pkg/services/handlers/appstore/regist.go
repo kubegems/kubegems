@@ -12,7 +12,7 @@ var appStoreTags = []string{"appstore"}
 
 func (h *Handler) Regist(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/appstore")
+	ws.Path("/v2/appstore")
 	ws.Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 
 	ws.Route(ws.GET("/repos").

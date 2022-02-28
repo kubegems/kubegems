@@ -7,9 +7,8 @@ import (
 	kialiconfig "github.com/kiali/kiali/config"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/model/orm"
 	"kubegems.io/pkg/model/validate"
-	"kubegems.io/pkg/service/options"
+	"kubegems.io/pkg/services/options"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
@@ -75,8 +74,6 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 }
 
 func Run(ctx context.Context, opts *options.Options) error {
-	onlineOptions := options.NewOnlineOptions() // 在线配置
-	_ = onlineOptions
 
 	ctx = log.NewContext(ctx, log.LogrLogger)
 	deps, err := prepareDependencies(ctx, opts)
@@ -90,9 +87,8 @@ func Run(ctx context.Context, opts *options.Options) error {
 	// 目前没啥问题
 	kialiconfig.Set(kialiconfig.NewConfig())
 
-	mc := orm.NewOrmClient(deps.Databse.DB())
-	validate.InitValidator(mc)
-	rest := NewRest(mc, deps, opts)
+	validate.InitValidator()
+	rest := NewRest(deps, opts)
 
 	// run
 	eg, ctx := errgroup.WithContext(ctx)

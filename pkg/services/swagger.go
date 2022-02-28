@@ -8,8 +8,8 @@ import (
 
 func enableSwagger(c *restful.Container) {
 	config := restfulspec.Config{
-		WebServices:                   c.RegisteredWebServices(), // you control what services are visible
-		APIPath:                       "/apidocs.json",
+		WebServices:                   c.RegisteredWebServices(),
+		APIPath:                       "/docs.json",
 		PostBuildSwaggerObjectHandler: enrichSwaggerObject,
 	}
 
@@ -38,4 +38,9 @@ func enrichSwaggerObject(swo *spec.Swagger) {
 		},
 	}
 	swo.Schemes = []string{"http", "https"}
+	swo.SecurityDefinitions = map[string]*spec.SecurityScheme{
+		"jwt": spec.APIKeyAuth("Authorization", "header"),
+	}
+	swo.Security = []map[string][]string{}
+	swo.Security = append(swo.Security, map[string][]string{"jwt": {""}})
 }

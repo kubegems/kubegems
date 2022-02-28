@@ -13,8 +13,7 @@ import (
 	"github.com/goharbor/harbor/src/pkg/scan/vuln"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/utils/harbor"
 )
@@ -323,10 +322,13 @@ func (h *ImageHandler) completeRegistryOption(ctx context.Context, options *Regi
 	hostname := spec.Hostname()
 
 	// todo: improve this query
-	registries := &forms.RegistryDetailList{}
-	_ = h.Model().List(ctx, registries.Object(), client.BelongTo((&forms.ProjectCommon{Name: project}).Object()))
+	registries := &[]models.Registry{}
+	h.DB().WithContext(ctx).Scopes(
+		handlers.ScopeTable(registries),
+		handlers.ScopeBelongViaField(&models.Project{}, registries, handlers.WhereNameEqual(project), "project_id"),
+	).Find(registries)
 
-	for _, registry := range registries.Items {
+	for _, registry := range *registries {
 		u, err := url.Parse(registry.Address)
 		if err != nil {
 			log.WithField("registry", registry.Address).Warn("invalid address")

@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/utils/helm"
 )
 
@@ -18,15 +18,12 @@ const (
 	SyncStatusSuccess = "success"
 )
 
-func SyncCharts(ctx context.Context, repo forms.ChartRepoCommon, localChartMuseum helm.RepositoryConfig, modelClient client.ModelClientIface) {
+func SyncCharts(ctx context.Context, repo *models.ChartRepo, localChartMuseum helm.RepositoryConfig, db *gorm.DB) {
 	once := sync.Once{}
 	onevent := func(e helm.ProcessEvent) {
 		// 有事件就更新
 		once.Do(func() {
-			updateObj := forms.ChartRepoCommon{
-				SyncStatus: SyncStatusRunning,
-			}
-			modelClient.Update(ctx, updateObj.Object(), client.WhereNameEqual(repo.Name))
+			db.Where("id = ?", repo.ID).UpdateColumn("sync_status", SyncStatusRunning)
 		})
 		if e.Error != nil {
 			log.Error(e.Error, "sync chart repo failed", "chart", e.Chart.Name, "chart version", e.Chart.Version)
@@ -38,20 +35,18 @@ func SyncCharts(ctx context.Context, repo forms.ChartRepoCommon, localChartMuseu
 		URL:  repo.URL,
 	}, localChartMuseum, onevent)
 
-	updateObj := forms.ChartRepoCommon{}
+	updates := map[string]interface{}{}
 	if err != nil {
 		if errors.Is(err, helm.ErrSynchronizing) {
 			return
 		}
 		log.Error(err, "sync repo charts failed", "erpo", repo.Name)
-		updateObj.SyncStatus = SyncStatusError
-		updateObj.SyncMessage = err.Error()
+		updates["sync_status"] = SyncStatusError
+		updates["sync_message"] = err.Error()
 	} else {
-		updateObj.SyncStatus = SyncStatusSuccess
+		updates["sync_status"] = SyncStatusSuccess
+		updates["last_sync"] = time.Now().Format(time.RFC3339)
 	}
 	log.Info("sync repo charts finished", "repo", repo.Name)
-	now := time.Now()
-	updateObj.LastSync = &now
-
-	modelClient.Update(ctx, updateObj.Object(), client.WhereNameEqual(repo.Name))
+	db.Where("id = ?", repo.ID).Updates(updates)
 }

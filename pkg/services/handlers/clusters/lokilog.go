@@ -38,7 +38,6 @@ func (l *Handler) QueryRange(req *restful.Request, resp *restful.Response) {
 	lmtStr := query.Limit
 	if query.Limit == "" {
 		lmtStr = "500"
-	} else {
 	}
 	limit, _ := strconv.Atoi(lmtStr)
 	if limit > 50000 {

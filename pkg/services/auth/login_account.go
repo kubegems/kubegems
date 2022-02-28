@@ -3,14 +3,14 @@ package auth
 import (
 	"context"
 
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"gorm.io/gorm"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/utils"
 )
 
 type AccountLoginUtil struct {
-	Name        string
-	ModelClient client.ModelClientIface
+	Name string
+	DB   *gorm.DB
 }
 
 func (ut *AccountLoginUtil) LoginAddr() string {
@@ -18,13 +18,13 @@ func (ut *AccountLoginUtil) LoginAddr() string {
 }
 
 func (ut *AccountLoginUtil) GetUserInfo(ctx context.Context, cred *Credential) (*UserInfo, error) {
-	user := forms.UserInternal{}
-	if err := ut.ModelClient.Get(ctx, user.Object(), client.Where("username", client.Eq, cred.Username)); err != nil {
+	user := &models.User{}
+	if err := ut.DB.WithContext(ctx).Where("username = ?", cred.Username).First(user).Error; err != nil {
 		return nil, err
 	}
 	if err := utils.ValidatePassword(cred.Password, user.Password); err != nil {
 		return nil, err
 	}
 
-	return &UserInfo{Username: user.Name, Email: user.Email}, nil
+	return &UserInfo{Username: user.Username, Email: user.Email}, nil
 }

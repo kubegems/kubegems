@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
+	"gorm.io/gorm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/repo"
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/services/handlers/base"
 	"kubegems.io/pkg/utils/helm"
@@ -67,26 +67,26 @@ func (h *Handler) ListApps(req *restful.Request, resp *restful.Response) {
 }
 
 func (h *Handler) RetrieveApp(req *restful.Request, resp *restful.Response) {
-	repo := req.PathParameter("repo")
+	reponame := req.PathParameter("repo")
 	chart := req.PathParameter("chart")
 	ctx := req.Request.Context()
-	if repo == "" {
-		handlers.NotFound(resp, fmt.Errorf("invalid repo %s", repo))
+	if reponame == "" {
+		handlers.NotFound(resp, fmt.Errorf("invalid repo %s", reponame))
 		return
 	}
 	var repourl string
-	if repo == InternalChartRepoName {
+	if reponame == InternalChartRepoName {
 		repourl = "http://gems-chartmuseum.gemcloud-system:8030/gems" // TODO: config
 	} else {
-		repoData := forms.ChartRepoCommon{}
-		if err := h.Model().Get(ctx, repoData.Object(), client.WhereNameEqual(repo)); err != nil {
+		repo := &models.ChartRepo{}
+		if err := h.DBWithContext(req).Where("name = ?", reponame).First(repo).Error; err != nil {
 			handlers.NotFoundOrBadRequest(resp, err)
 			return
 		}
-		repourl = repoData.URL
+		repourl = repo.URL
 	}
 
-	index, err := h.ChartMuseumClient.ListChartVersions(ctx, repo, chart)
+	index, err := h.ChartMuseumClient.ListChartVersions(ctx, reponame, chart)
 	if err != nil {
 		handlers.BadRequest(resp, err)
 		return
@@ -123,50 +123,58 @@ func (h *Handler) RetrieveAppFiles(req *restful.Request, resp *restful.Response)
 }
 
 func (h *Handler) ListExternalRepos(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	ol := forms.ChartRepoCommonList{}
-	if err := h.Model().List(ctx, ol.Object()); err != nil {
+	ol := &[]models.ChartRepo{}
+	scopes := []func(*gorm.DB) *gorm.DB{
+		handlers.ScopeTable(ol),
+		handlers.ScopeOrder(req, []string{"last_sync"}),
+		handlers.ScopeSearch(req, ol, []string{"name"}),
+	}
+	var total int64
+	if err := h.DBWithContext(req).Scopes(scopes...).Count(&total).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.OK(resp, ol.Data())
+
+	scopes = append(scopes, handlers.ScopePageSize(req))
+	db := h.DBWithContext(req).Scopes(scopes...).Find(ol)
+	if err := db.Error; err != nil {
+		handlers.BadRequest(resp, err)
+		return
+	}
+	handlers.OK(resp, handlers.Page(db, total, ol))
 }
 
 func (h *Handler) CreateExternalRepo(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	repoData := forms.ChartRepoCommon{}
-	if err := handlers.BindData(req, repoData); err != nil {
+	repo := &models.ChartRepo{}
+	if err := handlers.BindData(req, repo); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
 
-	repository, err := helm.NewLegencyRepository(&helm.RepositoryConfig{Name: repoData.Name, URL: repoData.URL})
+	repository, err := helm.NewLegencyRepository(&helm.RepositoryConfig{Name: repo.Name, URL: repo.URL})
 	if err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
 	// validate repo
-	if _, err := repository.GetIndex(ctx); err != nil {
+	if _, err := repository.GetIndex(req.Request.Context()); err != nil {
 		handlers.BadRequest(resp, fmt.Errorf("invalid repo index: %w", err))
 		return
 	}
-
-	if err := h.Model().Create(ctx, repoData.Object()); err != nil {
+	if err := h.DBWithContext(req).Create(repo).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	handlers.OK(resp, repoData.Data())
+	handlers.OK(resp, repo)
 	go func() {
-		SyncCharts(context.Background(), repoData, helm.RepositoryConfig{URL: h.AppStoreOpt.Addr}, h.Model())
+		SyncCharts(context.Background(), repo, helm.RepositoryConfig{URL: h.AppStoreOpt.Addr}, h.DB())
 	}()
-	return
 }
 
 func (h *Handler) DeleteExternalRepo(req *restful.Request, resp *restful.Response) {
-	repo := req.PathParameter("repo")
-	repoData := forms.ChartRepoCommon{}
-	ctx := req.Request.Context()
-	if err := h.Model().Delete(ctx, repoData.Object(), client.WhereNameEqual(repo)); err != nil {
+	reponame := req.PathParameter("repo")
+	repo := &models.ChartRepo{}
+	if err := h.DBWithContext(req).Where("namef = ?", reponame).Delete(repo).Error; err != nil {
 		if handlers.IsNotFound(err) {
 			handlers.NoContent(resp, nil)
 			return
@@ -179,18 +187,17 @@ func (h *Handler) DeleteExternalRepo(req *restful.Request, resp *restful.Respons
 }
 
 func (h *Handler) SyncExternalRepo(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
-	repo := req.PathParameter("repo")
-	repoData := &forms.ChartRepoCommon{}
-	if err := h.Model().Get(ctx, repoData.Object(), client.WhereNameEqual(repo)); err != nil {
+	reponame := req.PathParameter("repo")
+	repo := &models.ChartRepo{}
+	if err := h.DBWithContext(req).Where("name = ?", reponame).First(repo).Error; err != nil {
 		handlers.NotFoundOrBadRequest(resp, err)
 		return
 	}
 
 	go func() {
-		SyncCharts(context.Background(), *repoData.Data(), helm.RepositoryConfig{URL: h.AppStoreOpt.Addr}, h.Model())
+		SyncCharts(context.Background(), repo, helm.RepositoryConfig{URL: h.AppStoreOpt.Addr}, h.DB())
 	}()
-	handlers.OK(resp, fmt.Sprintf("repo %s started sync on background", repo))
+	handlers.OK(resp, fmt.Sprintf("repo %s started sync on background", repo.Name))
 }
 
 func chartVersion2List(chartVersionsMap map[string]repo.ChartVersions, repourl string) []Chart {

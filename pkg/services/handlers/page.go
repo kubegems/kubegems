@@ -72,7 +72,8 @@ func NewPageData(list interface{}, page, size int, filterfn PageFilterFunc, sort
 	return PageData{
 		List:        v.Interface(),
 		Total:       int64(total),
-		CurrentPage: int64(page),
-		CurrentSize: int64(size),
+		CurrentPage: page,
+		CurrentSize: size,
 	}
+
 }

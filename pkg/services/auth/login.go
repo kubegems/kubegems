@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/model/forms"
+	"gorm.io/gorm"
+	"kubegems.io/pkg/models"
 )
 
 const (
@@ -41,21 +41,20 @@ type AuthenticateModuleIface interface {
 	GetAuthenticateModule(name string) AuthenticateIface
 }
 
-func NewAuthenticateModule(client client.ModelClientIface) *AuthenticateModule {
+func NewAuthenticateModule(db *gorm.DB) *AuthenticateModule {
 	return &AuthenticateModule{
-		ModelClient: client,
+		DB: db,
 	}
 }
 
 type AuthenticateModule struct {
-	ModelClient client.ModelClientIface
+	DB *gorm.DB
 }
 
 func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name string) AuthenticateIface {
-	authSources := &forms.AuthSourceCommonList{}
-	l.ModelClient.List(ctx, authSources.Object())
-	sources := authSources.Data()
-	for _, source := range sources {
+	authSources := &[]models.AuthSource{}
+	l.DB.WithContext(ctx).Find(authSources)
+	for _, source := range *authSources {
 		if source.Name == name {
 			switch source.Kind {
 			case "LDAP":
@@ -66,13 +65,11 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name str
 				opt := &OauthOption{}
 				json.Unmarshal(source.Config, opt)
 				return NewOauthUtils(opt)
-			default:
-				return &AccountLoginUtil{
-					ModelClient: l.ModelClient,
-					Name:        AccountLoginName,
-				}
 			}
 		}
 	}
-	return nil
+	return &AccountLoginUtil{
+		DB:   l.DB,
+		Name: AccountLoginName,
+	}
 }
