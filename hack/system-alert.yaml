@@ -1,0 +1,341 @@
+# k8s节点
+- name: KubernetesNodeNotReady
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: statusCondition
+  labelpairs:
+    condition: Ready
+    status: "true"
+  for: 5m
+  alertLevels:
+    - compareOp: "=="
+      compareValue: "0"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: KubernetesMemoryPressure
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: statusCondition
+  labelpairs:
+    condition: MemoryPressure
+    status: "true"
+  for: 5m
+  alertLevels:
+    - compareOp: "=="
+      compareValue: "1"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 1h
+- name: KubernetesDiskPressure
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: statusCondition
+  labelpairs:
+    condition: DiskPressure
+    status: "true"
+  for: 5m
+  alertLevels:
+    - compareOp: "=="
+      compareValue: "1"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 1h
+- name: KubernetesOutOfDisk
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: statusCondition
+  labelpairs:
+    condition: OutOfDisk
+    status: "true"
+  for: 5m
+  alertLevels:
+    - compareOp: "=="
+      compareValue: "1"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 1h
+- name: KubernetesPodNumberTooHigh
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: runningPodPercent
+  unit: percent
+  for: 1h
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "90"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 1h
+
+# 系统namepace pod
+- name: KubernetesPodCrashLooping
+  namespace: gemcloud-monitoring-system
+  resource: container
+  rule: restartTimesLast5m
+  unit: times
+  labelpairs:
+    namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+  for: 1m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "2"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: KubernetesPodOOMKilling
+  namespace: gemcloud-monitoring-system
+  resource: container
+  rule: statusTerminatedReason
+  labelpairs:
+    namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+    reason: "OOMKilled"
+  for: 1m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "0"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+
+# 节点 host
+- name: HostHighCpuLoad
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: cpuUsagePercent
+  unit: percent
+  for: 1m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "80"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: HostHighMemoryLoad
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: memoryUsagePercent
+  unit: percent
+  for: 5m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "90"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: HostUnusualDiskReadRate
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: diskReadBPS
+  unit: mbps
+  for: 5m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "50"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: HostUnusualDiskWriteRate
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: diskWriteBPS
+  unit: mbps
+  for: 5m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "50"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: HostNetworkReceiveErrors
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: networkInErrPercent
+  unit: percent
+  for: 1m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "1"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: HostNetworkTransmitErrors
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: networkOutErrPercent
+  unit: percent
+  for: 1m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "1"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: HostHighLoad5
+  namespace: gemcloud-monitoring-system
+  resource: node
+  rule: load5
+  for: 1m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "gems_node_cpu_total_cores"
+      severity: error
+    - compareOp: ">"
+      compareValue: "1.5 * gems_node_cpu_total_cores"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+# 证书
+- name: CertManagerCertExpirySoon
+  namespace: gemcloud-monitoring-system
+  resource: cert
+  rule: expirationRemainTime
+  unit: d
+  labelpairs:
+    namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+  for: 1h
+  alertLevels:
+    - compareOp: "<"
+      compareValue: "7"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 12h
+- name: CertManagerCertNotReady
+  namespace: gemcloud-monitoring-system
+  resource: cert
+  rule: status
+  labelpairs:
+    namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+    condition: "False|Unknown"
+  for: 0m
+  alertLevels:
+    - compareOp: "=="
+      compareValue: "1"
+      severity: error
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: ClusterHighCpuLoad
+  namespace: gemcloud-monitoring-system
+  resource: cluster
+  rule: cpuUsagePercent
+  unit: percent
+  for: 0m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "80"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: ClusterHighMemoryLoad
+  namespace: gemcloud-monitoring-system
+  resource: cluster
+  rule: memoryUsagePercent
+  unit: percent
+  for: 1m
+  alertLevels:
+    - compareOp: ">"
+      compareValue: "90"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+# plugin
+- name: GemsPluginFailed
+  namespace: gemcloud-monitoring-system
+  resource: plugin
+  rule: status
+  labelpairs:
+    enabled: "true"
+  for: 1m
+  alertLevels:
+    - compareOp: "=="
+      compareValue: "0"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+# exporter
+- name: ExporterDown
+  namespace: gemcloud-monitoring-system
+  resource: exporter
+  rule: status
+  labelpairs:
+    job: "alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"
+  for: 1m
+  alertLevels:
+    - compareOp: "=="
+      compareValue: "0"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+
+    # - name: KubernetesPersistentvolumeError
+    #   rules:
+    #     - alert: KubernetesPersistentvolumeError
+    #       expr: kube_persistentvolume_status_phase{phase=~"Failed|Pending", job="kube-state-metrics"} > 0
+    #       for: 0m
+    #       labels:
+    #         gems_alertname: KubernetesPersistentvolumeError
+    #         gems_namespace: gemcloud-monitoring-system
+    #         gems_alert_scope: system-admin
+    #         severity: critical
+    #       annotations:
+    #         message: Cluster {{ $externalLabels.k8s_cloud_cluster }} persistentvolume {{ $labels.persistentvolume }} error
+    #         value: '{{ $value | printf "%.1f" }}'
+    # - name: HostCpuStealNoisyNeighbor
+    #   rules:
+    #     - alert: HostCpuStealNoisyNeighbor
+    #       expr: avg by(host, namespace) (rate(node_cpu_seconds_total{mode="steal"}[5m])) * 100 > 10
+    #       for: 0m
+    #       labels:
+    #         gems_alertname: HostCpuStealNoisyNeighbor
+    #         gems_namespace: gemcloud-monitoring-system
+    #         gems_alert_scope: system-admin
+    #         severity: error
+    #       annotations:
+    #         message: Cluster {{ $externalLabels.k8s_cloud_cluster }} node {{ $labels.host }} CPU steal noisy neighbor
+    #         value: '{{ $value | printf "%.1f" }}'
+    # - name: HostContextSwitching
+    #   rules:
+    #     - alert: HostContextSwitching
+    #       expr: (rate(node_context_switches_total[5m])) / (count without(cpu, mode) (node_cpu_seconds_total{mode="idle"})) > 40000
+    #       for: 1m
+    #       labels:
+    #         gems_alertname: HostContextSwitching
+    #         gems_namespace: gemcloud-monitoring-system
+    #         gems_alert_scope: system-admin
+    #         severity: error
+    #       annotations:
+    #         message: Cluster {{ $externalLabels.k8s_cloud_cluster }} node {{ $labels.host }} context switching
+    #         value: '{{ $value | printf "%.1f" }}'
+    # - name: HostConntrackLimit
+    #   rules:
+    #     - alert: HostConntrackLimit
+    #       expr: node_nf_conntrack_entries / node_nf_conntrack_entries_limit > 0.8
+    #       for: 5m
+    #       labels:
+    #         gems_alertname: HostConntrackLimit
+    #         gems_namespace: gemcloud-monitoring-system
+    #         gems_alert_scope: system-admin
+    #         severity: error
+    #       annotations:
+    #         message: Cluster {{ $externalLabels.k8s_cloud_cluster }} node {{ $labels.host }} conntrack limit
+    #         value: '{{ $value | printf "%.1f" }}'
