@@ -1,10 +1,16 @@
 package application
 
 import (
-	restfulspec "github.com/emicklei/go-restful-openapi/v2"
+	"github.com/argoproj/argo-rollouts/pkg/apiclient/rollout"
+	rolloutsv1alpha1 "github.com/argoproj/argo-rollouts/pkg/apis/rollouts/v1alpha1"
 	"github.com/emicklei/go-restful/v3"
+	"github.com/goharbor/harbor/src/pkg/scan/vuln"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
+	"kubegems.io/pkg/utils/git"
+	"kubegems.io/pkg/utils/route"
+	"kubegems.io/pkg/utils/workflow"
 )
 
 type ApplicationHandler struct {
@@ -17,140 +23,306 @@ type ApplicationHandler struct {
 	ArgoCD *argo.Client
 }
 
-const (
-	applicationTag = "application"
-)
+func (h *ApplicationHandler) Regist(c *restful.Container) {
+	ws := &restful.WebService{}
+	h.Register(ws)
+	c.Add(ws)
+}
 
-// nolint: lll,funlen
-func (h *ApplicationHandler) Regist(container *restful.Container) {
+// nolint: funlen
+func (h *ApplicationHandler) Register(ws *restful.WebService) {
 	deploy := h
 	manifest := h.Manifest
 	task := deploy.Task
-	image := ImageHandler{BaseHandler: manifest.BaseHandler}
+	image := &ImageHandler{BaseHandler: manifest.BaseHandler}
 
-	ws := new(restful.WebService)
-	ws.Path("/v2")
-	ws.Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
-	container.Add(ws)
-
-	routers := []*restful.RouteBuilder{
-		// manifests
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests").To(manifest.ListManifest),
-		ws.POST("/tenants/{tenant}/projects/{project}/manifests").To(manifest.CreateManifest),
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}").To(manifest.GetManifest),
-		ws.PUT("/tenants/{tenant}/projects/{project}/manifests/{manifest}").To(manifest.UpdateManifest),
-		ws.DELETE("/tenants/{tenant}/projects/{project}/manifests/{manifest}").To(manifest.DeleteManifest),
-
-		// manifest files
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}/files").To(manifest.ListFiles),
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}/files/{file}").To(manifest.GetFile),
-		ws.PUT("/tenants/{tenant}/projects/{project}/manifests/{manifest}/files/{file}").To(manifest.UpdateFile),
-		ws.PUT("/tenants/{tenant}/projects/{project}/manifests/{manifest}/files").To(manifest.UpdateFiles),
-		ws.DELETE("/tenants/{tenant}/projects/{project}/manifests/{manifest}/files/{file}").To(manifest.DeleteFile),
-
-		// manifest git
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}/gitlog").To(manifest.GitLog),
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}/gitdiff").To(manifest.GitDiff),
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}/gitrevert").To(manifest.GitRevert),
-		ws.POST("/tenants/{tenant}/projects/{project}/manifests/{manifest}/gitpull").To(manifest.GitPull),
-		// metas
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}/metas").To(manifest.ListMetas),
-
-		// manifest resources
-		ws.GET("/tenant/{tenant}/projects/{project}/manifests/{manifest}/resources/{group}/{version}/{kind}").To(manifest.ListResources),
-		ws.GET("/tenant/{tenant}/projects/{project}/manifests/{manifest}/resources/{group}/{version}/{kind}/{name}").To(manifest.GetResource),
-		ws.POST("/tenant/{tenant}/projects/{project}/manifests/{manifest}/resources/{group}/{version}/{kind}").To(manifest.CreateResource),
-		ws.PUT("/tenant/{tenant}/projects/{project}/manifests/{manifest}/resources/{group}/{version}/{kind}/{name}").To(manifest.UpdateResource),
-		ws.DELETE("/tenant/{tenant}/projects/{project}/manifests/{manifest}/resources/{group}/{version}/{kind}/{name}").To(manifest.DeleteResource),
-
-		// argo
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}/argohistory").To(deploy.ArgoHistory),
-		ws.GET("/tenants/{tenant}/projects/{project}/manifests/{manifest}/imagehistory").To(deploy.ImageHistory),
-
-		// appstore
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/appstoreapplications").To(deploy.ListAppstoreApp),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/appstoreapplications/{app}").To(deploy.GetAppstoreApp),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/appstoreapplications").To(deploy.CreateAppstoreApp),
-		ws.DELETE("/tenants/{tenant}/projects/{project}/environments/{environment}/appstoreapplications/{app}").To(deploy.DeleteAppstoreApp),
-
-		// application
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications").To(deploy.List),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications").To(deploy.Create),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}").To(deploy.Get),
-		ws.DELETE("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}").To(deploy.Delete),
-
-		// application images
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/_/images").To(deploy.ListImages),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/_/images").To(deploy.BatchUpdateImages),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/images").To(deploy.GetImages),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/images").To(deploy.UpdateImages),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/image").To(deploy.DirectUpdateImage),
-
-		// application tasks
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/tasks").To(task.List),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/_/tasks").To(task.BatchList),
-
-		// application files
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/files").To(deploy.ListFiles),
-		ws.PUT("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/files/{file}").To(deploy.UpdateFile),
-		ws.PUT("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/files/{file}").To(deploy.UpdateFiles),
-		ws.DELETE("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/files/{file}").To(deploy.DeleteFile),
-
-		// application git
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/gitlog").To(deploy.GitLog),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/gitdiff").To(deploy.GitDiff),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/gitrevert").To(deploy.GitRevert),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/gitpull").To(deploy.GitPull),
-
-		// application metas
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/metas").To(manifest.ListMetas),
-		// application resources
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/resources/{group}/{version}/{kind}").To(manifest.ListResources),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/resources/{group}/{version}/{kind}/{name}").To(manifest.GetResource),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/resources/{group}/{version}/{kind}").To(manifest.CreateResource),
-		ws.PUT("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/resources/{group}/{version}/{kind}/{name}").To(manifest.UpdateResource),
-		ws.DELETE("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/resources/{group}/{version}/{kind}/{name}").To(manifest.DeleteResource),
-
-		// resource suggestion
-		ws.PATCH("/clusters/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name}").To(deploy.UpdateWorkloadResources),
-
-		// application argo
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/argohistory").To(deploy.ArgoHistory),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/imagehistory").To(deploy.ImageHistory),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/resourcetree").To(deploy.ResourceTree),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/argoresource").To(deploy.GetArgoResource),
-		ws.DELETE("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/argoresource").To(deploy.DeleteArgoResource),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/sync").To(deploy.Sync),
-
-		// images
-		ws.GET("/tenants/{tenant}/projects/{project}/images/vulnerabilities").To(image.Vulnerabilities),
-		ws.GET("/tenants/{tenant}/projects/{project}/images/summary").To(image.Summary),
-		ws.GET("/tenants/{tenant}/projects/{project}/images/unpublishable").To(image.Unpublishable),
-		ws.GET("/tenants/{tenant}/projects/{project}/images/scan").To(image.Scan),
-		ws.GET("/tenants/{tenant}/projects/{project}/images/tags").To(image.ImageTags),
-
-		// application strategydeploy
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/strategydeploy").To(deploy.GetStrategyDeployment),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/strategydeploy").To(deploy.EnableStrategyDeployment),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/strategyswitch").To(deploy.SwitchStrategy),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/analysistemplate").To(deploy.ListAnalysisTemplate),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/strategydeploystatus").To(deploy.StrategyDeploymentStatus),
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/strategydeploycontrol").To(deploy.StrategyDeploymentControl),
-
-		// application addtional
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/sevices").To(deploy.ListRelatedService),
-		// application replicas
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/replicas").To(deploy.GetReplicas),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/replicas").To(deploy.SetReplicas),
-		// application hpa
-		ws.GET("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/hpa").To(deploy.GetHPA),
-		ws.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/hpa").To(deploy.SetHPA),
-		ws.DELETE("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/hpa").To(deploy.DeleteHPA),
+	newfilesGroup := func() *route.Group {
+		return route.
+			NewGroup("").
+			Tag("resources").
+			AddRoutes(
+				// git
+				route.GET("/gitlog").To(manifest.GitLog).
+					Paged().
+					Response(GitLog{}),
+				route.GET("/gitdiff").To(manifest.GitDiff).
+					Response([]git.FileDiff{}),
+				route.POST("/gitrevert").To(manifest.GitRevert).
+					Parameters(route.QueryParameter("hash", "git hash")),
+				route.POST("/gitpull").To(manifest.GitPull),
+				// meta
+				route.GET("/metas").To(manifest.ListMetas).
+					Parameters(route.QueryParameter("kind", "filte kind").Optional()),
+			).
+			AddSubGroup(
+				route.NewGroup("/files").
+					AddRoutes(
+						route.GET("").To(manifest.ListFiles).Response([]FileContent{}, "files"),
+						route.POST("").To(manifest.UpdateFiles).
+							Parameters(
+								route.BodyParameter("files", []FileContent{}),
+								route.QueryParameter("msg", "commit message"),
+							),
+						route.GET("/{file}").To(manifest.GetFile).Response(FileContent{}), // not implemented
+						route.PUT("/{file}").To(manifest.UpdateFile).
+							Parameters(
+								route.PathParameter("file", "file name"),
+								route.BodyParameter("content", []FileContent{}),
+							),
+						route.DELETE("/{file}").To(manifest.DeleteFile).Parameters(
+							route.PathParameter("file", "file name"),
+						),
+					),
+				route.NewGroup("/resources/{group}/{version}/{kind}").
+					Parameters(
+						route.PathParameter("group", "group name"),
+						route.PathParameter("version", "version name"),
+						route.PathParameter("kind", "kind name"),
+					).
+					AddRoutes(
+						route.GET("").To(manifest.ListResources).Response(unstructured.UnstructuredList{}),
+						route.POST("").To(manifest.CreateResource).Parameters(
+							route.BodyParameter("resource", unstructured.Unstructured{}),
+						),
+						route.GET("{name}").To(manifest.GetResource).
+							Parameters(route.PathParameter("name", "resource name")).
+							Response(unstructured.Unstructured{}),
+						route.PUT("{name}").To(manifest.UpdateResource).
+							Parameters(
+								route.PathParameter("name", "resource name"),
+								route.BodyParameter("resource", unstructured.Unstructured{}),
+							),
+						route.DELETE("{name}").To(manifest.DeleteResource).
+							Parameters(route.PathParameter("name", "resource name")),
+					),
+			)
 	}
 
-	for _, route := range routers {
-		ws.Route(
-			route.Metadata(restfulspec.KeyOpenAPITags, applicationTag),
-		)
+	tree := &route.Tree{
+		Group: route.
+			NewGroup("/v2").
+			Tag("reources").
+			AddRoutes(
+				// resource suggestion
+				route.
+					PATCH("/clusters/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name}").
+					To(deploy.UpdateWorkloadResources).
+					Parameters(
+						route.PathParameter("cluster", "cluster name"),
+						route.PathParameter("group", "group name"),
+						route.PathParameter("version", "version name"),
+						route.PathParameter("namespace", "namespace name"),
+						route.PathParameter("resource", "resource name"),
+						route.PathParameter("name", "resource name"),
+					),
+			).
+			AddSubGroup(
+				route.
+					NewGroup("/tenants/{tenant}/projects/{project}").
+					Parameters(
+						route.PathParameter("tenant", "tenant name"),
+						route.PathParameter("project", "project name"),
+					).
+					AddSubGroup(
+						route.
+							NewGroup("/images").
+							Tag("project-images").
+							Parameters(route.PathParameter("image", "image name")).
+							AddRoutes(
+								route.GET("/vulnerabilities").To(image.Vulnerabilities).
+									Response(vuln.Report{}),
+								route.GET("/summary").To(image.Summary).
+									Paged().
+									Response([]ImageSummaryItem{}, "paged image summary"),
+								route.POST("/unpublishable").To(image.Unpublishable).
+									Parameters(
+										route.QueryParameter("unpublishable", "true/false").DataType("boolean"),
+									),
+								route.POST("/scan").To(image.Scan),
+								route.GET("/tags").To(image.ImageTags).
+									Response([]ImageTag{}),
+							),
+						route.
+							NewGroup("/manifests").
+							Tag("manifest").
+							AddRoutes(
+								route.GET("").To(manifest.ListManifest).
+									Paged().
+									Response([]Manifest{}, "paged manifests"),
+								route.POST("").To(manifest.CreateManifest).
+									Parameters(route.BodyParameter("manifest", Manifest{})),
+							).
+							AddSubGroup(
+								route.
+									NewGroup("/{manifest}").
+									Tag("manifest").
+									Parameters(route.PathParameter("manifest", "manifest name")).
+									AddRoutes(
+										route.GET("").To(manifest.GetManifest).
+											Response(Manifest{}, "manifest"),
+										route.PUT("").To(manifest.UpdateManifest).
+											Parameters(route.BodyParameter("manifest", Manifest{})),
+										route.DELETE("").To(manifest.DeleteManifest),
+										route.GET("/argohistory").To(deploy.ArgoHistory).
+											Paged().
+											Response(ArgoHistory{}, "argo history"),
+										route.GET("/imagehistory").To(deploy.ImageHistory).
+											Paged().
+											Response(ImageHistory{}, "paged image history"),
+									).
+									AddSubGroup(
+										newfilesGroup().
+											Tag("manifest files"),
+									),
+							),
+						route.
+							NewGroup("/environments/{environment}/applications").
+							Tag("application").
+							Parameters(route.PathParameter("environment", "environment name")).
+							AddRoutes(
+								route.GET("").To(deploy.List).
+									Response([]DeploiedManifest{}, "paged deployed manifests"),
+								route.POST("").To(deploy.Create).
+									Parameters(route.BodyParameter("deploied", DeploiedManifest{})),
+								route.GET("/_/images").To(deploy.ListImages).
+									Response([]DeployImages{}),
+								route.POST("/_/images").To(deploy.BatchUpdateImages).
+									Parameters(route.BodyParameter("images", []DeployImages{})),
+								route.GET("/_/tasks").To(task.BatchList).
+									Parameters(
+										route.QueryParameter("names", "filter names splited by comma").Optional(),
+									).
+									Response([]workflow.Task{}),
+							).
+							AddSubGroup(
+								route.
+									NewGroup("/{application}").
+									Tag("application").
+									Parameters(
+										route.PathParameter("application", "application name"),
+									).
+									AddRoutes(
+										route.GET("").To(deploy.Get).
+											Response(DeploiedManifest{}),
+										route.DELETE("").To(deploy.Delete),
+										// image
+										route.POST("/image").To(deploy.DirectUpdateImage).
+											Parameters(
+												route.QueryParameter("image", "image name"),
+												route.QueryParameter("version", "istio version").Optional(),
+											),
+										route.GET("/images").To(deploy.GetImages).
+											Response(DeployImages{}),
+										route.POST("/images").To(deploy.UpdateImages).
+											Parameters(route.BodyParameter("images", DeployImages{})),
+										// task
+										route.GET("/tasks").To(task.List).
+											Parameters(
+												route.QueryParameter("watch", "start ssevent").Optional(),
+												route.QueryParameter("type", "filter event type").Optional(),
+												route.QueryParameter("limit", "limit return results").Optional(),
+											).
+											Response([]workflow.Task{}),
+										// argo
+										route.GET("/argoresource").To(deploy.GetArgoResource).
+											Parameters(
+												route.QueryParameter("namespace", "namespace"),
+												route.QueryParameter("name", "name"),
+												route.QueryParameter("group", "group"),
+												route.QueryParameter("kind", "kind"),
+												route.QueryParameter("version", "version"),
+											).
+											Response(ArgoResourceDiff{}),
+										route.DELETE("/argoresource").To(deploy.DeleteArgoResource).
+											Parameters(
+												route.QueryParameter("namespace", "namespace"),
+												route.QueryParameter("name", "name"),
+												route.QueryParameter("group", "group"),
+												route.QueryParameter("kind", "kind"),
+												route.QueryParameter("version", "version"),
+											),
+										route.GET("/resourcetree").To(deploy.ResourceTree),
+										route.POST("/sync").To(deploy.Sync).
+											Parameters(
+												route.BodyParameter("sync", SyncRequest{}).Optional(),
+											),
+										route.GET("/argohistory").To(deploy.ArgoHistory).
+											Paged().
+											Response([]*ArgoHistory{}, "paged argo history"),
+										route.GET("/imagehistory").To(deploy.ImageHistory).
+											Paged().
+											Response([]*ImageHistory{}, "paged image history"),
+									).
+									AddSubGroup(
+										// application strategydeploy
+										route.
+											NewGroup("").
+											Tag("strategydeploy").
+											AddRoutes(
+												route.GET("/strategydeploy").To(deploy.GetStrategyDeployment).
+													Response(DeploymentStrategyWithImages{}),
+												route.POST("/strategydeploy").To(deploy.EnableStrategyDeployment).
+													Parameters(
+														route.BodyParameter("strategydeploy", DeploymentStrategyWithImages{}),
+													),
+												route.POST("/strategyswitch").To(deploy.SwitchStrategy).
+													Parameters(
+														route.BodyParameter("strategydeploy", DeploymentStrategy{}),
+													),
+												route.GET("/analysistemplate").To(deploy.ListAnalysisTemplate).
+													Response([]rolloutsv1alpha1.ClusterAnalysisTemplate{}),
+												route.GET("/strategydeploystatus").To(deploy.StrategyDeploymentStatus).
+													Response(rollout.RolloutInfo{}),
+												route.POST("/strategydeploycontrol").To(deploy.StrategyDeploymentControl).
+													Parameters(
+														route.BodyParameter("control", StrategyDeploymentControl{}),
+													),
+											),
+										route.
+											NewGroup("").
+											Tag("application additional").
+											AddRoutes(
+												// application additional
+												route.GET("/services").To(deploy.ListRelatedService).
+													Response([]RelatedService{}),
+												// application replicas
+												route.GET("/replicas").To(deploy.GetReplicas).
+													Response(AppReplicas{}),
+												route.POST("/replicas").To(deploy.SetReplicas).
+													Parameters(
+														route.BodyParameter("replicas", AppReplicas{}),
+													),
+												// application hpa
+												route.GET("/hpa").To(deploy.GetHPA).
+													Response(HPAMetrics{}),
+												route.POST("/hpa").To(deploy.SetHPA).
+													Parameters(
+														route.BodyParameter("hpa", HPAMetrics{}),
+													),
+												route.DELETE("/hpa").To(deploy.DeleteHPA),
+											),
+										newfilesGroup().
+											Tag("application files"),
+									),
+							),
+						route.
+							NewGroup("/appstoreapplications").
+							Tag("appstore").
+							AddRoutes(
+								route.GET("").To(deploy.ListAppstoreApp).
+									Paged().
+									Parameters(route.QueryParameter("search", "search name").Optional()).
+									Response([]DeploiedHelm{}),
+								route.POST("").To(deploy.CreateAppstoreApp).
+									Parameters(route.BodyParameter("helm values", AppStoreDeployForm{})),
+								route.GET("/{application}").To(deploy.GetAppstoreApp).
+									Parameters(route.PathParameter("application", "application name")).
+									Response(DeploiedManifest{}),
+								route.DELETE("/{application}").To(deploy.DeleteAppstoreApp).
+									Parameters(route.PathParameter("application", "application name")),
+							),
+					),
+			),
 	}
+	tree.AddToWebService(ws)
 }

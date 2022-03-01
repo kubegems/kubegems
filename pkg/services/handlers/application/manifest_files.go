@@ -52,7 +52,7 @@ var ResourceWhileList = []schema.GroupVersionKind{
 func (h *ManifestHandler) UpdateFile(req *restful.Request, resp *restful.Response) {
 	body := &FileContent{}
 	h.NamedRefFunc(req, resp, body, func(ctx context.Context, ref PathRef) (interface{}, error) {
-		filename := req.PathParameter("filename")
+		filename := req.PathParameter("file")
 		if filename == "" {
 			return nil, fmt.Errorf("filename cannot be empty")
 		}
@@ -126,7 +126,7 @@ func (h *ManifestHandler) UpdateFiles(req *restful.Request, resp *restful.Respon
 func (h *ManifestHandler) DeleteFile(req *restful.Request, resp *restful.Response) {
 	body := []byte{}
 	h.NamedRefFunc(req, resp, &body, func(ctx context.Context, ref PathRef) (interface{}, error) {
-		filename := req.PathParameter("filename")
+		filename := req.PathParameter("file")
 		if filename == "" {
 			return nil, fmt.Errorf("filename cannot be empty")
 		}
