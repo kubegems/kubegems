@@ -9,6 +9,8 @@ import (
 	"kubegems.io/pkg/utils/loki"
 )
 
+// TODO: https://pkg.go.dev/github.com/grafana/loki/pkg/logcli/client#DefaultClient
+
 type LokiCli = Handler
 
 func (c LokiCli) LokiQueryRange(ctx context.Context, cluster string, query map[string]string) (*loki.QueryResponseData, error) {

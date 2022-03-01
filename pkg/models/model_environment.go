@@ -17,6 +17,10 @@ const (
 	EnvironmentRoleOperator = "operator"
 
 	ResEnvironment = "environment"
+
+	EnvironmentMetaTypeDev  = "dev"
+	EnvironmentMetaTypeTest = "test"
+	EnvironmentMetaTypeProd = "prod"
 )
 
 type Environment struct {
