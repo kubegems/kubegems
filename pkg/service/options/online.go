@@ -58,7 +58,7 @@ func (opts *OnlineOptions) StartSync(db *gorm.DB, interval time.Duration) {
 
 func (opts *OnlineOptions) convertToDBConfig() ([]models.OnlineConfig, error) {
 	e := reflect.ValueOf(opts).Elem()
-	cfgs := make([]models.OnlineConfig, e.NumField())
+	cfgs := []models.OnlineConfig{}
 
 	for i := 0; i < e.NumField(); i++ {
 		if e.Type().Field(i).Name != "m" { // 'm' is the mutex name
@@ -66,10 +66,10 @@ func (opts *OnlineOptions) convertToDBConfig() ([]models.OnlineConfig, error) {
 			if err != nil {
 				return nil, fmt.Errorf("options %s, err: %w", e.Type().Field(i).Name, err)
 			}
-			cfgs[i] = models.OnlineConfig{
+			cfgs = append(cfgs, models.OnlineConfig{
 				Name:    e.Type().Field(i).Name,
 				Content: bts,
-			}
+			})
 		}
 	}
 	return cfgs, nil
