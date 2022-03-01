@@ -46,7 +46,7 @@ func (h *Handler) ListUser(req *restful.Request, resp *restful.Response) {
 
 func (h *Handler) RetrieveUser(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
-	user := models.UserCommon{}
+	user := &models.UserCommon{}
 	if err := h.DB().WithContext(ctx).First(user, "username = ?", req.PathParameter("name")).Error; err != nil {
 		handlers.NotFoundOrBadRequest(resp, err)
 	}
