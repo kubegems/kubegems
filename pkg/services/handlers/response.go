@@ -11,7 +11,7 @@ import (
 type Response struct {
 	Message   string      `json:"message"`
 	Data      interface{} `json:"data"`
-	ErrorData interface{} `json:"err"`
+	ErrorData interface{} `json:"err,omitempty"`
 }
 
 type PageData struct {
@@ -42,7 +42,7 @@ func Page(db *gorm.DB, total int64, data interface{}) *PageData {
 }
 
 func BadRequest(resp *restful.Response, err error) {
-	resp.WriteHeaderAndJson(http.StatusBadRequest, ParseError(err), restful.MIME_JSON)
+	resp.WriteHeaderAndJson(http.StatusBadRequest, Response{Message: MessageError, ErrorData: ParseError(err)}, restful.MIME_JSON)
 }
 
 func ServiceUnavailable(resp *restful.Response, err error) {
@@ -85,12 +85,12 @@ func IsNotFound(err error) bool {
 	return err == gorm.ErrRecordNotFound
 }
 
-type ResponseBase struct {
+type RespBase struct {
 	Message   string      `json:"message"`
 	ErrorData interface{} `json:"err"`
 }
 
-type PageBase struct {
+type ListBase struct {
 	Total       int64 `json:"total"`
 	CurrentPage int64 `json:"page"`
 	CurrentSize int64 `json:"size"`
