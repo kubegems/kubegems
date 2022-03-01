@@ -3,11 +3,6 @@ package clusterhandler
 import "text/template"
 
 var installerOperatorTpl = template.Must(template.New("installer-operator").Parse(`
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: kubegems-installer
----
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
