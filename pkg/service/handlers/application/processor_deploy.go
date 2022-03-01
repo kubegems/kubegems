@@ -728,7 +728,10 @@ func UpdateContentImages(ctx context.Context, store GitStore, images []string, v
 			// 更新镜像
 			for i, c := range template.Spec.Containers {
 				for _, image := range images {
-					if v1alpha1.KustomizeImage(image).Match(v1alpha1.KustomizeImage(c.Image)) {
+					// Cautious:
+					//  foo/bar Match foo/bar:v1
+					//  foo/bar:v1 !Match foo/bar
+					if v1alpha1.KustomizeImage(c.Image).Match(v1alpha1.KustomizeImage(image)) {
 						template.Spec.Containers[i].Image = image
 					}
 				}
