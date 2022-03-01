@@ -107,22 +107,13 @@ func (h *MonitorHandler) QueryRange(c *gin.Context) {
 // @Router /v1/metrics/labelvalues [get]
 // @Security JWT
 func (h *MonitorHandler) LabelValues(c *gin.Context) {
-	ret := map[string]interface{}{}
+	ret := []string{}
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
-		values := url.Values{}
-		values.Add("match", req.SeriesSelector)
-		values.Add("start", req.Start)
-		values.Add("end", req.End)
-		values.Add("label", req.Label)
-
-		err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
-			return cli.DoRequest(ctx, agents.Request{
-				Path:  "/custom/prometheus/v1/label/values",
-				Query: values,
-				Into:  agents.WrappedResponse(&ret),
-			})
-		})
-		if err != nil {
+		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
+			var err error
+			ret, err = cli.Extend().GetPrometheusLabelValues(ctx, req.SeriesSelector, req.Label, req.Start, req.End)
+			return err
+		}); err != nil {
 			return fmt.Errorf("prometheus label values failed, cluster: %s, promql: %s, %w", req.Cluster, req.Promql, err)
 		}
 		return nil
@@ -131,7 +122,7 @@ func (h *MonitorHandler) LabelValues(c *gin.Context) {
 		return
 	}
 
-	handlers.OK(c, ret["labels"])
+	handlers.OK(c, ret)
 }
 
 func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryReq) error) error {
