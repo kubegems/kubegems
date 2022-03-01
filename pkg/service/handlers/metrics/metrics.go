@@ -3,7 +3,6 @@ package metrics
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -62,22 +61,10 @@ type MetricQueryReq struct {
 func (h *MonitorHandler) QueryRange(c *gin.Context) {
 	ret := prommodel.Matrix{}
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
-		values := url.Values{}
-		values.Add("query", req.Promql)
-		values.Add("start", req.Start)
-		values.Add("end", req.End)
-		values.Add("step", req.Step)
-
 		return h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
-			err := cli.DoRequest(ctx, agents.Request{
-				Path:  "/custom/prometheus/v1/matrix",
-				Query: values,
-				Into:  agents.WrappedResponse(&ret),
-			})
-			if err != nil {
-				return fmt.Errorf("prometheus query range failed, cluster: %s, promql: %s, %w", req.Cluster, req.Promql, err)
-			}
-			return nil
+			var err error
+			ret, err = cli.Extend().PrometheusQueryRange(ctx, req.Promql, req.Start, req.End, req.Step)
+			return err
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -259,7 +246,6 @@ func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 	h.OnlineOptions.Lock()
 	resDetail.Rules[ruleName] = rule
 	h.OnlineOptions.UnLock()
-
 	if err := h.OnlineOptions.SaveToDB(h.GetDB()); err != nil {
 		handlers.NotOK(c, err)
 		return

@@ -117,7 +117,7 @@ func GetOrCreateAlertmanagerConfig(ctx context.Context, namespace string, cli ag
 		}
 		return aconfig, nil
 	}
-	return nil, err
+	return aconfig, err
 }
 
 func GetOrCreatePrometheusRule(ctx context.Context, namespace string, cli agents.Client) (*monitoringv1.PrometheusRule, error) {
@@ -130,7 +130,7 @@ func GetOrCreatePrometheusRule(ctx context.Context, namespace string, cli agents
 		}
 		return prule, err
 	}
-	return nil, err
+	return prule, err
 }
 
 func CommitToK8s(ctx context.Context, raw *prometheus.RawAlertResource, cli agents.Client) error {
