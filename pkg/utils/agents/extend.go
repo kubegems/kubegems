@@ -175,6 +175,27 @@ func (c *ExtendClient) GetPromeAlertRules(ctx context.Context, name string) (map
 	return ret, nil
 }
 
+func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, match, label, start, end string) ([]string, error) {
+	resp := struct {
+		Labels []string    `json:"labels,omitempty"`
+		Warns  interface{} `json:"warns,omitempty"`
+	}{}
+	values := url.Values{}
+	values.Add("match", match)
+	values.Add("label", label)
+	values.Add("start", start)
+	values.Add("end", end)
+	if err := c.DoRequest(ctx, Request{
+		Path:  "/custom/prometheus/v1/labelvalues",
+		Query: values,
+		Into:  WrappedResponse(&resp),
+	}); err != nil {
+		return nil, fmt.Errorf("get label values failed: %v", err)
+	}
+
+	return resp.Labels, nil
+}
+
 func convertBlackListToSilence(info models.AlertInfo) alertmanagertypes.Silence {
 	ret := alertmanagertypes.Silence{
 		StartsAt:  *info.SilenceStartsAt,
