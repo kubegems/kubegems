@@ -38,21 +38,31 @@ func (h *Handler) Regist(container *restful.Container) {
 		Doc("delete cluster").
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, nil))
+		Returns(http.StatusNoContent, handlers.MessageOK, nil))
+
+	ws.Route(ws.POST("/{cluster}").
+		To(h.CreateCluster).
+		Doc("create clusters").
+		Reads(models.Cluster{}).
+		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
+		Returns(http.StatusBadRequest, "validate failed", handlers.Response{}).
+		Returns(http.StatusOK, handlers.MessageOK, ClusterResp{}))
 
 	ws.Route(ws.PUT("/{cluster}").
 		To(h.ModifyCluster).
 		Doc("modify clusters").
+		Reads(models.Cluster{}).
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, ClusterInfoResp{}))
+		Returns(http.StatusBadRequest, "validate failed", handlers.Response{}).
+		Returns(http.StatusOK, handlers.MessageOK, ClusterResp{}))
 
 	ws.Route(ws.GET("/{cluster}/plugins").
 		To(h.ListPlugins).
 		Doc("list cluster plugins").
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, nil))
+		Returns(http.StatusOK, handlers.MessageOK, map[string]interface{}{}))
 
 	ws.Route(ws.POST("/{cluster}/plugins/{plugin}/types/{type}/action/{action}").
 		To(h.PluginSwitch).
@@ -62,14 +72,14 @@ func (h *Handler) Regist(container *restful.Container) {
 		Param(restful.PathParameter("plugin", "plugin name")).
 		Param(restful.PathParameter("action", "action name").PossibleValues([]string{"enable", "disable"})).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, nil))
+		Returns(http.StatusOK, handlers.MessageOK, "ok"))
 
 	ws.Route(ws.GET("/{cluster}/environments").
 		To(h.ListEnvironment).
 		Doc("list cluster environments").
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, models.EnvironmentCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, EnvironmentListResp{}))
 
 	ws.Route(ws.GET("/{cluster}/log-query-snapshot").
 		To(h.ListLogQueryHistory).
@@ -83,13 +93,13 @@ func (h *Handler) Regist(container *restful.Container) {
 		Doc("get cluster quota stastics").
 		Param(restful.PathParameter("cluster", "cluster name")).
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, []ClusterQuota{}))
+		Returns(http.StatusOK, handlers.MessageOK, ClusterQuotaResp{}))
 
 	ws.Route(ws.GET("/all-status").
 		To(h.ClusterStatus).
 		Doc("get all cluster status").
 		Metadata(restfulspec.KeyOpenAPITags, clusterTags).
-		Returns(http.StatusOK, handlers.MessageOK, ClusterStatusMap{"cluster": true}))
+		Returns(http.StatusOK, handlers.MessageOK, ClusterStatusMapResp{}))
 
 	h.registLoki(ws)
 	container.Add(ws)

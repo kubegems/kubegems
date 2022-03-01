@@ -64,7 +64,7 @@ func (h *Handler) ModifyTenantMember(req *restful.Request, resp *restful.Respons
 	if err := h.DB().WithContext(ctx).Updates(rel).Error; err != nil {
 		handlers.BadRequest(resp, err)
 	}
-	handlers.OK(resp, rel)
+	handlers.OK(resp, updateData)
 }
 
 func (h *Handler) DeleteTenantMember(req *restful.Request, resp *restful.Response) {

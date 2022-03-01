@@ -5,6 +5,7 @@ import (
 	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/services/handlers/base"
+	"kubegems.io/pkg/utils"
 )
 
 var userTags = []string{"users"}
@@ -14,15 +15,23 @@ type Handler struct {
 }
 
 func (h *Handler) CreateUser(req *restful.Request, resp *restful.Response) {
-	user := models.UserCommon{}
+	user := &models.UserCreate{}
 	if err := handlers.BindData(req, user); err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
-	if err := h.DB().WithContext(req.Request.Context()).Create(user).Error; err != nil {
+	pass, _ := utils.MakePassword(user.Password)
+	newUser := &models.User{
+		Email:        user.Email,
+		Username:     user.Username,
+		Password:     pass,
+		SystemRoleID: 2,
+	}
+	if err := h.DB().WithContext(req.Request.Context()).Create(newUser).Error; err != nil {
 		handlers.BadRequest(resp, err)
 		return
 	}
+	user.ID = newUser.ID
 	handlers.Created(resp, user)
 }
 
