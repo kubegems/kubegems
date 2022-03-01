@@ -90,7 +90,7 @@ func CreateByYamlOrJson(ctx context.Context, cfg *rest.Config, yamlOrJson []byte
 			log.Errorf("failed to apply %s %s, err: %v, yaml:\n%s", obj.GetKind(), obj.GetName(), err, string(data))
 			return err
 		}
-		log.Infof("succeed apply %s %s", obj.GetKind(), obj.GetName())
+		log.Info("apply succeed", "kind", obj.GetKind(), "name", obj.GetName())
 	}
 }
 
@@ -152,6 +152,6 @@ func DeleteByYamlOrJson(ctx context.Context, cfg *rest.Config, yamlOrJson []byte
 			log.Errorf("failed to delete %s %s, err: %v, yaml:\n%s", obj.GetKind(), obj.GetName(), err, string(data))
 			return err
 		}
-		log.Infof("succeed delete %s %s", obj.GetKind(), obj.GetName())
+		log.Info("delete succeed", "kind", obj.GetKind(), "name", obj.GetName())
 	}
 }
