@@ -62,7 +62,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 		for pluginName, v := range allPlugins.Spec.KubernetesPlugins {
 			v.Status.IsHealthy = gemsplugin.IsPluginHelthy(h.cluster, v)
 			v.Name = pluginName
-			ret.CorePlugins[v.Details.Catalog] = append(ret.CorePlugins[v.Details.Catalog], v)
+			ret.KubernetesPlugins[v.Details.Catalog] = append(ret.KubernetesPlugins[v.Details.Catalog], v)
 		}
 
 		for _, v := range ret.CorePlugins {
