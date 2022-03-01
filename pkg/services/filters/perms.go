@@ -18,11 +18,19 @@ func NewPermMiddleware(db *gorm.DB) *PermMiddleware {
 }
 
 func (p *PermMiddleware) FilterFunc(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+	if isOpen(req) {
+		chain.ProcessFilter(req, resp)
+		return
+	}
 	u := req.Attribute("user")
 	if u == nil {
 		resp.WriteHeaderAndJson(http.StatusForbidden, "no user", restful.MIME_JSON)
 	}
-	user := u.(user.CommonUserIface)
+	user, ok := u.(user.CommonUserIface)
+	if !ok {
+		resp.WriteHeaderAndJson(http.StatusForbidden, "error user", restful.MIME_JSON)
+		return
+	}
 	if !p.hasPerm(user, req) {
 		resp.WriteHeaderAndJson(http.StatusForbidden, "no perms", restful.MIME_JSON)
 		return
