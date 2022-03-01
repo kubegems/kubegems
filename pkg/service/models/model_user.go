@@ -17,7 +17,7 @@ type User struct {
 	// 邮箱
 	Email string `gorm:"type:varchar(50)" binding:"required"`
 	// 电话
-	Phone    string `gorm:"type:varchar(255)" binding:"required"`
+	Phone    string `gorm:"type:varchar(255)"`
 	Password string `gorm:"type:varchar(255)" json:"-"`
 	// 是否激活
 	IsActive *bool `sql:"DEFAULT:true"`
@@ -47,4 +47,11 @@ func (u User) MarshalBinary() ([]byte, error) {
 
 func (u *User) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &u)
+}
+
+type UserCreate struct {
+	ID       uint   `json:"id"`
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"min=8"`
 }

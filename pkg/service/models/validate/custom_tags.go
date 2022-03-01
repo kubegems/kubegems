@@ -35,5 +35,8 @@ func (v *Validator) registCustomTags() error {
 	if e := v.Validator.RegisterTranslation("fqdn", v.Translator, registerTranslator("fqdn", "{0}错误，{1}不是合法的租户名字"), translateFn); e != nil {
 		return e
 	}
+	if e := v.Validator.RegisterTranslation("password", v.Translator, registerTranslator("password", "密码长度至少8位,包含大小写字母和数字以及特殊字符(.!@#$%~)"), translateFn); e != nil {
+		return e
+	}
 	return nil
 }

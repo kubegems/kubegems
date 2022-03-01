@@ -81,21 +81,34 @@ func (h *UserHandler) RetrieveUser(c *gin.Context) {
 // @Description 创建User
 // @Accept json
 // @Produce json
-// @Param param body models.User true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.User} "User"
+// @Param param body models.UserCreate true "表单"
+// @Success 200 {object} handlers.ResponseStruct{Data=models.UserCreate} "User"
 // @Router /v1/user [post]
 // @Security JWT
 func (h *UserHandler) PostUser(c *gin.Context) {
-	var obj models.User
+	var obj models.UserCreate
 	if err := c.BindJSON(&obj); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Create(&obj).Error; err != nil {
+	pass, err := utils.MakePassword(obj.Password)
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "创建", "系统用户", obj.Username)
+	truePtr := true
+	user := &models.User{
+		Username:     obj.Username,
+		Password:     pass,
+		Email:        obj.Email,
+		SystemRoleID: 2,
+		IsActive:     &truePtr,
+	}
+	if err := h.GetDB().Create(&user).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	h.SetAuditData(c, "创建", "系统用户", user.Username)
 	handlers.Created(c, obj)
 }
 

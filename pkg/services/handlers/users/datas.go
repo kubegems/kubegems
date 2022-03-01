@@ -6,6 +6,6 @@ import (
 )
 
 type UserListResp struct {
-	handlers.PageBase
+	handlers.ListBase
 	List []models.User `json:"list"`
 }

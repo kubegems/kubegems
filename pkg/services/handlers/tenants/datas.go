@@ -6,27 +6,27 @@ import (
 )
 
 type TenantCreateResp struct {
-	handlers.ResponseBase
+	handlers.RespBase
 	Data models.TenantSimple `json:"data"`
 }
 
 type TenantCommonResp struct {
-	handlers.ResponseBase
+	handlers.RespBase
 	Data models.TenantCommon `json:"data"`
 }
 
 type TenantListResp struct {
-	handlers.PageBase
+	handlers.ListBase
 	Data []models.TenantSimple `json:"list"`
 }
 
 type ProjectListResp struct {
-	handlers.PageBase
+	handlers.ListBase
 	Data []models.Project `json:"list"`
 }
 
 type UserSimpleListResp struct {
-	handlers.PageBase
+	handlers.ListBase
 	Data []models.UserSimple `json:"list"`
 }
 
