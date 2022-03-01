@@ -38,6 +38,7 @@ type Plugins struct {
 	Spec struct {
 		ClusterName       string             `json:"cluster_name"`
 		Runtime           string             `json:"runtime"`
+		Global            interface{}        `json:"global"`
 		CorePlugins       map[string]*Plugin `json:"core_plugins"`
 		KubernetesPlugins map[string]*Plugin `json:"kubernetes_plugins"`
 	} `json:"spec"`
