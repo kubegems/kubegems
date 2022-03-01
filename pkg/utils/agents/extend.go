@@ -34,23 +34,23 @@ func (c *ExtendClient) ListPlugins(ctx context.Context) (map[string]interface{},
 	ret := make(map[string]interface{})
 	err := c.DoRequest(ctx, Request{
 		Method: http.MethodGet,
-		Path:   "/custom/" + plugins.GroupName + "/v1alpha1/plugins",
-		Into:   WrappedResponse(ret),
+		Path:   "/custom/" + plugins.GroupName + "/v1beta1/installers",
+		Into:   WrappedResponse(&ret),
 	})
 	return ret, err
 }
 
 func (c *ExtendClient) EnablePlugin(ctx context.Context, ptype, name string) error {
 	return c.DoRequest(ctx, Request{
-		Method: http.MethodPost,
-		Path:   fmt.Sprintf("/custom/%s/v1alpha1/plugins/%s/actions/enable?type=%s", plugins.GroupName, name, ptype),
+		Method: http.MethodPut,
+		Path:   fmt.Sprintf("/custom/%s/v1beta1/installers/%s/actions/enable?type=%s", plugins.GroupName, name, ptype),
 	})
 }
 
 func (c *ExtendClient) DisablePlugin(ctx context.Context, ptype, name string) error {
 	return c.DoRequest(ctx, Request{
-		Method: http.MethodDelete,
-		Path:   fmt.Sprintf("/custom/%s/v1alpha1/plugins/%s/actions/disable?type=%s", plugins.GroupName, name, ptype),
+		Method: http.MethodPut,
+		Path:   fmt.Sprintf("/custom/%s/v1beta1/installers/%s/actions/disable?type=%s", plugins.GroupName, name, ptype),
 	})
 }
 
