@@ -51,7 +51,7 @@ func NewRest(deps *Dependencies, opts *options.Options) *restful.Container {
 		handler.Regist(c)
 	}
 	enableSwagger(c)
-	enableFilters(c, opts)
+	enableFilters(c, deps.Databse.DB(), opts)
 	return c
 }
 
