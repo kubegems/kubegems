@@ -10087,7 +10087,7 @@ var doc = `{
             }
         },
         "/v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable": {
-            "post": {
+            "put": {
                 "security": [
                     {
                         "JWT": []
@@ -10150,7 +10150,7 @@ var doc = `{
             }
         },
         "/v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable": {
-            "post": {
+            "put": {
                 "security": [
                     {
                         "JWT": []
@@ -22088,15 +22088,21 @@ var doc = `{
             "type": "object",
             "properties": {
                 "core": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/gemsplugin.Plugin"
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/gemsplugin.Plugin"
+                        }
                     }
                 },
                 "kubernetes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/gemsplugin.Plugin"
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/gemsplugin.Plugin"
+                        }
                     }
                 }
             }
@@ -23145,10 +23151,8 @@ var doc = `{
             "type": "object",
             "properties": {
                 "oversoldConfig": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                    "type": "object",
+                    "$ref": "#/definitions/datatypes.JSON"
                 },
                 "resources": {
                     "type": "object",
@@ -24406,6 +24410,30 @@ var doc = `{
                 "$ref": "#/definitions/models.MetricGraph"
             }
         },
+        "models.OIDCUser": {
+            "type": "object",
+            "properties": {
+                "creation_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "secret": {
+                    "description": "secret in plain text",
+                    "type": "string"
+                },
+                "subiss": {
+                    "type": "string"
+                },
+                "update_time": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.OnlineConfig": {
             "type": "object",
             "required": [
@@ -24717,54 +24745,56 @@ var doc = `{
         },
         "models.User": {
             "type": "object",
-            "required": [
-                "email",
-                "phone",
-                "username"
-            ],
             "properties": {
-                "createdAt": {
-                    "description": "加入时间",
-                    "type": "string"
-                },
-                "email": {
-                    "description": "邮箱",
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isActive": {
-                    "description": "是否激活",
+                "admin_role_in_auth": {
+                    "description": "AdminRoleInAuth to store the admin privilege granted by external authentication provider",
                     "type": "boolean"
                 },
-                "lastLoginAt": {
-                    "description": "最后登录时间",
+                "comment": {
                     "type": "string"
                 },
-                "phone": {
-                    "description": "电话",
+                "creation_time": {
                     "type": "string"
                 },
-                "role": {
-                    "description": "角色，不同关联对象下表示的角色不同, 用来做join查询的时候处理角色字段的(请勿删除)",
+                "deleted": {
+                    "type": "boolean"
+                },
+                "email": {
                     "type": "string"
                 },
-                "systemRole": {
+                "oidc_user_meta": {
                     "type": "object",
-                    "$ref": "#/definitions/models.SystemRole"
+                    "$ref": "#/definitions/models.OIDCUser"
                 },
-                "systemRoleID": {
+                "password": {
+                    "type": "string"
+                },
+                "password_version": {
+                    "type": "string"
+                },
+                "realname": {
+                    "type": "string"
+                },
+                "reset_uuid": {
+                    "type": "string"
+                },
+                "role_id": {
+                    "description": "if this field is named as \"RoleID\", beego orm can not map role_id\nto it.",
                     "type": "integer"
                 },
-                "tenants": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Tenant"
-                    }
+                "role_name": {
+                    "type": "string"
+                },
+                "sysadmin_flag": {
+                    "type": "boolean"
+                },
+                "update_time": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 },
                 "username": {
-                    "description": "用户名",
                     "type": "string"
                 }
             }
@@ -27288,6 +27318,22 @@ var doc = `{
                 }
             }
         },
+        "v1.NamespaceSelector": {
+            "type": "object",
+            "properties": {
+                "any": {
+                    "description": "Boolean describing whether all namespaces are selected in contrast to a\nlist restricting them.",
+                    "type": "boolean"
+                },
+                "matchNames": {
+                    "description": "List of namespace names.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "v1.Node": {
             "type": "object",
             "properties": {
@@ -28834,44 +28880,208 @@ var doc = `{
         "v1.Probe": {
             "type": "object",
             "properties": {
-                "exec": {
-                    "description": "One and only one of the following should be specified.\nExec specifies the action to take.\n+optional",
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
                     "type": "object",
-                    "$ref": "#/definitions/v1.ExecAction"
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
-                "failureThreshold": {
-                    "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 3. Minimum value is 1.\n+optional",
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "Time"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
                     "type": "integer"
                 },
-                "httpGet": {
-                    "description": "HTTPGet specifies the http request to perform.\n+optional",
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "Time"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
                     "type": "object",
-                    "$ref": "#/definitions/v1.HTTPGetAction"
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
-                "initialDelaySeconds": {
-                    "description": "Number of seconds after the container has started before liveness probes are initiated.\nMore info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes\n+optional",
-                    "type": "integer"
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "type": "ManagedFieldsEntry"
+                    }
                 },
-                "periodSeconds": {
-                    "description": "How often (in seconds) to perform the probe.\nDefault to 10 seconds. Minimum value is 1.\n+optional",
-                    "type": "integer"
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
                 },
-                "successThreshold": {
-                    "description": "Minimum consecutive successes for the probe to be considered successful after having failed.\nDefaults to 1. Must be 1 for liveness and startup. Minimum value is 1.\n+optional",
-                    "type": "integer"
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
                 },
-                "tcpSocket": {
-                    "description": "TCPSocket specifies an action involving a TCP port.\nTCP hooks not yet supported\nTODO: implement a realistic TCP lifecycle hook\n+optional",
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Specification of desired Ingress selection for target discovery by Prometheus.",
                     "type": "object",
-                    "$ref": "#/definitions/v1.TCPSocketAction"
+                    "$ref": "#/definitions/v1.ProbeSpec"
                 },
-                "terminationGracePeriodSeconds": {
-                    "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure.\nThe grace period is the duration in seconds after the processes running in the pod are sent\na termination signal and the time when the processes are forcibly halted with a kill signal.\nSet this value longer than the expected cleanup time for your process.\nIf this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this\nvalue overrides the value provided by the pod spec.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down).\nThis is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate.\n+optional",
-                    "type": "integer"
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
+                }
+            }
+        },
+        "v1.ProbeSpec": {
+            "type": "object",
+            "properties": {
+                "interval": {
+                    "description": "Interval at which targets are probed using the configured prober.\nIf not specified Prometheus' global scrape interval is used.",
+                    "type": "string"
                 },
-                "timeoutSeconds": {
-                    "description": "Number of seconds after which the probe times out.\nDefaults to 1 second. Minimum value is 1.\nMore info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes\n+optional",
-                    "type": "integer"
+                "jobName": {
+                    "description": "The job name assigned to scraped metrics by default.",
+                    "type": "string"
+                },
+                "module": {
+                    "description": "The module to use for probing specifying how to probe the target.\nExample module configuring in the blackbox exporter:\nhttps://github.com/prometheus/blackbox_exporter/blob/master/example.yml",
+                    "type": "string"
+                },
+                "prober": {
+                    "description": "Specification for the prober to use for probing targets.\nThe prober.URL parameter is required. Targets cannot be probed if left empty.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.ProberSpec"
+                },
+                "scrapeTimeout": {
+                    "description": "Timeout for scraping metrics from the Prometheus exporter.",
+                    "type": "string"
+                },
+                "targets": {
+                    "description": "Targets defines a set of static and/or dynamically discovered targets to be probed using the prober.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.ProbeTargets"
+                }
+            }
+        },
+        "v1.ProbeTargetIngress": {
+            "type": "object",
+            "properties": {
+                "namespaceSelector": {
+                    "description": "Select Ingress objects by namespace.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.NamespaceSelector"
+                },
+                "relabelingConfigs": {
+                    "description": "RelabelConfigs to apply to samples before ingestion.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.RelabelConfig"
+                    }
+                },
+                "selector": {
+                    "description": "Select Ingress objects by labels.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.LabelSelector"
+                }
+            }
+        },
+        "v1.ProbeTargetStaticConfig": {
+            "type": "object",
+            "properties": {
+                "labels": {
+                    "description": "Labels assigned to all metrics scraped from the targets.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "relabelingConfigs": {
+                    "description": "RelabelConfigs to apply to samples before ingestion.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.RelabelConfig"
+                    }
+                },
+                "static": {
+                    "description": "Targets is a list of URLs to probe using the configured prober.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "v1.ProbeTargets": {
+            "type": "object",
+            "properties": {
+                "ingress": {
+                    "description": "Ingress defines the set of dynamically discovered ingress objects which hosts are considered for probing.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.ProbeTargetIngress"
+                },
+                "staticConfig": {
+                    "description": "StaticConfig defines static targets which are considers for probing.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#static_config.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.ProbeTargetStaticConfig"
+                }
+            }
+        },
+        "v1.ProberSpec": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "description": "Path to collect metrics from.\nDefaults to ` + "`" + `/probe` + "`" + `.",
+                    "type": "string"
+                },
+                "scheme": {
+                    "description": "HTTP scheme to use for scraping.\nDefaults to ` + "`" + `http` + "`" + `.",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "Mandatory URL of the prober.",
+                    "type": "string"
                 }
             }
         },
@@ -28961,6 +29171,42 @@ var doc = `{
                 }
             }
         },
+        "v1.RelabelConfig": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "Action to perform based on regex matching. Default is 'replace'",
+                    "type": "string"
+                },
+                "modulus": {
+                    "description": "Modulus to take of the hash of the source label values.",
+                    "type": "integer"
+                },
+                "regex": {
+                    "description": "Regular expression against which the extracted value is matched. Default is '(.*)'",
+                    "type": "string"
+                },
+                "replacement": {
+                    "description": "Replacement value against which a regex replace is performed if the\nregular expression matches. Regex capture groups are available. Default is '$1'",
+                    "type": "string"
+                },
+                "separator": {
+                    "description": "Separator placed between concatenated source label values. default is ';'.",
+                    "type": "string"
+                },
+                "sourceLabels": {
+                    "description": "The source labels select values from existing labels. Their content is concatenated\nusing the configured separator and matched against the configured regular expression\nfor the replace, keep, and drop actions.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "targetLabel": {
+                    "description": "Label to which the resulting value is written in a replace action.\nIt is mandatory for replace actions. Regex capture groups are available.",
+                    "type": "string"
+                }
+            }
+        },
         "v1.ResourceFieldSelector": {
             "type": "object",
             "properties": {
@@ -29015,28 +29261,54 @@ var doc = `{
                 }
             }
         },
+        "v1.Rule": {
+            "type": "object",
+            "properties": {
+                "alert": {
+                    "type": "string"
+                },
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "expr": {
+                    "type": "object",
+                    "$ref": "#/definitions/intstr.IntOrString"
+                },
+                "for": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "record": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.RuleGroup": {
             "type": "object",
             "properties": {
-                "file": {
-                    "type": "string"
-                },
                 "interval": {
-                    "type": "number"
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
                 },
+                "partial_response_strategy": {
+                    "type": "string"
+                },
                 "rules": {
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Rules"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.Rule"
+                    }
                 }
-            }
-        },
-        "v1.Rules": {
-            "type": "array",
-            "items": {
-                "type": "object"
             }
         },
         "v1.SELinuxOptions": {
@@ -30846,12 +31118,12 @@ var doc = `{
         "v1alpha1.HealthStatus": {
             "type": "object",
             "properties": {
-                "message": {
-                    "description": "Message is a human-readable informational message describing the health status",
-                    "type": "string"
+                "enable": {
+                    "description": "Enable the HealthStatus.",
+                    "type": "boolean"
                 },
-                "status": {
-                    "description": "Status holds the status code of the application or resource",
+                "uri": {
+                    "description": "URI of the location. Default is ` + "`" + `/nginx-health` + "`" + `.\n+kubebuilder:validation:Optional",
                     "type": "string"
                 }
             }
@@ -32980,103 +33252,19 @@ var doc = `{
         "v1beta1.Gateway": {
             "type": "object",
             "properties": {
-                "annotations": {
-                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                "selector": {
+                    "description": "One or more labels that indicate a specific set of pods/VMs\non which this gateway configuration should be applied.\nBy default workloads are searched across all namespaces based on label selectors.\nThis implies that a gateway resource in the namespace \"foo\" can select pods in\nthe namespace \"bar\" based on labels.\nThis behavior can be controlled via the ` + "`" + `PILOT_SCOPE_GATEWAY_TO_NAMESPACE` + "`" + `\nenvironment variable in istiod. If this variable is set\nto true, the scope of label search is restricted to the configuration\nnamespace in which the the resource is present. In other words, the Gateway\nresource must reside in the same namespace as the gateway workload\ninstance.\nIf selector is nil, the Gateway will be applied to all workloads.",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
                 },
-                "apiVersion": {
-                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-                    "type": "string"
-                },
-                "clusterName": {
-                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
-                    "type": "string"
-                },
-                "creationTimestamp": {
-                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "deletionGracePeriodSeconds": {
-                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
-                    "type": "integer"
-                },
-                "deletionTimestamp": {
-                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "finalizers": {
-                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                "servers": {
+                    "description": "A list of server specifications.",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/v1beta1.Server"
                     }
-                },
-                "generateName": {
-                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
-                    "type": "string"
-                },
-                "generation": {
-                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
-                    "type": "integer"
-                },
-                "kind": {
-                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "managedFields": {
-                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
-                    }
-                },
-                "name": {
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
-                    "type": "string"
-                },
-                "ownerReferences": {
-                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.OwnerReference"
-                    }
-                },
-                "resourceVersion": {
-                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
-                    "type": "string"
-                },
-                "selfLink": {
-                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
-                    "type": "string"
-                },
-                "spec": {
-                    "description": "Spec defines the implementation of this definition.\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Gateway"
-                },
-                "status": {
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha1.IstioStatus"
-                },
-                "uid": {
-                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
-                    "type": "string"
                 }
             }
         },
@@ -33289,6 +33477,126 @@ var doc = `{
                 "window": {
                     "type": "object",
                     "$ref": "#/definitions/v1.Duration"
+                }
+            }
+        },
+        "v1beta1.Port": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Label assigned to the port.",
+                    "type": "string"
+                },
+                "number": {
+                    "description": "A valid non-negative integer port number.",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "The protocol exposed on the port.\nMUST BE one of HTTP|HTTPS|GRPC|HTTP2|MONGO|TCP|TLS.\nTLS implies the connection will be routed based on the SNI header to\nthe destination without terminating the TLS connection.",
+                    "type": "string"
+                },
+                "target_port": {
+                    "description": "The port number on the endpoint where the traffic will be\nreceived. Applicable only when used with ServiceEntries.",
+                    "type": "integer"
+                }
+            }
+        },
+        "v1beta1.Server": {
+            "type": "object",
+            "properties": {
+                "bind": {
+                    "description": "The ip or the Unix domain socket to which the listener should be bound\nto. Format: ` + "`" + `x.x.x.x` + "`" + ` or ` + "`" + `unix:///path/to/uds` + "`" + ` or ` + "`" + `unix://@foobar` + "`" + `\n(Linux abstract namespace). When using Unix domain sockets, the port\nnumber should be 0.\nThis can be used to restrict the reachability of this server to be gateway internal only.\nThis is typically used when a gateway needs to communicate to another mesh service\ne.g. publishing metrics. In such case, the server created with the\nspecified bind will not be available to external gateway clients.",
+                    "type": "string"
+                },
+                "default_endpoint": {
+                    "description": "The loopback IP endpoint or Unix domain socket to which traffic should\nbe forwarded to by default. Format should be ` + "`" + `127.0.0.1:PORT` + "`" + ` or\n` + "`" + `unix:///path/to/socket` + "`" + ` or ` + "`" + `unix://@foobar` + "`" + ` (Linux abstract namespace).\nNOT IMPLEMENTED.\n$hide_from_docs",
+                    "type": "string"
+                },
+                "hosts": {
+                    "description": "One or more hosts exposed by this gateway.\nWhile typically applicable to\nHTTP services, it can also be used for TCP services using TLS with SNI.\nA host is specified as a ` + "`" + `dnsName` + "`" + ` with an optional ` + "`" + `namespace/` + "`" + ` prefix.\nThe ` + "`" + `dnsName` + "`" + ` should be specified using FQDN format, optionally including\na wildcard character in the left-most component (e.g., ` + "`" + `prod/*.example.com` + "`" + `).\nSet the ` + "`" + `dnsName` + "`" + ` to ` + "`" + `*` + "`" + ` to select all ` + "`" + `VirtualService` + "`" + ` hosts from the\nspecified namespace (e.g.,` + "`" + `prod/*` + "`" + `).\n\nThe ` + "`" + `namespace` + "`" + ` can be set to ` + "`" + `*` + "`" + ` or ` + "`" + `.` + "`" + `, representing any or the current\nnamespace, respectively. For example, ` + "`" + `*/foo.example.com` + "`" + ` selects the\nservice from any available namespace while ` + "`" + `./foo.example.com` + "`" + ` only selects\nthe service from the namespace of the sidecar. The default, if no ` + "`" + `namespace/` + "`" + `\nis specified, is ` + "`" + `*/` + "`" + `, that is, select services from any namespace.\nAny associated ` + "`" + `DestinationRule` + "`" + ` in the selected namespace will also be used.\n\nA ` + "`" + `VirtualService` + "`" + ` must be bound to the gateway and must have one or\nmore hosts that match the hosts specified in a server. The match\ncould be an exact match or a suffix match with the server's hosts. For\nexample, if the server's hosts specifies ` + "`" + `*.example.com` + "`" + `, a\n` + "`" + `VirtualService` + "`" + ` with hosts ` + "`" + `dev.example.com` + "`" + ` or ` + "`" + `prod.example.com` + "`" + ` will\nmatch. However, a ` + "`" + `VirtualService` + "`" + ` with host ` + "`" + `example.com` + "`" + ` or\n` + "`" + `newexample.com` + "`" + ` will not match.\n\nNOTE: Only virtual services exported to the gateway's namespace\n(e.g., ` + "`" + `exportTo` + "`" + ` value of ` + "`" + `*` + "`" + `) can be referenced.\nPrivate configurations (e.g., ` + "`" + `exportTo` + "`" + ` set to ` + "`" + `.` + "`" + `) will not be\navailable. Refer to the ` + "`" + `exportTo` + "`" + ` setting in ` + "`" + `VirtualService` + "`" + `,\n` + "`" + `DestinationRule` + "`" + `, and ` + "`" + `ServiceEntry` + "`" + ` configurations for details.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "An optional name of the server, when set must be unique across all servers.\nThis will be used for variety of purposes like prefixing stats generated with\nthis name etc.",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "The Port on which the proxy should listen for incoming\nconnections.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1beta1.Port"
+                },
+                "tls": {
+                    "description": "Set of TLS related options that govern the server's behavior. Use\nthese options to control if all http requests should be redirected to\nhttps, and the TLS modes to use.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1beta1.ServerTLSSettings"
+                }
+            }
+        },
+        "v1beta1.ServerTLSSettings": {
+            "type": "object",
+            "properties": {
+                "ca_certificates": {
+                    "description": "REQUIRED if mode is ` + "`" + `MUTUAL` + "`" + `. The path to a file containing\ncertificate authority certificates to use in verifying a presented\nclient side certificate.",
+                    "type": "string"
+                },
+                "cipher_suites": {
+                    "description": "Optional: If specified, only support the specified cipher list.\nOtherwise default to the default cipher list supported by Envoy.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "credential_name": {
+                    "description": "For gateways running on Kubernetes, the name of the secret that\nholds the TLS certs including the CA certificates. Applicable\nonly on Kubernetes. The secret (of type ` + "`" + `generic` + "`" + `) should\ncontain the following keys and values: ` + "`" + `key:\n\u003cprivateKey\u003e` + "`" + ` and ` + "`" + `cert: \u003cserverCert\u003e` + "`" + `. For mutual TLS,\n` + "`" + `cacert: \u003cCACertificate\u003e` + "`" + ` can be provided in the same secret or\na separate secret named ` + "`" + `\u003csecret\u003e-cacert` + "`" + `.\nSecret of type tls for server certificates along with\nca.crt key for CA certificates is also supported.\nOnly one of server certificates and CA certificate\nor credentialName can be specified.",
+                    "type": "string"
+                },
+                "https_redirect": {
+                    "description": "If set to true, the load balancer will send a 301 redirect for\nall http connections, asking the clients to use HTTPS.",
+                    "type": "boolean"
+                },
+                "max_protocol_version": {
+                    "description": "Optional: Maximum TLS protocol version.",
+                    "type": "integer"
+                },
+                "min_protocol_version": {
+                    "description": "Optional: Minimum TLS protocol version.",
+                    "type": "integer"
+                },
+                "mode": {
+                    "description": "Optional: Indicates whether connections to this port should be\nsecured using TLS. The value of this field determines how TLS is\nenforced.",
+                    "type": "integer"
+                },
+                "private_key": {
+                    "description": "REQUIRED if mode is ` + "`" + `SIMPLE` + "`" + ` or ` + "`" + `MUTUAL` + "`" + `. The path to the file\nholding the server's private key.",
+                    "type": "string"
+                },
+                "server_certificate": {
+                    "description": "REQUIRED if mode is ` + "`" + `SIMPLE` + "`" + ` or ` + "`" + `MUTUAL` + "`" + `. The path to the file\nholding the server-side TLS certificate to use.",
+                    "type": "string"
+                },
+                "subject_alt_names": {
+                    "description": "A list of alternate names to verify the subject identity in the\ncertificate presented by the client.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "verify_certificate_hash": {
+                    "description": "An optional list of hex-encoded SHA-256 hashes of the\nauthorized client certificates. Both simple and colon separated\nformats are acceptable.\nNote: When both verify_certificate_hash and verify_certificate_spki\nare specified, a hash matching either value will result in the\ncertificate being accepted.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "verify_certificate_spki": {
+                    "description": "An optional list of base64-encoded SHA-256 hashes of the SKPIs of\nauthorized client certificates.\nNote: When both verify_certificate_hash and verify_certificate_spki\nare specified, a hash matching either value will result in the\ncertificate being accepted.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

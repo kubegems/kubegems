@@ -17,8 +17,8 @@ type PluginHandler struct {
 }
 
 type PluginsRet struct {
-	CorePlugins       []*gemsplugin.Plugin `json:"core"`
-	KubernetesPlugins []*gemsplugin.Plugin `json:"kubernetes"`
+	CorePlugins       map[string][]*gemsplugin.Plugin `json:"core"`
+	KubernetesPlugins map[string][]*gemsplugin.Plugin `json:"kubernetes"`
 }
 
 // @Tags Agent.Plugin
@@ -50,23 +50,31 @@ func (h *PluginHandler) List(c *gin.Context) {
 		}
 		OK(c, ret)
 	} else {
-		ret := PluginsRet{}
+		ret := PluginsRet{
+			CorePlugins:       make(map[string][]*gemsplugin.Plugin),
+			KubernetesPlugins: make(map[string][]*gemsplugin.Plugin),
+		}
 		for pluginName, v := range allPlugins.Spec.CorePlugins {
 			v.Status.IsHealthy = gemsplugin.IsPluginHelthy(h.cluster, v)
 			v.Name = pluginName
-			ret.CorePlugins = append(ret.CorePlugins, v)
+			ret.CorePlugins[v.Details.Catalog] = append(ret.CorePlugins[v.Details.Catalog], v)
 		}
 		for pluginName, v := range allPlugins.Spec.KubernetesPlugins {
 			v.Status.IsHealthy = gemsplugin.IsPluginHelthy(h.cluster, v)
 			v.Name = pluginName
-			ret.KubernetesPlugins = append(ret.KubernetesPlugins, v)
+			ret.CorePlugins[v.Details.Catalog] = append(ret.CorePlugins[v.Details.Catalog], v)
 		}
-		sort.Slice(ret.CorePlugins, func(i, j int) bool {
-			return ret.CorePlugins[i].Name < ret.CorePlugins[j].Name
-		})
-		sort.Slice(ret.KubernetesPlugins, func(i, j int) bool {
-			return ret.KubernetesPlugins[i].Name < ret.KubernetesPlugins[j].Name
-		})
+
+		for _, v := range ret.CorePlugins {
+			sort.Slice(v, func(i, j int) bool {
+				return v[i].Name < v[j].Name
+			})
+		}
+		for _, v := range ret.KubernetesPlugins {
+			sort.Slice(v, func(i, j int) bool {
+				return v[i].Name < v[j].Name
+			})
+		}
 
 		OK(c, ret)
 	}
@@ -81,7 +89,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Param name path string true "name"
 // @Param type query string true "type"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [post]
+// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [put]
 // @Security JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {
@@ -89,6 +97,7 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 	}); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
 		handlers.NotOK(c, err)
+		return
 	}
 	handlers.OK(c, "ok")
 }
@@ -102,7 +111,7 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Param name path string true "name"
 // @Param type query string true "type"
 // @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable [post]
+// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable [put]
 // @Security JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
 	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {
@@ -110,6 +119,7 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 	}); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
 		handlers.NotOK(c, err)
+		return
 	}
 	handlers.OK(c, "ok")
 }
@@ -127,7 +137,7 @@ func (h *PluginHandler) updatePlugin(
 	var found *gemsplugin.Plugin
 	switch plugintype {
 	case gemsplugin.TypeCorePlugins:
-		if v, ok := allPlugins.Spec.CorePlugins[name]; !ok {
+		if v, ok := allPlugins.Spec.CorePlugins[name]; ok {
 			found = v
 		} else {
 			return fmt.Errorf("no such plugin")
