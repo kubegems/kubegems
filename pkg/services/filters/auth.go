@@ -32,7 +32,7 @@ func NewAuthMiddleware(opts *jwt.Options) *AuthMiddleware {
 
 // UserLoader 根据凭据载入用户
 func (l *AuthMiddleware) FilterFunc(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
-	if strings.HasPrefix(req.Request.URL.Path, "/docs") || strings.HasPrefix(req.Request.URL.Path, "/v2/login") {
+	if isOpen(req) {
 		chain.ProcessFilter(req, resp)
 		return
 	}
