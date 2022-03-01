@@ -397,26 +397,21 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	}
 	h.SetAuditData(c, "创建", "集群", cluster.ClusterName)
 
-	// 控制集群只检验
-	if cluster.Primary {
-		primarys := []models.Cluster{}
-		if err := h.GetDataBase().DB().Where(`'primary' = ?`, true).Find(&primarys).Error; err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-		if len(primarys) > 0 {
-			handlers.NotOK(c, fmt.Errorf("控制集群只能有一个"))
-			return
-		}
-		if err := h.GetDB().Create(cluster).Error; err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-		handlers.Created(c, cluster)
-		return
-	}
-
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		// 控制集群只检验
+		if cluster.Primary {
+			primarys := []models.Cluster{}
+			if err := h.GetDataBase().DB().Where(`'primary' = ?`, true).Find(&primarys).Error; err != nil {
+				return err
+			}
+			if len(primarys) > 0 {
+				return fmt.Errorf("控制集群只能有一个")
+			}
+			if err := h.GetDB().Create(cluster).Error; err != nil {
+				return err
+			}
+			return nil
+		}
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if err := tx.Create(cluster).Error; err != nil {
 				return err
@@ -447,12 +442,12 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				h.GetDataBase().SystemAdmins(),
 			).
 			Send()
-		handlers.Created(c, cluster)
 		return nil
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+	handlers.Created(c, cluster)
 }
 
 type ClusterQuota struct {
@@ -736,14 +731,5 @@ func (i *ClusterInstaller) UnInstall(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := kube.DeleteByYamlOrJson(ctx, i.RestConfig, installerBts); err != nil {
-		log.Error(err, "create installer yaml")
-		return err
-	}
-
-	pluginsBts, err := i.getInstallerBts()
-	if err != nil {
-		return err
-	}
-	return kube.DeleteByYamlOrJson(ctx, i.RestConfig, pluginsBts)
+	return kube.DeleteByYamlOrJson(ctx, i.RestConfig, installerBts)
 }
