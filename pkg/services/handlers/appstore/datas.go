@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"helm.sh/helm/v3/pkg/chart"
+	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/services/handlers"
 )
 
@@ -22,7 +23,28 @@ type Chart struct {
 	RepoURL     string              `json:"repoURL"`
 }
 
+type AppFiles struct {
+	Files   map[string]string `json:"files" description:"files"`
+	App     string            `json:"app" description:"app"`
+	Version string            `json:"version" description:"version"`
+}
+
 type AppListInfoResp struct {
 	handlers.RespBase
 	Data []Chart `json:"data"`
+}
+
+type AppFilesResp struct {
+	handlers.RespBase
+	Data AppFiles `json:"data"`
+}
+
+type ChartRepoListResp struct {
+	handlers.ListBase
+	Data []models.ChartRepo `json:"list"`
+}
+
+type ChartRepoResp struct {
+	handlers.RespBase
+	Data []models.ChartRepo `json:"data"`
 }

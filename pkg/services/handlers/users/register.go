@@ -25,21 +25,22 @@ func (h *Handler) Regist(container *restful.Container) {
 		Doc("create user").
 		Metadata(restfulspec.KeyOpenAPITags, userTags).
 		Reads(models.User{}).
-		Returns(http.StatusOK, handlers.MessageOK, models.User{}))
+		Returns(http.StatusBadRequest, "validate failed", handlers.Response{}).
+		Returns(http.StatusOK, handlers.MessageOK, UserCreateResp{}))
 
 	ws.Route(ws.DELETE("/{name}").
 		To(h.DeleteUser).
 		Doc("delete user").
 		Param(restful.PathParameter("name", "user name")).
 		Metadata(restfulspec.KeyOpenAPITags, userTags).
-		Returns(http.StatusOK, handlers.MessageOK, nil))
+		Returns(http.StatusNoContent, handlers.MessageOK, nil))
 
 	ws.Route(ws.GET("/{name}").
 		To(h.RetrieveUser).
 		Doc("retrieve user").
 		Param(restful.PathParameter("name", "user name")).
 		Metadata(restfulspec.KeyOpenAPITags, userTags).
-		Returns(http.StatusOK, handlers.MessageOK, models.UserCommon{}))
+		Returns(http.StatusOK, handlers.MessageOK, UserCommonResp{}))
 
 	container.Add(ws)
 }
