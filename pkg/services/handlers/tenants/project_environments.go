@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	restfulspec "github.com/emicklei/go-restful-openapi/v2"
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/log"
@@ -222,8 +221,6 @@ func (h *Handler) GetEnvironmentResourceAggregate(req *restful.Request, resp *re
 		log.Error(err, "get environment resource")
 	}
 	handlers.OK(resp, res)
-
-	handlers.OK(resp, res)
 }
 
 func (h *Handler) SwitchEnvironmentNetworkIsolate(req *restful.Request, resp *restful.Response) {
@@ -278,113 +275,4 @@ func (h *Handler) SwitchEnvironmentNetworkIsolate(req *restful.Request, resp *re
 		return
 	}
 	handlers.OK(resp, tnetpol)
-}
-
-func (h *Handler) registProjectEnvironments(ws *restful.WebService) {
-	ws.Route(ws.POST("/{tenant}/projects/{project}/environments").
-		To(h.CreateProjectEnvironment).
-		Doc("create a environment in tenant/project").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Reads(EnvironmentCreateForm{}).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusCreated, handlers.MessageOK, EnvironmentCreateForm{}))
-
-	ws.Route(ws.DELETE("/{tenant}/projects/{project}/environments/{environment}").
-		To(h.DeleteProjectEnvironment).
-		Doc("delete a environment belong to the tenant/project ").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name")).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusNoContent, handlers.MessageOK, nil))
-
-	ws.Route(ws.GET("/{tenant}/projects/{project}/environments").
-		To(h.ListProjectEnvironment).
-		Doc("list environment belong to the tenant/project ").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusOK, handlers.MessageOK, []models.EnvironmentCommon{}))
-
-	ws.Route(ws.GET("/{tenant}/projects/{project}/environments/{environment}").
-		To(h.RetrieveProjectEnvironment).
-		Doc("get environment belong to the tenant/project ").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name")).
-		Param(restful.QueryParameter("detail", "show detail").PossibleValues([]string{"true", "false"})).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusOK, handlers.MessageOK, models.Environment{}))
-
-	ws.Route(ws.PUT("/{tenant}/projects/{project}/environments/{environment}").
-		To(h.ModifyProjectEnvironment).
-		Doc("list environment belong to the tenant/project ").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name")).
-		Reads(EnvironmentCreateForm{}).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusOK, handlers.MessageOK, models.Environment{}))
-
-	ws.Route(ws.GET("/{tenant}/projects/{project}/environments/{environment}/users").
-		To(h.ListEnvironmentMembers).
-		Doc("list environment member").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).
-		Param(restful.QueryParameter("role", "filter role")).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusOK, handlers.MessageOK, []models.UserCommon{}))
-
-	ws.Route(ws.POST("/{tenant}/projects/{project}/environments/{environment}/users/{user}").
-		To(h.AddOrModifyEnvironmentMembers).
-		Doc("add or modify environment member ").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).
-		Param(restful.PathParameter("user", "user to add")).
-		Param(restful.QueryParameter("role", "filter role").Required(true)).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusOK, handlers.MessageOK, models.EnvironmentUserRels{}))
-
-	ws.Route(ws.DELETE("/{tenant}/projects/{project}/environments/{environment}/users/{user}").
-		To(h.DeleteEnvironmentMember).
-		Doc("delete environment member ").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).
-		Param(restful.PathParameter("user", "user to add")).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusNoContent, handlers.MessageOK, nil))
-
-	ws.Route(ws.GET("/{tenant}/projects/{project}/environments/{environment}/resource-aggregate").
-		To(h.GetEnvironmentResourceAggregate).
-		Doc("get environment resource history stastics").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).
-		Param(restful.QueryParameter("date", "date to speficy")).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusNoContent, handlers.MessageOK, nil))
-
-	ws.Route(ws.POST("/{tenant}/projects/{project}/environments/{environment}/network-isolate").
-		To(h.SwitchEnvironmentNetworkIsolate).
-		Doc("enable environment network isolate").
-		Operation("EnableEnvironmentNetworkIsolate").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusNoContent, handlers.MessageOK, nil))
-
-	ws.Route(ws.DELETE("/{tenant}/projects/{project}/environments/{environment}/network-isolate").
-		To(h.SwitchEnvironmentNetworkIsolate).
-		Doc("disable environment network isolate").
-		Operation("DisableEnvironmentNetworkIsolate").
-		Param(restful.PathParameter("tenant", "tenant name")).
-		Param(restful.PathParameter("project", "project name belong to the tenant")).
-		Param(restful.PathParameter("environment", "environment name belong to the tenant/project")).
-		Metadata(restfulspec.KeyOpenAPITags, tenantProjectTags).
-		Returns(http.StatusNoContent, handlers.MessageOK, nil))
 }

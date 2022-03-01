@@ -48,6 +48,21 @@ type UserSimple struct {
 	Role     string `json:"role,omitempty"`
 }
 
+func (UserSimple) TableName() string {
+	return UserTableName
+}
+
+type UserCreate struct {
+	ID       uint   `json:"id,omitempty"`
+	Username string `json:"username,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Password string `json:"password"`
+}
+
+func (UserCreate) TableName() string {
+	return UserTableName
+}
+
 type UserCommon struct {
 	ID           uint        `json:"id,omitempty"`
 	Username     string      `json:"username,omitempty"`
@@ -61,20 +76,16 @@ type UserCommon struct {
 	SystemRoleID uint        `json:"systemRoleID,omitempty"`
 }
 
+func (UserCommon) TableName() string {
+	return UserTableName
+}
+
 func (u UserCommon) MarshalBinary() ([]byte, error) {
 	return json.Marshal(u)
 }
 
 func (u *UserCommon) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &u)
-}
-
-func (UserSimple) TableName() string {
-	return UserTableName
-}
-
-func (UserCommon) TableName() string {
-	return UserTableName
 }
 
 func (u *UserCommon) GetID() uint {

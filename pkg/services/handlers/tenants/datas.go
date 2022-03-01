@@ -25,6 +25,21 @@ type ProjectListResp struct {
 	Data []models.Project `json:"list"`
 }
 
+type EnvironmentListResp struct {
+	handlers.ListBase
+	Data []models.EnvironmentCommon `json:"list"`
+}
+
+type EnvironmentResp struct {
+	handlers.RespBase
+	Data models.Environment `json:"data"`
+}
+
+type ProjectResp struct {
+	handlers.RespBase
+	Data models.Project `json:"data"`
+}
+
 type UserSimpleListResp struct {
 	handlers.ListBase
 	Data []models.UserSimple `json:"list"`
@@ -36,10 +51,25 @@ type TenantUserCreateForm struct {
 	Role   string `json:"role" validate:"required"`
 }
 
+type TenantUserCreateResp struct {
+	handlers.RespBase
+	Data TenantUserCreateForm `json:"data"`
+}
+
 type ProjectCreateForm struct {
 	Name          string `json:"name" validate:"required"`
 	Remark        string `json:"remark" validate:"required"`
 	ResourceQuota string `json:"quota" validate:"json"`
+}
+
+type EnvironmentResourceResp struct {
+	handlers.RespBase
+	Data models.EnvironmentResource `json:"data"`
+}
+
+type EnvironmentUserRelsResp struct {
+	handlers.RespBase
+	Data models.EnvironmentUserRels `json:"data"`
 }
 
 type EnvironmentCreateForm struct {

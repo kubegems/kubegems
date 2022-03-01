@@ -7,5 +7,15 @@ import (
 
 type UserListResp struct {
 	handlers.ListBase
-	List []models.User `json:"list"`
+	List []models.UserCommon `json:"list"`
+}
+
+type UserCreateResp struct {
+	handlers.RespBase
+	Data models.UserCreate `json:"data"`
+}
+
+type UserCommonResp struct {
+	handlers.RespBase
+	Data models.UserCommon `json:"data"`
 }

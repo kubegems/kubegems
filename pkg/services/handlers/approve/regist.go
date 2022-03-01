@@ -21,7 +21,7 @@ func (h *Handler) Regist(container *restful.Container) {
 		To(h.List).
 		Doc("list approvals").
 		Metadata(restfulspec.KeyOpenAPITags, approvalTags).
-		ReturnsError(http.StatusBadRequest, "list error", handlers.Response{}).
+		Returns(http.StatusBadRequest, "list error", handlers.Response{}).
 		Returns(http.StatusOK, handlers.MessageOK, ApproveListResp{}))
 
 	ws.Route(ws.POST("/{kind}/{id}/{action}").
@@ -31,9 +31,9 @@ func (h *Handler) Regist(container *restful.Container) {
 		Param(restful.PathParameter("kind", "resource kind").PossibleValues([]string{ApplyKindQuotaApply})).
 		Param(restful.PathParameter("id", "resource id")).
 		Param(restful.PathParameter("action", "approval action").PossibleValues([]string{"pass", "reject"})).
-		ReturnsError(http.StatusBadRequest, "not supported action", handlers.Response{}).
-		ReturnsError(http.StatusNotFound, "approve not found", handlers.Response{}).
-		Returns(http.StatusOK, handlers.MessageOK, nil))
+		Returns(http.StatusBadRequest, "not supported action", handlers.Response{}).
+		Returns(http.StatusNotFound, "approve not found", handlers.Response{}).
+		Returns(http.StatusOK, handlers.MessageOK, "ok"))
 
 	container.Add(ws)
 }
