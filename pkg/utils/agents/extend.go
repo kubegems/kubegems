@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
+	prommodel "github.com/prometheus/common/model"
 	"kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/prometheus"
@@ -190,10 +191,28 @@ func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, match, labe
 		Query: values,
 		Into:  WrappedResponse(&resp),
 	}); err != nil {
-		return nil, fmt.Errorf("get label values failed: %v", err)
+		return nil, fmt.Errorf("prometheus label values failed, cluster: %s, promql: %s, label: %s, %v", c.Name, match, label, err)
 	}
 
 	return resp.Labels, nil
+}
+
+func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, end, step string) (prommodel.Matrix, error) {
+	ret := prommodel.Matrix{}
+	values := url.Values{}
+	values.Add("query", query)
+	values.Add("start", start)
+	values.Add("end", end)
+	values.Add("step", step)
+	if err := c.DoRequest(ctx, Request{
+		Path:  "/custom/prometheus/v1/matrix",
+		Query: values,
+		Into:  WrappedResponse(&ret),
+	}); err != nil {
+		return nil, fmt.Errorf("prometheus query range failed, cluster: %s, promql: %s, %v", c.Name, query, err)
+	}
+
+	return ret, nil
 }
 
 func convertBlackListToSilence(info models.AlertInfo) alertmanagertypes.Silence {

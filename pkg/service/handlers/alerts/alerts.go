@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -84,7 +85,7 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 		}
 
 		sort.Slice(ret, func(i, j int) bool {
-			return ret[i].Name < ret[j].Name
+			return strings.ToLower(ret[i].Name) < strings.ToLower(ret[j].Name)
 		})
 		return ret, nil
 	})(c)
