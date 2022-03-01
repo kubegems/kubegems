@@ -61,4 +61,5 @@ func (v *Validator) registStructValidates() {
 	v.Validator.RegisterStructValidation(v.ProjectStructLevelValidation, models.Project{})
 	v.Validator.RegisterStructValidation(v.TenantUserRelStructLevelValidation, models.TenantUserRels{})
 	v.Validator.RegisterStructValidation(v.EnvironmentUserRelStructLevelValidation, models.EnvironmentUserRels{})
+	v.Validator.RegisterStructValidation(v.UserCreateStructLevelValidation, models.UserCreate{})
 }

@@ -11,8 +11,8 @@ type UserHandler struct {
 
 func (h *UserHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/user", h.CheckIsSysADMIN, h.ListUser)
+	rg.POST("/user", h.CheckIsSysADMIN, h.PostUser)
 	rg.GET("/user/:user_id", h.CheckIsSysADMIN, h.RetrieveUser)
-	rg.POST("/user/:user_id", h.CheckIsSysADMIN, h.PostUser)
 	rg.PUT("/user/:user_id", h.CheckIsSysADMIN, h.PutUser)
 	rg.DELETE("/user/:user_id", h.CheckIsSysADMIN, h.DeleteUser)
 	rg.GET("/user/:user_id/tenant", h.ListUserTenant)

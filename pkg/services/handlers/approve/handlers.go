@@ -2,7 +2,6 @@ package approvehandler
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
@@ -11,15 +10,6 @@ import (
 	"kubegems.io/pkg/services/handlers/base"
 	"kubegems.io/pkg/utils"
 )
-
-type Approve struct {
-	Title   string      `json:"title,omitempty"`
-	Kind    ApplyKind   `json:"kind,omitempty"`
-	KindID  uint        `json:"recordID,omitempty"`
-	Content interface{} `json:"content,omitempty"`
-	Time    time.Time   `json:"time,omitempty"`
-	Status  string      `json:"status,omitempty"`
-}
 
 type Handler struct {
 	base.BaseHandler
@@ -78,6 +68,7 @@ func (h *Handler) Action(req *restful.Request, resp *restful.Response) {
 		handlers.NotFound(resp, fmt.Errorf("not supported kind %s", kind))
 		return
 	}
+	handlers.OK(resp, "ok")
 }
 
 func quotaApply2Approve(ol []models.TenantResourceQuotaApply) []Approve {

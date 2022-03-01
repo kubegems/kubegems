@@ -6,21 +6,21 @@ import (
 )
 
 type ClusterInfoResp struct {
-	handlers.PageBase
+	handlers.RespBase
 	Data models.ClusterSimple `json:"data"`
 }
 
 type ClusterListResp struct {
-	handlers.PageBase
+	handlers.ListBase
 	Data []models.ClusterSimple `json:"list"`
 }
 
 type LogQueryHistoryListResp struct {
-	handlers.PageBase
+	handlers.ListBase
 	Data []models.LogQueryHistory `json:"list"`
 }
 
 type LogQuerySnapshotListResp struct {
-	handlers.PageBase
+	handlers.ListBase
 	Data []models.LogQuerySnapshot `json:"list"`
 }

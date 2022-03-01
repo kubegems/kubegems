@@ -52,19 +52,19 @@ func ToUint(id string) uint {
 
 func ValidPassword(input string) error {
 	if len(input) < 8 {
-		return errors.New("密码长度至少8位")
+		return errors.New("密码长度至少8位,包含大小写字母和数字以及特殊字符(.!@#$%~)")
 	}
 	if !regA_Z.Match([]byte(input)) {
-		return errors.New("密码至少包含一个大写字母")
+		return errors.New("密码长度至少8位,包含大小写字母和数字以及特殊字符(.!@#$%~)")
 	}
 	if !rega_z.Match([]byte(input)) {
-		return errors.New("密码至少包含一个小写字母")
+		return errors.New("密码长度至少8位,包含大小写字母和数字以及特殊字符(.!@#$%~)")
 	}
 	if !reg0_9.Match([]byte(input)) {
-		return errors.New("密码至少包含一个数字")
+		return errors.New("密码长度至少8位,包含大小写字母和数字以及特殊字符(.!@#$%~)")
 	}
 	if !reg_chs.Match([]byte(input)) {
-		return errors.New("密码至少包含一个特殊字符(.!@#$%~)")
+		return errors.New("密码长度至少8位,包含大小写字母和数字以及特殊字符(.!@#$%~)")
 	}
 
 	return nil
