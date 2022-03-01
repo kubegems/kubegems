@@ -210,15 +210,16 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
-			if err := h.GetDataBase().DB().Delete(cluster).Error; err != nil {
+			if err := tx.Delete(cluster).Error; err != nil {
 				return err
 			}
 
 			installer := ClusterInstaller{
-				Cluster:         cluster,
-				Clientset:       clientSet,
-				RestConfig:      config,
-				KubegemsVersion: version.Get(),
+				Cluster:          cluster,
+				Clientset:        clientSet,
+				RestConfig:       config,
+				KubegemsVersion:  version.Get(),
+				InstallerOptions: h.InstallerOptions,
 			}
 			return installer.UnInstall(ctx)
 		}); err != nil {
@@ -399,12 +400,16 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	// 控制集群只检验
 	if cluster.Primary {
 		primarys := []models.Cluster{}
-		if err := h.GetDataBase().DB().Where("primary = ?", true).Find(&primarys).Error; err != nil {
+		if err := h.GetDataBase().DB().Where(`'primary' = ?`, true).Find(&primarys).Error; err != nil {
 			handlers.NotOK(c, err)
 			return
 		}
 		if len(primarys) > 0 {
 			handlers.NotOK(c, fmt.Errorf("控制集群只能有一个"))
+			return
+		}
+		if err := h.GetDB().Create(cluster).Error; err != nil {
+			handlers.NotOK(c, err)
 			return
 		}
 		handlers.Created(c, cluster)
@@ -413,7 +418,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
-			if err := h.GetDataBase().DB().Save(cluster).Error; err != nil {
+			if err := tx.Create(cluster).Error; err != nil {
 				return err
 			}
 
