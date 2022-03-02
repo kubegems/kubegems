@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"sync"
 
+	"k8s.io/client-go/rest"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/httpsigs"
@@ -113,22 +114,43 @@ func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta
 	if err != nil {
 		return nil, err
 	}
-
 	climeta := &ClientMeta{
 		Name:     name,
 		BaseAddr: baseaddr,
-		Transport: &http.Transport{
-			Proxy: getRequestProxy(h.apiServerProxyPath(true)),
-		},
+		Signer:   getRequestProxy(h.apiServerProxyPath(true)),
+	}
+	defaultRoudTripper := &http.Transport{
+		Proxy: climeta.Signer,
 	}
 
 	if baseaddr.Scheme == "https" {
-		cert, key, ca := []byte(cluster.AgentCert), []byte(cluster.AgentKey), []byte(cluster.AgentCA)
-		tlsconfig, err := tlsConfigFrom(cert, key, ca)
-		if err != nil {
-			return nil, err
+		if cluster.AgentCert != "" && cluster.AgentKey != "" {
+			cert, key, ca := []byte(cluster.AgentCert), []byte(cluster.AgentKey), []byte(cluster.AgentCA)
+			tlsconfig, err := tlsConfigFrom(cert, key, ca)
+			if err != nil {
+				return nil, err
+			}
+			climeta.TlsConfig = tlsconfig
+			defaultRoudTripper.TLSClientConfig = tlsconfig
+			climeta.Transport = defaultRoudTripper
+		} else {
+			cfg, err := kube.GetKubeRestConfig(cluster.KubeConfig)
+			if err != nil {
+				return nil, err
+			}
+			tlsCfg, err := rest.TLSConfigFor(cfg)
+			if err != nil {
+				return nil, err
+			}
+			climeta.TlsConfig = tlsCfg
+			climeta.Restconfig = cfg
+			defaultRoudTripper.TLSClientConfig = tlsCfg
+			rt, err := rest.HTTPWrappersForConfig(cfg, defaultRoudTripper)
+			if err != nil {
+				return nil, err
+			}
+			climeta.Transport = rt
 		}
-		climeta.Transport.TLSClientConfig = tlsconfig
 	}
 	return climeta, nil
 }

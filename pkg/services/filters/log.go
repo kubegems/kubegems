@@ -11,5 +11,5 @@ func Log(req *restful.Request, resp *restful.Response, chain *restful.FilterChai
 	start := time.Now()
 	chain.ProcessFilter(req, resp)
 	duration := time.Since(start)
-	log.Info(req.Request.URL.String(), "duration", duration.String())
+	log.Info(req.Request.URL.String(), "duration", duration.String(), "method", req.Request.Method, "code", resp.StatusCode())
 }
