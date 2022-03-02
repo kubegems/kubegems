@@ -38,6 +38,9 @@ const (
 	ScopeSystemAdmin = "system-admin" // 系统管理员
 	ScopeSystemUser  = "system-user"  // 所有用户
 	ScopeNormal      = "normal"       // 普通租户用户
+
+	SilenceCommentForBlackListPrefix = "fingerprint-"
+	SilenceCommentForAlertrulePrefix = "silence for"
 )
 
 // 里面资源的namespace必须相同
@@ -367,7 +370,7 @@ func convertAlertRule(namespace string, group monitoringv1.RuleGroup, opts *Moni
 
 		exprJson := rule.Annotations[exprJsonAnnotationKey]
 		if exprJson == "" {
-			return ret, fmt.Errorf("rule annotation not contains expr json key")
+			return ret, fmt.Errorf("rule annotation not contains expr json key: %v", rule)
 		}
 
 		expr := CompareQueryParams{}
