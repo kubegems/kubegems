@@ -98,6 +98,15 @@ func (l *PrivateTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIf
 func parseAuthorizationHeader(req *http.Request) (htype, token string) {
 	authheader := req.Header.Get("Authorization")
 	if authheader == "" {
+		tkn := req.URL.Query().Get("token")
+		if tkn == "" {
+			return
+		}
+		htype = "Bearer"
+		token = tkn
+		q := req.URL.Query()
+		q.Del("token")
+		req.URL.RawQuery = q.Encode()
 		return
 	}
 	seps := strings.Split(authheader, " ")

@@ -10,10 +10,11 @@ import (
 	"net/url"
 
 	"github.com/gorilla/websocket"
+	"k8s.io/client-go/rest"
 	"kubegems.io/pkg/utils/httputil"
 )
 
-func (c TypedClient) DialWebsocket(ctx context.Context, path string, headers ...http.Header) (*websocket.Conn, *http.Response, error) {
+func (c TypedClient) DialWebsocket(ctx context.Context, path string, headers http.Header) (*websocket.Conn, *http.Response, error) {
 	wsu := (&url.URL{
 		Scheme: func() string {
 			if c.BaseAddr.Scheme == "http" {
@@ -26,11 +27,28 @@ func (c TypedClient) DialWebsocket(ctx context.Context, path string, headers ...
 		Path: c.BaseAddr.Path + "/" + path,
 	}).String()
 
-	if len(headers) > 0 {
-		return c.websocket.DialContext(ctx, wsu, headers[0])
+	if c.ClientMeta.Restconfig == nil {
+		return c.websocket.DialContext(ctx, wsu, headers)
 	} else {
-		return c.websocket.DialContext(ctx, wsu, nil)
+		u, err := url.Parse(wsu)
+		if err != nil {
+			return nil, nil, err
+		}
+		req := &http.Request{
+			Method: http.MethodGet,
+			URL:    u,
+			Header: headers,
+		}
+		wsrt := NewWebsocketRoundTripper(c.websocket)
+		rt, err := rest.HTTPWrappersForConfig(c.ClientMeta.Restconfig, wsrt)
+		if err != nil {
+			return nil, nil, err
+		}
+		go rt.RoundTrip(req)
+		ret := <-wsrt.Result
+		return ret.Conn, ret.Resp, ret.Err
 	}
+
 }
 
 type Request struct {
