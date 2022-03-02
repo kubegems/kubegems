@@ -23,7 +23,6 @@ var (
 		"service":   "alertmanager",
 		"port":      "9093",
 	}
-	silenceCommentPrefix = "fingerprint-"
 )
 
 type ExtendClient struct {
@@ -78,7 +77,7 @@ func (c *ExtendClient) Healthy(ctx context.Context) error {
 	return c.DoRequest(ctx, Request{Path: "/healthz"})
 }
 
-func (c *ExtendClient) ListSilences(ctx context.Context, labels map[string]string) ([]alertmanagertypes.Silence, error) {
+func (c *ExtendClient) ListSilences(ctx context.Context, labels map[string]string, commentPrefix string) ([]alertmanagertypes.Silence, error) {
 	allSilences := []alertmanagertypes.Silence{}
 
 	req := Request{
@@ -97,19 +96,29 @@ func (c *ExtendClient) ListSilences(ctx context.Context, labels map[string]strin
 	if err := c.DoRequest(ctx, req); err != nil {
 		return nil, fmt.Errorf("list silence by %v, %w", labels, err)
 	}
+
 	// 只返回活跃的
 	ret := []alertmanagertypes.Silence{}
-	for _, v := range allSilences {
-		if v.Status.State == alertmanagertypes.SilenceStateActive &&
-			strings.HasPrefix(v.Comment, silenceCommentPrefix) {
-			ret = append(ret, v)
+	if commentPrefix == "" {
+		for _, v := range allSilences {
+			if v.Status.State == alertmanagertypes.SilenceStateActive {
+				ret = append(ret, v)
+			}
+		}
+	} else {
+		for _, v := range allSilences {
+			if v.Status.State == alertmanagertypes.SilenceStateActive &&
+				strings.HasPrefix(v.Comment, commentPrefix) {
+				ret = append(ret, v)
+			}
 		}
 	}
 	return ret, nil
 }
 
+// use for blacklist
 func (c *ExtendClient) CreateOrUpdateSilenceIfNotExist(ctx context.Context, info models.AlertInfo) error {
-	silenceList, err := c.ListSilences(ctx, info.LabelMap)
+	silenceList, err := c.ListSilences(ctx, info.LabelMap, prometheus.SilenceCommentForBlackListPrefix)
 	if err != nil {
 		return err
 	}
@@ -136,8 +145,9 @@ func (c *ExtendClient) CreateOrUpdateSilenceIfNotExist(ctx context.Context, info
 	return nil
 }
 
+// use for blacklist
 func (c *ExtendClient) DeleteSilenceIfExist(ctx context.Context, info models.AlertInfo) error {
-	silenceList, err := c.ListSilences(ctx, info.LabelMap)
+	silenceList, err := c.ListSilences(ctx, info.LabelMap, prometheus.SilenceCommentForBlackListPrefix)
 	if err != nil {
 		return err
 	}
@@ -221,7 +231,7 @@ func convertBlackListToSilence(info models.AlertInfo) alertmanagertypes.Silence 
 		EndsAt:    *info.SilenceEndsAt,
 		UpdatedAt: *info.SilenceUpdatedAt,
 		CreatedBy: info.SilenceCreator,
-		Comment:   fmt.Sprintf("%s%s", silenceCommentPrefix, info.Fingerprint), // comment存指纹，以便取出时做匹配
+		Comment:   fmt.Sprintf("%s%s", prometheus.SilenceCommentForBlackListPrefix, info.Fingerprint), // comment存指纹，以便取出时做匹配
 		Matchers:  make(labels.Matchers, len(info.LabelMap)),
 	}
 	index := 0

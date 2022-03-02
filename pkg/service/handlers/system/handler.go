@@ -80,6 +80,8 @@ func (h *SystemHandler) SetConfig(c *gin.Context) {
 		return
 	}
 
+	h.SetAuditData(c, "更新", "系统配置", newcfg.Name)
+
 	oldcfg.Content = newcfg.Content
 	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&oldcfg).Error; err != nil {

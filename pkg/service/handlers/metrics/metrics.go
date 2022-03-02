@@ -230,6 +230,8 @@ func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 		return
 	}
 
+	h.SetAuditData(c, "更新", "Prometheus模板", resName+"."+ruleName)
+
 	for _, unit := range rule.Units {
 		if _, ok := h.OnlineOptions.Monitor.Units[unit]; !ok {
 			handlers.NotOK(c, fmt.Errorf("unit %s is not valid", unit))
@@ -267,6 +269,8 @@ func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 	resName := c.Param("resource_name")
 	ruleName := c.Param("rule_name")
+
+	h.SetAuditData(c, "删除", "Prometheus模板", resName+"."+ruleName)
 
 	resDetail, ok := h.OnlineOptions.Monitor.Resources[resName]
 	if !ok {
