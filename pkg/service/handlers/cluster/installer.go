@@ -205,7 +205,7 @@ spec:
       details:
         catalog: 服务网格
         description: KubeGems平台服务治理套件.
-        version: v1.11.0
+        version: v1.11.7
       enabled: false
       namespace: istio-system
       operator:
