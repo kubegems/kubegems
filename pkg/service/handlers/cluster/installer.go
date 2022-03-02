@@ -127,7 +127,7 @@ spec:
         description: 监控Kubernetes内各个资源的运行状态.
         version: v1.9.8-debian-10-r0
       enabled: true
-      namespace: kube-system
+      namespace: gemcloud-monitoring-system
       status:
         deployment:
         - kube-state-metrics
