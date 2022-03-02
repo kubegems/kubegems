@@ -38,7 +38,7 @@ func ListAlertRule(ctx context.Context, cli agents.Client, opts *prometheus.Moni
 	}
 
 	// 按照namespace分组
-	allSilences, err := cli.Extend().ListSilences(ctx, nil)
+	allSilences, err := cli.Extend().ListSilences(ctx, nil, prometheus.SilenceCommentForAlertrulePrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func ListAlertRule(ctx context.Context, cli agents.Client, opts *prometheus.Moni
 		if rule.Name == prometheus.PrometheusRuleName {
 			amconfig, ok := configNamespaceMap[rule.Namespace]
 			if !ok {
-				log.Warnf("alertmanager config: %s not found", rule.Name)
+				log.Warnf("alertmanager config %s in namespace %s not found", rule.Name, rule.Namespace)
 				continue
 			}
 			raw := &prometheus.RawAlertResource{
@@ -89,7 +89,7 @@ func GetRawAlertResource(ctx context.Context, namespace string, cli agents.Clien
 
 	silence, err := cli.Extend().ListSilences(ctx, map[string]string{
 		prometheus.AlertNamespaceLabel: namespace,
-	})
+	}, prometheus.SilenceCommentForAlertrulePrefix)
 	if err != nil {
 		return nil, err
 	}
