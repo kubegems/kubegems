@@ -31,6 +31,10 @@ func GetKubeconfigInfos(kubeconfig []byte) (apiserver string, cert, key, ca []by
 	return cfg.Host, cfg.TLSClientConfig.CertData, cfg.TLSClientConfig.KeyData, cfg.TLSClientConfig.CAData, nil
 }
 
+func GetKubeRestConfig(kubeconfig []byte) (*rest.Config, error) {
+	return clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+}
+
 // AutoClientConfig 自动获取当前环境 restConfig
 // 1. 先尝试使用InClusterConfig,
 // 2. 若不存在则使用 ~/.kube/config，

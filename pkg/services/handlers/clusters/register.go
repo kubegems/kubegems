@@ -11,7 +11,8 @@ import (
 
 var (
 	clusterTags       = []string{"cluster"}
-	clusterPluginTags = []string{"cluster", "cluster-plugin"}
+	clusterPluginTags = []string{"cluster-plugin"}
+	clusterProxyTags  = []string{"cluster-proxy"}
 )
 
 func (h *Handler) Regist(container *restful.Container) {
@@ -102,6 +103,7 @@ func (h *Handler) Regist(container *restful.Container) {
 		Returns(http.StatusOK, handlers.MessageOK, ClusterStatusMapResp{}))
 
 	h.registLoki(ws)
+	h.registProxy(ws)
 	container.Add(ws)
 }
 
@@ -189,4 +191,13 @@ func (h *Handler) registLoki(ws *restful.WebService) {
 		Param(restful.QueryParameter("label", "label").Required(true)).
 		Metadata(restfulspec.KeyOpenAPITags, clusterPluginTags).
 		Returns(http.StatusOK, handlers.MessageOK, nil))
+}
+
+func (h *Handler) registProxy(ws *restful.WebService) {
+	ws.Route(ws.GET("/{cluster}/proxy/{action:*}").
+		To(h.Proxy).
+		Doc("proxy to agent api").
+		Metadata(restfulspec.KeyOpenAPITags, clusterProxyTags).
+		Param(restful.PathParameter("cluster", "cluster name")).
+		Param(restful.PathParameter("action", "real path to action")))
 }
