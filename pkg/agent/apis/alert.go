@@ -1,11 +1,12 @@
 package apis
 
 import (
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/msgbus"
 )
 
@@ -31,6 +32,8 @@ func (h *AlertHandler) Webhook(c *gin.Context) {
 	errs := h.Watcher.send(msg)
 	if len(errs) != 0 {
 		log.Errorf("send error: %v", errs)
+		NotOK(c, fmt.Errorf(strings.Join(errs, ",")))
+		return
 	}
-	handlers.OK(c, errs)
+	OK(c, errs)
 }
