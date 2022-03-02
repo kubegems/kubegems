@@ -85,7 +85,7 @@ func (c *AgentMessageCollector) Run() error {
 
 func (c *AgentMessageCollector) MessageChan(ctx context.Context, clustername string, stopch chan struct{}) {
 	log := log.FromContextOrDiscard(ctx).WithValues("cluster", clustername)
-	uri := "/notify"
+	uri := "notify"
 	for {
 		func() error {
 			clusterProxy, err := c.clientsSet.ClientOf(ctx, clustername)
