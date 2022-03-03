@@ -20,7 +20,7 @@ func (h *Handler) Regist(container *restful.Container) {
 		To(h.ListExternalRepos).
 		Doc("list external repos").
 		Metadata(restfulspec.KeyOpenAPITags, appStoreTags).
-		ReturnsError(http.StatusBadRequest, "list chart repo failed", handlers.Response{}).
+		Returns(http.StatusBadRequest, "list chart repo failed", handlers.Response{}).
 		Returns(http.StatusOK, handlers.MessageOK, ChartRepoListResp{}))
 
 	ws.Route(ws.POST("/repos").

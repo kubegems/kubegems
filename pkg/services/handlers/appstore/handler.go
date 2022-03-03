@@ -32,12 +32,6 @@ func MustNewHandler(base base.BaseHandler, options *helm.Options) *Handler {
 	}
 }
 
-type AppFilesResponse struct {
-	Files   map[string]string `json:"files" description:"files"`
-	App     string            `json:"app" description:"app"`
-	Version string            `json:"version" description:"version"`
-}
-
 func (h *Handler) ListApps(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	index, err := h.ChartMuseumClient.ListAllChartVersions(ctx, req.PathParameter("repo"))
@@ -97,7 +91,7 @@ func (h *Handler) RetrieveAppFiles(req *restful.Request, resp *restful.Response)
 	for _, v := range chartfiles {
 		files[v.Name] = base64.StdEncoding.EncodeToString(v.Data)
 	}
-	ret := AppFilesResponse{
+	ret := AppFiles{
 		Files:   files,
 		App:     chart,
 		Version: version,
