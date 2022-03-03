@@ -31,7 +31,7 @@ func enrichSwaggerObject(swo *spec.Swagger) {
 			Contact: &spec.ContactInfo{
 				ContactInfoProps: spec.ContactInfoProps{
 					Name:  "kubegems",
-					Email: "com@cloudminds.com",
+					Email: "support@kubegems.io",
 				},
 			},
 			Version: "1.0.0",
