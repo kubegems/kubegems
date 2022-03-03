@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-
 	rest, err := kube.AutoClientConfig()
 	if err != nil {
 		panic(err)
