@@ -8,7 +8,7 @@ require (
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/alicebob/miniredis/v2 v2.17.0
-	github.com/appleboy/gin-jwt/v2 v2.6.4
+	github.com/appleboy/gin-jwt/v2 v2.8.0
 	github.com/argoproj/argo-cd/v2 v2.1.10
 	github.com/argoproj/argo-rollouts v1.1.1
 	github.com/cloudflare/cfssl v1.6.1
@@ -21,7 +21,7 @@ require (
 	github.com/evanphx/json-patch v4.12.0+incompatible
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gin-contrib/sse v0.1.0
-	github.com/gin-gonic/gin v1.7.2
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-ldap/ldap/v3 v3.2.4
@@ -167,6 +167,7 @@ require (
 	github.com/gocraft/work v0.5.1 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/status v1.0.3 // indirect
+	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.11.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -263,6 +264,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/tidwall/gjson v1.12.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go/codec v1.1.13 // indirect
