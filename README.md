@@ -10,10 +10,10 @@
 
 ### Run local
 
-1. make build
-2. ./bin/kubegems service gencfg > config/config.yaml
-3. prepare file `certs/jwt/tls.crt` and `certs/jwt/tls.key`
-4. ./bin/kubegems service
+1. `make build` 
+2. `./bin/kubegems service gencfg > config/config.yaml`
+3. `cd scripts && bash generate-tls-certs.sh`
+4. `./bin/kubegems service`
 
 ### Debug by vscode
 
@@ -24,7 +24,7 @@
   "request": "launch",
   "mode": "debug",
   "program": "${workspaceFolder}/cmd",
-  "cwd": "${workspaceFolder}", // 不然找不到证书文件
+  "cwd": "${workspaceFolder}", 
   "args": ["service"]
 }
 ```
