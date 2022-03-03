@@ -6,10 +6,16 @@ import (
 	"github.com/emicklei/go-restful/v3"
 )
 
-func isOpen(req *restful.Request) bool {
+var WhitePrefixList = []string{
+	"/docs",
+	"/v2/login",
+}
 
-	if strings.HasPrefix(req.Request.URL.Path, "/docs") || strings.HasPrefix(req.Request.URL.Path, "/v2/login") {
-		return true
+func IsWhiteList(req *restful.Request) bool {
+	for _, prefix := range WhitePrefixList {
+		if strings.HasPrefix(req.Request.URL.Path, prefix) {
+			return true
+		}
 	}
 	return false
 }

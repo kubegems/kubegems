@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/auth/user"
+	"kubegems.io/pkg/utils"
 )
 
 type PermMiddleware struct {
@@ -18,7 +19,7 @@ func NewPermMiddleware(db *gorm.DB) *PermMiddleware {
 }
 
 func (p *PermMiddleware) FilterFunc(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
-	if isOpen(req) {
+	if IsWhiteList(req) {
 		chain.ProcessFilter(req, resp)
 		return
 	}
@@ -42,7 +43,7 @@ func (p *PermMiddleware) hasPerm(user user.CommonUserIface, req *restful.Request
 	if p.hasPermForMetaData(user, req) {
 		return true
 	}
-	// TODO : cluster/
+	// TODO : cluster agent api perm check
 	return true
 }
 
@@ -126,15 +127,15 @@ func (p *PermMiddleware) hasPermForMetaData(user user.CommonUserIface, req *rest
 		return true
 	}
 	// dev environment allows any role operate
-	if environment.MetaType == "dev" {
+	if environment.MetaType == models.EnvironmentMetaTypeDev {
 		return true
 	}
 	// test environment allows roles ["test", "admin", "ops"] operate
-	if environment.MetaType == "test" && in(projectRole, []string{models.ProjectRoleTest, models.ProjectRoleOps, models.ProjectRoleAdmin}) {
+	if environment.MetaType == models.EnvironmentMetaTypeTest && utils.ContainStr([]string{models.ProjectRoleTest, models.ProjectRoleOps, models.ProjectRoleAdmin}, projectRole) {
 		return true
 	}
 	// prod environment allows roles ["admin", "ops"] operate
-	if environment.MetaType == "prod" && in(projectRole, []string{models.ProjectRoleOps, models.ProjectRoleAdmin}) {
+	if environment.MetaType == models.EnvironmentMetaTypeProd && utils.ContainStr([]string{models.ProjectRoleOps, models.ProjectRoleAdmin}, projectRole) {
 		return true
 	}
 	envUserRel := &models.EnvironmentUserRels{}
@@ -146,15 +147,6 @@ func (p *PermMiddleware) hasPermForMetaData(user user.CommonUserIface, req *rest
 	}
 	if envUserRel.Role == models.EnvironmentRoleOperator {
 		return true
-	}
-	return false
-}
-
-func in(s string, ss []string) bool {
-	for i := range ss {
-		if ss[i] == s {
-			return true
-		}
 	}
 	return false
 }

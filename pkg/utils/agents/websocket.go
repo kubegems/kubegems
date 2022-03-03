@@ -2,6 +2,7 @@ package agents
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -35,6 +36,8 @@ func (d *WebsocketRoundTripper) RoundTrip(r *http.Request) (*http.Response, erro
 	}
 	ch := make(chan bool, 1)
 	conn.SetCloseHandler(func(code int, text string) error {
+		message := websocket.FormatCloseMessage(code, "")
+		conn.WriteControl(websocket.CloseMessage, message, time.Now().Add(time.Second))
 		ch <- true
 		return nil
 	})

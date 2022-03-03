@@ -30,9 +30,8 @@ func NewAuthMiddleware(opts *jwt.Options) *AuthMiddleware {
 	}
 }
 
-// UserLoader 根据凭据载入用户
 func (l *AuthMiddleware) FilterFunc(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
-	if isOpen(req) {
+	if IsWhiteList(req) {
 		chain.ProcessFilter(req, resp)
 		return
 	}
@@ -56,12 +55,12 @@ func (l *AuthMiddleware) FilterFunc(req *restful.Request, resp *restful.Response
 	chain.ProcessFilter(req, resp)
 }
 
-// UserGetterIface 用户接口
+// UserGetterIface
 type UserGetterIface interface {
 	GetUser(req *http.Request) (u user.CommonUserIface, exist bool)
 }
 
-// BearerTokenUserLoader  bearer类型
+// BearerTokenUserLoader  bearer type
 type BearerTokenUserLoader struct {
 	JWT *jwt.JWT
 }
@@ -85,7 +84,7 @@ func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIfa
 	return &user, err == nil
 }
 
-// PrivateTokenUserLoader private-token认证
+// PrivateTokenUserLoader private-token
 type PrivateTokenUserLoader struct{}
 
 func (l *PrivateTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIface, exist bool) {
@@ -117,7 +116,7 @@ func parseAuthorizationHeader(req *http.Request) (htype, token string) {
 }
 
 // BasicAuthUserLoader basic认证
-// 例如 Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l
+// eg: Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l
 type BasicAuthUserLoader struct{}
 
 func (l *BasicAuthUserLoader) GetUser(req *http.Request) (userData user.CommonUserIface, exist bool) {
