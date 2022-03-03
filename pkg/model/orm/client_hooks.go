@@ -188,7 +188,7 @@ const (
 	syncKindUpsert = "upsert"
 	syncKindDelete = "delete"
 
-	imagePullSecretKeyPrefix  = "gems.cloudminds.com/imagePullSecrets-"
+	imagePullSecretKeyPrefix  = "kubegems.io/imagePullSecrets-"
 	defaultServiceAccountName = "default"
 )
 
