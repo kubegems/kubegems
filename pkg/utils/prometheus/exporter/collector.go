@@ -18,11 +18,11 @@ var (
 	scrapeSuccessDesc  *prometheus.Desc
 )
 
-func GetNamespace() string {
+func getNamespace() string {
 	return namespace
 }
 
-func SetNamespace(ns string) {
+func setNamespace(ns string) {
 	namespace = ns
 	scrapeSuccessDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "scrape", "collector_success"),
@@ -38,14 +38,16 @@ func SetNamespace(ns string) {
 	)
 }
 
-func RegisterCollector(collector string, _ bool, factory func(logger *log.Logger) (Collector, error)) {
+type Collectorfunc func(logger *log.Logger) (Collector, error)
+
+func registerCollector(collector string, factory Collectorfunc) {
 	flag := true
 	collectorState[collector] = &flag
 	factories[collector] = factory
 }
 
 var (
-	factories              = make(map[string]func(logger *log.Logger) (Collector, error))
+	factories              = make(map[string]Collectorfunc)
 	initiatedCollectorsMtx = sync.Mutex{}
 	initiatedCollectors    = make(map[string]Collector)
 	collectorState         = make(map[string]*bool)

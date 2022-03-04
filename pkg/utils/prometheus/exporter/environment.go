@@ -1,4 +1,4 @@
-package collector
+package exporter
 
 import (
 	"sync"
@@ -6,24 +6,26 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/exporter"
+	"kubegems.io/pkg/utils/database"
 )
 
 type EnvironmentCollector struct {
 	environmentInfo *prometheus.Desc
 
+	*database.Database
 	mutex sync.Mutex
 }
 
-func NewEnvironmentCollector() func(_ *log.Logger) (exporter.Collector, error) {
-	return func(_ *log.Logger) (exporter.Collector, error) {
+func NewEnvironmentCollector(db *database.Database) func(_ *log.Logger) (Collector, error) {
+	return func(_ *log.Logger) (Collector, error) {
 		return &EnvironmentCollector{
 			environmentInfo: prometheus.NewDesc(
-				prometheus.BuildFQName(exporter.GetNamespace(), "environment", "info"),
+				prometheus.BuildFQName(getNamespace(), "environment", "info"),
 				"Gems environment info",
 				[]string{"environment_name", "namespace", "environment_type", "project_name", "tenant_name", "cluster_name"},
 				nil,
 			),
+			Database: db,
 		}, nil
 	}
 }
@@ -33,7 +35,7 @@ func (c *EnvironmentCollector) Update(ch chan<- prometheus.Metric) error {
 	defer c.mutex.Unlock()
 
 	var environments []models.Environment
-	if err := dbinstance.DB().Preload("Project.Tenant").Preload("Cluster").Find(&environments).Error; err != nil {
+	if err := c.Database.DB().Preload("Project.Tenant").Preload("Cluster").Find(&environments).Error; err != nil {
 		return err
 	}
 
