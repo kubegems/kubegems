@@ -51,7 +51,6 @@ type Plugin struct {
 	Type         string      `json:"-"` // 用于暂存类型给prometheus
 	Operator     interface{} `json:"operator,omitempty"`
 	Manual       interface{} `json:"manual,omitempty"`
-	Skip         bool        `json:"skip"`
 	DefaultClass bool        `json:"default_class,omitempty"`
 }
 
