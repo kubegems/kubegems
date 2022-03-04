@@ -31,9 +31,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/pkg/controller/handler"
 	"kubegems.io/pkg/controller/utils"
 )
 
@@ -151,6 +153,7 @@ func (r *TenantNetworkPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 func (r *TenantNetworkPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&gemsv1beta1.TenantNetworkPolicy{}).
+		Watches(&source.Kind{Type: &corev1.Node{}}, handler.NewNodeHandler(r.Client, r.Log)).
 		Complete(r)
 }
 

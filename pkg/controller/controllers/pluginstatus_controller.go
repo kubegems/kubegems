@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"os"
-	"sync"
 
 	"github.com/go-logr/logr"
 	nginxv1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
@@ -53,8 +52,7 @@ func (p *PluginStatus) ComponentEnabled(name ComponentName) bool {
 
 type PluginStatusController struct {
 	client.Client
-	once sync.Once // 初始化完成
-	Log  logr.Logger
+	Log logr.Logger
 }
 
 func (r *PluginStatusController) Init(ctx context.Context) error {
