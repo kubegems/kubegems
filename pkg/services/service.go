@@ -12,12 +12,10 @@ import (
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/git"
 	_ "kubegems.io/pkg/utils/kube" // 用于 AddToSchema
 	"kubegems.io/pkg/utils/pprof"
-	"kubegems.io/pkg/utils/prometheus"
-	"kubegems.io/pkg/utils/prometheus/collector"
+	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/tracing"
 )
@@ -90,6 +88,10 @@ func Run(ctx context.Context, opts *options.Options) error {
 	validate.InitValidator()
 	rest := NewRest(deps, opts)
 
+	exporterHandler := exporter.NewHandler("gems_server", map[string]exporter.Collectorfunc{
+		"request": exporter.NewRequestCollector(),
+	})
+
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
@@ -99,10 +101,8 @@ func Run(ctx context.Context, opts *options.Options) error {
 		return pprof.Run(ctx)
 	})
 	eg.Go(func() error {
-		exporter.SetNamespace("gems_server")
-		exporter.RegisterCollector("request", true, collector.NewRequestCollector) // http exporter
 		// 启动prometheus exporter
-		return prometheus.RunExporter(ctx, opts.Exporter, exporter.NewHandler())
+		return exporterHandler.Run(ctx, opts.Exporter)
 	})
 	return eg.Wait()
 }

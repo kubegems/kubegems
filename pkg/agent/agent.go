@@ -9,14 +9,11 @@ import (
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/pkg/agent/apis"
 	"kubegems.io/pkg/agent/cluster"
-	"kubegems.io/pkg/agent/collector"
 	"kubegems.io/pkg/agent/indexer"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/pprof"
-	"kubegems.io/pkg/utils/prometheus"
-	basecollector "kubegems.io/pkg/utils/prometheus/collector" // http exporter
+	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/system"
 )
 
@@ -69,10 +66,10 @@ func Run(ctx context.Context, options *Options) error {
 	go c.Start(ctx)
 	c.GetCache().WaitForCacheSync(ctx)
 
-	exporter.SetNamespace("gems_agent")
-	exporter.RegisterCollector("plugin", true, collector.NewPluginCollectorFunc(c)) // plugin exporter
-	exporter.RegisterCollector("request", true, basecollector.NewRequestCollector)  // http exporter
-	exporterHandler := exporter.NewHandler()
+	exporterHandler := exporter.NewHandler("gems_agent", map[string]exporter.Collectorfunc{
+		"plugin":  exporter.NewPluginCollectorFunc(c), // plugin exporter
+		"request": exporter.NewRequestCollector(),     // http exporter
+	})
 
 	eg, ctx := errgroup.WithContext(ctx)
 
@@ -83,7 +80,7 @@ func Run(ctx context.Context, options *Options) error {
 		return pprof.Run(ctx)
 	})
 	eg.Go(func() error {
-		return prometheus.RunExporter(ctx, options.Exporter, exporterHandler)
+		return exporterHandler.Run(ctx, options.Exporter)
 	})
 	return eg.Wait()
 }

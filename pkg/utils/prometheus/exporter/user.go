@@ -1,4 +1,4 @@
-package collector
+package exporter
 
 import (
 	"sync"
@@ -7,24 +7,26 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/exporter"
+	"kubegems.io/pkg/utils/database"
 )
 
 type UserCollector struct {
 	userStatus *prometheus.Desc
 
+	*database.Database
 	mutex sync.Mutex
 }
 
-func NewUserCollector() func(_ *log.Logger) (exporter.Collector, error) {
-	return func(_ *log.Logger) (exporter.Collector, error) {
+func NewUserCollector(db *database.Database) Collectorfunc {
+	return func(_ *log.Logger) (Collector, error) {
 		return &UserCollector{
 			userStatus: prometheus.NewDesc(
-				prometheus.BuildFQName(exporter.GetNamespace(), "user", "status"),
+				prometheus.BuildFQName(getNamespace(), "user", "status"),
 				"Gems user status",
 				[]string{"user_name", "email", "system_role"},
 				nil,
 			),
+			Database: db,
 		}, nil
 	}
 }
@@ -34,7 +36,7 @@ func (c *UserCollector) Update(ch chan<- prometheus.Metric) error {
 	defer c.mutex.Unlock()
 
 	var users []models.User
-	if err := dbinstance.DB().Preload("SystemRole").Find(&users).Error; err != nil {
+	if err := c.Database.DB().Preload("SystemRole").Find(&users).Error; err != nil {
 		return err
 	}
 	for _, v := range users {
