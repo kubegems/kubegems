@@ -155,7 +155,7 @@ func (r *TenantNetworkPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error
 }
 
 func (r *TenantNetworkPolicyReconciler) handleStatusMap(ctx context.Context, st map[string]NetworkPolicyAction, netpol *gemsv1beta1.TenantNetworkPolicy) {
-	cidr, err := utils.GetCIDR(r.Client)
+	cidrs, err := utils.GetCIDRs(r.Client)
 	if err != nil {
 		panic(err)
 	}
@@ -176,7 +176,7 @@ func (r *TenantNetworkPolicyReconciler) handleStatusMap(ctx context.Context, st 
 	}
 
 	for ns, action := range st {
-		defaultnetpol := utils.DefaultNetworkPolicy(ns, "default", cidr)
+		defaultnetpol := utils.DefaultNetworkPolicy(ns, "default", cidrs)
 		action.Modify = &defaultnetpol
 		if action.TenantISO {
 			utils.AddNamespaceSelector(action.Modify, gemlabels.LabelTenant, action.Tenant)
