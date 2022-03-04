@@ -6,7 +6,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/database"
 )
 
@@ -39,12 +38,17 @@ func (c *UserCollector) Update(ch chan<- prometheus.Metric) error {
 	if err := c.Database.DB().Preload("SystemRole").Find(&users).Error; err != nil {
 		return err
 	}
-	for _, v := range users {
+	for i := range users {
 		ch <- prometheus.MustNewConstMetric(
 			c.userStatus,
 			prometheus.GaugeValue,
-			utils.BoolToFloat64(v.IsActive),
-			v.Username, v.Email, v.SystemRole.RoleCode,
+			func() float64 {
+				if users[i].IsActive != nil && *users[i].IsActive {
+					return 1
+				}
+				return 0
+			}(),
+			users[i].Username, users[i].Email, users[i].SystemRole.RoleCode,
 		)
 	}
 

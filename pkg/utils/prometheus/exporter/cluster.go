@@ -44,33 +44,19 @@ func (c *ClusterCollector) Update(ch chan<- prometheus.Metric) error {
 		return err
 	}
 
-	// TODO: add context
-	ctx := context.Background()
+	return c.agents.ExecuteInEachCluster(context.TODO(), func(ctx context.Context, cli agents.Client) error {
+		ishealth := true
+		if err := cli.Extend().Healthy(ctx); err != nil {
+			ishealth = false
+		}
 
-	var wg sync.WaitGroup
-	for _, cluster := range clusters {
-		wg.Add(1)
-		go func(clus *models.Cluster) { // 必须把i传进去
-			defer wg.Done()
-
-			ishealth := true
-
-			cli, err := c.agents.ClientOf(ctx, clus.ClusterName)
-			if err != nil {
-				ishealth = false
-			}
-			if err := cli.Extend().Healthy(ctx); err != nil {
-				ishealth = false
-			}
-
-			ch <- prometheus.MustNewConstMetric(
-				c.clusterUp,
-				prometheus.CounterValue,
-				utils.BoolToFloat64(&ishealth),
-				clus.ClusterName, clus.APIServer, clus.Version,
-			)
-		}(cluster)
-	}
-	wg.Wait()
-	return nil
+		addr := cli.APIServerAddr()
+		ch <- prometheus.MustNewConstMetric(
+			c.clusterUp,
+			prometheus.CounterValue,
+			utils.BoolToFloat64(ishealth),
+			cli.Name(), (&addr).String(), cli.APIServerVersion(),
+		)
+		return nil
+	})
 }

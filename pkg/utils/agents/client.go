@@ -27,6 +27,8 @@ type Client interface {
 	Extend() *ExtendClient
 	Name() string
 	BaseAddr() url.URL
+	APIServerAddr() url.URL
+	APIServerVersion() string
 	// Deprecated: remove
 	Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error
 }
@@ -39,12 +41,14 @@ type DelegateClient struct {
 }
 
 type ClientMeta struct {
-	Name       string
-	BaseAddr   *url.URL
-	TlsConfig  *tls.Config
-	Restconfig *rest.Config
-	Signer     func(*http.Request) (*url.URL, error)
-	Transport  http.RoundTripper
+	Name             string
+	APIServerAddr    *url.URL
+	APIServerVersion string
+	BaseAddr         *url.URL
+	TlsConfig        *tls.Config
+	Restconfig       *rest.Config
+	Signer           func(*http.Request) (*url.URL, error)
+	Transport        http.RoundTripper
 }
 
 func (c *DelegateClient) Extend() *ExtendClient {
@@ -59,6 +63,13 @@ func (c *DelegateClient) BaseAddr() url.URL {
 	return *c.ClientMeta.BaseAddr
 }
 
+func (c *DelegateClient) APIServerAddr() url.URL {
+	return *c.ClientMeta.APIServerAddr
+}
+
+func (c *DelegateClient) APIServerVersion() string {
+	return c.ClientMeta.APIServerVersion
+}
 func newClient(meta ClientMeta) Client {
 	typed := &TypedClient{
 		ClientMeta: meta,
