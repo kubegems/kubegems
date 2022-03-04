@@ -41,11 +41,7 @@ func Build(data interface{}) *spec.Schema {
 }
 
 func (b *Builder) Build(data interface{}) *spec.Schema {
-	schema := b.BuildSchema(reflect.ValueOf(data))
-	if schema != nil {
-		schema.Definitions = b.Definitions
-	}
-	return schema
+	return b.BuildSchema(reflect.ValueOf(data))
 }
 
 var WellKnowGoTypeAsSchema = map[reflect.Type]spec.Schema{
