@@ -6,7 +6,7 @@ import (
 	"kubegems.io/pkg/apis/gems"
 )
 
-func DefaultNetworkPolicy(namespace, name, cidr string) netv1.NetworkPolicy {
+func DefaultNetworkPolicy(namespace, name string, cidrs []string) netv1.NetworkPolicy {
 	np := netv1.NetworkPolicy{}
 	np.Name = name
 	np.Namespace = namespace
@@ -18,7 +18,7 @@ func DefaultNetworkPolicy(namespace, name, cidr string) netv1.NetworkPolicy {
 					{
 						IPBlock: &netv1.IPBlock{
 							CIDR:   "0.0.0.0/0",
-							Except: []string{cidr},
+							Except: cidrs,
 						},
 					},
 				},
