@@ -15,7 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/agentutils"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
@@ -103,7 +102,7 @@ func (h *AlertmanagerConfigHandler) ListReceiver(c *gin.Context) {
 				}
 			}
 		} else {
-			config, err := agentutils.GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
+			config, err := cli.Extend().GetOrCreateAlertmanagerConfig(ctx, namespace)
 			if err != nil {
 				return nil, err
 			}
@@ -163,7 +162,7 @@ func (h *AlertmanagerConfigHandler) CreateReceiver(c *gin.Context) {
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
-		aconfig, err := agentutils.GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
+		aconfig, err := cli.Extend().GetOrCreateAlertmanagerConfig(ctx, namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -214,7 +213,7 @@ func (h *AlertmanagerConfigHandler) DeleteReceiver(c *gin.Context) {
 		if len(name) == 0 {
 			return nil, fmt.Errorf("receiver name must not be empty")
 		}
-		aconfig, err := agentutils.GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
+		aconfig, err := cli.Extend().GetOrCreateAlertmanagerConfig(ctx, namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -247,7 +246,7 @@ func (h *AlertmanagerConfigHandler) ModifyReceiver(c *gin.Context) {
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
-		aconfig, err := agentutils.GetOrCreateAlertmanagerConfig(ctx, namespace, cli)
+		aconfig, err := cli.Extend().GetOrCreateAlertmanagerConfig(ctx, namespace)
 		if err != nil {
 			return nil, err
 		}
