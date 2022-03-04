@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"kubegems.io/pkg/agentutils"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
@@ -41,7 +40,7 @@ func (c *AlertRuleCollector) Update(ch chan<- prometheus.Metric) error {
 	defer c.mutex.Unlock()
 
 	return c.ClientSet.ExecuteInEachCluster(context.TODO(), func(ctx context.Context, cli agents.Client) error {
-		alertrules, err := agentutils.ListAlertRule(ctx, cli, c.MonitorOptions)
+		alertrules, err := cli.Extend().ListAllAlertRules(ctx, c.MonitorOptions)
 		if err != nil {
 			log.Error(err, "list alert rule in failed", "cluster", cli.Name())
 			return nil

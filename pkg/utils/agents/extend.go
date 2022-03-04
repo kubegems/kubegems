@@ -8,13 +8,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	prommodel "github.com/prometheus/common/model"
+	v1 "k8s.io/api/core/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/pkg/apis/plugins"
+	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/prometheus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -122,7 +128,28 @@ func (c *ExtendClient) CreateOrUpdateSilenceIfNotExist(ctx context.Context, info
 	if err != nil {
 		return err
 	}
-	silence := convertBlackListToSilence(info)
+	convertAlertInfoToSilence := func(info models.AlertInfo) alertmanagertypes.Silence {
+		ret := alertmanagertypes.Silence{
+			StartsAt:  *info.SilenceStartsAt,
+			EndsAt:    *info.SilenceEndsAt,
+			UpdatedAt: *info.SilenceUpdatedAt,
+			CreatedBy: info.SilenceCreator,
+			Comment:   fmt.Sprintf("%s%s", prometheus.SilenceCommentForBlackListPrefix, info.Fingerprint), // comment存指纹，以便取出时做匹配
+			Matchers:  make(labels.Matchers, len(info.LabelMap)),
+		}
+		index := 0
+		for k, v := range info.LabelMap {
+			ret.Matchers[index] = &labels.Matcher{
+				Type:  labels.MatchEqual,
+				Name:  k,
+				Value: v,
+			}
+			index++
+		}
+		return ret
+	}
+
+	silence := convertAlertInfoToSilence(info)
 	switch len(silenceList) {
 	case 0:
 		break
@@ -166,7 +193,7 @@ func (c *ExtendClient) DeleteSilenceIfExist(ctx context.Context, info models.Ale
 	}
 }
 
-func (c *ExtendClient) CheckAlertmanagerConfig(ctx context.Context, data *v1alpha1.AlertmanagerConfig) error {
+func (c *ExtendClient) CheckAlertmanagerConfig(ctx context.Context, data *monitoringv1alpha1.AlertmanagerConfig) error {
 	return c.DoRequest(ctx, Request{
 		Method: http.MethodPost,
 		Path:   "/custom/alertmanager/v1/alerts/_/actions/check",
@@ -225,23 +252,131 @@ func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, e
 	return ret, nil
 }
 
-func convertBlackListToSilence(info models.AlertInfo) alertmanagertypes.Silence {
-	ret := alertmanagertypes.Silence{
-		StartsAt:  *info.SilenceStartsAt,
-		EndsAt:    *info.SilenceEndsAt,
-		UpdatedAt: *info.SilenceUpdatedAt,
-		CreatedBy: info.SilenceCreator,
-		Comment:   fmt.Sprintf("%s%s", prometheus.SilenceCommentForBlackListPrefix, info.Fingerprint), // comment存指纹，以便取出时做匹配
-		Matchers:  make(labels.Matchers, len(info.LabelMap)),
+func (c *ExtendClient) ListAllAlertRules(ctx context.Context, opts *prometheus.MonitorOptions) ([]prometheus.AlertRule, error) {
+	ruleList := monitoringv1.PrometheusRuleList{}
+	configList := monitoringv1alpha1.AlertmanagerConfigList{}
+
+	configNamespaceMap := map[string]*monitoringv1alpha1.AlertmanagerConfig{}
+	silenceNamespaceMap := map[string][]alertmanagertypes.Silence{}
+
+	ret := []prometheus.AlertRule{}
+	if err := c.List(ctx, &ruleList, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.PrometheusRuleSelector)); err != nil {
+		return nil, err
 	}
-	index := 0
-	for k, v := range info.LabelMap {
-		ret.Matchers[index] = &labels.Matcher{
-			Type:  labels.MatchEqual,
-			Name:  k,
-			Value: v,
+	if err := c.List(ctx, &configList, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
+		return nil, err
+	}
+
+	// 按照namespace分组
+	for _, v := range configList.Items {
+		if v.Name == prometheus.AlertmanagerConfigName {
+			configNamespaceMap[v.Namespace] = v
 		}
-		index++
 	}
-	return ret
+
+	// 按照namespace分组
+	allSilences, err := c.ListSilences(ctx, nil, prometheus.SilenceCommentForAlertrulePrefix)
+	if err != nil {
+		return nil, err
+	}
+	for _, silence := range allSilences {
+		for _, m := range silence.Matchers {
+			if m.Name == prometheus.AlertNamespaceLabel {
+				silenceNamespaceMap[m.Value] = append(silenceNamespaceMap[m.Value], silence)
+			}
+		}
+	}
+
+	for _, rule := range ruleList.Items {
+		if rule.Name == prometheus.PrometheusRuleName {
+			amconfig, ok := configNamespaceMap[rule.Namespace]
+			if !ok {
+				log.Warnf("alertmanager config %s in namespace %s not found", rule.Name, rule.Namespace)
+				continue
+			}
+			raw := &prometheus.RawAlertResource{
+				PrometheusRule:     rule,
+				AlertmanagerConfig: amconfig,
+				Silences:           silenceNamespaceMap[rule.Namespace],
+				MonitorOptions:     opts,
+			}
+
+			alerts, err := raw.ToAlerts(false)
+			if err != nil {
+				return nil, err
+			}
+			ret = append(ret, alerts...)
+		}
+	}
+
+	return ret, nil
+}
+
+// GetRawAlertResource get specified namespace's alert
+func (c *ExtendClient) GetRawAlertResource(ctx context.Context, namespace string, opts *prometheus.MonitorOptions) (*prometheus.RawAlertResource, error) {
+	amcfg, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	promerule, err := c.GetOrCreatePrometheusRule(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	silence, err := c.ListSilences(ctx, map[string]string{
+		prometheus.AlertNamespaceLabel: namespace,
+	}, prometheus.SilenceCommentForAlertrulePrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	return &prometheus.RawAlertResource{
+		AlertmanagerConfig: amcfg,
+		PrometheusRule:     promerule,
+		Silences:           silence,
+		MonitorOptions:     opts,
+	}, nil
+}
+
+func (c *ExtendClient) GetOrCreateAlertmanagerConfig(ctx context.Context, namespace string) (*monitoringv1alpha1.AlertmanagerConfig, error) {
+	aconfig := &monitoringv1alpha1.AlertmanagerConfig{}
+	err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: prometheus.AlertmanagerConfigName}, aconfig)
+	if kerrors.IsNotFound(err) {
+		// 初始化
+		aconfig = prometheus.GetBaseAlertmanagerConfig(namespace)
+		if err := c.CheckAlertmanagerConfig(ctx, aconfig); err != nil {
+			return nil, err
+		}
+
+		if err := c.Create(ctx, aconfig); err != nil {
+			return nil, err
+		}
+		return aconfig, nil
+	}
+	return aconfig, err
+}
+
+func (c *ExtendClient) GetOrCreatePrometheusRule(ctx context.Context, namespace string) (*monitoringv1.PrometheusRule, error) {
+	prule := &monitoringv1.PrometheusRule{}
+	err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: prometheus.PrometheusRuleName}, prule)
+	if kerrors.IsNotFound(err) {
+		prule = prometheus.GetBasePrometheusRule(namespace)
+		if err := c.Create(ctx, prule); err != nil {
+			return nil, err
+		}
+		return prule, err
+	}
+	return prule, err
+}
+
+func (c *ExtendClient) CommitRawAlertResource(ctx context.Context, raw *prometheus.RawAlertResource) error {
+	if err := c.CheckAlertmanagerConfig(ctx, raw.AlertmanagerConfig); err != nil {
+		return err
+	}
+
+	if err := c.Update(ctx, raw.PrometheusRule); err != nil {
+		return err
+	}
+	return c.Update(ctx, raw.AlertmanagerConfig)
 }

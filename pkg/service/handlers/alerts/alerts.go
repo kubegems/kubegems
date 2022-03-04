@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/agentutils"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
@@ -60,12 +59,12 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 
 		ret := []prometheus.AlertRule{}
 		if namespace == allNamespace {
-			ret, err = agentutils.ListAlertRule(ctx, cli, h.MonitorOptions)
+			ret, err = cli.Extend().ListAllAlertRules(ctx, h.MonitorOptions)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
+			raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +108,7 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 	name := c.Param("name")
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
-		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
+		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +225,7 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 		}
 
 		// get、update、commit
-		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
+		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -235,7 +234,7 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 			return nil, err
 		}
 
-		if err := agentutils.CommitToK8s(ctx, raw, cli); err != nil {
+		if err := cli.Extend().CommitRawAlertResource(ctx, raw); err != nil {
 			return nil, err
 		}
 		return "ok", nil
@@ -271,7 +270,7 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 		}
 
 		// get、update、commit
-		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
+		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -280,7 +279,7 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 			return nil, err
 		}
 
-		if err := agentutils.CommitToK8s(ctx, raw, cli); err != nil {
+		if err := cli.Extend().CommitRawAlertResource(ctx, raw); err != nil {
 			return nil, err
 		}
 		return "ok", nil
@@ -310,7 +309,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
 		// get、update、commit
-		raw, err := agentutils.GetRawAlertResource(ctx, namespace, cli, h.MonitorOptions)
+		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -319,7 +318,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 			return nil, err
 		}
 
-		if err := agentutils.CommitToK8s(ctx, raw, cli); err != nil {
+		if err := cli.Extend().CommitRawAlertResource(ctx, raw); err != nil {
 			return nil, err
 		}
 
