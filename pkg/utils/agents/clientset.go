@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"sync"
 
+	"golang.org/x/sync/errgroup"
 	"k8s.io/client-go/rest"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/database"
@@ -45,6 +46,23 @@ func (h *ClientSet) Clusters() []string {
 	)
 	h.databse.DB().Model(&cluster).Pluck("cluster_name", &ret)
 	return ret
+}
+
+// ExecuteInEachCluster Execute in each cluster concurrently
+func (h ClientSet) ExecuteInEachCluster(ctx context.Context, f func(ctx context.Context, cli Client) error) error {
+	g := errgroup.Group{}
+	for _, v := range h.Clusters() {
+		clustername := v
+		g.Go(func() error {
+			client, err := h.ClientOf(ctx, clustername)
+			if err != nil {
+				return err
+			}
+
+			return f(ctx, client)
+		})
+	}
+	return g.Wait()
 }
 
 func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
@@ -114,10 +132,16 @@ func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta
 	if err != nil {
 		return nil, err
 	}
+	apiserveraddr, err := url.Parse(cluster.APIServer)
+	if err != nil {
+		return nil, err
+	}
 	climeta := &ClientMeta{
-		Name:     name,
-		BaseAddr: baseaddr,
-		Signer:   getRequestProxy(h.apiServerProxyPath(true)),
+		Name:             name,
+		BaseAddr:         baseaddr,
+		APIServerAddr:    apiserveraddr,
+		APIServerVersion: cluster.Version,
+		Signer:           getRequestProxy(h.apiServerProxyPath(true)),
 	}
 	defaultRoudTripper := &http.Transport{
 		Proxy: climeta.Signer,
