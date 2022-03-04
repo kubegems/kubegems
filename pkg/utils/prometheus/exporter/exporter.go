@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -44,11 +45,39 @@ type Handler struct {
 	logger                  *log.Logger
 }
 
-func NewHandler() *Handler {
-	return NewHandlerWith(IncludeExporterMetrics, MaxRequests, log.GlobalLogger.Sugar())
+func NewHandler(namespace string, collectors map[string]Collectorfunc) *Handler {
+	setNamespace(namespace)
+	for k, v := range collectors {
+		registerCollector(k, v)
+	}
+
+	return newHandlerWith(IncludeExporterMetrics, MaxRequests, log.GlobalLogger.Sugar())
 }
 
-func NewHandlerWith(includeExporterMetrics bool, maxRequests int, logger *log.Logger) *Handler {
+func (h *Handler) Run(ctx context.Context, opts *ExporterOptions) error {
+	mu := http.NewServeMux()
+	mu.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`<html>
+			<head><title>Gemcloud Exporter</title></head>
+			<body>
+			<h1>Gemcloud Exporter</h1>
+			<p><a href="` + MetricPath + `">Metrics</a></p>
+			</body>
+			</html>`))
+	})
+	mu.Handle(MetricPath, h)
+
+	server := &http.Server{Addr: opts.Listen, Handler: mu}
+	go func() {
+		<-ctx.Done()
+		server.Close()
+		log.Info("prometheus exporter stopped")
+	}()
+	log.FromContextOrDiscard(ctx).Info("prometheus exporter listen on", "address", opts.Listen)
+	return server.ListenAndServe()
+}
+
+func newHandlerWith(includeExporterMetrics bool, maxRequests int, logger *log.Logger) *Handler {
 	h := &Handler{
 		exporterMetricsRegistry: prometheus.NewRegistry(),
 		includeExporterMetrics:  includeExporterMetrics,
@@ -116,7 +145,7 @@ func (h *Handler) innerHandler(filters ...string) (http.Handler, error) {
 	}
 
 	r := prometheus.NewRegistry()
-	r.MustRegister(version.NewCollector(GetNamespace()))
+	r.MustRegister(version.NewCollector(getNamespace()))
 	if err := r.Register(nc); err != nil {
 		return nil, fmt.Errorf("couldn't register node collector: %s", err)
 	}

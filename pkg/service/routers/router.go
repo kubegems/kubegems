@@ -52,7 +52,7 @@ import (
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/oauth"
-	"kubegems.io/pkg/utils/prometheus/collector"
+	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/system"
 	"kubegems.io/pkg/utils/tracing"
@@ -162,7 +162,7 @@ func (r *Router) Complete() error {
 
 	globalMiddlewares := []func(*gin.Context){
 		// prometheus request metrics
-		collector.GetRequestCollector().HandlerFunc(),
+		exporter.GetRequestCollector().HandlerFunc(),
 		// logger
 		log.DefaultGinLoggerMideare(),
 		// panic recovery

@@ -15,7 +15,7 @@ import (
 	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/prometheus/collector"
+	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/route"
 	"kubegems.io/pkg/utils/system"
 	"kubegems.io/pkg/version"
@@ -96,7 +96,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 		// log
 		log.DefaultGinLoggerMideare(),
 		// 请求数统计
-		collector.GetRequestCollector().HandlerFunc(),
+		exporter.GetRequestCollector().HandlerFunc(),
 		// panic recovery
 		gin.Recovery(),
 	)

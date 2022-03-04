@@ -3,11 +3,11 @@ package options
 import (
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/git"
 	"kubegems.io/pkg/utils/helm"
 	"kubegems.io/pkg/utils/msgbus"
 	"kubegems.io/pkg/utils/oauth"
+	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/system"
 )

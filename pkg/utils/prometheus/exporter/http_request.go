@@ -1,4 +1,4 @@
-package collector
+package exporter
 
 import (
 	"sync"
@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/exporter"
 )
 
 type basicInfo struct {
@@ -28,50 +27,51 @@ type RequestCollector struct {
 }
 
 func GetRequestCollector() *RequestCollector {
-	tmp := exporter.GetInitiatedCollectors()
+	tmp := GetInitiatedCollectors()
 	return tmp["request"].(*RequestCollector)
 }
 
-func NewRequestCollector(_ *log.Logger) (exporter.Collector, error) {
-	c := &RequestCollector{
-		requestCount: prometheus.NewDesc(
-			prometheus.BuildFQName(exporter.GetNamespace(), "http", "requests_total"),
-			"Gems server request total",
-			nil,
-			nil,
-		),
-		upDuration: prometheus.NewDesc(
-			prometheus.BuildFQName(exporter.GetNamespace(), "up", "duration_seconds"),
-			"Gems server up duration",
-			nil,
-			nil,
-		),
-		requestTime: prometheus.NewDesc(
-			prometheus.BuildFQName(exporter.GetNamespace(), "http", "request_duration_seconds"),
-			"Gems server request duration seconds",
-			nil,
-			nil,
-		),
+func NewRequestCollector() Collectorfunc {
+	return func(logger *log.Logger) (Collector, error) {
+		return &RequestCollector{
+			requestCount: prometheus.NewDesc(
+				prometheus.BuildFQName(getNamespace(), "http", "requests_total"),
+				"Gems server request total",
+				nil,
+				nil,
+			),
+			upDuration: prometheus.NewDesc(
+				prometheus.BuildFQName(getNamespace(), "up", "duration_seconds"),
+				"Gems server up duration",
+				nil,
+				nil,
+			),
+			requestTime: prometheus.NewDesc(
+				prometheus.BuildFQName(getNamespace(), "http", "request_duration_seconds"),
+				"Gems server request duration seconds",
+				nil,
+				nil,
+			),
 
-		basicInfo: basicInfo{
-			start: time.Now(),
-			countBuckets: map[float64]uint64{
-				0.005: 0,
-				0.01:  0,
-				0.025: 0,
-				0.05:  0,
-				0.1:   0,
-				0.25:  0,
-				0.5:   0,
-				1:     0,
-				2.5:   0,
-				5:     0,
-				10:    0,
+			basicInfo: basicInfo{
+				start: time.Now(),
+				countBuckets: map[float64]uint64{
+					0.005: 0,
+					0.01:  0,
+					0.025: 0,
+					0.05:  0,
+					0.1:   0,
+					0.25:  0,
+					0.5:   0,
+					1:     0,
+					2.5:   0,
+					5:     0,
+					10:    0,
+				},
 			},
-		},
-		mutex: sync.Mutex{},
+			mutex: sync.Mutex{},
+		}, nil
 	}
-	return c, nil
 }
 
 func (rc *RequestCollector) HandlerFunc() gin.HandlerFunc {

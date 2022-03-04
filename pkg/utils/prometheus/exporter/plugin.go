@@ -1,4 +1,4 @@
-package collector
+package exporter
 
 import (
 	"strconv"
@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/gemsplugin"
 )
 
@@ -17,23 +16,16 @@ type PluginCollector struct {
 	mutex        sync.Mutex
 }
 
-type pluginstatus int
-
-const (
-	statusUnhealthy pluginstatus = 0
-	statusOK        pluginstatus = 1
-)
-
-func NewPluginCollectorFunc(cluster cluster.Interface) func(*log.Logger) (exporter.Collector, error) {
-	return func(logger *log.Logger) (exporter.Collector, error) {
+func NewPluginCollectorFunc(cluster cluster.Interface) func(*log.Logger) (Collector, error) {
+	return func(logger *log.Logger) (Collector, error) {
 		return NewPluginCollector(logger, cluster)
 	}
 }
 
-func NewPluginCollector(_ *log.Logger, clus cluster.Interface) (exporter.Collector, error) {
+func NewPluginCollector(_ *log.Logger, clus cluster.Interface) (Collector, error) {
 	c := &PluginCollector{
 		pluginStatus: prometheus.NewDesc(
-			prometheus.BuildFQName(exporter.GetNamespace(), "plugin", "status"),
+			prometheus.BuildFQName(getNamespace(), "plugin", "status"),
 			"Gems plugin status",
 			[]string{"type", "plugin", "namespace", "enabled", "version"},
 			nil,

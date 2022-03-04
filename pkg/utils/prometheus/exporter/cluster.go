@@ -1,4 +1,4 @@
-package collector
+package exporter
 
 import (
 	"context"
@@ -9,26 +9,28 @@ import (
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/exporter"
+	"kubegems.io/pkg/utils/database"
 )
 
 type ClusterCollector struct {
 	clusterUp *prometheus.Desc
 
 	agents *agents.ClientSet
-	mutex  sync.Mutex
+	*database.Database
+	mutex sync.Mutex
 }
 
-func NewClusterCollector(agents *agents.ClientSet) func(_ *log.Logger) (exporter.Collector, error) {
-	return func(_ *log.Logger) (exporter.Collector, error) {
+func NewClusterCollector(agents *agents.ClientSet, db *database.Database) func(_ *log.Logger) (Collector, error) {
+	return func(_ *log.Logger) (Collector, error) {
 		return &ClusterCollector{
 			agents: agents,
 			clusterUp: prometheus.NewDesc(
-				prometheus.BuildFQName(exporter.GetNamespace(), "cluster", "up"),
+				prometheus.BuildFQName(getNamespace(), "cluster", "up"),
 				"Gems cluster status",
 				[]string{"cluster_name", "api_server", "version"},
 				nil,
 			),
+			Database: db,
 		}, nil
 	}
 }
@@ -38,7 +40,7 @@ func (c *ClusterCollector) Update(ch chan<- prometheus.Metric) error {
 	defer c.mutex.Unlock()
 
 	var clusters []*models.Cluster
-	if err := dbinstance.DB().Find(&clusters).Error; err != nil {
+	if err := c.Database.DB().Find(&clusters).Error; err != nil {
 		return err
 	}
 

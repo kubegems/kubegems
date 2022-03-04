@@ -10,13 +10,11 @@ import (
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/exporter"
 	"kubegems.io/pkg/utils/git"
 	_ "kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/pprof"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/worker/collector"
 	"kubegems.io/pkg/worker/dump"
 	"kubegems.io/pkg/worker/resourcelist"
 	"kubegems.io/pkg/worker/task"
@@ -77,13 +75,12 @@ func Run(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	collector.Init(deps.Argocli, deps.Databse)
-	exporter.SetNamespace("gems_worker")
-	exporter.RegisterCollector("cluster", true, collector.NewClusterCollector(deps.Agentscli))
-	exporter.RegisterCollector("environment", true, collector.NewEnvironmentCollector())
-	exporter.RegisterCollector("user", true, collector.NewUserCollector())
-	exporter.RegisterCollector("application", true, collector.NewApplicationCollector())
-	exporterHandler := exporter.NewHandler()
+	exporterHandler := exporter.NewHandler("gems_worker", map[string]exporter.Collectorfunc{
+		"cluster":     exporter.NewClusterCollector(deps.Agentscli, deps.Databse),
+		"environment": exporter.NewEnvironmentCollector(deps.Databse),
+		"user":        exporter.NewUserCollector(deps.Databse),
+		"application": exporter.NewApplicationCollector(deps.Argocli),
+	})
 
 	// dump
 	dump := &dump.Dump{Options: options.Dump, DB: deps.Databse}
@@ -111,7 +108,7 @@ func Run(ctx context.Context, options *Options) error {
 		return pprof.Run(ctx)
 	})
 	eg.Go(func() error {
-		return prometheus.RunExporter(ctx, options.Exporter, exporterHandler)
+		return exporterHandler.Run(ctx, options.Exporter)
 	})
 	eg.Go(func() error {
 		return task.Run(ctx, deps.Redis, deps.Databse, deps.Git, deps.Argocli, options.AppStore, deps.Agentscli)
