@@ -15,6 +15,7 @@ import (
 	tenanthandler "kubegems.io/pkg/services/handlers/tenants"
 	userhandler "kubegems.io/pkg/services/handlers/users"
 	"kubegems.io/pkg/services/options"
+	"kubegems.io/pkg/utils/route"
 	"kubegems.io/pkg/utils/system"
 )
 
@@ -50,7 +51,10 @@ func NewRest(deps *Dependencies, opts *options.Options) *restful.Container {
 	for _, handler := range handlers {
 		handler.Regist(c)
 	}
-	enableSwagger(c)
+
+	// enableSwagger
+	c.Add(route.BuildOpenAPIWebService(c.RegisteredWebServices(), "docs.json", enrichSwaggerObject))
+
 	enableFilters(c, deps.Databse.DB(), opts)
 	return c
 }

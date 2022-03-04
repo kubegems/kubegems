@@ -12,12 +12,12 @@ import (
 type Function = func(req *restful.Request, resp *restful.Response)
 
 type Tree struct {
-	Group               *Group
-	ResponseWrapperFunc func(data interface{}) interface{}
+	Group           *Group
+	RouteUpdateFunc func(r *Route) // can update route setting before build
 }
 
-func (tree *Tree) AddToWebService(ws *restful.WebService) {
-	addWebService(ws, "root", "", nil, tree.Group)
+func (t *Tree) AddToWebService(ws *restful.WebService) {
+	t.addWebService(ws, "root", "", nil, t.Group)
 }
 
 func toRestfulParam(p Param) *restful.Parameter {
@@ -49,7 +49,7 @@ func toRestfulParam(p Param) *restful.Parameter {
 		Required(!p.IsOptional)
 }
 
-func addWebService(ws *restful.WebService, meta string, basepath string, baseparams []*restful.Parameter, group *Group) {
+func (t *Tree) addWebService(ws *restful.WebService, meta string, basepath string, baseparams []*restful.Parameter, group *Group) {
 	for _, params := range group.params {
 		baseparams = append(baseparams, toRestfulParam(params))
 	}
@@ -60,17 +60,22 @@ func addWebService(ws *restful.WebService, meta string, basepath string, basepar
 	}
 
 	for _, route := range group.routes {
+		// run hook before add
+		if t.RouteUpdateFunc != nil {
+			t.RouteUpdateFunc(route)
+		}
+
 		rb := ws.
-			Method(route.method).
-			Path(basepath+route.path).
-			To(route.function).
+			Method(route.Method).
+			Path(basepath+route.Path).
+			To(route.Func).
 			Metadata(restfulspec.KeyOpenAPITags, []string{meta}).
-			Doc(route.summary)
+			Doc(route.Summary)
 
 		for _, param := range baseparams {
 			rb.Param(param)
 		}
-		for _, param := range route.params {
+		for _, param := range route.Params {
 			if param.Kind == ParamKindBody {
 				rb.Reads(param.Example, param.Description)
 			} else {
@@ -78,7 +83,7 @@ func addWebService(ws *restful.WebService, meta string, basepath string, basepar
 				rb.Param(p)
 			}
 		}
-		for _, ret := range route.responses {
+		for _, ret := range route.Responses {
 			rb.Returns(ret.Code, ret.Description, ret.Body)
 			if ret.Body != nil {
 				rb.Writes(ret.Body)
@@ -88,7 +93,7 @@ func addWebService(ws *restful.WebService, meta string, basepath string, basepar
 		ws.Route(rb)
 	}
 	for _, group := range group.subGroups {
-		addWebService(ws, meta, basepath, baseparams, group)
+		t.addWebService(ws, meta, basepath, baseparams, group)
 	}
 }
 
@@ -125,12 +130,13 @@ func (g *Group) Parameters(params ...Param) *Group {
 }
 
 type Route struct {
-	summary   string
-	path      string
-	method    string
-	function  Function
-	params    []Param
-	responses []ResponseMeta
+	Summary    string
+	Path       string
+	Method     string
+	Func       Function
+	Params     []Param
+	Responses  []ResponseMeta
+	Properties map[string]interface{}
 }
 
 type ResponseMeta struct {
@@ -142,8 +148,8 @@ type ResponseMeta struct {
 
 func Do(method string, path string) *Route {
 	return &Route{
-		method: method,
-		path:   path,
+		Method: method,
+		Path:   path,
 	}
 }
 
@@ -168,37 +174,36 @@ func DELETE(path string) *Route {
 }
 
 func (n *Route) To(fun Function) *Route {
-	n.function = fun
+	n.Func = fun
 	return n
 }
 
-func (n *Route) Summary(summary string) *Route {
-	n.summary = summary
+func (n *Route) ShortDesc(summary string) *Route {
+	n.Summary = summary
 	return n
 }
 
 func (n *Route) Paged() *Route {
-	n.params = append(n.params, QueryParameter("page", "page number").Optional())
-	n.params = append(n.params, QueryParameter("size", "page size").Optional())
+	n.Params = append(n.Params, QueryParameter("page", "page number").Optional())
+	n.Params = append(n.Params, QueryParameter("size", "page size").Optional())
 	return n
 }
 
 func (n *Route) Parameters(params ...Param) *Route {
-	n.params = append(n.params, params...)
+	n.Params = append(n.Params, params...)
 	return n
 }
 
 func (n *Route) Response(body interface{}, descs ...string) *Route {
-	n.responses = append(n.responses, ResponseMeta{Code: http.StatusOK, Body: body, Description: strings.Join(descs, "")})
+	n.Responses = append(n.Responses, ResponseMeta{Code: http.StatusOK, Body: body, Description: strings.Join(descs, "")})
 	return n
 }
 
-func (n *Route) Responses(responses ...ResponseMeta) *Route {
-	n.responses = append(n.responses, responses...)
-	return n
-}
-
-func (n *Route) SubGroup(nodes ...*Route) *Route {
+func (n *Route) SetProperty(k string, v interface{}) *Route {
+	if n.Properties == nil {
+		n.Properties = make(map[string]interface{})
+	}
+	n.Properties[k] = v
 	return n
 }
 
