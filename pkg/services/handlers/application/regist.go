@@ -6,6 +6,7 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"github.com/goharbor/harbor/src/pkg/scan/vuln"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"kubegems.io/pkg/services/handlers"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/git"
@@ -29,7 +30,7 @@ func (h *ApplicationHandler) Regist(c *restful.Container) {
 	c.Add(ws)
 }
 
-// nolint: funlen
+// nolint: funlen,maintidex
 func (h *ApplicationHandler) Register(ws *restful.WebService) {
 	deploy := h
 	manifest := h.Manifest
@@ -46,6 +47,7 @@ func (h *ApplicationHandler) Register(ws *restful.WebService) {
 					Paged().
 					Response(GitLog{}),
 				route.GET("/gitdiff").To(manifest.GitDiff).
+					Parameters(route.QueryParameter("hash", "git hash")).
 					Response([]git.FileDiff{}),
 				route.POST("/gitrevert").To(manifest.GitRevert).
 					Parameters(route.QueryParameter("hash", "git hash")),
@@ -99,6 +101,33 @@ func (h *ApplicationHandler) Register(ws *restful.WebService) {
 	}
 
 	tree := &route.Tree{
+		RouteUpdateFunc: func(r *route.Route) {
+			page, size := false, false
+			for _, param := range r.Params {
+				if param.Kind == route.ParamKindQuery {
+					if param.Name == "page" {
+						page = true
+					}
+					if param.Name == "size" {
+						size = true
+					}
+				}
+			}
+			for i, v := range r.Responses {
+				//  if query parameters exist, response as a paged response
+				if page && size {
+					r.Responses[i].Body = handlers.Response{
+						Data: handlers.PageData{
+							List: v.Body,
+						},
+					}
+				} else {
+					r.Responses[i].Body = handlers.Response{
+						Data: v.Body,
+					}
+				}
+			}
+		},
 		Group: route.
 			NewGroup("/v2").
 			Tag("reources").
@@ -127,7 +156,7 @@ func (h *ApplicationHandler) Register(ws *restful.WebService) {
 						route.
 							NewGroup("/images").
 							Tag("project-images").
-							Parameters(route.PathParameter("image", "image name")).
+							Parameters(route.QueryParameter("image", "image name")).
 							AddRoutes(
 								route.GET("/vulnerabilities").To(image.Vulnerabilities).
 									Response(vuln.Report{}),
