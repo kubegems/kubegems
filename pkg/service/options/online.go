@@ -135,6 +135,8 @@ func (opts *OnlineOptions) CheckAndUpdateSipecifiedField(cfg models.OnlineConfig
 			// 调用check
 			checker, ok := optIf.(OptionsCheckable)
 			if ok {
+				// FIXME 如果有map，因map unmarshal机制
+				// 若添加元素后调用check不通过，还原unmarshal时无法删除其中多的元素
 				if err := checker.CheckOptions(); err != nil {
 					// 新值check不通过，将旧值还原
 					json.Unmarshal(oldContent, optIf)

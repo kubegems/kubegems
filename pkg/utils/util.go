@@ -148,8 +148,8 @@ func BoolToString(a bool) string {
 	return "0"
 }
 
-func BoolToFloat64(a *bool) float64 {
-	if a != nil && *a {
+func BoolToFloat64(a bool) float64 {
+	if a {
 		return 1
 	}
 	return 0

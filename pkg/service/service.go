@@ -109,7 +109,8 @@ func Run(ctx context.Context, opts *options.Options) error {
 	}
 
 	exporterHandler := exporter.NewHandler("gems_server", map[string]exporter.Collectorfunc{
-		"request": exporter.NewRequestCollector(),
+		"request":   exporter.NewRequestCollector(),
+		"alertrule": exporter.NewAlertRuleCollector(deps.Agentscli, onlineOptions.Monitor),
 	})
 
 	// run
