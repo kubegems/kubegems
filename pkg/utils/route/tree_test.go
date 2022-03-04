@@ -30,8 +30,12 @@ type SampleResponseData struct {
 
 func Test_Tree_AddToContainer(t *testing.T) {
 	tree := &Tree{
-		ResponseWrapperFunc: func(data interface{}) interface{} {
-			return &SampleResponseData{Data: data}
+		RouteUpdateFunc: func(r *Route) {
+			for i := range r.Responses {
+				r.Responses[i].Body = SampleResponseData{
+					Data: r.Responses[i].Body,
+				}
+			}
 		},
 		Group: NewGroup("/v2").
 			AddSubGroup(
@@ -57,8 +61,7 @@ func Test_Tree_AddToContainer(t *testing.T) {
 							AddSubGroup(
 								NewGroup("/animals").Tag("animals").
 									AddRoutes(
-										GET("/").To(Samplefunc).
-											Responses(),
+										GET("/").To(Samplefunc),
 									),
 							),
 					),
