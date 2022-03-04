@@ -11,7 +11,6 @@ import (
 	"istio.io/istio/pkg/config/kube"
 	"istio.io/istio/pkg/config/protocol"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -235,7 +234,7 @@ func OnNamespceChangeFunc(cli client.Client) handler.MapFunc {
 
 func (r *ServiceentryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1.Service{}).
+		For(&corev1.Service{}).
 		// 当ns发生变化时，enqueue 所有该空间下的service
 		Watches(&source.Kind{Type: &corev1.Namespace{}}, handler.EnqueueRequestsFromMapFunc(OnNamespceChangeFunc(mgr.GetClient()))).
 		Complete(r)
