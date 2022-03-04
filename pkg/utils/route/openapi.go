@@ -2,7 +2,6 @@ package route
 
 import (
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
@@ -43,25 +42,15 @@ func (b *Builder) buildOpenAPI(wss []*restful.WebService, afterFunc func(swagger
 
 	paths := map[string]spec.PathItem{}
 	for _, ws := range wss {
-		rootPath, patterns := sanitizePath(ws.RootPath())
-
 		var commonPathParameters []spec.Parameter
 		for _, pathparam := range ws.PathParameters() {
 			parameter := convertParameter(pathparam.Data())
-			for name, pattern := range patterns {
-				if parameter.Name == name && parameter.In == "path" && parameter.Pattern == "" {
-					parameter.Pattern = pattern
-					break
-				}
-			}
 			commonPathParameters = append(commonPathParameters, parameter)
 		}
 
 		for _, route := range ws.Routes() {
 			pathItem := spec.PathItem{}
-
 			routePath, patterns := sanitizePath(route.Path)
-			routePath = path.Join(rootPath, routePath)
 
 			if exist, ok := paths[routePath]; ok {
 				pathItem = exist
@@ -117,7 +106,13 @@ func (b *Builder) buildOperation(route restful.Route, pathPatterns map[string]st
 	// parameters
 	params := make([]spec.Parameter, 0, len(route.ParameterDocs))
 	for _, param := range route.ParameterDocs {
-		params = append(params, convertParameter(param.Data()))
+		param := convertParameter(param.Data())
+		if param.In == "path" {
+			if pattern, ok := pathPatterns[param.Name]; ok {
+				param.Pattern = pattern
+			}
+		}
+		params = append(params, param)
 	}
 	op.Parameters = params
 
