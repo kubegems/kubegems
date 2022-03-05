@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"kubegems.io/pkg/service/handlers"
+	tenanthandler "kubegems.io/pkg/service/handlers/tenant"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/msgbus"
 )
@@ -119,8 +121,14 @@ func (h *ApproveHandler) Pass(c *gin.Context) {
 	h.GetDB().Where("username = ?", quota.TenantResourceQuotaApply.Username).First(&targetUser)
 
 	// 应用新的resource quota
+	ctx := c.Request.Context()
 	quota.Content = content
-	if err := h.GetDB().Save(&quota).Error; err != nil {
+	if e := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&quota).Error; err != nil {
+			return err
+		}
+		return tenanthandler.AfterTenantResourceQuotaSave(ctx, h.BaseHandler, tx, &quota)
+	}); e != nil {
 		handlers.NotOK(c, err)
 		return
 	}
