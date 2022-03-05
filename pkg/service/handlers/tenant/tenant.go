@@ -19,6 +19,7 @@ import (
 	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
@@ -754,7 +755,7 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 		if err := tx.Create(&obj).Error; err != nil {
 			return err
 		}
-		return h.afterTenantResourceQuotaSave(ctx, tx, &obj)
+		return AfterTenantResourceQuotaSave(ctx, h.BaseHandler, tx, &obj)
 	})
 
 	if err := h.GetDB().Create(&obj).Error; err != nil {
@@ -770,7 +771,7 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 	handlers.Created(c, obj)
 }
 
-func (h *TenantHandler) afterTenantResourceQuotaSave(ctx context.Context, tx *gorm.DB, trq *models.TenantResourceQuota) error {
+func AfterTenantResourceQuotaSave(ctx context.Context, h base.BaseHandler, tx *gorm.DB, trq *models.TenantResourceQuota) error {
 	var (
 		tenant  models.Tenant
 		cluster models.Cluster
@@ -790,19 +791,19 @@ func (h *TenantHandler) afterTenantResourceQuotaSave(ctx context.Context, tx *go
 		}
 	}
 	// 创建or更新 租户
-	if err := h.CreateOrUpdateTenant(ctx, cluster.ClusterName, tenant.TenantName, admins, members); err != nil {
+	if err := CreateOrUpdateTenant(ctx, h, cluster.ClusterName, tenant.TenantName, admins, members); err != nil {
 		return err
 	}
 	// 这儿有个坑，controller还没有成功创建出来TenantResourceQuota，就去更新租户资源，会报错404；先睡会儿把
 	<-time.NewTimer(time.Second * 2).C
 	// 创建or更新 租户资源
-	if err := h.CreateOrUpdateTenantResourceQuota(ctx, cluster.ClusterName, tenant.TenantName, trq.Content); err != nil {
+	if err := CreateOrUpdateTenantResourceQuota(ctx, h, cluster.ClusterName, tenant.TenantName, trq.Content); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (h *TenantHandler) CreateOrUpdateTenant(ctx context.Context, clustername, tenantname string, admins, members []string) error {
+func CreateOrUpdateTenant(ctx context.Context, h base.BaseHandler, clustername, tenantname string, admins, members []string) error {
 	return h.Execute(ctx, clustername, func(ctx context.Context, cli agents.Client) error {
 		crdTenant := &v1beta1.Tenant{
 			ObjectMeta: metav1.ObjectMeta{Name: tenantname},
@@ -819,7 +820,7 @@ func (h *TenantHandler) CreateOrUpdateTenant(ctx context.Context, clustername, t
 	})
 }
 
-func (h *TenantHandler) CreateOrUpdateTenantResourceQuota(ctx context.Context, clustername, tenantname string, data []byte) error {
+func CreateOrUpdateTenantResourceQuota(ctx context.Context, h base.BaseHandler, clustername, tenantname string, data []byte) error {
 	var hard v1.ResourceList
 	if err := json.Unmarshal(data, &hard); err != nil {
 		return err
@@ -884,8 +885,13 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 	h.SetAuditData(c, "更新", "集群租户资源限制", fmt.Sprintf("集群[%v]/租户[%v]", cluster.ClusterName, tenant.TenantName))
 	h.SetExtraAuditData(c, models.ResTenant, trq.TenantID)
 
-	if err := h.GetDB().Save(&trq).Error; err != nil {
-		handlers.NotOK(c, err)
+	if e := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if e := tx.Save(&trq).Error; e != nil {
+			return e
+		}
+		return AfterTenantResourceQuotaSave(ctx, h.BaseHandler, tx, &trq)
+	}); e != nil {
+		handlers.NotOK(c, e)
 		return
 	}
 	handlers.OK(c, trq)
