@@ -7,7 +7,6 @@ import (
 
 type ClusterHandler struct {
 	base.BaseHandler
-	*InstallerOptions
 }
 
 func (h *ClusterHandler) RegistRouter(rg *gin.RouterGroup) {

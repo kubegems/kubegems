@@ -1,12 +1,39 @@
-package clusterhandler
+package gemsplugin
 
 import (
-	"github.com/ghodss/yaml"
+	"encoding/json"
+
+	"gopkg.in/yaml.v2"
 	"kubegems.io/pkg/log"
 )
 
+type InstallerOptions struct {
+	OperatorImage string  `json:"operator_image,omitempty"`
+	InstallerYaml Plugins `json:"installer_yaml,omitempty"`
+}
+
+func DefaultInstallerOptions() *InstallerOptions {
+	return &InstallerOptions{
+		OperatorImage: "kubegems/installer-operator:v2.3-release",
+		InstallerYaml: defaultInstallerObj,
+	}
+}
+
+func (opts *InstallerOptions) JSON() []byte {
+	bts, _ := json.Marshal(opts)
+	return bts
+}
+
+func (opts *InstallerOptions) ConfigName() string {
+	return "Installer"
+}
+
+func (opts *InstallerOptions) CheckOptions() error {
+	return nil
+}
+
 var (
-	defaultInstallerObj map[string]interface{}
+	defaultInstallerObj Plugins
 )
 
 func init() {

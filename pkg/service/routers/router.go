@@ -81,12 +81,11 @@ func RealClientIPMiddleware() gin.HandlerFunc {
 }
 
 type Router struct {
-	Opts          *options.Options
-	OnlineOptions *options.OnlineOptions
-	Agents        *agents.ClientSet
-	Database      *database.Database
-	Redis         *redis.Client
-	Argo          *argo.Client
+	Opts     *options.Options
+	Agents   *agents.ClientSet
+	Database *database.Database
+	Redis    *redis.Client
+	Argo     *argo.Client
 
 	auditInstance *audit.DefaultAuditInstance
 	gin           *gin.Engine
@@ -208,8 +207,7 @@ func (r *Router) Complete() error {
 	}
 	// 选项
 	systemHandler := systemhandler.SystemHandler{
-		BaseHandler:   basehandler,
-		OnlineOptions: r.OnlineOptions,
+		BaseHandler: basehandler,
 	}
 	systemHandler.RegistRouter(rg)
 
@@ -223,8 +221,7 @@ func (r *Router) Complete() error {
 
 	// 集群
 	clusterHandler := &clusterhandler.ClusterHandler{
-		BaseHandler:      basehandler,
-		InstallerOptions: r.OnlineOptions.Installer,
+		BaseHandler: basehandler,
 	}
 	clusterHandler.RegistRouter(rg)
 
@@ -258,14 +255,12 @@ func (r *Router) Complete() error {
 
 	// 告警规则
 	alertRuleHandler := &alerthandler.AlertsHandler{
-		BaseHandler:    basehandler,
-		MonitorOptions: r.OnlineOptions.Monitor,
+		BaseHandler: basehandler,
 	}
 	alertRuleHandler.RegistRouter(rg)
 
 	metricsHandler := &metrics.MonitorHandler{
-		BaseHandler:   basehandler,
-		OnlineOptions: r.OnlineOptions,
+		BaseHandler: basehandler,
 	}
 	metricsHandler.RegistRouter(rg)
 

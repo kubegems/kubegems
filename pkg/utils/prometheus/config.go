@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ghodss/yaml"
@@ -15,6 +16,10 @@ const (
 	PromqlNamespaceKey = "namespace"
 )
 
+func (opts *MonitorOptions) ConfigName() string {
+	return "Monitor"
+}
+
 func (opts *MonitorOptions) CheckOptions() error {
 	for _, res := range opts.Resources {
 		for _, rule := range res.Rules {
@@ -26,6 +31,11 @@ func (opts *MonitorOptions) CheckOptions() error {
 		}
 	}
 	return nil
+}
+
+func (opts *MonitorOptions) JSON() []byte {
+	bts, _ := json.Marshal(opts)
+	return bts
 }
 
 func (cfg *MonitorOptions) FindRuleContext(resName, ruleName string) (RuleContext, error) {
