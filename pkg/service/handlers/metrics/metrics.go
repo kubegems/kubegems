@@ -283,6 +283,25 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 		return
 	}
 
+	allalerts := []prometheus.AlertRule{}
+	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
+		alerts, err := cli.Extend().ListAllAlertRules(ctx, h.Monitor)
+		if err != nil {
+			return fmt.Errorf("list alert in cluster %s failed: %v", cli.Name(), err)
+		}
+		allalerts = append(allalerts, alerts...)
+		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	for _, v := range allalerts {
+		if v.Resource == resName && v.Rule == ruleName {
+			handlers.NotOK(c, fmt.Errorf("prometheus 模板 %s.%s 正在被告警规则%s使用", resName, ruleName, v.Name))
+			return
+		}
+	}
+
 	h.OnlineOptions.Lock()
 	delete(resDetail.Rules, ruleName)
 	h.OnlineOptions.UnLock()
