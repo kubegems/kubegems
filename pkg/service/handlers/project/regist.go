@@ -34,17 +34,6 @@ func (h *ProjectHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/project/:project_id/environment",
 		h.CheckByProjectID, h.PostProjectEnvironment)
 
-	rg.GET("/project/:project_id/registry", h.CheckByProjectID, h.ListProjectRegistry)
-	rg.GET("/project/:project_id/registry/:registry_id", h.CheckByProjectID, h.RetrieveProjectRegistry)
-	rg.POST("/project/:project_id/registry",
-		h.CheckByProjectID, h.PostProjectRegistry)
-	rg.PUT("/project/:project_id/registry/:registry_id",
-		h.CheckByProjectID, h.PutProjectRegistry)
-	rg.PATCH("/project/:project_id/registry/:registry_id",
-		h.CheckByProjectID, h.SetDefaultProjectRegistry)
-	rg.DELETE("/project/:project_id/registry/:registry_id",
-		h.CheckByProjectID, h.DeleteProjectRegistry)
-
 	rg.GET("/project/:project_id/statistics", h.CheckByProjectID, h.ProjectStatistics)
 	rg.GET("/project/:project_id/none_resource_statistics", h.CheckByProjectID, h.ProjectNoneResourceStatistics)
 	rg.GET("/project/:project_id/quota", h.CheckByProjectID, h.GetProjectResourceQuota)
