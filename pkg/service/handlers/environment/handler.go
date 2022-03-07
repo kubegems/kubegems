@@ -9,8 +9,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	v1 "k8s.io/api/core/v1"
+	"gorm.io/gorm/clause"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
@@ -113,7 +116,7 @@ func (h *EnvironmentHandler) RetrieveEnvironment(c *gin.Context) {
 // @Security JWT
 func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 	var obj models.Environment
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().Preload("Cluster").First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -129,12 +132,13 @@ func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 		return
 	}
 	ctx := c.Request.Context()
-	// 不保存集群数据
-	cluster := models.Cluster{}
-	h.GetDB().First(&cluster, obj.ClusterID)
-
+	cluster := obj.Cluster
+	if err := ValidateEnvironmentNamespace(ctx, h.BaseHandler, h.GetDB(), obj.Namespace, obj.EnvironmentName, obj.Cluster.ClusterName); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(&obj).Error; err != nil {
+		if err := tx.Omit(clause.Associations).Save(&obj).Error; err != nil {
 			return err
 		}
 		return AfterEnvironmentSave(ctx, h.BaseHandler, tx, &obj)
@@ -147,6 +151,46 @@ func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 	handlers.OK(c, obj)
 }
 
+// ValidateEnvironmentNamespace 校验绑定的namespace是否合法.
+func ValidateEnvironmentNamespace(ctx context.Context, h base.BaseHandler, tx *gorm.DB, namespace, envname, clustername string) error {
+	forbiddenBindNamespaces := []string{
+		gems.NamespaceGateway,
+		gems.NamespaceLogging,
+		gems.NamespaceSystem,
+		gems.NamespaceMonitor,
+		gems.NamespaceWorkflow,
+		"kube-system",
+		"default",
+		"istio-system",
+	}
+	if ut.ContainStr(forbiddenBindNamespaces, namespace) {
+		return fmt.Errorf("namespace  %s is now allowed, it's a system retain namespace", namespace)
+	}
+	agent, err := h.GetAgents().ClientOf(ctx, clustername)
+	if err != nil {
+		return err
+	}
+	ns := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+		},
+	}
+	if err := agent.Get(ctx, client.ObjectKeyFromObject(&ns), &ns); err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		} else {
+			return err
+		}
+	}
+	if bindedEnv, exist := ns.Labels[gems.LabelEnvironment]; exist {
+		if bindedEnv != envname {
+			return fmt.Errorf("namespace %s is binded with other environment", namespace)
+		}
+	}
+	return nil
+
+}
+
 /*
 环境的创建，修改，删除，都会触发hook，将状态同步到对应的集群下
 */
@@ -155,9 +199,9 @@ func AfterEnvironmentSave(ctx context.Context, h base.BaseHandler, tx *gorm.DB, 
 		project       models.Project
 		cluster       models.Cluster
 		spec          v1beta1.EnvironmentSpec
-		tmpLimitRange map[string]v1.LimitRangeItem
-		limitRange    []v1.LimitRangeItem
-		resourceQuota v1.ResourceList
+		tmpLimitRange map[string]corev1.LimitRangeItem
+		limitRange    []corev1.LimitRangeItem
+		resourceQuota corev1.ResourceList
 	)
 	if e := tx.Preload("Tenant").First(&project, "id = ?", env.ProjectID).Error; e != nil {
 		return e
@@ -180,7 +224,7 @@ func AfterEnvironmentSave(ctx context.Context, h base.BaseHandler, tx *gorm.DB, 
 	}
 
 	for key, v := range tmpLimitRange {
-		v.Type = v1.LimitType(key)
+		v.Type = corev1.LimitType(key)
 		limitRange = append(limitRange, v)
 	}
 	spec.Namespace = env.Namespace
