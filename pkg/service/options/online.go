@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
 	clusterhandler "kubegems.io/pkg/service/handlers/cluster"
-	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/oauth"
 	"kubegems.io/pkg/utils/prometheus"
@@ -21,10 +20,9 @@ type OptionsCheckable interface {
 }
 
 type OnlineOptions struct {
-	Oauth        *oauth.Options                           `json:"oauth,omitempty"`
-	Microservice *microserviceoptions.MicroserviceOptions `json:"microservice,omitempty"`
-	Installer    *clusterhandler.InstallerOptions         `json:"installer,omitempty"`
-	Monitor      *prometheus.MonitorOptions               `json:"monitor,omitempty"`
+	Oauth     *oauth.Options                   `json:"oauth,omitempty"`
+	Installer *clusterhandler.InstallerOptions `json:"installer,omitempty"`
+	Monitor   *prometheus.MonitorOptions       `json:"monitor,omitempty"`
 
 	m sync.Mutex
 }
@@ -39,10 +37,9 @@ func (opts *OnlineOptions) UnLock() {
 
 func NewOnlineOptions() *OnlineOptions {
 	return &OnlineOptions{
-		Oauth:        oauth.NewDefaultOptions(),
-		Microservice: microserviceoptions.NewDefaultOptions(),
-		Installer:    clusterhandler.DefaultInstallerOptions(),
-		Monitor:      prometheus.DefaultMonitorOptions(),
+		Oauth:     oauth.NewDefaultOptions(),
+		Installer: clusterhandler.DefaultInstallerOptions(),
+		Monitor:   prometheus.DefaultMonitorOptions(),
 	}
 }
 

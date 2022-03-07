@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	kialiconfig "github.com/kiali/kiali/config"
 	"golang.org/x/sync/errgroup"
@@ -91,7 +90,7 @@ func Run(ctx context.Context, opts *options.Options) error {
 		return fmt.Errorf("failed to load online options from db: %w", err)
 	}
 	// 开始同步
-	go onlineOptions.StartSync(deps.Databse.DB(), 1*time.Minute)
+	// go onlineOptions.StartSync(deps.Databse.DB(), 1*time.Minute)
 
 	// 依赖的kiali库用到，需要初始化
 	// FIXME: 我们用到的配置较少，初始化时填入我们的配置，如
