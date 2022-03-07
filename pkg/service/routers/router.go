@@ -16,7 +16,7 @@ import (
 	msgbus "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/aaa"
 	"kubegems.io/pkg/service/aaa/audit"
-	auth "kubegems.io/pkg/service/aaa/authentication"
+	"kubegems.io/pkg/service/aaa/auth"
 	"kubegems.io/pkg/service/aaa/authorization"
 	"kubegems.io/pkg/service/handlers"
 	alerthandler "kubegems.io/pkg/service/handlers/alerts"
@@ -52,7 +52,6 @@ import (
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
 	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/oauth"
 	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/system"
@@ -124,7 +123,7 @@ func (r *Router) Complete() error {
 	// validator
 	validate.InitValidator(r.Database.DB())
 	// oauth
-	oauthtool := oauth.NewOauthTool(r.OnlineOptions.Oauth)
+	// oauthtool := oauth.NewOauthTool(r.OnlineOptions.Oauth)
 	// user interface
 	userif := aaa.NewUserInfoHandler()
 	// cache
@@ -156,10 +155,10 @@ func (r *Router) Complete() error {
 	dir, _ := os.Getwd()
 	router.StaticFS("/lokiExport", http.Dir(dir+"/lokiExport"))
 
-	authMiddleware, err := auth.NewAuthMiddleware(r.Opts.JWT, r.Database, r.Redis, aaa.NewUserInfoHandler())
-	if err != nil {
-		return err
-	}
+	// authMiddleware, err := auth.NewAuthMiddleware(r.Opts.JWT, r.Database, r.Redis, aaa.NewUserInfoHandler())
+	// if err != nil {
+	// 	return err
+	// }
 
 	globalMiddlewares := []func(*gin.Context){
 		// prometheus request metrics
@@ -183,19 +182,20 @@ func (r *Router) Complete() error {
 
 	// 登录和认证相关
 	oauth := loginhandler.OAuthHandler{
-		Midware:   authMiddleware,
-		OauthTool: oauthtool,
+		DB:         r.Database.DB(),
+		AuthModule: *auth.NewAuthenticateModule(r.Database.DB()),
+		JWTOptions: r.Opts.JWT,
 	}
 	router.POST("/v1/login", oauth.LoginHandler)
 	router.GET("/v1/oauth/addr", oauth.GetOauthAddr)
-	router.GET("/v1/oauth/callback", oauth.GetOauthToken)
+	router.GET("/v1/oauth/callback/:source", oauth.GetOauthToken)
 
 	rg := router.Group("v1")
 
 	// 注册中间件
 	apiMidwares := []func(*gin.Context){
 		// authc
-		authMiddleware.MiddlewareFunc(),
+		auth.NewAuthMiddleware(r.Opts.JWT).FilterFunc,
 		// audit
 		r.auditInstance.Middleware(),
 	}

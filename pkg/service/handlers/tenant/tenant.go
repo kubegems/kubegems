@@ -500,7 +500,7 @@ func (h *TenantHandler) ListTenantProject(c *gin.Context) {
 
 	if !userAuthority.IsTenantAdmin(utils.ToUint(tid)) && !userAuthority.IsSystemAdmin {
 		cond.Join = handlers.Args("left join project_user_rels on project_user_rels.project_id = projects.id")
-		cond.Where = append(cond.Where, handlers.Args("project_user_rels.user_id = ?", user.ID))
+		cond.Where = append(cond.Where, handlers.Args("project_user_rels.user_id = ?", user.GetID()))
 	}
 
 	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
@@ -1279,7 +1279,7 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 	}
 	quota.TenantResourceQuotaApply.Status = models.QuotaStatusPending
 	quota.TenantResourceQuotaApply.Content = req.Content
-	quota.TenantResourceQuotaApply.Username = u.Username
+	quota.TenantResourceQuotaApply.Username = u.GetUsername()
 
 	need := v1.ResourceList{}
 	origin := v1.ResourceList{}
@@ -1312,7 +1312,7 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 		Content(fmt.Sprintf("申请调整租户%s在集群%s的资源", quota.Tenant.TenantName, quota.Cluster.ClusterName)).
 		SetUsersToSend(
 			h.GetDataBase().SystemAdmins(),
-			[]uint{u.ID},
+			[]uint{u.GetID()},
 		).
 		Send()
 

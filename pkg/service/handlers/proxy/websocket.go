@@ -23,7 +23,7 @@ type xtermMessage struct {
 	Cols    uint16 `json:"cols"`  // msgtype=resize情况下使用
 }
 
-func Transport(local, proxy *websocket.Conn, c *gin.Context, user *models.User, auditFunc func(string)) {
+func Transport(local, proxy *websocket.Conn, c *gin.Context, user models.CommonUserIface, auditFunc func(string)) {
 	p := WebSocketProxy{
 		RequestContext: c,
 		Source:         local,
@@ -32,7 +32,7 @@ func Transport(local, proxy *websocket.Conn, c *gin.Context, user *models.User, 
 		TargetChan:     make(chan Msg, 100),
 		Done:           make(chan bool, 2),
 
-		UserName: user.Username,
+		Username: user.GetUsername(),
 		buf:      bytes.NewBuffer([]byte{}),
 	}
 
@@ -47,7 +47,7 @@ type WebSocketProxy struct {
 	SourceChan     chan Msg
 	TargetChan     chan Msg
 	Done           chan bool
-	UserName       string
+	Username       string
 	AuditFunc      func(string)
 	buf            *bytes.Buffer
 }

@@ -5,8 +5,8 @@ import (
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/git"
 	"kubegems.io/pkg/utils/helm"
+	"kubegems.io/pkg/utils/jwt"
 	"kubegems.io/pkg/utils/msgbus"
-	"kubegems.io/pkg/utils/oauth"
 	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/system"
@@ -19,7 +19,7 @@ type Options struct {
 	DebugMode bool                      `json:"debugMode,omitempty"`
 	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
 	Git       *git.Options              `json:"git,omitempty"`
-	JWT       *oauth.JWTOptions         `json:"jwt,omitempty"`
+	JWT       *jwt.Options              `json:"jwt,omitempty"`
 	LogLevel  string                    `json:"logLevel,omitempty"`
 	Msgbus    *msgbus.Options           `json:"msgbus,omitempty"`
 	Mysql     *database.Options         `json:"mysql,omitempty"`
@@ -33,7 +33,7 @@ func DefaultOptions() *Options {
 		DebugMode: false,
 		Exporter:  exporter.DefaultExporterOptions(),
 		Git:       git.NewDefaultOptions(),
-		JWT:       oauth.NewDefaultJWTOptions(),
+		JWT:       jwt.DefaultOptions(),
 		LogLevel:  "debug",
 		Msgbus:    msgbus.DefaultMsgbusOptions(),
 		Mysql:     database.NewDefaultOptions(),
