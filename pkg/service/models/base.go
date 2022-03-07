@@ -136,6 +136,8 @@ func migrateModels(db *gorm.DB) error {
 		&MetricDashborad{},
 		// 配置
 		&OnlineConfig{},
+		// 登陆源
+		&AuthSource{},
 	)
 }
 

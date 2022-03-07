@@ -1,20 +1,27 @@
 package loginhandler
 
 import (
+	"context"
+	"fmt"
 	"time"
 
-	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	auth "kubegems.io/pkg/service/aaa/authentication"
+	"gorm.io/gorm"
+	"kubegems.io/pkg/log"
+	auth "kubegems.io/pkg/service/aaa/auth"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/oauth"
+	"kubegems.io/pkg/utils/jwt"
 )
 
 type LoginForm struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
+}
+type OAuthHandler struct {
+	DB         *gorm.DB
+	AuthModule auth.AuthenticateModule
+	JWTOptions *jwt.Options
 }
 
 // FakeLogin 实际上这个没有用的，只是为了生成swagger文档
@@ -28,12 +35,7 @@ type LoginForm struct {
 // @Failure 401 {string} string "登录失败"
 // @Router /v1/login [post]
 func (h *OAuthHandler) LoginHandler(c *gin.Context) {
-	h.Midware.LoginHandler(c)
-}
-
-type OAuthHandler struct {
-	Midware   *auth.Middleware
-	OauthTool *oauth.OauthTool
+	h.commonLogin(c)
 }
 
 // @Summary 获取OAUTH登录地址
@@ -44,63 +46,77 @@ type OAuthHandler struct {
 // @Success 200 {string} string	"地址"
 // @Router /v1/oauth/addr [get]
 func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
-	handlers.OK(c, h.OauthTool.GetAuthAddr())
+	source := c.Query("source")
+	if source == "" {
+		handlers.NotOK(c, fmt.Errorf("source not provide"))
+	}
+	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source)
+	handlers.OK(c, sourceUtil.LoginAddr())
 }
 
-// @Summary 获取OAUTH登录地址
-// @Description 获取OAUTH登录地址
+// @Summary OAUTH登录callback
+// @Description OAUTH登录callback
 // @Tags AAAAA
 // @Accept  json
 // @Produce  json
 // @Success 200 {string} string	"地址"
-// @Router /v1/oauth/callback [get]
+// @Param source path string true "loginsource"
+// @Router /v1/oauth/callback/{source} [get]
 func (h *OAuthHandler) GetOauthToken(c *gin.Context) {
-	t := h.OauthTool
-	code := c.Query("code")
-	tok, err := t.GetAccessToken(code)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	ret, err := t.GetPersonInfo(tok)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	var user models.User
-	now := time.Now()
-	if err := h.Midware.Database.DB().First(&user, "username = ?", ret.Username).Error; err != nil {
-		if models.IsNotFound(err) {
-			active := true
-			user = models.User{
-				Username:     ret.Username,
-				Email:        ret.Email,
-				Password:     utils.GeneratePassword(),
-				IsActive:     &active,
-				LastLoginAt:  &now,
-				SystemRoleID: 2,
-			}
-			h.Midware.Database.DB().Create(&user)
-		}
-	} else {
-		user.LastLoginAt = &now
-		h.Midware.Database.DB().Save(&user)
-	}
-	mw := h.Midware
-	token := jwtgo.New(jwtgo.GetSigningMethod(mw.SigningAlgorithm))
-	claims := token.Claims.(jwtgo.MapClaims)
+	h.commonLogin(c)
+}
 
-	if mw.PayloadFunc != nil {
-		for key, value := range mw.PayloadFunc(&user) {
-			claims[key] = value
+func (h *OAuthHandler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo) (*models.User, error) {
+	u := &models.User{}
+	if err := h.DB.WithContext(ctx).First(u, "username = ?", uinfo.Username).Error; err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return nil, err
 		}
+		newUser := &models.User{
+			Username: uinfo.Username,
+			Email:    uinfo.Email,
+			Source:   uinfo.Source,
+		}
+		err := h.DB.WithContext(ctx).Create(newUser).Error
+		return newUser, err
+	} else {
+		return u, nil
 	}
-	expire := mw.TimeFunc().Add(mw.Timeout)
-	claims["exp"] = expire.Unix()
-	tokenString, err := token.SignedString(h.Midware.PrivateKey)
-	if err != nil {
+}
+
+func (h *OAuthHandler) commonLogin(c *gin.Context) {
+	ctx := c.Request.Context()
+	cred := &auth.Credential{}
+	cred.Source = c.Param("source")
+	if err := c.BindJSON(cred); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	mw.LoginResponse(c, 200, tokenString, expire)
+	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source)
+	uinfo, err := authenticator.GetUserInfo(ctx, cred)
+	if err != nil {
+		handlers.Unauthorized(c, err)
+		return
+	}
+	uinternel, err := h.getOrCreateUser(ctx, uinfo)
+	if err != nil {
+		log.Error(err, "handle login error", "username", uinfo.Username)
+		handlers.Unauthorized(c, fmt.Errorf("system error"))
+		return
+	}
+	now := time.Now()
+	uinternel.LastLoginAt = &now
+	h.DB.WithContext(ctx).Updates(uinternel)
+	user := &models.User{
+		Username: uinternel.Username,
+		Email:    uinternel.Email,
+		ID:       uinternel.ID,
+	}
+
+	jwtInstance := h.JWTOptions.ToJWT()
+	token, _, err := jwtInstance.GenerateToken(user, h.JWTOptions.Expire)
+	if err != nil {
+		handlers.Unauthorized(c, err)
+	}
+	handlers.OK(c, token)
 }

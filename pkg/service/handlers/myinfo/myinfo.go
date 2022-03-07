@@ -25,7 +25,7 @@ func (h *MyHandler) Myinfo(c *gin.Context) {
 		return
 	}
 	var user models.User
-	if e := h.GetDB().Preload("SystemRole").Preload("Tenants").First(&user, "id = ?", u.ID).Error; e != nil {
+	if e := h.GetDB().Preload("SystemRole").Preload("Tenants").First(&user, "id = ?", u.GetID()).Error; e != nil {
 		handlers.Forbidden(c, fmt.Errorf("请重新登录"))
 		return
 	}
@@ -68,7 +68,9 @@ func (h *MyHandler) MyTenants(c *gin.Context) {
 		return
 	}
 	tenants := []models.Tenant{}
-	h.GetDB().Joins("tenant_user_rels on tenant_user_rels.tenant_id = tenants.id").Where("tenant_user_rels.user_id = ?", u.ID).Find(&tenants)
+	h.GetDB().
+		Joins("tenant_user_rels on tenant_user_rels.tenant_id = tenants.id").
+		Where("tenant_user_rels.user_id = ?", u.GetID()).Find(&tenants)
 	handlers.OK(c, tenants)
 }
 
@@ -89,7 +91,7 @@ func (h *MyHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 	cuser := models.User{}
-	h.GetDB().First(&cuser, u.ID)
+	h.GetDB().First(&cuser, u.GetID())
 	form := &resetPasswordForm{}
 	c.BindJSON(form)
 

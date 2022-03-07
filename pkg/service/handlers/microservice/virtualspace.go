@@ -80,7 +80,7 @@ func (h *VirtualSpaceHandler) ListVirtualSpace(c *gin.Context) {
 	if !auth.IsSystemAdmin {
 		subQuery := h.GetDB().Table("virtual_space_user_rels").
 			Select("virtual_space_id").
-			Where("user_id = ?", u.ID)
+			Where("user_id = ?", u.GetID())
 		cond.Where = append(cond.Where, handlers.Args("id in (?)", subQuery))
 	}
 	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
@@ -138,7 +138,7 @@ func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 	h.SetExtraAuditData(c, models.ResVirtualSpace, vs.ID)
 
 	u, _ := h.GetContextUser(c)
-	vs.CreatedBy = u.Username
+	vs.CreatedBy = u.GetUsername()
 	vs.IsActive = true
 
 	if err := h.GetDB().Save(&vs).Error; err != nil {

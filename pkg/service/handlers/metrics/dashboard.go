@@ -26,7 +26,7 @@ func (h *MonitorHandler) ListDashborad(c *gin.Context) {
 	}
 
 	ret := []models.MetricDashborad{}
-	if err := h.GetDB().Find(&ret, "creator = ?", u.Username).Error; err != nil {
+	if err := h.GetDB().Find(&ret, "creator = ?", u.GetUsername()).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -76,7 +76,7 @@ func (h *MonitorHandler) DeleteDashborad(c *gin.Context) {
 	}
 
 	d := models.MetricDashborad{}
-	if err := h.GetDB().Delete(&d, "id = ? and creator = ?", c.Param("dashboard_id"), u.Username).Error; err != nil {
+	if err := h.GetDB().Delete(&d, "id = ? and creator = ?", c.Param("dashboard_id"), u.GetUsername()).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -92,7 +92,7 @@ func (h *MonitorHandler) getDashboardReq(c *gin.Context) (*models.MetricDashbora
 	if err := c.BindJSON(&req); err != nil {
 		return nil, err
 	}
-	req.Creator = u.Username
+	req.Creator = u.GetUsername()
 
 	// 逐个校验graph
 	for _, v := range req.Graphs {

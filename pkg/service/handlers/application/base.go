@@ -221,7 +221,7 @@ func (h *BaseHandler) processfunc(c *gin.Context, body interface{}, completes []
 
 		// 注入 user
 		if user, ok := h.GetContextUser(c); ok {
-			ctx = context.WithValue(ctx, contextAuthorKey{}, &object.Signature{Name: user.Username, Email: user.Email})
+			ctx = context.WithValue(ctx, contextAuthorKey{}, &object.Signature{Name: user.GetUsername(), Email: user.GetEmail()})
 		} else {
 			ctx = context.WithValue(ctx, contextAuthorKey{}, &object.Signature{Name: "unknow", Email: "unknown"})
 		}

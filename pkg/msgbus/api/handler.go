@@ -43,7 +43,7 @@ func (m *MessageHandler) MessageCenter(c *gin.Context) {
 	var user *switcher.NotifyUser
 	dbUser, exist := m.GetContextUser(c)
 	if exist {
-		user = switcher.NewNotifyUser(conn, dbUser.Username, dbUser.ID)
+		user = switcher.NewNotifyUser(conn, dbUser.GetUsername(), dbUser.GetID())
 	} else {
 		user = switcher.NewNotifyUser(conn, "none", 0)
 	}

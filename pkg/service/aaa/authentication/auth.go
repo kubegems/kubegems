@@ -34,7 +34,7 @@ type loginForm struct {
 	Password string `form:"password" json:"password" binding:"required"`
 }
 
-func dbauth(db *gorm.DB, form loginForm) (interface{}, error) {
+func dbauth(db *gorm.DB, form loginForm) (models.CommonUserIface, error) {
 	var user models.User
 	if err := db.First(&user, "username = ?", form.Username).Error; err != nil {
 		log.Warnf("dbauth failed for user %s: %v", form.Username, err)
@@ -54,7 +54,7 @@ func dbauth(db *gorm.DB, form loginForm) (interface{}, error) {
 	return &user, nil
 }
 
-func getAuthenticator(db *gorm.DB, uif aaa.UserInterface) func(c *gin.Context) (interface{}, error) {
+func getAuthenticator(db *gorm.DB, uif aaa.ContextUserOperator) func(c *gin.Context) (interface{}, error) {
 	return func(c *gin.Context) (interface{}, error) {
 		var loginVals loginForm
 		/*
@@ -70,13 +70,12 @@ func getAuthenticator(db *gorm.DB, uif aaa.UserInterface) func(c *gin.Context) (
 		if err != nil {
 			return nil, err
 		}
-		u := user.(*models.User)
-		uif.SetContextUser(c, u)
-		return u, nil
+		uif.SetContextUser(c, user)
+		return user, nil
 	}
 }
 
-func getIdentityHandler(db *gorm.DB, redis *redis.Client, uif aaa.UserInterface) func(*gin.Context) interface{} {
+func getIdentityHandler(db *gorm.DB, redis *redis.Client, uif aaa.ContextUserOperator) func(*gin.Context) interface{} {
 	return func(c *gin.Context) interface{} {
 		claims := jwt.ExtractClaims(c)
 		username := claims[identityKey].(string)
@@ -152,7 +151,7 @@ type Middleware struct {
 }
 
 func NewAuthMiddleware(system *oauth.JWTOptions, database *database.Database,
-	redis *redis.Client, uif aaa.UserInterface) (*Middleware, error) {
+	redis *redis.Client, uif aaa.ContextUserOperator) (*Middleware, error) {
 	db := database.DB()
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:            gems.GroupName,

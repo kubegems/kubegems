@@ -40,7 +40,7 @@ type PermissionChecker interface {
 
 type DefaultPermissionChecker struct {
 	Cache  *models.CacheLayer
-	Userif aaa.UserInterface
+	Userif aaa.ContextUserOperator
 }
 
 func (defaultPermChecker *DefaultPermissionChecker) HasEnvPerm(c *gin.Context, cluster, namespace string) (hasPerm bool, objname string, currentrole string) {

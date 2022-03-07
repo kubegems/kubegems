@@ -26,6 +26,7 @@ type User struct {
 	// 最后登录时间
 	LastLoginAt *time.Time `sql:"DEFAULT:'current_timestamp'"`
 
+	Source       string    `gorm:"type:varchar(50)"`
 	Tenants      []*Tenant `gorm:"many2many:tenant_user_rels;"`
 	SystemRole   *SystemRole
 	SystemRoleID uint
@@ -54,4 +55,31 @@ type UserCreate struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"min=8"`
+}
+
+func (u *User) GetID() uint {
+	return u.ID
+}
+func (u *User) GetSystemRoleID() uint {
+	return u.SystemRoleID
+}
+func (u *User) GetUsername() string {
+	return u.Username
+
+}
+func (u *User) GetUserKind() string {
+	return ""
+}
+func (u *User) GetMail() string {
+	return u.Email
+}
+func (u *User) GetEmail() string {
+	return u.Email
+}
+
+func (u *User) GetSource() string {
+	return u.Source
+}
+func (u *User) SetLastLogin(t *time.Time) {
+	u.LastLoginAt = t
 }

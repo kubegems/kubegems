@@ -41,7 +41,7 @@ func (h *MessageHandler) ListMessage(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
 	messageType := c.Query("message_type")
-	q := h.GetDB().Where("user_id = ?", user.ID)
+	q := h.GetDB().Where("user_id = ?", user.GetID())
 
 	switch messageType {
 	case string(msgbus.Message), string(msgbus.Approve):
@@ -120,7 +120,7 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 		return
 	}
 
-	readQuery := h.GetDB().Model(models.UserMessageStatus{}).Where("user_id = ?", user.ID)
+	readQuery := h.GetDB().Model(models.UserMessageStatus{}).Where("user_id = ?", user.GetID())
 	details := models.Message{}
 	if msgID != "_all" {
 		switch msgType {

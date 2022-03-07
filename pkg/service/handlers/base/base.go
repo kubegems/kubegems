@@ -20,7 +20,7 @@ import (
 type BaseHandler struct {
 	audit.AuditInterface
 	authorization.PermissionChecker
-	aaa.UserInterface
+	aaa.ContextUserOperator
 	agents     *agents.ClientSet
 	database   *database.Database
 	redis      *redis.Client
@@ -30,7 +30,7 @@ type BaseHandler struct {
 
 func NewHandler(auditi audit.AuditInterface,
 	permcheck authorization.PermissionChecker,
-	userif aaa.UserInterface,
+	userif aaa.ContextUserOperator,
 	agents *agents.ClientSet,
 	database *database.Database,
 	redis *redis.Client,
@@ -38,14 +38,14 @@ func NewHandler(auditi audit.AuditInterface,
 	cachelayer *models.CacheLayer,
 ) BaseHandler {
 	return BaseHandler{
-		AuditInterface:    auditi,
-		PermissionChecker: permcheck,
-		UserInterface:     userif,
-		agents:            agents,
-		msgbuscli:         msgbuscli,
-		cachelayer:        cachelayer,
-		database:          database,
-		redis:             redis,
+		AuditInterface:      auditi,
+		PermissionChecker:   permcheck,
+		ContextUserOperator: userif,
+		agents:              agents,
+		msgbuscli:           msgbuscli,
+		cachelayer:          cachelayer,
+		database:            database,
+		redis:               redis,
 	}
 }
 
