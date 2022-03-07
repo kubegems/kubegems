@@ -24,6 +24,7 @@ import (
 	approveHandler "kubegems.io/pkg/service/handlers/approve"
 	appstorehandler "kubegems.io/pkg/service/handlers/appstore"
 	auditloghandler "kubegems.io/pkg/service/handlers/auditlog"
+	authsource "kubegems.io/pkg/service/handlers/authsource"
 	"kubegems.io/pkg/service/handlers/base"
 	clusterhandler "kubegems.io/pkg/service/handlers/cluster"
 	environmenthandler "kubegems.io/pkg/service/handlers/environment"
@@ -316,6 +317,9 @@ func (r *Router) Complete() error {
 	// app handler
 	appHandler := applicationhandler.MustNewApplicationDeployHandler(r.Opts.Git, r.Argo, basehandler)
 	appHandler.RegistRouter(rg)
+
+	authSourceHandler := authsource.AuthSourceHandler{BaseHandler: basehandler}
+	authSourceHandler.RegistRouter(rg)
 
 	// microservice  handler
 	// TODO: kiali在每个集群配置可能不相同，先写死，后面看要不要支持配置
