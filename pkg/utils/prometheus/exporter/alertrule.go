@@ -55,5 +55,4 @@ func (c *AlertRuleCollector) Update(ch chan<- prometheus.Metric) error {
 		}
 		return nil
 	})
-
 }
