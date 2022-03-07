@@ -77,6 +77,9 @@ func (t *JWT) ParseToken(token string) (*JWTClaims, error) {
 	_, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (interface{}, error) {
 		return t.publicKey, nil
 	})
+	if err != nil {
+		return nil, err
+	}
 	if err := claims.Valid(); err != nil {
 		return nil, err
 	}
