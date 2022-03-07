@@ -22,6 +22,7 @@ type Registry struct {
 	CreatorID  uint
 	Project    *Project `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 	// 项目ID
-	ProjectID uint `grom:"uniqueIndex:uniq_idx_project_registry;"`
-	IsDefault bool
+	ProjectID     uint `grom:"uniqueIndex:uniq_idx_project_registry;"`
+	IsDefault     bool
+	EnableExtends bool // 是否启用扩展功能，支持harbor等高级仓库
 }
