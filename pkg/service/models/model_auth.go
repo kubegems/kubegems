@@ -10,13 +10,24 @@ import (
 
 type AuthSource struct {
 	ID        uint             `json:"id"`
-	Name      string           `gorm:"unique"`
+	Name      string           `gorm:"unique" json:"name"`
 	Kind      string           `json:"kind"`
 	Config    AuthSourceConfig `json:"config" validate:"json"`
 	TokenType string           `json:"tokenType"`
 	Enabled   bool             `json:"enabled"`
 	CreatedAt *time.Time       `json:"createdAt"`
 	UpdatedAt *time.Time       `json:"updatedAt"`
+}
+
+type AuthSourceSimple struct {
+	ID      uint   `json:"id"`
+	Name    string `gorm:"unique" json:"name"`
+	Kind    string `json:"kind"`
+	Enabled bool   `json:"enabled"`
+}
+
+func (AuthSourceSimple) TableName() string {
+	return "auth_sources"
 }
 
 type AuthSourceConfig struct {

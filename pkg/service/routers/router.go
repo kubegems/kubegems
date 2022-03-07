@@ -191,6 +191,9 @@ func (r *Router) Complete() error {
 	router.GET("/v1/oauth/addr", oauth.GetOauthAddr)
 	router.GET("/v1/oauth/callback/:source", oauth.GetOauthToken)
 
+	authSourceHandler := authsource.AuthSourceHandler{BaseHandler: basehandler}
+	router.GET("/v1/system/authsource", authSourceHandler.ListAuthSourceSimple)
+
 	rg := router.Group("v1")
 
 	// 注册中间件
@@ -318,7 +321,7 @@ func (r *Router) Complete() error {
 	appHandler := applicationhandler.MustNewApplicationDeployHandler(r.Opts.Git, r.Argo, basehandler)
 	appHandler.RegistRouter(rg)
 
-	authSourceHandler := authsource.AuthSourceHandler{BaseHandler: basehandler}
+	// authsource
 	authSourceHandler.RegistRouter(rg)
 
 	// microservice  handler
