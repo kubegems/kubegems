@@ -148,7 +148,8 @@ func (p *ApplicationProcessor) WaitRollouts(ctx context.Context, ref PathRef) er
 }
 
 func (p *ApplicationProcessor) PrepareDeploymentStrategyWithImages(
-	ctx context.Context, ref PathRef, strategy DeploymentStrategyWithImages) error {
+	ctx context.Context, ref PathRef, strategy DeploymentStrategyWithImages,
+) error {
 	// 更新镜像
 	if len(strategy.DeployImages.PublishImages()) != 0 || strategy.DeployImages.IstioVersion != "" {
 		if err := p.Manifest.StoreFunc(ctx, ref, func(ctx context.Context, store GitStore) error {
@@ -252,13 +253,7 @@ func (p *ApplicationProcessor) configForArgoRollout(ctx context.Context, cli Git
 	case CanaryDeploymentStrategyType:
 		if strategy.Canary == nil {
 			// 默认
-			strategy.Canary = &CanaryDeploymentStrategy{
-				ExtendCanaryStrategy: ExtendCanaryStrategy{
-					TrafficRouting: &RolloutTrafficRouting{
-						Istio: &IstioTrafficRouting{VirtualService: IstioVirtualService{IstioVirtualService: rolloutsv1alpha1.IstioVirtualService{}}},
-					},
-				},
-			}
+			strategy.Canary = &CanaryDeploymentStrategy{}
 		}
 		if err := p.prepareCanaryRollout(ctx, cli, dep, strategy.Canary); err != nil {
 			return err
@@ -373,7 +368,7 @@ func (p *ApplicationProcessor) prepareCanaryRollout(ctx context.Context, cli Git
 		return nil
 	}
 	switch {
-	// istio 需要创建 vitrual service
+	// istio 需要创建 virtual service
 	case tr.Istio != nil:
 		return p.prepareCanaryIstioRollout(ctx, cli, dep, canary.StableService, canary.CanaryService, tr.Istio, isinit)
 	default:
@@ -398,7 +393,8 @@ func completeCanarySteps(_ context.Context, canary *rolloutsv1alpha1.CanaryStrat
 
 // istio 策略需要创建一个virtualservice
 func (p *ApplicationProcessor) prepareCanaryIstioRollout(ctx context.Context, cli GitStore,
-	dep *appsv1.Deployment, stablesvcname, nextsvcname string, istio *IstioTrafficRouting, isinit bool) error {
+	dep *appsv1.Deployment, stablesvcname, nextsvcname string, istio *IstioTrafficRouting, isinit bool,
+) error {
 	// 虚拟服务是要和主service同名的
 	if istio.VirtualService.Name == "" {
 		istio.VirtualService.Name = stablesvcname
