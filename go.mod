@@ -8,12 +8,10 @@ require (
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/alicebob/miniredis/v2 v2.17.0
-	github.com/appleboy/gin-jwt/v2 v2.8.0
 	github.com/argoproj/argo-cd/v2 v2.1.10
 	github.com/argoproj/argo-rollouts v1.1.1
 	github.com/cloudflare/cfssl v1.6.1
 	github.com/containerd/containerd v1.4.4
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21
 	github.com/emersion/go-smtp v0.15.0
 	github.com/emicklei/go-restful-openapi/v2 v2.8.0
@@ -129,6 +127,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deislabs/oras v0.11.1 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/cli v20.10.5+incompatible // indirect
@@ -161,7 +160,6 @@ require (
 	github.com/go-redis/cache/v8 v8.2.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gocraft/work v0.5.1 // indirect
-	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.11.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
