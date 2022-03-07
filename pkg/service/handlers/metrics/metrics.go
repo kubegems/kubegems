@@ -11,7 +11,7 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
-	"kubegems.io/pkg/service/options"
+	"kubegems.io/pkg/service/online"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/prometheus/promql"
@@ -140,7 +140,9 @@ func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryR
 		return fmt.Errorf("请指定查询集群")
 	}
 
-	ruleCtx, err := q.FindRuleContext(h.OnlineOptions.Monitor)
+	monitoropts := new(prometheus.MonitorOptions)
+	online.LoadOptions(monitoropts, h.GetDB())
+	ruleCtx, err := q.FindRuleContext(monitoropts)
 	if err != nil {
 		return err
 	}
@@ -195,7 +197,9 @@ func (h *MonitorHandler) GetMetricTemplate(c *gin.Context) {
 	resName := c.Param("resource_name")
 	ruleName := c.Param("rule_name")
 
-	resDetail, ok := h.OnlineOptions.Monitor.Resources[resName]
+	monitoropts := new(prometheus.MonitorOptions)
+	online.LoadOptions(monitoropts, h.GetDB())
+	resDetail, ok := monitoropts.Resources[resName]
 	if !ok {
 		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
 		return
@@ -232,23 +236,23 @@ func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 
 	h.SetAuditData(c, "更新", "Prometheus模板", resName+"."+ruleName)
 
+	monitoropts := new(prometheus.MonitorOptions)
+	online.LoadOptions(monitoropts, h.GetDB())
 	for _, unit := range rule.Units {
-		if _, ok := h.OnlineOptions.Monitor.Units[unit]; !ok {
+		if _, ok := monitoropts.Units[unit]; !ok {
 			handlers.NotOK(c, fmt.Errorf("unit %s is not valid", unit))
 			return
 		}
 	}
 
-	resDetail, ok := h.OnlineOptions.Monitor.Resources[resName]
+	resDetail, ok := monitoropts.Resources[resName]
 	if !ok {
 		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
 		return
 	}
 
-	h.OnlineOptions.Lock()
 	resDetail.Rules[ruleName] = rule
-	h.OnlineOptions.UnLock()
-	if err := h.OnlineOptions.SaveToDB(h.GetDB()); err != nil {
+	if err := online.SaveOptions(monitoropts, h.GetDB()); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -272,7 +276,9 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 
 	h.SetAuditData(c, "删除", "Prometheus模板", resName+"."+ruleName)
 
-	resDetail, ok := h.OnlineOptions.Monitor.Resources[resName]
+	monitoropts := new(prometheus.MonitorOptions)
+	online.LoadOptions(monitoropts, h.GetDB())
+	resDetail, ok := monitoropts.Resources[resName]
 	if !ok {
 		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
 		return
@@ -285,7 +291,7 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 
 	allalerts := []prometheus.AlertRule{}
 	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
-		alerts, err := cli.Extend().ListAllAlertRules(ctx, h.Monitor)
+		alerts, err := cli.Extend().ListAllAlertRules(ctx, monitoropts)
 		if err != nil {
 			return fmt.Errorf("list alert in cluster %s failed: %v", cli.Name(), err)
 		}
@@ -302,10 +308,8 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 		}
 	}
 
-	h.OnlineOptions.Lock()
 	delete(resDetail.Rules, ruleName)
-	h.OnlineOptions.UnLock()
-	if err := h.OnlineOptions.SaveToDB(h.GetDB()); err != nil {
+	if err := online.SaveOptions(monitoropts, h.GetDB()); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -314,7 +318,6 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 
 type MonitorHandler struct {
 	base.BaseHandler
-	*options.OnlineOptions
 }
 
 func (h *MonitorHandler) RegistRouter(rg *gin.RouterGroup) {

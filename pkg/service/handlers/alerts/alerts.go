@@ -15,6 +15,7 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/online"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 )
@@ -57,14 +58,16 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 			return nil, err
 		}
 
+		monitoropts := new(prometheus.MonitorOptions)
+		online.LoadOptions(monitoropts, h.GetDB())
 		ret := []prometheus.AlertRule{}
 		if namespace == allNamespace {
-			ret, err = cli.Extend().ListAllAlertRules(ctx, h.MonitorOptions)
+			ret, err = cli.Extend().ListAllAlertRules(ctx, monitoropts)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
+			raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
 			if err != nil {
 				return nil, err
 			}
@@ -108,7 +111,9 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 	name := c.Param("name")
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
-		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
+		monitoropts := new(prometheus.MonitorOptions)
+		online.LoadOptions(monitoropts, h.GetDB())
+		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
 		}
@@ -220,12 +225,15 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 		}
 		req.Namespace = namespace
 		h.SetAuditData(c, "创建", "告警规则", req.Name)
-		if err := req.CheckAndModify(h.MonitorOptions); err != nil {
+
+		monitoropts := new(prometheus.MonitorOptions)
+		online.LoadOptions(monitoropts, h.GetDB())
+		if err := req.CheckAndModify(monitoropts); err != nil {
 			return nil, err
 		}
 
 		// get、update、commit
-		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
+		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
 		}
@@ -265,12 +273,15 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 		}
 		req.Namespace = namespace
 		h.SetAuditData(c, "更新", "告警规则", req.Name)
-		if err := req.CheckAndModify(h.MonitorOptions); err != nil {
+
+		monitoropts := new(prometheus.MonitorOptions)
+		online.LoadOptions(monitoropts, h.GetDB())
+		if err := req.CheckAndModify(monitoropts); err != nil {
 			return nil, err
 		}
 
 		// get、update、commit
-		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
+		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
 		}
@@ -309,7 +320,9 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
 		// get、update、commit
-		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, h.MonitorOptions)
+		monitoropts := new(prometheus.MonitorOptions)
+		online.LoadOptions(monitoropts, h.GetDB())
+		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
 		}
@@ -606,21 +619,23 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 		return
 	}
 
+	monitoropts := new(prometheus.MonitorOptions)
+	online.LoadOptions(monitoropts, h.GetDB())
 	for i := range ret {
 		if ret[i].SilenceEndsAt.Equal(forever) {
 			ret[i].SilenceEndsAt = nil
 		}
 		ret[i].LabelMap = make(map[string]string)
 		_ = json.Unmarshal(ret[i].Labels, &ret[i].LabelMap)
-		ret[i].Summary = h.formatBlackListSummary(ret[i].LabelMap)
+		ret[i].Summary = h.formatBlackListSummary(ret[i].LabelMap, monitoropts)
 	}
 	handlers.OK(c, handlers.Page(total, ret, int64(page), int64(size)))
 }
 
-func (h *AlertsHandler) formatBlackListSummary(labels map[string]string) string {
+func (h *AlertsHandler) formatBlackListSummary(labels map[string]string, opts *prometheus.MonitorOptions) string {
 	resKey := labels[prometheus.AlertResourceLabel]
 	ruleKey := labels[prometheus.AlertRuleLabel]
-	res := h.MonitorOptions.Resources[resKey]
+	res := opts.Resources[resKey]
 	rule := res.Rules[ruleKey]
 	labelStr := fmt.Sprintf("%s: [集群:%s] ", labels[prometheus.AlertNameLabel], labels[prometheus.AlertClusterKey])
 	for _, l := range rule.Labels {
