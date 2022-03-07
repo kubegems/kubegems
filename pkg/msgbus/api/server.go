@@ -10,7 +10,7 @@ import (
 	"kubegems.io/pkg/msgbus/options"
 	"kubegems.io/pkg/msgbus/switcher"
 	"kubegems.io/pkg/service/aaa"
-	auth "kubegems.io/pkg/service/aaa/authentication"
+	"kubegems.io/pkg/service/aaa/auth"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/redis"
 )
@@ -18,12 +18,9 @@ import (
 func NewGinServer(opts *options.Options, database *database.Database, redis *redis.Client, ms *switcher.MessageSwitcher) (*gin.Engine, error) {
 	r := gin.Default()
 	// 初始化需要注册的中间件
-	authmidware, err := auth.NewAuthMiddleware(opts.JWT, database, redis, aaa.NewUserInfoHandler())
-	if err != nil {
-		return nil, err
-	}
+	authMiddleware := auth.NewAuthMiddleware(opts.JWT)
 	middlewares := []func(*gin.Context){
-		authmidware.MiddlewareFunc(),
+		authMiddleware.FilterFunc,
 	}
 
 	r.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"healthy": "ok"}) })
