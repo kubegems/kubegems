@@ -758,11 +758,6 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 		return AfterTenantResourceQuotaSave(ctx, h.BaseHandler, tx, &obj)
 	})
 
-	if err := h.GetDB().Create(&obj).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
 	h.GetDB().Preload("Tenant").Preload("Cluster", func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name") }).First(&obj, obj.ID)
 
 	h.SetAuditData(c, "创建", "租户集群资源限制", fmt.Sprintf("租户[%v]/集群[%v]", obj.Tenant.TenantName, obj.Cluster.ClusterName))
