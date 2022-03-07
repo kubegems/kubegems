@@ -337,7 +337,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 	any_value(filter_json) as filter_json,
 	any_value(label_json) as label_json,
 	count(*) as total from log_query_histories where creator_id = ? and cluster_id = ? and create_at > ? group by log_ql order by total desc;`
-	if err := h.GetDataBase().DB().Raw(rawsql, user.ID, c.Param("cluster_id"), before15d).Scan(&list).Error; err != nil {
+	if err := h.GetDataBase().DB().Raw(rawsql, user.GetID(), c.Param("cluster_id"), before15d).Scan(&list).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

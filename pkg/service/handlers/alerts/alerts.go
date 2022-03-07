@@ -711,7 +711,7 @@ func (h *AlertsHandler) withBlackListReq(c *gin.Context, f func(req models.Alert
 	if err := h.GetDB().First(&req, "fingerprint = ?", req.Fingerprint).Error; err != nil {
 		return err
 	}
-	req.SilenceCreator = u.Username
+	req.SilenceCreator = u.GetUsername()
 	req.LabelMap = map[string]string{}
 	if err := json.Unmarshal(req.Labels, &req.LabelMap); err != nil {
 		return err

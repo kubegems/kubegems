@@ -152,5 +152,5 @@ func (audit *DefaultAuditInstance) LogIt(c *gin.Context, t time.Time, raw gin.H)
 	tenant, tags = GetExtraAuditData(c)
 	issuccess := c.Writer.Status() < http.StatusBadRequest
 
-	audit.Log(user.Username, module, tenant, action, name, tags, raw, issuccess, c.ClientIP())
+	audit.Log(user.GetUsername(), module, tenant, action, name, tags, raw, issuccess, c.ClientIP())
 }

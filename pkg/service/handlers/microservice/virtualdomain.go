@@ -90,7 +90,7 @@ func (h *VirtualDomainHandler) PostVirtualDomain(c *gin.Context) {
 	h.SetExtraAuditData(c, models.ResVirtualDomain, vd.ID)
 
 	u, _ := h.GetContextUser(c)
-	vd.CreatedBy = u.Username
+	vd.CreatedBy = u.GetUsername()
 	vd.IsActive = true
 
 	if err := h.GetDB().Save(&vd).Error; err != nil {

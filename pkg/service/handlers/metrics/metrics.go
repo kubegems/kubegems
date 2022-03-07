@@ -144,7 +144,7 @@ func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryR
 	if err != nil {
 		return err
 	}
-	if u.SystemRoleID != 1 && q.Namespace == "" {
+	if u.GetSystemRoleID() != 1 && q.Namespace == "" {
 		return fmt.Errorf("非管理员必须指定namespace")
 	}
 	if !ruleCtx.ResourceDetail.Namespaced && q.Namespace != "" {

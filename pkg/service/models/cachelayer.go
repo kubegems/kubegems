@@ -41,10 +41,10 @@ type UserAuthority struct {
 	VirtualSpaces []*UserResource `json:"virtualSpaces"`
 }
 
-func (c *CacheLayer) GetUserAuthority(user *User) *UserAuthority {
+func (c *CacheLayer) GetUserAuthority(user CommonUserIface) *UserAuthority {
 	authinfo := UserAuthority{}
-	if err := c.Redis.Client.Get(context.Background(), UserAuthorityKey(user.Username)).Scan(&authinfo); err != nil {
-		log.Debugf("authorization data for user %v not exist, refresh now, if will timeout in %v minutes", user.Username, userAuthorizationDataExpireMinute)
+	if err := c.Redis.Client.Get(context.Background(), UserAuthorityKey(user.GetUsername())).Scan(&authinfo); err != nil {
+		log.Debugf("authorization data for user %v not exist, refresh now, if will timeout in %v minutes", user.GetUsername(), userAuthorizationDataExpireMinute)
 		newAuthInfo := c.FlushUserAuthority(user)
 		return newAuthInfo
 	}
@@ -63,28 +63,28 @@ func (auth *UserAuthority) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &auth)
 }
 
-func (c *CacheLayer) FlushUserAuthority(user *User) *UserAuthority {
+func (c *CacheLayer) FlushUserAuthority(user CommonUserIface) *UserAuthority {
 	auth := new(UserAuthority)
 
-	sysrole := SystemRole{ID: user.SystemRoleID}
+	sysrole := SystemRole{ID: user.GetSystemRoleID()}
 	if err := c.DataBase.DB().First(&sysrole).Error; err != nil {
 		log.Errorf("flush user authority err: %v", err)
 	}
 
 	var turs []TenantUserRels
-	if err := c.DataBase.DB().Preload("Tenant").Where("user_id = ?", user.ID).Find(&turs).Error; err != nil {
+	if err := c.DataBase.DB().Preload("Tenant").Where("user_id = ?", user.GetID()).Find(&turs).Error; err != nil {
 		log.Errorf("query db: %v", err)
 	}
 	var purs []ProjectUserRels
-	if err := c.DataBase.DB().Preload("Project").Where("user_id = ?", user.ID).Find(&purs).Error; err != nil {
+	if err := c.DataBase.DB().Preload("Project").Where("user_id = ?", user.GetID()).Find(&purs).Error; err != nil {
 		log.Errorf("query db: %v", err)
 	}
 	var eurs []EnvironmentUserRels
-	if err := c.DataBase.DB().Preload("Environment").Where("user_id = ?", user.ID).Find(&eurs).Error; err != nil {
+	if err := c.DataBase.DB().Preload("Environment").Where("user_id = ?", user.GetID()).Find(&eurs).Error; err != nil {
 		log.Errorf("query db: %v", err)
 	}
 	var vurs []VirtualSpaceUserRels
-	if err := c.DataBase.DB().Preload("VirtualSpace").Where("user_id = ?", user.ID).Find(&vurs).Error; err != nil {
+	if err := c.DataBase.DB().Preload("VirtualSpace").Where("user_id = ?", user.GetID()).Find(&vurs).Error; err != nil {
 		log.Errorf("query db: %v", err)
 	}
 
@@ -131,7 +131,7 @@ func (c *CacheLayer) FlushUserAuthority(user *User) *UserAuthority {
 		}
 	}
 
-	c.Redis.Client.SetEX(context.Background(), UserAuthorityKey(user.Username), auth, time.Duration(userAuthorizationDataExpireMinute)*time.Minute)
+	c.Redis.Client.SetEX(context.Background(), UserAuthorityKey(user.GetUsername()), auth, time.Duration(userAuthorizationDataExpireMinute)*time.Minute)
 	return auth
 }
 
