@@ -9,6 +9,8 @@ import (
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/gemsplugin"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 func createDatabaseIfNotExists(dsn, dbname string) error {
@@ -70,6 +72,22 @@ func initBaseData(db *gorm.DB) error {
 		return e
 	}
 	if e := db.FirstOrCreate(&admin, admin.ID).Error; e != nil {
+		return e
+	}
+
+	// init default online configs
+	installerCfg := OnlineConfig{
+		Name:    gemsplugin.DefaultInstallerOptions().ConfigName(),
+		Content: gemsplugin.DefaultInstallerOptions().JSON(),
+	}
+	monitorCfg := OnlineConfig{
+		Name:    prometheus.DefaultMonitorOptions().ConfigName(),
+		Content: prometheus.DefaultMonitorOptions().JSON(),
+	}
+	if e := db.FirstOrCreate(&installerCfg).Error; e != nil {
+		return e
+	}
+	if e := db.FirstOrCreate(&monitorCfg).Error; e != nil {
 		return e
 	}
 

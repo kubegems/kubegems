@@ -3,7 +3,7 @@ package gemsplugin
 import (
 	"encoding/json"
 
-	"gopkg.in/yaml.v2"
+	"github.com/ghodss/yaml"
 	"kubegems.io/pkg/log"
 )
 
