@@ -49,6 +49,7 @@ func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 	source := c.Query("source")
 	if source == "" {
 		handlers.NotOK(c, fmt.Errorf("source not provide"))
+		return
 	}
 	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source)
 	handlers.OK(c, sourceUtil.LoginAddr())
