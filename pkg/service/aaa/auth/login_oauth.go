@@ -16,7 +16,7 @@ type OauthOption struct {
 	UserInfoURL string   `json:"userInfoURL"`
 	RedirectURL string   `json:"redirectURL"`
 	AppID       string   `json:"appID"`
-	AppSecret   string   `json:"appSecretj"`
+	AppSecret   string   `json:"appSecret"`
 	Scopes      []string `json:"scopes"`
 }
 
