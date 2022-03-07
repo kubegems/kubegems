@@ -987,12 +987,12 @@ definitions:
     type: object
   handlers.PageData:
     properties:
-      currentPage:
-        type: integer
-      currentSize:
-        type: integer
       list:
         type: object
+      page:
+        type: integer
+      size:
+        type: integer
       total:
         type: integer
     type: object
@@ -1018,21 +1018,6 @@ definitions:
     items:
       type: integer
     type: array
-  kubernetes.Host:
-    properties:
-      cluster:
-        type: string
-      complete_input:
-        description: |-
-          CompleteInput is true when Service, Namespace and Cluster fields are present.
-          It is true for simple service names and FQDN services.
-          It is false for service.namespace format and service entries.
-        type: boolean
-      namespace:
-        type: string
-      service:
-        type: string
-    type: object
   labels.Matcher:
     properties:
       name:
@@ -1346,33 +1331,44 @@ definitions:
     type: object
   models.Application:
     properties:
+      applicationName:
+        description: 应用名字
+        type: string
       createdAt:
+        description: 创建时间
         type: string
       creator:
+        description: 创建人
         type: string
       environment:
         $ref: '#/definitions/models.Environment'
+        description: 关联的环境
         type: object
       environmentID:
+        description: 关联的环境
         type: integer
       id:
         type: integer
       images:
         $ref: '#/definitions/datatypes.JSON'
+        description: 镜像,逗号分割
         type: object
       kind:
+        description: 类型
         type: string
       labels:
         $ref: '#/definitions/datatypes.JSON'
+        description: Label
         type: object
-      name:
-        type: string
       project:
         $ref: '#/definitions/models.Project'
+        description: 所属项
         type: object
       projectID:
+        description: 所属项目ID
         type: integer
       remark:
+        description: 备注
         type: string
     type: object
   models.AuditLog:
@@ -1436,35 +1432,13 @@ definitions:
         description: 带单位
         type: string
     type: object
-  models.CVEAllowlist:
-    properties:
-      creationTime:
-        type: string
-      expires_at:
-        type: integer
-      id:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/models.CVEAllowlistItem'
-        type: array
-      project_id:
-        type: integer
-      updateTime:
-        type: string
-    type: object
-  models.CVEAllowlistItem:
-    properties:
-      cve_id:
-        type: string
-    type: object
   models.ChartRepo:
     properties:
-      chartRepoName:
-        type: string
       id:
         type: integer
       lastSync:
+        type: string
+      name:
         type: string
       syncMessage:
         type: string
@@ -1473,23 +1447,45 @@ definitions:
       url:
         type: string
     required:
-    - chartRepoName
+    - name
     type: object
   models.Cluster:
     properties:
-      destination_rule:
+      agentAddr:
         type: string
-      direction:
+      apiserver:
         type: string
-      port:
-        type: integer
-      service_fqdn:
-        $ref: '#/definitions/kubernetes.Host'
+      clusterResourceQuota:
+        $ref: '#/definitions/datatypes.JSON'
         type: object
-      subset:
+      environments:
+        items:
+          $ref: '#/definitions/models.Environment'
+        type: array
+      id:
+        type: integer
+      kubeConfig:
+        $ref: '#/definitions/datatypes.JSON'
+        type: object
+      name:
         type: string
-      type:
+      oversoldConfig:
+        $ref: '#/definitions/datatypes.JSON'
+        type: object
+      primary:
+        type: boolean
+      runtime:
+        description: docker or containerd
         type: string
+      tenantResourceQuotas:
+        items:
+          $ref: '#/definitions/models.TenantResourceQuota'
+        type: array
+      version:
+        type: string
+    required:
+    - kubeConfig
+    - name
     type: object
   models.Condition:
     properties:
@@ -1507,58 +1503,44 @@ definitions:
   models.Environment:
     properties:
       applications:
-        description: 关联的应用
         items:
           $ref: '#/definitions/models.Application'
         type: array
       cluster:
         $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
         type: object
       clusterID:
-        description: 所属集群ID
         type: integer
       creator:
         $ref: '#/definitions/models.User'
-        description: 创建者
         type: object
       creatorID:
-        description: 创建人ID
         type: integer
       deletePolicy:
-        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
-        type: string
-      environmentName:
-        description: 环境名字
         type: string
       id:
         type: integer
       limitRange:
         $ref: '#/definitions/datatypes.JSON'
-        description: 环境下的limitrage
         type: object
       metaType:
-        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
+        description: MetaTpe (dev, prod, test, pub ...)
+        type: string
+      name:
         type: string
       namespace:
-        description: 环境关联的namespace
         type: string
       project:
         $ref: '#/definitions/models.Project'
-        description: 所属项目
         type: object
       projectID:
-        description: 所属项目ID
         type: integer
       remark:
-        description: 备注
         type: string
       resourceQuota:
         $ref: '#/definitions/datatypes.JSON'
-        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
         type: object
       users:
-        description: 关联的用户
         items:
           $ref: '#/definitions/models.User'
         type: array
@@ -1566,7 +1548,6 @@ definitions:
         $ref: '#/definitions/models.VirtualSpace'
         type: object
       virtualSpaceID:
-        description: 虚拟空间
         type: integer
     type: object
   models.EnvironmentResource:
@@ -1609,7 +1590,6 @@ definitions:
   models.EnvironmentUserRels:
     properties:
       environmentID:
-        description: EnvironmentID
         type: integer
       id:
         type: integer
@@ -1617,13 +1597,11 @@ definitions:
         $ref: '#/definitions/models.Environment'
         type: object
       role:
-        description: 环境级角色("reader", "operator")
         type: string
       user:
         $ref: '#/definitions/models.User'
         type: object
       userID:
-        description: 用户ID
         type: integer
     required:
     - environmentID
@@ -1643,30 +1621,23 @@ definitions:
     properties:
       cluster:
         $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
         type: object
       clusterID:
-        description: 所属集群ID
         type: integer
       createAt:
-        description: 创建时间
         type: string
       creator:
         $ref: '#/definitions/models.User'
-        description: 创建者
         type: object
       creatorID:
         type: integer
       filterJSON:
-        description: 正则标签
         type: string
       id:
         type: integer
       labelJSON:
-        description: 标签
         type: string
       logQL:
-        description: logql
         type: string
     type: object
   models.LogQueryHistoryWithCount:
@@ -1700,32 +1671,26 @@ definitions:
     properties:
       cluster:
         $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
         type: object
       clusterID:
-        description: 所属集群ID
         type: integer
       createAt:
-        description: 创建时间
         type: string
       creator:
         $ref: '#/definitions/models.User'
-        description: 创建者
         type: object
       creatorID:
         type: integer
       downloadURL:
-        description: 下载地址
         type: string
       endTime:
         type: string
       id:
         type: integer
       snapshotCount:
-        description: 行数
+        description: line count
         type: integer
       snapshotName:
-        description: 名称
         type: string
       sourceFile:
         type: string
@@ -1808,47 +1773,53 @@ definitions:
         $ref: '#/definitions/datatypes.JSON'
         description: 配置内容
         type: object
+      createdAt:
+        type: string
       name:
         description: 配置名
+        type: string
+      updatedAt:
+        description: 创建时间
         type: string
     required:
     - name
     type: object
   models.Project:
     properties:
-      chart_count:
-        type: integer
-      creation_time:
-        type: string
-      current_user_role_id:
-        type: integer
-      current_user_role_ids:
+      applications:
         items:
-          type: integer
+          $ref: '#/definitions/models.Application'
         type: array
-      cve_allowlist:
-        $ref: '#/definitions/models.CVEAllowlist'
-        type: object
-      deleted:
-        type: boolean
-      metadata:
-        additionalProperties:
-          type: string
-        type: object
+      createdAt:
+        type: string
+      environments:
+        items:
+          $ref: '#/definitions/models.Environment'
+        type: array
+      id:
+        type: integer
       name:
         type: string
-      owner_id:
-        type: integer
-      owner_name:
+      projectAlias:
         type: string
-      project_id:
-        type: integer
-      registry_id:
-        type: integer
-      repo_count:
-        type: integer
-      update_time:
+      registries:
+        items:
+          $ref: '#/definitions/models.Registry'
+        type: array
+      remark:
         type: string
+      resourceQuota:
+        $ref: '#/definitions/datatypes.JSON'
+        type: object
+      tenant:
+        $ref: '#/definitions/models.Tenant'
+        type: object
+      tenantID:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
     type: object
   models.ProjectUserRels:
     properties:
@@ -1873,39 +1844,29 @@ definitions:
     type: object
   models.Registry:
     properties:
+      address:
+        type: string
       creator:
         $ref: '#/definitions/models.User'
-        description: 创建者
         type: object
       creatorID:
         type: integer
-      enableExtends:
-        description: 是否启用扩展功能，支持harbor等高级仓库
-        type: boolean
       id:
         type: integer
       isDefault:
         type: boolean
+      name:
+        type: string
       password:
-        description: 密码
         type: string
       project:
         $ref: '#/definitions/models.Project'
         type: object
       projectID:
-        description: 项目ID
         type: integer
-      registryAddress:
-        description: 仓库地址
-        type: string
-      registryName:
-        description: 仓库名称
-        type: string
       updateTime:
-        description: 更新时间
         type: string
       username:
-        description: 用户名
         type: string
     type: object
   models.SystemRole:
@@ -2100,9 +2061,9 @@ definitions:
       isActive:
         description: 是否激活
         type: boolean
-      updatedAt:
+      name:
         type: string
-      virtualDomainName:
+      updatedAt:
         type: string
     type: object
   models.VirtualSpace:
@@ -2119,14 +2080,14 @@ definitions:
         type: integer
       isActive:
         type: boolean
+      name:
+        type: string
       updatedAt:
         type: string
       users:
         items:
           $ref: '#/definitions/models.User'
         type: array
-      virtualSpaceName:
-        type: string
     type: object
   models.VirtualSpaceUserRels:
     properties:
@@ -2825,6 +2786,26 @@ definitions:
         type: string
     type: object
   types.Timestamp:
+    properties:
+      nanos:
+        description: |-
+          Non-negative fractions of a second at nanosecond resolution. Negative
+          second values with fractions must still have non-negative nanos values
+          that count forward in time. Must be from 0 to 999,999,999
+          inclusive.
+        type: integer
+      seconds:
+        description: |-
+          Represents seconds of UTC time since Unix epoch
+          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+          9999-12-31T23:59:59Z inclusive.
+        type: integer
+    type: object
+  types.UInt32Value:
+    properties:
+      value:
+        description: The uint32 value.
+        type: integer
     type: object
   userhandler.resetPasswordResult:
     properties:
@@ -10945,13 +10926,12 @@ definitions:
     type: object
   v1alpha1.HealthStatus:
     properties:
-      enable:
-        description: Enable the HealthStatus.
-        type: boolean
-      uri:
-        description: |-
-          URI of the location. Default is `/nginx-health`.
-          +kubebuilder:validation:Optional
+      message:
+        description: Message is a human-readable informational message describing
+          the health status
+        type: string
+      status:
+        description: Status holds the status code of the application or resource
         type: string
     type: object
   v1alpha1.InfoItem:
@@ -12176,6 +12156,220 @@ definitions:
           +optional
         type: object
     type: object
+  v1alpha3.ClientTLSSettings:
+    properties:
+      ca_certificates:
+        description: |-
+          OPTIONAL: The path to the file containing certificate authority
+          certificates to use in verifying a presented server certificate. If
+          omitted, the proxy will not verify the server's certificate.
+          Should be empty if mode is `ISTIO_MUTUAL`.
+        type: string
+      client_certificate:
+        description: |-
+          REQUIRED if mode is `MUTUAL`. The path to the file holding the
+          client-side TLS certificate to use.
+          Should be empty if mode is `ISTIO_MUTUAL`.
+        type: string
+      credential_name:
+        description: |-
+          The name of the secret that holds the TLS certs for the
+          client including the CA certificates. Secret must exist in the
+          same namespace with the proxy using the certificates.
+          The secret (of type `generic`)should contain the
+          following keys and values: `key: <privateKey>`,
+          `cert: <serverCert>`, `cacert: <CACertificate>`.
+          Secret of type tls for client certificates along with
+          ca.crt key for CA certificates is also supported.
+          Only one of client certificates and CA certificate
+          or credentialName can be specified.
+
+          **NOTE:** This field is currently applicable only at gateways.
+          Sidecars will continue to use the certificate paths.
+        type: string
+      mode:
+        description: |-
+          Indicates whether connections to this port should be secured
+          using TLS. The value of this field determines how TLS is enforced.
+        type: integer
+      private_key:
+        description: |-
+          REQUIRED if mode is `MUTUAL`. The path to the file holding the
+          client's private key.
+          Should be empty if mode is `ISTIO_MUTUAL`.
+        type: string
+      sni:
+        description: SNI string to present to the server during TLS handshake.
+        type: string
+      subject_alt_names:
+        description: |-
+          A list of alternate names to verify the subject identity in the
+          certificate. If specified, the proxy will verify that the server
+          certificate's subject alt name matches one of the specified values.
+          If specified, this list overrides the value of subject_alt_names
+          from the ServiceEntry.
+        items:
+          type: string
+        type: array
+    type: object
+  v1alpha3.ConnectionPoolSettings:
+    properties:
+      http:
+        $ref: '#/definitions/v1alpha3.ConnectionPoolSettings_HTTPSettings'
+        description: HTTP connection pool settings.
+        type: object
+      tcp:
+        $ref: '#/definitions/v1alpha3.ConnectionPoolSettings_TCPSettings'
+        description: Settings common to both HTTP and TCP upstream connections.
+        type: object
+    type: object
+  v1alpha3.ConnectionPoolSettings_HTTPSettings:
+    properties:
+      h2_upgrade_policy:
+        description: Specify if http1.1 connection should be upgraded to http2 for
+          the associated destination.
+        type: integer
+      http1_max_pending_requests:
+        description: Maximum number of pending HTTP requests to a destination. Default
+          2^32-1.
+        type: integer
+      http2_max_requests:
+        description: Maximum number of requests to a backend. Default 2^32-1.
+        type: integer
+      idle_timeout:
+        $ref: '#/definitions/types.Duration'
+        description: |-
+          The idle timeout for upstream connection pool connections. The idle timeout
+          is defined as the period in which there are no active requests.
+          If not set, the default is 1 hour. When the idle timeout is reached,
+          the connection will be closed. If the connection is an HTTP/2
+          connection a drain sequence will occur prior to closing the connection.
+          Note that request based timeouts mean that HTTP/2 PINGs will not
+          keep the connection alive. Applies to both HTTP1.1 and HTTP2 connections.
+        type: object
+      max_requests_per_connection:
+        description: |-
+          Maximum number of requests per connection to a backend. Setting this
+          parameter to 1 disables keep alive. Default 0, meaning "unlimited",
+          up to 2^29.
+        type: integer
+      max_retries:
+        description: |-
+          Maximum number of retries that can be outstanding to all hosts in a
+          cluster at a given time. Defaults to 2^32-1.
+        type: integer
+      use_client_protocol:
+        description: |-
+          If set to true, client protocol will be preserved while initiating connection to backend.
+          Note that when this is set to true, h2_upgrade_policy will be ineffective i.e. the client
+          connections will not be upgraded to http2.
+        type: boolean
+    type: object
+  v1alpha3.ConnectionPoolSettings_TCPSettings:
+    properties:
+      connect_timeout:
+        $ref: '#/definitions/types.Duration'
+        description: |-
+          TCP connection timeout. format:
+          1h/1m/1s/1ms. MUST BE >=1ms. Default is 10s.
+        type: object
+      max_connections:
+        description: Maximum number of HTTP1 /TCP connections to a destination host.
+          Default 2^32-1.
+        type: integer
+      tcp_keepalive:
+        $ref: '#/definitions/v1alpha3.ConnectionPoolSettings_TCPSettings_TcpKeepalive'
+        description: If set then set SO_KEEPALIVE on the socket to enable TCP Keepalives.
+        type: object
+    type: object
+  v1alpha3.ConnectionPoolSettings_TCPSettings_TcpKeepalive:
+    properties:
+      interval:
+        $ref: '#/definitions/types.Duration'
+        description: |-
+          The time duration between keep-alive probes.
+          Default is to use the OS level configuration
+          (unless overridden, Linux defaults to 75s.)
+        type: object
+      probes:
+        description: |-
+          Maximum number of keepalive probes to send without response before
+          deciding the connection is dead. Default is to use the OS level configuration
+          (unless overridden, Linux defaults to 9.)
+        type: integer
+      time:
+        $ref: '#/definitions/types.Duration'
+        description: |-
+          The time duration a connection needs to be idle before keep-alive
+          probes start being sent. Default is to use the OS level configuration
+          (unless overridden, Linux defaults to 7200s (ie 2 hours.)
+        type: object
+    type: object
+  v1alpha3.CorsPolicy:
+    properties:
+      allow_credentials:
+        $ref: '#/definitions/types.BoolValue'
+        description: |-
+          Indicates whether the caller is allowed to send the actual request
+          (not the preflight) using credentials. Translates to
+          `Access-Control-Allow-Credentials` header.
+        type: object
+      allow_headers:
+        description: |-
+          List of HTTP headers that can be used when requesting the
+          resource. Serialized to Access-Control-Allow-Headers header.
+        items:
+          type: string
+        type: array
+      allow_methods:
+        description: |-
+          List of HTTP methods allowed to access the resource. The content will
+          be serialized into the Access-Control-Allow-Methods header.
+        items:
+          type: string
+        type: array
+      allow_origin:
+        description: |-
+          The list of origins that are allowed to perform CORS requests. The
+          content will be serialized into the Access-Control-Allow-Origin
+          header. Wildcard * will allow all origins.
+          $hide_from_docs
+        items:
+          type: string
+        type: array
+      allow_origins:
+        description: |-
+          String patterns that match allowed origins.
+          An origin is allowed if any of the string matchers match.
+          If a match is found, then the outgoing Access-Control-Allow-Origin would be set to the origin as provided by the client.
+        items:
+          $ref: '#/definitions/v1alpha3.StringMatch'
+        type: array
+      expose_headers:
+        description: |-
+          A list of HTTP headers that the browsers are allowed to
+          access. Serialized into Access-Control-Expose-Headers header.
+        items:
+          type: string
+        type: array
+      max_age:
+        $ref: '#/definitions/types.Duration'
+        description: |-
+          Specifies how long the results of a preflight request can be
+          cached. Translates to the `Access-Control-Max-Age` header.
+        type: object
+    type: object
+  v1alpha3.Delegate:
+    properties:
+      name:
+        description: Name specifies the name of the delegate VirtualService.
+        type: string
+      namespace:
+        description: |-
+          Namespace specifies the namespace where the delegate VirtualService resides.
+          By default, it is same to the root's.
+        type: string
+    type: object
   v1alpha3.Destination:
     properties:
       host:
@@ -12211,232 +12405,57 @@ definitions:
     type: object
   v1alpha3.DestinationRule:
     properties:
-      annotations:
-        additionalProperties:
-          type: string
+      export_to:
         description: |-
-          Annotations is an unstructured key value map stored with a resource that may be
-          set by external tools to store and retrieve arbitrary metadata. They are not
-          queryable and should be preserved when modifying objects.
-          More info: http://kubernetes.io/docs/user-guide/annotations
-          +optional
-        type: object
-      apiVersion:
-        description: |-
-          APIVersion defines the versioned schema of this representation of an object.
-          Servers should convert recognized schemas to the latest internal value, and
-          may reject unrecognized values.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-          +optional
-        type: string
-      clusterName:
-        description: |-
-          The name of the cluster which the object belongs to.
-          This is used to distinguish resources with same name and namespace in different clusters.
-          This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
-          +optional
-        type: string
-      creationTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          CreationTimestamp is a timestamp representing the server time when this object was
-          created. It is not guaranteed to be set in happens-before order across separate operations.
-          Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+          A list of namespaces to which this destination rule is exported.
+          The resolution of a destination rule to apply to a service occurs in the
+          context of a hierarchy of namespaces. Exporting a destination rule allows
+          it to be included in the resolution hierarchy for services in
+          other namespaces. This feature provides a mechanism for service owners
+          and mesh administrators to control the visibility of destination rules
+          across namespace boundaries.
 
-          Populated by the system.
-          Read-only.
-          Null for lists.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      deletionGracePeriodSeconds:
-        description: |-
-          Number of seconds allowed for this object to gracefully terminate before
-          it will be removed from the system. Only set when deletionTimestamp is also set.
-          May only be shortened.
-          Read-only.
-          +optional
-        type: integer
-      deletionTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
-          field is set by the server when a graceful deletion is requested by the user, and is not
-          directly settable by a client. The resource is expected to be deleted (no longer visible
-          from resource lists, and not reachable by name) after the time in this field, once the
-          finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
-          Once the deletionTimestamp is set, this value may not be unset or be set further into the
-          future, although it may be shortened or the resource may be deleted prior to this time.
-          For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
-          by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
-          the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
-          remove the pod from the API. In the presence of network partitions, this object may still
-          exist after this timestamp, until an administrator or automated process can determine the
-          resource is fully terminated.
-          If not set, graceful deletion of the object has not been requested.
+          If no namespaces are specified then the destination rule is exported to all
+          namespaces by default.
 
-          Populated by the system when a graceful deletion is requested.
-          Read-only.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      finalizers:
-        description: |-
-          Must be empty before the object is deleted from the registry. Each entry
-          is an identifier for the responsible component that will remove the entry
-          from the list. If the deletionTimestamp of the object is non-nil, entries
-          in this list can only be removed.
-          Finalizers may be processed and removed in any order.  Order is NOT enforced
-          because it introduces significant risk of stuck finalizers.
-          finalizers is a shared field, any actor with permission can reorder it.
-          If the finalizer list is processed in order, then this can lead to a situation
-          in which the component responsible for the first finalizer in the list is
-          waiting for a signal (field value, external system, or other) produced by a
-          component responsible for a finalizer later in the list, resulting in a deadlock.
-          Without enforced ordering finalizers are free to order amongst themselves and
-          are not vulnerable to ordering changes in the list.
-          +optional
-          +patchStrategy=merge
+          The value "." is reserved and defines an export to the same namespace that
+          the destination rule is declared in. Similarly, the value "*" is reserved and
+          defines an export to all namespaces.
         items:
           type: string
         type: array
-      generateName:
+      host:
         description: |-
-          GenerateName is an optional prefix, used by the server, to generate a unique
-          name ONLY IF the Name field has not been provided.
-          If this field is used, the name returned to the client will be different
-          than the name passed. This value will also be combined with a unique suffix.
-          The provided value has the same validation rules as the Name field,
-          and may be truncated by the length of the suffix required to make the value
-          unique on the server.
+          The name of a service from the service registry. Service
+          names are looked up from the platform's service registry (e.g.,
+          Kubernetes services, Consul services, etc.) and from the hosts
+          declared by [ServiceEntries](https://istio.io/docs/reference/config/networking/service-entry/#ServiceEntry). Rules defined for
+          services that do not exist in the service registry will be ignored.
 
-          If this field is specified and the generated name exists, the server will
-          NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-          ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-          should retry (optionally after the time indicated in the Retry-After header).
+          *Note for Kubernetes users*: When short names are used (e.g. "reviews"
+          instead of "reviews.default.svc.cluster.local"), Istio will interpret
+          the short name based on the namespace of the rule, not the service. A
+          rule in the "default" namespace containing a host "reviews" will be
+          interpreted as "reviews.default.svc.cluster.local", irrespective of
+          the actual namespace associated with the reviews service. _To avoid
+          potential misconfigurations, it is recommended to always use fully
+          qualified domain names over short names._
 
-          Applied only if Name is not specified.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
-          +optional
+          Note that the host field applies to both HTTP and TCP services.
         type: string
-      generation:
+      subsets:
         description: |-
-          A sequence number representing a specific generation of the desired state.
-          Populated by the system. Read-only.
-          +optional
-        type: integer
-      kind:
-        description: |-
-          Kind is a string value representing the REST resource this object represents.
-          Servers may infer this from the endpoint the client submits requests to.
-          Cannot be updated.
-          In CamelCase.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-          +optional
-        type: string
-      labels:
-        additionalProperties:
-          type: string
-        description: |-
-          Map of string keys and values that can be used to organize and categorize
-          (scope and select) objects. May match selectors of replication controllers
-          and services.
-          More info: http://kubernetes.io/docs/user-guide/labels
-          +optional
-        type: object
-      managedFields:
-        description: |-
-          ManagedFields maps workflow-id and version to the set of fields
-          that are managed by that workflow. This is mostly for internal
-          housekeeping, and users typically shouldn't need to set or
-          understand this field. A workflow can be the user's name, a
-          controller's name, or the name of a specific apply path like
-          "ci-cd". The set of fields is always in the version that the
-          workflow used when modifying the object.
-
-          +optional
+          One or more named sets that represent individual versions of a
+          service. Traffic policies can be overridden at subset level.
         items:
-          $ref: '#/definitions/v1.ManagedFieldsEntry'
+          $ref: '#/definitions/v1alpha3.Subset'
         type: array
-      name:
+      traffic_policy:
+        $ref: '#/definitions/v1alpha3.TrafficPolicy'
         description: |-
-          Name must be unique within a namespace. Is required when creating resources, although
-          some resources may allow a client to request the generation of an appropriate name
-          automatically. Name is primarily intended for creation idempotence and configuration
-          definition.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#names
-          +optional
-        type: string
-      namespace:
-        description: |-
-          Namespace defines the space within which each name must be unique. An empty namespace is
-          equivalent to the "default" namespace, but "default" is the canonical representation.
-          Not all objects are required to be scoped to a namespace - the value of this field for
-          those objects will be empty.
-
-          Must be a DNS_LABEL.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/namespaces
-          +optional
-        type: string
-      ownerReferences:
-        description: |-
-          List of objects depended by this object. If ALL objects in the list have
-          been deleted, this object will be garbage collected. If this object is managed by a controller,
-          then an entry in this list will point to this controller, with the controller field set to true.
-          There cannot be more than one managing controller.
-          +optional
-          +patchMergeKey=uid
-          +patchStrategy=merge
-        items:
-          $ref: '#/definitions/v1.OwnerReference'
-        type: array
-      resourceVersion:
-        description: |-
-          An opaque value that represents the internal version of this object that can
-          be used by clients to determine when objects have changed. May be used for optimistic
-          concurrency, change detection, and the watch operation on a resource or set of resources.
-          Clients must treat these values as opaque and passed unmodified back to the server.
-          They may only be valid for a particular resource or set of resources.
-
-          Populated by the system.
-          Read-only.
-          Value must be treated as opaque by clients and .
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-          +optional
-        type: string
-      selfLink:
-        description: |-
-          SelfLink is a URL representing this object.
-          Populated by the system.
-          Read-only.
-
-          DEPRECATED
-          Kubernetes will stop propagating this field in 1.20 release and the field is planned
-          to be removed in 1.21 release.
-          +optional
-        type: string
-      spec:
-        $ref: '#/definitions/v1alpha3.DestinationRule'
-        description: |-
-          Spec defines the implementation of this definition.
-          +optional
+          Traffic policies to apply (load balancing policy, connection pool
+          sizes, outlier detection).
         type: object
-      status:
-        $ref: '#/definitions/v1alpha1.IstioStatus'
-        type: object
-      uid:
-        description: |-
-          UID is the unique in time and space value for this object. It is typically generated by
-          the server on successful creation of a resource and is not allowed to change on PUT
-          operations.
-
-          Populated by the system.
-          Read-only.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-          +optional
-        type: string
     type: object
   v1alpha3.Gateway:
     properties:
@@ -12851,6 +12870,25 @@ definitions:
           If a header is matched with a matching rule among withoutHeader, the traffic becomes not matched one.
         type: object
     type: object
+  v1alpha3.HTTPRedirect:
+    properties:
+      authority:
+        description: |-
+          On a redirect, overwrite the Authority/Host portion of the URL with
+          this value.
+        type: string
+      redirect_code:
+        description: |-
+          On a redirect, Specifies the HTTP status code to use in the redirect
+          response. The default response code is MOVED_PERMANENTLY (301).
+        type: integer
+      uri:
+        description: |-
+          On a redirect, overwrite the Path portion of the URL with this
+          value. Note that the entire path will be replaced, irrespective of the
+          request URI being matched as an exact path or prefix.
+        type: string
+    type: object
   v1alpha3.HTTPRetry:
     properties:
       attempts:
@@ -12881,6 +12919,126 @@ definitions:
         description: |-
           Flag to specify whether the retries should retry to other localities.
           See the [retry plugin configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/http/http_connection_management#retry-plugin-configuration) for more details.
+        type: object
+    type: object
+  v1alpha3.HTTPRewrite:
+    properties:
+      authority:
+        description: rewrite the Authority/Host header with this value.
+        type: string
+      uri:
+        description: |-
+          rewrite the path (or the prefix) portion of the URI with this
+          value. If the original URI was matched based on prefix, the value
+          provided in this field will replace the corresponding matched prefix.
+        type: string
+    type: object
+  v1alpha3.HTTPRoute:
+    properties:
+      cors_policy:
+        $ref: '#/definitions/v1alpha3.CorsPolicy'
+        description: |-
+          Cross-Origin Resource Sharing policy (CORS). Refer to
+          [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+          for further details about cross origin resource sharing.
+        type: object
+      delegate:
+        $ref: '#/definitions/v1alpha3.Delegate'
+        description: |-
+          Delegate is used to specify the particular VirtualService which
+          can be used to define delegate HTTPRoute.
+
+          It can be set only when `Route` and `Redirect` are empty, and the route
+          rules of the delegate VirtualService will be merged with that in the
+          current one.
+
+          **NOTE**:
+
+          1. Only one level delegation is supported.
+          2. The delegate's HTTPMatchRequest must be a strict subset of the root's,
+             otherwise there is a conflict and the HTTPRoute will not take effect.
+        type: object
+      fault:
+        $ref: '#/definitions/v1alpha3.HTTPFaultInjection'
+        description: |-
+          Fault injection policy to apply on HTTP traffic at the client side.
+          Note that timeouts or retries will not be enabled when faults are
+          enabled on the client side.
+        type: object
+      headers:
+        $ref: '#/definitions/v1alpha3.Headers'
+        description: Header manipulation rules
+        type: object
+      match:
+        description: |-
+          Match conditions to be satisfied for the rule to be
+          activated. All conditions inside a single match block have AND
+          semantics, while the list of match blocks have OR semantics. The rule
+          is matched if any one of the match blocks succeed.
+        items:
+          $ref: '#/definitions/v1alpha3.HTTPMatchRequest'
+        type: array
+      mirror:
+        $ref: '#/definitions/v1alpha3.Destination'
+        description: |-
+          Mirror HTTP traffic to a another destination in addition to forwarding
+          the requests to the intended destination. Mirrored traffic is on a
+          best effort basis where the sidecar/gateway will not wait for the
+          mirrored cluster to respond before returning the response from the
+          original destination.  Statistics will be generated for the mirrored
+          destination.
+        type: object
+      mirror_percent:
+        $ref: '#/definitions/types.UInt32Value'
+        description: |-
+          Percentage of the traffic to be mirrored by the `mirror` field.
+          Use of integer `mirror_percent` value is deprecated. Use the
+          double `mirror_percentage` field instead
+        type: object
+      mirror_percentage:
+        $ref: '#/definitions/v1alpha3.Percent'
+        description: |-
+          Percentage of the traffic to be mirrored by the `mirror` field.
+          If this field is absent, all the traffic (100%) will be mirrored.
+          Max value is 100.
+        type: object
+      name:
+        description: |-
+          The name assigned to the route for debugging purposes. The
+          route's name will be concatenated with the match's name and will
+          be logged in the access logs for requests matching this
+          route/match.
+        type: string
+      redirect:
+        $ref: '#/definitions/v1alpha3.HTTPRedirect'
+        description: |-
+          A HTTP rule can either redirect or forward (default) traffic. If
+          traffic passthrough option is specified in the rule,
+          route/redirect will be ignored. The redirect primitive can be used to
+          send a HTTP 301 redirect to a different URI or Authority.
+        type: object
+      retries:
+        $ref: '#/definitions/v1alpha3.HTTPRetry'
+        description: Retry policy for HTTP requests.
+        type: object
+      rewrite:
+        $ref: '#/definitions/v1alpha3.HTTPRewrite'
+        description: |-
+          Rewrite HTTP URIs and Authority headers. Rewrite cannot be used with
+          Redirect primitive. Rewrite will be performed before forwarding.
+        type: object
+      route:
+        description: |-
+          A HTTP rule can either redirect or forward (default) traffic. The
+          forwarding target can be one of several versions of a service (see
+          glossary in beginning of document). Weights associated with the
+          service version determine the proportion of traffic it receives.
+        items:
+          $ref: '#/definitions/v1alpha3.HTTPRouteDestination'
+        type: array
+      timeout:
+        $ref: '#/definitions/types.Duration'
+        description: Timeout for HTTP requests, default is disabled.
         type: object
     type: object
   v1alpha3.HTTPRouteDestination:
@@ -12938,6 +13096,100 @@ definitions:
         description: Overwrite the headers specified by key with the given values
         type: object
     type: object
+  v1alpha3.IstioEgressListener:
+    properties:
+      bind:
+        description: |-
+          The IP or the Unix domain socket to which the listener should be bound
+          to. Port MUST be specified if bind is not empty. Format: `x.x.x.x` or
+          `unix:///path/to/uds` or `unix://@foobar` (Linux abstract namespace). If
+          omitted, Istio will automatically configure the defaults based on imported
+          services, the workload instances to which this configuration is applied to and
+          the captureMode. If captureMode is `NONE`, bind will default to
+          127.0.0.1.
+        type: string
+      capture_mode:
+        description: |-
+          When the bind address is an IP, the captureMode option dictates
+          how traffic to the listener is expected to be captured (or not).
+          captureMode must be DEFAULT or `NONE` for Unix domain socket binds.
+        type: integer
+      hosts:
+        description: |-
+          One or more service hosts exposed by the listener
+          in `namespace/dnsName` format. Services in the specified namespace
+          matching `dnsName` will be exposed.
+          The corresponding service can be a service in the service registry
+          (e.g., a Kubernetes or cloud foundry service) or a service specified
+          using a `ServiceEntry` or `VirtualService` configuration. Any
+          associated `DestinationRule` in the same namespace will also be used.
+
+          The `dnsName` should be specified using FQDN format, optionally including
+          a wildcard character in the left-most component (e.g., `prod/*.example.com`).
+          Set the `dnsName` to `*` to select all services from the specified namespace
+          (e.g., `prod/*`).
+
+          The `namespace` can be set to `*`, `.`, or `~`, representing any, the current,
+          or no namespace, respectively. For example, `*/foo.example.com` selects the
+          service from any available namespace while `./foo.example.com` only selects
+          the service from the namespace of the sidecar. If a host is set to `*/*`,
+          Istio will configure the sidecar to be able to reach every service in the
+          mesh that is exported to the sidecar's namespace. The value `~/*` can be used
+          to completely trim the configuration for sidecars that simply receive traffic
+          and respond, but make no outbound connections of their own.
+
+          NOTE: Only services and configuration artifacts exported to the sidecar's
+          namespace (e.g., `exportTo` value of `*`) can be referenced.
+          Private configurations (e.g., `exportTo` set to `.`) will
+          not be available. Refer to the `exportTo` setting in `VirtualService`,
+          `DestinationRule`, and `ServiceEntry` configurations for details.
+        items:
+          type: string
+        type: array
+      port:
+        $ref: '#/definitions/v1alpha3.Port'
+        description: |-
+          The port associated with the listener. If using Unix domain socket,
+          use 0 as the port number, with a valid protocol. The port if
+          specified, will be used as the default destination port associated
+          with the imported hosts. If the port is omitted, Istio will infer the
+          listener ports based on the imported hosts. Note that when multiple
+          egress listeners are specified, where one or more listeners have
+          specific ports while others have no port, the hosts exposed on a
+          listener port will be based on the listener with the most specific
+          port.
+        type: object
+    type: object
+  v1alpha3.IstioIngressListener:
+    properties:
+      bind:
+        description: |-
+          The IP to which the listener should be bound. Must be in the
+          format `x.x.x.x`. Unix domain socket addresses are not allowed in
+          the bind field for ingress listeners. If omitted, Istio will
+          automatically configure the defaults based on imported services
+          and the workload instances to which this configuration is applied
+          to.
+        type: string
+      capture_mode:
+        description: |-
+          The captureMode option dictates how traffic to the listener is
+          expected to be captured (or not).
+        type: integer
+      default_endpoint:
+        description: |-
+          The IP endpoint or Unix domain socket to which
+          traffic should be forwarded to. This configuration can be used to
+          redirect traffic arriving at the bind `IP:Port` on the sidecar to a `localhost:port`
+          or Unix domain socket where the application workload instance is listening for
+          connections. Arbitrary IPs are not supported. Format should be one of `127.0.0.1:PORT`, `0.0.0.0:PORT`
+          (which will forward to the instance IP), or `unix:///path/to/socket`
+        type: string
+      port:
+        $ref: '#/definitions/v1alpha3.Port'
+        description: The port associated with the listener.
+        type: object
+    type: object
   v1alpha3.L4MatchAttributes:
     properties:
       destination_subnets:
@@ -12983,10 +13235,213 @@ definitions:
           $hide_from_docs
         type: string
     type: object
+  v1alpha3.LoadBalancerSettings:
+    properties:
+      lbPolicy:
+        $ref: '#/definitions/v1alpha3.isLoadBalancerSettings_LbPolicy'
+        description: "Upstream load balancing policy.\n\nTypes that are valid to be
+          assigned to LbPolicy:\n\t*LoadBalancerSettings_Simple\n\t*LoadBalancerSettings_ConsistentHash"
+        type: object
+      locality_lb_setting:
+        $ref: '#/definitions/v1alpha3.LocalityLoadBalancerSetting'
+        description: |-
+          Locality load balancer settings, this will override mesh wide settings in entirety, meaning no merging would be performed
+          between this object and the object one in MeshConfig
+        type: object
+    type: object
+  v1alpha3.LocalityLoadBalancerSetting:
+    properties:
+      distribute:
+        description: |-
+          Optional: only one of distribute or failover can be set.
+          Explicitly specify loadbalancing weight across different zones and geographical locations.
+          Refer to [Locality weighted load balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/locality_weight)
+          If empty, the locality weight is set according to the endpoints number within it.
+        items:
+          $ref: '#/definitions/v1alpha3.LocalityLoadBalancerSetting_Distribute'
+        type: array
+      enabled:
+        $ref: '#/definitions/types.BoolValue'
+        description: |-
+          enable locality load balancing, this is DestinationRule-level and will override mesh wide settings in entirety.
+          e.g. true means that turn on locality load balancing for this DestinationRule no matter what mesh wide settings is.
+        type: object
+      failover:
+        description: |-
+          Optional: only failover or distribute can be set.
+          Explicitly specify the region traffic will land on when endpoints in local region becomes unhealthy.
+          Should be used together with OutlierDetection to detect unhealthy endpoints.
+          Note: if no OutlierDetection specified, this will not take effect.
+        items:
+          $ref: '#/definitions/v1alpha3.LocalityLoadBalancerSetting_Failover'
+        type: array
+    type: object
+  v1alpha3.LocalityLoadBalancerSetting_Distribute:
+    properties:
+      from:
+        description: Originating locality, '/' separated, e.g. 'region/zone/sub_zone'.
+        type: string
+      to:
+        additionalProperties:
+          type: integer
+        description: |-
+          Map of upstream localities to traffic distribution weights. The sum of
+          all weights should be 100. Any locality not present will
+          receive no traffic.
+        type: object
+    type: object
+  v1alpha3.LocalityLoadBalancerSetting_Failover:
+    properties:
+      from:
+        description: Originating region.
+        type: string
+      to:
+        description: |-
+          Destination region the traffic will fail over to when endpoints in
+          the 'from' region becomes unhealthy.
+        type: string
+    type: object
+  v1alpha3.OutboundTrafficPolicy:
+    properties:
+      egress_proxy:
+        $ref: '#/definitions/v1alpha3.Destination'
+        description: |-
+          Specifies the details of the egress proxy to which unknown
+          traffic should be forwarded to from the sidecar. Valid only if
+          the mode is set to ALLOW_ANY. If not specified when the mode is
+          ALLOW_ANY, the sidecar will send the unknown traffic directly to
+          the IP requested by the application.
+
+          ** NOTE 1**: The specified egress host must be imported in the
+          egress section for the traffic forwarding to work.
+
+          ** NOTE 2**: An Envoy based egress gateway is unlikely to be able
+          to handle plain text TCP connections forwarded from the sidecar.
+          Envoy's dynamic forward proxy can handle only HTTP and TLS
+          connections.
+          $hide_from_docs
+        type: object
+      mode:
+        type: integer
+    type: object
+  v1alpha3.OutlierDetection:
+    properties:
+      base_ejection_time:
+        $ref: '#/definitions/types.Duration'
+        description: |-
+          Minimum ejection duration. A host will remain ejected for a period
+          equal to the product of minimum ejection duration and the number of
+          times the host has been ejected. This technique allows the system to
+          automatically increase the ejection period for unhealthy upstream
+          servers. format: 1h/1m/1s/1ms. MUST BE >=1ms. Default is 30s.
+        type: object
+      consecutive_5xx_errors:
+        $ref: '#/definitions/types.UInt32Value'
+        description: |-
+          Number of 5xx errors before a host is ejected from the connection pool.
+          When the upstream host is accessed over an opaque TCP connection, connect
+          timeouts, connection error/failure and request failure events qualify as a
+          5xx error.
+          This feature defaults to 5 but can be disabled by setting the value to 0.
+
+          Note that consecutive_gateway_errors and consecutive_5xx_errors can be
+          used separately or together. Because the errors counted by
+          consecutive_gateway_errors are also included in consecutive_5xx_errors,
+          if the value of consecutive_gateway_errors is greater than or equal to
+          the value of consecutive_5xx_errors, consecutive_gateway_errors will have
+          no effect.
+        type: object
+      consecutive_errors:
+        description: |-
+          Number of errors before a host is ejected from the connection
+          pool. Defaults to 5. When the upstream host is accessed over HTTP, a
+          502, 503, or 504 return code qualifies as an error. When the upstream host
+          is accessed over an opaque TCP connection, connect timeouts and
+          connection error/failure events qualify as an error.
+          $hide_from_docs
+        type: integer
+      consecutive_gateway_errors:
+        $ref: '#/definitions/types.UInt32Value'
+        description: |-
+          Number of gateway errors before a host is ejected from the connection pool.
+          When the upstream host is accessed over HTTP, a 502, 503, or 504 return
+          code qualifies as a gateway error. When the upstream host is accessed over
+          an opaque TCP connection, connect timeouts and connection error/failure
+          events qualify as a gateway error.
+          This feature is disabled by default or when set to the value 0.
+
+          Note that consecutive_gateway_errors and consecutive_5xx_errors can be
+          used separately or together. Because the errors counted by
+          consecutive_gateway_errors are also included in consecutive_5xx_errors,
+          if the value of consecutive_gateway_errors is greater than or equal to
+          the value of consecutive_5xx_errors, consecutive_gateway_errors will have
+          no effect.
+        type: object
+      consecutive_local_origin_failures:
+        $ref: '#/definitions/types.UInt32Value'
+        description: |-
+          The number of consecutive locally originated failures before ejection
+          occurs. Defaults to 5. Parameter takes effect only when split_external_local_origin_errors
+          is set to true.
+        type: object
+      interval:
+        $ref: '#/definitions/types.Duration'
+        description: |-
+          Time interval between ejection sweep analysis. format:
+          1h/1m/1s/1ms. MUST BE >=1ms. Default is 10s.
+        type: object
+      max_ejection_percent:
+        description: |-
+          Maximum % of hosts in the load balancing pool for the upstream
+          service that can be ejected. Defaults to 10%.
+        type: integer
+      min_health_percent:
+        description: |-
+          Outlier detection will be enabled as long as the associated load balancing
+          pool has at least min_health_percent hosts in healthy mode. When the
+          percentage of healthy hosts in the load balancing pool drops below this
+          threshold, outlier detection will be disabled and the proxy will load balance
+          across all hosts in the pool (healthy and unhealthy). The threshold can be
+          disabled by setting it to 0%. The default is 0% as it's not typically
+          applicable in k8s environments with few pods per service.
+        type: integer
+      split_external_local_origin_errors:
+        description: |-
+          Determines whether to distinguish local origin failures from external errors. If set to true
+          consecutive_local_origin_failure is taken into account for outlier detection calculations.
+          This should be used when you want to derive the outlier detection status based on the errors
+          seen locally such as failure to connect, timeout while connecting etc. rather than the status code
+          retuned by upstream service. This is especially useful when the upstream service explicitly returns
+          a 5xx for some requests and you want to ignore those responses from upstream service while determining
+          the outlier detection status of a host.
+          Defaults to false.
+        type: boolean
+    type: object
   v1alpha3.Percent:
     properties:
       value:
         type: number
+    type: object
+  v1alpha3.Port:
+    properties:
+      name:
+        description: Label assigned to the port.
+        type: string
+      number:
+        description: A valid non-negative integer port number.
+        type: integer
+      protocol:
+        description: |-
+          The protocol exposed on the port.
+          MUST BE one of HTTP|HTTPS|GRPC|HTTP2|MONGO|TCP|TLS.
+          TLS implies the connection will be routed based on the SNI header to
+          the destination without terminating the TLS connection.
+        type: string
+      target_port:
+        description: |-
+          The port number on the endpoint where the traffic will be
+          received. Applicable only when used with ServiceEntries.
+        type: integer
     type: object
   v1alpha3.PortSelector:
     properties:
@@ -13011,461 +13466,164 @@ definitions:
     type: object
   v1alpha3.ServiceEntry:
     properties:
-      annotations:
-        additionalProperties:
+      addresses:
+        description: |-
+          The virtual IP addresses associated with the service. Could be CIDR
+          prefix. For HTTP traffic, generated route configurations will include http route
+          domains for both the `addresses` and `hosts` field values and the destination will
+          be identified based on the HTTP Host/Authority header.
+          If one or more IP addresses are specified,
+          the incoming traffic will be identified as belonging to this service
+          if the destination IP matches the IP/CIDRs specified in the addresses
+          field. If the Addresses field is empty, traffic will be identified
+          solely based on the destination port. In such scenarios, the port on
+          which the service is being accessed must not be shared by any other
+          service in the mesh. In other words, the sidecar will behave as a
+          simple TCP proxy, forwarding incoming traffic on a specified port to
+          the specified destination endpoint IP/host. Unix domain socket
+          addresses are not supported in this field.
+        items:
           type: string
+        type: array
+      endpoints:
         description: |-
-          Annotations is an unstructured key value map stored with a resource that may be
-          set by external tools to store and retrieve arbitrary metadata. They are not
-          queryable and should be preserved when modifying objects.
-          More info: http://kubernetes.io/docs/user-guide/annotations
-          +optional
-        type: object
-      apiVersion:
+          One or more endpoints associated with the service. Only one of
+          `endpoints` or `workloadSelector` can be specified.
+        items:
+          $ref: '#/definitions/v1alpha3.WorkloadEntry'
+        type: array
+      export_to:
         description: |-
-          APIVersion defines the versioned schema of this representation of an object.
-          Servers should convert recognized schemas to the latest internal value, and
-          may reject unrecognized values.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-          +optional
-        type: string
-      clusterName:
-        description: |-
-          The name of the cluster which the object belongs to.
-          This is used to distinguish resources with same name and namespace in different clusters.
-          This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
-          +optional
-        type: string
-      creationTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          CreationTimestamp is a timestamp representing the server time when this object was
-          created. It is not guaranteed to be set in happens-before order across separate operations.
-          Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+          A list of namespaces to which this service is exported. Exporting a service
+          allows it to be used by sidecars, gateways and virtual services defined in
+          other namespaces. This feature provides a mechanism for service owners
+          and mesh administrators to control the visibility of services across
+          namespace boundaries.
 
-          Populated by the system.
-          Read-only.
-          Null for lists.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      deletionGracePeriodSeconds:
+          If no namespaces are specified then the service is exported to all
+          namespaces by default.
+
+          The value "." is reserved and defines an export to the same namespace that
+          the service is declared in. Similarly the value "*" is reserved and
+          defines an export to all namespaces.
+
+          For a Kubernetes Service, the equivalent effect can be achieved by setting
+          the annotation "networking.istio.io/exportTo" to a comma-separated list
+          of namespace names.
+        items:
+          type: string
+        type: array
+      hosts:
         description: |-
-          Number of seconds allowed for this object to gracefully terminate before
-          it will be removed from the system. Only set when deletionTimestamp is also set.
-          May only be shortened.
-          Read-only.
-          +optional
+          The hosts associated with the ServiceEntry. Could be a DNS
+          name with wildcard prefix.
+
+          1. The hosts field is used to select matching hosts in VirtualServices and DestinationRules.
+          2. For HTTP traffic the HTTP Host/Authority header will be matched against the hosts field.
+          3. For HTTPs or TLS traffic containing Server Name Indication (SNI), the SNI value
+          will be matched against the hosts field.
+
+          **NOTE 1:** When resolution is set to type DNS and no endpoints
+          are specified, the host field will be used as the DNS name of the
+          endpoint to route traffic to.
+
+          **NOTE 2:** If the hostname matches with the name of a service
+          from another service registry such as Kubernetes that also
+          supplies its own set of endpoints, the ServiceEntry will be
+          treated as a decorator of the existing Kubernetes
+          service. Properties in the service entry will be added to the
+          Kubernetes service if applicable. Currently, the only the
+          following additional properties will be considered by `istiod`:
+
+          1. subjectAltNames: In addition to verifying the SANs of the
+             service accounts associated with the pods of the service, the
+             SANs specified here will also be verified.
+        items:
+          type: string
+        type: array
+      location:
+        description: |-
+          Specify whether the service should be considered external to the mesh
+          or part of the mesh.
         type: integer
-      deletionTimestamp:
-        $ref: '#/definitions/v1.Time'
+      ports:
         description: |-
-          DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
-          field is set by the server when a graceful deletion is requested by the user, and is not
-          directly settable by a client. The resource is expected to be deleted (no longer visible
-          from resource lists, and not reachable by name) after the time in this field, once the
-          finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
-          Once the deletionTimestamp is set, this value may not be unset or be set further into the
-          future, although it may be shortened or the resource may be deleted prior to this time.
-          For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
-          by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
-          the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
-          remove the pod from the API. In the presence of network partitions, this object may still
-          exist after this timestamp, until an administrator or automated process can determine the
-          resource is fully terminated.
-          If not set, graceful deletion of the object has not been requested.
-
-          Populated by the system when a graceful deletion is requested.
-          Read-only.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      finalizers:
-        description: |-
-          Must be empty before the object is deleted from the registry. Each entry
-          is an identifier for the responsible component that will remove the entry
-          from the list. If the deletionTimestamp of the object is non-nil, entries
-          in this list can only be removed.
-          Finalizers may be processed and removed in any order.  Order is NOT enforced
-          because it introduces significant risk of stuck finalizers.
-          finalizers is a shared field, any actor with permission can reorder it.
-          If the finalizer list is processed in order, then this can lead to a situation
-          in which the component responsible for the first finalizer in the list is
-          waiting for a signal (field value, external system, or other) produced by a
-          component responsible for a finalizer later in the list, resulting in a deadlock.
-          Without enforced ordering finalizers are free to order amongst themselves and
-          are not vulnerable to ordering changes in the list.
-          +optional
-          +patchStrategy=merge
+          The ports associated with the external service. If the
+          Endpoints are Unix domain socket addresses, there must be exactly one
+          port.
         items:
-          type: string
+          $ref: '#/definitions/v1alpha3.Port'
         type: array
-      generateName:
+      resolution:
         description: |-
-          GenerateName is an optional prefix, used by the server, to generate a unique
-          name ONLY IF the Name field has not been provided.
-          If this field is used, the name returned to the client will be different
-          than the name passed. This value will also be combined with a unique suffix.
-          The provided value has the same validation rules as the Name field,
-          and may be truncated by the length of the suffix required to make the value
-          unique on the server.
-
-          If this field is specified and the generated name exists, the server will
-          NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-          ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-          should retry (optionally after the time indicated in the Retry-After header).
-
-          Applied only if Name is not specified.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
-          +optional
-        type: string
-      generation:
-        description: |-
-          A sequence number representing a specific generation of the desired state.
-          Populated by the system. Read-only.
-          +optional
+          Service discovery mode for the hosts. Care must be taken
+          when setting the resolution mode to NONE for a TCP port without
+          accompanying IP addresses. In such cases, traffic to any IP on
+          said port will be allowed (i.e. `0.0.0.0:<port>`).
         type: integer
-      kind:
+      subject_alt_names:
         description: |-
-          Kind is a string value representing the REST resource this object represents.
-          Servers may infer this from the endpoint the client submits requests to.
-          Cannot be updated.
-          In CamelCase.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-          +optional
-        type: string
-      labels:
-        additionalProperties:
+          If specified, the proxy will verify that the server certificate's
+          subject alternate name matches one of the specified values.
+
+          NOTE: When using the workloadEntry with workloadSelectors, the
+          service account specified in the workloadEntry will also be used
+          to derive the additional subject alternate names that should be
+          verified.
+        items:
           type: string
-        description: |-
-          Map of string keys and values that can be used to organize and categorize
-          (scope and select) objects. May match selectors of replication controllers
-          and services.
-          More info: http://kubernetes.io/docs/user-guide/labels
-          +optional
-        type: object
-      managedFields:
-        description: |-
-          ManagedFields maps workflow-id and version to the set of fields
-          that are managed by that workflow. This is mostly for internal
-          housekeeping, and users typically shouldn't need to set or
-          understand this field. A workflow can be the user's name, a
-          controller's name, or the name of a specific apply path like
-          "ci-cd". The set of fields is always in the version that the
-          workflow used when modifying the object.
-
-          +optional
-        items:
-          $ref: '#/definitions/v1.ManagedFieldsEntry'
         type: array
-      name:
+      workload_selector:
+        $ref: '#/definitions/v1alpha3.WorkloadSelector'
         description: |-
-          Name must be unique within a namespace. Is required when creating resources, although
-          some resources may allow a client to request the generation of an appropriate name
-          automatically. Name is primarily intended for creation idempotence and configuration
-          definition.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#names
-          +optional
-        type: string
-      namespace:
-        description: |-
-          Namespace defines the space within which each name must be unique. An empty namespace is
-          equivalent to the "default" namespace, but "default" is the canonical representation.
-          Not all objects are required to be scoped to a namespace - the value of this field for
-          those objects will be empty.
-
-          Must be a DNS_LABEL.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/namespaces
-          +optional
-        type: string
-      ownerReferences:
-        description: |-
-          List of objects depended by this object. If ALL objects in the list have
-          been deleted, this object will be garbage collected. If this object is managed by a controller,
-          then an entry in this list will point to this controller, with the controller field set to true.
-          There cannot be more than one managing controller.
-          +optional
-          +patchMergeKey=uid
-          +patchStrategy=merge
-        items:
-          $ref: '#/definitions/v1.OwnerReference'
-        type: array
-      resourceVersion:
-        description: |-
-          An opaque value that represents the internal version of this object that can
-          be used by clients to determine when objects have changed. May be used for optimistic
-          concurrency, change detection, and the watch operation on a resource or set of resources.
-          Clients must treat these values as opaque and passed unmodified back to the server.
-          They may only be valid for a particular resource or set of resources.
-
-          Populated by the system.
-          Read-only.
-          Value must be treated as opaque by clients and .
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-          +optional
-        type: string
-      selfLink:
-        description: |-
-          SelfLink is a URL representing this object.
-          Populated by the system.
-          Read-only.
-
-          DEPRECATED
-          Kubernetes will stop propagating this field in 1.20 release and the field is planned
-          to be removed in 1.21 release.
-          +optional
-        type: string
-      spec:
-        $ref: '#/definitions/v1alpha3.ServiceEntry'
-        description: |-
-          Spec defines the implementation of this definition.
-          +optional
+          Applicable only for MESH_INTERNAL services. Only one of
+          `endpoints` or `workloadSelector` can be specified. Selects one
+          or more Kubernetes pods or VM workloads (specified using
+          `WorkloadEntry`) based on their labels. The `WorkloadEntry` object
+          representing the VMs should be defined in the same namespace as
+          the ServiceEntry.
         type: object
-      status:
-        $ref: '#/definitions/v1alpha1.IstioStatus'
-        type: object
-      uid:
-        description: |-
-          UID is the unique in time and space value for this object. It is typically generated by
-          the server on successful creation of a resource and is not allowed to change on PUT
-          operations.
-
-          Populated by the system.
-          Read-only.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-          +optional
-        type: string
     type: object
   v1alpha3.Sidecar:
     properties:
-      annotations:
-        additionalProperties:
-          type: string
+      egress:
         description: |-
-          Annotations is an unstructured key value map stored with a resource that may be
-          set by external tools to store and retrieve arbitrary metadata. They are not
-          queryable and should be preserved when modifying objects.
-          More info: http://kubernetes.io/docs/user-guide/annotations
-          +optional
-        type: object
-      apiVersion:
-        description: |-
-          APIVersion defines the versioned schema of this representation of an object.
-          Servers should convert recognized schemas to the latest internal value, and
-          may reject unrecognized values.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-          +optional
-        type: string
-      clusterName:
-        description: |-
-          The name of the cluster which the object belongs to.
-          This is used to distinguish resources with same name and namespace in different clusters.
-          This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
-          +optional
-        type: string
-      creationTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          CreationTimestamp is a timestamp representing the server time when this object was
-          created. It is not guaranteed to be set in happens-before order across separate operations.
-          Clients may not set this value. It is represented in RFC3339 form and is in UTC.
-
-          Populated by the system.
-          Read-only.
-          Null for lists.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      deletionGracePeriodSeconds:
-        description: |-
-          Number of seconds allowed for this object to gracefully terminate before
-          it will be removed from the system. Only set when deletionTimestamp is also set.
-          May only be shortened.
-          Read-only.
-          +optional
-        type: integer
-      deletionTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
-          field is set by the server when a graceful deletion is requested by the user, and is not
-          directly settable by a client. The resource is expected to be deleted (no longer visible
-          from resource lists, and not reachable by name) after the time in this field, once the
-          finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
-          Once the deletionTimestamp is set, this value may not be unset or be set further into the
-          future, although it may be shortened or the resource may be deleted prior to this time.
-          For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
-          by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
-          the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
-          remove the pod from the API. In the presence of network partitions, this object may still
-          exist after this timestamp, until an administrator or automated process can determine the
-          resource is fully terminated.
-          If not set, graceful deletion of the object has not been requested.
-
-          Populated by the system when a graceful deletion is requested.
-          Read-only.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      finalizers:
-        description: |-
-          Must be empty before the object is deleted from the registry. Each entry
-          is an identifier for the responsible component that will remove the entry
-          from the list. If the deletionTimestamp of the object is non-nil, entries
-          in this list can only be removed.
-          Finalizers may be processed and removed in any order.  Order is NOT enforced
-          because it introduces significant risk of stuck finalizers.
-          finalizers is a shared field, any actor with permission can reorder it.
-          If the finalizer list is processed in order, then this can lead to a situation
-          in which the component responsible for the first finalizer in the list is
-          waiting for a signal (field value, external system, or other) produced by a
-          component responsible for a finalizer later in the list, resulting in a deadlock.
-          Without enforced ordering finalizers are free to order amongst themselves and
-          are not vulnerable to ordering changes in the list.
-          +optional
-          +patchStrategy=merge
+          Egress specifies the configuration of the sidecar for processing
+          outbound traffic from the attached workload instance to other
+          services in the mesh. If not specified, inherits the system
+          detected defaults from the namespace-wide or the global default Sidecar.
         items:
-          type: string
+          $ref: '#/definitions/v1alpha3.IstioEgressListener'
         type: array
-      generateName:
+      ingress:
         description: |-
-          GenerateName is an optional prefix, used by the server, to generate a unique
-          name ONLY IF the Name field has not been provided.
-          If this field is used, the name returned to the client will be different
-          than the name passed. This value will also be combined with a unique suffix.
-          The provided value has the same validation rules as the Name field,
-          and may be truncated by the length of the suffix required to make the value
-          unique on the server.
-
-          If this field is specified and the generated name exists, the server will
-          NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-          ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-          should retry (optionally after the time indicated in the Retry-After header).
-
-          Applied only if Name is not specified.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
-          +optional
-        type: string
-      generation:
-        description: |-
-          A sequence number representing a specific generation of the desired state.
-          Populated by the system. Read-only.
-          +optional
-        type: integer
-      kind:
-        description: |-
-          Kind is a string value representing the REST resource this object represents.
-          Servers may infer this from the endpoint the client submits requests to.
-          Cannot be updated.
-          In CamelCase.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-          +optional
-        type: string
-      labels:
-        additionalProperties:
-          type: string
-        description: |-
-          Map of string keys and values that can be used to organize and categorize
-          (scope and select) objects. May match selectors of replication controllers
-          and services.
-          More info: http://kubernetes.io/docs/user-guide/labels
-          +optional
-        type: object
-      managedFields:
-        description: |-
-          ManagedFields maps workflow-id and version to the set of fields
-          that are managed by that workflow. This is mostly for internal
-          housekeeping, and users typically shouldn't need to set or
-          understand this field. A workflow can be the user's name, a
-          controller's name, or the name of a specific apply path like
-          "ci-cd". The set of fields is always in the version that the
-          workflow used when modifying the object.
-
-          +optional
+          Ingress specifies the configuration of the sidecar for processing
+          inbound traffic to the attached workload instance. If omitted, Istio will
+          automatically configure the sidecar based on the information about the workload
+          obtained from the orchestration platform (e.g., exposed ports, services,
+          etc.). If specified, inbound ports are configured if and only if the
+          workload instance is associated with a service.
         items:
-          $ref: '#/definitions/v1.ManagedFieldsEntry'
+          $ref: '#/definitions/v1alpha3.IstioIngressListener'
         type: array
-      name:
+      outbound_traffic_policy:
+        $ref: '#/definitions/v1alpha3.OutboundTrafficPolicy'
         description: |-
-          Name must be unique within a namespace. Is required when creating resources, although
-          some resources may allow a client to request the generation of an appropriate name
-          automatically. Name is primarily intended for creation idempotence and configuration
-          definition.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#names
-          +optional
-        type: string
-      namespace:
-        description: |-
-          Namespace defines the space within which each name must be unique. An empty namespace is
-          equivalent to the "default" namespace, but "default" is the canonical representation.
-          Not all objects are required to be scoped to a namespace - the value of this field for
-          those objects will be empty.
-
-          Must be a DNS_LABEL.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/namespaces
-          +optional
-        type: string
-      ownerReferences:
-        description: |-
-          List of objects depended by this object. If ALL objects in the list have
-          been deleted, this object will be garbage collected. If this object is managed by a controller,
-          then an entry in this list will point to this controller, with the controller field set to true.
-          There cannot be more than one managing controller.
-          +optional
-          +patchMergeKey=uid
-          +patchStrategy=merge
-        items:
-          $ref: '#/definitions/v1.OwnerReference'
-        type: array
-      resourceVersion:
-        description: |-
-          An opaque value that represents the internal version of this object that can
-          be used by clients to determine when objects have changed. May be used for optimistic
-          concurrency, change detection, and the watch operation on a resource or set of resources.
-          Clients must treat these values as opaque and passed unmodified back to the server.
-          They may only be valid for a particular resource or set of resources.
-
-          Populated by the system.
-          Read-only.
-          Value must be treated as opaque by clients and .
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-          +optional
-        type: string
-      selfLink:
-        description: |-
-          SelfLink is a URL representing this object.
-          Populated by the system.
-          Read-only.
-
-          DEPRECATED
-          Kubernetes will stop propagating this field in 1.20 release and the field is planned
-          to be removed in 1.21 release.
-          +optional
-        type: string
-      spec:
-        $ref: '#/definitions/v1alpha3.Sidecar'
-        description: |-
-          Spec defines the implementation of this definition.
-          +optional
+          Configuration for the outbound traffic policy.  If your
+          application uses one or more external services that are not known
+          apriori, setting the policy to `ALLOW_ANY` will cause the
+          sidecars to route any unknown traffic originating from the
+          application to its requested destination. If not specified,
+          inherits the system detected defaults from the namespace-wide or
+          the global default Sidecar.
         type: object
-      status:
-        $ref: '#/definitions/v1alpha1.IstioStatus'
-        type: object
-      uid:
+      workload_selector:
+        $ref: '#/definitions/v1alpha3.WorkloadSelector'
         description: |-
-          UID is the unique in time and space value for this object. It is typically generated by
-          the server on successful creation of a resource and is not allowed to change on PUT
-          operations.
-
-          Populated by the system.
-          Read-only.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-          +optional
-        type: string
+          Criteria used to select the specific set of pods/VMs on which this
+          `Sidecar` configuration should be applied. If omitted, the `Sidecar`
+          configuration will be applied to all workload instances in the same namespace.
+        type: object
     type: object
   v1alpha3.StringMatch:
     properties:
@@ -13474,7 +13632,275 @@ definitions:
         description: "Types that are valid to be assigned to MatchType:\n\t*StringMatch_Exact\n\t*StringMatch_Prefix\n\t*StringMatch_Regex"
         type: object
     type: object
+  v1alpha3.Subset:
+    properties:
+      labels:
+        additionalProperties:
+          type: string
+        description: |-
+          Labels apply a filter over the endpoints of a service in the
+          service registry. See route rules for examples of usage.
+        type: object
+      name:
+        description: |-
+          Name of the subset. The service name and the subset name can
+          be used for traffic splitting in a route rule.
+        type: string
+      traffic_policy:
+        $ref: '#/definitions/v1alpha3.TrafficPolicy'
+        description: |-
+          Traffic policies that apply to this subset. Subsets inherit the
+          traffic policies specified at the DestinationRule level. Settings
+          specified at the subset level will override the corresponding settings
+          specified at the DestinationRule level.
+        type: object
+    type: object
+  v1alpha3.TCPRoute:
+    properties:
+      match:
+        description: |-
+          Match conditions to be satisfied for the rule to be
+          activated. All conditions inside a single match block have AND
+          semantics, while the list of match blocks have OR semantics. The rule
+          is matched if any one of the match blocks succeed.
+        items:
+          $ref: '#/definitions/v1alpha3.L4MatchAttributes'
+        type: array
+      route:
+        description: The destination to which the connection should be forwarded to.
+        items:
+          $ref: '#/definitions/v1alpha3.RouteDestination'
+        type: array
+    type: object
+  v1alpha3.TLSMatchAttributes:
+    properties:
+      destination_subnets:
+        description: |-
+          IPv4 or IPv6 ip addresses of destination with optional subnet.  E.g.,
+          a.b.c.d/xx form or just a.b.c.d.
+        items:
+          type: string
+        type: array
+      gateways:
+        description: |-
+          Names of gateways where the rule should be applied. Gateway names
+          in the top-level `gateways` field of the VirtualService (if any) are overridden. The gateway
+          match is independent of sourceLabels.
+        items:
+          type: string
+        type: array
+      port:
+        description: |-
+          Specifies the port on the host that is being addressed. Many services
+          only expose a single port or label ports with the protocols they
+          support, in these cases it is not required to explicitly select the
+          port.
+        type: integer
+      sni_hosts:
+        description: |-
+          SNI (server name indicator) to match on. Wildcard prefixes
+          can be used in the SNI value, e.g., *.com will match foo.example.com
+          as well as example.com. An SNI value must be a subset (i.e., fall
+          within the domain) of the corresponding virtual serivce's hosts.
+        items:
+          type: string
+        type: array
+      source_labels:
+        additionalProperties:
+          type: string
+        description: |-
+          One or more labels that constrain the applicability of a rule to
+          workloads with the given labels. If the VirtualService has a list of
+          gateways specified in the top-level `gateways` field, it should include the reserved gateway
+          `mesh` in order for this field to be applicable.
+        type: object
+      source_namespace:
+        description: |-
+          Source namespace constraining the applicability of a rule to workloads in that namespace.
+          If the VirtualService has a list of gateways specified in the top-level `gateways` field,
+          it must include the reserved gateway `mesh` for this field to be applicable.
+        type: string
+    type: object
+  v1alpha3.TLSRoute:
+    properties:
+      match:
+        description: |-
+          Match conditions to be satisfied for the rule to be
+          activated. All conditions inside a single match block have AND
+          semantics, while the list of match blocks have OR semantics. The rule
+          is matched if any one of the match blocks succeed.
+        items:
+          $ref: '#/definitions/v1alpha3.TLSMatchAttributes'
+        type: array
+      route:
+        description: The destination to which the connection should be forwarded to.
+        items:
+          $ref: '#/definitions/v1alpha3.RouteDestination'
+        type: array
+    type: object
+  v1alpha3.TrafficPolicy:
+    properties:
+      connection_pool:
+        $ref: '#/definitions/v1alpha3.ConnectionPoolSettings'
+        description: Settings controlling the volume of connections to an upstream
+          service
+        type: object
+      load_balancer:
+        $ref: '#/definitions/v1alpha3.LoadBalancerSettings'
+        description: Settings controlling the load balancer algorithms.
+        type: object
+      outlier_detection:
+        $ref: '#/definitions/v1alpha3.OutlierDetection'
+        description: Settings controlling eviction of unhealthy hosts from the load
+          balancing pool
+        type: object
+      port_level_settings:
+        description: |-
+          Traffic policies specific to individual ports. Note that port level
+          settings will override the destination-level settings. Traffic
+          settings specified at the destination-level will not be inherited when
+          overridden by port-level settings, i.e. default values will be applied
+          to fields omitted in port-level traffic policies.
+        items:
+          $ref: '#/definitions/v1alpha3.TrafficPolicy_PortTrafficPolicy'
+        type: array
+      tls:
+        $ref: '#/definitions/v1alpha3.ClientTLSSettings'
+        description: TLS related settings for connections to the upstream service.
+        type: object
+    type: object
+  v1alpha3.TrafficPolicy_PortTrafficPolicy:
+    properties:
+      connection_pool:
+        $ref: '#/definitions/v1alpha3.ConnectionPoolSettings'
+        description: Settings controlling the volume of connections to an upstream
+          service
+        type: object
+      load_balancer:
+        $ref: '#/definitions/v1alpha3.LoadBalancerSettings'
+        description: Settings controlling the load balancer algorithms.
+        type: object
+      outlier_detection:
+        $ref: '#/definitions/v1alpha3.OutlierDetection'
+        description: Settings controlling eviction of unhealthy hosts from the load
+          balancing pool
+        type: object
+      port:
+        $ref: '#/definitions/v1alpha3.PortSelector'
+        description: |-
+          Specifies the number of a port on the destination service
+          on which this policy is being applied.
+        type: object
+      tls:
+        $ref: '#/definitions/v1alpha3.ClientTLSSettings'
+        description: TLS related settings for connections to the upstream service.
+        type: object
+    type: object
   v1alpha3.VirtualService:
+    properties:
+      export_to:
+        description: |-
+          A list of namespaces to which this virtual service is exported. Exporting a
+          virtual service allows it to be used by sidecars and gateways defined in
+          other namespaces. This feature provides a mechanism for service owners
+          and mesh administrators to control the visibility of virtual services
+          across namespace boundaries.
+
+          If no namespaces are specified then the virtual service is exported to all
+          namespaces by default.
+
+          The value "." is reserved and defines an export to the same namespace that
+          the virtual service is declared in. Similarly the value "*" is reserved and
+          defines an export to all namespaces.
+        items:
+          type: string
+        type: array
+      gateways:
+        description: |-
+          The names of gateways and sidecars that should apply these routes.
+          Gateways in other namespaces may be referred to by
+          `<gateway namespace>/<gateway name>`; specifying a gateway with no
+          namespace qualifier is the same as specifying the VirtualService's
+          namespace. A single VirtualService is used for sidecars inside the mesh as
+          well as for one or more gateways. The selection condition imposed by this
+          field can be overridden using the source field in the match conditions
+          of protocol-specific routes. The reserved word `mesh` is used to imply
+          all the sidecars in the mesh. When this field is omitted, the default
+          gateway (`mesh`) will be used, which would apply the rule to all
+          sidecars in the mesh. If a list of gateway names is provided, the
+          rules will apply only to the gateways. To apply the rules to both
+          gateways and sidecars, specify `mesh` as one of the gateway names.
+        items:
+          type: string
+        type: array
+      hosts:
+        description: |-
+          The destination hosts to which traffic is being sent. Could
+          be a DNS name with wildcard prefix or an IP address.  Depending on the
+          platform, short-names can also be used instead of a FQDN (i.e. has no
+          dots in the name). In such a scenario, the FQDN of the host would be
+          derived based on the underlying platform.
+
+          A single VirtualService can be used to describe all the traffic
+          properties of the corresponding hosts, including those for multiple
+          HTTP and TCP ports. Alternatively, the traffic properties of a host
+          can be defined using more than one VirtualService, with certain
+          caveats. Refer to the
+          [Operations Guide](https://istio.io/docs/ops/best-practices/traffic-management/#split-virtual-services)
+          for details.
+
+          *Note for Kubernetes users*: When short names are used (e.g. "reviews"
+          instead of "reviews.default.svc.cluster.local"), Istio will interpret
+          the short name based on the namespace of the rule, not the service. A
+          rule in the "default" namespace containing a host "reviews" will be
+          interpreted as "reviews.default.svc.cluster.local", irrespective of
+          the actual namespace associated with the reviews service. _To avoid
+          potential misconfigurations, it is recommended to always use fully
+          qualified domain names over short names._
+
+          The hosts field applies to both HTTP and TCP services. Service inside
+          the mesh, i.e., those found in the service registry, must always be
+          referred to using their alphanumeric names. IP addresses are allowed
+          only for services defined via the Gateway.
+
+          *Note*: It must be empty for a delegate VirtualService.
+        items:
+          type: string
+        type: array
+      http:
+        description: |-
+          An ordered list of route rules for HTTP traffic. HTTP routes will be
+          applied to platform service ports named 'http-*'/'http2-*'/'grpc-*', gateway
+          ports with protocol HTTP/HTTP2/GRPC/ TLS-terminated-HTTPS and service
+          entry ports using HTTP/HTTP2/GRPC protocols.  The first rule matching
+          an incoming request is used.
+        items:
+          $ref: '#/definitions/v1alpha3.HTTPRoute'
+        type: array
+      tcp:
+        description: |-
+          An ordered list of route rules for opaque TCP traffic. TCP routes will
+          be applied to any port that is not a HTTP or TLS port. The first rule
+          matching an incoming request is used.
+        items:
+          $ref: '#/definitions/v1alpha3.TCPRoute'
+        type: array
+      tls:
+        description: |-
+          An ordered list of route rule for non-terminated TLS & HTTPS
+          traffic. Routing is typically performed using the SNI value presented
+          by the ClientHello message. TLS routes will be applied to platform
+          service ports named 'https-*', 'tls-*', unterminated gateway ports using
+          HTTPS/TLS protocols (i.e. with "passthrough" TLS mode) and service
+          entry ports using HTTPS/TLS protocols.  The first rule matching an
+          incoming request is used.  NOTE: Traffic 'https-*' or 'tls-*' ports
+          without associated virtual service will be treated as opaque TCP
+          traffic.
+        items:
+          $ref: '#/definitions/v1alpha3.TLSRoute'
+        type: array
+    type: object
+  v1alpha3.WorkloadEntry:
     properties:
       annotations:
         additionalProperties:
@@ -13683,7 +14109,7 @@ definitions:
           +optional
         type: string
       spec:
-        $ref: '#/definitions/v1alpha3.VirtualService'
+        $ref: '#/definitions/v1alpha3.WorkloadEntry'
         description: |-
           Spec defines the implementation of this definition.
           +optional
@@ -13703,9 +14129,23 @@ definitions:
           +optional
         type: string
     type: object
+  v1alpha3.WorkloadSelector:
+    properties:
+      labels:
+        additionalProperties:
+          type: string
+        description: |-
+          One or more labels that indicate a specific set of pods/VMs
+          on which the configuration should be applied. The scope of
+          label search is restricted to the configuration namespace in which the
+          the resource is present.
+        type: object
+    type: object
   v1alpha3.isHTTPFaultInjection_Abort_ErrorType:
     type: object
   v1alpha3.isHTTPFaultInjection_Delay_HttpDelayType:
+    type: object
+  v1alpha3.isLoadBalancerSettings_LbPolicy:
     type: object
   v1alpha3.isStringMatch_MatchType:
     type: object
@@ -18775,11 +19215,17 @@ paths:
       summary: 获取OAUTH登录地址
       tags:
       - AAAAA
-  /v1/oauth/callback:
+  /v1/oauth/callback/{source}:
     get:
       consumes:
       - application/json
-      description: 获取OAUTH登录地址
+      description: OAUTH登录callback
+      parameters:
+      - description: loginsource
+        in: path
+        name: source
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -18787,7 +19233,7 @@ paths:
           description: 地址
           schema:
             type: string
-      summary: 获取OAUTH登录地址
+      summary: OAUTH登录callback
       tags:
       - AAAAA
   /v1/project:
