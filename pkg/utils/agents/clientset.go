@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"golang.org/x/sync/errgroup"
+	"gorm.io/gorm"
 	"k8s.io/client-go/rest"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/database"
@@ -19,15 +20,25 @@ import (
 )
 
 type ClientSet struct {
-	options *Options
-	databse *database.Database
-	clients sync.Map // name -> *Client
+	options  *Options
+	database *database.Database
+	clients  sync.Map // name -> *Client
 }
 
-func NewClientSet(databse *database.Database) (*ClientSet, error) {
+// Initialize for gorm plugin
+func (h *ClientSet) Initialize(db *gorm.DB) error {
+	return nil
+}
+
+// Name for gorm plugin
+func (h *ClientSet) Name() string {
+	return "agentcli"
+}
+
+func NewClientSet(database *database.Database) (*ClientSet, error) {
 	return &ClientSet{
-		databse: databse,
-		options: NewDefaultOptions(), // default options,if override by config from database
+		database: database,
+		options:  NewDefaultOptions(), // default options,if override by config from database
 	}, nil
 }
 
@@ -44,7 +55,7 @@ func (h *ClientSet) Clusters() []string {
 		ret     []string
 		cluster models.Cluster
 	)
-	h.databse.DB().Model(&cluster).Pluck("cluster_name", &ret)
+	h.database.DB().Model(&cluster).Pluck("cluster_name", &ret)
 	return ret
 }
 
@@ -86,7 +97,7 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
 	ret := []string{}
 	cluster := &models.Cluster{Primary: true}
-	if err := h.databse.DB().Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
+	if err := h.database.DB().Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
 		return nil, err
 	}
 	if len(ret) == 0 {
@@ -109,7 +120,7 @@ func (h *ClientSet) completeFromKubeconfig(ctx context.Context, cluster *models.
 	cluster.AgentCA = string(kubeca)
 
 	// update databse
-	if err := h.databse.DB().Save(cluster).Error; err != nil {
+	if err := h.database.DB().Save(cluster).Error; err != nil {
 		return err
 	}
 	return nil
@@ -117,7 +128,7 @@ func (h *ClientSet) completeFromKubeconfig(ctx context.Context, cluster *models.
 
 func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta, error) {
 	cluster := &models.Cluster{}
-	if err := h.databse.DB().First(&cluster, "cluster_name = ?", name).Error; err != nil {
+	if err := h.database.DB().First(&cluster, "cluster_name = ?", name).Error; err != nil {
 		return nil, err
 	}
 
