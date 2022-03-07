@@ -195,7 +195,7 @@ func (r *Router) Complete() error {
 	// 注册中间件
 	apiMidwares := []func(*gin.Context){
 		// authc
-		auth.NewAuthMiddleware(r.Opts.JWT).FilterFunc,
+		auth.NewAuthMiddleware(r.Opts.JWT, userif).FilterFunc,
 		// audit
 		r.auditInstance.Middleware(),
 	}
