@@ -9,6 +9,24 @@ import (
 	"kubegems.io/pkg/utils"
 )
 
+// ListAuthSourceSimple list authsource simple
+// @Tags AuthSource
+// @Summary AuthSource列表 (no auth)
+// @Description AuthSource列表 (no auth)
+// @Accept json
+// @Produce json
+// @Success 200 {object} handlers.ResponseStruct{Data=[]models.AuthSource} "AuthSource"
+// @Router /v1/system/authsource [get]
+// @Security JWT
+func (h *AuthSourceHandler) ListAuthSourceSimple(c *gin.Context) {
+	list := []models.AuthSourceSimple{}
+	if err := h.GetDB().Find(&list).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, list)
+}
+
 // ListAuthSource list authsource
 // @Tags AuthSource
 // @Summary AuthSource列表
