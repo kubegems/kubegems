@@ -1,5 +1,11 @@
 package git
 
+import (
+	"fmt"
+
+	"kubegems.io/pkg/apis/gems"
+)
+
 var DefaultCommiter = &Commiter{
 	Name:  "service",
 	Email: "service@kubgems.io",
@@ -18,7 +24,7 @@ type Options struct {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		Addr:     "http://gems-gitea:3000",
+		Addr:     fmt.Sprintf("http://gems-gitea.%s:3000", gems.NamespaceSystem),
 		Username: "root",
 		Password: "",
 	}
