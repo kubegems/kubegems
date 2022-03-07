@@ -15,16 +15,10 @@ type OnlineConfig interface {
 	CheckOptions() error
 }
 
-var DefaultOnlineConfigs = []models.OnlineConfig{
-	{
-		Name:    "Installer",
-		Content: gemsplugin.DefaultInstallerOptions().JSON(),
-	},
-	{
-		Name:    "Monitor",
-		Content: prometheus.DefaultMonitorOptions().JSON(),
-	},
-}
+var (
+	_ OnlineConfig = &gemsplugin.InstallerOptions{}
+	_ OnlineConfig = &prometheus.MonitorOptions{}
+)
 
 func LoadOptions(opts OnlineConfig, db *gorm.DB) error {
 	config := models.OnlineConfig{}
