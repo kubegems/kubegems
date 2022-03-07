@@ -4,17 +4,14 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/options"
 )
 
 type SystemHandler struct {
 	base.BaseHandler
-	*options.OnlineOptions
 }
 
 // GetConfig 列出所有系统配置
@@ -83,17 +80,10 @@ func (h *SystemHandler) SetConfig(c *gin.Context) {
 	h.SetAuditData(c, "更新", "系统配置", newcfg.Name)
 
 	oldcfg.Content = newcfg.Content
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(&oldcfg).Error; err != nil {
-			return err
-		}
-		return h.OnlineOptions.CheckAndUpdateSipecifiedField(oldcfg)
-	}); err != nil {
+	if err := h.GetDB().Save(&oldcfg).Error; err != nil {
 		log.Error(err, "save config")
 		handlers.NotOK(c, err)
-		return
 	}
-
 	handlers.OK(c, "ok")
 }
 

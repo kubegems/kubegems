@@ -73,24 +73,11 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 }
 
 func Run(ctx context.Context, opts *options.Options) error {
-	onlineOptions := options.NewOnlineOptions() // 在线配置
-
 	ctx = log.NewContext(ctx, log.LogrLogger)
 	deps, err := prepareDependencies(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("failed init dependencies: %v", err)
 	}
-
-	// 初始化到DB
-	if err := onlineOptions.InitToDB(deps.Databse.DB()); err != nil {
-		return fmt.Errorf("failed to save online options to db: %w", err)
-	}
-	// 先从DB加载一次最新的
-	if err := onlineOptions.LoadFromDB(deps.Databse.DB()); err != nil {
-		return fmt.Errorf("failed to load online options from db: %w", err)
-	}
-	// 开始同步
-	// go onlineOptions.StartSync(deps.Databse.DB(), 1*time.Minute)
 
 	// 依赖的kiali库用到，需要初始化
 	// FIXME: 我们用到的配置较少，初始化时填入我们的配置，如
@@ -99,17 +86,16 @@ func Run(ctx context.Context, opts *options.Options) error {
 	kialiconfig.Set(kialiconfig.NewConfig())
 
 	router := &routers.Router{
-		Opts:          opts,
-		OnlineOptions: onlineOptions,
-		Agents:        deps.Agentscli,
-		Argo:          deps.Argocli,
-		Database:      deps.Databse,
-		Redis:         deps.Redis,
+		Opts:     opts,
+		Agents:   deps.Agentscli,
+		Argo:     deps.Argocli,
+		Database: deps.Databse,
+		Redis:    deps.Redis,
 	}
 
 	exporterHandler := exporter.NewHandler("gems_server", map[string]exporter.Collectorfunc{
 		"request":   exporter.NewRequestCollector(),
-		"alertrule": exporter.NewAlertRuleCollector(deps.Agentscli, onlineOptions.Monitor),
+		"alertrule": exporter.NewAlertRuleCollector(deps.Agentscli, deps.Databse),
 	})
 
 	// run

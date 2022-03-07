@@ -5,6 +5,8 @@ import (
 
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/online"
+	"kubegems.io/pkg/utils/prometheus"
 
 	"github.com/gin-gonic/gin"
 )
@@ -94,12 +96,14 @@ func (h *MonitorHandler) getDashboardReq(c *gin.Context) (*models.MetricDashbora
 	}
 	req.Creator = u.GetUsername()
 
+	monitoropts := new(prometheus.MonitorOptions)
+	online.LoadOptions(monitoropts, h.GetDB())
 	// 逐个校验graph
 	for _, v := range req.Graphs {
 		if v.Name == "" {
 			return nil, fmt.Errorf("图表名不能为空")
 		}
-		_, err := v.FindRuleContext(h.OnlineOptions.Monitor)
+		_, err := v.FindRuleContext(monitoropts)
 		if err != nil {
 			return nil, err
 		}

@@ -24,7 +24,9 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/online"
 	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/gemsplugin"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/msgbus"
 	"kubegems.io/pkg/version"
@@ -208,6 +210,9 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		return
 	}
 
+	installeropts := new(gemsplugin.InstallerOptions)
+	online.LoadOptions(installeropts, h.GetDB())
+
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if err := tx.Delete(cluster).Error; err != nil {
@@ -219,7 +224,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 				Clientset:        clientSet,
 				RestConfig:       config,
 				KubegemsVersion:  version.Get(),
-				InstallerOptions: h.InstallerOptions,
+				InstallerOptions: installeropts,
 			}
 			return installer.UnInstall(ctx)
 		}); err != nil {
@@ -412,6 +417,10 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			}
 			return nil
 		}
+
+		installeropts := new(gemsplugin.InstallerOptions)
+		online.LoadOptions(installeropts, h.GetDB())
+
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if err := tx.Create(cluster).Error; err != nil {
 				return err
@@ -421,7 +430,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				Clientset:  clientSet,
 				RestConfig: config,
 
-				InstallerOptions: h.InstallerOptions,
+				InstallerOptions: installeropts,
 				Cluster:          cluster,
 				KubegemsVersion:  version.Get(),
 			}
@@ -657,24 +666,12 @@ func (i *ClusterInstaller) CreateNamespaceIfNotExists(ctx context.Context) error
 	return nil
 }
 
-type InstallerOptions struct {
-	OperatorImage string                 `json:"operator_image,omitempty"`
-	InstallerYaml map[string]interface{} `json:"installer_yaml,omitempty"`
-}
-
-func DefaultInstallerOptions() *InstallerOptions {
-	return &InstallerOptions{
-		OperatorImage: "kubegems/installer-operator:v2.3-release",
-		InstallerYaml: defaultInstallerObj,
-	}
-}
-
 type ClusterInstaller struct {
 	Clientset  *kubernetes.Clientset
 	RestConfig *rest.Config
 
 	Cluster          *models.Cluster
-	InstallerOptions *InstallerOptions
+	InstallerOptions *gemsplugin.InstallerOptions
 	KubegemsVersion  version.Version
 }
 
