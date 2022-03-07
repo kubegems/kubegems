@@ -17,7 +17,6 @@ import (
 	containerdreference "github.com/containerd/containerd/reference"
 	dockerreference "github.com/containerd/containerd/reference/docker"
 	"github.com/goharbor/harbor/src/common"
-	"github.com/goharbor/harbor/src/controller/systeminfo"
 	harborerrors "github.com/goharbor/harbor/src/lib/errors"
 	"github.com/goharbor/harbor/src/pkg/artifact"
 	"github.com/goharbor/harbor/src/pkg/label/model"
@@ -33,10 +32,12 @@ const csrfTokenHeader = "X-Harbor-CSRF-Token"
 /*
  * 重新定义  AdditionLink  Tag  Label 等结构体的原因为如果从 harbor 引入这些类型，会引入 beego 一大堆东西
  */
+
+//nolint: tagliatelle
 type Artifact struct {
 	artifact.Artifact
-	Tags          []Tag                               `json:"tags"`           // the list of tags that attached to the artifact
-	AdditionLinks map[string]AdditionLink             `json:"addition_links"` // the resource link for build history(image), values.yaml(chart), dependency(chart), etc
+	Tags          []Tag                               `json:"tags"`
+	AdditionLinks map[string]AdditionLink             `json:"addition_links"`
 	Labels        []Label                             `json:"labels"`
 	ScanOverview  map[string]vuln.NativeReportSummary `json:"scan_overview"`
 }
@@ -48,29 +49,31 @@ type AdditionLink struct {
 }
 
 // Tag is the overall view of tag
+//nolint: tagliatelle
 type Tag struct {
-	ID           int64     `orm:"pk;auto;column(id)" json:"id"`
-	RepositoryID int64     `orm:"column(repository_id)" json:"repository_id"` // tags are the resources of repository, one repository only contains one same name tag
-	ArtifactID   int64     `orm:"column(artifact_id)" json:"artifact_id"`     // the artifact ID that the tag attaches to, it changes when pushing a same name but different digest artifact
-	Name         string    `orm:"column(name)" json:"name"`
-	PushTime     time.Time `orm:"column(push_time)" json:"push_time"`
-	PullTime     time.Time `orm:"column(pull_time)" json:"pull_time"`
+	ID           int64     `json:"id"`
+	RepositoryID int64     `json:"repository_id"`
+	ArtifactID   int64     `json:"artifact_id"`
+	Name         string    `json:"name"`
+	PushTime     time.Time `json:"push_time"`
+	PullTime     time.Time `json:"pull_time"`
 	Immutable    bool      `json:"immutable"`
 	Signed       bool      `json:"signed"`
 }
 
 // Label holds information used for a label
+//nolint: tagliatelle
 type Label struct {
-	ID           int64     `orm:"pk;auto;column(id)" json:"id"`
-	Name         string    `orm:"column(name)" json:"name"`
-	Description  string    `orm:"column(description)" json:"description"`
-	Color        string    `orm:"column(color)" json:"color"`
-	Level        string    `orm:"column(level)" json:"-"`
-	Scope        string    `orm:"column(scope)" json:"scope"`
-	ProjectID    int64     `orm:"column(project_id)" json:"project_id"`
-	CreationTime time.Time `orm:"column(creation_time);auto_now_add" json:"creation_time"`
-	UpdateTime   time.Time `orm:"column(update_time);auto_now" json:"update_time"`
-	Deleted      bool      `orm:"column(deleted)" json:"deleted"`
+	ID           int64     `json:"id"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	Color        string    `json:"color"`
+	Level        string    `json:"level"`
+	Scope        string    `json:"scope"`
+	ProjectID    int64     `json:"project_id"`
+	CreationTime time.Time `json:"creation_time"`
+	UpdateTime   time.Time `json:"update_time"`
+	Deleted      bool      `json:"deleted"`
 }
 
 type Vulnerabilities map[string]vuln.Report
@@ -198,9 +201,25 @@ func (c *Client) ScanArtifact(ctx context.Context, image string) error {
 	return c.doRequest(ctx, http.MethodPost, path, nil, nil)
 }
 
+//nolint: tagliatelle
+type SystemInfo struct {
+	WithNotary                  bool   `json:"with_notary"`
+	AuthMode                    string `json:"auth_mode"`
+	RegistryUrl                 string `json:"registry_url"`
+	ExternalUrl                 string `json:"external_url"`
+	ProjectCreationRestriction  string `json:"project_creation_restriction"`
+	SelfRegistration            bool   `json:"self_registration"`
+	HasCaRoot                   bool   `json:"has_ca_root"`
+	HarborVersion               string `json:"harbor_version"`
+	RegistryStorageProviderName string `json:"registry_storage_provider_name"`
+	ReadOnly                    bool   `json:"read_only"`
+	WithChartmuseum             bool   `json:"with_chartmuseum"`
+	NotificationEnable          bool   `json:"notification_enable"`
+}
+
 // GET https://{host}/api/v2.0/systeminfo
-func (c *Client) SystemInfo(ctx context.Context) (*systeminfo.Data, error) {
-	info := &systeminfo.Data{}
+func (c *Client) SystemInfo(ctx context.Context) (*SystemInfo, error) {
+	info := &SystemInfo{}
 	if err := c.doRequest(ctx, http.MethodGet, "/systeminfo", nil, info); err != nil {
 		return nil, err
 	}
@@ -395,7 +414,8 @@ func ParseImag(image string) (domain, path, name, tag string, err error) {
 	domain = dockerreference.Domain(named)
 
 	fullpath := dockerreference.Path(named)
-	splits := strings.SplitN(fullpath, "/", 2)
+	const two = 2
+	splits := strings.SplitN(fullpath, "/", two)
 	if len(splits) > 1 {
 		path = splits[0]
 		name = splits[1]
