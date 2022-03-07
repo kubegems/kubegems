@@ -21,7 +21,7 @@ type AuthMiddleware struct {
 	uif     aaa.ContextUserOperator
 }
 
-func NewAuthMiddleware(opts *jwt.Options) *AuthMiddleware {
+func NewAuthMiddleware(opts *jwt.Options, userif aaa.ContextUserOperator) *AuthMiddleware {
 	var getters []UserGetterIface
 	getters = append(getters, &BearerTokenUserLoader{
 		JWT: opts.ToJWT(),
@@ -29,6 +29,7 @@ func NewAuthMiddleware(opts *jwt.Options) *AuthMiddleware {
 	getters = append(getters, &PrivateTokenUserLoader{})
 	return &AuthMiddleware{
 		getters: getters,
+		uif:     userif,
 	}
 }
 
