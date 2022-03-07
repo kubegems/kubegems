@@ -367,29 +367,6 @@ func GetNodeTotal(nodes *[]v1.Node, tquotalist *[]gemsv1beta1.TenantResourceQuot
 	}
 }
 
-func containerTotal(containers []v1beta1.ContainerMetrics) interface{} {
-	ret := v1.ResourceList{
-		v1.ResourceCPU:    *resource.NewQuantity(0, resource.BinarySI),
-		v1.ResourceMemory: *resource.NewQuantity(0, resource.BinarySI),
-	}
-	for _, c := range containers {
-		tcpu := ret[v1.ResourceCPU]
-		tpcpu := &tcpu
-		tpcpu.Add(c.Usage.Cpu().DeepCopy())
-		ret[v1.ResourceCPU] = *tpcpu
-
-		tmem := ret[v1.ResourceMemory]
-		tpmem := &tmem
-		tpmem.Add(c.Usage.Memory().DeepCopy())
-		ret[v1.ResourceMemory] = *tpmem
-	}
-	res := Res{
-		v1.ResourceCPU:    ret.Cpu().ScaledValue(resource.Milli),
-		v1.ResourceMemory: ret.Memory().Value() / (1024 * 1024),
-	}
-	return res
-}
-
 // GetEnvironmentResourceQuota 单个环境下的资源统计[quota]
 // @Tags Project
 // @Summary 单个环境下的资源统计[quota]
@@ -688,6 +665,10 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 	env.LimitRange = models.FillDefaultLimigrange(&env)
 
 	ctx := c.Request.Context()
+	if err := environment.ValidateEnvironmentNamespace(ctx, h.BaseHandler, h.GetDB(), env.Namespace, env.EnvironmentName, cluster.ClusterName); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&env).Error; err != nil {
 			return err
