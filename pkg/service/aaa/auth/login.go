@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 
 	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
@@ -64,12 +63,24 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name str
 	}
 	switch authSource.Kind {
 	case "LDAP":
-		ldapUt := &LdapLoginUtils{}
-		json.Unmarshal(authSource.Config, ldapUt)
+		ldapUt := &LdapLoginUtils{
+			BaseDN:       authSource.Config.BaseDN,
+			Name:         authSource.Config.Name,
+			BindUsername: authSource.Config.BindUsername,
+			BindPassword: authSource.Config.BindPassword,
+			LdapAddr:     authSource.Config.LdapAddr,
+		}
 		return ldapUt
 	case "OAUTH":
-		opt := &OauthOption{}
-		json.Unmarshal(authSource.Config, opt)
+		opt := &OauthOption{
+			AuthURL:     authSource.Config.AuthURL,
+			TokenURL:    authSource.Config.TokenURL,
+			UserInfoURL: authSource.Config.UserInfoURL,
+			RedirectURL: authSource.Config.RedirectURL,
+			AppID:       authSource.Config.AppID,
+			AppSecret:   authSource.Config.AppSecret,
+			Scopes:      authSource.Config.Scopes,
+		}
 		return NewOauthUtils(opt)
 	default:
 		return defaultUtil

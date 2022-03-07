@@ -2177,6 +2177,229 @@ var doc = `{
                 }
             }
         },
+        "/v1/authsource": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "AuthSource列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AuthSource"
+                ],
+                "summary": "AuthSource列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "AuthSource",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/handlers.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "List": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/models.AuthSource"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "create AuthSource",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AuthSource"
+                ],
+                "summary": "create AuthSource",
+                "parameters": [
+                    {
+                        "description": "表单",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AuthSource"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "AuthSource",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/models.AuthSource"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/authsource/{source_id}": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "modify AuthSource",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AuthSource"
+                ],
+                "summary": "modify AuthSource",
+                "parameters": [
+                    {
+                        "description": "表单",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AuthSource"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "source_id",
+                        "name": "source_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "AuthSource",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/models.AuthSource"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "delete AuthSource",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AuthSource"
+                ],
+                "summary": "delete AuthSource",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "source_id",
+                        "name": "source_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "AuthSource",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/cluster": {
             "get": {
                 "security": [
@@ -23270,14 +23493,14 @@ var doc = `{
         "handlers.PageData": {
             "type": "object",
             "properties": {
+                "currentPage": {
+                    "type": "integer"
+                },
+                "currentSize": {
+                    "type": "integer"
+                },
                 "list": {
                     "type": "object"
-                },
-                "page": {
-                    "type": "integer"
-                },
-                "size": {
-                    "type": "integer"
                 },
                 "total": {
                     "type": "integer"
@@ -23847,6 +24070,82 @@ var doc = `{
                 }
             }
         },
+        "models.AuthSource": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.AuthSourceConfig"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tokenType": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AuthSourceConfig": {
+            "type": "object",
+            "properties": {
+                "appID": {
+                    "type": "string"
+                },
+                "appSecret": {
+                    "type": "string"
+                },
+                "basedn": {
+                    "type": "string"
+                },
+                "binduser": {
+                    "type": "string"
+                },
+                "ldapaddr": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "ldap",
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "redirectURL": {
+                    "type": "string"
+                },
+                "scopes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tokenURL": {
+                    "type": "string"
+                },
+                "url": {
+                    "description": "oauth",
+                    "type": "string"
+                },
+                "userInfoURL": {
+                    "type": "string"
+                }
+            }
+        },
         "models.CPUMemoryStatus": {
             "type": "object",
             "properties": {
@@ -23878,16 +24177,16 @@ var doc = `{
         "models.ChartRepo": {
             "type": "object",
             "required": [
-                "name"
+                "chartRepoName"
             ],
             "properties": {
+                "chartRepoName": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "lastSync": {
-                    "type": "string"
-                },
-                "name": {
                     "type": "string"
                 },
                 "syncMessage": {
@@ -23904,20 +24203,14 @@ var doc = `{
         "models.Cluster": {
             "type": "object",
             "required": [
-                "clusterName",
-                "kubeConfig"
+                "kubeConfig",
+                "name"
             ],
             "properties": {
                 "agentAddr": {
-                    "description": "Agent地址",
                     "type": "string"
                 },
                 "apiserver": {
-                    "description": "APIServer地址 根据kubeconfig添加后，自动填充",
-                    "type": "string"
-                },
-                "clusterName": {
-                    "description": "集群名字",
                     "type": "string"
                 },
                 "clusterResourceQuota": {
@@ -23934,17 +24227,17 @@ var doc = `{
                     "type": "integer"
                 },
                 "kubeConfig": {
-                    "description": "KubeConfig 配置",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "oversoldConfig": {
-                    "description": "集群资源超卖设置",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
                 "primary": {
-                    "description": "是否主集群",
                     "type": "boolean"
                 },
                 "runtime": {
@@ -23958,7 +24251,6 @@ var doc = `{
                     }
                 },
                 "version": {
-                    "description": "Version 版本",
                     "type": "string"
                 }
             }
@@ -23986,74 +24278,60 @@ var doc = `{
             "type": "object",
             "properties": {
                 "applications": {
-                    "description": "关联的应用",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.Application"
                     }
                 },
                 "cluster": {
-                    "description": "关联的集群",
                     "type": "object",
                     "$ref": "#/definitions/models.Cluster"
                 },
                 "clusterID": {
-                    "description": "所属集群ID",
                     "type": "integer"
                 },
                 "creator": {
-                    "description": "创建者",
                     "type": "object",
                     "$ref": "#/definitions/models.User"
                 },
                 "creatorID": {
-                    "description": "创建人ID",
                     "type": "integer"
                 },
                 "deletePolicy": {
-                    "description": "删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)",
-                    "type": "string"
-                },
-                "environmentName": {
-                    "description": "环境名字",
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "limitRange": {
-                    "description": "环境下的limitrage",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
                 "metaType": {
-                    "description": "元类型(开发(dev)，测试(test)，生产(prod))等选项之一",
+                    "description": "MetaTpe (dev, prod, test, pub ...)",
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "namespace": {
-                    "description": "环境关联的namespace",
                     "type": "string"
                 },
                 "project": {
-                    "description": "所属项目",
                     "type": "object",
                     "$ref": "#/definitions/models.Project"
                 },
                 "projectID": {
-                    "description": "所属项目ID",
                     "type": "integer"
                 },
                 "remark": {
-                    "description": "备注",
                     "type": "string"
                 },
                 "resourceQuota": {
-                    "description": "环境资源限制(这个会和namespace下的ResourceQuota对等)",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
                 "users": {
-                    "description": "关联的用户",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.User"
@@ -24064,7 +24342,6 @@ var doc = `{
                     "$ref": "#/definitions/models.VirtualSpace"
                 },
                 "virtualSpaceID": {
-                    "description": "虚拟空间",
                     "type": "integer"
                 }
             }
@@ -24081,13 +24358,13 @@ var doc = `{
                 "avgPVCUsageByte": {
                     "type": "number"
                 },
-                "clusterName": {
+                "cluster": {
                     "type": "string"
                 },
                 "createdAt": {
                     "type": "string"
                 },
-                "environmentName": {
+                "environment": {
                     "type": "string"
                 },
                 "id": {
@@ -24117,10 +24394,10 @@ var doc = `{
                 "networkSendByte": {
                     "type": "number"
                 },
-                "projectName": {
+                "project": {
                     "type": "string"
                 },
-                "tenantName": {
+                "tenant": {
                     "type": "string"
                 }
             }
@@ -24134,7 +24411,6 @@ var doc = `{
             ],
             "properties": {
                 "environmentID": {
-                    "description": "EnvironmentID",
                     "type": "integer"
                 },
                 "id": {
@@ -24145,7 +24421,6 @@ var doc = `{
                     "$ref": "#/definitions/models.Environment"
                 },
                 "role": {
-                    "description": "环境级角色(\"reader\", \"operator\")",
                     "type": "string"
                 },
                 "user": {
@@ -24153,7 +24428,6 @@ var doc = `{
                     "$ref": "#/definitions/models.User"
                 },
                 "userID": {
-                    "description": "用户ID",
                     "type": "integer"
                 }
             }
@@ -24176,16 +24450,20 @@ var doc = `{
             "type": "object",
             "properties": {
                 "cluster": {
+                    "description": "关联的集群",
                     "type": "object",
                     "$ref": "#/definitions/models.Cluster"
                 },
                 "clusterID": {
+                    "description": "所属集群ID",
                     "type": "integer"
                 },
                 "createAt": {
+                    "description": "创建时间",
                     "type": "string"
                 },
                 "creator": {
+                    "description": "创建者",
                     "type": "object",
                     "$ref": "#/definitions/models.User"
                 },
@@ -24193,15 +24471,18 @@ var doc = `{
                     "type": "integer"
                 },
                 "filterJSON": {
+                    "description": "正则标签",
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "labelJSON": {
+                    "description": "标签",
                     "type": "string"
                 },
                 "logQL": {
+                    "description": "logql",
                     "type": "string"
                 }
             }
@@ -24250,16 +24531,20 @@ var doc = `{
             "type": "object",
             "properties": {
                 "cluster": {
+                    "description": "关联的集群",
                     "type": "object",
                     "$ref": "#/definitions/models.Cluster"
                 },
                 "clusterID": {
+                    "description": "所属集群ID",
                     "type": "integer"
                 },
                 "createAt": {
+                    "description": "创建时间",
                     "type": "string"
                 },
                 "creator": {
+                    "description": "创建者",
                     "type": "object",
                     "$ref": "#/definitions/models.User"
                 },
@@ -24267,6 +24552,7 @@ var doc = `{
                     "type": "integer"
                 },
                 "downloadURL": {
+                    "description": "下载地址",
                     "type": "string"
                 },
                 "endTime": {
@@ -24276,10 +24562,11 @@ var doc = `{
                     "type": "integer"
                 },
                 "snapshotCount": {
-                    "description": "line count",
+                    "description": "行数",
                     "type": "integer"
                 },
                 "snapshotName": {
+                    "description": "名称",
                     "type": "string"
                 },
                 "sourceFile": {
@@ -24336,7 +24623,6 @@ var doc = `{
                     "type": "integer"
                 },
                 "name": {
-                    "description": "面板名",
                     "type": "string"
                 },
                 "step": {
@@ -24391,6 +24677,30 @@ var doc = `{
                 "$ref": "#/definitions/models.MetricGraph"
             }
         },
+        "models.OIDCUser": {
+            "type": "object",
+            "properties": {
+                "creation_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "secret": {
+                    "description": "secret in plain text",
+                    "type": "string"
+                },
+                "subiss": {
+                    "type": "string"
+                },
+                "update_time": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.OnlineConfig": {
             "type": "object",
             "required": [
@@ -24424,6 +24734,7 @@ var doc = `{
                     }
                 },
                 "createdAt": {
+                    "description": "创建时间",
                     "type": "string"
                 },
                 "environments": {
@@ -24435,10 +24746,12 @@ var doc = `{
                 "id": {
                     "type": "integer"
                 },
-                "name": {
+                "projectAlias": {
+                    "description": "项目别名",
                     "type": "string"
                 },
-                "projectAlias": {
+                "projectName": {
+                    "description": "项目名字",
                     "type": "string"
                 },
                 "registries": {
@@ -24448,9 +24761,11 @@ var doc = `{
                     }
                 },
                 "remark": {
+                    "description": "项目备注",
                     "type": "string"
                 },
                 "resourceQuota": {
+                    "description": "项目资源限制",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
@@ -24459,6 +24774,7 @@ var doc = `{
                     "$ref": "#/definitions/models.Tenant"
                 },
                 "tenantID": {
+                    "description": "所属的租户ID",
                     "type": "integer"
                 },
                 "users": {
@@ -24485,9 +24801,11 @@ var doc = `{
                     "$ref": "#/definitions/models.Project"
                 },
                 "projectID": {
+                    "description": "ProjectID",
                     "type": "integer"
                 },
                 "role": {
+                    "description": "项目级角色(管理员admin, 开发dev, 测试test, 运维ops)",
                     "type": "string"
                 },
                 "user": {
@@ -24495,6 +24813,7 @@ var doc = `{
                     "$ref": "#/definitions/models.User"
                 },
                 "userID": {
+                    "description": "用户ID",
                     "type": "integer"
                 }
             }
@@ -24553,16 +24872,18 @@ var doc = `{
         "models.SystemRole": {
             "type": "object",
             "required": [
-                "code"
+                "roleCode"
             ],
             "properties": {
-                "code": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "integer"
                 },
-                "name": {
+                "roleCode": {
+                    "description": "系统级角色Code(管理员admin, 普通用户ordinary)",
+                    "type": "string"
+                },
+                "roleName": {
+                    "description": "角色名字",
                     "type": "string"
                 },
                 "users": {
@@ -24583,10 +24904,8 @@ var doc = `{
                     "type": "integer"
                 },
                 "isActive": {
+                    "description": "是否激活",
                     "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
                 },
                 "projects": {
                     "type": "array",
@@ -24595,6 +24914,7 @@ var doc = `{
                     }
                 },
                 "remark": {
+                    "description": "备注",
                     "type": "string"
                 },
                 "resourceQuotas": {
@@ -24602,6 +24922,10 @@ var doc = `{
                     "items": {
                         "$ref": "#/definitions/models.TenantResourceQuota"
                     }
+                },
+                "tenantName": {
+                    "description": "租户名字",
+                    "type": "string"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -24641,49 +24965,28 @@ var doc = `{
                 },
                 "tenantID": {
                     "type": "integer"
+                },
+                "tenantResourceQuotaApply": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.TenantResourceQuotaApply"
+                },
+                "tenantResourceQuotaApplyID": {
+                    "type": "integer"
                 }
             }
         },
         "models.TenantResourceQuotaApply": {
             "type": "object",
-            "required": [
-                "clusterID",
-                "tenantID"
-            ],
             "properties": {
-                "cluster": {
-                    "type": "object",
-                    "$ref": "#/definitions/models.Cluster"
-                },
-                "clusterID": {
-                    "type": "integer"
-                },
                 "content": {
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
-                },
-                "createAt": {
-                    "type": "string"
-                },
-                "creator": {
-                    "type": "object",
-                    "$ref": "#/definitions/models.User"
-                },
-                "creatorID": {
-                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "status": {
                     "type": "string"
-                },
-                "tenant": {
-                    "type": "object",
-                    "$ref": "#/definitions/models.Tenant"
-                },
-                "tenantID": {
-                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -24703,6 +25006,7 @@ var doc = `{
                     "type": "integer"
                 },
                 "role": {
+                    "description": "租户级角色(管理员admin, 普通用户ordinary)",
                     "type": "string"
                 },
                 "tenant": {
@@ -24710,6 +25014,7 @@ var doc = `{
                     "$ref": "#/definitions/models.Tenant"
                 },
                 "tenantID": {
+                    "description": "租户ID",
                     "type": "integer"
                 },
                 "user": {
@@ -24717,72 +25022,69 @@ var doc = `{
                     "$ref": "#/definitions/models.User"
                 },
                 "userID": {
+                    "description": "用户ID",
                     "type": "integer"
                 }
             }
         },
         "models.User": {
             "type": "object",
-            "required": [
-                "email",
-                "username"
-            ],
             "properties": {
-                "createdAt": {
-                    "description": "加入时间",
-                    "type": "string"
-                },
-                "email": {
-                    "description": "邮箱",
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isActive": {
-                    "description": "是否激活",
+                "admin_role_in_auth": {
+                    "description": "AdminRoleInAuth to store the admin privilege granted by external authentication provider",
                     "type": "boolean"
                 },
-                "lastLoginAt": {
-                    "description": "最后登录时间",
+                "comment": {
                     "type": "string"
                 },
-                "phone": {
-                    "description": "电话",
+                "creation_time": {
                     "type": "string"
                 },
-                "role": {
-                    "description": "角色，不同关联对象下表示的角色不同, 用来做join查询的时候处理角色字段的(请勿删除)",
+                "deleted": {
+                    "type": "boolean"
+                },
+                "email": {
                     "type": "string"
                 },
-                "source": {
-                    "type": "string"
-                },
-                "systemRole": {
+                "oidc_user_meta": {
                     "type": "object",
-                    "$ref": "#/definitions/models.SystemRole"
+                    "$ref": "#/definitions/models.OIDCUser"
                 },
-                "systemRoleID": {
+                "password": {
+                    "type": "string"
+                },
+                "password_version": {
+                    "type": "string"
+                },
+                "realname": {
+                    "type": "string"
+                },
+                "reset_uuid": {
+                    "type": "string"
+                },
+                "role_id": {
+                    "description": "if this field is named as \"RoleID\", beego orm can not map role_id\nto it.",
                     "type": "integer"
                 },
-                "tenants": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Tenant"
-                    }
+                "role_name": {
+                    "type": "string"
+                },
+                "sysadmin_flag": {
+                    "type": "boolean"
+                },
+                "update_time": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 },
                 "username": {
-                    "description": "用户名",
                     "type": "string"
                 }
             }
         },
         "models.UserCreate": {
             "type": "object",
-            "required": [
-                "email",
-                "username"
-            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -25829,13 +26131,14 @@ var doc = `{
             }
         },
         "types.Timestamp": {
-            "type": "object"
-        },
-        "types.UInt32Value": {
             "type": "object",
             "properties": {
-                "value": {
-                    "description": "The uint32 value.",
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
                     "type": "integer"
                 }
             }
@@ -27323,6 +27626,22 @@ var doc = `{
                 "server": {
                     "description": "Server is the hostname or IP address of the NFS server.\nMore info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
                     "type": "string"
+                }
+            }
+        },
+        "v1.NamespaceSelector": {
+            "type": "object",
+            "properties": {
+                "any": {
+                    "description": "Boolean describing whether all namespaces are selected in contrast to a\nlist restricting them.",
+                    "type": "boolean"
+                },
+                "matchNames": {
+                    "description": "List of namespace names.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -28872,44 +29191,208 @@ var doc = `{
         "v1.Probe": {
             "type": "object",
             "properties": {
-                "exec": {
-                    "description": "One and only one of the following should be specified.\nExec specifies the action to take.\n+optional",
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
                     "type": "object",
-                    "$ref": "#/definitions/v1.ExecAction"
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
-                "failureThreshold": {
-                    "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 3. Minimum value is 1.\n+optional",
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "Time"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
                     "type": "integer"
                 },
-                "httpGet": {
-                    "description": "HTTPGet specifies the http request to perform.\n+optional",
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "Time"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
                     "type": "object",
-                    "$ref": "#/definitions/v1.HTTPGetAction"
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
-                "initialDelaySeconds": {
-                    "description": "Number of seconds after the container has started before liveness probes are initiated.\nMore info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes\n+optional",
-                    "type": "integer"
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "type": "ManagedFieldsEntry"
+                    }
                 },
-                "periodSeconds": {
-                    "description": "How often (in seconds) to perform the probe.\nDefault to 10 seconds. Minimum value is 1.\n+optional",
-                    "type": "integer"
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
                 },
-                "successThreshold": {
-                    "description": "Minimum consecutive successes for the probe to be considered successful after having failed.\nDefaults to 1. Must be 1 for liveness and startup. Minimum value is 1.\n+optional",
-                    "type": "integer"
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
                 },
-                "tcpSocket": {
-                    "description": "TCPSocket specifies an action involving a TCP port.\nTCP hooks not yet supported\nTODO: implement a realistic TCP lifecycle hook\n+optional",
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Specification of desired Ingress selection for target discovery by Prometheus.",
                     "type": "object",
-                    "$ref": "#/definitions/v1.TCPSocketAction"
+                    "$ref": "#/definitions/v1.ProbeSpec"
                 },
-                "terminationGracePeriodSeconds": {
-                    "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure.\nThe grace period is the duration in seconds after the processes running in the pod are sent\na termination signal and the time when the processes are forcibly halted with a kill signal.\nSet this value longer than the expected cleanup time for your process.\nIf this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this\nvalue overrides the value provided by the pod spec.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down).\nThis is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate.\n+optional",
-                    "type": "integer"
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
+                }
+            }
+        },
+        "v1.ProbeSpec": {
+            "type": "object",
+            "properties": {
+                "interval": {
+                    "description": "Interval at which targets are probed using the configured prober.\nIf not specified Prometheus' global scrape interval is used.",
+                    "type": "string"
                 },
-                "timeoutSeconds": {
-                    "description": "Number of seconds after which the probe times out.\nDefaults to 1 second. Minimum value is 1.\nMore info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes\n+optional",
-                    "type": "integer"
+                "jobName": {
+                    "description": "The job name assigned to scraped metrics by default.",
+                    "type": "string"
+                },
+                "module": {
+                    "description": "The module to use for probing specifying how to probe the target.\nExample module configuring in the blackbox exporter:\nhttps://github.com/prometheus/blackbox_exporter/blob/master/example.yml",
+                    "type": "string"
+                },
+                "prober": {
+                    "description": "Specification for the prober to use for probing targets.\nThe prober.URL parameter is required. Targets cannot be probed if left empty.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.ProberSpec"
+                },
+                "scrapeTimeout": {
+                    "description": "Timeout for scraping metrics from the Prometheus exporter.",
+                    "type": "string"
+                },
+                "targets": {
+                    "description": "Targets defines a set of static and/or dynamically discovered targets to be probed using the prober.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.ProbeTargets"
+                }
+            }
+        },
+        "v1.ProbeTargetIngress": {
+            "type": "object",
+            "properties": {
+                "namespaceSelector": {
+                    "description": "Select Ingress objects by namespace.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.NamespaceSelector"
+                },
+                "relabelingConfigs": {
+                    "description": "RelabelConfigs to apply to samples before ingestion.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.RelabelConfig"
+                    }
+                },
+                "selector": {
+                    "description": "Select Ingress objects by labels.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.LabelSelector"
+                }
+            }
+        },
+        "v1.ProbeTargetStaticConfig": {
+            "type": "object",
+            "properties": {
+                "labels": {
+                    "description": "Labels assigned to all metrics scraped from the targets.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "relabelingConfigs": {
+                    "description": "RelabelConfigs to apply to samples before ingestion.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.RelabelConfig"
+                    }
+                },
+                "static": {
+                    "description": "Targets is a list of URLs to probe using the configured prober.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "v1.ProbeTargets": {
+            "type": "object",
+            "properties": {
+                "ingress": {
+                    "description": "Ingress defines the set of dynamically discovered ingress objects which hosts are considered for probing.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.ProbeTargetIngress"
+                },
+                "staticConfig": {
+                    "description": "StaticConfig defines static targets which are considers for probing.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#static_config.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.ProbeTargetStaticConfig"
+                }
+            }
+        },
+        "v1.ProberSpec": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "description": "Path to collect metrics from.\nDefaults to ` + "`" + `/probe` + "`" + `.",
+                    "type": "string"
+                },
+                "scheme": {
+                    "description": "HTTP scheme to use for scraping.\nDefaults to ` + "`" + `http` + "`" + `.",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "Mandatory URL of the prober.",
+                    "type": "string"
                 }
             }
         },
@@ -28999,6 +29482,42 @@ var doc = `{
                 }
             }
         },
+        "v1.RelabelConfig": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "Action to perform based on regex matching. Default is 'replace'",
+                    "type": "string"
+                },
+                "modulus": {
+                    "description": "Modulus to take of the hash of the source label values.",
+                    "type": "integer"
+                },
+                "regex": {
+                    "description": "Regular expression against which the extracted value is matched. Default is '(.*)'",
+                    "type": "string"
+                },
+                "replacement": {
+                    "description": "Replacement value against which a regex replace is performed if the\nregular expression matches. Regex capture groups are available. Default is '$1'",
+                    "type": "string"
+                },
+                "separator": {
+                    "description": "Separator placed between concatenated source label values. default is ';'.",
+                    "type": "string"
+                },
+                "sourceLabels": {
+                    "description": "The source labels select values from existing labels. Their content is concatenated\nusing the configured separator and matched against the configured regular expression\nfor the replace, keep, and drop actions.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "targetLabel": {
+                    "description": "Label to which the resulting value is written in a replace action.\nIt is mandatory for replace actions. Regex capture groups are available.",
+                    "type": "string"
+                }
+            }
+        },
         "v1.ResourceFieldSelector": {
             "type": "object",
             "properties": {
@@ -29053,28 +29572,54 @@ var doc = `{
                 }
             }
         },
+        "v1.Rule": {
+            "type": "object",
+            "properties": {
+                "alert": {
+                    "type": "string"
+                },
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "expr": {
+                    "type": "object",
+                    "$ref": "#/definitions/intstr.IntOrString"
+                },
+                "for": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "record": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.RuleGroup": {
             "type": "object",
             "properties": {
-                "file": {
-                    "type": "string"
-                },
                 "interval": {
-                    "type": "number"
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
                 },
+                "partial_response_strategy": {
+                    "type": "string"
+                },
                 "rules": {
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Rules"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.Rule"
+                    }
                 }
-            }
-        },
-        "v1.Rules": {
-            "type": "array",
-            "items": {
-                "type": "object"
             }
         },
         "v1.SELinuxOptions": {
@@ -32172,129 +32717,6 @@ var doc = `{
                 }
             }
         },
-        "v1alpha3.ClientTLSSettings": {
-            "type": "object",
-            "properties": {
-                "ca_certificates": {
-                    "description": "OPTIONAL: The path to the file containing certificate authority\ncertificates to use in verifying a presented server certificate. If\nomitted, the proxy will not verify the server's certificate.\nShould be empty if mode is ` + "`" + `ISTIO_MUTUAL` + "`" + `.",
-                    "type": "string"
-                },
-                "client_certificate": {
-                    "description": "REQUIRED if mode is ` + "`" + `MUTUAL` + "`" + `. The path to the file holding the\nclient-side TLS certificate to use.\nShould be empty if mode is ` + "`" + `ISTIO_MUTUAL` + "`" + `.",
-                    "type": "string"
-                },
-                "credential_name": {
-                    "description": "The name of the secret that holds the TLS certs for the\nclient including the CA certificates. Secret must exist in the\nsame namespace with the proxy using the certificates.\nThe secret (of type ` + "`" + `generic` + "`" + `)should contain the\nfollowing keys and values: ` + "`" + `key: \u003cprivateKey\u003e` + "`" + `,\n` + "`" + `cert: \u003cserverCert\u003e` + "`" + `, ` + "`" + `cacert: \u003cCACertificate\u003e` + "`" + `.\nSecret of type tls for client certificates along with\nca.crt key for CA certificates is also supported.\nOnly one of client certificates and CA certificate\nor credentialName can be specified.\n\n**NOTE:** This field is currently applicable only at gateways.\nSidecars will continue to use the certificate paths.",
-                    "type": "string"
-                },
-                "mode": {
-                    "description": "Indicates whether connections to this port should be secured\nusing TLS. The value of this field determines how TLS is enforced.",
-                    "type": "integer"
-                },
-                "private_key": {
-                    "description": "REQUIRED if mode is ` + "`" + `MUTUAL` + "`" + `. The path to the file holding the\nclient's private key.\nShould be empty if mode is ` + "`" + `ISTIO_MUTUAL` + "`" + `.",
-                    "type": "string"
-                },
-                "sni": {
-                    "description": "SNI string to present to the server during TLS handshake.",
-                    "type": "string"
-                },
-                "subject_alt_names": {
-                    "description": "A list of alternate names to verify the subject identity in the\ncertificate. If specified, the proxy will verify that the server\ncertificate's subject alt name matches one of the specified values.\nIf specified, this list overrides the value of subject_alt_names\nfrom the ServiceEntry.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "v1alpha3.ConnectionPoolSettings": {
-            "type": "object",
-            "properties": {
-                "http": {
-                    "description": "HTTP connection pool settings.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ConnectionPoolSettings_HTTPSettings"
-                },
-                "tcp": {
-                    "description": "Settings common to both HTTP and TCP upstream connections.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ConnectionPoolSettings_TCPSettings"
-                }
-            }
-        },
-        "v1alpha3.ConnectionPoolSettings_HTTPSettings": {
-            "type": "object",
-            "properties": {
-                "h2_upgrade_policy": {
-                    "description": "Specify if http1.1 connection should be upgraded to http2 for the associated destination.",
-                    "type": "integer"
-                },
-                "http1_max_pending_requests": {
-                    "description": "Maximum number of pending HTTP requests to a destination. Default 2^32-1.",
-                    "type": "integer"
-                },
-                "http2_max_requests": {
-                    "description": "Maximum number of requests to a backend. Default 2^32-1.",
-                    "type": "integer"
-                },
-                "idle_timeout": {
-                    "description": "The idle timeout for upstream connection pool connections. The idle timeout\nis defined as the period in which there are no active requests.\nIf not set, the default is 1 hour. When the idle timeout is reached,\nthe connection will be closed. If the connection is an HTTP/2\nconnection a drain sequence will occur prior to closing the connection.\nNote that request based timeouts mean that HTTP/2 PINGs will not\nkeep the connection alive. Applies to both HTTP1.1 and HTTP2 connections.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                },
-                "max_requests_per_connection": {
-                    "description": "Maximum number of requests per connection to a backend. Setting this\nparameter to 1 disables keep alive. Default 0, meaning \"unlimited\",\nup to 2^29.",
-                    "type": "integer"
-                },
-                "max_retries": {
-                    "description": "Maximum number of retries that can be outstanding to all hosts in a\ncluster at a given time. Defaults to 2^32-1.",
-                    "type": "integer"
-                },
-                "use_client_protocol": {
-                    "description": "If set to true, client protocol will be preserved while initiating connection to backend.\nNote that when this is set to true, h2_upgrade_policy will be ineffective i.e. the client\nconnections will not be upgraded to http2.",
-                    "type": "boolean"
-                }
-            }
-        },
-        "v1alpha3.ConnectionPoolSettings_TCPSettings": {
-            "type": "object",
-            "properties": {
-                "connect_timeout": {
-                    "description": "TCP connection timeout. format:\n1h/1m/1s/1ms. MUST BE \u003e=1ms. Default is 10s.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                },
-                "max_connections": {
-                    "description": "Maximum number of HTTP1 /TCP connections to a destination host. Default 2^32-1.",
-                    "type": "integer"
-                },
-                "tcp_keepalive": {
-                    "description": "If set then set SO_KEEPALIVE on the socket to enable TCP Keepalives.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ConnectionPoolSettings_TCPSettings_TcpKeepalive"
-                }
-            }
-        },
-        "v1alpha3.ConnectionPoolSettings_TCPSettings_TcpKeepalive": {
-            "type": "object",
-            "properties": {
-                "interval": {
-                    "description": "The time duration between keep-alive probes.\nDefault is to use the OS level configuration\n(unless overridden, Linux defaults to 75s.)",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                },
-                "probes": {
-                    "description": "Maximum number of keepalive probes to send without response before\ndeciding the connection is dead. Default is to use the OS level configuration\n(unless overridden, Linux defaults to 9.)",
-                    "type": "integer"
-                },
-                "time": {
-                    "description": "The time duration a connection needs to be idle before keep-alive\nprobes start being sent. Default is to use the OS level configuration\n(unless overridden, Linux defaults to 7200s (ie 2 hours.)",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                }
-            }
-        },
         "v1alpha3.Destination": {
             "type": "object",
             "properties": {
@@ -32316,47 +32738,206 @@ var doc = `{
         "v1alpha3.DestinationRule": {
             "type": "object",
             "properties": {
-                "export_to": {
-                    "description": "A list of namespaces to which this destination rule is exported.\nThe resolution of a destination rule to apply to a service occurs in the\ncontext of a hierarchy of namespaces. Exporting a destination rule allows\nit to be included in the resolution hierarchy for services in\nother namespaces. This feature provides a mechanism for service owners\nand mesh administrators to control the visibility of destination rules\nacross namespace boundaries.\n\nIf no namespaces are specified then the destination rule is exported to all\nnamespaces by default.\n\nThe value \".\" is reserved and defines an export to the same namespace that\nthe destination rule is declared in. Similarly, the value \"*\" is reserved and\ndefines an export to all namespaces.",
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "host": {
-                    "description": "The name of a service from the service registry. Service\nnames are looked up from the platform's service registry (e.g.,\nKubernetes services, Consul services, etc.) and from the hosts\ndeclared by [ServiceEntries](https://istio.io/docs/reference/config/networking/service-entry/#ServiceEntry). Rules defined for\nservices that do not exist in the service registry will be ignored.\n\n*Note for Kubernetes users*: When short names are used (e.g. \"reviews\"\ninstead of \"reviews.default.svc.cluster.local\"), Istio will interpret\nthe short name based on the namespace of the rule, not the service. A\nrule in the \"default\" namespace containing a host \"reviews\" will be\ninterpreted as \"reviews.default.svc.cluster.local\", irrespective of\nthe actual namespace associated with the reviews service. _To avoid\npotential misconfigurations, it is recommended to always use fully\nqualified domain names over short names._\n\nNote that the host field applies to both HTTP and TCP services.",
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
                     "type": "string"
                 },
-                "subsets": {
-                    "description": "One or more named sets that represent individual versions of a\nservice. Traffic policies can be overridden at subset level.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1alpha3.Subset"
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
                     }
                 },
-                "traffic_policy": {
-                    "description": "Traffic policies to apply (load balancing policy, connection pool\nsizes, outlier detection).",
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                    }
+                },
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
                     "type": "object",
-                    "$ref": "#/definitions/v1alpha3.TrafficPolicy"
+                    "$ref": "#/definitions/v1alpha3.DestinationRule"
+                },
+                "status": {
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
                 }
             }
         },
         "v1alpha3.Gateway": {
             "type": "object",
             "properties": {
-                "selector": {
-                    "description": "One or more labels that indicate a specific set of pods/VMs\non which this gateway configuration should be applied.\nBy default workloads are searched across all namespaces based on label selectors.\nThis implies that a gateway resource in the namespace \"foo\" can select pods in\nthe namespace \"bar\" based on labels.\nThis behavior can be controlled via the ` + "`" + `PILOT_SCOPE_GATEWAY_TO_NAMESPACE` + "`" + `\nenvironment variable in istiod. If this variable is set\nto true, the scope of label search is restricted to the configuration\nnamespace in which the the resource is present. In other words, the Gateway\nresource must reside in the same namespace as the gateway workload\ninstance.\nIf selector is nil, the Gateway will be applied to all workloads.",
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
                 },
-                "servers": {
-                    "description": "A list of server specifications.",
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/v1alpha3.Server"
+                        "type": "string"
                     }
+                },
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                    }
+                },
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.Gateway"
+                },
+                "status": {
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
                 }
             }
         },
@@ -32568,6 +33149,53 @@ var doc = `{
                 }
             }
         },
+        "v1alpha3.IstioEgressListener": {
+            "type": "object",
+            "properties": {
+                "bind": {
+                    "description": "The IP or the Unix domain socket to which the listener should be bound\nto. Port MUST be specified if bind is not empty. Format: ` + "`" + `x.x.x.x` + "`" + ` or\n` + "`" + `unix:///path/to/uds` + "`" + ` or ` + "`" + `unix://@foobar` + "`" + ` (Linux abstract namespace). If\nomitted, Istio will automatically configure the defaults based on imported\nservices, the workload instances to which this configuration is applied to and\nthe captureMode. If captureMode is ` + "`" + `NONE` + "`" + `, bind will default to\n127.0.0.1.",
+                    "type": "string"
+                },
+                "capture_mode": {
+                    "description": "When the bind address is an IP, the captureMode option dictates\nhow traffic to the listener is expected to be captured (or not).\ncaptureMode must be DEFAULT or ` + "`" + `NONE` + "`" + ` for Unix domain socket binds.",
+                    "type": "integer"
+                },
+                "hosts": {
+                    "description": "One or more service hosts exposed by the listener\nin ` + "`" + `namespace/dnsName` + "`" + ` format. Services in the specified namespace\nmatching ` + "`" + `dnsName` + "`" + ` will be exposed.\nThe corresponding service can be a service in the service registry\n(e.g., a Kubernetes or cloud foundry service) or a service specified\nusing a ` + "`" + `ServiceEntry` + "`" + ` or ` + "`" + `VirtualService` + "`" + ` configuration. Any\nassociated ` + "`" + `DestinationRule` + "`" + ` in the same namespace will also be used.\n\nThe ` + "`" + `dnsName` + "`" + ` should be specified using FQDN format, optionally including\na wildcard character in the left-most component (e.g., ` + "`" + `prod/*.example.com` + "`" + `).\nSet the ` + "`" + `dnsName` + "`" + ` to ` + "`" + `*` + "`" + ` to select all services from the specified namespace\n(e.g., ` + "`" + `prod/*` + "`" + `).\n\nThe ` + "`" + `namespace` + "`" + ` can be set to ` + "`" + `*` + "`" + `, ` + "`" + `.` + "`" + `, or ` + "`" + `~` + "`" + `, representing any, the current,\nor no namespace, respectively. For example, ` + "`" + `*/foo.example.com` + "`" + ` selects the\nservice from any available namespace while ` + "`" + `./foo.example.com` + "`" + ` only selects\nthe service from the namespace of the sidecar. If a host is set to ` + "`" + `*/*` + "`" + `,\nIstio will configure the sidecar to be able to reach every service in the\nmesh that is exported to the sidecar's namespace. The value ` + "`" + `~/*` + "`" + ` can be used\nto completely trim the configuration for sidecars that simply receive traffic\nand respond, but make no outbound connections of their own.\n\nNOTE: Only services and configuration artifacts exported to the sidecar's\nnamespace (e.g., ` + "`" + `exportTo` + "`" + ` value of ` + "`" + `*` + "`" + `) can be referenced.\nPrivate configurations (e.g., ` + "`" + `exportTo` + "`" + ` set to ` + "`" + `.` + "`" + `) will\nnot be available. Refer to the ` + "`" + `exportTo` + "`" + ` setting in ` + "`" + `VirtualService` + "`" + `,\n` + "`" + `DestinationRule` + "`" + `, and ` + "`" + `ServiceEntry` + "`" + ` configurations for details.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "port": {
+                    "description": "The port associated with the listener. If using Unix domain socket,\nuse 0 as the port number, with a valid protocol. The port if\nspecified, will be used as the default destination port associated\nwith the imported hosts. If the port is omitted, Istio will infer the\nlistener ports based on the imported hosts. Note that when multiple\negress listeners are specified, where one or more listeners have\nspecific ports while others have no port, the hosts exposed on a\nlistener port will be based on the listener with the most specific\nport.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.Port"
+                }
+            }
+        },
+        "v1alpha3.IstioIngressListener": {
+            "type": "object",
+            "properties": {
+                "bind": {
+                    "description": "The IP to which the listener should be bound. Must be in the\nformat ` + "`" + `x.x.x.x` + "`" + `. Unix domain socket addresses are not allowed in\nthe bind field for ingress listeners. If omitted, Istio will\nautomatically configure the defaults based on imported services\nand the workload instances to which this configuration is applied\nto.",
+                    "type": "string"
+                },
+                "capture_mode": {
+                    "description": "The captureMode option dictates how traffic to the listener is\nexpected to be captured (or not).",
+                    "type": "integer"
+                },
+                "default_endpoint": {
+                    "description": "The IP endpoint or Unix domain socket to which\ntraffic should be forwarded to. This configuration can be used to\nredirect traffic arriving at the bind ` + "`" + `IP:Port` + "`" + ` on the sidecar to a ` + "`" + `localhost:port` + "`" + `\nor Unix domain socket where the application workload instance is listening for\nconnections. Arbitrary IPs are not supported. Format should be one of ` + "`" + `127.0.0.1:PORT` + "`" + `, ` + "`" + `0.0.0.0:PORT` + "`" + `\n(which will forward to the instance IP), or ` + "`" + `unix:///path/to/socket` + "`" + `",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "The port associated with the listener.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.Port"
+                }
+            }
+        },
         "v1alpha3.L4MatchAttributes": {
             "type": "object",
             "properties": {
@@ -32606,117 +33234,16 @@ var doc = `{
                 }
             }
         },
-        "v1alpha3.LoadBalancerSettings": {
+        "v1alpha3.OutboundTrafficPolicy": {
             "type": "object",
             "properties": {
-                "lbPolicy": {
-                    "description": "Upstream load balancing policy.\n\nTypes that are valid to be assigned to LbPolicy:\n\t*LoadBalancerSettings_Simple\n\t*LoadBalancerSettings_ConsistentHash",
+                "egress_proxy": {
+                    "description": "Specifies the details of the egress proxy to which unknown\ntraffic should be forwarded to from the sidecar. Valid only if\nthe mode is set to ALLOW_ANY. If not specified when the mode is\nALLOW_ANY, the sidecar will send the unknown traffic directly to\nthe IP requested by the application.\n\n** NOTE 1**: The specified egress host must be imported in the\negress section for the traffic forwarding to work.\n\n** NOTE 2**: An Envoy based egress gateway is unlikely to be able\nto handle plain text TCP connections forwarded from the sidecar.\nEnvoy's dynamic forward proxy can handle only HTTP and TLS\nconnections.\n$hide_from_docs",
                     "type": "object",
-                    "$ref": "#/definitions/v1alpha3.isLoadBalancerSettings_LbPolicy"
+                    "$ref": "#/definitions/v1alpha3.Destination"
                 },
-                "locality_lb_setting": {
-                    "description": "Locality load balancer settings, this will override mesh wide settings in entirety, meaning no merging would be performed\nbetween this object and the object one in MeshConfig",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.LocalityLoadBalancerSetting"
-                }
-            }
-        },
-        "v1alpha3.LocalityLoadBalancerSetting": {
-            "type": "object",
-            "properties": {
-                "distribute": {
-                    "description": "Optional: only one of distribute or failover can be set.\nExplicitly specify loadbalancing weight across different zones and geographical locations.\nRefer to [Locality weighted load balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/locality_weight)\nIf empty, the locality weight is set according to the endpoints number within it.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1alpha3.LocalityLoadBalancerSetting_Distribute"
-                    }
-                },
-                "enabled": {
-                    "description": "enable locality load balancing, this is DestinationRule-level and will override mesh wide settings in entirety.\ne.g. true means that turn on locality load balancing for this DestinationRule no matter what mesh wide settings is.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.BoolValue"
-                },
-                "failover": {
-                    "description": "Optional: only failover or distribute can be set.\nExplicitly specify the region traffic will land on when endpoints in local region becomes unhealthy.\nShould be used together with OutlierDetection to detect unhealthy endpoints.\nNote: if no OutlierDetection specified, this will not take effect.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1alpha3.LocalityLoadBalancerSetting_Failover"
-                    }
-                }
-            }
-        },
-        "v1alpha3.LocalityLoadBalancerSetting_Distribute": {
-            "type": "object",
-            "properties": {
-                "from": {
-                    "description": "Originating locality, '/' separated, e.g. 'region/zone/sub_zone'.",
-                    "type": "string"
-                },
-                "to": {
-                    "description": "Map of upstream localities to traffic distribution weights. The sum of\nall weights should be 100. Any locality not present will\nreceive no traffic.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "integer"
-                    }
-                }
-            }
-        },
-        "v1alpha3.LocalityLoadBalancerSetting_Failover": {
-            "type": "object",
-            "properties": {
-                "from": {
-                    "description": "Originating region.",
-                    "type": "string"
-                },
-                "to": {
-                    "description": "Destination region the traffic will fail over to when endpoints in\nthe 'from' region becomes unhealthy.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1alpha3.OutlierDetection": {
-            "type": "object",
-            "properties": {
-                "base_ejection_time": {
-                    "description": "Minimum ejection duration. A host will remain ejected for a period\nequal to the product of minimum ejection duration and the number of\ntimes the host has been ejected. This technique allows the system to\nautomatically increase the ejection period for unhealthy upstream\nservers. format: 1h/1m/1s/1ms. MUST BE \u003e=1ms. Default is 30s.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                },
-                "consecutive_5xx_errors": {
-                    "description": "Number of 5xx errors before a host is ejected from the connection pool.\nWhen the upstream host is accessed over an opaque TCP connection, connect\ntimeouts, connection error/failure and request failure events qualify as a\n5xx error.\nThis feature defaults to 5 but can be disabled by setting the value to 0.\n\nNote that consecutive_gateway_errors and consecutive_5xx_errors can be\nused separately or together. Because the errors counted by\nconsecutive_gateway_errors are also included in consecutive_5xx_errors,\nif the value of consecutive_gateway_errors is greater than or equal to\nthe value of consecutive_5xx_errors, consecutive_gateway_errors will have\nno effect.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.UInt32Value"
-                },
-                "consecutive_errors": {
-                    "description": "Number of errors before a host is ejected from the connection\npool. Defaults to 5. When the upstream host is accessed over HTTP, a\n502, 503, or 504 return code qualifies as an error. When the upstream host\nis accessed over an opaque TCP connection, connect timeouts and\nconnection error/failure events qualify as an error.\n$hide_from_docs",
+                "mode": {
                     "type": "integer"
-                },
-                "consecutive_gateway_errors": {
-                    "description": "Number of gateway errors before a host is ejected from the connection pool.\nWhen the upstream host is accessed over HTTP, a 502, 503, or 504 return\ncode qualifies as a gateway error. When the upstream host is accessed over\nan opaque TCP connection, connect timeouts and connection error/failure\nevents qualify as a gateway error.\nThis feature is disabled by default or when set to the value 0.\n\nNote that consecutive_gateway_errors and consecutive_5xx_errors can be\nused separately or together. Because the errors counted by\nconsecutive_gateway_errors are also included in consecutive_5xx_errors,\nif the value of consecutive_gateway_errors is greater than or equal to\nthe value of consecutive_5xx_errors, consecutive_gateway_errors will have\nno effect.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.UInt32Value"
-                },
-                "consecutive_local_origin_failures": {
-                    "description": "The number of consecutive locally originated failures before ejection\noccurs. Defaults to 5. Parameter takes effect only when split_external_local_origin_errors\nis set to true.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.UInt32Value"
-                },
-                "interval": {
-                    "description": "Time interval between ejection sweep analysis. format:\n1h/1m/1s/1ms. MUST BE \u003e=1ms. Default is 10s.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                },
-                "max_ejection_percent": {
-                    "description": "Maximum % of hosts in the load balancing pool for the upstream\nservice that can be ejected. Defaults to 10%.",
-                    "type": "integer"
-                },
-                "min_health_percent": {
-                    "description": "Outlier detection will be enabled as long as the associated load balancing\npool has at least min_health_percent hosts in healthy mode. When the\npercentage of healthy hosts in the load balancing pool drops below this\nthreshold, outlier detection will be disabled and the proxy will load balance\nacross all hosts in the pool (healthy and unhealthy). The threshold can be\ndisabled by setting it to 0%. The default is 0% as it's not typically\napplicable in k8s environments with few pods per service.",
-                    "type": "integer"
-                },
-                "split_external_local_origin_errors": {
-                    "description": "Determines whether to distinguish local origin failures from external errors. If set to true\nconsecutive_local_origin_failure is taken into account for outlier detection calculations.\nThis should be used when you want to derive the outlier detection status based on the errors\nseen locally such as failure to connect, timeout while connecting etc. rather than the status code\nretuned by upstream service. This is especially useful when the upstream service explicitly returns\na 5xx for some requests and you want to ignore those responses from upstream service while determining\nthe outlier detection status of a host.\nDefaults to false.",
-                    "type": "boolean"
                 }
             }
         },
@@ -32772,308 +33299,92 @@ var doc = `{
                 }
             }
         },
-        "v1alpha3.Server": {
-            "type": "object",
-            "properties": {
-                "bind": {
-                    "description": "The ip or the Unix domain socket to which the listener should be bound\nto. Format: ` + "`" + `x.x.x.x` + "`" + ` or ` + "`" + `unix:///path/to/uds` + "`" + ` or ` + "`" + `unix://@foobar` + "`" + `\n(Linux abstract namespace). When using Unix domain sockets, the port\nnumber should be 0.\nThis can be used to restrict the reachability of this server to be gateway internal only.\nThis is typically used when a gateway needs to communicate to another mesh service\ne.g. publishing metrics. In such case, the server created with the\nspecified bind will not be available to external gateway clients.",
-                    "type": "string"
-                },
-                "default_endpoint": {
-                    "description": "The loopback IP endpoint or Unix domain socket to which traffic should\nbe forwarded to by default. Format should be ` + "`" + `127.0.0.1:PORT` + "`" + ` or\n` + "`" + `unix:///path/to/socket` + "`" + ` or ` + "`" + `unix://@foobar` + "`" + ` (Linux abstract namespace).\nNOT IMPLEMENTED.\n$hide_from_docs",
-                    "type": "string"
-                },
-                "hosts": {
-                    "description": "One or more hosts exposed by this gateway.\nWhile typically applicable to\nHTTP services, it can also be used for TCP services using TLS with SNI.\nA host is specified as a ` + "`" + `dnsName` + "`" + ` with an optional ` + "`" + `namespace/` + "`" + ` prefix.\nThe ` + "`" + `dnsName` + "`" + ` should be specified using FQDN format, optionally including\na wildcard character in the left-most component (e.g., ` + "`" + `prod/*.example.com` + "`" + `).\nSet the ` + "`" + `dnsName` + "`" + ` to ` + "`" + `*` + "`" + ` to select all ` + "`" + `VirtualService` + "`" + ` hosts from the\nspecified namespace (e.g.,` + "`" + `prod/*` + "`" + `).\n\nThe ` + "`" + `namespace` + "`" + ` can be set to ` + "`" + `*` + "`" + ` or ` + "`" + `.` + "`" + `, representing any or the current\nnamespace, respectively. For example, ` + "`" + `*/foo.example.com` + "`" + ` selects the\nservice from any available namespace while ` + "`" + `./foo.example.com` + "`" + ` only selects\nthe service from the namespace of the sidecar. The default, if no ` + "`" + `namespace/` + "`" + `\nis specified, is ` + "`" + `*/` + "`" + `, that is, select services from any namespace.\nAny associated ` + "`" + `DestinationRule` + "`" + ` in the selected namespace will also be used.\n\nA ` + "`" + `VirtualService` + "`" + ` must be bound to the gateway and must have one or\nmore hosts that match the hosts specified in a server. The match\ncould be an exact match or a suffix match with the server's hosts. For\nexample, if the server's hosts specifies ` + "`" + `*.example.com` + "`" + `, a\n` + "`" + `VirtualService` + "`" + ` with hosts ` + "`" + `dev.example.com` + "`" + ` or ` + "`" + `prod.example.com` + "`" + ` will\nmatch. However, a ` + "`" + `VirtualService` + "`" + ` with host ` + "`" + `example.com` + "`" + ` or\n` + "`" + `newexample.com` + "`" + ` will not match.\n\nNOTE: Only virtual services exported to the gateway's namespace\n(e.g., ` + "`" + `exportTo` + "`" + ` value of ` + "`" + `*` + "`" + `) can be referenced.\nPrivate configurations (e.g., ` + "`" + `exportTo` + "`" + ` set to ` + "`" + `.` + "`" + `) will not be\navailable. Refer to the ` + "`" + `exportTo` + "`" + ` setting in ` + "`" + `VirtualService` + "`" + `,\n` + "`" + `DestinationRule` + "`" + `, and ` + "`" + `ServiceEntry` + "`" + ` configurations for details.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "An optional name of the server, when set must be unique across all servers.\nThis will be used for variety of purposes like prefixing stats generated with\nthis name etc.",
-                    "type": "string"
-                },
-                "port": {
-                    "description": "The Port on which the proxy should listen for incoming\nconnections.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.Port"
-                },
-                "tls": {
-                    "description": "Set of TLS related options that govern the server's behavior. Use\nthese options to control if all http requests should be redirected to\nhttps, and the TLS modes to use.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ServerTLSSettings"
-                }
-            }
-        },
-        "v1alpha3.ServerTLSSettings": {
-            "type": "object",
-            "properties": {
-                "ca_certificates": {
-                    "description": "REQUIRED if mode is ` + "`" + `MUTUAL` + "`" + `. The path to a file containing\ncertificate authority certificates to use in verifying a presented\nclient side certificate.",
-                    "type": "string"
-                },
-                "cipher_suites": {
-                    "description": "Optional: If specified, only support the specified cipher list.\nOtherwise default to the default cipher list supported by Envoy.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "credential_name": {
-                    "description": "For gateways running on Kubernetes, the name of the secret that\nholds the TLS certs including the CA certificates. Applicable\nonly on Kubernetes. The secret (of type ` + "`" + `generic` + "`" + `) should\ncontain the following keys and values: ` + "`" + `key:\n\u003cprivateKey\u003e` + "`" + ` and ` + "`" + `cert: \u003cserverCert\u003e` + "`" + `. For mutual TLS,\n` + "`" + `cacert: \u003cCACertificate\u003e` + "`" + ` can be provided in the same secret or\na separate secret named ` + "`" + `\u003csecret\u003e-cacert` + "`" + `.\nSecret of type tls for server certificates along with\nca.crt key for CA certificates is also supported.\nOnly one of server certificates and CA certificate\nor credentialName can be specified.",
-                    "type": "string"
-                },
-                "https_redirect": {
-                    "description": "If set to true, the load balancer will send a 301 redirect for\nall http connections, asking the clients to use HTTPS.",
-                    "type": "boolean"
-                },
-                "max_protocol_version": {
-                    "description": "Optional: Maximum TLS protocol version.",
-                    "type": "integer"
-                },
-                "min_protocol_version": {
-                    "description": "Optional: Minimum TLS protocol version.",
-                    "type": "integer"
-                },
-                "mode": {
-                    "description": "Optional: Indicates whether connections to this port should be\nsecured using TLS. The value of this field determines how TLS is\nenforced.",
-                    "type": "integer"
-                },
-                "private_key": {
-                    "description": "REQUIRED if mode is ` + "`" + `SIMPLE` + "`" + ` or ` + "`" + `MUTUAL` + "`" + `. The path to the file\nholding the server's private key.",
-                    "type": "string"
-                },
-                "server_certificate": {
-                    "description": "REQUIRED if mode is ` + "`" + `SIMPLE` + "`" + ` or ` + "`" + `MUTUAL` + "`" + `. The path to the file\nholding the server-side TLS certificate to use.",
-                    "type": "string"
-                },
-                "subject_alt_names": {
-                    "description": "A list of alternate names to verify the subject identity in the\ncertificate presented by the client.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "verify_certificate_hash": {
-                    "description": "An optional list of hex-encoded SHA-256 hashes of the\nauthorized client certificates. Both simple and colon separated\nformats are acceptable.\nNote: When both verify_certificate_hash and verify_certificate_spki\nare specified, a hash matching either value will result in the\ncertificate being accepted.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "verify_certificate_spki": {
-                    "description": "An optional list of base64-encoded SHA-256 hashes of the SKPIs of\nauthorized client certificates.\nNote: When both verify_certificate_hash and verify_certificate_spki\nare specified, a hash matching either value will result in the\ncertificate being accepted.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "v1alpha3.ServiceEntry": {
             "type": "object",
             "properties": {
-                "annotations": {
-                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
-                    "type": "object",
-                    "additionalProperties": {
+                "addresses": {
+                    "description": "The virtual IP addresses associated with the service. Could be CIDR\nprefix. For HTTP traffic, generated route configurations will include http route\ndomains for both the ` + "`" + `addresses` + "`" + ` and ` + "`" + `hosts` + "`" + ` field values and the destination will\nbe identified based on the HTTP Host/Authority header.\nIf one or more IP addresses are specified,\nthe incoming traffic will be identified as belonging to this service\nif the destination IP matches the IP/CIDRs specified in the addresses\nfield. If the Addresses field is empty, traffic will be identified\nsolely based on the destination port. In such scenarios, the port on\nwhich the service is being accessed must not be shared by any other\nservice in the mesh. In other words, the sidecar will behave as a\nsimple TCP proxy, forwarding incoming traffic on a specified port to\nthe specified destination endpoint IP/host. Unix domain socket\naddresses are not supported in this field.",
+                    "type": "array",
+                    "items": {
                         "type": "string"
                     }
                 },
-                "apiVersion": {
-                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-                    "type": "string"
+                "endpoints": {
+                    "description": "One or more endpoints associated with the service. Only one of\n` + "`" + `endpoints` + "`" + ` or ` + "`" + `workloadSelector` + "`" + ` can be specified.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.WorkloadEntry"
+                    }
                 },
-                "clusterName": {
-                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
-                    "type": "string"
+                "export_to": {
+                    "description": "A list of namespaces to which this service is exported. Exporting a service\nallows it to be used by sidecars, gateways and virtual services defined in\nother namespaces. This feature provides a mechanism for service owners\nand mesh administrators to control the visibility of services across\nnamespace boundaries.\n\nIf no namespaces are specified then the service is exported to all\nnamespaces by default.\n\nThe value \".\" is reserved and defines an export to the same namespace that\nthe service is declared in. Similarly the value \"*\" is reserved and\ndefines an export to all namespaces.\n\nFor a Kubernetes Service, the equivalent effect can be achieved by setting\nthe annotation \"networking.istio.io/exportTo\" to a comma-separated list\nof namespace names.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
-                "creationTimestamp": {
-                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
+                "hosts": {
+                    "description": "The hosts associated with the ServiceEntry. Could be a DNS\nname with wildcard prefix.\n\n1. The hosts field is used to select matching hosts in VirtualServices and DestinationRules.\n2. For HTTP traffic the HTTP Host/Authority header will be matched against the hosts field.\n3. For HTTPs or TLS traffic containing Server Name Indication (SNI), the SNI value\nwill be matched against the hosts field.\n\n**NOTE 1:** When resolution is set to type DNS and no endpoints\nare specified, the host field will be used as the DNS name of the\nendpoint to route traffic to.\n\n**NOTE 2:** If the hostname matches with the name of a service\nfrom another service registry such as Kubernetes that also\nsupplies its own set of endpoints, the ServiceEntry will be\ntreated as a decorator of the existing Kubernetes\nservice. Properties in the service entry will be added to the\nKubernetes service if applicable. Currently, the only the\nfollowing additional properties will be considered by ` + "`" + `istiod` + "`" + `:\n\n1. subjectAltNames: In addition to verifying the SANs of the\n   service accounts associated with the pods of the service, the\n   SANs specified here will also be verified.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
-                "deletionGracePeriodSeconds": {
-                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                "location": {
+                    "description": "Specify whether the service should be considered external to the mesh\nor part of the mesh.",
                     "type": "integer"
                 },
-                "deletionTimestamp": {
-                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "finalizers": {
-                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                "ports": {
+                    "description": "The ports associated with the external service. If the\nEndpoints are Unix domain socket addresses, there must be exactly one\nport.",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/v1alpha3.Port"
                     }
                 },
-                "generateName": {
-                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
-                    "type": "string"
-                },
-                "generation": {
-                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                "resolution": {
+                    "description": "Service discovery mode for the hosts. Care must be taken\nwhen setting the resolution mode to NONE for a TCP port without\naccompanying IP addresses. In such cases, traffic to any IP on\nsaid port will be allowed (i.e. ` + "`" + `0.0.0.0:\u003cport\u003e` + "`" + `).",
                     "type": "integer"
                 },
-                "kind": {
-                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
-                    "type": "object",
-                    "additionalProperties": {
+                "subject_alt_names": {
+                    "description": "If specified, the proxy will verify that the server certificate's\nsubject alternate name matches one of the specified values.\n\nNOTE: When using the workloadEntry with workloadSelectors, the\nservice account specified in the workloadEntry will also be used\nto derive the additional subject alternate names that should be\nverified.",
+                    "type": "array",
+                    "items": {
                         "type": "string"
                     }
                 },
-                "managedFields": {
-                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
-                    }
-                },
-                "name": {
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
-                    "type": "string"
-                },
-                "ownerReferences": {
-                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.OwnerReference"
-                    }
-                },
-                "resourceVersion": {
-                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
-                    "type": "string"
-                },
-                "selfLink": {
-                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
-                    "type": "string"
-                },
-                "spec": {
-                    "description": "Spec defines the implementation of this definition.\n+optional",
+                "workload_selector": {
+                    "description": "Applicable only for MESH_INTERNAL services. Only one of\n` + "`" + `endpoints` + "`" + ` or ` + "`" + `workloadSelector` + "`" + ` can be specified. Selects one\nor more Kubernetes pods or VM workloads (specified using\n` + "`" + `WorkloadEntry` + "`" + `) based on their labels. The ` + "`" + `WorkloadEntry` + "`" + ` object\nrepresenting the VMs should be defined in the same namespace as\nthe ServiceEntry.",
                     "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ServiceEntry"
-                },
-                "status": {
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha1.IstioStatus"
-                },
-                "uid": {
-                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
-                    "type": "string"
+                    "$ref": "#/definitions/v1alpha3.WorkloadSelector"
                 }
             }
         },
         "v1alpha3.Sidecar": {
             "type": "object",
             "properties": {
-                "annotations": {
-                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "apiVersion": {
-                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-                    "type": "string"
-                },
-                "clusterName": {
-                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
-                    "type": "string"
-                },
-                "creationTimestamp": {
-                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "deletionGracePeriodSeconds": {
-                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
-                    "type": "integer"
-                },
-                "deletionTimestamp": {
-                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "finalizers": {
-                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                "egress": {
+                    "description": "Egress specifies the configuration of the sidecar for processing\noutbound traffic from the attached workload instance to other\nservices in the mesh. If not specified, inherits the system\ndetected defaults from the namespace-wide or the global default Sidecar.",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/v1alpha3.IstioEgressListener"
                     }
                 },
-                "generateName": {
-                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
-                    "type": "string"
-                },
-                "generation": {
-                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
-                    "type": "integer"
-                },
-                "kind": {
-                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "managedFields": {
-                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                "ingress": {
+                    "description": "Ingress specifies the configuration of the sidecar for processing\ninbound traffic to the attached workload instance. If omitted, Istio will\nautomatically configure the sidecar based on the information about the workload\nobtained from the orchestration platform (e.g., exposed ports, services,\netc.). If specified, inbound ports are configured if and only if the\nworkload instance is associated with a service.",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                        "$ref": "#/definitions/v1alpha3.IstioIngressListener"
                     }
                 },
-                "name": {
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
-                    "type": "string"
-                },
-                "ownerReferences": {
-                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.OwnerReference"
-                    }
-                },
-                "resourceVersion": {
-                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
-                    "type": "string"
-                },
-                "selfLink": {
-                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
-                    "type": "string"
-                },
-                "spec": {
-                    "description": "Spec defines the implementation of this definition.\n+optional",
+                "outbound_traffic_policy": {
+                    "description": "Configuration for the outbound traffic policy.  If your\napplication uses one or more external services that are not known\napriori, setting the policy to ` + "`" + `ALLOW_ANY` + "`" + ` will cause the\nsidecars to route any unknown traffic originating from the\napplication to its requested destination. If not specified,\ninherits the system detected defaults from the namespace-wide or\nthe global default Sidecar.",
                     "type": "object",
-                    "$ref": "#/definitions/v1alpha3.Sidecar"
+                    "$ref": "#/definitions/v1alpha3.OutboundTrafficPolicy"
                 },
-                "status": {
+                "workload_selector": {
+                    "description": "Criteria used to select the specific set of pods/VMs on which this\n` + "`" + `Sidecar` + "`" + ` configuration should be applied. If omitted, the ` + "`" + `Sidecar` + "`" + `\nconfiguration will be applied to all workload instances in the same namespace.",
                     "type": "object",
-                    "$ref": "#/definitions/v1alpha1.IstioStatus"
-                },
-                "uid": {
-                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
-                    "type": "string"
+                    "$ref": "#/definitions/v1alpha3.WorkloadSelector"
                 }
             }
         },
@@ -33084,89 +33395,6 @@ var doc = `{
                     "description": "Types that are valid to be assigned to MatchType:\n\t*StringMatch_Exact\n\t*StringMatch_Prefix\n\t*StringMatch_Regex",
                     "type": "object",
                     "$ref": "#/definitions/v1alpha3.isStringMatch_MatchType"
-                }
-            }
-        },
-        "v1alpha3.Subset": {
-            "type": "object",
-            "properties": {
-                "labels": {
-                    "description": "Labels apply a filter over the endpoints of a service in the\nservice registry. See route rules for examples of usage.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "Name of the subset. The service name and the subset name can\nbe used for traffic splitting in a route rule.",
-                    "type": "string"
-                },
-                "traffic_policy": {
-                    "description": "Traffic policies that apply to this subset. Subsets inherit the\ntraffic policies specified at the DestinationRule level. Settings\nspecified at the subset level will override the corresponding settings\nspecified at the DestinationRule level.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.TrafficPolicy"
-                }
-            }
-        },
-        "v1alpha3.TrafficPolicy": {
-            "type": "object",
-            "properties": {
-                "connection_pool": {
-                    "description": "Settings controlling the volume of connections to an upstream service",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ConnectionPoolSettings"
-                },
-                "load_balancer": {
-                    "description": "Settings controlling the load balancer algorithms.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.LoadBalancerSettings"
-                },
-                "outlier_detection": {
-                    "description": "Settings controlling eviction of unhealthy hosts from the load balancing pool",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.OutlierDetection"
-                },
-                "port_level_settings": {
-                    "description": "Traffic policies specific to individual ports. Note that port level\nsettings will override the destination-level settings. Traffic\nsettings specified at the destination-level will not be inherited when\noverridden by port-level settings, i.e. default values will be applied\nto fields omitted in port-level traffic policies.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1alpha3.TrafficPolicy_PortTrafficPolicy"
-                    }
-                },
-                "tls": {
-                    "description": "TLS related settings for connections to the upstream service.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ClientTLSSettings"
-                }
-            }
-        },
-        "v1alpha3.TrafficPolicy_PortTrafficPolicy": {
-            "type": "object",
-            "properties": {
-                "connection_pool": {
-                    "description": "Settings controlling the volume of connections to an upstream service",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ConnectionPoolSettings"
-                },
-                "load_balancer": {
-                    "description": "Settings controlling the load balancer algorithms.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.LoadBalancerSettings"
-                },
-                "outlier_detection": {
-                    "description": "Settings controlling eviction of unhealthy hosts from the load balancing pool",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.OutlierDetection"
-                },
-                "port": {
-                    "description": "Specifies the number of a port on the destination service\non which this policy is being applied.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.PortSelector"
-                },
-                "tls": {
-                    "description": "TLS related settings for connections to the upstream service.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.ClientTLSSettings"
                 }
             }
         },
@@ -33273,13 +33501,125 @@ var doc = `{
                 }
             }
         },
+        "v1alpha3.WorkloadEntry": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                    }
+                },
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.WorkloadEntry"
+                },
+                "status": {
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
+                }
+            }
+        },
+        "v1alpha3.WorkloadSelector": {
+            "type": "object",
+            "properties": {
+                "labels": {
+                    "description": "One or more labels that indicate a specific set of pods/VMs\non which the configuration should be applied. The scope of\nlabel search is restricted to the configuration namespace in which the\nthe resource is present.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "v1alpha3.isHTTPFaultInjection_Abort_ErrorType": {
             "type": "object"
         },
         "v1alpha3.isHTTPFaultInjection_Delay_HttpDelayType": {
-            "type": "object"
-        },
-        "v1alpha3.isLoadBalancerSettings_LbPolicy": {
             "type": "object"
         },
         "v1alpha3.isStringMatch_MatchType": {
@@ -33296,87 +33636,6 @@ var doc = `{
                     "description": "The memory usage is the memory working set.",
                     "type": "object",
                     "$ref": "#/definitions/v1.ResourceList"
-                }
-            }
-        },
-        "v1beta1.CorsPolicy": {
-            "type": "object",
-            "properties": {
-                "allow_credentials": {
-                    "description": "Indicates whether the caller is allowed to send the actual request\n(not the preflight) using credentials. Translates to\n` + "`" + `Access-Control-Allow-Credentials` + "`" + ` header.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.BoolValue"
-                },
-                "allow_headers": {
-                    "description": "List of HTTP headers that can be used when requesting the\nresource. Serialized to Access-Control-Allow-Headers header.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "allow_methods": {
-                    "description": "List of HTTP methods allowed to access the resource. The content will\nbe serialized into the Access-Control-Allow-Methods header.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "allow_origin": {
-                    "description": "The list of origins that are allowed to perform CORS requests. The\ncontent will be serialized into the Access-Control-Allow-Origin\nheader. Wildcard * will allow all origins.\n$hide_from_docs",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "allow_origins": {
-                    "description": "String patterns that match allowed origins.\nAn origin is allowed if any of the string matchers match.\nIf a match is found, then the outgoing Access-Control-Allow-Origin would be set to the origin as provided by the client.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.StringMatch"
-                    }
-                },
-                "expose_headers": {
-                    "description": "A list of HTTP headers that the browsers are allowed to\naccess. Serialized into Access-Control-Expose-Headers header.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "max_age": {
-                    "description": "Specifies how long the results of a preflight request can be\ncached. Translates to the ` + "`" + `Access-Control-Max-Age` + "`" + ` header.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                }
-            }
-        },
-        "v1beta1.Delegate": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "description": "Name specifies the name of the delegate VirtualService.",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace specifies the namespace where the delegate VirtualService resides.\nBy default, it is same to the root's.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1beta1.Destination": {
-            "type": "object",
-            "properties": {
-                "host": {
-                    "description": "The name of a service from the service registry. Service\nnames are looked up from the platform's service registry (e.g.,\nKubernetes services, Consul services, etc.) and from the hosts\ndeclared by [ServiceEntry](https://istio.io/docs/reference/config/networking/service-entry/#ServiceEntry). Traffic forwarded to\ndestinations that are not found in either of the two, will be dropped.\n\n*Note for Kubernetes users*: When short names are used (e.g. \"reviews\"\ninstead of \"reviews.default.svc.cluster.local\"), Istio will interpret\nthe short name based on the namespace of the rule, not the service. A\nrule in the \"default\" namespace containing a host \"reviews will be\ninterpreted as \"reviews.default.svc.cluster.local\", irrespective of\nthe actual namespace associated with the reviews service. To avoid\npotential misconfiguration, it is recommended to always use fully\nqualified domain names over short names.",
-                    "type": "string"
-                },
-                "port": {
-                    "description": "Specifies the port on the host that is being addressed. If a service\nexposes only a single port it is not required to explicitly select the\nport.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.PortSelector"
-                },
-                "subset": {
-                    "description": "The name of a subset within the service. Applicable only to services\nwithin the mesh. The subset must be defined in a corresponding\nDestinationRule.",
-                    "type": "string"
                 }
             }
         },
@@ -33483,360 +33742,6 @@ var doc = `{
                 }
             }
         },
-        "v1beta1.HTTPFaultInjection": {
-            "type": "object",
-            "properties": {
-                "abort": {
-                    "description": "Abort Http request attempts and return error codes back to downstream\nservice, giving the impression that the upstream service is faulty.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPFaultInjection_Abort"
-                },
-                "delay": {
-                    "description": "Delay requests before forwarding, emulating various failures such as\nnetwork issues, overloaded upstream service, etc.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPFaultInjection_Delay"
-                }
-            }
-        },
-        "v1beta1.HTTPFaultInjection_Abort": {
-            "type": "object",
-            "properties": {
-                "errorType": {
-                    "description": "Types that are valid to be assigned to ErrorType:\n\t*HTTPFaultInjection_Abort_HttpStatus\n\t*HTTPFaultInjection_Abort_GrpcStatus\n\t*HTTPFaultInjection_Abort_Http2Error",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.isHTTPFaultInjection_Abort_ErrorType"
-                },
-                "percentage": {
-                    "description": "Percentage of requests to be aborted with the error code provided.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Percent"
-                }
-            }
-        },
-        "v1beta1.HTTPFaultInjection_Delay": {
-            "type": "object",
-            "properties": {
-                "httpDelayType": {
-                    "description": "Types that are valid to be assigned to HttpDelayType:\n\t*HTTPFaultInjection_Delay_FixedDelay\n\t*HTTPFaultInjection_Delay_ExponentialDelay",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.isHTTPFaultInjection_Delay_HttpDelayType"
-                },
-                "percent": {
-                    "description": "Percentage of requests on which the delay will be injected (0-100).\nUse of integer ` + "`" + `percent` + "`" + ` value is deprecated. Use the double ` + "`" + `percentage` + "`" + `\nfield instead.",
-                    "type": "integer"
-                },
-                "percentage": {
-                    "description": "Percentage of requests on which the delay will be injected.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Percent"
-                }
-            }
-        },
-        "v1beta1.HTTPMatchRequest": {
-            "type": "object",
-            "properties": {
-                "authority": {
-                    "description": "HTTP Authority\nvalues are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.StringMatch"
-                },
-                "gateways": {
-                    "description": "Names of gateways where the rule should be applied. Gateway names\nin the top-level ` + "`" + `gateways` + "`" + ` field of the VirtualService (if any) are overridden. The gateway\nmatch is independent of sourceLabels.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "headers": {
-                    "description": "The header keys must be lowercase and use hyphen as the separator,\ne.g. _x-request-id_.\n\nHeader values are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).\n\nIf the value is empty and only the name of header is specfied, presence of the header is checked.\n**Note:** The keys ` + "`" + `uri` + "`" + `, ` + "`" + `scheme` + "`" + `, ` + "`" + `method` + "`" + `, and ` + "`" + `authority` + "`" + ` will be ignored.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/v1beta1.StringMatch"
-                    }
-                },
-                "ignore_uri_case": {
-                    "description": "Flag to specify whether the URI matching should be case-insensitive.\n\n**Note:** The case will be ignored only in the case of ` + "`" + `exact` + "`" + ` and ` + "`" + `prefix` + "`" + `\nURI matches.",
-                    "type": "boolean"
-                },
-                "method": {
-                    "description": "HTTP Method\nvalues are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.StringMatch"
-                },
-                "name": {
-                    "description": "The name assigned to a match. The match's name will be\nconcatenated with the parent route's name and will be logged in\nthe access logs for requests matching this route.",
-                    "type": "string"
-                },
-                "port": {
-                    "description": "Specifies the ports on the host that is being addressed. Many services\nonly expose a single port or label ports with the protocols they support,\nin these cases it is not required to explicitly select the port.",
-                    "type": "integer"
-                },
-                "query_params": {
-                    "description": "Query parameters for matching.\n\nEx:\n\n- For a query parameter like \"?key=true\", the map key would be \"key\" and\n  the string match could be defined as ` + "`" + `exact: \"true\"` + "`" + `.\n\n- For a query parameter like \"?key\", the map key would be \"key\" and the\n  string match could be defined as ` + "`" + `exact: \"\"` + "`" + `.\n\n- For a query parameter like \"?key=123\", the map key would be \"key\" and the\n  string match could be defined as ` + "`" + `regex: \"\\d+$\"` + "`" + `. Note that this\n  configuration will only match values like \"123\" but not \"a123\" or \"123a\".\n\n**Note:** ` + "`" + `prefix` + "`" + ` matching is currently not supported.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/v1beta1.StringMatch"
-                    }
-                },
-                "scheme": {
-                    "description": "URI Scheme\nvalues are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.StringMatch"
-                },
-                "source_labels": {
-                    "description": "One or more labels that constrain the applicability of a rule to source (client) workloads\nwith the given labels. If the VirtualService has a list of gateways specified\nin the top-level ` + "`" + `gateways` + "`" + ` field, it must include the reserved gateway\n` + "`" + `mesh` + "`" + ` for this field to be applicable.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "source_namespace": {
-                    "description": "Source namespace constraining the applicability of a rule to workloads in that namespace.\nIf the VirtualService has a list of gateways specified in the top-level ` + "`" + `gateways` + "`" + ` field,\nit must include the reserved gateway ` + "`" + `mesh` + "`" + ` for this field to be applicable.",
-                    "type": "string"
-                },
-                "uri": {
-                    "description": "URI to match\nvalues are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).\n\n**Note:** Case-insensitive matching could be enabled via the\n` + "`" + `ignore_uri_case` + "`" + ` flag.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.StringMatch"
-                },
-                "without_headers": {
-                    "description": "withoutHeader has the same syntax with the header, but has opposite meaning.\nIf a header is matched with a matching rule among withoutHeader, the traffic becomes not matched one.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/v1beta1.StringMatch"
-                    }
-                }
-            }
-        },
-        "v1beta1.HTTPRedirect": {
-            "type": "object",
-            "properties": {
-                "authority": {
-                    "description": "On a redirect, overwrite the Authority/Host portion of the URL with\nthis value.",
-                    "type": "string"
-                },
-                "redirect_code": {
-                    "description": "On a redirect, Specifies the HTTP status code to use in the redirect\nresponse. The default response code is MOVED_PERMANENTLY (301).",
-                    "type": "integer"
-                },
-                "uri": {
-                    "description": "On a redirect, overwrite the Path portion of the URL with this\nvalue. Note that the entire path will be replaced, irrespective of the\nrequest URI being matched as an exact path or prefix.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1beta1.HTTPRetry": {
-            "type": "object",
-            "properties": {
-                "attempts": {
-                    "description": "Number of retries to be allowed for a given request. The interval\nbetween retries will be determined automatically (25ms+). When request\n` + "`" + `timeout` + "`" + ` of the [HTTP route](https://istio.io/docs/reference/config/networking/virtual-service/#HTTPRoute)\nor ` + "`" + `per_try_timeout` + "`" + ` is configured, the actual number of retries attempted also depends on\nthe specified request ` + "`" + `timeout` + "`" + ` and ` + "`" + `per_try_timeout` + "`" + ` values.",
-                    "type": "integer"
-                },
-                "per_try_timeout": {
-                    "description": "Timeout per attempt for a given request, including the initial call and any retries. Format: 1h/1m/1s/1ms. MUST BE \u003e=1ms.\nDefault is same value as request\n` + "`" + `timeout` + "`" + ` of the [HTTP route](https://istio.io/docs/reference/config/networking/virtual-service/#HTTPRoute),\nwhich means no timeout.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                },
-                "retry_on": {
-                    "description": "Specifies the conditions under which retry takes place.\nOne or more policies can be specified using a ‘,’ delimited list.\nSee the [retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on)\nand [gRPC retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-grpc-on) for more details.",
-                    "type": "string"
-                },
-                "retry_remote_localities": {
-                    "description": "Flag to specify whether the retries should retry to other localities.\nSee the [retry plugin configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/http/http_connection_management#retry-plugin-configuration) for more details.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.BoolValue"
-                }
-            }
-        },
-        "v1beta1.HTTPRewrite": {
-            "type": "object",
-            "properties": {
-                "authority": {
-                    "description": "rewrite the Authority/Host header with this value.",
-                    "type": "string"
-                },
-                "uri": {
-                    "description": "rewrite the path (or the prefix) portion of the URI with this\nvalue. If the original URI was matched based on prefix, the value\nprovided in this field will replace the corresponding matched prefix.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1beta1.HTTPRoute": {
-            "type": "object",
-            "properties": {
-                "cors_policy": {
-                    "description": "Cross-Origin Resource Sharing policy (CORS). Refer to\n[CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)\nfor further details about cross origin resource sharing.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.CorsPolicy"
-                },
-                "delegate": {
-                    "description": "Delegate is used to specify the particular VirtualService which\ncan be used to define delegate HTTPRoute.\n\nIt can be set only when ` + "`" + `Route` + "`" + ` and ` + "`" + `Redirect` + "`" + ` are empty, and the route\nrules of the delegate VirtualService will be merged with that in the\ncurrent one.\n\n**NOTE**:\n\n1. Only one level delegation is supported.\n2. The delegate's HTTPMatchRequest must be a strict subset of the root's,\n   otherwise there is a conflict and the HTTPRoute will not take effect.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Delegate"
-                },
-                "fault": {
-                    "description": "Fault injection policy to apply on HTTP traffic at the client side.\nNote that timeouts or retries will not be enabled when faults are\nenabled on the client side.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPFaultInjection"
-                },
-                "headers": {
-                    "description": "Header manipulation rules",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Headers"
-                },
-                "match": {
-                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.HTTPMatchRequest"
-                    }
-                },
-                "mirror": {
-                    "description": "Mirror HTTP traffic to a another destination in addition to forwarding\nthe requests to the intended destination. Mirrored traffic is on a\nbest effort basis where the sidecar/gateway will not wait for the\nmirrored cluster to respond before returning the response from the\noriginal destination.  Statistics will be generated for the mirrored\ndestination.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Destination"
-                },
-                "mirror_percent": {
-                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nUse of integer ` + "`" + `mirror_percent` + "`" + ` value is deprecated. Use the\ndouble ` + "`" + `mirror_percentage` + "`" + ` field instead",
-                    "type": "object",
-                    "$ref": "#/definitions/types.UInt32Value"
-                },
-                "mirror_percentage": {
-                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nIf this field is absent, all the traffic (100%) will be mirrored.\nMax value is 100.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Percent"
-                },
-                "name": {
-                    "description": "The name assigned to the route for debugging purposes. The\nroute's name will be concatenated with the match's name and will\nbe logged in the access logs for requests matching this\nroute/match.",
-                    "type": "string"
-                },
-                "redirect": {
-                    "description": "A HTTP rule can either redirect or forward (default) traffic. If\ntraffic passthrough option is specified in the rule,\nroute/redirect will be ignored. The redirect primitive can be used to\nsend a HTTP 301 redirect to a different URI or Authority.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPRedirect"
-                },
-                "retries": {
-                    "description": "Retry policy for HTTP requests.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPRetry"
-                },
-                "rewrite": {
-                    "description": "Rewrite HTTP URIs and Authority headers. Rewrite cannot be used with\nRedirect primitive. Rewrite will be performed before forwarding.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPRewrite"
-                },
-                "route": {
-                    "description": "A HTTP rule can either redirect or forward (default) traffic. The\nforwarding target can be one of several versions of a service (see\nglossary in beginning of document). Weights associated with the\nservice version determine the proportion of traffic it receives.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.HTTPRouteDestination"
-                    }
-                },
-                "timeout": {
-                    "description": "Timeout for HTTP requests, default is disabled.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                }
-            }
-        },
-        "v1beta1.HTTPRouteDestination": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "description": "Destination uniquely identifies the instances of a service\nto which the request/connection should be forwarded to.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Destination"
-                },
-                "headers": {
-                    "description": "Header manipulation rules",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Headers"
-                },
-                "weight": {
-                    "description": "The proportion of traffic to be forwarded to the service\nversion. (0-100). Sum of weights across destinations SHOULD BE == 100.\nIf there is only one destination in a rule, the weight value is assumed to\nbe 100.",
-                    "type": "integer"
-                }
-            }
-        },
-        "v1beta1.Headers": {
-            "type": "object",
-            "properties": {
-                "request": {
-                    "description": "Header manipulation rules to apply before forwarding a request\nto the destination service",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Headers_HeaderOperations"
-                },
-                "response": {
-                    "description": "Header manipulation rules to apply before returning a response\nto the caller",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Headers_HeaderOperations"
-                }
-            }
-        },
-        "v1beta1.Headers_HeaderOperations": {
-            "type": "object",
-            "properties": {
-                "add": {
-                    "description": "Append the given values to the headers specified by keys\n(will create a comma-separated list of values)",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "remove": {
-                    "description": "Remove a the specified headers",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "set": {
-                    "description": "Overwrite the headers specified by key with the given values",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "v1beta1.L4MatchAttributes": {
-            "type": "object",
-            "properties": {
-                "destination_subnets": {
-                    "description": "IPv4 or IPv6 ip addresses of destination with optional subnet.  E.g.,\na.b.c.d/xx form or just a.b.c.d.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "gateways": {
-                    "description": "Names of gateways where the rule should be applied. Gateway names\nin the top-level ` + "`" + `gateways` + "`" + ` field of the VirtualService (if any) are overridden. The gateway\nmatch is independent of sourceLabels.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "port": {
-                    "description": "Specifies the port on the host that is being addressed. Many services\nonly expose a single port or label ports with the protocols they support,\nin these cases it is not required to explicitly select the port.",
-                    "type": "integer"
-                },
-                "source_labels": {
-                    "description": "One or more labels that constrain the applicability of a rule to\nworkloads with the given labels. If the VirtualService has a list of\ngateways specified in the top-level ` + "`" + `gateways` + "`" + ` field, it should include the reserved gateway\n` + "`" + `mesh` + "`" + ` in order for this field to be applicable.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "source_namespace": {
-                    "description": "Source namespace constraining the applicability of a rule to workloads in that namespace.\nIf the VirtualService has a list of gateways specified in the top-level ` + "`" + `gateways` + "`" + ` field,\nit must include the reserved gateway ` + "`" + `mesh` + "`" + ` for this field to be applicable.",
-                    "type": "string"
-                },
-                "source_subnet": {
-                    "description": "IPv4 or IPv6 ip address of source with optional subnet. E.g., a.b.c.d/xx\nform or just a.b.c.d\n$hide_from_docs",
-                    "type": "string"
-                }
-            }
-        },
         "v1beta1.NodeMetrics": {
             "type": "object",
             "properties": {
@@ -33939,14 +33844,6 @@ var doc = `{
                 "window": {
                     "type": "object",
                     "$ref": "#/definitions/v1.Duration"
-                }
-            }
-        },
-        "v1beta1.Percent": {
-            "type": "object",
-            "properties": {
-                "value": {
-                    "type": "number"
                 }
             }
         },
@@ -34057,29 +33954,6 @@ var doc = `{
                 }
             }
         },
-        "v1beta1.PortSelector": {
-            "type": "object",
-            "properties": {
-                "number": {
-                    "description": "Valid port number",
-                    "type": "integer"
-                }
-            }
-        },
-        "v1beta1.RouteDestination": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "description": "Destination uniquely identifies the instances of a service\nto which the request/connection should be forwarded to.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Destination"
-                },
-                "weight": {
-                    "description": "The proportion of traffic to be forwarded to the service\nversion. If there is only one destination in a rule, all traffic will be\nrouted to it irrespective of the weight.",
-                    "type": "integer"
-                }
-            }
-        },
         "v1beta1.Service": {
             "type": "object",
             "properties": {
@@ -34088,95 +33962,6 @@ var doc = `{
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
-                    }
-                }
-            }
-        },
-        "v1beta1.StringMatch": {
-            "type": "object",
-            "properties": {
-                "matchType": {
-                    "description": "Types that are valid to be assigned to MatchType:\n\t*StringMatch_Exact\n\t*StringMatch_Prefix\n\t*StringMatch_Regex",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.isStringMatch_MatchType"
-                }
-            }
-        },
-        "v1beta1.TCPRoute": {
-            "type": "object",
-            "properties": {
-                "match": {
-                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.L4MatchAttributes"
-                    }
-                },
-                "route": {
-                    "description": "The destination to which the connection should be forwarded to.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.RouteDestination"
-                    }
-                }
-            }
-        },
-        "v1beta1.TLSMatchAttributes": {
-            "type": "object",
-            "properties": {
-                "destination_subnets": {
-                    "description": "IPv4 or IPv6 ip addresses of destination with optional subnet.  E.g.,\na.b.c.d/xx form or just a.b.c.d.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "gateways": {
-                    "description": "Names of gateways where the rule should be applied. Gateway names\nin the top-level ` + "`" + `gateways` + "`" + ` field of the VirtualService (if any) are overridden. The gateway\nmatch is independent of sourceLabels.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "port": {
-                    "description": "Specifies the port on the host that is being addressed. Many services\nonly expose a single port or label ports with the protocols they\nsupport, in these cases it is not required to explicitly select the\nport.",
-                    "type": "integer"
-                },
-                "sni_hosts": {
-                    "description": "SNI (server name indicator) to match on. Wildcard prefixes\ncan be used in the SNI value, e.g., *.com will match foo.example.com\nas well as example.com. An SNI value must be a subset (i.e., fall\nwithin the domain) of the corresponding virtual serivce's hosts.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "source_labels": {
-                    "description": "One or more labels that constrain the applicability of a rule to\nworkloads with the given labels. If the VirtualService has a list of\ngateways specified in the top-level ` + "`" + `gateways` + "`" + ` field, it should include the reserved gateway\n` + "`" + `mesh` + "`" + ` in order for this field to be applicable.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "source_namespace": {
-                    "description": "Source namespace constraining the applicability of a rule to workloads in that namespace.\nIf the VirtualService has a list of gateways specified in the top-level ` + "`" + `gateways` + "`" + ` field,\nit must include the reserved gateway ` + "`" + `mesh` + "`" + ` for this field to be applicable.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1beta1.TLSRoute": {
-            "type": "object",
-            "properties": {
-                "match": {
-                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.TLSMatchAttributes"
-                    }
-                },
-                "route": {
-                    "description": "The destination to which the connection should be forwarded to.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.RouteDestination"
                     }
                 }
             }
@@ -34342,47 +34127,103 @@ var doc = `{
         "v1beta1.VirtualService": {
             "type": "object",
             "properties": {
-                "export_to": {
-                    "description": "A list of namespaces to which this virtual service is exported. Exporting a\nvirtual service allows it to be used by sidecars and gateways defined in\nother namespaces. This feature provides a mechanism for service owners\nand mesh administrators to control the visibility of virtual services\nacross namespace boundaries.\n\nIf no namespaces are specified then the virtual service is exported to all\nnamespaces by default.\n\nThe value \".\" is reserved and defines an export to the same namespace that\nthe virtual service is declared in. Similarly the value \"*\" is reserved and\ndefines an export to all namespaces.",
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "gateways": {
-                    "description": "The names of gateways and sidecars that should apply these routes.\nGateways in other namespaces may be referred to by\n` + "`" + `\u003cgateway namespace\u003e/\u003cgateway name\u003e` + "`" + `; specifying a gateway with no\nnamespace qualifier is the same as specifying the VirtualService's\nnamespace. A single VirtualService is used for sidecars inside the mesh as\nwell as for one or more gateways. The selection condition imposed by this\nfield can be overridden using the source field in the match conditions\nof protocol-specific routes. The reserved word ` + "`" + `mesh` + "`" + ` is used to imply\nall the sidecars in the mesh. When this field is omitted, the default\ngateway (` + "`" + `mesh` + "`" + `) will be used, which would apply the rule to all\nsidecars in the mesh. If a list of gateway names is provided, the\nrules will apply only to the gateways. To apply the rules to both\ngateways and sidecars, specify ` + "`" + `mesh` + "`" + ` as one of the gateway names.",
-                    "type": "array",
-                    "items": {
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
                         "type": "string"
                     }
                 },
-                "hosts": {
-                    "description": "The destination hosts to which traffic is being sent. Could\nbe a DNS name with wildcard prefix or an IP address.  Depending on the\nplatform, short-names can also be used instead of a FQDN (i.e. has no\ndots in the name). In such a scenario, the FQDN of the host would be\nderived based on the underlying platform.\n\nA single VirtualService can be used to describe all the traffic\nproperties of the corresponding hosts, including those for multiple\nHTTP and TCP ports. Alternatively, the traffic properties of a host\ncan be defined using more than one VirtualService, with certain\ncaveats. Refer to the\n[Operations Guide](https://istio.io/docs/ops/best-practices/traffic-management/#split-virtual-services)\nfor details.\n\n*Note for Kubernetes users*: When short names are used (e.g. \"reviews\"\ninstead of \"reviews.default.svc.cluster.local\"), Istio will interpret\nthe short name based on the namespace of the rule, not the service. A\nrule in the \"default\" namespace containing a host \"reviews\" will be\ninterpreted as \"reviews.default.svc.cluster.local\", irrespective of\nthe actual namespace associated with the reviews service. _To avoid\npotential misconfigurations, it is recommended to always use fully\nqualified domain names over short names._\n\nThe hosts field applies to both HTTP and TCP services. Service inside\nthe mesh, i.e., those found in the service registry, must always be\nreferred to using their alphanumeric names. IP addresses are allowed\nonly for services defined via the Gateway.\n\n*Note*: It must be empty for a delegate VirtualService.",
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
                     }
                 },
-                "http": {
-                    "description": "An ordered list of route rules for HTTP traffic. HTTP routes will be\napplied to platform service ports named 'http-*'/'http2-*'/'grpc-*', gateway\nports with protocol HTTP/HTTP2/GRPC/ TLS-terminated-HTTPS and service\nentry ports using HTTP/HTTP2/GRPC protocols.  The first rule matching\nan incoming request is used.",
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/v1beta1.HTTPRoute"
+                        "$ref": "#/definitions/v1.OwnerReference"
                     }
                 },
-                "tcp": {
-                    "description": "An ordered list of route rules for opaque TCP traffic. TCP routes will\nbe applied to any port that is not a HTTP or TLS port. The first rule\nmatching an incoming request is used.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.TCPRoute"
-                    }
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
                 },
-                "tls": {
-                    "description": "An ordered list of route rule for non-terminated TLS \u0026 HTTPS\ntraffic. Routing is typically performed using the SNI value presented\nby the ClientHello message. TLS routes will be applied to platform\nservice ports named 'https-*', 'tls-*', unterminated gateway ports using\nHTTPS/TLS protocols (i.e. with \"passthrough\" TLS mode) and service\nentry ports using HTTPS/TLS protocols.  The first rule matching an\nincoming request is used.  NOTE: Traffic 'https-*' or 'tls-*' ports\nwithout associated virtual service will be treated as opaque TCP\ntraffic.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.TLSRoute"
-                    }
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1beta1.VirtualService"
+                },
+                "status": {
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
                 }
             }
         },
@@ -34402,15 +34243,6 @@ var doc = `{
                     "$ref": "#/definitions/v1.ResourceRequirements"
                 }
             }
-        },
-        "v1beta1.isHTTPFaultInjection_Abort_ErrorType": {
-            "type": "object"
-        },
-        "v1beta1.isHTTPFaultInjection_Delay_HttpDelayType": {
-            "type": "object"
-        },
-        "v1beta1.isStringMatch_MatchType": {
-            "type": "object"
         },
         "vuln.CVSS": {
             "type": "object",
