@@ -14,6 +14,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
@@ -1387,7 +1389,7 @@ func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 	ctx := c.Request.Context()
 	// _all 不筛选租户
 	tenantidStr := c.Param("tenant_id")
-	selector := map[string]string{}
+	var selector labels.Selector
 	if tenantidStr != "_all" && tenantidStr != "0" {
 		tenantid, _ := strconv.Atoi(tenantidStr)
 		tenant := models.Tenant{ID: uint(tenantid)}
@@ -1395,7 +1397,8 @@ func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 			handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
 			return
 		}
-		selector[gemlabels.LabelTenant+"__in"] = tenant.TenantName + "," + defaultGatewayTenant
+		r, _ := labels.NewRequirement(gemlabels.LabelTenant, selection.In, []string{tenant.TenantName, defaultGatewayTenant})
+		selector = labels.NewSelector().Add(*r)
 	}
 
 	tgList, err := h.listGateways(ctx, cluster.ClusterName, selector)
@@ -1406,10 +1409,12 @@ func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 	handlers.OK(c, tgList)
 }
 
-func (h *TenantHandler) listGateways(ctx context.Context, cluster string, selector map[string]string) ([]v1beta1.TenantGateway, error) {
+func (h *TenantHandler) listGateways(ctx context.Context, cluster string, selector labels.Selector) ([]v1beta1.TenantGateway, error) {
 	gatewaylist := &v1beta1.TenantGatewayList{}
 	err := h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
-		return cli.List(ctx, gatewaylist, client.MatchingLabels(selector))
+		return cli.List(ctx, gatewaylist, &client.ListOptions{
+			LabelSelector: selector,
+		})
 	})
 	return gatewaylist.Items, err
 }
@@ -1468,9 +1473,7 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 
 	if ingressClass != "" {
 		tglist, err := h.listGateways(ctx, cluster.ClusterName,
-			map[string]string{
-				networking.LabelIngressClass: ingressClass,
-			},
+			labels.SelectorFromSet(map[string]string{networking.LabelIngressClass: ingressClass}),
 		)
 		if err != nil {
 			handlers.NotOK(c, err)
