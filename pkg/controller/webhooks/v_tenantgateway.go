@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	v1 "k8s.io/api/admission/v1"
@@ -24,6 +25,11 @@ func (r *ResourceValidate) ValidateTenantGateway(ctx context.Context, req admiss
 		err := r.decoder.Decode(req, tg)
 		if err != nil {
 			return admission.Errored(http.StatusBadRequest, err)
+		}
+
+		reg := regexp.MustCompile(`[a-z]([-a-z0-9]*[a-z0-9])?`)
+		if !reg.MatchString(tg.Name) {
+			return admission.Denied(fmt.Sprintf("Gateway name not valid must match regex: %s", reg.String()))
 		}
 
 		// 非删除操作才检测租户
