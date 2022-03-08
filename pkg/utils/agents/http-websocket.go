@@ -8,13 +8,14 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 
 	"github.com/gorilla/websocket"
 	"k8s.io/client-go/rest"
 	"kubegems.io/pkg/utils/httputil"
 )
 
-func (c TypedClient) DialWebsocket(ctx context.Context, path string, headers http.Header) (*websocket.Conn, *http.Response, error) {
+func (c TypedClient) DialWebsocket(ctx context.Context, rpath string, headers http.Header) (*websocket.Conn, *http.Response, error) {
 	wsu := (&url.URL{
 		Scheme: func() string {
 			if c.BaseAddr.Scheme == "http" {
@@ -24,7 +25,7 @@ func (c TypedClient) DialWebsocket(ctx context.Context, path string, headers htt
 			}
 		}(),
 		Host: c.BaseAddr.Host,
-		Path: c.BaseAddr.Path + "/" + path,
+		Path: path.Join(c.BaseAddr.Path, rpath),
 	}).String()
 
 	if c.ClientMeta.Restconfig == nil {
