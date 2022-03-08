@@ -32,7 +32,7 @@ func (AuthSourceSimple) TableName() string {
 
 type AuthSourceConfig struct {
 	// oauth
-	AuthURL     string   `json:"url,omitempty"`
+	AuthURL     string   `json:"authURL,omitempty"`
 	TokenURL    string   `json:"tokenURL,omitempty"`
 	UserInfoURL string   `json:"userInfoURL,omitempty"`
 	RedirectURL string   `json:"redirectURL,omitempty"`
