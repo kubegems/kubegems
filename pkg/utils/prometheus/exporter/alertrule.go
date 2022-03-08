@@ -29,7 +29,8 @@ func NewAlertRuleCollector(cs *agents.ClientSet, dyConfigProvider options.Dynami
 				[]string{"cluster", "namespace", "name", "resource", "rule", "receiver_count"},
 				nil,
 			),
-			ClientSet: cs,
+			ClientSet:        cs,
+			dyConfigProvider: dyConfigProvider,
 		}, nil
 	}
 }
