@@ -1,6 +1,8 @@
 package authsource
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -73,6 +75,10 @@ func (h *AuthSourceHandler) Create(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	if err := validateAuthConfig(&source); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 	if err := h.GetDB().WithContext(ctx).Save(&source).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -106,6 +112,10 @@ func (h *AuthSourceHandler) Modify(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	if err := validateAuthConfig(&newOne); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 	source.Config = newOne.Config
 	now := time.Now()
 	source.UpdatedAt = &now
@@ -132,4 +142,43 @@ func (h *AuthSourceHandler) Delete(c *gin.Context) {
 	pk := utils.ToUint(c.Param("source_id"))
 	h.GetDB().Delete(&source, pk)
 	handlers.NoContent(c, nil)
+}
+
+func validateAuthConfig(source *models.AuthSource) error {
+	errs := []string{}
+	if source.Kind == "LDAP" {
+		if source.Config.BaseDN == "" {
+			errs = append(errs, "basedn can't empty")
+		}
+		if source.Config.BindUsername == "" {
+			errs = append(errs, "bindUsername can't empty")
+		}
+		if source.Config.BindPassword == "" {
+			errs = append(errs, "bindPassword can't empty")
+		}
+		if source.Config.LdapAddr == "" {
+			errs = append(errs, "ldapAddr can't empty")
+		}
+	}
+	if source.Kind == "OAUTH" {
+		if source.Config.AppID == "" {
+			errs = append(errs, "appid can't empty")
+		}
+		if source.Config.AppSecret == "" {
+			errs = append(errs, "appSecret can't empty")
+		}
+		if source.Config.AuthURL == "" {
+			errs = append(errs, "authURL can't empty")
+		}
+		if source.Config.RedirectURL == "" {
+			errs = append(errs, "redirectURL can't empty")
+		}
+		if source.Config.UserInfoURL == "" {
+			errs = append(errs, "userInfoURL can't empty")
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf(strings.Join(errs, ";"))
+	}
+	return nil
 }
