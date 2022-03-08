@@ -15,7 +15,6 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/online"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 )
@@ -59,7 +58,7 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 		}
 
 		monitoropts := new(prometheus.MonitorOptions)
-		online.LoadOptions(monitoropts, h.GetDB())
+		h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 		ret := []prometheus.AlertRule{}
 		if namespace == allNamespace {
 			ret, err = cli.Extend().ListAllAlertRules(ctx, monitoropts)
@@ -112,7 +111,7 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
 		monitoropts := new(prometheus.MonitorOptions)
-		online.LoadOptions(monitoropts, h.GetDB())
+		h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
@@ -227,7 +226,7 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 		h.SetAuditData(c, "创建", "告警规则", req.Name)
 
 		monitoropts := new(prometheus.MonitorOptions)
-		online.LoadOptions(monitoropts, h.GetDB())
+		h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 		if err := req.CheckAndModify(monitoropts); err != nil {
 			return nil, err
 		}
@@ -275,7 +274,7 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 		h.SetAuditData(c, "更新", "告警规则", req.Name)
 
 		monitoropts := new(prometheus.MonitorOptions)
-		online.LoadOptions(monitoropts, h.GetDB())
+		h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 		if err := req.CheckAndModify(monitoropts); err != nil {
 			return nil, err
 		}
@@ -321,7 +320,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
 		// get、update、commit
 		monitoropts := new(prometheus.MonitorOptions)
-		online.LoadOptions(monitoropts, h.GetDB())
+		h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
@@ -620,7 +619,7 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 	}
 
 	monitoropts := new(prometheus.MonitorOptions)
-	online.LoadOptions(monitoropts, h.GetDB())
+	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	for i := range ret {
 		if ret[i].SilenceEndsAt.Equal(forever) {
 			ret[i].SilenceEndsAt = nil

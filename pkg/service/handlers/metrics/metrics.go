@@ -11,7 +11,6 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
-	"kubegems.io/pkg/service/online"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/prometheus/promql"
@@ -141,7 +140,7 @@ func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryR
 	}
 
 	monitoropts := new(prometheus.MonitorOptions)
-	online.LoadOptions(monitoropts, h.GetDB())
+	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	ruleCtx, err := q.FindRuleContext(monitoropts)
 	if err != nil {
 		return err
@@ -198,7 +197,7 @@ func (h *MonitorHandler) GetMetricTemplate(c *gin.Context) {
 	ruleName := c.Param("rule_name")
 
 	monitoropts := new(prometheus.MonitorOptions)
-	online.LoadOptions(monitoropts, h.GetDB())
+	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	resDetail, ok := monitoropts.Resources[resName]
 	if !ok {
 		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
@@ -237,7 +236,7 @@ func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 	h.SetAuditData(c, "更新", "Prometheus模板", resName+"."+ruleName)
 
 	monitoropts := new(prometheus.MonitorOptions)
-	online.LoadOptions(monitoropts, h.GetDB())
+	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	for _, unit := range rule.Units {
 		if _, ok := monitoropts.Units[unit]; !ok {
 			handlers.NotOK(c, fmt.Errorf("unit %s is not valid", unit))
@@ -252,7 +251,7 @@ func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 	}
 
 	resDetail.Rules[ruleName] = rule
-	if err := online.SaveOptions(monitoropts, h.GetDB()); err != nil {
+	if err := h.DynamicConfig.Set(c.Request.Context(), monitoropts); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -277,7 +276,8 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 	h.SetAuditData(c, "删除", "Prometheus模板", resName+"."+ruleName)
 
 	monitoropts := new(prometheus.MonitorOptions)
-	online.LoadOptions(monitoropts, h.GetDB())
+	ctx := c.Request.Context()
+	h.DynamicConfig.Get(ctx, monitoropts)
 	resDetail, ok := monitoropts.Resources[resName]
 	if !ok {
 		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
@@ -309,7 +309,7 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 	}
 
 	delete(resDetail.Rules, ruleName)
-	if err := online.SaveOptions(monitoropts, h.GetDB()); err != nil {
+	if err := h.DynamicConfig.Set(ctx, monitoropts); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

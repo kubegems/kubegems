@@ -7,23 +7,23 @@ import (
 	"kubegems.io/pkg/utils/helm"
 	"kubegems.io/pkg/utils/jwt"
 	"kubegems.io/pkg/utils/msgbus"
-	"kubegems.io/pkg/utils/prometheus/exporter"
+	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/utils/system"
 )
 
 type Options struct {
-	System    *system.Options           `json:"system,omitempty"`
-	Appstore  *helm.Options             `json:"appstore,omitempty"`
-	Argo      *argo.Options             `json:"argo,omitempty"`
-	DebugMode bool                      `json:"debugMode,omitempty"`
-	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
-	Git       *git.Options              `json:"git,omitempty"`
-	JWT       *jwt.Options              `json:"jwt,omitempty"`
-	LogLevel  string                    `json:"logLevel,omitempty"`
-	Msgbus    *msgbus.Options           `json:"msgbus,omitempty"`
-	Mysql     *database.Options         `json:"mysql,omitempty"`
-	Redis     *redis.Options            `json:"redis,omitempty"`
+	System    *system.Options             `json:"system,omitempty"`
+	Appstore  *helm.Options               `json:"appstore,omitempty"`
+	Argo      *argo.Options               `json:"argo,omitempty"`
+	DebugMode bool                        `json:"debugMode,omitempty"`
+	Exporter  *prometheus.ExporterOptions `json:"exporter,omitempty"`
+	Git       *git.Options                `json:"git,omitempty"`
+	JWT       *jwt.Options                `json:"jwt,omitempty"`
+	LogLevel  string                      `json:"logLevel,omitempty"`
+	Msgbus    *msgbus.Options             `json:"msgbus,omitempty"`
+	Mysql     *database.Options           `json:"mysql,omitempty"`
+	Redis     *redis.Options              `json:"redis,omitempty"`
 }
 
 func DefaultOptions() *Options {
@@ -31,7 +31,7 @@ func DefaultOptions() *Options {
 		Appstore:  helm.NewDefaultOptions(),
 		Argo:      argo.NewDefaultArgoOptions(),
 		DebugMode: false,
-		Exporter:  exporter.DefaultExporterOptions(),
+		Exporter:  prometheus.DefaultExporterOptions(),
 		Git:       git.NewDefaultOptions(),
 		JWT:       jwt.DefaultOptions(),
 		LogLevel:  "debug",
