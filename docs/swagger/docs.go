@@ -2251,7 +2251,7 @@ var doc = `{
                         "JWT": []
                     }
                 ],
-                "description": "create AuthSource",
+                "description": "create AuthSource  oauth(authURL,tokenURL,userInfoURL,redirectURL,appID,appSecret,scopes) ldap(basedn,ldapaddr,binduser,password)",
                 "consumes": [
                     "application/json"
                 ],
@@ -23426,10 +23426,8 @@ var doc = `{
             "type": "object",
             "properties": {
                 "oversoldConfig": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                    "type": "object",
+                    "$ref": "#/definitions/datatypes.JSON"
                 },
                 "resources": {
                     "type": "object",
@@ -23536,14 +23534,14 @@ var doc = `{
         "handlers.PageData": {
             "type": "object",
             "properties": {
+                "currentPage": {
+                    "type": "integer"
+                },
+                "currentSize": {
+                    "type": "integer"
+                },
                 "list": {
                     "type": "object"
-                },
-                "page": {
-                    "type": "integer"
-                },
-                "size": {
-                    "type": "integer"
                 },
                 "total": {
                     "type": "integer"
@@ -23582,6 +23580,24 @@ var doc = `{
             "type": "array",
             "items": {
                 "type": "integer"
+            }
+        },
+        "kubernetes.Host": {
+            "type": "object",
+            "properties": {
+                "cluster": {
+                    "type": "string"
+                },
+                "complete_input": {
+                    "description": "CompleteInput is true when Service, Namespace and Cluster fields are present.\nIt is true for simple service names and FQDN services.\nIt is false for service.namespace format and service entries.",
+                    "type": "boolean"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "service": {
+                    "type": "string"
+                }
             }
         },
         "labels.Matcher": {
@@ -24004,44 +24020,55 @@ var doc = `{
         "models.Application": {
             "type": "object",
             "properties": {
+                "applicationName": {
+                    "description": "应用名字",
+                    "type": "string"
+                },
                 "createdAt": {
+                    "description": "创建时间",
                     "type": "string"
                 },
                 "creator": {
+                    "description": "创建人",
                     "type": "string"
                 },
                 "environment": {
+                    "description": "关联的环境",
                     "type": "object",
                     "$ref": "#/definitions/models.Environment"
                 },
                 "environmentID": {
+                    "description": "关联的环境",
                     "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "images": {
+                    "description": "镜像,逗号分割",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
                 "kind": {
+                    "description": "类型",
                     "type": "string"
                 },
                 "labels": {
+                    "description": "Label",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "project": {
+                    "description": "所属项",
                     "type": "object",
                     "$ref": "#/definitions/models.Project"
                 },
                 "projectID": {
+                    "description": "所属项目ID",
                     "type": "integer"
                 },
                 "remark": {
+                    "description": "备注",
                     "type": "string"
                 }
             }
@@ -24104,6 +24131,10 @@ var doc = `{
         },
         "models.AuthSource": {
             "type": "object",
+            "required": [
+                "config",
+                "tokenType"
+            ],
             "properties": {
                 "config": {
                     "type": "object",
@@ -24141,6 +24172,9 @@ var doc = `{
                 "appSecret": {
                     "type": "string"
                 },
+                "authURL": {
+                    "type": "string"
+                },
                 "basedn": {
                     "type": "string"
                 },
@@ -24167,10 +24201,6 @@ var doc = `{
                     }
                 },
                 "tokenURL": {
-                    "type": "string"
-                },
-                "url": {
-                    "description": "oauth",
                     "type": "string"
                 },
                 "userInfoURL": {
@@ -24206,6 +24236,40 @@ var doc = `{
                 }
             }
         },
+        "models.CVEAllowlist": {
+            "type": "object",
+            "properties": {
+                "creationTime": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.CVEAllowlistItem"
+                    }
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "updateTime": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CVEAllowlistItem": {
+            "type": "object",
+            "properties": {
+                "cve_id": {
+                    "type": "string"
+                }
+            }
+        },
         "models.ChartRepo": {
             "type": "object",
             "required": [
@@ -24234,62 +24298,24 @@ var doc = `{
         },
         "models.Cluster": {
             "type": "object",
-            "required": [
-                "clusterName",
-                "kubeConfig"
-            ],
             "properties": {
-                "agentAddr": {
-                    "description": "Agent地址",
+                "destination_rule": {
                     "type": "string"
                 },
-                "apiserver": {
-                    "description": "APIServer地址 根据kubeconfig添加后，自动填充",
+                "direction": {
                     "type": "string"
                 },
-                "clusterName": {
-                    "description": "集群名字",
-                    "type": "string"
-                },
-                "clusterResourceQuota": {
-                    "type": "object",
-                    "$ref": "#/definitions/datatypes.JSON"
-                },
-                "environments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Environment"
-                    }
-                },
-                "id": {
+                "port": {
                     "type": "integer"
                 },
-                "kubeConfig": {
-                    "description": "KubeConfig 配置",
+                "service_fqdn": {
                     "type": "object",
-                    "$ref": "#/definitions/datatypes.JSON"
+                    "$ref": "#/definitions/kubernetes.Host"
                 },
-                "oversoldConfig": {
-                    "description": "集群资源超卖设置",
-                    "type": "object",
-                    "$ref": "#/definitions/datatypes.JSON"
-                },
-                "primary": {
-                    "description": "是否主集群",
-                    "type": "boolean"
-                },
-                "runtime": {
-                    "description": "docker or containerd",
+                "subset": {
                     "type": "string"
                 },
-                "tenantResourceQuotas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.TenantResourceQuota"
-                    }
-                },
-                "version": {
-                    "description": "Version 版本",
+                "type": {
                     "type": "string"
                 }
             }
@@ -24317,60 +24343,74 @@ var doc = `{
             "type": "object",
             "properties": {
                 "applications": {
+                    "description": "关联的应用",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.Application"
                     }
                 },
                 "cluster": {
+                    "description": "关联的集群",
                     "type": "object",
                     "$ref": "#/definitions/models.Cluster"
                 },
                 "clusterID": {
+                    "description": "所属集群ID",
                     "type": "integer"
                 },
                 "creator": {
+                    "description": "创建者",
                     "type": "object",
                     "$ref": "#/definitions/models.User"
                 },
                 "creatorID": {
+                    "description": "创建人ID",
                     "type": "integer"
                 },
                 "deletePolicy": {
+                    "description": "删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)",
+                    "type": "string"
+                },
+                "environmentName": {
+                    "description": "环境名字",
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "limitRange": {
+                    "description": "环境下的limitrage",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
                 "metaType": {
-                    "description": "MetaTpe (dev, prod, test, pub ...)",
-                    "type": "string"
-                },
-                "name": {
+                    "description": "元类型(开发(dev)，测试(test)，生产(prod))等选项之一",
                     "type": "string"
                 },
                 "namespace": {
+                    "description": "环境关联的namespace",
                     "type": "string"
                 },
                 "project": {
+                    "description": "所属项目",
                     "type": "object",
                     "$ref": "#/definitions/models.Project"
                 },
                 "projectID": {
+                    "description": "所属项目ID",
                     "type": "integer"
                 },
                 "remark": {
+                    "description": "备注",
                     "type": "string"
                 },
                 "resourceQuota": {
+                    "description": "环境资源限制(这个会和namespace下的ResourceQuota对等)",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
                 },
                 "users": {
+                    "description": "关联的用户",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.User"
@@ -24381,6 +24421,7 @@ var doc = `{
                     "$ref": "#/definitions/models.VirtualSpace"
                 },
                 "virtualSpaceID": {
+                    "description": "虚拟空间",
                     "type": "integer"
                 }
             }
@@ -24450,6 +24491,7 @@ var doc = `{
             ],
             "properties": {
                 "environmentID": {
+                    "description": "EnvironmentID",
                     "type": "integer"
                 },
                 "id": {
@@ -24460,6 +24502,7 @@ var doc = `{
                     "$ref": "#/definitions/models.Environment"
                 },
                 "role": {
+                    "description": "环境级角色(\"reader\", \"operator\")",
                     "type": "string"
                 },
                 "user": {
@@ -24467,6 +24510,7 @@ var doc = `{
                     "$ref": "#/definitions/models.User"
                 },
                 "userID": {
+                    "description": "用户ID",
                     "type": "integer"
                 }
             }
@@ -24716,6 +24760,30 @@ var doc = `{
                 "$ref": "#/definitions/models.MetricGraph"
             }
         },
+        "models.OIDCUser": {
+            "type": "object",
+            "properties": {
+                "creation_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "secret": {
+                    "description": "secret in plain text",
+                    "type": "string"
+                },
+                "subiss": {
+                    "type": "string"
+                },
+                "update_time": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.OnlineConfig": {
             "type": "object",
             "required": [
@@ -24742,61 +24810,54 @@ var doc = `{
         "models.Project": {
             "type": "object",
             "properties": {
-                "applications": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Application"
-                    }
-                },
-                "createdAt": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "environments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Environment"
-                    }
-                },
-                "id": {
+                "chart_count": {
                     "type": "integer"
                 },
-                "projectAlias": {
-                    "description": "项目别名",
+                "creation_time": {
                     "type": "string"
                 },
-                "projectName": {
-                    "description": "项目名字",
-                    "type": "string"
-                },
-                "registries": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Registry"
-                    }
-                },
-                "remark": {
-                    "description": "项目备注",
-                    "type": "string"
-                },
-                "resourceQuota": {
-                    "description": "项目资源限制",
-                    "type": "object",
-                    "$ref": "#/definitions/datatypes.JSON"
-                },
-                "tenant": {
-                    "type": "object",
-                    "$ref": "#/definitions/models.Tenant"
-                },
-                "tenantID": {
-                    "description": "所属的租户ID",
+                "current_user_role_id": {
                     "type": "integer"
                 },
-                "users": {
+                "current_user_role_ids": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.User"
+                        "type": "integer"
                     }
+                },
+                "cve_allowlist": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.CVEAllowlist"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner_id": {
+                    "type": "integer"
+                },
+                "owner_name": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "registry_id": {
+                    "type": "integer"
+                },
+                "repo_count": {
+                    "type": "integer"
+                },
+                "update_time": {
+                    "type": "string"
                 }
             }
         },
@@ -24906,10 +24967,8 @@ var doc = `{
                     "type": "integer"
                 },
                 "isActive": {
+                    "description": "是否激活",
                     "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
                 },
                 "projects": {
                     "type": "array",
@@ -24918,6 +24977,7 @@ var doc = `{
                     }
                 },
                 "remark": {
+                    "description": "备注",
                     "type": "string"
                 },
                 "resourceQuotas": {
@@ -24925,6 +24985,10 @@ var doc = `{
                     "items": {
                         "$ref": "#/definitions/models.TenantResourceQuota"
                     }
+                },
+                "tenantName": {
+                    "description": "租户名字",
+                    "type": "string"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -24964,49 +25028,28 @@ var doc = `{
                 },
                 "tenantID": {
                     "type": "integer"
+                },
+                "tenantResourceQuotaApply": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.TenantResourceQuotaApply"
+                },
+                "tenantResourceQuotaApplyID": {
+                    "type": "integer"
                 }
             }
         },
         "models.TenantResourceQuotaApply": {
             "type": "object",
-            "required": [
-                "clusterID",
-                "tenantID"
-            ],
             "properties": {
-                "cluster": {
-                    "type": "object",
-                    "$ref": "#/definitions/models.Cluster"
-                },
-                "clusterID": {
-                    "type": "integer"
-                },
                 "content": {
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
-                },
-                "createAt": {
-                    "type": "string"
-                },
-                "creator": {
-                    "type": "object",
-                    "$ref": "#/definitions/models.User"
-                },
-                "creatorID": {
-                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "status": {
                     "type": "string"
-                },
-                "tenant": {
-                    "type": "object",
-                    "$ref": "#/definitions/models.Tenant"
-                },
-                "tenantID": {
-                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -25026,6 +25069,7 @@ var doc = `{
                     "type": "integer"
                 },
                 "role": {
+                    "description": "租户级角色(管理员admin, 普通用户ordinary)",
                     "type": "string"
                 },
                 "tenant": {
@@ -25033,6 +25077,7 @@ var doc = `{
                     "$ref": "#/definitions/models.Tenant"
                 },
                 "tenantID": {
+                    "description": "租户ID",
                     "type": "integer"
                 },
                 "user": {
@@ -25040,48 +25085,61 @@ var doc = `{
                     "$ref": "#/definitions/models.User"
                 },
                 "userID": {
+                    "description": "用户ID",
                     "type": "integer"
                 }
             }
         },
         "models.User": {
             "type": "object",
-            "required": [
-                "email",
-                "phone",
-                "username"
-            ],
             "properties": {
-                "createdAt": {
+                "admin_role_in_auth": {
+                    "description": "AdminRoleInAuth to store the admin privilege granted by external authentication provider",
+                    "type": "boolean"
+                },
+                "comment": {
                     "type": "string"
+                },
+                "creation_time": {
+                    "type": "string"
+                },
+                "deleted": {
+                    "type": "boolean"
                 },
                 "email": {
                     "type": "string"
                 },
-                "id": {
+                "oidc_user_meta": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.OIDCUser"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "password_version": {
+                    "type": "string"
+                },
+                "realname": {
+                    "type": "string"
+                },
+                "reset_uuid": {
+                    "type": "string"
+                },
+                "role_id": {
+                    "description": "if this field is named as \"RoleID\", beego orm can not map role_id\nto it.",
                     "type": "integer"
                 },
-                "isActive": {
+                "role_name": {
+                    "type": "string"
+                },
+                "sysadmin_flag": {
                     "type": "boolean"
                 },
-                "lastLoginAt": {
+                "update_time": {
                     "type": "string"
                 },
-                "phone": {
-                    "type": "string"
-                },
-                "systemRole": {
-                    "type": "object",
-                    "$ref": "#/definitions/models.SystemRole"
-                },
-                "systemRoleID": {
+                "user_id": {
                     "type": "integer"
-                },
-                "tenants": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Tenant"
-                    }
                 },
                 "username": {
                     "type": "string"
@@ -25090,6 +25148,10 @@ var doc = `{
         },
         "models.UserCreate": {
             "type": "object",
+            "required": [
+                "email",
+                "username"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -25153,10 +25215,10 @@ var doc = `{
                     "description": "是否激活",
                     "type": "boolean"
                 },
-                "updatedAt": {
+                "name": {
                     "type": "string"
                 },
-                "virtualDomainName": {
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -25182,9 +25244,6 @@ var doc = `{
                 "isActive": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "updatedAt": {
                     "type": "string"
                 },
@@ -25193,6 +25252,9 @@ var doc = `{
                     "items": {
                         "$ref": "#/definitions/models.User"
                     }
+                },
+                "virtualSpaceName": {
+                    "type": "string"
                 }
             }
         },
@@ -26136,17 +26198,7 @@ var doc = `{
             }
         },
         "types.Timestamp": {
-            "type": "object",
-            "properties": {
-                "nanos": {
-                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
-                    "type": "integer"
-                },
-                "seconds": {
-                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
-                    "type": "integer"
-                }
-            }
+            "type": "object"
         },
         "types.UInt32Value": {
             "type": "object",
@@ -29370,54 +29422,28 @@ var doc = `{
                 }
             }
         },
-        "v1.Rule": {
-            "type": "object",
-            "properties": {
-                "alert": {
-                    "type": "string"
-                },
-                "annotations": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "expr": {
-                    "type": "object",
-                    "$ref": "#/definitions/intstr.IntOrString"
-                },
-                "for": {
-                    "type": "string"
-                },
-                "labels": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "record": {
-                    "type": "string"
-                }
-            }
-        },
         "v1.RuleGroup": {
             "type": "object",
             "properties": {
-                "interval": {
+                "file": {
                     "type": "string"
+                },
+                "interval": {
+                    "type": "number"
                 },
                 "name": {
                     "type": "string"
                 },
-                "partial_response_strategy": {
-                    "type": "string"
-                },
                 "rules": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.Rule"
-                    }
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Rules"
                 }
+            }
+        },
+        "v1.Rules": {
+            "type": "array",
+            "items": {
+                "type": "object"
             }
         },
         "v1.SELinuxOptions": {
@@ -31227,12 +31253,12 @@ var doc = `{
         "v1alpha1.HealthStatus": {
             "type": "object",
             "properties": {
-                "enable": {
-                    "description": "Enable the HealthStatus.",
-                    "type": "boolean"
+                "message": {
+                    "description": "Message is a human-readable informational message describing the health status",
+                    "type": "string"
                 },
-                "uri": {
-                    "description": "URI of the location. Default is ` + "`" + `/nginx-health` + "`" + `.\n+kubebuilder:validation:Optional",
+                "status": {
+                    "description": "Status holds the status code of the application or resource",
                     "type": "string"
                 }
             }
@@ -32638,6 +32664,69 @@ var doc = `{
                 }
             }
         },
+        "v1alpha3.CorsPolicy": {
+            "type": "object",
+            "properties": {
+                "allow_credentials": {
+                    "description": "Indicates whether the caller is allowed to send the actual request\n(not the preflight) using credentials. Translates to\n` + "`" + `Access-Control-Allow-Credentials` + "`" + ` header.",
+                    "type": "object",
+                    "$ref": "#/definitions/types.BoolValue"
+                },
+                "allow_headers": {
+                    "description": "List of HTTP headers that can be used when requesting the\nresource. Serialized to Access-Control-Allow-Headers header.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allow_methods": {
+                    "description": "List of HTTP methods allowed to access the resource. The content will\nbe serialized into the Access-Control-Allow-Methods header.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allow_origin": {
+                    "description": "The list of origins that are allowed to perform CORS requests. The\ncontent will be serialized into the Access-Control-Allow-Origin\nheader. Wildcard * will allow all origins.\n$hide_from_docs",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allow_origins": {
+                    "description": "String patterns that match allowed origins.\nAn origin is allowed if any of the string matchers match.\nIf a match is found, then the outgoing Access-Control-Allow-Origin would be set to the origin as provided by the client.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.StringMatch"
+                    }
+                },
+                "expose_headers": {
+                    "description": "A list of HTTP headers that the browsers are allowed to\naccess. Serialized into Access-Control-Expose-Headers header.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "max_age": {
+                    "description": "Specifies how long the results of a preflight request can be\ncached. Translates to the ` + "`" + `Access-Control-Max-Age` + "`" + ` header.",
+                    "type": "object",
+                    "$ref": "#/definitions/types.Duration"
+                }
+            }
+        },
+        "v1alpha3.Delegate": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Name specifies the name of the delegate VirtualService.",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace specifies the namespace where the delegate VirtualService resides.\nBy default, it is same to the root's.",
+                    "type": "string"
+                }
+            }
+        },
         "v1alpha3.Destination": {
             "type": "object",
             "properties": {
@@ -32828,6 +32917,23 @@ var doc = `{
                 }
             }
         },
+        "v1alpha3.HTTPRedirect": {
+            "type": "object",
+            "properties": {
+                "authority": {
+                    "description": "On a redirect, overwrite the Authority/Host portion of the URL with\nthis value.",
+                    "type": "string"
+                },
+                "redirect_code": {
+                    "description": "On a redirect, Specifies the HTTP status code to use in the redirect\nresponse. The default response code is MOVED_PERMANENTLY (301).",
+                    "type": "integer"
+                },
+                "uri": {
+                    "description": "On a redirect, overwrite the Path portion of the URL with this\nvalue. Note that the entire path will be replaced, irrespective of the\nrequest URI being matched as an exact path or prefix.",
+                    "type": "string"
+                }
+            }
+        },
         "v1alpha3.HTTPRetry": {
             "type": "object",
             "properties": {
@@ -32848,6 +32954,97 @@ var doc = `{
                     "description": "Flag to specify whether the retries should retry to other localities.\nSee the [retry plugin configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/http/http_connection_management#retry-plugin-configuration) for more details.",
                     "type": "object",
                     "$ref": "#/definitions/types.BoolValue"
+                }
+            }
+        },
+        "v1alpha3.HTTPRewrite": {
+            "type": "object",
+            "properties": {
+                "authority": {
+                    "description": "rewrite the Authority/Host header with this value.",
+                    "type": "string"
+                },
+                "uri": {
+                    "description": "rewrite the path (or the prefix) portion of the URI with this\nvalue. If the original URI was matched based on prefix, the value\nprovided in this field will replace the corresponding matched prefix.",
+                    "type": "string"
+                }
+            }
+        },
+        "v1alpha3.HTTPRoute": {
+            "type": "object",
+            "properties": {
+                "cors_policy": {
+                    "description": "Cross-Origin Resource Sharing policy (CORS). Refer to\n[CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)\nfor further details about cross origin resource sharing.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.CorsPolicy"
+                },
+                "delegate": {
+                    "description": "Delegate is used to specify the particular VirtualService which\ncan be used to define delegate HTTPRoute.\n\nIt can be set only when ` + "`" + `Route` + "`" + ` and ` + "`" + `Redirect` + "`" + ` are empty, and the route\nrules of the delegate VirtualService will be merged with that in the\ncurrent one.\n\n**NOTE**:\n\n1. Only one level delegation is supported.\n2. The delegate's HTTPMatchRequest must be a strict subset of the root's,\n   otherwise there is a conflict and the HTTPRoute will not take effect.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.Delegate"
+                },
+                "fault": {
+                    "description": "Fault injection policy to apply on HTTP traffic at the client side.\nNote that timeouts or retries will not be enabled when faults are\nenabled on the client side.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.HTTPFaultInjection"
+                },
+                "headers": {
+                    "description": "Header manipulation rules",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.Headers"
+                },
+                "match": {
+                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.HTTPMatchRequest"
+                    }
+                },
+                "mirror": {
+                    "description": "Mirror HTTP traffic to a another destination in addition to forwarding\nthe requests to the intended destination. Mirrored traffic is on a\nbest effort basis where the sidecar/gateway will not wait for the\nmirrored cluster to respond before returning the response from the\noriginal destination.  Statistics will be generated for the mirrored\ndestination.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.Destination"
+                },
+                "mirror_percent": {
+                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nUse of integer ` + "`" + `mirror_percent` + "`" + ` value is deprecated. Use the\ndouble ` + "`" + `mirror_percentage` + "`" + ` field instead",
+                    "type": "object",
+                    "$ref": "#/definitions/types.UInt32Value"
+                },
+                "mirror_percentage": {
+                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nIf this field is absent, all the traffic (100%) will be mirrored.\nMax value is 100.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.Percent"
+                },
+                "name": {
+                    "description": "The name assigned to the route for debugging purposes. The\nroute's name will be concatenated with the match's name and will\nbe logged in the access logs for requests matching this\nroute/match.",
+                    "type": "string"
+                },
+                "redirect": {
+                    "description": "A HTTP rule can either redirect or forward (default) traffic. If\ntraffic passthrough option is specified in the rule,\nroute/redirect will be ignored. The redirect primitive can be used to\nsend a HTTP 301 redirect to a different URI or Authority.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.HTTPRedirect"
+                },
+                "retries": {
+                    "description": "Retry policy for HTTP requests.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.HTTPRetry"
+                },
+                "rewrite": {
+                    "description": "Rewrite HTTP URIs and Authority headers. Rewrite cannot be used with\nRedirect primitive. Rewrite will be performed before forwarding.",
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha3.HTTPRewrite"
+                },
+                "route": {
+                    "description": "A HTTP rule can either redirect or forward (default) traffic. The\nforwarding target can be one of several versions of a service (see\nglossary in beginning of document). Weights associated with the\nservice version determine the proportion of traffic it receives.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.HTTPRouteDestination"
+                    }
+                },
+                "timeout": {
+                    "description": "Timeout for HTTP requests, default is disabled.",
+                    "type": "object",
+                    "$ref": "#/definitions/types.Duration"
                 }
             }
         },
@@ -33394,6 +33591,85 @@ var doc = `{
                 }
             }
         },
+        "v1alpha3.TCPRoute": {
+            "type": "object",
+            "properties": {
+                "match": {
+                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.L4MatchAttributes"
+                    }
+                },
+                "route": {
+                    "description": "The destination to which the connection should be forwarded to.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.RouteDestination"
+                    }
+                }
+            }
+        },
+        "v1alpha3.TLSMatchAttributes": {
+            "type": "object",
+            "properties": {
+                "destination_subnets": {
+                    "description": "IPv4 or IPv6 ip addresses of destination with optional subnet.  E.g.,\na.b.c.d/xx form or just a.b.c.d.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "gateways": {
+                    "description": "Names of gateways where the rule should be applied. Gateway names\nin the top-level ` + "`" + `gateways` + "`" + ` field of the VirtualService (if any) are overridden. The gateway\nmatch is independent of sourceLabels.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "port": {
+                    "description": "Specifies the port on the host that is being addressed. Many services\nonly expose a single port or label ports with the protocols they\nsupport, in these cases it is not required to explicitly select the\nport.",
+                    "type": "integer"
+                },
+                "sni_hosts": {
+                    "description": "SNI (server name indicator) to match on. Wildcard prefixes\ncan be used in the SNI value, e.g., *.com will match foo.example.com\nas well as example.com. An SNI value must be a subset (i.e., fall\nwithin the domain) of the corresponding virtual serivce's hosts.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "source_labels": {
+                    "description": "One or more labels that constrain the applicability of a rule to\nworkloads with the given labels. If the VirtualService has a list of\ngateways specified in the top-level ` + "`" + `gateways` + "`" + ` field, it should include the reserved gateway\n` + "`" + `mesh` + "`" + ` in order for this field to be applicable.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "source_namespace": {
+                    "description": "Source namespace constraining the applicability of a rule to workloads in that namespace.\nIf the VirtualService has a list of gateways specified in the top-level ` + "`" + `gateways` + "`" + ` field,\nit must include the reserved gateway ` + "`" + `mesh` + "`" + ` for this field to be applicable.",
+                    "type": "string"
+                }
+            }
+        },
+        "v1alpha3.TLSRoute": {
+            "type": "object",
+            "properties": {
+                "match": {
+                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.TLSMatchAttributes"
+                    }
+                },
+                "route": {
+                    "description": "The destination to which the connection should be forwarded to.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.RouteDestination"
+                    }
+                }
+            }
+        },
         "v1alpha3.TrafficPolicy": {
             "type": "object",
             "properties": {
@@ -33459,206 +33735,86 @@ var doc = `{
         "v1alpha3.VirtualService": {
             "type": "object",
             "properties": {
-                "annotations": {
-                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "apiVersion": {
-                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-                    "type": "string"
-                },
-                "clusterName": {
-                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
-                    "type": "string"
-                },
-                "creationTimestamp": {
-                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "deletionGracePeriodSeconds": {
-                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
-                    "type": "integer"
-                },
-                "deletionTimestamp": {
-                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "finalizers": {
-                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                "export_to": {
+                    "description": "A list of namespaces to which this virtual service is exported. Exporting a\nvirtual service allows it to be used by sidecars and gateways defined in\nother namespaces. This feature provides a mechanism for service owners\nand mesh administrators to control the visibility of virtual services\nacross namespace boundaries.\n\nIf no namespaces are specified then the virtual service is exported to all\nnamespaces by default.\n\nThe value \".\" is reserved and defines an export to the same namespace that\nthe virtual service is declared in. Similarly the value \"*\" is reserved and\ndefines an export to all namespaces.",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "generateName": {
-                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
-                    "type": "string"
-                },
-                "generation": {
-                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
-                    "type": "integer"
-                },
-                "kind": {
-                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
-                    "type": "object",
-                    "additionalProperties": {
+                "gateways": {
+                    "description": "The names of gateways and sidecars that should apply these routes.\nGateways in other namespaces may be referred to by\n` + "`" + `\u003cgateway namespace\u003e/\u003cgateway name\u003e` + "`" + `; specifying a gateway with no\nnamespace qualifier is the same as specifying the VirtualService's\nnamespace. A single VirtualService is used for sidecars inside the mesh as\nwell as for one or more gateways. The selection condition imposed by this\nfield can be overridden using the source field in the match conditions\nof protocol-specific routes. The reserved word ` + "`" + `mesh` + "`" + ` is used to imply\nall the sidecars in the mesh. When this field is omitted, the default\ngateway (` + "`" + `mesh` + "`" + `) will be used, which would apply the rule to all\nsidecars in the mesh. If a list of gateway names is provided, the\nrules will apply only to the gateways. To apply the rules to both\ngateways and sidecars, specify ` + "`" + `mesh` + "`" + ` as one of the gateway names.",
+                    "type": "array",
+                    "items": {
                         "type": "string"
                     }
                 },
-                "managedFields": {
-                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                "hosts": {
+                    "description": "The destination hosts to which traffic is being sent. Could\nbe a DNS name with wildcard prefix or an IP address.  Depending on the\nplatform, short-names can also be used instead of a FQDN (i.e. has no\ndots in the name). In such a scenario, the FQDN of the host would be\nderived based on the underlying platform.\n\nA single VirtualService can be used to describe all the traffic\nproperties of the corresponding hosts, including those for multiple\nHTTP and TCP ports. Alternatively, the traffic properties of a host\ncan be defined using more than one VirtualService, with certain\ncaveats. Refer to the\n[Operations Guide](https://istio.io/docs/ops/best-practices/traffic-management/#split-virtual-services)\nfor details.\n\n*Note for Kubernetes users*: When short names are used (e.g. \"reviews\"\ninstead of \"reviews.default.svc.cluster.local\"), Istio will interpret\nthe short name based on the namespace of the rule, not the service. A\nrule in the \"default\" namespace containing a host \"reviews\" will be\ninterpreted as \"reviews.default.svc.cluster.local\", irrespective of\nthe actual namespace associated with the reviews service. _To avoid\npotential misconfigurations, it is recommended to always use fully\nqualified domain names over short names._\n\nThe hosts field applies to both HTTP and TCP services. Service inside\nthe mesh, i.e., those found in the service registry, must always be\nreferred to using their alphanumeric names. IP addresses are allowed\nonly for services defined via the Gateway.\n\n*Note*: It must be empty for a delegate VirtualService.",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                        "type": "string"
                     }
                 },
-                "name": {
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
-                    "type": "string"
-                },
-                "ownerReferences": {
-                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                "http": {
+                    "description": "An ordered list of route rules for HTTP traffic. HTTP routes will be\napplied to platform service ports named 'http-*'/'http2-*'/'grpc-*', gateway\nports with protocol HTTP/HTTP2/GRPC/ TLS-terminated-HTTPS and service\nentry ports using HTTP/HTTP2/GRPC protocols.  The first rule matching\nan incoming request is used.",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/v1.OwnerReference"
+                        "$ref": "#/definitions/v1alpha3.HTTPRoute"
                     }
                 },
-                "resourceVersion": {
-                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
-                    "type": "string"
+                "tcp": {
+                    "description": "An ordered list of route rules for opaque TCP traffic. TCP routes will\nbe applied to any port that is not a HTTP or TLS port. The first rule\nmatching an incoming request is used.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.TCPRoute"
+                    }
                 },
-                "selfLink": {
-                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
-                    "type": "string"
-                },
-                "spec": {
-                    "description": "Spec defines the implementation of this definition.\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.VirtualService"
-                },
-                "status": {
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha1.IstioStatus"
-                },
-                "uid": {
-                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
-                    "type": "string"
+                "tls": {
+                    "description": "An ordered list of route rule for non-terminated TLS \u0026 HTTPS\ntraffic. Routing is typically performed using the SNI value presented\nby the ClientHello message. TLS routes will be applied to platform\nservice ports named 'https-*', 'tls-*', unterminated gateway ports using\nHTTPS/TLS protocols (i.e. with \"passthrough\" TLS mode) and service\nentry ports using HTTPS/TLS protocols.  The first rule matching an\nincoming request is used.  NOTE: Traffic 'https-*' or 'tls-*' ports\nwithout associated virtual service will be treated as opaque TCP\ntraffic.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha3.TLSRoute"
+                    }
                 }
             }
         },
         "v1alpha3.WorkloadEntry": {
             "type": "object",
             "properties": {
-                "annotations": {
-                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "apiVersion": {
-                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-                    "type": "string"
-                },
-                "clusterName": {
-                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
-                    "type": "string"
-                },
-                "creationTimestamp": {
-                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "deletionGracePeriodSeconds": {
-                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
-                    "type": "integer"
-                },
-                "deletionTimestamp": {
-                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1.Time"
-                },
-                "finalizers": {
-                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "generateName": {
-                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
-                    "type": "string"
-                },
-                "generation": {
-                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
-                    "type": "integer"
-                },
-                "kind": {
-                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                "address": {
+                    "description": "Address associated with the network endpoint without the\nport.  Domain names can be used if and only if the resolution is set\nto DNS, and must be fully-qualified without wildcards. Use the form\nunix:///absolute/path/to/socket for Unix domain socket endpoints.",
                     "type": "string"
                 },
                 "labels": {
-                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "description": "One or more labels associated with the endpoint.",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
                 },
-                "managedFields": {
-                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                "locality": {
+                    "description": "The locality associated with the endpoint. A locality corresponds\nto a failure domain (e.g., country/region/zone). Arbitrary failure\ndomain hierarchies can be represented by separating each\nencapsulating failure domain by /. For example, the locality of an\nan endpoint in US, in US-East-1 region, within availability zone\naz-1, in data center rack r11 can be represented as\nus/us-east-1/az-1/r11. Istio will configure the sidecar to route to\nendpoints within the same locality as the sidecar. If none of the\nendpoints in the locality are available, endpoints parent locality\n(but within the same network ID) will be chosen. For example, if\nthere are two endpoints in same network (networkID \"n1\"), say e1\nwith locality us/us-east-1/az-1/r11 and e2 with locality\nus/us-east-1/az-2/r12, a sidecar from us/us-east-1/az-1/r11 locality\nwill prefer e1 from the same locality over e2 from a different\nlocality. Endpoint e2 could be the IP associated with a gateway\n(that bridges networks n1 and n2), or the IP associated with a\nstandard service endpoint.",
+                    "type": "string"
+                },
+                "network": {
+                    "description": "Network enables Istio to group endpoints resident in the same L3\ndomain/network. All endpoints in the same network are assumed to be\ndirectly reachable from one another. When endpoints in different\nnetworks cannot reach each other directly, an Istio Gateway can be\nused to establish connectivity (usually using the\n` + "`" + `AUTO_PASSTHROUGH` + "`" + ` mode in a Gateway Server). This is\nan advanced configuration used typically for spanning an Istio mesh\nover multiple clusters.",
+                    "type": "string"
+                },
+                "ports": {
+                    "description": "Set of ports associated with the endpoint. If the port map is\nspecified, it must be a map of servicePortName to this endpoint's\nport, such that traffic to the service port will be forwarded to\nthe endpoint port that maps to the service's portName. If\nomitted, and the targetPort is specified as part of the service's\nport specification, traffic to the service port will be forwarded\nto one of the endpoints on the specified ` + "`" + `targetPort` + "`" + `. If both\nthe targetPort and endpoint's port map are not specified, traffic\nto a service port will be forwarded to one of the endpoints on\nthe same port.\n\n**NOTE 1:** Do not use for ` + "`" + `unix://` + "`" + ` addresses.\n\n**NOTE 2:** endpoint port map takes precedence over targetPort.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
                     }
                 },
-                "name": {
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                "service_account": {
+                    "description": "The service account associated with the workload if a sidecar\nis present in the workload. The service account must be present\nin the same namespace as the configuration ( WorkloadEntry or a\nServiceEntry)",
                     "type": "string"
                 },
-                "namespace": {
-                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
-                    "type": "string"
-                },
-                "ownerReferences": {
-                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.OwnerReference"
-                    }
-                },
-                "resourceVersion": {
-                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
-                    "type": "string"
-                },
-                "selfLink": {
-                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
-                    "type": "string"
-                },
-                "spec": {
-                    "description": "Spec defines the implementation of this definition.\n+optional",
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha3.WorkloadEntry"
-                },
-                "status": {
-                    "type": "object",
-                    "$ref": "#/definitions/v1alpha1.IstioStatus"
-                },
-                "uid": {
-                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
-                    "type": "string"
+                "weight": {
+                    "description": "The load balancing weight associated with the endpoint. Endpoints\nwith higher weights will receive proportionally higher traffic.",
+                    "type": "integer"
                 }
             }
         },
@@ -33700,87 +33856,6 @@ var doc = `{
                 }
             }
         },
-        "v1beta1.CorsPolicy": {
-            "type": "object",
-            "properties": {
-                "allow_credentials": {
-                    "description": "Indicates whether the caller is allowed to send the actual request\n(not the preflight) using credentials. Translates to\n` + "`" + `Access-Control-Allow-Credentials` + "`" + ` header.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.BoolValue"
-                },
-                "allow_headers": {
-                    "description": "List of HTTP headers that can be used when requesting the\nresource. Serialized to Access-Control-Allow-Headers header.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "allow_methods": {
-                    "description": "List of HTTP methods allowed to access the resource. The content will\nbe serialized into the Access-Control-Allow-Methods header.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "allow_origin": {
-                    "description": "The list of origins that are allowed to perform CORS requests. The\ncontent will be serialized into the Access-Control-Allow-Origin\nheader. Wildcard * will allow all origins.\n$hide_from_docs",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "allow_origins": {
-                    "description": "String patterns that match allowed origins.\nAn origin is allowed if any of the string matchers match.\nIf a match is found, then the outgoing Access-Control-Allow-Origin would be set to the origin as provided by the client.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.StringMatch"
-                    }
-                },
-                "expose_headers": {
-                    "description": "A list of HTTP headers that the browsers are allowed to\naccess. Serialized into Access-Control-Expose-Headers header.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "max_age": {
-                    "description": "Specifies how long the results of a preflight request can be\ncached. Translates to the ` + "`" + `Access-Control-Max-Age` + "`" + ` header.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                }
-            }
-        },
-        "v1beta1.Delegate": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "description": "Name specifies the name of the delegate VirtualService.",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace specifies the namespace where the delegate VirtualService resides.\nBy default, it is same to the root's.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1beta1.Destination": {
-            "type": "object",
-            "properties": {
-                "host": {
-                    "description": "The name of a service from the service registry. Service\nnames are looked up from the platform's service registry (e.g.,\nKubernetes services, Consul services, etc.) and from the hosts\ndeclared by [ServiceEntry](https://istio.io/docs/reference/config/networking/service-entry/#ServiceEntry). Traffic forwarded to\ndestinations that are not found in either of the two, will be dropped.\n\n*Note for Kubernetes users*: When short names are used (e.g. \"reviews\"\ninstead of \"reviews.default.svc.cluster.local\"), Istio will interpret\nthe short name based on the namespace of the rule, not the service. A\nrule in the \"default\" namespace containing a host \"reviews will be\ninterpreted as \"reviews.default.svc.cluster.local\", irrespective of\nthe actual namespace associated with the reviews service. To avoid\npotential misconfiguration, it is recommended to always use fully\nqualified domain names over short names.",
-                    "type": "string"
-                },
-                "port": {
-                    "description": "Specifies the port on the host that is being addressed. If a service\nexposes only a single port it is not required to explicitly select the\nport.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.PortSelector"
-                },
-                "subset": {
-                    "description": "The name of a subset within the service. Applicable only to services\nwithin the mesh. The subset must be defined in a corresponding\nDestinationRule.",
-                    "type": "string"
-                }
-            }
-        },
         "v1beta1.Gateway": {
             "type": "object",
             "properties": {
@@ -33797,360 +33872,6 @@ var doc = `{
                     "items": {
                         "$ref": "#/definitions/v1beta1.Server"
                     }
-                }
-            }
-        },
-        "v1beta1.HTTPFaultInjection": {
-            "type": "object",
-            "properties": {
-                "abort": {
-                    "description": "Abort Http request attempts and return error codes back to downstream\nservice, giving the impression that the upstream service is faulty.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPFaultInjection_Abort"
-                },
-                "delay": {
-                    "description": "Delay requests before forwarding, emulating various failures such as\nnetwork issues, overloaded upstream service, etc.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPFaultInjection_Delay"
-                }
-            }
-        },
-        "v1beta1.HTTPFaultInjection_Abort": {
-            "type": "object",
-            "properties": {
-                "errorType": {
-                    "description": "Types that are valid to be assigned to ErrorType:\n\t*HTTPFaultInjection_Abort_HttpStatus\n\t*HTTPFaultInjection_Abort_GrpcStatus\n\t*HTTPFaultInjection_Abort_Http2Error",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.isHTTPFaultInjection_Abort_ErrorType"
-                },
-                "percentage": {
-                    "description": "Percentage of requests to be aborted with the error code provided.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Percent"
-                }
-            }
-        },
-        "v1beta1.HTTPFaultInjection_Delay": {
-            "type": "object",
-            "properties": {
-                "httpDelayType": {
-                    "description": "Types that are valid to be assigned to HttpDelayType:\n\t*HTTPFaultInjection_Delay_FixedDelay\n\t*HTTPFaultInjection_Delay_ExponentialDelay",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.isHTTPFaultInjection_Delay_HttpDelayType"
-                },
-                "percent": {
-                    "description": "Percentage of requests on which the delay will be injected (0-100).\nUse of integer ` + "`" + `percent` + "`" + ` value is deprecated. Use the double ` + "`" + `percentage` + "`" + `\nfield instead.",
-                    "type": "integer"
-                },
-                "percentage": {
-                    "description": "Percentage of requests on which the delay will be injected.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Percent"
-                }
-            }
-        },
-        "v1beta1.HTTPMatchRequest": {
-            "type": "object",
-            "properties": {
-                "authority": {
-                    "description": "HTTP Authority\nvalues are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.StringMatch"
-                },
-                "gateways": {
-                    "description": "Names of gateways where the rule should be applied. Gateway names\nin the top-level ` + "`" + `gateways` + "`" + ` field of the VirtualService (if any) are overridden. The gateway\nmatch is independent of sourceLabels.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "headers": {
-                    "description": "The header keys must be lowercase and use hyphen as the separator,\ne.g. _x-request-id_.\n\nHeader values are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).\n\nIf the value is empty and only the name of header is specfied, presence of the header is checked.\n**Note:** The keys ` + "`" + `uri` + "`" + `, ` + "`" + `scheme` + "`" + `, ` + "`" + `method` + "`" + `, and ` + "`" + `authority` + "`" + ` will be ignored.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/v1beta1.StringMatch"
-                    }
-                },
-                "ignore_uri_case": {
-                    "description": "Flag to specify whether the URI matching should be case-insensitive.\n\n**Note:** The case will be ignored only in the case of ` + "`" + `exact` + "`" + ` and ` + "`" + `prefix` + "`" + `\nURI matches.",
-                    "type": "boolean"
-                },
-                "method": {
-                    "description": "HTTP Method\nvalues are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.StringMatch"
-                },
-                "name": {
-                    "description": "The name assigned to a match. The match's name will be\nconcatenated with the parent route's name and will be logged in\nthe access logs for requests matching this route.",
-                    "type": "string"
-                },
-                "port": {
-                    "description": "Specifies the ports on the host that is being addressed. Many services\nonly expose a single port or label ports with the protocols they support,\nin these cases it is not required to explicitly select the port.",
-                    "type": "integer"
-                },
-                "query_params": {
-                    "description": "Query parameters for matching.\n\nEx:\n\n- For a query parameter like \"?key=true\", the map key would be \"key\" and\n  the string match could be defined as ` + "`" + `exact: \"true\"` + "`" + `.\n\n- For a query parameter like \"?key\", the map key would be \"key\" and the\n  string match could be defined as ` + "`" + `exact: \"\"` + "`" + `.\n\n- For a query parameter like \"?key=123\", the map key would be \"key\" and the\n  string match could be defined as ` + "`" + `regex: \"\\d+$\"` + "`" + `. Note that this\n  configuration will only match values like \"123\" but not \"a123\" or \"123a\".\n\n**Note:** ` + "`" + `prefix` + "`" + ` matching is currently not supported.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/v1beta1.StringMatch"
-                    }
-                },
-                "scheme": {
-                    "description": "URI Scheme\nvalues are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.StringMatch"
-                },
-                "source_labels": {
-                    "description": "One or more labels that constrain the applicability of a rule to source (client) workloads\nwith the given labels. If the VirtualService has a list of gateways specified\nin the top-level ` + "`" + `gateways` + "`" + ` field, it must include the reserved gateway\n` + "`" + `mesh` + "`" + ` for this field to be applicable.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "source_namespace": {
-                    "description": "Source namespace constraining the applicability of a rule to workloads in that namespace.\nIf the VirtualService has a list of gateways specified in the top-level ` + "`" + `gateways` + "`" + ` field,\nit must include the reserved gateway ` + "`" + `mesh` + "`" + ` for this field to be applicable.",
-                    "type": "string"
-                },
-                "uri": {
-                    "description": "URI to match\nvalues are case-sensitive and formatted as follows:\n\n- ` + "`" + `exact: \"value\"` + "`" + ` for exact string match\n\n- ` + "`" + `prefix: \"value\"` + "`" + ` for prefix-based match\n\n- ` + "`" + `regex: \"value\"` + "`" + ` for RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).\n\n**Note:** Case-insensitive matching could be enabled via the\n` + "`" + `ignore_uri_case` + "`" + ` flag.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.StringMatch"
-                },
-                "without_headers": {
-                    "description": "withoutHeader has the same syntax with the header, but has opposite meaning.\nIf a header is matched with a matching rule among withoutHeader, the traffic becomes not matched one.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/v1beta1.StringMatch"
-                    }
-                }
-            }
-        },
-        "v1beta1.HTTPRedirect": {
-            "type": "object",
-            "properties": {
-                "authority": {
-                    "description": "On a redirect, overwrite the Authority/Host portion of the URL with\nthis value.",
-                    "type": "string"
-                },
-                "redirect_code": {
-                    "description": "On a redirect, Specifies the HTTP status code to use in the redirect\nresponse. The default response code is MOVED_PERMANENTLY (301).",
-                    "type": "integer"
-                },
-                "uri": {
-                    "description": "On a redirect, overwrite the Path portion of the URL with this\nvalue. Note that the entire path will be replaced, irrespective of the\nrequest URI being matched as an exact path or prefix.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1beta1.HTTPRetry": {
-            "type": "object",
-            "properties": {
-                "attempts": {
-                    "description": "Number of retries to be allowed for a given request. The interval\nbetween retries will be determined automatically (25ms+). When request\n` + "`" + `timeout` + "`" + ` of the [HTTP route](https://istio.io/docs/reference/config/networking/virtual-service/#HTTPRoute)\nor ` + "`" + `per_try_timeout` + "`" + ` is configured, the actual number of retries attempted also depends on\nthe specified request ` + "`" + `timeout` + "`" + ` and ` + "`" + `per_try_timeout` + "`" + ` values.",
-                    "type": "integer"
-                },
-                "per_try_timeout": {
-                    "description": "Timeout per attempt for a given request, including the initial call and any retries. Format: 1h/1m/1s/1ms. MUST BE \u003e=1ms.\nDefault is same value as request\n` + "`" + `timeout` + "`" + ` of the [HTTP route](https://istio.io/docs/reference/config/networking/virtual-service/#HTTPRoute),\nwhich means no timeout.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                },
-                "retry_on": {
-                    "description": "Specifies the conditions under which retry takes place.\nOne or more policies can be specified using a ‘,’ delimited list.\nSee the [retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on)\nand [gRPC retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-grpc-on) for more details.",
-                    "type": "string"
-                },
-                "retry_remote_localities": {
-                    "description": "Flag to specify whether the retries should retry to other localities.\nSee the [retry plugin configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/http/http_connection_management#retry-plugin-configuration) for more details.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.BoolValue"
-                }
-            }
-        },
-        "v1beta1.HTTPRewrite": {
-            "type": "object",
-            "properties": {
-                "authority": {
-                    "description": "rewrite the Authority/Host header with this value.",
-                    "type": "string"
-                },
-                "uri": {
-                    "description": "rewrite the path (or the prefix) portion of the URI with this\nvalue. If the original URI was matched based on prefix, the value\nprovided in this field will replace the corresponding matched prefix.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1beta1.HTTPRoute": {
-            "type": "object",
-            "properties": {
-                "cors_policy": {
-                    "description": "Cross-Origin Resource Sharing policy (CORS). Refer to\n[CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)\nfor further details about cross origin resource sharing.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.CorsPolicy"
-                },
-                "delegate": {
-                    "description": "Delegate is used to specify the particular VirtualService which\ncan be used to define delegate HTTPRoute.\n\nIt can be set only when ` + "`" + `Route` + "`" + ` and ` + "`" + `Redirect` + "`" + ` are empty, and the route\nrules of the delegate VirtualService will be merged with that in the\ncurrent one.\n\n**NOTE**:\n\n1. Only one level delegation is supported.\n2. The delegate's HTTPMatchRequest must be a strict subset of the root's,\n   otherwise there is a conflict and the HTTPRoute will not take effect.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Delegate"
-                },
-                "fault": {
-                    "description": "Fault injection policy to apply on HTTP traffic at the client side.\nNote that timeouts or retries will not be enabled when faults are\nenabled on the client side.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPFaultInjection"
-                },
-                "headers": {
-                    "description": "Header manipulation rules",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Headers"
-                },
-                "match": {
-                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.HTTPMatchRequest"
-                    }
-                },
-                "mirror": {
-                    "description": "Mirror HTTP traffic to a another destination in addition to forwarding\nthe requests to the intended destination. Mirrored traffic is on a\nbest effort basis where the sidecar/gateway will not wait for the\nmirrored cluster to respond before returning the response from the\noriginal destination.  Statistics will be generated for the mirrored\ndestination.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Destination"
-                },
-                "mirror_percent": {
-                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nUse of integer ` + "`" + `mirror_percent` + "`" + ` value is deprecated. Use the\ndouble ` + "`" + `mirror_percentage` + "`" + ` field instead",
-                    "type": "object",
-                    "$ref": "#/definitions/types.UInt32Value"
-                },
-                "mirror_percentage": {
-                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nIf this field is absent, all the traffic (100%) will be mirrored.\nMax value is 100.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Percent"
-                },
-                "name": {
-                    "description": "The name assigned to the route for debugging purposes. The\nroute's name will be concatenated with the match's name and will\nbe logged in the access logs for requests matching this\nroute/match.",
-                    "type": "string"
-                },
-                "redirect": {
-                    "description": "A HTTP rule can either redirect or forward (default) traffic. If\ntraffic passthrough option is specified in the rule,\nroute/redirect will be ignored. The redirect primitive can be used to\nsend a HTTP 301 redirect to a different URI or Authority.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPRedirect"
-                },
-                "retries": {
-                    "description": "Retry policy for HTTP requests.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPRetry"
-                },
-                "rewrite": {
-                    "description": "Rewrite HTTP URIs and Authority headers. Rewrite cannot be used with\nRedirect primitive. Rewrite will be performed before forwarding.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.HTTPRewrite"
-                },
-                "route": {
-                    "description": "A HTTP rule can either redirect or forward (default) traffic. The\nforwarding target can be one of several versions of a service (see\nglossary in beginning of document). Weights associated with the\nservice version determine the proportion of traffic it receives.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.HTTPRouteDestination"
-                    }
-                },
-                "timeout": {
-                    "description": "Timeout for HTTP requests, default is disabled.",
-                    "type": "object",
-                    "$ref": "#/definitions/types.Duration"
-                }
-            }
-        },
-        "v1beta1.HTTPRouteDestination": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "description": "Destination uniquely identifies the instances of a service\nto which the request/connection should be forwarded to.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Destination"
-                },
-                "headers": {
-                    "description": "Header manipulation rules",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Headers"
-                },
-                "weight": {
-                    "description": "The proportion of traffic to be forwarded to the service\nversion. (0-100). Sum of weights across destinations SHOULD BE == 100.\nIf there is only one destination in a rule, the weight value is assumed to\nbe 100.",
-                    "type": "integer"
-                }
-            }
-        },
-        "v1beta1.Headers": {
-            "type": "object",
-            "properties": {
-                "request": {
-                    "description": "Header manipulation rules to apply before forwarding a request\nto the destination service",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Headers_HeaderOperations"
-                },
-                "response": {
-                    "description": "Header manipulation rules to apply before returning a response\nto the caller",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Headers_HeaderOperations"
-                }
-            }
-        },
-        "v1beta1.Headers_HeaderOperations": {
-            "type": "object",
-            "properties": {
-                "add": {
-                    "description": "Append the given values to the headers specified by keys\n(will create a comma-separated list of values)",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "remove": {
-                    "description": "Remove a the specified headers",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "set": {
-                    "description": "Overwrite the headers specified by key with the given values",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "v1beta1.L4MatchAttributes": {
-            "type": "object",
-            "properties": {
-                "destination_subnets": {
-                    "description": "IPv4 or IPv6 ip addresses of destination with optional subnet.  E.g.,\na.b.c.d/xx form or just a.b.c.d.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "gateways": {
-                    "description": "Names of gateways where the rule should be applied. Gateway names\nin the top-level ` + "`" + `gateways` + "`" + ` field of the VirtualService (if any) are overridden. The gateway\nmatch is independent of sourceLabels.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "port": {
-                    "description": "Specifies the port on the host that is being addressed. Many services\nonly expose a single port or label ports with the protocols they support,\nin these cases it is not required to explicitly select the port.",
-                    "type": "integer"
-                },
-                "source_labels": {
-                    "description": "One or more labels that constrain the applicability of a rule to\nworkloads with the given labels. If the VirtualService has a list of\ngateways specified in the top-level ` + "`" + `gateways` + "`" + ` field, it should include the reserved gateway\n` + "`" + `mesh` + "`" + ` in order for this field to be applicable.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "source_namespace": {
-                    "description": "Source namespace constraining the applicability of a rule to workloads in that namespace.\nIf the VirtualService has a list of gateways specified in the top-level ` + "`" + `gateways` + "`" + ` field,\nit must include the reserved gateway ` + "`" + `mesh` + "`" + ` for this field to be applicable.",
-                    "type": "string"
-                },
-                "source_subnet": {
-                    "description": "IPv4 or IPv6 ip address of source with optional subnet. E.g., a.b.c.d/xx\nform or just a.b.c.d\n$hide_from_docs",
-                    "type": "string"
                 }
             }
         },
@@ -34256,14 +33977,6 @@ var doc = `{
                 "window": {
                     "type": "object",
                     "$ref": "#/definitions/v1.Duration"
-                }
-            }
-        },
-        "v1beta1.Percent": {
-            "type": "object",
-            "properties": {
-                "value": {
-                    "type": "number"
                 }
             }
         },
@@ -34395,29 +34108,6 @@ var doc = `{
                 }
             }
         },
-        "v1beta1.PortSelector": {
-            "type": "object",
-            "properties": {
-                "number": {
-                    "description": "Valid port number",
-                    "type": "integer"
-                }
-            }
-        },
-        "v1beta1.RouteDestination": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "description": "Destination uniquely identifies the instances of a service\nto which the request/connection should be forwarded to.",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.Destination"
-                },
-                "weight": {
-                    "description": "The proportion of traffic to be forwarded to the service\nversion. If there is only one destination in a rule, all traffic will be\nrouted to it irrespective of the weight.",
-                    "type": "integer"
-                }
-            }
-        },
         "v1beta1.Server": {
             "type": "object",
             "properties": {
@@ -34525,95 +34215,6 @@ var doc = `{
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
-                    }
-                }
-            }
-        },
-        "v1beta1.StringMatch": {
-            "type": "object",
-            "properties": {
-                "matchType": {
-                    "description": "Types that are valid to be assigned to MatchType:\n\t*StringMatch_Exact\n\t*StringMatch_Prefix\n\t*StringMatch_Regex",
-                    "type": "object",
-                    "$ref": "#/definitions/v1beta1.isStringMatch_MatchType"
-                }
-            }
-        },
-        "v1beta1.TCPRoute": {
-            "type": "object",
-            "properties": {
-                "match": {
-                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.L4MatchAttributes"
-                    }
-                },
-                "route": {
-                    "description": "The destination to which the connection should be forwarded to.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.RouteDestination"
-                    }
-                }
-            }
-        },
-        "v1beta1.TLSMatchAttributes": {
-            "type": "object",
-            "properties": {
-                "destination_subnets": {
-                    "description": "IPv4 or IPv6 ip addresses of destination with optional subnet.  E.g.,\na.b.c.d/xx form or just a.b.c.d.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "gateways": {
-                    "description": "Names of gateways where the rule should be applied. Gateway names\nin the top-level ` + "`" + `gateways` + "`" + ` field of the VirtualService (if any) are overridden. The gateway\nmatch is independent of sourceLabels.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "port": {
-                    "description": "Specifies the port on the host that is being addressed. Many services\nonly expose a single port or label ports with the protocols they\nsupport, in these cases it is not required to explicitly select the\nport.",
-                    "type": "integer"
-                },
-                "sni_hosts": {
-                    "description": "SNI (server name indicator) to match on. Wildcard prefixes\ncan be used in the SNI value, e.g., *.com will match foo.example.com\nas well as example.com. An SNI value must be a subset (i.e., fall\nwithin the domain) of the corresponding virtual serivce's hosts.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "source_labels": {
-                    "description": "One or more labels that constrain the applicability of a rule to\nworkloads with the given labels. If the VirtualService has a list of\ngateways specified in the top-level ` + "`" + `gateways` + "`" + ` field, it should include the reserved gateway\n` + "`" + `mesh` + "`" + ` in order for this field to be applicable.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "source_namespace": {
-                    "description": "Source namespace constraining the applicability of a rule to workloads in that namespace.\nIf the VirtualService has a list of gateways specified in the top-level ` + "`" + `gateways` + "`" + ` field,\nit must include the reserved gateway ` + "`" + `mesh` + "`" + ` for this field to be applicable.",
-                    "type": "string"
-                }
-            }
-        },
-        "v1beta1.TLSRoute": {
-            "type": "object",
-            "properties": {
-                "match": {
-                    "description": "Match conditions to be satisfied for the rule to be\nactivated. All conditions inside a single match block have AND\nsemantics, while the list of match blocks have OR semantics. The rule\nis matched if any one of the match blocks succeed.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.TLSMatchAttributes"
-                    }
-                },
-                "route": {
-                    "description": "The destination to which the connection should be forwarded to.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.RouteDestination"
                     }
                 }
             }
@@ -34779,47 +34380,103 @@ var doc = `{
         "v1beta1.VirtualService": {
             "type": "object",
             "properties": {
-                "export_to": {
-                    "description": "A list of namespaces to which this virtual service is exported. Exporting a\nvirtual service allows it to be used by sidecars and gateways defined in\nother namespaces. This feature provides a mechanism for service owners\nand mesh administrators to control the visibility of virtual services\nacross namespace boundaries.\n\nIf no namespaces are specified then the virtual service is exported to all\nnamespaces by default.\n\nThe value \".\" is reserved and defines an export to the same namespace that\nthe virtual service is declared in. Similarly the value \"*\" is reserved and\ndefines an export to all namespaces.",
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1.Time"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "gateways": {
-                    "description": "The names of gateways and sidecars that should apply these routes.\nGateways in other namespaces may be referred to by\n` + "`" + `\u003cgateway namespace\u003e/\u003cgateway name\u003e` + "`" + `; specifying a gateway with no\nnamespace qualifier is the same as specifying the VirtualService's\nnamespace. A single VirtualService is used for sidecars inside the mesh as\nwell as for one or more gateways. The selection condition imposed by this\nfield can be overridden using the source field in the match conditions\nof protocol-specific routes. The reserved word ` + "`" + `mesh` + "`" + ` is used to imply\nall the sidecars in the mesh. When this field is omitted, the default\ngateway (` + "`" + `mesh` + "`" + `) will be used, which would apply the rule to all\nsidecars in the mesh. If a list of gateway names is provided, the\nrules will apply only to the gateways. To apply the rules to both\ngateways and sidecars, specify ` + "`" + `mesh` + "`" + ` as one of the gateway names.",
-                    "type": "array",
-                    "items": {
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
                         "type": "string"
                     }
                 },
-                "hosts": {
-                    "description": "The destination hosts to which traffic is being sent. Could\nbe a DNS name with wildcard prefix or an IP address.  Depending on the\nplatform, short-names can also be used instead of a FQDN (i.e. has no\ndots in the name). In such a scenario, the FQDN of the host would be\nderived based on the underlying platform.\n\nA single VirtualService can be used to describe all the traffic\nproperties of the corresponding hosts, including those for multiple\nHTTP and TCP ports. Alternatively, the traffic properties of a host\ncan be defined using more than one VirtualService, with certain\ncaveats. Refer to the\n[Operations Guide](https://istio.io/docs/ops/best-practices/traffic-management/#split-virtual-services)\nfor details.\n\n*Note for Kubernetes users*: When short names are used (e.g. \"reviews\"\ninstead of \"reviews.default.svc.cluster.local\"), Istio will interpret\nthe short name based on the namespace of the rule, not the service. A\nrule in the \"default\" namespace containing a host \"reviews\" will be\ninterpreted as \"reviews.default.svc.cluster.local\", irrespective of\nthe actual namespace associated with the reviews service. _To avoid\npotential misconfigurations, it is recommended to always use fully\nqualified domain names over short names._\n\nThe hosts field applies to both HTTP and TCP services. Service inside\nthe mesh, i.e., those found in the service registry, must always be\nreferred to using their alphanumeric names. IP addresses are allowed\nonly for services defined via the Gateway.\n\n*Note*: It must be empty for a delegate VirtualService.",
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
                     }
                 },
-                "http": {
-                    "description": "An ordered list of route rules for HTTP traffic. HTTP routes will be\napplied to platform service ports named 'http-*'/'http2-*'/'grpc-*', gateway\nports with protocol HTTP/HTTP2/GRPC/ TLS-terminated-HTTPS and service\nentry ports using HTTP/HTTP2/GRPC protocols.  The first rule matching\nan incoming request is used.",
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/v1beta1.HTTPRoute"
+                        "$ref": "#/definitions/v1.OwnerReference"
                     }
                 },
-                "tcp": {
-                    "description": "An ordered list of route rules for opaque TCP traffic. TCP routes will\nbe applied to any port that is not a HTTP or TLS port. The first rule\nmatching an incoming request is used.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.TCPRoute"
-                    }
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
                 },
-                "tls": {
-                    "description": "An ordered list of route rule for non-terminated TLS \u0026 HTTPS\ntraffic. Routing is typically performed using the SNI value presented\nby the ClientHello message. TLS routes will be applied to platform\nservice ports named 'https-*', 'tls-*', unterminated gateway ports using\nHTTPS/TLS protocols (i.e. with \"passthrough\" TLS mode) and service\nentry ports using HTTPS/TLS protocols.  The first rule matching an\nincoming request is used.  NOTE: Traffic 'https-*' or 'tls-*' ports\nwithout associated virtual service will be treated as opaque TCP\ntraffic.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.TLSRoute"
-                    }
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
+                    "type": "object",
+                    "$ref": "#/definitions/v1beta1.VirtualService"
+                },
+                "status": {
+                    "type": "object",
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
                 }
             }
         },
@@ -34839,15 +34496,6 @@ var doc = `{
                     "$ref": "#/definitions/v1.ResourceRequirements"
                 }
             }
-        },
-        "v1beta1.isHTTPFaultInjection_Abort_ErrorType": {
-            "type": "object"
-        },
-        "v1beta1.isHTTPFaultInjection_Delay_HttpDelayType": {
-            "type": "object"
-        },
-        "v1beta1.isStringMatch_MatchType": {
-            "type": "object"
         },
         "vuln.CVSS": {
             "type": "object",
