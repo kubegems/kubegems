@@ -22,13 +22,14 @@ type OauthOption struct {
 
 type OauthLoginUtils struct {
 	Name        string
-	Options     *OauthOption
 	OauthConfig *oauth2.Config
+	opts        *OauthOption
 	client      *http.Client
 }
 
 func NewOauthUtils(opts *OauthOption) *OauthLoginUtils {
 	return &OauthLoginUtils{
+		opts: opts,
 		OauthConfig: &oauth2.Config{
 			ClientID:     opts.AppID,
 			ClientSecret: opts.AppSecret,
@@ -58,7 +59,7 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 	}
 	restyClient := resty.NewWithClient(ot.OauthConfig.Client(context.Background(), token))
 	ret := &UserInfo{}
-	if _, err := restyClient.SetHeader("Authorization", "Bearer "+token.AccessToken).R().SetResult(ret).Get(ot.Options.UserInfoURL); err != nil {
+	if _, err := restyClient.SetHeader("Authorization", "Bearer "+token.AccessToken).R().SetResult(ret).Get(ot.opts.UserInfoURL); err != nil {
 		return nil, err
 	}
 
