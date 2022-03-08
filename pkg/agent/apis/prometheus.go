@@ -327,7 +327,7 @@ func (p *prometheusHandler) CertInfo(c *gin.Context) {
 			InsecureSkipVerify: true,
 		}
 
-		u, err := url.Parse(p.cluster.Config().Host)
+		u, err := url.Parse("https://kubernetes.default:443")
 		if err != nil {
 			NotOK(c, err)
 			return
