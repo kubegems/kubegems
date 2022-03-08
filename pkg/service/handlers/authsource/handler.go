@@ -61,7 +61,7 @@ func (h *AuthSourceHandler) ListAuthSource(c *gin.Context) {
 // Create create authsource
 // @Tags AuthSource
 // @Summary create AuthSource
-// @Description create AuthSource
+// @Description create AuthSource  oauth(authURL,tokenURL,userInfoURL,redirectURL,appID,appSecret,scopes) ldap(basedn,ldapaddr,binduser,password)
 // @Accept json
 // @Produce json
 // @Param param body models.AuthSource true "表单"
@@ -75,6 +75,7 @@ func (h *AuthSourceHandler) Create(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	source.Enabled = true
 	if err := validateAuthConfig(&source); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -151,18 +152,18 @@ func validateAuthConfig(source *models.AuthSource) error {
 			errs = append(errs, "basedn can't empty")
 		}
 		if source.Config.BindUsername == "" {
-			errs = append(errs, "bindUsername can't empty")
+			errs = append(errs, "binduser can't empty")
 		}
 		if source.Config.BindPassword == "" {
-			errs = append(errs, "bindPassword can't empty")
+			errs = append(errs, "password can't empty")
 		}
 		if source.Config.LdapAddr == "" {
-			errs = append(errs, "ldapAddr can't empty")
+			errs = append(errs, "ldapaddr can't empty")
 		}
 	}
 	if source.Kind == "OAUTH" {
 		if source.Config.AppID == "" {
-			errs = append(errs, "appid can't empty")
+			errs = append(errs, "appID can't empty")
 		}
 		if source.Config.AppSecret == "" {
 			errs = append(errs, "appSecret can't empty")
