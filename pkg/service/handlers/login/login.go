@@ -106,6 +106,7 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source)
 	uinfo, err := authenticator.GetUserInfo(ctx, cred)
 	if err != nil {
+		log.Error(err, "login failed", "cred", cred)
 		handlers.Unauthorized(c, err)
 		return
 	}
