@@ -24,7 +24,6 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/online"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/gemsplugin"
 	"kubegems.io/pkg/utils/kube"
@@ -211,7 +210,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 	}
 
 	installeropts := new(gemsplugin.InstallerOptions)
-	online.LoadOptions(installeropts, h.GetDB())
+	h.DynamicConfig.Get(c.Request.Context(), installeropts)
 
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
@@ -419,7 +418,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		}
 
 		installeropts := new(gemsplugin.InstallerOptions)
-		online.LoadOptions(installeropts, h.GetDB())
+		h.DynamicConfig.Get(ctx, installeropts)
 
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if err := tx.Create(cluster).Error; err != nil {

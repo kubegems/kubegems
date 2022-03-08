@@ -77,11 +77,11 @@ func initBaseData(db *gorm.DB) error {
 
 	// init default online configs
 	installerCfg := OnlineConfig{
-		Name:    gemsplugin.DefaultInstallerOptions().ConfigName(),
+		Name:    gemsplugin.DefaultInstallerOptions().Name(),
 		Content: gemsplugin.DefaultInstallerOptions().JSON(),
 	}
 	monitorCfg := OnlineConfig{
-		Name:    prometheus.DefaultMonitorOptions().ConfigName(),
+		Name:    prometheus.DefaultMonitorOptions().Name(),
 		Content: prometheus.DefaultMonitorOptions().JSON(),
 	}
 	if e := db.FirstOrCreate(&installerCfg).Error; e != nil {

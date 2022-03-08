@@ -24,11 +24,11 @@ func (opts *InstallerOptions) JSON() []byte {
 	return bts
 }
 
-func (opts *InstallerOptions) ConfigName() string {
+func (opts *InstallerOptions) Name() string {
 	return "Installer"
 }
 
-func (opts *InstallerOptions) CheckOptions() error {
+func (opts *InstallerOptions) Validate() error {
 	return nil
 }
 

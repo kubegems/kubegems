@@ -21,29 +21,30 @@ import (
 )
 
 type Dependencies struct {
-	Options   *options.Options
-	Redis     *redis.Client
-	Databse   *database.Database
-	Argocli   *argo.Client
-	Git       *git.SimpleLocalProvider
-	Agentscli *agents.ClientSet
+	Options          *options.Options
+	Redis            *redis.Client
+	Databse          *database.Database
+	Argocli          *argo.Client
+	Git              *git.SimpleLocalProvider
+	Agentscli        *agents.ClientSet
+	DyConfigProvider options.DynamicConfigurationProviderIface
 }
 
-func prepareDependencies(ctx context.Context, options *options.Options) (*Dependencies, error) {
+func prepareDependencies(ctx context.Context, opts *options.Options) (*Dependencies, error) {
 	// logger
-	log.SetLevel(options.LogLevel)
+	log.SetLevel(opts.LogLevel)
 
 	// tracing
 	tracing.SetGlobal(ctx)
 
 	// redis
-	rediscli, err := redis.NewClient(options.Redis)
+	rediscli, err := redis.NewClient(opts.Redis)
 	if err != nil {
 		return nil, err
 	}
 
 	// database
-	db, err := database.NewDatabase(options.Mysql)
+	db, err := database.NewDatabase(opts.Mysql)
 	if err != nil {
 		return nil, err
 	}
@@ -53,21 +54,25 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 		return nil, err
 	}
 	// git
-	gitprovider, err := git.NewProvider(options.Git)
+	gitprovider, err := git.NewProvider(opts.Git)
 	if err != nil {
 		return nil, err
 	}
 	// argo
-	argocli, err := argo.NewClient(ctx, options.Argo)
+	argocli, err := argo.NewClient(ctx, opts.Argo)
 	if err != nil {
 		return nil, err
 	}
+
+	dyConfigProvider := options.NewDatabaseDynamicConfigurationProvider(db.DB())
+
 	deps := &Dependencies{
-		Redis:     rediscli,
-		Databse:   db,
-		Argocli:   argocli,
-		Git:       gitprovider,
-		Agentscli: agentclientset,
+		Redis:            rediscli,
+		Databse:          db,
+		Argocli:          argocli,
+		Git:              gitprovider,
+		Agentscli:        agentclientset,
+		DyConfigProvider: dyConfigProvider,
 	}
 	return deps, nil
 }
@@ -91,11 +96,12 @@ func Run(ctx context.Context, opts *options.Options) error {
 		Argo:     deps.Argocli,
 		Database: deps.Databse,
 		Redis:    deps.Redis,
+		DyConfig: deps.DyConfigProvider,
 	}
 
 	exporterHandler := exporter.NewHandler("gems_server", map[string]exporter.Collectorfunc{
 		"request":   exporter.NewRequestCollector(),
-		"alertrule": exporter.NewAlertRuleCollector(deps.Agentscli, deps.Databse),
+		"alertrule": exporter.NewAlertRuleCollector(deps.Agentscli, deps.DyConfigProvider),
 	})
 
 	// run

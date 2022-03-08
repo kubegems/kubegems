@@ -16,11 +16,11 @@ const (
 	PromqlNamespaceKey = "namespace"
 )
 
-func (opts *MonitorOptions) ConfigName() string {
+func (opts *MonitorOptions) Name() string {
 	return "Monitor"
 }
 
-func (opts *MonitorOptions) CheckOptions() error {
+func (opts *MonitorOptions) Validate() error {
 	for _, res := range opts.Resources {
 		for _, rule := range res.Rules {
 			for _, unit := range rule.Units {
