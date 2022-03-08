@@ -209,15 +209,14 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		return
 	}
 
-	installeropts := new(gemsplugin.InstallerOptions)
-	h.DynamicConfig.Get(c.Request.Context(), installeropts)
-
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		installeropts := new(gemsplugin.InstallerOptions)
+		h.DynamicConfig.Get(ctx, installeropts)
+
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if err := tx.Delete(cluster).Error; err != nil {
 				return err
 			}
-
 			installer := ClusterInstaller{
 				Cluster:          cluster,
 				Clientset:        clientSet,

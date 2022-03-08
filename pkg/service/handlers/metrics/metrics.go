@@ -276,8 +276,7 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 	h.SetAuditData(c, "删除", "Prometheus模板", resName+"."+ruleName)
 
 	monitoropts := new(prometheus.MonitorOptions)
-	ctx := c.Request.Context()
-	h.DynamicConfig.Get(ctx, monitoropts)
+	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	resDetail, ok := monitoropts.Resources[resName]
 	if !ok {
 		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
@@ -309,7 +308,7 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 	}
 
 	delete(resDetail.Rules, ruleName)
-	if err := h.DynamicConfig.Set(ctx, monitoropts); err != nil {
+	if err := h.DynamicConfig.Set(c.Request.Context(), monitoropts); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
