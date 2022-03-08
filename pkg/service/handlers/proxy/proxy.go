@@ -114,7 +114,7 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 		headers.Add(key, strings.Join(values, ","))
 	}
 
-	wsu := path.Join(proxyPath, c.Request.URL.RawQuery)
+	wsu := proxyPath + "?" + c.Request.URL.RawQuery
 	proxyConn, _, err := v.DialWebsocket(c.Request.Context(), wsu, headers)
 	if err != nil {
 		handlers.NotOK(c, err)
