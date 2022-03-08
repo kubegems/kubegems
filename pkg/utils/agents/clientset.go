@@ -147,15 +147,16 @@ func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta
 	if err != nil {
 		return nil, err
 	}
+	signer := getRequestProxy(h.apiServerProxyPath(true))
 	climeta := &ClientMeta{
 		Name:             name,
 		BaseAddr:         baseaddr,
 		APIServerAddr:    apiserveraddr,
 		APIServerVersion: cluster.Version,
-		Signer:           getRequestProxy(h.apiServerProxyPath(true)),
+		Signer:           signer,
 	}
 	defaultRoudTripper := &http.Transport{
-		Proxy: climeta.Signer,
+		Proxy: signer,
 	}
 
 	if baseaddr.Scheme == "https" {
