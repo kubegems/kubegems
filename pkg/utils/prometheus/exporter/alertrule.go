@@ -7,22 +7,20 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/online"
+	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/database"
 	kprometheus "kubegems.io/pkg/utils/prometheus"
 )
 
 type AlertRuleCollector struct {
 	alertrules *prometheus.Desc
-
-	*database.Database
 	*agents.ClientSet
-	mutex sync.Mutex
+	dyConfigProvider options.DynamicConfigurationProviderIface
+	mutex            sync.Mutex
 }
 
-func NewAlertRuleCollector(cs *agents.ClientSet, db *database.Database) Collectorfunc {
+func NewAlertRuleCollector(cs *agents.ClientSet, dyConfigProvider options.DynamicConfigurationProviderIface) Collectorfunc {
 	return func(_ *log.Logger) (Collector, error) {
 		return &AlertRuleCollector{
 			alertrules: prometheus.NewDesc(
@@ -32,7 +30,6 @@ func NewAlertRuleCollector(cs *agents.ClientSet, db *database.Database) Collecto
 				nil,
 			),
 			ClientSet: cs,
-			Database:  db,
 		}, nil
 	}
 }
@@ -42,7 +39,8 @@ func (c *AlertRuleCollector) Update(ch chan<- prometheus.Metric) error {
 	defer c.mutex.Unlock()
 
 	monitoropts := new(kprometheus.MonitorOptions)
-	online.LoadOptions(monitoropts, c.Database.DB())
+
+	c.dyConfigProvider.Get(context.Background(), monitoropts)
 
 	return c.ClientSet.ExecuteInEachCluster(context.TODO(), func(ctx context.Context, cli agents.Client) error {
 		alertrules, err := cli.Extend().ListAllAlertRules(ctx, monitoropts)

@@ -86,6 +86,7 @@ type Router struct {
 	Database *database.Database
 	Redis    *redis.Client
 	Argo     *argo.Client
+	DyConfig options.DynamicConfigurationProviderIface
 
 	auditInstance *audit.DefaultAuditInstance
 	gin           *gin.Engine
@@ -136,6 +137,7 @@ func (r *Router) Complete() error {
 		r.auditInstance,
 		&authorization.DefaultPermissionChecker{Cache: cache, Userif: userif},
 		userif,
+		r.DyConfig,
 		r.Agents,
 		r.Database,
 		r.Redis,

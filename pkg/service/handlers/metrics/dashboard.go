@@ -5,7 +5,6 @@ import (
 
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/online"
 	"kubegems.io/pkg/utils/prometheus"
 
 	"github.com/gin-gonic/gin"
@@ -97,7 +96,7 @@ func (h *MonitorHandler) getDashboardReq(c *gin.Context) (*models.MetricDashbora
 	req.Creator = u.GetUsername()
 
 	monitoropts := new(prometheus.MonitorOptions)
-	online.LoadOptions(monitoropts, h.GetDB())
+	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	// 逐个校验graph
 	for _, v := range req.Graphs {
 		if v.Name == "" {

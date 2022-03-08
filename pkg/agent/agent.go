@@ -13,17 +13,18 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/pprof"
+	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/system"
 )
 
 type Options struct {
-	DebugMode bool                      `json:"debugmode,omitempty" description:"enable debug mode"`
-	LogLevel  string                    `json:"loglevel,omitempty"`
-	System    *system.Options           `json:"system,omitempty"`
-	API       *apis.Options             `json:"api,omitempty"`
-	Debug     *apis.DebugOptions        `json:"debug,omitempty" description:"debug options"`
-	Exporter  *exporter.ExporterOptions `json:"exporter,omitempty"`
+	DebugMode bool                        `json:"debugmode,omitempty" description:"enable debug mode"`
+	LogLevel  string                      `json:"loglevel,omitempty"`
+	System    *system.Options             `json:"system,omitempty"`
+	API       *apis.Options               `json:"api,omitempty"`
+	Debug     *apis.DebugOptions          `json:"debug,omitempty" description:"debug options"`
+	Exporter  *prometheus.ExporterOptions `json:"exporter,omitempty"`
 }
 
 func DefaultOptions() *Options {
@@ -34,7 +35,7 @@ func DefaultOptions() *Options {
 		System:    system.NewDefaultOptions(),
 		API:       apis.NewDefaultOptions(),
 		Debug:     apis.NewDefaultDebugOptions(),
-		Exporter:  exporter.DefaultExporterOptions(),
+		Exporter:  prometheus.DefaultExporterOptions(),
 	}
 	defaultoptions.System.Listen = ":8041"
 	return defaultoptions

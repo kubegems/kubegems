@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/common/version"
 	"go.uber.org/zap"
 	"kubegems.io/pkg/log"
+	gempro "kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/strings"
 )
 
@@ -21,16 +22,6 @@ var (
 	IncludeExporterMetrics = false
 	MaxRequests            = 40
 )
-
-type ExporterOptions struct {
-	Listen string `json:"listen,omitempty" description:"listen address"`
-}
-
-func DefaultExporterOptions() *ExporterOptions {
-	return &ExporterOptions{
-		Listen: ":9100",
-	}
-}
 
 // Handler wraps an unfiltered http.Handler but uses a filtered Handler,
 // created on the fly, if filtering is requested. Create instances with
@@ -54,7 +45,7 @@ func NewHandler(namespace string, collectors map[string]Collectorfunc) *Handler 
 	return newHandlerWith(IncludeExporterMetrics, MaxRequests, log.GlobalLogger.Sugar())
 }
 
-func (h *Handler) Run(ctx context.Context, opts *ExporterOptions) error {
+func (h *Handler) Run(ctx context.Context, opts *gempro.ExporterOptions) error {
 	mu := http.NewServeMux()
 	mu.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte(`<html>
