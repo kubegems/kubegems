@@ -365,7 +365,7 @@ func (c *ExtendClient) GetOrCreatePrometheusRule(ctx context.Context, namespace 
 		if err := c.Create(ctx, prule); err != nil {
 			return nil, err
 		}
-		return prule, err
+		return prule, nil
 	}
 	return prule, err
 }
