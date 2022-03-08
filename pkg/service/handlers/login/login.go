@@ -3,6 +3,7 @@ package loginhandler
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -89,9 +90,18 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	ctx := c.Request.Context()
 	cred := &auth.Credential{}
 	cred.Source = c.Param("source")
-	if err := c.BindJSON(cred); err != nil {
-		handlers.NotOK(c, err)
-		return
+	if c.Request.Method == http.MethodPost {
+		if err := c.BindJSON(cred); err != nil {
+			handlers.NotOK(c, err)
+			return
+		}
+	} else {
+		code := c.Query("code")
+		if code == "" {
+			handlers.NotOK(c, fmt.Errorf("invalid code"))
+			return
+		}
+		cred.Code = c.Query("code")
 	}
 	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source)
 	uinfo, err := authenticator.GetUserInfo(ctx, cred)
