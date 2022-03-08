@@ -11,9 +11,9 @@ import (
 type AuthSource struct {
 	ID        uint             `json:"id"`
 	Name      string           `gorm:"unique" json:"name"`
-	Kind      string           `json:"kind"`
-	Config    AuthSourceConfig `json:"config" validate:"json"`
-	TokenType string           `json:"tokenType"`
+	Kind      string           `json:"kind" binding:"oneof=LDAP OAUTH"`
+	Config    AuthSourceConfig `json:"config" binding:"required,json"`
+	TokenType string           `json:"tokenType" binding:"required,oneof=Bearer"`
 	Enabled   bool             `json:"enabled"`
 	CreatedAt *time.Time       `json:"createdAt"`
 	UpdatedAt *time.Time       `json:"updatedAt"`
