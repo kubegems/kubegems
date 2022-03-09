@@ -215,7 +215,15 @@ func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("默认仓库只能有一个"))
 		return
 	}
-	if err := h.GetDB().Save(&registry).Error; err != nil {
+
+	ctx := c.Request.Context()
+	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&registry).Error; err != nil {
+			return err
+		}
+		return h.onChange(ctx, tx, &registry)
+	})
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
