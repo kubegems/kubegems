@@ -1,11 +1,13 @@
 package authsource
 
 import (
+	"crypto/tls"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-ldap/ldap/v3"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
@@ -160,6 +162,9 @@ func validateAuthConfig(source *models.AuthSource) error {
 		if source.Config.LdapAddr == "" {
 			errs = append(errs, "ldapaddr can't empty")
 		}
+		if !validateLdapConfig(source.Config) {
+			errs = append(errs, "ldap test failed, binduser or password error")
+		}
 	}
 	if source.Kind == "OAUTH" {
 		if source.Config.AppID == "" {
@@ -182,4 +187,20 @@ func validateAuthConfig(source *models.AuthSource) error {
 		return fmt.Errorf(strings.Join(errs, ";"))
 	}
 	return nil
+}
+
+func validateLdapConfig(cfg models.AuthSourceConfig) bool {
+	req := ldap.NewSimpleBindRequest(cfg.BindUsername, cfg.BindPassword, nil)
+	ldapConn, err := ldap.Dial("tcp", cfg.LdapAddr)
+	if err != nil {
+		return false
+	}
+	defer ldapConn.Close()
+	if cfg.EnableTLS {
+		if err := ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
+			return false
+		}
+	}
+	_, err = ldapConn.SimpleBind(req)
+	return err == nil
 }

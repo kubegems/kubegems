@@ -82,8 +82,6 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 func (ut *LdapLoginUtils) ValidateCredential(cred *Credential) bool {
 	userdn := fmt.Sprintf("cn=%s,%s", cred.Username, ut.BaseDN)
 	req := ldap.NewSimpleBindRequest(userdn, cred.Password, nil)
-	log.Info("req", "userdn", userdn)
-	log.Info("req", "pass", cred.Password)
 	ldapConn, err := ldap.Dial("tcp", ut.LdapAddr)
 	if err != nil {
 		log.Error(err, "connect to ldap server failed")
