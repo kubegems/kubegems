@@ -115,10 +115,6 @@ func (h *ApplicationHandler) SetReplicas(c *gin.Context) {
 		if err := h.ApplicationProcessor.SetReplicas(ctx, ref, body.Replicas); err != nil {
 			return nil, err
 		}
-		//  sync
-		if err := h.ApplicationProcessor.Sync(ctx, ref); err != nil {
-			return nil, err
-		}
 		return "ok", nil
 	})
 }
@@ -176,10 +172,6 @@ func (h *ApplicationHandler) SetHPA(c *gin.Context) {
 	h.NamedRefFunc(c, body, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		// hpa
 		if err := h.ApplicationProcessor.SetHorizontalPodAutoscaler(ctx, ref, *body); err != nil {
-			return nil, err
-		}
-		// sync
-		if err := h.ApplicationProcessor.Sync(ctx, ref); err != nil {
 			return nil, err
 		}
 		return "ok", nil
