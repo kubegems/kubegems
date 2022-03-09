@@ -13,12 +13,12 @@ import (
 	"github.com/prometheus/common/version"
 	"go.uber.org/zap"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
 	gempro "kubegems.io/pkg/utils/prometheus"
-	"kubegems.io/pkg/utils/strings"
 )
 
 var (
-	MetricPath             = strings.StrOrDef(os.Getenv("METRIC_PATH"), "/metrics")
+	MetricPath             = utils.StrOrDef(os.Getenv("METRIC_PATH"), "/metrics")
 	IncludeExporterMetrics = false
 	MaxRequests            = 40
 )

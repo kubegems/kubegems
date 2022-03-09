@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/slice"
 )
 
 const (
@@ -105,7 +106,7 @@ func (r *AlertRule) CheckAndModify(opts *MonitorOptions) error {
 		return fmt.Errorf("alert level can't be null")
 	}
 	for _, v := range r.AlertLevels {
-		if !utils.ContainStr(opts.Operators, v.CompareOp) {
+		if !slice.ContainStr(opts.Operators, v.CompareOp) {
 			return fmt.Errorf("invalid operator: %s", v.CompareOp)
 		}
 		if _, ok := opts.Severity[v.Severity]; !ok {

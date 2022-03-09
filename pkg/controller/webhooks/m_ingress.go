@@ -15,7 +15,6 @@ import (
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
-	"kubegems.io/pkg/controller/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -64,7 +63,7 @@ func (r *ResourceMutate) MutateIngress(ctx context.Context, req admission.Reques
 			}
 		}
 
-		if err := utils.CheckGatewayAndIngressProtocol(tgs.Items[0], []ext_v1beta1.Ingress{*ingress}); err != nil {
+		if err := CheckGatewayAndIngressProtocol(tgs.Items[0], []ext_v1beta1.Ingress{*ingress}); err != nil {
 			log.Log.Error(err, "ingress and gateway protocol check failed")
 			return admission.Denied(err.Error())
 		}

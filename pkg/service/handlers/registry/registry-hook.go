@@ -16,9 +16,9 @@ import (
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/harbor"
+	"kubegems.io/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -166,11 +166,11 @@ func addOrRemoveSecret(env *v1beta1.Environment, serviceAccountName, targetSecre
 		}
 		secrets := strings.Split(env.Annotations[k], ",")
 		if isAdd {
-			if !utils.ContainStr(secrets, targetSecretName) {
+			if !slice.ContainStr(secrets, targetSecretName) {
 				secrets = append(secrets, targetSecretName)
 			}
 		} else {
-			secrets = utils.RemoveStrInReplace(secrets, targetSecretName)
+			secrets = slice.RemoveStrInReplace(secrets, targetSecretName)
 		}
 
 		if len(secrets) == 0 {

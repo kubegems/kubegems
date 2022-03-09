@@ -10,6 +10,7 @@ import (
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/slice"
 )
 
 var normalActions = []string{
@@ -108,7 +109,7 @@ func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.
 			if role == models.TenantRoleAdmin {
 				return true, role
 			}
-			if utils.ContainStr(normalActions, action) {
+			if slice.ContainStr(normalActions, action) {
 				return true, role
 			}
 		case models.ResProject:
@@ -122,7 +123,7 @@ func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.
 			if role == models.ProjectRoleAdmin {
 				return true, role
 			}
-			if utils.ContainStr(normalActions, action) {
+			if slice.ContainStr(normalActions, action) {
 				return true, role
 			}
 		case models.ResEnvironment:
@@ -136,7 +137,7 @@ func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.
 			if role == models.EnvironmentRoleOperator {
 				return true, role
 			}
-			if utils.ContainStr(normalActions, action) {
+			if slice.ContainStr(normalActions, action) {
 				return true, role
 			}
 		case models.ResVirtualSpace:
@@ -150,7 +151,7 @@ func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.
 			if role == models.VirtualSpaceRoleAdmin {
 				return true, role
 			}
-			if utils.ContainStr(normalActions, action) {
+			if slice.ContainStr(normalActions, action) {
 				return true, role
 			}
 		}

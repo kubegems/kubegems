@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 	"kubegems.io/pkg/models"
 	"kubegems.io/pkg/services/auth/user"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/slice"
 )
 
 type PermMiddleware struct {
@@ -131,11 +131,11 @@ func (p *PermMiddleware) hasPermForMetaData(user user.CommonUserIface, req *rest
 		return true
 	}
 	// test environment allows roles ["test", "admin", "ops"] operate
-	if environment.MetaType == models.EnvironmentMetaTypeTest && utils.ContainStr([]string{models.ProjectRoleTest, models.ProjectRoleOps, models.ProjectRoleAdmin}, projectRole) {
+	if environment.MetaType == models.EnvironmentMetaTypeTest && slice.ContainStr([]string{models.ProjectRoleTest, models.ProjectRoleOps, models.ProjectRoleAdmin}, projectRole) {
 		return true
 	}
 	// prod environment allows roles ["admin", "ops"] operate
-	if environment.MetaType == models.EnvironmentMetaTypeProd && utils.ContainStr([]string{models.ProjectRoleOps, models.ProjectRoleAdmin}, projectRole) {
+	if environment.MetaType == models.EnvironmentMetaTypeProd && slice.ContainStr([]string{models.ProjectRoleOps, models.ProjectRoleAdmin}, projectRole) {
 		return true
 	}
 	envUserRel := &models.EnvironmentUserRels{}

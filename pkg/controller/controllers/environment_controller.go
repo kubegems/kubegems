@@ -32,7 +32,8 @@ import (
 	"k8s.io/client-go/tools/record"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/maps"
+	"kubegems.io/pkg/utils/slice"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -113,7 +114,7 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	r.handleServiceAccount(&env, nsLabel, ctx, log)
 
 	var changed bool
-	if utils.LabelChanged(env.Labels, nsLabel) {
+	if maps.LabelChanged(env.Labels, nsLabel) {
 		env.Labels = labels.Merge(env.Labels, nsLabel)
 		changed = true
 	}
@@ -149,13 +150,13 @@ func (r *EnvironmentReconciler) handleNamespace(env *gemsv1beta1.Environment, nl
 			}
 			ns.Labels = labels.Merge(ns.Labels, nlabels)
 			if err := r.Create(ctx, &ns); err != nil {
-				r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedCreate, "Failed to create namespace %s: %v", env.Spec.Namespace, err)
+				r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to create namespace %s: %v", env.Spec.Namespace, err)
 				log.Info("Error create namespace")
 				return
 			}
-			r.Recorder.Eventf(env, corev1.EventTypeNormal, utils.ReasonCreated, "Successfully create namespace %s", env.Spec.Namespace)
+			r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated, "Successfully create namespace %s", env.Spec.Namespace)
 		} else {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonUnknowError, "Failed relate namespace %s to Environment %s: %v", env.Spec.Namespace, env.Name, err)
+			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonUnknowError, "Failed relate namespace %s to Environment %s: %v", env.Spec.Namespace, env.Name, err)
 			log.Error(err, "Error get namespace")
 			return
 		}
@@ -169,7 +170,7 @@ func (r *EnvironmentReconciler) handleNamespace(env *gemsv1beta1.Environment, nl
 		if originNsList.Items[idx].Name == ns.Name {
 			continue
 		}
-		utils.DeleteLabels(originNsList.Items[idx].Labels, nlabels)
+		maps.DeleteLabels(originNsList.Items[idx].Labels, nlabels)
 		originNsList.Items[idx].ObjectMeta.OwnerReferences = nil
 		r.Update(ctx, &originNsList.Items[idx])
 	}
@@ -178,16 +179,16 @@ func (r *EnvironmentReconciler) handleNamespace(env *gemsv1beta1.Environment, nl
 		controllerutil.SetControllerReference(env, &ns, r.Scheme)
 		changed = true
 	}
-	if utils.LabelChanged(ns.Labels, nlabels) {
+	if maps.LabelChanged(ns.Labels, nlabels) {
 		ns.Labels = labels.Merge(ns.Labels, nlabels)
 		changed = true
 	}
 	if changed {
 		if err := r.Update(ctx, &ns); err != nil {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedUpdate, "Failed to update Namespace %s belong to Environment %s", env.Spec.Namespace, env.Name)
+			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, "Failed to update Namespace %s belong to Environment %s", env.Spec.Namespace, env.Name)
 			log.Error(err, "Error update namespace")
 		}
-		r.Recorder.Eventf(env, corev1.EventTypeNormal, utils.ReasonUpdated, "Successfully update namespace %s belong to Environment %s", env.Spec.Namespace, env.Name)
+		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonUpdated, "Successfully update namespace %s belong to Environment %s", env.Spec.Namespace, env.Name)
 	}
 }
 
@@ -205,13 +206,13 @@ func (r *EnvironmentReconciler) handleResourceQuota(env *gemsv1beta1.Environment
 			controllerutil.SetControllerReference(env, &nsrq, r.Scheme)
 			nsrq.Labels = labels.Merge(nsrq.Labels, nlabels)
 			if err := r.Create(ctx, &nsrq); err != nil {
-				r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedCreate, "Failed to create ResourceQuota %s: %v", env.Spec.ResourceQuotaName, err)
+				r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to create ResourceQuota %s: %v", env.Spec.ResourceQuotaName, err)
 				log.Info("Error create resourceQuota")
 				return
 			}
-			r.Recorder.Eventf(env, corev1.EventTypeNormal, utils.ReasonCreated, "Successfully create ResourceQuota %s", env.Spec.ResourceQuotaName)
+			r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated, "Successfully create ResourceQuota %s", env.Spec.ResourceQuotaName)
 		} else {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonUnknowError, "Failed relate ResourceQuota %s to Environment %s: %v", env.Spec.ResourceQuotaName, env.Name, err)
+			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonUnknowError, "Failed relate ResourceQuota %s to Environment %s: %v", env.Spec.ResourceQuotaName, env.Name, err)
 			log.Error(err, "Error get resourceQuota")
 			return
 		}
@@ -229,10 +230,10 @@ func (r *EnvironmentReconciler) handleResourceQuota(env *gemsv1beta1.Environment
 	}
 	if changed {
 		if err := r.Update(ctx, &nsrq); err != nil {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedUpdate, "Failed to update ResourceQuota %s belong to Environment %s: %v", env.Spec.ResourceQuotaName, env.Name, err)
+			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, "Failed to update ResourceQuota %s belong to Environment %s: %v", env.Spec.ResourceQuotaName, env.Name, err)
 			log.Info("Error update resourceQuota")
 		}
-		r.Recorder.Eventf(env, corev1.EventTypeNormal, utils.ReasonCreated, "Successfully updated ResourceQuota %s to Environment %s", env.Spec.ResourceQuotaName, env.Name)
+		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated, "Successfully updated ResourceQuota %s to Environment %s", env.Spec.ResourceQuotaName, env.Name)
 	}
 }
 
@@ -249,13 +250,13 @@ func (r *EnvironmentReconciler) handleLimitRange(env *gemsv1beta1.Environment, n
 			lr.Labels = labels.Merge(lr.Labels, nlabels)
 			lr.Spec.Limits = env.Spec.LimitRage
 			if err := r.Create(ctx, &lr); err != nil {
-				r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedCreate, "Failed to create LimitRange %s: %v", env.Spec.LimitRageName, err)
+				r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to create LimitRange %s: %v", env.Spec.LimitRageName, err)
 				log.Info("Error create limitrange " + err.Error())
 				return
 			}
-			r.Recorder.Eventf(env, corev1.EventTypeNormal, utils.ReasonCreated, "Successfully create LimitRange %s", env.Spec.LimitRageName)
+			r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated, "Successfully create LimitRange %s", env.Spec.LimitRageName)
 		} else {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonUnknowError, "Failed relate LimitRange %s to Environment %s: %v", env.Spec.LimitRageName, env.Name, err)
+			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonUnknowError, "Failed relate LimitRange %s to Environment %s: %v", env.Spec.LimitRageName, env.Name, err)
 			log.Error(err, "Error get limitrange")
 			return
 		}
@@ -272,10 +273,10 @@ func (r *EnvironmentReconciler) handleLimitRange(env *gemsv1beta1.Environment, n
 	}
 	if changed {
 		if err := r.Update(ctx, &lr); err != nil {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedUpdate, "Failed to update LimitRange %s belong to Environment %s", env.Spec.LimitRageName, env.Name)
+			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, "Failed to update LimitRange %s belong to Environment %s", env.Spec.LimitRageName, env.Name)
 			log.Info("Error update limigrange")
 		}
-		r.Recorder.Eventf(env, corev1.EventTypeNormal, utils.ReasonUpdated, "Successfully update LimitRange %s belong to Environment %s", env.Spec.LimitRageName, env.Name)
+		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonUpdated, "Successfully update LimitRange %s belong to Environment %s", env.Spec.LimitRageName, env.Name)
 	}
 }
 
@@ -283,7 +284,7 @@ func (r *EnvironmentReconciler) handleServiceAccount(env *gemsv1beta1.Environmen
 	serviceAccountList := corev1.ServiceAccountList{}
 	if err := r.Client.List(ctx, &serviceAccountList, &client.ListOptions{Namespace: env.Spec.Namespace}); err != nil {
 		msg := fmt.Sprintf("failed to list serviceaccount in namespace %s", env.Spec.Namespace)
-		r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedUpdate, msg)
+		r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, msg)
 		r.Log.Error(err, msg)
 	}
 	saMap := map[string]corev1.ServiceAccount{} // map加快匹配
@@ -300,7 +301,7 @@ func (r *EnvironmentReconciler) handleServiceAccount(env *gemsv1beta1.Environmen
 					sa.ImagePullSecrets = secrets
 					if err := r.Client.Update(ctx, &sa); err != nil {
 						msg := fmt.Sprintf("failed to update serviceaccount %v", sa)
-						r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedUpdate, msg)
+						r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, msg)
 						r.Log.Error(err, msg)
 					}
 					r.Log.Info(fmt.Sprintf("success to update serviceaccount %s in namespace %s", sa.Name, sa.Namespace))
@@ -320,7 +321,7 @@ func imagePullSecretHasDiff(obj []corev1.LocalObjectReference, str string) ([]co
 		newSec[i] = strings.TrimSpace(newSec[i]) // 去除空格
 	}
 
-	if !utils.StringArrayEqual(oldSec, newSec) {
+	if !slice.StringArrayEqual(oldSec, newSec) {
 		ret := make([]corev1.LocalObjectReference, len(newSec))
 		for i := range newSec {
 			ret[i].Name = newSec[i]
@@ -342,13 +343,13 @@ func (r *EnvironmentReconciler) handleDelete(env *gemsv1beta1.Environment, todel
 		}
 	}
 	if env.Spec.DeletePolicy == gemsv1beta1.DeletePolicyDelLabels {
-		ns.ObjectMeta.Labels = utils.DeleteLabels(ns.ObjectMeta.Labels, todelLabels)
+		ns.ObjectMeta.Labels = maps.DeleteLabels(ns.ObjectMeta.Labels, todelLabels)
 		ns.SetOwnerReferences(nil)
 		if err := r.Update(ctx, &ns); err != nil {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, utils.ReasonFailedDelete, "Failed to delete environment labels for namespace %s", env.Spec.Namespace)
+			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedDelete, "Failed to delete environment labels for namespace %s", env.Spec.Namespace)
 			return err
 		}
-		r.Recorder.Eventf(env, corev1.EventTypeNormal, utils.ReasonDeleted, "Successfully to delete environment labels for namespace %s", env.Spec.Namespace)
+		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonDeleted, "Successfully to delete environment labels for namespace %s", env.Spec.Namespace)
 	}
 	return nil
 }

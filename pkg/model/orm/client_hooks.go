@@ -14,8 +14,8 @@ import (
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/harbor"
+	"kubegems.io/pkg/utils/slice"
 )
 
 func (c *Client) registHook(obj client.Object, phase client.HookPhase, fn func(tx *gorm.DB, obj client.Object) error) {
@@ -288,11 +288,11 @@ func addOrRemoveSecret(env *v1beta1.Environment, serviceAccountName, targetSecre
 			if saName == serviceAccountName {
 				secrets := strings.Split(env.Annotations[k], ",")
 				if isAdd {
-					if !utils.ContainStr(secrets, targetSecretName) {
+					if !slice.ContainStr(secrets, targetSecretName) {
 						secrets = append(secrets, targetSecretName)
 					}
 				} else {
-					secrets = utils.RemoveStr(secrets, targetSecretName)
+					secrets = slice.RemoveStr(secrets, targetSecretName)
 				}
 
 				if len(secrets) == 0 {

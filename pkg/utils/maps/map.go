@@ -1,4 +1,4 @@
-package utils
+package maps
 
 func LabelChanged(origin, newone map[string]string) bool {
 	if len(origin) == 0 {

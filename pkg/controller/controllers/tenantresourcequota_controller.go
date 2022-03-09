@@ -33,7 +33,7 @@ import (
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/controller/handler"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/resourcequota"
 )
 
 // TenantResourceQuotaReconciler reconciles a TenantResourceQuota object
@@ -73,10 +73,10 @@ func (r *TenantResourceQuotaReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 	oldused := rq.Status.Used.DeepCopy()
 	oldAllocated := rq.Status.Allocated.DeepCopy()
-	used := utils.EmptyTenantResourceQuota()
-	allocated := utils.EmptyTenantResourceQuota()
+	used := resourcequota.EmptyTenantResourceQuota()
+	allocated := resourcequota.EmptyTenantResourceQuota()
 	for _, nrq := range nrqList.Items {
-		for _, resource := range utils.TenantLimitResources {
+		for _, resource := range resourcequota.TenantLimitResources {
 			tmp, exist := nrq.Status.Used[resource]
 			if exist {
 				u := used[resource]

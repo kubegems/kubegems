@@ -5,9 +5,9 @@ import (
 	"path"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/controller/utils"
 	"kubegems.io/pkg/service/handlers"
 	proxyutil "kubegems.io/pkg/service/handlers/proxy/util"
+	"kubegems.io/pkg/utils/slice"
 )
 
 func (h *ProxyHandler) ProxyService(c *gin.Context) {
@@ -39,11 +39,11 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 	// TODO: 作为可配置数据
 	nswhiteList := []string{"istio-system", "observability"}
 	svcwhiteList := []string{"kiali", "jaeger-query"}
-	if !utils.StringIn(namespace, nswhiteList) {
+	if !slice.ContainStr(nswhiteList, namespace) {
 		handlers.Forbidden(c, "forbidden")
 		return
 	}
-	if !utils.StringIn(service, svcwhiteList) {
+	if !slice.ContainStr(svcwhiteList, service) {
 		handlers.Forbidden(c, "forbidden")
 		return
 	}

@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	gemlabels "kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -51,7 +51,7 @@ func (h *NamespaceHandler) List(c *gin.Context) {
 
 	objects := []corev1.Namespace{}
 	for _, obj := range nsList.Items {
-		if !utils.StringIn(obj.Name, forbiddenBindNamespaces) {
+		if !slice.ContainStr(forbiddenBindNamespaces, obj.Name) {
 			objects = append(objects, obj)
 		}
 	}
