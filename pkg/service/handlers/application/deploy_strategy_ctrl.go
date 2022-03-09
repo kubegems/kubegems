@@ -103,7 +103,7 @@ func (h *ApplicationHandler) StrategyDeploymentControl(c *gin.Context) {
 		}
 		return "ok", nil
 	}
-	h.LocalAndRemoteCliFunc(c, req, ctrlfunc, "rollout ctrl")
+	h.LocalAndRemoteCliFunc(c, req, ctrlfunc, "")
 }
 
 func (h *ApplicationHandler) asyncUndo(ctx context.Context, ref PathRef, targetrev string) {
