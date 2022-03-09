@@ -152,13 +152,6 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	nsHandler := &NamespaceHandler{C: cluster.GetClient()}
 	routes.register("core", "v1", "namespaces", ActionList, nsHandler.List)
 
-	metricsHandler := &MetricsHandler{metricScraperHost: options.MetricsServer, C: cluster.GetClient()}
-	routes.register("metrics.k8s.io", "v1beta1", "nodes", ActionList, metricsHandler.Nodes)
-	routes.register("metrics.k8s.io", "v1beta1", "nodes", ActionGet, metricsHandler.Node)
-	routes.register("metrics.k8s.io", "v1beta1", "nodes", "recently", metricsHandler.NodeList)
-	routes.register("metrics.k8s.io", "v1beta1", "pods", ActionList, metricsHandler.Pods)
-	routes.register("metrics.k8s.io", "v1beta1", "pods", "recently", metricsHandler.PodList)
-
 	podHandler := PodHandler{cluster: cluster, debugoptions: debugOptions}
 	routes.register("core", "v1", "pods", ActionList, podHandler.List)
 	routes.register("core", "v1", "pods", "shell", podHandler.ExecPods)
