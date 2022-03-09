@@ -28,7 +28,7 @@ type VirtualSpaceUserRels struct {
 	VirtualSpaceID uint          `gorm:"uniqueIndex:uniq_idx_virtual_space_user_rel"`
 	VirtualSpace   *VirtualSpace `json:",omitempty" gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 
-	UserID uint  `gorm:"uniqueIndex:uniq_idx_virtual_space_user_rel"`
+	UserID uint  `gorm:"uniqueIndex:uniq_idx_virtual_space_user_rel;constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 	User   *User `json:",omitempty" gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 
 	// 虚拟空间角色(管理员admin, 普通用户normal)

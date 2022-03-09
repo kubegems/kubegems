@@ -59,7 +59,7 @@ type Environment struct {
 // EnvironmentUserRels
 type EnvironmentUserRels struct {
 	ID          uint         `gorm:"primarykey"`
-	User        *User        `json:",omitempty"`
+	User        *User        `json:",omitempty" gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 	Environment *Environment `json:"omitempty" gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 	// 用户ID
 	UserID uint `gorm:"uniqueIndex:uniq_idx_env_user_rel" binding:"required"`
