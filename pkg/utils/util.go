@@ -15,11 +15,10 @@ import (
 )
 
 var (
-	regA_Z      = regexp.MustCompile("[A-Z]+")
-	rega_z      = regexp.MustCompile("[a-z]+")
-	reg0_9      = regexp.MustCompile("[0-9]+")
-	reg_chs     = regexp.MustCompile(`[!\.@#$%~]+`)
-	reg_dns1035 = regexp.MustCompile(`[a-z]([-a-z0-9]*[a-z0-9])?`)
+	regA_Z  = regexp.MustCompile("[A-Z]+")
+	rega_z  = regexp.MustCompile("[a-z]+")
+	reg0_9  = regexp.MustCompile("[0-9]+")
+	reg_chs = regexp.MustCompile(`[!\.@#$%~]+`)
 )
 
 var (
@@ -99,10 +98,6 @@ func JoinFlagName(prefix, key string) string {
 		return strings.ToLower(key)
 	}
 	return strings.ToLower(prefix + "-" + key)
-}
-
-func IsValidDNS1035(s string) bool {
-	return reg_dns1035.MatchString(s)
 }
 
 const (

@@ -10,10 +10,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
 	ctrlutils "kubegems.io/pkg/controller/utils"
-	"kubegems.io/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -27,8 +27,8 @@ func (r *ResourceValidate) ValidateTenantGateway(ctx context.Context, req admiss
 			return admission.Errored(http.StatusBadRequest, err)
 		}
 
-		if !utils.IsValidDNS1035(tg.Name) {
-			return admission.Denied("Gateway name is not valid, must match a DNS-1035 format")
+		if errs := validation.IsDNS1035Label(tg.Name); len(errs) > 0 {
+			return admission.Denied(strings.Join(errs, ", "))
 		}
 
 		// 非删除操作才检测租户
