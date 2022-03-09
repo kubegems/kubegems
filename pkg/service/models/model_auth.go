@@ -43,6 +43,7 @@ type AuthSourceConfig struct {
 	Name         string `json:"name,omitempty"`
 	LdapAddr     string `json:"ldapaddr,omitempty"`
 	BaseDN       string `json:"basedn,omitempty"`
+	EnableTLS    bool   `json:"enableTLS,omitempty"`
 	BindUsername string `json:"binduser,omitempty"`
 	BindPassword string `json:"password,omitempty"`
 }
