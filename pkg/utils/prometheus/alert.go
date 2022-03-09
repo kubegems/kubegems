@@ -12,7 +12,6 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/slice"
 )
 
@@ -276,7 +275,7 @@ func (raw *RawAlertResource) UpdateAlertRules(alertRules []AlertRule) error {
 		// 更新AlertmanagerConfig inhibitRules
 		// 先用map为同一label的去重
 		if len(alertRule.AlertLevels) > 1 {
-			inhibitRuleMap[utils.SliceUniqueKey(alertRule.RuleDetail.Labels)] = v1alpha1.InhibitRule{
+			inhibitRuleMap[slice.SliceUniqueKey(alertRule.RuleDetail.Labels)] = v1alpha1.InhibitRule{
 				SourceMatch: []v1alpha1.Matcher{
 					{
 						Name:  severityLabel,
