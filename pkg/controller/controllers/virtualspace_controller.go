@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"kubegems.io/pkg/apis/networking"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/set"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -80,7 +80,7 @@ func (r *VirtuslspaceReconciler) OnChange(ctx context.Context, ns *corev1.Namesp
 	}
 
 	sisternss := func(namespace string) []string {
-		hosts := utils.NewSet()
+		hosts := set.NewSet()
 		for _, nss := range virtualspacenamespaces {
 			for _, ns := range nss {
 				if ns == namespace {

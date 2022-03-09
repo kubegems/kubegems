@@ -36,7 +36,7 @@ import (
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/controller/handler"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/maps"
 )
 
 const (
@@ -158,7 +158,7 @@ func (r *TenantNetworkPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error
 }
 
 func (r *TenantNetworkPolicyReconciler) handleStatusMap(ctx context.Context, st map[string]NetworkPolicyAction, netpol *gemsv1beta1.TenantNetworkPolicy) {
-	cidrs, err := utils.GetCIDRs(r.Client)
+	cidrs, err := GetCIDRs(r.Client)
 	if err != nil {
 		panic(err)
 	}
@@ -179,16 +179,16 @@ func (r *TenantNetworkPolicyReconciler) handleStatusMap(ctx context.Context, st 
 	}
 
 	for ns, action := range st {
-		defaultnetpol := utils.DefaultNetworkPolicy(ns, "default", cidrs)
+		defaultnetpol := DefaultNetworkPolicy(ns, "default", cidrs)
 		action.Modify = &defaultnetpol
 		if action.TenantISO {
-			utils.AddNamespaceSelector(action.Modify, gemlabels.LabelTenant, action.Tenant)
+			AddNamespaceSelector(action.Modify, gemlabels.LabelTenant, action.Tenant)
 		}
 		if action.ProjectISO {
-			utils.AddNamespaceSelector(action.Modify, gemlabels.LabelProject, action.Project)
+			AddNamespaceSelector(action.Modify, gemlabels.LabelProject, action.Project)
 		}
 		if action.EnvironmentISO {
-			utils.AddNamespaceSelector(action.Modify, gemlabels.LabelEnvironment, action.Environment)
+			AddNamespaceSelector(action.Modify, gemlabels.LabelEnvironment, action.Environment)
 		}
 		if action.Origin == nil {
 			if !action.EnvironmentISO && !action.ProjectISO && !action.TenantISO {
@@ -246,7 +246,7 @@ func (r *TenantNetworkPolicyReconciler) handleRelatedObjectList(ctx context.Cont
 		case isoKindEnvironment:
 			tmpaction.EnvironmentISO = isolated
 		}
-		tmpaction.Labels = utils.GetLabels(ns.Labels, gemlabels.CommonLabels)
+		tmpaction.Labels = maps.GetLabels(ns.Labels, gemlabels.CommonLabels)
 		st[ns.Name] = tmpaction
 	}
 }

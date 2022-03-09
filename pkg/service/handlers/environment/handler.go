@@ -22,6 +22,7 @@ import (
 	ut "kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -164,7 +165,7 @@ func ValidateEnvironmentNamespace(ctx context.Context, h base.BaseHandler, tx *g
 		"kube-node-lease",
 		"local-path-storage",
 	}
-	if ut.ContainStr(forbiddenBindNamespaces, namespace) {
+	if slice.ContainStr(forbiddenBindNamespaces, namespace) {
 		return fmt.Errorf("namespace  %s is now allowed, it's a system retain namespace", namespace)
 	}
 	agent, err := h.GetAgents().ClientOf(ctx, clustername)

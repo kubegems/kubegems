@@ -7,7 +7,7 @@ import (
 
 	v1 "k8s.io/api/admission/v1"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -31,12 +31,12 @@ func (r *ResourceMutate) MutateEnvironment(ctx context.Context, req admission.Re
 
 func envDefault(env *gemsv1beta1.Environment) {
 	if env.Spec.LimitRage == nil {
-		env.Spec.LimitRage = utils.GetDefaultEnvironmentLimitRange()
+		env.Spec.LimitRage = resourcequota.GetDefaultEnvironmentLimitRange()
 	}
 	if len(env.Spec.LimitRageName) == 0 {
-		env.Spec.LimitRageName = utils.DefaultLimitRangeName
+		env.Spec.LimitRageName = resourcequota.DefaultLimitRangeName
 	}
-	defaultResourceQuota := utils.GetDefaultEnvironmentResourceQuota()
+	defaultResourceQuota := resourcequota.GetDefaultEnvironmentResourceQuota()
 	if env.Spec.ResourceQuota == nil {
 		env.Spec.ResourceQuota = defaultResourceQuota
 	} else {
@@ -47,7 +47,7 @@ func envDefault(env *gemsv1beta1.Environment) {
 		}
 	}
 	if len(env.Spec.ResourceQuotaName) == 0 {
-		env.Spec.ResourceQuotaName = utils.DefaultResourceQuotaName
+		env.Spec.ResourceQuotaName = resourcequota.DefaultResourceQuotaName
 	}
 	if env.Annotations == nil {
 		env.Annotations = make(map[string]string)

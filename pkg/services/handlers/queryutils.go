@@ -6,7 +6,7 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/pkg/model/client"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/slice"
 )
 
 const (
@@ -130,31 +130,31 @@ func WhereOptions(req *restful.Request, queryWhiteList []string) []client.Option
 		default:
 			if strings.HasSuffix(key, gt) {
 				realKey := strings.TrimSuffix(key, gt)
-				if utils.ContainStr(queryWhiteList, realKey) {
+				if slice.ContainStr(queryWhiteList, realKey) {
 					opts = append(opts, client.Where(realKey, client.Gt, value[0]))
 				}
 			} else if strings.HasSuffix(key, gte) {
 				realKey := strings.TrimSuffix(key, gte)
-				if utils.ContainStr(queryWhiteList, realKey) {
+				if slice.ContainStr(queryWhiteList, realKey) {
 					opts = append(opts, client.Where(realKey, client.Gte, value[0]))
 				}
 			} else if strings.HasSuffix(key, lt) {
 				realKey := strings.TrimSuffix(key, lt)
-				if utils.ContainStr(queryWhiteList, realKey) {
+				if slice.ContainStr(queryWhiteList, realKey) {
 					opts = append(opts, client.Where(realKey, client.Lt, value[0]))
 				}
 			} else if strings.HasSuffix(key, lte) {
 				realKey := strings.TrimSuffix(key, lte)
-				if utils.ContainStr(queryWhiteList, realKey) {
+				if slice.ContainStr(queryWhiteList, realKey) {
 					opts = append(opts, client.Where(realKey, client.Lte, value[0]))
 				}
 			} else if strings.HasSuffix(key, in) {
 				realKey := strings.TrimSuffix(key, in)
-				if utils.ContainStr(queryWhiteList, realKey) {
+				if slice.ContainStr(queryWhiteList, realKey) {
 					opts = append(opts, client.Where(realKey, client.In, value))
 				}
 			} else {
-				if utils.ContainStr(queryWhiteList, key) {
+				if slice.ContainStr(queryWhiteList, key) {
 					opts = append(opts, client.Where(key, client.Eq, value[0]))
 				}
 			}

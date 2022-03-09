@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
-	ctrlutils "kubegems.io/pkg/controller/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -61,7 +60,7 @@ func (r *ResourceValidate) ValidateTenantGateway(ctx context.Context, req admiss
 		})); err != nil {
 			return admission.Denied(err.Error())
 		}
-		if err := ctrlutils.CheckGatewayAndIngressProtocol(*tg, ingressList.Items); err != nil {
+		if err := CheckGatewayAndIngressProtocol(*tg, ingressList.Items); err != nil {
 			return admission.Denied(err.Error())
 		}
 

@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -32,7 +32,7 @@ func (r *ResourceMutate) MutateDaemonSet(ctx context.Context, req admission.Requ
 	var limitRangeItems []corev1.LimitRangeItem
 	var lr corev1.LimitRange
 	if err := r.Client.Get(context.Background(), types.NamespacedName{Namespace: ds.Namespace, Name: "default"}, &lr); err != nil {
-		limitRangeItems = utils.GetDefaultEnvironmentLimitRange()
+		limitRangeItems = resourcequota.GetDefaultEnvironmentLimitRange()
 	} else {
 		limitRangeItems = lr.Spec.Limits
 	}

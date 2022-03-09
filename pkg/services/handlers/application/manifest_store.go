@@ -6,7 +6,7 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"kubegems.io/pkg/utils/strings"
+	"kubegems.io/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -127,7 +127,7 @@ func (g GVKN) GVK() schema.GroupVersionKind {
 func (h *ManifestHandler) resourceFunc(req *restful.Request, resp *restful.Response, body interface{},
 	gvknfun func(ctx context.Context, gvkn GVKN, store GitStore) (interface{}, error)) {
 	gvkn := GVKN{
-		Group:   strings.StrOrDef(req.PathParameter("group"), "core"),
+		Group:   utils.StrOrDef(req.PathParameter("group"), "core"),
 		Version: req.PathParameter("version"),
 		Kind:    req.PathParameter("kind"),
 		Name:    req.PathParameter("name"),
