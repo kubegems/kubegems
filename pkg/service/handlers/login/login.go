@@ -130,5 +130,6 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	if err != nil {
 		handlers.Unauthorized(c, err)
 	}
-	handlers.OK(c, token)
+	data := map[string]string{"token": token}
+	handlers.OK(c, data)
 }
