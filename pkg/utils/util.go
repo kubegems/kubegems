@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	stringsutil "kubegems.io/pkg/utils/strings"
 )
 
 var (
@@ -21,11 +20,12 @@ var (
 	reg_chs = regexp.MustCompile(`[!\.@#$%~]+`)
 )
 
-var (
-	ContainStr         = stringsutil.ContainStr
-	RemoveStrInReplace = stringsutil.RemoveStrInReplace
-	RemoveStr          = stringsutil.RemoveStr
-)
+func StrOrDef(s string, def string) string {
+	if s == "" {
+		return def
+	}
+	return s
+}
 
 // 保留n位小数
 func RoundTo(n float64, decimals uint32) float64 {

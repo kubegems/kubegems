@@ -35,7 +35,6 @@ import (
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/controller/handler"
-	"kubegems.io/pkg/controller/utils"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -122,12 +121,12 @@ func (r *TenantGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			// 没有nic，执行create
 			nic := r.nginxIngressControllerForTenantGateway(&tg)
 			if err := r.Create(ctx, nic); err != nil {
-				r.Recorder.Eventf(&tg, corev1.EventTypeWarning, utils.ReasonFailedCreate, "Failed to create NginxIngressController %s: %v", nic.Name, err)
+				r.Recorder.Eventf(&tg, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to create NginxIngressController %s: %v", nic.Name, err)
 				log.Info("Error create NginxIngressController")
 			}
-			r.Recorder.Eventf(&tg, corev1.EventTypeNormal, utils.ReasonCreated, "Successfully create NginxIngressController %s", nic.Name)
+			r.Recorder.Eventf(&tg, corev1.EventTypeNormal, ReasonCreated, "Successfully create NginxIngressController %s", nic.Name)
 		} else {
-			r.Recorder.Eventf(found, corev1.EventTypeWarning, utils.ReasonUnknowError, "Failed to get NginxIngressController %s: %v", found.Name, err)
+			r.Recorder.Eventf(found, corev1.EventTypeWarning, ReasonUnknowError, "Failed to get NginxIngressController %s: %v", found.Name, err)
 			log.Error(err, "Error get NginxIngressController")
 		}
 	} else {
@@ -135,10 +134,10 @@ func (r *TenantGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		if r.hasNginxIngressControllerChanged(found, &tg) {
 			updated := r.updateNginxIngressController(found, &tg)
 			if err := r.Update(ctx, updated); err != nil {
-				r.Recorder.Eventf(&tg, corev1.EventTypeWarning, utils.ReasonFailedCreate, "Failed to update NginxIngressController %s: %v", found.Name, err)
+				r.Recorder.Eventf(&tg, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to update NginxIngressController %s: %v", found.Name, err)
 				log.Error(err, "Error update NginxIngressController")
 			} else {
-				r.Recorder.Eventf(&tg, corev1.EventTypeNormal, utils.ReasonCreated, "Successfully update NginxIngressController %s", found.Name)
+				r.Recorder.Eventf(&tg, corev1.EventTypeNormal, ReasonCreated, "Successfully update NginxIngressController %s", found.Name)
 			}
 		}
 	}
@@ -239,7 +238,7 @@ func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1
 	if tg.Spec.Workload == nil {
 		tg.Spec.Workload = &gemsv1beta1.Workload{}
 	}
-	if utils.HasDifferentResources(nic.Spec.Workload.Resources, tg.Spec.Workload.Resources) {
+	if HasDifferentResources(nic.Spec.Workload.Resources, tg.Spec.Workload.Resources) {
 		return true
 	}
 	if !reflect.DeepEqual(nic.Spec.Workload.ExtraLabels, tg.Spec.Workload.ExtraLabels) || !reflect.DeepEqual(nic.Spec.ConfigMapData, tg.Spec.ConfigMapData) {

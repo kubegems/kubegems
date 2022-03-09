@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -39,9 +39,9 @@ func (r *ResourceValidate) ValidateTenantResourceQuota(ctx context.Context, req 
 			if err := r.decoder.DecodeRaw(req.OldObject, oldtrq); err != nil {
 				return admission.Errored(http.StatusBadRequest, err)
 			}
-			need = utils.SubResource(oldtrq.Spec.Hard, trq.Spec.Hard)
+			need = resourcequota.SubResource(oldtrq.Spec.Hard, trq.Spec.Hard)
 		}
-		enough, errmsg := utils.ResourceEnough(capacity, allocated, need)
+		enough, errmsg := resourcequota.ResourceEnough(capacity, allocated, need)
 		if enough {
 			return admission.Allowed("pass")
 		}

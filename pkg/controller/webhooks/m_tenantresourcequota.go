@@ -7,7 +7,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -18,7 +18,7 @@ func (r *ResourceMutate) MutateTenantResourceQuota(ctx context.Context, req admi
 	if err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
-	defaultrq := utils.GetDefaultTeantResourceQuota()
+	defaultrq := resourcequota.GetDefaultTeantResourceQuota()
 	if trq.Spec.Hard == nil {
 		trq.Spec.Hard = make(v1.ResourceList)
 	}

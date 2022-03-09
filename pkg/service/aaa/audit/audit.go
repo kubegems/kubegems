@@ -12,7 +12,7 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/aaa"
 	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/slice"
 )
 
 var normalActions = []string{
@@ -79,7 +79,7 @@ func NewAuditMiddleware(db *gorm.DB, cache *models.CacheLayer, uinterface aaa.Co
 }
 
 func (audit *DefaultAuditInstance) AuditProxyFunc(c *gin.Context, proxyobj *ProxyObject) {
-	if utils.ContainStr(normalActions, c.Request.Method) {
+	if slice.ContainStr(normalActions, c.Request.Method) {
 		return
 	}
 	action := methodMap[c.Request.Method]

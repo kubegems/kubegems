@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -54,7 +54,7 @@ func (r *ResourceValidate) ValidateEnvironment(ctx context.Context, req admissio
 		}
 
 		// 3. 检查LimitRange是否合法
-		if errmsg, invalid := utils.IsLimitRangeInvalid(env.Spec.LimitRage); invalid {
+		if errmsg, invalid := resourcequota.IsLimitRangeInvalid(env.Spec.LimitRage); invalid {
 			msg := fmt.Sprintf("LimitRange format error: %v", strings.Join(errmsg, ";"))
 			return admission.Denied(msg)
 		}
@@ -86,7 +86,7 @@ func (r *ResourceValidate) ValidateEnvironment(ctx context.Context, req admissio
 				return admission.Denied(strings.Join(msgs, ";"))
 			}
 		}
-		if errmsg, invalid := utils.IsLimitRangeInvalid(env.Spec.LimitRage); invalid {
+		if errmsg, invalid := resourcequota.IsLimitRangeInvalid(env.Spec.LimitRage); invalid {
 			msg := fmt.Sprintf("LimitRange format error: %v", strings.Join(errmsg, ";"))
 			return admission.Denied(msg)
 		}
@@ -115,7 +115,7 @@ func (r *ResourceValidate) tenantResourceIsEnough(trq *gemsv1beta1.TenantResourc
 	allocated := corev1.ResourceList{}
 	if old != nil {
 		oldres := old.Spec.ResourceQuota
-		for _, key := range utils.TenantLimitResources {
+		for _, key := range resourcequota.TenantLimitResources {
 			allocatedv := trq.Status.Allocated[key]
 			oldv, oexist := oldres[key]
 			if oexist {
@@ -126,5 +126,5 @@ func (r *ResourceValidate) tenantResourceIsEnough(trq *gemsv1beta1.TenantResourc
 	} else {
 		allocated = trq.Status.Allocated
 	}
-	return utils.ResourceIsEnough(trq.Spec.Hard, allocated, env.Spec.ResourceQuota, utils.TenantLimitResources)
+	return resourcequota.ResourceIsEnough(trq.Spec.Hard, allocated, env.Spec.ResourceQuota, resourcequota.TenantLimitResources)
 }

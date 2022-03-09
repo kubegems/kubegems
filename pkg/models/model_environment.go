@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/datatypes"
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/resourcequota"
 )
 
 /*
@@ -56,7 +56,7 @@ type EnvironmentUserRels struct {
 }
 
 func FillDefaultLimigrange(env *Environment) []byte {
-	defaultLimitRangers := utils.GetDefaultEnvironmentLimitRange()
+	defaultLimitRangers := resourcequota.GetDefaultEnvironmentLimitRange()
 
 	kindTmp := map[v1.LimitType]v1.LimitRangeItem{}
 	for _, item := range defaultLimitRangers {

@@ -12,7 +12,7 @@ import (
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"kubegems.io/pkg/agent/apis/types"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -34,15 +34,15 @@ func (sth *StatisticsHandler) ClusterWorkloadStatistics(c *gin.Context) {
 
 	deployments := &appsv1.DeploymentList{}
 	_ = sth.C.List(c.Request.Context(), deployments)
-	ret[utils.ResourceDeployments.String()] = len(deployments.Items)
+	ret[resourcequota.ResourceDeployments.String()] = len(deployments.Items)
 
 	statefulsetCounter := &appsv1.StatefulSetList{}
 	_ = sth.C.List(c.Request.Context(), statefulsetCounter)
-	ret[utils.ResourceStatefulSets.String()] = len(statefulsetCounter.Items)
+	ret[resourcequota.ResourceStatefulSets.String()] = len(statefulsetCounter.Items)
 
 	daemonsetCounter := &appsv1.DaemonSetList{}
 	_ = sth.C.List(c.Request.Context(), daemonsetCounter)
-	ret[utils.ResourceDaemonsets.String()] = len(daemonsetCounter.Items)
+	ret[resourcequota.ResourceDaemonsets.String()] = len(daemonsetCounter.Items)
 
 	podCounter := &corev1.PodList{}
 	_ = sth.C.List(c.Request.Context(), podCounter)
@@ -50,27 +50,27 @@ func (sth *StatisticsHandler) ClusterWorkloadStatistics(c *gin.Context) {
 
 	configmapCounter := &corev1.ConfigMapList{}
 	_ = sth.C.List(c.Request.Context(), configmapCounter)
-	ret[utils.ResourceConfigMaps.String()] = len(configmapCounter.Items)
+	ret[resourcequota.ResourceConfigMaps.String()] = len(configmapCounter.Items)
 
 	secretCounter := &corev1.SecretList{}
 	_ = sth.C.List(c.Request.Context(), secretCounter)
-	ret[utils.ResourceSecrets.String()] = len(secretCounter.Items)
+	ret[resourcequota.ResourceSecrets.String()] = len(secretCounter.Items)
 
 	pvcCounter := &corev1.PersistentVolumeList{}
 	_ = sth.C.List(c.Request.Context(), pvcCounter)
-	ret[utils.ResourcePersistentVolumeClaims.String()] = len(pvcCounter.Items)
+	ret[resourcequota.ResourcePersistentVolumeClaims.String()] = len(pvcCounter.Items)
 
 	serviceCounter := &corev1.ServiceList{}
 	_ = sth.C.List(c.Request.Context(), serviceCounter)
-	ret[utils.ResourceServices.String()] = len(serviceCounter.Items)
+	ret[resourcequota.ResourceServices.String()] = len(serviceCounter.Items)
 
 	cronjobCounter := &batchv1beta1.CronJobList{}
 	_ = sth.C.List(c.Request.Context(), cronjobCounter)
-	ret[utils.ResourceCronJobs.String()] = len(cronjobCounter.Items)
+	ret[resourcequota.ResourceCronJobs.String()] = len(cronjobCounter.Items)
 
 	jobCounter := &batchv1.JobList{}
 	_ = sth.C.List(c.Request.Context(), jobCounter)
-	ret[utils.ResourceJobs.String()] = len(jobCounter.Items)
+	ret[resourcequota.ResourceJobs.String()] = len(jobCounter.Items)
 
 	namespaceCounter := &corev1.NamespaceList{}
 	_ = sth.C.List(c.Request.Context(), namespaceCounter)

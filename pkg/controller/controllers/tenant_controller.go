@@ -31,7 +31,9 @@ import (
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/controller/handler"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/maps"
+	"kubegems.io/pkg/utils/resourcequota"
+	"kubegems.io/pkg/utils/slice"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -209,8 +211,8 @@ func (r *TenantReconciler) handleTenantStatus(tenant *gemsv1beta1.Tenant, ctx co
 		namespaces = append(namespaces, env.Spec.Namespace)
 	}
 
-	envSame := utils.StringArrayEqual(tenant.Status.Environments, envNames)
-	nsSame := utils.StringArrayEqual(tenant.Status.Namespaces, namespaces)
+	envSame := slice.StringArrayEqual(tenant.Status.Environments, envNames)
+	nsSame := slice.StringArrayEqual(tenant.Status.Namespaces, namespaces)
 	if envSame && nsSame {
 		return false
 	}
@@ -239,29 +241,29 @@ func (r *TenantReconciler) handleTenantResourceQuota(tenant *gemsv1beta1.Tenant,
 		trq.Name = tenant.Name
 		controllerutil.SetControllerReference(tenant, &trq, r.Scheme)
 		trq.Labels = labels.Merge(trq.Labels, nlabels)
-		trq.Spec.Hard = utils.GetDefaultTeantResourceQuota()
+		trq.Spec.Hard = resourcequota.GetDefaultTeantResourceQuota()
 		if err := r.Create(ctx, &trq); err != nil {
-			r.Recorder.Eventf(tenant, corev1.EventTypeWarning, utils.ReasonFailedCreateSubResource, "Failed to Create TenantTesourceQuota for tenant %s: %v", tenant.Spec.TenantName, err)
+			r.Recorder.Eventf(tenant, corev1.EventTypeWarning, ReasonFailedCreateSubResource, "Failed to Create TenantTesourceQuota for tenant %s: %v", tenant.Spec.TenantName, err)
 			log.Info("Faield to create TenantResourceQuota: " + err.Error())
 			return
 		}
-		r.Recorder.Eventf(tenant, corev1.EventTypeNormal, utils.ReasonCreated, "Successfully create TenantTesourceQuota for tenant %s", tenant.Spec.TenantName)
+		r.Recorder.Eventf(tenant, corev1.EventTypeNormal, ReasonCreated, "Successfully create TenantTesourceQuota for tenant %s", tenant.Spec.TenantName)
 	}
 	var changed bool
-	if !utils.ExistOwnerRef(trq.ObjectMeta, *owner) {
+	if !ExistOwnerRef(trq.ObjectMeta, *owner) {
 		controllerutil.SetControllerReference(tenant, &trq, r.Scheme)
 		changed = true
 	}
-	if utils.LabelChanged(trq.Labels, nlabels) {
+	if maps.LabelChanged(trq.Labels, nlabels) {
 		trq.Labels = labels.Merge(trq.Labels, nlabels)
 		changed = true
 	}
 	if changed {
 		if err := r.Update(ctx, &trq); err != nil {
-			r.Recorder.Eventf(tenant, corev1.EventTypeWarning, utils.ReasonFailedUpdate, "Failed to update TenantTesourceQuota for tenant %s", tenant.Spec.TenantName)
+			r.Recorder.Eventf(tenant, corev1.EventTypeWarning, ReasonFailedUpdate, "Failed to update TenantTesourceQuota for tenant %s", tenant.Spec.TenantName)
 			log.Info("Faield to update TenantResourceQuota")
 		}
-		r.Recorder.Eventf(tenant, corev1.EventTypeNormal, utils.ReasonUpdated, "Successfully update TenantTesourceQuota for tenant %s", tenant.Spec.TenantName)
+		r.Recorder.Eventf(tenant, corev1.EventTypeNormal, ReasonUpdated, "Successfully update TenantTesourceQuota for tenant %s", tenant.Spec.TenantName)
 	}
 }
 
@@ -287,26 +289,26 @@ func (r *TenantReconciler) handleTenantNetworkPolicy(tenant *gemsv1beta1.Tenant,
 		tnetpol.Spec.Tenant = tenant.Name
 		tnetpol.Spec.TenantIsolated = false
 		if err := r.Create(ctx, &tnetpol); err != nil {
-			r.Recorder.Eventf(tenant, corev1.EventTypeWarning, utils.ReasonFailedCreateSubResource, "Failed to Create TenantNetworkPolicy for tenant %s: %v", tenant.Spec.TenantName, err)
+			r.Recorder.Eventf(tenant, corev1.EventTypeWarning, ReasonFailedCreateSubResource, "Failed to Create TenantNetworkPolicy for tenant %s: %v", tenant.Spec.TenantName, err)
 			log.Info("Faield to create TenantNetworkpolicy: " + err.Error())
 			return
 		}
-		r.Recorder.Eventf(tenant, corev1.EventTypeNormal, utils.ReasonCreated, "Successfully create TenantNetworkPolicy for tenant %s", tenant.Spec.TenantName)
+		r.Recorder.Eventf(tenant, corev1.EventTypeNormal, ReasonCreated, "Successfully create TenantNetworkPolicy for tenant %s", tenant.Spec.TenantName)
 	}
 	var changed bool
-	if !utils.ExistOwnerRef(tnetpol.ObjectMeta, *owner) {
+	if !ExistOwnerRef(tnetpol.ObjectMeta, *owner) {
 		controllerutil.SetControllerReference(tenant, &tnetpol, r.Scheme)
 		changed = true
 	}
-	if utils.LabelChanged(tnetpol.Labels, nlabels) {
+	if maps.LabelChanged(tnetpol.Labels, nlabels) {
 		tnetpol.Labels = labels.Merge(tnetpol.Labels, nlabels)
 		changed = true
 	}
 	if changed {
 		if err := r.Update(ctx, &tnetpol); err != nil {
-			r.Recorder.Eventf(tenant, corev1.EventTypeWarning, utils.ReasonFailedUpdate, "Failed to update TenantNetworkPolicy for tenant %s", tenant.Spec.TenantName)
+			r.Recorder.Eventf(tenant, corev1.EventTypeWarning, ReasonFailedUpdate, "Failed to update TenantNetworkPolicy for tenant %s", tenant.Spec.TenantName)
 			log.Info("Faield to update TenantNetworkPolicy")
 		}
-		r.Recorder.Eventf(tenant, corev1.EventTypeNormal, utils.ReasonUpdated, "Successfully update TenantNetworkPloicy for tenant %s", tenant.Spec.TenantName)
+		r.Recorder.Eventf(tenant, corev1.EventTypeNormal, ReasonUpdated, "Successfully update TenantNetworkPloicy for tenant %s", tenant.Spec.TenantName)
 	}
 }

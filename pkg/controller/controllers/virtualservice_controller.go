@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"kubegems.io/pkg/apis/networking"
-	"kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils/set"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -102,7 +102,7 @@ func (r *ServiceentryReconciler) OnChange(ctx context.Context, svc *corev1.Servi
 		return ctrl.Result{}, nil
 	}
 
-	hosts := utils.NewSet()
+	hosts := set.NewSet()
 
 	addtohosts := func(val string) {
 		for _, domain := range strings.Split(val, ",") {
@@ -196,7 +196,7 @@ func (r *ServiceentryReconciler) updateVirtualServiceHosts(ctx context.Context, 
 		return err
 	}
 
-	sets := utils.NewSet()
+	sets := set.NewSet()
 	sets.Append(svc.Name)
 	// sets.Append(vs.Spec.Hosts...)
 	sets.Append(hosts...)

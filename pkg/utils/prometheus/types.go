@@ -7,8 +7,8 @@ import (
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/prometheus/promql"
+	"kubegems.io/pkg/utils/slice"
 )
 
 type Action int
@@ -106,13 +106,13 @@ func (params *BaseQueryParams) FindRuleContext(cfg *MonitorOptions) (RuleContext
 	}
 
 	if !(ruleDetail.Units == nil && params.Unit == "") {
-		if !utils.ContainStr(ruleDetail.Units, params.Unit) {
+		if !slice.ContainStr(ruleDetail.Units, params.Unit) {
 			return ctx, fmt.Errorf("invalid unit: %s in ruledetail: %v", params.Unit, ruleDetail)
 		}
 	}
 
 	for label := range params.LabelPairs {
-		if !utils.ContainStr(ruleDetail.Labels, label) {
+		if !slice.ContainStr(ruleDetail.Labels, label) {
 			return ctx, fmt.Errorf("invalid label: %s in ruledetail: %v", label, ruleDetail)
 		}
 	}
