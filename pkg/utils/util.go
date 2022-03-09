@@ -5,7 +5,6 @@ import (
 	"math"
 	"math/rand"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -169,10 +168,4 @@ func UintToStr(i *uint) string {
 		return ""
 	}
 	return strconv.Itoa(int(*i))
-}
-
-func SliceUniqueKey(s []string) string {
-	tmp := append([]string{}, s...)
-	sort.Strings(tmp)
-	return strings.Join(tmp, "-")
 }
