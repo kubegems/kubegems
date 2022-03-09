@@ -90,7 +90,7 @@ func TestIsValidFQDNLower(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := IsValidFQDNLower(tt.args.s); got != tt.want {
+			if got := IsValidDNS1035(tt.args.s); got != tt.want {
 				t.Errorf("IsValidFQDNLower() = %v, want %v", got, tt.want)
 			}
 		})
