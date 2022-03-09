@@ -38,8 +38,6 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 			log.Error(err, "connect to ldap server with tls failed")
 			return
 		}
-	} else {
-		ldapConn.Start()
 	}
 
 	if err = ldapConn.Bind(ut.BindUsername, ut.BindPassword); err != nil {
@@ -53,7 +51,7 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 		0,
 		0,
 		false,
-		fmt.Sprintf("(&(objectClass=organizationalPerson)(cn=%s))", cred.Username),
+		fmt.Sprintf("(cn=%s)", cred.Username),
 		[]string{"mail"},
 		nil,
 	)
@@ -66,22 +64,26 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 		log.Error(fmt.Errorf("more than one search result returnd"), "credential", cred)
 		return
 	}
+	uinfo := UserInfo{}
 	info := result.Entries[0]
-	ret.Username = info.GetAttributeValue("username")
+	uinfo.Username = cred.Username
 	mailstr := info.GetAttributeValue("mail")
 	emailstr := info.GetAttributeValue("email")
 	if emailstr != "" {
-		ret.Email = emailstr
+		uinfo.Email = emailstr
 	} else {
-		ret.Email = mailstr
+		uinfo.Email = mailstr
 	}
-	ret.Source = cred.Source
+	uinfo.Source = cred.Source
+	ret = &uinfo
 	return
 }
 
 func (ut *LdapLoginUtils) ValidateCredential(cred *Credential) bool {
 	userdn := fmt.Sprintf("cn=%s,%s", cred.Username, ut.BaseDN)
 	req := ldap.NewSimpleBindRequest(userdn, cred.Password, nil)
+	log.Info("req", "userdn", userdn)
+	log.Info("req", "pass", cred.Password)
 	ldapConn, err := ldap.Dial("tcp", ut.LdapAddr)
 	if err != nil {
 		log.Error(err, "connect to ldap server failed")
@@ -94,12 +96,10 @@ func (ut *LdapLoginUtils) ValidateCredential(cred *Credential) bool {
 			log.Error(err, "connect to ldap server with tls failed")
 			return false
 		}
-	} else {
-		ldapConn.Start()
 	}
 	_, err = ldapConn.SimpleBind(req)
 	if err != nil {
-		log.Info("user login with ldap failed", "credential", cred)
+		log.Error(err, "faield to login with ldap", "enableTLS", ut.EnableTLS, "username", cred.Username, "source", cred.Source)
 		return false
 	}
 	return true
