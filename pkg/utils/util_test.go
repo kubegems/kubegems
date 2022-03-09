@@ -48,55 +48,6 @@ func TestRoundTo(t *testing.T) {
 	}
 }
 
-func TestIsValidFQDNLower(t *testing.T) {
-	type args struct {
-		s string
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "normal 1",
-			args: args{s: "www.a.b.c"},
-			want: true,
-		},
-		{
-			name: "normal 2",
-			args: args{s: "a"},
-			want: true,
-		},
-		{
-			name: "failed 1",
-			args: args{s: "1_a.b.c"},
-			want: false,
-		},
-		{
-			name: "failed 2",
-			args: args{s: "张三李四"},
-			want: false,
-		},
-		{
-			name: "failed 3",
-			args: args{s: "*.sd"},
-			want: false,
-		},
-		{
-			name: "failed 3",
-			args: args{s: "1+.sd"},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := IsValidDNS1035(tt.args.s); got != tt.want {
-				t.Errorf("IsValidFQDNLower() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestJoinFlagName(t *testing.T) {
 	type args struct {
 		prefix string
