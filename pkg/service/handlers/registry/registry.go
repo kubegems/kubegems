@@ -16,7 +16,7 @@ var (
 	PreloadFields  = []string{"Creator", "Project"}
 	OrderFields    = []string{"RegistryName", "ID"}
 	ModelName      = "Registry"
-	PrimaryKeyName = "registry_id"
+	ProjectKeyName = "project_id"
 )
 
 // ListRegistry 列表 Registry
@@ -65,7 +65,7 @@ func (h *RegistryHandler) ListRegistry(c *gin.Context) {
 // @Security JWT
 func (h *RegistryHandler) RetrieveRegistry(c *gin.Context) {
 	var obj models.Registry
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -85,7 +85,7 @@ func (h *RegistryHandler) RetrieveRegistry(c *gin.Context) {
 // @Security JWT
 func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 	var obj models.Registry
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -95,7 +95,7 @@ func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if strconv.Itoa(int(obj.ID)) != c.Param(PrimaryKeyName) {
+	if strconv.Itoa(int(obj.ID)) != c.Param(ProjectKeyName) {
 		handlers.NotOK(c, fmt.Errorf("请求体参数和URL参数ID不匹配"))
 		return
 	}
@@ -145,7 +145,7 @@ func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 // @Security JWT
 func (h *RegistryHandler) DeleteRegistry(c *gin.Context) {
 	var obj models.Registry
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
@@ -155,7 +155,7 @@ func (h *RegistryHandler) DeleteRegistry(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Delete(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+		if err := tx.Delete(&obj, c.Param(ProjectKeyName)).Error; err != nil {
 			return err
 		}
 		return h.onDelete(ctx, tx, &obj)
