@@ -107,13 +107,13 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	uinfo, err := authenticator.GetUserInfo(ctx, cred)
 	if err != nil {
 		log.Error(err, "login failed", "cred", cred)
-		handlers.Unauthorized(c, err)
+		handlers.Unauthorized(c, err.Error())
 		return
 	}
 	uinternel, err := h.getOrCreateUser(ctx, uinfo)
 	if err != nil {
 		log.Error(err, "handle login error", "username", uinfo.Username)
-		handlers.Unauthorized(c, fmt.Errorf("system error"))
+		handlers.Unauthorized(c, "system error")
 		return
 	}
 	now := time.Now()
