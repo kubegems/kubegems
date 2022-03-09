@@ -103,16 +103,21 @@ func (h *RegistryHandler) syncRegistry(ctx context.Context, reg *models.Registry
 				}
 				switch kind {
 				case syncKindUpsert:
-					// 默认仓库添加annotation
-					addOrRemoveSecret(environment, defaultServiceAccountName, secretName, reg.IsDefault)
 					_, err := controllerutil.CreateOrUpdate(ctx, cli, secret, func() error {
 						return updateSecretData(reg, secret)
 					})
-					return err
+					if err != nil {
+						return err
+					}
 				case syncKindDelete:
-					addOrRemoveSecret(environment, defaultServiceAccountName, secretName, false)
-					return cli.Delete(ctx, secret)
+					if err := cli.Delete(ctx, secret); err != nil {
+						return err
+					}
 				}
+
+				// 默认仓库添加annotation
+				updateEnviromentAnnotation(environment, defaultServiceAccountName, secretName, (kind == syncKindUpsert && reg.IsDefault))
+				// 更新 env
 				return cli.Update(ctx, environment)
 			})
 		})
@@ -145,7 +150,7 @@ func updateSecretData(v *models.Registry, in *v1.Secret) error {
 	return nil
 }
 
-func addOrRemoveSecret(env *v1beta1.Environment, serviceAccountName, targetSecretName string, isAdd bool) {
+func updateEnviromentAnnotation(env *v1beta1.Environment, serviceAccountName, targetSecretName string, isAdd bool) {
 	if env.Annotations == nil {
 		env.Annotations = make(map[string]string)
 	}
