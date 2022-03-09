@@ -107,7 +107,7 @@ func (h *AlertmanagerHandler) CreateSilence(c *gin.Context) {
 	silenceapi := client.NewSilenceAPI(h.client)
 	silence := types.Silence{}
 	c.BindJSON(&silence)
-	if _, err := silenceapi.Set(context.TODO(), silence); err != nil {
+	if _, err := silenceapi.Set(c.Request.Context(), silence); err != nil {
 		NotOK(c, err)
 	}
 	OK(c, "")
@@ -125,7 +125,7 @@ func (h *AlertmanagerHandler) CreateSilence(c *gin.Context) {
 // @Security JWT
 func (h *AlertmanagerHandler) ListSilence(c *gin.Context) {
 	silenceapi := client.NewSilenceAPI(h.client)
-	ret, err := silenceapi.List(context.TODO(), c.Query("filter"))
+	ret, err := silenceapi.List(c.Request.Context(), c.Query("filter"))
 	if err != nil {
 		NotOK(c, err)
 	}
@@ -144,7 +144,7 @@ func (h *AlertmanagerHandler) ListSilence(c *gin.Context) {
 // @Security JWT
 func (h *AlertmanagerHandler) DeleteSilence(c *gin.Context) {
 	silenceapi := client.NewSilenceAPI(h.client)
-	if err := silenceapi.Expire(context.TODO(), c.Query("id")); err != nil {
+	if err := silenceapi.Expire(c.Request.Context(), c.Query("id")); err != nil {
 		NotOK(c, err)
 	}
 	OK(c, "")
