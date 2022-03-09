@@ -2,6 +2,7 @@ package slice
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -47,4 +48,10 @@ func StringArrayEqual(s1, s2 []string) bool {
 	x := struct{ Strings []string }{s1}
 	y := struct{ Strings []string }{s2}
 	return cmp.Equal(x, y, trans)
+}
+
+func SliceUniqueKey(s []string) string {
+	tmp := append([]string{}, s...)
+	sort.Strings(tmp)
+	return strings.Join(tmp, "-")
 }
