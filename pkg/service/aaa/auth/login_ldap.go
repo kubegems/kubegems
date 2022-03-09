@@ -13,6 +13,7 @@ type LdapLoginUtils struct {
 	Name         string `yaml:"name" json:"name"`
 	LdapAddr     string `yaml:"addr" json:"ldapaddr"`
 	BaseDN       string `yaml:"basedn" json:"basedn"`
+	EnableTLS    bool   `json:"enableTLS"`
 	BindUsername string `yaml:"binduser" json:"binduser"`
 	BindPassword string `yaml:"bindpass" json:"password"`
 }
@@ -32,9 +33,13 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 	}
 	defer ldapConn.Close()
 
-	if err = ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		log.Error(err, "connect to ldap server with tls failed")
-		return
+	if ut.EnableTLS {
+		if err = ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
+			log.Error(err, "connect to ldap server with tls failed")
+			return
+		}
+	} else {
+		ldapConn.Start()
 	}
 
 	if err = ldapConn.Bind(ut.BindUsername, ut.BindPassword); err != nil {
@@ -75,7 +80,7 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 }
 
 func (ut *LdapLoginUtils) ValidateCredential(cred *Credential) bool {
-	userdn := fmt.Sprintf(ut.BaseDN, cred.Username)
+	userdn := fmt.Sprintf("cn=%s,%s", cred.Username, ut.BaseDN)
 	req := ldap.NewSimpleBindRequest(userdn, cred.Password, nil)
 	ldapConn, err := ldap.Dial("tcp", ut.LdapAddr)
 	if err != nil {
@@ -84,9 +89,13 @@ func (ut *LdapLoginUtils) ValidateCredential(cred *Credential) bool {
 	}
 	defer ldapConn.Close()
 
-	if err := ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		log.Error(err, "connect to ldap server with tls failed")
-		return false
+	if ut.EnableTLS {
+		if err := ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
+			log.Error(err, "connect to ldap server with tls failed")
+			return false
+		}
+	} else {
+		ldapConn.Start()
 	}
 	_, err = ldapConn.SimpleBind(req)
 	if err != nil {
