@@ -69,6 +69,7 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name str
 			BindUsername: authSource.Config.BindUsername,
 			BindPassword: authSource.Config.BindPassword,
 			LdapAddr:     authSource.Config.LdapAddr,
+			EnableTLS:    authSource.Config.EnableTLS,
 		}
 		return ldapUt
 	case "OAUTH":

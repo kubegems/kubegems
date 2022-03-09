@@ -75,9 +75,10 @@ func (h *OAuthHandler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo
 			return nil, err
 		}
 		newUser := &models.User{
-			Username: uinfo.Username,
-			Email:    uinfo.Email,
-			Source:   uinfo.Source,
+			Username:     uinfo.Username,
+			Email:        uinfo.Email,
+			Source:       uinfo.Source,
+			SystemRoleID: 2,
 		}
 		err := h.DB.WithContext(ctx).Create(newUser).Error
 		return newUser, err
