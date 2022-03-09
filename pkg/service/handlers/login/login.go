@@ -74,10 +74,13 @@ func (h *OAuthHandler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo
 		if err != gorm.ErrRecordNotFound {
 			return nil, err
 		}
+		active := true
 		newUser := &models.User{
-			Username:     uinfo.Username,
-			Email:        uinfo.Email,
-			Source:       uinfo.Source,
+			Username: uinfo.Username,
+			Email:    uinfo.Email,
+			IsActive: &active,
+			Source:   uinfo.Source,
+			// todo: get systemrole via code from db
 			SystemRoleID: 2,
 		}
 		err := h.DB.WithContext(ctx).Create(newUser).Error
