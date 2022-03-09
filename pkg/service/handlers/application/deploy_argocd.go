@@ -225,18 +225,11 @@ func (h *ApplicationHandler) listArgoHistories(ctx context.Context, ref PathRef)
 		tenant := argo.Labels[LabelTenant]
 		// 添加当前版本
 
-		cref := PathRef{Tenant: ref.Project, Project: ref.Project, Env: env, Name: applicationName}
+		cref := PathRef{Tenant: ref.Tenant, Project: ref.Project, Env: env, Name: applicationName}
 
-		item := &ArgoHistory{
-			ID:          fmt.Sprintf("%s-%s-%d", env, applicationName, len(argo.Status.History)),
-			Name:        applicationName,
-			Environment: env,
-			Tenant:      tenant,
-			Status:      string(argo.Status.Health.Status),
-			GitVersion:  argo.Spec.Source.TargetRevision,
-		}
-		_ = h.completeArgoHistoryFromGit(ctx, cref, item)
-		ret = append(ret, item)
+		currentRev := argo.Status.Sync.Revision
+		currentStatus := string(argo.Status.Health.Status)
+
 		// 添加历史版本
 		// 反序
 		for i := len(argo.Status.History) - 1; i >= 0; i-- {
@@ -248,9 +241,20 @@ func (h *ApplicationHandler) listArgoHistories(ctx context.Context, ref PathRef)
 				Tenant:      tenant,
 				GitVersion:  history.Revision,
 				Status:      "", // none
-				PublishAt:   history.DeployedAt,
 			}
+
+			if history.DeployStartedAt != nil {
+				item.PublishAt = *history.DeployStartedAt
+			} else {
+				item.PublishAt = history.DeployedAt
+			}
+
 			_ = h.completeArgoHistoryFromGit(ctx, cref, item)
+
+			if item.GitVersion == currentRev {
+				item.Status = currentStatus
+			}
+
 			ret = append(ret, item)
 		}
 	}
@@ -262,8 +266,12 @@ func (h *ApplicationHandler) completeArgoHistoryFromGit(ctx context.Context, ref
 	if err != nil {
 		return err
 	}
-	his.Publisher = revmeta.Creator
-	his.Images = revmeta.Images
+	if his.Publisher == "" {
+		his.Publisher = revmeta.Creator
+	}
+	if his.Images == nil {
+		his.Images = revmeta.Images
+	}
 	if his.PublishAt.IsZero() {
 		his.PublishAt = revmeta.CreatedAt
 	}
@@ -409,7 +417,8 @@ type ArgoResourceNode struct {
 }
 
 func (h *ApplicationHandler) resourceTreeListToTree(ctx context.Context,
-	apptree *v1alpha1.ApplicationTree, cli *argo.Client, argoappname string) ArgoResourceTree {
+	apptree *v1alpha1.ApplicationTree, cli *argo.Client, argoappname string,
+) ArgoResourceTree {
 	getsyncstatus := func(argoapp *v1alpha1.Application, r v1alpha1.ResourceRef) string {
 		for _, v := range argoapp.Status.Resources {
 			if v.Group == r.Group && v.Kind == r.Kind && v.Namespace == r.Namespace && v.Name == r.Name {
