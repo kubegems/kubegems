@@ -160,8 +160,9 @@ func ValidateEnvironmentNamespace(ctx context.Context, h base.BaseHandler, tx *g
 		gems.NamespaceMonitor,
 		gems.NamespaceWorkflow,
 		"kube-system",
-		"default",
 		"istio-system",
+		"kube-node-lease",
+		"local-path-storage",
 	}
 	if ut.ContainStr(forbiddenBindNamespaces, namespace) {
 		return fmt.Errorf("namespace  %s is now allowed, it's a system retain namespace", namespace)
@@ -188,7 +189,6 @@ func ValidateEnvironmentNamespace(ctx context.Context, h base.BaseHandler, tx *g
 		}
 	}
 	return nil
-
 }
 
 /*
