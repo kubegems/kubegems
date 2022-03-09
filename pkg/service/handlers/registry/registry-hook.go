@@ -57,7 +57,7 @@ func (h *RegistryHandler) validate(ctx context.Context, v *models.Registry) erro
 	defer cancel()
 
 	// check if a harbor registry when enableExtends is true
-	if true {
+	if v.EnableExtends {
 		harborcli, err := harbor.NewClient(v.RegistryAddress, v.Username, v.Password)
 		if err != nil {
 			return err
