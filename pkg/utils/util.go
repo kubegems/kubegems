@@ -15,10 +15,11 @@ import (
 )
 
 var (
-	regA_Z  = regexp.MustCompile("[A-Z]+")
-	rega_z  = regexp.MustCompile("[a-z]+")
-	reg0_9  = regexp.MustCompile("[0-9]+")
-	reg_chs = regexp.MustCompile(`[!\.@#$%~]+`)
+	regA_Z   = regexp.MustCompile("[A-Z]+")
+	rega_z   = regexp.MustCompile("[a-z]+")
+	reg0_9   = regexp.MustCompile("[0-9]+")
+	reg_chs  = regexp.MustCompile(`[!\.@#$%~]+`)
+	reg_fqdn = regexp.MustCompile(`[a-z]([-a-z0-9]*[a-z0-9])?`)
 )
 
 var (
@@ -101,8 +102,7 @@ func JoinFlagName(prefix, key string) string {
 }
 
 func IsValidFQDNLower(s string) bool {
-	fq := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`)
-	return fq.MatchString(s)
+	return reg_fqdn.MatchString(s)
 }
 
 const (
