@@ -11,7 +11,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 
@@ -46,7 +46,7 @@ func (c *OCIDistributionClient) ListTags(ctx context.Context, image string) (*sp
 func (c *OCIDistributionClient) Ping(ctx context.Context) error {
 	err := c.request(ctx, http.MethodGet, "/v2", nil, nil)
 	if err != nil {
-		return fmt.Errorf("OCI registry check failed: %w", err)
+		return err
 	}
 	return nil
 }
@@ -86,10 +86,22 @@ func (c *OCIDistributionClient) request(ctx context.Context, method string, path
 		if err := json.NewDecoder(resp.Body).Decode(errresp); err != nil {
 			return err
 		}
-		return errresp
+		return errorResponseError(errresp)
 	}
 	if into != nil {
 		return json.NewDecoder(resp.Body).Decode(into)
 	}
 	return nil
+}
+
+func errorResponseError(err *specsv1.ErrorResponse) error {
+	if err == nil {
+		return nil
+	}
+
+	msg := err.Error() + ":"
+	for _, e := range err.Detail() {
+		msg += e.Message + ";"
+	}
+	return errors.New(msg)
 }

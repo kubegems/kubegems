@@ -89,7 +89,7 @@ func (h *RegistryHandler) ListProjectRegistry(c *gin.Context) {
 		Model:         "Registry",
 		SearchFields:  []string{"RegistryName"},
 		PreloadFields: []string{"Creator", "Project"},
-		Where:         []*handlers.QArgs{handlers.Args("project_id = ?", c.Param(PrimaryKeyName))},
+		Where:         []*handlers.QArgs{handlers.Args("project_id = ?", c.Param("project_id"))},
 	}
 	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
 	if err != nil {
@@ -112,7 +112,7 @@ func (h *RegistryHandler) ListProjectRegistry(c *gin.Context) {
 // @Security JWT
 func (h *RegistryHandler) RetrieveProjectRegistry(c *gin.Context) {
 	var registry models.Registry
-	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("registry_id")).Error; err != nil {
+	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -132,7 +132,7 @@ func (h *RegistryHandler) RetrieveProjectRegistry(c *gin.Context) {
 // @Security JWT
 func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 	var registry models.Registry
-	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("registry_id")).Error; err != nil {
+	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -140,7 +140,7 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if strconv.Itoa(int(registry.ProjectID)) != c.Param(PrimaryKeyName) || strconv.Itoa(int(registry.ID)) != c.Param("registry_id") {
+	if strconv.Itoa(int(registry.ProjectID)) != c.Param(ProjectKeyName) || strconv.Itoa(int(registry.ID)) != c.Param("registry_id") {
 		handlers.NotOK(c, fmt.Errorf("请求体参数和URL参数不匹配"))
 		return
 	}
@@ -189,11 +189,12 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 // @Security JWT
 func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 	var registry models.Registry
-	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("registry_id")).Error; err != nil {
+	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	isDefault, _ := strconv.ParseBool(c.Query("is_default"))
+	isDefault, _ := strconv.ParseBool(c.Query("isDefault"))
+
 	registry.IsDefault = isDefault
 
 	if isDefault {
@@ -241,7 +242,7 @@ func (h *RegistryHandler) DeleteProjectRegistry(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Delete(&registry, "project_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("registry_id")).Error; err != nil {
+		if err := tx.Delete(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
 			return err
 		}
 		return h.onDelete(ctx, tx, &registry)
