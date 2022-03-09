@@ -338,16 +338,21 @@ func (p *prometheusHandler) CertInfo(c *gin.Context) {
 			return
 		}
 		defer conn.Close()
+
+		invalidCNs := []string{}
 		for _, cert := range conn.ConnectionState().PeerCertificates {
-			if cert.Subject.CommonName == "kube-apiserver" {
+			if strings.Contains(cert.Subject.CommonName, "apiserver") {
 				OK(c, gin.H{
 					"ExpiredAt": cert.NotAfter,
 				})
 				return
 			}
+			invalidCNs = append(invalidCNs, cert.Subject.CommonName)
 		}
+		NotOK(c, fmt.Errorf("cert CN: %s", strings.Join(invalidCNs, ",")))
+		return
 	} else {
-		handlers.NotOK(c, fmt.Errorf("unsupport cert name"))
+		NotOK(c, fmt.Errorf("unsupport cert name"))
 		return
 	}
 }
