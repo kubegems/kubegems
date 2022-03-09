@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 
 	v1 "k8s.io/api/admission/v1"
@@ -13,7 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
-	"kubegems.io/pkg/controller/utils"
+	ctrlutils "kubegems.io/pkg/controller/utils"
+	"kubegems.io/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -27,9 +27,8 @@ func (r *ResourceValidate) ValidateTenantGateway(ctx context.Context, req admiss
 			return admission.Errored(http.StatusBadRequest, err)
 		}
 
-		reg := regexp.MustCompile(`[a-z]([-a-z0-9]*[a-z0-9])?`)
-		if !reg.MatchString(tg.Name) {
-			return admission.Denied(fmt.Sprintf("Gateway name not valid must match regex: %s", reg.String()))
+		if !utils.IsValidDNS1035(tg.Name) {
+			return admission.Denied("Gateway name is not valid, must match a DNS-1035 format")
 		}
 
 		// 非删除操作才检测租户
@@ -62,7 +61,7 @@ func (r *ResourceValidate) ValidateTenantGateway(ctx context.Context, req admiss
 		})); err != nil {
 			return admission.Denied(err.Error())
 		}
-		if err := utils.CheckGatewayAndIngressProtocol(*tg, ingressList.Items); err != nil {
+		if err := ctrlutils.CheckGatewayAndIngressProtocol(*tg, ingressList.Items); err != nil {
 			return admission.Denied(err.Error())
 		}
 

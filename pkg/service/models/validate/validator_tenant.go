@@ -10,7 +10,7 @@ func (v *Validator) TenantStructLevelValidation(sl validator.StructLevel) {
 	tenant := sl.Current().Interface().(models.Tenant)
 	tmp := models.Tenant{}
 	// 租户名字必须符合FQDN格式
-	if !utils.IsValidFQDNLower(tenant.TenantName) {
+	if !utils.IsValidDNS1035(tenant.TenantName) {
 		sl.ReportError(tenant.TenantName, "租户名字", "TenantName", "fqdn", "租户")
 		return
 	}
