@@ -41,7 +41,7 @@ func NewRootCmd() *cobra.Command {
 		apps.NewServiceCmd(),
 		apps.NewMsgbusCmd(),
 		apps.NewWorkerCmd(),
-		apps.NewServicesCmd(),
+		// apps.NewServicesCmd(),
 	)
 	return cmd
 }

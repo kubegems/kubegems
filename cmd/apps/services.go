@@ -1,5 +1,6 @@
 package apps
 
+/*
 import (
 	"context"
 	"os"
@@ -7,11 +8,11 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/pkg/models"
-	"kubegems.io/pkg/services"
-	"kubegems.io/pkg/services/options"
 	"kubegems.io/pkg/utils/config"
 	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/v2/models"
+	"kubegems.io/pkg/v2/services"
+	"kubegems.io/pkg/v2/services/options"
 )
 
 func NewServicesCmd() *cobra.Command {
@@ -65,3 +66,4 @@ func newServicesMigrateCmd() *cobra.Command {
 	config.AutoRegisterFlags(cmd.Flags(), "", options)
 	return cmd
 }
+*/
