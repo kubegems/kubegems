@@ -2,7 +2,6 @@ package apis
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -13,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/clusterinfo"
 	"kubegems.io/pkg/utils/prometheus"
 )
 
@@ -27,17 +26,16 @@ func dynamicTimeStep(start time.Time, end time.Time) time.Duration {
 	}
 }
 
-func NewPrometheusHandler(server string, cluster cluster.Interface) (*prometheusHandler, error) {
+func NewPrometheusHandler(server string) (*prometheusHandler, error) {
 	client, err := api.NewClient(api.Config{Address: server})
 	if err != nil {
 		return nil, err
 	}
-	return &prometheusHandler{client: client, cluster: cluster}, nil
+	return &prometheusHandler{client: client}, nil
 }
 
 type prometheusHandler struct {
-	client  api.Client
-	cluster cluster.Interface
+	client api.Client
 }
 
 // https://prometheus.io/docs/prometheus/latest/querying/operators/#comparison-binary-operators
@@ -323,34 +321,14 @@ func (p *prometheusHandler) ComponentStatus(c *gin.Context) {
 // @Security JWT
 func (p *prometheusHandler) CertInfo(c *gin.Context) {
 	if c.Param("name") == "apiserver" {
-		conf := &tls.Config{
-			InsecureSkipVerify: true,
-		}
-
-		u, err := url.Parse("https://kubernetes.default:443")
+		expiredAt, err := clusterinfo.GetServerCertExpiredTime(clusterinfo.APIServerURL, clusterinfo.APIServerCertCN)
 		if err != nil {
 			NotOK(c, err)
 			return
 		}
-		conn, err := tls.Dial("tcp", u.Host, conf)
-		if err != nil {
-			NotOK(c, err)
-			return
-		}
-		defer conn.Close()
-
-		invalidCNs := []string{}
-		for _, cert := range conn.ConnectionState().PeerCertificates {
-			if strings.Contains(cert.Subject.CommonName, "apiserver") {
-				OK(c, gin.H{
-					"ExpiredAt": cert.NotAfter,
-				})
-				return
-			}
-			invalidCNs = append(invalidCNs, cert.Subject.CommonName)
-		}
-		NotOK(c, fmt.Errorf("cert CN: %s", strings.Join(invalidCNs, ",")))
-		return
+		OK(c, gin.H{
+			"ExpiredAt": expiredAt,
+		})
 	} else {
 		NotOK(c, fmt.Errorf("unsupport cert name"))
 		return
