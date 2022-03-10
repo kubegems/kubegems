@@ -32,6 +32,6 @@ type Cluster struct {
 }
 
 func ClusterIsNotDeleted(tx *gorm.DB) *gorm.DB {
-	tx.Where("is_delete = ?", false)
+	tx.Where("is_deleted = ?", false)
 	return tx
 }
