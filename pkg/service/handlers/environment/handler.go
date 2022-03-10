@@ -207,7 +207,7 @@ func AfterEnvironmentSave(ctx context.Context, h base.BaseHandler, tx *gorm.DB, 
 	if e := tx.Preload("Tenant").First(&project, "id = ?", env.ProjectID).Error; e != nil {
 		return e
 	}
-	if e := tx.First(&cluster, "id = ?", env.ClusterID).Error; e != nil {
+	if e := tx.Scopes(models.ClusterIsNotDeleted).First(&cluster, "id = ?", env.ClusterID).Error; e != nil {
 		return e
 	}
 

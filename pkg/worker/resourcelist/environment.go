@@ -36,7 +36,7 @@ const (
 func (c *ResourceCache) EnvironmentSync() error {
 	start := time.Now()
 	clusters := []models.Cluster{}
-	if err := c.DB.DB().Find(&clusters).Error; err != nil {
+	if err := c.DB.DB().Scopes(models.ClusterIsNotDeleted).Find(&clusters).Error; err != nil {
 		return errors.Wrap(err, "failed to get clusters")
 	}
 
