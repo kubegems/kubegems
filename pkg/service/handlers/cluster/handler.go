@@ -627,9 +627,7 @@ func withClusterAndK8sClient(
 
 	cluster.APIServer = apiserver
 	cluster.Version = serverSersion.String()
-	if cluster.Mode != models.ClusterModeService {
-		cluster.Mode = models.ClusterModeProxy
-	}
+
 	// get container runtime
 	reg := regexp.MustCompile("(.*)://(.*)")
 	for _, n := range nodes.Items {
