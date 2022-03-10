@@ -124,9 +124,11 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	uinternel.LastLoginAt = &now
 	h.DB.WithContext(ctx).Updates(uinternel)
 	user := &models.User{
-		Username: uinternel.Username,
-		Email:    uinternel.Email,
-		ID:       uinternel.ID,
+		Username:     uinternel.Username,
+		Email:        uinternel.Email,
+		ID:           uinternel.ID,
+		SystemRoleID: uinternel.SystemRoleID,
+		Source:       uinternel.Source,
 	}
 
 	jwtInstance := h.JWTOptions.ToJWT()
