@@ -10,10 +10,11 @@ type Cluster struct {
 	ClusterName string         `gorm:"type:varchar(50);uniqueIndex" binding:"required"`
 	APIServer   string         `gorm:"type:varchar(250);uniqueIndex"` // APIServer地址 根据kubeconfig添加后，自动填充
 	KubeConfig  datatypes.JSON `binding:"required"`
-	// Vendor 集群提供商(gke tke aliyun selfhosted)
-	Vendor string `gorm:"type:varchar(50);default:selfhosted" binding:"required,oneof=selfhosted gke aliyun tke"`
+	// Vendor 集群提供商(gke tke ack selfhosted)
+	Vendor string `gorm:"type:varchar(50);default:selfhosted" binding:"required,oneof=selfhosted gke ack tke"`
 	// ImageRepo 安装kubegems核心组件时使用的镜像仓库
-	ImageRepo            string         `gorm:"type:varchar(255);default:docker.io" binding:"required"`
+	ImageRepo string `gorm:"type:varchar(255);default:docker.io/kubegems" binding:"required"`
+	// DefaultStorageClass 默认storageclass, 默认local-path
 	DefaultStorageClass  string         `gorm:"type:varchar(255);default:local-path" binding:"required"`
 	Version              string         // apiserver version
 	AgentAddr            string         // if empty, using apiserver proxy
