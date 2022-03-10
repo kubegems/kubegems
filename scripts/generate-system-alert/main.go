@@ -10,7 +10,7 @@ import (
 
 func main() {
 	alerts := []prometheus.AlertRule{}
-	file, err := os.Open("hack/system-alert.yaml")
+	file, err := os.Open("scripts/generate-system-alert/system-alert.yaml")
 	if err != nil {
 		panic(err)
 	}

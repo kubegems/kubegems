@@ -68,8 +68,9 @@ func Run(ctx context.Context, options *Options) error {
 	c.GetCache().WaitForCacheSync(ctx)
 
 	exporterHandler := exporter.NewHandler("gems_agent", map[string]exporter.Collectorfunc{
-		"plugin":  exporter.NewPluginCollectorFunc(c), // plugin exporter
-		"request": exporter.NewRequestCollector(),     // http exporter
+		"plugin":                 exporter.NewPluginCollectorFunc(c), // plugin exporter
+		"request":                exporter.NewRequestCollector(),     // http exporter
+		"cluster_component_cert": exporter.NewCertCollectorFunc(),    // cluster component cert
 	})
 
 	eg, ctx := errgroup.WithContext(ctx)
