@@ -28,7 +28,7 @@ type Cluster struct {
 	Environments         []*Environment
 	TenantResourceQuotas []*TenantResourceQuota
 	ClusterResourceQuota datatypes.JSON
-	IsDeleted            bool `json:"-"`
+	IsDeleted            bool `json:"-" gorm:"default:false"`
 }
 
 func ClusterIsNotDeleted(tx *gorm.DB) *gorm.DB {
