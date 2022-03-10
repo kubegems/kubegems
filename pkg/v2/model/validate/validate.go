@@ -10,7 +10,7 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	chTranslations "github.com/go-playground/validator/v10/translations/zh"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/v2/model/forms"
 )
 
 type ValidatorIface interface {
