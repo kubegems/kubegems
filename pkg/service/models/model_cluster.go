@@ -14,6 +14,7 @@ type Cluster struct {
 	Vendor string `gorm:"type:varchar(50);default:selfhosted" binding:"required,oneof=selfhosted gke aliyun tke"`
 	// ImageRepo 安装kubegems核心组件时使用的镜像仓库
 	ImageRepo            string         `gorm:"type:varchar(255);default:docker.io" binding:"required"`
+	DefaultStorageClass  string         `gorm:"type:varchar(255);default:local-path" binding:"required"`
 	Version              string         // apiserver version
 	AgentAddr            string         // if empty, using apiserver proxy
 	AgentCA              string         `json:"-"`

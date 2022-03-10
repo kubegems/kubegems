@@ -59,14 +59,14 @@ spec:
     # default vvariable used to "docker.io/kubegems" if not set.
     # available container repositories "docker.io/kubegem" is default, other reigstry incoude <ghcr.io/kubegems> and <registry.cn-beijing.aliyuncs.com/kubegems>.
     # If you are using a private repository, you can configure a policy to replicat image locallly from any of the srouce registry listed above.
-    repository: registry.cn-beijing.aliyuncs.com/kubegems
+    repository: "{{ .Cluster.ImageRepo }}"
   
     # Secret for container repositories.
     # imagepullsecret: kubegems
   
     # Kubegems uses the built-in local-path-provisioner by defaults.
     # If you need to set a personalised storage class for the component, please configure it in the field "<component>.operator.persisten.storageclass".
-    # storageclass: local-path
+    storageclass: "{{ .Cluster.DefaultStorageClass }}"
   
   core_plugins:
     kubegems_local:
