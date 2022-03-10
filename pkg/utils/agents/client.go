@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -41,14 +40,13 @@ type DelegateClient struct {
 }
 
 type ClientMeta struct {
-	Name             string
+	Name      string
+	BaseAddr  *url.URL
+	TLSConfig *tls.Config
+	Proxy     func(req *http.Request) (*url.URL, error)
+
 	APIServerAddr    *url.URL
 	APIServerVersion string
-	BaseAddr         *url.URL
-	TlsConfig        *tls.Config
-	Restconfig       *rest.Config
-	Signer           func(*http.Request) (*url.URL, error)
-	Transport        http.RoundTripper
 }
 
 func (c *DelegateClient) Extend() *ExtendClient {
@@ -70,16 +68,20 @@ func (c *DelegateClient) APIServerAddr() url.URL {
 func (c *DelegateClient) APIServerVersion() string {
 	return c.ClientMeta.APIServerVersion
 }
+
 func newClient(meta ClientMeta) Client {
 	typed := &TypedClient{
 		ClientMeta: meta,
 		http: &http.Client{
-			Transport: meta.Transport,
+			Transport: &http.Transport{
+				TLSClientConfig: meta.TLSConfig,
+				Proxy:           meta.Proxy,
+			},
 		},
 		websocket: &websocket.Dialer{
-			Proxy:            meta.Signer,
+			Proxy:            meta.Proxy,
 			HandshakeTimeout: 45 * time.Second,
-			TLSClientConfig:  meta.TlsConfig,
+			TLSClientConfig:  meta.TLSConfig,
 		},
 		scheme: scheme.Scheme,
 	}

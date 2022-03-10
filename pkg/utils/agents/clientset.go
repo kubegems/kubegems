@@ -12,11 +12,10 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/database"
 	"kubegems.io/pkg/utils/httpsigs"
-	"kubegems.io/pkg/utils/kube"
 )
 
 type ClientSet struct {
@@ -107,23 +106,109 @@ func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
 	return h.ClientOf(ctx, managerclustername)
 }
 
-func (h *ClientSet) completeFromKubeconfig(ctx context.Context, cluster *models.Cluster) error {
-	kubeconfig := []byte(cluster.KubeConfig)
-	apiserver, kubecliCert, kubecliKey, kubeca, err := kube.GetKubeconfigInfos(kubeconfig)
-	if err != nil {
-		return err
-	}
-	// always using https via apiserver proxy now
-	cluster.AgentAddr = apiserver + h.apiServerProxyPath(true)
-	cluster.AgentCert = string(kubecliCert)
-	cluster.AgentKey = string(kubecliKey)
-	cluster.AgentCA = string(kubeca)
+func (h *ClientSet) serverInfoOf(ctx context.Context, cluster *models.Cluster) (*ServerInfo, error) {
+	serverinfo := &ServerInfo{}
 
-	// update databse
-	if err := h.database.DB().Save(cluster).Error; err != nil {
-		return err
+	// from origin
+	if len(cluster.KubeConfig) == 0 || cluster.AgentAddr != "" {
+		baseaddr, err := url.Parse(cluster.AgentAddr)
+		if err != nil {
+			return nil, err
+		}
+		serverinfo.Addr = baseaddr
+		serverinfo.CA = []byte(cluster.AgentCA)
+
+		serverinfo.AuthInfo.ClientCertificate = []byte(cluster.AgentCert)
+		serverinfo.AuthInfo.ClientKey = []byte(cluster.AgentKey)
+
+		return serverinfo, nil
 	}
-	return nil
+
+	// from kubeconfig
+	kubeconfig := []byte(cluster.KubeConfig)
+	restconfig, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	cluster.APIServer = restconfig.Host
+
+	// complete server info
+	baseaddr, err := url.Parse(restconfig.Host + h.apiServerProxyPath(true))
+	if err != nil {
+		return nil, err
+	}
+	serverinfo.Addr = baseaddr
+	serverinfo.CA = restconfig.TLSClientConfig.CAData
+
+	// complete auth info
+	if authinfo := &serverinfo.AuthInfo; authinfo.IsEmpty() {
+		transportconfig, err := restconfig.TransportConfig()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case transportconfig.HasBasicAuth():
+			authinfo.Username = transportconfig.Username
+			authinfo.Password = transportconfig.Password
+		case transportconfig.HasTokenAuth():
+			authinfo.Token = transportconfig.BearerToken
+		case transportconfig.HasCertAuth():
+			authinfo.ClientCertificate = transportconfig.TLS.CertData
+			authinfo.ClientKey = transportconfig.TLS.KeyData
+		}
+	}
+	return serverinfo, nil
+}
+
+type ServerInfo struct {
+	Addr     *url.URL `json:"addr,omitempty"` // addr with api path prefix
+	CA       []byte   `json:"ca,omitempty"`
+	AuthInfo AuthInfo `json:"authInfo,omitempty"`
+}
+
+func (s *ServerInfo) TLSConfig() (*tls.Config, error) {
+	caCertPool, err := x509.SystemCertPool()
+	if err != nil {
+		caCertPool = x509.NewCertPool()
+	}
+	if s.CA != nil {
+		caCertPool.AppendCertsFromPEM(s.CA)
+	}
+	tlsconfig := &tls.Config{RootCAs: caCertPool}
+	cert, key := s.AuthInfo.ClientCertificate, s.AuthInfo.ClientKey
+	if len(cert) > 0 && len(key) > 0 {
+		certificate, err := tls.X509KeyPair(cert, key)
+		if err != nil {
+			return nil, err
+		}
+		tlsconfig.Certificates = append(tlsconfig.Certificates, certificate)
+	}
+	return tlsconfig, nil
+}
+
+type AuthInfo struct {
+	ClientCertificate []byte `json:"clientCertificate,omitempty"`
+	ClientKey         []byte `json:"clientKey,omitempty"`
+	Token             string `json:"token,omitempty"`
+	Username          string `json:"username,omitempty"`
+	Password          string `json:"password,omitempty"`
+}
+
+func (auth *AuthInfo) IsEmpty() bool {
+	return len(auth.ClientCertificate) == 0 && len(auth.ClientKey) == 0 && auth.Token == "" && auth.Username == "" && auth.Password == ""
+}
+
+func (auth *AuthInfo) Proxy(req *http.Request) (*url.URL, error) {
+	if auth.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+auth.Token)
+		return nil, nil
+	}
+	if _, _, exist := req.BasicAuth(); !exist && auth.Username != "" {
+		req.SetBasicAuth(auth.Username, auth.Password)
+		return nil, nil
+	}
+	return nil, nil
 }
 
 func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta, error) {
@@ -132,82 +217,63 @@ func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta
 		return nil, err
 	}
 
-	// 如果 agent addr 为空，则使用 apiserver 模式回填
-	if len(cluster.AgentAddr) == 0 {
-		if err := h.completeFromKubeconfig(ctx, cluster); err != nil {
-			return nil, err
-		}
-	}
-
-	baseaddr, err := url.Parse(cluster.AgentAddr)
+	serverinfo, err := h.serverInfoOf(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
+	baseaddr := serverinfo.Addr
+
+	// TODO: consider replace with baseaddr
 	apiserveraddr, err := url.Parse(cluster.APIServer)
 	if err != nil {
 		return nil, err
 	}
-	signer := getRequestProxy(h.apiServerProxyPath(true))
+
+	proxy := ChainedProxy{
+		httpSigner(baseaddr.Path), // http sig
+		serverinfo.AuthInfo.Proxy, // basic auth / token auth
+	}
+
+	// tls
+	tlsconfig, err := serverinfo.TLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	climeta := &ClientMeta{
 		Name:             name,
 		BaseAddr:         baseaddr,
 		APIServerAddr:    apiserveraddr,
 		APIServerVersion: cluster.Version,
-		Signer:           signer,
-	}
-	defaultRoudTripper := &http.Transport{
-		Proxy: signer,
-	}
-
-	if baseaddr.Scheme == "https" {
-		if cluster.AgentCert != "" && cluster.AgentKey != "" {
-			cert, key, ca := []byte(cluster.AgentCert), []byte(cluster.AgentKey), []byte(cluster.AgentCA)
-			tlsconfig, err := tlsConfigFrom(cert, key, ca)
-			if err != nil {
-				return nil, err
-			}
-			climeta.TlsConfig = tlsconfig
-			defaultRoudTripper.TLSClientConfig = tlsconfig
-			climeta.Transport = defaultRoudTripper
-		} else {
-			cfg, err := kube.GetKubeRestConfig(cluster.KubeConfig)
-			if err != nil {
-				return nil, err
-			}
-			tlsCfg, err := rest.TLSConfigFor(cfg)
-			if err != nil {
-				return nil, err
-			}
-			climeta.TlsConfig = tlsCfg
-			climeta.Restconfig = cfg
-			defaultRoudTripper.TLSClientConfig = tlsCfg
-			rt, err := rest.HTTPWrappersForConfig(cfg, defaultRoudTripper)
-			if err != nil {
-				return nil, err
-			}
-			climeta.Transport = rt
-		}
+		TLSConfig:        tlsconfig,
+		Proxy:            proxy.Proxy,
 	}
 	return climeta, nil
 }
 
-func tlsConfigFrom(cert, key, ca []byte) (*tls.Config, error) {
-	certificate, err := tls.X509KeyPair(cert, key)
-	if err != nil {
-		return nil, err
-	}
-	caCertPool, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, err
-	}
-	caCertPool.AppendCertsFromPEM(ca)
-	return &tls.Config{RootCAs: caCertPool, Certificates: []tls.Certificate{certificate}}, nil
-}
-
-func getRequestProxy(pathPrefix string) func(req *http.Request) (*url.URL, error) {
+func httpSigner(basepath string) func(req *http.Request) (*url.URL, error) {
 	signer := httpsigs.GetSigner()
 	return func(req *http.Request) (*url.URL, error) {
-		signer.Sign(req, pathPrefix)
+		signer.Sign(req, basepath)
 		return nil, nil
 	}
+}
+
+type ChainedProxy []func(*http.Request) (*url.URL, error)
+
+func (pc ChainedProxy) Proxy(req *http.Request) (*url.URL, error) {
+	var finalurl *url.URL
+	for _, p := range pc {
+		if p == nil {
+			continue
+		}
+		url, err := p(req)
+		if err != nil {
+			return nil, err
+		}
+		if url != nil {
+			finalurl = url
+		}
+	}
+	return finalurl, nil
 }
