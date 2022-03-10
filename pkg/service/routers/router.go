@@ -30,6 +30,7 @@ import (
 	environmenthandler "kubegems.io/pkg/service/handlers/environment"
 	eventhandler "kubegems.io/pkg/service/handlers/event"
 	loginhandler "kubegems.io/pkg/service/handlers/login"
+	logoperatorhandler "kubegems.io/pkg/service/handlers/logoperator"
 	logqueryhandler "kubegems.io/pkg/service/handlers/logquery"
 	lokiloghandler "kubegems.io/pkg/service/handlers/lokilog"
 	messagehandler "kubegems.io/pkg/service/handlers/message"
@@ -325,6 +326,10 @@ func (r *Router) Complete() error {
 	// TODO: kiali在每个集群配置可能不相同，先写死，后面看要不要支持配置
 	microservicehandler := microservice.NewMicroServiceHandler(basehandler, microserviceoptions.NewDefaultOptions())
 	microservicehandler.RegistRouter(rg)
+
+	// logoperator handler
+	logoperatorHandler := &logoperatorhandler.LogOperatorHandler{BaseHandler: basehandler}
+	logoperatorHandler.RegistRouter(rg)
 
 	// workload 的反向代理
 	proxyHandler := proxyhandler.ProxyHandler{BaseHandler: basehandler}
