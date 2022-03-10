@@ -54,7 +54,7 @@ func (h *ClientSet) Clusters() []string {
 		ret     []string
 		cluster models.Cluster
 	)
-	h.database.DB().Model(&cluster).Pluck("cluster_name", &ret)
+	h.database.DB().Scopes(models.ClusterIsNotDeleted).Model(&cluster).Pluck("cluster_name", &ret)
 	return ret
 }
 
@@ -96,7 +96,7 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
 	ret := []string{}
 	cluster := &models.Cluster{Primary: true}
-	if err := h.database.DB().Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
+	if err := h.database.DB().Scopes(models.ClusterIsNotDeleted).Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
 		return nil, err
 	}
 	if len(ret) == 0 {
@@ -213,7 +213,7 @@ func (auth *AuthInfo) Proxy(req *http.Request) (*url.URL, error) {
 
 func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta, error) {
 	cluster := &models.Cluster{}
-	if err := h.database.DB().First(&cluster, "cluster_name = ?", name).Error; err != nil {
+	if err := h.database.DB().Scopes(models.ClusterIsNotDeleted).First(&cluster, "cluster_name = ?", name).Error; err != nil {
 		return nil, err
 	}
 
