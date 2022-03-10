@@ -403,11 +403,11 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 		// 控制集群只检验
 		if cluster.Primary {
-			primarys := []models.Cluster{}
-			if err := h.GetDataBase().DB().Where(`'primary' = ?`, true).Find(&primarys).Error; err != nil {
+			var primarysCount int64
+			if err := h.GetDataBase().DB().Where(`'primary' = ?`, true).Count(&primarysCount).Error; err != nil {
 				return err
 			}
-			if len(primarys) > 0 {
+			if primarysCount > 0 {
 				return fmt.Errorf("控制集群只能有一个")
 			}
 			if err := h.GetDB().Create(cluster).Error; err != nil {

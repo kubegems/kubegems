@@ -914,8 +914,9 @@ definitions:
   clusterhandler.ClusterQuota:
     properties:
       oversoldConfig:
-        $ref: '#/definitions/datatypes.JSON'
-        type: object
+        items:
+          type: integer
+        type: array
       resources:
         $ref: '#/definitions/types.ClusterResourceStatistics'
         type: object
@@ -1001,12 +1002,12 @@ definitions:
     type: object
   handlers.PageData:
     properties:
-      currentPage:
-        type: integer
-      currentSize:
-        type: integer
       list:
         type: object
+      page:
+        type: integer
+      size:
+        type: integer
       total:
         type: integer
     type: object
@@ -1032,6 +1033,21 @@ definitions:
     items:
       type: integer
     type: array
+  kubernetes.Host:
+    properties:
+      cluster:
+        type: string
+      complete_input:
+        description: |-
+          CompleteInput is true when Service, Namespace and Cluster fields are present.
+          It is true for simple service names and FQDN services.
+          It is false for service.namespace format and service entries.
+        type: boolean
+      namespace:
+        type: string
+      service:
+        type: string
+    type: object
   labels.Matcher:
     properties:
       name:
@@ -1418,7 +1434,7 @@ definitions:
   models.AuthSource:
     properties:
       config:
-        $ref: '#/definitions/models.AuthSourceConfig'
+        $ref: '#/definitions/datatypes.JSON'
         type: object
       createdAt:
         type: string
@@ -1433,41 +1449,27 @@ definitions:
       tokenType:
         type: string
       updatedAt:
+        description: 创建时间
         type: string
-    required:
-    - config
-    - tokenType
     type: object
-  models.AuthSourceConfig:
+  models.CPUMemoryStatus:
     properties:
-      appID:
+      currentLimit:
+        description: 带单位
         type: string
-      appSecret:
+      currentRate:
+        type: number
+      status:
+        description: 扩容或缩容
         type: string
-      authURL:
+      suggestLimit:
+        description: 带单位
         type: string
-      basedn:
+      suggestMaxLimit:
+        description: 带单位
         type: string
-      binduser:
-        type: string
-      enableTLS:
-        type: boolean
-      ldapaddr:
-        type: string
-      name:
-        description: ldap
-        type: string
-      password:
-        type: string
-      redirectURL:
-        type: string
-      scopes:
-        items:
-          type: string
-        type: array
-      tokenURL:
-        type: string
-      userInfoURL:
+      suggestMinLimit:
+        description: 带单位
         type: string
     type: object
   models.ChartRepo:
@@ -1489,101 +1491,88 @@ definitions:
     type: object
   models.Cluster:
     properties:
-      agentAddr:
+      destination_rule:
         type: string
-      apiserver:
+      direction:
         type: string
-      clusterResourceQuota:
-        $ref: '#/definitions/datatypes.JSON'
-        type: object
-      environments:
-        items:
-          $ref: '#/definitions/models.Environment'
-        type: array
-      id:
+      port:
         type: integer
-      kubeConfig:
-        $ref: '#/definitions/datatypes.JSON'
+      service_fqdn:
+        $ref: '#/definitions/kubernetes.Host'
         type: object
-      name:
+      subset:
         type: string
-      oversoldConfig:
-        $ref: '#/definitions/datatypes.JSON'
+      type:
+        type: string
+    type: object
+  models.Condition:
+    properties:
+      CPUStatus:
+        $ref: '#/definitions/models.CPUMemoryStatus'
         type: object
-      primary:
-        type: boolean
-      runtime:
-        description: docker or containerd
-        type: string
-      tenantResourceQuotas:
+      MemoryStatus:
+        $ref: '#/definitions/models.CPUMemoryStatus'
+        type: object
+      pods:
         items:
-          $ref: '#/definitions/models.TenantResourceQuota'
+          type: string
         type: array
-      version:
-        type: string
-    required:
-    - kubeConfig
-    - name
-    type: object
-  models.ContainerInfo:
-    properties:
-      image:
-        type: string
-      isProxy:
-        type: boolean
-      isReady:
-        type: boolean
-      name:
-        type: string
-    type: object
-  models.DashboardRef:
-    properties:
-      template:
-        type: string
-      title:
-        type: string
     type: object
   models.Environment:
     properties:
       applications:
+        description: 关联的应用
         items:
           $ref: '#/definitions/models.Application'
         type: array
       cluster:
         $ref: '#/definitions/models.Cluster'
+        description: 关联的集群
         type: object
       clusterID:
+        description: 所属集群ID
         type: integer
       creator:
         $ref: '#/definitions/models.User'
+        description: 创建者
         type: object
       creatorID:
+        description: 创建人ID
         type: integer
       deletePolicy:
+        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
+        type: string
+      environmentName:
+        description: 环境名字
         type: string
       id:
         type: integer
       limitRange:
         $ref: '#/definitions/datatypes.JSON'
+        description: 环境下的limitrage
         type: object
       metaType:
-        description: MetaTpe (dev, prod, test, pub ...)
-        type: string
-      name:
+        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
         type: string
       namespace:
+        description: 环境关联的namespace
         type: string
       project:
         $ref: '#/definitions/models.Project'
+        description: 所属项目
         type: object
       projectID:
+        description: 所属项目ID
         type: integer
       remark:
+        description: 备注
         type: string
       resourceQuota:
         $ref: '#/definitions/datatypes.JSON'
+        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
         type: object
       users:
+        description: 关联的用户
         items:
           $ref: '#/definitions/models.User'
         type: array
@@ -1591,6 +1580,7 @@ definitions:
         $ref: '#/definitions/models.VirtualSpace'
         type: object
       virtualSpaceID:
+        description: 虚拟空间
         type: integer
     type: object
   models.EnvironmentResource:
@@ -1601,11 +1591,11 @@ definitions:
         type: number
       avgPVCUsageByte:
         type: number
-      cluster:
+      clusterName:
         type: string
       createdAt:
         type: string
-      environment:
+      environmentName:
         type: string
       id:
         type: integer
@@ -1625,14 +1615,15 @@ definitions:
         type: number
       networkSendByte:
         type: number
-      project:
+      projectName:
         type: string
-      tenant:
+      tenantName:
         type: string
     type: object
   models.EnvironmentUserRels:
     properties:
       environmentID:
+        description: EnvironmentID
         type: integer
       id:
         type: integer
@@ -1640,11 +1631,13 @@ definitions:
         $ref: '#/definitions/models.Environment'
         type: object
       role:
+        description: 环境级角色("reader", "operator")
         type: string
       user:
         $ref: '#/definitions/models.User'
         type: object
       userID:
+        description: 用户ID
         type: integer
     required:
     - environmentID
@@ -1664,30 +1657,23 @@ definitions:
     properties:
       cluster:
         $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
         type: object
       clusterID:
-        description: 所属集群ID
         type: integer
       createAt:
-        description: 创建时间
         type: string
       creator:
         $ref: '#/definitions/models.User'
-        description: 创建者
         type: object
       creatorID:
         type: integer
       filterJSON:
-        description: 正则标签
         type: string
       id:
         type: integer
       labelJSON:
-        description: 标签
         type: string
       logQL:
-        description: logql
         type: string
     type: object
   models.LogQueryHistoryWithCount:
@@ -1721,32 +1707,26 @@ definitions:
     properties:
       cluster:
         $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
         type: object
       clusterID:
-        description: 所属集群ID
         type: integer
       createAt:
-        description: 创建时间
         type: string
       creator:
         $ref: '#/definitions/models.User'
-        description: 创建者
         type: object
       creatorID:
         type: integer
       downloadURL:
-        description: 下载地址
         type: string
       endTime:
         type: string
       id:
         type: integer
       snapshotCount:
-        description: 行数
+        description: line count
         type: integer
       snapshotName:
-        description: 名称
         type: string
       sourceFile:
         type: string
@@ -1783,6 +1763,7 @@ definitions:
       id:
         type: integer
       name:
+        description: 面板名
         type: string
       step:
         type: string
@@ -1838,56 +1819,6 @@ definitions:
     required:
     - name
     type: object
-  models.Pod:
-    properties:
-      annotations:
-        additionalProperties:
-          type: string
-        type: object
-      appLabel:
-        type: boolean
-      containers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      createdAt:
-        type: string
-      createdBy:
-        items:
-          $ref: '#/definitions/models.Reference'
-        type: array
-      istioContainers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      istioInitContainers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      labels:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      proxyStatus:
-        $ref: '#/definitions/models.ProxyStatus'
-        type: object
-      serviceAccountName:
-        type: string
-      status:
-        type: string
-      statusMessage:
-        type: string
-      statusReason:
-        type: string
-      versionLabel:
-        type: boolean
-    type: object
-  models.Pods:
-    items:
-      $ref: '#/definitions/models.Pod'
-    type: array
   models.Project:
     properties:
       applications:
@@ -1895,7 +1826,6 @@ definitions:
           $ref: '#/definitions/models.Application'
         type: array
       createdAt:
-        description: 创建时间
         type: string
       environments:
         items:
@@ -1903,28 +1833,23 @@ definitions:
         type: array
       id:
         type: integer
-      projectAlias:
-        description: 项目别名
+      name:
         type: string
-      projectName:
-        description: 项目名字
+      projectAlias:
         type: string
       registries:
         items:
           $ref: '#/definitions/models.Registry'
         type: array
       remark:
-        description: 项目备注
         type: string
       resourceQuota:
         $ref: '#/definitions/datatypes.JSON'
-        description: 项目资源限制
         type: object
       tenant:
         $ref: '#/definitions/models.Tenant'
         type: object
       tenantID:
-        description: 所属的租户ID
         type: integer
       users:
         items:
@@ -1939,156 +1864,60 @@ definitions:
         $ref: '#/definitions/models.Project'
         type: object
       projectID:
-        description: ProjectID
         type: integer
       role:
-        description: 项目级角色(管理员admin, 开发dev, 测试test, 运维ops)
         type: string
       user:
         $ref: '#/definitions/models.User'
         type: object
       userID:
-        description: 用户ID
         type: integer
     required:
     - projectID
     - role
     - userID
     type: object
-  models.ProxyStatus:
-    properties:
-      CDS:
-        type: string
-      EDS:
-        type: string
-      LDS:
-        type: string
-      RDS:
-        type: string
-    type: object
-  models.Reference:
-    properties:
-      kind:
-        type: string
-      name:
-        type: string
-    type: object
   models.Registry:
     properties:
+      address:
+        type: string
       creator:
         $ref: '#/definitions/models.User'
-        description: 创建者
         type: object
       creatorID:
         type: integer
-      enableExtends:
-        description: 是否启用扩展功能，支持harbor等高级仓库
-        type: boolean
       id:
         type: integer
       isDefault:
         type: boolean
+      name:
+        type: string
       password:
-        description: 密码
         type: string
       project:
         $ref: '#/definitions/models.Project'
         type: object
       projectID:
-        description: 项目ID
         type: integer
-      registryAddress:
-        description: 仓库地址
-        type: string
-      registryName:
-        description: 仓库名称
-        type: string
       updateTime:
-        description: 更新时间
         type: string
       username:
-        description: 用户名
         type: string
-    type: object
-  models.Runtime:
-    properties:
-      dashboardRefs:
-        items:
-          $ref: '#/definitions/models.DashboardRef'
-        type: array
-      name:
-        type: string
-    type: object
-  models.ServiceOverview:
-    properties:
-      additionalDetailSample:
-        $ref: '#/definitions/models.AdditionalItem'
-        description: |-
-          Additional detail sample, such as type of api being served (graphql, grpc, rest)
-          example: rest
-          required: false
-        type: object
-      appLabel:
-        description: |-
-          Has label app
-          required: true
-          example: true
-        type: boolean
-      healthAnnotations:
-        additionalProperties:
-          type: string
-        description: Annotations of the service
-        type: object
-      istioReferences:
-        description: Istio References
-        items:
-          $ref: '#/definitions/models.IstioValidationKey'
-        type: array
-      istioSidecar:
-        description: |-
-          Define if Pods related to this Service has an IstioSidecar deployed
-          required: true
-          example: true
-        type: boolean
-      kialiWizard:
-        description: Kiali Wizard scenario, if any
-        type: string
-      labels:
-        additionalProperties:
-          type: string
-        description: Labels for Service
-        type: object
-      name:
-        description: |-
-          Name of the Service
-          required: true
-          example: reviews-v1
-        type: string
-      namespace:
-        description: Namespace of the Service
-        type: string
-      selector:
-        additionalProperties:
-          type: string
-        description: Selector for Service
-        type: object
     type: object
   models.SystemRole:
     properties:
+      code:
+        type: string
       id:
         type: integer
-      roleCode:
-        description: 系统级角色Code(管理员admin, 普通用户ordinary)
-        type: string
-      roleName:
-        description: 角色名字
+      name:
         type: string
       users:
         items:
           $ref: '#/definitions/models.User'
         type: array
     required:
-    - roleCode
+    - code
     type: object
   models.Tenant:
     properties:
@@ -2097,22 +1926,19 @@ definitions:
       id:
         type: integer
       isActive:
-        description: 是否激活
         type: boolean
+      name:
+        type: string
       projects:
         items:
           $ref: '#/definitions/models.Project'
         type: array
       remark:
-        description: 备注
         type: string
       resourceQuotas:
         items:
           $ref: '#/definitions/models.TenantResourceQuota'
         type: array
-      tenantName:
-        description: 租户名字
-        type: string
       updatedAt:
         type: string
       users:
@@ -2137,47 +1963,59 @@ definitions:
         type: object
       tenantID:
         type: integer
-      tenantResourceQuotaApply:
-        $ref: '#/definitions/models.TenantResourceQuotaApply'
-        type: object
-      tenantResourceQuotaApplyID:
-        type: integer
     required:
     - clusterID
     - tenantID
     type: object
   models.TenantResourceQuotaApply:
     properties:
+      cluster:
+        $ref: '#/definitions/models.Cluster'
+        type: object
+      clusterID:
+        type: integer
       content:
         $ref: '#/definitions/datatypes.JSON'
         type: object
+      createAt:
+        type: string
+      creator:
+        $ref: '#/definitions/models.User'
+        type: object
+      creatorID:
+        type: integer
       id:
         type: integer
       status:
         type: string
+      tenant:
+        $ref: '#/definitions/models.Tenant'
+        type: object
+      tenantID:
+        type: integer
       updatedAt:
         type: string
       username:
         type: string
+    required:
+    - clusterID
+    - tenantID
     type: object
   models.TenantUserRels:
     properties:
       id:
         type: integer
       role:
-        description: 租户级角色(管理员admin, 普通用户ordinary)
         type: string
       tenant:
         $ref: '#/definitions/models.Tenant'
         type: object
       tenantID:
-        description: 租户ID
         type: integer
       user:
         $ref: '#/definitions/models.User'
         type: object
       userID:
-        description: 用户ID
         type: integer
     required:
     - role
@@ -2319,134 +2157,30 @@ definitions:
     type: object
   models.Workload:
     properties:
-      additionalDetailSample:
-        $ref: '#/definitions/models.AdditionalItem'
-        description: |-
-          Additional item sample, such as type of api being served (graphql, grpc, rest)
-          example: rest
-          required: false
+      clusterName:
+        type: string
+      color:
+        description: eg, yellow
+        type: string
+      conditions:
+        additionalProperties:
+          $ref: '#/definitions/models.Condition'
+        description: 按容器名分组
         type: object
-      additionalDetails:
-        description: Additional details to display, such as configured annotations
-        items:
-          $ref: '#/definitions/models.AdditionalItem'
-        type: array
-      appLabel:
-        description: |-
-          Define if Pods related to this Workload has the label App
-          required: true
-          example: true
-        type: boolean
-      availableReplicas:
-        description: |-
-          Number of available replicas
-          required: true
-          example: 1
-        type: integer
+      cpulimitStdvar:
+        type: number
       createdAt:
-        description: |-
-          Creation timestamp (in RFC3339 format)
-          required: true
-          example: 2018-07-31T12:24:17Z
         type: string
-      currentReplicas:
-        description: |-
-          Number of current replicas pods that matches controller selector labels
-          required: true
-          example: 2
+      id:
         type: integer
-      dashboardAnnotations:
-        additionalProperties:
-          type: string
-        description: |-
-          Dashboard annotations
-          required: false
-        type: object
-      desiredReplicas:
-        description: |-
-          Number of desired replicas defined by the user in the controller Spec
-          required: true
-          example: 2
-        type: integer
-      healthAnnotations:
-        additionalProperties:
-          type: string
-        description: |-
-          HealthAnnotations
-          required: false
-        type: object
-      istioInjectionAnnotation:
-        description: |-
-          Define if Workload has an explicit Istio policy annotation
-          Istio supports this as a label as well - this will be defined if the label is set, too.
-          If both annotation and label are set, if any is false, injection is disabled.
-          It's mapped as a pointer to show three values nil, true, false
-        type: boolean
-      istioReferences:
-        description: Istio References
-        items:
-          $ref: '#/definitions/models.IstioValidationKey'
-        type: array
-      istioSidecar:
-        description: |-
-          Define if Pods related to this Workload has an IstioSidecar deployed
-          required: true
-          example: true
-        type: boolean
-      labels:
-        additionalProperties:
-          type: string
-        description: Workload labels
-        type: object
+      memoryLimitStdvar:
+        type: number
       name:
-        description: |-
-          Name of the workload
-          required: true
-          example: reviews-v1
         type: string
-      podCount:
-        description: |-
-          Number of current workload pods
-          required: true
-          example: 1
-        type: integer
-      pods:
-        $ref: '#/definitions/models.Pods'
-        description: Pods bound to the workload
-        type: object
-      resourceVersion:
-        description: |-
-          Kubernetes ResourceVersion
-          required: true
-          example: 192892127
+      namespace:
         type: string
-      runtimes:
-        description: Runtimes and associated dashboards
-        items:
-          $ref: '#/definitions/models.Runtime'
-        type: array
-      serviceAccountNames:
-        description: Names of the workload service accounts
-        items:
-          type: string
-        type: array
-      services:
-        description: Services that match workload selector
-        items:
-          $ref: '#/definitions/models.ServiceOverview'
-        type: array
       type:
-        description: |-
-          Type of the workload
-          required: true
-          example: deployment
         type: string
-      versionLabel:
-        description: |-
-          Define if Pods related to this Workload has the label Version
-          required: true
-          example: true
-        type: boolean
     type: object
   models.WorkloadListItem:
     properties:
@@ -3096,22 +2830,6 @@ definitions:
     properties:
       state:
         type: string
-    type: object
-  types.Timestamp:
-    properties:
-      nanos:
-        description: |-
-          Non-negative fractions of a second at nanosecond resolution. Negative
-          second values with fractions must still have non-negative nanos values
-          that count forward in time. Must be from 0 to 999,999,999
-          inclusive.
-        type: integer
-      seconds:
-        description: |-
-          Represents seconds of UTC time since Unix epoch
-          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
-          9999-12-31T23:59:59Z inclusive.
-        type: integer
     type: object
   types.UInt32Value:
     properties:
@@ -8269,39 +7987,22 @@ definitions:
           +optional
         type: object
     type: object
-  v1.Rule:
-    properties:
-      alert:
-        type: string
-      annotations:
-        additionalProperties:
-          type: string
-        type: object
-      expr:
-        $ref: '#/definitions/intstr.IntOrString'
-        type: object
-      for:
-        type: string
-      labels:
-        additionalProperties:
-          type: string
-        type: object
-      record:
-        type: string
-    type: object
   v1.RuleGroup:
     properties:
-      interval:
+      file:
         type: string
+      interval:
+        type: number
       name:
         type: string
-      partial_response_strategy:
-        type: string
       rules:
-        items:
-          $ref: '#/definitions/v1.Rule'
-        type: array
+        $ref: '#/definitions/v1.Rules'
+        type: object
     type: object
+  v1.Rules:
+    items:
+      type: object
+    type: array
   v1.SELinuxOptions:
     properties:
       level:
@@ -10703,37 +10404,6 @@ definitions:
           +optional
         type: object
     type: object
-  v1alpha1.AnalysisMessageBase:
-    properties:
-      documentation_url:
-        description: |-
-          A url pointing to the Istio documentation for this specific error type.
-          Should be of the form
-          `^http(s)?://(preliminary\.)?istio.io/docs/reference/config/analysis/`
-          Required.
-        type: string
-      level:
-        description: Represents how severe a message is. Required.
-        type: integer
-      type:
-        $ref: '#/definitions/v1alpha1.AnalysisMessageBase_Type'
-        type: object
-    type: object
-  v1alpha1.AnalysisMessageBase_Type:
-    properties:
-      code:
-        description: |-
-          A 7 character code matching `^IST[0-9]{4}$` intended to uniquely identify
-          the message type. (e.g. "IST0001" is mapped to the "InternalError" message
-          type.) 0000-0100 are reserved. Required.
-        type: string
-      name:
-        description: |-
-          A human-readable name for the message type. e.g. "InternalError",
-          "PodMissingProxy". This should be the same for all messages of the same type.
-          Required.
-        type: string
-    type: object
   v1alpha1.AnalysisRunArgument:
     properties:
       name:
@@ -11236,13 +10906,12 @@ definitions:
     type: object
   v1alpha1.HealthStatus:
     properties:
-      enable:
-        description: Enable the HealthStatus.
-        type: boolean
-      uri:
-        description: |-
-          URI of the location. Default is `/nginx-health`.
-          +kubebuilder:validation:Optional
+      message:
+        description: Message is a human-readable informational message describing
+          the health status
+        type: string
+      status:
+        description: Status holds the status code of the application or resource
         type: string
     type: object
   v1alpha1.InfoItem:
@@ -11277,68 +10946,6 @@ definitions:
           operator enforces that the alert matches the resource’s namespace.
         items:
           $ref: '#/definitions/v1alpha1.Matcher'
-        type: array
-    type: object
-  v1alpha1.IstioCondition:
-    properties:
-      last_probe_time:
-        $ref: '#/definitions/types.Timestamp'
-        description: |-
-          Last time we probed the condition.
-          +optional
-        type: object
-      last_transition_time:
-        $ref: '#/definitions/types.Timestamp'
-        description: |-
-          Last time the condition transitioned from one status to another.
-          +optional
-        type: object
-      message:
-        description: |-
-          Human-readable message indicating details about last transition.
-          +optional
-        type: string
-      reason:
-        description: |-
-          Unique, one-word, CamelCase reason for the condition's last transition.
-          +optional
-        type: string
-      status:
-        description: |-
-          Status is the status of the condition.
-          Can be True, False, Unknown.
-        type: string
-      type:
-        description: Type is the type of the condition.
-        type: string
-    type: object
-  v1alpha1.IstioStatus:
-    properties:
-      conditions:
-        description: |-
-          Current service state of pod.
-          More info: https://istio.io/docs/reference/config/config-status/
-          +optional
-          +patchMergeKey=type
-          +patchStrategy=merge
-        items:
-          $ref: '#/definitions/v1alpha1.IstioCondition'
-        type: array
-      observed_generation:
-        description: |-
-          Resource Generation to which the Reconciled Condition refers.
-          When this value is not equal to the object's metadata generation, reconciled condition  calculation for the current
-          generation is still in progress.  See https://istio.io/latest/docs/reference/config/config-status/ for more info.
-          +optional
-        type: integer
-      validation_messages:
-        description: |-
-          Includes any errors or warnings detected by Istio's analyzers.
-          +optional
-          +patchMergeKey=type
-          +patchStrategy=merge
-        items:
-          $ref: '#/definitions/v1alpha1.AnalysisMessageBase'
         type: array
     type: object
   v1alpha1.JobMetric:
@@ -14169,232 +13776,80 @@ definitions:
     type: object
   v1alpha3.WorkloadEntry:
     properties:
-      annotations:
-        additionalProperties:
-          type: string
+      address:
         description: |-
-          Annotations is an unstructured key value map stored with a resource that may be
-          set by external tools to store and retrieve arbitrary metadata. They are not
-          queryable and should be preserved when modifying objects.
-          More info: http://kubernetes.io/docs/user-guide/annotations
-          +optional
-        type: object
-      apiVersion:
-        description: |-
-          APIVersion defines the versioned schema of this representation of an object.
-          Servers should convert recognized schemas to the latest internal value, and
-          may reject unrecognized values.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-          +optional
-        type: string
-      clusterName:
-        description: |-
-          The name of the cluster which the object belongs to.
-          This is used to distinguish resources with same name and namespace in different clusters.
-          This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
-          +optional
-        type: string
-      creationTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          CreationTimestamp is a timestamp representing the server time when this object was
-          created. It is not guaranteed to be set in happens-before order across separate operations.
-          Clients may not set this value. It is represented in RFC3339 form and is in UTC.
-
-          Populated by the system.
-          Read-only.
-          Null for lists.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      deletionGracePeriodSeconds:
-        description: |-
-          Number of seconds allowed for this object to gracefully terminate before
-          it will be removed from the system. Only set when deletionTimestamp is also set.
-          May only be shortened.
-          Read-only.
-          +optional
-        type: integer
-      deletionTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
-          field is set by the server when a graceful deletion is requested by the user, and is not
-          directly settable by a client. The resource is expected to be deleted (no longer visible
-          from resource lists, and not reachable by name) after the time in this field, once the
-          finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
-          Once the deletionTimestamp is set, this value may not be unset or be set further into the
-          future, although it may be shortened or the resource may be deleted prior to this time.
-          For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
-          by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
-          the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
-          remove the pod from the API. In the presence of network partitions, this object may still
-          exist after this timestamp, until an administrator or automated process can determine the
-          resource is fully terminated.
-          If not set, graceful deletion of the object has not been requested.
-
-          Populated by the system when a graceful deletion is requested.
-          Read-only.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      finalizers:
-        description: |-
-          Must be empty before the object is deleted from the registry. Each entry
-          is an identifier for the responsible component that will remove the entry
-          from the list. If the deletionTimestamp of the object is non-nil, entries
-          in this list can only be removed.
-          Finalizers may be processed and removed in any order.  Order is NOT enforced
-          because it introduces significant risk of stuck finalizers.
-          finalizers is a shared field, any actor with permission can reorder it.
-          If the finalizer list is processed in order, then this can lead to a situation
-          in which the component responsible for the first finalizer in the list is
-          waiting for a signal (field value, external system, or other) produced by a
-          component responsible for a finalizer later in the list, resulting in a deadlock.
-          Without enforced ordering finalizers are free to order amongst themselves and
-          are not vulnerable to ordering changes in the list.
-          +optional
-          +patchStrategy=merge
-        items:
-          type: string
-        type: array
-      generateName:
-        description: |-
-          GenerateName is an optional prefix, used by the server, to generate a unique
-          name ONLY IF the Name field has not been provided.
-          If this field is used, the name returned to the client will be different
-          than the name passed. This value will also be combined with a unique suffix.
-          The provided value has the same validation rules as the Name field,
-          and may be truncated by the length of the suffix required to make the value
-          unique on the server.
-
-          If this field is specified and the generated name exists, the server will
-          NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-          ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-          should retry (optionally after the time indicated in the Retry-After header).
-
-          Applied only if Name is not specified.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
-          +optional
-        type: string
-      generation:
-        description: |-
-          A sequence number representing a specific generation of the desired state.
-          Populated by the system. Read-only.
-          +optional
-        type: integer
-      kind:
-        description: |-
-          Kind is a string value representing the REST resource this object represents.
-          Servers may infer this from the endpoint the client submits requests to.
-          Cannot be updated.
-          In CamelCase.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-          +optional
+          Address associated with the network endpoint without the
+          port.  Domain names can be used if and only if the resolution is set
+          to DNS, and must be fully-qualified without wildcards. Use the form
+          unix:///absolute/path/to/socket for Unix domain socket endpoints.
         type: string
       labels:
         additionalProperties:
           type: string
-        description: |-
-          Map of string keys and values that can be used to organize and categorize
-          (scope and select) objects. May match selectors of replication controllers
-          and services.
-          More info: http://kubernetes.io/docs/user-guide/labels
-          +optional
+        description: One or more labels associated with the endpoint.
         type: object
-      managedFields:
+      locality:
         description: |-
-          ManagedFields maps workflow-id and version to the set of fields
-          that are managed by that workflow. This is mostly for internal
-          housekeeping, and users typically shouldn't need to set or
-          understand this field. A workflow can be the user's name, a
-          controller's name, or the name of a specific apply path like
-          "ci-cd". The set of fields is always in the version that the
-          workflow used when modifying the object.
-
-          +optional
-        items:
-          $ref: '#/definitions/v1.ManagedFieldsEntry'
-        type: array
-      name:
-        description: |-
-          Name must be unique within a namespace. Is required when creating resources, although
-          some resources may allow a client to request the generation of an appropriate name
-          automatically. Name is primarily intended for creation idempotence and configuration
-          definition.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#names
-          +optional
+          The locality associated with the endpoint. A locality corresponds
+          to a failure domain (e.g., country/region/zone). Arbitrary failure
+          domain hierarchies can be represented by separating each
+          encapsulating failure domain by /. For example, the locality of an
+          an endpoint in US, in US-East-1 region, within availability zone
+          az-1, in data center rack r11 can be represented as
+          us/us-east-1/az-1/r11. Istio will configure the sidecar to route to
+          endpoints within the same locality as the sidecar. If none of the
+          endpoints in the locality are available, endpoints parent locality
+          (but within the same network ID) will be chosen. For example, if
+          there are two endpoints in same network (networkID "n1"), say e1
+          with locality us/us-east-1/az-1/r11 and e2 with locality
+          us/us-east-1/az-2/r12, a sidecar from us/us-east-1/az-1/r11 locality
+          will prefer e1 from the same locality over e2 from a different
+          locality. Endpoint e2 could be the IP associated with a gateway
+          (that bridges networks n1 and n2), or the IP associated with a
+          standard service endpoint.
         type: string
-      namespace:
+      network:
         description: |-
-          Namespace defines the space within which each name must be unique. An empty namespace is
-          equivalent to the "default" namespace, but "default" is the canonical representation.
-          Not all objects are required to be scoped to a namespace - the value of this field for
-          those objects will be empty.
-
-          Must be a DNS_LABEL.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/namespaces
-          +optional
+          Network enables Istio to group endpoints resident in the same L3
+          domain/network. All endpoints in the same network are assumed to be
+          directly reachable from one another. When endpoints in different
+          networks cannot reach each other directly, an Istio Gateway can be
+          used to establish connectivity (usually using the
+          `AUTO_PASSTHROUGH` mode in a Gateway Server). This is
+          an advanced configuration used typically for spanning an Istio mesh
+          over multiple clusters.
         type: string
-      ownerReferences:
+      ports:
+        additionalProperties:
+          type: integer
         description: |-
-          List of objects depended by this object. If ALL objects in the list have
-          been deleted, this object will be garbage collected. If this object is managed by a controller,
-          then an entry in this list will point to this controller, with the controller field set to true.
-          There cannot be more than one managing controller.
-          +optional
-          +patchMergeKey=uid
-          +patchStrategy=merge
-        items:
-          $ref: '#/definitions/v1.OwnerReference'
-        type: array
-      resourceVersion:
-        description: |-
-          An opaque value that represents the internal version of this object that can
-          be used by clients to determine when objects have changed. May be used for optimistic
-          concurrency, change detection, and the watch operation on a resource or set of resources.
-          Clients must treat these values as opaque and passed unmodified back to the server.
-          They may only be valid for a particular resource or set of resources.
+          Set of ports associated with the endpoint. If the port map is
+          specified, it must be a map of servicePortName to this endpoint's
+          port, such that traffic to the service port will be forwarded to
+          the endpoint port that maps to the service's portName. If
+          omitted, and the targetPort is specified as part of the service's
+          port specification, traffic to the service port will be forwarded
+          to one of the endpoints on the specified `targetPort`. If both
+          the targetPort and endpoint's port map are not specified, traffic
+          to a service port will be forwarded to one of the endpoints on
+          the same port.
 
-          Populated by the system.
-          Read-only.
-          Value must be treated as opaque by clients and .
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-          +optional
-        type: string
-      selfLink:
-        description: |-
-          SelfLink is a URL representing this object.
-          Populated by the system.
-          Read-only.
+          **NOTE 1:** Do not use for `unix://` addresses.
 
-          DEPRECATED
-          Kubernetes will stop propagating this field in 1.20 release and the field is planned
-          to be removed in 1.21 release.
-          +optional
-        type: string
-      spec:
-        $ref: '#/definitions/v1alpha3.WorkloadEntry'
-        description: |-
-          Spec defines the implementation of this definition.
-          +optional
+          **NOTE 2:** endpoint port map takes precedence over targetPort.
         type: object
-      status:
-        $ref: '#/definitions/v1alpha1.IstioStatus'
-        type: object
-      uid:
+      service_account:
         description: |-
-          UID is the unique in time and space value for this object. It is typically generated by
-          the server on successful creation of a resource and is not allowed to change on PUT
-          operations.
-
-          Populated by the system.
-          Read-only.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-          +optional
+          The service account associated with the workload if a sidecar
+          is present in the workload. The service account must be present
+          in the same namespace as the configuration ( WorkloadEntry or a
+          ServiceEntry)
         type: string
+      weight:
+        description: |-
+          The load balancing weight associated with the endpoint. Endpoints
+          with higher weights will receive proportionally higher traffic.
+        type: integer
     type: object
   v1alpha3.WorkloadSelector:
     properties:
@@ -14516,232 +13971,28 @@ definitions:
     type: object
   v1beta1.Gateway:
     properties:
-      annotations:
+      selector:
         additionalProperties:
           type: string
         description: |-
-          Annotations is an unstructured key value map stored with a resource that may be
-          set by external tools to store and retrieve arbitrary metadata. They are not
-          queryable and should be preserved when modifying objects.
-          More info: http://kubernetes.io/docs/user-guide/annotations
-          +optional
+          One or more labels that indicate a specific set of pods/VMs
+          on which this gateway configuration should be applied.
+          By default workloads are searched across all namespaces based on label selectors.
+          This implies that a gateway resource in the namespace "foo" can select pods in
+          the namespace "bar" based on labels.
+          This behavior can be controlled via the `PILOT_SCOPE_GATEWAY_TO_NAMESPACE`
+          environment variable in istiod. If this variable is set
+          to true, the scope of label search is restricted to the configuration
+          namespace in which the the resource is present. In other words, the Gateway
+          resource must reside in the same namespace as the gateway workload
+          instance.
+          If selector is nil, the Gateway will be applied to all workloads.
         type: object
-      apiVersion:
-        description: |-
-          APIVersion defines the versioned schema of this representation of an object.
-          Servers should convert recognized schemas to the latest internal value, and
-          may reject unrecognized values.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-          +optional
-        type: string
-      clusterName:
-        description: |-
-          The name of the cluster which the object belongs to.
-          This is used to distinguish resources with same name and namespace in different clusters.
-          This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
-          +optional
-        type: string
-      creationTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          CreationTimestamp is a timestamp representing the server time when this object was
-          created. It is not guaranteed to be set in happens-before order across separate operations.
-          Clients may not set this value. It is represented in RFC3339 form and is in UTC.
-
-          Populated by the system.
-          Read-only.
-          Null for lists.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      deletionGracePeriodSeconds:
-        description: |-
-          Number of seconds allowed for this object to gracefully terminate before
-          it will be removed from the system. Only set when deletionTimestamp is also set.
-          May only be shortened.
-          Read-only.
-          +optional
-        type: integer
-      deletionTimestamp:
-        $ref: '#/definitions/v1.Time'
-        description: |-
-          DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
-          field is set by the server when a graceful deletion is requested by the user, and is not
-          directly settable by a client. The resource is expected to be deleted (no longer visible
-          from resource lists, and not reachable by name) after the time in this field, once the
-          finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
-          Once the deletionTimestamp is set, this value may not be unset or be set further into the
-          future, although it may be shortened or the resource may be deleted prior to this time.
-          For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
-          by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
-          the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
-          remove the pod from the API. In the presence of network partitions, this object may still
-          exist after this timestamp, until an administrator or automated process can determine the
-          resource is fully terminated.
-          If not set, graceful deletion of the object has not been requested.
-
-          Populated by the system when a graceful deletion is requested.
-          Read-only.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-          +optional
-        type: object
-      finalizers:
-        description: |-
-          Must be empty before the object is deleted from the registry. Each entry
-          is an identifier for the responsible component that will remove the entry
-          from the list. If the deletionTimestamp of the object is non-nil, entries
-          in this list can only be removed.
-          Finalizers may be processed and removed in any order.  Order is NOT enforced
-          because it introduces significant risk of stuck finalizers.
-          finalizers is a shared field, any actor with permission can reorder it.
-          If the finalizer list is processed in order, then this can lead to a situation
-          in which the component responsible for the first finalizer in the list is
-          waiting for a signal (field value, external system, or other) produced by a
-          component responsible for a finalizer later in the list, resulting in a deadlock.
-          Without enforced ordering finalizers are free to order amongst themselves and
-          are not vulnerable to ordering changes in the list.
-          +optional
-          +patchStrategy=merge
+      servers:
+        description: A list of server specifications.
         items:
-          type: string
+          $ref: '#/definitions/v1beta1.Server'
         type: array
-      generateName:
-        description: |-
-          GenerateName is an optional prefix, used by the server, to generate a unique
-          name ONLY IF the Name field has not been provided.
-          If this field is used, the name returned to the client will be different
-          than the name passed. This value will also be combined with a unique suffix.
-          The provided value has the same validation rules as the Name field,
-          and may be truncated by the length of the suffix required to make the value
-          unique on the server.
-
-          If this field is specified and the generated name exists, the server will
-          NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-          ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-          should retry (optionally after the time indicated in the Retry-After header).
-
-          Applied only if Name is not specified.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
-          +optional
-        type: string
-      generation:
-        description: |-
-          A sequence number representing a specific generation of the desired state.
-          Populated by the system. Read-only.
-          +optional
-        type: integer
-      kind:
-        description: |-
-          Kind is a string value representing the REST resource this object represents.
-          Servers may infer this from the endpoint the client submits requests to.
-          Cannot be updated.
-          In CamelCase.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-          +optional
-        type: string
-      labels:
-        additionalProperties:
-          type: string
-        description: |-
-          Map of string keys and values that can be used to organize and categorize
-          (scope and select) objects. May match selectors of replication controllers
-          and services.
-          More info: http://kubernetes.io/docs/user-guide/labels
-          +optional
-        type: object
-      managedFields:
-        description: |-
-          ManagedFields maps workflow-id and version to the set of fields
-          that are managed by that workflow. This is mostly for internal
-          housekeeping, and users typically shouldn't need to set or
-          understand this field. A workflow can be the user's name, a
-          controller's name, or the name of a specific apply path like
-          "ci-cd". The set of fields is always in the version that the
-          workflow used when modifying the object.
-
-          +optional
-        items:
-          $ref: '#/definitions/v1.ManagedFieldsEntry'
-        type: array
-      name:
-        description: |-
-          Name must be unique within a namespace. Is required when creating resources, although
-          some resources may allow a client to request the generation of an appropriate name
-          automatically. Name is primarily intended for creation idempotence and configuration
-          definition.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#names
-          +optional
-        type: string
-      namespace:
-        description: |-
-          Namespace defines the space within which each name must be unique. An empty namespace is
-          equivalent to the "default" namespace, but "default" is the canonical representation.
-          Not all objects are required to be scoped to a namespace - the value of this field for
-          those objects will be empty.
-
-          Must be a DNS_LABEL.
-          Cannot be updated.
-          More info: http://kubernetes.io/docs/user-guide/namespaces
-          +optional
-        type: string
-      ownerReferences:
-        description: |-
-          List of objects depended by this object. If ALL objects in the list have
-          been deleted, this object will be garbage collected. If this object is managed by a controller,
-          then an entry in this list will point to this controller, with the controller field set to true.
-          There cannot be more than one managing controller.
-          +optional
-          +patchMergeKey=uid
-          +patchStrategy=merge
-        items:
-          $ref: '#/definitions/v1.OwnerReference'
-        type: array
-      resourceVersion:
-        description: |-
-          An opaque value that represents the internal version of this object that can
-          be used by clients to determine when objects have changed. May be used for optimistic
-          concurrency, change detection, and the watch operation on a resource or set of resources.
-          Clients must treat these values as opaque and passed unmodified back to the server.
-          They may only be valid for a particular resource or set of resources.
-
-          Populated by the system.
-          Read-only.
-          Value must be treated as opaque by clients and .
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-          +optional
-        type: string
-      selfLink:
-        description: |-
-          SelfLink is a URL representing this object.
-          Populated by the system.
-          Read-only.
-
-          DEPRECATED
-          Kubernetes will stop propagating this field in 1.20 release and the field is planned
-          to be removed in 1.21 release.
-          +optional
-        type: string
-      spec:
-        $ref: '#/definitions/v1beta1.Gateway'
-        description: |-
-          Spec defines the implementation of this definition.
-          +optional
-        type: object
-      status:
-        $ref: '#/definitions/v1alpha1.IstioStatus'
-        type: object
-      uid:
-        description: |-
-          UID is the unique in time and space value for this object. It is typically generated by
-          the server on successful creation of a resource and is not allowed to change on PUT
-          operations.
-
-          Populated by the system.
-          Read-only.
-          More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-          +optional
-        type: string
     type: object
   v1beta1.HTTPFaultInjection:
     properties:
@@ -15203,6 +14454,27 @@ definitions:
       value:
         type: number
     type: object
+  v1beta1.Port:
+    properties:
+      name:
+        description: Label assigned to the port.
+        type: string
+      number:
+        description: A valid non-negative integer port number.
+        type: integer
+      protocol:
+        description: |-
+          The protocol exposed on the port.
+          MUST BE one of HTTP|HTTPS|GRPC|HTTP2|MONGO|TCP|TLS.
+          TLS implies the connection will be routed based on the SNI header to
+          the destination without terminating the TLS connection.
+        type: string
+      target_port:
+        description: |-
+          The port number on the endpoint where the traffic will be
+          received. Applicable only when used with ServiceEntries.
+        type: integer
+    type: object
   v1beta1.PortSelector:
     properties:
       number:
@@ -15223,6 +14495,166 @@ definitions:
           version. If there is only one destination in a rule, all traffic will be
           routed to it irrespective of the weight.
         type: integer
+    type: object
+  v1beta1.Server:
+    properties:
+      bind:
+        description: |-
+          The ip or the Unix domain socket to which the listener should be bound
+          to. Format: `x.x.x.x` or `unix:///path/to/uds` or `unix://@foobar`
+          (Linux abstract namespace). When using Unix domain sockets, the port
+          number should be 0.
+          This can be used to restrict the reachability of this server to be gateway internal only.
+          This is typically used when a gateway needs to communicate to another mesh service
+          e.g. publishing metrics. In such case, the server created with the
+          specified bind will not be available to external gateway clients.
+        type: string
+      default_endpoint:
+        description: |-
+          The loopback IP endpoint or Unix domain socket to which traffic should
+          be forwarded to by default. Format should be `127.0.0.1:PORT` or
+          `unix:///path/to/socket` or `unix://@foobar` (Linux abstract namespace).
+          NOT IMPLEMENTED.
+          $hide_from_docs
+        type: string
+      hosts:
+        description: |-
+          One or more hosts exposed by this gateway.
+          While typically applicable to
+          HTTP services, it can also be used for TCP services using TLS with SNI.
+          A host is specified as a `dnsName` with an optional `namespace/` prefix.
+          The `dnsName` should be specified using FQDN format, optionally including
+          a wildcard character in the left-most component (e.g., `prod/*.example.com`).
+          Set the `dnsName` to `*` to select all `VirtualService` hosts from the
+          specified namespace (e.g.,`prod/*`).
+
+          The `namespace` can be set to `*` or `.`, representing any or the current
+          namespace, respectively. For example, `*/foo.example.com` selects the
+          service from any available namespace while `./foo.example.com` only selects
+          the service from the namespace of the sidecar. The default, if no `namespace/`
+          is specified, is `*/`, that is, select services from any namespace.
+          Any associated `DestinationRule` in the selected namespace will also be used.
+
+          A `VirtualService` must be bound to the gateway and must have one or
+          more hosts that match the hosts specified in a server. The match
+          could be an exact match or a suffix match with the server's hosts. For
+          example, if the server's hosts specifies `*.example.com`, a
+          `VirtualService` with hosts `dev.example.com` or `prod.example.com` will
+          match. However, a `VirtualService` with host `example.com` or
+          `newexample.com` will not match.
+
+          NOTE: Only virtual services exported to the gateway's namespace
+          (e.g., `exportTo` value of `*`) can be referenced.
+          Private configurations (e.g., `exportTo` set to `.`) will not be
+          available. Refer to the `exportTo` setting in `VirtualService`,
+          `DestinationRule`, and `ServiceEntry` configurations for details.
+        items:
+          type: string
+        type: array
+      name:
+        description: |-
+          An optional name of the server, when set must be unique across all servers.
+          This will be used for variety of purposes like prefixing stats generated with
+          this name etc.
+        type: string
+      port:
+        $ref: '#/definitions/v1beta1.Port'
+        description: |-
+          The Port on which the proxy should listen for incoming
+          connections.
+        type: object
+      tls:
+        $ref: '#/definitions/v1beta1.ServerTLSSettings'
+        description: |-
+          Set of TLS related options that govern the server's behavior. Use
+          these options to control if all http requests should be redirected to
+          https, and the TLS modes to use.
+        type: object
+    type: object
+  v1beta1.ServerTLSSettings:
+    properties:
+      ca_certificates:
+        description: |-
+          REQUIRED if mode is `MUTUAL`. The path to a file containing
+          certificate authority certificates to use in verifying a presented
+          client side certificate.
+        type: string
+      cipher_suites:
+        description: |-
+          Optional: If specified, only support the specified cipher list.
+          Otherwise default to the default cipher list supported by Envoy.
+        items:
+          type: string
+        type: array
+      credential_name:
+        description: |-
+          For gateways running on Kubernetes, the name of the secret that
+          holds the TLS certs including the CA certificates. Applicable
+          only on Kubernetes. The secret (of type `generic`) should
+          contain the following keys and values: `key:
+          <privateKey>` and `cert: <serverCert>`. For mutual TLS,
+          `cacert: <CACertificate>` can be provided in the same secret or
+          a separate secret named `<secret>-cacert`.
+          Secret of type tls for server certificates along with
+          ca.crt key for CA certificates is also supported.
+          Only one of server certificates and CA certificate
+          or credentialName can be specified.
+        type: string
+      https_redirect:
+        description: |-
+          If set to true, the load balancer will send a 301 redirect for
+          all http connections, asking the clients to use HTTPS.
+        type: boolean
+      max_protocol_version:
+        description: 'Optional: Maximum TLS protocol version.'
+        type: integer
+      min_protocol_version:
+        description: 'Optional: Minimum TLS protocol version.'
+        type: integer
+      mode:
+        description: |-
+          Optional: Indicates whether connections to this port should be
+          secured using TLS. The value of this field determines how TLS is
+          enforced.
+        type: integer
+      private_key:
+        description: |-
+          REQUIRED if mode is `SIMPLE` or `MUTUAL`. The path to the file
+          holding the server's private key.
+        type: string
+      server_certificate:
+        description: |-
+          REQUIRED if mode is `SIMPLE` or `MUTUAL`. The path to the file
+          holding the server-side TLS certificate to use.
+        type: string
+      subject_alt_names:
+        description: |-
+          A list of alternate names to verify the subject identity in the
+          certificate presented by the client.
+        items:
+          type: string
+        type: array
+      verify_certificate_hash:
+        description: |-
+          An optional list of hex-encoded SHA-256 hashes of the
+          authorized client certificates. Both simple and colon separated
+          formats are acceptable.
+          Note: When both verify_certificate_hash and verify_certificate_spki
+          are specified, a hash matching either value will result in the
+          certificate being accepted.
+        items:
+          type: string
+        type: array
+      verify_certificate_spki:
+        description: |-
+          An optional list of base64-encoded SHA-256 hashes of the SKPIs of
+          authorized client certificates.
+          Note: When both verify_certificate_hash and verify_certificate_spki
+          are specified, a hash matching either value will result in the
+          certificate being accepted.
+        items:
+          type: string
+        type: array
     type: object
   v1beta1.Service:
     properties:
