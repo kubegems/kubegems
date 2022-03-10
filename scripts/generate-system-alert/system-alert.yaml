@@ -230,6 +230,7 @@
   receivers:
     - name: gemcloud-default-webhook
       interval: 10m
+# cluster
 - name: ClusterHighCpuLoad
   namespace: gemcloud-monitoring-system
   resource: cluster
@@ -252,6 +253,21 @@
   alertLevels:
     - compareOp: ">"
       compareValue: "90"
+      severity: critical
+  receivers:
+    - name: gemcloud-default-webhook
+      interval: 10m
+- name: ClusterComponentCertExpirySoon
+  namespace: gemcloud-monitoring-system
+  resource: cluster
+  rule: certExpirationRemainTime
+  labelpairs:
+    component: apiserver
+  unit: d
+  for: 1h
+  alertLevels:
+    - compareOp: "<"
+      compareValue: "7"
       severity: critical
   receivers:
     - name: gemcloud-default-webhook

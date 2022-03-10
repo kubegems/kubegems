@@ -169,7 +169,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	kubectlHandler := KubectlHandler{cluster: cluster, debugoptions: debugOptions}
 	routes.register("system", "v1", "kubectl", ActionList, kubectlHandler.ExecKubectl)
 
-	prometheusHandler, err := NewPrometheusHandler(options.PrometheusServer, cluster)
+	prometheusHandler, err := NewPrometheusHandler(options.PrometheusServer)
 	if err != nil {
 		return err
 	}

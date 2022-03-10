@@ -132,6 +132,11 @@ resources:
         showName: "内存使用率"
         units: [percent]
         labels: null
+      certExpirationRemainTime:
+        expr: gems_agent_cluster_component_cert_expiration_remain_seconds
+        showName: "证书剩余到期时间"
+        units: [s, m, h, d, w]
+        labels: [component]
   plugin:
     namespaced: false
     showName: "插件"
