@@ -1,4 +1,4 @@
-package auth
+package filters
 
 import (
 	"bytes"
@@ -8,20 +8,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/aaa"
-	"kubegems.io/pkg/service/aaa/auth/user"
-	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/jwt"
+	"kubegems.io/pkg/v2/models"
+	"kubegems.io/pkg/v2/services/auth/user"
 )
 
 type AuthMiddleware struct {
 	getters []UserGetterIface
-	uif     aaa.ContextUserOperator
 }
 
-func NewAuthMiddleware(opts *jwt.Options, userif aaa.ContextUserOperator) *AuthMiddleware {
+func NewAuthMiddleware(opts *jwt.Options) *AuthMiddleware {
 	var getters []UserGetterIface
 	getters = append(getters, &BearerTokenUserLoader{
 		JWT: opts.ToJWT(),
@@ -29,29 +27,32 @@ func NewAuthMiddleware(opts *jwt.Options, userif aaa.ContextUserOperator) *AuthM
 	getters = append(getters, &PrivateTokenUserLoader{})
 	return &AuthMiddleware{
 		getters: getters,
-		uif:     userif,
 	}
 }
 
-func (l *AuthMiddleware) FilterFunc(c *gin.Context) {
+func (l *AuthMiddleware) FilterFunc(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+	if IsWhiteList(req) {
+		chain.ProcessFilter(req, resp)
+		return
+	}
 	if len(l.getters) > 0 {
 		var (
 			loaded bool
-			user   models.CommonUserIface
+			user   user.CommonUserIface
 		)
 		for idx := range l.getters {
-			user, loaded = l.getters[idx].GetUser(c.Request)
+			user, loaded = l.getters[idx].GetUser(req.Request)
 			if loaded {
 				break
 			}
 		}
 		if !loaded {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, "")
+			resp.WriteHeaderAndJson(http.StatusUnauthorized, "unauthorized", restful.MIME_JSON)
 			return
 		}
-		l.uif.SetContextUser(c, user)
+		req.SetAttribute("user", user)
 	}
-	c.Next()
+	chain.ProcessFilter(req, resp)
 }
 
 // UserGetterIface
@@ -75,7 +76,7 @@ func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIfa
 		return nil, false
 	}
 	bts, _ := json.Marshal(claims.Payload)
-	var user models.User
+	var user models.UserCommon
 	err = json.Unmarshal(bts, &user)
 	if err != nil {
 		log.Error(err, "failed to load userinfo", "data", string(bts))
