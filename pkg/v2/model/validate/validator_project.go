@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	"kubegems.io/pkg/model/forms"
+	"kubegems.io/pkg/v2/model/forms"
 )
 
 func ProjectStructLevelValidation(sl validator.StructLevel) {
