@@ -23,6 +23,10 @@ type Cluster struct {
 	APIServer string `gorm:"type:varchar(250);uniqueIndex"`
 	// KubeConfig 配置
 	KubeConfig datatypes.JSON `binding:"required"`
+	// Vendor 集群提供商(gke tke aliyun selfhosted)
+	Vendor string `gorm:"type:varchar(50);default:selfhosted" binding:"required,oneof=selfhosted gke aliyun tke"`
+	// ImageRepo 安装kubegems核心组件时使用的镜像仓库
+	ImageRepo string `gorm:"type:varchar(255);default:docker.io" binding:"required"`
 
 	// Version 版本
 	Version string

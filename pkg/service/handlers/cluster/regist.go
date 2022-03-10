@@ -17,6 +17,8 @@ func (h *ClusterHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.DELETE("/cluster/:cluster_id", h.CheckIsSysADMIN, h.DeleteCluster)
 	rg.GET("/cluster/_/status", h.CheckIsSysADMIN, h.ListClusterStatus)
 
+	rg.POST("/cluster/validate-kubeconfig", h.CheckIsSysADMIN, h.ValidateKubeConfig)
+
 	rg.GET("/cluster/:cluster_id/environment", h.CheckIsSysADMIN, h.ListClusterEnvironment)
 	rg.GET("/cluster/:cluster_id/logqueryhistory", h.ListClusterLogQueryHistory)
 	rg.GET("/cluster/:cluster_id/logqueryhistoryv2", h.ListClusterLogQueryHistoryv2)
