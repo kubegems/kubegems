@@ -310,7 +310,7 @@ func (q *URLQuery) PageQuery(db *gorm.DB, cond *PageQueryCond) *gorm.DB {
 	if len(q.Search) > 0 {
 		qs := []string{}
 		for _, field := range cond.SearchFields {
-			qs = append(qs, fmt.Sprintf("%s like ?", field))
+			qs = append(qs, fmt.Sprintf("%s like ?", columnName(cond.Model, field)))
 		}
 		if len(qs) > 0 {
 			tmpq := strings.Join(qs, " or ")
