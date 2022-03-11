@@ -1,6 +1,7 @@
 package resourcelist
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
+	"kubegems.io/pkg/utils/agents"
 )
 
 const (
@@ -35,69 +37,65 @@ const (
 
 func (c *ResourceCache) EnvironmentSync() error {
 	start := time.Now()
-	clusters := []models.Cluster{}
-	if err := c.DB.DB().Find(&clusters).Error; err != nil {
-		return errors.Wrap(err, "failed to get clusters")
-	}
 
-	for _, cluster := range clusters {
-		maxCPUUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Max)
+	if err := c.Agents.ExecuteInEachCluster(context.Background(), func(ctx context.Context, cli agents.Client) error {
+		maxCPUUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentCPUUsageCore_LastDay_Max)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		maxMemoryUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Max)
+		maxMemoryUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentMemoryUsageByte_LastDay_Max)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		minCPUUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Min)
+		minCPUUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentCPUUsageCore_LastDay_Min)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		minMemoryUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Min)
+		minMemoryUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentMemoryUsageByte_LastDay_Min)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		avgCPUUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentCPUUsageCore_LastDay_Avg)
+		avgCPUUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentCPUUsageCore_LastDay_Avg)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		avgMemoryUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentMemoryUsageByte_LastDay_Avg)
+		avgMemoryUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentMemoryUsageByte_LastDay_Avg)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
 
-		maxPVCUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Max)
+		maxPVCUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentPVCUsageByte_LastDay_Max)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		minPVCUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Min)
+		minPVCUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentPVCUsageByte_LastDay_Min)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		avgPVCUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentPVCUsageByte_LastDay_Avg)
+		avgPVCUsageResp, err := cli.Extend().PrometheusVector(ctx, environmentPVCUsageByte_LastDay_Avg)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
 
-		networkRecvResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentNetworkReceiveByte_LastDay)
+		networkRecvResp, err := cli.Extend().PrometheusVector(ctx, environmentNetworkReceiveByte_LastDay)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
-		networkSendResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, "", environmentNetworkTransmitByte_LastDay)
+		networkSendResp, err := cli.Extend().PrometheusVector(ctx, environmentNetworkTransmitByte_LastDay)
 		if err != nil {
 			return errors.Wrap(err, "failed to exec promql")
 		}
 
 		envMap := make(map[string]*models.EnvironmentResource)
 		// 最大CPU使用量
-		for _, sample := range maxCPUUsageResp.Vector {
+		for _, sample := range maxCPUUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
 				continue
 			}
 			p := &models.EnvironmentResource{
-				ClusterName:     cluster.ClusterName,
+				ClusterName:     cli.Name(),
 				TenantName:      string(sample.Metric[TenantKey]),
 				ProjectName:     string(sample.Metric[ProjectKey]),
 				EnvironmentName: string(sample.Metric[EnvironmentKey]),
@@ -107,7 +105,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 最大内存使用量
-		for _, sample := range maxMemoryUsageResp.Vector {
+		for _, sample := range maxMemoryUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -121,7 +119,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 最小CPU使用量
-		for _, sample := range minCPUUsageResp.Vector {
+		for _, sample := range minCPUUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -135,7 +133,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 最小内存使用量
-		for _, sample := range minMemoryUsageResp.Vector {
+		for _, sample := range minMemoryUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -149,7 +147,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 平均CPU使用量
-		for _, sample := range avgCPUUsageResp.Vector {
+		for _, sample := range avgCPUUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -163,7 +161,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 平均内存使用量
-		for _, sample := range avgMemoryUsageResp.Vector {
+		for _, sample := range avgMemoryUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -177,7 +175,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 最大pvc使用量
-		for _, sample := range maxPVCUsageResp.Vector {
+		for _, sample := range maxPVCUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -191,7 +189,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 最小pvc使用量
-		for _, sample := range minPVCUsageResp.Vector {
+		for _, sample := range minPVCUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -205,7 +203,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 平均pvc使用量
-		for _, sample := range avgPVCUsageResp.Vector {
+		for _, sample := range avgPVCUsageResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -219,7 +217,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 网络流入
-		for _, sample := range networkRecvResp.Vector {
+		for _, sample := range networkRecvResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -233,7 +231,7 @@ func (c *ResourceCache) EnvironmentSync() error {
 		}
 
 		// 网络流出
-		for _, sample := range networkSendResp.Vector {
+		for _, sample := range networkSendResp {
 			key, valid := GetUniqueEnvironmentKey(sample)
 			if !valid {
 				log.Warnf("notvalid environment: %s", sample.Metric)
@@ -251,9 +249,12 @@ func (c *ResourceCache) EnvironmentSync() error {
 				return errors.Wrap(err, "failed to save environment resources")
 			}
 		}
+		return nil
+	}); err != nil {
+		return err
 	}
 
-	log.Infof("finish environment resource list, used: %s", time.Since(start).String())
+	log.Info("finish environment resource list", "duration", time.Since(start).String())
 	return nil
 }
 

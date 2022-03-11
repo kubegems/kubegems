@@ -252,6 +252,20 @@ func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, e
 	return ret, nil
 }
 
+func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prommodel.Vector, error) {
+	ret := prommodel.Vector{}
+	values := url.Values{}
+	values.Add("query", query)
+	if err := c.DoRequest(ctx, Request{
+		Path:  "/custom/prometheus/v1/vector",
+		Query: values,
+		Into:  WrappedResponse(&ret),
+	}); err != nil {
+		return nil, fmt.Errorf("prometheus vector failed, cluster: %s, promql: %s, %v", c.Name, query, err)
+	}
+	return ret, nil
+}
+
 func (c *ExtendClient) ListAllAlertRules(ctx context.Context, opts *prometheus.MonitorOptions) ([]prometheus.AlertRule, error) {
 	ruleList := monitoringv1.PrometheusRuleList{}
 	configList := monitoringv1alpha1.AlertmanagerConfigList{}
