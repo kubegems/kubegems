@@ -13,6 +13,7 @@ import (
 	meta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -41,6 +42,10 @@ func (r *LabelInjectorMutate) CommonInjectLabel(ctx context.Context, req admissi
 		obj = &appsv1.DaemonSet{}
 	case "PersistentVolumeClaim":
 		obj = &corev1.PersistentVolumeClaim{}
+	case "Flow":
+		obj = &loggingv1beta1.Flow{}
+	case "Output":
+		obj = &loggingv1beta1.Output{}
 	default:
 		r.Log.Error(errors.New("not support"), req.Kind.String())
 		return admission.Allowed("pass")
