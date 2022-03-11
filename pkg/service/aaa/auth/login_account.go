@@ -14,6 +14,10 @@ type AccountLoginUtil struct {
 	DB   *gorm.DB
 }
 
+func (ut *AccountLoginUtil) GetName() string {
+	return ut.Name
+}
+
 func (ut *AccountLoginUtil) LoginAddr() string {
 	return DefaultLoginURL
 }
