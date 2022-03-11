@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	SearchFields           = []string{"project_name"}
+	SearchFields           = []string{"ProjectName"}
 	FilterFields           = []string{"project_name", "TenantID"}
 	PreloadFields          = []string{"Applications", "Environments", "Registries", "Users", "Tenant"}
 	OrderFields            = []string{"project_name", "ID"}
