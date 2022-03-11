@@ -15,7 +15,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	// promemodel "github.com/prometheus/common/model"
-	"golang.org/x/sync/errgroup"
+
 	// corev1 "k8s.io/api/core/v1"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/service/handlers"
@@ -75,11 +75,7 @@ func (h *LogOperatorHandler) Flows(c *gin.Context) {
 	allFlows := []loggingv1beta1.Flow{}
 	flows := loggingv1beta1.FlowList{}
 	if err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
-		g := errgroup.Group{}
-		g.Go(func() error {
-			return tc.List(ctx, &flows, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{gemlabels.LabelTenant: tenant}))
-		})
-		return g.Wait()
+		return tc.List(ctx, &flows, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{gemlabels.LabelTenant: tenant}))
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -99,11 +95,7 @@ func (h *LogOperatorHandler) Outputs(c *gin.Context) {
 	allOutputs := []loggingv1beta1.Output{}
 	outputs := loggingv1beta1.OutputList{}
 	if err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
-		g := errgroup.Group{}
-		g.Go(func() error {
-			return tc.List(ctx, &outputs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{gemlabels.LabelTenant: tenant}))
-		})
-		return g.Wait()
+		return tc.List(ctx, &outputs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{gemlabels.LabelTenant: tenant}))
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
