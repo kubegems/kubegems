@@ -774,7 +774,7 @@ func AfterTenantResourceQuotaSave(ctx context.Context, h base.BaseHandler, tx *g
 		cluster models.Cluster
 		rels    []models.TenantUserRels
 	)
-	tx.Scopes(models.ClusterIsNotDeleted).First(&cluster, "id = ?", trq.ClusterID)
+	tx.First(&cluster, "id = ?", trq.ClusterID)
 	tx.First(&tenant, "id = ?", trq.TenantID)
 	tx.Preload("User").Find(&rels, "tenant_id = ?", trq.TenantID)
 
@@ -1212,7 +1212,7 @@ func (h *TenantHandler) TenantSwitch(c *gin.Context) {
 		handlers.NotOK(c, e)
 		return
 	}
-	if e := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, "id = ?", form.ClusterID).Error; e != nil {
+	if e := h.GetDB().First(&cluster, "id = ?", form.ClusterID).Error; e != nil {
 		handlers.NotOK(c, e)
 		return
 	}
@@ -1382,7 +1382,7 @@ const (
 func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 	clusterid := c.Param("cluster_id")
 	cluster := models.Cluster{}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, clusterid).Error; err != nil {
+	if err := h.GetDB().First(&cluster, clusterid).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("集群%s不存在", clusterid))
 		return
 	}
@@ -1464,7 +1464,7 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 	ingressClass := c.Query("ingressClass")
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
 	cluster := models.Cluster{ID: uint(clusterid)}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster).Error; err != nil {
+	if err := h.GetDB().First(&cluster).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
 		return
 	}
@@ -1517,7 +1517,7 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
 		return
 	}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster).Error; err != nil {
+	if err := h.GetDB().First(&cluster).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
 		return
 	}
@@ -1553,7 +1553,7 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
 	cluster := models.Cluster{ID: uint(clusterid)}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster).Error; err != nil {
+	if err := h.GetDB().First(&cluster).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
 		return
 	}
@@ -1613,7 +1613,7 @@ func (h *TenantHandler) DeleteTenantGateway(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
 		return
 	}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster).Error; err != nil {
+	if err := h.GetDB().First(&cluster).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
 		return
 	}
@@ -1659,7 +1659,7 @@ func (h *TenantHandler) GetObjectTenantGatewayAddr(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
 		return
 	}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster).Error; err != nil {
+	if err := h.GetDB().First(&cluster).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
 		return
 	}

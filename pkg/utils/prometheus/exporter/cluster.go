@@ -40,7 +40,7 @@ func (c *ClusterCollector) Update(ch chan<- prometheus.Metric) error {
 	defer c.mutex.Unlock()
 
 	var clusters []*models.Cluster
-	if err := c.Database.DB().Scopes(models.ClusterIsNotDeleted).Find(&clusters).Error; err != nil {
+	if err := c.Database.DB().Find(&clusters).Error; err != nil {
 		return err
 	}
 

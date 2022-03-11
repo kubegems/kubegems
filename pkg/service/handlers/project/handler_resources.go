@@ -387,7 +387,7 @@ func (h *ProjectHandler) GetEnvironmentResourceQuota(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Preload("Cluster", "is_deleted = ?", false).First(&env, "id = ?", c.Param("environment_id")).Error; err != nil {
+	if err := h.GetDB().Preload("Cluster").First(&env, "id = ?", c.Param("environment_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -658,7 +658,7 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 		return
 	}
 	var cluster models.Cluster
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, env.ClusterID).Error; err != nil {
+	if err := h.GetDB().First(&cluster, env.ClusterID).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -788,7 +788,7 @@ func (h *ProjectHandler) ProjectSwitch(c *gin.Context) {
 		handlers.NotOK(c, e)
 		return
 	}
-	if e := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, "id = ?", form.ClusterID).Error; e != nil {
+	if e := h.GetDB().First(&cluster, "id = ?", form.ClusterID).Error; e != nil {
 		handlers.NotOK(c, e)
 		return
 	}
