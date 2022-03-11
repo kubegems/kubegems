@@ -26,7 +26,7 @@ type Credential struct {
 type UserInfo struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
-	User     string `json:"user"`
+	Name     string `json:"name"`
 	Source   string `json:"-"`
 }
 
