@@ -3,11 +3,13 @@ package authsource
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-ldap/ldap/v3"
+	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
@@ -153,6 +155,9 @@ func validateAuthConfig(source *models.AuthSource) error {
 		if source.Config.BaseDN == "" {
 			errs = append(errs, "basedn can't empty")
 		}
+		if !basednIsValid(source.Config.BaseDN) {
+			errs = append(errs, "basedn is not valid")
+		}
 		if source.Config.BindUsername == "" {
 			errs = append(errs, "binduser can't empty")
 		}
@@ -162,8 +167,11 @@ func validateAuthConfig(source *models.AuthSource) error {
 		if source.Config.LdapAddr == "" {
 			errs = append(errs, "ldapaddr can't empty")
 		}
-		if !validateLdapConfig(source.Config) {
-			errs = append(errs, "ldap test failed, binduser or password error")
+		if err := filterIsValid(source.Config.Filter); err != nil {
+			errs = append(errs, fmt.Sprintf("filter format error: %v", err))
+		}
+		if err := validateLdapConfig(source.Config); err != nil {
+			errs = append(errs, fmt.Sprintf("test ldap conn error : %v", err))
 		}
 	}
 	if source.Kind == "OAUTH" {
@@ -189,18 +197,58 @@ func validateAuthConfig(source *models.AuthSource) error {
 	return nil
 }
 
-func validateLdapConfig(cfg models.AuthSourceConfig) bool {
+func validateLdapConfig(cfg models.AuthSourceConfig) error {
 	req := ldap.NewSimpleBindRequest(cfg.BindUsername, cfg.BindPassword, nil)
-	ldapConn, err := ldap.Dial("tcp", cfg.LdapAddr)
-	if err != nil {
-		return false
+	var (
+		ldapConn *ldap.Conn
+		err      error
+	)
+	ldap.DefaultTimeout = time.Second * 5
+	if strings.HasPrefix(cfg.LdapAddr, "ldap") {
+		ldapConn, err = ldap.DialURL(
+			cfg.LdapAddr,
+			ldap.DialWithDialer(&net.Dialer{Timeout: time.Second * 5}),
+		)
+	} else {
+		ldapConn, err = ldap.Dial("tcp", cfg.LdapAddr)
 	}
+	if err != nil {
+		log.Info("validate ldap config failed", "ldapaddr", cfg.LdapAddr, "error", err.Error())
+		return err
+	}
+	ldapConn.SetTimeout(time.Second * 5)
 	defer ldapConn.Close()
 	if cfg.EnableTLS {
 		if err := ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-			return false
+			return err
 		}
 	}
 	_, err = ldapConn.SimpleBind(req)
-	return err == nil
+	return err
+}
+
+func basednIsValid(basedn string) bool {
+	seps := strings.Split(basedn, ",")
+	for _, sep := range seps {
+		kvs := strings.Split(sep, "=")
+		if len(kvs) != 2 {
+			return false
+		}
+		if len(kvs[0]) == 0 || len(kvs[1]) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func filterIsValid(filter string) error {
+	if filter == "" {
+		return nil
+	}
+	_, err := ldap.CompileFilter(filter)
+	if err != nil {
+		log.Debugf("ldap filter format error: %s, %v", filter, err)
+		return err
+	}
+	return nil
 }

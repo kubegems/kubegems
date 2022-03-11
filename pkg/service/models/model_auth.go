@@ -31,21 +31,22 @@ func (AuthSourceSimple) TableName() string {
 }
 
 type AuthSourceConfig struct {
-	AuthURL     string   `json:"authURL,omitempty" binding:"url,require_with=TokenURL UserInfoURL RedirectURL AppID AppSecret"`
-	TokenURL    string   `json:"tokenURL,omitempty" binding:"url,require_with=AuthURL UserInfoURL RedirectURL AppID AppSecret"`
-	UserInfoURL string   `json:"userInfoURL,omitempty" binding:"url,require_with=AuthURL TokenURL RedirectURL AppID AppSecret"`
-	RedirectURL string   `json:"redirectURL,omitempty" binding:"url,require_with=AuthURL TokenURL UserInfoURL AppID AppSecret"`
-	AppID       string   `json:"appID,omitempty" binding:"require_with=AuthURL TokenURL UserInfoURL RedirectURL AppSecret"`
-	AppSecret   string   `json:"appSecret,omitempty" binding:"require_with=AuthURL TokenURL UserInfoURL RedirectURL AppID"`
+	AuthURL     string   `json:"authURL,omitempty" binding:"omitempty,url,required_with=TokenURL UserInfoURL RedirectURL AppID AppSecret"`
+	TokenURL    string   `json:"tokenURL,omitempty" binding:"omitempty,url,required_with=AuthURL UserInfoURL RedirectURL AppID AppSecret"`
+	UserInfoURL string   `json:"userInfoURL,omitempty" binding:"omitempty,url,required_with=AuthURL TokenURL RedirectURL AppID AppSecret"`
+	RedirectURL string   `json:"redirectURL,omitempty" binding:"omitempty,url,required_with=AuthURL TokenURL UserInfoURL AppID AppSecret"`
+	AppID       string   `json:"appID,omitempty" binding:"required_with=AuthURL TokenURL UserInfoURL RedirectURL AppSecret"`
+	AppSecret   string   `json:"appSecret,omitempty" binding:"required_with=AuthURL TokenURL UserInfoURL RedirectURL AppID"`
 	Scopes      []string `json:"scopes,omitempty"`
 
 	// ldap
 	Name         string `json:"name,omitempty"`
-	LdapAddr     string `json:"ldapaddr,omitempty" binding:"require_with=BaseDN EnableTLS BindUsername BindPassword"`
-	BaseDN       string `json:"basedn,omitempty" binding:"require_with=LdapAddr EnableTLS BindUsername BindPassword"`
-	EnableTLS    bool   `json:"enableTLS,omitempty" binding:"require_with=LdapAddr BaseDN BindUsername BindPassword"`
-	BindUsername string `json:"binduser,omitempty" binding:"require_with=LdapAddr BaseDN EnableTLS BindPassword"`
-	BindPassword string `json:"password,omitempty" binding:"require_with=LdapAddr BaseDN EnableTLS BindUsername"`
+	LdapAddr     string `json:"ldapaddr,omitempty" binding:"omitempty,hostname_port,required_with=BaseDN BindUsername BindPassword"`
+	BaseDN       string `json:"basedn,omitempty" binding:"required_with=LdapAddr BindUsername BindPassword"`
+	EnableTLS    bool   `json:"enableTLS,omitempty"`
+	Filter       string `json:"filter,omitempty"`
+	BindUsername string `json:"binduser,omitempty" binding:"required_with=LdapAddr BaseDN BindPassword"`
+	BindPassword string `json:"password,omitempty" binding:"required_with=LdapAddr BaseDN BindUsername"`
 }
 
 func (cfg *AuthSourceConfig) Scan(value interface{}) error {
