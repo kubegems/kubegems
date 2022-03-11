@@ -390,20 +390,26 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 // @Router /v1/cluster/{cluster_id}/logquerysnapshot [get]
 // @Security JWT
 func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
-	var list []models.LogQuerySnapshot
+	var (
+		list    []models.LogQuerySnapshot
+		cluster models.Cluster
+	)
 	query, err := handlers.GetQuery(c, nil)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	clusterid := utils.ToUint(c.Param(PrimaryKeyName))
+	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, clusterid).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 	cond := &handlers.PageQueryCond{
 		Model:         "LogQuerySnapshot",
 		SearchFields:  []string{"SnapshotName"},
 		PreloadFields: []string{"Cluster", "Creator"},
 		Where: []*handlers.QArgs{
 			handlers.Args("cluster_id = ?", clusterid),
-			handlers.Args("is_deleted = ?", false),
 		},
 	}
 	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
