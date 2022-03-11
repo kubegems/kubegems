@@ -53,6 +53,10 @@ func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 		return
 	}
 	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source)
+	if sourceUtil.GetName() != source {
+		handlers.NotOK(c, fmt.Errorf("source not provide"))
+		return
+	}
 	handlers.OK(c, sourceUtil.LoginAddr())
 }
 
@@ -108,6 +112,16 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		cred.Code = c.Query("code")
 	}
 	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source)
+	var authenticatorName string
+	if cred.Source == "" {
+		authenticatorName = "account"
+	} else {
+		authenticatorName = authenticator.GetName()
+	}
+	if authenticatorName != cred.Source {
+		handlers.Unauthorized(c, "auth source not exists or not enabled")
+		return
+	}
 	uinfo, err := authenticator.GetUserInfo(ctx, cred)
 	if err != nil {
 		log.Error(err, "login failed", "cred", cred)

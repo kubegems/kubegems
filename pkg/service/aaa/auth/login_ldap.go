@@ -22,6 +22,10 @@ type LdapLoginUtils struct {
 	BindPassword string `yaml:"bindpass" json:"password"`
 }
 
+func (ut *LdapLoginUtils) GetName() string {
+	return ut.Name
+}
+
 func (ut *LdapLoginUtils) LoginAddr() string {
 	return DefaultLoginURL
 }

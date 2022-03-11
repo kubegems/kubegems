@@ -31,6 +31,7 @@ type UserInfo struct {
 
 // AuthenticateIface 所有登录插件需要实现AuthenticateIface接口
 type AuthenticateIface interface {
+	GetName() string
 	// LoginAddr 获取登录地址
 	LoginAddr() string
 	// 验证凭据, 获取用户信息
@@ -57,15 +58,15 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name str
 		DB:   l.DB,
 		Name: AccountLoginName,
 	}
-	if err := l.DB.WithContext(ctx).Where("name = ?", name).First(&authSource).Error; err != nil {
-		log.Error(err, "find auth source failed", "name", name)
+	if err := l.DB.WithContext(ctx).Where("name = ? and enabled = ?", name, true).First(&authSource).Error; err != nil {
+		log.Error(err, "no enabled auth source found", "name", name)
 		return defaultUtil
 	}
 	switch authSource.Kind {
 	case "LDAP":
 		ldapUt := &LdapLoginUtils{
 			BaseDN:       authSource.Config.BaseDN,
-			Name:         authSource.Config.Name,
+			Name:         authSource.Name,
 			BindUsername: authSource.Config.BindUsername,
 			BindPassword: authSource.Config.BindPassword,
 			LdapAddr:     authSource.Config.LdapAddr,
@@ -82,7 +83,7 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name str
 			AppSecret:   authSource.Config.AppSecret,
 			Scopes:      authSource.Config.Scopes,
 		}
-		return NewOauthUtils(opt)
+		return NewOauthUtils(authSource.Name, opt)
 	default:
 		return defaultUtil
 	}
