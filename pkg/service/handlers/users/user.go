@@ -214,6 +214,10 @@ func (h *UserHandler) ListUserTenant(c *gin.Context) {
 	handlers.OK(c, handlers.Page(total, list, int64(page), int64(size)))
 }
 
+type ResetPasswordReq struct {
+	Password string `json:"password"`
+}
+
 // ResetUserPassword 重置用户密码
 // @Tags User
 // @Summary 重置用户密码
@@ -230,18 +234,29 @@ func (h *UserHandler) ResetUserPassword(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	passwd := utils.GeneratePassword()
-	password, err := utils.MakePassword(passwd)
+	resetPasswordReq := &ResetPasswordReq{}
+	c.BindJSON(resetPasswordReq)
+	var newPassowrd string
+	if resetPasswordReq.Password != "" {
+		if err := utils.ValidPassword(resetPasswordReq.Password); err != nil {
+			handlers.NotOK(c, err)
+			return
+		}
+		newPassowrd = resetPasswordReq.Password
+	} else {
+		newPassowrd = utils.GeneratePassword()
+	}
+	encryptPassword, err := utils.MakePassword(newPassowrd)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	user.Password = password
+	user.Password = encryptPassword
 	if err := h.GetDB().Save(&user).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, &resetPasswordResult{Password: passwd})
+	handlers.OK(c, &resetPasswordResult{Password: newPassowrd})
 }
 
 // ListEnvironmentUser 获取多个环境的用户列表
