@@ -121,9 +121,10 @@ func (h *AuthSourceHandler) Modify(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	source.Config = newOne.Config
 	now := time.Now()
+	source.Config = newOne.Config
 	source.UpdatedAt = &now
+	source.Enabled = newOne.Enabled
 	if err := h.GetDB().Save(source).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
