@@ -4,6 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net"
+	"strings"
+	"time"
 
 	"github.com/go-ldap/ldap/v3"
 	"kubegems.io/pkg/log"
@@ -14,6 +17,7 @@ type LdapLoginUtils struct {
 	LdapAddr     string `yaml:"addr" json:"ldapaddr"`
 	BaseDN       string `yaml:"basedn" json:"basedn"`
 	EnableTLS    bool   `json:"enableTLS"`
+	Filter       string `json:"filter"`
 	BindUsername string `yaml:"binduser" json:"binduser"`
 	BindPassword string `yaml:"bindpass" json:"password"`
 }
@@ -26,12 +30,21 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 	if !ut.ValidateCredential(cred) {
 		return nil, fmt.Errorf("invalid credential")
 	}
-	ldapConn, err := ldap.Dial("tcp", ut.LdapAddr)
+	var ldapConn *ldap.Conn
+	ldap.DefaultTimeout = time.Second * 5
+	if strings.HasPrefix(ut.LdapAddr, "ldap") {
+		ldapConn, err = ldap.DialURL(
+			ut.LdapAddr,
+			ldap.DialWithDialer(&net.Dialer{Timeout: time.Second * 5}),
+		)
+	} else {
+		ldapConn, err = ldap.Dial("tcp", ut.LdapAddr)
+	}
+	defer ldapConn.Close()
 	if err != nil {
 		log.Error(err, "connect to ldap server failed")
 		return
 	}
-	defer ldapConn.Close()
 
 	if ut.EnableTLS {
 		if err = ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
@@ -48,7 +61,7 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 		ut.BaseDN,
 		ldap.ScopeWholeSubtree,
 		ldap.NeverDerefAliases,
-		0,
+		1,
 		0,
 		false,
 		fmt.Sprintf("(cn=%s)", cred.Username),
@@ -82,12 +95,25 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 func (ut *LdapLoginUtils) ValidateCredential(cred *Credential) bool {
 	userdn := fmt.Sprintf("cn=%s,%s", cred.Username, ut.BaseDN)
 	req := ldap.NewSimpleBindRequest(userdn, cred.Password, nil)
-	ldapConn, err := ldap.Dial("tcp", ut.LdapAddr)
+
+	var (
+		ldapConn *ldap.Conn
+		err      error
+	)
+	ldap.DefaultTimeout = time.Second * 5
+	if strings.HasPrefix(ut.LdapAddr, "ldap") {
+		ldapConn, err = ldap.DialURL(
+			ut.LdapAddr,
+			ldap.DialWithDialer(&net.Dialer{Timeout: time.Second * 5}),
+		)
+	} else {
+		ldapConn, err = ldap.Dial("tcp", ut.LdapAddr)
+	}
+	defer ldapConn.Close()
 	if err != nil {
 		log.Error(err, "connect to ldap server failed")
 		return false
 	}
-	defer ldapConn.Close()
 
 	if ut.EnableTLS {
 		if err := ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
