@@ -36,10 +36,10 @@ type VirtualSpaceHandler struct {
 }
 
 var (
-	SearchFields   = []string{"VirtualSpaceName"}
-	FilterFields   = []string{"VirtualSpaceName", "VirtualSpaceID"}
+	SearchFields   = []string{"virtual_space_name"}
+	FilterFields   = []string{"virtual_space_name", "virtual_space_id"}
 	PreloadFields  = []string{"Environments", "Users"}
-	OrderFields    = []string{"VirtualSpaceName", "ID"}
+	OrderFields    = []string{"virtual_space_name", "id"}
 	ModelName      = "VirtualSpace"
 	PrimaryKeyName = "virtualspace_id"
 )
