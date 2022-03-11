@@ -8,6 +8,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
+	"kubegems.io/pkg/log"
 )
 
 type OauthOption struct {
@@ -55,11 +56,13 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 	ctxinner := context.WithValue(ctx, oauth2.HTTPClient, ot.client)
 	token, err := ot.OauthConfig.Exchange(ctxinner, cred.Code)
 	if err != nil {
+		log.Debugf("oauth2 exchange token failed: %v", err)
 		return nil, err
 	}
 	restyClient := resty.NewWithClient(ot.OauthConfig.Client(context.Background(), token))
 	ret := &UserInfo{}
 	if _, err := restyClient.SetHeader("Authorization", "Bearer "+token.AccessToken).R().SetResult(ret).Get(ot.opts.UserInfoURL); err != nil {
+		log.Debugf("oauth2 get userinfo  failed: %v", err)
 		return nil, err
 	}
 
