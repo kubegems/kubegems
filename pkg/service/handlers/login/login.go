@@ -116,8 +116,8 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		cred.Code = c.Query("code")
 	}
 	// TODO: 临时patch
-	if cred.Code == "" {
-		cred.Code = "account"
+	if cred.Source == "" {
+		cred.Source = "account"
 	}
 	// -----
 
