@@ -37,7 +37,7 @@ func (h *VirtualDomainHandler) ListVirtualDomain(c *gin.Context) {
 	}
 	cond := &handlers.PageQueryCond{
 		Model:        "VirtualDomain",
-		SearchFields: SearchFields,
+		SearchFields: []string{"virtual_domain_name"},
 		// Join:         handlers.Args("left join virtual_spaces on virtual_spaces.virtual_domain_id = virtual_domains.id"),
 		// Select:       handlers.Args("virtual_domains.*, if(virtual_spaces.virtual_domain_id is null, false, true) as is_using"),
 	}
