@@ -982,7 +982,7 @@ func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 		func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name") },
 	)
 	if search != "" {
-		q.Where("environment_name = ?", search)
+		q.Where("environment_name like ?", fmt.Sprintf("%%%s%%", search))
 	}
 	if err := q.Find(&envs, "project_id in (?)", projectids).Error; err != nil {
 		handlers.NotOK(c, err)
