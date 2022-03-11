@@ -1,6 +1,7 @@
 package resourcelist
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strings"
@@ -8,37 +9,40 @@ import (
 
 	"github.com/pkg/errors"
 	promemodel "github.com/prometheus/common/model"
+	v1 "k8s.io/api/core/v1"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/database"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	// containerCPUPercent_LastWeek 使用率超过60%
 	containerCPUPercent_LastWeek = `
-    quantile_over_time(0.95, gems_container_cpu_usage_percent{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m]) / 100 < 0.1
+    quantile_over_time(0.95, gems_container_cpu_usage_percent{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m]) / 100 < 0.1
 	or
-    quantile_over_time(0.95, gems_container_cpu_usage_percent{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m]) / 100 > 0.6`
+    quantile_over_time(0.95, gems_container_cpu_usage_percent{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m]) / 100 > 0.6`
 	containerMemoryPercent_LastWeek = `
-    quantile_over_time(0.95, gems_container_memory_usage_percent{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m]) / 100 < 0.1
+    quantile_over_time(0.95, gems_container_memory_usage_percent{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m]) / 100 < 0.1
 	or
-    quantile_over_time(0.95, gems_container_memory_usage_percent{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m]) / 100 > 0.6`
+    quantile_over_time(0.95, gems_container_memory_usage_percent{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m]) / 100 > 0.6`
 
-	containerCPUUsageCore_LastWeek     = `quantile_over_time(0.95, gems_container_cpu_usage_cores{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m])`
-	containerMemoryUsageBytes_LastWeek = `quantile_over_time(0.95, gems_container_memory_usage_bytes{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m])`
+	containerCPUUsageCore_LastWeek     = `quantile_over_time(0.95, gems_container_cpu_usage_cores{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m])`
+	containerMemoryUsageBytes_LastWeek = `quantile_over_time(0.95, gems_container_memory_usage_bytes{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}[1w:5m])`
 
-	containerCPULimitCore     = `gems_container_cpu_limit_cores{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}`
-	containerMemoryLimitBytes = `gems_container_memory_limit_bytes{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}`
+	containerCPULimitCore     = `gems_container_cpu_limit_cores{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}`
+	containerMemoryLimitBytes = `gems_container_memory_limit_bytes{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"}`
 
 	// cpu内存限制方差
 	// 计算workload所有副本的平均cpu、内存变化，而不是workload的总变化，避免副本数变化带来的影响
 	workloadCPULimitStdVar = `
-	stdvar_over_time((sum(gems_container_cpu_limit_cores{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"})by(namespace, owner_kind, workload) 
-	/ sum(gems_pod_workload{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet"})by(namespace, owner_kind, workload))[1w:5m])`
+	stdvar_over_time((sum(gems_container_cpu_limit_cores{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"})by(namespace, owner_kind, workload) 
+	/ sum(gems_pod_workload{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet"})by(namespace, owner_kind, workload))[1w:5m])`
 	workloadMemoryLimitStdVar = `
-	stdvar_over_time((sum(gems_container_memory_limit_bytes{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"})by(namespace, owner_kind, workload) 
-	/ sum(gems_pod_workload{namespace="__namespace__", owner_kind=~"Deployment|StatefulSet|DaemonSet"})by(namespace, owner_kind, workload))[1w:5m])`
+	stdvar_over_time((sum(gems_container_memory_limit_bytes{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet", container!~"istio-proxy|"})by(namespace, owner_kind, workload) 
+	/ sum(gems_pod_workload{namespace="%[1]s", owner_kind=~"Deployment|StatefulSet|DaemonSet"})by(namespace, owner_kind, workload))[1w:5m])`
 
 	Deployment  = "Deployment"
 	StatefulSet = "StatefulSet"
@@ -60,59 +64,60 @@ func (c *ResourceCache) WorkloadSync() error {
 	start := time.Now()
 	c.DB.DB().Where("1 = 1").Delete(models.Container{})
 	c.DB.DB().Where("1 = 1").Delete(models.Workload{})
-	clusters := []models.Cluster{}
-	if err := c.DB.DB().Find(&clusters).Error; err != nil {
-		return errors.Wrap(err, "failed to get clusters")
-	}
-	for _, cluster := range clusters {
-		// 数据太多，按namespace分片
-		for _, ns := range c.collectNamespaces(cluster.ClusterName) {
-			cpuPercentResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPUPercent_LastWeek)
+
+	if err := c.Agents.ExecuteInEachCluster(context.Background(), func(ctx context.Context, cli agents.Client) error {
+		nsList := v1.NamespaceList{}
+		if err := cli.List(ctx, &nsList, client.HasLabels([]string{gems.LabelEnvironment})); err != nil {
+			return err
+		}
+
+		for _, ns := range nsList.Items {
+			cpuPercentResp, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(containerCPUPercent_LastWeek, ns.Name))
 			if err != nil {
-				return errors.Wrap(err, "failed to exec promql")
+				return err
 			}
-			memoryPercentResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryPercent_LastWeek)
+			memoryPercentResp, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(containerMemoryPercent_LastWeek, ns.Name))
 			if err != nil {
-				return errors.Wrap(err, "failed to exec promql")
+				return err
 			}
-			cpuUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPUUsageCore_LastWeek)
+			cpuUsageResp, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(containerCPUUsageCore_LastWeek, ns.Name))
 			if err != nil {
-				return errors.Wrap(err, "failed to exec promql")
+				return err
 			}
-			memoryUsageResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryUsageBytes_LastWeek)
+			memoryUsageResp, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(containerMemoryUsageBytes_LastWeek, ns.Name))
 			if err != nil {
-				return errors.Wrap(err, "failed to exec promql")
+				return err
 			}
 			// 由于是当前的cpu、内存限制，与上面的数据有出入
-			cpuLimitResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerCPULimitCore)
+			cpuLimitResp, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(containerCPULimitCore, ns.Name))
 			if err != nil {
-				return errors.Wrap(err, "failed to exec promql")
+				return err
 			}
-			memoryLimitResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, containerMemoryLimitBytes)
+			memoryLimitResp, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(containerMemoryLimitBytes, ns.Name))
 			if err != nil {
-				return errors.Wrap(err, "failed to exec promql")
+				return err
 			}
-			cpuLimitStdvarResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, workloadCPULimitStdVar)
+			cpuLimitStdvarResp, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(workloadCPULimitStdVar, ns.Name))
 			if err != nil {
-				return errors.Wrap(err, "failed to exec promql")
+				return err
 			}
-			memoryLimitStdvarResp, err := c.getPrometheusResponseWithCluster(cluster.ClusterName, ns, workloadMemoryLimitStdVar)
+			memoryLimitStdvarResp, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(workloadMemoryLimitStdVar, ns.Name))
 			if err != nil {
-				return errors.Wrap(err, "failed to exec promql")
+				return err
 			}
 
 			// 缓存这个集群要插入的workload实例
 			containerMap := make(map[string]*models.Container)
 			// CPU使用率
-			for _, sample := range cpuPercentResp.Vector {
+			for _, sample := range cpuPercentResp {
 				key, err := GetUniqueContainerKey(sample)
 				if err != nil {
-					log.Warnf("notvalid workload in cluster: %s, err:%v", cluster.ClusterName, err)
+					log.Warnf("notvalid workload in cluster: %s, err:%v", cli.Name(), err)
 					continue
 				}
 				c := &models.Container{
 					Workload: &models.Workload{
-						ClusterName: cluster.ClusterName,
+						ClusterName: cli.Name(),
 						Namespace:   string(sample.Metric[NamespaceKey]),
 						Type:        string(sample.Metric[WorkloadTypeKey]),
 						Name:        strings.Split(string(sample.Metric[WorkloadNameKey]), ":")[1], // eg. Deployment:nginx
@@ -125,10 +130,10 @@ func (c *ResourceCache) WorkloadSync() error {
 			}
 
 			// 内存使用率
-			for _, sample := range memoryPercentResp.Vector {
+			for _, sample := range memoryPercentResp {
 				key, err := GetUniqueContainerKey(sample)
 				if err != nil {
-					log.Warnf("notvalid workload in cluster: %s, err:%v", cluster.ClusterName, err)
+					log.Warnf("notvalid workload in cluster: %s, err:%v", cli.Name(), err)
 					continue
 				}
 				if c, ok := containerMap[key]; ok {
@@ -137,7 +142,7 @@ func (c *ResourceCache) WorkloadSync() error {
 				} else {
 					c := &models.Container{
 						Workload: &models.Workload{
-							ClusterName: cluster.ClusterName,
+							ClusterName: cli.Name(),
 							Namespace:   string(sample.Metric[NamespaceKey]),
 							Type:        string(sample.Metric[WorkloadTypeKey]),
 							Name:        strings.Split(string(sample.Metric[WorkloadNameKey]), ":")[1],
@@ -151,10 +156,10 @@ func (c *ResourceCache) WorkloadSync() error {
 			}
 
 			// CPU使用量，在这之前所有超标的容器信息全部缓存完毕
-			for _, sample := range cpuUsageResp.Vector {
+			for _, sample := range cpuUsageResp {
 				key, err := GetUniqueContainerKey(sample)
 				if err != nil {
-					log.Warnf("notvalid workload in cluster: %s, err:%v", cluster.ClusterName, err)
+					log.Warnf("notvalid workload in cluster: %s, err:%v", cli.Name(), err)
 					continue
 				}
 				if c, ok := containerMap[key]; ok {
@@ -164,10 +169,10 @@ func (c *ResourceCache) WorkloadSync() error {
 			}
 
 			// 内存使用量
-			for _, sample := range memoryUsageResp.Vector {
+			for _, sample := range memoryUsageResp {
 				key, err := GetUniqueContainerKey(sample)
 				if err != nil {
-					log.Warnf("notvalid workload in cluster: %s, err:%v", cluster.ClusterName, err)
+					log.Warnf("notvalid workload in cluster: %s, err:%v", cli.Name(), err)
 					continue
 				}
 				if c, ok := containerMap[key]; ok {
@@ -177,10 +182,10 @@ func (c *ResourceCache) WorkloadSync() error {
 			}
 
 			// CPU限制
-			for _, sample := range cpuLimitResp.Vector {
+			for _, sample := range cpuLimitResp {
 				key, err := GetUniqueContainerKey(sample)
 				if err != nil {
-					log.Warnf("notvalid workload in cluster: %s, err:%v", cluster.ClusterName, err)
+					log.Warnf("notvalid workload in cluster: %s, err:%v", cli.Name(), err)
 					continue
 				}
 				if c, ok := containerMap[key]; ok {
@@ -190,10 +195,10 @@ func (c *ResourceCache) WorkloadSync() error {
 			}
 
 			// 内存限制
-			for _, sample := range memoryLimitResp.Vector {
+			for _, sample := range memoryLimitResp {
 				key, err := GetUniqueContainerKey(sample)
 				if err != nil {
-					log.Warnf("notvalid workload in cluster: %s, err:%v", cluster.ClusterName, err)
+					log.Warnf("notvalid workload in cluster: %s, err:%v", cli.Name(), err)
 					continue
 				}
 				if c, ok := containerMap[key]; ok {
@@ -225,10 +230,10 @@ func (c *ResourceCache) WorkloadSync() error {
 			}
 
 			// cpulimit方差
-			for _, sample := range cpuLimitStdvarResp.Vector {
+			for _, sample := range cpuLimitStdvarResp {
 				key, err := GetUniqueWorkloadKey(sample)
 				if err != nil {
-					log.Warnf("notvalid workload in cluster: %s, err:%v", cluster.ClusterName, err)
+					log.Warnf("notvalid workload in cluster: %s, err:%v", cli.Name(), err)
 					continue
 				}
 				if w, ok := workloadMap[key]; ok {
@@ -237,10 +242,10 @@ func (c *ResourceCache) WorkloadSync() error {
 				}
 			}
 			// 内存limit方差
-			for _, sample := range memoryLimitStdvarResp.Vector {
+			for _, sample := range memoryLimitStdvarResp {
 				key, err := GetUniqueWorkloadKey(sample)
 				if err != nil {
-					log.Warnf("notvalid workload in cluster: %s, err:%v", cluster.ClusterName, err)
+					log.Warnf("notvalid workload in cluster: %s, err:%v", cli.Name(), err)
 					continue
 				}
 				if w, ok := workloadMap[key]; ok {
@@ -263,11 +268,14 @@ func (c *ResourceCache) WorkloadSync() error {
 			if err := c.DB.DB().Save(&workloads).Error; err != nil {
 				return errors.Wrap(err, "failed to save workload resources")
 			}
-			log.Infof("cluster %s, namespace: %s workload collect succeed, total: %d", cluster.ClusterName, ns, total)
+			log.Infof("cluster %s, namespace: %s workload collect succeed, total: %d", cli.Name(), ns, total)
 		}
+		return nil
+	}); err != nil {
+		return err
 	}
 
-	log.Infof("finish workload resource list, used: %s", time.Since(start).String())
+	log.Info("finish workload resource list", "duration", time.Since(start).String())
 	return nil
 }
 
