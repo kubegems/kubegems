@@ -24,7 +24,7 @@ const (
 	resourceMemory = "memory"
 
 	minCPULimitCores    = 0.1      // 10m
-	minMemoryLimitBytes = 100 * Mi // 10Mi
+	minMemoryLimitBytes = 100 * Mi // 100Mi
 )
 
 // Workload workload资源使用清单
