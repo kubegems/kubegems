@@ -66,7 +66,7 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 		SearchFields:  SearchFields,
 		PreloadFields: []string{"Environments", "TenantResourceQuotas"},
 	}
-	total, page, size, err := query.PageList(h.GetDataBase().DB().Scopes(models.ClusterIsNotDeleted), cond, &list)
+	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -85,7 +85,7 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 // @Security JWT
 func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 	var clusters []*models.Cluster
-	if err := h.GetDataBase().DB().Scopes(models.ClusterIsNotDeleted).Find(&clusters).Error; err != nil {
+	if err := h.GetDataBase().DB().Find(&clusters).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -132,7 +132,7 @@ func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 // @Security JWT
 func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 	var obj models.Cluster
-	if err := h.GetDataBase().DB().Scopes(models.ClusterIsNotDeleted).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -152,7 +152,7 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 // @Security JWT
 func (h *ClusterHandler) PutCluster(c *gin.Context) {
 	var obj models.Cluster
-	if err := h.GetDataBase().DB().Scopes(models.ClusterIsNotDeleted).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -185,7 +185,7 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 // @Security JWT
 func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 	cluster := &models.Cluster{}
-	if err := h.GetDataBase().DB().Scopes(models.ClusterIsNotDeleted).First(cluster, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDataBase().DB().First(cluster, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
@@ -215,7 +215,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		h.DynamicConfig.Get(ctx, installeropts)
 
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
-			if err := tx.Where("id = ?", cluster.ID).UpdateColumn("is_deleted", true).Error; err != nil {
+			if err := tx.Delete(cluster).Error; err != nil {
 				return err
 			}
 			installer := ClusterInstaller{
@@ -278,7 +278,6 @@ func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 		PreloadFields: []string{"Project", "Cluster", "Creator", "Applications", "Users"},
 		Where: []*handlers.QArgs{
 			handlers.Args("cluster_id = ?", clusterid),
-			handlers.Args("is_deleted = ?", false),
 		},
 	}
 	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
@@ -314,7 +313,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 		return
 	}
 	clusterid := utils.ToUint(c.Param(PrimaryKeyName))
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, clusterid).Error; err != nil {
+	if err := h.GetDB().First(&cluster, clusterid).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("cluster not exist"))
 		return
 	}
@@ -358,7 +357,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 		count(*) as total
 	from log_query_histories
 	where
-		creator_id = ? and cluster_id = ? and create_at > ? and is_deleted = ?
+		creator_id = ? and cluster_id = ? and create_at > ?
 	group by
 		log_ql
 	order by total desc;`
@@ -400,7 +399,7 @@ func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 		return
 	}
 	clusterid := utils.ToUint(c.Param(PrimaryKeyName))
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, clusterid).Error; err != nil {
+	if err := h.GetDB().First(&cluster, clusterid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
