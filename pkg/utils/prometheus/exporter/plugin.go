@@ -39,7 +39,7 @@ func (c *PluginCollector) Update(ch chan<- prometheus.Metric) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	gemsplugins, err := gemsplugin.GetPlugins(c.clus)
+	gemsplugins, err := gemsplugin.GetPlugins(c.clus.Discovery())
 	if err != nil {
 		log.Error(err, "get plugins failed")
 		return err

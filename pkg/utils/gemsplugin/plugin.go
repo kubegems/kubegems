@@ -8,6 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/log"
 )
@@ -69,11 +70,11 @@ type Status struct {
 	Host        string   `json:"host,omitempty"`
 }
 
-func GetPlugins(clus cluster.Interface) (*Plugins, error) {
+func GetPlugins(dis discovery.DiscoveryInterface) (*Plugins, error) {
 	ctx := context.TODO()
 	once.Do(func() {
 		for _, pluginURL := range pluginURLs {
-			_, err := clus.Discovery().RESTClient().Get().AbsPath(pluginURL).Do(ctx).Raw()
+			_, err := dis.RESTClient().Get().AbsPath(pluginURL).Do(ctx).Raw()
 			if err == nil {
 				realPluginURL = pluginURL
 				log.Infof("use plugin url: %s", pluginURL)
@@ -84,7 +85,7 @@ func GetPlugins(clus cluster.Interface) (*Plugins, error) {
 		log.Fatalf("all plugin urls failed, please check installer position")
 	})
 
-	obj, err := clus.Discovery().RESTClient().Get().AbsPath(realPluginURL).Do(ctx).Raw()
+	obj, err := dis.RESTClient().Get().AbsPath(realPluginURL).Do(ctx).Raw()
 	if err != nil {
 		log.Errorf("error getting plugins: %v", err)
 		return nil, err
@@ -97,13 +98,13 @@ func GetPlugins(clus cluster.Interface) (*Plugins, error) {
 	return gemsplugins, nil
 }
 
-func UpdatePlugins(clus cluster.Interface, plugins *Plugins) error {
+func UpdatePlugins(dis discovery.DiscoveryInterface, plugins *Plugins) error {
 	ctx := context.TODO()
 	obj, err := json.Marshal(plugins)
 	if err != nil {
 		return err
 	}
-	_, err = clus.Discovery().RESTClient().Put().AbsPath(realPluginURL).Body(obj).DoRaw(ctx)
+	_, err = dis.RESTClient().Put().AbsPath(realPluginURL).Body(obj).DoRaw(ctx)
 	if err != nil {
 		log.Errorf("error update plugins: %v", err)
 		return err
