@@ -28,6 +28,13 @@ type OauthLoginUtils struct {
 	client      *http.Client
 }
 
+// OauthCommonUserInfo adaptor all source
+type OauthCommonUserInfo struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+}
+
 func NewOauthUtils(name string, opts *OauthOption) *OauthLoginUtils {
 	return &OauthLoginUtils{
 		Name: name,
@@ -65,7 +72,7 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 		return nil, err
 	}
 	restyClient := resty.NewWithClient(ot.OauthConfig.Client(context.Background(), token))
-	ret := &UserInfo{}
+	ret := &OauthCommonUserInfo{}
 	if _, err := restyClient.SetHeader("Authorization", "Bearer "+token.AccessToken).R().SetResult(ret).Get(ot.opts.UserInfoURL); err != nil {
 		log.Debugf("oauth2 get userinfo  failed: %v", err)
 		return nil, err
@@ -78,6 +85,9 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 			ret.Username = ret.Name
 		}
 	}
-	ret.Source = cred.Source
-	return ret, nil
+	return &UserInfo{
+		Username: ret.Username,
+		Email:    ret.Email,
+		Source:   cred.Source,
+	}, nil
 }
