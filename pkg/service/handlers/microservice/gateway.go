@@ -66,7 +66,7 @@ func (h *IstioGatewayHandler) ListGateway(c *gin.Context) {
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -146,7 +146,7 @@ func (h *IstioGatewayHandler) GetGateway(c *gin.Context) {
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -270,7 +270,7 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -336,7 +336,7 @@ func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -432,7 +432,7 @@ func (h *IstioGatewayHandler) DeleteGateway(c *gin.Context) {
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

@@ -61,7 +61,7 @@ func (c *ResourceCache) WorkloadSync() error {
 	c.DB.DB().Where("1 = 1").Delete(models.Container{})
 	c.DB.DB().Where("1 = 1").Delete(models.Workload{})
 	clusters := []models.Cluster{}
-	if err := c.DB.DB().Scopes(models.ClusterIsNotDeleted).Find(&clusters).Error; err != nil {
+	if err := c.DB.DB().Find(&clusters).Error; err != nil {
 		return errors.Wrap(err, "failed to get clusters")
 	}
 	for _, cluster := range clusters {
