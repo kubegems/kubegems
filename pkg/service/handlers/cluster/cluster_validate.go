@@ -8,6 +8,7 @@ import (
 	kversion "k8s.io/apimachinery/pkg/version"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils/gemsplugin"
 	"kubegems.io/pkg/utils/kube"
 )
 
@@ -16,10 +17,15 @@ type ValidateKubeConfigReq struct {
 }
 
 type ValidateKubeConfigResp struct {
-	ServerInfo     *kversion.Info `json:"serverInfo"`
-	StorageClasses []string       `json:"storageClasses"`
-	Connectable    bool
-	Message        string
+	ServerInfo     *kversion.Info `json:"serverInfo,omitempty"`
+	StorageClasses []string       `json:"storageClasses,omitempty"`
+
+	// 判断是否存在installer，若存在即可加为控制集群
+	ExistInstaller bool   `json:"existInstaller,omitempty"`
+	ClusterName    string `json:"clusterName,omitempty"`
+
+	Connectable bool   `json:"connectable,omitempty"`
+	Message     string `json:"message,omitempty"`
 }
 
 // ValidateKubeConfig 添加cluster前的kubeconfig检测接口，验证kubeconfig，返回集群信息和可用的storageClass列表
@@ -68,6 +74,12 @@ func (h *ClusterHandler) ValidateKubeConfig(c *gin.Context) {
 	}
 	for _, sc := range scList.Items {
 		resp.StorageClasses = append(resp.StorageClasses, sc.GetName())
+	}
+
+	plugins, err := gemsplugin.GetPlugins(clientSet.DiscoveryClient)
+	if err == nil {
+		resp.ExistInstaller = true
+		resp.ClusterName = plugins.Spec.ClusterName
 	}
 	handlers.OK(c, resp)
 }

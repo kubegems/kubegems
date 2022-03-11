@@ -32,7 +32,7 @@ type PluginsRet struct {
 // @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
 // @Security JWT
 func (h *PluginHandler) List(c *gin.Context) {
-	allPlugins, err := gemsplugin.GetPlugins(h.cluster)
+	allPlugins, err := gemsplugin.GetPlugins(h.cluster.Discovery())
 	if err != nil {
 		log.Error(err, "get plugins")
 		NotOK(c, err)
@@ -130,7 +130,7 @@ func (h *PluginHandler) updatePlugin(
 ) error {
 	plugintype := c.Query("type")
 	name := c.Param("name")
-	allPlugins, err := gemsplugin.GetPlugins(h.cluster)
+	allPlugins, err := gemsplugin.GetPlugins(h.cluster.Discovery())
 	if err != nil {
 		return err
 	}
@@ -153,5 +153,5 @@ func (h *PluginHandler) updatePlugin(
 	}
 
 	mutatePlugin(found)
-	return gemsplugin.UpdatePlugins(h.cluster, allPlugins)
+	return gemsplugin.UpdatePlugins(h.cluster.Discovery(), allPlugins)
 }
