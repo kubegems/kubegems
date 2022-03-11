@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -56,7 +57,8 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 	ctxinner := context.WithValue(ctx, oauth2.HTTPClient, ot.client)
 	token, err := ot.OauthConfig.Exchange(ctxinner, cred.Code)
 	if err != nil {
-		log.Debugf("oauth2 exchange token failed: %v", err)
+		otcfg, _ := json.Marshal(ot)
+		log.Debugf("oauth2 exchange token failed: %v, %s", err, otcfg)
 		return nil, err
 	}
 	restyClient := resty.NewWithClient(ot.OauthConfig.Client(context.Background(), token))
