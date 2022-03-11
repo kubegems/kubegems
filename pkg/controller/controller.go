@@ -19,6 +19,7 @@ import (
 	"context"
 	"time"
 
+	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
 	nginx_v1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	istioclinetworkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -46,6 +47,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(gemsv1beta1.AddToScheme(scheme))
+	utilruntime.Must(loggingv1beta1.AddToScheme(scheme))
 
 	// 每一组控制器都需要一个 Scheme，它提供了 Kinds 和相应的 Go 类型之间的映射
 	utilruntime.Must(nginx_v1alpha1.SchemeBuilder.AddToScheme(scheme))
