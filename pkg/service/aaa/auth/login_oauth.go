@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -29,8 +28,9 @@ type OauthLoginUtils struct {
 	client      *http.Client
 }
 
-func NewOauthUtils(opts *OauthOption) *OauthLoginUtils {
+func NewOauthUtils(name string, opts *OauthOption) *OauthLoginUtils {
 	return &OauthLoginUtils{
+		Name: name,
 		opts: opts,
 		OauthConfig: &oauth2.Config{
 			ClientID:     opts.AppID,
@@ -47,6 +47,10 @@ func NewOauthUtils(opts *OauthOption) *OauthLoginUtils {
 	}
 }
 
+func (ot *OauthLoginUtils) GetName() string {
+	return ot.Name
+}
+
 func (ot *OauthLoginUtils) LoginAddr() string {
 	state := uuid.NewString()
 	url := ot.OauthConfig.AuthCodeURL(state)
@@ -57,8 +61,7 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 	ctxinner := context.WithValue(ctx, oauth2.HTTPClient, ot.client)
 	token, err := ot.OauthConfig.Exchange(ctxinner, cred.Code)
 	if err != nil {
-		otcfg, _ := json.Marshal(ot)
-		log.Debugf("oauth2 exchange token failed: %v, %s", err, otcfg)
+		log.Debugf("oauth2 exchange token failed: %v", err)
 		return nil, err
 	}
 	restyClient := resty.NewWithClient(ot.OauthConfig.Client(context.Background(), token))
