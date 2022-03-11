@@ -20,6 +20,7 @@ func AddToschema(schema *runtime.Scheme) {
 	_ = metricsv1beta1.AddToScheme(schema)
 	_ = monitoringv1.AddToScheme(schema)
 	_ = monitoringv1alpha1.AddToScheme(schema)
+	_ = loggingv1beta1.AddToScheme(schema)
 	_ = gemsv1beta1.AddToScheme(schema)
 	_ = argocdv1alpha1.AddToScheme(schema)
 	_ = csiv1.AddToScheme(schema)
