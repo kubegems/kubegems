@@ -58,6 +58,9 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name str
 		DB:   l.DB,
 		Name: AccountLoginName,
 	}
+	if name == AccountLoginName {
+		return defaultUtil
+	}
 	if err := l.DB.WithContext(ctx).Where("name = ? and enabled = ?", name, true).First(&authSource).Error; err != nil {
 		log.Error(err, "no enabled auth source found", "name", name)
 		return defaultUtil
@@ -84,7 +87,6 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name str
 			Scopes:      authSource.Config.Scopes,
 		}
 		return NewOauthUtils(authSource.Name, opt)
-	default:
-		return defaultUtil
 	}
+	return nil
 }
