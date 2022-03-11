@@ -12,6 +12,7 @@ type AuthSource struct {
 	ID        uint             `json:"id"`
 	Name      string           `gorm:"unique" json:"name"`
 	Kind      string           `json:"kind" binding:"oneof=LDAP OAUTH"`
+	Vendor    string           `gorm:"type:varchar(30)" json:"vendor" binding:"omitempty,oneof=github gitlab oauth ldap"`
 	Config    AuthSourceConfig `json:"config" binding:"required,json"`
 	TokenType string           `json:"tokenType" binding:"required,oneof=Bearer"`
 	Enabled   bool             `json:"enabled"`
