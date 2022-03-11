@@ -304,20 +304,26 @@ func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 // @Router /v1/cluster/{cluster_id}/logqueryhistory [get]
 // @Security JWT
 func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
-	var list []models.LogQueryHistory
+	var (
+		list    []models.LogQueryHistory
+		cluster models.Cluster
+	)
 	query, err := handlers.GetQuery(c, nil)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	clusterid := utils.ToUint(c.Param(PrimaryKeyName))
+	if err := h.GetDB().Scopes(models.ClusterIsNotDeleted).First(&cluster, clusterid).Error; err != nil {
+		handlers.NotOK(c, fmt.Errorf("cluster not exist"))
+		return
+	}
 	cond := &handlers.PageQueryCond{
 		Model:         "LogQueryHistory",
 		SearchFields:  []string{"LogQL"},
 		PreloadFields: []string{"Cluster", "Creator"},
 		Where: []*handlers.QArgs{
 			handlers.Args("cluster_id = ?", clusterid),
-			handlers.Args("is_deleted = ?", false),
 		},
 	}
 	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
