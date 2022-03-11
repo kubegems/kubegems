@@ -72,10 +72,10 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 	}
 
 	if ret.Username == "" {
-		if ret.User == "" {
+		if ret.Name == "" {
 			return nil, fmt.Errorf("failed to get username")
 		} else {
-			ret.Username = ret.User
+			ret.Username = ret.Name
 		}
 	}
 	ret.Source = cred.Source
