@@ -53,6 +53,9 @@ validate:
 // 所有的环境下的资源，需要注入label
 //+kubebuilder:webhook:path=/label-injector,mutating=true,failurePolicy=ignore,groups="",resources=pods;configmaps;secrets;services;daemonsets;deployments;statefulsets;jobs;cronjobs;persistentvolumeclaims,verbs=create;update,versions=*,name=mutate.label-injector.dev,sideEffects=None,admissionReviewVersions=v1
 
+// logging resources，需要注入label
+//+kubebuilder:webhook:path=/label-injector,mutating=true,failurePolicy=ignore,groups="logging.banzaicloud.io",resources=flows;outputs,verbs=create;update,versions=v1beta1,name=mutate.label-injector.dev,sideEffects=None,admissionReviewVersions=v1
+
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
 

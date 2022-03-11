@@ -2,6 +2,9 @@ package logoperatorhandler
 
 import (
 	"context"
+	"sort"
+	"strings"
+
 	// "fmt"
 	// "net/http"
 	// "net/url"
@@ -9,9 +12,12 @@ import (
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
 	"github.com/gin-gonic/gin"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	// promemodel "github.com/prometheus/common/model"
 	"golang.org/x/sync/errgroup"
 	// corev1 "k8s.io/api/core/v1"
+	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
@@ -63,54 +69,49 @@ func (h *LogOperatorHandler) GetTenantNamespaces(c *gin.Context) ([]string, erro
 }
 
 func (h *LogOperatorHandler) Flows(c *gin.Context) {
-	namespaces, err := h.GetTenantNamespaces(c)
-	if err != nil {
+	cluster := c.Param("cluster")
+	tenant := c.Param(PrimaryKeyName)
+	ctx := c.Request.Context()
+	allFlows := []loggingv1beta1.Flow{}
+	flows := loggingv1beta1.FlowList{}
+	if err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
+		g := errgroup.Group{}
+		g.Go(func() error {
+			return tc.List(ctx, &flows, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{gemlabels.LabelTenant: tenant}))
+		})
+		return g.Wait()
+	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	cluster := c.Param("cluster")
-	ctx := c.Request.Context()
-	allFlows := []loggingv1beta1.Flow{}
-	for _, ns := range namespaces {
-		flows := loggingv1beta1.FlowList{}
-		if err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
-			g := errgroup.Group{}
-			g.Go(func() error {
-				return tc.List(ctx, &flows, client.InNamespace(ns))
-			})
-			return g.Wait()
-		}); err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-		allFlows = append(allFlows, flows.Items...)
-	}
+	allFlows = append(allFlows, flows.Items...)
+	sort.Slice(allFlows, func(i, j int) bool {
+		return strings.ToLower(allFlows[i].Name) < strings.ToLower(allFlows[j].Name)
+	})
 	handlers.OK(c, allFlows)
 }
 
 func (h *LogOperatorHandler) Outputs(c *gin.Context) {
-	namespaces, err := h.GetTenantNamespaces(c)
-	if err != nil {
+
+	cluster := c.Param("cluster")
+	tenant := c.Param(PrimaryKeyName)
+	ctx := c.Request.Context()
+	allOutputs := []loggingv1beta1.Output{}
+	outputs := loggingv1beta1.OutputList{}
+	if err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
+		g := errgroup.Group{}
+		g.Go(func() error {
+			return tc.List(ctx, &outputs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{gemlabels.LabelTenant: tenant}))
+		})
+		return g.Wait()
+	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	allOutputs := []loggingv1beta1.Output{}
-	cluster := c.Param("cluster")
-	ctx := c.Request.Context()
-	for _, ns := range namespaces {
-		outputs := loggingv1beta1.OutputList{}
-		if err := h.Execute(ctx, cluster, func(ctx context.Context, tc agents.Client) error {
-			g := errgroup.Group{}
-			g.Go(func() error {
-				return tc.List(ctx, &outputs, client.InNamespace(ns))
-			})
-			return g.Wait()
-		}); err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-		allOutputs = append(allOutputs, outputs.Items...)
-	}
+	allOutputs = append(allOutputs, outputs.Items...)
+	sort.Slice(allOutputs, func(i, j int) bool {
+		return strings.ToLower(allOutputs[i].Name) < strings.ToLower(allOutputs[j].Name)
+	})
 	handlers.OK(c, allOutputs)
 }
 
