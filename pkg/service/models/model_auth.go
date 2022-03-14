@@ -25,6 +25,7 @@ type AuthSourceSimple struct {
 	Name    string `gorm:"unique" json:"name"`
 	Kind    string `json:"kind"`
 	Enabled bool   `json:"enabled"`
+	Vendor  bool   `json:"vendor"`
 }
 
 func (AuthSourceSimple) TableName() string {
