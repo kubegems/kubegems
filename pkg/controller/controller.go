@@ -17,9 +17,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"net"
+	"strconv"
 	"time"
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
+	"github.com/go-logr/logr"
 	nginx_v1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	istioclinetworkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -33,6 +37,7 @@ import (
 	gemscontroller "kubegems.io/pkg/controller/controllers"
 	"kubegems.io/pkg/controller/webhooks"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	//+kubebuilder:scaffold:imports
 )
@@ -44,12 +49,11 @@ var (
 	renewDeadline = 20 * time.Second
 )
 
+// nolint: gochecknoinits
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(gemsv1beta1.AddToScheme(scheme))
 	utilruntime.Must(loggingv1beta1.AddToScheme(scheme))
-
-	// 每一组控制器都需要一个 Scheme，它提供了 Kinds 和相应的 Go 类型之间的映射
 	utilruntime.Must(nginx_v1alpha1.SchemeBuilder.AddToScheme(scheme))
 	utilruntime.Must(istioclinetworkingv1beta1.SchemeBuilder.AddToScheme(scheme))
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
@@ -59,14 +63,20 @@ func init() {
 
 type Options struct {
 	MetricsAddr          string                           `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
+	ProbeAddr            string                           `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
+	WebhookAddr          string                           `json:"webhookAddr,omitempty" description:"The address the webhook endpoint binds to."`
 	EnableLeaderElection bool                             `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
 	TenantGatewayOptions controllers.TenantGatewayOptions `json:"tenantGatewayOptions,omitempty"`
+	Enablewebhook        bool                             `json:"enablewebhook,omitempty" description:"Enable webhook for controller manager."`
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		MetricsAddr:          "127.0.0.1:8080", // default run under kube-rbac-proxy
+		WebhookAddr:          ":9443",
+		MetricsAddr:          ":9090",
+		ProbeAddr:            ":8081",
 		EnableLeaderElection: false,
+		Enablewebhook:        true,
 		TenantGatewayOptions: controllers.DefaultTenantGatewayOptions(),
 	}
 }
@@ -74,86 +84,125 @@ func NewDefaultOptions() *Options {
 func Run(ctx context.Context, options *Options) error {
 	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: options.MetricsAddr,
-		Port:               9443,
-		LeaseDuration:      &leaseDuration,
-		RenewDeadline:      &renewDeadline,
-		LeaderElection:     options.EnableLeaderElection,
-		LeaderElectionID:   gems.GroupName,
-	})
+	webhookHost, webhookPortStr, err := net.SplitHostPort(options.WebhookAddr)
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		return err
+		return fmt.Errorf("parse webhook address: %v", err)
+	}
+	webhookPort, err := strconv.Atoi(webhookPortStr)
+	if err != nil {
+		return fmt.Errorf("parse webhook port: %v", err)
 	}
 
-	if err = (&gemscontroller.TenantReconciler{
-		Client:   mgr.GetClient(),
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:                 scheme,
+		MetricsBindAddress:     options.MetricsAddr,
+		Port:                   webhookPort,
+		Host:                   webhookHost,
+		HealthProbeBindAddress: options.ProbeAddr,
+		LeaseDuration:          &leaseDuration,
+		RenewDeadline:          &renewDeadline,
+		LeaderElection:         options.EnableLeaderElection,
+		LeaderElectionID:       gems.GroupName,
+	})
+	if err != nil {
+		setupLog.Error(err, "unable to create manager")
+		return err
+	}
+	// setup healthz
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		return err
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		return err
+	}
+	// setup controllers
+	if err := setupControllers(mgr, options, setupLog); err != nil {
+		return err
+	}
+	// setup webhooks
+	if options.Enablewebhook {
+		if err := setUpWebhook(mgr, setupLog); err != nil {
+			return err
+		}
+	}
+
+	go webhooks.CreateDefaultTenantGateway(mgr.GetClient(), ctrl.Log.WithName("create-default-tenant-gateway"))
+
+	setupLog.Info("starting manager")
+	if err := mgr.Start(ctx); err != nil {
+		setupLog.Error(err, "problem running manager")
+		return err
+	}
+	return nil
+}
+
+func setupControllers(mgr ctrl.Manager, options *Options, setupLog logr.Logger) error {
+	if err := (&gemscontroller.TenantReconciler{
+		Client: mgr.GetClient(), Scheme: mgr.GetScheme(),
 		Log:      ctrl.Log.WithName("controllers").WithName("Tenant"),
-		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("Tenant"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Tenant")
 		return err
 	}
-	if err = (&gemscontroller.TenantResourceQuotaReconciler{
-		Client:   mgr.GetClient(),
+	if err := (&gemscontroller.TenantResourceQuotaReconciler{
+		Client: mgr.GetClient(), Scheme: mgr.GetScheme(),
 		Log:      ctrl.Log.WithName("controllers").WithName("TenantResourceQuota"),
-		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("TenantResourceQuota"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TenantResourceQuota")
 		return err
 	}
-	if err = (&gemscontroller.TenantNetworkPolicyReconciler{
-		Client:   mgr.GetClient(),
+	if err := (&gemscontroller.TenantNetworkPolicyReconciler{
+		Client: mgr.GetClient(), Scheme: mgr.GetScheme(),
 		Log:      ctrl.Log.WithName("controllers").WithName("TenantNetworkPolicy"),
-		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("TenantNetworkPolicy"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TenantNetworkPolicy")
 		return err
 	}
-	if err = (&gemscontroller.TenantGatewayReconciler{
-		Client:   mgr.GetClient(),
+	if err := (&gemscontroller.TenantGatewayReconciler{
+		Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Opts: options.TenantGatewayOptions,
 		Log:      ctrl.Log.WithName("controllers").WithName("TenantGateway"),
-		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("TenantGateway"),
-		Opts:     options.TenantGatewayOptions,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TenantGateway")
 		return err
 	}
-	if err = (&gemscontroller.EnvironmentReconciler{
-		Client:   mgr.GetClient(),
+	if err := (&gemscontroller.EnvironmentReconciler{
+		Client: mgr.GetClient(), Scheme: mgr.GetScheme(),
 		Log:      ctrl.Log.WithName("controllers").WithName("Environment"),
-		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("Environment"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Environment")
 		return err
 	}
-	if err = (&gemscontroller.ServiceentryReconciler{
+	if err := (&gemscontroller.ServiceentryReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("ServiceEntry"),
 	}).SetupWithManager(mgr); err != nil {
 		return err
 	}
 	// Conditional Controllers 允许仅当crd存在时启动对应controller： https://github.com/kubernetes-sigs/controller-runtime/pull/1527
-	if err = (&gemscontroller.VirtuslspaceReconciler{
+	if err := (&gemscontroller.VirtuslspaceReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Virtuslspace"),
 	}).SetupWithManager(mgr); err != nil {
 		return err
 	}
-	if err = (&gemscontroller.PluginStatusController{
+	if err := (&gemscontroller.PluginStatusController{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("PluginStatus"),
 	}).SetupWithManager(mgr); err != nil {
 		return err
 	}
-	//+kubebuilder:scaffold:builder
+	return nil
+}
+
+func setUpWebhook(mgr ctrl.Manager, setupLog logr.Logger) error {
+	setupLog.Info("registering webhooks")
 
 	// webhooks register handler
 	ws := mgr.GetWebhookServer()
@@ -171,12 +220,5 @@ func Run(ctx context.Context, options *Options) error {
 	labelInjectorHandler := webhooks.GetLabelInjectorMutateHandler(&c, &labelInjectorLogger)
 	ws.Register("/label-injector", labelInjectorHandler)
 
-	go webhooks.CreateDefaultTenantGateway(c, ctrl.Log.WithName("create-default-tenant-gateway"))
-
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctx); err != nil {
-		setupLog.Error(err, "problem running manager")
-		return err
-	}
 	return nil
 }
