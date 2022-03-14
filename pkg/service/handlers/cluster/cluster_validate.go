@@ -21,8 +21,8 @@ type ValidateKubeConfigResp struct {
 	StorageClasses []string       `json:"storageClasses,omitempty"`
 
 	// 判断是否存在installer，若存在即可加为控制集群
-	ExistInstaller bool   `json:"existInstaller,omitempty"`
-	ClusterName    string `json:"clusterName,omitempty"`
+	ExistInstaller bool   `json:"existInstaller"`
+	ClusterName    string `json:"clusterName"`
 
 	Connectable bool   `json:"connectable,omitempty"`
 	Message     string `json:"message,omitempty"`
