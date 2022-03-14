@@ -240,9 +240,7 @@ func (r *InstallerReconciler) apply(ctx context.Context, exist, desired *release
 
 func (r *InstallerReconciler) convertRelease(plugin pluginsv1beta1.InstallerSpecPlugin) (*release.Release, error) {
 	pluginValues := map[string]interface{}{}
-	if err := json.Unmarshal(plugin.Values.Raw, &pluginValues); err != nil {
-		return nil, err
-	}
+	_ = json.Unmarshal(plugin.Values.Raw, &pluginValues)
 	loader, err := loader.Loader(filepath.Join(r.Options.ChartsDir, plugin.Name))
 	if err != nil {
 		return nil, err
