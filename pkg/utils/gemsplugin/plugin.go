@@ -3,6 +3,7 @@ package gemsplugin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -82,8 +83,12 @@ func GetPlugins(dis discovery.DiscoveryInterface) (*Plugins, error) {
 			}
 			log.Errorf("plugins url %s error: %v", pluginURL, err)
 		}
-		log.Fatalf("all plugin urls failed, please check installer position")
+		log.Errorf("all plugin urls failed, please check installer position")
 	})
+
+	if realPluginURL == "" {
+		return nil, fmt.Errorf("installer plugins not found")
+	}
 
 	obj, err := dis.RESTClient().Get().AbsPath(realPluginURL).Do(ctx).Raw()
 	if err != nil {
@@ -95,7 +100,7 @@ func GetPlugins(dis discovery.DiscoveryInterface) (*Plugins, error) {
 	if err := json.Unmarshal(obj, gemsplugins); err != nil {
 		log.Errorf("error unmarshalling plugins: %v", err)
 	}
-	return gemsplugins, nil
+	return gemsplugins, err
 }
 
 func UpdatePlugins(dis discovery.DiscoveryInterface, plugins *Plugins) error {
