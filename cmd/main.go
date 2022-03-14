@@ -42,6 +42,7 @@ func NewRootCmd() *cobra.Command {
 		apps.NewMsgbusCmd(),
 		apps.NewWorkerCmd(),
 		// apps.NewServicesCmd(),
+		apps.NewInstallerCmd(),
 	)
 	return cmd
 }
