@@ -1,0 +1,349 @@
+{{/*
+    If the user does not have cert-manager and is not providing a secret with the certificates, the chart needs to generate the secret
+  */}}
+{{- $ca := genCA "kubegems-ca" 365 }}
+{{- $cert := genSignedCert (include "kubegems-local.controller.fullname" .) nil (list (printf "%s.%s.svc" (include "kubegems-local.controller.webhook.fullname" .) .Release.Namespace) (printf "%s.%s.svc.%s" (include "kubegems-local.controller.webhook.fullname" .) .Release.Namespace .Values.clusterDomain)) 365 $ca }}
+
+{{- if not .Values.controller.webhook.useCertManager }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "kubegems-local.controller.webhook.secretName" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ $cert.Cert | b64enc | quote }}
+  tls.key: {{ $cert.Key | b64enc | quote }}
+  ca.crt: {{ $ca.Cert | b64enc | quote }}
+{{- end }}
+---
+{{- if .Values.controller.webhook.enabled }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if .Values.controller.webhook.useCertManager }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s" .Release.Namespace (include "kubegems-local.controller.webhook.secretName" .) }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate
+    failurePolicy: Fail
+    name: validate.tenant.dev
+    rules:
+    - apiGroups:
+        - gems.kubegems.io
+      apiVersions:
+        - v1beta1
+      operations:
+        - UPDATE
+      resources:
+        - tenants
+    sideEffects: None
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate
+    failurePolicy: Fail
+    name: validate.tenantresourcequota.dev
+    rules:
+    - apiGroups:
+        - gems.kubegems.io
+      apiVersions:
+        - v1beta1
+      operations:
+        - CREATE
+        - UPDATE
+        - DELETE
+      resources:
+        - tenantresourcequotas
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate
+    failurePolicy: Fail
+    name: validate.tenantnetworkpolicy.dev
+    rules:
+    - apiGroups:
+      - gems.kubegems.io
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      - DELETE
+      resources:
+      - tenantnetworkpolicies
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate
+    failurePolicy: Fail
+    name: validate.tenantgateway.dev
+    rules:
+    - apiGroups:
+      - gems.kubegems.io
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      - DELETE
+      resources:
+      - tenantgateways
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate
+    failurePolicy: Fail
+    name: validate.environment.dev
+    rules:
+    - apiGroups:
+      - gems.kubegems.io
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - environments
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate
+    failurePolicy: Fail
+    name: valiate.namespace.dev
+    rules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - '*'
+      operations:
+      - DELETE
+      resources:
+      - namespaces
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate
+    failurePolicy: Fail
+    name: validate.istiogateway.dev
+    rules:
+    - apiGroups:
+      - networking.istio.io
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - gateways
+    sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if .Values.controller.webhook.useCertManager }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s" .Release.Namespace (include "kubegems-local.controller.webhook.secretName" .) }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /mutate
+    failurePolicy: Fail
+    name: mutate.resourcequota.dev
+    rules:
+    - apiGroups:
+      - gems.kubegems.io
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - tenantresourcequotas
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /mutate
+    failurePolicy: Fail
+    name: mutate.environment.dev
+    rules:
+    - apiGroups:
+      - gems.kubegems.io
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - environments
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /mutate
+    failurePolicy: Fail
+    name: mutate.gateway.dev
+    rules:
+    - apiGroups:
+      - gems.kubegems.io
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - tenantgateways
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /mutate
+    failurePolicy: Fail
+    name: mutate.ingress.dev
+    rules:
+    - apiGroups:
+      - extensions
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - ingresses
+    sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /label-injector
+    failurePolicy: Ignore
+    name: mutate.label-injector.dev
+    rules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - '*'
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - configmaps
+      - secrets
+      - services
+      - daemonsets
+      - deployments
+      - statefulsets
+      - jobs
+      - cronjobs
+      - persistentvolumeclaims
+    sideEffects: None
+{{- end }}

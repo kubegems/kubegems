@@ -1,0 +1,39 @@
+{{- if and (.Values.agent.tls.enabled) (.Values.agent.tls.useCertManager) }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "kubegems-local.agent.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: agent
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "kubegems-local.agent.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: agent
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  dnsNames:
+    - {{ printf "%s.%s.svc" (include "kubegems-local.agent.fullname" .) .Release.Namespace }}
+    - {{ printf "%s.%s.svc.%s" (include "kubegems-local.agent.fullname" .) .Release.Namespace .Values.clusterDomain }}
+  issuerRef:
+    kind: Issuer
+    name: {{ include "kubegems-local.agent.fullname" . }}
+  secretName: {{ template "kubegems-local.agent.secretName" . }}
+{{- end }}

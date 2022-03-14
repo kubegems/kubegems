@@ -1,0 +1,31 @@
+{{- if and .Values.agent.metrics.enabled .Values.agent.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kubegems-local.agent.fullname" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  jobLabel: {{ .Values.agent.metrics.serviceMonitor.jobLabel }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: metrics
+      {{- if .Values.agent.metrics.serviceMonitor.interval }}
+      interval: {{ .Values.agent.metrics.serviceMonitor.interval }}
+      {{- end }}
+      {{- if .Values.agent.metrics.serviceMonitor.metricRelabelings }}
+      metricRelabelings: {{ toYaml .Values.agent.metrics.serviceMonitor.metricRelabelings | nindent 8 }}
+      {{- end }}
+      {{- if .Values.agent.metrics.serviceMonitor.relabelings }}
+      relabelings: {{ toYaml .Values.agent.metrics.serviceMonitor.relabelings | nindent 8 }}
+      {{- end }}
+{{- end }}
