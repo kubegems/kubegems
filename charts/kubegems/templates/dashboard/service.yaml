@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kubegems.dashboard.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if .Values.dashboard.annotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.dashboard.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if and .Values.dashboard.metrics.enabled .Values.dashboard.metrics.service.annotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.dashboard.metrics.service.annotations "context" $) | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.dashboard.service.type }}
+  {{- if or (eq .Values.dashboard.service.type "LoadBalancer") (eq .Values.dashboard.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.dashboard.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq .Values.dashboard.service.type "LoadBalancer") (not (empty .Values.dashboard.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ .Values.dashboard.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if and (eq .Values.dashboard.service.type "LoadBalancer") (not (empty .Values.dashboard.service.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.dashboard.service.loadBalancerIP }}
+  {{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.dashboard.service.ports.http }}
+      protocol: TCP
+      targetPort: http
+    {{- if .Values.dashboard.metrics.enabled }}
+    - name: metrics
+      port: {{ .Values.dashboard.metrics.service.port }}
+      targetPort: metrics
+      protocol: TCP
+      {{- if (and (or (eq .Values.dashboard.service.type "NodePort") (eq .Values.dashboard.service.type "LoadBalancer")) (not (empty .Values.dashboard.service.nodePorts.metrics))) }}
+      nodePort: {{ .Values.server.dashboard.nodePorts.metrics }}
+      {{- else if eq .Values.dashboard.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
+    {{- end }}
+    {{- if .Values.dashboard.service.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.service.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{- include "common.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard

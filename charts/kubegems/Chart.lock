@@ -1,0 +1,18 @@
+dependencies:
+- name: common
+  repository: https://charts.bitnami.com/bitnami
+  version: 1.11.3
+- name: mysql
+  repository: https://charts.bitnami.com/bitnami
+  version: 8.8.26
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.5.2
+- name: gitea
+  repository: https://dl.gitea.io/charts
+  version: 5.0.2
+- name: argo-cd
+  repository: https://charts.bitnami.com/bitnami
+  version: 3.0.13
+digest: sha256:8bcad183c9d972d2f8e4e7ffd057660ee30f3e8579f73114108e8cb1b2fc315f
+generated: "2022-03-14T23:01:43.221085271+08:00"

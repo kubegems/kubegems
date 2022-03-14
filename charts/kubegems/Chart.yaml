@@ -1,0 +1,35 @@
+apiVersion: v2
+appVersion: v2.3.0
+dependencies:
+  - name: common
+    repository: https://charts.bitnami.com/bitnami
+    tags:
+      - bitnami-common
+    version: 1.x.x
+  - name: mysql
+    repository: https://charts.bitnami.com/bitnami
+    condition: mysql.enabled
+    version: 8.x.x
+  - name: redis
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    version: 16.x.x
+  - name: gitea
+    repository: https://dl.gitea.io/charts
+    condition: gitea.enabled
+    version: 5.x.x
+  - name: argo-cd
+    repository: https://charts.bitnami.com/bitnami
+    condition: argo-cd.enabled
+    version: 3.x.x
+description: KubeGems components.
+home: kubegems.io
+keywords:
+  - kubegems
+maintainers:
+  - email: support@kubegems.io
+    name: kubegems
+name: kubegems
+sources:
+  - https://kubegems.io
+version: 1.0.0
