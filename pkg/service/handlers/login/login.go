@@ -101,12 +101,14 @@ func (h *OAuthHandler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo
 func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	ctx := c.Request.Context()
 	cred := &auth.Credential{}
+	// POST for account login and ldap
 	if c.Request.Method == http.MethodPost {
 		if err := c.BindJSON(cred); err != nil {
 			handlers.NotOK(c, err)
 			return
 		}
 	} else {
+		// GET for oauth
 		code := c.Query("code")
 		if code == "" {
 			handlers.NotOK(c, fmt.Errorf("invalid code"))
@@ -115,10 +117,6 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		cred.Code = c.Query("code")
 	}
 
-	if cred.Source == "" {
-		handlers.Unauthorized(c, "auth source must provide")
-		return
-	}
 	state := c.Query("state")
 	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source, state)
 	if authenticator == nil {

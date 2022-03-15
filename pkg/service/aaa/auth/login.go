@@ -53,27 +53,27 @@ type AuthenticateModule struct {
 	DB *gorm.DB
 }
 
-func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, name, state string) AuthenticateIface {
+func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, sourceName, state string) AuthenticateIface {
 	authSource := models.AuthSource{}
 	defaultUtil := &AccountLoginUtil{
 		DB:   l.DB,
 		Name: AccountLoginName,
 	}
-	if name == AccountLoginName {
+	if sourceName == AccountLoginName {
 		return defaultUtil
 	}
 
-	if name == "" {
+	if sourceName == "" {
 		sname, err := getNameFromState(state)
 		if err != nil {
 			log.Error(err, "failed to find auth source from state", "state", state)
 			return defaultUtil
 		}
-		name = sname
+		sourceName = sname
 	}
 
-	if err := l.DB.WithContext(ctx).Where("name = ? and enabled = ?", name, true).First(&authSource).Error; err != nil {
-		log.Error(err, "no enabled auth source found", "name", name)
+	if err := l.DB.WithContext(ctx).Where("name = ? and enabled = ?", sourceName, true).First(&authSource).Error; err != nil {
+		log.Error(err, "no enabled auth source found", "name", sourceName)
 		return defaultUtil
 	}
 	switch authSource.Kind {
