@@ -58,6 +58,7 @@ func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 		return
 	}
 	if sourceUtil.GetName() != source {
+		log.Info("mismatch auth source name", "sourceut", sourceUtil.GetName(), "provided", source)
 		handlers.NotOK(c, fmt.Errorf("source not match"))
 		return
 	}
