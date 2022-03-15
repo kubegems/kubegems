@@ -52,7 +52,7 @@ func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("source not provide"))
 		return
 	}
-	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source)
+	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source, "")
 	if sourceUtil == nil {
 		handlers.NotOK(c, fmt.Errorf("source not exist"))
 		return
@@ -71,7 +71,7 @@ func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 // @Produce  json
 // @Success 200 {string} string	"地址"
 // @Param source path string true "loginsource"
-// @Router /v1/oauth/callback/{source} [get]
+// @Router /v1/oauth/callback [get]
 func (h *OAuthHandler) GetOauthToken(c *gin.Context) {
 	h.commonLogin(c)
 }
@@ -101,7 +101,6 @@ func (h *OAuthHandler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo
 func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	ctx := c.Request.Context()
 	cred := &auth.Credential{}
-	cred.Source = c.Param("source")
 	if c.Request.Method == http.MethodPost {
 		if err := c.BindJSON(cred); err != nil {
 			handlers.NotOK(c, err)
@@ -115,17 +114,13 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		}
 		cred.Code = c.Query("code")
 	}
-	// TODO: 临时patch
-	if cred.Source == "" {
-		cred.Source = "account"
-	}
-	// -----
 
 	if cred.Source == "" {
 		handlers.Unauthorized(c, "auth source must provide")
 		return
 	}
-	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source)
+	state := c.Query("state")
+	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source, state)
 	if authenticator == nil {
 		handlers.Unauthorized(c, fmt.Errorf("auth source not exist"))
 		return

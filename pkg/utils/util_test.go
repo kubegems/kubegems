@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -143,4 +144,38 @@ func TestValidPassword(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDesEncryptor_EncryptBase64(t *testing.T) {
+	t.Run("des encrypt", func(t *testing.T) {
+		k := bytes.Repeat([]byte("kubegems"), 1)
+		e := &DesEncryptor{
+			Key: k,
+		}
+		got, err := e.EncryptBase64("test123")
+		if err != nil {
+			t.Errorf("DesEncryptor.EncryptBase64() error = %v", err)
+			return
+		}
+		if got != "BJfXG3QdApg=" {
+			t.Errorf("DesEncryptor.EncryptBase64() = %v ", got)
+		}
+	})
+}
+
+func TestDesEncryptor_DecryptBase64(t *testing.T) {
+	t.Run("des decrypt", func(t *testing.T) {
+		k := bytes.Repeat([]byte("kubegems"), 1)
+		e := &DesEncryptor{
+			Key: k,
+		}
+		got, err := e.DecryptBase64("BJfXG3QdApg=")
+		if err != nil {
+			t.Errorf("DesEncryptor.DecryptBase64() error = %v", err)
+			return
+		}
+		if got != "test123" {
+			t.Errorf("DesEncryptor.DecryptBase64() = %v ", got)
+		}
+	})
 }

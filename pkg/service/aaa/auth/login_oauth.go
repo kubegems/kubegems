@@ -4,12 +4,20 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils"
 )
+
+const desKey = "semgebuk"
+
+var des = &utils.DesEncryptor{
+	Key: []byte(desKey),
+}
 
 type OauthOption struct {
 	AuthURL     string   `json:"url"`
@@ -59,8 +67,7 @@ func (ot *OauthLoginUtils) GetName() string {
 }
 
 func (ot *OauthLoginUtils) LoginAddr() string {
-	state := uuid.NewString()
-	url := ot.OauthConfig.AuthCodeURL(state)
+	url := ot.OauthConfig.AuthCodeURL(generateState(ot.Name))
 	return url
 }
 
@@ -90,4 +97,22 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 		Email:    ret.Email,
 		Source:   cred.Source,
 	}, nil
+}
+
+func generateState(name string) string {
+	s := fmt.Sprintf("%d/%s", time.Now().Unix(), name)
+	state, _ := des.EncryptBase64(s)
+	return state
+}
+
+func getNameFromState(state string) (string, error) {
+	s, err := des.DecryptBase64(state)
+	if err != nil {
+		return "", err
+	}
+	seps := strings.Split(s, "/")
+	if len(seps) != 2 {
+		return "", fmt.Errorf("failed to get state")
+	}
+	return seps[1], nil
 }

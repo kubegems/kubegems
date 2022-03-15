@@ -1,6 +1,10 @@
 package utils
 
 import (
+	"bytes"
+	"crypto/cipher"
+	"crypto/des"
+	"encoding/base64"
 	"errors"
 	"math"
 	"math/rand"
@@ -168,4 +172,50 @@ func UintToStr(i *uint) string {
 		return ""
 	}
 	return strconv.Itoa(int(*i))
+}
+
+type DesEncryptor struct {
+	Key []byte
+}
+
+func (e *DesEncryptor) EncryptBase64(input string) (string, error) {
+	data := []byte(input)
+	block, err := des.NewCipher(e.Key)
+	if err != nil {
+		return "", err
+	}
+	data = e.Padding(data, block.BlockSize())
+	blockMode := cipher.NewCBCEncrypter(block, e.Key)
+	crypted := make([]byte, len(data))
+	blockMode.CryptBlocks(crypted, data)
+	return base64.StdEncoding.EncodeToString(crypted), nil
+}
+
+func (e *DesEncryptor) DecryptBase64(input string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(input)
+	if err != nil {
+		return "", err
+	}
+	block, err := des.NewCipher(e.Key)
+	if err != nil {
+		return "", err
+	}
+	blockMode := cipher.NewCBCDecrypter(block, e.Key)
+	origData := make([]byte, len(data))
+	blockMode.CryptBlocks(origData, data)
+	origData = e.UnPadding(origData)
+	return string(origData), nil
+}
+
+func (e *DesEncryptor) Padding(cipherText []byte, blockSize int) []byte {
+	padding := blockSize - len(cipherText)%blockSize
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(cipherText, padText...)
+}
+
+func (e *DesEncryptor) UnPadding(input []byte) []byte {
+	data := []byte(input)
+	length := len(data)
+	unpadding := int(data[length-1])
+	return data[:(length - unpadding)]
 }
