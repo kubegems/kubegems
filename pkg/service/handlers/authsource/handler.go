@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-ldap/ldap/v3"
+	"golang.org/x/oauth2/endpoints"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
@@ -31,6 +32,45 @@ func (h *AuthSourceHandler) ListAuthSourceSimple(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, list)
+}
+
+type vendorData struct {
+	AuthURL  string   `json:"authURL"`
+	TokenURL string   `json:"tokenURL"`
+	Scopes   []string `json:"scopes"`
+}
+
+// @Tags AuthSource
+// @Summary AuthSource 预定义的源默认值
+// @Description AuthSource 预定义的源默认值
+// @Accept json
+// @Produce json
+// @Success 200 {object} handlers.ResponseStruct{Data=vendorData} "AuthSource"
+// @Param vendor query string true "vendor"
+// @Router /v1/system/authsource/predefined [get]
+// @Security JWT
+func (h *AuthSourceHandler) GetAuthSourcePredifinedVar(c *gin.Context) {
+	vendor := c.Query("vendor")
+	switch {
+	case strings.EqualFold(vendor, "github"):
+		handlers.OK(c, vendorData{
+			AuthURL:  endpoints.GitHub.AuthURL,
+			TokenURL: endpoints.GitHub.TokenURL,
+			Scopes:   []string{"user:email"},
+		})
+		return
+	case strings.EqualFold(vendor, "gitlab"):
+		handlers.OK(c, vendorData{
+			AuthURL:  endpoints.GitLab.AuthURL,
+			TokenURL: endpoints.GitLab.TokenURL,
+			Scopes:   []string{"email"},
+		})
+		return
+	default:
+		handlers.OK(c, vendorData{
+			Scopes: []string{},
+		})
+	}
 }
 
 // ListAuthSource list authsource
