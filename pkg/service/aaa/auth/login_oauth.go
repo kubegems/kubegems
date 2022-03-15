@@ -80,9 +80,8 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 	}
 	restyClient := resty.NewWithClient(ot.OauthConfig.Client(context.Background(), token))
 	ret := &OauthCommonUserInfo{}
-	restyClient.Debug = true
 	if _, err := restyClient.SetHeader("Authorization", "Bearer "+token.AccessToken).R().SetResult(ret).Get(ot.opts.UserInfoURL); err != nil {
-		log.Debugf("oauth2 get userinfo  failed: %v", err)
+		log.Debugf("oauth2 get userinfo  failed: %v", err, "url", ot.opts.UserInfoURL)
 		return nil, err
 	}
 
