@@ -116,8 +116,14 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		}
 		cred.Code = c.Query("code")
 	}
+
 	if cred.Source == "" {
-		source, err := h.AuthModule.GetNameFromState(c.Query("state"))
+		state := c.Query("state")
+		if state == "" {
+			handlers.Unauthorized(c, fmt.Errorf("state not provide"))
+			return
+		}
+		source, err := h.AuthModule.GetNameFromState(state)
 		if err != nil {
 			handlers.Unauthorized(c, fmt.Errorf("failed to get auth source"))
 			return
