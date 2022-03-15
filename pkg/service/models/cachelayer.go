@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	redisv8 "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/database"
@@ -194,18 +193,12 @@ func (auth *UserAuthority) IsVirtualSpaceAdmin(vsid uint) bool {
 
 var _globalResourceTree *GlobalResourceTree
 
-const (
-	GlobalResourceTreeKey = "globalResoruceCacheTree"
-	GlobalResourceLock    = "globalResoruceCacheTreeLock"
-)
-
-var GlobalResourceDuration = time.Second * 3
+const GlobalResourceTreeKey = "globalResoruceCacheTree"
 
 type GlobalResourceTree struct {
-	Tree   *ResourceNode
-	Locker *Locker
-	rdb    *redis.Client
-	mdb    *gorm.DB
+	Tree *ResourceNode
+	rdb  *redis.Client
+	mdb  *gorm.DB
 }
 
 func GetGlobalResourceTree(rdb *redis.Client, db *gorm.DB) *GlobalResourceTree {
@@ -213,19 +206,12 @@ func GetGlobalResourceTree(rdb *redis.Client, db *gorm.DB) *GlobalResourceTree {
 		return _globalResourceTree
 	}
 	t := &GlobalResourceTree{
-		rdb: rdb,
-		mdb: db,
-		Locker: &Locker{
-			Name:    GlobalResourceLock,
-			Timeout: 1 * time.Minute,
-			rdb:     rdb,
-		},
+		rdb:  rdb,
+		mdb:  db,
 		Tree: &ResourceNode{},
 	}
 	if t.Refresh() {
-		t.Locker.Lock(context.Background())
 		t.SetCache()
-		t.Locker.UnLock(context.Background())
 	}
 	return t
 }
@@ -280,8 +266,6 @@ func (t *GlobalResourceTree) SetCache() {
 }
 
 func (t *GlobalResourceTree) UpsertTenant(tid uint, name string) {
-	t.Locker.Lock(context.Background())
-	defer t.Locker.UnLock(context.Background())
 	t.Refresh()
 	if t.Tree.AddOrUpdateChild(ResTenant, tid, name) {
 		t.SetCache()
@@ -289,8 +273,6 @@ func (t *GlobalResourceTree) UpsertTenant(tid uint, name string) {
 }
 
 func (t *GlobalResourceTree) DelTenant(tid uint) {
-	t.Locker.Lock(context.Background())
-	defer t.Locker.UnLock(context.Background())
 	t.Refresh()
 	if t.Tree.DelChild(ResTenant, tid) {
 		t.SetCache()
@@ -298,8 +280,6 @@ func (t *GlobalResourceTree) DelTenant(tid uint) {
 }
 
 func (t *GlobalResourceTree) UpsertVirtualSpace(vid uint, name string) {
-	t.Locker.Lock(context.Background())
-	defer t.Locker.UnLock(context.Background())
 	t.Refresh()
 	if t.Tree.AddOrUpdateChild(ResVirtualSpace, vid, name) {
 		t.SetCache()
@@ -307,8 +287,6 @@ func (t *GlobalResourceTree) UpsertVirtualSpace(vid uint, name string) {
 }
 
 func (t *GlobalResourceTree) DelVirtualSpace(vid uint) {
-	t.Locker.Lock(context.Background())
-	defer t.Locker.UnLock(context.Background())
 	t.Refresh()
 	if t.Tree.DelChild(ResVirtualSpace, vid) {
 		t.SetCache()
@@ -316,8 +294,6 @@ func (t *GlobalResourceTree) DelVirtualSpace(vid uint) {
 }
 
 func (t *GlobalResourceTree) UpsertProject(tid, pid uint, name string) error {
-	t.Locker.Lock(context.Background())
-	defer t.Locker.UnLock(context.Background())
 	t.Refresh()
 	tnode := t.Tree.FindNode(ResTenant, tid)
 	if tnode == nil {
@@ -330,8 +306,6 @@ func (t *GlobalResourceTree) UpsertProject(tid, pid uint, name string) error {
 }
 
 func (t *GlobalResourceTree) DelProject(tid, pid uint) error {
-	t.Locker.Lock(context.Background())
-	defer t.Locker.UnLock(context.Background())
 	t.Refresh()
 	tnode := t.Tree.FindNode(ResTenant, tid)
 	if tnode == nil {
@@ -344,8 +318,6 @@ func (t *GlobalResourceTree) DelProject(tid, pid uint) error {
 }
 
 func (t *GlobalResourceTree) UpsertEnvironment(pid, eid uint, name, cluster, namespace string) error {
-	t.Locker.Lock(context.Background())
-	defer t.Locker.UnLock(context.Background())
 	t.Refresh()
 	pnode := t.Tree.FindNode(ResProject, pid)
 	if pnode == nil {
@@ -358,8 +330,6 @@ func (t *GlobalResourceTree) UpsertEnvironment(pid, eid uint, name, cluster, nam
 }
 
 func (t *GlobalResourceTree) DelEnvironment(pid, eid uint) error {
-	t.Locker.Lock(context.Background())
-	defer t.Locker.UnLock(context.Background())
 	t.Refresh()
 	pnode := t.Tree.FindNode(ResProject, pid)
 	if pnode == nil {
@@ -498,46 +468,4 @@ func findParent(n *ResourceNode, kind string, id uint) ResourceQueue {
 		}
 	}
 	return q
-}
-
-// 带阻塞的redis分布式锁 reference: https://www.zhihu.com/question/440583752/answer/1953369763
-type Locker struct {
-	Name    string
-	Timeout time.Duration
-	rdb     *redis.Client
-}
-
-func (l *Locker) Lock(ctx context.Context) (v string, err error) {
-	v, err = l.rdb.Get(ctx, "lock_"+l.Name).Result()
-	if err != nil && err != redisv8.Nil {
-		// 报错
-		return
-	} else if err == redisv8.Nil {
-		//  不存在KEY，即正常获取到了锁
-		err = l.rdb.Set(ctx, "lock_"+l.Name, time.Now(), l.Timeout).Err()
-		log.Infof("locking redis mutex: %s", l.Name)
-	} else {
-		// 阻塞， 等待锁释放的通知
-		log.Infof("wait redis mutex: %s", l.Name)
-		_, err = l.rdb.BRPop(ctx, l.Timeout, "free_"+l.Name).Result()
-		l.rdb.Del(ctx, "free_"+l.Name)
-	}
-	return
-}
-
-func (l *Locker) UnLock(ctx context.Context) (err error) {
-	_, err = l.rdb.Get(ctx, "lock_"+l.Name).Result()
-	if err == redisv8.Nil {
-		//  不存在KEY，即锁不存在
-		return redisv8.Nil
-	}
-	// 存在锁, push一个值，让其他线程将有一个能得到锁
-	log.Infof("unlock redis mutex: %s", l.Name)
-	_, err = l.rdb.LPush(ctx, "free_"+l.Name, time.Now()).Result()
-	if err != nil {
-		return
-	}
-	// 自己释放锁
-	l.rdb.Del(ctx, "lock_"+l.Name)
-	return
 }
