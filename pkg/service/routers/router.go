@@ -195,6 +195,7 @@ func (r *Router) Complete() error {
 
 	authSourceHandler := authsource.AuthSourceHandler{BaseHandler: basehandler}
 	router.GET("/v1/system/authsource", authSourceHandler.ListAuthSourceSimple)
+	router.GET("/v1/system/authsource/predefined", authSourceHandler.GetAuthSourcePredifinedVar)
 
 	rg := router.Group("v1")
 
