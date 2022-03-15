@@ -11,11 +11,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
@@ -1429,6 +1432,18 @@ func (h *TenantHandler) getGateway(ctx context.Context, cluster string, name str
 
 func (h *TenantHandler) createGateway(ctx context.Context, cluster string, gateway *v1beta1.TenantGateway) error {
 	return h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
+		dep := appsv1.Deployment{}
+		err := cli.Get(ctx, types.NamespacedName{
+			Namespace: gemlabels.NamespaceGateway,
+			Name:      gateway.Name,
+		}, &dep)
+		// 避免与istio网关同名
+		if err == nil {
+			return fmt.Errorf("网关%s已存在", gateway.Name)
+		}
+		if !kerrors.IsNotFound(err) {
+			return err
+		}
 		return cli.Create(ctx, gateway)
 	})
 }
