@@ -213,9 +213,11 @@ func (e *DesEncryptor) Padding(cipherText []byte, blockSize int) []byte {
 	return append(cipherText, padText...)
 }
 
-func (e *DesEncryptor) UnPadding(input []byte) []byte {
-	data := []byte(input)
+func (e *DesEncryptor) UnPadding(data []byte) []byte {
 	length := len(data)
+	if length == 0 {
+		return []byte{}
+	}
 	unpadding := int(data[length-1])
 	return data[:(length - unpadding)]
 }
