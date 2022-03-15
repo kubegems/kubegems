@@ -52,7 +52,7 @@ func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("source not provide"))
 		return
 	}
-	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source, "")
+	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source)
 	if sourceUtil == nil {
 		handlers.NotOK(c, fmt.Errorf("source not exist"))
 		return
@@ -116,9 +116,15 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		}
 		cred.Code = c.Query("code")
 	}
-
-	state := c.Query("state")
-	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source, state)
+	if cred.Source == "" {
+		source, err := h.AuthModule.GetNameFromState(c.Query("state"))
+		if err != nil {
+			handlers.Unauthorized(c, fmt.Errorf("failed to get auth source"))
+			return
+		}
+		cred.Source = source
+	}
+	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source)
 	if authenticator == nil {
 		handlers.Unauthorized(c, fmt.Errorf("auth source not exist"))
 		return
