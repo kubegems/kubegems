@@ -58,7 +58,7 @@ func (h *AuthSourceHandler) GetAuthSourcePredifinedVar(c *gin.Context) {
 			AuthURL:     endpoints.GitHub.AuthURL,
 			TokenURL:    endpoints.GitHub.TokenURL,
 			UserInfoURL: "https://github.com/api/v4/user",
-			Scopes:      []string{"user:email"},
+			Scopes:      []string{"user:email", "read:user"},
 		})
 		return
 	case strings.EqualFold(vendor, "gitlab"):
@@ -66,7 +66,7 @@ func (h *AuthSourceHandler) GetAuthSourcePredifinedVar(c *gin.Context) {
 			AuthURL:     endpoints.GitLab.AuthURL,
 			TokenURL:    endpoints.GitLab.TokenURL,
 			UserInfoURL: "https://api.github.com/user",
-			Scopes:      []string{"email"},
+			Scopes:      []string{"email", "read_user"},
 		})
 		return
 	default:
