@@ -35,9 +35,10 @@ func (h *AuthSourceHandler) ListAuthSourceSimple(c *gin.Context) {
 }
 
 type vendorData struct {
-	AuthURL  string   `json:"authURL"`
-	TokenURL string   `json:"tokenURL"`
-	Scopes   []string `json:"scopes"`
+	AuthURL     string   `json:"authURL"`
+	TokenURL    string   `json:"tokenURL"`
+	UserInfoURL string   `json:"userInfoURL"`
+	Scopes      []string `json:"scopes"`
 }
 
 // @Tags AuthSource
@@ -54,16 +55,18 @@ func (h *AuthSourceHandler) GetAuthSourcePredifinedVar(c *gin.Context) {
 	switch {
 	case strings.EqualFold(vendor, "github"):
 		handlers.OK(c, vendorData{
-			AuthURL:  endpoints.GitHub.AuthURL,
-			TokenURL: endpoints.GitHub.TokenURL,
-			Scopes:   []string{"user:email"},
+			AuthURL:     endpoints.GitHub.AuthURL,
+			TokenURL:    endpoints.GitHub.TokenURL,
+			UserInfoURL: "https://github.com/api/v4/user",
+			Scopes:      []string{"user:email"},
 		})
 		return
 	case strings.EqualFold(vendor, "gitlab"):
 		handlers.OK(c, vendorData{
-			AuthURL:  endpoints.GitLab.AuthURL,
-			TokenURL: endpoints.GitLab.TokenURL,
-			Scopes:   []string{"email"},
+			AuthURL:     endpoints.GitLab.AuthURL,
+			TokenURL:    endpoints.GitLab.TokenURL,
+			UserInfoURL: "https://api.github.com/user",
+			Scopes:      []string{"email"},
 		})
 		return
 	default:
