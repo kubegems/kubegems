@@ -12,6 +12,7 @@ import (
 	pkgv1alpha1 "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -285,6 +286,19 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 	ctx := c.Request.Context()
 	op := pkgv1alpha1.IstioOperator{}
 	if err := h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
+		dep := appsv1.Deployment{}
+		err := tc.Get(ctx, types.NamespacedName{
+			Namespace: istioGatewayNamespace,
+			Name:      gw.Name,
+		}, &dep)
+		// 避免与租户网关同名
+		if err == nil {
+			return fmt.Errorf("网关%s已存在", gw.Name)
+		}
+		if !kerrors.IsNotFound(err) {
+			return err
+		}
+
 		if err := tc.Get(ctx, types.NamespacedName{
 			Namespace: istioOperatorNamespace,
 			Name:      istioOperatorName,
