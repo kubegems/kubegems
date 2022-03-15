@@ -191,7 +191,7 @@ func (r *Router) Complete() error {
 	}
 	router.POST("/v1/login", oauth.LoginHandler)
 	router.GET("/v1/oauth/addr", oauth.GetOauthAddr)
-	router.GET("/v1/oauth/callback/:source", oauth.GetOauthToken)
+	router.GET("/v1/oauth/callback", oauth.GetOauthToken)
 
 	authSourceHandler := authsource.AuthSourceHandler{BaseHandler: basehandler}
 	router.GET("/v1/system/authsource", authSourceHandler.ListAuthSourceSimple)
