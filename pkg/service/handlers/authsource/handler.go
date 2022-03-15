@@ -57,7 +57,7 @@ func (h *AuthSourceHandler) GetAuthSourcePredifinedVar(c *gin.Context) {
 		handlers.OK(c, vendorData{
 			AuthURL:     endpoints.GitHub.AuthURL,
 			TokenURL:    endpoints.GitHub.TokenURL,
-			UserInfoURL: "https://github.com/api/v4/user",
+			UserInfoURL: "https://api.github.com/user",
 			Scopes:      []string{"user:email", "read:user"},
 		})
 		return
@@ -65,7 +65,7 @@ func (h *AuthSourceHandler) GetAuthSourcePredifinedVar(c *gin.Context) {
 		handlers.OK(c, vendorData{
 			AuthURL:     endpoints.GitLab.AuthURL,
 			TokenURL:    endpoints.GitLab.TokenURL,
-			UserInfoURL: "https://api.github.com/user",
+			UserInfoURL: "https://gitlab.com/api/v4/user",
 			Scopes:      []string{"email", "read_user"},
 		})
 		return
