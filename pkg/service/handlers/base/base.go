@@ -26,7 +26,7 @@ type BaseHandler struct {
 	agents     *agents.ClientSet
 	database   *database.Database
 	redis      *redis.Client
-	msgbuscli  msgclient.MessageBusInterface
+	msgbuscli  *msgclient.MsgBusClient
 	cachelayer *models.CacheLayer
 }
 
@@ -37,7 +37,7 @@ func NewHandler(auditi audit.AuditInterface,
 	agents *agents.ClientSet,
 	database *database.Database,
 	redis *redis.Client,
-	msgbuscli msgclient.MessageBusInterface,
+	msgbuscli *msgclient.MsgBusClient,
 	cachelayer *models.CacheLayer,
 ) BaseHandler {
 	return BaseHandler{
@@ -57,7 +57,7 @@ func (h *BaseHandler) GetAgents() *agents.ClientSet {
 	return h.agents
 }
 
-func (h *BaseHandler) GetMessageBusClient() msgclient.MessageBusInterface {
+func (h *BaseHandler) GetMessageBusClient() *msgclient.MsgBusClient {
 	return h.msgbuscli
 }
 
