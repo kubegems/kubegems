@@ -100,8 +100,12 @@ func Run(ctx context.Context, opts *options.Options) error {
 	}
 
 	exporterHandler := exporter.NewHandler("gems_server", map[string]exporter.Collectorfunc{
-		"request":   exporter.NewRequestCollector(),
-		"alertrule": exporter.NewAlertAndMetricCollector(deps.Agentscli, deps.Databse, deps.DyConfigProvider),
+		"request":     exporter.NewRequestCollector(),
+		"alertrule":   exporter.NewAlertAndMetricCollector(deps.Agentscli, deps.Databse, deps.DyConfigProvider),
+		"cluster":     exporter.NewClusterCollector(deps.Agentscli, deps.Databse),
+		"environment": exporter.NewEnvironmentCollector(deps.Databse),
+		"user":        exporter.NewUserCollector(deps.Databse),
+		"application": exporter.NewApplicationCollector(deps.Argocli),
 	})
 
 	// run
