@@ -71,6 +71,6 @@ func tgDefault(tg *gemsv1beta1.TenantGateway) {
 		tg.Spec.Workload.ExtraLabels["name"] = "nginx-ingress-operator" // 监控的servicemonitor 筛选 pod
 	}
 	if tg.Spec.BaseDomain == "" {
-		tg.Spec.BaseDomain = "*.gemscloud.com"
+		tg.Spec.BaseDomain = "*.kubegems.io"
 	}
 }
