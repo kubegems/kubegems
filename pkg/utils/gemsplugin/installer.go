@@ -96,7 +96,7 @@ spec:
       details:
         catalog: 监控&告警
         description: KubeGems平台监控&告警控制器,包含Prometheus和AlertManager服务.
-        version: v0.50.0-gems
+        version: v0.50.1-gems
       enabled: true
       namespace: gemcloud-monitoring-system
       operator:
