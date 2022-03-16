@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
 )
@@ -125,5 +126,32 @@ func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope string
 	ret.ClusterName = cluster
 	ret.Namespace = namespace
 	ret.AlertName = name
+	return ret, nil
+}
+
+type EnvInfo struct {
+	ClusterName string
+	Namespace   string
+
+	TenantName      string
+	ProjectName     string
+	EnvironmentName string
+}
+
+func (h *DatabaseHelper) ClusterNS2EnvMap() (map[string]EnvInfo, error) {
+	envInfos := []EnvInfo{}
+	sql := `select clusters.cluster_name, environments.namespace, tenants.tenant_name, projects.project_name, environments.environment_name
+		from environments left join clusters on environments.cluster_id = clusters.id
+			left join projects on environments.project_id = projects.id
+				left join tenants on projects.tenant_id = tenants.id`
+	if err := h.DB.Raw(sql).Scan(&envInfos).Error; err != nil {
+		return nil, errors.Wrap(err, "list env infos")
+	}
+
+	ret := map[string]EnvInfo{}
+	for _, v := range envInfos {
+		ret[v.ClusterName+"/"+v.Namespace] = v
+	}
+
 	return ret, nil
 }
