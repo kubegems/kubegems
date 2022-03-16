@@ -21,7 +21,7 @@ ifeq (${IMAGE_TAG},master)
 endif
 # Image URL to use all building/pushing image targets
 IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
-BASEIMG ?= ${IMAGE_REGISTRY}/kubegems/kubegems-base:$(IMAGE_TAG)
+CHARTS_IMG ?= ${IMAGE_REGISTRY}/kubegems/kubegems-charts:$(IMAGE_TAG)
 
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
@@ -51,11 +51,13 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 generate: ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	$(CONTROLLER_GEN) paths="./pkg/apis/..." crd  output:crd:artifacts:config=deploy/crd/bases 			# Generate CRDs
+	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=charts/kubegems-installer/crds 	    # Generate installer 		CRDs
+	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=charts/kubegems-local/crds				# Generate agent/controller CRDs
+
+	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"					# Generate DeepCopy, DeepCopyInto, DeepCopyObject
+
 	$(CONTROLLER_GEN) paths="./pkg/..." rbac:roleName=manager-role webhook output:dir=deploy/rbac 	# Generate RBAC
 	$(CONTROLLER_GEN) paths="./pkg/..." webhook output:dir=deploy/webhook 							# Generate Webhooks
-	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"					# Generate DeepCopy, DeepCopyInto, DeepCopyObject
-	$(KUSTOMIZE) build ./deploy/default > deploy/bundle.yaml										# Build bundle.yaml
 
 swagger:
 	# go mod vendor
@@ -78,11 +80,18 @@ build: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
-base-container: ## Build base image.
+charts-container: ## Build kubegems-charts image.
 ifneq (, $(shell which docker))
-	docker build -t ${BASEIMG} -f charts/Dockerfile charts
+	docker build -t ${CHARTS_IMG} -f charts/Dockerfile charts
 else
-	buildah bud -t ${BASEIMG}  -f charts/Dockerfile charts
+	buildah bud -t ${CHARTS_IMG}  -f charts/Dockerfile charts
+endif
+
+push-charts-container: ## Push charts image.
+ifneq (, $(shell which docker))
+	docker push ${CHARTS_IMG}
+else
+	buildah push ${CHARTS_IMG}
 endif
 
 container: build ## Build container image.

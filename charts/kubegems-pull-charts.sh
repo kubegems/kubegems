@@ -1,5 +1,8 @@
 #! /bin/sh
 
+set -e
+set -x
+
 # Absolute path to this script, e.g. /home/user/bin/foo.sh
 SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in, thus /home/user/bin
@@ -33,7 +36,7 @@ helm repo add argo https://argoproj.github.io/argo-helm
 # helm repo add jetstack https://charts.jetstack.io
 helm repo add jetstack https://charts.jetstack.io
 
-helm dependency build kubegems 
+helm dependency build kubegems
 helm dependency build kubegems-local
 
 helm pull --untar gitea-charts/gitea
@@ -72,4 +75,4 @@ rm -rf _istio
 # TODO
 
 echo "all charts downloaded"
-ls -l
+ls -l -h

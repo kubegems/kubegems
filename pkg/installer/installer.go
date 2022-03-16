@@ -29,6 +29,7 @@ type Options struct {
 	MetricsAddr          string `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
 	EnableLeaderElection bool   `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
 	ProbeAddr            string `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
+	ChartsDir            string `json:"chartsDir,omitempty" description:"The directory that contains the charts."`
 }
 
 func NewDefaultOptions() *Options {
@@ -36,6 +37,7 @@ func NewDefaultOptions() *Options {
 		MetricsAddr:          "127.0.0.1:8080", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
+		ChartsDir:            "charts",
 	}
 }
 
@@ -56,11 +58,9 @@ func Run(ctx context.Context, options *Options) error {
 	}
 
 	installerctrl := &controllers.InstallerReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Options: &controllers.InstallerOptions{
-			ChartsDir: "charts",
-		},
+		Client:  mgr.GetClient(),
+		Scheme:  mgr.GetScheme(),
+		Options: &controllers.InstallerOptions{ChartsDir: options.ChartsDir},
 	}
 	if err = installerctrl.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Memcached")

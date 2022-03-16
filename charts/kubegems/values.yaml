@@ -72,7 +72,7 @@ dashboard:
   image:
     registry: docker.io
     repository: kubegems/dashboard
-    tag: v2.3.0
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -440,7 +440,7 @@ init:
   image:
     registry: docker.io
     repository: kubegems/kubegems
-    tag: v2.3.0
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -595,7 +595,7 @@ api:
   image:
     registry: docker.io
     repository: kubegems/kubegems
-    tag: v2.3.0
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -971,7 +971,7 @@ msgbus:
   image:
     registry: docker.io
     repository: kubegems/kubegems
-    tag: v2.3.0
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1339,7 +1339,7 @@ worker:
   image:
     registry: docker.io
     repository: kubegems/kubegems
-    tag: v2.3.0
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images

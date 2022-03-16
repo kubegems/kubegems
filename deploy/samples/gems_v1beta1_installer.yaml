@@ -15,13 +15,6 @@ spec:
     - name: kube-prometheus-stack
       namespace: prometheus
       enabled: true
-    - name: argo-cd
-      namespace: argo-cd
-      enabled: false
-      values:
-        config:
-          secret:
-            argocdServerAdminPassword: "password"
     - name: cert-manager
       namespace: cert-manager
       enabled: true
@@ -34,21 +27,6 @@ spec:
       namespace: kubegems
       enabled: true
       values:
-        init:
-          image:
-            tag: develop
-        dashboard:
-          image:
-            tag: develop
-        api:
-          image:
-            tag: develop
-        worker:
-          image:
-            tag: develop
-        msgbus:
-          image:
-            tag: develop
         mysql:
           enabled: false
         externalDatabase:
@@ -56,10 +34,3 @@ spec:
     - name: kubegems-local
       namespace: kubegems-local
       enabled: true
-      values:
-        agent:
-          image:
-            tag: develop
-        controller:
-          image:
-            tag: develop

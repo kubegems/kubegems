@@ -1,3 +1,3 @@
 FROM alpine/helm
-ADD . /charts
-RUN sh /charts/pull-charts.sh
+COPY . /charts/
+RUN sh /charts/kubegems-pull-charts.sh
