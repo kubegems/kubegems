@@ -28,6 +28,7 @@ type UserInfo struct {
 	Email    string `json:"email"`
 	Name     string `json:"name"`
 	Source   string `json:"-"`
+	Vendor   string `json:"vendor"`
 }
 
 // AuthenticateIface 所有登录插件需要实现AuthenticateIface接口
@@ -74,6 +75,7 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, sourceNa
 	switch authSource.Kind {
 	case "LDAP":
 		ldapUt := &LdapLoginUtils{
+			Vendor:       authSource.Vendor,
 			BaseDN:       authSource.Config.BaseDN,
 			Name:         authSource.Name,
 			BindUsername: authSource.Config.BindUsername,
@@ -92,7 +94,7 @@ func (l *AuthenticateModule) GetAuthenticateModule(ctx context.Context, sourceNa
 			AppSecret:   authSource.Config.AppSecret,
 			Scopes:      authSource.Config.Scopes,
 		}
-		return NewOauthUtils(authSource.Name, opt)
+		return NewOauthUtils(authSource.Name, authSource.Vendor, opt)
 	}
 	return nil
 }

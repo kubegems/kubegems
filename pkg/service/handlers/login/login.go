@@ -85,10 +85,11 @@ func (h *OAuthHandler) getOrCreateUser(ctx context.Context, uinfo *auth.UserInfo
 		}
 		active := true
 		newUser := &models.User{
-			Username: uinfo.Username,
-			Email:    uinfo.Email,
-			IsActive: &active,
-			Source:   uinfo.Source,
+			Username:     uinfo.Username,
+			Email:        uinfo.Email,
+			IsActive:     &active,
+			Source:       uinfo.Source,
+			SourceVendor: uinfo.Vendor,
 			// todo: get systemrole via code from db
 			SystemRoleID: 2,
 		}

@@ -180,6 +180,7 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 // @Description 删除 Cluster
 // @Accept json
 // @Produce json
+// @Param record_only query string false "only delete record in database"
 // @Param cluster_id path uint true "cluster_id"
 // @Success 204 {object} handlers.ResponseStruct "resp"
 // @Router /v1/cluster/{cluster_id} [delete]
@@ -210,6 +211,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的环境，删除失败", cluster.ClusterName))
 		return
 	}
+	recordOnly := c.Query("record_only") == "true"
 
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 		installeropts := new(gemsplugin.InstallerOptions)
@@ -219,14 +221,17 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 			if err := tx.Delete(cluster).Error; err != nil {
 				return err
 			}
-			installer := ClusterInstaller{
-				Cluster:          cluster,
-				Clientset:        clientSet,
-				RestConfig:       config,
-				KubegemsVersion:  version.Get(),
-				InstallerOptions: installeropts,
+			if !recordOnly {
+				installer := ClusterInstaller{
+					Cluster:          cluster,
+					Clientset:        clientSet,
+					RestConfig:       config,
+					KubegemsVersion:  version.Get(),
+					InstallerOptions: installeropts,
+				}
+				return installer.UnInstall(ctx)
 			}
-			return installer.UnInstall(ctx)
+			return nil
 		}); err != nil {
 			log.Error(err, "delete cluster")
 			return err
@@ -436,6 +441,26 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+
+	apiserver, _, _, _, err := kube.GetKubeconfigInfos(cluster.KubeConfig)
+	if err != nil {
+		handlers.NotOK(c, fmt.Errorf("kubeconfig 格式错误"))
+		return
+	}
+	var existCount int64
+	if err := h.GetDB().Model(
+		&models.Cluster{},
+	).Where(
+		"cluster_name = ? or api_server = ?", cluster.ClusterName, apiserver,
+	).Count(&existCount).Error; err != nil {
+		log.Error(err, "failed check exsit cluster")
+		handlers.NotOK(c, fmt.Errorf("检测集群状态错误"))
+		return
+	}
+	if existCount > 0 {
+		handlers.NotOK(c, fmt.Errorf("已经存在相同名字 或 相同apiServer 的集群, 不允许重复添加"))
+		return
+	}
 	h.SetAuditData(c, "创建", "集群", cluster.ClusterName)
 
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
@@ -459,7 +484,14 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if err := tx.Clauses(clause.OnConflict{
-				UpdateAll: true,
+				DoUpdates: clause.AssignmentColumns([]string{
+					"kube_config",
+					"version",
+					"vendor",
+					"image_repo",
+					"default_storage_class",
+					"deleted_at",
+				}),
 			}).Create(cluster).Error; err != nil {
 				return err
 			}
