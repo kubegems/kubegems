@@ -22,7 +22,7 @@ func NewEnvironmentCollector(db *database.Database) func(_ *log.Logger) (Collect
 			environmentInfo: prometheus.NewDesc(
 				prometheus.BuildFQName(getNamespace(), "environment", "info"),
 				"Gems environment info",
-				[]string{"environment_name", "namespace", "environment_type", "project_name", "tenant_name", "cluster_name"},
+				[]string{"environment", "namespace", "environment_type", "project", "tenant", "cluster"},
 				nil,
 			),
 			Database: db,

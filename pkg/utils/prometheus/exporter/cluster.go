@@ -27,7 +27,7 @@ func NewClusterCollector(agents *agents.ClientSet, db *database.Database) func(_
 			clusterUp: prometheus.NewDesc(
 				prometheus.BuildFQName(getNamespace(), "cluster", "up"),
 				"Gems cluster status",
-				[]string{"cluster_name", "api_server", "version"},
+				[]string{"cluster", "api_server", "version"},
 				nil,
 			),
 			Database: db,
