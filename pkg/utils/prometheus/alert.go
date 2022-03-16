@@ -12,6 +12,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/set"
 	"kubegems.io/pkg/utils/slice"
 )
 
@@ -104,13 +105,20 @@ func (r *AlertRule) CheckAndModify(opts *MonitorOptions) error {
 	if len(r.AlertLevels) == 0 {
 		return fmt.Errorf("alert level can't be null")
 	}
+
+	severities := set.NewSet()
 	for _, v := range r.AlertLevels {
+		severities.Append(v.Severity)
 		if !slice.ContainStr(opts.Operators, v.CompareOp) {
 			return fmt.Errorf("invalid operator: %s", v.CompareOp)
 		}
 		if _, ok := opts.Severity[v.Severity]; !ok {
 			return fmt.Errorf("invalid severity: %s", v.Severity)
 		}
+	}
+
+	if severities.Len() < len(r.AlertLevels) {
+		return fmt.Errorf("有重复的告警级别")
 	}
 
 	// format message
