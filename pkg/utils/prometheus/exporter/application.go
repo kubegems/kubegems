@@ -26,7 +26,7 @@ func NewApplicationCollector(cli *argo.Client) func(_ *log.Logger) (Collector, e
 			projectInfo: prometheus.NewDesc(
 				prometheus.BuildFQName(getNamespace(), "application", "status"),
 				"Gems application status",
-				[]string{"application_name", "creator", "from", "environment_name", "project_name", "tenant_name", "cluster_name", "namespace", "status"},
+				[]string{"application_name", "creator", "from", "environment", "project", "tenant", "cluster", "namespace", "status"},
 				nil,
 			),
 			Client: cli,
