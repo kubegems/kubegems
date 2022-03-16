@@ -31,6 +31,7 @@ type OauthOption struct {
 
 type OauthLoginUtils struct {
 	Name        string
+	Vendor      string
 	OauthConfig *oauth2.Config
 	opts        *OauthOption
 	client      *http.Client
@@ -43,10 +44,11 @@ type OauthCommonUserInfo struct {
 	Email    string `json:"email"`
 }
 
-func NewOauthUtils(name string, opts *OauthOption) *OauthLoginUtils {
+func NewOauthUtils(name, vendor string, opts *OauthOption) *OauthLoginUtils {
 	return &OauthLoginUtils{
-		Name: name,
-		opts: opts,
+		Name:   name,
+		Vendor: vendor,
+		opts:   opts,
 		OauthConfig: &oauth2.Config{
 			ClientID:     opts.AppID,
 			ClientSecret: opts.AppSecret,
@@ -96,6 +98,7 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 		Username: ret.Username,
 		Email:    ret.Email,
 		Source:   cred.Source,
+		Vendor:   ot.Vendor,
 	}, nil
 }
 

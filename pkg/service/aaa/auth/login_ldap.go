@@ -14,6 +14,7 @@ import (
 
 type LdapLoginUtils struct {
 	Name         string `yaml:"name" json:"name"`
+	Vendor       string `json:"vendor"`
 	LdapAddr     string `yaml:"addr" json:"ldapaddr"`
 	BaseDN       string `yaml:"basedn" json:"basedn"`
 	EnableTLS    bool   `json:"enableTLS"`
@@ -84,6 +85,7 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 	uinfo := UserInfo{}
 	info := result.Entries[0]
 	uinfo.Username = cred.Username
+	uinfo.Vendor = ut.Vendor
 	mailstr := info.GetAttributeValue("mail")
 	emailstr := info.GetAttributeValue("email")
 	if emailstr != "" {
