@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -457,10 +458,11 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		h.DynamicConfig.Get(ctx, installeropts)
 
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
-			if err := tx.Create(cluster).Error; err != nil {
+			if err := tx.Clauses(clause.OnConflict{
+				UpdateAll: true,
+			}).Create(cluster).Error; err != nil {
 				return err
 			}
-
 			installer := ClusterInstaller{
 				Clientset:  clientSet,
 				RestConfig: config,
