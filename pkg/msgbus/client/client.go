@@ -16,20 +16,8 @@ import (
 	"kubegems.io/pkg/utils/msgbus"
 )
 
-type MessageBusInterface interface {
-	GinContext(c *gin.Context) *msgBusClient
-	MessageType(messageType msgbus.MessageType) *msgBusClient
-	ResourceType(resourceType msgbus.ResourceType) *msgBusClient
-	ActionType(actionType msgbus.EventKind) *msgBusClient
-	ResourceID(resourceID uint) *msgBusClient
-	Content(content string) *msgBusClient
-	SetUsersToSend(idSlices ...[]uint) *msgBusClient
-	AffectedUsers(idSlices ...[]uint) *msgBusClient
-	Send()
-}
-
-func NewMessageBusClient(database *database.Database, options *msgbus.Options) MessageBusInterface {
-	return &msgBusClient{
+func NewMessageBusClient(database *database.Database, options *msgbus.Options) *MsgBusClient {
+	return &MsgBusClient{
 		Database: database,
 		options:  options,
 		httpclient: &http.Client{
@@ -39,7 +27,7 @@ func NewMessageBusClient(database *database.Database, options *msgbus.Options) M
 	}
 }
 
-type msgBusClient struct {
+type MsgBusClient struct {
 	c                *gin.Context
 	options          *msgbus.Options
 	messageBusServer string
@@ -54,37 +42,37 @@ type msgBusClient struct {
 	affectedUsers    []uint
 }
 
-func (cli *msgBusClient) GinContext(c *gin.Context) *msgBusClient {
+func (cli *MsgBusClient) GinContext(c *gin.Context) *MsgBusClient {
 	cli.c = c.Copy() // goroutine中使用copy
 	return cli
 }
 
-func (cli *msgBusClient) MessageType(messageType msgbus.MessageType) *msgBusClient {
+func (cli *MsgBusClient) MessageType(messageType msgbus.MessageType) *MsgBusClient {
 	cli.messageType = messageType
 	return cli
 }
 
-func (cli *msgBusClient) ResourceType(resourceType msgbus.ResourceType) *msgBusClient {
+func (cli *MsgBusClient) ResourceType(resourceType msgbus.ResourceType) *MsgBusClient {
 	cli.resourceType = resourceType
 	return cli
 }
 
-func (cli *msgBusClient) ActionType(actionType msgbus.EventKind) *msgBusClient {
+func (cli *MsgBusClient) ActionType(actionType msgbus.EventKind) *MsgBusClient {
 	cli.actionType = actionType
 	return cli
 }
 
-func (cli *msgBusClient) ResourceID(resourceID uint) *msgBusClient {
+func (cli *MsgBusClient) ResourceID(resourceID uint) *MsgBusClient {
 	cli.resourceID = resourceID
 	return cli
 }
 
-func (cli *msgBusClient) Content(content string) *msgBusClient {
+func (cli *MsgBusClient) Content(content string) *MsgBusClient {
 	cli.content = content
 	return cli
 }
 
-func (cli *msgBusClient) SetUsersToSend(idSlices ...[]uint) *msgBusClient {
+func (cli *MsgBusClient) SetUsersToSend(idSlices ...[]uint) *MsgBusClient {
 	idSet := make(map[uint]struct{}) // 去重
 	for _, ids := range idSlices {
 		for _, id := range ids {
@@ -97,7 +85,7 @@ func (cli *msgBusClient) SetUsersToSend(idSlices ...[]uint) *msgBusClient {
 	return cli
 }
 
-func (cli *msgBusClient) AffectedUsers(idSlices ...[]uint) *msgBusClient {
+func (cli *MsgBusClient) AffectedUsers(idSlices ...[]uint) *MsgBusClient {
 	idSet := make(map[uint]struct{}) // 去重
 	for _, ids := range idSlices {
 		for _, id := range ids {
@@ -110,7 +98,7 @@ func (cli *msgBusClient) AffectedUsers(idSlices ...[]uint) *msgBusClient {
 	return cli
 }
 
-func (cli *msgBusClient) Send() {
+func (cli *MsgBusClient) Send() {
 	go func() {
 		msg := msgbus.NotifyMessage{
 			MessageType: cli.messageType,
@@ -137,7 +125,11 @@ func (cli *msgBusClient) Send() {
 		body := bytes.NewBuffer(o)
 
 		// all send to msgbus
-		req, _ := http.NewRequest(http.MethodPost, cli.messageBusServer, body)
+		req, err := http.NewRequest(http.MethodPost, cli.messageBusServer, body)
+		if err != nil {
+			log.Error(err, "new request")
+			return
+		}
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", cli.c.GetHeader("Authorization"))
 		resp, err := cli.httpclient.Do(req)
