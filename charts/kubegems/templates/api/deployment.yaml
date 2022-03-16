@@ -85,6 +85,7 @@ spec:
             {{- end }}
           {{- end }}
           env:
+            {{- include "kubegems.common.env" . | indent 12 }}
             - name: KUBEGEMS_DEBUG
               value: {{ ternary "true" "false" (or .Values.api.image.debug ) | quote }}
             - name: LOG_LEVEL
@@ -94,7 +95,7 @@ spec:
             {{- end }}
           envFrom:
             - secretRef:
-                name: {{ template "common.names.fullname" . }}
+                name: {{ include "kubegems.secret.fullname" . }}
             {{- if .Values.api.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVarsCM "context" $) }}

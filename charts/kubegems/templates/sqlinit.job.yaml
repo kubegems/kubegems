@@ -75,9 +75,11 @@ spec:
             - migrate
             - --initdata=true
           {{- end }}
+          env:
+            {{- include "kubegems.common.env" . | indent 12 }}
           envFrom:
             - secretRef:
-                name: {{ template "common.names.fullname" . }}
+                name: {{ template "kubegems.secret.fullname" . }}
             {{- if .Values.api.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVarsCM "context" $) }}

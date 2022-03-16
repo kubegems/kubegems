@@ -80,7 +80,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `dashboard.image.pullSecrets`                     | dashboard image pull secrets                                                                        | `[]`                 |
 | `dashboard.image.debug`                           | Enable dashboard image debug mode                                                                   | `false`              |
 | `dashboard.replicaCount`                          | Number of dashboard replicas to deploy                                                              | `1`                  |
-| `dashboard.containerPorts.http`                   | dashboard HTTP container port                                                                       | `80`                 |
+| `dashboard.containerPorts.http`                   | dashboard HTTP container port                                                                       | `8000`               |
 | `dashboard.livenessProbe.enabled`                 | Enable livenessProbe on dashboard containers                                                        | `true`               |
 | `dashboard.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                             | `10`                 |
 | `dashboard.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                                    | `20`                 |
@@ -104,9 +104,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | `dashboard.customStartupProbe`                    | Custom startupProbe that overrides the default one                                                  | `{}`                 |
 | `dashboard.resources.limits`                      | The resources limits for the dashboard containers                                                   | `{}`                 |
 | `dashboard.resources.requests`                    | The requested resources for the dashboard containers                                                | `{}`                 |
-| `dashboard.podSecurityContext.enabled`            | Enabled dashboard pods' Security Context                                                            | `true`               |
+| `dashboard.podSecurityContext.enabled`            | Enabled dashboard pods' Security Context                                                            | `false`              |
 | `dashboard.podSecurityContext.fsGroup`            | Set dashboard pod's Security Context fsGroup                                                        | `1001`               |
-| `dashboard.containerSecurityContext.enabled`      | Enabled dashboard containers' Security Context                                                      | `true`               |
+| `dashboard.containerSecurityContext.enabled`      | Enabled dashboard containers' Security Context                                                      | `false`              |
 | `dashboard.containerSecurityContext.runAsUser`    | Set dashboard containers' Security Context runAsUser                                                | `1001`               |
 | `dashboard.containerSecurityContext.runAsNonRoot` | Set dashboard containers' Security Context runAsNonRoot                                             | `true`               |
 | `dashboard.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for dashboard                      | `nil`                |
@@ -229,7 +229,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `api.image.pullSecrets`                     | API image pull secrets                                                                        | `[]`                |
 | `api.image.debug`                           | Enable API image debug mode                                                                   | `false`             |
 | `api.replicaCount`                          | Number of API replicas to deploy                                                              | `1`                 |
-| `api.containerPorts.http`                   | API HTTP container port                                                                       | `80`                |
+| `api.containerPorts.http`                   | API HTTP container port                                                                       | `8080`              |
 | `api.livenessProbe.enabled`                 | Enable livenessProbe on API containers                                                        | `true`              |
 | `api.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                       | `10`                |
 | `api.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                              | `20`                |
@@ -339,7 +339,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `msgbus.image.pullSecrets`                     | msgbus image pull secrets                                                                        | `[]`                |
 | `msgbus.image.debug`                           | Enable msgbus image debug mode                                                                   | `false`             |
 | `msgbus.replicaCount`                          | Number of msgbus replicas to deploy                                                              | `1`                 |
-| `msgbus.containerPorts.http`                   | msgbus HTTP container port                                                                       | `80`                |
+| `msgbus.containerPorts.http`                   | msgbus HTTP container port                                                                       | `8080`              |
 | `msgbus.livenessProbe.enabled`                 | Enable livenessProbe on msgbus containers                                                        | `true`              |
 | `msgbus.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                          | `10`                |
 | `msgbus.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                                 | `20`                |
@@ -446,14 +446,14 @@ The command removes all the Kubernetes components associated with the chart and 
 | `worker.image.pullSecrets`                     | worker image pull secrets                                                                        | `[]`                |
 | `worker.image.debug`                           | Enable worker image debug mode                                                                   | `false`             |
 | `worker.replicaCount`                          | Number of worker replicas to deploy                                                              | `1`                 |
-| `worker.containerPorts.http`                   | worker HTTP container port                                                                       | `80`                |
-| `worker.livenessProbe.enabled`                 | Enable livenessProbe on worker containers                                                        | `true`              |
+| `worker.containerPorts.http`                   | worker HTTP container port                                                                       | `8080`              |
+| `worker.livenessProbe.enabled`                 | Enable livenessProbe on worker containers                                                        | `false`             |
 | `worker.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                          | `10`                |
 | `worker.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                                 | `20`                |
 | `worker.livenessProbe.timeoutSeconds`          | Timeout seconds for livenessProbe                                                                | `1`                 |
 | `worker.livenessProbe.failureThreshold`        | Failure threshold for livenessProbe                                                              | `6`                 |
 | `worker.livenessProbe.successThreshold`        | Success threshold for livenessProbe                                                              | `1`                 |
-| `worker.readinessProbe.enabled`                | Enable readinessProbe on worker containers                                                       | `true`              |
+| `worker.readinessProbe.enabled`                | Enable readinessProbe on worker containers                                                       | `false`             |
 | `worker.readinessProbe.initialDelaySeconds`    | Initial delay seconds for readinessProbe                                                         | `10`                |
 | `worker.readinessProbe.periodSeconds`          | Period seconds for readinessProbe                                                                | `20`                |
 | `worker.readinessProbe.timeoutSeconds`         | Timeout seconds for readinessProbe                                                               | `1`                 |
@@ -567,15 +567,92 @@ The command removes all the Kubernetes components associated with the chart and 
 | `volumePermissions.resources.limits`                   | The resources limits for the init container                                                     | `{}`                               |
 | `volumePermissions.resources.requests`                 | The requested resources for the init container                                                  | `{}`                               |
 | `volumePermissions.containerSecurityContext.runAsUser` | Set init container's Security Context runAsUser                                                 | `0`                                |
-| `mysql.enabled`                                        | Enable MySQL                                                                                    | `true`                             |
-| `mysql.auth.rootPassword`                              | The password for the MySQL root user.                                                           | `password`                         |
-| `redis.enabled`                                        | Enable redis                                                                                    | `true`                             |
-| `redis.password`                                       | The password for the redis.                                                                     | `password`                         |
-| `gitea.enabled`                                        | Enable Gitea                                                                                    | `true`                             |
-| `gitea.admin.username`                                 | The username for git admin user.                                                                | `admin`                            |
-| `gitea.admin.password`                                 | The password for git admin user.                                                                | `password`                         |
-| `argo-cd.enabled`                                      | Enable Argo CD                                                                                  | `true`                             |
-| `argo-cd.argocdServerAdminPassword`                    | The password for the ArgoCD server admin user.                                                  | `password`                         |
+
+
+### Database configuration
+
+| Name                      | Description                           | Value        |
+| ------------------------- | ------------------------------------- | ------------ |
+| `mysql.enabled`           | Enable MySQL                          | `false`      |
+| `mysql.architecture`      | architecture.                         | `standalone` |
+| `mysql.auth.rootPassword` | The password for the MySQL root user. | `password`   |
+| `mysql.auth.username`     | The nonroot username of the MySQL.    | `""`         |
+| `mysql.auth.password`     | The nonroot password of the MySQL.    | `""`         |
+| `mysql.auth.database`     | Create database of the MySQL.         | `""`         |
+
+
+### External Database configuration
+
+| Name                                         | Description                                                             | Value                 |
+| -------------------------------------------- | ----------------------------------------------------------------------- | --------------------- |
+| `externalDatabase.enabled`                   | Enable External Database Configuration                                  | `true`                |
+| `externalDatabase.host`                      | Database host                                                           | `mysql`               |
+| `externalDatabase.port`                      | Database port number                                                    | `3306`                |
+| `externalDatabase.username`                  | Non-root username for Concourse                                         | `""`                  |
+| `externalDatabase.password`                  | Password for the non-root username for Concourse                        | `""`                  |
+| `externalDatabase.database`                  | Concourse database name                                                 | `""`                  |
+| `externalDatabase.existingSecret`            | Name of an existing secret resource containing the database credentials | `mysql`               |
+| `externalDatabase.existingSecretPasswordKey` | Name of an existing secret key containing the database credentials      | `mysql-root-password` |
+
+
+### RedisCache configuration
+
+| Name                  | Description                                          | Value        |
+| --------------------- | ---------------------------------------------------- | ------------ |
+| `redis.enabled`       | Enable redis                                         | `true`       |
+| `redis.architecture`  | architecture.                                        | `standalone` |
+| `redis.auth.password` | The password for the redis,keep emty to use default. | `""`         |
+
+
+### External RedisCache configuration
+
+| Name                                      | Description                                                          | Value   |
+| ----------------------------------------- | -------------------------------------------------------------------- | ------- |
+| `externalRedis.enabled`                   | Enable external redis                                                | `false` |
+| `externalRedis.host`                      | Redis host                                                           | `redis` |
+| `externalRedis.port`                      | Redis port number                                                    | `6379`  |
+| `externalRedis.password`                  | Redis password                                                       | `""`    |
+| `externalRedis.existingSecret`            | Name of an existing secret resource containing the redis credentials | `""`    |
+| `externalRedis.existingSecretPasswordKey` | Name of an existing secret key containing the redis credentials      | `""`    |
+
+
+### ArgoCD configuration
+
+| Name                                               | Description                                                                | Value  |
+| -------------------------------------------------- | -------------------------------------------------------------------------- | ------ |
+| `argo-cd.enabled`                                  | Enable Argo CD                                                             | `true` |
+| `argo-cd.configs.secret.argocdServerAdminPassword` | The password for the ArgoCD server admin user,keep empty to auto-generate. | `""`   |
+
+
+### External ArgoCD configuration
+
+| Name                                       | Description                                                            | Value                                  |
+| ------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------- |
+| `externalArgoCD.enabled`                   | Enable external Argo CD                                                | `false`                                |
+| `externalArgoCD.address`                   | Argo CD address                                                        | `http://argo-cd-argocd-server.argo-cd` |
+| `externalArgoCD.username`                  | Argo CD username                                                       | `admin`                                |
+| `externalArgoCD.password`                  | Argo CD password                                                       | `password`                             |
+| `externalArgoCD.existingSecret`            | Name of an existing secret resource containing the Argo CD credentials | `""`                                   |
+| `externalArgoCD.existingSecretPasswordKey` | Name of an existing secret key containing the Argo CD credentials      | `""`                                   |
+
+
+### Gitea configuration
+
+| Name            | Description  | Value  |
+| --------------- | ------------ | ------ |
+| `gitea.enabled` | Enable Gitea | `true` |
+
+
+### External Git configuration
+
+| Name                                    | Description                                                        | Value                     |
+| --------------------------------------- | ------------------------------------------------------------------ | ------------------------- |
+| `externalGit.enabled`                   | Enable external Git                                                | `false`                   |
+| `externalGit.address`                   | Git server address                                                 | `https://git.example.com` |
+| `externalGit.username`                  | Git username                                                       | `root`                    |
+| `externalGit.password`                  | Git password                                                       | `""`                      |
+| `externalGit.existingSecret`            | Name of an existing secret resource containing the Git credentials | `""`                      |
+| `externalGit.existingSecretPasswordKey` | Name of an existing secret key containing the Git credentials      | `""`                      |
 
 
 See https://github.com/bitnami-labs/readme-generator-for-helm to create the table

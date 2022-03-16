@@ -95,7 +95,7 @@ dashboard:
   ## @param dashboard.containerPorts.http dashboard HTTP container port
   ##
   containerPorts:
-    http: 80
+    http: 8000
   ## Configure extra options for dashboard containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
   ## @param dashboard.livenessProbe.enabled Enable livenessProbe on dashboard containers
@@ -163,7 +163,7 @@ dashboard:
   ## @param dashboard.podSecurityContext.fsGroup Set dashboard pod's Security Context fsGroup
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     fsGroup: 1001
   ## Configure Container Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -172,7 +172,7 @@ dashboard:
   ## @param dashboard.containerSecurityContext.runAsNonRoot Set dashboard containers' Security Context runAsNonRoot
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     runAsUser: 1001
     runAsNonRoot: true
 
@@ -618,7 +618,7 @@ api:
   ## @param api.containerPorts.http API HTTP container port
   ##
   containerPorts:
-    http: 80
+    http: 8080
   ## Configure extra options for API containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
   ## @param api.livenessProbe.enabled Enable livenessProbe on API containers
@@ -994,7 +994,7 @@ msgbus:
   ## @param msgbus.containerPorts.http msgbus HTTP container port
   ##
   containerPorts:
-    http: 80
+    http: 8080
   ## Configure extra options for msgbus containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
   ## @param msgbus.livenessProbe.enabled Enable livenessProbe on msgbus containers
@@ -1362,7 +1362,7 @@ worker:
   ## @param worker.containerPorts.http worker HTTP container port
   ##
   containerPorts:
-    http: 80
+    http: 8080
   ## Configure extra options for worker containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
   ## @param worker.livenessProbe.enabled Enable livenessProbe on worker containers
@@ -1373,7 +1373,7 @@ worker:
   ## @param worker.livenessProbe.successThreshold Success threshold for livenessProbe
   ##
   livenessProbe:
-    enabled: true
+    enabled: false
     initialDelaySeconds: 10
     timeoutSeconds: 1
     periodSeconds: 20
@@ -1387,7 +1387,7 @@ worker:
   ## @param worker.readinessProbe.successThreshold Success threshold for readinessProbe
   ##
   readinessProbe:
-    enabled: true
+    enabled: false
     initialDelaySeconds: 10
     timeoutSeconds: 1
     periodSeconds: 20
@@ -1831,30 +1831,121 @@ volumePermissions:
   containerSecurityContext:
     runAsUser: 0
 
+## @section Database configuration
+##
 ## @param mysql.enabled  Enable MySQL
+## @param mysql.architecture  architecture.
 ## @param mysql.auth.rootPassword  The password for the MySQL root user.
+## @param mysql.auth.username  The nonroot username of the MySQL.
+## @param mysql.auth.password  The nonroot password of the MySQL.
+## @param mysql.auth.database  Create database of the MySQL.
 mysql:
-  enabled: true
+  enabled: false
+  architecture: standalone
   auth:
-    rootPassword: password
+    rootPassword: "password" # root password must be set in order upgradeable
+    username: ""
+    password: ""
+    database: ""
 
+## @section External Database configuration
+##
+## All of these values are only used when mysql.enabled is set to false
+## @param externalDatabase.enabled Enable External Database Configuration
+## @param externalDatabase.host Database host
+## @param externalDatabase.port Database port number
+## @param externalDatabase.username Non-root username for Concourse
+## @param externalDatabase.password Password for the non-root username for Concourse
+## @param externalDatabase.database Concourse database name
+## @param externalDatabase.existingSecret Name of an existing secret resource containing the database credentials
+## @param externalDatabase.existingSecretPasswordKey Name of an existing secret key containing the database credentials
+##
+externalDatabase:
+  enabled: true
+  host: mysql
+  port: 3306
+  database: ""
+  username: ""
+  password: ""
+  existingSecret: "mysql"
+  existingSecretPasswordKey: "mysql-root-password"
+
+## @section RedisCache configuration
+##
 ## @param redis.enabled  Enable redis
-## @param redis.password  The password for the redis.
+## @param redis.architecture  architecture.
+## @param redis.auth.password  The password for the redis,keep emty to use default.
 redis:
   enabled: true
-  password: password
+  architecture: standalone
+  auth:
+    password: ""
 
-## @param gitea.enabled  Enable Gitea
-## @param gitea.admin.username The username for git admin user.
-## @param gitea.admin.password The password for git admin user.
-gitea:
-  enabled: true
-  admin:
-    username: admin
-    password: password
+## @section External RedisCache configuration
+##
+## @param externalRedis.enabled  Enable external redis
+## @param externalRedis.host Redis host
+## @param externalRedis.port Redis port number
+## @param externalRedis.password Redis password
+## @param externalRedis.existingSecret Name of an existing secret resource containing the redis credentials
+## @param externalRedis.existingSecretPasswordKey Name of an existing secret key containing the redis credentials
+externalRedis:
+  enabled: false
+  host: redis
+  port: 6379
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: ""
 
+## @section ArgoCD configuration
+##
 ## @param argo-cd.enabled  Enable Argo CD
-## @param argo-cd.argocdServerAdminPassword The password for the ArgoCD server admin user.
+## @param argo-cd.configs.secret.argocdServerAdminPassword The password for the ArgoCD server admin user,keep empty to auto-generate.
 argo-cd:
   enabled: true
-  argocdServerAdminPassword: password
+  configs:
+    secret:
+      argocdServerAdminPassword: ""
+
+## @section External ArgoCD configuration
+##
+## @param externalArgoCD.enabled  Enable external Argo CD
+## @param externalArgoCD.address Argo CD address
+## @param externalArgoCD.username Argo CD username
+## @param externalArgoCD.password Argo CD password
+## @param externalArgoCD.existingSecret Name of an existing secret resource containing the Argo CD credentials
+## @param externalArgoCD.existingSecretPasswordKey Name of an existing secret key containing the Argo CD credentials
+externalArgoCD:
+  enabled: false
+  address: http://argo-cd-argocd-server.argo-cd
+  username: admin
+  password: "password"
+  existingSecret: ""
+  existingSecretPasswordKey: ""
+
+## @section Gitea configuration
+##
+## @param gitea.enabled  Enable Gitea
+## @skip gitea.gitea.admin
+gitea:
+  enabled: true
+  gitea:
+    admin:
+      # username: ""
+      # password: ""
+
+## @section External Git configuration
+##
+## @param externalGit.enabled  Enable external Git
+## @param externalGit.address Git server address
+## @param externalGit.username Git username
+## @param externalGit.password Git password
+## @param externalGit.existingSecret Name of an existing secret resource containing the Git credentials
+## @param externalGit.existingSecretPasswordKey Name of an existing secret key containing the Git credentials
+externalGit:
+  enabled: false
+  address: "https://git.example.com"
+  username: root
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: ""

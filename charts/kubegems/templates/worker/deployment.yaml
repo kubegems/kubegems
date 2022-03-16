@@ -72,7 +72,6 @@ spec:
           {{- else }}
           args:
             - worker
-            - --system-listen=:{{ .Values.worker.containerPorts.http }}
             {{- if .Values.worker.metrics.enabled }}
             # todo: metrics args here
             {{- end }}
@@ -81,6 +80,7 @@ spec:
             {{- end }}
           {{- end }}
           env:
+            {{- include "kubegems.common.env" . | indent 12 }}
             - name: KUBEGEMS_DEBUG
               value: {{ ternary "true" "false" (or .Values.worker.image.debug ) | quote }}
             - name: LOG_LEVEL
@@ -90,7 +90,7 @@ spec:
             {{- end }}
           envFrom:
             - secretRef:
-                name: {{ template "common.names.fullname" . }}
+                name: {{ include "kubegems.secret.fullname" . }}
             {{- if .Values.worker.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.worker.extraEnvVarsCM "context" $) }}

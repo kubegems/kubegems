@@ -12,7 +12,7 @@ dependencies:
   repository: https://dl.gitea.io/charts
   version: 5.0.2
 - name: argo-cd
-  repository: https://charts.bitnami.com/bitnami
-  version: 3.0.13
-digest: sha256:8bcad183c9d972d2f8e4e7ffd057660ee30f3e8579f73114108e8cb1b2fc315f
-generated: "2022-03-14T23:01:43.221085271+08:00"
+  repository: https://argoproj.github.io/argo-helm
+  version: 3.35.4
+digest: sha256:c4722bcecd7537dbb325c5019a14092f88919ed1846a17293660b60aa057d391
+generated: "2022-03-16T10:31:28.078500766+08:00"

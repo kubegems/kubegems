@@ -9,7 +9,15 @@ Return the proper kubegems dashboard name
 Return the proper kubegems image name
 */}}
 {{- define "kubegems.dashboard.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.dashboard.image "global" .Values.global) }}
+{{- include "common.images.image" (dict "imageRoot" .Values.dashboard.image "global" .Values.global) -}}
+{{- end -}}
+
+{{- define "kubegems.api.address" -}}
+    {{- include "kubegems.api.fullname" . -}}:{{- .Values.api.service.ports.http -}}
+{{- end -}}
+
+{{- define "kubegems.msgbus.address" -}}
+    {{- include "kubegems.msgbus.fullname" . -}}:{{- .Values.api.service.ports.http -}}
 {{- end -}}
 
 {{/*
@@ -25,7 +33,7 @@ If release name contains chart name it will be used as a full name.
 Return the proper kubegems.api image name
 */}}
 {{- define "kubegems.init.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.init.image "global" .Values.global) }}
+{{- include "common.images.image" (dict "imageRoot" .Values.init.image "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
