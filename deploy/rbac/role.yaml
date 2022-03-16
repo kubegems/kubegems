@@ -1,4 +1,3 @@
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -372,6 +371,32 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - kubegems.io
+  resources:
+  - installers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kubegems.io
+  resources:
+  - installers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kubegems.io
+  resources:
+  - installers/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - networking.istio.io
   resources:

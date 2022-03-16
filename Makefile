@@ -21,6 +21,7 @@ ifeq (${IMAGE_TAG},master)
 endif
 # Image URL to use all building/pushing image targets
 IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
+BASEIMG ?= ${IMAGE_REGISTRY}/kubegems/kubegems-base:$(IMAGE_TAG)
 
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
@@ -76,6 +77,13 @@ test: generate ## Run tests.
 build: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
+
+base-container: ## Build base image.
+ifneq (, $(shell which docker))
+	docker build -t ${BASEIMG} -f charts/Dockerfile charts
+else
+	buildah bud -t ${BASEIMG}  -f charts/Dockerfile charts
+endif
 
 container: build ## Build container image.
 ifneq (, $(shell which docker))

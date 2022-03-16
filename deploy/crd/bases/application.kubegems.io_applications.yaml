@@ -5,22 +5,19 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: tenants.gems.kubegems.io
+  name: applications.application.kubegems.io
 spec:
-  group: gems.kubegems.io
+  group: application.kubegems.io
   names:
-    kind: Tenant
-    listKind: TenantList
-    plural: tenants
-    shortNames:
-    - ten
-    singular: tenant
-  scope: Cluster
+    kind: Application
+    listKind: ApplicationList
+    plural: applications
+    singular: application
+  scope: Namespaced
   versions:
   - name: v1beta1
     schema:
       openAPIV3Schema:
-        description: Tenant is the Schema for the tenants API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -35,47 +32,24 @@ spec:
           metadata:
             type: object
           spec:
-            description: TenantSpec defines the desired state of Tenant
+            description: ApplicationSpec
             properties:
-              admin:
-                description: Admin 租户管理员列表
+              images:
                 items:
                   type: string
                 type: array
-              members:
-                description: Members 租户成员列表
-                items:
-                  type: string
-                type: array
-              tenantName:
-                description: TenantName 租户名字
+              kind:
                 type: string
-            required:
-            - admin
-            type: object
-          status:
-            description: TenantStatus defines the observed state of Tenant
-            properties:
-              environments:
-                description: Environments 租户在本集群管控的环境
-                items:
+              labels:
+                additionalProperties:
                   type: string
-                type: array
-              lastUpdateTime:
-                description: LastUpdateTime 最后更新时间
-                format: date-time
+                type: object
+              remark:
                 type: string
-              namespaces:
-                description: Namespaces 租户在本集群管控的namespace
-                items:
-                  type: string
-                type: array
             type: object
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
 status:
   acceptedNames:
     kind: ""

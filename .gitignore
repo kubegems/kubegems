@@ -10,3 +10,9 @@ _.yaml
 *.sqlite3
 *.bak
 local_debug.go
+*.tgz
+charts/*
+!charts/*.sh
+!charts/*.md
+!charts/kubegems*
+!charts/Dockerfile
