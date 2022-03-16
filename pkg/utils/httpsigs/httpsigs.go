@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"kubegems.io/pkg/log"
 )
 
 var signer *Signer
@@ -59,9 +57,6 @@ func (s *Signer) Sign(req *http.Request, prefix string) {
 	sign := fmt.Sprintf("%x", md5.Sum([]byte(toSignStr)))
 	req.Header.Set(headerToken, sign)
 	req.Header.Set(headerTime, timeStr)
-	log.Debugf("signer sign: path %s", path)
-	log.Debugf("signer sign: tosign %s", toSignStr)
-	log.Debugf("signer sign: sign %s", sign)
 }
 
 func (s *Signer) Validate(req *http.Request) error {
@@ -79,15 +74,12 @@ func (s *Signer) Validate(req *http.Request) error {
 	after := n.Add(time.Second * time.Duration(s.Duration)).Unix()
 	before := n.Add(time.Second * (-1 * time.Duration(s.Duration))).Unix()
 	if timestamp > after || timestamp < before {
-		return fmt.Errorf("time out")
+		return fmt.Errorf("httpsigs time out, origin: %s, now: %v", timeStr, n)
 	}
 	toSignStr := path + timeStr + s.Token
 	signOut := fmt.Sprintf("%x", md5.Sum([]byte(toSignStr)))
-	log.Debugf("signer validate: path %s", path)
-	log.Debugf("signer validate: tosign %s", toSignStr)
-	log.Debugf("signer validate: sign %s", signOut)
 	if signOut != token {
-		return fmt.Errorf("invalid http signature")
+		return fmt.Errorf("invalid http signature, path: %s, tosign: %s, sign: %s", path, toSignStr, signOut)
 	}
 	return nil
 }
