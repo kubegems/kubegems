@@ -75,6 +75,7 @@ spec:
         description: KubeGems本地组件服务,运行在Kubernetes集群内部.
         version: "{{ .KubegemsVersion.GitVersion }}"
       namespace: gemcloud-system
+      enabled: true
       operator:
         cert_manager:
           version: v1.4.0
@@ -85,11 +86,11 @@ spec:
         gems_agent:
           # replicas: 1
         gems_controller:
-          replicas: 3
+          replicas: 1
       status:
         deployment:
         - gems-agent
-        - gems-controller
+        - gems-controller-manager
         required: true
   
     monitoring:
@@ -109,11 +110,11 @@ spec:
             tag: 2.27.1-debian-10-r16
           resources:
             cpu: 4000m
-            memory: 16Gi
+            memory: 8Gi
           persistent:
-            size: 400Gi
+            size: 50Gi
             # Specify stralgeclass to use, local-path was default value
-            # storageclass: alibabacloud-cnfs-nas
+            # storageclass: local-path
   
           # If you need to interface to an external alertmanager service, disealed alertmanager and configured the host field
           # Tips: host only support <ipaddress>:<ports>
@@ -127,13 +128,12 @@ spec:
           persistent:
             size: 10Gi
             # Specify stralgeclass to use, local-path was default value
-            # storageclass: 
+            # storageclass: local-path
   
           # If you need to interface to an external alertmanager service, disealed alertmanager and configured the host field
           # Tips: host only support <ipaddress>:<ports>
           #external_host: 172.16.0.1:9093
       status:
-        required: true
         deployment:
         - prometheus-operator
   
@@ -158,7 +158,6 @@ spec:
       status:
         deployment:
         - kube-state-metrics
-        required: true
   
     argo_rollouts:
       details:
@@ -177,12 +176,15 @@ spec:
         catalog: 日志中心
         description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务.
         version: v3.15.0
-      enabled: true
+      enabled: false
       namespace: gemcloud-logging-system
       operator:
         # Upstream used by logs whitch fluentbit collect, forward to fluentdpstream uspfluentbit and forwarded to flunetd
         enable_upstream: false
         fluentbit:
+          # Set the buffer size for HTTP client when reading responses from Kubernetes API server. 
+          # The value must be according to the Unit Size specification.
+          #buffer: 256k
           resources:
             cpu: "2"
             memory: 1Gi
@@ -194,11 +196,11 @@ spec:
           # The replicas of flunetd
           replicas: 2
           resources:
-            cpu: "2"
-            memory: 4Gi
+            cpu: "1"
+            memory: 2Gi
           persistent:
-            size: 100Gi
-            storageclass: alibabacloud-cnfs-nas
+            size: 10Gi
+            #storageclass: local-path
         loki:
           enabled: true
           #image:
@@ -208,8 +210,8 @@ spec:
           #  cpu: "4"
           #  memory: "8Gi"
           persistent:
-            size: 500Gi
-            storageclass: alibabacloud-cnfs-nas
+            size: 100Gi
+            #storageclass: local-path
           # If you need to interface to an external loki service, disealed loki and configured the host field
           # Tips: host only support <ipaddress>:<ports>
           #external_host: 172.168.0.1:3100
@@ -219,7 +221,7 @@ spec:
   
     eventer:
       details:
-        catalog: 日志&事件
+        catalog: 日志中心
         description: Kubernetes集群事件收集器(需开启 logging 套件).
         version: v1.1
       enabled: true
@@ -237,7 +239,7 @@ spec:
       namespace: istio-system
       operator:
         eastwestgateway:
-          enabled: true
+          enabled: false
         dnsproxy:
           enabled: true
         istio-cni:
@@ -268,9 +270,11 @@ spec:
           param: 0.5
         elasticsearch:
           enabled: true
+          # Elasticsearch running mode, default is single node. <cluster> mode will be set 3 replicas as a cluster.
+          mode: single
           persistent:
             size: 100Gi
-            # storageclass: alibabacloud-cnfs-nas
+            # storageclass: local-path
   
           # If you need to interface to an external ElasticSearch service, disealed ElasticSearch and configured the external_urls fielda.
           # external_urls: "http://172.16.0.1:9200"
