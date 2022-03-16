@@ -27,6 +27,7 @@ type User struct {
 	LastLoginAt *time.Time `sql:"DEFAULT:'current_timestamp'"`
 
 	Source       string    `gorm:"type:varchar(50)"`
+	SourceVendor string    `gorm:"type:varchar(50)"`
 	Tenants      []*Tenant `gorm:"many2many:tenant_user_rels;"`
 	SystemRole   *SystemRole
 	SystemRoleID uint
