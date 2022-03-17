@@ -468,6 +468,8 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			DoUpdates: clause.AssignmentColumns([]string{
 				"kube_config",
 				"version",
+				"runtime",
+				"primary",
 				"vendor",
 				"image_repo",
 				"default_storage_class",
