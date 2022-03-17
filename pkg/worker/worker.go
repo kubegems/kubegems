@@ -13,6 +13,7 @@ import (
 	"kubegems.io/pkg/utils/git"
 	_ "kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/pprof"
+	"kubegems.io/pkg/utils/prometheus/exporter"
 	"kubegems.io/pkg/utils/redis"
 	"kubegems.io/pkg/worker/dump"
 	"kubegems.io/pkg/worker/resourcelist"
@@ -95,9 +96,14 @@ func Run(ctx context.Context, options *Options) error {
 		}
 	})
 
+	exporterHandler := exporter.NewHandler("gems_worker", map[string]exporter.Collectorfunc{})
+
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		return pprof.Run(ctx)
+	})
+	eg.Go(func() error {
+		return exporterHandler.Run(ctx, options.Exporter)
 	})
 	eg.Go(func() error {
 		return task.Run(ctx, deps.Redis, deps.Databse, deps.Git, deps.Argocli, options.AppStore, deps.Agentscli)
