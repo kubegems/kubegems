@@ -211,7 +211,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的环境，删除失败", cluster.ClusterName))
 		return
 	}
-	recordOnly := c.Query("record_only") == "true"
+	recordOnly := c.DefaultQuery("record_only", "true") == "true"
 
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 		installeropts := new(gemsplugin.InstallerOptions)
