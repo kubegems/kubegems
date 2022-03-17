@@ -5,22 +5,6 @@ metadata:
   namespace: kubegems-installer
 spec:
   plugins:
-    - name: argo-rollouts
-      namespace: argo-rollouts
-    - name: jaeger
-      namespace: observability
-    - name: loki-stack
-      namespace: loki-stack
-    - name: metrics-server
-      namespace: kube-system
-    - name: kube-prometheus-stack
-      namespace: prometheus
-      enabled: true
-    - name: cert-manager
-      namespace: cert-manager
-      enabled: true
-      values:
-        installCRDs: true
     - name: mysql
       namespace: kubegems
       enabled: true
@@ -32,6 +16,3 @@ spec:
           enabled: false
         externalDatabase:
           enabled: true
-    - name: kubegems-local
-      namespace: kubegems-local
-      enabled: true
