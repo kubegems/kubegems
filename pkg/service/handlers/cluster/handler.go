@@ -464,16 +464,27 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	h.SetAuditData(c, "创建", "集群", cluster.ClusterName)
 
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		txClause := clause.OnConflict{
+			DoUpdates: clause.AssignmentColumns([]string{
+				"kube_config",
+				"version",
+				"vendor",
+				"image_repo",
+				"default_storage_class",
+				"deleted_at",
+			}),
+		}
+
 		// 控制集群只检验
 		if cluster.Primary {
 			var primarysCount int64
-			if err := h.GetDataBase().DB().Where(`'primary' = ?`, true).Count(&primarysCount).Error; err != nil {
+			if err := h.GetDataBase().DB().Model(&models.Cluster{}).Where(`'primary' = ?`, true).Count(&primarysCount).Error; err != nil {
 				return err
 			}
 			if primarysCount > 0 {
 				return fmt.Errorf("控制集群只能有一个")
 			}
-			if err := h.GetDB().Create(cluster).Error; err != nil {
+			if err := h.GetDB().Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
 			return nil
@@ -483,16 +494,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		h.DynamicConfig.Get(ctx, installeropts)
 
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
-			if err := tx.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{
-					"kube_config",
-					"version",
-					"vendor",
-					"image_repo",
-					"default_storage_class",
-					"deleted_at",
-				}),
-			}).Create(cluster).Error; err != nil {
+			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
 			installer := ClusterInstaller{
