@@ -3,8 +3,6 @@ package gemsplugin
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"sync"
 
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,12 +17,8 @@ const (
 	TypeKubernetesPlugins = "kubernetes"
 )
 
-var (
-	once       sync.Once
-	pluginURLs = []string{
-		"/apis/plugins.kubegems.io/v1beta1/namespaces/kubegems-installer/installers/kubegems-plugins",
-	}
-	realPluginURL string // real plugin resource position
+const (
+	realPluginURL = "/apis/plugins.kubegems.io/v1beta1/namespaces/kubegems-installer/installers/kubegems-plugins" // real plugin resource position
 )
 
 type Plugins struct {
@@ -73,23 +67,6 @@ type Status struct {
 
 func GetPlugins(dis discovery.DiscoveryInterface) (*Plugins, error) {
 	ctx := context.TODO()
-	once.Do(func() {
-		for _, pluginURL := range pluginURLs {
-			_, err := dis.RESTClient().Get().AbsPath(pluginURL).Do(ctx).Raw()
-			if err == nil {
-				realPluginURL = pluginURL
-				log.Infof("use plugin url: %s", pluginURL)
-				return
-			}
-			log.Errorf("plugins url %s error: %v", pluginURL, err)
-		}
-		log.Errorf("all plugin urls failed, please check installer position")
-	})
-
-	if realPluginURL == "" {
-		return nil, fmt.Errorf("installer plugins not found")
-	}
-
 	obj, err := dis.RESTClient().Get().AbsPath(realPluginURL).Do(ctx).Raw()
 	if err != nil {
 		log.Errorf("error getting plugins: %v", err)
