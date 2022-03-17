@@ -2,7 +2,7 @@
 
 ## Deploy
 
-Follow [deploy/READMD.md](deploy/READMD.md) to setup a kubegems cluster.
+Follow [deploy/README.md](../deploy/README.md) to setup a kubegems cluster.
 
 ## Develop
 
