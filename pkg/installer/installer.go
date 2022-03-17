@@ -58,9 +58,13 @@ func Run(ctx context.Context, options *Options) error {
 	}
 
 	installerctrl := &controllers.InstallerReconciler{
-		Client:  mgr.GetClient(),
-		Scheme:  mgr.GetScheme(),
-		Options: &controllers.InstallerOptions{ChartsDir: options.ChartsDir},
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Applyers: map[pluginv1beta1.InstallerSpecPluginKind]controllers.Applyer{
+			pluginv1beta1.InstallerSpecPluginKindHelm: &controllers.HelmApplyer{
+				ChartsDir: options.ChartsDir,
+			},
+		},
 	}
 	if err = installerctrl.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Memcached")

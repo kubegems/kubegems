@@ -30,12 +30,21 @@ type InstallerSpecGlobal struct {
 	Additional      map[string]string `json:"additional,omitempty"`
 }
 
+type InstallerSpecPluginKind string
+
+const (
+	InstallerSpecPluginKindHelm      InstallerSpecPluginKind = "helm"
+	InstallerSpecPluginKindKustomize InstallerSpecPluginKind = "kustomize"
+	InstallerSpecPluginKindNative    InstallerSpecPluginKind = "native"
+)
+
 type InstallerSpecPlugin struct {
-	Enabled   bool              `json:"enabled,omitempty"`   // enabled
-	Name      string            `json:"name,omitempty"`      // plugin name,also helm chart name
-	Namespace string            `json:"namespace,omitempty"` // install namespace
-	Labels    map[string]string `json:"labels,omitempty"`    // plugin labels
-	Version   string            `json:"version,omitempty"`   // plugin version,alsi helm chart version
+	Enabled   bool                    `json:"enabled,omitempty"`   // enabled
+	Kind      InstallerSpecPluginKind `json:"kind,omitempty"`      // plugin kind, e.g. "helm","kustomize","native".
+	Name      string                  `json:"name,omitempty"`      // plugin name,also helm chart name
+	Namespace string                  `json:"namespace,omitempty"` // install namespace
+	Labels    map[string]string       `json:"labels,omitempty"`    // plugin labels
+	Version   string                  `json:"version,omitempty"`   // plugin version,alsi helm chart version
 
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Values runtime.RawExtension `json:"values,omitempty"` // plugin values, helm values
