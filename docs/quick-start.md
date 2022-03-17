@@ -81,7 +81,7 @@ You can use the [Bridge to Kubernetes](https://marketplace.visualstudio.com/item
       "type": "bridge-to-kubernetes.resource",
       "resource": "kubegems-api",
       "resourceType": "service",
-      "ports": [80],
+      "ports": [8080],
       "targetCluster": "kind-kubegems",
       "targetNamespace": "kubegms",
       "useKubernetesServiceEnvironmentVariables": true
