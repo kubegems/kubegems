@@ -78,6 +78,7 @@ spec:
             {{- end }}
             {{- if .Values.controller.webhook.enabled }}
             - --enablewebhook
+            - --webhookaddr=:{{- .Values.controller.containerPorts.webhook }}
             {{- end }}
             - --probeaddr=:{{- .Values.controller.containerPorts.probe }}
             {{- if .Values.controller.metrics.enabled }}

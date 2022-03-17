@@ -513,7 +513,7 @@ controller:
   ## @param controller.containerPorts.probe controller probe port
   ##
   containerPorts:
-    webhook: 443
+    webhook: 9443
     probe: 8080
   ## Configure extra options for controller containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
