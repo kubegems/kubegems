@@ -1,0 +1,10 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Installer
+metadata:
+  name: kubegems-local
+  namespace: kubegems-installer
+spec:
+  plugins:
+    - name: kubegems-local
+      namespace: kubegems-local
+      enabled: true

@@ -16,7 +16,7 @@ endif
 
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
-ifeq (${IMAGE_TAG},master)
+ifeq (${IMAGE_TAG},main)
    IMAGE_TAG = latest
 endif
 # Image URL to use all building/pushing image targets
@@ -51,13 +51,13 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 generate: ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=charts/kubegems-installer/crds 	    # Generate installer 		CRDs
-	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=charts/kubegems-local/crds				# Generate agent/controller CRDs
+	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/charts/kubegems-installer/crds 	    # Generate installer 		CRDs
+	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/charts/kubegems-local/crds				# Generate agent/controller CRDs
 
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"					# Generate DeepCopy, DeepCopyInto, DeepCopyObject
 
-	$(CONTROLLER_GEN) paths="./pkg/..." rbac:roleName=manager-role webhook output:dir=deploy/rbac 	# Generate RBAC
-	$(CONTROLLER_GEN) paths="./pkg/..." webhook output:dir=deploy/webhook 							# Generate Webhooks
+	# $(CONTROLLER_GEN) paths="./pkg/..." rbac:roleName=manager-role webhook output:dir=deploy/rbac 	# Generate RBAC
+	# $(CONTROLLER_GEN) paths="./pkg/..." webhook output:dir=deploy/webhook 							# Generate Webhooks
 
 swagger:
 	# go mod vendor
@@ -82,9 +82,9 @@ build: ## Build binaries.
 
 charts-container: ## Build kubegems-charts image.
 ifneq (, $(shell which docker))
-	docker build -t ${CHARTS_IMG} -f charts/Dockerfile charts
+	docker build -t ${CHARTS_IMG} deploy
 else
-	buildah bud -t ${CHARTS_IMG}  -f charts/Dockerfile charts
+	buildah bud -t ${CHARTS_IMG}  deploy
 endif
 
 push-charts-container: ## Push charts image.

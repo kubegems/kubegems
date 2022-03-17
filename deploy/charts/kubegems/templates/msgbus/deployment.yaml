@@ -1,0 +1,163 @@
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "kubegems.msgbus.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: msgbus
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.msgbus.replicaCount }}
+  {{- if .Values.msgbus.updateStrategy }}
+  strategy: {{- toYaml .Values.msgbus.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: msgbus
+  template:
+    metadata:
+      {{- if .Values.msgbus.podAnnotations }}
+      annotations: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: msgbus
+        {{- if .Values.msgbus.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "kubegems.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.msgbus.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.msgbus.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.msgbus.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.msgbus.podAffinityPreset "component" "msgbus" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.msgbus.podAntiAffinityPreset "component" "msgbus" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.msgbus.nodeAffinityPreset.type "key" .Values.msgbus.nodeAffinityPreset.key "values" .Values.msgbus.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.msgbus.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.msgbus.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.msgbus.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.msgbus.priorityClassName }}
+      priorityClassName: {{ .Values.msgbus.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.msgbus.schedulerName }}
+      schedulerName: {{ .Values.msgbus.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.msgbus.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.msgbus.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: msgbus
+          image: {{ include "kubegems.msgbus.image" . }}
+          imagePullPolicy: {{ .Values.msgbus.image.pullPolicy }}
+          {{- if .Values.msgbus.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.msgbus.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.msgbus.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.msgbus.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.args "context" $) | nindent 12 }}
+          {{- else }}
+          args:
+            - msgbus
+            - --system-listen=:{{ .Values.msgbus.containerPorts.http }}
+            {{- if .Values.api.jwt.enabled }}
+            - --jwt-cert=/certs/jwt/tls.crt
+            - --jwt-key=/certs/jwt/tls.key
+            {{- end }}
+            {{- if .Values.msgbus.extraArgs }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.extraArgs "context" $) | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          env:
+            {{- include "kubegems.common.env" . | indent 12 }}
+            - name: KUBEGEMS_DEBUG
+              value: {{ ternary "true" "false" (or .Values.msgbus.image.debug ) | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.msgbus.logLevel }}
+            {{- if .Values.msgbus.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ include "kubegems.secret.fullname" . }}
+            {{- if .Values.msgbus.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.msgbus.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.msgbus.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.msgbus.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.msgbus.resources }}
+          resources: {{- toYaml .Values.msgbus.resources | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.msgbus.containerPorts.http }}
+            {{- if .Values.msgbus.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.msgbus.metrics.service.port }}
+              protocol: TCP
+            {{- end }}
+          {{- if .Values.msgbus.livenessProbe.enabled }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.msgbus.livenessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.msgbus.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.msgbus.readinessProbe.enabled }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.msgbus.readinessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.msgbus.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.msgbus.startupProbe.enabled }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.msgbus.startupProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.msgbus.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.customStartupProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.msgbus.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.api.jwt.enabled }}
+            - name: jwt-certs
+              mountPath: /certs/jwt
+              readOnly: true
+            {{- end }}
+          {{- if .Values.msgbus.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+        {{- if .Values.msgbus.sidecars }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.msgbus.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.api.jwt.enabled }}
+        - name: jwt-certs
+          secret:
+            secretName: {{ template "kubegems.api.jwt.secretName" . }}
+            defaultMode: 420
+        {{- end }}
+        {{- if .Values.msgbus.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.msgbus.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}

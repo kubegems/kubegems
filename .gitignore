@@ -11,8 +11,3 @@ _.yaml
 *.bak
 local_debug.go
 *.tgz
-charts/*
-!charts/*.sh
-!charts/*.md
-!charts/kubegems*
-!charts/Dockerfile

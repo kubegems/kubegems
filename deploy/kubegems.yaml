@@ -1,0 +1,37 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Installer
+metadata:
+  name: kubegems
+  namespace: kubegems-installer
+spec:
+  plugins:
+    - name: argo-rollouts
+      namespace: argo-rollouts
+    - name: jaeger
+      namespace: observability
+    - name: loki-stack
+      namespace: loki-stack
+    - name: metrics-server
+      namespace: kube-system
+    - name: kube-prometheus-stack
+      namespace: prometheus
+      enabled: true
+    - name: cert-manager
+      namespace: cert-manager
+      enabled: true
+      values:
+        installCRDs: true
+    - name: mysql
+      namespace: kubegems
+      enabled: true
+    - name: kubegems
+      namespace: kubegems
+      enabled: true
+      values:
+        mysql:
+          enabled: false
+        externalDatabase:
+          enabled: true
+    - name: kubegems-local
+      namespace: kubegems-local
+      enabled: true
