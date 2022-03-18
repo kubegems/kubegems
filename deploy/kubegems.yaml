@@ -7,18 +7,21 @@ spec:
   plugins:
     - name: mysql
       namespace: kubegems
-      kind: helm
       enabled: true
     - name: kubegems
       namespace: kubegems
-      kind: helm
       enabled: true
       values:
+        api:
+          image:
+            repository: cnfatal/kubegems
+        worker:
+          image:
+            repository: cnfatal/kubegems
+        msgbus:
+          image:
+            repository: cnfatal/kubegems
         mysql:
           enabled: false
         externalDatabase:
           enabled: true
-    - name: gateway
-      namespace: kubegems-gateway
-      kind: native
-      enabled: true

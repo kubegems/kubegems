@@ -20,7 +20,6 @@ spec:
   - name: v1beta1
     schema:
       openAPIV3Schema:
-        description: 'nolint: tagliatelle'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -39,23 +38,15 @@ spec:
               cluaterName:
                 type: string
               global:
-                properties:
-                  additional:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  imagepullsecret:
-                    type: string
-                  repository:
-                    type: string
-                  storageclass:
-                    type: string
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               plugins:
                 items:
                   properties:
                     enabled:
                       type: boolean
+                    kind:
+                      type: string
                     labels:
                       additionalProperties:
                         type: string
@@ -87,6 +78,8 @@ spec:
                       type: string
                     deletionTimestamp:
                       format: date-time
+                      type: string
+                    kind:
                       type: string
                     message:
                       type: string
@@ -200,10 +193,13 @@ spec:
           command:
             - sh
             - -c
-            - cp -R /charts/ /app/charts/
+            - cp -R /charts/* /app/charts/
+            - cp -R /plugins/* /app/plugins/
           volumeMounts:
-          - name: charts
-            mountPath: /app/charts
+            - name: charts
+              mountPath: /app/charts
+            - name: plugins
+              mountPath: /app/plugins
           resources:
             limits: {}
             requests: {}
@@ -217,6 +213,7 @@ spec:
           args:
             - installer
             - --chartsdir=/app/charts
+            - --pluginsdir=/app/plugins
             - --enableleaderelection
             - --probeaddr=:8080
             - --metricsaddr=:9100
@@ -254,6 +251,10 @@ spec:
           volumeMounts:
             - name: charts
               mountPath: /app/charts
+            - name: plugins
+              mountPath: /app/plugins
       volumes:
         - name: charts
+          emptyDir: {}
+        - name: plugins
           emptyDir: {}

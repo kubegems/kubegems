@@ -101,7 +101,7 @@ func (r *InstallerReconciler) Sync(ctx context.Context, installer *pluginsv1beta
 	globalVals := UnmarshalValues(installer.Spec.Global)
 
 	// one by one in dep order
-	for _, plugin := range installer.Spec.Plugins {
+	for i, plugin := range installer.Spec.Plugins {
 		if plugin.Name == "" || plugin.Namespace == "" {
 			continue
 		}
@@ -111,8 +111,7 @@ func (r *InstallerReconciler) Sync(ctx context.Context, installer *pluginsv1beta
 
 		// if empty use default
 		if plugin.Kind == "" {
-			plugin.Kind = pluginsv1beta1.InstallerSpecPluginKindHelm
-			continue
+			installer.Spec.Plugins[i].Kind = pluginsv1beta1.InstallerSpecPluginKindHelm
 		}
 
 		// choose applyer

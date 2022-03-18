@@ -71,9 +71,12 @@ spec:
             - sh
             - -c
             - cp -R /charts/* /app/charts/
+            - cp -R /plugins/* /app/plugins/
           volumeMounts:
-          - name: charts
-            mountPath: /app/charts
+            - name: charts
+              mountPath: /app/charts
+            - name: plugins
+              mountPath: /app/plugins
           {{- if .Values.installer.resources }}
           resources: {{- toYaml .Values.installer.resources | nindent 12 }}
           {{- end }}
@@ -93,6 +96,7 @@ spec:
           args:
             - installer
             - --chartsdir=/app/charts
+            - --pluginsdir=/app/plugins
             {{- if .Values.installer.leaderElection.enabled }}
             - --enableleaderelection
             {{- end }}
@@ -163,6 +167,8 @@ spec:
           volumeMounts:
             - name: charts
               mountPath: /app/charts
+            - name: plugins
+              mountPath: /app/plugins
           {{- if .Values.installer.extraVolumeMounts }}
           {{- include "common.tplvalues.render" (dict "value" .Values.installer.extraVolumeMounts "context" $) | nindent 12 }}
           {{- end }}
@@ -171,6 +177,8 @@ spec:
         {{- end }}
       volumes:
         - name: charts
+          emptyDir: {}
+        - name: plugins
           emptyDir: {}
         {{- if .Values.installer.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.installer.extraVolumes "context" $) | nindent 8 }}

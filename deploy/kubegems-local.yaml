@@ -21,6 +21,10 @@ spec:
     - name: kube-prometheus-stack
       namespace: prometheus
       enabled: true
+    - name: gateway
+      namespace: kubegems-gateway
+      kind: native
+      enabled: true
     - name: kubegems-local
       namespace: kubegems-local
       enabled: true
