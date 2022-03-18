@@ -80,7 +80,7 @@ func (r *VirtuslspaceReconciler) OnChange(ctx context.Context, ns *corev1.Namesp
 	}
 
 	sisternss := func(namespace string) []string {
-		hosts := set.NewSet()
+		hosts := set.NewSet[string]()
 		for _, nss := range virtualspacenamespaces {
 			for _, ns := range nss {
 				if ns == namespace {

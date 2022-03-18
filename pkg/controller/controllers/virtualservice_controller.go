@@ -102,7 +102,7 @@ func (r *ServiceentryReconciler) OnChange(ctx context.Context, svc *corev1.Servi
 		return ctrl.Result{}, nil
 	}
 
-	hosts := set.NewSet()
+	hosts := set.NewSet[string]()
 
 	addtohosts := func(val string) {
 		for _, domain := range strings.Split(val, ",") {
@@ -196,7 +196,7 @@ func (r *ServiceentryReconciler) updateVirtualServiceHosts(ctx context.Context, 
 		return err
 	}
 
-	sets := set.NewSet()
+	sets := set.NewSet[string]()
 	sets.Append(svc.Name)
 	// sets.Append(vs.Spec.Hosts...)
 	sets.Append(hosts...)
