@@ -106,7 +106,7 @@ func (r *AlertRule) CheckAndModify(opts *MonitorOptions) error {
 		return fmt.Errorf("alert level can't be null")
 	}
 
-	severities := set.NewSet()
+	severities := set.NewSet[string]()
 	for _, v := range r.AlertLevels {
 		severities.Append(v.Severity)
 		if !slice.ContainStr(opts.Operators, v.CompareOp) {
