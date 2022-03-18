@@ -20,6 +20,7 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+// nolint: gochecknoinits
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(pluginv1beta1.AddToScheme(scheme))
@@ -30,6 +31,7 @@ type Options struct {
 	EnableLeaderElection bool   `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
 	ProbeAddr            string `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
 	ChartsDir            string `json:"chartsDir,omitempty" description:"The directory that contains the charts."`
+	PluginsDir           string `json:"pluginsDir,omitempty" description:"The directory that contains the plugins."`
 }
 
 func NewDefaultOptions() *Options {
@@ -38,6 +40,7 @@ func NewDefaultOptions() *Options {
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
 		ChartsDir:            "charts",
+		PluginsDir:           "plugins",
 	}
 }
 
@@ -47,7 +50,6 @@ func Run(ctx context.Context, options *Options) error {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     options.MetricsAddr,
-		Port:                   9443,
 		HealthProbeBindAddress: options.ProbeAddr,
 		LeaderElection:         options.EnableLeaderElection,
 		LeaderElectionID:       plugins.GroupName,
@@ -57,17 +59,11 @@ func Run(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	installerctrl := &controllers.InstallerReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Applyers: map[pluginv1beta1.InstallerSpecPluginKind]controllers.Applyer{
-			pluginv1beta1.InstallerSpecPluginKindHelm: &controllers.HelmApplyer{
-				ChartsDir: options.ChartsDir,
-			},
-		},
-	}
-	if err = installerctrl.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Memcached")
+	if err := controllers.NewAndSetupInstallerReconciler(ctx, mgr, &controllers.InstallerOptions{
+		ChartsDir:  options.ChartsDir,
+		PluginsDir: options.PluginsDir,
+	}); err != nil {
+		setupLog.Error(err, "unable to create installer controller", "controller", "installer")
 		return err
 	}
 

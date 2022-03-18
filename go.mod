@@ -10,6 +10,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.17.0
 	github.com/argoproj/argo-cd/v2 v2.1.10
 	github.com/argoproj/argo-rollouts v1.1.1
+	github.com/argoproj/gitops-engine v0.4.2
 	github.com/banzaicloud/logging-operator/pkg/sdk v0.7.2
 	github.com/cloudflare/cfssl v1.6.1
 	github.com/containerd/containerd v1.4.13
@@ -119,7 +120,6 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
-	github.com/argoproj/gitops-engine v0.4.2 // indirect
 	github.com/argoproj/pkg v0.11.1-0.20211203175135-36c59d8fafe0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
 	github.com/astaxie/beego v1.12.1 // indirect

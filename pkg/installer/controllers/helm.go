@@ -27,12 +27,12 @@ func NewHelmConfig(namespace string) *action.Configuration {
 	return config
 }
 
-type HelmApplyer struct {
+type HelmApplier struct {
 	ChartsDir string `json:"chartsDir,omitempty"`
 }
 
 // nolint: funlen,nestif
-func (r *HelmApplyer) Apply(ctx context.Context, plugin pluginsv1beta1.InstallerSpecPlugin, status *pluginsv1beta1.InstallerStatusStatus) error {
+func (r *HelmApplier) Apply(ctx context.Context, plugin pluginsv1beta1.InstallerSpecPlugin, status *pluginsv1beta1.InstallerStatusStatus) error {
 	namespace, name := plugin.Namespace, plugin.Name
 	log := logr.FromContext(ctx).WithValues("name", name, "namespace", namespace)
 

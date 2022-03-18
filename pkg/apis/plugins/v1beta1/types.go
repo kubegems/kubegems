@@ -8,7 +8,6 @@ import (
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:scope=Namespaced
 //+kubebuilder:subresource:status
-// nolint: tagliatelle
 type Installer struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -83,10 +82,11 @@ const (
 )
 
 type InstallerStatusStatus struct {
-	Name      string `json:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
-	Status    Status `json:"status,omitempty"` // Status is the current state of the release
-	Message   string `json:"message,omitempty"`
+	Name      string                  `json:"name,omitempty"`
+	Namespace string                  `json:"namespace,omitempty"`
+	Kind      InstallerSpecPluginKind `json:"kind,omitempty"`   // plugin kind, e.g. "helm","kustomize","native".
+	Status    Status                  `json:"status,omitempty"` // Status is the current state of the release
+	Message   string                  `json:"message,omitempty"`
 
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Values            runtime.RawExtension `json:"values,omitempty"`
@@ -98,7 +98,6 @@ type InstallerStatusStatus struct {
 }
 
 //+kubebuilder:object:root=true
-// nolint: tagliatelle
 type InstallerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

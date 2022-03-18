@@ -24,17 +24,46 @@ import (
 	"github.com/go-logr/logr"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/yaml"
 )
 
 // InstallerReconciler reconciles a Memcached object
 type InstallerReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Applyers map[pluginsv1beta1.InstallerSpecPluginKind]Applyer
+	Scheme     *runtime.Scheme
+	RestConfig *rest.Config
+	Applyers   map[pluginsv1beta1.InstallerSpecPluginKind]Applier
+}
+
+type InstallerOptions struct {
+	ChartsDir  string `json:"chartsDir,omitempty"`
+	PluginsDir string `json:"pluginsDir,omitempty"`
+}
+
+func NewAndSetupInstallerReconciler(ctx context.Context, mgr manager.Manager, options *InstallerOptions) error {
+	nativeApplier, err := NewNativeApplier(ctx, mgr, options.PluginsDir)
+	if err != nil {
+		return err
+	}
+	applyers := map[pluginsv1beta1.InstallerSpecPluginKind]Applier{
+		pluginsv1beta1.InstallerSpecPluginKindHelm:   &HelmApplier{ChartsDir: options.ChartsDir},
+		pluginsv1beta1.InstallerSpecPluginKindNative: nativeApplier,
+	}
+	reconciler := &InstallerReconciler{
+		Client:     mgr.GetClient(),
+		Scheme:     mgr.GetScheme(),
+		RestConfig: mgr.GetConfig(),
+		Applyers:   applyers,
+	}
+	if err := reconciler.SetupWithManager(mgr); err != nil {
+		return err
+	}
+	return nil
 }
 
 //+kubebuilder:rbac:groups=kubegems.io,resources=installers,verbs=get;list;watch;create;update;patch;delete
@@ -59,7 +88,7 @@ func (r *InstallerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-type Applyer interface {
+type Applier interface {
 	Apply(ctx context.Context, plugin pluginsv1beta1.InstallerSpecPlugin, status *pluginsv1beta1.InstallerStatusStatus) error
 }
 
@@ -81,7 +110,9 @@ func (r *InstallerReconciler) Sync(ctx context.Context, installer *pluginsv1beta
 		// if empty use default
 		if plugin.Kind == "" {
 			plugin.Kind = pluginsv1beta1.InstallerSpecPluginKindHelm
+			continue
 		}
+
 		// choose applyer
 		applyer, ok := r.Applyers[plugin.Kind]
 		if !ok {
@@ -101,6 +132,8 @@ func (r *InstallerReconciler) Sync(ctx context.Context, installer *pluginsv1beta
 			}
 			return err
 		}
+		status.Namespace, status.Name, status.Kind = plugin.Namespace, plugin.Name, plugin.Kind
+
 		// not status update,continue next plugin
 		// https://github.com/golang/go/issues/19502
 		if apiequality.Semantic.DeepEqual(originalStatus, status) {
