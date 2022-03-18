@@ -9,6 +9,7 @@ import (
 	"kubegems.io/pkg/service/aaa/audit"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/models/cache"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/slice"
 )
@@ -40,7 +41,7 @@ type PermissionChecker interface {
 }
 
 type DefaultPermissionChecker struct {
-	Cache  *models.CacheLayer
+	Cache  *cache.ModelCache
 	Userif aaa.ContextUserOperator
 }
 
@@ -50,18 +51,17 @@ func (defaultPermChecker *DefaultPermissionChecker) HasEnvPerm(c *gin.Context, c
 		return false, "", ""
 	}
 	userAuthoriy := defaultPermChecker.Cache.GetUserAuthority(user)
-	if userAuthoriy.IsSystemAdmin {
+	if userAuthoriy.IsSystemAdmin() {
 		return true, "", "admin"
 	}
 
-	resourceTree := defaultPermChecker.Cache.GetGlobalResourceTree()
-	env := resourceTree.Tree.FindNodeByClusterNamespace(cluster, namespace)
+	env := defaultPermChecker.Cache.FindEnvironment(cluster, namespace)
 	if env == nil {
 		return false, "", ""
 	}
-	objname = env.Name
+	objname = env.GetName()
 	action := c.Request.Method
-	hasPerm, currentrole = defaultPermChecker.canDo(userAuthoriy, env.Kind, env.ID, action)
+	hasPerm, currentrole = defaultPermChecker.canDo(userAuthoriy, env.GetKind(), env.GetID(), action)
 	return
 }
 
@@ -73,33 +73,31 @@ func (defaultPermChecker *DefaultPermissionChecker) HasObjectPerm(c *gin.Context
 		return
 	}
 	userAuthoriy := defaultPermChecker.Cache.GetUserAuthority(user)
-	if userAuthoriy.IsSystemAdmin {
+	if userAuthoriy.IsSystemAdmin() {
 		hasPerm = true
 		currentrole = "sysadmin"
 		return
 	}
 
-	resourceTree := defaultPermChecker.Cache.GetGlobalResourceTree()
-	res := resourceTree.Tree.FindNode(kind, pk)
+	res := defaultPermChecker.Cache.FindResource(kind, pk)
 	if res == nil {
 		return false, "", ""
 	}
-	objname = res.Name
+	objname = res.GetName()
 	action := c.Request.Method
 	hasPerm, currentrole = defaultPermChecker.canDo(userAuthoriy, kind, pk, action)
 	return
 }
 
-func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.UserAuthority, kind string, pk uint, action string) (hasPerm bool, currenrole string) {
-	resourceTree := defaultPermChecker.Cache.GetGlobalResourceTree()
-	parents := resourceTree.Tree.FindParents(kind, pk)
+func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *cache.UserAuthority, kind string, pk uint, action string) (hasPerm bool, currenrole string) {
+	parents := defaultPermChecker.Cache.FindParents(kind, pk)
 	if len(parents) == 0 {
 		return true, ""
 	}
 	for _, res := range parents {
-		switch res.Kind {
+		switch res.GetKind() {
 		case models.ResTenant:
-			role := userAuthority.GetResourceRole(res.Kind, res.ID)
+			role := userAuthority.GetResourceRole(res.GetKind(), res.GetID())
 			// 不是租户成员->直接禁止;
 			// 租户管理员->放行;
 			// 租户普通成员->到具体项目判断
@@ -116,7 +114,7 @@ func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.
 			// 不是项目成员->直接禁止;
 			// 项目管理员->放行;
 			// 项目普通成员->到具体环境判断
-			role := userAuthority.GetResourceRole(res.Kind, res.ID)
+			role := userAuthority.GetResourceRole(res.GetKind(), res.GetID())
 			if role == "" {
 				return false, role
 			}
@@ -130,7 +128,7 @@ func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.
 			// 不是环境成员->直接禁止;
 			// 环境operator->放行;
 			// 环境reader->到具体动作判断
-			role := userAuthority.GetResourceRole(res.Kind, res.ID)
+			role := userAuthority.GetResourceRole(res.GetKind(), res.GetID())
 			if role == "" {
 				return false, role
 			}
@@ -144,7 +142,7 @@ func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *models.
 			// 不是虚拟空间成员->直接禁止;
 			// 虚拟空间管理员->放行;
 			// 虚拟空间reader->到具体动作判断
-			role := userAuthority.GetResourceRole(res.Kind, res.ID)
+			role := userAuthority.GetResourceRole(res.GetKind(), res.GetID())
 			if role == "" {
 				return false, role
 			}
@@ -235,7 +233,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsSysADMIN(c *gin
 		return
 	}
 	userAuthoriy := defaultPermissionChecker.Cache.GetUserAuthority(user)
-	if !userAuthoriy.IsSystemAdmin {
+	if !userAuthoriy.IsSystemAdmin() {
 		handlers.Forbidden(c, "只有系统管理员可以执行当前操作")
 		c.Abort()
 		return
@@ -250,7 +248,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsATenantAdmin(c 
 		return
 	}
 	userAuthoriy := defaultPermissionChecker.Cache.GetUserAuthority(user)
-	if userAuthoriy.IsSystemAdmin {
+	if userAuthoriy.IsSystemAdmin() {
 		return
 	}
 	for _, ten := range userAuthoriy.Tenants {
@@ -258,7 +256,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsATenantAdmin(c 
 			return
 		}
 	}
-	if userAuthoriy.IsSystemAdmin {
+	if userAuthoriy.IsSystemAdmin() {
 		return
 	}
 	handlers.Forbidden(c, "租户管理员才能执行当前操作")
@@ -273,7 +271,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsVirtualSpaceAdm
 		return
 	}
 	userAuthoriy := defaultPermissionChecker.Cache.GetUserAuthority(user)
-	if userAuthoriy.IsSystemAdmin {
+	if userAuthoriy.IsSystemAdmin() {
 		return
 	}
 	for _, vs := range userAuthoriy.VirtualSpaces {
@@ -301,7 +299,7 @@ func (defaultPermChecker *DefaultPermissionChecker) CheckCanDeployEnvironment(c 
 	}
 	userAuthoriy := defaultPermChecker.Cache.GetUserAuthority(user)
 	// 系统管理员. pass
-	if userAuthoriy.IsSystemAdmin {
+	if userAuthoriy.IsSystemAdmin() {
 		return
 	}
 
@@ -314,8 +312,7 @@ func (defaultPermChecker *DefaultPermissionChecker) CheckCanDeployEnvironment(c 
 		defaultPermChecker.CheckByProjectID(c)
 		return
 	}
-	resourceTree := defaultPermChecker.Cache.GetGlobalResourceTree()
-	parents := resourceTree.Tree.FindParents(models.ResEnvironment, envid)
+	parents := defaultPermChecker.Cache.FindParents(models.ResEnvironment, envid)
 	if len(parents) == 0 {
 		c.Abort()
 		handlers.NotOK(c, fmt.Errorf("当前环境数据异常，请联系管理员"))
@@ -323,20 +320,20 @@ func (defaultPermChecker *DefaultPermissionChecker) CheckCanDeployEnvironment(c 
 	}
 
 	for _, p := range parents {
-		switch p.Kind {
+		switch p.GetKind() {
 		case models.ResTenant:
 			// 租户管理员. pass
-			if userAuthoriy.IsTenantAdmin(p.ID) {
+			if userAuthoriy.IsTenantAdmin(p.GetTenantID()) {
 				return
 			}
 		case models.ResProject:
 			// 项目管理员，项目运维. pass
-			if userAuthoriy.IsProjectAdmin(p.ID) || userAuthoriy.IsProjectOps(p.ID) {
+			if userAuthoriy.IsProjectAdmin(p.GetProjectID()) || userAuthoriy.IsProjectOps(p.GetProjectID()) {
 				return
 			}
 		case models.ResEnvironment:
 			// 环境operator. pass
-			if userAuthoriy.IsEnvironmentOperator(p.ID) {
+			if userAuthoriy.IsEnvironmentOperator(p.GetEnvironmentID()) {
 				return
 			}
 		}

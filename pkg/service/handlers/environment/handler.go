@@ -149,7 +149,7 @@ func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetCacheLayer().GetGlobalResourceTree().UpsertEnvironment(obj.ProjectID, obj.ID, obj.EnvironmentName, cluster.ClusterName, obj.Namespace)
+	h.ModelCache().UpsertEnvironment(obj.ProjectID, obj.ID, obj.EnvironmentName, cluster.ClusterName, obj.Namespace)
 	handlers.OK(c, obj)
 }
 
@@ -292,7 +292,7 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetCacheLayer().GetGlobalResourceTree().DelEnvironment(obj.ProjectID, obj.ID)
+	h.ModelCache().DelEnvironment(obj.ProjectID, obj.ID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Delete
@@ -404,7 +404,7 @@ func (h *EnvironmentHandler) PostEnvironmentUser(c *gin.Context) {
 	}
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.GetDB().Preload("Environment.Project.Tenant").First(&rel, rel.ID)
 
@@ -452,7 +452,7 @@ func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 	}
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.GetDB().Preload("Environment.Project.Tenant").First(&rel, rel.ID)
 	h.SetAuditData(c, "更新", "环境成员", fmt.Sprintf("环境[%v]/用户[%v]", rel.Environment.EnvironmentName, user.Username))
@@ -494,7 +494,7 @@ func (h *EnvironmentHandler) DeleteEnvironmentUser(c *gin.Context) {
 	}
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.SetAuditData(c, "删除", "环境成员", fmt.Sprintf("环境[%v]/用户[%v]", rel.Environment.EnvironmentName, user.Username))
 	h.SetExtraAuditData(c, models.ResEnvironment, rel.EnvironmentID)

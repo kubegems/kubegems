@@ -12,6 +12,7 @@ import (
 	"kubegems.io/pkg/service/aaa/authorization"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/models/cache"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/database"
@@ -30,7 +31,7 @@ type BaseHandler struct {
 	database   *database.Database
 	redis      *redis.Client
 	msgbuscli  *msgclient.MsgBusClient
-	cachelayer *models.CacheLayer
+	modelCache *cache.ModelCache
 }
 
 func NewHandler(auditi audit.AuditInterface,
@@ -41,7 +42,7 @@ func NewHandler(auditi audit.AuditInterface,
 	database *database.Database,
 	redis *redis.Client,
 	msgbuscli *msgclient.MsgBusClient,
-	cachelayer *models.CacheLayer,
+	modelCache *cache.ModelCache,
 ) BaseHandler {
 	return BaseHandler{
 		AuditInterface:      auditi,
@@ -50,8 +51,8 @@ func NewHandler(auditi audit.AuditInterface,
 		ContextUserOperator: userif,
 		agents:              agents,
 		msgbuscli:           msgbuscli,
-		cachelayer:          cachelayer,
 		database:            database,
+		modelCache:          modelCache,
 		redis:               redis,
 	}
 }
@@ -76,8 +77,8 @@ func (h *BaseHandler) GetRedis() *redis.Client {
 	return h.redis
 }
 
-func (h *BaseHandler) GetCacheLayer() *models.CacheLayer {
-	return h.cachelayer
+func (h *BaseHandler) ModelCache() *cache.ModelCache {
+	return h.modelCache
 }
 
 // OnClusterFunc is the function be called on cluster,the first return value is the http response data,the second is the error

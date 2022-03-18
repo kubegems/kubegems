@@ -12,6 +12,7 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/aaa"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/models/cache"
 	"kubegems.io/pkg/utils/slice"
 )
 
@@ -35,7 +36,7 @@ const (
 
 type AuditInterface interface {
 	AuditProxyFunc(c *gin.Context, p *ProxyObject)
-	WebsocketAuditFunc(username string, parents models.ResourceQueue, ip string, proxyobj *ProxyObject) func(cmd string)
+	WebsocketAuditFunc(username string, parents []cache.CommonResourceIface, ip string, proxyobj *ProxyObject) func(cmd string)
 
 	// 重构版本新加的方法
 	SetAuditData(c *gin.Context, action, mod, name string)
@@ -63,12 +64,12 @@ func (p *ProxyObject) InNamespace() bool {
 
 type DefaultAuditInstance struct {
 	userinterface aaa.ContextUserOperator
-	cache         *models.CacheLayer
+	cache         *cache.ModelCache
 	db            *gorm.DB
 	logQueue      chan models.AuditLog
 }
 
-func NewAuditMiddleware(db *gorm.DB, cache *models.CacheLayer, uinterface aaa.ContextUserOperator) *DefaultAuditInstance {
+func NewAuditMiddleware(db *gorm.DB, cache *cache.ModelCache, uinterface aaa.ContextUserOperator) *DefaultAuditInstance {
 	audit := &DefaultAuditInstance{
 		db:            db,
 		logQueue:      make(chan models.AuditLog, 1000),
@@ -89,30 +90,29 @@ func (audit *DefaultAuditInstance) AuditProxyFunc(c *gin.Context, proxyobj *Prox
 	if !proxyobj.InNamespace() {
 		return
 	}
-	cacheTree := audit.cache.GetGlobalResourceTree().Tree
-	n := cacheTree.FindNodeByClusterNamespace(proxyobj.Cluster, proxyobj.Namespace)
+	n := audit.cache.FindEnvironment(proxyobj.Cluster, proxyobj.Namespace)
 	if n != nil {
-		extra := cacheTree.FindParents(n.Kind, n.ID)
+		extra := audit.cache.FindParents(n.GetKind(), n.GetID())
 		if len(extra) > 0 {
 			c.Set(AuditExtraDataKey, extra)
 		}
 	}
 }
 
-func (audit *DefaultAuditInstance) WebsocketAuditFunc(username string, parents models.ResourceQueue, ip string, proxyobj *ProxyObject) func(cmd string) {
+func (audit *DefaultAuditInstance) WebsocketAuditFunc(username string, parents []cache.CommonResourceIface, ip string, proxyobj *ProxyObject) func(cmd string) {
 	var tenant string
 	tags := map[string]string{}
 	for _, p := range parents {
-		switch p.Kind {
+		switch p.GetKind() {
 		case models.ResTenant:
-			tenant = p.Name
-			tags["租户"] = p.Name
+			tenant = p.GetName()
+			tags["租户"] = p.GetName()
 		case models.ResProject:
-			tags["项目"] = p.Name
+			tags["项目"] = p.GetName()
 		case models.ResEnvironment:
-			tags["环境"] = p.Name
-			tags["集群"] = p.Cluster
-			tags["namespace"] = p.Namespace
+			tags["环境"] = p.GetName()
+			tags["集群"] = p.GetCluster()
+			tags["namespace"] = p.GetNamespace()
 		}
 	}
 	module := proxyobj.Name

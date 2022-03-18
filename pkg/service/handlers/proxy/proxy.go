@@ -130,10 +130,10 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 		return
 	}
 	var auditFunc func(string)
-	env := h.GetCacheLayer().GetGlobalResourceTree().Tree.FindNodeByClusterNamespace(cluster, proxyobj.Namespace)
+	env := h.ModelCache().FindEnvironment(cluster, proxyobj.Namespace)
 	if env != nil {
 		log.Infof("proxy websocket, cluster is [%v], proxyobj is [%v]", cluster, proxyobj)
-		parents := h.GetCacheLayer().GetGlobalResourceTree().Tree.FindParents(models.ResEnvironment, env.ID)
+		parents := h.ModelCache().FindParents(models.ResEnvironment, env.GetID())
 		auditFunc = h.WebsocketAuditFunc(user.GetUsername(), parents, c.ClientIP(), proxyobj)
 	} else {
 		log.Infof("proxy websocket can't find env, cluster is [%v], proxyobj is [%v]", cluster, proxyobj)
