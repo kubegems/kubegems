@@ -23,6 +23,7 @@ import (
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/log"
+	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/models"
@@ -123,17 +124,14 @@ func (h *TenantHandler) PostTenant(c *gin.Context) {
 	h.SetAuditData(c, "创建", "租户", obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ResourceType(msgbus.Tenant).
-		ActionType(msgbus.Add).
-		ResourceID(obj.ID).
-		Content(fmt.Sprintf("创建了租户%s", obj.TenantName)).
-		SetUsersToSend(
-			h.GetDataBase().SystemAdmins(),
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Add
+		msg.ResourceType = msgbus.Tenant
+		msg.ResourceID = obj.ID
+		msg.Detail = fmt.Sprintf("创建了租户%s", obj.TenantName)
+		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
+	})
+
 	handlers.Created(c, obj)
 }
 
@@ -328,18 +326,15 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 	h.SetAuditData(c, "添加", "租户成员", fmt.Sprintf("租户[%v]/用户[%v]", tenant.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Add).
-		ResourceType(msgbus.Tenant).
-		ResourceID(rel.TenantID).
-		Content(fmt.Sprintf("向租户%s中添加了用户%s", tenant.TenantName, user.Username)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Add
+		msg.ResourceType = msgbus.Tenant
+		msg.ResourceID = rel.TenantID
+		msg.Detail = fmt.Sprintf("向租户%s中添加了用户%s", tenant.TenantName, user.Username)
+		msg.ToUsers.Append(rel.UserID)
+		msg.AffectedUsers.Append(rel.UserID)
+	})
+
 	handlers.OK(c, rel)
 }
 
@@ -385,18 +380,14 @@ func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 	h.SetAuditData(c, "修改", "租户成员", fmt.Sprintf("租户[%v]/用户[%v]", rel.Tenant.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, rel.TenantID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Update).
-		ResourceType(msgbus.Tenant).
-		ResourceID(rel.TenantID).
-		Content(fmt.Sprintf("将租户%s中的用户%s设置为了%s", rel.Tenant.TenantName, user.Username, rel.Role)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.Tenant
+		msg.ResourceID = rel.TenantID
+		msg.Detail = fmt.Sprintf("将租户%s中的用户%s设置为了%s", rel.Tenant.TenantName, user.Username, rel.Role)
+		msg.ToUsers.Append(rel.UserID)
+		msg.AffectedUsers.Append(rel.UserID)
+	})
 	handlers.OK(c, rel)
 }
 
@@ -455,18 +446,14 @@ func (h *TenantHandler) DeleteTenantUser(c *gin.Context) {
 	h.SetAuditData(c, "删除", "租户成员", fmt.Sprintf("租户[%v]/用户[%v]", obj.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, rel.TenantID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Delete).
-		ResourceType(msgbus.Tenant).
-		ResourceID(rel.TenantID).
-		Content(fmt.Sprintf("删除了租户%s中的用户%s", obj.TenantName, user.Username)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Delete
+		msg.ResourceType = msgbus.Tenant
+		msg.ResourceID = rel.TenantID
+		msg.Detail = fmt.Sprintf("删除了租户%s中的用户%s", obj.TenantName, user.Username)
+		msg.ToUsers.Append(rel.UserID)
+		msg.AffectedUsers.Append(rel.UserID)
+	})
 	handlers.NoContent(c, nil)
 }
 
@@ -575,17 +562,13 @@ func (h *TenantHandler) PostTenantProject(c *gin.Context) {
 	h.SetAuditData(c, "创建", "项目", project.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, project.ID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Add).
-		ResourceType(msgbus.Project).
-		ResourceID(project.ID).
-		Content(fmt.Sprintf("在租户%s中创建了项目%s", tenant.TenantName, project.ProjectName)).
-		SetUsersToSend(
-			h.GetDataBase().TenantAdmins(tenant.ID),
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Add
+		msg.ResourceType = msgbus.Project
+		msg.ResourceID = project.ID
+		msg.Detail = fmt.Sprintf("在租户%s中创建了项目%s", tenant.TenantName, project.ProjectName)
+		msg.ToUsers.Append(h.GetDataBase().TenantAdmins(tenant.ID)...)
+	})
 	handlers.OK(c, project)
 }
 
@@ -670,21 +653,15 @@ func (h *TenantHandler) EnableTenant(c *gin.Context) {
 
 	// 所有租户成员
 	tenantUsers := h.GetDataBase().TenantUsers(obj.ID)
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Update).
-		ResourceType(msgbus.Tenant).
-		ResourceID(obj.ID).
-		Content(fmt.Sprintf("激活了租户%s", obj.TenantName)).
-		SetUsersToSend(
-			h.GetDataBase().SystemAdmins(),
-			tenantUsers,
-		).
-		AffectedUsers(
-			tenantUsers,
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.Tenant
+		msg.ResourceID = obj.ID
+		msg.Detail = fmt.Sprintf("激活了租户%s", obj.TenantName)
+		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...).Append(tenantUsers...)
+		msg.AffectedUsers.Append(tenantUsers...)
+	})
+
 	handlers.OK(c, obj)
 }
 
@@ -715,21 +692,14 @@ func (h *TenantHandler) DisableTenant(c *gin.Context) {
 
 	// 所有租户成员
 	tenantUsers := h.GetDataBase().TenantUsers(obj.ID)
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Update).
-		ResourceType(msgbus.Tenant).
-		ResourceID(obj.ID).
-		Content(fmt.Sprintf("禁用了租户%s", obj.TenantName)).
-		SetUsersToSend(
-			h.GetDataBase().SystemAdmins(),
-			tenantUsers,
-		).
-		AffectedUsers(
-			tenantUsers,
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.Tenant
+		msg.ResourceID = obj.ID
+		msg.Detail = fmt.Sprintf("禁用了租户%s", obj.TenantName)
+		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...).Append(tenantUsers...)
+		msg.AffectedUsers.Append(tenantUsers...)
+	})
 	handlers.OK(c, obj)
 }
 
@@ -1308,18 +1278,14 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 	h.SetExtraAuditData(c, models.ResTenant, quota.TenantID)
 
 	// 申请消息给系统管理员和当前用户
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Approve).
-		ActionType(msgbus.Update).
-		ResourceType(msgbus.TenantResourceQuota).
-		ResourceID(quota.ID).
-		Content(fmt.Sprintf("申请调整租户%s在集群%s的资源", quota.Tenant.TenantName, quota.Cluster.ClusterName)).
-		SetUsersToSend(
-			h.GetDataBase().SystemAdmins(),
-			[]uint{u.GetID()},
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.MessageType = msgbus.Approve
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.TenantResourceQuota
+		msg.ResourceID = quota.ID
+		msg.Detail = fmt.Sprintf("申请调整租户%s在集群%s的资源", quota.Tenant.TenantName, quota.Cluster.ClusterName)
+		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...).Append(u.GetID())
+	})
 
 	handlers.OK(c, req)
 }

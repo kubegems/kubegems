@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -14,7 +15,9 @@ import (
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/msgbus"
 	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/pkg/utils/set"
 )
 
 // BaseHandler is the base handler for all handlers
@@ -105,4 +108,22 @@ func (h BaseHandler) Execute(ctx context.Context, cluster string, fun func(ctx c
 		return err
 	}
 	return fun(ctx, cli)
+}
+
+func (h BaseHandler) SendToMsgbus(c *gin.Context, mutateMsg func(msg *msgclient.MsgRequest)) {
+	msg := &msgclient.MsgRequest{
+		MessageType:   msgbus.Message,
+		Authorization: c.GetHeader("Authorization"),
+		ToUsers:       set.NewSet[uint](),
+		AffectedUsers: set.NewSet[uint](),
+	}
+	mutateMsg(msg)
+
+	user, ok := c.Get("current_user")
+	if ok {
+		msg.Username = user.(*models.User).Username
+		msg.Detail = fmt.Sprintf("用户%s%s", msg.Username, msg.Detail)
+	}
+
+	go h.GetMessageBusClient().Send(msg)
 }

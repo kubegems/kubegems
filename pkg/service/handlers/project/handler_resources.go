@@ -34,6 +34,7 @@ import (
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/environment"
 	"kubegems.io/pkg/service/models"
@@ -686,17 +687,13 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 	h.SetAuditData(c, "创建", "环境", env.EnvironmentName)
 	h.SetExtraAuditData(c, models.ResEnvironment, env.ID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Add).
-		ResourceType(msgbus.Environment).
-		ResourceID(env.ID).
-		Content(fmt.Sprintf("在租户%s/项目%s中创建了环境%s", obj.Tenant.TenantName, obj.ProjectName, env.EnvironmentName)).
-		SetUsersToSend(
-			h.GetDataBase().ProjectAdmins(obj.ID),
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Add
+		msg.ResourceType = msgbus.Environment
+		msg.ResourceID = env.ID
+		msg.Detail = fmt.Sprintf("在租户%s/项目%s中创建了环境%s", obj.Tenant.TenantName, obj.ProjectName, env.EnvironmentName)
+		msg.ToUsers.Append(h.GetDataBase().ProjectAdmins(obj.ID)...)
+	})
 	handlers.OK(c, env)
 }
 

@@ -16,6 +16,7 @@ import (
 	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/log"
+	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/models"
@@ -293,21 +294,15 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 	}
 	h.GetCacheLayer().GetGlobalResourceTree().DelEnvironment(obj.ProjectID, obj.ID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Delete).
-		ResourceType(msgbus.Environment).
-		ResourceID(obj.ID).
-		Content(fmt.Sprintf("删除了租户%s/项目%s中的环境%s", obj.Project.Tenant.TenantName, obj.Project.ProjectName, obj.EnvironmentName)).
-		SetUsersToSend(
-			projAdmins,
-			envUsers,
-		).
-		AffectedUsers(
-			envUsers, // 环境所有用户刷新权限
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Delete
+		msg.ResourceType = msgbus.Environment
+		msg.ResourceID = obj.ID
+		msg.Detail = fmt.Sprintf("删除了租户%s/项目%s中的环境%s", obj.Project.Tenant.TenantName, obj.Project.ProjectName, obj.EnvironmentName)
+		msg.ToUsers.Append(projAdmins...).Append(envUsers...)
+		msg.AffectedUsers.Append(envUsers...) // 环境所有用户刷新权限
+	})
+
 	handlers.NoContent(c, nil)
 }
 
@@ -416,19 +411,16 @@ func (h *EnvironmentHandler) PostEnvironmentUser(c *gin.Context) {
 	h.SetAuditData(c, "添加", "环境成员", fmt.Sprintf("环境[%v]/用户[%v]", rel.Environment.EnvironmentName, user.Username))
 	h.SetExtraAuditData(c, models.ResEnvironment, rel.EnvironmentID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Add).
-		ResourceType(msgbus.Environment).
-		ResourceID(rel.EnvironmentID).
-		Content(fmt.Sprintf("向租户%s/项目%s/环境%s中添加了用户%s",
-			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Add
+		msg.ResourceType = msgbus.Environment
+		msg.ResourceID = rel.EnvironmentID
+		msg.Detail = fmt.Sprintf("向租户%s/项目%s/环境%s中添加了用户%s",
+			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username)
+		msg.ToUsers.Append(rel.UserID)
+		msg.AffectedUsers.Append(rel.UserID) // 自己
+	})
+
 	handlers.OK(c, rel)
 }
 
@@ -465,19 +457,16 @@ func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 	h.GetDB().Preload("Environment.Project.Tenant").First(&rel, rel.ID)
 	h.SetAuditData(c, "更新", "环境成员", fmt.Sprintf("环境[%v]/用户[%v]", rel.Environment.EnvironmentName, user.Username))
 	h.SetExtraAuditData(c, models.ResEnvironment, rel.EnvironmentID)
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Update).
-		ResourceType(msgbus.Environment).
-		ResourceID(rel.EnvironmentID).
-		Content(fmt.Sprintf("将租户%s/项目%s/环境%s中的用户%s设置为了%s",
-			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username, rel.Role)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.Environment
+		msg.ResourceID = rel.EnvironmentID
+		msg.Detail = fmt.Sprintf("将租户%s/项目%s/环境%s中的用户%s设置为了%s",
+			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username, rel.Role)
+		msg.ToUsers.Append(rel.UserID)
+		msg.AffectedUsers.Append(rel.UserID) // 自己
+	})
 	handlers.OK(c, rel)
 }
 
@@ -510,19 +499,16 @@ func (h *EnvironmentHandler) DeleteEnvironmentUser(c *gin.Context) {
 	h.SetAuditData(c, "删除", "环境成员", fmt.Sprintf("环境[%v]/用户[%v]", rel.Environment.EnvironmentName, user.Username))
 	h.SetExtraAuditData(c, models.ResEnvironment, rel.EnvironmentID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Delete).
-		ResourceType(msgbus.Environment).
-		ResourceID(rel.EnvironmentID).
-		Content(fmt.Sprintf("删除了租户%s/项目%s/环境%s中的用户%s",
-			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Delete
+		msg.ResourceType = msgbus.Environment
+		msg.ResourceID = rel.EnvironmentID
+		msg.Detail = fmt.Sprintf("删除了租户%s/项目%s/环境%s中的用户%s",
+			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username)
+		msg.ToUsers.Append(rel.UserID)
+		msg.AffectedUsers.Append(rel.UserID) // 自己
+	})
+
 	handlers.NoContent(c, nil)
 }
 
