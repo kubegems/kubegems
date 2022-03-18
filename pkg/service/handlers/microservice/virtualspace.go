@@ -77,8 +77,7 @@ func (h *VirtualSpaceHandler) ListVirtualSpace(c *gin.Context) {
 		},
 	}
 	u, _ := h.GetContextUser(c)
-	auth := h.GetCacheLayer().GetUserAuthority(u)
-	if !auth.IsSystemAdmin {
+	if !h.ModelCache().GetUserAuthority(u).IsSystemAdmin() {
 		subQuery := h.GetDB().Table("virtual_space_user_rels").
 			Select("virtual_space_id").
 			Where("user_id = ?", u.GetID())
@@ -147,7 +146,7 @@ func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 		return
 	}
 
-	h.GetCacheLayer().GetGlobalResourceTree().UpsertVirtualSpace(vs.ID, vs.VirtualSpaceName)
+	h.ModelCache().UpsertVirtualSpace(vs.ID, vs.VirtualSpaceName)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Add
@@ -193,7 +192,7 @@ func (h *VirtualSpaceHandler) PutVirtualSpace(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetCacheLayer().GetGlobalResourceTree().UpsertVirtualSpace(obj.ID, obj.VirtualSpaceName)
+	h.ModelCache().UpsertVirtualSpace(obj.ID, obj.VirtualSpaceName)
 	handlers.OK(c, obj)
 }
 
@@ -263,7 +262,7 @@ func (h *VirtualSpaceHandler) DeleteVirtualSpace(c *gin.Context) {
 		return
 	}
 
-	h.GetCacheLayer().GetGlobalResourceTree().DelVirtualSpace(vs.ID)
+	h.ModelCache().DelVirtualSpace(vs.ID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Delete
@@ -629,7 +628,7 @@ func (h *VirtualSpaceHandler) PostVirtualSpaceUser(c *gin.Context) {
 	}
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.GetDB().Preload("VirtualSpace").First(&rel, rel.ID)
 	h.SetAuditData(c, "添加", "虚拟空间成员", fmt.Sprintf("虚拟空间[%v]/成员[%v]", rel.VirtualSpace.VirtualSpaceName, user.Username))
@@ -661,7 +660,7 @@ func (h *VirtualSpaceHandler) DeleteVirtualSpaceUser(c *gin.Context) {
 
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.SetAuditData(c, "删除", "虚拟空间成员", fmt.Sprintf("虚拟空间[%v]/成员[%v]", rel.VirtualSpace.VirtualSpaceName, user.Username))
 	h.SetExtraAuditData(c, models.ResVirtualSpace, rel.VirtualSpaceID)
