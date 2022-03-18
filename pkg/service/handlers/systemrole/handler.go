@@ -8,6 +8,7 @@ import (
 	"kubegems.io/pkg/utils/msgbus"
 
 	"github.com/gin-gonic/gin"
+	msgclient "kubegems.io/pkg/msgbus/client"
 )
 
 var (
@@ -194,24 +195,22 @@ func (h *SystemRoleHandler) PutSystemRoleUser(c *gin.Context) {
 	h.GetCacheLayer().FlushUserAuthority(&user)
 	h.SetAuditData(c, "授权", "用户系统角色", fmt.Sprintf("角色[%v]/用户[%v]", role.RoleName, user.Username))
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ResourceType(msgbus.User).
-		ActionType(msgbus.Update).
-		ResourceID(user.ID).
-		Content(fmt.Sprintf("将用户%s的系统角色设置为了%s", user.Username, role.RoleName)).
-		SetUsersToSend(
-			[]uint{user.ID}, // 自己
-			func() []uint {
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.User
+		msg.ResourceID = user.ID
+		msg.Detail = fmt.Sprintf("将用户%s的系统角色设置为了%s", user.Username, role.RoleName)
+		msg.ToUsers.
+			Append(user.ID). // 自己
+			Append(func() []uint {
 				if role.RoleCode == models.SystemRoleAdmin {
 					return h.GetDataBase().SystemAdmins()
 				}
 				return nil
-			}(), // 系统管理员
-		).
-		AffectedUsers([]uint{user.ID}).
-		Send()
+			}()...) // 系统管理员
+		msg.AffectedUsers.Append(user.ID) // 环境所有用户刷新权限
+	})
+
 	handlers.OK(c, user)
 }
 
