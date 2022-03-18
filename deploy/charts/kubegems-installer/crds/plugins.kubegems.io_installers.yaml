@@ -36,18 +36,8 @@ spec:
               cluaterName:
                 type: string
               global:
-                properties:
-                  additional:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  imagepullsecret:
-                    type: string
-                  repository:
-                    type: string
-                  storageclass:
-                    type: string
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               plugins:
                 items:
                   properties:

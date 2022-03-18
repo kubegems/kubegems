@@ -7,12 +7,18 @@ spec:
   plugins:
     - name: mysql
       namespace: kubegems
+      kind: helm
       enabled: true
     - name: kubegems
       namespace: kubegems
+      kind: helm
       enabled: true
       values:
         mysql:
           enabled: false
         externalDatabase:
           enabled: true
+    - name: gateway
+      namespace: kubegems-gateway
+      kind: native
+      enabled: true
