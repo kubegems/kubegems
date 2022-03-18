@@ -192,7 +192,7 @@ func (h *SystemRoleHandler) PutSystemRoleUser(c *gin.Context) {
 		return
 	}
 
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 	h.SetAuditData(c, "授权", "用户系统角色", fmt.Sprintf("角色[%v]/用户[%v]", role.RoleName, user.Username))
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
@@ -241,7 +241,7 @@ func (h *SystemRoleHandler) DeleteSystemRoleUser(c *gin.Context) {
 		return
 	}
 
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 	h.SetAuditData(c, "取消授权", "用户系统角色", fmt.Sprintf("角色[%v]/用户[%v]", role.RoleName, user.Username))
 
 	if err := h.GetDB().Model(&role).Association("Users").Delete(&user); err != nil {

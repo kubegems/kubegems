@@ -681,8 +681,7 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 		return
 	}
 
-	t := h.GetCacheLayer().GetGlobalResourceTree()
-	t.UpsertEnvironment(obj.ID, env.ID, env.EnvironmentName, cluster.ClusterName, env.Namespace)
+	h.ModelCache().UpsertEnvironment(obj.ID, env.ID, env.EnvironmentName, cluster.ClusterName, env.Namespace)
 
 	h.SetAuditData(c, "创建", "环境", env.EnvironmentName)
 	h.SetExtraAuditData(c, models.ResEnvironment, env.ID)
