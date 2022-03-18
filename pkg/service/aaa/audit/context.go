@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/models/cache"
 )
 
 const (
@@ -33,19 +34,17 @@ func (audit *DefaultAuditInstance) SetAuditData(c *gin.Context, action, mod, nam
 
 // SetExtraAuditData 设置上下文的审计数据 的系统环境信息（租户，项目，环境）
 func (audit *DefaultAuditInstance) SetExtraAuditData(c *gin.Context, kind string, uid uint) {
-	cacheTree := audit.cache.GetGlobalResourceTree()
-	extra := cacheTree.Tree.FindParents(kind, uid)
+	extra := audit.cache.FindParents(kind, uid)
 	if len(extra) > 0 {
 		c.Set(AuditExtraDataKey, extra)
 	}
 }
 
 // SetExtraAuditDataByClusterNamespace 根据集群namesapce设置上下文的审计数据 的系统环境信息（租户，项目，环境）
-func (audit *DefaultAuditInstance) SetExtraAuditDataByClusterNamespace(c *gin.Context, cluster, namesapce string) {
-	cacheTree := audit.cache.GetGlobalResourceTree()
-	node := cacheTree.Tree.FindNodeByClusterNamespace(cluster, namesapce)
-	if node != nil {
-		extra := cacheTree.Tree.FindParents(node.Kind, node.ID)
+func (audit *DefaultAuditInstance) SetExtraAuditDataByClusterNamespace(c *gin.Context, cluster, namespace string) {
+	env := audit.cache.FindEnvironment(cluster, namespace)
+	if env != nil {
+		extra := audit.cache.FindParents(env.GetKind(), env.GetID())
 		if len(extra) > 0 {
 			c.Set(AuditExtraDataKey, extra)
 		}
@@ -62,18 +61,18 @@ func GetExtraAuditData(c *gin.Context) (string, map[string]string) {
 	if !exist {
 		return "", tags
 	}
-	extra := extraIfe.(models.ResourceQueue)
+	extra := extraIfe.([]cache.CommonResourceIface)
 	for _, p := range extra {
-		switch p.Kind {
+		switch p.GetKind() {
 		case models.ResTenant:
-			tags["租户"] = p.Name
-			tenant = p.Name
+			tags["租户"] = p.GetName()
+			tenant = p.GetName()
 		case models.ResProject:
-			tags["项目"] = p.Name
+			tags["项目"] = p.GetName()
 		case models.ResEnvironment:
-			tags["环境"] = p.Name
-			tags["集群"] = p.Cluster
-			tags["namespace"] = p.Namespace
+			tags["环境"] = p.GetName()
+			tags["集群"] = p.GetCluster()
+			tags["namespace"] = p.GetNamespace()
 		}
 	}
 	return tenant, tags

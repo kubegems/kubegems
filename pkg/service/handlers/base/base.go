@@ -12,6 +12,7 @@ import (
 	"kubegems.io/pkg/service/aaa/authorization"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/models/cache"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/database"
@@ -23,35 +24,35 @@ import (
 // BaseHandler is the base handler for all handlers
 type BaseHandler struct {
 	audit.AuditInterface
-	authorization.PermissionChecker
+	authorization.PermissionManager
 	DynamicConfig options.DynamicConfigurationProviderIface
 	aaa.ContextUserOperator
 	agents     *agents.ClientSet
 	database   *database.Database
 	redis      *redis.Client
 	msgbuscli  *msgclient.MsgBusClient
-	cachelayer *models.CacheLayer
+	modelCache *cache.ModelCache
 }
 
 func NewHandler(auditi audit.AuditInterface,
-	permcheck authorization.PermissionChecker,
+	permManager authorization.PermissionManager,
 	userif aaa.ContextUserOperator,
 	dynamicConfig options.DynamicConfigurationProviderIface,
 	agents *agents.ClientSet,
 	database *database.Database,
 	redis *redis.Client,
 	msgbuscli *msgclient.MsgBusClient,
-	cachelayer *models.CacheLayer,
+	modelCache *cache.ModelCache,
 ) BaseHandler {
 	return BaseHandler{
 		AuditInterface:      auditi,
 		DynamicConfig:       dynamicConfig,
-		PermissionChecker:   permcheck,
+		PermissionManager:   permManager,
 		ContextUserOperator: userif,
 		agents:              agents,
 		msgbuscli:           msgbuscli,
-		cachelayer:          cachelayer,
 		database:            database,
+		modelCache:          modelCache,
 		redis:               redis,
 	}
 }
@@ -76,8 +77,8 @@ func (h *BaseHandler) GetRedis() *redis.Client {
 	return h.redis
 }
 
-func (h *BaseHandler) GetCacheLayer() *models.CacheLayer {
-	return h.cachelayer
+func (h *BaseHandler) ModelCache() *cache.ModelCache {
+	return h.modelCache
 }
 
 // OnClusterFunc is the function be called on cluster,the first return value is the http response data,the second is the error

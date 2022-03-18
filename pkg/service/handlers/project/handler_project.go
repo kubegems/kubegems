@@ -127,7 +127,7 @@ func (h *ProjectHandler) PutProject(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetCacheLayer().GetGlobalResourceTree().UpsertProject(obj.TenantID, obj.ID, obj.ProjectName)
+	h.ModelCache().UpsertProject(obj.TenantID, obj.ID, obj.ProjectName)
 	handlers.OK(c, obj)
 }
 
@@ -165,7 +165,7 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetCacheLayer().GetGlobalResourceTree().DelProject(obj.TenantID, obj.ID)
+	h.ModelCache().DelProject(obj.TenantID, obj.ID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Delete
@@ -287,7 +287,7 @@ func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 	}
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.GetDB().Preload("Project.Tenant").First(&rel, rel.ID)
 
@@ -340,7 +340,7 @@ func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
 	}
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.GetDB().Preload("Project.Tenant").First(&rel, rel.ID)
 	h.SetAuditData(c, "修改", "项目成员", fmt.Sprintf("项目[%v]/成员[%v]", rel.Project.ProjectName, user.Username))
@@ -402,7 +402,7 @@ func (h *ProjectHandler) DeleteProjectUser(c *gin.Context) {
 
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.SetAuditData(c, "删除", "项目成员", fmt.Sprintf("项目[%v]/成员[%v]", rel.Project.ProjectName, user.Username))
 	h.SetExtraAuditData(c, models.ResProject, rel.ProjectID)
