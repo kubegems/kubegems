@@ -59,7 +59,7 @@ func (h *ApproveHandler) ListApproves(c *gin.Context) {
 	ret := ApprovesList{}
 	// 目前只给admin看
 	u, _ := h.GetContextUser(c)
-	if h.GetCacheLayer().GetUserAuthority(u).IsSystemAdmin {
+	if h.ModelCache().GetUserAuthority(u).IsSystemAdmin() {
 		for _, v := range quotas {
 			if v.TenantResourceQuotaApply != nil && v.TenantResourceQuotaApply.Status == models.QuotaStatusPending {
 				ret = append(ret, Approve{
