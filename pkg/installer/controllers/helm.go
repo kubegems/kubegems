@@ -32,7 +32,12 @@ type HelmApplier struct {
 }
 
 // nolint: funlen,nestif
-func (r *HelmApplier) Apply(ctx context.Context, plugin pluginsv1beta1.InstallerSpecPlugin, status *pluginsv1beta1.InstallerStatusStatus) error {
+func (r *HelmApplier) Apply(
+	ctx context.Context,
+	plugin pluginsv1beta1.InstallerSpecPlugin,
+	globalValues map[string]interface{},
+	status *pluginsv1beta1.InstallerStatusStatus,
+) error {
 	namespace, name := plugin.Namespace, plugin.Name
 	log := logr.FromContext(ctx).WithValues("name", name, "namespace", namespace)
 

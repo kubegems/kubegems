@@ -17,9 +17,11 @@ type Installer struct {
 }
 
 type InstallerSpec struct {
-	CluaterName string                `json:"cluaterName,omitempty"`
-	Global      InstallerSpecGlobal   `json:"global,omitempty"`
-	Plugins     []InstallerSpecPlugin `json:"plugins,omitempty"`
+	CluaterName string `json:"cluaterName,omitempty"`
+
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Global  runtime.RawExtension  `json:"global,omitempty"`
+	Plugins []InstallerSpecPlugin `json:"plugins,omitempty"`
 }
 
 type InstallerSpecGlobal struct {

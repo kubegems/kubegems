@@ -89,7 +89,7 @@ func (r *InstallerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 type Applier interface {
-	Apply(ctx context.Context, plugin pluginsv1beta1.InstallerSpecPlugin, status *pluginsv1beta1.InstallerStatusStatus) error
+	Apply(ctx context.Context, plugin pluginsv1beta1.InstallerSpecPlugin, globalValues map[string]interface{}, status *pluginsv1beta1.InstallerStatusStatus) error
 }
 
 func (r *InstallerReconciler) Sync(ctx context.Context, installer *pluginsv1beta1.Installer) error {
@@ -97,6 +97,8 @@ func (r *InstallerReconciler) Sync(ctx context.Context, installer *pluginsv1beta
 	log := logr.FromContext(ctx)
 	log.Info("reconciling")
 	defer log.Info("reconciled")
+
+	globalVals := UnmarshalValues(installer.Spec.Global)
 
 	// one by one in dep order
 	for _, plugin := range installer.Spec.Plugins {
@@ -123,7 +125,8 @@ func (r *InstallerReconciler) Sync(ctx context.Context, installer *pluginsv1beta
 			}
 			continue
 		}
-		if err := applyer.Apply(ctx, plugin, status); err != nil {
+
+		if err := applyer.Apply(ctx, plugin, globalVals, status); err != nil {
 			resetStatus(status)
 			status.Status = pluginsv1beta1.StatusFailed
 			status.Message = err.Error()

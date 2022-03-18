@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -8,8 +9,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"text/template"
 	"time"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/argoproj/gitops-engine/pkg/cache"
 	"github.com/argoproj/gitops-engine/pkg/engine"
 	"github.com/argoproj/gitops-engine/pkg/health"
@@ -135,7 +138,12 @@ func (n *NativeApplier) apply(ctx context.Context, resources []*unstructured.Uns
 }
 
 // nolint: funlen
-func (n *NativeApplier) Apply(ctx context.Context, plugin pluginsv1beta1.InstallerSpecPlugin, status *pluginsv1beta1.InstallerStatusStatus) error {
+func (n *NativeApplier) Apply(
+	ctx context.Context,
+	plugin pluginsv1beta1.InstallerSpecPlugin,
+	globalValues map[string]interface{},
+	status *pluginsv1beta1.InstallerStatusStatus,
+) error {
 	namespace, name := plugin.Namespace, plugin.Name
 	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace)
 
@@ -144,7 +152,7 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin pluginsv1beta1.Install
 
 	var manifests []*unstructured.Unstructured
 	if enabled {
-		manifests, _, err = n.parseManifests(name, namespace)
+		manifests, _, err = n.parseManifests(plugin, globalValues)
 		if err != nil {
 			return err
 		}
@@ -205,7 +213,31 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin pluginsv1beta1.Install
 	return nil
 }
 
-func (n *NativeApplier) parseManifests(name, namespace string) ([]*unstructured.Unstructured, string, error) {
+type TemplatesValues struct {
+	Values  map[string]interface{}
+	Release map[string]interface{}
+}
+
+func (n *NativeApplier) parseManifests(
+	plugin pluginsv1beta1.InstallerSpecPlugin,
+	globalValues map[string]interface{},
+) ([]*unstructured.Unstructured, string, error) {
+	// tmplate vals
+	name, namespace := plugin.Name, plugin.Namespace
+	tplValues := TemplatesValues{
+		Values: func() map[string]interface{} {
+			vals := UnmarshalValues(plugin.Values)
+			if vals == nil {
+				vals = map[string]interface{}{}
+			}
+			vals["global"] = globalValues
+			return vals
+		}(),
+		Release: map[string]interface{}{
+			"Name":      name,
+			"Namespace": namespace,
+		},
+	}
 	var res []*unstructured.Unstructured
 	if err := filepath.Walk(filepath.Join(n.manifestDir, name), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -221,6 +253,11 @@ func (n *NativeApplier) parseManifests(name, namespace string) ([]*unstructured.
 		if err != nil {
 			return err
 		}
+		// template
+		data, err = templates(info.Name(), data, tplValues)
+		if err != nil {
+			return err
+		}
 		items, err := kube.SplitYAML(data)
 		if err != nil {
 			return fmt.Errorf("failed to parse %s: %v", path, err)
@@ -230,7 +267,6 @@ func (n *NativeApplier) parseManifests(name, namespace string) ([]*unstructured.
 	}); err != nil {
 		return nil, "", err
 	}
-
 	for i := range res {
 		annotations := res[i].GetAnnotations()
 		if annotations == nil {
@@ -243,4 +279,20 @@ func (n *NativeApplier) parseManifests(name, namespace string) ([]*unstructured.
 		res[i].SetNamespace("")
 	}
 	return res, "", nil
+}
+
+func templates(name string, content []byte, values interface{}) ([]byte, error) {
+	template, err := template.
+		New(name).
+		Option("missingkey=zero").
+		Funcs(sprig.TxtFuncMap()).
+		Parse(string(content))
+	if err != nil {
+		return nil, err
+	}
+	result := bytes.NewBuffer(nil)
+	if err := template.Execute(result, values); err != nil {
+		return nil, err
+	}
+	return result.Bytes(), nil
 }
