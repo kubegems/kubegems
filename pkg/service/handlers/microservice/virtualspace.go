@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/log"
+	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
 	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
@@ -147,17 +148,15 @@ func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 	}
 
 	h.GetCacheLayer().GetGlobalResourceTree().UpsertVirtualSpace(vs.ID, vs.VirtualSpaceName)
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ResourceType(msgbus.VirtualSpace).
-		ActionType(msgbus.Add).
-		ResourceID(vs.ID).
-		Content(fmt.Sprintf("创建了虚拟空间%s", vs.VirtualSpaceName)).
-		SetUsersToSend(
-			h.GetDataBase().SystemAdmins(),
-		).
-		Send()
+
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Add
+		msg.ResourceType = msgbus.VirtualSpace
+		msg.ResourceID = vs.ID
+		msg.Detail = fmt.Sprintf("创建了虚拟空间%s", vs.VirtualSpaceName)
+		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
+	})
+
 	handlers.OK(c, vs)
 }
 
@@ -265,17 +264,14 @@ func (h *VirtualSpaceHandler) DeleteVirtualSpace(c *gin.Context) {
 	}
 
 	h.GetCacheLayer().GetGlobalResourceTree().DelVirtualSpace(vs.ID)
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ResourceType(msgbus.VirtualSpace).
-		ActionType(msgbus.Delete).
-		ResourceID(vs.ID).
-		Content(fmt.Sprintf("了虚拟空间%s", vs.VirtualSpaceName)).
-		SetUsersToSend(
-			h.GetDataBase().SystemAdmins(),
-		).
-		Send()
+
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Delete
+		msg.ResourceType = msgbus.VirtualSpace
+		msg.ResourceID = vs.ID
+		msg.Detail = fmt.Sprintf("删除了虚拟空间%s", vs.VirtualSpaceName)
+		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
+	})
 
 	handlers.OK(c, "")
 }

@@ -26,6 +26,4 @@ func (h *ClusterHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/cluster/:cluster_id/quota", h.ListClusterQuota)
 
 	rg.GET("/cluster/:cluster_id/plugins", h.CheckIsSysADMIN, h.ListPligins)
-	rg.POST("/cluster/:cluster_id/plugins/:name/actions/enable", h.CheckIsSysADMIN, h.EnablePlugin)
-	rg.POST("/cluster/:cluster_id/plugins/:name/actions/disable", h.CheckIsSysADMIN, h.DisablePlugin)
 }

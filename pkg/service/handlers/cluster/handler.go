@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/rest"
 	"kubegems.io/pkg/agent/apis/types"
 	"kubegems.io/pkg/log"
+	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
@@ -237,17 +238,14 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 			return err
 		}
 
-		h.GetMessageBusClient().
-			GinContext(c).
-			MessageType(msgbus.Message).
-			ActionType(msgbus.Delete).
-			ResourceType(msgbus.Cluster).
-			ResourceID(cluster.ID).
-			Content(fmt.Sprintf("删除了集群%s", cluster.ClusterName)).
-			SetUsersToSend(
-				h.GetDataBase().SystemAdmins(),
-			).
-			Send()
+		h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+			msg.EventKind = msgbus.Delete
+			msg.ResourceType = msgbus.Cluster
+			msg.ResourceID = cluster.ID
+			msg.Detail = fmt.Sprintf("删除了集群%s", cluster.ClusterName)
+			msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
+		})
+
 		handlers.NoContent(c, nil)
 		return nil
 	}); err != nil {
@@ -513,17 +511,14 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			return err
 		}
 
-		h.GetMessageBusClient().
-			GinContext(c).
-			MessageType(msgbus.Message).
-			ActionType(msgbus.Add).
-			ResourceType(msgbus.Cluster).
-			ResourceID(cluster.ID).
-			Content(fmt.Sprintf("添加了集群%s", cluster.ClusterName)).
-			SetUsersToSend(
-				h.GetDataBase().SystemAdmins(),
-			).
-			Send()
+		h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+			msg.EventKind = msgbus.Add
+			msg.ResourceType = msgbus.Cluster
+			msg.ResourceID = cluster.ID
+			msg.Detail = fmt.Sprintf("添加了集群%s", cluster.ClusterName)
+			msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
+		})
+
 		return nil
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -581,86 +576,6 @@ func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 func (h *ClusterHandler) ListPligins(c *gin.Context) {
 	h.cluster(c, func(ctx context.Context, _ models.Cluster, cli agents.Client) (interface{}, error) {
 		return cli.Extend().ListPlugins(ctx)
-	})
-}
-
-// @Tags Agent.Plugin
-// @Summary 启用插件
-// @Description 启用插件
-// @Accept json
-// @Produce json
-// @Param cluster_id path int true "cluster_id"
-// @Param name path string true "name"
-// @Param type query string true "type"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/cluster/{cluster_id}/plugins/{name}/actions/enable [post]
-// @Security JWT
-func (h *ClusterHandler) EnablePlugin(c *gin.Context) {
-	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
-		plugintype := c.Query("type")
-		pluginname := c.Param("name")
-
-		h.SetAuditData(c, "启用", "集群插件", fmt.Sprintf("集群[%v]/插件[%v]", cluster.ClusterName, pluginname))
-
-		if err := cli.Extend().EnablePlugin(ctx, plugintype, pluginname); err != nil {
-			return nil, err
-		}
-
-		if plugintype == "core" {
-			h.GetMessageBusClient().
-				GinContext(c).
-				MessageType(msgbus.Message).
-				ActionType(msgbus.Update).
-				ResourceType(msgbus.Cluster).
-				ResourceID(cluster.ID).
-				Content(fmt.Sprintf("启用了集群%s中的插件%s", cluster.ClusterName, pluginname)).
-				SetUsersToSend(
-					h.GetDataBase().SystemAdmins(),
-				).
-				Send()
-		}
-
-		return "", nil
-	})
-}
-
-// @Tags Agent.Plugin
-// @Summary 禁用插件
-// @Description 禁用插件
-// @Accept json
-// @Produce json
-// @Param cluster_id path int true "cluster_id"
-// @Param name path string true "name"
-// @Param type query string true "type"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/cluster/{cluster_id}/plugins/{name}/actions/disable [post]
-// @Security JWT
-func (h *ClusterHandler) DisablePlugin(c *gin.Context) {
-	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
-		plugintype := c.Query("type")
-		pluginname := c.Param("name")
-
-		h.SetAuditData(c, "禁用", "集群插件", fmt.Sprintf("集群[%v]/插件[%v]", cluster.ClusterName, pluginname))
-
-		if err := cli.Extend().DisablePlugin(ctx, plugintype, pluginname); err != nil {
-			return nil, err
-		}
-
-		if plugintype == "core" {
-			h.GetMessageBusClient().
-				GinContext(c).
-				MessageType(msgbus.Message).
-				ActionType(msgbus.Update).
-				ResourceType(msgbus.Cluster).
-				ResourceID(cluster.ID).
-				Content(fmt.Sprintf("卸载了集群%s中的插件%s", cluster.ClusterName, pluginname)).
-				SetUsersToSend(
-					h.GetDataBase().SystemAdmins(),
-				).
-				Send()
-		}
-
-		return "", nil
 	})
 }
 

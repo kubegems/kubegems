@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
 	tenanthandler "kubegems.io/pkg/service/handlers/tenant"
 	"kubegems.io/pkg/service/models"
@@ -141,18 +142,15 @@ func (h *ApproveHandler) Pass(c *gin.Context) {
 
 	h.SetAuditData(c, "通过", "集群资源申请", quota.Tenant.TenantName+"/"+quota.Cluster.ClusterName)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Approve).
-		ActionType(msgbus.Update).
-		ResourceType(msgbus.TenantResourceQuota).
-		ResourceID(quota.ID).
-		Content(fmt.Sprintf("通过了用户%s在租户%s中发起对集群%s的资源调整审批", targetUser.Username, quota.Tenant.TenantName, quota.Cluster.ClusterName)).
-		SetUsersToSend(
-			h.GetDataBase().TenantAdmins(quota.TenantID),
-			[]uint{targetUser.ID},
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.MessageType = msgbus.Approve
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.TenantResourceQuota
+		msg.ResourceID = quota.ID
+		msg.Detail = fmt.Sprintf("通过了用户%s在租户%s中发起对集群%s的资源调整审批", targetUser.Username, quota.Tenant.TenantName, quota.Cluster.ClusterName)
+		msg.ToUsers.Append(h.GetDataBase().TenantAdmins(quota.TenantID)...).Append(targetUser.ID)
+	})
+
 	handlers.OK(c, quota)
 }
 
@@ -193,17 +191,15 @@ func (h *ApproveHandler) Reject(c *gin.Context) {
 	h.GetDB().Where("username = ?", quota.TenantResourceQuotaApply.Username).First(&targetUser)
 
 	h.SetAuditData(c, "拒绝", "集群资源申请", quota.Tenant.TenantName+"/"+quota.Cluster.ClusterName)
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Approve).
-		ActionType(msgbus.Update).
-		ResourceType(msgbus.TenantResourceQuota).
-		ResourceID(quota.ID).
-		Content(fmt.Sprintf("拒绝了用户%s在租户%s中发起对集群%s的资源调整审批", targetUser.Username, quota.Tenant.TenantName, quota.Cluster.ClusterName)).
-		SetUsersToSend(
-			h.GetDataBase().TenantAdmins(quota.TenantID),
-			[]uint{targetUser.ID},
-		).
-		Send()
+
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.MessageType = msgbus.Approve
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.TenantResourceQuota
+		msg.ResourceID = quota.ID
+		msg.Detail = fmt.Sprintf("拒绝了用户%s在租户%s中发起对集群%s的资源调整审批", targetUser.Username, quota.Tenant.TenantName, quota.Cluster.ClusterName)
+		msg.ToUsers.Append(h.GetDataBase().TenantAdmins(quota.TenantID)...).Append(targetUser.ID)
+	})
+
 	handlers.OK(c, quota)
 }
