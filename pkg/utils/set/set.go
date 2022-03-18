@@ -24,7 +24,7 @@ func NewSet[T Ordered]() *Set[T] {
 	}
 }
 
-func (s *Set[T]) Append(vals ...T) {
+func (s *Set[T]) Append(vals ...T) *Set[T] {
 	for _, val := range vals {
 		if _, ok := s.maps[val]; ok {
 			continue
@@ -32,6 +32,7 @@ func (s *Set[T]) Append(vals ...T) {
 		s.elems = append(s.elems, val)
 		s.maps[val] = struct{}{}
 	}
+	return s
 }
 
 func (s *Set[T]) Slice() []T {
@@ -41,6 +42,6 @@ func (s *Set[T]) Slice() []T {
 	return s.elems
 }
 
-func (s *Set[t]) Len() int {
+func (s *Set[T]) Len() int {
 	return len(s.elems)
 }

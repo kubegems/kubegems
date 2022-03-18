@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/apis/gems/v1beta1"
+	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
@@ -166,21 +167,14 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	}
 	h.GetCacheLayer().GetGlobalResourceTree().DelProject(obj.TenantID, obj.ID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Delete).
-		ResourceType(msgbus.Project).
-		ResourceID(obj.ID).
-		Content(fmt.Sprintf("删除了租户%s中的项目%s", obj.Tenant.TenantName, obj.ProjectName)).
-		SetUsersToSend(
-			tenantAdmins,
-			projUsers,
-		).
-		AffectedUsers(
-			projUsers, // 项目用户需刷新权限
-		).
-		Send()
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Delete
+		msg.ResourceType = msgbus.Project
+		msg.ResourceID = obj.ID
+		msg.Detail = fmt.Sprintf("删除了租户%s中的项目%s", obj.Tenant.TenantName, obj.ProjectName)
+		msg.ToUsers.Append(tenantAdmins...).Append(projUsers...)
+		msg.AffectedUsers.Append(projUsers...) // 项目用户需刷新权限
+	})
 	handlers.NoContent(c, nil)
 }
 
@@ -299,24 +293,22 @@ func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 
 	h.SetAuditData(c, "添加", "项目成员", fmt.Sprintf("项目[%v]/成员[%v]", rel.Project.ProjectName, user.Username))
 	h.SetExtraAuditData(c, models.ResProject, rel.ProjectID)
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Add).
-		ResourceType(msgbus.Project).
-		ResourceID(rel.ProjectID).
-		Content(fmt.Sprintf("向租户%s/项目%s中添加了用户%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-			func() []uint {
+
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Add
+		msg.ResourceType = msgbus.Project
+		msg.ResourceID = rel.ProjectID
+		msg.Detail = fmt.Sprintf("向租户%s/项目%s中添加了用户%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username)
+		msg.ToUsers.
+			Append(rel.UserID). // 自己
+			Append(func() []uint {
 				if rel.Role == models.ProjectRoleAdmin {
 					return h.GetDataBase().ProjectAdmins(rel.ProjectID)
 				}
 				return nil
-			}(), // 项目管理员
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+			}()...) // 项目管理员
+		msg.AffectedUsers.Append(rel.UserID)
+	})
 	handlers.OK(c, rel)
 }
 
@@ -353,24 +345,22 @@ func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
 	h.GetDB().Preload("Project.Tenant").First(&rel, rel.ID)
 	h.SetAuditData(c, "修改", "项目成员", fmt.Sprintf("项目[%v]/成员[%v]", rel.Project.ProjectName, user.Username))
 	h.SetExtraAuditData(c, models.ResProject, rel.ProjectID)
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Update).
-		ResourceType(msgbus.Project).
-		ResourceID(rel.ProjectID).
-		Content(fmt.Sprintf("将租户%s/项目%s中的用户%s设置为了%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username, rel.Role)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-			func() []uint {
+
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Update
+		msg.ResourceType = msgbus.Project
+		msg.ResourceID = rel.ProjectID
+		msg.Detail = fmt.Sprintf("将租户%s/项目%s中的用户%s设置为了%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username, rel.Role)
+		msg.ToUsers.
+			Append(rel.UserID). // 自己
+			Append(func() []uint {
 				if rel.Role == models.ProjectRoleAdmin {
 					return h.GetDataBase().ProjectAdmins(rel.ProjectID)
 				}
 				return nil
-			}(), // 项目管理员
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+			}()...) // 项目管理员
+		msg.AffectedUsers.Append(rel.UserID)
+	})
 	handlers.OK(c, rel)
 }
 
@@ -417,24 +407,22 @@ func (h *ProjectHandler) DeleteProjectUser(c *gin.Context) {
 	h.SetAuditData(c, "删除", "项目成员", fmt.Sprintf("项目[%v]/成员[%v]", rel.Project.ProjectName, user.Username))
 	h.SetExtraAuditData(c, models.ResProject, rel.ProjectID)
 
-	h.GetMessageBusClient().
-		GinContext(c).
-		MessageType(msgbus.Message).
-		ActionType(msgbus.Delete).
-		ResourceType(msgbus.Project).
-		ResourceID(rel.ProjectID).
-		Content(fmt.Sprintf("删除了租户%s/项目%s中的用户%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username)).
-		SetUsersToSend(
-			[]uint{rel.UserID}, // 自己
-			func() []uint {
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Delete
+		msg.ResourceType = msgbus.Project
+		msg.ResourceID = rel.ProjectID
+		msg.Detail = fmt.Sprintf("删除了租户%s/项目%s中的用户%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username)
+		msg.ToUsers.
+			Append(rel.UserID). // 自己
+			Append(func() []uint {
 				if rel.Role == models.ProjectRoleAdmin {
 					return h.GetDataBase().ProjectAdmins(rel.ProjectID)
 				}
 				return nil
-			}(), // 项目管理员
-		).
-		AffectedUsers([]uint{rel.UserID}).
-		Send()
+			}()...) // 项目管理员
+		msg.AffectedUsers.Append(rel.UserID)
+	})
+
 	handlers.NoContent(c, nil)
 }
 
