@@ -48,7 +48,7 @@ import (
 	tenanthandler "kubegems.io/pkg/service/handlers/tenant"
 	userhandler "kubegems.io/pkg/service/handlers/users"
 	workloadreshandler "kubegems.io/pkg/service/handlers/workloadres"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/service/models/cache"
 	"kubegems.io/pkg/service/models/validate"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/agents"
@@ -129,14 +129,17 @@ func (r *Router) Complete() error {
 	// user interface
 	userif := aaa.NewUserInfoHandler()
 	// cache
-	cache := &models.CacheLayer{DataBase: r.Database, Redis: r.Redis}
+	cache := &cache.ModelCache{DB: r.Database.DB(), Redis: r.Redis}
+	if err := cache.BuildCacheIfNotExist(); err != nil {
+		return err
+	}
 	// audit
 	r.auditInstance = audit.NewAuditMiddleware(r.Database.DB(), cache, userif)
 
 	// base handler
 	basehandler := base.NewHandler(
 		r.auditInstance,
-		&authorization.DefaultPermissionChecker{Cache: cache, Userif: userif},
+		&authorization.DefaultPermissionManager{Cache: cache, Userif: userif},
 		userif,
 		r.DyConfig,
 		r.Agents,

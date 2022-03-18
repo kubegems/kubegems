@@ -48,7 +48,7 @@ func (h *MyHandler) MyAuthority(c *gin.Context) {
 		return
 	}
 
-	auth := h.GetCacheLayer().FlushUserAuthority(u)
+	auth := h.ModelCache().FlushUserAuthority(u)
 	handlers.OK(c, auth)
 }
 

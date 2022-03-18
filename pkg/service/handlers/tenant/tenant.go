@@ -119,7 +119,7 @@ func (h *TenantHandler) PostTenant(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetCacheLayer().GetGlobalResourceTree().UpsertTenant(obj.ID, obj.TenantName)
+	h.ModelCache().UpsertTenant(obj.ID, obj.TenantName)
 
 	h.SetAuditData(c, "创建", "租户", obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
@@ -168,7 +168,7 @@ func (h *TenantHandler) PutTenant(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetCacheLayer().GetGlobalResourceTree().UpsertTenant(obj.ID, obj.TenantName)
+	h.ModelCache().UpsertTenant(obj.ID, obj.TenantName)
 	handlers.OK(c, obj)
 }
 
@@ -204,7 +204,7 @@ func (h *TenantHandler) DeleteTenant(c *gin.Context) {
 	h.SetAuditData(c, "删除", "租户", obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
-	h.GetCacheLayer().GetGlobalResourceTree().DelTenant(obj.ID)
+	h.ModelCache().DelTenant(obj.ID)
 
 	handlers.NoContent(c, nil)
 }
@@ -322,7 +322,7 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 	h.SetAuditData(c, "添加", "租户成员", fmt.Sprintf("租户[%v]/用户[%v]", tenant.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 
@@ -373,7 +373,7 @@ func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 	}
 
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.GetDB().Preload("Tenant").First(&rel, rel.ID)
 
@@ -441,7 +441,7 @@ func (h *TenantHandler) DeleteTenantUser(c *gin.Context) {
 	}
 
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
-	h.GetCacheLayer().FlushUserAuthority(&user)
+	h.ModelCache().FlushUserAuthority(&user)
 
 	h.SetAuditData(c, "删除", "租户成员", fmt.Sprintf("租户[%v]/用户[%v]", obj.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, rel.TenantID)
@@ -481,7 +481,7 @@ func (h *TenantHandler) ListTenantProject(c *gin.Context) {
 
 	tid := c.Param(PrimaryKeyName)
 	user, _ := h.GetContextUser(c)
-	userAuthority := h.GetCacheLayer().GetUserAuthority(user)
+	userAuthority := h.ModelCache().GetUserAuthority(user)
 
 	cond := &handlers.PageQueryCond{
 		Model:         "Project",
@@ -490,7 +490,7 @@ func (h *TenantHandler) ListTenantProject(c *gin.Context) {
 		Where:         []*handlers.QArgs{handlers.Args("tenant_id = ?", tid)},
 	}
 
-	if !userAuthority.IsTenantAdmin(utils.ToUint(tid)) && !userAuthority.IsSystemAdmin {
+	if !userAuthority.IsTenantAdmin(utils.ToUint(tid)) && !userAuthority.IsSystemAdmin() {
 		cond.Join = handlers.Args("left join project_user_rels on project_user_rels.project_id = projects.id")
 		cond.Where = append(cond.Where, handlers.Args("project_user_rels.user_id = ?", user.GetID()))
 	}
@@ -555,9 +555,7 @@ func (h *TenantHandler) PostTenantProject(c *gin.Context) {
 		return
 	}
 
-	t := h.GetCacheLayer().GetGlobalResourceTree()
-
-	_ = t.UpsertProject(tenant.ID, project.ID, project.ProjectName)
+	_ = h.ModelCache().UpsertProject(tenant.ID, project.ID, project.ProjectName)
 
 	h.SetAuditData(c, "创建", "项目", project.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, project.ID)
@@ -1547,9 +1545,9 @@ func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	u, _ := h.GetContextUser(c)
-	auth := h.GetCacheLayer().GetUserAuthority(u)
+	auth := h.ModelCache().GetUserAuthority(u)
 	// 非管理员不能编辑默认网关
-	if tg.Name == defaultGatewayName && !auth.IsSystemAdmin {
+	if tg.Name == defaultGatewayName && !auth.IsSystemAdmin() {
 		handlers.NotOK(c, fmt.Errorf("只有系统管理员能修改默认网关"))
 		return
 	}
