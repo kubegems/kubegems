@@ -30,5 +30,8 @@ var (
 
 // nolint: gochecknoinits
 func init() {
-	SchemeBuilder.Register(&Installer{}, &InstallerList{})
+	SchemeBuilder.Register(
+		&Plugin{},
+		&PluginList{},
+	)
 }

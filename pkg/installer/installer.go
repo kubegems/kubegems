@@ -59,11 +59,11 @@ func Run(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	if err := controllers.NewAndSetupInstallerReconciler(ctx, mgr, &controllers.InstallerOptions{
+	if err := controllers.NewAndSetupPluginReconciler(ctx, mgr, &controllers.PluginOptions{
 		ChartsDir:  options.ChartsDir,
 		PluginsDir: options.PluginsDir,
 	}); err != nil {
-		setupLog.Error(err, "unable to create installer controller", "controller", "installer")
+		setupLog.Error(err, "unable to create plugin controller", "controller", "plugin")
 		return err
 	}
 

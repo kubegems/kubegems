@@ -137,46 +137,33 @@ func (n *NativeApplier) apply(ctx context.Context, resources []*unstructured.Uns
 	return result, nil
 }
 
-// nolint: funlen
-func (n *NativeApplier) Apply(
-	ctx context.Context,
-	plugin pluginsv1beta1.InstallerSpecPlugin,
-	globalValues map[string]interface{},
-	status *pluginsv1beta1.InstallerStatusStatus,
-) error {
+func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	namespace, name := plugin.Namespace, plugin.Name
 	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace)
 
-	enabled := plugin.Enabled
-	var err error
-
-	var manifests []*unstructured.Unstructured
-	if enabled {
-		manifests, _, err = n.parseManifests(plugin, globalValues)
-		if err != nil {
-			return err
-		}
-	}
-
-	if (!enabled && status.Status == pluginsv1beta1.StatusUninstalled) ||
-		(enabled && status.Status == pluginsv1beta1.StatusDeployed) && reflect.DeepEqual(status.Values, plugin.Values) {
-		log.Info("plugin is uptodate and no changes")
-		return nil
-	}
-
-	state, err := n.apply(ctx, manifests, name, namespace)
+	manifests, _, err := n.parseManifests(plugin)
 	if err != nil {
 		return err
 	}
 
-	switch state.phase {
+	if status.Phase == pluginsv1beta1.StatusDeployed && reflect.DeepEqual(status.Values, plugin.Values) {
+		log.Info("plugin is uptodate and no changes")
+		return nil
+	}
+
+	result, err := n.apply(ctx, manifests, name, namespace)
+	if err != nil {
+		return err
+	}
+
+	switch result.phase {
 	case common.OperationRunning:
-		return fmt.Errorf("sync is still running: %s", state.message)
+		return fmt.Errorf("sync is still running: %s", result.message)
 	}
 
 	errmsgs := []string{}
 	notes := []map[string]interface{}{}
-	for _, result := range state.results {
+	for _, result := range result.results {
 		switch result.Status {
 		case common.ResultCodeSyncFailed:
 			errmsgs = append(errmsgs, fmt.Sprintf("%s: %s", result.ResourceKey.String(), result.Message))
@@ -194,22 +181,67 @@ func (n *NativeApplier) Apply(
 	}
 
 	now := metav1.Now()
-	if !enabled {
-		// uninstalled
-		status.Status = pluginsv1beta1.StatusUninstalled
-		if status.CreationTimestamp.IsZero() {
-			status.CreationTimestamp = metav1.Now()
-		}
-		status.UpgradeTimestamp = metav1.Now()
-	} else {
-		// installed
-		status.Status = pluginsv1beta1.StatusDeployed
-		status.DeletionTimestamp = &now
+
+	// installed
+	status.Phase = pluginsv1beta1.StatusDeployed
+	status.Values = plugin.Values
+	status.Message = result.message
+	status.Name = plugin.Name
+	status.Namespace = plugin.Namespace
+	if status.CreationTimestamp.IsZero() {
+		status.CreationTimestamp = now
+	}
+	status.UpgradeTimestamp = now
+	return nil
+}
+
+func (n *NativeApplier) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+	namespace, name := plugin.Namespace, plugin.Name
+	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace)
+
+	switch status.Phase {
+	case pluginsv1beta1.StatusDeployed, pluginsv1beta1.StatusFailed:
+		// continue processing
+	case pluginsv1beta1.StatusUninstalled, pluginsv1beta1.StatusNotInstall:
+		log.Info("plugin is removed or not installed")
+		return nil
+	case "":
+		log.Info("plugin is not installed set to not installed")
+		status.Phase = pluginsv1beta1.StatusNotInstall
+		status.CreationTimestamp = metav1.Now()
+		return nil
+	default:
+		return nil
 	}
 
-	status.Values = plugin.Values
-	status.Message = state.message
+	result, err := n.apply(ctx, nil, name, namespace)
+	if err != nil {
+		return err
+	}
+	errmsgs := []string{}
+	notes := []map[string]interface{}{}
+	for _, result := range result.results {
+		switch result.Status {
+		case common.ResultCodeSyncFailed:
+			errmsgs = append(errmsgs, fmt.Sprintf("%s: %s", result.ResourceKey.String(), result.Message))
+		}
+		notes = append(notes, map[string]interface{}{
+			"resource": result.ResourceKey.String(),
+			"status":   result.Status,
+		})
+	}
+	content, _ := yaml.Marshal(notes)
+	status.Notes = string(content)
 
+	if len(errmsgs) > 0 {
+		return fmt.Errorf(strings.Join(errmsgs, "\n"))
+	}
+
+	status.Phase = pluginsv1beta1.StatusUninstalled
+	status.Message = result.message
+	status.Name = plugin.Name
+	status.Namespace = plugin.Namespace
+	status.DeletionTimestamp = metav1.Now()
 	return nil
 }
 
@@ -218,21 +250,11 @@ type TemplatesValues struct {
 	Release map[string]interface{}
 }
 
-func (n *NativeApplier) parseManifests(
-	plugin pluginsv1beta1.InstallerSpecPlugin,
-	globalValues map[string]interface{},
-) ([]*unstructured.Unstructured, string, error) {
+func (n *NativeApplier) parseManifests(plugin Plugin) ([]*unstructured.Unstructured, string, error) {
 	// tmplate vals
 	name, namespace := plugin.Name, plugin.Namespace
 	tplValues := TemplatesValues{
-		Values: func() map[string]interface{} {
-			vals := UnmarshalValues(plugin.Values)
-			if vals == nil {
-				vals = map[string]interface{}{}
-			}
-			vals["global"] = globalValues
-			return vals
-		}(),
+		Values: plugin.Values,
 		Release: map[string]interface{}{
 			"Name":      name,
 			"Namespace": namespace,

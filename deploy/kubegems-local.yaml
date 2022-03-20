@@ -1,30 +1,73 @@
 apiVersion: plugins.kubegems.io/v1beta1
-kind: Installer
+kind: Plugin
+metadata:
+  name: argo-rollouts
+  namespace: argo-rollouts
+spec:
+  kind: helm
+  enabled: true
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  kind: helm
+  enabled: true
+  values:
+    installCRDs: true
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: jaeger
+  namespace: observability
+spec:
+  kind: helm
+  enabled: true
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: loki-stack
+  namespace: loki-stack
+spec:
+  kind: helm
+  enabled: true
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: metrics-server
+  namespace: kube-system
+spec:
+  kind: helm
+  enabled: true
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kube-prometheus-stack
+  namespace: prometheus
+spec:
+  kind: helm
+  enabled: true
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: gateway
+  namespace: kubegems-gateway
+spec:
+  kind: native
+  enabled: true
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
 metadata:
   name: kubegems-local
-  namespace: kubegems-installer
+  namespace: kubegems-local
 spec:
-  plugins:
-    - name: cert-manager
-      namespace: cert-manager
-      enabled: true
-      values:
-        installCRDs: true
-    - name: argo-rollouts
-      namespace: argo-rollouts
-    - name: jaeger
-      namespace: observability
-    - name: loki-stack
-      namespace: loki-stack
-    - name: metrics-server
-      namespace: kube-system
-    - name: kube-prometheus-stack
-      namespace: prometheus
-      enabled: true
-    - name: gateway
-      namespace: kubegems-gateway
-      kind: native
-      enabled: true
-    - name: kubegems-local
-      namespace: kubegems-local
-      enabled: true
+  kind: helm
+  enabled: true

@@ -1,27 +1,26 @@
 apiVersion: plugins.kubegems.io/v1beta1
-kind: Installer
+kind: Plugin
 metadata:
   name: kubegems
   namespace: kubegems-installer
 spec:
-  plugins:
-    - name: mysql
-      namespace: kubegems
+  kind: helm
+  enabled: false
+  installNamespace: kubegems
+  values:
+    api:
+      image:
+        repository: cnfatal/kubegems
+    worker:
+      image:
+        repository: cnfatal/kubegems
+    msgbus:
+      image:
+        repository: cnfatal/kubegems
+    mysql:
+      enabled: false
+    externalDatabase:
       enabled: true
-    - name: kubegems
-      namespace: kubegems
-      enabled: true
-      values:
-        api:
-          image:
-            repository: cnfatal/kubegems
-        worker:
-          image:
-            repository: cnfatal/kubegems
-        msgbus:
-          image:
-            repository: cnfatal/kubegems
-        mysql:
-          enabled: false
-        externalDatabase:
-          enabled: true
+    ingress:
+      hostname: dashboard.k8s.fatalc.cn
+      ingressClassName: nginx

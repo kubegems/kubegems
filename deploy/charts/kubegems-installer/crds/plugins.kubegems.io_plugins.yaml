@@ -6,23 +6,19 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
-  name: tenantnetworkpolicies.gems.kubegems.io
+  name: plugins.plugins.kubegems.io
 spec:
-  group: gems.kubegems.io
+  group: plugins.kubegems.io
   names:
-    kind: TenantNetworkPolicy
-    listKind: TenantNetworkPolicyList
-    plural: tenantnetworkpolicies
-    shortNames:
-    - tnetpol
-    singular: tenantnetworkpolicy
-  scope: Cluster
+    kind: Plugin
+    listKind: PluginList
+    plural: plugins
+    singular: plugin
+  scope: Namespaced
   versions:
   - name: v1beta1
     schema:
       openAPIV3Schema:
-        description: TenantNetworkPolicy is the Schema for the tenantnetworkpolicies
-          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -37,37 +33,46 @@ spec:
           metadata:
             type: object
           spec:
-            description: TenantNetworkPolicySpec defines the desired state of TenantNetworkPolicy
             properties:
-              environmentNetworkPolicies:
+              dependencies:
                 items:
-                  properties:
-                    name:
-                      type: string
-                    project:
-                      type: string
-                  type: object
+                  type: string
                 type: array
-              projectNetworkPolicies:
-                items:
-                  properties:
-                    name:
-                      type: string
-                  type: object
-                type: array
-              tenant:
-                type: string
-              tenantIsolated:
+              enabled:
                 type: boolean
+              installNamespace:
+                type: string
+              kind:
+                type: string
+              values:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              version:
+                type: string
             type: object
           status:
-            description: TenantNetworkPolicyStatus defines the observed state of TenantNetworkPolicy
             properties:
-              lastUpdateTime:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
+              creationTimestamp:
                 format: date-time
+                type: string
+              deletionTimestamp:
+                format: date-time
+                type: string
+              installNamespace:
+                type: string
+              message:
+                type: string
+              notes:
+                type: string
+              status:
+                type: string
+              upgradeTimestamp:
+                format: date-time
+                type: string
+              values:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              version:
                 type: string
             type: object
         type: object

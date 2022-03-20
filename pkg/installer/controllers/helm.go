@@ -31,63 +31,14 @@ type HelmApplier struct {
 	ChartsDir string `json:"chartsDir,omitempty"`
 }
 
-// nolint: funlen,nestif
-func (r *HelmApplier) Apply(
-	ctx context.Context,
-	plugin pluginsv1beta1.InstallerSpecPlugin,
-	globalValues map[string]interface{},
-	status *pluginsv1beta1.InstallerStatusStatus,
-) error {
+// nolint: funlen
+func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	namespace, name := plugin.Namespace, plugin.Name
 	log := logr.FromContext(ctx).WithValues("name", name, "namespace", namespace)
 
 	config := NewHelmConfig(namespace)
+	values := plugin.Values
 
-	// do get first
-	isNotFound := false
-	exist, err := action.NewGet(config).Run(name)
-	if err != nil {
-		if !errors.Is(err, driver.ErrReleaseNotFound) {
-			return err
-		}
-		isNotFound = true
-	}
-
-	if !plugin.Enabled {
-		if isNotFound {
-			if status.Status == pluginsv1beta1.StatusUninstalled || status.Status == pluginsv1beta1.StatusNotInstall {
-				return nil
-			}
-			log.Info("plugin is disabled and not installed")
-			status.Status = pluginsv1beta1.StatusNotInstall
-			return nil
-		}
-		// record exist and uninstalled
-		if exist.Info.Status == release.StatusUninstalled {
-			log.Info("plugin is disabled and uninstalled")
-			updateStatusFromRelease(status, exist)
-			return nil
-		}
-		// uninstall
-		log.Info("uninstalling")
-		uninstall := action.NewUninstall(config)
-		uninstalledRelease, err := uninstall.Run(name)
-		if err != nil {
-			log.Error(err, "on uninstall")
-			return err
-		}
-		log.Info("uninstalled")
-		if urelease := uninstalledRelease.Release; urelease != nil {
-			updateStatusFromRelease(status, urelease)
-		} else {
-			log.Info("uninstalled, but no release")
-			status.Message = uninstalledRelease.Info
-			status.Status = pluginsv1beta1.StatusUninstalled
-		}
-		return nil
-	}
-
-	values := UnmarshalValues(plugin.Values) // ignore error
 	loader, err := loader.Loader(filepath.Join(r.ChartsDir, name))
 	if err != nil {
 		log.Error(err, "on chart loader")
@@ -99,7 +50,11 @@ func (r *HelmApplier) Apply(
 		return err
 	}
 
-	if isNotFound {
+	exist, err := action.NewGet(config).Run(name)
+	if err != nil {
+		if !errors.Is(err, driver.ErrReleaseNotFound) {
+			return err
+		}
 		// install
 		log.Info("installing")
 		install := action.NewInstall(config)
@@ -112,20 +67,25 @@ func (r *HelmApplier) Apply(
 			return err
 		}
 		log.Info("installed")
-		updateStatusFromRelease(status, installedRelease)
+
+		status.Name, status.Namespace = installedRelease.Name, installedRelease.Namespace
+		status.Phase = pluginsv1beta1.StatusDeployed
+		status.CreationTimestamp = convtime(installedRelease.Info.FirstDeployed.Time)
+		status.UpgradeTimestamp = convtime(installedRelease.Info.LastDeployed.Time)
+		status.Notes = installedRelease.Info.Notes
+		status.Values = installedRelease.Config
 		return nil
 	}
 
 	// should upgrade
 	if exist.Info.Status == release.StatusDeployed && reflect.DeepEqual(exist.Config, values) {
 		log.V(5).Info("already uptodate")
-		updateStatusFromRelease(status, exist)
 		return nil
 	}
 
 	// upgrade
 	log.Info("upgrading")
-	log.V(5).Info("status not healthy", "status", exist.Info.Status)
+	log.V(5).Info("status", "status", exist.Info.Status)
 	log.V(5).Info("values diff", "old", exist.Config, "new", values)
 	upgrade := action.NewUpgrade(config)
 	upgrade.Install = true
@@ -136,86 +96,68 @@ func (r *HelmApplier) Apply(
 		return err
 	}
 	log.Info("upgraded")
-	updateStatusFromRelease(status, upgradeRelease)
+
+	now := metav1.Now()
+	status.Name, status.Namespace = upgradeRelease.Name, upgradeRelease.Namespace
+	status.Phase = pluginsv1beta1.StatusDeployed
+	status.Message = upgradeRelease.Info.Description
+	status.UpgradeTimestamp = now
+	status.Notes = upgradeRelease.Info.Notes
+	status.Values = upgradeRelease.Config
 	return nil
 }
 
-func updateStatusFromRelease(status *pluginsv1beta1.InstallerStatusStatus, release *release.Release) {
-	if release == nil {
-		return
+func (r *HelmApplier) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+	namespace, name := plugin.Namespace, plugin.Name
+	log := logr.FromContext(ctx).WithValues("name", name, "namespace", namespace)
+
+	config := NewHelmConfig(namespace)
+
+	exist, err := action.NewGet(config).Run(name)
+	if err != nil {
+		if !errors.Is(err, driver.ErrReleaseNotFound) {
+			return err
+		}
+		if status.Phase == pluginsv1beta1.StatusUninstalled ||
+			status.Phase == pluginsv1beta1.StatusNotInstall {
+			return nil
+		}
+		log.Info("plugin is not installed")
+		status.Phase = pluginsv1beta1.StatusNotInstall
+		status.Message = "plugin is not installed"
+		return nil
 	}
-	resetStatus(status)
 
-	status.Status = pluginsv1beta1.Status(release.Info.Status)
-	status.Message = release.Info.Description
-
-	// https://github.com/golang/go/issues/19502
-	// metav1.Time and time.Time are not comparable directly
-	convtime := func(t time.Time) metav1.Time {
-		t, _ = time.Parse(time.RFC3339, t.Format(time.RFC3339))
-		return metav1.Time{Time: t}
+	// check if the plugin is installed by current plugin
+	if status.Phase != pluginsv1beta1.StatusDeployed && status.Phase != pluginsv1beta1.StatusFailed {
+		log.Info("plugin is not deployed but this plugin but requested to uninstall")
+		status.Phase = pluginsv1beta1.StatusUnknown
+		status.Message = "plugin is not deployed by current plugin"
+		return nil
 	}
 
-	status.CreationTimestamp = convtime(release.Info.FirstDeployed.Time)
-	status.UpgradeTimestamp = convtime(release.Info.LastDeployed.Time)
-	status.Notes = release.Info.Notes
-	status.Version = release.Chart.Metadata.Version
-	status.Values = MarshalValues(release.Config)
-
-	if !release.Info.Deleted.IsZero() {
-		status.DeletionTimestamp = func() *metav1.Time {
-			time := convtime(release.Info.Deleted.Time)
-			return &time
-		}()
+	// uninstall
+	log.Info("uninstalling")
+	uninstall := action.NewUninstall(config)
+	uninstalledRelease, err := uninstall.Run(exist.Name)
+	if err != nil {
+		log.Error(err, "on uninstall")
+		return err
 	}
+	log.Info("uninstalled")
+	status.Phase = pluginsv1beta1.StatusUninstalled
+	status.Message = uninstalledRelease.Info
+	if urelease := uninstalledRelease.Release; urelease != nil {
+		status.DeletionTimestamp = convtime(urelease.Info.Deleted.Time)
+		status.Notes = urelease.Info.Notes
+		status.Values = urelease.Config
+	}
+	return nil
 }
 
-func resetStatus(status *pluginsv1beta1.InstallerStatusStatus) {
-	*status = pluginsv1beta1.InstallerStatusStatus{Name: status.Name, Namespace: status.Namespace}
-}
-
-func extractCurrentStatus(plugin pluginsv1beta1.InstallerSpecPlugin, installer *pluginsv1beta1.Installer) *pluginsv1beta1.InstallerStatusStatus {
-	for i, exist := range installer.Status.States {
-		if exist.Name != plugin.Name || exist.Namespace != plugin.Namespace {
-			continue
-		}
-		return &installer.Status.States[i]
-	}
-	installer.Status.States = append(installer.Status.States, pluginsv1beta1.InstallerStatusStatus{
-		Name:      plugin.Name,
-		Namespace: plugin.Namespace,
-	})
-	status := &installer.Status.States[len(installer.Status.States)-1]
-	return status
-}
-
-func updatedStatus(
-	plugin pluginsv1beta1.InstallerSpecPlugin,
-	installer *pluginsv1beta1.Installer,
-	status *pluginsv1beta1.InstallerStatusStatus,
-) bool {
-	name, namespace := plugin.Name, plugin.Namespace
-	if status != nil {
-		status.Name = name
-		status.Namespace = namespace
-	}
-	for i, exist := range installer.Status.States {
-		if exist.Name != name || exist.Namespace != namespace {
-			continue
-		}
-		if status == nil {
-			installer.Status.States = append(installer.Status.States[:i], installer.Status.States[i+1:]...)
-			return true
-		}
-		if reflect.DeepEqual(exist, *status) {
-			return false
-		}
-		installer.Status.States[i] = *status
-		return true
-	}
-	if status != nil {
-		installer.Status.States = append(installer.Status.States, *status)
-		return true
-	}
-	return false
+// https://github.com/golang/go/issues/19502
+// metav1.Time and time.Time are not comparable directly
+func convtime(t time.Time) metav1.Time {
+	t, _ = time.Parse(time.RFC3339, t.Format(time.RFC3339))
+	return metav1.Time{Time: t}
 }

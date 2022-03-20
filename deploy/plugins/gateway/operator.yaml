@@ -23,7 +23,7 @@ spec:
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
             - --v=10
-          image: {{ .Values.global.repository | default "docker.io/kubegems" }}/kube-rbac-proxy:v0.8.0
+          image: {{ .Values.repository | default "docker.io/kubegems" }}/kube-rbac-proxy:v0.8.0
           name: kube-rbac-proxy
           ports:
             - containerPort: 8443
@@ -34,7 +34,7 @@ spec:
             - --leader-elect
           command:
             - /manager
-          image: {{ .Values.global.repository | default "docker.io/kubegems" }}/nginx-ingress-operator:0.3.2
+          image: {{ .Values.repository | default "docker.io/kubegems" }}/nginx-ingress-operator:0.3.2
           livenessProbe:
             httpGet:
               path: /healthz
