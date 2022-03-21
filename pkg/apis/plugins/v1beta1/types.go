@@ -24,6 +24,7 @@ type PluginSpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Values  runtime.RawExtension `json:"values,omitempty"`  // plugin values, helm values
 	Version string               `json:"version,omitempty"` // plugin version,also helm chart version
+	Repo    string               `json:"repo,omitempty"`    // plugin repo url,optional
 }
 
 type Dependency struct {
@@ -64,9 +65,7 @@ const (
 type PluginPhase string
 
 const (
-	PluginPhaseUnknown    PluginPhase = "Unknown"
-	PluginPhaseNotInstall PluginPhase = "NotInstall"
-	PluginPhaseInstalled  PluginPhase = "Installed"
-	StatusUninstalled     PluginPhase = "Uninstalled"
-	PluginPhaseFailed     PluginPhase = "Failed"
+	PluginPhaseNone      PluginPhase = "None" // No phase specified, plugin is not installed or removed
+	PluginPhaseInstalled PluginPhase = "Installed"
+	PluginPhaseFailed    PluginPhase = "Failed"
 )

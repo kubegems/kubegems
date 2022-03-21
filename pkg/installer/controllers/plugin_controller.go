@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,6 +39,8 @@ type Applier interface {
 type Plugin struct {
 	Name      string
 	Namespace string
+	Version   string
+	Repo      string
 	Values    map[string]interface{}
 }
 
@@ -48,6 +49,7 @@ type PluginStatus struct {
 	Namespace         string
 	Phase             pluginsv1beta1.PluginPhase
 	Values            map[string]interface{}
+	Version           string
 	Message           string
 	Notes             string
 	CreationTimestamp metav1.Time
@@ -64,6 +66,8 @@ func PluginStatusFromPlugin(plugin *pluginsv1beta1.Plugin) *PluginStatus {
 		Namespace:         plugin.Status.InstallNamespace,
 		Phase:             plugin.Status.Phase,
 		Message:           plugin.Status.Message,
+		Values:            UnmarshalValues(plugin.Status.Values),
+		Version:           plugin.Status.Version,
 		Notes:             plugin.Status.Notes,
 		CreationTimestamp: plugin.CreationTimestamp,
 		UpgradeTimestamp:  plugin.Status.UpgradeTimestamp,
@@ -83,6 +87,7 @@ func (s PluginStatus) toPluginStatus() pluginsv1beta1.PluginStatus {
 		Notes:             s.Notes,
 		InstallNamespace:  s.Namespace,
 		Values:            MarshalValues(s.Values),
+		Version:           s.Version,
 		CreationTimestamp: s.CreationTimestamp,
 		UpgradeTimestamp:  s.UpgradeTimestamp,
 		DeletionTimestamp: func() *metav1.Time {
@@ -154,13 +159,11 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 // Sync
 // nolint: funlen
 func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plugin) error {
-	log := logr.FromContextOrDiscard(ctx)
-	log.Info("reconciling")
-	defer log.Info("reconciled")
-
 	thisPlugin := Plugin{
-		Name:   plugin.Name,
-		Values: UnmarshalValues(plugin.Spec.Values),
+		Name:    plugin.Name,
+		Values:  UnmarshalValues(plugin.Spec.Values),
+		Version: plugin.Spec.Version,
+		Repo:    plugin.Spec.Repo,
 		Namespace: func() string {
 			if plugin.Spec.InstallNamespace == "" {
 				return plugin.Namespace
@@ -199,7 +202,7 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 
 	// nolint: nestif
 	if !plugin.Spec.Enabled || plugin.DeletionTimestamp != nil {
-		// delete
+		// remove
 		if err := applyer.Remove(ctx, thisPlugin, thisStatus); err != nil {
 			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()

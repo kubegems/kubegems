@@ -51,6 +51,8 @@ spec:
                 type: string
               kind:
                 type: string
+              repo:
+                type: string
               values:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true

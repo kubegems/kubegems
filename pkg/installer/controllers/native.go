@@ -196,18 +196,18 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *Plugin
 }
 
 func (n *NativeApplier) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+	log := logr.FromContextOrDiscard(ctx)
 	namespace, name := plugin.Namespace, plugin.Name
-	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace)
 
 	switch status.Phase {
 	case pluginsv1beta1.PluginPhaseInstalled, pluginsv1beta1.PluginPhaseFailed:
 		// continue processing
-	case pluginsv1beta1.StatusUninstalled, pluginsv1beta1.PluginPhaseNotInstall:
+	case pluginsv1beta1.PluginPhaseNone:
 		log.Info("plugin is removed or not installed")
 		return nil
 	case "":
 		log.Info("plugin is not installed set to not installed")
-		status.Phase = pluginsv1beta1.PluginPhaseNotInstall
+		status.Phase = pluginsv1beta1.PluginPhaseNone
 		status.CreationTimestamp = metav1.Now()
 		return nil
 	default:
@@ -237,7 +237,7 @@ func (n *NativeApplier) Remove(ctx context.Context, plugin Plugin, status *Plugi
 		return fmt.Errorf(strings.Join(errmsgs, "\n"))
 	}
 
-	status.Phase = pluginsv1beta1.StatusUninstalled
+	status.Phase = pluginsv1beta1.PluginPhaseNone
 	status.Message = result.message
 	status.Name = plugin.Name
 	status.Namespace = plugin.Namespace
