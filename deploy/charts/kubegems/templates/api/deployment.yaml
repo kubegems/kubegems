@@ -58,6 +58,25 @@ spec:
       securityContext: {{- omit .Values.api.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       containers:
+        - name: copy-plugins
+          image: {{ include "kubegems.plugins.image" . }}
+          imagePullPolicy: {{ .Values.installer.image.pullPolicy }}
+          {{- if .Values.installer.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.installer.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          command:
+            - sh
+            - -c
+            - cp -R /charts/* /app/charts/
+            - cp -R /plugins/* /app/plugins/
+          volumeMounts:
+            - name: charts
+              mountPath: /app/charts
+            - name: plugins
+              mountPath: /app/plugins
+          {{- if .Values.installer.resources }}
+          resources: {{- toYaml .Values.installer.resources | nindent 12 }}
+          {{- end }}
         - name: api
           image: {{ include "kubegems.api.image" . }}
           imagePullPolicy: {{ .Values.api.image.pullPolicy }}
@@ -143,6 +162,10 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.api.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           volumeMounts:
+            - name: charts
+              mountPath: /app/charts
+            - name: plugins
+              mountPath: /app/plugins
             {{- if .Values.api.jwt.enabled }}
             - name: jwt-certs
               mountPath: /certs/jwt
@@ -155,6 +178,10 @@ spec:
         {{- include "common.tplvalues.render" ( dict "value" .Values.api.sidecars "context" $) | nindent 8 }}
         {{- end }}
       volumes:
+        - name: charts
+          emptyDir: {}
+        - name: plugins
+          emptyDir: {}
         {{- if .Values.api.jwt.enabled }}
         - name: jwt-certs
           secret:

@@ -223,14 +223,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 				return err
 			}
 			if !recordOnly {
-				installer := ClusterInstaller{
-					Cluster:          cluster,
-					Clientset:        clientSet,
-					RestConfig:       config,
-					KubegemsVersion:  version.Get(),
-					InstallerOptions: installeropts,
-				}
-				return installer.UnInstall(ctx)
+				return OpratorInstaller{Config: config}.Remove(ctx)
 			}
 			return nil
 		}); err != nil {
@@ -497,15 +490,20 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
-			installer := ClusterInstaller{
-				Clientset:  clientSet,
-				RestConfig: config,
-
-				InstallerOptions: installeropts,
-				Cluster:          cluster,
-				KubegemsVersion:  version.Get(),
+			installer := OpratorInstaller{
+				Config: config,
+				Values: map[string]interface{}{
+					"plugin": map[string]interface{}{
+						"role": "local", // must be local, see: deploy/charts/kubegems-local/values.yaml
+						"values": map[string]interface{}{
+							"kubegemsVersion": version.Get().GitVersion,
+							"clusterName":     cluster.ClusterName,
+							"storageClass":    cluster.DefaultStorageClass,
+						},
+					},
+				},
 			}
-			return installer.Install(ctx)
+			return installer.Apply(ctx)
 		}); err != nil {
 			log.Error(err, "create cluster")
 			return err
@@ -597,10 +595,6 @@ func withClusterAndK8sClient(
 	f func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error,
 ) error {
 	// 获取clientSet
-	apiserver, _, _, _, err := kube.GetKubeconfigInfos(cluster.KubeConfig)
-	if err != nil {
-		return fmt.Errorf("kubeconfig 格式错误, %w", err)
-	}
 	restconfig, clientSet, err := kube.GetKubeClient(cluster.KubeConfig)
 	if err != nil {
 		return fmt.Errorf("通过kubeconfig 获取restclient失败, %v", err)
@@ -614,8 +608,7 @@ func withClusterAndK8sClient(
 	if err != nil {
 		return fmt.Errorf("list node failed: %w", err)
 	}
-
-	cluster.APIServer = apiserver
+	cluster.APIServer = restconfig.Host
 	cluster.Version = serverSersion.String()
 
 	// get container runtime

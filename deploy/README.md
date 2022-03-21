@@ -59,33 +59,17 @@ kubectl config use-context kind-kubegems
 
 ## Deploy KubeGems
 
-Install kubegems installer.
+Install kubegems installer using helm.
 
-deploy installer from generated manifests.
+```sh
+helm install --namespace kubegems-installer --create-namespace kubegems-installer charts/kubegems-installer
+```
+
+or deploy installer from generated manifests.
 
 ```sh
 kubectl create namespace kubegems-installer
 kubectl apply --namespace kubegems-installer -f installer.yaml
-```
-
-or installer manifests using helm.
-
-```sh
-helm install --namespace kubegems-installer kubegems-installer charts/kubegems-installer
-```
-
-Create a kubegems-installer CR to install kubegems components.
-
-on control cluster :
-
-```sh
-kubectl apply -f kubegems.yaml
-```
-
-on managed cluster :
-
-```sh
-kubectl apply -f kubegems-local.yaml
 ```
 
 Wait every thing becomes OK.

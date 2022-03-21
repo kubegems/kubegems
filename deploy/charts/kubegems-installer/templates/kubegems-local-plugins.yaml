@@ -1,3 +1,4 @@
+{{- if eq .Values.plugins.role "local" -}}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
@@ -71,3 +72,11 @@ metadata:
 spec:
   kind: helm
   enabled: true
+  values:
+    agent:
+      image:
+        tag: {{ .Values.plugins.values.kubegemsVersion | quote }}
+    controller:
+      image:
+        tag: {{ .Values.plugins.values.kubegemsVersion | quote }}
+{{- end -}}

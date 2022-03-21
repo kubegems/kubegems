@@ -53,6 +53,8 @@ spec:
                 type: string
               kind:
                 type: string
+              repo:
+                type: string
               values:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
@@ -240,3 +242,29 @@ spec:
           emptyDir: {}
         - name: plugins
           emptyDir: {}
+---
+# Source: kubegems-installer/templates/kubegems-core-plugins.yaml
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: mysql
+  namespace: kubegems
+spec:
+  kind: helm
+  repo: https://charts.bitnami.com/bitnami
+  enabled: true
+---
+# Source: kubegems-installer/templates/kubegems-core-plugins.yaml
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems
+  namespace: kubegems
+spec:
+  kind: helm
+  enabled: true
+  values:
+    mysql:
+      enabled: false
+    externalDatabase:
+      enabled: true
