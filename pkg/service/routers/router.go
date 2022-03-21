@@ -139,7 +139,7 @@ func (r *Router) Complete() error {
 	// base handler
 	basehandler := base.NewHandler(
 		r.auditInstance,
-		&authorization.DefaultPermissionChecker{Cache: cache, Userif: userif},
+		&authorization.DefaultPermissionManager{Cache: cache, Userif: userif},
 		userif,
 		r.DyConfig,
 		r.Agents,

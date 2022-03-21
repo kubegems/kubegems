@@ -271,7 +271,12 @@ func createOrUpdateEnvironment(ctx context.Context, h base.BaseHandler, clustern
 // @Security JWT
 func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 	var obj models.Environment
-	if err := h.GetDB().Preload("Cluster", clusterSensitiveFunc).Preload("Project.Tenant").First(&obj, c.Param("environment_id")).Error; err != nil {
+	if err := h.GetDB().Preload(
+		"Cluster",
+		clusterSensitiveFunc,
+	).Preload(
+		"Project.Tenant",
+	).First(&obj, c.Param("environment_id")).Error; err != nil {
 		handlers.NoContent(c, nil)
 	}
 	h.SetAuditData(c, "删除", "环境", obj.EnvironmentName)
@@ -292,7 +297,7 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.ModelCache().DelEnvironment(obj.ProjectID, obj.ID)
+	h.ModelCache().DelEnvironment(obj.ProjectID, obj.ID, obj.Cluster.ClusterName, obj.Namespace)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Delete

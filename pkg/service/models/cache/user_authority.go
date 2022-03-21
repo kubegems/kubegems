@@ -1,10 +1,7 @@
 package cache
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
-	"time"
 
 	"kubegems.io/pkg/service/models"
 )
@@ -14,18 +11,6 @@ type UserResource struct {
 	Name    string `json:"name"`
 	Role    string `json:"role"`
 	IsAdmin bool   `json:"isAdmin"`
-}
-type CommonResourceIface interface {
-	GetKind() string
-	GetID() uint
-	GetTenantID() uint
-	GetProjectID() uint
-	GetEnvironmentID() uint
-	GetVirtualSpaceID() uint
-	GetName() string
-	GetCluster() string
-	GetNamespace() string
-	GetOwners() []CommonResourceIface
 }
 
 // UserAuthority 用户权限
@@ -136,24 +121,4 @@ func (auth *UserAuthority) IsVirtualSpaceAdmin(vsid uint) bool {
 func (auth *UserAuthority) IsVirtualSpaceMember(vsid uint) bool {
 	role := auth.GetResourceRole(models.ResVirtualSpace, vsid)
 	return role == models.VirtualSpaceRoleNormal
-}
-
-func (c *ModelCache) CacheUserInfo(user models.CommonUserIface) error {
-	return c.Redis.SetEX(context.Background(), UserInfoCacheKey(user.GetUsername()), user, time.Minute*10).Err()
-}
-
-func (c *ModelCache) GetUserInfo(username string, user models.CommonUserIface) error {
-	return c.Redis.Get(context.Background(), UserInfoCacheKey(username)).Scan(user)
-}
-
-func rateKey(username string) string {
-	return fmt.Sprintf("requestlimit:%v", username)
-}
-
-func UserInfoCacheKey(username string) string {
-	return fmt.Sprintf("userinfo_cahce_%s", username)
-}
-
-func UserInfoTokenKey(token, username string) string {
-	return fmt.Sprintf("token_userinfo_cahce_%s_%s", username, token)
 }

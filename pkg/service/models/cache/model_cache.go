@@ -47,112 +47,9 @@ hashset {
 const (
 	// 全局模型结构缓存
 	ModelCacheKey = "_model_cache"
-	// 用户登录过期时间
-	userAuthorizationDataExpireMinute = 60
-	// 缓存插件名字
-	ModelCachePluginName = "model_cache_plugin"
+	// 用户登录过期时间(minute)
+	userAuthorizationDataExpireMinute = 180
 )
-
-func cacheKey(kind string, id uint) string {
-	return fmt.Sprintf("%s_%v", kind, id)
-}
-
-func envCacheKey(cluster, namespace string) string {
-	return fmt.Sprintf("env_%s_%s", cluster, namespace)
-}
-
-type Entity struct {
-	Name      string    `json:",omitempty"`
-	Kind      string    `json:",omitempty"`
-	ID        uint      `json:",omitempty"`
-	Namespace string    `json:",omitempty"`
-	Cluster   string    `json:",omitempty"`
-	Owner     []*Entity `json:",omitempty"`
-	Children  []string  `json:",omitempty"`
-}
-
-func (n *Entity) MarshalBinary() ([]byte, error) {
-	return json.Marshal(*n)
-}
-
-func (n *Entity) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, n)
-}
-
-func (n *Entity) cacheKey() string {
-	return fmt.Sprintf("%s_%v", n.Kind, n.ID)
-}
-
-func (n *Entity) toPair() map[string]interface{} {
-	return map[string]interface{}{
-		n.cacheKey(): n,
-	}
-}
-
-func (n *Entity) toEnvPair() map[string]interface{} {
-	if n.Kind != models.ResEnvironment {
-		return nil
-	}
-	return map[string]interface{}{
-		envCacheKey(n.Namespace, n.Cluster): n,
-	}
-}
-
-func (n *Entity) GetKind() string {
-	return n.Kind
-}
-
-func (n *Entity) GetID() uint {
-	return n.ID
-}
-
-func (n *Entity) GetTenantID() uint {
-	return n.getKindID(models.ResTenant)
-}
-
-func (n *Entity) GetProjectID() uint {
-	return n.getKindID(models.ResProject)
-}
-
-func (n *Entity) GetEnvironmentID() uint {
-	return n.getKindID(models.ResEnvironment)
-
-}
-
-func (n *Entity) GetVirtualSpaceID() uint {
-	return n.getKindID(models.ResVirtualSpace)
-}
-
-func (n *Entity) GetName() string {
-	return n.Name
-}
-
-func (n *Entity) GetCluster() string {
-	return n.Cluster
-}
-
-func (n *Entity) GetNamespace() string {
-	return n.Namespace
-}
-
-func (n *Entity) GetOwners() []CommonResourceIface {
-	length := len(n.Owner)
-	if length == 0 {
-		return nil
-	}
-	ret := make([]CommonResourceIface, length)
-	for i := 0; i < length; i++ {
-		ret[i] = n.Owner[i]
-	}
-	return ret
-}
-
-func (n *Entity) getKindID(k string) uint {
-	if k == n.Kind {
-		return n.ID
-	}
-	return 0
-}
 
 type ModelCache struct {
 	DB    *gorm.DB
@@ -213,23 +110,37 @@ func (t *ModelCache) BuildCacheIfNotExist() error {
 	return nil
 }
 
-func (t *ModelCache) UpsertTenant(tid uint, name string) {
+func (t *ModelCache) UpsertTenant(tid uint, name string) error {
 	n := Entity{Name: name, Kind: models.ResTenant, ID: tid}
-	t.Redis.HSet(context.Background(), ModelCacheKey, n.toPair()).Result()
+	_, err := t.Redis.HSet(context.Background(), ModelCacheKey, n.toPair()).Result()
+	if err != nil {
+		log.Error(err, "cache upsert tenant failed", "tenant_id", tid, "tenant_name", name)
+	}
+	return err
 }
 
-func (t *ModelCache) DelTenant(tid uint) {
-	t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResTenant, tid))
+func (t *ModelCache) DelTenant(tid uint) error {
+	_, err := t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResTenant, tid)).Result()
+	if err != nil {
+		log.Error(err, "cache delete tenant failed", "tenant_id", tid)
+	}
+	return err
 }
 
 func (t *ModelCache) UpsertProject(tid, pid uint, name string) error {
 	n := Entity{Name: name, Kind: models.ResProject, ID: pid, Owner: []*Entity{{Kind: models.ResTenant, ID: tid}}}
 	_, err := t.Redis.HSet(context.Background(), ModelCacheKey, n.toPair()).Result()
+	if err != nil {
+		log.Error(err, "cache upsert project failed", "tenant_id", tid, "project_id", pid, "project_name", name)
+	}
 	return err
 }
 
 func (t *ModelCache) DelProject(tid, pid uint) error {
 	_, err := t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResProject, pid)).Result()
+	if err != nil {
+		log.Error(err, "cache delete project failed", "tenant_id", tid, "project_id", pid)
+	}
 	return err
 
 }
@@ -238,27 +149,53 @@ func (t *ModelCache) UpsertEnvironment(pid, eid uint, name, cluster, namespace s
 	ctx := context.Background()
 	_, err1 := t.Redis.HSet(ctx, ModelCacheKey, n.toPair()).Result()
 	if err1 != nil {
+		log.Error(err1, "cache upsert environment 1 failed", "project_id", pid, "environment_id", eid, "cluster", cluster, "namespace", namespace)
 		return err1
 	}
 	_, err2 := t.Redis.HSet(ctx, ModelCacheKey, n.toEnvPair()).Result()
 	if err2 != nil {
+		log.Error(err2, "cache upsert environment 2 failed", "project_id", pid, "environment_id", eid, "cluster", cluster, "namespace", namespace)
 		return err2
 	}
 	return nil
 }
 
-func (t *ModelCache) DelEnvironment(pid, eid uint) error {
+func (t *ModelCache) DelEnvironment(pid, eid uint, cluster, namespace string) error {
 	_, err := t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResEnvironment, eid)).Result()
+	if err != nil {
+		log.Error(err, "cache delete environment 1 failed", "project_id", pid, "environment_id", eid)
+		return err
+	}
+	_, err2 := t.Redis.HDel(context.Background(), ModelCacheKey, envCacheKey(cluster, namespace)).Result()
+	if err2 != nil {
+		log.Error(err2, "cache delete environment 2 failed", "project_id", pid, "environment_id", eid)
+		return err2
+	}
+	return nil
+}
+
+func (t *ModelCache) UpsertVirtualSpace(vid uint, name string) error {
+	_, err := t.Redis.HSet(context.Background(), ModelCacheKey, cacheKey(models.ResVirtualSpace, vid)).Result()
+	if err != nil {
+		log.Error(err, "cache upsert virtualspace failed", "vid", vid, "name", name)
+		return err
+	}
 	return err
 }
 
-func (t *ModelCache) UpsertVirtualSpace(vid uint, name string) {}
+func (t *ModelCache) DelVirtualSpace(vid uint) error {
+	_, err := t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResVirtualSpace, vid)).Result()
+	if err != nil {
+		log.Error(err, "cache delete virtualspace failed", "vid", vid)
+		return err
+	}
+	return err
 
-func (t *ModelCache) DelVirtualSpace(vid uint) {}
+}
 
 func (c *ModelCache) FindParents(kind string, id uint) []CommonResourceIface {
 	var ret []CommonResourceIface
-	parentsRaw, err := c.Redis.Eval(context.Background(), FindParentScript, []string{kind, strconv.FormatUint(uint64(id), 10)}).Result()
+	parentsRaw, err := c.Redis.Eval(context.Background(), FindParentScript, []string{ModelCacheKey, kind, strconv.FormatUint(uint64(id), 10)}).Result()
 	if err != nil {
 		log.Error(err, "failed to eval lua script", "script_name", "FindParentScript")
 		return nil

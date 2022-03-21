@@ -24,7 +24,7 @@ import (
 // BaseHandler is the base handler for all handlers
 type BaseHandler struct {
 	audit.AuditInterface
-	authorization.PermissionChecker
+	authorization.PermissionManager
 	DynamicConfig options.DynamicConfigurationProviderIface
 	aaa.ContextUserOperator
 	agents     *agents.ClientSet
@@ -35,7 +35,7 @@ type BaseHandler struct {
 }
 
 func NewHandler(auditi audit.AuditInterface,
-	permcheck authorization.PermissionChecker,
+	permManager authorization.PermissionManager,
 	userif aaa.ContextUserOperator,
 	dynamicConfig options.DynamicConfigurationProviderIface,
 	agents *agents.ClientSet,
@@ -47,7 +47,7 @@ func NewHandler(auditi audit.AuditInterface,
 	return BaseHandler{
 		AuditInterface:      auditi,
 		DynamicConfig:       dynamicConfig,
-		PermissionChecker:   permcheck,
+		PermissionManager:   permManager,
 		ContextUserOperator: userif,
 		agents:              agents,
 		msgbuscli:           msgbuscli,

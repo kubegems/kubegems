@@ -20,8 +20,8 @@ var normalActions = []string{
 	http.MethodOptions,
 }
 
-// PermissionChecker 权限判断工具,仅支持租户，项目，环境三级数据
-type PermissionChecker interface {
+// PermissionManager 权限判断工具,仅支持租户，项目，环境三级数据
+type PermissionManager interface {
 	// CheckByClusterNamespace 根据cluster和namespace，判断是否有关联环境的权限
 	CheckByClusterNamespace(c *gin.Context)
 	// CheckByEnvironmentID 判断是否有环境的操作权限
@@ -40,12 +40,12 @@ type PermissionChecker interface {
 	CheckCanDeployEnvironment(c *gin.Context)
 }
 
-type DefaultPermissionChecker struct {
+type DefaultPermissionManager struct {
 	Cache  *cache.ModelCache
 	Userif aaa.ContextUserOperator
 }
 
-func (defaultPermChecker *DefaultPermissionChecker) HasEnvPerm(c *gin.Context, cluster, namespace string) (hasPerm bool, objname string, currentrole string) {
+func (defaultPermChecker *DefaultPermissionManager) HasEnvPerm(c *gin.Context, cluster, namespace string) (hasPerm bool, objname string, currentrole string) {
 	user, exist := defaultPermChecker.Userif.GetContextUser(c)
 	if !exist {
 		return false, "", ""
@@ -65,7 +65,7 @@ func (defaultPermChecker *DefaultPermissionChecker) HasEnvPerm(c *gin.Context, c
 	return
 }
 
-func (defaultPermChecker *DefaultPermissionChecker) HasObjectPerm(c *gin.Context, kind string, pk uint) (hasPerm bool, objname string, currentrole string) {
+func (defaultPermChecker *DefaultPermissionManager) HasObjectPerm(c *gin.Context, kind string, pk uint) (hasPerm bool, objname string, currentrole string) {
 	user, exist := defaultPermChecker.Userif.GetContextUser(c)
 	if !exist {
 		hasPerm = false
@@ -89,7 +89,7 @@ func (defaultPermChecker *DefaultPermissionChecker) HasObjectPerm(c *gin.Context
 	return
 }
 
-func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *cache.UserAuthority, kind string, pk uint, action string) (hasPerm bool, currenrole string) {
+func (defaultPermChecker *DefaultPermissionManager) canDo(userAuthority *cache.UserAuthority, kind string, pk uint, action string) (hasPerm bool, currenrole string) {
 	parents := defaultPermChecker.Cache.FindParents(kind, pk)
 	if len(parents) == 0 {
 		return true, ""
@@ -157,7 +157,7 @@ func (defaultPermChecker *DefaultPermissionChecker) canDo(userAuthority *cache.U
 	return false, ""
 }
 
-func (defaultPermissionChecker *DefaultPermissionChecker) CheckByClusterNamespace(c *gin.Context) {
+func (defaultPermissionChecker *DefaultPermissionManager) CheckByClusterNamespace(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	if len(namespace) == 0 {
@@ -177,7 +177,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckByClusterNamespac
 	}
 }
 
-func (defaultPermissionChecker *DefaultPermissionChecker) CheckByEnvironmentID(c *gin.Context) {
+func (defaultPermissionChecker *DefaultPermissionManager) CheckByEnvironmentID(c *gin.Context) {
 	envid := utils.ToUint(c.Param("environment_id"))
 	hasPerm, objname, _ := defaultPermissionChecker.HasObjectPerm(c, models.ResEnvironment, envid)
 	if !hasPerm {
@@ -187,7 +187,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckByEnvironmentID(c
 	}
 }
 
-func (defaultPermissionChecker *DefaultPermissionChecker) CheckByProjectID(c *gin.Context) {
+func (defaultPermissionChecker *DefaultPermissionManager) CheckByProjectID(c *gin.Context) {
 	projid := utils.ToUint(c.Param("project_id"))
 	hasPerm, objname, _ := defaultPermissionChecker.HasObjectPerm(c, models.ResProject, projid)
 	if !hasPerm {
@@ -197,7 +197,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckByProjectID(c *gi
 	}
 }
 
-func (defaultPermissionChecker *DefaultPermissionChecker) CheckByTenantID(c *gin.Context) {
+func (defaultPermissionChecker *DefaultPermissionManager) CheckByTenantID(c *gin.Context) {
 	if c.Param("tenant_id") == "_all" {
 		defaultPermissionChecker.CheckIsATenantAdmin(c)
 		return
@@ -211,7 +211,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckByTenantID(c *gin
 	}
 }
 
-func (defaultPermissionChecker *DefaultPermissionChecker) CheckByVirtualSpaceID(c *gin.Context) {
+func (defaultPermissionChecker *DefaultPermissionManager) CheckByVirtualSpaceID(c *gin.Context) {
 	if c.Param("virtualspace_id") == "_all" {
 		defaultPermissionChecker.CheckIsSysADMIN(c)
 		return
@@ -225,7 +225,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckByVirtualSpaceID(
 	}
 }
 
-func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsSysADMIN(c *gin.Context) {
+func (defaultPermissionChecker *DefaultPermissionManager) CheckIsSysADMIN(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
 		handlers.Unauthorized(c, "请登录")
@@ -240,7 +240,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsSysADMIN(c *gin
 	}
 }
 
-func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsATenantAdmin(c *gin.Context) {
+func (defaultPermissionChecker *DefaultPermissionManager) CheckIsATenantAdmin(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
 		handlers.Unauthorized(c, "请登录")
@@ -263,7 +263,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsATenantAdmin(c 
 	c.Abort()
 }
 
-func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsVirtualSpaceAdmin(c *gin.Context) {
+func (defaultPermissionChecker *DefaultPermissionManager) CheckIsVirtualSpaceAdmin(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
 		handlers.Unauthorized(c, "请登录")
@@ -290,7 +290,7 @@ func (defaultPermissionChecker *DefaultPermissionChecker) CheckIsVirtualSpaceAdm
 // 4. 如果是项目运维，pass
 // 5. 如果是环境operator，pass
 // 6. 其他都reject
-func (defaultPermChecker *DefaultPermissionChecker) CheckCanDeployEnvironment(c *gin.Context) {
+func (defaultPermChecker *DefaultPermissionManager) CheckCanDeployEnvironment(c *gin.Context) {
 	user, exist := defaultPermChecker.Userif.GetContextUser(c)
 	if !exist {
 		c.Abort()
