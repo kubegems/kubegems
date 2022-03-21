@@ -5,6 +5,7 @@ metadata:
   namespace: kubegems
 spec:
   kind: helm
+  repo: https://charts.bitnami.com/bitnami
   enabled: true
 ---
 apiVersion: plugins.kubegems.io/v1beta1
