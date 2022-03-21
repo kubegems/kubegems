@@ -24,6 +24,7 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -170,6 +171,18 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 	thisStatus := PluginStatusFromPlugin(plugin)
 
 	// todo: check dependencies
+	if len(plugin.Spec.Dependencies) > 0 {
+		// check dependencies are installed
+		for _, dep := range plugin.Spec.Dependencies {
+			depPlugin := &pluginsv1beta1.Plugin{}
+			if err := r.Client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, depPlugin); err != nil {
+				return err
+			}
+			if depPlugin.Status.Phase != pluginsv1beta1.PluginPhaseInstalled {
+				return fmt.Errorf("dependency %s/%s is not installed", depPlugin.Namespace, depPlugin.Name)
+			}
+		}
+	}
 
 	// choose applyer
 	if plugin.Spec.Kind == "" {
@@ -177,7 +190,7 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 	}
 	applyer, ok := r.Applyers[plugin.Spec.Kind]
 	if !ok {
-		plugin.Status.Phase = pluginsv1beta1.StatusFailed
+		plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 		plugin.Status.Message = fmt.Sprintf("unknow plugin kind %s", plugin.Spec.Kind)
 		if err := r.Status().Update(ctx, plugin); err != nil {
 			return err
@@ -188,7 +201,7 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 	if !plugin.Spec.Enabled || plugin.DeletionTimestamp != nil {
 		// delete
 		if err := applyer.Remove(ctx, thisPlugin, thisStatus); err != nil {
-			plugin.Status.Phase = pluginsv1beta1.StatusFailed
+			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()
 			if err := r.Status().Update(ctx, plugin); err != nil {
 				return err
@@ -198,7 +211,7 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 	} else {
 		// apply
 		if err := applyer.Apply(ctx, thisPlugin, thisStatus); err != nil {
-			plugin.Status.Phase = pluginsv1beta1.StatusFailed
+			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()
 			if err := r.Status().Update(ctx, plugin); err != nil {
 				return err

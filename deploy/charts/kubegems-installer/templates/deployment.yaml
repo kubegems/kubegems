@@ -61,8 +61,8 @@ spec:
       securityContext: {{- omit .Values.installer.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       initContainers:
-        - name: copy-charts
-          image: {{ include "kubegems.charts.image" . }}
+        - name: copy-plugins
+          image: {{ include "kubegems.plugins.image" . }}
           imagePullPolicy: {{ .Values.installer.image.pullPolicy }}
           {{- if .Values.installer.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.installer.containerSecurityContext "enabled" | toYaml | nindent 12 }}

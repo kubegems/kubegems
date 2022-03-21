@@ -1,121 +1,4 @@
 ---
-# Source: crds/plugins.kubegems.io_installers.yaml
-
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.7.0
-  creationTimestamp: null
-  name: installers.plugins.kubegems.io
-spec:
-  group: plugins.kubegems.io
-  names:
-    kind: Installer
-    listKind: InstallerList
-    plural: installers
-    singular: installer
-  scope: Namespaced
-  versions:
-  - name: v1beta1
-    schema:
-      openAPIV3Schema:
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            properties:
-              cluaterName:
-                type: string
-              global:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              plugins:
-                items:
-                  properties:
-                    enabled:
-                      type: boolean
-                    kind:
-                      type: string
-                    labels:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                    values:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
-                    version:
-                      type: string
-                  type: object
-                type: array
-            type: object
-          status:
-            properties:
-              lastReconcileTime:
-                format: date-time
-                type: string
-              phase:
-                type: string
-              states:
-                items:
-                  properties:
-                    creationTimestamp:
-                      format: date-time
-                      type: string
-                    deletionTimestamp:
-                      format: date-time
-                      type: string
-                    kind:
-                      type: string
-                    message:
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                    notes:
-                      type: string
-                    status:
-                      type: string
-                    upgradeTimestamp:
-                      format: date-time
-                      type: string
-                    values:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
-                    version:
-                      type: string
-                  type: object
-                type: array
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
-
----
 # Source: crds/plugins.kubegems.io_plugins.yaml
 
 ---
@@ -155,7 +38,14 @@ spec:
             properties:
               dependencies:
                 items:
-                  type: string
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    version:
+                      type: string
+                  type: object
                 type: array
               enabled:
                 type: boolean
@@ -276,8 +166,8 @@ spec:
       securityContext:
         fsGroup: 1001
       initContainers:
-        - name: copy-charts
-          image: docker.io/kubegems/kubegems-charts:latest
+        - name: copy-plugins
+          image: docker.io/kubegems/kubegems-plugin:latest
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true

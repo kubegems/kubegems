@@ -146,7 +146,7 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *Plugin
 		return err
 	}
 
-	if status.Phase == pluginsv1beta1.StatusDeployed && reflect.DeepEqual(status.Values, plugin.Values) {
+	if status.Phase == pluginsv1beta1.PluginPhaseInstalled && reflect.DeepEqual(status.Values, plugin.Values) {
 		log.Info("plugin is uptodate and no changes")
 		return nil
 	}
@@ -183,7 +183,7 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *Plugin
 	now := metav1.Now()
 
 	// installed
-	status.Phase = pluginsv1beta1.StatusDeployed
+	status.Phase = pluginsv1beta1.PluginPhaseInstalled
 	status.Values = plugin.Values
 	status.Message = result.message
 	status.Name = plugin.Name
@@ -200,14 +200,14 @@ func (n *NativeApplier) Remove(ctx context.Context, plugin Plugin, status *Plugi
 	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace)
 
 	switch status.Phase {
-	case pluginsv1beta1.StatusDeployed, pluginsv1beta1.StatusFailed:
+	case pluginsv1beta1.PluginPhaseInstalled, pluginsv1beta1.PluginPhaseFailed:
 		// continue processing
-	case pluginsv1beta1.StatusUninstalled, pluginsv1beta1.StatusNotInstall:
+	case pluginsv1beta1.StatusUninstalled, pluginsv1beta1.PluginPhaseNotInstall:
 		log.Info("plugin is removed or not installed")
 		return nil
 	case "":
 		log.Info("plugin is not installed set to not installed")
-		status.Phase = pluginsv1beta1.StatusNotInstall
+		status.Phase = pluginsv1beta1.PluginPhaseNotInstall
 		status.CreationTimestamp = metav1.Now()
 		return nil
 	default:

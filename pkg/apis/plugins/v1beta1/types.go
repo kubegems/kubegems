@@ -17,19 +17,25 @@ type Plugin struct {
 }
 
 type PluginSpec struct {
-	Enabled          bool       `json:"enabled,omitempty"`          // enabled
-	Kind             PluginKind `json:"kind,omitempty"`             // plugin kind, e.g. "helm","kustomize","native".
-	InstallNamespace string     `json:"installNamespace,omitempty"` // plugin installNamespace
-	Dependencies     []string   `json:"dependencies,omitempty"`     // dependencies on other plugins
+	Enabled          bool         `json:"enabled,omitempty"`          // enabled
+	Kind             PluginKind   `json:"kind,omitempty"`             // plugin kind, e.g. "helm","kustomize","native".
+	InstallNamespace string       `json:"installNamespace,omitempty"` // plugin installNamespace
+	Dependencies     []Dependency `json:"dependencies,omitempty"`     // dependencies on other plugins
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Values  runtime.RawExtension `json:"values,omitempty"`  // plugin values, helm values
 	Version string               `json:"version,omitempty"` // plugin version,also helm chart version
 }
 
+type Dependency struct {
+	Name      string `json:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
+	Version   string `json:"version,omitempty"`
+}
+
 type PluginStatus struct {
 	Phase            PluginPhase `json:"status,omitempty"`           // Status is the current state of the release
 	Message          string      `json:"message,omitempty"`          // Message is the message associated with the status
-	InstallNamespace string      `json:"installNamespace,omitempty"` // plugin installNamespace
+	InstallNamespace string      `json:"installNamespace,omitempty"` // plugin installNamespace,if empty use .metadata.namespace
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Values            runtime.RawExtension `json:"values,omitempty"`
 	Version           string               `json:"version,omitempty"`
@@ -58,9 +64,9 @@ const (
 type PluginPhase string
 
 const (
-	StatusNotInstall  PluginPhase = "NotInstall"
-	StatusUnknown     PluginPhase = "Unknown"
-	StatusDeployed    PluginPhase = "Deployed"
-	StatusUninstalled PluginPhase = "Uninstalled"
-	StatusFailed      PluginPhase = "Failed"
+	PluginPhaseUnknown    PluginPhase = "Unknown"
+	PluginPhaseNotInstall PluginPhase = "NotInstall"
+	PluginPhaseInstalled  PluginPhase = "Installed"
+	StatusUninstalled     PluginPhase = "Uninstalled"
+	PluginPhaseFailed     PluginPhase = "Failed"
 )

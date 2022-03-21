@@ -36,7 +36,14 @@ spec:
             properties:
               dependencies:
                 items:
-                  type: string
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    version:
+                      type: string
+                  type: object
                 type: array
               enabled:
                 type: boolean

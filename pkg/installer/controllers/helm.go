@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"reflect"
 	"time"
@@ -66,10 +67,14 @@ func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginSt
 			log.Info("on install")
 			return err
 		}
+		if installedRelease.Info.Status != release.StatusDeployed {
+			status.Notes = installedRelease.Info.Notes
+			return fmt.Errorf("install not finished:%s", installedRelease.Info.Description)
+		}
 		log.Info("installed")
 
 		status.Name, status.Namespace = installedRelease.Name, installedRelease.Namespace
-		status.Phase = pluginsv1beta1.StatusDeployed
+		status.Phase = pluginsv1beta1.PluginPhaseInstalled
 		status.CreationTimestamp = convtime(installedRelease.Info.FirstDeployed.Time)
 		status.UpgradeTimestamp = convtime(installedRelease.Info.LastDeployed.Time)
 		status.Notes = installedRelease.Info.Notes
@@ -97,9 +102,14 @@ func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginSt
 	}
 	log.Info("upgraded")
 
+	if upgradeRelease.Info.Status != release.StatusDeployed {
+		status.Notes = upgradeRelease.Info.Notes
+		return fmt.Errorf("upgrade not finished:%s", upgradeRelease.Info.Description)
+	}
+
 	now := metav1.Now()
 	status.Name, status.Namespace = upgradeRelease.Name, upgradeRelease.Namespace
-	status.Phase = pluginsv1beta1.StatusDeployed
+	status.Phase = pluginsv1beta1.PluginPhaseInstalled
 	status.Message = upgradeRelease.Info.Description
 	status.UpgradeTimestamp = now
 	status.Notes = upgradeRelease.Info.Notes
@@ -119,19 +129,19 @@ func (r *HelmApplier) Remove(ctx context.Context, plugin Plugin, status *PluginS
 			return err
 		}
 		if status.Phase == pluginsv1beta1.StatusUninstalled ||
-			status.Phase == pluginsv1beta1.StatusNotInstall {
+			status.Phase == pluginsv1beta1.PluginPhaseNotInstall {
 			return nil
 		}
 		log.Info("plugin is not installed")
-		status.Phase = pluginsv1beta1.StatusNotInstall
+		status.Phase = pluginsv1beta1.PluginPhaseNotInstall
 		status.Message = "plugin is not installed"
 		return nil
 	}
 
 	// check if the plugin is installed by current plugin
-	if status.Phase != pluginsv1beta1.StatusDeployed && status.Phase != pluginsv1beta1.StatusFailed {
+	if status.Phase != pluginsv1beta1.PluginPhaseInstalled && status.Phase != pluginsv1beta1.PluginPhaseFailed {
 		log.Info("plugin is not deployed but this plugin but requested to uninstall")
-		status.Phase = pluginsv1beta1.StatusUnknown
+		status.Phase = pluginsv1beta1.PluginPhaseUnknown
 		status.Message = "plugin is not deployed by current plugin"
 		return nil
 	}

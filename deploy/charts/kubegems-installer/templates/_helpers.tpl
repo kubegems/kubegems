@@ -15,10 +15,10 @@ Return the proper installer image name
 {{- end -}}
 
 {{/*
-Return the proper charts image name
+Return the proper plugins image name
 */}}
-{{- define "kubegems.charts.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.charts.image "global" .Values.global) }}
+{{- define "kubegems.plugins.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.plugins.image "global" .Values.global) }}
 {{- end -}}
 
 

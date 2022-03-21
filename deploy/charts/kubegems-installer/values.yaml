@@ -369,7 +369,7 @@ installer:
       ##
       honorLabels: false
       ## @param installer.metrics.serviceMonitor.selector Prometheus instance selector labels
-      ## ref: https://github.com/bitnami/charts/tree/master/bitnami/prometheus-operator#prometheus-configuration
+      ## ref: https://github.com/bitnami/plugins/tree/master/bitnami/prometheus-operator#prometheus-configuration
       ## e.g:
       ## selector:
       ##   prometheus: my-prometheus
@@ -397,19 +397,19 @@ installer:
       ## @skip installer.metrics.serviceMonitor.relabelings
       relabelings: {}
 
-## @section Installer Charts image
-charts:
-  ## kubgems charts image
-  ## @param charts.image.registry charts image registry
-  ## @param charts.image.repository charts image repository
-  ## @param charts.image.tag charts image tag (immutable tags are recommended)
-  ## @param charts.image.pullPolicy charts image pull policy
-  ## @param charts.image.pullSecrets charts image pull secrets
-  ## @param charts.image.debug Enable charts image debug mode
+## @section Installer plugins image
+plugins:
+  ## kubgems plugins image
+  ## @param plugins.image.registry plugins image registry
+  ## @param plugins.image.repository plugins image repository
+  ## @param plugins.image.tag plugins image tag (immutable tags are recommended)
+  ## @param plugins.image.pullPolicy plugins image pull policy
+  ## @param plugins.image.pullSecrets plugins image pull secrets
+  ## @param plugins.image.debug Enable plugins image debug mode
   ##
   image:
     registry: docker.io
-    repository: kubegems/kubegems-charts
+    repository: kubegems/kubegems-plugin
     tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'

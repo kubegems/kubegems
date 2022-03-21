@@ -21,7 +21,7 @@ ifeq (${IMAGE_TAG},main)
 endif
 # Image URL to use all building/pushing image targets
 IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
-CHARTS_IMG ?= ${IMAGE_REGISTRY}/kubegems/kubegems-charts:$(IMAGE_TAG)
+PLUGINS_IMG ?= ${IMAGE_REGISTRY}/kubegems/kubegems-plugin:$(IMAGE_TAG)
 
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
@@ -80,18 +80,18 @@ build: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
-charts-container: ## Build kubegems-charts image.
+plugins-container: ## Build kubegems-plugins image.
 ifneq (, $(shell which docker))
-	docker build -t ${CHARTS_IMG} deploy
+	docker build -t ${PLUGINS_IMG} deploy
 else
-	buildah bud -t ${CHARTS_IMG}  deploy
+	buildah bud -t ${PLUGINS_IMG}  deploy
 endif
 
-push-charts-container: ## Push charts image.
+push-plugins-container: ## Push plugins image.
 ifneq (, $(shell which docker))
-	docker push ${CHARTS_IMG}
+	docker push ${PLUGINS_IMG}
 else
-	buildah push ${CHARTS_IMG}
+	buildah push ${PLUGINS_IMG}
 endif
 
 container: build ## Build container image.
