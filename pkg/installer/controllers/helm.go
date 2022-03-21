@@ -17,16 +17,21 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/utils/pointer"
+	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 )
 
 type HelmApplier struct {
+	helm      *Helm
 	ChartsDir string `json:"chartsDir,omitempty"`
+}
+
+func NewHelmApplier(config *rest.Config, path string) (*HelmApplier, error) {
+	return &HelmApplier{helm: &Helm{Config: config}, ChartsDir: path}, nil
 }
 
 func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
@@ -36,7 +41,7 @@ func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginSt
 		plugin.Repo = "file://" + r.ChartsDir
 	}
 
-	upgradeRelease, err := ApplyChart(ctx, name, namespace, plugin.Version, plugin.Values, plugin.Repo)
+	upgradeRelease, err := r.helm.ApplyChart(ctx, name, namespace, plugin.Version, plugin.Values, plugin.Repo)
 	if err != nil {
 		return err
 	}
@@ -72,7 +77,7 @@ func (r *HelmApplier) Remove(ctx context.Context, plugin Plugin, status *PluginS
 	}
 
 	// uninstall
-	release, err := RemoveChart(ctx, name, namespace)
+	release, err := r.helm.RemoveChart(ctx, name, namespace)
 	if err != nil {
 		return err
 	}
@@ -97,11 +102,18 @@ func convtime(t time.Time) metav1.Time {
 	return metav1.Time{Time: t}
 }
 
-func RemoveChart(ctx context.Context, chartName, installNamespace string) (*release.Release, error) {
-	log := logr.FromContext(ctx).WithValues("name", chartName, "namespace", installNamespace)
+type Helm struct {
+	Config *rest.Config
+}
+
+func (h *Helm) RemoveChart(ctx context.Context, chartName, installNamespace string) (*release.Release, error) {
+	log := logr.FromContextOrDiscard(ctx)
 
 	releaseName := chartName
-	cfg := NewHelmConfig(installNamespace)
+	cfg, err := NewHelmConfig(installNamespace, h.Config)
+	if err != nil {
+		return nil, err
+	}
 
 	exist, err := action.NewGet(cfg).Run(releaseName)
 	if err != nil {
@@ -120,11 +132,17 @@ func RemoveChart(ctx context.Context, chartName, installNamespace string) (*rele
 	return uninstalledRelease.Release, nil
 }
 
-func ApplyChart(ctx context.Context, chartName, installNamespace string, version string, values map[string]interface{}, repo string) (*release.Release, error) {
+func (h *Helm) ApplyChart(ctx context.Context,
+	chartName, installNamespace string, version string,
+	values map[string]interface{}, repo string,
+) (*release.Release, error) {
 	log := logr.FromContextOrDiscard(ctx)
 
 	releaseName := chartName
-	cfg := NewHelmConfig(installNamespace)
+	cfg, err := NewHelmConfig(installNamespace, h.Config)
+	if err != nil {
+		return nil, err
+	}
 
 	existRelease, err := action.NewGet(cfg).Run(releaseName)
 	if err != nil {
@@ -162,13 +180,19 @@ func ApplyChart(ctx context.Context, chartName, installNamespace string, version
 	return client.Run(releaseName, chart, values)
 }
 
-func NewHelmConfig(namespace string) *action.Configuration {
-	getter := genericclioptions.NewConfigFlags(true)
-	getter.Namespace = pointer.String(namespace) // must set to ns to install chart
+func NewHelmConfig(namespace string, restConfig *rest.Config) (*action.Configuration, error) {
+	log := func(format string, v ...interface{}) {
+	}
+	cligetter, err := NewRESTClientGetter(restConfig)
+	if err != nil {
+		return nil, err
+	}
 	config := &action.Configuration{}
-	config.Init(getter, namespace, "", func(format string, v ...interface{}) {
-	})
-	return config
+	config.Init(cligetter, namespace, "", log) // release storage namespace
+	if kc, ok := config.KubeClient.(*kube.Client); ok {
+		kc.Namespace = namespace // install to namespace
+	}
+	return config, nil
 }
 
 // name is the name of the chart

@@ -117,9 +117,12 @@ func NewAndSetupPluginReconciler(ctx context.Context, mgr manager.Manager, optio
 	if err != nil {
 		return err
 	}
-	_ = nativeApplier
+	helmapplier, err := NewHelmApplier(mgr.GetConfig(), options.ChartsDir)
+	if err != nil {
+		return err
+	}
 	applyers := map[pluginsv1beta1.PluginKind]Applier{
-		pluginsv1beta1.PluginKindHelm:   &HelmApplier{ChartsDir: options.ChartsDir},
+		pluginsv1beta1.PluginKindHelm:   helmapplier,
 		pluginsv1beta1.PluginKindNative: nativeApplier,
 	}
 	reconciler := &PluginReconciler{
