@@ -33,7 +33,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/controller/controllers"
 	gemscontroller "kubegems.io/pkg/controller/controllers"
 	"kubegems.io/pkg/controller/webhooks"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -62,12 +61,11 @@ func init() {
 }
 
 type Options struct {
-	MetricsAddr          string                           `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
-	ProbeAddr            string                           `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
-	WebhookAddr          string                           `json:"webhookAddr,omitempty" description:"The address the webhook endpoint binds to."`
-	EnableLeaderElection bool                             `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
-	TenantGatewayOptions controllers.TenantGatewayOptions `json:"tenantGatewayOptions,omitempty"`
-	Enablewebhook        bool                             `json:"enablewebhook,omitempty" description:"Enable webhook for controller manager."`
+	MetricsAddr          string `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
+	ProbeAddr            string `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
+	WebhookAddr          string `json:"webhookAddr,omitempty" description:"The address the webhook endpoint binds to."`
+	EnableLeaderElection bool   `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
+	Enablewebhook        bool   `json:"enablewebhook,omitempty" description:"Enable webhook for controller manager."`
 }
 
 func NewDefaultOptions() *Options {
@@ -77,7 +75,6 @@ func NewDefaultOptions() *Options {
 		ProbeAddr:            ":8081",
 		EnableLeaderElection: false,
 		Enablewebhook:        true,
-		TenantGatewayOptions: controllers.DefaultTenantGatewayOptions(),
 	}
 }
 
@@ -164,7 +161,7 @@ func setupControllers(mgr ctrl.Manager, options *Options, setupLog logr.Logger) 
 		return err
 	}
 	if err := (&gemscontroller.TenantGatewayReconciler{
-		Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Opts: options.TenantGatewayOptions,
+		Client: mgr.GetClient(), Scheme: mgr.GetScheme(),
 		Log:      ctrl.Log.WithName("controllers").WithName("TenantGateway"),
 		Recorder: mgr.GetEventRecorderFor("TenantGateway"),
 	}).SetupWithManager(mgr); err != nil {

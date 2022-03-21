@@ -41,27 +41,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-type TenantGatewayOptions struct {
-	NginxImageRepo   string `json:"nginxImageRepo,omitempty"`
-	NginxImageTag    string `json:"nginxImageTag,omitempty"`
-	NginxMetricsPort uint16 `json:"nginxMetricsPort,omitempty"`
-}
-
-func DefaultTenantGatewayOptions() TenantGatewayOptions {
-	return TenantGatewayOptions{
-		NginxImageRepo:   "kubegems/nginx-ingress",
-		NginxImageTag:    "1.11.1",
-		NginxMetricsPort: 9113,
-	}
-}
-
 // TenantGatewayReconciler reconciles a TenantGateway object
 type TenantGatewayReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-	Opts     TenantGatewayOptions
 }
 
 //+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantgateways,verbs=get;list;watch;create;update;patch;delete;deletecollection
@@ -227,7 +212,7 @@ func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1
 	}
 
 	// image
-	if nic.Spec.Image.Repository != r.Opts.NginxImageRepo || nic.Spec.Image.Tag != r.Opts.NginxImageTag {
+	if !reflect.DeepEqual(nic.Spec.Image, tg.Spec.Image) {
 		return true
 	}
 
@@ -248,6 +233,8 @@ func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1
 	return false
 }
 
+var nginxMetricsPort uint16 = 9113
+
 func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gemsv1beta1.TenantGateway) *nginx_v1alpha1.NginxIngressController {
 	return &nginx_v1alpha1.NginxIngressController{
 		ObjectMeta: metav1.ObjectMeta{
@@ -260,21 +247,17 @@ func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gem
 			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(tg, gemsv1beta1.SchemeTenantGateway)},
 		},
 		Spec: nginx_v1alpha1.NginxIngressControllerSpec{
-			Type:         "deployment",
-			ServiceType:  string(tg.Spec.Type),
-			Replicas:     tg.Spec.Replicas,
-			IngressClass: tg.Spec.IngressClass,
-			Service:      (*nginx_v1alpha1.Service)(tg.Spec.Service),
-			Image: nginx_v1alpha1.Image{
-				Repository: r.Opts.NginxImageRepo,
-				Tag:        r.Opts.NginxImageTag,
-				PullPolicy: string(corev1.PullIfNotPresent),
-			},
+			Type:          "deployment",
+			ServiceType:   string(tg.Spec.Type),
+			Replicas:      tg.Spec.Replicas,
+			IngressClass:  tg.Spec.IngressClass,
+			Service:       (*nginx_v1alpha1.Service)(tg.Spec.Service),
+			Image:         (nginx_v1alpha1.Image)(tg.Spec.Image),
 			Workload:      (*nginx_v1alpha1.Workload)(tg.Spec.Workload),
 			ConfigMapData: tg.Spec.ConfigMapData,
 			Prometheus: &nginx_v1alpha1.Prometheus{
 				Enable: true,
-				Port:   &r.Opts.NginxMetricsPort,
+				Port:   &nginxMetricsPort,
 			},
 		},
 	}
@@ -291,16 +274,12 @@ func (r *TenantGatewayReconciler) updateNginxIngressController(nic *nginx_v1alph
 	nic.Spec.Replicas = tg.Spec.Replicas
 	nic.Spec.IngressClass = tg.Spec.IngressClass
 	nic.Spec.Service = (*nginx_v1alpha1.Service)(tg.Spec.Service)
-	nic.Spec.Image = nginx_v1alpha1.Image{
-		Repository: r.Opts.NginxImageRepo,
-		Tag:        r.Opts.NginxImageTag,
-		PullPolicy: string(corev1.PullIfNotPresent),
-	}
+	nic.Spec.Image = (nginx_v1alpha1.Image)(tg.Spec.Image)
 	nic.Spec.Workload = (*nginx_v1alpha1.Workload)(tg.Spec.Workload)
 	nic.Spec.ConfigMapData = tg.Spec.ConfigMapData
 	nic.Spec.Prometheus = &nginx_v1alpha1.Prometheus{
 		Enable: true,
-		Port:   &r.Opts.NginxMetricsPort,
+		Port:   &nginxMetricsPort,
 	}
 	return nic
 }

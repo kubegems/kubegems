@@ -49,6 +49,27 @@ spec:
                   for more information about possible values.
                 nullable: true
                 type: object
+              image:
+                description: The image of the Ingress Controller.
+                properties:
+                  pullPolicy:
+                    description: The ImagePullPolicy of the image.
+                    enum:
+                    - Never
+                    - Always
+                    - IfNotPresent
+                    type: string
+                  repository:
+                    description: The repository of the image.
+                    type: string
+                  tag:
+                    description: The tag (version) of the image.
+                    type: string
+                required:
+                - pullPolicy
+                - repository
+                - tag
+                type: object
               ingressClass:
                 description: IngressClass 用以区分nginx作用域
                 type: string
