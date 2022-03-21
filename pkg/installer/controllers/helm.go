@@ -41,7 +41,12 @@ func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginSt
 		plugin.Repo = "file://" + r.ChartsDir
 	}
 
-	upgradeRelease, err := r.helm.ApplyChart(ctx, name, namespace, plugin.Version, plugin.Values, plugin.Repo)
+	upgradeRelease, err := r.helm.ApplyChart(ctx, name, namespace,
+		ApplyOptions{
+			Version: plugin.Version,
+			Repo:    plugin.Repo,
+			Values:  plugin.Values,
+		})
 	if err != nil {
 		return err
 	}
@@ -132,11 +137,19 @@ func (h *Helm) RemoveChart(ctx context.Context, chartName, installNamespace stri
 	return uninstalledRelease.Release, nil
 }
 
+type ApplyOptions struct {
+	Version string
+	Repo    string
+	Values  map[string]interface{}
+}
+
 func (h *Helm) ApplyChart(ctx context.Context,
-	chartName, installNamespace string, version string,
-	values map[string]interface{}, repo string,
+	chartName, installNamespace string,
+	options ApplyOptions,
 ) (*release.Release, error) {
 	log := logr.FromContextOrDiscard(ctx)
+
+	version, repo, values := options.Version, options.Repo, options.Values
 
 	releaseName := chartName
 	cfg, err := NewHelmConfig(installNamespace, h.Config)
