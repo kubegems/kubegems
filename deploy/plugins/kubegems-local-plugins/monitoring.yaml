@@ -1,0 +1,31 @@
+# https://artifacthub.io/packages/helm/metrics-server/metrics-server
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: metrics-server
+  namespace: kubegems-local
+spec:
+  kind: helm
+  repo: https://kubernetes-sigs.github.io/metrics-server
+  installNamespace: kube-system
+  enabled: true
+---
+# https://github.com/prometheus-operator/prometheus-operator/tree/main/helm
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kube-prometheus-stack
+  namespace: kubegems-local
+spec:
+  kind: helm
+  repo: https://prometheus-community.github.io/helm-charts
+  installNamespace: prometheus
+  enabled: true
+---
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter
+---
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics
+---
+# https://artifacthub.io/packages/helm/banzaicloud-stable/grafana-operator
+---
+

@@ -12,6 +12,8 @@ The `charts` dir contains kubegems helm charts.
 
 ## Setup Kubernets Cluster (optional)
 
+### From Kind
+
 Skip this section if you already have a kubernetes cluster.
 
 install kind from: https://kind.sigs.k8s.io/docs/user/quick-start/#installation
@@ -56,6 +58,10 @@ update cuurent context of kubeconfig to `kind-kubegems`
 ```sh
 kubectl config use-context kind-kubegems
 ```
+
+### From Kubeadm
+
+[Bootstrapping clusters with kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/)
 
 ## Deploy KubeGems
 

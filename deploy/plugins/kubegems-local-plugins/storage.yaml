@@ -1,0 +1,5 @@
+# local-path-provisioner
+# https://github.com/rancher/local-path-provisioner/tree/master/deploy/chart
+# git clone --depth=1 https://github.com/rancher/local-path-provisioner.git _local-path-provisioner
+# mv _local-path-provisioner/deploy/chart local-path-provisioner
+# rm -rf _local-path-provisioner

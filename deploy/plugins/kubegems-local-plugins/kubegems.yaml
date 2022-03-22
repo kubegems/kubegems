@@ -1,0 +1,19 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems-local
+  namespace: kubegems-local
+spec:
+  kind: helm
+  enabled: true
+  dependencies:
+    - cert-manager
+  values:
+    clusterName: "{{ .Values.clusterName }}"
+    storageClass: "{{ .Values.storageClass }}"
+    agent:
+      image:
+        tag: "{{ .Values.kubegemsVersion }}"
+    controller:
+      image:
+        tag: "{{ .Values.kubegemsVersion }}"

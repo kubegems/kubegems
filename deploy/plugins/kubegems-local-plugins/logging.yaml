@@ -1,0 +1,23 @@
+# https://github.com/grafana/helm-charts/tree/main/charts/loki
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: loki-stack
+  namespace: kubegems-local
+spec:
+  kind: helm
+  repo: https://grafana.github.io/helm-charts
+  installNamespace: loki-stack
+  enabled: true
+---
+# https://banzaicloud.com/docs/one-eye/logging-operator/install/#helm
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: logging-operator
+  namespace: logging-operator
+spec:
+  kind: helm
+  repo: https://kubernetes-charts.banzaicloud.com
+  installNamespace: logging
+  enabled: true

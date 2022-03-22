@@ -1,0 +1,27 @@
+# https://cert-manager.io/docs/installation/helm/
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: cert-manager
+  namespace: kubegems-local
+spec:
+  kind: helm
+  repo: https://charts.jetstack.io
+  enabled: true
+  installNamespace: cert-manager
+  values:
+    installCRDs: true
+---
+# https://github.com/NVIDIA/k8s-device-plugin#deployment-via-helm
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: nvidia-device-plugin
+  namespace: kubegems-local
+spec:
+  kind: helm
+  repo: https://nvidia.github.io/k8s-device-plugin
+  installNamespace: nvidia
+  enabled: true
+---
+# https://github.com/tkestack/gpu-manager

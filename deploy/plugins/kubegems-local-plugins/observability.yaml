@@ -1,0 +1,11 @@
+# https://github.com/jaegertracing/helm-charts
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: jaeger-operator
+  namespace: kubegems-local
+spec:
+  kind: helm
+  repo: https://jaegertracing.github.io/helm-charts
+  installNamespace: observability
+  enabled: true
