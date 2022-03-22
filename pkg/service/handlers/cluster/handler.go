@@ -493,7 +493,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			installer := OpratorInstaller{
 				Config: config,
 				Values: map[string]interface{}{
-					"plugin": map[string]interface{}{
+					"plugins": map[string]interface{}{
 						"role": "local", // must be local, see: deploy/charts/kubegems-local/values.yaml
 						"values": map[string]interface{}{
 							"kubegemsVersion": version.Get().GitVersion,

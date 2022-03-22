@@ -1,0 +1,11 @@
+{{/*
+self managed
+*/}}
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems-installer
+spec:
+  kind: helm
+  enabled: true
+  installNamespace: kubegems-installer

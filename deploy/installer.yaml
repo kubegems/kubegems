@@ -169,8 +169,8 @@ spec:
         fsGroup: 1001
       initContainers:
         - name: copy-plugins
-          image: docker.io/kubegems/kubegems-plugin:latest
-          imagePullPolicy: IfNotPresent
+          image: docker.io/cnfatal/kubegems-plugin:latest
+          imagePullPolicy: Always
           securityContext:
             runAsNonRoot: true
             runAsUser: 1001
@@ -189,8 +189,8 @@ spec:
             requests: {}
       containers:
         - name: installer
-          image: docker.io/kubegems/kubegems:latest
-          imagePullPolicy: IfNotPresent
+          image: docker.io/cnfatal/kubegems:latest
+          imagePullPolicy: Always
           securityContext:
             runAsNonRoot: true
             runAsUser: 1001
@@ -248,9 +248,9 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: mysql
-  namespace: kubegems
 spec:
   kind: helm
+  installNamespace: kubegems
   repo: https://charts.bitnami.com/bitnami
   enabled: true
 ---
@@ -259,10 +259,10 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kubegems
-  namespace: kubegems
 spec:
   kind: helm
   enabled: true
+  installNamespace: kubegems
   values:
     mysql:
       enabled: false

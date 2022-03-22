@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	KubeGemInstallerChartName      = "kubgems-installer"
+	KubeGemInstallerChartName      = "kubegems-installer"
 	KubeGemInstallerChartPath      = "/app/charts"
-	KubeGemInstallerChartNamespace = "kubgems-installer"
+	KubeGemInstallerChartNamespace = "kubegems-installer"
 )
 
 type OpratorInstaller struct {
