@@ -211,36 +211,6 @@ spec:
         securityContext:
           runAsNonRoot: true
           runAsUser: 1001
-        volumeMounts:
-        - mountPath: /app/charts
-          name: charts
-        - mountPath: /app/plugins
-          name: plugins
-      initContainers:
-      - command:
-        - sh
-        - -c
-        - cp -R /charts/* /app/charts/
-        - cp -R /plugins/* /app/plugins/
-        image: docker.io/kubegems/kubegems-plugin:latest
-        imagePullPolicy: IfNotPresent
-        name: copy-plugins
-        resources:
-          limits: {}
-          requests: {}
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 1001
-        volumeMounts:
-        - mountPath: /app/charts
-          name: charts
-        - mountPath: /app/plugins
-          name: plugins
       securityContext:
         fsGroup: 1001
       serviceAccountName: kubegems-installer
-      volumes:
-      - emptyDir: {}
-        name: charts
-      - emptyDir: {}
-        name: plugins

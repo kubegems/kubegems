@@ -14,13 +14,6 @@ Return the proper installer image name
 {{ include "common.images.image" (dict "imageRoot" .Values.installer.image "global" .Values.global) }}
 {{- end -}}
 
-{{/*
-Return the proper plugins image name
-*/}}
-{{- define "kubegems.plugins.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.plugins.image "global" .Values.global) }}
-{{- end -}}
-
 
 {{/*
 Return the proper Docker Image Registry Secret Names

@@ -418,34 +418,3 @@ serviceAccount:
   ## If not set and create is true, a name is generated using the common.names.fullname template
   ##
   name: ""
-
-## @section Installer plugins image
-plugins:
-  ## kubgems plugins image
-  ## @param plugins.image.registry plugins image registry
-  ## @param plugins.image.repository plugins image repository
-  ## @param plugins.image.tag plugins image tag (immutable tags are recommended)
-  ## @param plugins.image.pullPolicy plugins image pull policy
-  ## @param plugins.image.pullSecrets plugins image pull secrets
-  ## @param plugins.image.debug Enable plugins image debug mode
-  ##
-  image:
-    registry: docker.io
-    repository: kubegems/kubegems-plugin
-    tag: latest
-    ## Specify a imagePullPolicy
-    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-    ##
-    pullPolicy: IfNotPresent
-    ## Optionally specify an array of imagePullSecrets.
-    ## Secrets must be manually created in the namespace.
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-    ## e.g:
-    ## pullSecrets:
-    ##   - myRegistryKeySecretName
-    ##
-    pullSecrets: []
-    ## Enable debug mode
-    ##
-    debug: false
