@@ -1,8 +1,8 @@
-{{- if eq .Values.plugins.role "local" -}}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: argo-rollouts
+  namespace: kubegems-local
 spec:
   kind: helm
   installNamespace: argo-rollouts
@@ -12,6 +12,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: cert-manager
+  namespace: kubegems-local
 spec:
   kind: helm
   enabled: true
@@ -23,6 +24,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: jaeger
+  namespace: kubegems-local
 spec:
   kind: helm
   installNamespace: observability
@@ -32,6 +34,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: loki-stack
+  namespace: kubegems-local
 spec:
   kind: helm
   installNamespace: loki-stack
@@ -41,6 +44,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: metrics-server
+  namespace: kubegems-local
 spec:
   kind: helm
   installNamespace: kube-system
@@ -50,6 +54,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kube-prometheus-stack
+  namespace: kubegems-local
 spec:
   kind: helm
   installNamespace: prometheus
@@ -59,6 +64,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: gateway
+  namespace: kubegems-local
 spec:
   kind: native
   installNamespace: kubegems-gateway
@@ -68,15 +74,16 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kubegems-local
+  namespace: kubegems-local
 spec:
   kind: helm
-  installNamespace: kubegems-local
   enabled: true
   values:
+    clusterName: "{{ .Values.clusterName }}"
+    storageClass: "{{ .Values.storageClass }}"
     agent:
       image:
-        tag: {{ .Values.plugins.values.kubegemsVersion | quote }}
+        tag: "{{ .Values.kubegemsVersion }}"
     controller:
       image:
-        tag: {{ .Values.plugins.values.kubegemsVersion | quote }}
-{{- end -}}
+        tag: "{{ .Values.kubegemsVersion }}"

@@ -3,8 +3,8 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
-    meta.helm.sh/release-name: kubegems--installer
-    meta.helm.sh/release-namespace: kubegems--installer
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
   creationTimestamp: null
   name: plugins.plugins.kubegems.io
 spec:
@@ -100,8 +100,8 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   annotations:
-    meta.helm.sh/release-name: kubegems--installer
-    meta.helm.sh/release-namespace: kubegems--installer
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
   labels:
     app.kubernetes.io/component: installer
     app.kubernetes.io/instance: kubegems-installer
@@ -115,8 +115,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   annotations:
-    meta.helm.sh/release-name: kubegems--installer
-    meta.helm.sh/release-namespace: kubegems--installer
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
   labels:
     app.kubernetes.io/component: installer
     app.kubernetes.io/instance: kubegems-installer
@@ -138,8 +138,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    meta.helm.sh/release-name: kubegems--installer
-    meta.helm.sh/release-namespace: kubegems--installer
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
   labels:
     app.kubernetes.io/component: installer
     app.kubernetes.io/instance: kubegems-installer
@@ -244,45 +244,3 @@ spec:
         name: charts
       - emptyDir: {}
         name: plugins
----
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
-metadata:
-  annotations:
-    meta.helm.sh/release-name: kubegems--installer
-    meta.helm.sh/release-namespace: kubegems--installer
-  name: mysql
-spec:
-  enabled: true
-  installNamespace: kubegems
-  kind: helm
-  repo: https://charts.bitnami.com/bitnami
----
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
-metadata:
-  annotations:
-    meta.helm.sh/release-name: kubegems--installer
-    meta.helm.sh/release-namespace: kubegems--installer
-  name: kubegems
-spec:
-  enabled: true
-  installNamespace: kubegems
-  kind: helm
-  values:
-    externalDatabase:
-      enabled: true
-    mysql:
-      enabled: false
----
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
-metadata:
-  annotations:
-    meta.helm.sh/release-name: kubegems--installer
-    meta.helm.sh/release-namespace: kubegems--installer
-  name: kubegems-installer
-spec:
-  enabled: true
-  installNamespace: kubegems-installer
-  kind: helm

@@ -1,8 +1,8 @@
-{{- if eq .Values.plugins.role "core" -}}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: mysql
+  namespace: kubegems
 spec:
   kind: helm
   installNamespace: kubegems
@@ -13,6 +13,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kubegems
+  namespace: kubegems
 spec:
   kind: helm
   enabled: true
@@ -22,4 +23,3 @@ spec:
       enabled: false
     externalDatabase:
       enabled: true
-{{- end -}}

@@ -85,7 +85,6 @@ require (
 	k8s.io/api v0.22.4
 	k8s.io/apiextensions-apiserver v0.21.4
 	k8s.io/apimachinery v0.21.4
-	k8s.io/cli-runtime v0.21.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kubectl v0.21.2
 	k8s.io/metrics v0.21.2
@@ -328,6 +327,7 @@ require (
 	istio.io/gogo-genproto v0.0.0-20220126213228-fbb7617c3d36 // indirect
 	istio.io/pkg v0.0.0-20220126213228-1356f485563a // indirect
 	k8s.io/apiserver v0.21.2 // indirect
+	k8s.io/cli-runtime v0.21.2 // indirect
 	k8s.io/component-base v0.21.4 // indirect
 	k8s.io/component-helpers v0.21.2 // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect

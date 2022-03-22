@@ -449,16 +449,3 @@ plugins:
     ## Enable debug mode
     ##
     debug: false
-
-  ## @param plugin.role Specifies whether a Role should be created,support 'local' or 'core'
-  #
-  # core: is the kubgem core components,includes api dashboard and related components
-  # local: is the kubgem edge components,includes agent.
-  # keep empty to install none of the plugins
-  role: core
-  ## @param plugins.values The values in which to render the plugins-*.yaml
-  ## @skip plugins.values
-  values:
-    clusterName: ""
-    storageClass: ""
-    kubegemsVersion: "latest"

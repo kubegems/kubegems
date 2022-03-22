@@ -63,6 +63,7 @@ Install kubegems installer using helm.
 
 ```sh
 helm install --namespace kubegems-installer --create-namespace kubegems-installer charts/kubegems-installer
+kubectl apply -f plugins-core.yaml
 ```
 
 or deploy installer from generated manifests.
@@ -70,6 +71,7 @@ or deploy installer from generated manifests.
 ```sh
 kubectl create namespace kubegems-installer
 kubectl apply --namespace kubegems-installer -f installer.yaml
+kubectl apply -f plugins-core.yaml
 ```
 
 Wait every thing becomes OK.
@@ -80,6 +82,6 @@ Regenerate installer manifests using helm:
 
 ```sh
 helm template --namespace kubegems-installer --include-crds  kubegems-installer charts/kubegems-installer \
-| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems--installer meta.helm.sh/release-namespace=kubegems--installer \
+| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 | tee installer.yaml
 ```
