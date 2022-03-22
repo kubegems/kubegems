@@ -73,3 +73,13 @@ kubectl apply --namespace kubegems-installer -f installer.yaml
 ```
 
 Wait every thing becomes OK.
+
+## Generate Installer Manifests
+
+Regenerate installer manifests using helm:
+
+```sh
+helm template --namespace kubegems-installer --include-crds  kubegems-installer charts/kubegems-installer \
+| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems--installer meta.helm.sh/release-namespace=kubegems--installer \
+| tee installer.yaml
+```

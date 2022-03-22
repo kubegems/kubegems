@@ -1,12 +1,10 @@
----
-# Source: crds/plugins.kubegems.io_plugins.yaml
-
----
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
+    meta.helm.sh/release-name: kubegems--installer
+    meta.helm.sh/release-namespace: kubegems--installer
   creationTimestamp: null
   name: plugins.plugins.kubegems.io
 spec:
@@ -97,174 +95,194 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
-
 ---
-# Source: kubegems-installer/templates/service-account.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: kubegems-installer
-  namespace: "kubegems-installer"
+  annotations:
+    meta.helm.sh/release-name: kubegems--installer
+    meta.helm.sh/release-namespace: kubegems--installer
   labels:
-    app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.1.0
+    app.kubernetes.io/component: installer
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/component: installer
+    app.kubernetes.io/name: kubegems-installer
+    helm.sh/chart: kubegems-installer-0.1.0
+  name: kubegems-installer
+  namespace: kubegems-installer
 ---
-# Source: kubegems-installer/templates/rbac.yaml
-kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
 metadata:
-  name: kubegems-installer
-  namespace: "kubegems-installer"
+  annotations:
+    meta.helm.sh/release-name: kubegems--installer
+    meta.helm.sh/release-namespace: kubegems--installer
   labels:
-    app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.1.0
+    app.kubernetes.io/component: installer
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/component: installer
+    app.kubernetes.io/name: kubegems-installer
+    helm.sh/chart: kubegems-installer-0.1.0
+  name: kubegems-installer
+  namespace: kubegems-installer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-admin
 subjects:
-  - kind: ServiceAccount
-    name: kubegems-installer
-    namespace: kubegems-installer
+- kind: ServiceAccount
+  name: kubegems-installer
+  namespace: kubegems-installer
 ---
-# Source: kubegems-installer/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kubegems-installer
-  namespace: "kubegems-installer"
+  annotations:
+    meta.helm.sh/release-name: kubegems--installer
+    meta.helm.sh/release-namespace: kubegems--installer
   labels:
-    app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.1.0
+    app.kubernetes.io/component: installer
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/component: installer
+    app.kubernetes.io/name: kubegems-installer
+    helm.sh/chart: kubegems-installer-0.1.0
+  name: kubegems-installer
+  namespace: kubegems-installer
 spec:
   replicas: 1
-  strategy:
-    type: RollingUpdate
   selector:
     matchLabels:
-      app.kubernetes.io/name: kubegems-installer
-      app.kubernetes.io/instance: kubegems-installer
       app.kubernetes.io/component: installer
+      app.kubernetes.io/instance: kubegems-installer
+      app.kubernetes.io/name: kubegems-installer
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: kubegems-installer
-        helm.sh/chart: kubegems-installer-0.1.0
+        app.kubernetes.io/component: installer
         app.kubernetes.io/instance: kubegems-installer
         app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/component: installer
+        app.kubernetes.io/name: kubegems-installer
+        helm.sh/chart: kubegems-installer-0.1.0
     spec:
-      serviceAccountName: kubegems-installer
-      
+      containers:
+      - args:
+        - installer
+        - --chartsdir=/app/charts
+        - --pluginsdir=/app/plugins
+        - --enableleaderelection
+        - --probeaddr=:8080
+        - --metricsaddr=:9100
+        env:
+        - name: LOG_LEVEL
+          value: debug
+        image: docker.io/kubegems/kubegems:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /healthz
+            port: probe
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: installer
+        ports:
+        - containerPort: 8080
+          name: probe
+          protocol: TCP
+        - containerPort: 9100
+          name: metrics
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /healthz
+            port: probe
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          limits: {}
+          requests: {}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+        volumeMounts:
+        - mountPath: /app/charts
+          name: charts
+        - mountPath: /app/plugins
+          name: plugins
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - cp -R /charts/* /app/charts/
+        - cp -R /plugins/* /app/plugins/
+        image: docker.io/kubegems/kubegems-plugin:latest
+        imagePullPolicy: IfNotPresent
+        name: copy-plugins
+        resources:
+          limits: {}
+          requests: {}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+        volumeMounts:
+        - mountPath: /app/charts
+          name: charts
+        - mountPath: /app/plugins
+          name: plugins
       securityContext:
         fsGroup: 1001
-      initContainers:
-        - name: copy-plugins
-          image: docker.io/cnfatal/kubegems-plugin:latest
-          imagePullPolicy: Always
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1001
-          command:
-            - sh
-            - -c
-            - cp -R /charts/* /app/charts/
-            - cp -R /plugins/* /app/plugins/
-          volumeMounts:
-            - name: charts
-              mountPath: /app/charts
-            - name: plugins
-              mountPath: /app/plugins
-          resources:
-            limits: {}
-            requests: {}
-      containers:
-        - name: installer
-          image: docker.io/cnfatal/kubegems:latest
-          imagePullPolicy: Always
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1001
-          args:
-            - installer
-            - --chartsdir=/app/charts
-            - --pluginsdir=/app/plugins
-            - --enableleaderelection
-            - --probeaddr=:8080
-            - --metricsaddr=:9100
-          env:
-            - name: LOG_LEVEL
-              value: debug
-          resources:
-            limits: {}
-            requests: {}
-          ports:
-            - name: probe
-              containerPort: 8080
-              protocol: TCP
-            - name: metrics
-              containerPort: 9100
-              protocol: TCP
-          livenessProbe:
-            failureThreshold: 6
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 5
-            httpGet:
-              path: /healthz
-              port: probe
-          readinessProbe:
-            failureThreshold: 6
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 5
-            httpGet:
-              path: /healthz
-              port: probe
-          volumeMounts:
-            - name: charts
-              mountPath: /app/charts
-            - name: plugins
-              mountPath: /app/plugins
+      serviceAccountName: kubegems-installer
       volumes:
-        - name: charts
-          emptyDir: {}
-        - name: plugins
-          emptyDir: {}
+      - emptyDir: {}
+        name: charts
+      - emptyDir: {}
+        name: plugins
 ---
-# Source: kubegems-installer/templates/kubegems-core-plugins.yaml
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
+  annotations:
+    meta.helm.sh/release-name: kubegems--installer
+    meta.helm.sh/release-namespace: kubegems--installer
   name: mysql
 spec:
-  kind: helm
-  installNamespace: kubegems
-  repo: https://charts.bitnami.com/bitnami
   enabled: true
+  installNamespace: kubegems
+  kind: helm
+  repo: https://charts.bitnami.com/bitnami
 ---
-# Source: kubegems-installer/templates/kubegems-core-plugins.yaml
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
+  annotations:
+    meta.helm.sh/release-name: kubegems--installer
+    meta.helm.sh/release-namespace: kubegems--installer
   name: kubegems
 spec:
-  kind: helm
   enabled: true
   installNamespace: kubegems
+  kind: helm
   values:
-    mysql:
-      enabled: false
     externalDatabase:
       enabled: true
+    mysql:
+      enabled: false
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  annotations:
+    meta.helm.sh/release-name: kubegems--installer
+    meta.helm.sh/release-namespace: kubegems--installer
+  name: kubegems-installer
+spec:
+  enabled: true
+  installNamespace: kubegems-installer
+  kind: helm
