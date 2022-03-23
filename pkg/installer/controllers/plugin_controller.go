@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -177,15 +178,29 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 	thisStatus := PluginStatusFromPlugin(plugin)
 
 	// todo: check dependencies
+	// nolint: nestif
 	if len(plugin.Spec.Dependencies) > 0 {
 		// check dependencies are installed
 		for _, dep := range plugin.Spec.Dependencies {
+			name, namespace, version := dep.Name, dep.Namespace, dep.Version
+			if namespace == "" {
+				namespace = plugin.Namespace
+			}
+			if name == "" {
+				continue
+			}
 			depPlugin := &pluginsv1beta1.Plugin{}
-			if err := r.Client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, depPlugin); err != nil {
+			if err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, depPlugin); err != nil {
+				if errors.IsNotFound(err) {
+					return fmt.Errorf("dependency %s/%s not found", name, namespace)
+				}
 				return err
 			}
 			if depPlugin.Status.Phase != pluginsv1beta1.PluginPhaseInstalled {
-				return fmt.Errorf("dependency %s/%s is not installed", depPlugin.Namespace, depPlugin.Name)
+				return fmt.Errorf("dependency %s/%s is not installed", name, namespace)
+			}
+			if version != "" {
+				// TODO: check version
 			}
 		}
 	}

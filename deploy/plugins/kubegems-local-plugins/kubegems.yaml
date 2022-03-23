@@ -2,7 +2,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kubegems-local
-  namespace: kubegems-installer
+  namespace: kubegems-local
 spec:
   kind: helm
   enabled: true

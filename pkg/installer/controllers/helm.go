@@ -190,6 +190,7 @@ func (h *Helm) ApplyChart(ctx context.Context,
 	log.Info("upgrading")
 	client := action.NewUpgrade(cfg)
 	client.Namespace = installNamespace
+	client.ResetValues = true
 	return client.Run(releaseName, chart, values)
 }
 
