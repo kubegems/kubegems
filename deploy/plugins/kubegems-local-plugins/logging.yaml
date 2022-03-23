@@ -15,7 +15,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: logging-operator
-  namespace: logging-operator
+  namespace: kubegems-local
 spec:
   kind: helm
   repo: https://kubernetes-charts.banzaicloud.com

@@ -15,20 +15,25 @@ const (
 	KubeGemInstallerChartName      = "kubegems-installer"
 	KubeGemInstallerChartNamespace = "kubegems-installer"
 
-	KubeGemInstallerPluginsPath = "/app/plugins"
-	KubeGemLocalPluginsName     = "kubegems-local-plugins"
+	KubeGemInstallerPluginsPath  = "/app/plugins"
+	KubeGemLocalPluginsName      = "kubegems-local-plugins"
+	KubeGemLocalPluginsNamespace = "kubegems-local"
 )
 
 type OpratorInstaller struct {
-	ChartPath     string                 // path to the chart
-	Config        *rest.Config           // target cluster config
-	Version       string                 // version of the installer chart
-	PluginsValues map[string]interface{} // values pass to `plugins-local-template.yaml`
+	ChartPath        string                 // path to the chart
+	Config           *rest.Config           // target cluster config
+	Version          string                 // version of the installer chart
+	InstallNamespace string                 // namespace where the installer is installed
+	PluginsValues    map[string]interface{} // values pass to `plugins-local-template.yaml`
 }
 
 func (i OpratorInstaller) Apply(ctx context.Context) error {
 	if i.ChartPath == "" {
 		i.ChartPath = KubeGemInstallerChartPath
+	}
+	if i.InstallNamespace == "" {
+		i.InstallNamespace = KubeGemInstallerChartNamespace
 	}
 	log.FromContextOrDiscard(ctx).Info("applying kubegems-installer chart", "chartPath", i.ChartPath)
 	helm := controllers.Helm{Config: i.Config}
@@ -36,7 +41,7 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	relese, err := helm.ApplyChart(ctx, KubeGemInstallerChartName, KubeGemInstallerChartNamespace,
+	relese, err := helm.ApplyChart(ctx, KubeGemInstallerChartName, i.InstallNamespace,
 		controllers.ApplyOptions{Values: i.PluginsValues, Repo: "file://" + path},
 	)
 	if err != nil {
@@ -56,9 +61,12 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 }
 
 func (i OpratorInstaller) Remove(ctx context.Context) error {
+	if i.InstallNamespace == "" {
+		i.InstallNamespace = KubeGemInstallerChartNamespace
+	}
 	log.FromContextOrDiscard(ctx).Info("removing kubegems-installer chart")
 	helm := controllers.Helm{Config: i.Config}
-	relese, err := helm.RemoveChart(ctx, KubeGemInstallerChartName, KubeGemInstallerChartNamespace)
+	relese, err := helm.RemoveChart(ctx, KubeGemInstallerChartName, i.InstallNamespace)
 	if err != nil {
 		return err
 	}
