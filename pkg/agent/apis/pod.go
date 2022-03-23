@@ -70,6 +70,9 @@ func (h *PodHandler) List(c *gin.Context) {
 		client.MatchingLabelsSelector{Selector: sel},
 	}
 	fieldSelector, fexist := getFieldSelector(c)
+	if fexist {
+		listOpts = append(listOpts, client.MatchingFieldsSelector{Selector: fieldSelector})
+	}
 
 	if err = h.cluster.GetClient().List(c.Request.Context(), podList, listOpts...); err != nil {
 		NotOK(c, err)
@@ -77,14 +80,6 @@ func (h *PodHandler) List(c *gin.Context) {
 	}
 
 	objects := podList.Items
-
-	// filter pod status
-	// see: issues #122
-	if fexist {
-		if val, ok := fieldSelector.RequiresExactMatch("phase"); ok {
-			objects = filterByContainerState(val, objects)
-		}
-	}
 
 	objects = filterByNodename(c, objects)
 	pageData := NewPageDataFromContext(c, func(i int) SortAndSearchAble {
