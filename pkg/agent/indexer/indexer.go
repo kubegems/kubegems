@@ -11,7 +11,7 @@ import (
 // 自定义的indexer
 func CustomIndexPods(c cache.Cache) error {
 	//  1. 根据状态(kubectl看到的)过滤
-	if err := c.IndexField(context.TODO(), &v1.Pod{}, "podstatus", func(iobj client.Object) []string {
+	if err := c.IndexField(context.TODO(), &v1.Pod{}, "phase", func(iobj client.Object) []string {
 		obj := iobj.(*v1.Pod)
 		return []string{podStatus(obj)}
 	}); err != nil {
@@ -26,22 +26,7 @@ func CustomIndexPods(c cache.Cache) error {
 		return err
 	}
 
-	// 3. phase 的过滤
-	if err := c.IndexField(context.TODO(), &v1.Pod{}, "phase", func(iobj client.Object) []string {
-		obj := iobj.(*v1.Pod)
-		return []string{runningStatus(obj)}
-	}); err != nil {
-		return err
-	}
-
 	return nil
-}
-
-func runningStatus(po *v1.Pod) string {
-	if po.Status.Phase == v1.PodRunning {
-		return string(v1.PodRunning)
-	}
-	return "NotRunning"
 }
 
 func podStatus(po *v1.Pod) string {
