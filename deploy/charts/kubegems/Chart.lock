@@ -1,18 +1,21 @@
 dependencies:
 - name: common
   repository: https://charts.bitnami.com/bitnami
-  version: 1.11.3
+  version: 1.12.0
 - name: mysql
   repository: https://charts.bitnami.com/bitnami
-  version: 8.8.26
+  version: 8.8.27
 - name: redis
   repository: https://charts.bitnami.com/bitnami
-  version: 16.5.2
+  version: 16.5.5
 - name: gitea
   repository: https://dl.gitea.io/charts
-  version: 5.0.2
+  version: 5.0.3
 - name: argo-cd
   repository: https://argoproj.github.io/argo-helm
   version: 3.35.4
-digest: sha256:c4722bcecd7537dbb325c5019a14092f88919ed1846a17293660b60aa057d391
-generated: "2022-03-16T10:31:28.078500766+08:00"
+- name: chartmuseum
+  repository: https://chartmuseum.github.io/charts
+  version: 3.6.2
+digest: sha256:136210420a8c2bfd132cf17281fbf1df479f08a6f0fb475386cb166ccb8ee46a
+generated: "2022-03-23T17:46:51.942211876+08:00"

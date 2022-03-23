@@ -320,6 +320,25 @@ Return the proper git password secret key
 
 
 {{/*
+Create a default fully qualified gitea name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "kubegems.chartmuseum.fullname" -}}
+{{- include "common.names.dependency.fullname" (dict "chartName" "chartmuseum" "chartValues" .Values.chartmuseum "context" $) -}}
+{{- end -}}
+
+{{/*
+chartmuseum address
+*/}}
+{{- define "kubegems.chartmuseum.address" -}}
+{{- if and .Values.chartmuseum.enabled -}}
+    {{- printf "http://%s.%s:" (include "kubegems.chartmuseum.fullname" .) .Release.Namespace -}}{{- .Values.chartmuseum.service.externalPort -}}
+{{- else if .Values.externalAppstore.enabled -}}
+    {{- .Values.externalAppstore.address -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the proper common environment variables
 */}}
 {{- define "kubegems.common.env" -}}

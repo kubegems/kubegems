@@ -22,6 +22,10 @@ dependencies:
     repository: https://argoproj.github.io/argo-helm
     condition: argo-cd.enabled
     version: 3.x.x
+  - name: chartmuseum
+    repository: https://chartmuseum.github.io/charts
+    condition: chartmuseum.enabled
+    version: 3.x.x
 description: KubeGems components.
 home: kubegems.io
 keywords:
@@ -32,4 +36,4 @@ maintainers:
 name: kubegems
 sources:
   - https://kubegems.io
-version: 1.0.0
+version: 1.0.1

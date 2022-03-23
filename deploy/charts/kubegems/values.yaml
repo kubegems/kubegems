@@ -1952,3 +1952,14 @@ externalGit:
   password: ""
   existingSecret: ""
   existingSecretPasswordKey: ""
+
+## @section Chartmuseum configuration
+## @param chartmuseum.enabled  Enable Chartmuseum
+chartmuseum:
+  enabled: true
+
+## @section External Chartmuseum configuration
+## @param externalAppstore.enabled  Enable external Chartmuseum
+externalAppstore:
+  enabled: false
+  address: "https://chartmuseum.example.com"
