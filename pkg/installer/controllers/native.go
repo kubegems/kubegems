@@ -258,7 +258,15 @@ func ApplyNative(ctx context.Context, config *rest.Config, namespace string, res
 		opt(opts)
 	}
 
-	clusterCache := cache.NewClusterCache(config, cache.SetLogr(log), cache.SetClusterResources(true))
+	clusterCache := cache.NewClusterCache(config,
+		cache.SetLogr(log),
+		cache.SetClusterResources(true),
+		cache.SetPopulateResourceInfoHandler(
+			func(un *unstructured.Unstructured, isRoot bool) (info interface{}, cacheManifest bool) {
+				return nil, true
+			},
+		),
+	)
 	if err := clusterCache.EnsureSynced(); err != nil {
 		return nil, err
 	}

@@ -5,9 +5,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Namespaced
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Status of the plugin"
+// +kubebuilder:printcolumn:name="InstallNamespace",type="string",JSONPath=".status.installNamespace",description="Install Namespace of the plugin"
+// +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Version of the plugin"
+// +kubebuilder:printcolumn:name="UpgradeTimestamp",type="date",JSONPath=".status.upgradeTimestamp",description="UpgradeTimestamp of the plugin"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="CreationTimestamp of the plugin"
 type Plugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -34,7 +39,7 @@ type Dependency struct {
 }
 
 type PluginStatus struct {
-	Phase            PluginPhase `json:"status,omitempty"`           // Status is the current state of the release
+	Phase            PluginPhase `json:"phase,omitempty"`            // Phase is the current state of the release
 	Message          string      `json:"message,omitempty"`          // Message is the message associated with the status
 	InstallNamespace string      `json:"installNamespace,omitempty"` // plugin installNamespace,if empty use .metadata.namespace
 	// +kubebuilder:pruning:PreserveUnknownFields
