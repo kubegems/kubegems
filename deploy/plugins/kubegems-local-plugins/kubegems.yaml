@@ -13,6 +13,8 @@ spec:
     clusterName: "{{ .Values.clusterName }}"
     storageClass: "{{ .Values.storageClass }}"
     agent:
+      extraArgs:
+      - --api-prometheusserver=http://kube-prometheus-stack-prometheus.prometheus:9090
       image:
         tag: "{{ .Values.kubegems.version }}"
     controller:
