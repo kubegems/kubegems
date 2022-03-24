@@ -39,6 +39,17 @@ type Workload struct {
 	ExtraLabels map[string]string `json:"extraLabels,omitempty"`
 }
 
+// Image defines the Repository, Tag and ImagePullPolicy of the Ingress Controller Image.
+type Image struct {
+	// The repository of the image.
+	Repository string `json:"repository"`
+	// The tag (version) of the image.
+	Tag string `json:"tag"`
+	// The ImagePullPolicy of the image.
+	// +kubebuilder:validation:Enum=Never;Always;IfNotPresent
+	PullPolicy string `json:"pullPolicy"`
+}
+
 // TenantGatewaySpec defines the desired state of TenantGateway
 type TenantGatewaySpec struct {
 	// Type 负载均衡类型
@@ -49,6 +60,9 @@ type TenantGatewaySpec struct {
 	Tenant string `json:"tenant"`
 	// IngressClass 用以区分nginx作用域
 	IngressClass string `json:"ingressClass"`
+	// The image of the Ingress Controller.
+	// +kubebuilder:validation:Optional
+	Image Image `json:"image"`
 	// The service of the Ingress controller.
 	// +kubebuilder:validation:Optional
 	// +nullable
