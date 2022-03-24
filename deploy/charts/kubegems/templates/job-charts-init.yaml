@@ -1,0 +1,91 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "common.names.fullname" . }}-charts-init
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: kubegems
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  backoffLimit: 10
+  parallelism: 1
+  template:
+    metadata:
+      {{- if .Values.init.podAnnotations }}
+      annotations: {{- include "common.tplvalues.render" (dict "value" .Values.init.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: kubegems
+        {{- if .Values.init.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.init.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      restartPolicy: {{ .Values.init.charts.restartPolicy }}
+      {{- include "kubegems.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.init.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.init.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.init.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.init.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.init.podAffinityPreset "component" "init" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.init.podAntiAffinityPreset "component" "init" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.init.nodeAffinityPreset.type "key" .Values.init.nodeAffinityPreset.key "values" .Values.init.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.init.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.init.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.init.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.init.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.init.priorityClassName }}
+      priorityClassName: {{ .Values.init.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.init.schedulerName }}
+      schedulerName: {{ .Values.init.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.init.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.init.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: charts-init
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.init.charts.image.pullPolicy }}
+          {{- if .Values.init.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.init.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.init.charts.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.init.charts.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.init.charts.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.init.charts.args "context" $) | nindent 12 }}
+          {{- else}}
+          args:
+            - --wait
+            - --repo
+            - kubegems
+            - --server
+            - "$(APPSTORE_ADDR)"
+          {{- end }}
+          env:
+            {{- include "kubegems.common.env" . | indent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ template "kubegems.secret.fullname" . }}
+            {{- if .Values.init.charts.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.init.charts.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.init.charts.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.init.charts.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.init.charts.resources }}
+          resources: {{- toYaml .Values.init.charts.resources | nindent 12 }}
+          {{- end }}

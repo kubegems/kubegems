@@ -80,14 +80,14 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ template "kubegems.secret.fullname" . }}
-            {{- if .Values.api.extraEnvVarsCM }}
+            {{- if .Values.init.extraEnvVarsCM }}
             - configMapRef:
-                name: {{ include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVarsCM "context" $) }}
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.init.extraEnvVarsCM "context" $) }}
             {{- end }}
-            {{- if .Values.api.extraEnvVarsSecret }}
+            {{- if .Values.init.extraEnvVarsSecret }}
             - secretRef:
-                name: {{ include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVarsSecret "context" $) }}
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.init.extraEnvVarsSecret "context" $) }}
             {{- end }}
-          {{- if .Values.api.resources }}
-          resources: {{- toYaml .Values.api.resources | nindent 12 }}
+          {{- if .Values.init.resources }}
+          resources: {{- toYaml .Values.init.resources | nindent 12 }}
           {{- end }}

@@ -9,6 +9,9 @@ spec:
   repo: https://kubernetes-sigs.github.io/metrics-server
   installNamespace: kube-system
   enabled: true
+  values:
+    args:
+      - --kubelet-insecure-tls
 ---
 # https://github.com/prometheus-operator/prometheus-operator/tree/main/helm
 apiVersion: plugins.kubegems.io/v1beta1

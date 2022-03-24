@@ -1,15 +1,18 @@
 package apis
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/agent/cluster"
+	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/gemsplugin"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PluginHandler struct {
@@ -41,12 +44,10 @@ func (h *PluginHandler) List(c *gin.Context) {
 
 	simple, _ := strconv.ParseBool(c.Query("simple"))
 	if simple {
-		ret := make(map[string]bool)
-		for name, v := range allPlugins.Spec.CorePlugins {
-			ret[name] = v.Enabled
-		}
-		for name, v := range allPlugins.Spec.KubernetesPlugins {
-			ret[name] = v.Enabled
+		ret, err := h.PluginSimple(c.Request.Context())
+		if err != nil {
+			NotOK(c, err)
+			return
 		}
 		OK(c, ret)
 	} else {
@@ -78,6 +79,30 @@ func (h *PluginHandler) List(c *gin.Context) {
 
 		OK(c, ret)
 	}
+}
+
+type PluginStatus map[string]bool
+
+// plugin name -> display plugin name
+// TODO: move after frontend updated
+var PluginNameMapping = map[string]string{
+	"argo-rollouts": "argo_rollouts",
+}
+
+func (h *PluginHandler) PluginSimple(ctx context.Context) (PluginStatus, error) {
+	pluginList := &pluginsv1beta1.PluginList{}
+	if err := h.cluster.GetClient().List(ctx, pluginList, &client.ListOptions{}); err != nil {
+		return nil, err
+	}
+	ret := PluginStatus{}
+	for _, plugin := range pluginList.Items {
+		if retname, ok := PluginNameMapping[plugin.Name]; ok {
+			ret[retname] = plugin.Spec.Enabled
+		} else {
+			ret[plugin.Name] = plugin.Spec.Enabled
+		}
+	}
+	return ret, nil
 }
 
 // @Tags Agent.Plugin

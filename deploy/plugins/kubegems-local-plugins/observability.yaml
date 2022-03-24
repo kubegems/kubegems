@@ -1,3 +1,18 @@
+# https://github.com/elastic/helm-charts
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: elasticsearch
+  namespace: kubegems-local
+spec:
+  kind: helm
+  repo: https://helm.elastic.co
+  installNamespace: observability
+  enabled: true
+  values:
+    replicas: 1
+    minimumMasterNodes: 1
+---
 # https://github.com/jaegertracing/helm-charts
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
@@ -9,3 +24,26 @@ spec:
   repo: https://jaegertracing.github.io/helm-charts
   installNamespace: observability
   enabled: true
+---
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: jaeger
+  namespace: observability
+spec:
+  strategy: production
+  sampling:
+    options:
+      default_strategy:
+        type: "{{ .Values.jaeger.operator.sampling.type | default('probabilistic') }}"
+        param: "{{ .Values.jaeger.operator.sampling.param | default('0.5') }}"
+  ingress:
+    enabled: false
+  collector:
+    options:
+      collector.zipkin.host-port: "9411"
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch-master.observability:9200

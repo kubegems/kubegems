@@ -430,6 +430,46 @@ dashboard:
 ## @section Init Job Parameters
 ##
 init:
+  ## @param init.charts.image.registry image registry
+  ## @param init.charts.image.repository image repository
+  ## @param init.charts.image.tag image tag (immutable tags are recommended)
+  ## @param init.charts.image.pullPolicy image pull policy
+  ## @param init.charts.image.pullSecrets image pull secrets
+  ## @param init.charts.image.debug Enable image debug mode
+  ##
+  charts:
+    image:
+      registry: docker.io
+      repository: kubegems/charts-uploader
+      tag: latest
+      ## Specify a imagePullPolicy
+      ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+      ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+      ##
+      pullPolicy: IfNotPresent
+      ## Optionally specify an array of imagePullSecrets.
+      ## Secrets must be manually created in the namespace.
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+      ## e.g:
+      ## pullSecrets:
+      ##   - myRegistryKeySecretName
+      ##
+      pullSecrets: []
+      ## Enable debug mode
+      ##
+      debug: false
+        ## @param init.replicaCount Number of API replicas to deploy
+    ##
+    replicaCount: 1
+    ## @param init.restartPolicy The restart policy for job,valid values: "OnFailure", "Never"
+    ##
+    restartPolicy: OnFailure
+    ## @param init.command Override default container command (useful when using custom images)
+    ##
+    command: []
+    ## @param init.args Override default container args (useful when using custom images)
+    ##
+    args: []
   ## @param init.image.registry API image registry
   ## @param init.image.repository API image repository
   ## @param init.image.tag API image tag (immutable tags are recommended)
@@ -1955,8 +1995,14 @@ externalGit:
 
 ## @section Chartmuseum configuration
 ## @param chartmuseum.enabled  Enable Chartmuseum
+## @param chartmuseum.env  Chartmuseum environment variables
+## @skip chartmuseum.env
 chartmuseum:
   enabled: true
+  env:
+    open:
+      DEPTH: 1
+      DISABLE_API: false
 
 ## @section External Chartmuseum configuration
 ## @param externalAppstore.enabled  Enable external Chartmuseum

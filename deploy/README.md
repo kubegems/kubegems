@@ -16,7 +16,7 @@ The `charts` dir contains kubegems helm charts.
 
 Skip this section if you already have a kubernetes cluster.
 
-install kind from: https://kind.sigs.k8s.io/docs/user/quick-start/#installation
+install kind from: <https://kind.sigs.k8s.io/docs/user/quick-start/#installation>
 
 or
 
@@ -27,7 +27,7 @@ go install sigs.k8s.io/kind@v0.12.0
 and create a kind cluster
 
 ```sh
-$ sudo kind create cluster --name kubegems --kubeconfig ${HOME}/.kube/config
+sudo kind create cluster --name kubegems --kubeconfig ${HOME}/.kube/config
 ```
 
 or you can use below config to quick setup a faster kind cluster.

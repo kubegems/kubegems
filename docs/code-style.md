@@ -126,13 +126,13 @@ type FileBackend struct {}
 ```go
 // 正确
 type Foo struct {
-	ID      string `json:"id,omitempty"`
-	BarHTTP string `json:"barHTTP,omitempty"`
+ ID      string `json:"id,omitempty"`
+ BarHTTP string `json:"barHTTP,omitempty"`
 }
 // 错误
 type Bar struct {
-	ID      string `json:"ID,omitempty"`
-	BarHTTP string `json:"barHttp,omitempty"`
+ ID      string `json:"ID,omitempty"`
+ BarHTTP string `json:"barHttp,omitempty"`
 }
 ```
 
