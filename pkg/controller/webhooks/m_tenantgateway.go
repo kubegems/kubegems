@@ -73,4 +73,14 @@ func tgDefault(tg *gemsv1beta1.TenantGateway) {
 	if tg.Spec.BaseDomain == "" {
 		tg.Spec.BaseDomain = "*.kubegems.io"
 	}
+
+	if tg.Spec.Image.Repository == "" {
+		tg.Spec.Image.Repository = "kubegems/nginx-ingress"
+	}
+	if tg.Spec.Image.Tag == "" {
+		tg.Spec.Image.Tag = "1.11.1"
+	}
+	if tg.Spec.Image.PullPolicy == "" {
+		tg.Spec.Image.PullPolicy = string(corev1.PullIfNotPresent)
+	}
 }
