@@ -26,6 +26,9 @@ spec:
   repo: https://kiali.org/helm-charts
   installNamespace: istio-system
   enabled: true
+  values:
+    auth:
+      strategy: anonymous
 ---
 # https://github.com/argoproj/argo-helm/tree/master/charts/argo-rollouts
 apiVersion: plugins.kubegems.io/v1beta1
