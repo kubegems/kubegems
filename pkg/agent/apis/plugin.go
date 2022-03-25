@@ -35,13 +35,6 @@ type PluginsRet struct {
 // @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
 // @Security JWT
 func (h *PluginHandler) List(c *gin.Context) {
-	allPlugins, err := gemsplugin.GetPlugins(h.cluster.Discovery())
-	if err != nil {
-		log.Error(err, "get plugins")
-		NotOK(c, err)
-		return
-	}
-
 	simple, _ := strconv.ParseBool(c.Query("simple"))
 	if simple {
 		ret, err := h.PluginSimple(c.Request.Context())
@@ -51,6 +44,12 @@ func (h *PluginHandler) List(c *gin.Context) {
 		}
 		OK(c, ret)
 	} else {
+		allPlugins, err := gemsplugin.GetPlugins(h.cluster.Discovery())
+		if err != nil {
+			log.Error(err, "get plugins")
+			NotOK(c, err)
+			return
+		}
 		ret := PluginsRet{
 			CorePlugins:       make(map[string][]*gemsplugin.Plugin),
 			KubernetesPlugins: make(map[string][]*gemsplugin.Plugin),
