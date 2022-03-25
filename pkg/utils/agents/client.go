@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"k8s.io/client-go/kubernetes/scheme"
+	"kubegems.io/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -83,7 +83,7 @@ func newClient(meta ClientMeta) Client {
 			HandshakeTimeout: 45 * time.Second,
 			TLSClientConfig:  meta.TLSConfig,
 		},
-		scheme: scheme.Scheme,
+		scheme: kube.GetScheme(),
 	}
 
 	return &DelegateClient{
