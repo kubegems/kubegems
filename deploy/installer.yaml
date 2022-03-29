@@ -16,7 +16,28 @@ spec:
     singular: plugin
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - description: Status of the plugin
+      jsonPath: .status.phase
+      name: Status
+      type: string
+    - description: Install Namespace of the plugin
+      jsonPath: .status.installNamespace
+      name: InstallNamespace
+      type: string
+    - description: Version of the plugin
+      jsonPath: .status.version
+      name: Version
+      type: string
+    - description: UpgradeTimestamp of the plugin
+      jsonPath: .status.upgradeTimestamp
+      name: UpgradeTimestamp
+      type: date
+    - description: CreationTimestamp of the plugin
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         properties:
@@ -51,6 +72,8 @@ spec:
                 type: string
               kind:
                 type: string
+              path:
+                type: string
               repo:
                 type: string
               values:
@@ -73,7 +96,7 @@ spec:
                 type: string
               notes:
                 type: string
-              status:
+              phase:
                 type: string
               upgradeTimestamp:
                 format: date-time

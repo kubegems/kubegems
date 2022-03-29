@@ -87,7 +87,5 @@ Wait every thing becomes OK.
 Regenerate installer manifests using helm:
 
 ```sh
-helm template --namespace kubegems-installer --include-crds  kubegems-installer charts/kubegems-installer \
-| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
-| tee installer.yaml
+make generate-installer-manifests
 ```
