@@ -480,7 +480,7 @@ func (e EmailConfig) testEmail(cluster, namespace string) error {
 	auth := sasl.NewPlainClient("", e.From, e.AuthPassword)
 	receivers := strings.Split(e.To, ",")
 	msg := strings.NewReader("To: " + e.To + "\r\n" +
-		"Subject: gemscloud test email" + "\r\n" +
+		"Subject: Kubegems test email" + "\r\n" +
 		"\r\n" +
 		"from cluster " + cluster + " namespace " + namespace + " at " + time.Now().Format("2006-01-02 15:04:05"))
 	return smtp.SendMail(e.SMTPServer, auth, e.From, receivers, msg)
