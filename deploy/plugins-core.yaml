@@ -24,20 +24,6 @@ spec:
   enabled: true
   installNamespace: kubegems
   values:
-    api:
-      image:
-        repository: cnfatal/kubegems
-        pullPolicy: Always
-    init:
-      image:
-        repository: cnfatal/kubegems
-        pullPolicy: Always
-      charts:
-        image:
-          repository: cnfatal/charts-uploader
-          pullPolicy: Always
-    ingress:
-      hostname: dashboard.k8s.fatalc.cn
     mysql:
       enabled: false
     externalDatabase:
