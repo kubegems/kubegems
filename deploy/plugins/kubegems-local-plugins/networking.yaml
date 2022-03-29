@@ -6,14 +6,23 @@ metadata:
   name: gateway
   namespace: kubegems-local
 spec:
-  kind: native
+  kind: template
   installNamespace: kubegems-gateway
   enabled: true
 ---
-# istio operator
-# git clone --depth=1 --branch=release-1.11  https://github.com/istio/istio.git _istio
-# mv _istio/manifests/charts/istio-operator istio-operator
-# rm -rf _istio
+# https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: istio-operator
+  namespace: kubegems-local
+spec:
+  enabled: true
+  kind: helm
+  installNamespace: kubegems-gateway
+  repo: https://github.com/istio/istio.git
+  path: manifests/charts/istio-operator
+  version: "release-1.11"
 ---
 # https://kiali.io/docs/installation/installation-guide/install-with-helm/
 apiVersion: plugins.kubegems.io/v1beta1
