@@ -27,6 +27,7 @@ import (
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -36,15 +37,15 @@ const PluginFinalizerName = "plugins.kubegems.io/finalizer"
 // PluginReconciler reconciles a Memcached object
 type PluginReconciler struct {
 	client.Client
-	Applier Applier
+	PluginManager PluginManager
 }
 
-func NewAndSetupPluginReconciler(ctx context.Context, mgr manager.Manager, options *PluginOptions) error {
+func NewAndSetupPluginReconciler(ctx context.Context, mgr manager.Manager, options *PluginOptions, concurrent int) error {
 	reconciler := &PluginReconciler{
-		Client:  mgr.GetClient(),
-		Applier: NewPluginManager(mgr.GetConfig(), options),
+		Client:        mgr.GetClient(),
+		PluginManager: NewDelegatePluginManager(mgr.GetConfig(), options),
 	}
-	if err := reconciler.SetupWithManager(mgr); err != nil {
+	if err := reconciler.SetupWithManager(mgr, concurrent); err != nil {
 		return err
 	}
 	return nil
@@ -136,7 +137,7 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 	// nolint: nestif
 	if shouldRemove {
 		// remove
-		if err := r.Applier.Remove(ctx, thisPlugin, thisStatus); err != nil {
+		if err := r.PluginManager.Remove(ctx, thisPlugin, thisStatus); err != nil {
 			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()
 			if err := r.Status().Update(ctx, plugin); err != nil {
@@ -147,7 +148,7 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 		plugin.Status.Phase = pluginsv1beta1.PluginPhaseRemoved
 	} else {
 		// apply
-		if err := r.Applier.Apply(ctx, thisPlugin, thisStatus); err != nil {
+		if err := r.PluginManager.Apply(ctx, thisPlugin, thisStatus); err != nil {
 			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()
 			if err := r.Status().Update(ctx, plugin); err != nil {
@@ -170,8 +171,8 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *PluginReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *PluginReconciler) SetupWithManager(mgr ctrl.Manager, concurrent int) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&pluginsv1beta1.Plugin{}).
+		For(&pluginsv1beta1.Plugin{}).WithOptions(controller.Options{MaxConcurrentReconciles: concurrent}).
 		Complete(r)
 }

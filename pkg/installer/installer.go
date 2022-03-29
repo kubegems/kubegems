@@ -15,6 +15,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
+const PluginsControllerConcurrency = 5
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -62,7 +64,7 @@ func Run(ctx context.Context, options *Options) error {
 	if err := controllers.NewAndSetupPluginReconciler(ctx, mgr, &controllers.PluginOptions{
 		ChartsDir:  options.ChartsDir,
 		PluginsDir: options.PluginsDir,
-	}); err != nil {
+	}, PluginsControllerConcurrency); err != nil {
 		setupLog.Error(err, "unable to create plugin controller", "controller", "plugin")
 		return err
 	}

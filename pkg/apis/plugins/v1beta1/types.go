@@ -65,7 +65,7 @@ type PluginKind string
 const (
 	PluginKindHelm      PluginKind = "helm"
 	PluginKindKustomize PluginKind = "kustomize"
-	PluginKindNative    PluginKind = "native"
+	PluginKindTemplate  PluginKind = "template"
 )
 
 type PluginPhase string

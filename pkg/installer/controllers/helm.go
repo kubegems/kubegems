@@ -23,17 +23,17 @@ import (
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 )
 
-type HelmApplier struct {
-	helm      *Helm
+type HelmPlugin struct {
+	Helm      *Helm  `json:"helm,omitempty"`
 	ChartsDir string `json:"chartsDir,omitempty"`
 }
 
-func NewHelmApplier(config *rest.Config, path string) *HelmApplier {
-	return &HelmApplier{helm: &Helm{Config: config}, ChartsDir: path}
+func NewHelmPlugin(config *rest.Config, path string) *HelmPlugin {
+	return &HelmPlugin{Helm: &Helm{Config: config}, ChartsDir: path}
 }
 
-func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
-	upgradeRelease, err := r.helm.ApplyChart(ctx, plugin.Name, plugin.Namespace, plugin.Repo, ApplyOptions{
+func (r *HelmPlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+	upgradeRelease, err := r.Helm.ApplyChart(ctx, plugin.Name, plugin.Namespace, plugin.Repo, ApplyOptions{
 		Version: plugin.Version,
 		Path:    plugin.Path,
 		Values:  plugin.Values,
@@ -58,7 +58,7 @@ func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginSt
 	return nil
 }
 
-func (r *HelmApplier) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (r *HelmPlugin) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	log := logr.FromContextOrDiscard(ctx)
 
 	if status.Phase == pluginsv1beta1.PluginPhaseNone {
@@ -72,7 +72,7 @@ func (r *HelmApplier) Remove(ctx context.Context, plugin Plugin, status *PluginS
 	}
 
 	// uninstall
-	release, err := r.helm.RemoveChart(ctx, plugin.Name, plugin.Namespace)
+	release, err := r.Helm.RemoveChart(ctx, plugin.Name, plugin.Namespace)
 	if err != nil {
 		return err
 	}

@@ -53,7 +53,8 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 	_ = relese
 	// apply plugins
 	templatepath := filepath.Join(KubeGemInstallerPluginsPath, KubeGemLocalPluginsName)
-	resources, err := controllers.ParseManifests(templatepath, i.PluginsValues)
+	release := controllers.Release{Name: KubeGemLocalPluginsName, Namespace: KubeGemLocalPluginsNamespace}
+	resources, err := controllers.TemplatesBuild(ctx, templatepath, release, i.PluginsValues)
 	if err != nil {
 		return err
 	}

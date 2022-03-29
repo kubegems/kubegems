@@ -12,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-logr/logr"
+	"kubegems.io/pkg/log"
 )
 
 func Download(ctx context.Context, repo, version, path string) (string, error) {
@@ -35,19 +36,20 @@ func Download(ctx context.Context, repo, version, path string) (string, error) {
 		}
 		return filepath.Join(abs, u.Path, path), nil
 	}
-	// git
+	// .git
 	if strings.HasSuffix(u.Path, ".git") {
 		cachedir, err := NewCacheDir(repo, version)
 		if err != nil {
 			return "", err
 		}
 		if err := DownloadGit(ctx, repo, version, cachedir); err != nil {
+			log.Errorf("git clone %s: %v", repo, err)
 			return "", err
 		}
 		return filepath.Join(cachedir, path), nil
 	}
 	// unsupported
-	return "", fmt.Errorf("unsupported download url: %s", repo)
+	return "", fmt.Errorf("unsupported download url: %s,curren supported pattern '*.git' and 'file://*'", repo)
 }
 
 func NewCacheDir(repo, version string) (string, error) {

@@ -1,18 +1,12 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
-	"text/template"
 	"time"
 
-	"github.com/Masterminds/sprig/v3"
 	"github.com/argoproj/gitops-engine/pkg/cache"
 	"github.com/argoproj/gitops-engine/pkg/health"
 	"github.com/argoproj/gitops-engine/pkg/sync"
@@ -33,24 +27,33 @@ const (
 	ManagedPluginAnnotation = "kubegems.io/plugin-name"
 )
 
-type NativeApplier struct {
-	config      *rest.Config
-	manifestDir string
+type NativePlugin struct {
+	Config      *rest.Config
+	DefaultRepo string
+	BuildFunc   BuildFunc
 }
 
-func NewNativeApplier(restconfig *rest.Config, manifestDir string) *NativeApplier {
-	return &NativeApplier{manifestDir: manifestDir, config: restconfig}
+type Release struct {
+	Name      string
+	Namespace string
+	Version   string
+}
+
+type BuildFunc func(ctx context.Context, path string, release Release, values map[string]interface{}) ([]*unstructured.Unstructured, error)
+
+func NewNativePlugin(restconfig *rest.Config, defaultrepo string, buildfun BuildFunc) *NativePlugin {
+	return &NativePlugin{Config: restconfig, DefaultRepo: defaultrepo, BuildFunc: buildfun}
 }
 
 // nolint: funlen
-func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	namespace, name := plugin.Namespace, plugin.Name
 	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace)
 
 	repo, path := plugin.Repo, plugin.Path
 	if repo == "" {
 		// use default local repo
-		repo = "file://" + n.manifestDir
+		repo = "file://" + n.DefaultRepo
 	}
 	if path == "" {
 		path = plugin.Name
@@ -62,21 +65,21 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *Plugin
 	}
 	path = p
 
-	// parse manifests
-	tplValues := TemplatesValues{
-		Values:  plugin.Values,
-		Release: map[string]interface{}{"Name": name, "Namespace": namespace},
+	release := Release{
+		Name:      plugin.Name,
+		Namespace: plugin.Namespace,
+		Version:   plugin.Version,
 	}
-	manifests, err := ParseManifests(path, tplValues)
+	manifests, err := n.BuildFunc(ctx, path, release, plugin.Values)
 	if err != nil {
-		return fmt.Errorf("parse manifests: %w", err)
+		return fmt.Errorf("build manifests: %v", err)
 	}
 	for i := range manifests {
 		annotations := manifests[i].GetAnnotations()
 		if annotations == nil {
 			annotations = make(map[string]string)
 		}
-		annotations[ManagedPluginAnnotation] = name
+		annotations[ManagedPluginAnnotation] = fmt.Sprintf("%s/%s", plugin.Namespace, plugin.Name)
 		manifests[i].SetAnnotations(annotations)
 		// we remove namespace to avoid cross namespace conflicts
 		manifests[i].SetNamespace("")
@@ -86,7 +89,7 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *Plugin
 		return nil
 	}
 
-	result, err := ApplyNative(ctx, n.config, namespace, manifests, WithManagedResourceSelectByPluginName(name))
+	result, err := ApplyNative(ctx, n.Config, namespace, manifests, WithManagedResourceSelectByPluginName(namespace, name))
 	if err != nil {
 		return err
 	}
@@ -127,7 +130,7 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *Plugin
 	return nil
 }
 
-func (n *NativeApplier) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (n *NativePlugin) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	log := logr.FromContextOrDiscard(ctx)
 	namespace, name := plugin.Namespace, plugin.Name
 
@@ -146,7 +149,7 @@ func (n *NativeApplier) Remove(ctx context.Context, plugin Plugin, status *Plugi
 		return nil
 	}
 
-	result, err := ApplyNative(ctx, n.config, namespace, []*unstructured.Unstructured{}, WithManagedResourceSelectByPluginName(name))
+	result, err := ApplyNative(ctx, n.Config, namespace, []*unstructured.Unstructured{}, WithManagedResourceSelectByPluginName(namespace, name))
 	if err != nil {
 		return err
 	}
@@ -177,60 +180,6 @@ func (n *NativeApplier) Remove(ctx context.Context, plugin Plugin, status *Plugi
 	return nil
 }
 
-type TemplatesValues struct {
-	Values  map[string]interface{}
-	Release map[string]interface{}
-}
-
-func ParseManifests(path string, values interface{}) ([]*unstructured.Unstructured, error) {
-	var res []*unstructured.Unstructured
-	if err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		if ext := strings.ToLower(filepath.Ext(info.Name())); ext != ".json" && ext != ".yml" && ext != ".yaml" {
-			return nil
-		}
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		// template
-		data, err = Templates(info.Name(), data, values)
-		if err != nil {
-			return err
-		}
-		items, err := kube.SplitYAML(data)
-		if err != nil {
-			return fmt.Errorf("failed to parse %s: %v", path, err)
-		}
-		res = append(res, items...)
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-func Templates(name string, content []byte, values interface{}) ([]byte, error) {
-	template, err := template.
-		New(name).
-		Option("missingkey=zero").
-		Funcs(sprig.TxtFuncMap()).
-		Parse(string(content))
-	if err != nil {
-		return nil, err
-	}
-	result := bytes.NewBuffer(nil)
-	if err := template.Execute(result, values); err != nil {
-		return nil, err
-	}
-	return result.Bytes(), nil
-}
-
 type syncResult struct {
 	phase   common.OperationPhase
 	message string
@@ -255,10 +204,15 @@ func WithManagedResourceSelection(fun func(obj client.Object) bool) Option {
 	}
 }
 
-func WithManagedResourceSelectByPluginName(name string) Option {
+func WithManagedResourceSelectByPluginName(namespace, name string) Option {
+	const CountNameAndNamespace = 2
 	return WithManagedResourceSelection(func(obj client.Object) bool {
-		if annotations := obj.GetAnnotations(); annotations != nil && annotations[ManagedPluginAnnotation] == name {
-			return true
+		if annotations := obj.GetAnnotations(); annotations != nil {
+			nm := annotations[ManagedPluginAnnotation]
+			splits := strings.SplitN(nm, "/", CountNameAndNamespace)
+			if len(splits) >= 2 && splits[0] == namespace && splits[1] == name {
+				return true
+			}
 		}
 		return false
 	})

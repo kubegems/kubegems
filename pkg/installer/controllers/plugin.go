@@ -11,27 +11,29 @@ import (
 
 var ErrUnknownPluginKind = errors.New("unknown plugin kind")
 
-type Applier interface {
+type PluginManager interface {
 	// plugin is the plugin to apply,if plugin.path set use it directly.
 	Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error
 	Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error
 }
 
 type PluginOptions struct {
-	ChartsDir  string `json:"chartsDir,omitempty"`
-	PluginsDir string `json:"pluginsDir,omitempty"`
+	ChartsDir    string `json:"chartsDir,omitempty"`
+	PluginsDir   string `json:"pluginsDir,omitempty"`
+	KustomizeDir string `json:"kustomizeDir,omitempty"`
 }
 
-func NewPluginManager(restconfig *rest.Config, options *PluginOptions) *PluginManager {
-	return &PluginManager{
-		appliers: map[pluginsv1beta1.PluginKind]Applier{
-			pluginsv1beta1.PluginKindHelm:   NewHelmApplier(restconfig, options.ChartsDir),
-			pluginsv1beta1.PluginKindNative: NewNativeApplier(restconfig, options.PluginsDir),
+func NewDelegatePluginManager(restconfig *rest.Config, options *PluginOptions) *DelegatePluginManager {
+	return &DelegatePluginManager{
+		appliers: map[pluginsv1beta1.PluginKind]PluginManager{
+			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options.ChartsDir),
+			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.KustomizeDir, KustomizeBuild),
+			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options.PluginsDir, TemplatesBuild),
 		},
 	}
 }
 
-func (m *PluginManager) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (m *DelegatePluginManager) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	applier, ok := m.appliers[plugin.Kind]
 	if !ok {
 		return ErrUnknownPluginKind
@@ -39,7 +41,7 @@ func (m *PluginManager) Apply(ctx context.Context, plugin Plugin, status *Plugin
 	return applier.Apply(ctx, plugin, status)
 }
 
-func (m *PluginManager) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (m *DelegatePluginManager) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	applier, ok := m.appliers[plugin.Kind]
 	if !ok {
 		return ErrUnknownPluginKind
@@ -47,8 +49,8 @@ func (m *PluginManager) Remove(ctx context.Context, plugin Plugin, status *Plugi
 	return applier.Remove(ctx, plugin, status)
 }
 
-type PluginManager struct {
-	appliers map[pluginsv1beta1.PluginKind]Applier
+type DelegatePluginManager struct {
+	appliers map[pluginsv1beta1.PluginKind]PluginManager
 }
 
 type Plugin struct {
