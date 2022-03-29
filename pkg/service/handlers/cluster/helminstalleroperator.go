@@ -41,8 +41,11 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	relese, err := helm.ApplyChart(ctx, KubeGemInstallerChartName, i.InstallNamespace,
-		controllers.ApplyOptions{Values: i.PluginsValues, Repo: "file://" + path},
+	relese, err := helm.ApplyChart(ctx, KubeGemInstallerChartName, i.InstallNamespace, "",
+		controllers.ApplyOptions{
+			Values: i.PluginsValues,
+			Path:   path,
+		},
 	)
 	if err != nil {
 		return err

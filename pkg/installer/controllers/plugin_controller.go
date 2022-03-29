@@ -20,117 +20,29 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-type Applier interface {
-	Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error
-	Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error
-}
-
-type Plugin struct {
-	Name      string
-	Namespace string
-	Version   string
-	Repo      string
-	Values    map[string]interface{}
-}
-
-type PluginStatus struct {
-	Name              string
-	Namespace         string
-	Phase             pluginsv1beta1.PluginPhase
-	Values            map[string]interface{}
-	Version           string
-	Message           string
-	Notes             string
-	CreationTimestamp metav1.Time
-	UpgradeTimestamp  metav1.Time
-	DeletionTimestamp metav1.Time
-}
-
-func PluginStatusFromPlugin(plugin *pluginsv1beta1.Plugin) *PluginStatus {
-	if plugin == nil {
-		return nil
-	}
-	return &PluginStatus{
-		Name:              plugin.Name,
-		Namespace:         plugin.Status.InstallNamespace,
-		Phase:             plugin.Status.Phase,
-		Message:           plugin.Status.Message,
-		Values:            UnmarshalValues(plugin.Status.Values),
-		Version:           plugin.Status.Version,
-		Notes:             plugin.Status.Notes,
-		CreationTimestamp: plugin.CreationTimestamp,
-		UpgradeTimestamp:  plugin.Status.UpgradeTimestamp,
-		DeletionTimestamp: func() metav1.Time {
-			if plugin.DeletionTimestamp.IsZero() {
-				return metav1.Time{}
-			}
-			return *plugin.DeletionTimestamp
-		}(),
-	}
-}
-
-func (s PluginStatus) toPluginStatus() pluginsv1beta1.PluginStatus {
-	return pluginsv1beta1.PluginStatus{
-		Phase:             s.Phase,
-		Message:           s.Message,
-		Notes:             s.Notes,
-		InstallNamespace:  s.Namespace,
-		Values:            MarshalValues(s.Values),
-		Version:           s.Version,
-		CreationTimestamp: s.CreationTimestamp,
-		UpgradeTimestamp:  s.UpgradeTimestamp,
-		DeletionTimestamp: func() *metav1.Time {
-			if s.DeletionTimestamp.IsZero() {
-				return nil
-			}
-			return &s.DeletionTimestamp
-		}(),
-	}
-}
+const PluginFinalizerName = "plugins.kubegems.io/finalizer"
 
 // PluginReconciler reconciles a Memcached object
 type PluginReconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	RestConfig *rest.Config
-	Applyers   map[pluginsv1beta1.PluginKind]Applier
-}
-
-type PluginOptions struct {
-	ChartsDir  string `json:"chartsDir,omitempty"`
-	PluginsDir string `json:"pluginsDir,omitempty"`
+	Applier Applier
 }
 
 func NewAndSetupPluginReconciler(ctx context.Context, mgr manager.Manager, options *PluginOptions) error {
-	nativeApplier, err := NewNativeApplier(ctx, mgr, options.PluginsDir)
-	if err != nil {
-		return err
-	}
-	helmapplier, err := NewHelmApplier(mgr.GetConfig(), options.ChartsDir)
-	if err != nil {
-		return err
-	}
-	applyers := map[pluginsv1beta1.PluginKind]Applier{
-		pluginsv1beta1.PluginKindHelm:   helmapplier,
-		pluginsv1beta1.PluginKindNative: nativeApplier,
-	}
 	reconciler := &PluginReconciler{
-		Client:     mgr.GetClient(),
-		Scheme:     mgr.GetScheme(),
-		RestConfig: mgr.GetConfig(),
-		Applyers:   applyers,
+		Client:  mgr.GetClient(),
+		Applier: NewPluginManager(mgr.GetConfig(), options),
 	}
 	if err := reconciler.SetupWithManager(mgr); err != nil {
 		return err
@@ -148,9 +60,34 @@ func NewAndSetupPluginReconciler(ctx context.Context, mgr manager.Manager, optio
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := logr.FromContextOrDiscard(ctx)
+
 	plugin := &pluginsv1beta1.Plugin{}
 	if err := r.Client.Get(ctx, req.NamespacedName, plugin); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// The object is not being deleted, so if it does not have our finalizer,
+	// then lets add the finalizer and update the object. This is equivalent
+	// registering our finalizer.
+	if plugin.DeletionTimestamp == nil && !controllerutil.ContainsFinalizer(plugin, PluginFinalizerName) {
+		log.Info("add finalizer")
+		controllerutil.AddFinalizer(plugin, PluginFinalizerName)
+		if err := r.Update(ctx, plugin); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	// check the object is being deleted then remove the finalizer
+	if plugin.DeletionTimestamp != nil && controllerutil.ContainsFinalizer(plugin, PluginFinalizerName) {
+		if plugin.Status.Phase == pluginsv1beta1.PluginPhaseNone || plugin.Status.Phase != pluginsv1beta1.PluginPhaseRemoved {
+			controllerutil.RemoveFinalizer(plugin, PluginFinalizerName)
+			if err := r.Update(ctx, plugin); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, nil
+		}
+		log.Info("waiting for plugin to be removed, then remove finalizer")
 	}
 
 	if err := r.Sync(ctx, plugin); err != nil {
@@ -161,25 +98,16 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 }
 
 // Sync
-// nolint: funlen
+// nolint: funlen,gocognit
 func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plugin) error {
-	thisPlugin := Plugin{
-		Name:    plugin.Name,
-		Values:  UnmarshalValues(plugin.Spec.Values),
-		Version: plugin.Spec.Version,
-		Repo:    plugin.Spec.Repo,
-		Namespace: func() string {
-			if plugin.Spec.InstallNamespace == "" {
-				return plugin.Namespace
-			}
-			return plugin.Spec.InstallNamespace
-		}(),
-	}
+	thisPlugin := PluginFromPlugin(plugin)
 	thisStatus := PluginStatusFromPlugin(plugin)
+
+	shouldRemove := (!plugin.Spec.Enabled) || plugin.DeletionTimestamp != nil
 
 	// todo: check dependencies
 	// nolint: nestif
-	if len(plugin.Spec.Dependencies) > 0 {
+	if !shouldRemove && len(plugin.Spec.Dependencies) > 0 {
 		// check dependencies are installed
 		for _, dep := range plugin.Spec.Dependencies {
 			name, namespace, version := dep.Name, dep.Namespace, dep.Version
@@ -205,23 +133,10 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 		}
 	}
 
-	// choose applyer
-	if plugin.Spec.Kind == "" {
-		plugin.Spec.Kind = pluginsv1beta1.PluginKindHelm
-	}
-	applyer, ok := r.Applyers[plugin.Spec.Kind]
-	if !ok {
-		plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
-		plugin.Status.Message = fmt.Sprintf("unknow plugin kind %s", plugin.Spec.Kind)
-		if err := r.Status().Update(ctx, plugin); err != nil {
-			return err
-		}
-	}
-
 	// nolint: nestif
-	if !plugin.Spec.Enabled || plugin.DeletionTimestamp != nil {
+	if shouldRemove {
 		// remove
-		if err := applyer.Remove(ctx, thisPlugin, thisStatus); err != nil {
+		if err := r.Applier.Remove(ctx, thisPlugin, thisStatus); err != nil {
 			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()
 			if err := r.Status().Update(ctx, plugin); err != nil {
@@ -229,9 +144,10 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 			}
 			return err
 		}
+		plugin.Status.Phase = pluginsv1beta1.PluginPhaseRemoved
 	} else {
 		// apply
-		if err := applyer.Apply(ctx, thisPlugin, thisStatus); err != nil {
+		if err := r.Applier.Apply(ctx, thisPlugin, thisStatus); err != nil {
 			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()
 			if err := r.Status().Update(ctx, plugin); err != nil {

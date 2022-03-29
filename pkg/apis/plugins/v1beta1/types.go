@@ -24,12 +24,13 @@ type Plugin struct {
 type PluginSpec struct {
 	Enabled          bool         `json:"enabled,omitempty"`          // enabled
 	Kind             PluginKind   `json:"kind,omitempty"`             // plugin kind, e.g. "helm","kustomize","native".
-	InstallNamespace string       `json:"installNamespace,omitempty"` // plugin installNamespace
+	InstallNamespace string       `json:"installNamespace,omitempty"` // plugin install namespace, same with metadata.namespace if empty.
 	Dependencies     []Dependency `json:"dependencies,omitempty"`     // dependencies on other plugins
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Values  runtime.RawExtension `json:"values,omitempty"`  // plugin values, helm values
 	Version string               `json:"version,omitempty"` // plugin version,also helm chart version
 	Repo    string               `json:"repo,omitempty"`    // plugin repo url,optional
+	Path    string               `json:"path,omitempty"`    // plugin repo path,optional
 }
 
 type Dependency struct {
@@ -73,4 +74,5 @@ const (
 	PluginPhaseNone      PluginPhase = "None" // No phase specified, plugin is not installed or removed
 	PluginPhaseInstalled PluginPhase = "Installed"
 	PluginPhaseFailed    PluginPhase = "Failed"
+	PluginPhaseRemoved   PluginPhase = "Removed"
 )

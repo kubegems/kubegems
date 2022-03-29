@@ -106,3 +106,8 @@ kustomize: ## Download kustomize locally if necessary.
 LINTER = ${BIN_DIR}/golangci-lint
 linter: ## Download controller-gen locally if necessary.
 	GOBIN=${BIN_DIR} go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.0
+
+K8S_VERSION = 1.20.0
+setup-envtest: ## setup operator test environment
+	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	setup-envtest use ${K8S_VERSION}

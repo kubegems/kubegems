@@ -26,7 +26,6 @@ import (
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/yaml"
 )
 
@@ -39,9 +38,8 @@ type NativeApplier struct {
 	manifestDir string
 }
 
-func NewNativeApplier(ctx context.Context, mgr manager.Manager, manifestDir string) (*NativeApplier, error) {
-	n := &NativeApplier{manifestDir: manifestDir, config: mgr.GetConfig()}
-	return n, nil
+func NewNativeApplier(restconfig *rest.Config, manifestDir string) *NativeApplier {
+	return &NativeApplier{manifestDir: manifestDir, config: restconfig}
 }
 
 // nolint: funlen
@@ -49,13 +47,29 @@ func (n *NativeApplier) Apply(ctx context.Context, plugin Plugin, status *Plugin
 	namespace, name := plugin.Namespace, plugin.Name
 	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace)
 
+	repo, path := plugin.Repo, plugin.Path
+	if repo == "" {
+		// use default local repo
+		repo = "file://" + n.manifestDir
+	}
+	if path == "" {
+		path = plugin.Name
+	}
+
+	p, err := Download(ctx, repo, plugin.Version, path)
+	if err != nil {
+		return err
+	}
+	path = p
+
+	// parse manifests
 	tplValues := TemplatesValues{
 		Values:  plugin.Values,
 		Release: map[string]interface{}{"Name": name, "Namespace": namespace},
 	}
-	manifests, err := ParseManifests(filepath.Join(n.manifestDir, name), tplValues)
+	manifests, err := ParseManifests(path, tplValues)
 	if err != nil {
-		return err
+		return fmt.Errorf("parse manifests: %w", err)
 	}
 	for i := range manifests {
 		annotations := manifests[i].GetAnnotations()
@@ -155,7 +169,7 @@ func (n *NativeApplier) Remove(ctx context.Context, plugin Plugin, status *Plugi
 		return fmt.Errorf(strings.Join(errmsgs, "\n"))
 	}
 
-	status.Phase = pluginsv1beta1.PluginPhaseNone
+	status.Phase = pluginsv1beta1.PluginPhaseRemoved
 	status.Message = result.message
 	status.Name = plugin.Name
 	status.Namespace = plugin.Namespace

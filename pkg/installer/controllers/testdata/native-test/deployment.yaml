@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: native-test
+  annotations:
+    foo: "{{- .Values.foo -}}"
+spec:
+  selector:
+    matchLabels:
+      app: native-test
+  template:
+    metadata:
+      labels:
+        app: native-test
+    spec:
+      containers:
+        - name: native-test
+          image: hello-world:latest
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"

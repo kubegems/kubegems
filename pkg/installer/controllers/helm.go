@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
-	"path/filepath"
 	"reflect"
 	"time"
 
@@ -30,23 +28,16 @@ type HelmApplier struct {
 	ChartsDir string `json:"chartsDir,omitempty"`
 }
 
-func NewHelmApplier(config *rest.Config, path string) (*HelmApplier, error) {
-	return &HelmApplier{helm: &Helm{Config: config}, ChartsDir: path}, nil
+func NewHelmApplier(config *rest.Config, path string) *HelmApplier {
+	return &HelmApplier{helm: &Helm{Config: config}, ChartsDir: path}
 }
 
 func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
-	namespace, name := plugin.Namespace, plugin.Name
-	if plugin.Repo == "" {
-		// if no remote repo found,use local charts
-		plugin.Repo = "file://" + r.ChartsDir
-	}
-
-	upgradeRelease, err := r.helm.ApplyChart(ctx, name, namespace,
-		ApplyOptions{
-			Version: plugin.Version,
-			Repo:    plugin.Repo,
-			Values:  plugin.Values,
-		})
+	upgradeRelease, err := r.helm.ApplyChart(ctx, plugin.Name, plugin.Namespace, plugin.Repo, ApplyOptions{
+		Version: plugin.Version,
+		Path:    plugin.Path,
+		Values:  plugin.Values,
+	})
 	if err != nil {
 		return err
 	}
@@ -69,7 +60,6 @@ func (r *HelmApplier) Apply(ctx context.Context, plugin Plugin, status *PluginSt
 
 func (r *HelmApplier) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	log := logr.FromContextOrDiscard(ctx)
-	namespace, name := plugin.Namespace, plugin.Name
 
 	if status.Phase == pluginsv1beta1.PluginPhaseNone {
 		log.Info("already removed")
@@ -82,7 +72,7 @@ func (r *HelmApplier) Remove(ctx context.Context, plugin Plugin, status *PluginS
 	}
 
 	// uninstall
-	release, err := r.helm.RemoveChart(ctx, name, namespace)
+	release, err := r.helm.RemoveChart(ctx, plugin.Name, plugin.Namespace)
 	if err != nil {
 		return err
 	}
@@ -92,7 +82,7 @@ func (r *HelmApplier) Remove(ctx context.Context, plugin Plugin, status *PluginS
 		return nil
 	}
 
-	status.Phase = pluginsv1beta1.PluginPhaseNone
+	status.Phase = pluginsv1beta1.PluginPhaseRemoved
 	status.Message = release.Info.Description
 	status.DeletionTimestamp = convtime(release.Info.Deleted.Time)
 	status.Notes = release.Info.Notes
@@ -139,20 +129,41 @@ func (h *Helm) RemoveChart(ctx context.Context, chartName, installNamespace stri
 
 type ApplyOptions struct {
 	Version string
-	Repo    string
+	Path    string
 	Values  map[string]interface{}
 }
 
-func (h *Helm) ApplyChart(ctx context.Context,
-	chartName, installNamespace string,
-	options ApplyOptions,
-) (*release.Release, error) {
+// ApplyChart applies a chart to a release.
+// To install a local chart,set the path to the chart and chart name is ignored when find chart
+// 			eg: name: local-path-provisioner
+// 				repo: ""
+// 				path: tmp/charts/local-path-provisioner
+//			or:
+// 				name: local-path-provisioner
+// 				repo: "file://tmp/charts"
+// 				path: "local-path-provisioner"
+//
+// To install an in git chart,set repo to git clone url set version to git branch/tag and set path to chart directory in repo.
+// if path is git root,set path to '.'
+// 			eg: name: local-path-provisioner
+// 				repo: https://github.com/rancher/local-path-provisioner.git
+// 				version: master
+// 				path: deploy/chart/local-path-provisioner
+//
+// To install a normal remote chart,set repo to chart repository url and set version to chart version.
+// 			eg: name: mysql
+//				repo: https://charts.bitnami.com/bitnami
+// 				version: 1.0.0
+// 				name: mysql
+//
+// chartName is the 'release name' whenever.
+func (h *Helm) ApplyChart(ctx context.Context, name, namespace string, repo string, options ApplyOptions) (*release.Release, error) {
 	log := logr.FromContextOrDiscard(ctx)
 
-	version, repo, values := options.Version, options.Repo, options.Values
+	version, path, values := options.Version, options.Path, options.Values
+	releaseName := name
 
-	releaseName := chartName
-	cfg, err := NewHelmConfig(installNamespace, h.Config)
+	cfg, err := NewHelmConfig(namespace, h.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +174,7 @@ func (h *Helm) ApplyChart(ctx context.Context,
 			return nil, err
 		}
 
-		chart, err := LoadChart(chartName, version, repo)
+		chart, err := LoadChart(ctx, name, version, repo, path)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +183,7 @@ func (h *Helm) ApplyChart(ctx context.Context,
 		install := action.NewInstall(cfg)
 		install.ReleaseName = releaseName
 		install.CreateNamespace = true
-		install.Namespace = installNamespace
+		install.Namespace = namespace
 		return install.Run(chart, values)
 	}
 
@@ -182,14 +193,14 @@ func (h *Helm) ApplyChart(ctx context.Context,
 		return existRelease, nil
 	}
 
-	chart, err := LoadChart(chartName, version, repo)
+	chart, err := LoadChart(ctx, name, version, repo, path)
 	if err != nil {
 		return nil, err
 	}
 
 	log.Info("upgrading")
 	client := action.NewUpgrade(cfg)
-	client.Namespace = installNamespace
+	client.Namespace = namespace
 	client.ResetValues = true
 	return client.Run(releaseName, chart, values)
 }
@@ -210,64 +221,46 @@ func NewHelmConfig(namespace string, restConfig *rest.Config) (*action.Configura
 }
 
 // name is the name of the chart
-// repo is the url of the chart repository,eg: http://charts.example.com or file:///app/charts
-// version is the version of the chart,ignored when repo is file://
-// LoadChart loads the chart from the repo
-func LoadChart(name string, version string, repo string) (*chart.Chart, error) {
+// repo is the url of the chart repository,eg: http://charts.example.com
+// if repopath is not empty,download it from repo and set chartNameOrPath to repo/repopath.
+// LoadChart loads the chart from the repository
+func LoadChart(ctx context.Context, chartNameOrPath string, version string, repo, path string) (*chart.Chart, error) {
+	if path != "" {
+		p, err := Download(ctx, repo, version, path)
+		if err != nil {
+			return nil, fmt.Errorf("download chart: %w", err)
+		}
+		chartNameOrPath = p
+	}
+
+	chartPathOptions := action.ChartPathOptions{RepoURL: repo, Version: version}
 	settings := cli.New()
-	chartPathOptions := action.ChartPathOptions{
-		RepoURL: repo,
-		Version: version,
-	}
-
-	repoURL, err := url.Parse(repo)
+	chartPath, err := chartPathOptions.LocateChart(chartNameOrPath, settings)
 	if err != nil {
 		return nil, err
 	}
-
-	if repoURL.Scheme == "file" {
-		name = filepath.Join(repoURL.Path, name)
-	} else {
-		chartPathOptions.RepoURL = repo
-	}
-
-	getters := getter.All(settings)
-
-	chartPath, err := chartPathOptions.LocateChart(name, settings)
-	if err != nil {
-		return nil, err
-	}
-
 	chart, err := loader.Load(chartPath)
 	if err != nil {
 		return nil, err
 	}
-
-	// nolint: nestif
-	if deps := chart.Metadata.Dependencies; deps != nil {
-		if err := action.CheckDependencies(chart, deps); err != nil {
-			// dependencies update
-			if true {
-				man := &downloader.Manager{
-					Out:              io.Discard,
-					ChartPath:        chartPath,
-					Keyring:          chartPathOptions.Keyring,
-					SkipUpdate:       false,
-					Getters:          getters,
-					RepositoryConfig: settings.RepositoryConfig,
-					RepositoryCache:  settings.RepositoryCache,
-					Debug:            settings.Debug,
-				}
-				if err := man.Update(); err != nil {
-					return nil, err
-				}
-				// Reload the chart with the updated Chart.lock file.
-				if chart, err = loader.Load(chartPath); err != nil {
-					return nil, fmt.Errorf("failed reloading chart after repo update:%w", err)
-				}
-			} else {
-				return nil, err
-			}
+	if err := action.CheckDependencies(chart, chart.Metadata.Dependencies); err != nil {
+		// dependencies update
+		man := &downloader.Manager{
+			Out:              io.Discard,
+			ChartPath:        chartPath,
+			Keyring:          chartPathOptions.Keyring,
+			SkipUpdate:       false,
+			Getters:          getter.All(settings),
+			RepositoryConfig: settings.RepositoryConfig,
+			RepositoryCache:  settings.RepositoryCache,
+			Debug:            settings.Debug,
+		}
+		if err := man.Update(); err != nil {
+			return nil, err
+		}
+		// Reload the chart with the updated Chart.lock file.
+		if chart, err = loader.Load(chartPath); err != nil {
+			return nil, fmt.Errorf("failed reloading chart after repo update:%w", err)
 		}
 	}
 	return chart, nil
