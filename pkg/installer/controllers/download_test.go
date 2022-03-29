@@ -22,9 +22,9 @@ func TestDownload(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				plugin: Plugin{
-					Repo:    "https://github.com/rancher/local-path-provisioner.git",
-					Path:    "deploy/chart",
-					Version: "v0.0.20",
+					Repo: "https://github.com/rancher/local-path-provisioner.git",
+					Path: "deploy/chart",
+					// Version: "v0.0.20",
 				},
 			},
 			want: "",

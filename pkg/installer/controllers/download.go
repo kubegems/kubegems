@@ -57,6 +57,9 @@ func NewCacheDir(repo, version string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if version == "" {
+		return filepath.Join(os.TempDir(), "kubegems-cache", u.Host, u.Path), nil
+	}
 	return filepath.Join(os.TempDir(), "kubegems-cache", u.Host, u.Path+"@"+version), nil
 }
 
@@ -81,20 +84,30 @@ func DownloadGit(ctx context.Context, cloneurl string, rev string, dir string) e
 		if err != nil {
 			return err
 		}
-		// git remote update
-		remotes, err := repository.Remotes()
-		if err != nil {
-			return err
-		}
-		for _, remote := range remotes {
-			remote.FetchContext(ctx, &git.FetchOptions{InsecureSkipTLS: true})
-		}
 	}
 	wt, err := repository.Worktree()
 	if err != nil {
 		return err
 	}
-
+	if rev == "" {
+		if err := wt.PullContext(ctx, &git.PullOptions{
+			SingleBranch: true, Force: true, InsecureSkipTLS: true,
+		}); err != nil {
+			if !errors.Is(err, git.NoErrAlreadyUpToDate) {
+				return err
+			}
+			return nil
+		}
+		return nil
+	}
+	// git remote update
+	remotes, err := repository.Remotes()
+	if err != nil {
+		return err
+	}
+	for _, remote := range remotes {
+		remote.FetchContext(ctx, &git.FetchOptions{InsecureSkipTLS: true})
+	}
 	hash, err := repository.ResolveRevision(plumbing.Revision(rev))
 	if err != nil {
 		return err
