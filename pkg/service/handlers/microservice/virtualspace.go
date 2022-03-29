@@ -894,7 +894,7 @@ func (h *VirtualSpaceHandler) environmentProcess(c *gin.Context, decodebody inte
 		handlers.NotOK(c, err)
 		return
 	}
-	if strconv.Itoa(int(*env.VirtualSpaceID)) != c.Param("virtualspace_id") {
+	if env.VirtualSpaceID == nil || strconv.Itoa(int(*env.VirtualSpaceID)) != c.Param("virtualspace_id") {
 		handlers.NotOK(c, fmt.Errorf("环境%s不是该虚拟空间成员", env.EnvironmentName))
 		return
 	}
