@@ -81,7 +81,7 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// check the object is being deleted then remove the finalizer
 	if plugin.DeletionTimestamp != nil && controllerutil.ContainsFinalizer(plugin, PluginFinalizerName) {
-		if plugin.Status.Phase == pluginsv1beta1.PluginPhaseNone || plugin.Status.Phase != pluginsv1beta1.PluginPhaseRemoved {
+		if plugin.Status.Phase == pluginsv1beta1.PluginPhaseNone || plugin.Status.Phase == pluginsv1beta1.PluginPhaseRemoved {
 			controllerutil.RemoveFinalizer(plugin, PluginFinalizerName)
 			if err := r.Update(ctx, plugin); err != nil {
 				return ctrl.Result{}, err
