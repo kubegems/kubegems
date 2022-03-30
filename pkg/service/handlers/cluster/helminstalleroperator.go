@@ -37,14 +37,15 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 	}
 	log.FromContextOrDiscard(ctx).Info("applying kubegems-installer chart", "chartPath", i.ChartPath)
 	helm := controllers.Helm{Config: i.Config}
-	path, err := filepath.Abs(i.ChartPath)
+
+	repopath, err := filepath.Abs(i.ChartPath)
 	if err != nil {
 		return err
 	}
-	relese, err := helm.ApplyChart(ctx, KubeGemInstallerChartName, i.InstallNamespace, "",
+	relese, err := helm.ApplyChart(ctx, KubeGemInstallerChartName, i.InstallNamespace, "file://"+repopath,
 		controllers.ApplyOptions{
 			Values: i.PluginsValues,
-			Path:   path,
+			Path:   KubeGemInstallerChartName,
 		},
 	)
 	if err != nil {

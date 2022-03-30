@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"reflect"
 	"time"
 
@@ -29,13 +30,24 @@ type HelmPlugin struct {
 }
 
 func NewHelmPlugin(config *rest.Config, path string) *HelmPlugin {
+	if abs, _ := filepath.Abs(path); abs != path {
+		path = abs
+	}
 	return &HelmPlugin{Helm: &Helm{Config: config}, ChartsDir: path}
 }
 
 func (r *HelmPlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
-	upgradeRelease, err := r.Helm.ApplyChart(ctx, plugin.Name, plugin.Namespace, plugin.Repo, ApplyOptions{
+	repo, path := plugin.Repo, plugin.Path
+	if repo == "" {
+		repo = "file://" + r.ChartsDir
+		if path == "" {
+			path = plugin.Name
+		}
+	}
+
+	upgradeRelease, err := r.Helm.ApplyChart(ctx, plugin.Name, plugin.Namespace, repo, ApplyOptions{
 		Version: plugin.Version,
-		Path:    plugin.Path,
+		Path:    path,
 		Values:  plugin.Values,
 	})
 	if err != nil {
@@ -137,10 +149,10 @@ type ApplyOptions struct {
 // To install a local chart,set the path to the chart and chart name is ignored when find chart
 // 			eg: name: local-path-provisioner
 // 				repo: ""
-// 				path: tmp/charts/local-path-provisioner
+// 				path: tmp/charts/local-path-provisioner  // local path to the chart.
 //			or:
 // 				name: local-path-provisioner
-// 				repo: "file://tmp/charts"
+// 				repo: "file:///tmp/charts"   // must absolute path
 // 				path: "local-path-provisioner"
 //
 // To install an in git chart,set repo to git clone url set version to git branch/tag and set path to chart directory in repo.
@@ -150,7 +162,7 @@ type ApplyOptions struct {
 // 				version: master
 // 				path: deploy/chart/local-path-provisioner
 //
-// To install a normal remote chart,set repo to chart repository url and set version to chart version.
+// To install a normal remote chart,set repo to chart repository url and set version to chart version.(keep 'path' empty)
 // 			eg: name: mysql
 //				repo: https://charts.bitnami.com/bitnami
 // 				version: 1.0.0
@@ -158,7 +170,7 @@ type ApplyOptions struct {
 //
 // chartName is the 'release name' whenever.
 func (h *Helm) ApplyChart(ctx context.Context, name, namespace string, repo string, options ApplyOptions) (*release.Release, error) {
-	log := logr.FromContextOrDiscard(ctx)
+	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace, "repo", repo, "version", options.Version, "path", options.Path)
 
 	version, path, values := options.Version, options.Path, options.Values
 	releaseName := name

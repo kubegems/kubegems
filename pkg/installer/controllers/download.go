@@ -15,6 +15,9 @@ import (
 	"kubegems.io/pkg/log"
 )
 
+// Download from repo
+// only support: file:///<abs path> ; no support file://<rel path>, file://./<rel path> ;
+// https://tools.ietf.org/html/rfc8089   only absolute path allowed
 func Download(ctx context.Context, repo, version, path string) (string, error) {
 	logr.FromContextOrDiscard(ctx).
 		WithValues("repo", repo, "version", version, "path", path).
@@ -24,17 +27,16 @@ func Download(ctx context.Context, repo, version, path string) (string, error) {
 		return filepath.Join(repo, path), nil
 	}
 	// download
-	u, err := url.Parse(repo)
+	u, err := url.ParseRequestURI(repo)
 	if err != nil {
 		return "", err
 	}
 	// file://
 	if u.Scheme == "file" || u.Scheme == "" {
-		abs, err := filepath.Abs(u.Host)
-		if err != nil {
-			return "", err
+		if u.Host != "" && u.Host != "localhost" {
+			return "", fmt.Errorf("unsupported host: %s", u.Host)
 		}
-		return filepath.Join(abs, u.Path, path), nil
+		return filepath.Join(u.Path, path), nil
 	}
 	// .git
 	if strings.HasSuffix(u.Path, ".git") {

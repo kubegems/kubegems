@@ -142,6 +142,8 @@ var _ = Describe("Basic Plugin tests", func() {
 	// 	Expect(plugin.Status.Version).To(Equal("0.0.21"))
 	// })
 
+	testdatadir, _ := filepath.Abs("testdata")
+
 	It("creates a local helm plugin", func() {
 		plugin := &pluginsv1beta1.Plugin{
 			ObjectMeta: metav1.ObjectMeta{
@@ -170,7 +172,8 @@ var _ = Describe("Basic Plugin tests", func() {
 			},
 			Spec: pluginsv1beta1.PluginSpec{
 				Kind:    pluginsv1beta1.PluginKindTemplate,
-				Repo:    "file://testdata",
+				Repo:    "file:///" + testdatadir,
+				Path:    "template-test",
 				Enabled: true,
 				Values: MarshalValues(map[string]interface{}{
 					"foo": "barvalue",
@@ -198,7 +201,7 @@ var _ = Describe("Basic Plugin tests", func() {
 			},
 			Spec: pluginsv1beta1.PluginSpec{
 				Kind:    pluginsv1beta1.PluginKindKustomize,
-				Repo:    "file://testdata",
+				Repo:    "file:///" + testdatadir,
 				Enabled: true,
 			},
 		}

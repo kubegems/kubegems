@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
@@ -42,6 +43,9 @@ type Release struct {
 type BuildFunc func(ctx context.Context, path string, release Release, values map[string]interface{}) ([]*unstructured.Unstructured, error)
 
 func NewNativePlugin(restconfig *rest.Config, defaultrepo string, buildfun BuildFunc) *NativePlugin {
+	if abs, _ := filepath.Abs(defaultrepo); abs != defaultrepo {
+		defaultrepo = abs
+	}
 	return &NativePlugin{Config: restconfig, DefaultRepo: defaultrepo, BuildFunc: buildfun}
 }
 
