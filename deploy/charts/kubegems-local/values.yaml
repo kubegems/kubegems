@@ -472,6 +472,147 @@ agent:
         - regex: endpoint|service|container|pod|namespace
           action: labeldrop
 
+## kubectl parameters
+##
+kubectl:
+  ## KubeGems kubectl image
+  ## ref: https://hub.docker.com/r/kubegems/kubegems/tags/
+  ## @param kubectl.image.registry kubectl image registry
+  ## @param kubectl.image.repository kubectl image repository
+  ## @param kubectl.image.tag kubectl image tag (immutable tags are recommended)
+  ## @param kubectl.image.pullPolicy kubectl image pull policy
+  ## @param kubectl.image.pullSecrets kubectl image pull secrets
+  ## @param kubectl.image.debug Enable kubectl image debug mode
+  ##
+  image:
+    registry: docker.io
+    repository: kubegems/gems-kubectl
+    tag: latest
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Enable debug mode
+    ##
+    debug: false
+  ## @param kubectl.replicaCount Number of kubectl replicas to deploy
+  ##
+  replicaCount: 1
+
+  ## kubectl resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param kubectl.resources.limits The resources limits for the kubectl containers
+  ## @param kubectl.resources.requests The requested resources for the kubectl containers
+  ##
+  resources:
+    limits: {}
+    requests: {}
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param kubectl.podSecurityContext.enabled Enabled kubectl pods' Security Context
+  ## @param kubectl.podSecurityContext.fsGroup Set kubectl pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+  ## Configure Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param kubectl.containerSecurityContext.enabled Enabled kubectl containers' Security Context
+  ## @param kubectl.containerSecurityContext.runAsUser Set kubectl containers' Security Context runAsUser
+  ## @param kubectl.containerSecurityContext.runAsNonRoot Set kubectl containers' Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## @param kubectl.existingConfigmap The name of an existing ConfigMap with your custom configuration for kubectl
+  ##
+  existingConfigmap:
+  ## @param kubectl.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param kubectl.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param kubectl.hostAliases kubectl pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param kubectl.podLabels Extra labels for kubectl pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param kubectl.podAnnotations Annotations for kubectl pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param kubectl.podAffinityPreset Pod affinity preset. Ignored if `kubectl.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param kubectl.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `kubectl.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node kubectl.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param kubectl.nodeAffinityPreset.type Node affinity preset type. Ignored if `kubectl.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param kubectl.nodeAffinityPreset.key Node label key to match. Ignored if `kubectl.affinity` is set
+    ##
+    key: ""
+    ## @param kubectl.nodeAffinityPreset.values Node label values to match. Ignored if `kubectl.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param kubectl.affinity Affinity for kubectl pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `kubectl.podAffinityPreset`, `kubectl.podAntiAffinityPreset`, and `kubectl.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param kubectl.nodeSelector Node labels for kubectl pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param kubectl.tolerations Tolerations for kubectl pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param kubectl.updateStrategy.type kubectl statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param kubectl.priorityClassName kubectl pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param kubectl.schedulerName Name of the k8s scheduler (other than default) for kubectl pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param kubectl.lifecycleHooks for the kubectl container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+
 ## @section Controller Parameters
 
 ## controller configuration

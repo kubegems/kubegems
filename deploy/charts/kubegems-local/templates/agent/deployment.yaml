@@ -74,6 +74,7 @@ spec:
           args:
             - agent
             - --system-listen=:{{ .Values.agent.containerPorts.http }}
+            - --debug-podselector="app.kubernetes.io/component=kubectl,app.kubernetes.io/name={{ include "common.names.fullname" . }}"
             {{- if .Values.agent.tls.enabled }}
             - --system-cafile=/certs/ca.crt
             - --system-certfile=/certs/tls.crt

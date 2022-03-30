@@ -36,6 +36,18 @@ Return the proper agent serviceAccount name
 {{- end -}}
 {{- end -}}
 
+
+{{/*
+Return the proper kubegems-local.kubectl image name
+*/}}
+{{- define "kubegems-local.kubectl.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.kubectl.image "global" .Values.global) }}
+{{- end -}}
+
+{{- define "kubegems-local.kubectl.fullname" -}}
+{{- printf "%s-kubectl" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
