@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 type DatabaseHelper struct {
@@ -95,7 +96,7 @@ type AlertPosition struct {
 
 func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope string) (AlertPosition, error) {
 	ret := AlertPosition{}
-	if scope == "" {
+	if scope == "" || scope == prometheus.ScopeNormal {
 		sql := `select environments.id as environment_id, environments.environment_name, environments.cluster_id, projects.id as project_id, projects.project_name, tenants.id as tenant_id, tenants.tenant_name
 		from environments left join clusters on environments.cluster_id = clusters.id
 			left join projects on environments.project_id = projects.id
