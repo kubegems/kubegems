@@ -20,7 +20,7 @@ const (
 	KubeGemInstallerChartName      = "kubegems-installer"
 	KubeGemInstallerChartNamespace = "kubegems-installer"
 	KubeGemLocalPluginsNamespace   = "kubegems-local"
-	KubeGemLocalPluginsFile        = "/app/plugins/kubegems-local-plugins.yaml"
+	KubeGemLocalPluginsFile        = "/app/plugins/kubegems-local-stack.yaml"
 )
 
 type OpratorInstaller struct {
