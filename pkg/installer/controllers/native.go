@@ -34,13 +34,7 @@ type NativePlugin struct {
 	BuildFunc   BuildFunc
 }
 
-type Release struct {
-	Name      string
-	Namespace string
-	Version   string
-}
-
-type BuildFunc func(ctx context.Context, path string, release Release, values map[string]interface{}) ([]*unstructured.Unstructured, error)
+type BuildFunc func(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error)
 
 func NewNativePlugin(restconfig *rest.Config, defaultrepo string, buildfun BuildFunc) *NativePlugin {
 	if abs, _ := filepath.Abs(defaultrepo); abs != defaultrepo {
@@ -54,27 +48,21 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 	namespace, name := plugin.Namespace, plugin.Name
 	log := logr.FromContextOrDiscard(ctx).WithValues("name", name, "namespace", namespace)
 
-	repo, path := plugin.Repo, plugin.Path
-	if repo == "" {
+	if plugin.Repo == "" {
 		// use default local repo
-		repo = "file://" + n.DefaultRepo
+		plugin.Repo = "file://" + n.DefaultRepo
 	}
-	if path == "" {
-		path = plugin.Name
+	if plugin.Path == "" {
+		plugin.Path = plugin.Name
 	}
 
-	p, err := Download(ctx, repo, plugin.Version, path)
+	p, err := Download(ctx, plugin.Repo, plugin.Version, plugin.Path)
 	if err != nil {
 		return err
 	}
-	path = p
+	plugin.Path = p
 
-	release := Release{
-		Name:      plugin.Name,
-		Namespace: plugin.Namespace,
-		Version:   plugin.Version,
-	}
-	manifests, err := n.BuildFunc(ctx, path, release, plugin.Values)
+	manifests, err := n.BuildFunc(ctx, plugin)
 	if err != nil {
 		return fmt.Errorf("build manifests: %v", err)
 	}

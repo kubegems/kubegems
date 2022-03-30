@@ -47,7 +47,7 @@ func NewDefaultOptions() *Options {
 }
 
 func Run(ctx context.Context, options *Options) error {
-	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,

@@ -18,11 +18,13 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/go-logr/logr"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,6 +35,8 @@ import (
 )
 
 const PluginFinalizerName = "plugins.kubegems.io/finalizer"
+
+const DependencyErrorRetryInterval = 5 * time.Second
 
 // PluginReconciler reconciles a Memcached object
 type PluginReconciler struct {
@@ -92,10 +96,23 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	if err := r.Sync(ctx, plugin); err != nil {
+		// if is dependency error, then we can retry at a certain interval
+		if errors.Is(err, DependencyError{}) {
+			return ctrl.Result{RequeueAfter: DependencyErrorRetryInterval}, err
+		}
 		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
+}
+
+type DependencyError struct {
+	Reason     string
+	Dependency pluginsv1beta1.Dependency
+}
+
+func (e DependencyError) Error() string {
+	return fmt.Sprintf("dependency %s/%s :%s", e.Dependency.Namespace, e.Dependency.Name, e.Reason)
 }
 
 // Sync
@@ -120,13 +137,13 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 			}
 			depPlugin := &pluginsv1beta1.Plugin{}
 			if err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, depPlugin); err != nil {
-				if errors.IsNotFound(err) {
-					return fmt.Errorf("dependency %s/%s not found", name, namespace)
+				if apierrors.IsNotFound(err) {
+					return DependencyError{Reason: "not found", Dependency: dep}
 				}
 				return err
 			}
 			if depPlugin.Status.Phase != pluginsv1beta1.PluginPhaseInstalled {
-				return fmt.Errorf("dependency %s/%s is not installed", name, namespace)
+				return DependencyError{Reason: "not installed", Dependency: dep}
 			}
 			if version != "" {
 				// TODO: check version

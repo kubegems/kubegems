@@ -2,9 +2,14 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 )
@@ -23,14 +28,34 @@ type PluginOptions struct {
 	KustomizeDir string `json:"kustomizeDir,omitempty"`
 }
 
+type NoPluginBuildFunc func(ctx context.Context, dir string, release Release, values map[string]interface{}) ([]*unstructured.Unstructured, error)
+
 func NewDelegatePluginManager(restconfig *rest.Config, options *PluginOptions) *DelegatePluginManager {
 	return &DelegatePluginManager{
 		appliers: map[pluginsv1beta1.PluginKind]PluginManager{
 			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options.ChartsDir),
-			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.KustomizeDir, KustomizeBuild),
-			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options.PluginsDir, TemplatesBuild),
+			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.KustomizeDir, KustomizeBuildPlugin),
+			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options.PluginsDir, TemplatesBuildPlugin),
+			pluginsv1beta1.PluginKindInline:    NewNativePlugin(restconfig, options.PluginsDir, InlineBuildPlugin),
 		},
 	}
+}
+
+func InlineBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
+	rss := make([]*unstructured.Unstructured, 0, len(plugin.Resources))
+	for i, obj := range plugin.Resources {
+		uns := &unstructured.Unstructured{}
+		if obj.Object != nil {
+			// already unmarshaled
+			scheme.Scheme.Convert(obj.Object, uns, nil)
+		} else {
+			if err := json.Unmarshal(obj.Raw, uns); err != nil {
+				return nil, fmt.Errorf("unmarshal resource[%d]: %v", i, err)
+			}
+		}
+		rss = append(rss, uns)
+	}
+	return rss, nil
 }
 
 func (m *DelegatePluginManager) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
@@ -60,6 +85,7 @@ type Plugin struct {
 	Repo      string                    `json:"repo,omitempty"`
 	Version   string                    `json:"version,omitempty"`
 	Path      string                    `json:"path,omitempty"`
+	Resources []runtime.RawExtension    `json:"resources,omitempty"`
 	Values    map[string]interface{}    `json:"values,omitempty"`
 }
 
@@ -120,12 +146,13 @@ func PluginStatusFromPlugin(plugin *pluginsv1beta1.Plugin) *PluginStatus {
 
 func PluginFromPlugin(plugin *pluginsv1beta1.Plugin) Plugin {
 	return Plugin{
-		Name:    plugin.Name,
-		Kind:    plugin.Spec.Kind,
-		Values:  UnmarshalValues(plugin.Spec.Values),
-		Version: plugin.Spec.Version,
-		Repo:    plugin.Spec.Repo,
-		Path:    plugin.Spec.Path,
+		Name:      plugin.Name,
+		Kind:      plugin.Spec.Kind,
+		Values:    UnmarshalValues(plugin.Spec.Values),
+		Version:   plugin.Spec.Version,
+		Repo:      plugin.Spec.Repo,
+		Path:      plugin.Spec.Path,
+		Resources: plugin.Spec.Resources,
 		Namespace: func() string {
 			if plugin.Spec.InstallNamespace == "" {
 				return plugin.Namespace

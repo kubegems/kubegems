@@ -17,8 +17,12 @@ import (
 	"sigs.k8s.io/kustomize/api/krusty"
 )
 
+func KustomizeBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
+	return KustomizeBuild(ctx, plugin.Path)
+}
+
 // build kustomization
-func KustomizeBuild(ctx context.Context, dir string, release Release, values map[string]interface{}) ([]*unstructured.Unstructured, error) {
+func KustomizeBuild(ctx context.Context, dir string) ([]*unstructured.Unstructured, error) {
 	k := krusty.MakeKustomizer(krusty.MakeDefaultOptions())
 	m, err := k.Run(filesys.MakeFsOnDisk(), dir)
 	if err != nil {
@@ -39,15 +43,28 @@ func KustomizeBuild(ctx context.Context, dir string, release Release, values map
 	return res, nil
 }
 
-func TemplatesBuild(ctx context.Context, path string, release Release, values map[string]interface{}) ([]*unstructured.Unstructured, error) {
+type Release struct {
+	Name      string
+	Namespace string
+	Version   string
+}
+
+func TemplatesBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
 	tplValues := struct {
 		Values  map[string]interface{}
-		Release interface{}
+		Release Release
 	}{
-		Values:  values,
-		Release: release,
+		Values: plugin.Values,
+		Release: Release{
+			Name:      plugin.Name,
+			Namespace: plugin.Namespace,
+			Version:   plugin.Version,
+		},
 	}
+	return TemplatesBuild(ctx, plugin.Path, tplValues)
+}
 
+func TemplatesBuild(ctx context.Context, path string, tplValues interface{}) ([]*unstructured.Unstructured, error) {
 	var res []*unstructured.Unstructured
 	if err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

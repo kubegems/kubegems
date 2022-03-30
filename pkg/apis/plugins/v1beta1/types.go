@@ -31,6 +31,8 @@ type PluginSpec struct {
 	Version string               `json:"version,omitempty"` // plugin version,also helm chart version
 	Repo    string               `json:"repo,omitempty"`    // plugin repo url,optional
 	Path    string               `json:"path,omitempty"`    // plugin repo path,optional
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Resources []runtime.RawExtension `json:"resources,omitempty"` // inline resources
 }
 
 type Dependency struct {
@@ -66,6 +68,7 @@ const (
 	PluginKindHelm      PluginKind = "helm"
 	PluginKindKustomize PluginKind = "kustomize"
 	PluginKindTemplate  PluginKind = "template"
+	PluginKindInline    PluginKind = "inline"
 )
 
 type PluginPhase string

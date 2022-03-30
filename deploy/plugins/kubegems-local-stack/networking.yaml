@@ -9,6 +9,8 @@ spec:
   kind: template
   installNamespace: kubegems-gateway
   enabled: true
+  values:
+    repository: ""
 ---
 # https://kiali.io/docs/installation/installation-guide/install-with-helm/
 apiVersion: plugins.kubegems.io/v1beta1
