@@ -83,7 +83,7 @@ func TemplatesBuild(ctx context.Context, path string, release Release, values ma
 func templates(name string, content []byte, values interface{}) ([]byte, error) {
 	template, err := template.
 		New(name).
-		Option("missingkey=zero").
+		Option("missingkey=error").
 		Funcs(sprig.TxtFuncMap()).
 		Parse(string(content))
 	if err != nil {

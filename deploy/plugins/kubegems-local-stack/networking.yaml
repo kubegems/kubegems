@@ -10,20 +10,6 @@ spec:
   installNamespace: kubegems-gateway
   enabled: true
 ---
-# https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
-metadata:
-  name: istio-operator
-  namespace: "{{ .Release.Namespace }}"
-spec:
-  enabled: true
-  kind: helm
-  installNamespace: kubegems-gateway
-  repo: https://github.com/istio/istio.git
-  path: manifests/charts/istio-operator
-  version: "release-1.11"
----
 # https://kiali.io/docs/installation/installation-guide/install-with-helm/
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin

@@ -32,11 +32,6 @@ metadata:
   namespace: observability
 spec:
   strategy: production
-  sampling:
-    options:
-      default_strategy:
-        type: "probabilistic"
-        param: "0.5"
   ingress:
     enabled: false
   collector:

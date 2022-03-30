@@ -14,8 +14,14 @@ spec:
     logging:
       enabled: false
     kubegems:
-      verson: latest
+      version: latest
       registry: docker.io
       repository: kubegems/kubegems
     nvidiagpu:
       enabled: false
+    istio:
+      enabled: true
+      operator:
+        hub: ""
+        tracing:
+          sampling: 50
