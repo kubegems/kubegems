@@ -4,7 +4,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: gateway
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   kind: template
   installNamespace: kubegems-gateway
@@ -15,7 +15,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: istio-operator
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   enabled: true
   kind: helm
@@ -29,7 +29,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kiali-server
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   kind: helm
   repo: https://kiali.org/helm-charts
@@ -44,7 +44,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: argo-rollouts
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   kind: helm
   repo: https://argoproj.github.io/argo-helm

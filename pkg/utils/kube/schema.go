@@ -10,6 +10,7 @@ import (
 	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	istiopkgv1alpha1 "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	applicationv1beta1 "kubegems.io/pkg/apis/application/v1beta1"
@@ -31,6 +32,11 @@ func AddToschema(schema *runtime.Scheme) {
 	_ = applicationv1beta1.AddToScheme(schema)
 	_ = loggingv1beta1.AddToScheme(schema)
 	_ = pluginv1beta1.AddToScheme(schema)
+}
+
+// nolint: gochecknoinits
+func init() {
+	AddToschema(scheme.Scheme)
 }
 
 func GetScheme() *runtime.Scheme {

@@ -1,0 +1,21 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems-local-stack
+  namespace: kubegems-local
+spec:
+  kind: template
+  enabled: true
+  values:
+    clusterName: local
+    storageClass: local-path
+    installer:
+      enabled: false # enabel self managed installer
+    logging:
+      enabled: false
+    kubegems:
+      verson: latest
+      registry: docker.io
+      repository: kubegems/kubegems
+    nvidiagpu:
+      enabled: false

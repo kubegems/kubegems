@@ -3,7 +3,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: elasticsearch
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   kind: helm
   repo: https://helm.elastic.co
@@ -18,7 +18,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: jaeger-operator
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   kind: helm
   repo: https://jaegertracing.github.io/helm-charts
@@ -35,8 +35,8 @@ spec:
   sampling:
     options:
       default_strategy:
-        type: "{{ .Values.jaeger.operator.sampling.type | default('probabilistic') }}"
-        param: "{{ .Values.jaeger.operator.sampling.param | default('0.5') }}"
+        type: "probabilistic"
+        param: "0.5"
   ingress:
     enabled: false
   collector:

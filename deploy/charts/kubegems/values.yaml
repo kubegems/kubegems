@@ -458,7 +458,7 @@ init:
       ## Enable debug mode
       ##
       debug: false
-        ## @param init.replicaCount Number of API replicas to deploy
+    ## @param init.replicaCount Number of API replicas to deploy
     ##
     replicaCount: 1
     ## @param init.restartPolicy The restart policy for job,valid values: "OnFailure", "Never"
@@ -1923,6 +1923,11 @@ redis:
   architecture: standalone
   auth:
     password: ""
+  ## @param master.persistence.enabled Enable persistence on Redis&trade; master nodes using Persistent Volume Claims
+  ##
+  master:
+    persistence:
+      enabled: false
 
 ## @section External RedisCache configuration
 ##
@@ -1972,10 +1977,13 @@ externalArgoCD:
 ## @skip gitea.gitea.admin
 gitea:
   enabled: true
+  memcached:
+    enabled: false
   gitea:
     admin:
       # username: ""
       # password: ""
+  # to use external DB https://gitea.com/gitea/helm-chart/issues/9
 
 ## @section External Git configuration
 ##

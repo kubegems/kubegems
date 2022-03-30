@@ -186,6 +186,7 @@ func (h *Helm) ApplyChart(ctx context.Context, name, namespace string, repo stri
 			return nil, err
 		}
 
+		log.Info("loading chart")
 		chart, err := LoadChart(ctx, name, version, repo, path)
 		if err != nil {
 			return nil, err

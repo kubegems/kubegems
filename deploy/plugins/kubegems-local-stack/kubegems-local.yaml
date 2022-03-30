@@ -2,16 +2,13 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kubegems-local
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   kind: helm
   enabled: true
-  installNamespace: "{{ .Values.kubegems.namespace }}"
   dependencies:
     - name: cert-manager
   values:
-    clusterName: "{{ .Values.clusterName }}"
-    storageClass: "{{ .Values.storageClass }}"
     agent:
       extraArgs:
         - --api-prometheusserver=http://kube-prometheus-stack-prometheus.prometheus:9090
@@ -20,6 +17,10 @@ spec:
         - --api-jaegerserber=http://jaeger-query.observability:16686
       image:
         tag: "{{ .Values.kubegems.version }}"
+        registry: "{{ .Values.kubegems.registry }}"
+        repository: "{{ .Values.kubegems.repository }}"
     controller:
       image:
         tag: "{{ .Values.kubegems.version }}"
+        registry: "{{ .Values.kubegems.registry }}"
+        repository: "{{ .Values.kubegems.repository }}"

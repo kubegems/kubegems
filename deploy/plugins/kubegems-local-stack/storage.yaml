@@ -4,7 +4,7 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: local-path-provisioner
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   enabled: true
   kind: helm
@@ -17,10 +17,10 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: external-snapshotter
-  namespace: kubegems-local
+  namespace: "{{ .Release.Namespace }}"
 spec:
   kind: kustomize
-  repo: https://github.com/kubernetes-csi/external-snapshotter
+  repo: https://github.com/kubernetes-csi/external-snapshotter.git
   version: "v5.0.0"
   path: client/config/crd
   installNamespace: kube-system

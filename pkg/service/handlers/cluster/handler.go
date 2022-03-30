@@ -488,6 +488,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if cluster.InstallNamespace == "" {
+				// local components install namespace
 				cluster.InstallNamespace = KubeGemLocalPluginsNamespace
 			}
 			values := map[string]interface{}{}
@@ -495,8 +496,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 
 			// override values
 			values["kubegems"] = map[string]interface{}{
-				"version":   version.Get().GitVersion,
-				"namespace": cluster.InstallNamespace, // local components install namespace
+				"version": version.Get().GitVersion,
 			}
 			values["clusterName"] = cluster.ClusterName
 			values["storageClass"] = cluster.DefaultStorageClass
@@ -505,9 +505,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			installer := OpratorInstaller{
 				Config: config,
 				// values to template `deploy/plugins/kubegems-local-plugins`
-				PluginsValues: map[string]interface{}{
-					"Values": values,
-				},
+				PluginsValues: values,
 			}
 			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
