@@ -58,6 +58,10 @@ generate: ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefiniti
 	# $(CONTROLLER_GEN) paths="./pkg/..." rbac:roleName=manager-role webhook output:dir=deploy/rbac 	# Generate RBAC
 	# $(CONTROLLER_GEN) paths="./pkg/..." webhook output:dir=deploy/webhook 							# Generate Webhooks
 
+	helm template --namespace kubegems-installer --include-crds  kubegems-installer deploy/charts/kubegems-installer \
+	| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
+	| tee deploy/installer.yaml
+
 swagger:
 	# go mod vendor
 	# 需要 go install github.com/swaggo/swag/cmd/swag@v1.6.7 其他版本不太行
@@ -111,8 +115,3 @@ K8S_VERSION = 1.20.0
 setup-envtest: ## setup operator test environment
 	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 	setup-envtest use ${K8S_VERSION}
-
-generate-installer-manifests: ## Generate installer manifests.
-	helm template --namespace kubegems-installer --include-crds  kubegems-installer deploy/charts/kubegems-installer \
-	| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
-	| tee deploy/installer.yaml

@@ -76,6 +76,11 @@ spec:
                 type: string
               repo:
                 type: string
+              resources:
+                items:
+                  type: object
+                type: array
+                x-kubernetes-preserve-unknown-fields: true
               values:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
