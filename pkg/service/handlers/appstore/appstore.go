@@ -92,7 +92,7 @@ func (h *AppstoreHandler) AppDetail(c *gin.Context) {
 
 	repourl := ""
 	if reponame == InternalChartRepoName {
-		repourl = "http://gems-chartmuseum.gemcloud-system:8030/gems" // TODO: 这里需要统一，由于默认仓库在数据库中无记录。所以之前写死的
+		repourl = h.AppStoreOpt.Addr + "/" + reponame
 	} else {
 		modelrepo := &models.ChartRepo{ChartRepoName: reponame}
 		if err := h.GetDB().Where(modelrepo).Find(modelrepo).Error; err != nil {
