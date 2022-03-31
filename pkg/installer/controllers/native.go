@@ -32,6 +32,8 @@ type NativePlugin struct {
 	Config      *rest.Config
 	DefaultRepo string
 	BuildFunc   BuildFunc
+
+	applyer *NativeApply
 }
 
 type BuildFunc func(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error)
@@ -81,7 +83,7 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 		return nil
 	}
 
-	result, err := ApplyNative(ctx, n.Config, namespace, manifests, WithManagedResourceSelectByPluginName(namespace, name))
+	result, err := n.apply(ctx, namespace, manifests, WithManagedResourceSelectByPluginName(namespace, name))
 	if err != nil {
 		return err
 	}
@@ -141,7 +143,7 @@ func (n *NativePlugin) Remove(ctx context.Context, plugin Plugin, status *Plugin
 		return nil
 	}
 
-	result, err := ApplyNative(ctx, n.Config, namespace, []*unstructured.Unstructured{}, WithManagedResourceSelectByPluginName(namespace, name))
+	result, err := n.apply(ctx, namespace, []*unstructured.Unstructured{}, WithManagedResourceSelectByPluginName(namespace, name))
 	if err != nil {
 		return err
 	}
@@ -170,6 +172,13 @@ func (n *NativePlugin) Remove(ctx context.Context, plugin Plugin, status *Plugin
 	status.Namespace = plugin.Namespace
 	status.DeletionTimestamp = metav1.Now()
 	return nil
+}
+
+func (n *NativePlugin) apply(ctx context.Context, namespace string, resources []*unstructured.Unstructured, options ...Option) (*syncResult, error) {
+	if n.applyer == nil {
+		n.applyer = &NativeApply{Config: n.Config}
+	}
+	return n.applyer.Apply(ctx, namespace, resources, options...)
 }
 
 type syncResult struct {
@@ -210,26 +219,29 @@ func WithManagedResourceSelectByPluginName(namespace, name string) Option {
 	})
 }
 
-func ApplyNative(ctx context.Context, config *rest.Config, namespace string, resources []*unstructured.Unstructured, options ...Option) (*syncResult, error) {
-	log := logr.FromContextOrDiscard(ctx).WithValues("namespace", namespace)
+type NativeApply struct {
+	cache  cache.ClusterCache
+	Config *rest.Config
+}
 
+func (n *NativeApply) Apply(ctx context.Context, namespace string, resources []*unstructured.Unstructured, options ...Option) (*syncResult, error) {
+	log := logr.FromContextOrDiscard(ctx).WithValues("namespace", namespace)
 	opts := &Options{}
 	for _, opt := range options {
 		opt(opts)
 	}
-
-	clusterCache := cache.NewClusterCache(config,
-		cache.SetLogr(log),
-		cache.SetClusterResources(true),
-		cache.SetPopulateResourceInfoHandler(
-			func(un *unstructured.Unstructured, isRoot bool) (info interface{}, cacheManifest bool) {
+	if n.cache == nil {
+		newcache := cache.NewClusterCache(n.Config, cache.SetLogr(log), cache.SetClusterResources(true),
+			cache.SetPopulateResourceInfoHandler(func(un *unstructured.Unstructured, isRoot bool) (info interface{}, cacheManifest bool) {
 				return nil, true
-			},
-		),
-	)
-	if err := clusterCache.EnsureSynced(); err != nil {
-		return nil, err
+			}),
+		)
+		if err := newcache.EnsureSynced(); err != nil {
+			return nil, err
+		}
+		n.cache = newcache
 	}
+	clusterCache, config := n.cache, n.Config
 	managedResources, err := clusterCache.GetManagedLiveObjs(resources, func(r *cache.Resource) bool {
 		if opts.ManagedResourceSelection == nil {
 			return false // default select nothing
@@ -241,9 +253,7 @@ func ApplyNative(ctx context.Context, config *rest.Config, namespace string, res
 	}
 	reconciliationResult := sync.Reconcile(resources, managedResources, namespace, clusterCache)
 	syncopts := []sync.SyncOpt{
-		sync.WithSkipHooks(true),
-		sync.WithLogr(log),
-		sync.WithPrune(true),
+		sync.WithSkipHooks(true), sync.WithLogr(log), sync.WithPrune(true),
 		sync.WithHealthOverride(alwaysHealthOverride{}),
 		sync.WithNamespaceCreation(true, func(u *unstructured.Unstructured) bool { return true }),
 	}
@@ -254,9 +264,7 @@ func ApplyNative(ctx context.Context, config *rest.Config, namespace string, res
 	}
 	defer cleanup()
 	defer syncCtx.Terminate()
-
 	var result *syncResult
-
 	period := time.Second
 	err = wait.PollUntil(period, func() (done bool, err error) {
 		syncCtx.Sync()

@@ -1,0 +1,11 @@
+# https://banzaicloud.com/docs/one-eye/logging-operator/install/#helm
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: logging-operator
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  repo: https://kubernetes-charts.banzaicloud.com
+  installNamespace: logging
+  enabled: true

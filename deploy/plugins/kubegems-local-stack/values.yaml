@@ -1,0 +1,20 @@
+clusterName: local
+storageClass: local-path
+installer:
+  enabled: false # enabel self managed installer
+logging:
+  operator:
+    enabled: true
+  loki:
+    enabled: false
+kubegems:
+  version: latest
+  registry: docker.io
+  repository: kubegems/kubegems
+nvidiagpu:
+  enabled: false
+istio:
+  operator:
+    hub: ""
+    tracing:
+      sampling: 50

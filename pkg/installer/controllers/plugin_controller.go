@@ -155,6 +155,7 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 	if shouldRemove {
 		// remove
 		if err := r.PluginManager.Remove(ctx, thisPlugin, thisStatus); err != nil {
+			plugin.Status = thisStatus.toPluginStatus()
 			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()
 			if err := r.Status().Update(ctx, plugin); err != nil {
@@ -166,6 +167,7 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 	} else {
 		// apply
 		if err := r.PluginManager.Apply(ctx, thisPlugin, thisStatus); err != nil {
+			plugin.Status = thisStatus.toPluginStatus()
 			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
 			plugin.Status.Message = err.Error()
 			if err := r.Status().Update(ctx, plugin); err != nil {

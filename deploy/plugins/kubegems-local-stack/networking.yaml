@@ -11,21 +11,7 @@ spec:
   enabled: true
   values:
     repository: ""
----
-# https://kiali.io/docs/installation/installation-guide/install-with-helm/
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
-metadata:
-  name: kiali-server
-  namespace: "{{ .Release.Namespace }}"
-spec:
-  kind: helm
-  repo: https://kiali.org/helm-charts
-  installNamespace: istio-system
-  enabled: true
-  values:
-    auth:
-      strategy: anonymous
+
 ---
 # https://github.com/argoproj/argo-helm/tree/master/charts/argo-rollouts
 apiVersion: plugins.kubegems.io/v1beta1

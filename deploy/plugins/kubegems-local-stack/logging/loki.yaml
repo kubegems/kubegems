@@ -1,0 +1,11 @@
+# https://github.com/grafana/helm-charts/tree/main/charts/loki
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: loki-stack
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  repo: https://grafana.github.io/helm-charts
+  installNamespace: loki-stack
+  enabled: true
