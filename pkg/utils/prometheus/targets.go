@@ -15,6 +15,7 @@ const (
 	MetricTargetDeployment  = "deployment"
 	MetricTargetStatefulset = "statefulset"
 	MetricTargetDaemonset   = "daemonset"
+	MetricTargetWorkload    = "workload" // 临时解决不知道哪种workload的情况
 
 	annotationsTargetNameKey = gems.AnnotationsMetricsTargetNameKey
 	allNamespace             = "_all"
@@ -80,10 +81,10 @@ func ConvertToServiceOrPodMonitor(req *MetricTarget) (client.Object, error) {
 	switch req.TargetType {
 	case MetricTargetService:
 		return req.toServiceMonitor(), nil
-	case MetricTargetDeployment, MetricTargetStatefulset, MetricTargetDaemonset:
+	case MetricTargetDeployment, MetricTargetStatefulset, MetricTargetDaemonset, MetricTargetWorkload:
 		return req.toPodMonitor(), nil
 	}
-	return nil, fmt.Errorf("not valid metric target type, must be one of service/deployment/statefulset/daemonset")
+	return nil, fmt.Errorf("not valid metric target type, must be one of service/deployment/statefulset/daemonset/workload")
 }
 
 func ConvertToMetricTarget(obj client.Object) *MetricTarget {
@@ -92,7 +93,7 @@ func ConvertToMetricTarget(obj client.Object) *MetricTarget {
 		ret := &MetricTarget{
 			Namespace:       v.Namespace,
 			Name:            v.Name,
-			TargetType:      getTargetTypeFromAnno(v.Annotations),
+			TargetType:      MetricTargetService,
 			TargetLabels:    v.Spec.Selector.MatchLabels,
 			TargetNamespace: targetNamespace(v.Spec.NamespaceSelector),
 			TargetName:      getTargetNameFromAnno(v.Annotations),
@@ -116,6 +117,9 @@ func ConvertToMetricTarget(obj client.Object) *MetricTarget {
 			TargetNamespace: targetNamespace(v.Spec.NamespaceSelector),
 			TargetName:      getTargetNameFromAnno(v.Annotations),
 			TargetEndpoints: make([]TargetEndpoint, len(v.Spec.PodMetricsEndpoints)),
+		}
+		if ret.TargetType == "" {
+			ret.TargetType = MetricTargetWorkload
 		}
 		for i, ep := range v.Spec.PodMetricsEndpoints {
 			ret.TargetEndpoints[i] = TargetEndpoint{
