@@ -116,7 +116,7 @@ func DownloadGit(ctx context.Context, cloneurl string, rev string, dir string) e
 	}
 	// git reset --hard <hash>
 	if err := wt.Reset(&git.ResetOptions{Mode: git.HardReset, Commit: *hash}); err != nil {
-		return err
+		return fmt.Errorf("git reset --hard %s :%w", hash.String(), err)
 	}
 	return nil
 }
