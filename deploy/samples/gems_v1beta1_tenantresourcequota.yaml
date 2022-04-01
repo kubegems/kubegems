@@ -1,7 +1,0 @@
-apiVersion: kubegems.io/v1beta1
-kind: TenantResourceQuota
-metadata:
-  name: tenantresourcequota-sample
-spec:
-  # Add fields here
-  foo: bar

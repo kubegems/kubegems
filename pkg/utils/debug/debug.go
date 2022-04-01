@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/argoproj/argo-cd/v2/util/io"
@@ -23,6 +24,23 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/kube"
+)
+
+var isDebug = false
+
+func IsDebug() bool {
+	return os.Getenv("DEBUG") == "true"
+}
+
+func init() {
+	if str, ok := os.LookupEnv("DEBUG"); ok {
+		log.Info("debug mode set from environment", "debug", str)
+		isDebug, _ = strconv.ParseBool(str)
+	}
+}
+
+const (
+	GemSystemNamespace = "gemcloud-system"
 )
 
 // ApplyPortForwardingOptions using apiserver port forward port for options

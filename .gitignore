@@ -10,3 +10,4 @@ _.yaml
 *.sqlite3
 *.bak
 local_debug.go
+*.tgz

@@ -19,7 +19,6 @@ import (
 )
 
 type ClientSet struct {
-	options  *Options
 	database *database.Database
 	clients  sync.Map // name -> *Client
 }
@@ -35,18 +34,26 @@ func (h *ClientSet) Name() string {
 }
 
 func NewClientSet(database *database.Database) (*ClientSet, error) {
-	return &ClientSet{
-		database: database,
-		options:  NewDefaultOptions(), // default options,if override by config from database
-	}, nil
+	return &ClientSet{database: database}, nil
 }
 
-func (h *ClientSet) apiServerProxyPath(isHttps bool) string {
-	template := "/api/v1/namespaces/%s/services/%s:%d/proxy"
-	if isHttps {
-		template = "/api/v1/namespaces/%s/services/https:%s:%d/proxy"
+func ApiServerProxyPath(namespace, schema, svcname, port string) string {
+	if namespace == "" {
+		namespace = "kubegems-local"
 	}
-	return fmt.Sprintf(template, h.options.Namespace, h.options.ServiceName, h.options.ServicePort)
+	if svcname == "" {
+		svcname = "kubegems-local-agent"
+	}
+	if port == "" {
+		port = "http" // include https
+	}
+	if schema != "" {
+		template := "/api/v1/namespaces/%s/services/%s:%s:%s/proxy"
+		return fmt.Sprintf(template, namespace, schema, svcname, port)
+	} else {
+		template := "/api/v1/namespaces/%s/services/%s:%s/proxy"
+		return fmt.Sprintf(template, namespace, svcname, port)
+	}
 }
 
 func (h *ClientSet) Clusters() []string {
@@ -134,7 +141,8 @@ func (h *ClientSet) serverInfoOf(ctx context.Context, cluster *models.Cluster) (
 	cluster.APIServer = restconfig.Host
 
 	// complete server info
-	baseaddr, err := url.Parse(restconfig.Host + h.apiServerProxyPath(true))
+	path := ApiServerProxyPath(cluster.InstallNamespace, "https", "", "")
+	baseaddr, err := url.Parse(restconfig.Host + path)
 	if err != nil {
 		return nil, err
 	}
