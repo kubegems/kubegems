@@ -1,0 +1,28 @@
+# local-path-provisioner
+# https://github.com/rancher/local-path-provisioner/tree/master/deploy/chart
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: local-path-provisioner
+  namespace: kubegems-installer
+spec:
+  enabled: true
+  kind: helm
+  installNamespace: local-path-storage
+  repo: https://github.com/rancher/local-path-provisioner.git
+  path: deploy/chart/local-path-provisioner
+  values:
+    storageClass:
+      defaultClass: true
+---
+# https://kubernetes.github.io/ingress-nginx/deploy/#quick-start
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: ingress-nginx
+  namespace: kubegems-installer
+spec:
+  enabled: true
+  kind: helm
+  installNamespace: ingress-nginx
+  repo: https://kubernetes.github.io/ingress-nginx

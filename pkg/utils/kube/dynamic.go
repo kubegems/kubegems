@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 
-	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
+	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,142 +18,148 @@ import (
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
-	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"kubegems.io/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CreateByYamlOrJson(ctx context.Context, cfg *rest.Config, yamlOrJson []byte) error {
-	// 1. Prepare a RESTMapper to find GVR
-	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return err
-	}
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
+type Options struct {
+	CreateNamespace bool `json:"createNamespace,omitempty"`
+}
 
-	// 2. Prepare the dynamic client
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return err
-	}
+type Option func(*Options)
 
-	log.Debugf(string(yamlOrJson))
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(yamlOrJson), 1024)
-
-	for {
-		var rawObj runtime.RawExtension
-		if err = decoder.Decode(&rawObj); err != nil {
-			if err == io.EOF {
-				return nil
-			}
-
-			return errors.Wrap(err, "decode raw")
-		}
-		// 3. Decode YAML manifest into unstructured.Unstructured
-		obj := &unstructured.Unstructured{}
-		_, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, obj)
-		if err != nil {
-			return errors.Wrap(err, "get gvk")
-		}
-
-		// 4. Find GVR
-		mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-		if err != nil {
-			return errors.Wrap(err, "rest mapping")
-		}
-
-		// 5. Obtain REST interface for the GVR
-		var dr dynamic.ResourceInterface
-		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-			// namespaced resources should specify the namespace
-			dr = dyn.Resource(mapping.Resource).Namespace(obj.GetNamespace())
-		} else {
-			// for cluster-wide resources
-			dr = dyn.Resource(mapping.Resource)
-		}
-
-		// 6. Marshal object into JSON
-		data, err := json.Marshal(obj)
-		if err != nil {
-			return errors.Wrap(err, "json marshal")
-		}
-
-		forceApplyMangagedFields := true
-		// 7. Create or Update the object with SSA
-		//     types.ApplyPatchType indicates SSA.
-		//     FieldManager specifies the field owner ID.
-		_, err = dr.Patch(ctx, obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
-			FieldManager: "gems-server",
-			Force:        &forceApplyMangagedFields, // 参考 https://kubernetes.io/zh/docs/reference/using-api/server-side-apply/#conflicts
-		})
-
-		if err != nil {
-			log.Errorf("failed to apply %s %s, err: %v, yaml:\n%s", obj.GetKind(), obj.GetName(), err, string(data))
-			return err
-		}
-		log.Info("apply succeed", "kind", obj.GetKind(), "name", obj.GetName())
+func WithCreateNamespace() Option {
+	return func(o *Options) {
+		o.CreateNamespace = true
 	}
 }
 
-func DeleteByYamlOrJson(ctx context.Context, cfg *rest.Config, yamlOrJson []byte) error {
-	// 1. Prepare a RESTMapper to find GVR
-	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
+func Apply[T client.Object](ctx context.Context, config *rest.Config, resources []T, options ...Option) error {
+	log := logr.FromContextOrDiscard(ctx)
+
+	opts := &Options{}
+	for _, opt := range options {
+		opt(opts)
+	}
+	cli, err := NewClient(config)
 	if err != nil {
 		return err
 	}
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
 
-	// 2. Prepare the dynamic client
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	log.Debugf(string(yamlOrJson))
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(yamlOrJson), 1024)
-
-	for {
-		var rawObj runtime.RawExtension
-		if err = decoder.Decode(&rawObj); err != nil {
-			if err == io.EOF {
-				return nil
+	// nolint: nestif
+	if opts.CreateNamespace {
+		namespaces := []string{}
+		for _, obj := range resources {
+			if obj.GetNamespace() == "" {
+				continue
 			}
-			return errors.Wrap(err, "decode raw")
+			if err := cli.Get(ctx, types.NamespacedName{Name: obj.GetNamespace()}, &corev1.Namespace{}); err != nil {
+				if !errors.IsNotFound(err) {
+					return err
+				}
+				namespaces = append(namespaces, obj.GetNamespace())
+			}
 		}
-		// 3. Decode YAML manifest into unstructured.Unstructured
-		obj := &unstructured.Unstructured{}
-		_, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, obj)
-		if err != nil {
-			return errors.Wrap(err, "get gvk")
+		log.Info("create namespaces", "namespaces", namespaces)
+		for _, ns := range namespaces {
+			if err := cli.Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ns}}); err != nil {
+				if errors.IsAlreadyExists(err) {
+					continue
+				}
+				return err
+			}
 		}
-
-		// 4. Find GVR
-		mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-		if err != nil {
-			return errors.Wrap(err, "rest mapping")
-		}
-
-		// 5. Obtain REST interface for the GVR
-		var dr dynamic.ResourceInterface
-		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-			// namespaced resources should specify the namespace
-			dr = dyn.Resource(mapping.Resource).Namespace(obj.GetNamespace())
-		} else {
-			// for cluster-wide resources
-			dr = dyn.Resource(mapping.Resource)
-		}
-
-		// 6. Marshal object into JSON
+	}
+	for _, obj := range resources {
 		data, err := json.Marshal(obj)
 		if err != nil {
-			return errors.Wrap(err, "json marshal")
+			return fmt.Errorf("json marshal: %w", err)
 		}
-
-		if err := dr.Delete(ctx, obj.GetName(), metav1.DeleteOptions{}); err != nil {
-			log.Errorf("failed to delete %s %s, err: %v, yaml:\n%s", obj.GetKind(), obj.GetName(), err, string(data))
+		// using server side apply
+		if err := cli.Patch(ctx, obj, client.RawPatch(types.ApplyPatchType, data),
+			client.FieldOwner("kubegems"),
+			client.ForceOwnership,
+		); err != nil {
+			log.Error(err, "apply object", "data", string(data))
 			return err
 		}
-		log.Info("delete succeed", "kind", obj.GetKind(), "name", obj.GetName())
 	}
+	return nil
+}
+
+func Remove[T client.Object](ctx context.Context, config *rest.Config, resources []T, options ...Option) error {
+	log := logr.FromContextOrDiscard(ctx)
+
+	opts := &Options{}
+	for _, opt := range options {
+		opt(opts)
+	}
+	cli, err := NewClient(config)
+	if err != nil {
+		return err
+	}
+	for _, obj := range resources {
+		data, err := json.Marshal(obj)
+		if err != nil {
+			return fmt.Errorf("json marshal: %w", err)
+		}
+		if err := cli.Delete(ctx, obj); err != nil {
+			log.Error(err, "remove object", "data", string(data))
+			return err
+		}
+	}
+	return nil
+}
+
+func NewClient(config *rest.Config) (client.Client, error) {
+	dc, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
+	clientOptions := client.Options{Scheme: scheme.Scheme, Mapper: mapper}
+	return client.New(config, clientOptions)
+}
+
+func ParseResource(raw []byte) ([]*unstructured.Unstructured, error) {
+	log.Debugf(string(raw))
+	resources := []*unstructured.Unstructured{}
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(raw), yamlcacheSize)
+	for {
+		var rawObj runtime.RawExtension
+		if err := decoder.Decode(&rawObj); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return resources, fmt.Errorf("decode raw: %w", err)
+		}
+		obj := &unstructured.Unstructured{}
+		_, _, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, obj)
+		if err != nil {
+			return resources, fmt.Errorf("decode object: %w", err)
+		}
+		resources = append(resources, obj)
+	}
+	return resources, nil
+}
+
+const yamlcacheSize = 1024
+
+func CreateByYamlOrJson(ctx context.Context, cfg *rest.Config, yamlOrJson []byte) error {
+	resources, err := ParseResource(yamlOrJson)
+	if err != nil {
+		return err
+	}
+	return Apply(ctx, cfg, resources)
+}
+
+func DeleteByYamlOrJson(ctx context.Context, cfg *rest.Config, yamlOrJson []byte) error {
+	resources, err := ParseResource(yamlOrJson)
+	if err != nil {
+		return err
+	}
+	return Remove(ctx, cfg, resources)
 }

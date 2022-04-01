@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubegems
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: mysql
+  namespace: kubegems
+spec:
+  kind: helm
+  installNamespace: kubegems
+  repo: https://charts.bitnami.com/bitnami
+  enabled: true
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems
+  namespace: kubegems
+spec:
+  kind: helm
+  enabled: true
+  installNamespace: kubegems
+  values:
+    mysql:
+      enabled: false
+    externalDatabase:
+      enabled: true

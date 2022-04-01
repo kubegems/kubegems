@@ -26,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/argo"
@@ -457,7 +456,9 @@ func (h *ApplicationProcessor) createArgoCluster(ctx context.Context, clusternam
 	return existcluster, nil
 }
 
-func (h *ApplicationProcessor) createArgoProjectForEnvironment(ctx context.Context, ref PathRef, apiserver string, namespace string) (*v1alpha1.AppProject, error) {
+func (h *ApplicationProcessor) createArgoProjectForEnvironment(
+	ctx context.Context, ref PathRef, apiserver string, namespace string,
+) (*v1alpha1.AppProject, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ensure argo project")
 	defer span.Finish()
 
@@ -468,11 +469,6 @@ func (h *ApplicationProcessor) createArgoProjectForEnvironment(ctx context.Conte
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name: GenArgoPrjNameFromRef(ref),
-			Labels: map[string]string{
-				gemlabels.LabelTenant:      ref.Tenant,
-				gemlabels.LabelProject:     ref.Project,
-				gemlabels.LabelEnvironment: ref.Env,
-			},
 		},
 		// 目前暂时先设置允许所有目的环境，因为argo是私有的可放开限制
 		// 若需要根据环境进行限制则需要根据 project environment 变化来更新

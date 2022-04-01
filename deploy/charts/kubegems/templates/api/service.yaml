@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kubegems.api.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: api
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if .Values.api.annotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.api.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if and .Values.api.metrics.enabled .Values.api.metrics.service.annotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.api.metrics.service.annotations "context" $) | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.api.service.type }}
+  {{- if or (eq .Values.api.service.type "LoadBalancer") (eq .Values.api.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.api.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq .Values.api.service.type "LoadBalancer") (not (empty .Values.api.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ .Values.api.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if and (eq .Values.api.service.type "LoadBalancer") (not (empty .Values.api.service.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.api.service.loadBalancerIP }}
+  {{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.api.service.ports.http }}
+      protocol: TCP
+      targetPort: http
+    {{- if .Values.api.metrics.enabled }}
+    - name: metrics
+      port: {{ .Values.api.metrics.service.port }}
+      targetPort: metrics
+      protocol: TCP
+      {{- if (and (or (eq .Values.api.service.type "NodePort") (eq .Values.api.service.type "LoadBalancer")) (not (empty .Values.api.service.nodePorts.metrics))) }}
+      nodePort: {{ .Values.server.api.nodePorts.metrics }}
+      {{- else if eq .Values.api.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
+    {{- end }}
+    {{- if .Values.api.service.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.api.service.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{- include "common.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: api

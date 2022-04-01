@@ -1,4 +1,6 @@
 FROM alpine
-WORKDIR /serv
-COPY bin/kubegems /serv
-ENTRYPOINT ["/serv/kubegems"]
+COPY deploy/charts /app/charts
+COPY deploy/plugins /app/plugins
+ENV HELM_CACHE_HOME=/tmp
+COPY bin/kubegems /app/kubegems
+ENTRYPOINT ["/app/kubegems"]

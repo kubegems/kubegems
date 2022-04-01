@@ -41,7 +41,6 @@ func NewDefaultDebugOptions() *DebugOptions {
 }
 
 type Options struct {
-	MetricsServer      string `json:"metricsServer,omitempty"`
 	PrometheusServer   string `json:"prometheusServer,omitempty"`
 	AlertmanagerServer string `json:"alertmanagerServer,omitempty"`
 	LokiServer         string `json:"lokiServer,omitempty"`
@@ -51,7 +50,6 @@ type Options struct {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		MetricsServer:      fmt.Sprintf("http://metrics-scraper.%s:8000", gems.NamespaceMonitor),
 		PrometheusServer:   fmt.Sprintf("http://prometheus.%s:9090", gems.NamespaceMonitor),
 		AlertmanagerServer: fmt.Sprintf("http://alertmanager.%s:9093", gems.NamespaceMonitor),
 		LokiServer:         fmt.Sprintf("http://loki-gateway.%s:3100", gems.NamespaceLogging),

@@ -1,0 +1,83 @@
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "kubegems-local.kubectl.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: kubectl
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.kubectl.replicaCount }}
+  {{- if .Values.kubectl.updateStrategy }}
+  strategy: {{- toYaml .Values.kubectl.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kubectl
+  template:
+    metadata:
+      {{- if .Values.kubectl.podAnnotations }}
+      annotations: {{- include "common.tplvalues.render" (dict "value" .Values.kubectl.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: kubectl
+        {{- if .Values.kubectl.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.kubectl.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ template "kubegems-local.agent.serviceAccountName" . }}
+      {{- include "kubegems-local.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.kubectl.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.kubectl.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.kubectl.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.kubectl.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.kubectl.podAffinityPreset "component" "kubectl" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.kubectl.podAntiAffinityPreset "component" "kubectl" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.kubectl.nodeAffinityPreset.type "key" .Values.kubectl.nodeAffinityPreset.key "values" .Values.kubectl.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.kubectl.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.kubectl.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.kubectl.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.kubectl.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.kubectl.priorityClassName }}
+      priorityClassName: {{ .Values.kubectl.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.kubectl.schedulerName }}
+      schedulerName: {{ .Values.kubectl.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.kubectl.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.kubectl.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: kubectl
+          image: {{ include "kubegems-local.kubectl.image" . }}
+          imagePullPolicy: {{ .Values.kubectl.image.pullPolicy }}
+          {{- if .Values.kubectl.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.kubectl.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.kubectl.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.kubectl.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.kubectl.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.kubectl.args "context" $) | nindent 12 }}
+          {{- else }}
+          args:
+            {{- if .Values.kubectl.extraArgs }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.kubectl.extraArgs "context" $) | nindent 12 }}
+            {{- end }}
+          {{- end }}         
+          {{- if .Values.kubectl.resources }}
+          resources: {{- toYaml .Values.kubectl.resources | nindent 12 }}
+          {{- end }}
+          
+         
