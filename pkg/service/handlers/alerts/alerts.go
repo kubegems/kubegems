@@ -15,6 +15,7 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 )
@@ -569,6 +570,64 @@ func (h *AlertsHandler) SearchAlert(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, handlers.Page(total, messages, int64(page), int64(size)))
+}
+
+type AlertCount struct {
+	Fingerprint     string `json:"fingerprint,omitempty"`
+	Status          string `json:"status,omitempty"`
+	StartsAt        *time.Time
+	EndsAt          *time.Time
+	MaxCreatedAt    *time.Time
+	TenantName      string `json:"tenantName,omitempty"`
+	ProjectName     string `json:"projectName,omitempty"`
+	EnvironmentName string `json:"environmentName,omitempty"`
+}
+
+// SearchAlert 搜索告警
+// @Tags Alert
+// @Summary  搜索告警
+// @Description 搜索告警
+// @Accept json
+// @Produce json
+// @Param tenant query string false "租户名"
+// @Param start query string false "开始时间"
+// @Param end query string false "结束时间"
+// @Param status query string false "状态(firing, resolved)"
+// @Success 200 {object} handlers.ResponseStruct{Data=[]AlertCount} "resp"
+// @Router /v1/alerts/count [get]
+// @Security JWT
+func (h *AlertsHandler) AlertCount(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+	if start == "" {
+		start = utils.DayStartTime(time.Now()).Format("2006-01-02 15:04:05.000")
+	}
+	if end == "" {
+		end = utils.NextDayStartTime(time.Now()).Format("2006-01-02 15:04:05.000")
+	}
+
+	subQuery := h.GetDB().Table("alert_messages").
+		Select("fingerprint, max(created_at) as max_created_at").
+		Where("starts_at >= ?", start).
+		Where("starts_at < ?", end).
+		Group("fingerprint")
+	query := h.GetDB().Table("(?) as tmp", subQuery).
+		Select("alert_messages.fingerprint, status, starts_at, ends_at, max_created_at, tenant_name, project_name, environment_name").
+		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
+		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint").
+		Where("tenant_name = ?", c.Query("tenant"))
+
+	status := c.Query("status")
+	if status != "" {
+		query.Where("alert_messages.status = ?", status)
+	}
+
+	ret := []AlertCount{}
+	if err := query.Scan(&ret).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, ret)
 }
 
 var (
