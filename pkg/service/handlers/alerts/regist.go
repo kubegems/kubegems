@@ -34,6 +34,8 @@ func (h *AlertsHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/alerts/blacklist", h.ListBlackList)
 	rg.POST("/alerts/blacklist", h.AddToBlackList)
 	rg.DELETE("/alerts/blacklist/:fingerprint", h.RemoveInBlackList)
+
+	rg.GET("/alerts/count", h.AlertCount)
 }
 
 type AlertmanagerConfigHandler struct {

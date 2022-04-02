@@ -10,12 +10,15 @@ import (
 )
 
 type AlertInfo struct {
-	Fingerprint string `gorm:"type:varchar(50);primaryKey"` // 指纹作为主键
-	Name        string `gorm:"type:varchar(50);"`
-	Namespace   string `gorm:"type:varchar(50);"`
-	ClusterName string `gorm:"type:varchar(50);"`
-	Labels      datatypes.JSON
-	LabelMap    map[string]string `gorm:"-" json:"-"`
+	Fingerprint     string `gorm:"type:varchar(50);primaryKey"` // 指纹作为主键
+	Name            string `gorm:"type:varchar(50);"`
+	Namespace       string `gorm:"type:varchar(50);"`
+	ClusterName     string `gorm:"type:varchar(50);"`
+	TenantName      string `gorm:"type:varchar(50);index"`
+	ProjectName     string `gorm:"type:varchar(50);index"`
+	EnvironmentName string `gorm:"type:varchar(50);index"`
+	Labels          datatypes.JSON
+	LabelMap        map[string]string `gorm:"-" json:"-"`
 
 	SilenceStartsAt  *time.Time
 	SilenceUpdatedAt *time.Time

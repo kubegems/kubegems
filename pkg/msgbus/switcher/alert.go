@@ -44,28 +44,43 @@ func (w *WebhookAlert) fingerprintMap() map[string][]Alert {
 func (ms *MessageSwitcher) saveFingerprintMapToDB(fingerprintMap map[string][]Alert) []models.AlertMessage {
 	now := time.Now()
 	alertMessages := []models.AlertMessage{}
+	alertInfos := []models.AlertInfo{}
 
+	clusterNS2EnvMap, err := ms.DataBase.ClusterNS2EnvMap()
+	if err != nil {
+		log.Error(err, "get ClusterNS2EnvMap")
+	}
 	for fingerprint, alerts := range fingerprintMap {
 		labelbyts, _ := json.Marshal(alerts[0].Labels)
+		envinfo := clusterNS2EnvMap[fmt.Sprintf("%s/%s",
+			alerts[0].Labels[prometheus.AlertClusterKey],
+			alerts[0].Labels[prometheus.AlertNamespaceLabel])]
+		alertInfos = append(alertInfos, models.AlertInfo{
+			Fingerprint:     fingerprint,
+			Name:            alerts[0].Labels[prometheus.AlertNameLabel], // 铁定有元素的，不会越界
+			Namespace:       alerts[0].Labels[prometheus.AlertNamespaceLabel],
+			ClusterName:     alerts[0].Labels[prometheus.AlertClusterKey],
+			TenantName:      envinfo.TenantName,
+			ProjectName:     envinfo.ProjectName,
+			EnvironmentName: envinfo.EnvironmentName,
+			Labels:          labelbyts,
+		})
+
 		for _, alert := range alerts {
 			alertMessages = append(alertMessages, models.AlertMessage{
 				Fingerprint: fingerprint,
-				AlertInfo: &models.AlertInfo{
-					Fingerprint: fingerprint,
-					Name:        alerts[0].Labels[prometheus.AlertNameLabel], // 铁定有元素的，不会越界
-					Namespace:   alerts[0].Labels[prometheus.AlertNamespaceLabel],
-					ClusterName: alerts[0].Labels[prometheus.AlertClusterKey],
-					Labels:      labelbyts,
-				},
-
-				Value:     alert.Annotations["value"],
-				Message:   alert.Annotations["message"],
-				StartsAt:  utils.TimeZeroToNull(alert.StartsAt),
-				EndsAt:    utils.TimeZeroToNull(alert.EndsAt),
-				CreatedAt: &now,
-				Status:    alert.Status,
+				Value:       alert.Annotations["value"],
+				Message:     alert.Annotations["message"],
+				StartsAt:    utils.TimeZeroToNull(alert.StartsAt),
+				EndsAt:      utils.TimeZeroToNull(alert.EndsAt),
+				CreatedAt:   &now,
+				Status:      alert.Status,
 			})
 		}
+	}
+	if err := ms.DataBase.DB().Save(&alertInfos).Error; err != nil {
+		log.Error(err, "save alert info")
+		return nil
 	}
 	if err := ms.DataBase.DB().Save(&alertMessages).Error; err != nil {
 		log.Error(err, "save alert message")
