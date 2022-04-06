@@ -144,10 +144,15 @@ func PluginStatusFromPlugin(plugin *pluginsv1beta1.Plugin) *PluginStatus {
 
 func PluginFromPlugin(plugin *pluginsv1beta1.Plugin) Plugin {
 	return Plugin{
-		Name:      plugin.Name,
-		Kind:      plugin.Spec.Kind,
-		Values:    UnmarshalValues(plugin.Spec.Values),
-		Version:   plugin.Spec.Version,
+		Name:   plugin.Name,
+		Kind:   plugin.Spec.Kind,
+		Values: UnmarshalValues(plugin.Spec.Values),
+		Version: func() string {
+			if plugin.Spec.Version != "" {
+				return plugin.Spec.Version
+			}
+			return "0.0.0"
+		}(),
 		Repo:      plugin.Spec.Repo,
 		Path:      plugin.Spec.Path,
 		Resources: plugin.Spec.Resources,

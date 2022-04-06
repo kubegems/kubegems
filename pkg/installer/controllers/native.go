@@ -93,29 +93,9 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 	if err != nil {
 		return err
 	}
-	switch result.phase {
-	case common.OperationRunning:
-		return fmt.Errorf("sync is still running: %s", result.message)
+	if err := n.parseResult(result, status); err != nil {
+		return err
 	}
-	errmsgs := []string{}
-	notes := []map[string]interface{}{}
-	for _, result := range result.results {
-		switch result.Status {
-		case common.ResultCodeSyncFailed:
-			errmsgs = append(errmsgs, fmt.Sprintf("%s: %s", result.ResourceKey.String(), result.Message))
-		}
-		notes = append(notes, map[string]interface{}{
-			"resource": result.ResourceKey.String(),
-			"status":   result.Status,
-		})
-	}
-	content, _ := yaml.Marshal(notes)
-	status.Notes = string(content)
-
-	if len(errmsgs) > 0 {
-		return fmt.Errorf(strings.Join(errmsgs, "\n"))
-	}
-
 	now := metav1.Now()
 	// installed
 	status.Phase = pluginsv1beta1.PluginPhaseInstalled
@@ -153,25 +133,9 @@ func (n *NativePlugin) Remove(ctx context.Context, plugin Plugin, status *Plugin
 	if err != nil {
 		return err
 	}
-	errmsgs := []string{}
-	notes := []map[string]interface{}{}
-	for _, result := range result.results {
-		switch result.Status {
-		case common.ResultCodeSyncFailed:
-			errmsgs = append(errmsgs, fmt.Sprintf("%s: %s", result.ResourceKey.String(), result.Message))
-		}
-		notes = append(notes, map[string]interface{}{
-			"resource": result.ResourceKey.String(),
-			"status":   result.Status,
-		})
+	if err := n.parseResult(result, status); err != nil {
+		return err
 	}
-	content, _ := yaml.Marshal(notes)
-	status.Notes = string(content)
-
-	if len(errmsgs) > 0 {
-		return fmt.Errorf(strings.Join(errmsgs, "\n"))
-	}
-
 	status.Phase = pluginsv1beta1.PluginPhaseRemoved
 	status.Message = result.message
 	status.Name = plugin.Name
@@ -285,4 +249,33 @@ func (n *NativeApply) Apply(ctx context.Context, namespace string, resources []*
 		return result, err
 	}
 	return result, nil
+}
+
+func (n *NativePlugin) parseResult(result *syncResult, status *PluginStatus) error {
+	switch result.phase {
+	case common.OperationRunning:
+		return fmt.Errorf("sync is still running: %s", result.message)
+	case common.OperationFailed:
+		return fmt.Errorf("sync failed: %s", result.message)
+	}
+
+	errmsgs := []string{}
+	notes := []map[string]interface{}{}
+	for _, result := range result.results {
+		switch result.Status {
+		case common.ResultCodeSyncFailed:
+			errmsgs = append(errmsgs, fmt.Sprintf("%s: %s", result.ResourceKey.String(), result.Message))
+		}
+		notes = append(notes, map[string]interface{}{
+			"resource": result.ResourceKey.String(),
+			"status":   result.Status,
+		})
+	}
+	content, _ := yaml.Marshal(notes)
+	status.Notes = string(content)
+
+	if len(errmsgs) > 0 {
+		return fmt.Errorf(strings.Join(errmsgs, "\n"))
+	}
+	return nil
 }
