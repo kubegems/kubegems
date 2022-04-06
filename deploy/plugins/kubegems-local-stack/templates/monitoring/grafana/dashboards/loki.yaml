@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-loki
+  namespace: "{{ .Values.monitoring.namespace }}"
+  labels:
+    grafana_dashboard: loki
+data:
+  loki.json.url: https://grafana.com/api/dashboards/13407/revisions/1/download

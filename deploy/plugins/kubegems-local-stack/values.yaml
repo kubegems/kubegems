@@ -1,7 +1,5 @@
 clusterName: local
 storageClass: local-path
-installer:
-  enabled: false # enabel self managed installer
 logging:
   namespace: logging
   operator:
@@ -9,18 +7,31 @@ logging:
   loki:
     enabled: false
 monitoring:
+  enabled: true
   namespace: prometheus
+  prometheus:
+    address: http://kube-prometheus-stack-prometheus.prometheus:9090
+observability:
+  namespace: observability
+  enabled: true
+  jaeger:
+    address: http://jaeger-query.observability:16686
 kubegems:
   version: latest
   registry: docker.io
   repository: kubegems/kubegems
+  installer:
+    namespace: kubegems-installer
+    enabled: false
   local:
-    prometheus: http://kube-prometheus-stack-prometheus.prometheus:9090
-    alertmanager: http://kube-prometheus-stack-alertmanager.prometheus:9093
-    loki: http://loki-stack.loki-stack:3100
-    jaeger: http://jaeger-query.observability:16686
-  agent:
-    alert: https://kubegems-local-agent.kubegems-local:8041/alert
+    namespace: kubegems-local
+    api:
+      prometheus: http://kube-prometheus-stack-prometheus.prometheus:9090
+      alertmanager: http://kube-prometheus-stack-alertmanager.prometheus:9093
+      loki: http://loki-stack.loki-stack:3100
+      jaeger: http://jaeger-query.observability:16686
+    agent:
+      alert: https://kubegems-local-agent.kubegems-local:8041/alert
 nvidiagpu:
   enabled: false
 istio:

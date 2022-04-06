@@ -28,8 +28,6 @@ type PluginOptions struct {
 	KustomizeDir string `json:"kustomizeDir,omitempty"`
 }
 
-type NoPluginBuildFunc func(ctx context.Context, dir string, release Release, values map[string]interface{}) ([]*unstructured.Unstructured, error)
-
 func NewDelegatePluginManager(restconfig *rest.Config, options *PluginOptions) *DelegatePluginManager {
 	return &DelegatePluginManager{
 		appliers: map[pluginsv1beta1.PluginKind]PluginManager{

@@ -1,4 +1,3 @@
-# go-template:skip
 # https://github.com/argoproj/argo-helm/tree/master/charts/argo-rollouts
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
