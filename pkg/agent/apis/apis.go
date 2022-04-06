@@ -44,7 +44,7 @@ type Options struct {
 	PrometheusServer   string `json:"prometheusServer,omitempty"`
 	AlertmanagerServer string `json:"alertmanagerServer,omitempty"`
 	LokiServer         string `json:"lokiServer,omitempty"`
-	JaegerSerber       string `json:"jaegerSerber,omitempty"`
+	JaegerServer       string `json:"jaegerServer,omitempty"`
 	EnableHTTPSigs     bool   `json:"enableHTTPSigs,omitempty" description:"check http sigs, default false"`
 }
 
@@ -53,7 +53,7 @@ func NewDefaultOptions() *Options {
 		PrometheusServer:   fmt.Sprintf("http://prometheus.%s:9090", gems.NamespaceMonitor),
 		AlertmanagerServer: fmt.Sprintf("http://alertmanager.%s:9093", gems.NamespaceMonitor),
 		LokiServer:         fmt.Sprintf("http://loki-gateway.%s:3100", gems.NamespaceLogging),
-		JaegerSerber:       "http://jaeger-query.observability:16686",
+		JaegerServer:       "http://jaeger-query.observability:16686",
 		EnableHTTPSigs:     false,
 	}
 }
@@ -217,7 +217,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.register("argoproj.io", "v1alpha1", "rollouts", "info", argoRolloutHandler.GetRolloutInfo)
 	routes.register("argoproj.io", "v1alpha1", "rollouts", "depinfo", argoRolloutHandler.GetRolloutDepInfo)
 
-	jaegerHandler := &jaegerHandler{Server: options.JaegerSerber}
+	jaegerHandler := &jaegerHandler{Server: options.JaegerServer}
 	routes.register("jaeger", "v1", "span", ActionList, jaegerHandler.GetSpanCount)
 
 	// watcher 给消息中心使用的，不暴露给前端用户
