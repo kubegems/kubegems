@@ -236,9 +236,4 @@ spec:
         resources:
           limits: {}
           requests: {}
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 1001
-      securityContext:
-        fsGroup: 1001
       serviceAccountName: kubegems-installer
