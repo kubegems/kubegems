@@ -1,4 +1,17 @@
-{{- if .Values.istio.enabled -}}
+# https://kiali.io/docs/installation/installation-guide/install-with-helm/
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kiali-server
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  repo: https://kiali.org/helm-charts
+  installNamespace: istio-system
+  enabled: true
+  values:
+    auth:
+      strategy: anonymous
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
 apiVersion: plugins.kubegems.io/v1beta1
@@ -15,114 +28,100 @@ spec:
   version: "1.11.8"
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 metadata:
-  name: istio-operator-cr
-  namespace: "{{ .Release.Namespace }}"
+  annotations:
+  name: gems-istio
 spec:
-  enabled: true
-  kind: inline
-  installNamespace: istio-system
-  dependencies:
-  - name: istio-operator
-  resources:
-  - apiVersion: install.istio.io/v1alpha1
-    kind: IstioOperator
-    metadata:
-      annotations:
-      name: gems-istio
-    spec:
-      components:
-        pilot:
-          k8s:
-            env:
-            - name: PILOT_FILTER_GATEWAY_CLUSTER_CONFIG
-              value: "true"
-        cni:
-          enabled: true
-        ingressGateways:
-        - name: istio-ingressgateway
-          enabled: false
-        - name: istio-eastwestgateway
-          namespace: gemcloud-gateway-system
-          label:
-            istio: eastwestgateway
-            app: istio-eastwestgateway
-            topology.istio.io/network: "{{ .Values.clusterName }}"
-          enabled: true
-          k8s:
-            env:
-              - name: ISTIO_META_ROUTER_MODE
-                value: "sni-dnat"
-              - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-                value: "{{ .Values.clusterName }}"
-            resources:
-              limits:
-                cpu: 4000m
-                memory: 4Gi
-              requests:
-                cpu: 100M
-                memory: 128Mi
-            hpaSpec:
-              minReplicas: 1
-              maxReplicas: 3
-            service:
-              ports:
-                - name: status-port
-                  port: 15021
-                  targetPort: 15021
-                - name: tls
-                  port: 15443
-                  targetPort: 15443
-                - name: tls-istiod
-                  port: 15012
-                  targetPort: 15012
-                - name: tls-webhook
-                  port: 15017
-                  targetPort: 15017
-      hub: "{{ .Values.istio.operator.hub }}"
-      meshConfig:
-        defaultConfig:
-          proxyMetadata:
-            ISTIO_META_DNS_AUTO_ALLOCATE: "true"
-            ISTIO_META_DNS_CAPTURE: "true"
-          tracing:
-            sampling: "{{ .Values.istio.operator.tracing.sampling }}"
-            zipkin:
-              address: "jaeger-collector.observability.svc.cluster.local:9411"
-        enableTracing: true
-      tag: 1.11.0
-      values:
-        gateways:
-          istio-ingressgateway:
-            injectionTemplate: gateway
-        global:
-          meshID: mesh-default
-          multiCluster:
-            clusterName: "{{ .Values.clusterName }}"
-          network: "{{ .Values.clusterName }}"
-          proxy_init:
-            resources:
-              limits:
-                cpu: 200m
-                memory: 512Mi
-              requests:
-                cpu: 10m
-                memory: 10Mi
-          proxy:
-            autoInject: disabled
-            resources:
-              limits:
-                cpu: "1"
-                memory: 2048Mi
-              requests:
-                cpu: 100m
-                memory: 128Mi
-          tracer:
-            zipkin:
-              address: "jaeger-collector.observability.svc.cluster.local:9411"
-        istio_cni:
-          enabled: true
-
-{{- end -}}
+  components:
+    pilot:
+      k8s:
+        env:
+          - name: PILOT_FILTER_GATEWAY_CLUSTER_CONFIG
+            value: "true"
+    cni:
+      enabled: true
+    ingressGateways:
+      - name: istio-ingressgateway
+        enabled: false
+      - name: istio-eastwestgateway
+        namespace: gemcloud-gateway-system
+        label:
+          istio: eastwestgateway
+          app: istio-eastwestgateway
+          topology.istio.io/network: "{{ .Values.clusterName }}"
+        enabled: true
+        k8s:
+          env:
+            - name: ISTIO_META_ROUTER_MODE
+              value: "sni-dnat"
+            - name: ISTIO_META_REQUESTED_NETWORK_VIEW
+              value: "{{ .Values.clusterName }}"
+          resources:
+            limits:
+              cpu: 4000m
+              memory: 4Gi
+            requests:
+              cpu: 100M
+              memory: 128Mi
+          hpaSpec:
+            minReplicas: 1
+            maxReplicas: 3
+          service:
+            ports:
+              - name: status-port
+                port: 15021
+                targetPort: 15021
+              - name: tls
+                port: 15443
+                targetPort: 15443
+              - name: tls-istiod
+                port: 15012
+                targetPort: 15012
+              - name: tls-webhook
+                port: 15017
+                targetPort: 15017
+  hub: "{{ .Values.istio.operator.hub }}"
+  meshConfig:
+    defaultConfig:
+      proxyMetadata:
+        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
+        ISTIO_META_DNS_CAPTURE: "true"
+      tracing:
+        sampling: "{{ .Values.istio.operator.tracing.sampling }}"
+        zipkin:
+          address: "jaeger-collector.observability.svc.cluster.local:9411"
+    enableTracing: true
+  tag: 1.11.0
+  values:
+    gateways:
+      istio-ingressgateway:
+        injectionTemplate: gateway
+    global:
+      meshID: mesh-default
+      multiCluster:
+        clusterName: "{{ .Values.clusterName }}"
+      network: "{{ .Values.clusterName }}"
+      proxy_init:
+        resources:
+          limits:
+            cpu: 200m
+            memory: 512Mi
+          requests:
+            cpu: 10m
+            memory: 10Mi
+      proxy:
+        autoInject: disabled
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2048Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      tracer:
+        zipkin:
+          address: "jaeger-collector.observability.svc.cluster.local:9411"
+    istio_cni:
+      enabled: true

@@ -1,7 +1,3 @@
-
-
-{{- if .Values.installer.enabled -}}
----
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
@@ -10,5 +6,3 @@ metadata:
 spec:
   kind: helm
   enabled: true
-  installNamespace: kubegems-installer
-{{- end -}}

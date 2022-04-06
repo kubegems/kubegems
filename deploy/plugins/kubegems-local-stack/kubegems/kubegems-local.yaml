@@ -11,10 +11,10 @@ spec:
   values:
     agent:
       extraArgs:
-        - --api-prometheusserver=http://kube-prometheus-stack-prometheus.prometheus:9090
-        - --api-alertmanagerserver=http://kube-prometheus-stack-alertmanager.prometheus:9093
-        - --api-lokiserver=http://loki-stack.loki-stack:3100
-        - --api-jaegerserber=http://jaeger-query.observability:16686
+        - --api-prometheusserver={{ .Values.kubegems.local.prometheus }}
+        - --api-alertmanagerserver={{ .Values.kubegems.local.alertmanager }}
+        - --api-lokiserver={{ .Values.kubegems.local.loki }}
+        - --api-jaegerserber={{ .Values.kubegems.local.jaeger }}
       image:
         tag: "{{ .Values.kubegems.version }}"
         registry: "{{ .Values.kubegems.registry }}"
