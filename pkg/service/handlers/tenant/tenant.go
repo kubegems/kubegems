@@ -303,7 +303,7 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 		user   models.User
 	)
 	if err := h.GetDB().Preload("ResourceQuotas").First(&tenant, c.Param(PrimaryKeyName)).Error; err != nil {
-		handlers.NotOK(c, nil)
+		handlers.NotOK(c, fmt.Errorf("tenant not exists"))
 		return
 	}
 	if err := c.BindJSON(&rel); err != nil {
