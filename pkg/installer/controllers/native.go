@@ -68,6 +68,14 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 	if err != nil {
 		return fmt.Errorf("build manifests: %v", err)
 	}
+
+	// add inline resources
+	inlineresources, err := InlineBuildPlugin(ctx, plugin)
+	if err != nil {
+		return err
+	}
+	manifests = append(manifests, inlineresources...)
+
 	for i := range manifests {
 		annotations := manifests[i].GetAnnotations()
 		if annotations == nil {
@@ -75,8 +83,6 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 		}
 		annotations[ManagedPluginAnnotation] = fmt.Sprintf("%s/%s", plugin.Namespace, plugin.Name)
 		manifests[i].SetAnnotations(annotations)
-		// we remove namespace to avoid cross namespace conflicts
-		manifests[i].SetNamespace("")
 	}
 	if status.Phase == pluginsv1beta1.PluginPhaseInstalled && reflect.DeepEqual(status.Values, plugin.Values) {
 		log.Info("plugin is uptodate and no changes")
