@@ -1,0 +1,12 @@
+# go-template:skip
+# https://github.com/argoproj/argo-helm/tree/master/charts/argo-rollouts
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: argo-rollouts
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  repo: https://argoproj.github.io/argo-helm
+  installNamespace: argo-rollouts
+  enabled: true

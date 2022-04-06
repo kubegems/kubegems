@@ -1,0 +1,21 @@
+# https://github.com/prometheus-operator/prometheus-operator/tree/main/helm
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter
+# https://artifacthub.io/packages/helm/banzaicloud-stable/grafana-operator
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kube-prometheus-stack
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  repo: https://prometheus-community.github.io/helm-charts
+  installNamespace: "{{ .Values.monitoring.namespace }}"
+  enabled: true
+  values:
+    grafana:
+      sidecar:
+        dashboards:
+          enabled: true
+        datasources:
+          enabled: true

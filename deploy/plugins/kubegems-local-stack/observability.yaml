@@ -25,32 +25,20 @@ spec:
   installNamespace: observability
   enabled: true
 ---
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
 metadata:
-  name: jaeger-operator-cr
-  namespace: "{{ .Release.Namespace }}"
+  name: jaeger
+  namespace: observability
 spec:
-  kind: inline
-  installNamespace: observability
-  dependencies:
-    - name: jaeger-operator
-  enabled: true
-  resources:
-    - apiVersion: jaegertracing.io/v1
-      kind: Jaeger
-      metadata:
-        name: jaeger
-        namespace: observability
-      spec:
-        strategy: production
-        ingress:
-          enabled: false
-        collector:
-          options:
-            collector.zipkin.host-port: "9411"
-        storage:
-          type: elasticsearch
-          options:
-            es:
-              server-urls: http://elasticsearch-master.observability:9200
+  strategy: production
+  ingress:
+    enabled: false
+  collector:
+    options:
+      collector.zipkin.host-port: "9411"
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch-master.observability:9200
