@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-dashboard-argocd
-  namespace: "{{ .Values.monitoring.namespace }}"
-  labels:
-    grafana_dashboard: argocd
-data:
-  argo-cd.json.url: https://grafana.com/api/dashboards/14584/revisions/1/download

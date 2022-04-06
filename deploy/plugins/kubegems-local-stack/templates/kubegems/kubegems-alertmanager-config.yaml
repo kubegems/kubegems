@@ -1,3 +1,4 @@
+{{- if .Values.monitoring.enabled -}}
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
@@ -5,7 +6,9 @@ metadata:
   labels:
     alertmanagerConfig: gemcloud
   name: gemcloud
-  namespace: "{{ .Release.Namespace }}"
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   inhibitRules:
     - equal:
@@ -22,12 +25,12 @@ spec:
     - name: "null"
     - name: gemcloud-default-webhook
       webhookConfigs:
-        - httpConfig:
+        - url: {{ include "kubegems.local.agent.alert" . }}
+          httpConfig:
             tlsConfig:
               ca: {}
               cert: {}
               insecureSkipVerify: true
-          url: "{{ .Values.kubegems.local.agent.alert }}"
   route:
     continue: true
     groupBy:
@@ -40,7 +43,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: KubernetesNodeNotReady
         receiver: gemcloud-default-webhook
@@ -48,7 +51,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: KubernetesMemoryPressure
         receiver: gemcloud-default-webhook
@@ -56,7 +59,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: KubernetesDiskPressure
         receiver: gemcloud-default-webhook
@@ -64,7 +67,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: KubernetesOutOfDisk
         receiver: gemcloud-default-webhook
@@ -72,7 +75,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: KubernetesPodNumberTooHigh
         receiver: gemcloud-default-webhook
@@ -80,7 +83,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: KubernetesPodCrashLooping
         receiver: gemcloud-default-webhook
@@ -88,7 +91,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: KubernetesPodOOMKilling
         receiver: gemcloud-default-webhook
@@ -96,7 +99,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: HostHighCpuLoad
         receiver: gemcloud-default-webhook
@@ -104,7 +107,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: HostHighMemoryLoad
         receiver: gemcloud-default-webhook
@@ -112,7 +115,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: HostUnusualDiskReadRate
         receiver: gemcloud-default-webhook
@@ -120,7 +123,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: HostUnusualDiskWriteRate
         receiver: gemcloud-default-webhook
@@ -128,7 +131,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: HostNetworkReceiveErrors
         receiver: gemcloud-default-webhook
@@ -136,7 +139,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: HostNetworkTransmitErrors
         receiver: gemcloud-default-webhook
@@ -144,7 +147,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: HostHighLoad5
         receiver: gemcloud-default-webhook
@@ -152,7 +155,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: CertManagerCertExpirySoon
         receiver: gemcloud-default-webhook
@@ -160,7 +163,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: CertManagerCertNotReady
         receiver: gemcloud-default-webhook
@@ -168,7 +171,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: ClusterHighCpuLoad
         receiver: gemcloud-default-webhook
@@ -176,7 +179,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: ClusterHighMemoryLoad
         receiver: gemcloud-default-webhook
@@ -184,7 +187,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: ClusterComponentCertExpirySoon
         receiver: gemcloud-default-webhook
@@ -192,7 +195,7 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: GemsPluginFailed
         receiver: gemcloud-default-webhook
@@ -200,8 +203,9 @@ spec:
       - continue: true
         matchers:
           - name: gems_namespace
-            value: "{{ .Values.monitoring.namespace }}"
+            value: {{ .Values.monitoring.namespace }}
           - name: gems_alertname
             value: ExporterDown
         receiver: gemcloud-default-webhook
         repeatInterval: 10m
+{{- end -}}

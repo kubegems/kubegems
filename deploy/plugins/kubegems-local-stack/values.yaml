@@ -1,21 +1,27 @@
 clusterName: local
 storageClass: local-path
 logging:
+  enabled: true
   namespace: logging
   operator:
     enabled: true
   loki:
-    enabled: false
+    # address: http://loki-stack.loki-stack:3100
 monitoring:
   enabled: true
   namespace: prometheus
   prometheus:
-    address: http://kube-prometheus-stack-prometheus.prometheus:9090
+    # address: http://kube-prometheus-stack-prometheus.prometheus:9090
+  alertmanager:
+    # address: http://kube-prometheus-stack-alertmanager.alertmanager:9093
 observability:
   namespace: observability
   enabled: true
   jaeger:
-    address: http://jaeger-query.observability:16686
+    # address: http://jaeger-query.observability:16686
+gateway:
+  enabled: true
+  namespace: kubegems-gateway
 kubegems:
   version: latest
   registry: docker.io
@@ -25,17 +31,18 @@ kubegems:
     enabled: false
   local:
     namespace: kubegems-local
-    api:
-      prometheus: http://kube-prometheus-stack-prometheus.prometheus:9090
-      alertmanager: http://kube-prometheus-stack-alertmanager.prometheus:9093
-      loki: http://loki-stack.loki-stack:3100
-      jaeger: http://jaeger-query.observability:16686
     agent:
-      alert: https://kubegems-local-agent.kubegems-local:8041/alert
-nvidiagpu:
+      # alert: https://kubegems-local-agent.kubegems-local:8041/alert
+gpu:
   enabled: false
+  namespace: kube-system
 istio:
+  enabled: true
+  namespace: istio-system
   operator:
-    hub: ""
+    hub: docker.io
     tracing:
       sampling: 50
+argo-rollouts:
+  enabled: true
+  namespace: argo-rollouts

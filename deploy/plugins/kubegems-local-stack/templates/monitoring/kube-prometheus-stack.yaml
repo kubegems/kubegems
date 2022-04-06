@@ -2,6 +2,7 @@
 # https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter
 # https://artifacthub.io/packages/helm/banzaicloud-stable/grafana-operator
 # https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics
+{{- if .Values.monitoring.enabled }}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
@@ -19,3 +20,4 @@ spec:
           enabled: true
         datasources:
           enabled: true
+{{- end }}

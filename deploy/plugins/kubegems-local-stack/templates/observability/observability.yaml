@@ -1,3 +1,4 @@
+{{- if .Values.observability.enabled }}
 # https://github.com/elastic/helm-charts
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
@@ -30,6 +31,8 @@ kind: Jaeger
 metadata:
   name: jaeger
   namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   strategy: production
   ingress:
@@ -42,3 +45,4 @@ spec:
     options:
       es:
         server-urls: http://elasticsearch-master.observability:9200
+{{- end -}}
