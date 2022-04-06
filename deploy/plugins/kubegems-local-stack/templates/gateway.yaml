@@ -1,12 +1,12 @@
+{{- if .Values.gateway.enabled  -}}
 # https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: gateway
-  namespace: "{{ .Release.Namespace }}"
+  namespace: {{ .Release.Namespace }}
 spec:
   kind: template
-  installNamespace: kubegems-gateway
+  installNamespace: {{ .Values.gateway.namespace }}
   enabled: true
-  values:
-    repository: ""
+{{- end }}
