@@ -162,7 +162,7 @@ installer:
   ## @param installer.podSecurityContext.fsGroup Set installer pod's Security Context fsGroup
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     fsGroup: 1001
   ## Configure Container Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -171,7 +171,7 @@ installer:
   ## @param installer.containerSecurityContext.runAsNonRoot Set installer containers' Security Context runAsNonRoot
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     runAsUser: 1001
     runAsNonRoot: true
 
