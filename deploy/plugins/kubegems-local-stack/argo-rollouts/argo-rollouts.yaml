@@ -1,18 +1,4 @@
-# https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm
----
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
-metadata:
-  name: gateway
-  namespace: "{{ .Release.Namespace }}"
-spec:
-  kind: template
-  installNamespace: kubegems-gateway
-  enabled: true
-  values:
-    repository: ""
-
----
+# go-template:skip
 # https://github.com/argoproj/argo-helm/tree/master/charts/argo-rollouts
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin

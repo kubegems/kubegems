@@ -1,0 +1,14 @@
+# https://artifacthub.io/packages/helm/metrics-server/metrics-server
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: metrics-server
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  repo: https://kubernetes-sigs.github.io/metrics-server
+  installNamespace: kube-system
+  enabled: true
+  values:
+    args:
+      - --kubelet-insecure-tls
