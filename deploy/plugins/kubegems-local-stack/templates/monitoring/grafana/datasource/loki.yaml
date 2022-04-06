@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource-loki
+  labels:
+    grafana_datasource: loki
+data:
+  datasource-loki.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Loki
+      type: loki
+      access: proxy
+      url: {{ .Values.kubegems.local.api.loki }}
+      isDefault: false
+      version: 1
+      editable: false
+      jsonData:
+        maxLines: 2000
+        tlsSkipVerify: true
+        timeInterval: "5s"

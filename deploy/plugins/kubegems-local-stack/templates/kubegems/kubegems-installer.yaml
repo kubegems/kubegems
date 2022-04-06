@@ -1,3 +1,4 @@
+{{- if .Values.kubegems.installer.enabled -}}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
@@ -6,3 +7,4 @@ metadata:
 spec:
   kind: helm
   enabled: true
+{{- end }}

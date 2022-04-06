@@ -11,7 +11,7 @@ spec:
   kind: helm
   repo: https://prometheus-community.github.io/helm-charts
   installNamespace: "{{ .Values.monitoring.namespace }}"
-  enabled: true
+  enabled: {{ .Values.monitoring.enabled }}
   values:
     grafana:
       sidecar:
