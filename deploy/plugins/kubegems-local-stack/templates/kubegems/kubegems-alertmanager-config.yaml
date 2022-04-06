@@ -27,7 +27,7 @@ spec:
               ca: {}
               cert: {}
               insecureSkipVerify: true
-          url: "{{ .Values.kubegems.agent.alert }}"
+          url: "{{ .Values.kubegems.local.agent.alert }}"
   route:
     continue: true
     groupBy:

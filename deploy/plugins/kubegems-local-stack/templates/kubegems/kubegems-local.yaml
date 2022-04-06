@@ -11,10 +11,10 @@ spec:
   values:
     agent:
       extraArgs:
-        - --api-prometheusserver={{ .Values.kubegems.local.prometheus }}
-        - --api-alertmanagerserver={{ .Values.kubegems.local.alertmanager }}
-        - --api-lokiserver={{ .Values.kubegems.local.loki }}
-        - --api-jaegerserber={{ .Values.kubegems.local.jaeger }}
+        - --api-prometheusserver={{ .Values.kubegems.local.api.prometheus }}
+        - --api-alertmanagerserver={{ .Values.kubegems.local.api.alertmanager }}
+        - --api-lokiserver={{ .Values.kubegems.local.api.loki }}
+        - --api-jaegerserber={{ .Values.kubegems.local.api.jaeger }}
       image:
         tag: "{{ .Values.kubegems.version }}"
         registry: "{{ .Values.kubegems.registry }}"
