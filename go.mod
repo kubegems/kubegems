@@ -5,7 +5,6 @@ go 1.18
 require (
 	code.gitea.io/sdk/gitea v0.15.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/alicebob/miniredis/v2 v2.17.0
 	github.com/argoproj/argo-cd/v2 v2.1.10
@@ -110,6 +109,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/Microsoft/hcsshim v0.8.14 // indirect
