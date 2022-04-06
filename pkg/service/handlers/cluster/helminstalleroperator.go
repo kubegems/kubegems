@@ -45,12 +45,17 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 	_ = relese
 
 	allinoneplugin := &pluginsv1beta1.Plugin{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: pluginsv1beta1.GroupVersion.String(),
+			Kind:       "Plugin",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      KubeGemLocalPluginsNmae,
 			Namespace: i.InstallNamespace,
 		},
 		Spec: pluginsv1beta1.PluginSpec{
 			Enabled:          true,
+			Kind:             pluginsv1beta1.PluginKindTemplate,
 			InstallNamespace: i.InstallNamespace, // set ns to install ns
 			Values:           controllers.MarshalValues(i.PluginsValues),
 		},
