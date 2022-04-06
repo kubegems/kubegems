@@ -8,7 +8,7 @@ metadata:
 spec:
   kind: helm
   repo: https://kubernetes-charts.banzaicloud.com
-  installNamespace: "{{ .Values.logging.namespace }}"
+  installNamespace: {{ .Values.logging.namespace }}
   enabled: true
 ---
 # https://github.com/grafana/helm-charts/tree/main/charts/loki
@@ -20,6 +20,6 @@ metadata:
 spec:
   kind: helm
   repo: https://grafana.github.io/helm-charts
-  installNamespace: "{{ .Values.logging.namespace }}"
+  installNamespace: {{ .Values.logging.namespace }}
   enabled: true
 {{- end }}
