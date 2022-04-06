@@ -309,11 +309,16 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 // 环境删除,同步删除CRD
 func (h *EnvironmentHandler) afterEnvironmentDelete(ctx context.Context, tx *gorm.DB, env *models.Environment) error {
 	return h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
-		return cli.Delete(ctx, &v1beta1.Environment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: env.EnvironmentName,
-			},
-		})
+		envobj := &v1beta1.Environment{}
+		err := cli.Get(ctx, client.ObjectKey{Name: env.EnvironmentName}, envobj)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return nil
+			} else {
+				return err
+			}
+		}
+		return cli.Delete(ctx, envobj)
 	})
 }
 

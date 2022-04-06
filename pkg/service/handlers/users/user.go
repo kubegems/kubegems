@@ -109,7 +109,7 @@ func (h *UserHandler) PostUser(c *gin.Context) {
 		return
 	}
 	h.SetAuditData(c, "创建", "系统用户", user.Username)
-	handlers.Created(c, obj)
+	handlers.Created(c, user)
 }
 
 // PutUser 修改User
