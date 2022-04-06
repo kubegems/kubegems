@@ -3,14 +3,19 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/argoproj/gitops-engine/pkg/utils/kube"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/kustomize/api/filesys"
 	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/yaml"
 )
 
 func KustomizeBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
@@ -46,7 +51,7 @@ func TemplatesBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.U
 		Namespace: plugin.Namespace,
 		IsInstall: true,
 	}
-	chart, err := loader.Load(plugin.Path)
+	chart, err := Load(plugin)
 	if err != nil {
 		return nil, err
 	}
@@ -69,4 +74,54 @@ func TemplatesBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.U
 		}
 	}
 	return res, nil
+}
+
+const chartfile = "Chart.yaml"
+
+func Load(plugin Plugin) (*chart.Chart, error) {
+	absdir, err := filepath.Abs(plugin.Path)
+	if err != nil {
+		return nil, err
+	}
+	absdir += string(filepath.Separator)
+	containsChartFile := false
+	files := []*loader.BufferedFile{}
+	walk := func(name string, fi os.FileInfo, err error) error {
+		relfilename := strings.TrimPrefix(name, absdir)
+		if relfilename == "" {
+			return nil
+		}
+		if relfilename == chartfile {
+			containsChartFile = true
+		}
+		if err != nil {
+			return err
+		}
+		if fi.IsDir() {
+			return nil
+		}
+		data, err := os.ReadFile(name)
+		if err != nil {
+			return err
+		}
+		files = append(files, &loader.BufferedFile{Name: relfilename, Data: data})
+		return nil
+	}
+	if err = filepath.Walk(absdir, walk); err != nil {
+		return nil, err
+	}
+
+	if !containsChartFile {
+		chartfile := chart.Metadata{
+			APIVersion: chart.APIVersionV2,
+			Name:       plugin.Name,
+			Version:    plugin.Version,
+		}
+		chartfilecontent, err := yaml.Marshal(chartfile)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, &loader.BufferedFile{Name: "Chart.yaml", Data: chartfilecontent})
+	}
+	return loader.LoadFiles(files)
 }
