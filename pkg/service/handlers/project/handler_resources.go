@@ -658,11 +658,13 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	user, _ := h.GetContextUser(c)
 	var cluster models.Cluster
 	if err := h.GetDB().First(&cluster, env.ClusterID).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+	env.CreatorID = user.GetID()
 	env.LimitRange = models.FillDefaultLimigrange(&env)
 
 	ctx := c.Request.Context()
