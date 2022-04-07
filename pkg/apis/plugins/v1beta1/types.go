@@ -22,17 +22,27 @@ type Plugin struct {
 }
 
 type PluginSpec struct {
-	Enabled          bool         `json:"enabled,omitempty"`          // enabled
-	Kind             PluginKind   `json:"kind,omitempty"`             // plugin kind, e.g. "helm","kustomize","native".
-	InstallNamespace string       `json:"installNamespace,omitempty"` // plugin install namespace, same with metadata.namespace if empty.
-	Dependencies     []Dependency `json:"dependencies,omitempty"`     // dependencies on other plugins
+	Enabled bool `json:"enabled,omitempty"`
+	// plugin kind, e.g. "helm","kustomize","native".
+	Kind PluginKind `json:"kind,omitempty"`
+	// plugin install namespace, same with metadata.namespace if empty.
+	InstallNamespace string `json:"installNamespace,omitempty"`
+	// dependencies on other plugins
+	Dependencies []Dependency `json:"dependencies,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Values  runtime.RawExtension `json:"values,omitempty"`  // plugin values, helm values
-	Version string               `json:"version,omitempty"` // plugin version,also helm chart version
-	Repo    string               `json:"repo,omitempty"`    // plugin repo url,optional
-	Path    string               `json:"path,omitempty"`    // plugin repo path,optional
+	// plugin values, helm values
+	Values runtime.RawExtension `json:"values,omitempty"`
+	// plugin version,also helm chart version
+	Version string `json:"version,omitempty"`
+	// plugin repo url
+	// +optional
+	Repo string `json:"repo,omitempty"`
+	// plugin repo path
+	// +optional
+	Path string `json:"path,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Resources []runtime.RawExtension `json:"resources,omitempty"` // inline resources
+	// inline resources
+	Resources []runtime.RawExtension `json:"resources,omitempty"`
 }
 
 type Dependency struct {
@@ -42,16 +52,20 @@ type Dependency struct {
 }
 
 type PluginStatus struct {
-	Phase            PluginPhase `json:"phase,omitempty"`            // Phase is the current state of the release
-	Message          string      `json:"message,omitempty"`          // Message is the message associated with the status
-	InstallNamespace string      `json:"installNamespace,omitempty"` // plugin installNamespace,if empty use .metadata.namespace
+	// Phase is the current state of the release
+	Phase PluginPhase `json:"phase,omitempty"`
+	// Message is the message associated with the status
+	Message string `json:"message,omitempty"`
+	// plugin installNamespace,if empty use .metadata.namespace
+	InstallNamespace string `json:"installNamespace,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Values            runtime.RawExtension `json:"values,omitempty"`
 	Version           string               `json:"version,omitempty"`
 	CreationTimestamp metav1.Time          `json:"creationTimestamp,omitempty"`
 	UpgradeTimestamp  metav1.Time          `json:"upgradeTimestamp,omitempty"`
 	DeletionTimestamp *metav1.Time         `json:"deletionTimestamp,omitempty"`
-	Notes             string               `json:"notes,omitempty"` // Contains the rendered templates/NOTES.txt if available
+	// Contains the rendered templates/NOTES.txt if available
+	Notes string `json:"notes,omitempty"`
 }
 
 //+kubebuilder:object:root=true

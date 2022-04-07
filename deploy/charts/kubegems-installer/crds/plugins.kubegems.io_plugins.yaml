@@ -56,6 +56,7 @@ spec:
           spec:
             properties:
               dependencies:
+                description: dependencies on other plugins
                 items:
                   properties:
                     name:
@@ -69,22 +70,30 @@ spec:
               enabled:
                 type: boolean
               installNamespace:
+                description: plugin install namespace, same with metadata.namespace
+                  if empty.
                 type: string
               kind:
+                description: plugin kind, e.g. "helm","kustomize","native".
                 type: string
               path:
+                description: plugin repo path
                 type: string
               repo:
+                description: plugin repo url
                 type: string
               resources:
+                description: inline resources
                 items:
                   type: object
                 type: array
                 x-kubernetes-preserve-unknown-fields: true
               values:
+                description: plugin values, helm values
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               version:
+                description: plugin version,also helm chart version
                 type: string
             type: object
           status:
@@ -96,12 +105,16 @@ spec:
                 format: date-time
                 type: string
               installNamespace:
+                description: plugin installNamespace,if empty use .metadata.namespace
                 type: string
               message:
+                description: Message is the message associated with the status
                 type: string
               notes:
+                description: Contains the rendered templates/NOTES.txt if available
                 type: string
               phase:
+                description: Phase is the current state of the release
                 type: string
               upgradeTimestamp:
                 format: date-time
