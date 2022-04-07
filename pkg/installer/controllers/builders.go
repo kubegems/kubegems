@@ -76,7 +76,7 @@ func TemplatesBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.U
 	return res, nil
 }
 
-const chartfile = "Chart.yaml"
+const chartFileName = "Chart.yaml"
 
 func Load(plugin Plugin) (*chart.Chart, error) {
 	absdir, err := filepath.Abs(plugin.Path)
@@ -91,7 +91,7 @@ func Load(plugin Plugin) (*chart.Chart, error) {
 		if relfilename == "" {
 			return nil
 		}
-		if relfilename == chartfile {
+		if relfilename == chartFileName {
 			containsChartFile = true
 		}
 		if err != nil {
@@ -115,13 +115,18 @@ func Load(plugin Plugin) (*chart.Chart, error) {
 		chartfile := chart.Metadata{
 			APIVersion: chart.APIVersionV2,
 			Name:       plugin.Name,
-			Version:    plugin.Version,
+			Version: func() string {
+				if plugin.Version != "" {
+					return plugin.Version
+				}
+				return "0.0.0"
+			}(),
 		}
 		chartfilecontent, err := yaml.Marshal(chartfile)
 		if err != nil {
 			return nil, err
 		}
-		files = append(files, &loader.BufferedFile{Name: "Chart.yaml", Data: chartfilecontent})
+		files = append(files, &loader.BufferedFile{Name: chartFileName, Data: chartfilecontent})
 	}
 	return loader.LoadFiles(files)
 }
