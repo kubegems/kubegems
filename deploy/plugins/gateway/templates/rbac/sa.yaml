@@ -2,4 +2,3 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: nginx-ingress-operator-controller-manager
-  namespace: gemcloud-gateway-system

@@ -40,7 +40,7 @@ istio:
   enabled: true
   namespace: istio-system
   operator:
-    hub: docker.io
+    hub: docker.io/istio
     tracing:
       sampling: 50
 argo-rollouts:

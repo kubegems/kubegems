@@ -27,6 +27,8 @@ spec:
   repo: https://github.com/istio/istio.git
   path: manifests/charts/istio-operator
   version: "1.11.8"
+  values:
+    operatorNamespace: {{ .Values.istio.namespace }}
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
 apiVersion: install.istio.io/v1alpha1
