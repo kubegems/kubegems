@@ -63,13 +63,20 @@ kubectl config use-context kind-kubegems
 
 [Bootstrapping clusters with kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/)
 
+or using kubeadm with kuberouter for your local environment:
+
+```sh
+sudo kubeadm init --pod-network-cidr 10.244.0.0/16
+KUBECONFIG=/etc/kubernetes/admin.conf kubectl taint nodes --all node-role.kubernetes.io/master-
+KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/daemonset/kubeadm-kuberouter.yaml
+```
+
 ## Deploy KubeGems
 
 Install kubegems installer using helm.
 
 ```sh
 helm install --namespace kubegems-installer --create-namespace kubegems-installer charts/kubegems-installer
-kubectl apply -f plugins-core.yaml
 ```
 
 or deploy installer from generated manifests.
@@ -77,6 +84,17 @@ or deploy installer from generated manifests.
 ```sh
 kubectl create namespace kubegems-installer
 kubectl apply --namespace kubegems-installer -f installer.yaml
+```
+
+if you has no storage plugin installed:
+
+```sh
+kubectl apply -f plugins-extends.yaml
+```
+
+Deploy kubegems core components:
+
+```sh
 kubectl apply -f plugins-core.yaml
 ```
 
