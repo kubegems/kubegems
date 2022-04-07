@@ -252,11 +252,8 @@ func (n *NativeApply) Apply(ctx context.Context, namespace string, resources []*
 }
 
 func (n *NativePlugin) parseResult(result *syncResult, status *PluginStatus) error {
-	switch result.phase {
-	case common.OperationRunning:
+	if result.phase == common.OperationRunning {
 		return fmt.Errorf("sync is still running: %s", result.message)
-	case common.OperationFailed:
-		return fmt.Errorf("sync failed: %s", result.message)
 	}
 
 	errmsgs := []string{}
