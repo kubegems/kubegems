@@ -83,22 +83,22 @@ or deploy installer from generated manifests.
 
 ```sh
 kubectl create namespace kubegems-installer
-kubectl apply --namespace kubegems-installer -f installer.yaml
+kubectl apply --namespace kubegems-installer -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/installer.yaml
 ```
 
 if you has no storage plugin installed:
 
 ```sh
-kubectl apply -f plugins-extends.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/plugins-extends.yaml
 ```
 
 Deploy kubegems core components:
 
 ```sh
-kubectl apply -f plugins-core.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/plugins-core.yaml
 ```
 
-Wait every thing becomes OK.
+Wait until everything becomes OK.
 
 ## Generate Installer Manifests
 
