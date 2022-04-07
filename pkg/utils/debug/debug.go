@@ -40,7 +40,7 @@ func init() {
 }
 
 const (
-	GemSystemNamespace = "gemcloud-system"
+	KubegemsNamespace = "kubegems"
 )
 
 // ApplyPortForwardingOptions using apiserver port forward port for options
@@ -68,7 +68,7 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 
 	// mysql
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "gems-mysql", 3306)
+		addr, err := PortForward(ctx, rest, KubegemsNamespace, "mysql", 3306)
 		if err != nil {
 			return err
 		}
@@ -79,7 +79,7 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 
 	// redis
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "gems-redis", 6379)
+		addr, err := PortForward(ctx, rest, KubegemsNamespace, "kubegems-redis-master", 6379)
 		if err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 
 	// git
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "gems-gitea", 3000)
+		addr, err := PortForward(ctx, rest, KubegemsNamespace, "kubegems-gitea-http", 3000)
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 
 	// chartmuseum
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "gems-chartmuseum", 8030)
+		addr, err := PortForward(ctx, rest, KubegemsNamespace, "kubegems-chartmuseum", 8080)
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 
 	// argo
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, gems.NamespaceWorkflow, "argocd-server", 80)
+		addr, err := PortForward(ctx, rest, KubegemsNamespace, "kubegems-argocd-server", 80)
 		if err != nil {
 			return err
 		}
