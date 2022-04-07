@@ -38,7 +38,7 @@ type Options struct {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		MetricsAddr:          "127.0.0.1:8080", // default run under kube-rbac-proxy
+		MetricsAddr:          "127.0.0.1:9100", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
 		ChartsDir:            "charts",
