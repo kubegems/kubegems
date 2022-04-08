@@ -2,7 +2,7 @@
 
 ## Charts
 
-The `charts` dir contains kubegems helm charts.
+The `plugins` dir contains kubegems helm charts.
 
 | name               | description                                                                       |
 | ------------------ | --------------------------------------------------------------------------------- |
