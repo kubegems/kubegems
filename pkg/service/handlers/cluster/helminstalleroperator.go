@@ -2,6 +2,7 @@ package clusterhandler
 
 import (
 	"context"
+	"path/filepath"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -13,11 +14,11 @@ import (
 )
 
 const (
-	KubeGemsInstallerChartPath      = "/app/charts"
-	KubeGemsInstallerChartName      = "kubegems-installer"
-	KubeGemsInstallerChartNamespace = "kubegems-installer"
-	KubeGemsLocalPluginsNamespace   = "kubegems-local"
-	KubeGemsLocalPluginsNmae        = "kubegems-local-stack"
+	KubeGemPluginsPath               = "plugins"
+	KubeGemsInstallerPluginName      = "kubegems-installer"
+	KubeGemsInstallerPluginNamespace = "kubegems-installer"
+	KubeGemsLocalPluginsNamespace    = "kubegems-local"
+	KubeGemsLocalPluginsName         = "kubegems-local-stack"
 )
 
 type OpratorInstaller struct {
@@ -28,21 +29,21 @@ type OpratorInstaller struct {
 }
 
 func (i OpratorInstaller) Apply(ctx context.Context) error {
-	if i.InstallNamespace == "" {
-		i.InstallNamespace = KubeGemsLocalPluginsNamespace
-	}
-	chartpath := KubeGemsInstallerChartPath
+	chartpath := filepath.Join(KubeGemPluginsPath, KubeGemsInstallerPluginName)
 	log.FromContextOrDiscard(ctx).Info("applying kubegems-installer chart", "chartPath", chartpath)
-	relese, err := (&controllers.Helm{Config: i.Config}).ApplyChart(ctx, KubeGemsInstallerChartName, KubeGemsInstallerChartNamespace, "file://"+chartpath,
-		controllers.ApplyOptions{
-			Values: i.PluginsValues,
-			Path:   KubeGemsInstallerChartName,
-		},
+
+	relese, err := (&controllers.Helm{Config: i.Config}).ApplyChart(ctx,
+		KubeGemsInstallerPluginName, KubeGemsInstallerPluginNamespace,
+		chartpath, i.PluginsValues, controllers.ApplyOptions{},
 	)
 	if err != nil {
 		return err
 	}
 	log.Info("apply kubegems installer succeed", "namespace", relese.Namespace, "name", relese.Name, "version", relese.Version)
+
+	if i.InstallNamespace == "" {
+		i.InstallNamespace = KubeGemsLocalPluginsNamespace
+	}
 
 	allinoneplugin := &pluginsv1beta1.Plugin{
 		TypeMeta: metav1.TypeMeta{
@@ -50,7 +51,7 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 			Kind:       "Plugin",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      KubeGemsLocalPluginsNmae,
+			Name:      KubeGemsLocalPluginsName,
 			Namespace: i.InstallNamespace,
 		},
 		Spec: pluginsv1beta1.PluginSpec{
@@ -68,7 +69,7 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 
 func (i OpratorInstaller) Remove(ctx context.Context) error {
 	if i.InstallNamespace == "" {
-		i.InstallNamespace = KubeGemsInstallerChartNamespace
+		i.InstallNamespace = KubeGemsLocalPluginsNamespace
 	}
 
 	// remove all plugins

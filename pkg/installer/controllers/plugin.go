@@ -2,14 +2,11 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 )
@@ -23,37 +20,18 @@ type PluginManager interface {
 }
 
 type PluginOptions struct {
-	ChartsDir    string `json:"chartsDir,omitempty"`
-	PluginsDir   string `json:"pluginsDir,omitempty"`
-	KustomizeDir string `json:"kustomizeDir,omitempty"`
+	PluginsDir string `json:"pluginsDir,omitempty"`
 }
 
 func NewDelegatePluginManager(restconfig *rest.Config, options *PluginOptions) *DelegatePluginManager {
 	return &DelegatePluginManager{
 		appliers: map[pluginsv1beta1.PluginKind]PluginManager{
-			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options.ChartsDir),
-			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.KustomizeDir, KustomizeBuildPlugin),
+			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options.PluginsDir),
+			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.PluginsDir, KustomizeBuildPlugin),
 			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options.PluginsDir, TemplatesBuildPlugin),
 			pluginsv1beta1.PluginKindInline:    NewNativePlugin(restconfig, options.PluginsDir, InlineBuildPlugin),
 		},
 	}
-}
-
-func InlineBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
-	rss := make([]*unstructured.Unstructured, 0, len(plugin.Resources))
-	for i, obj := range plugin.Resources {
-		uns := &unstructured.Unstructured{}
-		if obj.Object != nil {
-			// already unmarshaled
-			scheme.Scheme.Convert(obj.Object, uns, nil)
-		} else {
-			if err := json.Unmarshal(obj.Raw, uns); err != nil {
-				return nil, fmt.Errorf("unmarshal resource[%d]: %v", i, err)
-			}
-		}
-		rss = append(rss, uns)
-	}
-	return rss, nil
 }
 
 func (m *DelegatePluginManager) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
@@ -83,21 +61,23 @@ type Plugin struct {
 	Repo      string                    `json:"repo,omitempty"`
 	Version   string                    `json:"version,omitempty"`
 	Path      string                    `json:"path,omitempty"`
+	DryRun    bool                      `json:"dryRun,omitempty"`
 	Resources []runtime.RawExtension    `json:"resources,omitempty"`
 	Values    map[string]interface{}    `json:"values,omitempty"`
 }
 
 type PluginStatus struct {
-	Name              string                     `json:"name,omitempty"`
-	Namespace         string                     `json:"namespace,omitempty"`
-	Phase             pluginsv1beta1.PluginPhase `json:"phase,omitempty"`
-	Values            map[string]interface{}     `json:"values,omitempty"`
-	Version           string                     `json:"version,omitempty"`
-	Message           string                     `json:"message,omitempty"`
-	Notes             string                     `json:"notes,omitempty"`
-	CreationTimestamp metav1.Time                `json:"creationTimestamp,omitempty"`
-	UpgradeTimestamp  metav1.Time                `json:"upgradeTimestamp,omitempty"`
-	DeletionTimestamp metav1.Time                `json:"deletionTimestamp,omitempty"`
+	Name              string                       `json:"name,omitempty"`
+	Namespace         string                       `json:"namespace,omitempty"`
+	Phase             pluginsv1beta1.PluginPhase   `json:"phase,omitempty"`
+	Values            map[string]interface{}       `json:"values,omitempty"`
+	Version           string                       `json:"version,omitempty"`
+	Message           string                       `json:"message,omitempty"`
+	Notes             string                       `json:"notes,omitempty"`
+	Resources         []*unstructured.Unstructured `json:"resources,omitempty"`
+	CreationTimestamp metav1.Time                  `json:"creationTimestamp,omitempty"`
+	UpgradeTimestamp  metav1.Time                  `json:"upgradeTimestamp,omitempty"`
+	DeletionTimestamp metav1.Time                  `json:"deletionTimestamp,omitempty"`
 }
 
 func (s PluginStatus) toPluginStatus() pluginsv1beta1.PluginStatus {
