@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/kustomize/api/filesys"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/yaml"
@@ -42,6 +44,27 @@ func KustomizeBuild(ctx context.Context, dir string) ([]*unstructured.Unstructur
 	res = append(res, items...)
 
 	return res, nil
+}
+
+func HelmBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
+	return TemplatesBuildPlugin(ctx, plugin)
+}
+
+func InlineBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
+	rss := make([]*unstructured.Unstructured, 0, len(plugin.Resources))
+	for i, obj := range plugin.Resources {
+		uns := &unstructured.Unstructured{}
+		if obj.Object != nil {
+			// already unmarshaled
+			scheme.Scheme.Convert(obj.Object, uns, nil)
+		} else {
+			if err := json.Unmarshal(obj.Raw, uns); err != nil {
+				return nil, fmt.Errorf("unmarshal resource[%d]: %v", i, err)
+			}
+		}
+		rss = append(rss, uns)
+	}
+	return rss, nil
 }
 
 // TemplatesBuildPlugin using helm template engine to render,but allow apply to different namespaces

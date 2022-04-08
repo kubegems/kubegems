@@ -32,7 +32,6 @@ type Options struct {
 	MetricsAddr          string `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
 	EnableLeaderElection bool   `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
 	ProbeAddr            string `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
-	ChartsDir            string `json:"chartsDir,omitempty" description:"The directory that contains the charts."`
 	PluginsDir           string `json:"pluginsDir,omitempty" description:"The directory that contains the plugins."`
 }
 
@@ -41,7 +40,6 @@ func NewDefaultOptions() *Options {
 		MetricsAddr:          "127.0.0.1:9100", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
-		ChartsDir:            "charts",
 		PluginsDir:           "plugins",
 	}
 }
@@ -62,7 +60,6 @@ func Run(ctx context.Context, options *Options) error {
 	}
 
 	if err := controllers.NewAndSetupPluginReconciler(ctx, mgr, &controllers.PluginOptions{
-		ChartsDir:  options.ChartsDir,
 		PluginsDir: options.PluginsDir,
 	}, PluginsControllerConcurrency); err != nil {
 		setupLog.Error(err, "unable to create plugin controller", "controller", "plugin")

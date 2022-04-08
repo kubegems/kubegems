@@ -43,6 +43,7 @@ func NewRootCmd() *cobra.Command {
 		apps.NewWorkerCmd(),
 		// apps.NewServicesCmd(),
 		apps.NewInstallerCmd(),
+		apps.NewPluginCmd(),
 	)
 	return cmd
 }
