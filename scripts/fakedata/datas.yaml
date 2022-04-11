@@ -1,0 +1,130 @@
+clusters:
+  - name: g-cluster-1
+    # kubeconfig kubeconfigs/g-cluste-1.yaml
+
+users:
+  - name: "g-user1"
+    password: "Passw0rd!@#"
+    email: "g-user1@kubegems.io"
+  - name: "g-user2"
+    password: "Passw0rd!@#"
+    email: "g-user2@kubegems.io"
+  - name: "g-user3"
+    password: "Passw0rd!@#"
+    email: "g-user3@kubegems.io"
+  - name: "g-user4"
+    password: "Passw0rd!@#"
+    email: "g-user4@kubegems.io"
+  - name: "g-user5"
+    password: "Passw0rd!@#"
+    email: "g-user5@kubegems.io"
+  - name: "g-user6"
+    password: "Passw0rd!@#"
+    email: "g-user6@kubegems.io"
+  - name: "g-user7"
+    password: "Passw0rd!@#"
+    email: "g-user7@kubegems.io"
+  - name: "g-user8"
+    password: "Passw0rd!@#"
+    email: "g-user8@kubegems.io"
+  - name: "g-user9"
+    password: "Passw0rd!@#"
+    email: "g-user9@kubegems.io"
+
+tenants:
+  - name: "g-ten-1"
+    quotas:
+      - cluster: g-cluster-1
+        content:
+          limits.cpu: "4"
+          limits.memory: "6Gi"
+          requests.storage: "20Gi"
+          count/pods: 100
+    members:
+      admin:
+        - "g-user1"
+      ordinary:
+        - "g-user2"
+        - "g-user3"
+        - "g-user4"
+        - "g-user5"
+    projects:
+      - name: "project1"
+        members:
+          admin:
+            - "g-user2"
+          dev:
+            - "g-user3"
+          test:
+            - "g-user4"
+          ops:
+            - "g-user5"
+        environments:
+          - name: dev
+            cluster: g-cluster-1
+            namespace: g-dev
+            applications:
+              - name: hello-world
+            quota:
+              count/pods: 100
+              limits.cpu: "1"
+              limits.memory: "2Gi"
+              requests.cpu: "1"
+              requests.memory: "2Gi"
+              requests.storage: "2Gi"
+          - name: test
+            cluster: g-cluster-1
+            namespace: g-test
+            applications:
+              - name: hello-world
+            quota:
+              count/pods: 100
+              limits.cpu: "1"
+              limits.memory: "2Gi"
+              requests.cpu: "1"
+              requests.memory: "2Gi"
+              requests.storage: "2Gi"
+          - name: prod
+            cluster: g-cluster-1
+            namespace: g-prod
+            applications:
+              - name: hello-world
+            members:
+              operator:
+                - "g-user3"
+            quota:
+              count/pods: 100
+              limits.cpu: "1"
+              limits.memory: "2Gi"
+              requests.cpu: "1"
+              requests.memory: "2Gi"
+              requests.storage: "2Gi"
+        applications:
+          - name: hello-world
+
+defaultLimitRange:
+  Container:
+    max:
+      cpu: '24'
+      memory: 48Gi
+    min:
+      cpu: '0'
+      memory: '0'
+    default:
+      cpu: 500m
+      memory: 1Gi
+    defaultRequest:
+      cpu: 10m
+      memory: 10Mi
+  PersistentVolumeClaim:
+    max:
+      storage: 1Ti
+    min:
+      storage: '0'
+  Pod:
+    max:
+      cpu: '48'
+      memory: 64Gi
+    min:
+      cpu: '0'
+      memory: '0'
