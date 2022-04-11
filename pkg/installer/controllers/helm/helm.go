@@ -1,14 +1,19 @@
-package controllers
+package helm
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 
 	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/downloader"
+	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -132,9 +137,43 @@ func NewHelmConfig(namespace string, restConfig *rest.Config) (*action.Configura
 // if repopath is not empty,download it from repo and set chartNameOrPath to repo/repopath.
 // LoadChart loads the chart from the repository
 func LoadChart(ctx context.Context, name, repo, version string) (*chart.Chart, error) {
-	_, chart, err := DownloadHelmChartOriginal(ctx, repo, name, version)
+	_, chart, err := DownloadChart(ctx, repo, name, version)
 	if err != nil {
 		return nil, fmt.Errorf("download chart: %w", err)
 	}
 	return chart, nil
+}
+
+func DownloadChart(ctx context.Context, repo, name, version string) (string, *chart.Chart, error) {
+	chartPathOptions := action.ChartPathOptions{RepoURL: repo, Version: version}
+	settings := cli.New()
+	chartPath, err := chartPathOptions.LocateChart(name, settings)
+	if err != nil {
+		return "", nil, err
+	}
+	chart, err := loader.Load(chartPath)
+	if err != nil {
+		return "", nil, err
+	}
+	// dependencies update
+	if err := action.CheckDependencies(chart, chart.Metadata.Dependencies); err != nil {
+		man := &downloader.Manager{
+			Out:              io.Discard,
+			ChartPath:        chartPath,
+			Keyring:          chartPathOptions.Keyring,
+			SkipUpdate:       false,
+			Getters:          getter.All(settings),
+			RepositoryConfig: settings.RepositoryConfig,
+			RepositoryCache:  settings.RepositoryCache,
+			Debug:            settings.Debug,
+		}
+		if err := man.Update(); err != nil {
+			return "", nil, err
+		}
+		chart, err = loader.Load(chartPath)
+		if err != nil {
+			return "", nil, err
+		}
+	}
+	return chartPath, chart, err
 }

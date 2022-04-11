@@ -7,13 +7,14 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/argoproj/gitops-engine/pkg/health"
 	"github.com/argoproj/gitops-engine/pkg/sync/common"
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	"kubegems.io/pkg/installer/controllers/gitops"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -25,7 +26,21 @@ type NativePlugin struct {
 	Config       *rest.Config
 	CacheDir     string
 	BuildFunc    BuildFunc
-	gitopsengine *GitOpsEngine
+	gitopsengine *gitops.GitOpsEngine
+}
+
+func WithManagedResourceSelectByPluginName(namespace, name string) gitops.Option {
+	const CountNameAndNamespace = 2
+	return gitops.WithManagedResourceSelection(func(obj client.Object) bool {
+		if annotations := obj.GetAnnotations(); annotations != nil {
+			nm := annotations[ManagedPluginAnnotation]
+			splits := strings.SplitN(nm, "/", CountNameAndNamespace)
+			if len(splits) >= 2 && splits[0] == namespace && splits[1] == name {
+				return true
+			}
+		}
+		return false
+	})
 }
 
 type BuildFunc func(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error)
@@ -79,12 +94,11 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 	status.Resources = manifests
 
 	// apply
-	var result *syncResult
+	var result *gitops.SyncResult
 	if plugin.DryRun {
-		result = &syncResult{phase: common.OperationSucceeded, message: "dry run succeeded"}
+		result = &gitops.SyncResult{Phase: common.OperationSucceeded, Message: "dry run succeeded"}
 	} else {
 		result, err = n.apply(ctx, plugin.Namespace, manifests,
-			WithDryRun(plugin.DryRun),
 			WithManagedResourceSelectByPluginName(plugin.Namespace, plugin.Name))
 		if err != nil {
 			return err
@@ -98,7 +112,7 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 	// installed
 	status.Phase = pluginsv1beta1.PluginPhaseInstalled
 	status.Values = plugin.Values
-	status.Message = result.message
+	status.Message = result.Message
 	status.Name, status.Namespace = plugin.Name, plugin.Namespace
 	if status.CreationTimestamp.IsZero() {
 		status.CreationTimestamp = now
@@ -126,14 +140,13 @@ func (n *NativePlugin) Remove(ctx context.Context, plugin Plugin, status *Plugin
 		return nil
 	}
 
-	var result *syncResult
+	var result *gitops.SyncResult
 	var err error
 
 	if plugin.DryRun {
-		result = &syncResult{phase: common.OperationSucceeded, message: "dry run succeeded"}
+		result = &gitops.SyncResult{Phase: common.OperationSucceeded, Message: "dry run succeeded"}
 	} else {
 		result, err = n.apply(ctx, namespace, []*unstructured.Unstructured{},
-			WithDryRun(plugin.DryRun),
 			WithManagedResourceSelectByPluginName(namespace, name))
 		if err != nil {
 			return err
@@ -144,40 +157,28 @@ func (n *NativePlugin) Remove(ctx context.Context, plugin Plugin, status *Plugin
 		return err
 	}
 	status.Phase = pluginsv1beta1.PluginPhaseRemoved
-	status.Message = result.message
+	status.Message = result.Message
 	status.Name = plugin.Name
 	status.Namespace = plugin.Namespace
 	status.DeletionTimestamp = metav1.Now()
 	return nil
 }
 
-func (n *NativePlugin) apply(ctx context.Context, namespace string, resources []*unstructured.Unstructured, options ...Option) (*syncResult, error) {
+func (n *NativePlugin) apply(ctx context.Context, namespace string, resources []*unstructured.Unstructured, options ...gitops.Option) (*gitops.SyncResult, error) {
 	if n.gitopsengine == nil {
-		n.gitopsengine = &GitOpsEngine{Config: n.Config}
+		n.gitopsengine = &gitops.GitOpsEngine{Config: n.Config}
 	}
 	return n.gitopsengine.Apply(ctx, namespace, resources, options...)
 }
 
-type syncResult struct {
-	phase   common.OperationPhase
-	message string
-	results []common.ResourceSyncResult
-}
-
-type alwaysHealthOverride struct{}
-
-func (alwaysHealthOverride) GetResourceHealth(_ *unstructured.Unstructured) (*health.HealthStatus, error) {
-	return &health.HealthStatus{Status: health.HealthStatusHealthy, Message: "always heathy"}, nil
-}
-
-func (n *NativePlugin) parseResult(result *syncResult, status *PluginStatus) error {
-	if result.phase == common.OperationRunning {
-		return fmt.Errorf("sync is still running: %s", result.message)
+func (n *NativePlugin) parseResult(result *gitops.SyncResult, status *PluginStatus) error {
+	if result.Phase == common.OperationRunning {
+		return fmt.Errorf("sync is still running: %s", result.Message)
 	}
 
 	errmsgs := []string{}
 	notes := []map[string]interface{}{}
-	for _, result := range result.results {
+	for _, result := range result.Results {
 		switch result.Status {
 		case common.ResultCodeSyncFailed:
 			errmsgs = append(errmsgs, fmt.Sprintf("%s: %s", result.ResourceKey.String(), result.Message))
