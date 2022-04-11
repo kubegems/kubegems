@@ -1,58 +1,14 @@
 package controllers
 
 import (
-	"context"
-	"errors"
+	"encoding/json"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	"sigs.k8s.io/yaml"
 )
-
-var ErrUnknownPluginKind = errors.New("unknown plugin kind")
-
-type PluginManager interface {
-	// plugin is the plugin to apply,if plugin.path set use it directly.
-	Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error
-	Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error
-}
-
-type PluginOptions struct {
-	PluginsDir string `json:"pluginsDir,omitempty"`
-}
-
-func NewDelegatePluginManager(restconfig *rest.Config, options *PluginOptions) *DelegatePluginManager {
-	return &DelegatePluginManager{
-		appliers: map[pluginsv1beta1.PluginKind]PluginManager{
-			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options.PluginsDir),
-			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.PluginsDir, KustomizeBuildPlugin),
-			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options.PluginsDir, TemplatesBuildPlugin),
-			pluginsv1beta1.PluginKindInline:    NewNativePlugin(restconfig, options.PluginsDir, InlineBuildPlugin),
-		},
-	}
-}
-
-func (m *DelegatePluginManager) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
-	applier, ok := m.appliers[plugin.Kind]
-	if !ok {
-		return ErrUnknownPluginKind
-	}
-	return applier.Apply(ctx, plugin, status)
-}
-
-func (m *DelegatePluginManager) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
-	applier, ok := m.appliers[plugin.Kind]
-	if !ok {
-		return ErrUnknownPluginKind
-	}
-	return applier.Remove(ctx, plugin, status)
-}
-
-type DelegatePluginManager struct {
-	appliers map[pluginsv1beta1.PluginKind]PluginManager
-}
 
 type Plugin struct {
 	Kind      pluginsv1beta1.PluginKind `json:"kind,omitempty"`
@@ -138,4 +94,37 @@ func PluginFromPlugin(plugin *pluginsv1beta1.Plugin) Plugin {
 			return plugin.Spec.InstallNamespace
 		}(),
 	}
+}
+
+func MarshalValues(vals map[string]interface{}) runtime.RawExtension {
+	if vals == nil {
+		return runtime.RawExtension{}
+	}
+	bytes, _ := json.Marshal(vals)
+	return runtime.RawExtension{Raw: bytes}
+}
+
+func UnmarshalValues(val runtime.RawExtension) map[string]interface{} {
+	if val.Raw == nil {
+		return nil
+	}
+	var vals interface{}
+	_ = yaml.Unmarshal(val.Raw, &vals)
+
+	if kvs, ok := vals.(map[string]interface{}); ok {
+		return kvs
+	}
+	if arr, ok := vals.([]interface{}); ok {
+		// is format of --set K=V
+		kvs := make(map[string]interface{}, len(arr))
+		for _, kv := range arr {
+			if kv, ok := kv.(map[string]interface{}); ok {
+				for k, v := range kv {
+					kvs[k] = v
+				}
+			}
+		}
+		return kvs
+	}
+	return nil
 }

@@ -1,12 +1,13 @@
-package controllers
+package gitops
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/argoproj/gitops-engine/pkg/cache"
+	"github.com/argoproj/gitops-engine/pkg/health"
 	"github.com/argoproj/gitops-engine/pkg/sync"
+	"github.com/argoproj/gitops-engine/pkg/sync/common"
 	"github.com/argoproj/gitops-engine/pkg/utils/kube"
 	"github.com/argoproj/gitops-engine/pkg/utils/tracing"
 	"github.com/go-logr/logr"
@@ -40,21 +41,19 @@ func WithDryRun(b bool) Option {
 	}
 }
 
-func WithManagedResourceSelectByPluginName(namespace, name string) Option {
-	const CountNameAndNamespace = 2
-	return WithManagedResourceSelection(func(obj client.Object) bool {
-		if annotations := obj.GetAnnotations(); annotations != nil {
-			nm := annotations[ManagedPluginAnnotation]
-			splits := strings.SplitN(nm, "/", CountNameAndNamespace)
-			if len(splits) >= 2 && splits[0] == namespace && splits[1] == name {
-				return true
-			}
-		}
-		return false
-	})
+type SyncResult struct {
+	Phase   common.OperationPhase
+	Message string
+	Results []common.ResourceSyncResult
 }
 
-func (n *GitOpsEngine) Apply(ctx context.Context, namespace string, resources []*unstructured.Unstructured, options ...Option) (*syncResult, error) {
+type alwaysHealthOverride struct{}
+
+func (alwaysHealthOverride) GetResourceHealth(_ *unstructured.Unstructured) (*health.HealthStatus, error) {
+	return &health.HealthStatus{Status: health.HealthStatusHealthy, Message: "always heathy"}, nil
+}
+
+func (n *GitOpsEngine) Apply(ctx context.Context, namespace string, resources []*unstructured.Unstructured, options ...Option) (*SyncResult, error) {
 	log := logr.FromContextOrDiscard(ctx).WithValues("namespace", namespace)
 	opts := &GitOpsEngineOptions{}
 	for _, opt := range options {
@@ -95,12 +94,12 @@ func (n *GitOpsEngine) Apply(ctx context.Context, namespace string, resources []
 	}
 	defer cleanup()
 	defer syncCtx.Terminate()
-	var result *syncResult
+	var result *SyncResult
 	period := time.Second
 	err = wait.PollUntil(period, func() (done bool, err error) {
 		syncCtx.Sync()
 		phase, message, resources := syncCtx.GetState()
-		result = &syncResult{phase: phase, message: message, results: resources}
+		result = &SyncResult{Phase: phase, Message: message, Results: resources}
 		if phase.Completed() {
 			return true, err
 		}

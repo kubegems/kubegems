@@ -18,9 +18,7 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"time"
 
 	"github.com/go-logr/logr"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -36,18 +34,16 @@ import (
 
 const PluginFinalizerName = "plugins.kubegems.io/finalizer"
 
-const DependencyErrorRetryInterval = 5 * time.Second
-
 // PluginReconciler reconciles a Memcached object
 type PluginReconciler struct {
 	client.Client
-	PluginManager PluginManager
+	PluginManager *PluginManager
 }
 
 func NewAndSetupPluginReconciler(ctx context.Context, mgr manager.Manager, options *PluginOptions, concurrent int) error {
 	reconciler := &PluginReconciler{
 		Client:        mgr.GetClient(),
-		PluginManager: NewDelegatePluginManager(mgr.GetConfig(), options),
+		PluginManager: NewPluginManager(mgr.GetConfig(), options),
 	}
 	if err := reconciler.SetupWithManager(mgr, concurrent); err != nil {
 		return err
@@ -95,15 +91,19 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		log.Info("waiting for plugin to be removed, then remove finalizer")
 	}
 
-	if err := r.Sync(ctx, plugin); err != nil {
-		// if is dependency error, then we can retry at a certain interval
-		if errors.Is(err, DependencyError{}) {
-			return ctrl.Result{RequeueAfter: DependencyErrorRetryInterval}, err
+	beforeStatus := plugin.Status.DeepCopy()
+
+	err := r.Sync(ctx, plugin)
+	// update status if updated whenever the sync has error or no
+	if !apiequality.Semantic.DeepEqual(plugin.Status, beforeStatus) {
+		if err := r.Status().Update(ctx, plugin); err != nil {
+			return ctrl.Result{}, err
 		}
+	}
+	if err != nil {
 		return ctrl.Result{}, err
 	}
-
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, err
 }
 
 type DependencyError struct {
@@ -116,11 +116,7 @@ func (e DependencyError) Error() string {
 }
 
 // Sync
-// nolint: funlen,gocognit
 func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plugin) error {
-	thisPlugin := PluginFromPlugin(plugin)
-	thisStatus := PluginStatusFromPlugin(plugin)
-
 	shouldRemove := (!plugin.Spec.Enabled) || plugin.DeletionTimestamp != nil
 
 	// todo: check dependencies
@@ -151,42 +147,13 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 		}
 	}
 
-	// nolint: nestif
 	if shouldRemove {
 		// remove
-		if err := r.PluginManager.Remove(ctx, thisPlugin, thisStatus); err != nil {
-			plugin.Status = thisStatus.toPluginStatus()
-			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
-			plugin.Status.Message = err.Error()
-			if err := r.Status().Update(ctx, plugin); err != nil {
-				return err
-			}
-			return err
-		}
-		plugin.Status.Phase = pluginsv1beta1.PluginPhaseRemoved
+		return r.PluginManager.Remove(ctx, plugin)
 	} else {
 		// apply
-		if err := r.PluginManager.Apply(ctx, thisPlugin, thisStatus); err != nil {
-			plugin.Status = thisStatus.toPluginStatus()
-			plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
-			plugin.Status.Message = err.Error()
-			if err := r.Status().Update(ctx, plugin); err != nil {
-				return err
-			}
-			return err
-		}
+		return r.PluginManager.Apply(ctx, plugin)
 	}
-
-	// update status
-	pluginStatus := thisStatus.toPluginStatus()
-	if apiequality.Semantic.DeepEqual(plugin.Status, pluginStatus) {
-		return nil
-	}
-	plugin.Status = pluginStatus
-	if err := r.Status().Update(ctx, plugin); err != nil {
-		return err
-	}
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

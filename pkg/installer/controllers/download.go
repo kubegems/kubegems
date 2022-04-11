@@ -21,12 +21,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/go-logr/logr"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/downloader"
-	"helm.sh/helm/v3/pkg/getter"
+	"kubegems.io/pkg/installer/controllers/helm"
 )
 
 const (
@@ -36,8 +31,6 @@ const (
 
 // we cache "plugin" in a directory with name "{name}-{version}" under cache directory
 func DownloadPlugin(ctx context.Context, plugin *Plugin, cachedir string) error {
-	log := logr.FromContextOrDiscard(ctx).WithValues("plugin", plugin.Name)
-
 	pluginCacheDir := ""
 	if plugin.Version == "" {
 		pluginCacheDir = filepath.Join(cachedir, plugin.Name)
@@ -45,9 +38,11 @@ func DownloadPlugin(ctx context.Context, plugin *Plugin, cachedir string) error 
 		pluginCacheDir = filepath.Join(cachedir, plugin.Name+"-"+plugin.Version)
 	}
 
+	log := logr.FromContextOrDiscard(ctx).WithValues("kind", plugin.Kind, "plugin", plugin.Name, "dir", pluginCacheDir)
+
 	// cache hint?
 	if entries, err := os.ReadDir(pluginCacheDir); err == nil && len(entries) > 0 {
-		log.Info("already download,use cache")
+		log.Info("already download")
 		plugin.Path = pluginCacheDir
 		return nil
 	}
@@ -124,7 +119,11 @@ func Download(ctx context.Context, repo DownloadRepo, intodir string) error {
 }
 
 func DownloadZip(ctx context.Context, uri, subpath, into string) error {
-	resp, err := http.Get(uri)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -177,7 +176,11 @@ func DownloadZip(ctx context.Context, uri, subpath, into string) error {
 }
 
 func DownloadTgz(ctx context.Context, uri, subpath, into string) error {
-	resp, err := http.Get(uri)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -298,42 +301,8 @@ func DownloadGit(ctx context.Context, cloneurl string, rev string, subpath, into
 	})
 }
 
-func DownloadHelmChartOriginal(ctx context.Context, repo, name, version string) (string, *chart.Chart, error) {
-	chartPathOptions := action.ChartPathOptions{RepoURL: repo, Version: version}
-	settings := cli.New()
-	chartPath, err := chartPathOptions.LocateChart(name, settings)
-	if err != nil {
-		return "", nil, err
-	}
-	chart, err := loader.Load(chartPath)
-	if err != nil {
-		return "", nil, err
-	}
-	// dependencies update
-	if err := action.CheckDependencies(chart, chart.Metadata.Dependencies); err != nil {
-		man := &downloader.Manager{
-			Out:              io.Discard,
-			ChartPath:        chartPath,
-			Keyring:          chartPathOptions.Keyring,
-			SkipUpdate:       false,
-			Getters:          getter.All(settings),
-			RepositoryConfig: settings.RepositoryConfig,
-			RepositoryCache:  settings.RepositoryCache,
-			Debug:            settings.Debug,
-		}
-		if err := man.Update(); err != nil {
-			return "", nil, err
-		}
-		chart, err = loader.Load(chartPath)
-		if err != nil {
-			return "", nil, err
-		}
-	}
-	return chartPath, chart, err
-}
-
 func DownloadHelmChart(ctx context.Context, repo, name, version, intodir string) error {
-	chartPath, chart, err := DownloadHelmChartOriginal(ctx, repo, name, version)
+	chartPath, chart, err := helm.DownloadChart(ctx, repo, name, version)
 	if err != nil {
 		return err
 	}
@@ -383,11 +352,17 @@ func UnTarGz(r io.Reader, subpath, into string) error {
 		filename := strings.TrimPrefix(hdr.Name, subpath)
 		filename = filepath.Join(into, filename)
 
-		if dir := filepath.Dir(filename); dir != "" {
-			if err := os.MkdirAll(dir, defaultDirMode); err != nil {
+		if hdr.FileInfo().IsDir() {
+			if err := os.MkdirAll(filename, defaultDirMode); err != nil {
+				return err
+			}
+			continue
+		} else {
+			if err := os.MkdirAll(filepath.Dir(filename), defaultDirMode); err != nil {
 				return err
 			}
 		}
+
 		dest, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, hdr.FileInfo().Mode())
 		if err != nil {
 			return err

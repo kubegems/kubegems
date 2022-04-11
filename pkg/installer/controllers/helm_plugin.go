@@ -13,18 +13,19 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	"kubegems.io/pkg/installer/controllers/helm"
 )
 
 type HelmPlugin struct {
-	Helm      *Helm  `json:"helm,omitempty"`
-	ChartsDir string `json:"chartsDir,omitempty"`
+	Helm      *helm.Helm `json:"helm,omitempty"`
+	ChartsDir string     `json:"chartsDir,omitempty"`
 }
 
 func NewHelmPlugin(config *rest.Config, path string) *HelmPlugin {
 	if abs, _ := filepath.Abs(path); abs != path {
 		path = abs
 	}
-	return &HelmPlugin{Helm: &Helm{Config: config}, ChartsDir: path}
+	return &HelmPlugin{Helm: &helm.Helm{Config: config}, ChartsDir: path}
 }
 
 func (r *HelmPlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
@@ -32,7 +33,7 @@ func (r *HelmPlugin) Apply(ctx context.Context, plugin Plugin, status *PluginSta
 		return err
 	}
 
-	upgradeRelease, err := r.Helm.ApplyChart(ctx, plugin.Name, plugin.Namespace, plugin.Path, plugin.Values, ApplyOptions{
+	upgradeRelease, err := r.Helm.ApplyChart(ctx, plugin.Name, plugin.Namespace, plugin.Path, plugin.Values, helm.ApplyOptions{
 		Version: plugin.Version, Repo: plugin.Repo, DryRun: plugin.DryRun,
 	})
 	if err != nil {
@@ -72,21 +73,20 @@ func (r *HelmPlugin) Remove(ctx context.Context, plugin Plugin, status *PluginSt
 	}
 
 	// uninstall
-	release, err := r.Helm.RemoveChart(ctx, plugin.Name, plugin.Namespace, RemoveOptions{
+	release, err := r.Helm.RemoveChart(ctx, plugin.Name, plugin.Namespace, helm.RemoveOptions{
 		DryRun: plugin.DryRun,
 	})
 	if err != nil {
 		return err
 	}
 
-	ress, _ := parseResources(release.Manifest)
-	status.Resources = ress
-
 	if release == nil {
 		status.Phase = pluginsv1beta1.PluginPhaseNone
 		status.Message = "plugin not install"
 		return nil
 	}
+	ress, _ := parseResources(release.Manifest)
+	status.Resources = ress
 
 	status.Phase = pluginsv1beta1.PluginPhaseRemoved
 	status.Message = release.Info.Description
