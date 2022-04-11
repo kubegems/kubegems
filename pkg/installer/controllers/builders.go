@@ -1,31 +1,29 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/argoproj/gitops-engine/pkg/utils/kube"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/kubernetes/scheme"
+	"helm.sh/helm/v3/pkg/releaseutil"
 	"sigs.k8s.io/kustomize/api/filesys"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/yaml"
 )
 
-func KustomizeBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
+func KustomizeTemplatePlugin(ctx context.Context, plugin Plugin) ([]byte, error) {
 	return KustomizeBuild(ctx, plugin.Path)
 }
 
 // build kustomization
-func KustomizeBuild(ctx context.Context, dir string) ([]*unstructured.Unstructured, error) {
+func KustomizeBuild(ctx context.Context, dir string) ([]byte, error) {
 	k := krusty.MakeKustomizer(krusty.MakeDefaultOptions())
 	m, err := k.Run(filesys.MakeFsOnDisk(), dir)
 	if err != nil {
@@ -35,40 +33,23 @@ func KustomizeBuild(ctx context.Context, dir string) ([]*unstructured.Unstructur
 	if err != nil {
 		return nil, err
 	}
-
-	res := []*unstructured.Unstructured{}
-	items, err := kube.SplitYAML(yml)
-	if err != nil {
-		return nil, fmt.Errorf("parse content [%s]: %v", string(yml), err)
-	}
-	res = append(res, items...)
-
-	return res, nil
+	return []byte(yml), nil
 }
 
-func HelmBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
-	return TemplatesBuildPlugin(ctx, plugin)
-}
-
-func InlineBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
-	rss := make([]*unstructured.Unstructured, 0, len(plugin.Resources))
-	for i, obj := range plugin.Resources {
-		uns := &unstructured.Unstructured{}
-		if obj.Object != nil {
-			// already unmarshaled
-			scheme.Scheme.Convert(obj.Object, uns, nil)
-		} else {
-			if err := json.Unmarshal(obj.Raw, uns); err != nil {
-				return nil, fmt.Errorf("unmarshal resource[%d]: %v", i, err)
-			}
+func InlineTemplatePlugin(ctx context.Context, plugin Plugin) ([]byte, error) {
+	out := bytes.NewBuffer(nil)
+	for _, obj := range plugin.Resources {
+		out.WriteString("---\n")
+		_, err := out.Write(obj.Raw)
+		if err != nil {
+			return nil, err
 		}
-		rss = append(rss, uns)
 	}
-	return rss, nil
+	return out.Bytes(), nil
 }
 
-// TemplatesBuildPlugin using helm template engine to render,but allow apply to different namespaces
-func TemplatesBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
+// TemplatesTemplate using helm template engine to render,but allow apply to different namespaces
+func TemplatesTemplatePlugin(ctx context.Context, plugin Plugin) ([]byte, error) {
 	options := chartutil.ReleaseOptions{
 		Name:      plugin.Name,
 		Namespace: plugin.Namespace,
@@ -78,7 +59,9 @@ func TemplatesBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.U
 	if err != nil {
 		return nil, err
 	}
-	valuesToRender, err := chartutil.ToRenderValues(chart, plugin.Values, options, chartutil.DefaultCapabilities)
+
+	caps := chartutil.DefaultCapabilities
+	valuesToRender, err := chartutil.ToRenderValues(chart, plugin.Values, options, caps)
 	if err != nil {
 		return nil, err
 	}
@@ -86,17 +69,18 @@ func TemplatesBuildPlugin(ctx context.Context, plugin Plugin) ([]*unstructured.U
 	if err != nil {
 		return nil, err
 	}
-	var res []*unstructured.Unstructured
-	for _, content := range renderdFiles {
-		items, err := kube.SplitYAML([]byte(content))
-		if err != nil {
-			return nil, err
-		}
-		for _, item := range items {
-			res = append(res, item)
-		}
+	_, manifests, err := releaseutil.SortManifests(renderdFiles, caps.APIVersions, releaseutil.InstallOrder)
+	if err != nil {
+		return nil, err
 	}
-	return res, nil
+	out := bytes.NewBuffer(nil)
+	for _, crd := range chart.CRDObjects() {
+		fmt.Fprintf(out, "---\n# Source: %s\n%s\n", crd.Name, string(crd.File.Data[:]))
+	}
+	for _, m := range manifests {
+		fmt.Fprintf(out, "---\n# Source: %s\n%s\n", m.Name, m.Content)
+	}
+	return out.Bytes(), nil
 }
 
 const chartFileName = "Chart.yaml"

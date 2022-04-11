@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -112,6 +113,7 @@ func UnmarshalValues(val runtime.RawExtension) map[string]interface{} {
 	_ = yaml.Unmarshal(val.Raw, &vals)
 
 	if kvs, ok := vals.(map[string]interface{}); ok {
+		RemoveNulls(kvs)
 		return kvs
 	}
 	if arr, ok := vals.([]interface{}); ok {
@@ -124,7 +126,29 @@ func UnmarshalValues(val runtime.RawExtension) map[string]interface{} {
 				}
 			}
 		}
+		RemoveNulls(kvs)
 		return kvs
 	}
 	return nil
+}
+
+// https://github.com/helm/helm/blob/bed1a42a398b30a63a279d68cc7319ceb4618ec3/pkg/chartutil/coalesce.go#L37
+// helm CoalesceValues cant handle nested null,like `{a: {b: null}}`, which want to be `{}`
+func RemoveNulls(m map[string]interface{}) {
+	val := reflect.ValueOf(m)
+	for _, e := range val.MapKeys() {
+		v := val.MapIndex(e)
+		switch t := v.Interface().(type) {
+		case map[string]interface{}:
+			RemoveNulls(t)
+		}
+
+		if v.Kind() == reflect.Interface {
+			v = v.Elem()
+		}
+		if (v.Kind() == reflect.Invalid) || (v.Kind() == reflect.Map && v.Len() == 0) || v.IsZero() {
+			delete(m, e.String())
+			continue
+		}
+	}
 }

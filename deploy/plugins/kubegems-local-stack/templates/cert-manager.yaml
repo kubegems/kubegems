@@ -9,5 +9,35 @@ spec:
   repo: https://charts.jetstack.io
   enabled: true
   installNamespace: cert-manager
+  version: 1.8.0
   values:
     installCRDs: true
+    image:
+      {{- if .Values.image.registry }}
+      # repository: quay.io/jetstack/cert-manager-controller
+      repository: {{ printf "%s/%s/cert-manager-controller" .Values.image.registry  .Values.image.repository }}
+      {{- end }}
+    webhook: 
+      image:
+        {{- if .Values.image.registry }}
+        # repository: quay.io/jetstack/cert-manager-webhook
+        repository: {{ printf "%s/%s/cert-manager-webhook" .Values.image.registry  .Values.image.repository }}
+        {{- end }}
+    startupapicheck:  
+      image:
+        {{- if .Values.image.registry }}
+        # repository: quay.io/jetstack/cert-manager-ctl
+        repository: {{ printf "%s/%s/cert-manager-ctl" .Values.image.registry  .Values.image.repository }}
+        {{- end }}
+    controller:
+      image:
+        {{- if .Values.image.registry }}
+        # repository: quay.io/jetstack/cert-manager-controller
+        repository: {{ printf "%s/%s/cert-manager-controller" .Values.image.registry  .Values.image.repository }}
+        {{- end }}
+    cainjector:
+      image:
+        {{- if .Values.image.registry }}
+        # repository: quay.io/jetstack/cert-manager-cainjector
+        repository: {{ printf "%s/%s/cert-manager-cainjector" .Values.image.registry  .Values.image.repository }}
+        {{- end }}

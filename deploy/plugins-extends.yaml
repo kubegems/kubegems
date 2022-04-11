@@ -9,8 +9,9 @@ spec:
   enabled: true
   kind: helm
   installNamespace: local-path-storage
-  repo: https://github.com/rancher/local-path-provisioner.git
-  path: deploy/chart/local-path-provisioner
+  repo: https://github.com/rancher/local-path-provisioner/archive/refs/tags/v0.0.22.tar.gz
+  path: local-path-provisioner-0.0.22/deploy/chart/local-path-provisioner
+  version: 0.0.22
   values:
     storageClass:
       defaultClass: true
@@ -26,3 +27,4 @@ spec:
   kind: helm
   installNamespace: ingress-nginx
   repo: https://kubernetes.github.io/ingress-nginx
+  version: 4.0.19

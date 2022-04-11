@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/argoproj/gitops-engine/pkg/sync/common"
+	"github.com/argoproj/gitops-engine/pkg/utils/kube"
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,7 +26,7 @@ const (
 type NativePlugin struct {
 	Config       *rest.Config
 	CacheDir     string
-	BuildFunc    BuildFunc
+	TemplateFunc TemplateFunc
 	gitopsengine *gitops.GitOpsEngine
 }
 
@@ -43,38 +44,30 @@ func WithManagedResourceSelectByPluginName(namespace, name string) gitops.Option
 	})
 }
 
-type BuildFunc func(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error)
+type TemplateFunc func(ctx context.Context, plugin Plugin) ([]byte, error)
 
-func NewNativePlugin(restconfig *rest.Config, defaultrepo string, buildfun BuildFunc) *NativePlugin {
+func NewNativePlugin(restconfig *rest.Config, defaultrepo string, buildfun TemplateFunc) *NativePlugin {
 	if abs, _ := filepath.Abs(defaultrepo); abs != defaultrepo {
 		defaultrepo = abs
 	}
-	return &NativePlugin{Config: restconfig, CacheDir: defaultrepo, BuildFunc: buildfun}
+	return &NativePlugin{Config: restconfig, CacheDir: defaultrepo, TemplateFunc: buildfun}
 }
 
-func (n *NativePlugin) build(ctx context.Context, plugin Plugin) ([]*unstructured.Unstructured, error) {
+func (n *NativePlugin) Template(ctx context.Context, plugin Plugin) ([]byte, error) {
 	if err := DownloadPlugin(ctx, &plugin, n.CacheDir); err != nil {
 		return nil, err
 	}
-	manifests, err := n.BuildFunc(ctx, plugin)
+	// tmplate
+	manifestdoc, err := n.TemplateFunc(ctx, plugin)
 	if err != nil {
 		return nil, fmt.Errorf("build manifests: %v", err)
 	}
 	// add inline resources
-	inlineresources, err := InlineBuildPlugin(ctx, plugin)
+	inlinedoc, err := InlineTemplatePlugin(ctx, plugin)
 	if err != nil {
 		return nil, err
 	}
-	manifests = append(manifests, inlineresources...)
-	for i := range manifests {
-		annotations := manifests[i].GetAnnotations()
-		if annotations == nil {
-			annotations = make(map[string]string)
-		}
-		annotations[ManagedPluginAnnotation] = fmt.Sprintf("%s/%s", plugin.Namespace, plugin.Name)
-		manifests[i].SetAnnotations(annotations)
-	}
-	return manifests, nil
+	return append(manifestdoc, inlinedoc...), nil
 }
 
 func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
@@ -87,18 +80,31 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 	}
 
 	// build manifests
-	manifests, err := n.build(ctx, plugin)
+	manifestdoc, err := n.Template(ctx, plugin)
 	if err != nil {
 		return err
 	}
-	status.Resources = manifests
+	resources, err := kube.SplitYAML(manifestdoc)
+	if err != nil {
+		return fmt.Errorf("parse content [%s]: %v", string(manifestdoc), err)
+	}
+	for i := range resources {
+		annotations := resources[i].GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+		annotations[ManagedPluginAnnotation] = fmt.Sprintf("%s/%s", plugin.Namespace, plugin.Name)
+		resources[i].SetAnnotations(annotations)
+	}
+
+	status.Resources = resources
 
 	// apply
 	var result *gitops.SyncResult
 	if plugin.DryRun {
 		result = &gitops.SyncResult{Phase: common.OperationSucceeded, Message: "dry run succeeded"}
 	} else {
-		result, err = n.apply(ctx, plugin.Namespace, manifests,
+		result, err = n.apply(ctx, plugin.Namespace, resources,
 			WithManagedResourceSelectByPluginName(plugin.Namespace, plugin.Name))
 		if err != nil {
 			return err
@@ -164,7 +170,9 @@ func (n *NativePlugin) Remove(ctx context.Context, plugin Plugin, status *Plugin
 	return nil
 }
 
-func (n *NativePlugin) apply(ctx context.Context, namespace string, resources []*unstructured.Unstructured, options ...gitops.Option) (*gitops.SyncResult, error) {
+func (n *NativePlugin) apply(ctx context.Context, namespace string,
+	resources []*unstructured.Unstructured, options ...gitops.Option,
+) (*gitops.SyncResult, error) {
 	if n.gitopsengine == nil {
 		n.gitopsengine = &gitops.GitOpsEngine{Config: n.Config}
 	}
