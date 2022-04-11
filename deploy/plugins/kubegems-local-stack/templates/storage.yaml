@@ -9,8 +9,8 @@ spec:
   enabled: true
   kind: helm
   installNamespace: local-path-storage
-  repo: https://github.com/rancher/local-path-provisioner.git
-  path: deploy/chart/local-path-provisioner
+  repo: https://github.com/rancher/local-path-provisioner/archive/refs/tags/v0.0.22.tar.gz
+  path: local-path-provisioner-0.0.22/deploy/chart/local-path-provisioner
 ---
 # https://github.com/kubernetes-csi/external-snapshotter/tree/master/client/config/crd
 apiVersion: plugins.kubegems.io/v1beta1
@@ -20,8 +20,7 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
 spec:
   kind: kustomize
-  repo: https://github.com/kubernetes-csi/external-snapshotter.git
-  version: "v5.0.0"
-  path: client/config/crd
+  repo: https://github.com/kubernetes-csi/external-snapshotter/archive/refs/tags/v5.0.1.tar.gz
+  path: external-snapshotter-5.0.1/client/config/crd
   installNamespace: kube-system
   enabled: true

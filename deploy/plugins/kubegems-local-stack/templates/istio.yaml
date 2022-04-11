@@ -24,9 +24,8 @@ spec:
   enabled: true
   kind: helm
   installNamespace: {{ .Values.istio.namespace }}
-  repo: https://github.com/istio/istio.git
-  path: manifests/charts/istio-operator
-  version: "1.11.8"
+  repo: https://github.com/istio/istio/archive/refs/tags/1.12.6.tar.gz
+  path: istio-1.12.6/manifests/charts/istio-operator
   values:
     operatorNamespace: {{ .Values.istio.namespace }}
 ---

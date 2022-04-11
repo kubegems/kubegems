@@ -210,7 +210,6 @@ spec:
       containers:
       - args:
         - installer
-        - --chartsdir=/app/charts
         - --pluginsdir=/app/plugins
         - --enableleaderelection
         - --probeaddr=:8080

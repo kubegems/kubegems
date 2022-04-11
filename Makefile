@@ -83,6 +83,10 @@ build: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
+plugins-download: ## Build plugins-cache
+	${BIN_DIR}/kubegems plugins template deploy/plugins/kubegems-local-stack | ${BIN_DIR}/kubegems plugins download -
+	${BIN_DIR}/kubegems plugins download deploy/*.yaml
+
 container: build ## Build container image.
 ifneq (, $(shell which docker))
 	docker build -t ${IMG} .

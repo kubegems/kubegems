@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	"kubegems.io/pkg/installer/controllers"
+	"kubegems.io/pkg/installer/controllers/helm"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,9 +33,9 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 	chartpath := filepath.Join(KubeGemPluginsPath, KubeGemsInstallerPluginName)
 	log.FromContextOrDiscard(ctx).Info("applying kubegems-installer chart", "chartPath", chartpath)
 
-	relese, err := (&controllers.Helm{Config: i.Config}).ApplyChart(ctx,
+	relese, err := (&helm.Helm{Config: i.Config}).ApplyChart(ctx,
 		KubeGemsInstallerPluginName, KubeGemsInstallerPluginNamespace,
-		chartpath, i.PluginsValues, controllers.ApplyOptions{},
+		chartpath, i.PluginsValues, helm.ApplyOptions{},
 	)
 	if err != nil {
 		return err
