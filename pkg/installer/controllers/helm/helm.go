@@ -81,8 +81,7 @@ func (h *Helm) ApplyChart(ctx context.Context,
 	if options.DryRun {
 		log.Info("dry run installing")
 		install := action.NewInstall(&action.Configuration{})
-		install.ReleaseName = releaseName
-		install.Namespace = releaseNamespace
+		install.ReleaseName, install.Namespace = releaseName, releaseNamespace
 		install.DryRun, install.DisableHooks, install.ClientOnly, install.CreateNamespace = true, true, true, true
 		return install.Run(chart, values)
 	}
@@ -98,9 +97,8 @@ func (h *Helm) ApplyChart(ctx context.Context,
 		}
 		log.Info("installing")
 		install := action.NewInstall(cfg)
-		install.ReleaseName = releaseName
+		install.ReleaseName, install.Namespace = releaseName, releaseNamespace
 		install.CreateNamespace = true
-		install.Namespace = releaseNamespace
 		install.ClientOnly = options.DryRun
 		return install.Run(chart, values)
 	}

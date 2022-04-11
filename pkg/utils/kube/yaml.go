@@ -14,12 +14,13 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func SplitYAMLTyped(raw []byte) ([]runtime.Object, error) {
+// func SplitYAMLFilterByExample[T runtime.Object](raw []byte) ([]T, error) {} // not working now
+func SplitYAMLFilterByExample[T runtime.Object](raw []byte) ([]T, error) {
 	const readcache = 4096
 	d := kubeyaml.NewYAMLOrJSONDecoder(bytes.NewReader(raw), readcache)
 	decoder := serializer.NewCodecFactory(scheme.Scheme).UniversalDeserializer()
 
-	var objs []runtime.Object
+	var objs []T
 	for {
 		ext := runtime.RawExtension{}
 		if err := d.Decode(&ext); err != nil {
@@ -37,11 +38,13 @@ func SplitYAMLTyped(raw []byte) ([]runtime.Object, error) {
 		if err != nil {
 			// decode type error using unstructured
 			obj = &unstructured.Unstructured{}
-			if err := yaml.Unmarshal(ext.Raw, obj); err != nil {
-				return nil, err
+			if e := yaml.Unmarshal(ext.Raw, obj); e != nil {
+				return nil, e
 			}
 		}
-		objs = append(objs, obj)
+		if istyped, ok := obj.(T); ok {
+			objs = append(objs, istyped)
+		}
 	}
 	return objs, nil
 }

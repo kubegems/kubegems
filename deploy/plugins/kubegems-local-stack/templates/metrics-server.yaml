@@ -9,6 +9,12 @@ spec:
   repo: https://kubernetes-sigs.github.io/metrics-server
   installNamespace: kube-system
   enabled: true
+  version: 3.8.2
   values:
     args:
       - --kubelet-insecure-tls
+    image:
+      {{- if .Values.image.registry }}
+      # repository: k8s.gcr.io/metrics-server/metrics-server
+      repository: {{ printf "%s/%s/metrics-server" .Values.image.registry  .Values.image.repository }}
+      {{- end }}

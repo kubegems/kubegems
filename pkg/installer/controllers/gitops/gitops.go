@@ -2,6 +2,7 @@ package gitops
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/argoproj/gitops-engine/pkg/cache"
@@ -15,6 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const (
+	IgnoreOptions  = "plugins.kubegems.io/ignore-options"
+	IgnoreOnUpdate = "OnUpdate"
+	IgnoreOnDelete = "OnDelete"
 )
 
 type GitOpsEngine struct {
@@ -86,6 +93,7 @@ func (n *GitOpsEngine) Apply(ctx context.Context, namespace string, resources []
 		sync.WithLogr(log), sync.WithOperationSettings(opts.DryRun, true, true, true),
 		sync.WithHealthOverride(alwaysHealthOverride{}),
 		sync.WithNamespaceCreation(true, func(u *unstructured.Unstructured) bool { return true }),
+		sync.WithResourcesFilter(filterByIgnoreOptions),
 	}
 	kubectl := &kube.KubectlCmd{Log: log, Tracer: tracing.NopTracer{}}
 	syncCtx, cleanup, err := sync.NewSyncContext("", reconciliationResult, config, config, kubectl, namespace, clusterCache.GetOpenAPISchema(), syncopts...)
@@ -109,4 +117,22 @@ func (n *GitOpsEngine) Apply(ctx context.Context, namespace string, resources []
 		return result, err
 	}
 	return result, nil
+}
+
+func filterByIgnoreOptions(key kube.ResourceKey, target *unstructured.Unstructured, live *unstructured.Unstructured) bool {
+	switch {
+	// remove
+	case target == nil:
+	// create
+	case target != nil && live == nil:
+	// update
+	case target != nil && live != nil:
+		if annotations := live.GetAnnotations(); annotations != nil {
+			// ignore different on update
+			if ignore, ok := annotations[IgnoreOptions]; ok && strings.Contains(ignore, IgnoreOnUpdate) {
+				return false
+			}
+		}
+	}
+	return true
 }

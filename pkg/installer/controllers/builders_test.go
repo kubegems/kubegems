@@ -49,7 +49,7 @@ func TestTemplatesBuildPlugin(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := TemplatesBuildPlugin(tt.args.ctx, tt.args.plugin)
+			got, err := TemplatesTemplatePlugin(tt.args.ctx, tt.args.plugin)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TemplatesBuildPlugin() error = %v, wantErr %v", err, tt.wantErr)
 				return

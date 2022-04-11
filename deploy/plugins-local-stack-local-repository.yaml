@@ -1,0 +1,12 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems-local-stack
+  namespace: kubegems-local
+spec:
+  kind: template
+  enabled: true
+  values:
+    image:
+      registry: "docker.io"
+      repository: "kubegems"

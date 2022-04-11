@@ -6,10 +6,17 @@ metadata:
   name: logging-operator
   namespace: "{{ .Release.Namespace }}"
 spec:
-  kind: helm
-  repo: https://kubernetes-charts.banzaicloud.com
-  installNamespace: {{ .Values.logging.namespace }}
   enabled: true
+  kind: helm
+  installNamespace: {{ .Values.logging.namespace }}
+  repo: https://kubernetes-charts.banzaicloud.com
+  version: {{ .Values.logging.operator.version }}
+  values:
+    image:
+      {{- if .Values.image.registry }}
+      # repository: ghcr.io/banzaicloud/logging-operator
+      repository: {{ printf "%s/%s/logging-operator" .Values.image.registry  .Values.image.repository }}
+      {{- end }}
 ---
 # https://github.com/grafana/helm-charts/tree/main/charts/loki
 apiVersion: plugins.kubegems.io/v1beta1
@@ -18,8 +25,22 @@ metadata:
   name: loki-stack
   namespace: "{{ .Release.Namespace }}"
 spec:
-  kind: helm
-  repo: https://grafana.github.io/helm-charts
-  installNamespace: {{ .Values.logging.namespace }}
   enabled: true
+  kind: helm
+  installNamespace: {{ .Values.logging.namespace }}
+  repo: https://grafana.github.io/helm-charts
+  version: {{ .Values.logging.loki.version }}
+  values:
+    promtail: 
+      image:
+        {{- if .Values.image.registry }}
+        # repository: grafana/promtail
+        repository: {{ printf "%s/%s/promtail" .Values.image.registry  .Values.image.repository }}
+        {{- end }}
+    loki: 
+      image:
+        {{- if .Values.image.registry }}
+        # repository: grafana/loki
+        repository: {{ printf "%s/%s/loki" .Values.image.registry  .Values.image.repository }}
+        {{- end }}
 {{- end }}

@@ -2,7 +2,7 @@
 {{- if .Values.observability.enabled  }}
     {{- printf "http://jaeger-query.%s:16686" .Values.observability.namespace }}
 {{- else -}}
-    {{- .Values.observability.jaeger.address }}
+    {{- .Values.observability.externalJaeger.address }}
 {{- end -}}
 {{- end -}}
 
@@ -10,7 +10,7 @@
 {{- if .Values.monitoring.enabled  }}
     {{- printf "http://kube-prometheus-stack-prometheus.%s:9090" .Values.monitoring.namespace }}
 {{- else -}}
-    {{- .Values.monitoring.prometheus.address }}
+    {{- .Values.monitoring.externalPrometheus.address }}
 {{- end -}}
 {{- end -}}
 
@@ -18,7 +18,7 @@
 {{- if .Values.monitoring.enabled  }}
     {{- printf "http://kube-prometheus-stack-alertmanager.%s:9093" .Values.monitoring.namespace }}
 {{- else -}}
-    {{- .Values.monitoring.alertmanager.address }}
+    {{- .Values.monitoring.externalAlertmanager.address }}
 {{- end -}}
 {{- end -}}
 
@@ -26,7 +26,7 @@
 {{- if .Values.logging.enabled  }}
     {{- printf "http://loki-stack.%s:3100" .Values.logging.namespace }}
 {{- else -}}
-    {{- .Values.logging.loki.address }}
+    {{- .Values.logging.externalLoki.address }}
 {{- end -}}
 {{- end -}}
 
