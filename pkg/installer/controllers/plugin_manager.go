@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 )
@@ -15,6 +14,7 @@ var ErrUnknownPluginKind = errors.New("unknown plugin kind")
 
 type PluginInstaller interface {
 	// plugin is the plugin to apply,if plugin.path set use it directly.
+	Template(ctx context.Context, plugin Plugin) ([]byte, error)
 	Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error
 	Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error
 }
@@ -27,9 +27,9 @@ func NewPluginManager(restconfig *rest.Config, options *PluginOptions) *PluginMa
 	return &PluginManager{
 		Installers: map[pluginsv1beta1.PluginKind]PluginInstaller{
 			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options.PluginsDir),
-			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.PluginsDir, KustomizeBuildPlugin),
-			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options.PluginsDir, TemplatesBuildPlugin),
-			pluginsv1beta1.PluginKindInline:    NewNativePlugin(restconfig, options.PluginsDir, InlineBuildPlugin),
+			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.PluginsDir, KustomizeTemplatePlugin),
+			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options.PluginsDir, TemplatesTemplatePlugin),
+			pluginsv1beta1.PluginKindInline:    NewNativePlugin(restconfig, options.PluginsDir, InlineTemplatePlugin),
 		},
 		Options: options,
 	}
@@ -47,14 +47,15 @@ func WithDryRun() PluginManagerOption {
 	}
 }
 
-func (m *PluginManager) Template(ctx context.Context, apiplugin *pluginsv1beta1.Plugin) ([]*unstructured.Unstructured, error) {
+func (m *PluginManager) Template(ctx context.Context, apiplugin *pluginsv1beta1.Plugin) ([]byte, error) {
 	thisPlugin := PluginFromPlugin(apiplugin)
-	thisStatus := PluginStatusFromPlugin(apiplugin)
-
 	thisPlugin.DryRun = true // must set this
 
-	err := m.apply(ctx, thisPlugin, thisStatus)
-	return thisStatus.Resources, err
+	installer, ok := m.Installers[thisPlugin.Kind]
+	if !ok {
+		return nil, ErrUnknownPluginKind
+	}
+	return installer.Template(ctx, thisPlugin)
 }
 
 func (m *PluginManager) Download(ctx context.Context, apiplugin *pluginsv1beta1.Plugin) error {

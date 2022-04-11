@@ -7,17 +7,77 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kube-prometheus-stack
-  namespace: "{{ .Release.Namespace }}"
+  namespace: {{ .Release.Namespace }}
 spec:
   kind: helm
   repo: https://prometheus-community.github.io/helm-charts
-  installNamespace: "{{ .Values.monitoring.namespace }}"
+  installNamespace: {{ .Values.monitoring.namespace }}
   enabled: {{ .Values.monitoring.enabled }}
+  version: {{ .Values.monitoring.operator.version }}
   values:
+    kube-state-metrics:
+      image:
+        {{- if .Values.image.registry }}
+        # repository: k8s.gcr.io/kube-state-metrics/kube-state-metrics
+        repository: {{ printf "%s/%s/kube-state-metrics" .Values.image.registry .Values.image.repository }}
+        {{- end }}
     grafana:
+      initChownData:
+        image:
+          {{- if .Values.image.registry }}
+          # repository: busybox
+          repository: {{ printf "%s/%s/busybox" .Values.image.registry .Values.image.repository }}
+          {{- end }}
+      image:
+        {{- if .Values.image.registry }}
+        # repository: grafana/grafana
+        repository: {{ printf "%s/%s/grafana" .Values.image.registry .Values.image.repository }}
+        {{- end }}
       sidecar:
+        image:
+          {{- if .Values.image.registry }}
+          # repository: quay.io/kiwigrid/k8s-sidecar
+          repository: {{ printf "%s/%s/k8s-sidecar" .Values.image.registry .Values.image.repository }}
+          {{- end }}
         dashboards:
           enabled: true
         datasources:
           enabled: true
+    prometheusOperator:
+      image:
+        {{- if .Values.image.registry }}
+        # repository: quay.io/prometheus-operator/prometheus-operator
+        repository: {{ printf "%s/%s/prometheus-operator" .Values.image.registry .Values.image.repository }}
+        {{- end }}
+      prometheusConfigReloader:
+        image:
+          {{- if .Values.image.registry }}
+          # repository: quay.io/prometheus-operator/prometheus-config-reloader
+          repository: {{ printf "%s/%s/prometheus-config-reloader" .Values.image.registry .Values.image.repository }}
+          {{- end }}
+        thanosImage:
+          {{- if .Values.image.registry }}
+          # repository: quay.io/thanos/thanos
+          repository: {{ printf "%s/%s/thanos" .Values.image.registry .Values.image.repository }}
+          {{- end }}
+    prometheus:
+      prometheusSpec:
+        image:
+          {{- if .Values.image.registry }}
+          # repository: quay.io/prometheus/prometheus
+          repository: {{ printf "%s/%s/prometheus" .Values.image.registry .Values.image.repository }}
+          {{- end }}
+    alertmanager:
+      alertmanagerSpec:
+        image:
+          {{- if .Values.image.registry }}  
+          # repository: quay.io/prometheus/alertmanager
+          repository: {{ printf "%s/%s/alertmanager" .Values.image.registry .Values.image.repository }}
+          {{- end }}
+    prometheus-node-exporter:
+      image:
+        {{- if .Values.image.registry }}  
+        # repository: quay.io/prometheus/node-exporter
+        repository: {{ printf "%s/%s/node-exporter" .Values.image.registry .Values.image.repository }}
+        {{- end }}
 {{- end }}

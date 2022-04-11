@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -12,91 +13,120 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	"kubegems.io/pkg/installer/controllers"
-	"kubegems.io/pkg/service/handlers/application"
 	"kubegems.io/pkg/utils/kube"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 )
 
-type GlobalPluginsOptions struct {
-	Directory string
-}
-
 func NewPluginCmd() *cobra.Command {
-	globalOptions := &GlobalPluginsOptions{
-		Directory: "deploy/plugins",
+	globalOptions := &controllers.PluginOptions{
+		PluginsDir: "deploy/plugins",
 	}
 	cmd := &cobra.Command{
 		Use:   "plugins",
 		Short: "plugins commands",
 	}
-	cmd.PersistentFlags().StringVarP(&globalOptions.Directory, "directory", "d", globalOptions.Directory, "cache directory")
+	cmd.PersistentFlags().StringVarP(&globalOptions.PluginsDir, "directory", "d", globalOptions.PluginsDir, "cache directory")
 
 	cmd.AddCommand(NewPluginTemplateCmd(globalOptions))
 	cmd.AddCommand(NewPluginsDownloadCmd(globalOptions))
 	return cmd
 }
 
-func NewPluginTemplateCmd(global *GlobalPluginsOptions) *cobra.Command {
+func NewPluginTemplateCmd(global *controllers.PluginOptions) *cobra.Command {
+	pretty := false
 	cmd := &cobra.Command{
 		Use:   "template",
 		Short: "template plugin",
 		Example: `
 		kubegem plugins template deploy/plugins/kubegem-local-stack
+		kubegem plugins template deploy/plugins-core.yaml
 		`,
-		RunE: func(cmd *cobra.Command, pathes []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
+			pm := controllers.NewPluginManager(nil, global)
+			// to avoid log message mix in yaml contents
+			log.Default().SetOutput(io.Discard)
 
-			pm := controllers.NewPluginManager(nil, &controllers.PluginOptions{
-				PluginsDir: global.Directory,
-			})
+			for _, path := range args {
+				var content []byte
+				var err error
 
-			for _, path := range pathes {
-				fi, err := os.Stat(path)
-				if err != nil {
-					return err
-				}
-				if !fi.IsDir() {
-					return fmt.Errorf("%s is not a directory", path)
-				}
-
-				plugin := &pluginsv1beta1.Plugin{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      filepath.Base(path),
-						Namespace: "default",
-					},
-					Spec: pluginsv1beta1.PluginSpec{
-						Enabled: true,
-						Kind:    controllers.DetectPluginType(path),
-					},
-				}
-
-				resources, err := pm.Template(ctx, plugin)
-				if err != nil {
-					return err
-				}
-				for _, r := range resources {
-					raw, err := yaml.Marshal(r)
+				// stdin
+				// nolint:nestif
+				if path == "-" {
+					content, err = io.ReadAll(os.Stdin)
 					if err != nil {
 						return err
 					}
-					fmt.Print(string(raw))
-					fmt.Println("---")
+				} else {
+					fi, err := os.Stat(path)
+					if err != nil {
+						return err
+					}
+					if fi.IsDir() {
+						// template current directory
+						err := templatePrint(ctx, pm, &pluginsv1beta1.Plugin{
+							ObjectMeta: metav1.ObjectMeta{Name: filepath.Base(path), Namespace: "default"},
+							Spec:       pluginsv1beta1.PluginSpec{Enabled: true, Kind: controllers.DetectPluginType(path)},
+						}, pretty)
+						if err != nil {
+							return err
+						}
+						continue
+					}
+					content, err = os.ReadFile(path)
+					if err != nil {
+						return err
+					}
+				}
+				// template every plugin
+				objs, err := kube.SplitYAMLFilterByExample[*pluginsv1beta1.Plugin](content)
+				if err != nil {
+					return err
+				}
+				for _, obj := range objs {
+					if err := templatePrint(ctx, pm, obj, pretty); err != nil {
+						return err
+					}
 				}
 			}
 			return nil
 		},
 	}
+	cmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "pretty print")
 	return cmd
 }
 
-func NewPluginsDownloadCmd(global *GlobalPluginsOptions) *cobra.Command {
+func templatePrint(ctx context.Context, pm *controllers.PluginManager, plugin *pluginsv1beta1.Plugin, pretty bool) error {
+	manifestdoc, err := pm.Template(ctx, plugin)
+	if err != nil {
+		return err
+	}
+	if !pretty {
+		fmt.Print(string(manifestdoc))
+		return nil
+	}
+	objects, err := kube.SplitYAMLFilterByExample[runtime.Object](manifestdoc)
+	if err != nil {
+		return err
+	}
+	for _, obj := range objects {
+		raw, err := yaml.Marshal(obj)
+		if err != nil {
+			return err
+		}
+		fmt.Println("---")
+		fmt.Print(string(raw))
+	}
+	return nil
+}
+
+func NewPluginsDownloadCmd(global *controllers.PluginOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "download",
 		Short:   "download plugins",
@@ -121,22 +151,13 @@ func NewPluginsDownloadCmd(global *GlobalPluginsOptions) *cobra.Command {
 						return err
 					}
 				}
-
-				pm := controllers.NewPluginManager(nil, &controllers.PluginOptions{
-					PluginsDir: global.Directory,
-				})
-
-				objs, err := kube.SplitYAMLTyped(filecontent)
+				pm := controllers.NewPluginManager(nil, global)
+				objs, err := kube.SplitYAMLFilterByExample[*pluginsv1beta1.Plugin](filecontent)
 				if err != nil {
 					return err
 				}
 				for _, obj := range objs {
-					apiplugin, ok := obj.(*pluginsv1beta1.Plugin)
-					if !ok {
-						continue
-					}
-
-					if err := pm.Download(ctx, apiplugin); err != nil {
+					if err := pm.Download(ctx, obj); err != nil {
 						return err
 					}
 				}
@@ -145,23 +166,4 @@ func NewPluginsDownloadCmd(global *GlobalPluginsOptions) *cobra.Command {
 		},
 	}
 	return cmd
-}
-
-func parseImage(obj runtime.Object) []string {
-	if uns, ok := obj.(*unstructured.Unstructured); ok {
-		// covert to typed obj
-		raw, err := yaml.Marshal(uns)
-		if err != nil {
-			return []string{}
-		}
-		typedobj, err := application.DecodeResource(raw)
-		if err != nil {
-			return []string{}
-		}
-		return application.ParseImagesFrom(typedobj)
-	}
-	if typedobj, ok := obj.(client.Object); ok {
-		return application.ParseImagesFrom(typedobj)
-	}
-	return []string{}
 }

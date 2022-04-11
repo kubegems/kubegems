@@ -6,13 +6,19 @@ metadata:
   name: kiali-server
   namespace: {{ .Release.Namespace }}
 spec:
-  kind: helm
-  repo: https://kiali.org/helm-charts
-  installNamespace: {{ .Values.istio.namespace }}
   enabled: true
+  kind: helm
+  installNamespace: {{ .Values.istio.namespace }}
+  repo: https://kiali.org/helm-charts
+  version: 1.49.0
   values:
     auth:
       strategy: anonymous
+    deployment:
+      {{- if .Values.image.registry }}
+      # image_name: quay.io/kiali/kiali
+      image_name: {{ printf "%s/%s/kiali" .Values.image.registry .Values.image.repository }}
+      {{- end }} 
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
 apiVersion: plugins.kubegems.io/v1beta1
@@ -24,10 +30,15 @@ spec:
   enabled: true
   kind: helm
   installNamespace: {{ .Values.istio.namespace }}
-  repo: https://github.com/istio/istio/archive/refs/tags/1.12.6.tar.gz
-  path: istio-1.12.6/manifests/charts/istio-operator
+  repo: https://github.com/istio/istio/archive/refs/tags/{{ .Values.istio.operator.version }}.tar.gz
+  path: istio-{{ .Values.istio.operator.version }}/manifests/charts/istio-operator
+  version: {{ .Values.istio.operator.version }}
   values:
     operatorNamespace: {{ .Values.istio.namespace }}
+    {{- if .Values.image.registry }}
+    # hub: gcr.io/istio-testing
+    hub: {{ printf "%s/%s" .Values.image.registry .Values.image.repository }}
+    {{- end }}
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
 apiVersion: install.istio.io/v1alpha1
@@ -37,6 +48,7 @@ metadata:
   namespace: {{ .Values.istio.namespace }}
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    plugins.kubegems.io/ignore-options: OnUpdate
 spec:
   components:
     pilot:
@@ -87,6 +99,7 @@ spec:
                 port: 15017
                 targetPort: 15017
   hub: {{ .Values.istio.operator.hub }}
+  tag: {{ .Values.istio.operator.tag }}
   meshConfig:
     defaultConfig:
       proxyMetadata:

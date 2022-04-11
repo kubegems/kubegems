@@ -9,7 +9,19 @@ spec:
   kind: helm
   repo: https://argoproj.github.io/argo-helm
   installNamespace: {{ index .Values "argo-rollouts" "namespace" }}
+  version: {{ index .Values "argo-rollouts" "version" }}
   enabled: true
+  values:
+    controller:
+      image:
+        {{- if .Values.image.registry }}
+        registry: {{ .Values.image.registry }}
+        repository: {{ printf "%s/argo-rollouts" .Values.image.repository }}
+        {{- else }}
+        registry: quay.io
+        repository: argoproj/argo-rollouts
+        {{- end }}
+
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ClusterAnalysisTemplate

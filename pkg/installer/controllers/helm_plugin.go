@@ -28,6 +28,25 @@ func NewHelmPlugin(config *rest.Config, path string) *HelmPlugin {
 	return &HelmPlugin{Helm: &helm.Helm{Config: config}, ChartsDir: path}
 }
 
+func (r *HelmPlugin) Template(ctx context.Context, plugin Plugin) ([]byte, error) {
+	if err := DownloadPlugin(ctx, &plugin, r.ChartsDir); err != nil {
+		return nil, err
+	}
+
+	upgradeRelease, err := r.Helm.ApplyChart(ctx,
+		plugin.Name, plugin.Namespace,
+		plugin.Path, plugin.Values,
+		helm.ApplyOptions{
+			Version: plugin.Version,
+			Repo:    plugin.Repo,
+			DryRun:  true,
+		})
+	if err != nil {
+		return nil, err
+	}
+	return []byte(upgradeRelease.Manifest), nil
+}
+
 func (r *HelmPlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
 	if err := DownloadPlugin(ctx, &plugin, r.ChartsDir); err != nil {
 		return err

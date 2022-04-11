@@ -1,39 +1,48 @@
-imageRegistry: ""
+image:
+  registry: ""
+  repository: ""
 clusterName: local
 storageClass: local-path
 logging:
   enabled: true
   namespace: logging
   operator:
-    enabled: true
+    version: 3.17.4
   loki:
-    # address: http://loki-stack.loki-stack:3100
+    version: 2.6.2
+  # externalLoki:
+  #   address: http://loki-stack.loki-stack:3100
 monitoring:
   enabled: true
   namespace: prometheus
-  prometheus:
-    # address: http://kube-prometheus-stack-prometheus.prometheus:9090
-  alertmanager:
-    # address: http://kube-prometheus-stack-alertmanager.alertmanager:9093
+  operator:
+    version: 34.9.0
+  # externalPrometheus:
+  #   address: http://kube-prometheus-stack-prometheus.prometheus:9090
+  # externalAlertmanager:
+  #   address: http://kube-prometheus-stack-alertmanager.alertmanager:9093
 observability:
-  namespace: observability
   enabled: true
+  namespace: observability
+  operator:
+    version: 2.30.0
   jaeger:
-    # address: http://jaeger-query.observability:16686
+    version: 1.30.0
+  # externalJaeger:
+  #   ddress: http://jaeger-query.observability:16686
 gateway:
   enabled: true
   namespace: kubegems-gateway
+  version:
 kubegems:
   version: latest
   registry: docker.io
   repository: kubegems/kubegems
   installer:
-    namespace: kubegems-installer
     enabled: false
+    namespace: kubegems-installer
   local:
     namespace: kubegems-local
-    agent:
-      # alert: https://kubegems-local-agent.kubegems-local:8041/alert
 gpu:
   enabled: false
   namespace: kube-system
@@ -41,9 +50,12 @@ istio:
   enabled: true
   namespace: istio-system
   operator:
+    version: 1.12.6 # operator version
     hub: docker.io/istio
+    tag: 1.11.2 # istio version
     tracing:
       sampling: 50
 argo-rollouts:
   enabled: true
   namespace: argo-rollouts
+  version: 2.14.0

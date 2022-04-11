@@ -11,6 +11,33 @@ spec:
   installNamespace: local-path-storage
   repo: https://github.com/rancher/local-path-provisioner/archive/refs/tags/v0.0.22.tar.gz
   path: local-path-provisioner-0.0.22/deploy/chart/local-path-provisioner
+  version: 0.0.22
+  values:
+    configmap:
+      helperPod: |-
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: helper-pod
+        spec:
+          containers:
+          - name: helper-pod
+            {{- if .Values.image.registry }}
+            image: {{ printf "%s/%s/busybox" .Values.image.registry .Values.image.repository }}
+            {{- else }}
+            image: busybox
+            {{- end }}
+            imagePullPolicy: IfNotPresent
+    image:
+      {{- if .Values.image.registry }}
+      # repository: rancher/local-path-provisioner
+      repository: {{ printf "%s/%s/local-path-provisioner" .Values.image.registry  .Values.image.repository }}
+      {{- end }}
+    helperImage:
+      {{- if .Values.image.registry }}
+      # repository: busybox
+      repository: {{ printf "%s/%s/busybox" .Values.image.registry  .Values.image.repository }}
+      {{- end }}
 ---
 # https://github.com/kubernetes-csi/external-snapshotter/tree/master/client/config/crd
 apiVersion: plugins.kubegems.io/v1beta1
@@ -19,8 +46,9 @@ metadata:
   name: external-snapshotter
   namespace: "{{ .Release.Namespace }}"
 spec:
+  enabled: true
   kind: kustomize
+  installNamespace: kube-system
   repo: https://github.com/kubernetes-csi/external-snapshotter/archive/refs/tags/v5.0.1.tar.gz
   path: external-snapshotter-5.0.1/client/config/crd
-  installNamespace: kube-system
-  enabled: true
+  version: 5.0.1
