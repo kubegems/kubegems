@@ -58,40 +58,6 @@ type LokiHandler struct {
 }
 
 // @Tags         Agent.V1
-// @Summary      Loki Query
-// @Description  Loki Query
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true   "cluster"
-// @Param        limit      query     string                                false  "The max number of entries to return"
-// @Param        query      query     string                                true   "loki query language"
-// @Param        time       query     int                                   false  "The evaluation time for the query as a nanosecond Unix epoch or another supported format. Defaults to now"
-// @Param        direction  query     string                                true   "The order to all results"
-// @Success      200        {object}  handlers.ResponseStruct{Data=object}  ""
-// @Router       /v1/proxy/cluster/{cluster}/custom/loki/v1/query [get]
-// @Security     JWT
-func (h *LokiHandler) Query(c *gin.Context) {
-	var data loki.QueryRangeParam
-	if err := c.ShouldBindQuery(&data); err != nil {
-		NotOK(c, err)
-		return
-	}
-
-	data.Query, _ = url.QueryUnescape(data.Query)
-	body, err := h._http("/loki/api/v1/query", "GET", data.ToMap(), nil)
-	if err != nil {
-		NotOK(c, fmt.Errorf("请求错误 %v", err))
-		return
-	}
-	res := loki.QueryResponse{}
-	if err := json.Unmarshal([]byte(body), &res); err != nil {
-		NotOK(c, fmt.Errorf("解析loki数据错误 err=%v,data=%v", err.Error(), string(body)))
-		return
-	}
-	OK(c, res.Data)
-}
-
-// @Tags         Agent.V1
 // @Summary      Loki QueryRange
 // @Description  Loki QueryRange
 // @Accept       json
@@ -126,17 +92,17 @@ func (h *LokiHandler) QueryRange(c *gin.Context) {
 	OK(c, res.Data)
 }
 
-// @Tags Agent.V1
-// @Summary Loki Labels
-// @Description Loki Labels
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param start query string true "The start time for the query as a nanosecond Unix epoch"
-// @Param end query string true "The end time for the query as a nanosecond Unix epoch"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} ""
-// @Router /v1/proxy/cluster/{cluster}/custom/loki/v1/labels [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      Loki Labels
+// @Description  Loki Labels
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        start    query     string                                true  "The start time for the query as a nanosecond Unix epoch"
+// @Param        end      query     string                                true  "The end time for the query as a nanosecond Unix epoch"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/loki/v1/labels [get]
+// @Security     JWT
 func (h *LokiHandler) Labels(c *gin.Context) {
 	var data loki.LabelParam
 	if err := c.ShouldBindQuery(&data); err != nil {
@@ -158,18 +124,18 @@ func (h *LokiHandler) Labels(c *gin.Context) {
 	OK(c, res.Data)
 }
 
-// @Tags Agent.V1
-// @Summary Loki LabelValues
-// @Description Loki LabelValues
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param start query string true "The start time for the query as a nanosecond Unix epoch"
-// @Param end query string true "The end time for the query as a nanosecond Unix epoch"
-// @Param label query string true "label"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} ""
-// @Router /v1/proxy/cluster/{cluster}/custom/loki/v1/labelvalues [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      Loki LabelValues
+// @Description  Loki LabelValues
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        start    query     string                                true  "The start time for the query as a nanosecond Unix epoch"
+// @Param        end      query     string                                true  "The end time for the query as a nanosecond Unix epoch"
+// @Param        label    query     string                                true  "label"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/loki/v1/labelvalues [get]
+// @Security     JWT
 func (h *LokiHandler) LabelValues(c *gin.Context) {
 	var data loki.LabelParam
 	if err := c.ShouldBindQuery(&data); err != nil {
@@ -199,18 +165,18 @@ func _query(params map[string]string) string {
 	return q.Encode()
 }
 
-// @Tags Agent.V1
-// @Summary Loki Series
-// @Description Loki Series
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param start query string true "The start time for the query as a nanosecond Unix epoch"
-// @Param end query string true "The end time for the query as a nanosecond Unix epoch"
-// @Param match query string true "match"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} ""
-// @Router /v1/proxy/cluster/{cluster}/custom/loki/v1/series [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      Loki Series
+// @Description  Loki Series
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        start    query     string                                true  "The start time for the query as a nanosecond Unix epoch"
+// @Param        end      query     string                                true  "The end time for the query as a nanosecond Unix epoch"
+// @Param        match    query     string                                true  "match"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/loki/v1/series [get]
+// @Security     JWT
 func (h *LokiHandler) Series(c *gin.Context) {
 	var data loki.SeriesForm
 	if err := c.ShouldBindQuery(&data); err != nil {
@@ -231,20 +197,20 @@ func (h *LokiHandler) Series(c *gin.Context) {
 	OK(c, res.Data)
 }
 
-// @Tags Agent.V1
-// @Summary Loki LabelValues
-// @Description Loki LabelValues
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param start query string true "The start time for the query as a nanosecond Unix epoch"
-// @Param limit query string false "The max number of entries to return"
-// @Param query query string true "loki query language"
-// @Param delay_for query string true "The number of seconds to delay retrieving logs to let slow loggers catch up. Defaults to 0 and cannot be larger than 5."
-// @Param stream query string true "must be true"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} ""
-// @Router /v1/proxy/cluster/{cluster}/custom/loki/v1/tail [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      Loki LabelValues
+// @Description  Loki LabelValues
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true   "cluster"
+// @Param        start      query     string                                true   "The start time for the query as a nanosecond Unix epoch"
+// @Param        limit      query     string                                false  "The max number of entries to return"
+// @Param        query      query     string                                true   "loki query language"
+// @Param        delay_for  query     string                                true   "The number of seconds to delay retrieving logs to let slow loggers catch up. Defaults to 0 and cannot be larger than 5."
+// @Param        stream     query     string                                true   "must be true"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/loki/v1/tail [get]
+// @Security     JWT
 func (h *LokiHandler) Tail(c *gin.Context) {
 	var queryParam loki.TailParam
 

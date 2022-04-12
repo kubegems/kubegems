@@ -104,17 +104,17 @@ func (h *PluginHandler) PluginSimple(ctx context.Context) (PluginStatus, error) 
 	return ret, nil
 }
 
-// @Tags Agent.Plugin
-// @Summary 启用插件
-// @Description 启用插件
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param name path string true "name"
-// @Param type query string true "type"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [put]
-// @Security JWT
+// @Tags         Agent.Plugin
+// @Summary      启用插件
+// @Description  启用插件
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        name     path      string                                true  "name"
+// @Param        type     query     string                                true  "type"
+// @Success      200      {object}  handlers.ResponseStruct{Data=string}  "Plugins"
+// @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [put]
+// @Security     JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {
 		plugin.Enabled = true

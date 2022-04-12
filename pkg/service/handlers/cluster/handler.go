@@ -484,7 +484,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if cluster.InstallNamespace == "" {
 				// local components install namespace
-				cluster.InstallNamespace = KubeGemLocalPluginsNamespace
+				cluster.InstallNamespace = KubeGemsLocalPluginsNamespace
 			}
 			values := map[string]interface{}{}
 			json.Unmarshal(cluster.Values, &values)

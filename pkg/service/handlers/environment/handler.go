@@ -572,7 +572,7 @@ func (h *EnvironmentHandler) GetEnvironmentResource(c *gin.Context) {
 // @Description  环境网络隔离开关
 // @Accept       json
 // @Produce      json
-// @Param        environment_id  path      uint                                                       true   "environment_id"
+// @Param        environment_id  path      uint                                                   true  "environment_id"
 // @Param        param           body      handlers.IsolatedSwitch                                true  "表单"
 // @Success      200             {object}  handlers.ResponseStruct{Data=handlers.IsolatedSwitch}  "object"
 // @Router       /v1/environment/{environment_id}/action/networkisolate [post]

@@ -13030,7 +13030,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.SystemRole"
+                                                                "$ref": "#/definitions/kubegems.io_pkg_service_models.SystemRole"
                                                             }
                                                         }
                                                     }
@@ -13068,7 +13068,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.SystemRole"
+                            "$ref": "#/definitions/kubegems.io_pkg_service_models.SystemRole"
                         }
                     }
                 ],
@@ -13084,7 +13084,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.SystemRole"
+                                            "$ref": "#/definitions/kubegems.io_pkg_service_models.SystemRole"
                                         }
                                     }
                                 }
@@ -13133,7 +13133,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.SystemRole"
+                                            "$ref": "#/definitions/kubegems.io_pkg_service_models.SystemRole"
                                         }
                                     }
                                 }
@@ -22652,9 +22652,7 @@ const docTemplate = `{
                 },
                 "receivers": {
                     "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                    "items": {}
                 },
                 "startsAt": {
                     "type": "string"
@@ -22722,81 +22720,6 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
-                }
-            }
-        },
-        "environment.EnvironmentObservabilityRet": {
-            "type": "object",
-            "properties": {
-                "alertResourceMap": {
-                    "description": "告警规则的资源map",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "integer"
-                    }
-                },
-                "alertRuleCount": {
-                    "description": "告警规则列表",
-                    "type": "integer"
-                },
-                "clusterName": {
-                    "type": "string"
-                },
-                "containerRestartTotal": {
-                    "type": "integer"
-                },
-                "cpu": {
-                    "type": "string"
-                },
-                "criticalAlertCount": {
-                    "type": "integer"
-                },
-                "environmentName": {
-                    "type": "string"
-                },
-                "errorAlertCount": {
-                    "type": "integer"
-                },
-                "errorLogCount": {
-                    "type": "integer"
-                },
-                "eventCount": {
-                    "description": "事件数量",
-                    "type": "integer"
-                },
-                "labels": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "logRate": {
-                    "type": "string"
-                },
-                "logging": {
-                    "description": "是否启日志",
-                    "type": "boolean"
-                },
-                "loggingCollectorCount": {
-                    "type": "integer"
-                },
-                "memory": {
-                    "type": "string"
-                },
-                "monitorCollectorCount": {
-                    "description": "metrics采集器数量",
-                    "type": "integer"
-                },
-                "monitoring": {
-                    "description": "是否启用监控",
-                    "type": "boolean"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "serviceMesh": {
-                    "description": "是否启用服务网格",
-                    "type": "boolean"
                 }
             }
         },
@@ -22885,6 +22808,10 @@ const docTemplate = `{
         },
         "handlers.IsolatedSwitch": {
             "type": "object",
+            "required": [
+                "clusterID",
+                "tenantID"
+            ],
             "properties": {
                 "isolate": {
                     "type": "boolean"
@@ -24344,7 +24271,10 @@ const docTemplate = `{
                 "ingressPort": {
                     "type": "integer"
                 },
-                "servicePort": {
+                "tenant": {
+                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+                },
+                "tenantID": {
                     "type": "integer"
                 }
             }
@@ -24360,8 +24290,7 @@ const docTemplate = `{
                     "description": "VirtualService references an Istio VirtualService to modify to shape traffic",
                     "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.IstioVirtualService"
                 },
-                "virtualServices": {
-                    "description": "VirtualServices references a list of Istio VirtualService to modify to shape traffic",
+                "environments": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1alpha1.IstioVirtualService"
@@ -24785,12 +24714,34 @@ const docTemplate = `{
                 }
             }
         },
+        "kubegems.io_pkg_service_models.SystemRole": {
+            "type": "object",
+            "required": [
+                "roleCode"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "roleCode": {
+                    "description": "系统级角色Code(管理员admin, 普通用户ordinary)",
+                    "type": "string"
+                },
+                "roleName": {
+                    "description": "角色名字",
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
         "kubegems.io_pkg_service_models.Tenant": {
             "type": "object",
             "properties": {
-                "allocatedResourcequota": {
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -24923,7 +24874,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "images": {
-                    "description": "集群资源超卖设置",
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -24933,7 +24884,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "labels": {
-                    "description": "集群资源超卖设置",
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -24981,7 +24932,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "limitRange": {
-                    "description": "集群资源超卖设置",
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -25007,7 +24958,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "resourceQuota": {
-                    "description": "集群资源超卖设置",
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -25062,6 +25013,29 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_v2_models.SystemRole": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
                 }
             }
         },
@@ -25120,7 +25094,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "content": {
-                    "description": "集群资源超卖设置",
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -26564,6 +26538,10 @@ const docTemplate = `{
                     "description": "ImageRepo 安装kubegems核心组件时使用的镜像仓库",
                     "type": "string"
                 },
+                "installNamespace": {
+                    "description": "agent service namespace",
+                    "type": "string"
+                },
                 "kubeConfig": {
                     "type": "array",
                     "items": {
@@ -26571,7 +26549,7 @@ const docTemplate = `{
                     }
                 },
                 "oversoldConfig": {
-                    "description": "集群资源超卖设置",
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -26589,6 +26567,13 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/kubegems.io_pkg_v2_models.TenantResourceQuota"
+                    }
+                },
+                "values": {
+                    "description": "installer plugins Values",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
                     }
                 },
                 "vendor": {
@@ -26949,30 +26934,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.OIDCUser": {
-            "type": "object",
-            "properties": {
-                "creation_time": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "secret": {
-                    "description": "secret in plain text",
-                    "type": "string"
-                },
-                "subiss": {
-                    "type": "string"
-                },
-                "update_time": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "models.OnlineConfig": {
             "type": "object",
             "required": [
@@ -27035,7 +26996,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "resourceQuota": {
-                    "description": "集群资源超卖设置",
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -27083,31 +27044,6 @@ const docTemplate = `{
                 "userID": {
                     "description": "用户ID",
                     "type": "integer"
-                }
-            }
-        },
-        "models.SystemRole": {
-            "type": "object",
-            "required": [
-                "roleCode"
-            ],
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "roleCode": {
-                    "description": "系统级角色Code(管理员admin, 普通用户ordinary)",
-                    "type": "string"
-                },
-                "roleName": {
-                    "description": "角色名字",
-                    "type": "string"
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
                 }
             }
         },
@@ -27166,53 +27102,41 @@ const docTemplate = `{
         },
         "models.User": {
             "type": "object",
+            "required": [
+                "email",
+                "phone",
+                "username"
+            ],
             "properties": {
-                "admin_role_in_auth": {
-                    "description": "AdminRoleInAuth to store the admin privilege granted by external authentication provider",
-                    "type": "boolean"
-                },
-                "comment": {
+                "createdAt": {
                     "type": "string"
-                },
-                "creation_time": {
-                    "type": "string"
-                },
-                "deleted": {
-                    "type": "boolean"
                 },
                 "email": {
                     "type": "string"
                 },
-                "oidc_user_meta": {
-                    "$ref": "#/definitions/models.OIDCUser"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "password_version": {
-                    "type": "string"
-                },
-                "realname": {
-                    "type": "string"
-                },
-                "reset_uuid": {
-                    "type": "string"
-                },
-                "role_id": {
-                    "description": "if this field is named as \"RoleID\", beego orm can not map role_id\nto it.",
+                "id": {
                     "type": "integer"
                 },
-                "role_name": {
-                    "type": "string"
-                },
-                "sysadmin_flag": {
+                "isActive": {
                     "type": "boolean"
                 },
-                "update_time": {
+                "lastLoginAt": {
                     "type": "string"
                 },
-                "user_id": {
+                "phone": {
+                    "type": "string"
+                },
+                "systemRole": {
+                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.SystemRole"
+                },
+                "systemRoleID": {
                     "type": "integer"
+                },
+                "tenants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+                    }
                 },
                 "username": {
                     "type": "string"
