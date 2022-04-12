@@ -26,23 +26,23 @@ type PodHandler struct {
 	debugoptions *DebugOptions
 }
 
-// @Tags Agent.V1
-// @Summary 获取Pod列表数据
-// @Description 获取Pod列表数据
-// @Accept json
-// @Produce json
-// @Param order query string false "page"
-// @Param search query string false "search"
-// @Param page query int false "page"
-// @Param size query int false "page"
-// @Param namespace path string true "namespace"
-// @Param fieldSelector query string false "fieldSelector, 只支持podstatus={xxx}格式"
-// @Param cluster path string true "cluster"
-// @Param topkind query string false "topkind(Deployment,StatefulSet,DaemonSet,Job,Node)"
-// @Param topname query string false "topname"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]object}} "Pod"
-// @Router /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      获取Pod列表数据
+// @Description  获取Pod列表数据
+// @Accept       json
+// @Produce      json
+// @Param        order          query     string                                                          false  "page"
+// @Param        search         query     string                                                          false  "search"
+// @Param        page           query     int                                                             false  "page"
+// @Param        size           query     int                                                             false  "page"
+// @Param        namespace      path      string                                                          true   "namespace"
+// @Param        fieldSelector  query     string                                                          false  "fieldSelector, 只支持podstatus={xxx}格式"
+// @Param        cluster        path      string                                                          true   "cluster"
+// @Param        topkind        query     string                                                          false  "topkind(Deployment,StatefulSet,DaemonSet,Job,Node)"
+// @Param        topname        query     string                                                          false  "topname"
+// @Success      200            {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]object}}  "Pod"
+// @Router       /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods [get]
+// @Security     JWT
 func (h *PodHandler) List(c *gin.Context) {
 	ns := c.Param("namespace")
 	// 网关namespace必须是gemcloud-gateway-system
@@ -183,19 +183,19 @@ func filterByContainerState(phase string, pods []v1.Pod) []v1.Pod {
 }
 
 // ExecContainer 进入容器交互执行命令
-// @Tags Agent.V1
-// @Summary 进入容器交互执行命令(websocket)
-// @Description 进入容器交互执行命令(websocket)
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param pod path string true "pod"
-// @Param container query string true "container"
-// @Param stream query string true "stream must be true"
-// @Param token query string true "token"
-// @Param shell query string false "default sh, choice(bash,ash,zsh)"
-// @Success 200 {object} object "ws"
-// @Router /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/shell [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      进入容器交互执行命令(websocket)
+// @Description  进入容器交互执行命令(websocket)
+// @Param        cluster    path      string  true   "cluster"
+// @Param        namespace  path      string  true   "namespace"
+// @Param        pod        path      string  true   "pod"
+// @Param        container  query     string  true   "container"
+// @Param        stream     query     string  true   "stream must be true"
+// @Param        token      query     string  true   "token"
+// @Param        shell      query     string  false  "default sh, choice(bash,ash,zsh)"
+// @Success      200        {object}  object  "ws"
+// @Router       /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/shell [get]
+// @Security     JWT
 func (h *PodHandler) ExecPods(c *gin.Context) {
 	conn, err := ws.InitWebsocket(c.Writer, c.Request)
 	if err != nil {
@@ -222,20 +222,20 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 }
 
 // GetContainerLogs 获取容器的stdout输出
-// @Tags Agent.V1
-// @Summary 实时获取日志STDOUT输出(websocket)
-// @Description 实时获取日志STDOUT输出(websocket)
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param namespace path string true "namespace"
-// @Param pod path string true "pod"
-// @Param container query string true "container"
-// @Param stream query string true "stream must be true"
-// @Param follow query string true "follow"
-// @Param tail query int false "tail line (default 1000)"
-// @Success 200 {object} object "ws"
-// @Router /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/logs [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      实时获取日志STDOUT输出(websocket)
+// @Description  实时获取日志STDOUT输出(websocket)
+// @Param        cluster    path      string  true   "cluster"
+// @Param        namespace  path      string  true   "namespace"
+// @Param        namespace  path      string  true   "namespace"
+// @Param        pod        path      string  true   "pod"
+// @Param        container  query     string  true   "container"
+// @Param        stream     query     string  true   "stream must be true"
+// @Param        follow     query     string  true   "follow"
+// @Param        tail       query     int     false  "tail line (default 1000)"
+// @Success      200        {object}  object  "ws"
+// @Router       /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/logs [get]
+// @Security     JWT
 func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 	namespace := c.Param("namespace")
 	pod := c.Param("name")

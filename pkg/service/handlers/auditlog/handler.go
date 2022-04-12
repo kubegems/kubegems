@@ -16,23 +16,23 @@ var (
 )
 
 // ListAuditLog 列表 AuditLog
-// @Tags AuditLog
-// @Summary AuditLog列表
-// @Description AuditLog列表
-// @Accept json
-// @Produce json
-// @Param Username query string false "Username"
-// @Param Tenant query string false "Tenant"
-// @Param Action query string false "Action"
-// @Param Success query string false "Success"
-// @Param CreatedAt_gte query string false "CreatedAt_gte"
-// @Param CreatedAt_lte query string false "CreatedAt_lte"
-// @Param page query int false "page"
-// @Param size query int false "page"
-// @Param search query string false "search in (username,module,name)"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.AuditLog}} "AuditLog"
-// @Router /v1/auditlog [get]
-// @Security JWT
+// @Tags         AuditLog
+// @Summary      AuditLog列表
+// @Description  AuditLog列表
+// @Accept       json
+// @Produce      json
+// @Param        Username       query     string                                                                   false  "Username"
+// @Param        Tenant         query     string                                                                   false  "Tenant"
+// @Param        Action         query     string                                                                   false  "Action"
+// @Param        Success        query     string                                                                   false  "Success"
+// @Param        CreatedAt_gte  query     string                                                                   false  "CreatedAt_gte"
+// @Param        CreatedAt_lte  query     string                                                                   false  "CreatedAt_lte"
+// @Param        page           query     int                                                                      false  "page"
+// @Param        size           query     int                                                                      false  "page"
+// @Param        search         query     string                                                                   false  "search in (username,module,name)"
+// @Success      200            {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.AuditLog}}  "AuditLog"
+// @Router       /v1/auditlog [get]
+// @Security     JWT
 func (h *AuditLogHandler) ListAuditLog(c *gin.Context) {
 	var list []models.AuditLog
 	query, err := handlers.GetQuery(c, nil)
@@ -79,15 +79,15 @@ func (h *AuditLogHandler) ListAuditLog(c *gin.Context) {
 }
 
 // RetrieveAuditLog AuditLog详情
-// @Tags AuditLog
-// @Summary AuditLog详情
-// @Description get AuditLog详情
-// @Accept json
-// @Produce json
-// @Param auditlog_id path uint true "auditlog_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.AuditLog} "AuditLog"
-// @Router /v1/auditlog/{auditlog_id} [get]
-// @Security JWT
+// @Tags         AuditLog
+// @Summary      AuditLog详情
+// @Description  get AuditLog详情
+// @Accept       json
+// @Produce      json
+// @Param        auditlog_id  path      uint                                           true  "auditlog_id"
+// @Success      200          {object}  handlers.ResponseStruct{Data=models.AuditLog}  "AuditLog"
+// @Router       /v1/auditlog/{auditlog_id} [get]
+// @Security     JWT
 func (h *AuditLogHandler) RetrieveAuditLog(c *gin.Context) {
 	var obj models.AuditLog
 	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {

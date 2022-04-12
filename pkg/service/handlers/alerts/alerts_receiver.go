@@ -62,17 +62,17 @@ func (rec *ReceiverConfig) Precheck() error {
 	return nil
 }
 
-// @Tags Alert
-// @Summary 在namespace下获取receiver列表
-// @Description 在namespace下获取receiver列表
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param search query string true "search"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]ReceiverConfig} "告警通知接收人"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver [get]
-// @Security JWT
+// @Tags         Alert
+// @Summary      在namespace下获取receiver列表
+// @Description  在namespace下获取receiver列表
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                          true  "cluster"
+// @Param        namespace  path      string                                          true  "namespace"
+// @Param        search     query     string                                          true  "search"
+// @Success      200        {object}  handlers.ResponseStruct{Data=[]ReceiverConfig}  "告警通知接收人"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver [get]
+// @Security     JWT
 func (h *AlertmanagerConfigHandler) ListReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -145,17 +145,17 @@ func filterSecretByNamespace(secrets *[]corev1.Secret, ns string) *corev1.Secret
 	return nil
 }
 
-// @Tags Alert
-// @Summary 在namespace下创建receiver
-// @Description 在namespace下创建receiver
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param form body ReceiverConfig true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "告警通知接收人"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver [post]
-// @Security JWT
+// @Tags         Alert
+// @Summary      在namespace下创建receiver
+// @Description  在namespace下创建receiver
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        form       body      ReceiverConfig                        true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "告警通知接收人"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver [post]
+// @Security     JWT
 func (h *AlertmanagerConfigHandler) CreateReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -188,17 +188,17 @@ func (h *AlertmanagerConfigHandler) CreateReceiver(c *gin.Context) {
 	})(c)
 }
 
-// @Tags Alert
-// @Summary 在namespace下删除receiver
-// @Description 在namespace下创建receiver
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "告警通知接收人"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name} [delete]
-// @Security JWT
+// @Tags         Alert
+// @Summary      在namespace下删除receiver
+// @Description  在namespace下创建receiver
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "告警通知接收人"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name} [delete]
+// @Security     JWT
 func (h *AlertmanagerConfigHandler) DeleteReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -228,18 +228,18 @@ func (h *AlertmanagerConfigHandler) DeleteReceiver(c *gin.Context) {
 	})(c)
 }
 
-// @Tags Alert
-// @Summary 在namespace下修改receiver
-// @Description 在namespace下修改receiver
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Param form body ReceiverConfig true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "告警通知接收人"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name} [put]
-// @Security JWT
+// @Tags         Alert
+// @Summary      在namespace下修改receiver
+// @Description  在namespace下修改receiver
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Param        form       body      ReceiverConfig                        true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "告警通知接收人"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name} [put]
+// @Security     JWT
 func (h *AlertmanagerConfigHandler) ModifyReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -272,18 +272,18 @@ func (h *AlertmanagerConfigHandler) ModifyReceiver(c *gin.Context) {
 	})(c)
 }
 
-// @Tags Alert
-// @Summary 发送测试邮件
-// @Description 发送测试邮件
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Param form body EmailConfig true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "告警通知接收人"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name}/actions/test [post]
-// @Security JWT
+// @Tags         Alert
+// @Summary      发送测试邮件
+// @Description  发送测试邮件
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Param        form       body      EmailConfig                           true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "告警通知接收人"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name}/actions/test [post]
+// @Security     JWT
 func (h *AlertmanagerConfigHandler) TestEmail(c *gin.Context) {
 	req := EmailConfig{}
 	c.BindJSON(&req)

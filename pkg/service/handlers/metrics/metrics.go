@@ -39,24 +39,24 @@ type MetricQueryReq struct {
 }
 
 // Query 监控指标查询
-// @Tags Metrics
-// @Summary 监控指标查询
-// @Description 监控指标查询
-// @Accept json
-// @Produce json
-// @Param cluster query string true "集群名"
-// @Param namespace query string false "命名空间， 非管理员必传"
-// @Param resource query string true "查询资源"
-// @Param rule query string true "查询规则"
-// @Param unit query string true "单位"
-// @Param labelpairs query string false "标签键值对(value为空或者_all表示所有，支持正则), eg. labelpairs[host]=k8s-master&labelpairs[pod]=_all"
-// @Param start query string false "开始时间，默认现在-30m"
-// @Param end query string false "结束时间，默认现在"
-// @Param step query int false "step, 单位秒，默认0"
-// @Param topk query int false "限制返回前多少条指标，默认20"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "Metrics配置"
-// @Router /v1/metrics/queryrange [get]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      监控指标查询
+// @Description  监控指标查询
+// @Accept       json
+// @Produce      json
+// @Param        cluster     query     string                                true   "集群名"
+// @Param        namespace   query     string                                false  "命名空间， 非管理员必传"
+// @Param        resource    query     string                                true   "查询资源"
+// @Param        rule        query     string                                true   "查询规则"
+// @Param        unit        query     string                                true   "单位"
+// @Param        labelpairs  query     string                                false  "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
+// @Param        start       query     string                                false  "开始时间，默认现在-30m"
+// @Param        end         query     string                                false  "结束时间，默认现在"
+// @Param        step        query     int                                   false  "step, 单位秒，默认0"
+// @Param        topk        query     int                                   false  "限制返回前多少条指标，默认20"
+// @Success      200         {object}  handlers.ResponseStruct{Data=object}  "Metrics配置"
+// @Router       /v1/metrics/queryrange [get]
+// @Security     JWT
 func (h *MonitorHandler) QueryRange(c *gin.Context) {
 	ret := prommodel.Matrix{}
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
@@ -74,24 +74,24 @@ func (h *MonitorHandler) QueryRange(c *gin.Context) {
 }
 
 // Query 监控标签值
-// @Tags Metrics
-// @Summary 监控标签值
-// @Description 查询label对应的标签值
-// @Accept json
-// @Produce json
-// @Param label query string true "要查询的标签"
-// @Param cluster query string true "集群名"
-// @Param namespace query string false "命名空间， 非管理员必传"
-// @Param resource query string true "查询资源"
-// @Param rule query string true "查询规则"
-// @Param unit query string true "单位"
-// @Param labelpairs query string false "标签键值对(value为空或者_all表示所有，支持正则), eg. labelpairs[host]=k8s-master&labelpairs[pod]=_all"
-// @Param start query string false "开始时间，默认现在-30m"
-// @Param end query string false "结束时间，默认现在"
-// @Param step query int false "step, 单位秒，默认0"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]string} "Metrics配置"
-// @Router /v1/metrics/labelvalues [get]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      监控标签值
+// @Description  查询label对应的标签值
+// @Accept       json
+// @Produce      json
+// @Param        label       query     string                                  true   "要查询的标签"
+// @Param        cluster     query     string                                  true   "集群名"
+// @Param        namespace   query     string                                  false  "命名空间， 非管理员必传"
+// @Param        resource    query     string                                  true   "查询资源"
+// @Param        rule        query     string                                  true   "查询规则"
+// @Param        unit        query     string                                  true   "单位"
+// @Param        labelpairs  query     string                                  false  "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
+// @Param        start       query     string                                  false  "开始时间，默认现在-30m"
+// @Param        end         query     string                                  false  "结束时间，默认现在"
+// @Param        step        query     int                                     false  "step, 单位秒，默认0"
+// @Success      200         {object}  handlers.ResponseStruct{Data=[]string}  "Metrics配置"
+// @Router       /v1/metrics/labelvalues [get]
+// @Security     JWT
 func (h *MonitorHandler) LabelValues(c *gin.Context) {
 	ret := []string{}
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
@@ -182,16 +182,16 @@ func (h *MonitorHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryR
 }
 
 // GetMetricTemplate 获取prometheu查询模板
-// @Tags Metrics
-// @Summary 获取prometheu查询模板
-// @Description 获取prometheu查询模板
-// @Accept json
-// @Produce json
-// @Param resource_name path string true "resource"
-// @Param rule_name path string true "rule"
-// @Success 200 {object} handlers.ResponseStruct{Data=prometheus.RuleDetail} "resp"
-// @Router /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [get]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      获取prometheu查询模板
+// @Description  获取prometheu查询模板
+// @Accept       json
+// @Produce      json
+// @Param        resource_name  path      string                                               true  "resource"
+// @Param        rule_name      path      string                                               true  "rule"
+// @Success      200            {object}  handlers.ResponseStruct{Data=prometheus.RuleDetail}  "resp"
+// @Router       /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [get]
+// @Security     JWT
 func (h *MonitorHandler) GetMetricTemplate(c *gin.Context) {
 	resName := c.Param("resource_name")
 	ruleName := c.Param("rule_name")
@@ -213,17 +213,17 @@ func (h *MonitorHandler) GetMetricTemplate(c *gin.Context) {
 }
 
 // AddOrUpdateMetricTemplate 添加/更新prometheu查询模板
-// @Tags Metrics
-// @Summary 添加prometheu查询模板
-// @Description 添加prometheu查询模板
-// @Accept json
-// @Produce json
-// @Param resource_name path string true "resource"
-// @Param rule_name path string true "rule"
-// @Param from body prometheus.RuleDetail true "查询模板配置"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [post]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      添加prometheu查询模板
+// @Description  添加prometheu查询模板
+// @Accept       json
+// @Produce      json
+// @Param        resource_name  path      string                                true  "resource"
+// @Param        rule_name      path      string                                true  "rule"
+// @Param        from           body      prometheus.RuleDetail                 true  "查询模板配置"
+// @Success      200            {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [post]
+// @Security     JWT
 func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 	resName := c.Param("resource_name")
 	ruleName := c.Param("rule_name")
@@ -259,16 +259,16 @@ func (h *MonitorHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 }
 
 // DeleteMetricTemplate 删除prometheu查询模板
-// @Tags Metrics
-// @Summary 删除prometheu查询模板
-// @Description 删除prometheu查询模板
-// @Accept json
-// @Produce json
-// @Param resource_name path string true "resource"
-// @Param rule_name path string true "rule"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [delete]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      删除prometheu查询模板
+// @Description  删除prometheu查询模板
+// @Accept       json
+// @Produce      json
+// @Param        resource_name  path      string                                true  "resource"
+// @Param        rule_name      path      string                                true  "rule"
+// @Success      200            {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/metrics/template/resources/{resource_name}/rules/{rule_name} [delete]
+// @Security     JWT
 func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 	resName := c.Param("resource_name")
 	ruleName := c.Param("rule_name")

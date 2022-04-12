@@ -20,17 +20,17 @@ type metaForm struct {
 	Annotations map[string]string
 }
 
-// @Tags Agent.V1
-// @Summary 修改node的元数据,label和annotations
-// @Description 修改node的元数据,label和annotations
-// @Accept json
-// @Produce json
-// @Param param body metaForm  true "表单"`
-// @Param name path string true "name"
-// @Param cluster path string true "cluster"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "Node"
-// @Router /v1/proxy/cluster/{cluster}/custom/core/v1/nodes/{name}/actions/metadata [patch]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      修改node的元数据,label和annotations
+// @Description  修改node的元数据,label和annotations
+// @Accept       json
+// @Produce      json
+// @Param        param    body      metaForm                              true  "表单"`
+// @Param        name     path      string                                true  "name"
+// @Param        cluster  path      string                                true  "cluster"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "Node"
+// @Router       /v1/proxy/cluster/{cluster}/custom/core/v1/nodes/{name}/actions/metadata [patch]
+// @Security     JWT
 func (h *NodeHandler) PatchNodeLabelOrAnnotations(c *gin.Context) {
 	name := c.Param("name")
 	formdata := metaForm{}
@@ -61,17 +61,17 @@ type taintForm struct {
 	Taints []corev1.Taint
 }
 
-// @Tags Agent.V1
-// @Summary 修改节点污点
-// @Description 修改节点污点
-// @Accept json
-// @Produce json
-// @Param param body taintForm  true "表单"`
-// @Param name path string true "name"
-// @Param cluster path string true "cluster"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "Node"
-// @Router /v1/proxy/cluster/{cluster}/custom/core/v1/nodes/{name}/actions/taint [patch]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      修改节点污点
+// @Description  修改节点污点
+// @Accept       json
+// @Produce      json
+// @Param        param    body      taintForm                             true  "表单"`
+// @Param        name     path      string                                true  "name"
+// @Param        cluster  path      string                                true  "cluster"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "Node"
+// @Router       /v1/proxy/cluster/{cluster}/custom/core/v1/nodes/{name}/actions/taint [patch]
+// @Security     JWT
 func (h *NodeHandler) PatchNodeTaint(c *gin.Context) {
 	name := c.Param("name")
 	formdata := taintForm{}
@@ -101,17 +101,17 @@ type cordonForm struct {
 	Unschedulable bool
 }
 
-// @Tags Agent.V1
-// @Summary 修改节点调度
-// @Description 修改节点调度
-// @Accept json
-// @Produce json
-// @Param param body cordonForm  true "表单"`
-// @Param name path string true "name"
-// @Param cluster path string true "cluster"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "Node"
-// @Router /v1/proxy/cluster/{cluster}/custom/core/v1/nodes/{name}/actions/cordon [patch]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      修改节点调度
+// @Description  修改节点调度
+// @Accept       json
+// @Produce      json
+// @Param        param    body      cordonForm                            true  "表单"`
+// @Param        name     path      string                                true  "name"
+// @Param        cluster  path      string                                true  "cluster"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "Node"
+// @Router       /v1/proxy/cluster/{cluster}/custom/core/v1/nodes/{name}/actions/cordon [patch]
+// @Security     JWT
 func (h *NodeHandler) PatchNodeCordon(c *gin.Context) {
 	name := c.Param("name")
 
@@ -149,16 +149,16 @@ type CustomNode struct {
 	TotalLimits   map[corev1.ResourceName]resource.Quantity
 }
 
-// @Tags Agent.V1
-// @Summary 自定义的NODE详情接口,(可以获取资源分配情况)
-// @Description 自定义的NODE详情接口,(可以获取资源分配情况)
-// @Accept json
-// @Produce json
-// @Param name path string true "name"
-// @Param cluster path string true "cluster"
-// @Success 200 {object} handlers.ResponseStruct{Data=CustomNode} "Node"
-// @Router /v1/proxy/cluster/{cluster}/custom/core/v1/nodes/{name} [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      自定义的NODE详情接口,(可以获取资源分配情况)
+// @Description  自定义的NODE详情接口,(可以获取资源分配情况)
+// @Accept       json
+// @Produce      json
+// @Param        name     path      string                                    true  "name"
+// @Param        cluster  path      string                                    true  "cluster"
+// @Success      200      {object}  handlers.ResponseStruct{Data=CustomNode}  "Node"
+// @Router       /v1/proxy/cluster/{cluster}/custom/core/v1/nodes/{name} [get]
+// @Security     JWT
 func (h *NodeHandler) Get(c *gin.Context) {
 	name := c.Param("name")
 	node := &corev1.Node{}

@@ -76,20 +76,20 @@ func (h *ManifestHandler) DeleteResource(req *restful.Request, resp *restful.Res
 	})
 }
 
-// @Tags Application
-// @Summary 应用内容类型摘要
-// @Description 对应用内所有资源进行列举，用于自动补全
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @Param application_id path  int    true "application id"
-// @param environment_id path  int	  true "environment id"
-// @Param name			 path  string	true "name"
-// @Param kind 		     query string false "若设置，则仅显示设置的类型，例如 Deployment,StatefulSet,Job,ConfigMap"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]object} "类型信息"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/metas [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用内容类型摘要
+// @Description  对应用内所有资源进行列举，用于自动补全
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                     true   "tenaut id"
+// @Param        project_id      path      int                                     true   "project id"
+// @Param        application_id  path      int                                     true   "application id"
+// @param        environment_id  path      int                                     true   "environment id"
+// @Param        name            path      string                                  true   "name"
+// @Param        kind            query     string                                  false  "若设置，则仅显示设置的类型，例如 Deployment,StatefulSet,Job,ConfigMap"
+// @Success      200             {object}  handlers.ResponseStruct{Data=[]object}  "类型信息"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/metas [get]
+// @Security     JWT
 func (h *ManifestHandler) ListMetas(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		kind := req.QueryParameter("kind")

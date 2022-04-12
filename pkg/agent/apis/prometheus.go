@@ -45,17 +45,17 @@ var stateMap = map[string]int{
 	"firing":   3,
 }
 
-// @Tags Agent.V1
-// @Summary Prometheus Vector
-// @Description Prometheus Vector
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param query query string false "query"
-// @Param notnull query bool false "notnull"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "vector"
-// @Router /v1/proxy/cluster/{cluster}/custom/prometheus/v1/vector [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      Prometheus Vector
+// @Description  Prometheus Vector
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true   "cluster"
+// @Param        query    query     string                                false  "query"
+// @Param        notnull  query     bool                                  false  "notnull"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "vector"
+// @Router       /v1/proxy/cluster/{cluster}/custom/prometheus/v1/vector [get]
+// @Security     JWT
 func (p *prometheusHandler) Vector(c *gin.Context) {
 	query := c.Query("query")
 
@@ -82,19 +82,19 @@ func (p *prometheusHandler) Vector(c *gin.Context) {
 	OK(c, obj)
 }
 
-// @Tags Agent.V1
-// @Summary Prometheus Matrix
-// @Description Prometheus Matrix
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param start query string false "start"
-// @Param end query string false "end"
-// @Param step query int false "step, 单位秒"
-// @Param query query string false "query"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "matrix"
-// @Router /v1/proxy/cluster/{cluster}/custom/prometheus/v1/matrix [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      Prometheus Matrix
+// @Description  Prometheus Matrix
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true   "cluster"
+// @Param        start    query     string                                false  "start"
+// @Param        end      query     string                                false  "end"
+// @Param        step     query     int                                   false  "step, 单位秒"
+// @Param        query    query     string                                false  "query"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "matrix"
+// @Router       /v1/proxy/cluster/{cluster}/custom/prometheus/v1/matrix [get]
+// @Security     JWT
 func (p *prometheusHandler) Matrix(c *gin.Context) {
 	query := c.Query("query")
 	start := c.Query("start")
@@ -129,19 +129,19 @@ func (p *prometheusHandler) Matrix(c *gin.Context) {
 	handlers.OK(c, obj)
 }
 
-// @Tags Agent.V1
-// @Summary Prometheus LabelValues
-// @Description Prometheus LabelValues
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param start query string false "start"
-// @Param end query string false "end"
-// @Param match query string false "query"
-// @Param label query string false "label"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "labelvalues"
-// @Router /v1/proxy/cluster/{cluster}/custom/prometheus/v1/labelvalues [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      Prometheus LabelValues
+// @Description  Prometheus LabelValues
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true   "cluster"
+// @Param        start    query     string                                false  "start"
+// @Param        end      query     string                                false  "end"
+// @Param        match    query     string                                false  "query"
+// @Param        label    query     string                                false  "label"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "labelvalues"
+// @Router       /v1/proxy/cluster/{cluster}/custom/prometheus/v1/labelvalues [get]
+// @Security     JWT
 func (p *prometheusHandler) LabelValues(c *gin.Context) {
 	label := c.DefaultQuery("label", "__name__")
 	match := c.QueryArray("match")
@@ -164,16 +164,16 @@ func (p *prometheusHandler) LabelValues(c *gin.Context) {
 	})
 }
 
-// @Tags Agent.V1
-// @Summary Prometheus alertrule
-// @Description Prometheus 获取告警规则详情
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param name query string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=v1.AlertingRule} "alertrule"
-// @Router /v1/proxy/cluster/{cluster}/custom/prometheus/v1/alertrule [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      Prometheus alertrule
+// @Description  Prometheus 获取告警规则详情
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                                                 true  "cluster"
+// @Param        name     query     string                                                                 true  "name"
+// @Success      200      {object}  handlers.ResponseStruct{Data=map[string]prometheus.RealTimeAlertRule}  "alertrule"
+// @Router       /v1/proxy/cluster/{cluster}/custom/prometheus/v1/alertrule [get]
+// @Security     JWT
 func (p *prometheusHandler) AlertRule(c *gin.Context) {
 	groupOrAlertName := c.Query("name")
 	api := v1.NewAPI(p.client)
@@ -229,14 +229,14 @@ type ComponentStatus struct {
 	Count     int
 }
 
-// @Tags Agent.V1
-// @Summary ComponentStatus
-// @Description ComponentStatus 获取集群组件状态
-// @Accept json
-// @Produce json
-// @Success 200 {object} handlers.ResponseStruct{Data=map[string]ComponentStatus} "ComponentStatus"
-// @Router /v1/proxy/cluster/{cluster}/custom/prometheus/v1/componentstatus [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      ComponentStatus
+// @Description  ComponentStatus 获取集群组件状态
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  handlers.ResponseStruct{Data=map[string]ComponentStatus}  "ComponentStatus"
+// @Router       /v1/proxy/cluster/{cluster}/custom/prometheus/v1/componentstatus [get]
+// @Security     JWT
 func (p *prometheusHandler) ComponentStatus(c *gin.Context) {
 	api := v1.NewAPI(p.client)
 	targets, err := api.Targets(context.TODO())
@@ -310,15 +310,15 @@ func (p *prometheusHandler) ComponentStatus(c *gin.Context) {
 	OK(c, ret)
 }
 
-// @Tags Agent.V1
-// @Summary CertInfo
-// @Description CertInfo 获取证书信息
-// @Accept json
-// @Produce json
-// @Param name path string false "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=map[string]string} "CertInfo"
-// @Router /v1/proxy/cluster/{cluster}/custom/prometheus/v1/certinfos/{name} [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      CertInfo
+// @Description  CertInfo 获取证书信息
+// @Accept       json
+// @Produce      json
+// @Param        name  path      string                                           false  "name"
+// @Success      200   {object}  handlers.ResponseStruct{Data=map[string]string}  "CertInfo"
+// @Router       /v1/proxy/cluster/{cluster}/custom/prometheus/v1/certinfos/{name} [get]
+// @Security     JWT
 func (p *prometheusHandler) CertInfo(c *gin.Context) {
 	if c.Param("name") == "apiserver" {
 		expiredAt, err := clusterinfo.GetServerCertExpiredTime(clusterinfo.APIServerURL, clusterinfo.APIServerCertCN)
