@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/common/model"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"kubegems.io/pkg/log"
@@ -38,16 +39,16 @@ type AlertLevel struct {
 }
 
 // ListAlertRule 获取AlertRule列表
-// @Tags Alert
-// @Summary  获取AlertRule列表
-// @Description 获取AlertRule列表
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]prometheus.AlertRule} "规则"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert [get]
-// @Security JWT
+// @Tags         Alert
+// @Summary      获取AlertRule列表
+// @Description  获取AlertRule列表
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "规则"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert [get]
+// @Security     JWT
 func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -94,17 +95,17 @@ func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 }
 
 // GetAlertRule AlertRule详情
-// @Tags Alert
-// @Summary  AlertRule详情
-// @Description AlertRule详情
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=prometheus.AlertRule} "规则"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name} [get]
-// @Security JWT
+// @Tags         Alert
+// @Summary      AlertRule详情
+// @Description  AlertRule详情
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "规则"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name} [get]
+// @Security     JWT
 func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -147,17 +148,17 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 }
 
 // GetAlertRule 禁用AlertRule
-// @Tags Alert
-// @Summary  禁用AlertRule
-// @Description 禁用AlertRule
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} ""
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/actions/disable [post]
-// @Security JWT
+// @Tags         Alert
+// @Summary      禁用AlertRule
+// @Description  禁用AlertRule
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  ""
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/actions/disable [post]
+// @Security     JWT
 func (h *AlertsHandler) DisableAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -175,17 +176,17 @@ func (h *AlertsHandler) DisableAlertRule(c *gin.Context) {
 }
 
 // GetAlertRule 启用AlertRule
-// @Tags Alert
-// @Summary  启用AlertRule
-// @Description 启用AlertRule
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} ""
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/actions/enable [post]
-// @Security JWT
+// @Tags         Alert
+// @Summary      启用AlertRule
+// @Description  启用AlertRule
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  ""
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/actions/enable [post]
+// @Security     JWT
 func (h *AlertsHandler) EnableAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -203,17 +204,17 @@ func (h *AlertsHandler) EnableAlertRule(c *gin.Context) {
 }
 
 // CreateAlertRule 创建AlertRule
-// @Tags Alert
-// @Summary  创建AlertRule
-// @Description 创建AlertRule
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param form body prometheus.AlertRule true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "规则"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert [post]
-// @Security JWT
+// @Tags         Alert
+// @Summary      创建AlertRule
+// @Description  创建AlertRule
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        form       body      string                                true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "规则"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert [post]
+// @Security     JWT
 func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -250,18 +251,18 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 }
 
 // ModifyAlertRule 修改AlertRule
-// @Tags Alert
-// @Summary  修改AlertRule
-// @Description 修改AlertRule
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Param form body prometheus.AlertRule true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "规则"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name} [put]
-// @Security JWT
+// @Tags         Alert
+// @Summary      修改AlertRule
+// @Description  修改AlertRule
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Param        form       body      string                                true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "规则"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name} [put]
+// @Security     JWT
 func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -298,17 +299,17 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 }
 
 // DeleteAlertRule 删除AlertRule
-// @Tags Alert
-// @Summary  修改AlertRule
-// @Description 修改AlertRule
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "规则"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name} [delete]
-// @Security JWT
+// @Tags         Alert
+// @Summary      修改AlertRule
+// @Description  修改AlertRule
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "规则"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name} [delete]
+// @Security     JWT
 func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -360,22 +361,22 @@ type AlertMessageGroup struct {
 }
 
 // AlertHistory 告警历史
-// @Tags Alert
-// @Summary  告警历史
-// @Description 告警历史
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Param status query string false "告警状态(resolved, firing), 为空则是所有状态"
-// @Param CreatedAt_gte query string false "CreatedAt_gte"
-// @Param CreatedAt_lte query string false "CreatedAt_lte"
-// @Param page query int false "page"
-// @Param size query int false "size"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]AlertMessageGroup} "规则"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/history [get]
-// @Security JWT
+// @Tags         Alert
+// @Summary      告警历史
+// @Description  告警历史
+// @Accept       json
+// @Produce      json
+// @Param        cluster        path      string                                             true   "cluster"
+// @Param        namespace      path      string                                             true   "namespace"
+// @Param        name           path      string                                             true   "name"
+// @Param        status         query     string                                             false  "告警状态(resolved, firing),  为空则是所有状态"
+// @Param        CreatedAt_gte  query     string                                             false  "CreatedAt_gte"
+// @Param        CreatedAt_lte  query     string                                             false  "CreatedAt_lte"
+// @Param        page           query     int                                                false  "page"
+// @Param        size           query     int                                                false  "size"
+// @Success      200            {object}  handlers.ResponseStruct{Data=[]AlertMessageGroup}  "规则"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/history [get]
+// @Security     JWT
 func (h *AlertsHandler) AlertHistory(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
@@ -435,21 +436,21 @@ func (h *AlertsHandler) AlertHistory(c *gin.Context) {
 }
 
 // AlertHistory 重复的告警记录
-// @Tags Alert
-// @Summary  重复的告警记录
-// @Description 重复的告警记录
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "name"
-// @Param fingerprint query string true "告警指纹"
-// @Param starts_at query string true "告警开始时间"
-// @Param page query int false "page"
-// @Param size query int false "size"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]models.AlertMessage} "规则"
-// @Router /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/repeats [get]
-// @Security JWT
+// @Tags         Alert
+// @Summary      重复的告警记录
+// @Description  重复的告警记录
+// @Accept       json
+// @Produce      json
+// @Param        cluster      path      string                                               true   "cluster"
+// @Param        namespace    path      string                                               true   "namespace"
+// @Param        name         path      string                                               true   "name"
+// @Param        fingerprint  query     string                                               true   "告警指纹"
+// @Param        starts_at    query     string                                               true   "告警开始时间"
+// @Param        page         query     int                                                  false  "page"
+// @Param        size         query     int                                                  false  "size"
+// @Success      200          {object}  handlers.ResponseStruct{Data=[]models.AlertMessage}  "规则"
+// @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/repeats [get]
+// @Security     JWT
 func (h *AlertsHandler) AlertRepeats(c *gin.Context) {
 	var messages []models.AlertMessage
 	query, err := handlers.GetQuery(c, nil)
@@ -478,25 +479,25 @@ func (h *AlertsHandler) AlertRepeats(c *gin.Context) {
 }
 
 // SearchAlert 搜索告警
-// @Tags Alert
-// @Summary  搜索告警
-// @Description 搜索告警
-// @Accept json
-// @Produce json
-// @Param cluster query string false "集群,默认所有"
-// @Param namespace query string false "告警命名空间，默认所有"
-// @Param alertname query string false "告警规则名，默认所有"
-// @Param resource query string false "告警资源，默认所有"
-// @Param rule query string false "告警指标，默认所有"
-// @Param labelpairs query string false "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
-// @Param start query string false "开始时间"
-// @Param end query string false "结束时间"
-// @Param status query string false "状态(firing, resolved)"
-// @Param page query int false "page"
-// @Param size query int false "size"
-// @Success 200 {object} handlers.ResponseStruct{Data=pagination.PageData{List=[]AlertMessageGroup}} "resp"
-// @Router /v1/alerts/search [get]
-// @Security JWT
+// @Tags         Alert
+// @Summary      搜索告警
+// @Description  搜索告警
+// @Accept       json
+// @Produce      json
+// @Param        cluster     query     string                                                                       false  "集群,默认所有"
+// @Param        namespace   query     string                                                                       false  "告警命名空间，默认所有"
+// @Param        alertname   query     string                                                                       false  "告警规则名，默认所有"
+// @Param        resource    query     string                                                                       false  "告警资源，默认所有"
+// @Param        rule        query     string                                                                       false  "告警指标，默认所有"
+// @Param        labelpairs  query     string                                                                       false  "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
+// @Param        start       query     string                                                                       false  "开始时间"
+// @Param        end         query     string                                                                       false  "结束时间"
+// @Param        status      query     string                                                                       false  "状态(firing, resolved)"
+// @Param        page        query     int                                                                          false  "page"
+// @Param        size        query     int                                                                          false  "size"
+// @Success      200         {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]AlertMessageGroup}}  "resp"
+// @Router       /v1/alerts/search [get]
+// @Security     JWT
 func (h *AlertsHandler) SearchAlert(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
@@ -572,38 +573,155 @@ func (h *AlertsHandler) SearchAlert(c *gin.Context) {
 	handlers.OK(c, handlers.Page(total, messages, int64(page), int64(size)))
 }
 
-type AlertCount struct {
-	Fingerprint     string `json:"fingerprint,omitempty"`
-	Status          string `json:"status,omitempty"`
-	StartsAt        *time.Time
-	EndsAt          *time.Time
-	MaxCreatedAt    *time.Time
-	TenantName      string `json:"tenantName,omitempty"`
-	ProjectName     string `json:"projectName,omitempty"`
-	EnvironmentName string `json:"environmentName,omitempty"`
+type AlertCountStatus struct {
+	TodayCount     int  `json:"todayCount"`
+	YesterdayCount int  `json:"yesterdayCount"`
+	IsIncrease     bool `json:"isIncrease"` // 今天相比昨天，是否在增加
+	Percent        int  `json:"percent"`    // 增加/减少的百分数，-1 表示无穷大，0 表示不增不减
 }
 
-// SearchAlert 搜索告警
-// @Tags Alert
-// @Summary  搜索告警
-// @Description 搜索告警
-// @Accept json
-// @Produce json
-// @Param tenant query string false "租户名"
-// @Param start query string false "开始时间"
-// @Param end query string false "结束时间"
-// @Param status query string false "状态(firing, resolved)"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]AlertCount} "resp"
-// @Router /v1/alerts/count [get]
-// @Security JWT
-func (h *AlertsHandler) AlertCount(c *gin.Context) {
-	start := c.Query("start")
-	end := c.Query("end")
-	if start == "" {
-		start = utils.DayStartTime(time.Now()).Format("2006-01-02 15:04:05.000")
+func (a *AlertCountStatus) calculate() {
+	if a.TodayCount >= a.YesterdayCount {
+		if a.TodayCount == 0 {
+			// 两个都是0
+			a.IsIncrease = false
+			a.Percent = 0
+			return
+		}
+
+		a.IsIncrease = true
+		if a.YesterdayCount == 0 {
+			a.Percent = -1 // -1 表示无穷大
+		} else {
+			a.Percent = ((a.TodayCount - a.YesterdayCount) * 100) / a.YesterdayCount
+		}
+	} else {
+		a.IsIncrease = false
+		a.Percent = ((a.YesterdayCount - a.TodayCount) * 100) / a.YesterdayCount
 	}
-	if end == "" {
-		end = utils.NextDayStartTime(time.Now()).Format("2006-01-02 15:04:05.000")
+}
+
+type AlertCountRet struct {
+	Total    AlertCountStatus `json:"total,omitempty"`
+	Firing   AlertCountStatus `json:"firing,omitempty"`
+	Resolved AlertCountStatus `json:"resolved,omitempty"`
+}
+
+// AlertToday 今日告警数量统计
+// @Tags         Alert
+// @Summary      今日告警数量统计
+// @Description  今日告警数量统计
+// @Accept       json
+// @Produce      json
+// @Param        tenant  query     string                                          true   "租户名"
+// @Param        status  query     string                                          false  "状态(firing, resolved)"
+// @Success      200     {object}  handlers.ResponseStruct{Data=AlertCountStatus}  "resp"
+// @Router       /v1/alerts/today [get]
+// @Security     JWT
+func (h *AlertsHandler) AlertToday(c *gin.Context) {
+	todayBedin := utils.DayStartTime(time.Now())
+	yesterdayBegin := todayBedin.Add(-24 * time.Hour)
+	todayEnd := todayBedin.Add(24 * time.Hour)
+
+	yesterdaySubQuery := h.GetDB().Table("alert_messages").
+		Select("fingerprint, max(created_at) as max_created_at").
+		Where("starts_at >= ?", yesterdayBegin).
+		Where("starts_at < ?", todayBedin).
+		Group("fingerprint")
+	yesterdayQuery := h.GetDB().Table("(?) as tmp", yesterdaySubQuery).
+		Select("status, count(alert_infos.fingerprint) as count").
+		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
+		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint").
+		Where("tenant_name = ?", c.Query("tenant")).
+		Group("status")
+
+	todaySubQuery := h.GetDB().Table("alert_messages").
+		Select("fingerprint, max(created_at) as max_created_at").
+		Where("starts_at >= ?", todayBedin).
+		Where("starts_at < ?", todayEnd).
+		Group("fingerprint")
+	todayQuery := h.GetDB().Table("(?) as tmp", todaySubQuery).
+		Select("status, count(alert_infos.fingerprint) as count").
+		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
+		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint").
+		Where("tenant_name = ?", c.Query("tenant")).
+		Group("status")
+
+	type result struct {
+		Status string
+		Count  int
+	}
+	yesterdayResult := []result{}
+	todayResult := []result{}
+	if err := yesterdayQuery.Scan(&yesterdayResult).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if err := todayQuery.Scan(&todayResult).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	ret := AlertCountRet{}
+	for _, v := range yesterdayResult {
+		if v.Status == "firing" {
+			ret.Firing.YesterdayCount = v.Count
+		} else {
+			ret.Resolved.YesterdayCount = v.Count
+		}
+	}
+	for _, v := range todayResult {
+		if v.Status == "firing" {
+			ret.Firing.TodayCount = v.Count
+		} else {
+			ret.Resolved.TodayCount = v.Count
+		}
+	}
+	ret.Total.YesterdayCount = ret.Firing.YesterdayCount + ret.Resolved.YesterdayCount
+	ret.Total.TodayCount = ret.Firing.TodayCount + ret.Resolved.TodayCount
+	ret.Firing.calculate()
+	ret.Resolved.calculate()
+	ret.Total.calculate()
+
+	handlers.OK(c, ret)
+}
+
+type AlertGraph struct {
+	ProjectName string
+	Date        string
+	Count       int64
+
+	DateTimeStamp int64
+}
+
+// AlertGraph 告警趋势图
+// @Tags         Alert
+// @Summary      告警趋势图
+// @Description  告警趋势图
+// @Accept       json
+// @Produce      json
+// @Param        tenant  query     string                                      true   "租户名"
+// @Param        start    query     string                                    false  "开始时间，格式 2006-01-02T15:04:05Z07:00"
+// @Param        end      query     string                                    false  "结束时间，格式 2006-01-02T15:04:05Z07:00"
+// @Success      200     {object}  handlers.ResponseStruct{Data=model.Matrix}  "resp"
+// @Router       /v1/alerts/graph [get]
+// @Security     JWT
+func (h *AlertsHandler) AlertGraph(c *gin.Context) {
+	start, err := time.Parse(time.RFC3339, c.Query("start"))
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if start.IsZero() {
+		start = utils.DayStartTime(time.Now())
+	}
+	end, err := time.Parse(time.RFC3339, c.Query("end"))
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if end.IsZero() {
+		end = utils.NextDayStartTime(time.Now())
 	}
 
 	subQuery := h.GetDB().Table("alert_messages").
@@ -612,22 +730,141 @@ func (h *AlertsHandler) AlertCount(c *gin.Context) {
 		Where("starts_at < ?", end).
 		Group("fingerprint")
 	query := h.GetDB().Table("(?) as tmp", subQuery).
-		Select("alert_messages.fingerprint, status, starts_at, ends_at, max_created_at, tenant_name, project_name, environment_name").
+		Select(`project_name, DATE_FORMAT(starts_at, "%Y-%m-%d") as date, count(alert_messages.fingerprint) as count`).
+		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
+		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint").
+		Where("tenant_name = ?", c.Query("tenant")).
+		Group("project_name").Group(`DATE_FORMAT(starts_at, "%Y-%m-%d")`)
+
+	result := []AlertGraph{}
+	if err := query.Scan(&result).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	tmp := map[string][]AlertGraph{}
+	for _, v := range result {
+		t, _ := time.Parse("2006-01-02", v.Date)
+		v.DateTimeStamp = t.UnixMilli()
+		if elems, ok := tmp[v.ProjectName]; ok {
+			elems = append(elems, v)
+			tmp[v.ProjectName] = elems
+		} else {
+			tmp[v.ProjectName] = []AlertGraph{v}
+		}
+	}
+
+	ret := model.Matrix{}
+	for k, points := range tmp {
+		series := &model.SampleStream{
+			Metric: model.Metric{
+				"project": model.LabelValue(k),
+			},
+			Values: newDefaultSamplePair(start, end),
+		}
+		fillInPoints(points, series.Values)
+		ret = append(ret, series)
+	}
+
+	handlers.OK(c, ret)
+}
+
+type TableRet struct {
+	GroupValue string `json:"groupValue,omitempty"`
+	Count      int    `json:"count,omitempty"`
+}
+
+// AlertByGroup 告警分组统计
+// @Tags         Alert
+// @Summary      告警分组统计
+// @Description  告警分组统计
+// @Accept       json
+// @Produce      json
+// @Param        tenant   query     string                                    true   "租户名"
+// @Param        start   query     string                                      false  "开始时间，格式 2006-01-02T15:04:05Z07:00"
+// @Param        end     query     string                                      false  "结束时间，格式 2006-01-02T15:04:05Z07:00"
+// @Param        groupby  query     string                                    true   "按什么分组(project_name, alert_type)"
+// @Success      200      {object}  handlers.ResponseStruct{Data=[]TableRet}  "resp"
+// @Router       /v1/alerts/group [get]
+// @Security     JWT
+func (h *AlertsHandler) AlertByGroup(c *gin.Context) {
+	start, err := time.Parse(time.RFC3339, c.Query("start"))
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if start.IsZero() {
+		start = utils.DayStartTime(time.Now())
+	}
+	end, err := time.Parse(time.RFC3339, c.Query("end"))
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if end.IsZero() {
+		end = utils.NextDayStartTime(time.Now())
+	}
+
+	subQuery := h.GetDB().Table("alert_messages").
+		Select("fingerprint, max(created_at) as max_created_at").
+		Where("starts_at >= ?", start).
+		Where("starts_at < ?", end).
+		Group("fingerprint")
+	query := h.GetDB().Table("(?) as tmp", subQuery).
 		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
 		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint").
 		Where("tenant_name = ?", c.Query("tenant"))
 
-	status := c.Query("status")
-	if status != "" {
-		query.Where("alert_messages.status = ?", status)
+	switch c.Query("groupby") {
+	case "alert_type":
+		query.Select("concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule') as group_value, count(alert_infos.fingerprint) as count").
+			Group("concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule')")
+	case "project_name":
+		query.Select("alert_infos.project_name as group_value, count(alert_infos.fingerprint) as count").
+			Group("alert_infos.project_name")
+	default:
+		handlers.NotOK(c, fmt.Errorf("groupby not valid"))
+		return
 	}
 
-	ret := []AlertCount{}
+	ret := []TableRet{}
 	if err := query.Scan(&ret).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	handlers.OK(c, ret)
+}
+
+func fillInPoints(points []AlertGraph, samples []model.SamplePair) {
+	var i, j int
+	for i < len(points) && j < len(samples) {
+		if points[i].DateTimeStamp < int64(samples[j].Timestamp) {
+			i++
+			continue
+		}
+		if points[i].DateTimeStamp == int64(samples[j].Timestamp) {
+			samples[j].Value = model.SampleValue(points[i].Count)
+			i++
+			j++
+			continue
+		}
+		if points[i].DateTimeStamp > int64(samples[j].Timestamp) {
+			j++
+			continue
+		}
+	}
+}
+
+// 每天一个sample
+func newDefaultSamplePair(start, end time.Time) []model.SamplePair {
+	ret := []model.SamplePair{}
+	for tmp := start; tmp.Before(end); tmp = tmp.Add(24 * time.Hour) {
+		ret = append(ret, model.SamplePair{
+			Timestamp: model.Time(tmp.UnixMilli()),
+			Value:     0,
+		})
+	}
+	return ret
 }
 
 var (
@@ -637,18 +874,18 @@ var (
 )
 
 // AlertHistory 告警黑名单
-// @Tags Alert
-// @Summary  告警黑名单
-// @Description 告警黑名单
-// @Accept json
-// @Produce json
-// @Param cluster query string false "集群, 默认所有"
-// @Param namespace query string false "命名空间, 默认所有"
-// @Param page query int false "page"
-// @Param size query int false "size"
-// @Success 200 {object} handlers.ResponseStruct{Data=pagination.PageData{List=[]models.AlertInfo}} "resp"
-// @Router /v1/alerts/blacklist [get]
-// @Security JWT
+// @Tags         Alert
+// @Summary      告警黑名单
+// @Description  告警黑名单
+// @Accept       json
+// @Produce      json
+// @Param        cluster    query     string                                                                      false  "集群, 默认所有"
+// @Param        namespace  query     string                                                                      false  "命名空间, 默认所有"
+// @Param        page       query     int                                                                         false  "page"
+// @Param        size       query     int                                                                         false  "size"
+// @Success      200        {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]models.AlertInfo}}  "resp"
+// @Router       /v1/alerts/blacklist [get]
+// @Security     JWT
 func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 	cluster := c.Query("cluster")
 	namespace := c.Query("namespace")
@@ -703,15 +940,15 @@ func (h *AlertsHandler) formatBlackListSummary(labels map[string]string, opts *p
 }
 
 // AlertHistory 加入/更新告警黑名单
-// @Tags Alert
-// @Summary  加入/更新告警黑名单
-// @Description 加入/更新告警黑名单
-// @Accept json
-// @Produce json
-// @Param form body models.AlertInfo true "黑名单详情，必传AlertInfo.Fingerprint"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/alerts/blacklist [post]
-// @Security JWT
+// @Tags         Alert
+// @Summary      加入/更新告警黑名单
+// @Description  加入/更新告警黑名单
+// @Accept       json
+// @Produce      json
+// @Param        form  body      models.AlertInfo                      true  "黑名单详情，必传AlertInfo.Fingerprint"
+// @Success      200   {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/alerts/blacklist [post]
+// @Security     JWT
 func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 	if err := h.withBlackListReq(c, func(req models.AlertInfo) error {
 		return h.GetDB().Transaction(func(tx *gorm.DB) error {
@@ -733,15 +970,15 @@ func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 }
 
 // AlertHistory 移除告警黑名单
-// @Tags Alert
-// @Summary  移除告警黑名单
-// @Description 移除告警黑名单
-// @Accept json
-// @Produce json
-// @Param fingerprint path string true "告警指纹"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/alerts/blacklist/{fingerprint} [delete]
-// @Security JWT
+// @Tags         Alert
+// @Summary      移除告警黑名单
+// @Description  移除告警黑名单
+// @Accept       json
+// @Produce      json
+// @Param        fingerprint  path      string                                true  "告警指纹"
+// @Success      200          {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/alerts/blacklist/{fingerprint} [delete]
+// @Security     JWT
 func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 	req := models.AlertInfo{
 		Fingerprint: c.Param("fingerprint"),
