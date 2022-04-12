@@ -22,20 +22,20 @@ import (
 )
 
 func NewPluginCmd() *cobra.Command {
-	globalOptions := &controllers.PluginOptions{
-		PluginsDir: "deploy/plugins",
-	}
+	globalOptions := controllers.NewDefaultOPluginptions()
 	cmd := &cobra.Command{
 		Use:   "plugins",
 		Short: "plugins commands",
 	}
-	cmd.PersistentFlags().StringVarP(&globalOptions.PluginsDir, "directory", "d", globalOptions.PluginsDir, "cache directory")
+	cmd.PersistentFlags().StringVarP(&globalOptions.CacheDir, "cache", "c", globalOptions.CacheDir, "cache download plugins to this directory")
+	cmd.PersistentFlags().StringSliceVarP(&globalOptions.SearchDirs, "directory", "d", globalOptions.SearchDirs, "search plugins in directories")
 
 	cmd.AddCommand(NewPluginTemplateCmd(globalOptions))
 	cmd.AddCommand(NewPluginsDownloadCmd(globalOptions))
 	return cmd
 }
 
+// nolint: gocognit
 func NewPluginTemplateCmd(global *controllers.PluginOptions) *cobra.Command {
 	pretty := false
 	cmd := &cobra.Command{
@@ -51,12 +51,9 @@ func NewPluginTemplateCmd(global *controllers.PluginOptions) *cobra.Command {
 			pm := controllers.NewPluginManager(nil, global)
 			// to avoid log message mix in yaml contents
 			log.Default().SetOutput(io.Discard)
-
 			for _, path := range args {
 				var content []byte
 				var err error
-
-				// stdin
 				// nolint:nestif
 				if path == "-" {
 					content, err = io.ReadAll(os.Stdin)

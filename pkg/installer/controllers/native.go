@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -24,8 +23,8 @@ const (
 )
 
 type NativePlugin struct {
+	*PluginOptions
 	Config       *rest.Config
-	CacheDir     string
 	TemplateFunc TemplateFunc
 	gitopsengine *gitops.GitOpsEngine
 }
@@ -46,15 +45,16 @@ func WithManagedResourceSelectByPluginName(namespace, name string) gitops.Option
 
 type TemplateFunc func(ctx context.Context, plugin Plugin) ([]byte, error)
 
-func NewNativePlugin(restconfig *rest.Config, defaultrepo string, buildfun TemplateFunc) *NativePlugin {
-	if abs, _ := filepath.Abs(defaultrepo); abs != defaultrepo {
-		defaultrepo = abs
+func NewNativePlugin(restconfig *rest.Config, options *PluginOptions, buildfun TemplateFunc) *NativePlugin {
+	return &NativePlugin{
+		Config:        restconfig,
+		PluginOptions: options,
+		TemplateFunc:  buildfun,
 	}
-	return &NativePlugin{Config: restconfig, CacheDir: defaultrepo, TemplateFunc: buildfun}
 }
 
 func (n *NativePlugin) Template(ctx context.Context, plugin Plugin) ([]byte, error) {
-	if err := DownloadPlugin(ctx, &plugin, n.CacheDir); err != nil {
+	if err := DownloadPlugin(ctx, &plugin, n.PluginOptions.CacheDir, n.PluginOptions.SearchDirs...); err != nil {
 		return nil, err
 	}
 	// tmplate
