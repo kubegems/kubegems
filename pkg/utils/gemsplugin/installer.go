@@ -5,6 +5,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"kubegems.io/pkg/log"
+	"kubegems.io/pkg/version"
 )
 
 type InstallerOptions struct {
@@ -14,7 +15,7 @@ type InstallerOptions struct {
 
 func DefaultInstallerOptions() *InstallerOptions {
 	return &InstallerOptions{
-		OperatorImage: "kubegems/installer-operator:v2.3-release",
+		OperatorImage: "kubegems/installer-operator:" + version.Get().GitVersion,
 		InstallerYaml: defaultInstallerObj,
 	}
 }
