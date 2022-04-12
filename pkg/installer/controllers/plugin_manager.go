@@ -20,16 +20,31 @@ type PluginInstaller interface {
 }
 
 type PluginOptions struct {
-	PluginsDir string `json:"pluginsDir,omitempty"`
+	CacheDir   string   `json:"cacheDir,omitempty"`
+	SearchDirs []string `json:"searchDirs,omitempty"`
+}
+
+func NewDefaultOPluginptions() *PluginOptions {
+	cachedir, err := os.UserCacheDir()
+	if err != nil {
+		cachedir = os.TempDir()
+	}
+	return &PluginOptions{
+		CacheDir: filepath.Join(cachedir, "kubegems", "plugins"),
+		SearchDirs: []string{
+			"plugins",
+			"deploy/plugins",
+		},
+	}
 }
 
 func NewPluginManager(restconfig *rest.Config, options *PluginOptions) *PluginManager {
 	return &PluginManager{
 		Installers: map[pluginsv1beta1.PluginKind]PluginInstaller{
-			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options.PluginsDir),
-			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options.PluginsDir, KustomizeTemplatePlugin),
-			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options.PluginsDir, TemplatesTemplatePlugin),
-			pluginsv1beta1.PluginKindInline:    NewNativePlugin(restconfig, options.PluginsDir, InlineTemplatePlugin),
+			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options),
+			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options, KustomizeTemplatePlugin),
+			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options, TemplatesTemplatePlugin),
+			pluginsv1beta1.PluginKindInline:    NewNativePlugin(restconfig, options, InlineTemplatePlugin),
 		},
 		Options: options,
 	}
@@ -60,7 +75,7 @@ func (m *PluginManager) Template(ctx context.Context, apiplugin *pluginsv1beta1.
 
 func (m *PluginManager) Download(ctx context.Context, apiplugin *pluginsv1beta1.Plugin) error {
 	plugin := PluginFromPlugin(apiplugin)
-	return DownloadPlugin(ctx, &plugin, m.Options.PluginsDir)
+	return DownloadPlugin(ctx, &plugin, m.Options.CacheDir, m.Options.SearchDirs...)
 }
 
 func (m *PluginManager) Apply(ctx context.Context, apiplugin *pluginsv1beta1.Plugin, options ...PluginManagerOption) error {

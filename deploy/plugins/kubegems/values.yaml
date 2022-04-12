@@ -1889,7 +1889,7 @@ mysql:
     rootPassword: "password" # root password must be set in order upgradeable
     username: ""
     password: ""
-    database: ""
+    database: "kubegems"
 
 ## @section External Database configuration
 ##
@@ -1907,7 +1907,7 @@ externalDatabase:
   enabled: true
   host: mysql
   port: 3306
-  database: ""
+  database: "kubegems"
   username: ""
   password: ""
   existingSecret: "mysql"
@@ -1954,6 +1954,9 @@ argo-cd:
   configs:
     secret:
       argocdServerAdminPassword: ""
+  server:
+    config:
+      users.session.duration: "0"
 
 ## @section External ArgoCD configuration
 ##

@@ -59,9 +59,9 @@ func Run(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	if err := controllers.NewAndSetupPluginReconciler(ctx, mgr, &controllers.PluginOptions{
-		PluginsDir: options.PluginsDir,
-	}, PluginsControllerConcurrency); err != nil {
+	pluginsoptions := controllers.NewDefaultOPluginptions()
+	pluginsoptions.SearchDirs = append(pluginsoptions.SearchDirs, options.PluginsDir)
+	if err := controllers.NewAndSetupPluginReconciler(ctx, mgr, pluginsoptions, PluginsControllerConcurrency); err != nil {
 		setupLog.Error(err, "unable to create plugin controller", "controller", "plugin")
 		return err
 	}
