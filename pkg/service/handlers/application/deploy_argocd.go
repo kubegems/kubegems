@@ -23,19 +23,19 @@ type SyncRequest struct {
 	Resources []v1alpha1.SyncOperationResource `json:"resources,omitempty"`
 }
 
-// @Tags Application
-// @Summary Sync同步
-// @Description Sync同步
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @param environment_id path  int	  true "environment id"
-// @Param name			 path  string true "name"
-// @Param body			 body  SyncRequest false "指定需要同步的资源，否则全部同步"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/sync [post]
-// @Security JWT
+// @Tags         Application
+// @Summary      Sync同步
+// @Description  Sync同步
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                   true   "tenaut id"
+// @Param        project_id      path      int                                   true   "project id"
+// @param        environment_id  path      int                                   true   "environment id"
+// @Param        name            path      string                                true   "name"
+// @Param        body            body      SyncRequest                           false  "指定需要同步的资源，否则全部同步"
+// @Success      200             {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/sync [post]
+// @Security     JWT
 func (h *ApplicationHandler) Sync(c *gin.Context) {
 	body := &SyncRequest{}
 	h.NamedRefFunc(c, body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -47,19 +47,19 @@ func (h *ApplicationHandler) Sync(c *gin.Context) {
 	})
 }
 
-// @Tags Application
-// @Summary 资源树实时状态(List/Watch)
-// @Description 资源树实时状态
-// @Accept json
-// @Produce json
-// @Param tenant_id      	path  	int    	true 	"tenaut id"
-// @Param project_id     	path  	int    	true 	"project id"
-// @param environment_id 	path 	int		true 	"envid"
-// @Param name 				path	string	true 	"应用名称,应用商店名称"
-// @param watch 		 	query 	bool   	false 	"true"// 是否watch
-// @Success 200 {object} handlers.ResponseStruct{Data=ArgoResourceTree} "summary"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/resourcetree [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      资源树实时状态(List/Watch)
+// @Description  资源树实时状态
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                             true   "tenaut id"
+// @Param        project_id      path      int                                             true   "project id"
+// @param        environment_id  path      int                                             true   "envid"
+// @Param        name            path      string                                          true   "应用名称,应用商店名称"
+// @param        watch           query     bool                                            false  "true"//  是否watch
+// @Success      200             {object}  handlers.ResponseStruct{Data=ArgoResourceTree}  "summary"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/resourcetree [get]
+// @Security     JWT
 func (h *ApplicationHandler) ResourceTree(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		argoappname := ref.FullName()
@@ -114,18 +114,18 @@ type ArgoHistory struct {
 	PublishAt   metav1.Time `json:"publishAt"`            // 如果发布，有发布时间 gitcommit 时间
 }
 
-// @Tags Application
-// @Summary 部署历史
-// @Description 部署历史
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @param environment_id path  int	  true "environment id"
-// @Param name			 path  string	true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{Data=[]ArgoHistory}} "history"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/argohistory [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      部署历史
+// @Description  部署历史
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                                                  true  "tenaut id"
+// @Param        project_id      path      int                                                                  true  "project id"
+// @param        environment_id  path      int                                                                  true  "environment id"
+// @Param        name            path      string                                                               true  "name"
+// @Success      200             {object}  handlers.ResponseStruct{Data=handlers.PageData{Data=[]ArgoHistory}}  "history"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/argohistory [get]
+// @Security     JWT
 func (h *ApplicationHandler) Argohistory(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		list, err := h.listArgoHistories(ctx, ref)
@@ -146,18 +146,18 @@ type ImageHistory struct {
 	Type        string      `json:"type"`                  // 环境类型
 }
 
-// @Tags Application
-// @Summary 镜像历史
-// @Description 镜像历史（生成镜像跟踪功能数据）
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @param environment_id path  int	  true "environment id"
-// @Param name			 path  string	true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "history"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/imagehistory [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      镜像历史
+// @Description  镜像历史（生成镜像跟踪功能数据）
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                   true  "tenaut id"
+// @Param        project_id      path      int                                   true  "project id"
+// @param        environment_id  path      int                                   true  "environment id"
+// @Param        name            path      string                                true  "name"
+// @Success      200  {object}  handlers.ResponseStruct{Data=string}  "history"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/imagehistory [get]
+// @Security     JWT
 func (h *ApplicationHandler) ImageHistory(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		image := c.Query("image")
@@ -291,22 +291,22 @@ type ArgoResourceDiff struct {
 	PredictedLiveState  interface{} `json:"predictedLiveState"`
 }
 
-// @Tags Application
-// @Summary argo资源
-// @Description argo资源
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @param environment_id path  int	  true "environment id"
-// @Param name			 path  string true "appname"
-// @params name		query string "resourcename"
-// @params group	query string "group"
-// @params version	query string "version"
-// @params kind		query string "kind"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "history"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/argoresource [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      argo资源
+// @Description  argo资源
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path  int     true  "tenaut id"
+// @Param        project_id      path  int     true  "project id"
+// @param        environment_id  path  int     true  "environment id"
+// @Param        name            path  string  true  "appname"
+// @params       name                  query string "resourcename"
+// @params       group           query string "group"
+// @params       version         query string "version"
+// @params       kind                      query string "kind"
+// @Success      200  {object}  handlers.ResponseStruct{Data=string}  "history"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/argoresource [get]
+// @Security     JWT
 func (h *ApplicationHandler) GetArgoResource(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		queries := &struct {
@@ -505,23 +505,23 @@ func isSameResourceRef(v, r v1alpha1.ResourceRef) bool {
 	return v.Group == r.Group && v.Kind == r.Kind && v.Namespace == r.Namespace && v.Name == r.Name
 }
 
-// @Tags Application
-// @Summary argo资源
-// @Description argo资源
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @param environment_id path  int	  true "environment id"
-// @Param name			 path  string true "appname"
-// @params name			query string "resourcename"
-// @params group		query string "group"
-// @params version		query string "version"
-// @params namespace 	query string "namespace"
-// @params kind		query string "kind"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "history"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/argoresource [delete]
-// @Security JWT
+// @Tags         Application
+// @Summary      argo资源
+// @Description  argo资源
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path  int     true  "tenaut id"
+// @Param        project_id      path  int     true  "project id"
+// @param        environment_id  path  int     true  "environment id"
+// @Param        name            path  string  true  "appname"
+// @params       name                       query string "resourcename"
+// @params       group                 query string "group"
+// @params       version               query string "version"
+// @params       namespace       query string "namespace"
+// @params       kind                      query string "kind"
+// @Success      200             {object}  handlers.ResponseStruct{Data=string}  "history"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/argoresource [delete]
+// @Security     JWT
 func (h *ApplicationHandler) DeleteArgoResource(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		queries := &struct {

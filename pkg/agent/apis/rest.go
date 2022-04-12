@@ -37,35 +37,35 @@ type GVKN struct {
 	LabelSelector string
 }
 
-// @Tags Agent.V1
-// @Summary  获取 none namespaced scope workload
-// @Description 获取 none namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      获取 none namespaced scope workload
+// @Description  获取 none namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster   path      string                                true  "cluster"
+// @Param        group     path      string                                true  "group"
+// @Param        version   path      string                                true  "version"
+// @Param        resource  path      string                                true  "resoruce"
+// @Param        name      path      string                                true  "name"
+// @Success      200       {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [get]
+// @Security     JWT
 func _() {}
 
-// @Tags Agent.V1
-// @Summary 获取namespaced scope workload
-// @Description 获取namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param namespace path string true "namespace"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      获取namespaced scope workload
+// @Description  获取namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        group      path      string                                true  "group"
+// @Param        version    path      string                                true  "version"
+// @Param        resource   path      string                                true  "resoruce"
+// @Param        name       path      string                                true  "name"
+// @Param        namespace  path      string                                true  "namespace"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [get]
+// @Security     JWT
 func (h *REST) Get(c *gin.Context) {
 	gvkn, err := h.parseGVKN(c)
 	if err != nil {
@@ -84,34 +84,34 @@ func (h *REST) Get(c *gin.Context) {
 	}
 }
 
-// @Tags Agent.V1
-// @Summary  获取 none namespaced scope workload  list
-// @Description 获取 none namespaced scope workload  list
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/{resource} [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      获取 none namespaced scope workload  list
+// @Description  获取 none namespaced scope workload  list
+// @Accept       json
+// @Produce      json
+// @Param        cluster   path      string                                  true  "cluster"
+// @Param        group     path      string                                  true  "group"
+// @Param        version   path      string                                  true  "version"
+// @Param        resource  path      string                                  true  "resoruce"
+// @Success      200       {object}  handlers.ResponseStruct{Data=[]object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/{resource} [get]
+// @Security     JWT
 func _() {}
 
-// @Tags Agent.V1
-// @Summary 获取namespaced scope workload  list
-// @Description 获取namespaced scope workload  list
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param namespace path string true "namespace"
-// @Param watch query bool true "watch"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource} [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      获取namespaced scope workload  list
+// @Description  获取namespaced scope workload  list
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                  true  "cluster"
+// @Param        group      path      string                                  true  "group"
+// @Param        version    path      string                                  true  "version"
+// @Param        resource   path      string                                  true  "resoruce"
+// @Param        namespace  path      string                                  true  "namespace"
+// @Param        watch      query     bool                                    true  "watch"
+// @Success      200        {object}  handlers.ResponseStruct{Data=[]object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource} [get]
+// @Security     JWT
 func (h *REST) List(c *gin.Context) {
 	iswatch, _ := strconv.ParseBool(c.Param("watch"))
 	gvkn, err := h.parseGVKN(c)
@@ -174,37 +174,37 @@ func WatchEvents(c *gin.Context, cluster cluster.Interface, list client.ObjectLi
 	return nil
 }
 
-// @Tags Agent.V1
-// @Summary  创建namespaced scope workload
-// @Description 创建namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param data body object true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [post]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      创建namespaced scope workload
+// @Description  创建namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster   path      string                                true  "cluster"
+// @Param        group     path      string                                true  "group"
+// @Param        version   path      string                                true  "version"
+// @Param        resource  path      string                                true  "resoruce"
+// @Param        name      path      string                                true  "name"
+// @Param        data      body      object                                true  "body"
+// @Success      200       {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [post]
+// @Security     JWT
 func _() {}
 
-// @Tags Agent.V1
-// @Summary 创建 none namespaced scope workload
-// @Description 创建 none namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param namespace path string true "namespace"
-// @Param data body object true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [post]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      创建 none namespaced scope workload
+// @Description  创建 none namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        group      path      string                                true  "group"
+// @Param        version    path      string                                true  "version"
+// @Param        resource   path      string                                true  "resoruce"
+// @Param        name       path      string                                true  "name"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        data       body      object                                true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [post]
+// @Security     JWT
 func (h *REST) Create(c *gin.Context) {
 	gvkn, err := h.parseGVKN(c)
 	if err != nil {
@@ -234,37 +234,37 @@ func (h *REST) Create(c *gin.Context) {
 	}
 }
 
-// @Tags Agent.V1
-// @Summary  创建none namespaced scope workload
-// @Description 创建none amespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param data body object true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [put]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      创建none namespaced scope workload
+// @Description  创建none amespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster   path      string                                true  "cluster"
+// @Param        group     path      string                                true  "group"
+// @Param        version   path      string                                true  "version"
+// @Param        resource  path      string                                true  "resoruce"
+// @Param        name      path      string                                true  "name"
+// @Param        data      body      object                                true  "body"
+// @Success      200       {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [put]
+// @Security     JWT
 func _() {}
 
-// @Tags Agent.V1
-// @Summary 创建namespaced scope workload
-// @Description 创建namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param namespace path string true "namespace"
-// @Param data body object true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [put]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      创建namespaced scope workload
+// @Description  创建namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        group      path      string                                true  "group"
+// @Param        version    path      string                                true  "version"
+// @Param        resource   path      string                                true  "resoruce"
+// @Param        name       path      string                                true  "name"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        data       body      object                                true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [put]
+// @Security     JWT
 func (h *REST) Update(c *gin.Context) {
 	gvkn, err := h.parseGVKN(c)
 	if err != nil {
@@ -288,35 +288,35 @@ func (h *REST) Update(c *gin.Context) {
 	}
 }
 
-// @Tags Agent.V1
-// @Summary  创建none namespaced scope workload
-// @Description 创建none namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [delete]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      创建none namespaced scope workload
+// @Description  创建none namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster   path      string                                true  "cluster"
+// @Param        group     path      string                                true  "group"
+// @Param        version   path      string                                true  "version"
+// @Param        resource  path      string                                true  "resoruce"
+// @Param        name      path      string                                true  "name"
+// @Success      200       {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [delete]
+// @Security     JWT
 func _() {}
 
-// @Tags Agent.V1
-// @Summary 创建namespaced scope workload
-// @Description 创建namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param namespace path string true "namespace"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [delete]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      创建namespaced scope workload
+// @Description  创建namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        group      path      string                                true  "group"
+// @Param        version    path      string                                true  "version"
+// @Param        resource   path      string                                true  "resoruce"
+// @Param        name       path      string                                true  "name"
+// @Param        namespace  path      string                                true  "namespace"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [delete]
+// @Security     JWT
 func (h *REST) Delete(c *gin.Context) {
 	gvkn, err := h.parseGVKN(c)
 	if err != nil {
@@ -336,37 +336,37 @@ func (h *REST) Delete(c *gin.Context) {
 	}
 }
 
-// @Tags Agent.V1
-// @Summary  创建none namespaced scope workload
-// @Description 创建none namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param data body object true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [patch]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      创建none namespaced scope workload
+// @Description  创建none namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster   path      string                                true  "cluster"
+// @Param        group     path      string                                true  "group"
+// @Param        version   path      string                                true  "version"
+// @Param        resource  path      string                                true  "resoruce"
+// @Param        name      path      string                                true  "name"
+// @Param        data      body      object                                true  "body"
+// @Success      200       {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name} [patch]
+// @Security     JWT
 func _() {}
 
-// @Tags Agent.V1
-// @Summary 创建namespaced scope workload
-// @Description 创建namespaced scope workload
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param namespace path string true "namespace"
-// @Param data body object true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [patch]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      创建namespaced scope workload
+// @Description  创建namespaced scope workload
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        group      path      string                                true  "group"
+// @Param        version    path      string                                true  "version"
+// @Param        resource   path      string                                true  "resoruce"
+// @Param        name       path      string                                true  "name"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        data       body      object                                true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [patch]
+// @Security     JWT
 func (h *REST) Patch(c *gin.Context) {
 	gvkn, err := h.parseGVKN(c)
 	if err != nil {
@@ -419,37 +419,37 @@ type scaleForm struct {
 	Replicas int32 `json:"replicas"`
 }
 
-// @Tags Agent.V1
-// @Summary  nonamespace 扩缩容
-// @Description 扩缩容
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param data body object true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name}/actions/scale [patch]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      nonamespace 扩缩容
+// @Description  扩缩容
+// @Accept       json
+// @Produce      json
+// @Param        cluster   path      string                                true  "cluster"
+// @Param        group     path      string                                true  "group"
+// @Param        version   path      string                                true  "version"
+// @Param        resource  path      string                                true  "resoruce"
+// @Param        name      path      string                                true  "name"
+// @Param        data      body      object                                true  "body"
+// @Success      200       {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/{resource}/{name}/actions/scale [patch]
+// @Security     JWT
 func _() {}
 
-// @Tags Agent.V1
-// @Summary  扩缩容
-// @Description 扩缩容
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param group path string true "group"
-// @Param version path string true "version"
-// @Param resource path string true "resoruce"
-// @Param name path string true "name"
-// @Param namespace path string true "namespace"
-// @Param data body scaleForm true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "counter"
-// @Router /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name}/actions/scale [patch]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      扩缩容
+// @Description  扩缩容
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        group      path      string                                true  "group"
+// @Param        version    path      string                                true  "version"
+// @Param        resource   path      string                                true  "resoruce"
+// @Param        name       path      string                                true  "name"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        data       body      scaleForm                             true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "counter"
+// @Router       /v1/proxy/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name}/actions/scale [patch]
+// @Security     JWT
 func (h *REST) Scale(c *gin.Context) {
 	gvkn, err := h.parseGVKN(c)
 	if err != nil {

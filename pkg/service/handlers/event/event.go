@@ -10,19 +10,19 @@ import (
 )
 
 // QueryRange 获取事件
-// @Tags Event
-// @Summary 获取事件
-// @Description 获取事件
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster_name"
-// @Param query query string true "query"
-// @Param limit query int false "limit"
-// @Param start query string false "start"
-// @Param end query string false "end"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "QueryRange"
-// @Router /v1/event/{cluster} [get]
-// @Security JWT
+// @Tags         Event
+// @Summary      获取事件
+// @Description  获取事件
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true   "cluster_name"
+// @Param        query    query     string                                true   "query"
+// @Param        limit    query     int                                   false  "limit"
+// @Param        start    query     string                                false  "start"
+// @Param        end      query     string                                false  "end"
+// @Success      200      {object}  handlers.ResponseStruct{Data=string}  "QueryRange"
+// @Router       /v1/event/{cluster} [get]
+// @Security     JWT
 func (l *EventHandler) Event(c *gin.Context) {
 	clustername := c.Param("cluster")
 

@@ -11,14 +11,14 @@ import (
 )
 
 // Config 监控dashboard列表
-// @Tags Metrics
-// @Summary 监控dashboard列表
-// @Description 监控dashboard列表
-// @Accept json
-// @Produce json
-// @Success 200 {object} handlers.ResponseStruct{Data=[]models.MetricDashborad} "监控dashboard列表"
-// @Router /v1/metrics/dashboard [get]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      监控dashboard列表
+// @Description  监控dashboard列表
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  handlers.ResponseStruct{Data=[]models.MetricDashborad}  "监控dashboard列表"
+// @Router       /v1/metrics/dashboard [get]
+// @Security     JWT
 func (h *MonitorHandler) ListDashborad(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {
@@ -36,15 +36,15 @@ func (h *MonitorHandler) ListDashborad(c *gin.Context) {
 }
 
 // Config 创建/更新dashboad
-// @Tags Metrics
-// @Summary 创建/更新dashboad
-// @Description 创建/更新dashboad
-// @Accept json
-// @Produce json
-// @Param from body models.MetricDashborad true "dashboad配置"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/metrics/dashboard [post]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      创建/更新dashboad
+// @Description  创建/更新dashboad
+// @Accept       json
+// @Produce      json
+// @Param        from  body      models.MetricDashborad                true  "dashboad配置"
+// @Success      200   {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/metrics/dashboard [post]
+// @Security     JWT
 func (h *MonitorHandler) CreateOrUpdateDashborad(c *gin.Context) {
 	req, err := h.getDashboardReq(c)
 	if err != nil {
@@ -60,15 +60,15 @@ func (h *MonitorHandler) CreateOrUpdateDashborad(c *gin.Context) {
 }
 
 // Config 删除dashboad
-// @Tags Metrics
-// @Summary 删除dashboad
-// @Description 删除dashboad
-// @Accept json
-// @Produce json
-// @Param dashboard_id path uint true "dashboard id"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/metrics/dashboard/{dashboard_id} [delete]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      删除dashboad
+// @Description  删除dashboad
+// @Accept       json
+// @Produce      json
+// @Param        dashboard_id  path      uint                                  true  "dashboard id"
+// @Success      200           {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/metrics/dashboard/{dashboard_id} [delete]
+// @Security     JWT
 func (h *MonitorHandler) DeleteDashborad(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {

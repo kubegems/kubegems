@@ -1,9 +1,13 @@
 package alerthandler
 
 import (
+	"reflect"
 	"testing"
+	"time"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/prometheus/common/model"
+	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/prometheus"
 )
 
@@ -74,6 +78,39 @@ func TestAlertRule_checkAndModify(t *testing.T) {
 			// if err := r.; (err != nil) != tt.wantErr {
 			// 	t.Errorf("AlertRule.checkAndModify() error = %v, wantErr %v", err, tt.wantErr)
 			// }
+		})
+	}
+}
+
+func Test_newDefaultSamplePair(t *testing.T) {
+	type args struct {
+		start time.Time
+		end   time.Time
+	}
+	tests := []struct {
+		name string
+		args args
+		want []model.SamplePair
+	}{
+		{
+			name: "1",
+			args: args{
+				start: utils.DayStartTime(time.Now()),
+				end:   utils.NextDayStartTime(time.Now()),
+			},
+			want: []model.SamplePair{
+				{
+					Timestamp: model.Time(utils.DayStartTime(time.Now()).Unix()),
+					Value:     0,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newDefaultSamplePair(tt.args.start, tt.args.end); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newDefaultSamplePair() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

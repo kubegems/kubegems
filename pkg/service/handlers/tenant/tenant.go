@@ -44,19 +44,19 @@ var (
 )
 
 // ListTenant 列表 Tenant
-// @Tags Tenant
-// @Summary Tenant列表
-// @Description Tenant列表
-// @Accept json
-// @Produce json
-// @Param TenantName query string false "TenantName"
-// @Param preload query string false "choices ResourceQuotas,Users,Projects"
-// @Param page query int false "page"
-// @Param size query int false "page"
-// @Param search query string false "search in (TenantName,Remark)"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Tenant}} "Tenant"
-// @Router /v1/tenant [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      Tenant列表
+// @Description  Tenant列表
+// @Accept       json
+// @Produce      json
+// @Param        TenantName  query     string                                                                 false  "TenantName"
+// @Param        preload     query     string                                                                 false  "choices ResourceQuotas,Users,Projects"
+// @Param        page        query     int                                                                    false  "page"
+// @Param        size        query     int                                                                    false  "page"
+// @Param        search      query     string                                                                 false  "search in (TenantName,Remark)"
+// @Success      200         {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Tenant}}  "Tenant"
+// @Router       /v1/tenant [get]
+// @Security     JWT
 func (h *TenantHandler) ListTenant(c *gin.Context) {
 	var list []models.Tenant
 	query, err := handlers.GetQuery(c, nil)
@@ -79,15 +79,15 @@ func (h *TenantHandler) ListTenant(c *gin.Context) {
 }
 
 // RetrieveTenant Tenant详情
-// @Tags Tenant
-// @Summary Tenant详情
-// @Description get Tenant详情
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.Tenant} "Tenant"
-// @Router /v1/tenant/{tenant_id} [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      Tenant详情
+// @Description  get Tenant详情
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                         true  "tenant_id"
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.Tenant}  "Tenant"
+// @Router       /v1/tenant/{tenant_id} [get]
+// @Security     JWT
 func (h *TenantHandler) RetrieveTenant(c *gin.Context) {
 	var obj models.Tenant
 	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -98,15 +98,15 @@ func (h *TenantHandler) RetrieveTenant(c *gin.Context) {
 }
 
 // PostTenant 创建Tenant
-// @Tags Tenant
-// @Summary 创建Tenant
-// @Description 创建Tenant
-// @Accept json
-// @Produce json
-// @Param param body models.Tenant true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.Tenant} "Tenant"
-// @Router /v1/tenant [post]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      创建Tenant
+// @Description  创建Tenant
+// @Accept       json
+// @Produce      json
+// @Param        param  body      models.Tenant                                true  "表单"
+// @Success      200    {object}  handlers.ResponseStruct{Data=models.Tenant}  "Tenant"
+// @Router       /v1/tenant [post]
+// @Security     JWT
 func (h *TenantHandler) PostTenant(c *gin.Context) {
 	var obj models.Tenant
 	if err := c.BindJSON(&obj); err != nil {
@@ -136,16 +136,16 @@ func (h *TenantHandler) PostTenant(c *gin.Context) {
 }
 
 // PutTenant 修改Tenant
-// @Tags Tenant
-// @Summary 修改Tenant
-// @Description 修改Tenant
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param param body models.Tenant true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.Tenant} "Tenant"
-// @Router /v1/tenant/{tenant_id} [put]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      修改Tenant
+// @Description  修改Tenant
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                         true  "tenant_id"
+// @Param        param      body      models.Tenant                                true  "表单"
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.Tenant}  "Tenant"
+// @Router       /v1/tenant/{tenant_id} [put]
+// @Security     JWT
 func (h *TenantHandler) PutTenant(c *gin.Context) {
 	var obj models.Tenant
 	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -173,15 +173,15 @@ func (h *TenantHandler) PutTenant(c *gin.Context) {
 }
 
 // DeleteTenant 删除 Tenant
-// @Tags Tenant
-// @Summary 删除 Tenant
-// @Description 删除 Tenant
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Success 204 {object} handlers.ResponseStruct "resp"
-// @Router /v1/tenant/{tenant_id} [delete]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      删除 Tenant
+// @Description  删除 Tenant
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                     true  "tenant_id"
+// @Success      204        {object}  handlers.ResponseStruct  "resp"
+// @Router       /v1/tenant/{tenant_id} [delete]
+// @Security     JWT
 func (h *TenantHandler) DeleteTenant(c *gin.Context) {
 	var obj models.Tenant
 	// 这儿是删除数据，不存在preload 敏感数据的情况
@@ -222,19 +222,19 @@ func (h *TenantHandler) afterTenantDelete(ctx context.Context, tx *gorm.DB, t *m
 }
 
 // ListTenantUser 获取属于Tenant的 User 列表
-// @Tags Tenant
-// @Summary 获取属于 Tenant 的 User 列表
-// @Description 获取属于 Tenant 的 User 列表
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param preload query string false "choices Tenants,SystemRole"
-// @Param page query int false "page"
-// @Param size query int false "page"
-// @Param search query string false "search in (Username,Email)"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}} "models.User"
-// @Router /v1/tenant/{tenant_id}/user [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取属于 Tenant 的 User 列表
+// @Description  获取属于 Tenant 的 User 列表
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                                                 true   "tenant_id"
+// @Param        preload    query     string                                                               false  "choices Tenants,SystemRole"
+// @Param        page       query     int                                                                  false  "page"
+// @Param        size       query     int                                                                  false  "page"
+// @Param        search     query     string                                                               false  "search in (Username,Email)"
+// @Success      200        {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}}  "models.User"
+// @Router       /v1/tenant/{tenant_id}/user [get]
+// @Security     JWT
 func (h *TenantHandler) ListTenantUser(c *gin.Context) {
 	var list []models.User
 	query, err := handlers.GetQuery(c, nil)
@@ -259,16 +259,16 @@ func (h *TenantHandler) ListTenantUser(c *gin.Context) {
 }
 
 // RetrieveTenantUser 获取Tenant 的一个 User详情
-// @Tags Tenant
-// @Summary 获取Tenant 的一个 User详情
-// @Description 获取Tenant 的一个 User详情
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param user_id path uint true "user_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.User} "models.User"
-// @Router /v1/tenant/{tenant_id}/user/{user_id} [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取Tenant 的一个 User详情
+// @Description  获取Tenant 的一个 User详情
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                       true  "tenant_id"
+// @Param        user_id    path      uint                                       true  "user_id"
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.User}  "models.User"
+// @Router       /v1/tenant/{tenant_id}/user/{user_id} [get]
+// @Security     JWT
 func (h *TenantHandler) RetrieveTenantUser(c *gin.Context) {
 	var obj models.User
 	if err := h.GetDB().Table(
@@ -286,16 +286,16 @@ func (h *TenantHandler) RetrieveTenantUser(c *gin.Context) {
 }
 
 // PostTenantUser 在User和Tenant间添加关联关系
-// @Tags Tenant
-// @Summary 在User和Tenant间添加关联关系
-// @Description 在User和Tenant间添加关联关系
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param param body models.TenantUserRels  true "表单"`
-// @Success 200 {object} handlers.ResponseStruct{Data=models.TenantUserRels} "models.User"
-// @Router /v1/tenant/{tenant_id}/user [post]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      在User和Tenant间添加关联关系
+// @Description  在User和Tenant间添加关联关系
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                                 true  "tenant_id"
+// @Param        param      body      models.TenantUserRels                                true  "表单"`
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.TenantUserRels}  "models.User"
+// @Router       /v1/tenant/{tenant_id}/user [post]
+// @Security     JWT
 func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 	var (
 		tenant models.Tenant
@@ -339,17 +339,17 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 }
 
 // PutTenantUser 修改 User 和 Tenant 的关联关系
-// @Tags Tenant
-// @Summary  修改 User 和 Tenant 的关联关系
+// @Tags         Tenant
+// @Summary      修改 User 和 Tenant 的关联关系
 // @Description  修改 User 和 Tenant 的关联关系
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param user_id path uint true "user_id"
-// @Param param body models.TenantUserRels  true "表单"`
-// @Success 200 {object} handlers.ResponseStruct{Data=models.TenantUserRels} "models.User"
-// @Router /v1/tenant/{tenant_id}/user/{user_id} [put]
-// @Security JWT
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                                 true  "tenant_id"
+// @Param        user_id    path      uint                                                 true  "user_id"
+// @Param        param      body      models.TenantUserRels                                true  "表单"`
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.TenantUserRels}  "models.User"
+// @Router       /v1/tenant/{tenant_id}/user/{user_id} [put]
+// @Security     JWT
 func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 	var (
 		rel  models.TenantUserRels
@@ -392,16 +392,16 @@ func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 }
 
 // DeleteTenantUser 删除 User 和 Tenant 的关系
-// @Tags Tenant
-// @Summary 删除 User 和 Tenant 的关系
-// @Description 删除 User 和 Tenant 的关系
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param user_id path uint true "user_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.User} "models.User"
-// @Router /v1/tenant/{tenant_id}/user/{user_id} [delete]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      删除 User 和 Tenant 的关系
+// @Description  删除 User 和 Tenant 的关系
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                       true  "tenant_id"
+// @Param        user_id    path      uint                                       true  "user_id"
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.User}  "models.User"
+// @Router       /v1/tenant/{tenant_id}/user/{user_id} [delete]
+// @Security     JWT
 func (h *TenantHandler) DeleteTenantUser(c *gin.Context) {
 	var (
 		obj     models.Tenant
@@ -458,19 +458,19 @@ func (h *TenantHandler) DeleteTenantUser(c *gin.Context) {
 }
 
 // ListTenantProject 获取属于Tenant的 Project 列表
-// @Tags Tenant
-// @Summary 获取属于 Tenant 的 Project 列表
-// @Description 获取属于 Tenant 的 Project 列表
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param preload query string false "choices Applications,Environments,Registries,Users,Tenant"
-// @Param page query int false "page"
-// @Param size query int false "page"
-// @Param search query string false "search in (ProjectName)"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Project}} "models.Project"
-// @Router /v1/tenant/{tenant_id}/project [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取属于 Tenant 的 Project 列表
+// @Description  获取属于 Tenant 的 Project 列表
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                                                    true   "tenant_id"
+// @Param        preload    query     string                                                                  false  "choices Applications,Environments,Registries,Users,Tenant"
+// @Param        page       query     int                                                                     false  "page"
+// @Param        size       query     int                                                                     false  "page"
+// @Param        search     query     string                                                                  false  "search in (ProjectName)"
+// @Success      200        {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Project}}  "models.Project"
+// @Router       /v1/tenant/{tenant_id}/project [get]
+// @Security     JWT
 func (h *TenantHandler) ListTenantProject(c *gin.Context) {
 	var list []models.Project
 	query, err := handlers.GetQuery(c, nil)
@@ -504,16 +504,16 @@ func (h *TenantHandler) ListTenantProject(c *gin.Context) {
 }
 
 // RetrieveTenantProject 获取Tenant 的一个 Project详情
-// @Tags Tenant
-// @Summary 获取Tenant 的一个 Project详情
-// @Description 获取Tenant 的一个 Project详情
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param project_id path uint true "project_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.Project} "models.Project"
-// @Router /v1/tenant/{tenant_id}/project/{project_id} [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取Tenant 的一个 Project详情
+// @Description  获取Tenant 的一个 Project详情
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      uint                                          true  "tenant_id"
+// @Param        project_id  path      uint                                          true  "project_id"
+// @Success      200         {object}  handlers.ResponseStruct{Data=models.Project}  "models.Project"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id} [get]
+// @Security     JWT
 func (h *TenantHandler) RetrieveTenantProject(c *gin.Context) {
 	var project models.Project
 	if err := h.GetDB().Where("tenant_id = ? and id = ?", c.Param(project.ProjectAlias), c.Param("project_id")).First(&project).Error; err != nil {
@@ -524,16 +524,16 @@ func (h *TenantHandler) RetrieveTenantProject(c *gin.Context) {
 }
 
 // PostTenantProject 创建一个属于 Tenant 的Project
-// @Tags Tenant
-// @Summary 创建一个属于 Tenant 的Project
-// @Description 创建一个属于 Tenant 的Project
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param param body models.Project true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.Project} "models.Project"
-// @Router /v1/tenant/{tenant_id}/project [post]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      创建一个属于 Tenant 的Project
+// @Description  创建一个属于 Tenant 的Project
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                          true  "tenant_id"
+// @Param        param      body      models.Project                                true  "表单"
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.Project}  "models.Project"
+// @Router       /v1/tenant/{tenant_id}/project [post]
+// @Security     JWT
 func (h *TenantHandler) PostTenantProject(c *gin.Context) {
 	var (
 		tenant  models.Tenant
@@ -571,18 +571,18 @@ func (h *TenantHandler) PostTenantProject(c *gin.Context) {
 }
 
 // ListTenantTenantResourceQuota 获取属于Tenant的 TenantResourceQuota 列表
-// @Tags Tenant
-// @Summary 获取属于 Tenant 的 TenantResourceQuota 列表
-// @Description 获取属于 Tenant 的 TenantResourceQuota 列表
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param preload query string false "choices Tenant,Cluster"
-// @Param page query int false "page"
-// @Param size query int false "page"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.TenantResourceQuota}} "models.TenantResourceQuota"
-// @Router /v1/tenant/{tenant_id}/tenantresourcequota [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取属于 Tenant 的 TenantResourceQuota 列表
+// @Description  获取属于 Tenant 的 TenantResourceQuota 列表
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                                                                true   "tenant_id"
+// @Param        preload    query     string                                                                              false  "choices Tenant,Cluster"
+// @Param        page       query     int                                                                                 false  "page"
+// @Param        size       query     int                                                                                 false  "page"
+// @Success      200        {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.TenantResourceQuota}}  "models.TenantResourceQuota"
+// @Router       /v1/tenant/{tenant_id}/tenantresourcequota [get]
+// @Security     JWT
 func (h *TenantHandler) ListTenantTenantResourceQuota(c *gin.Context) {
 	var list []models.TenantResourceQuota
 	query, err := handlers.GetQuery(c, nil)
@@ -605,16 +605,16 @@ func (h *TenantHandler) ListTenantTenantResourceQuota(c *gin.Context) {
 }
 
 // RetrieveTenantTenantResourceQuota 获取Tenant 的一个 TenantResourceQuota详情
-// @Tags Tenant
-// @Summary 获取Tenant 的一个 TenantResourceQuota详情
-// @Description 获取Tenant 的一个 TenantResourceQuota详情
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param tenantresourcequota_id path uint true "tenantresourcequota_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.TenantResourceQuota} "models.TenantResourceQuota"
-// @Router /v1/tenant/{tenant_id}/tenantresourcequota/{tenantresourcequota_id} [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取Tenant 的一个 TenantResourceQuota详情
+// @Description  获取Tenant 的一个 TenantResourceQuota详情
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id               path      uint                                                      true  "tenant_id"
+// @Param        tenantresourcequota_id  path      uint                                                      true  "tenantresourcequota_id"
+// @Success      200                     {object}  handlers.ResponseStruct{Data=models.TenantResourceQuota}  "models.TenantResourceQuota"
+// @Router       /v1/tenant/{tenant_id}/tenantresourcequota/{tenantresourcequota_id} [get]
+// @Security     JWT
 func (h *TenantHandler) RetrieveTenantTenantResourceQuota(c *gin.Context) {
 	var trq models.TenantResourceQuota
 	if err := h.GetDB().First(&trq, "tenant_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("tenantresourcequota_id")).Error; err != nil {
@@ -625,15 +625,15 @@ func (h *TenantHandler) RetrieveTenantTenantResourceQuota(c *gin.Context) {
 }
 
 // EnableTenant 激活租户
-// @Tags Tenant
-// @Summary 激活租户,当租户为未激活状态的时候才可用
-// @Description 激活租户,当租户为未激活状态的时候才可用
-// @Accept json
-// @Produce json
-// @Param tenantid path int true "tenantid"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]models.Tenant} "Tenant"
-// @Router /v1/tenant/{tenant_id}/action/enable [post]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      激活租户,当租户为未激活状态的时候才可用
+// @Description  激活租户,当租户为未激活状态的时候才可用
+// @Accept       json
+// @Produce      json
+// @Param        tenantid  path      int                                            true  "tenantid"
+// @Success      200       {object}  handlers.ResponseStruct{Data=[]models.Tenant}  "Tenant"
+// @Router       /v1/tenant/{tenant_id}/action/enable [post]
+// @Security     JWT
 func (h *TenantHandler) EnableTenant(c *gin.Context) {
 	var obj models.Tenant
 	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -664,15 +664,15 @@ func (h *TenantHandler) EnableTenant(c *gin.Context) {
 }
 
 // DisableTenant 取消激活租户
-// @Tags Tenant
-// @Summary 取消激活租户,当租户为激活状态的时候才可用
-// @Description 取消激活租户,当租户为激活状态的时候才可用
-// @Accept json
-// @Produce json
-// @Param tenantid path int true "tenant_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]models.Tenant} "Tenant"
-// @Router /v1/tenant/{tenant_id}/action/disable [post]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      取消激活租户,当租户为激活状态的时候才可用
+// @Description  取消激活租户,当租户为激活状态的时候才可用
+// @Accept       json
+// @Produce      json
+// @Param        tenantid  path      int                                            true  "tenant_id"
+// @Success      200       {object}  handlers.ResponseStruct{Data=[]models.Tenant}  "Tenant"
+// @Router       /v1/tenant/{tenant_id}/action/disable [post]
+// @Security     JWT
 func (h *TenantHandler) DisableTenant(c *gin.Context) {
 	var obj models.Tenant
 	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -702,16 +702,16 @@ func (h *TenantHandler) DisableTenant(c *gin.Context) {
 }
 
 // PostTenantTenantResourceQuota 创建一个属于 Tenant 的TenantResourceQuota
-// @Tags Tenant
-// @Summary 创建一个属于 Tenant 的TenantResourceQuota
-// @Description 创建一个属于 Tenant 的TenantResourceQuota
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param param body models.TenantResourceQuota true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.TenantResourceQuota} "models.TenantResourceQuota"
-// @Router /v1/tenant/{tenant_id}/tenantresourcequota [post]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      创建一个属于 Tenant 的TenantResourceQuota
+// @Description  创建一个属于 Tenant 的TenantResourceQuota
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                                      true  "tenant_id"
+// @Param        param      body      models.TenantResourceQuota                                true  "表单"
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.TenantResourceQuota}  "models.TenantResourceQuota"
+// @Router       /v1/tenant/{tenant_id}/tenantresourcequota [post]
+// @Security     JWT
 func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 	var obj models.TenantResourceQuota
 	if err := c.BindJSON(&obj); err != nil {
@@ -807,17 +807,17 @@ func CreateOrUpdateTenantResourceQuota(ctx context.Context, h base.BaseHandler, 
 }
 
 // PatchTenantTenantResourceQuota 修改一个属于 Tenant 的TenantResourceQuota
-// @Tags Tenant
-// @Summary 修改一个属于 Tenant 的TenantResourceQuota
-// @Description 修改一个属于 Tenant 的TenantResourceQuota
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param cluster_id path uint true "cluster_id"
-// @Param param body models.TenantResourceQuota true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.TenantResourceQuota} "models.TenantResourceQuota"
-// @Router /v1/tenant/{tenant_id}/tenantresourcequota/{:cluster_id} [put]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      修改一个属于 Tenant 的TenantResourceQuota
+// @Description  修改一个属于 Tenant 的TenantResourceQuota
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      uint                                                      true  "tenant_id"
+// @Param        cluster_id  path      uint                                                      true  "cluster_id"
+// @Param        param       body      models.TenantResourceQuota                                true  "表单"
+// @Success      200         {object}  handlers.ResponseStruct{Data=models.TenantResourceQuota}  "models.TenantResourceQuota"
+// @Router       /v1/tenant/{tenant_id}/tenantresourcequota/{:cluster_id} [put]
+// @Security     JWT
 func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 	var trq models.TenantResourceQuota
 	if err := h.GetDB().Preload(
@@ -866,16 +866,16 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 }
 
 // PatchTenantTenantResourceQuota 删除租户在一个集群下的资源
-// @Tags Tenant
-// @Summary 删除租户在一个集群下的资源
-// @Description 删除租户在一个集群下的资源
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param cluster_id path uint true "cluster_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "obj"
-// @Router /v1/tenant/{tenant_id}/tenantresourcequota/{:cluster_id} [put]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      删除租户在一个集群下的资源
+// @Description  删除租户在一个集群下的资源
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      uint                                  true  "tenant_id"
+// @Param        cluster_id  path      uint                                  true  "cluster_id"
+// @Success      200         {object}  handlers.ResponseStruct{Data=object}  "obj"
+// @Router       /v1/tenant/{tenant_id}/tenantresourcequota/{:cluster_id} [put]
+// @Security     JWT
 func (h *TenantHandler) DeleteTenantResourceQuota(c *gin.Context) {
 	var trq models.TenantResourceQuota
 	if err := h.GetDB().Preload("Tenant").Preload(
@@ -917,16 +917,16 @@ func (h *TenantHandler) afterTenantResourceQuotaDelete(ctx context.Context, tx *
 }
 
 // TenantEnvironments 获取租户下所有的环境
-// @Tags Tenant
-// @Summary 获取租户下所有的环境以及资源状态
-// @Description 获取租户下所有的环境以及资源状态
-// @Accept json
-// @Produce json
-// @Param tenant_id path int true "tenant_id"
-// @Param search query string false "search in (EnvironmentName)"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]object} "object"
-// @Router /v1/tenant/{tenant_id}/environment_with_quotas [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取租户下所有的环境以及资源状态
+// @Description  获取租户下所有的环境以及资源状态
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      int                                     true   "tenant_id"
+// @Param        search     query     string                                  false  "search in (EnvironmentName)"
+// @Success      200        {object}  handlers.ResponseStruct{Data=[]object}  "object"
+// @Router       /v1/tenant/{tenant_id}/environment_with_quotas [get]
+// @Security     JWT
 func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 	var (
 		tenant models.Tenant
@@ -1000,20 +1000,20 @@ func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 }
 
 // ListEnvironment 获取租户下的所有环境列表
-// @Tags Tenant
-// @Summary 获取租户下的所有Environment列表
-// @Description 获取租户下的所有Environment列表
-// @Accept json
-// @Produce json
-// @Param tenant_id path int true "tenant_id"
-// @Param EnvironmentName query string false "EnvironmentName"
-// @Param preload query string false "choices Creator,Cluster,Project,ResourceQuota,Applications,Users"
-// @Param page query int false "page"
-// @Param size query int false "page"
-// @Param search query string false "search in (EnvironmentName)"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}} "Environment"
-// @Router /v1/tenant/{tenant_id}/environment [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取租户下的所有Environment列表
+// @Description  获取租户下的所有Environment列表
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id        path      int                                                                         true   "tenant_id"
+// @Param        EnvironmentName  query     string                                                                      false  "EnvironmentName"
+// @Param        preload          query     string                                                                      false  "choices Creator,Cluster,Project,ResourceQuota,Applications,Users"
+// @Param        page             query     int                                                                         false  "page"
+// @Param        size             query     int                                                                         false  "page"
+// @Param        search           query     string                                                                      false  "search in (EnvironmentName)"
+// @Success      200              {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}}  "Environment"
+// @Router       /v1/tenant/{tenant_id}/environment [get]
+// @Security     JWT
 func (h *TenantHandler) ListEnvironment(c *gin.Context) {
 	var list []models.Environment
 	projectids := []uint{}
@@ -1055,15 +1055,15 @@ type tenantStatisticsData struct {
 }
 
 // TenantStatistics 租户非资源类型统计
-// @Tags Tenant
-// @Summary 租户非资源类型统计
-// @Description 租户非资源类型统计
-// @Accept json
-// @Produce json
-// @Param tenant_id path int true "tenant_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=tenantStatisticsData} "statistics"
-// @Router /v1/tenant/{tenant_id}/statistics [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      租户非资源类型统计
+// @Description  租户非资源类型统计
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      int                                                 true  "tenant_id"
+// @Success      200        {object}  handlers.ResponseStruct{Data=tenantStatisticsData}  "statistics"
+// @Router       /v1/tenant/{tenant_id}/statistics [get]
+// @Security     JWT
 func (h *TenantHandler) TenantStatistics(c *gin.Context) {
 	// 集群数，项目数，环境数，用户数，应用数
 	var (
@@ -1159,16 +1159,16 @@ func (h *TenantHandler) TenantStatistics(c *gin.Context) {
 	handlers.OK(c, ret)
 }
 
-// @Tags NetworkIsolated
-// @Summary 租户网络隔离开关
-// @Description 租户网络隔离开关
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param param body handlers.ClusterIsolatedSwitch true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.IsolatedSwitch} "object"
-// @Router /v1/tenant/{tenant_id}/action/networkisolate [post]
-// @Security JWT
+// @Tags         NetworkIsolated
+// @Summary      租户网络隔离开关
+// @Description  租户网络隔离开关
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id  path      uint                                                   true  "tenant_id"
+// @Param        param      body      handlers.ClusterIsolatedSwitch                         true  "表单"
+// @Success      200        {object}  handlers.ResponseStruct{Data=handlers.IsolatedSwitch}  "object"
+// @Router       /v1/tenant/{tenant_id}/action/networkisolate [post]
+// @Security     JWT
 func (h *TenantHandler) TenantSwitch(c *gin.Context) {
 	form := &handlers.ClusterIsolatedSwitch{}
 	if err := c.BindJSON(form); err != nil {
@@ -1208,17 +1208,17 @@ func (h *TenantHandler) TenantSwitch(c *gin.Context) {
 }
 
 // CreateTenantTenantResourceQuotaApply  创建or修改租户集群资源变更申请
-// @Tags Tenant
-// @Summary 创建or修改租户集群资源变更申请
-// @Description 创建or修改租户集群资源变更申请
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param cluster_id path uint true "cluster_id"
-// @Param param body models.TenantResourceQuotaApply true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.TenantResourceQuotaApply} "models.TenantResourceQuotaApply"
-// @Router /v1/tenant/{tenant_id}/cluster/{cluster_id}/resourceApply [post]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      创建or修改租户集群资源变更申请
+// @Description  创建or修改租户集群资源变更申请
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      uint                                                           true  "tenant_id"
+// @Param        cluster_id  path      uint                                                           true  "cluster_id"
+// @Param        param       body      models.TenantResourceQuotaApply                                true  "表单"
+// @Success      200         {object}  handlers.ResponseStruct{Data=models.TenantResourceQuotaApply}  "models.TenantResourceQuotaApply"
+// @Router       /v1/tenant/{tenant_id}/cluster/{cluster_id}/resourceApply [post]
+// @Security     JWT
 func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 	var (
 		quota models.TenantResourceQuota
@@ -1289,16 +1289,16 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 }
 
 // GetTenantTenantResourceQuotaApply  获取租户集群资源变更申请详情
-// @Tags Tenant
-// @Summary 获取租户集群资源变更申请详情
-// @Description 获取租户集群资源变更申请详情
-// @Accept json
-// @Produce json
-// @Param tenant_id path uint true "tenant_id"
-// @Param tenantresourcequotaapply_id path uint true "tenantresourcequotaapply_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.TenantResourceQuotaApply} "models.TenantResourceQuotaApply"
-// @Router /v1/tenant/{tenant_id}/tenantresourcequotaapply/{tenantresourcequotaapply_id} [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取租户集群资源变更申请详情
+// @Description  获取租户集群资源变更申请详情
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id                    path      uint                                                           true  "tenant_id"
+// @Param        tenantresourcequotaapply_id  path      uint                                                           true  "tenantresourcequotaapply_id"
+// @Success      200                          {object}  handlers.ResponseStruct{Data=models.TenantResourceQuotaApply}  "models.TenantResourceQuotaApply"
+// @Router       /v1/tenant/{tenant_id}/tenantresourcequotaapply/{tenantresourcequotaapply_id} [get]
+// @Security     JWT
 func (h *TenantHandler) GetTenantTenantResourceQuotaApply(c *gin.Context) {
 	var obj models.TenantResourceQuotaApply
 	if err := h.GetDB().First(&obj, "id = ?", c.Param("tenantresourcequotaapply_id")).Error; err != nil {
@@ -1336,16 +1336,16 @@ const (
 	defaultGatewayTenant = "notenant"
 )
 
-// @Tags Tenant
-// @Summary 获取TenantGateway 列表
-// @Description 获取TenantGateway 列表
-// @Accept json
-// @Produce json
-// @Param cluster_id path string true "cluster_id"
-// @Param tenant_id path string true "tenant_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]v1beta1.TenantGateway} "object"
-// @Router /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取TenantGateway 列表
+// @Description  获取TenantGateway 列表
+// @Accept       json
+// @Produce      json
+// @Param        cluster_id  path      string                                                 true  "cluster_id"
+// @Param        tenant_id   path      string                                                 true  "tenant_id"
+// @Success      200         {object}  handlers.ResponseStruct{Data=[]v1beta1.TenantGateway}  "object"
+// @Router       /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways [get]
+// @Security     JWT
 func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 	clusterid := c.Param("cluster_id")
 	cluster := models.Cluster{}
@@ -1428,17 +1428,17 @@ func (h *TenantHandler) deleteGateway(ctx context.Context, cluster string, name 
 	})
 }
 
-// @Tags Tenant
-// @Summary 获取TenantGateway
-// @Description 获取TenantGateway
-// @Accept json
-// @Produce json
-// @Param cluster_id path string true "cluster_id"
-// @Param tenant_id path string true "tenant_id"
-// @Param ingressClass query string true "ingressClass"
-// @Success 200 {object} handlers.ResponseStruct{Data=v1beta1.TenantGateway} "object"
-// @Router /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name} [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取TenantGateway
+// @Description  获取TenantGateway
+// @Accept       json
+// @Produce      json
+// @Param        cluster_id    path      string                                               true  "cluster_id"
+// @Param        tenant_id     path      string                                               true  "tenant_id"
+// @Param        ingressClass  query     string                                               true  "ingressClass"
+// @Success      200           {object}  handlers.ResponseStruct{Data=v1beta1.TenantGateway}  "object"
+// @Router       /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name} [get]
+// @Security     JWT
 func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 	ingressClass := c.Query("ingressClass")
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
@@ -1476,17 +1476,17 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 	}
 }
 
-// @Tags Tenant
-// @Summary 创建TenantGateway
-// @Description 创建TenantGateway
-// @Accept json
-// @Produce json
-// @Param cluster_id path string true "cluster_id"
-// @Param tenant_id path string true "tenant_id"
-// @Param param body v1beta1.TenantGateway true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=v1beta1.TenantGateway} "object"
-// @Router /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways [post]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      创建TenantGateway
+// @Description  创建TenantGateway
+// @Accept       json
+// @Produce      json
+// @Param        cluster_id  path      string                                               true  "cluster_id"
+// @Param        tenant_id   path      string                                               true  "tenant_id"
+// @Param        param       body      v1beta1.TenantGateway                                true  "表单"
+// @Success      200         {object}  handlers.ResponseStruct{Data=v1beta1.TenantGateway}  "object"
+// @Router       /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways [post]
+// @Security     JWT
 func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 	tenantid, _ := strconv.Atoi(c.Param("tenant_id"))
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
@@ -1518,17 +1518,17 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 	handlers.OK(c, tg)
 }
 
-// @Tags Tenant
-// @Summary 更新TenantGateway
-// @Description 更新TenantGateway
-// @Accept json
-// @Produce json
-// @Param cluster_id path string true "cluster_id"
-// @Param tenant_id path string true "tenant_id"
-// @Param param body v1beta1.TenantGateway true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=v1beta1.TenantGateway} "object"
-// @Router /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name} [put]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      更新TenantGateway
+// @Description  更新TenantGateway
+// @Accept       json
+// @Produce      json
+// @Param        cluster_id  path      string                                               true  "cluster_id"
+// @Param        tenant_id   path      string                                               true  "tenant_id"
+// @Param        param       body      v1beta1.TenantGateway                                true  "表单"
+// @Success      200         {object}  handlers.ResponseStruct{Data=v1beta1.TenantGateway}  "object"
+// @Router       /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name} [put]
+// @Security     JWT
 func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
 	cluster := models.Cluster{ID: uint(clusterid)}
@@ -1571,17 +1571,17 @@ func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 	handlers.OK(c, &tg)
 }
 
-// @Tags Tenant
-// @Summary 删除TenantGateway
-// @Description 删除TenantGateway
-// @Accept json
-// @Produce json
-// @Param cluster_id path string true "cluster_id"
-// @Param tenant_id path string true "tenant_id"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "object"
-// @Router /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name} [delete]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      删除TenantGateway
+// @Description  删除TenantGateway
+// @Accept       json
+// @Produce      json
+// @Param        cluster_id  path      string                                true  "cluster_id"
+// @Param        tenant_id   path      string                                true  "tenant_id"
+// @Param        name        path      string                                true  "name"
+// @Success      200         {object}  handlers.ResponseStruct{Data=string}  "object"
+// @Router       /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name} [delete]
+// @Security     JWT
 func (h *TenantHandler) DeleteTenantGateway(c *gin.Context) {
 	tenantid, _ := strconv.Atoi(c.Param("tenant_id"))
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
@@ -1619,16 +1619,16 @@ type GatewayAddr struct {
 	Status string
 }
 
-// @Tags Tenant
-// @Summary 获取TenantGateway adddresses
-// @Description 获取TenantGateway adddresses
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param name path string true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]string} "object"
-// @Router /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name}/addresses [get]
-// @Security JWT
+// @Tags         Tenant
+// @Summary      获取TenantGateway adddresses
+// @Description  获取TenantGateway adddresses
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                  true  "cluster"
+// @Param        name     path      string                                  true  "name"
+// @Success      200      {object}  handlers.ResponseStruct{Data=[]string}  "object"
+// @Router       /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name}/addresses [get]
+// @Security     JWT
 func (h *TenantHandler) GetObjectTenantGatewayAddr(c *gin.Context) {
 	tenantid, _ := strconv.Atoi(c.Param("tenant_id"))
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))

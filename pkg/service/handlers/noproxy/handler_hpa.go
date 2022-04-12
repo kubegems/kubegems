@@ -34,17 +34,17 @@ type hpaQuery struct {
 	Name string `json:"name" form:"name"`
 }
 
-// @Tags NOPROXY
-// @Summary 设置HPA
-// @Description 设置HPA
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param param body hpaForm true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "object"
-// @Router /v1/noproxy/{cluster}/{namespace}/hpa [post]
-// @Security JWT
+// @Tags         NOPROXY
+// @Summary      设置HPA
+// @Description  设置HPA
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        param      body      hpaForm                               true  "表单"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "object"
+// @Router       /v1/noproxy/{cluster}/{namespace}/hpa [post]
+// @Security     JWT
 func (h *HpaHandler) SetObjectHpa(c *gin.Context) {
 	form := &hpaForm{}
 	if err := c.BindJSON(form); err != nil {
@@ -66,19 +66,19 @@ func (h *HpaHandler) SetObjectHpa(c *gin.Context) {
 	handlers.OK(c, hpa)
 }
 
-// @Tags NOPROXY
-// @Summary 获取HPA form
-// @Description 获取HPA form
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name query string true "name"
-// @Param cluster query string true "cluster"
-// @Param kind query string true "kind"
-// @Success 200 {object} handlers.ResponseStruct{Data=hpaForm} "object"
-// @Router /v1/noproxy/{cluster}/{namespace}/hpa [get]
-// @Security JWT
+// @Tags         NOPROXY
+// @Summary      获取HPA form
+// @Description  获取HPA form
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                 true  "cluster"
+// @Param        namespace  path      string                                 true  "namespace"
+// @Param        name       query     string                                 true  "name"
+// @Param        cluster    query     string                                 true  "cluster"
+// @Param        kind       query     string                                 true  "kind"
+// @Success      200        {object}  handlers.ResponseStruct{Data=hpaForm}  "object"
+// @Router       /v1/noproxy/{cluster}/{namespace}/hpa [get]
+// @Security     JWT
 func (h *HpaHandler) GetObjectHpa(c *gin.Context) {
 	namespace := c.Param("namespace")
 	cluster := c.Param("cluster")

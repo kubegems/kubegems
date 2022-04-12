@@ -45,17 +45,17 @@ func (s ServiceDetail) GetCreationTimestamp() metav1.Time {
 }
 
 // ListServices service列表
-// @Tags VirtualSpace
-// @Summary service列表
-// @Description service列表
-// @Accept json
-// @Produce json
-// @Param virtualspace_id path uint true "virtualspace_id"
-// @Param environment_id path uint true "environment_id"
-// @Param search query string true "service名称"
-// @Success 200 {object} handlers.ResponseStruct{Data=pagination.PageData{List=[]string}} "resp"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/service [get]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      service列表
+// @Description  service列表
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint                                                              true  "virtualspace_id"
+// @Param        environment_id   path      uint                                                              true  "environment_id"
+// @Param        search           query     string                                                            true  "service名称"
+// @Success      200              {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]string}}  "resp"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/service [get]
+// @Security     JWT
 func (h *VirtualSpaceHandler) ListServices(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		svcList := v1.ServiceList{}
@@ -108,17 +108,17 @@ func (h *VirtualSpaceHandler) ListServices(c *gin.Context) {
 }
 
 // GetService service详情
-// @Tags VirtualSpace
-// @Summary service详情
-// @Description service详情
-// @Accept json
-// @Produce json
-// @Param virtualspace_id path uint true "virtualspace_id"
-// @Param environment_id path uint true "environment_id"
-// @Param service_name path string true "service_name"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name} [get]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      service详情
+// @Description  service详情
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint                                  true  "virtualspace_id"
+// @Param        environment_id   path      uint                                  true  "environment_id"
+// @Param        service_name     path      string                                true  "service_name"
+// @Success      200              {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name} [get]
+// @Security     JWT
 func (h *VirtualSpaceHandler) GetService(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		return h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
@@ -144,18 +144,18 @@ type HTTPRoute struct {
 }
 
 // ServiceRequestRouting service请求路由
-// @Tags VirtualSpace
-// @Summary service请求路由
-// @Description service请求路由
-// @Accept json
-// @Produce json
-// @Param virtualspace_id path uint true "virtualspace_id"
-// @Param environment_id path uint true "environment_id"
-// @Param service_name path string true "service_name"
-// @Param param body []HTTPRoute true "请求路由"
-// @Success 200 {object} handlers.ResponseStruct{Data=ServiceDetail} "resp"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/request_routing [post]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      service请求路由
+// @Description  service请求路由
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint                                         true  "virtualspace_id"
+// @Param        environment_id   path      uint                                         true  "environment_id"
+// @Param        service_name     path      string                                       true  "service_name"
+// @Param        param            body      []HTTPRoute                                  true  "请求路由"
+// @Success      200              {object}  handlers.ResponseStruct{Data=ServiceDetail}  "resp"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/request_routing [post]
+// @Security     JWT
 func (h *VirtualSpaceHandler) ServiceRequestRouting(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
@@ -181,18 +181,18 @@ func (h *VirtualSpaceHandler) ServiceRequestRouting(c *gin.Context) {
 }
 
 // ServiceFaultInjection service故障注入
-// @Tags VirtualSpace
-// @Summary service故障注入
-// @Description service故障注入
-// @Accept json
-// @Produce json
-// @Param virtualspace_id path uint true "virtualspace_id"
-// @Param environment_id path uint true "environment_id"
-// @Param service_name path string true "service_name"
-// @Param param body HTTPRoute true "故障注入"
-// @Success 200 {object} handlers.ResponseStruct{Data=ServiceDetail} "resp"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/fault_injection [post]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      service故障注入
+// @Description  service故障注入
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint                                         true  "virtualspace_id"
+// @Param        environment_id   path      uint                                         true  "environment_id"
+// @Param        service_name     path      string                                       true  "service_name"
+// @Param        param            body      HTTPRoute                                    true  "故障注入"
+// @Success      200              {object}  handlers.ResponseStruct{Data=ServiceDetail}  "resp"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/fault_injection [post]
+// @Security     JWT
 func (h *VirtualSpaceHandler) ServiceFaultInjection(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
@@ -227,18 +227,18 @@ func (h *VirtualSpaceHandler) ServiceFaultInjection(c *gin.Context) {
 }
 
 // ServiceTrafficShifting service流量切换
-// @Tags VirtualSpace
-// @Summary service流量切换
-// @Description service流量切换
-// @Accept json
-// @Produce json
-// @Param virtualspace_id path uint true "virtualspace_id"
-// @Param environment_id path uint true "environment_id"
-// @Param service_name path string true "service_name"
-// @Param param body HTTPRoute true "流量切换"
-// @Success 200 {object} handlers.ResponseStruct{Data=ServiceDetail} "resp"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/traffic_shifting  [post]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      service流量切换
+// @Description  service流量切换
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint                                         true  "virtualspace_id"
+// @Param        environment_id   path      uint                                         true  "environment_id"
+// @Param        service_name     path      string                                       true  "service_name"
+// @Param        param            body      HTTPRoute                                    true  "流量切换"
+// @Success      200              {object}  handlers.ResponseStruct{Data=ServiceDetail}  "resp"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/traffic_shifting  [post]
+// @Security     JWT
 func (h *VirtualSpaceHandler) ServiceTrafficShifting(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
@@ -274,18 +274,18 @@ type TCPRoute struct {
 }
 
 // ServiceTCPTrafficShifting service tcp流量切换
-// @Tags VirtualSpace
-// @Summary service tcp流量切换
-// @Description service tcp流量切换
-// @Accept json
-// @Produce json
-// @Param virtualspace_id path uint true "virtualspace_id"
-// @Param environment_id path uint true "environment_id"
-// @Param service_name path string true "service_name"
-// @Param param body TCPRoute true "tcp流量切换"
-// @Success 200 {object} handlers.ResponseStruct{Data=ServiceDetail} "resp"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/tcp_traffic_shifting  [post]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      service tcp流量切换
+// @Description  service tcp流量切换
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint                                         true  "virtualspace_id"
+// @Param        environment_id   path      uint                                         true  "environment_id"
+// @Param        service_name     path      string                                       true  "service_name"
+// @Param        param            body      TCPRoute                                     true  "tcp流量切换"
+// @Success      200              {object}  handlers.ResponseStruct{Data=ServiceDetail}  "resp"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/tcp_traffic_shifting  [post]
+// @Security     JWT
 func (h *VirtualSpaceHandler) ServiceTCPTrafficShifting(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
@@ -311,18 +311,18 @@ func (h *VirtualSpaceHandler) ServiceTCPTrafficShifting(c *gin.Context) {
 }
 
 // ServiceRequestTimeout service超时配置
-// @Tags VirtualSpace
-// @Summary service超时配置
-// @Description service超时配置
-// @Accept json
-// @Produce json
-// @Param virtualspace_id path uint true "virtualspace_id"
-// @Param environment_id path uint true "environment_id"
-// @Param service_name path string true "service_name"
-// @Param param body HTTPRoute true "超时设置"
-// @Success 200 {object} handlers.ResponseStruct{Data=ServiceDetail} "resp"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/request_timeouts  [post]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      service超时配置
+// @Description  service超时配置
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint                                         true  "virtualspace_id"
+// @Param        environment_id   path      uint                                         true  "environment_id"
+// @Param        service_name     path      string                                       true  "service_name"
+// @Param        param            body      HTTPRoute                                    true  "超时设置"
+// @Success      200              {object}  handlers.ResponseStruct{Data=ServiceDetail}  "resp"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/request_timeouts  [post]
+// @Security     JWT
 func (h *VirtualSpaceHandler) ServiceRequestTimeout(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
@@ -357,17 +357,17 @@ func (h *VirtualSpaceHandler) ServiceRequestTimeout(c *gin.Context) {
 }
 
 // ServicetReset service重置
-// @Tags VirtualSpace
-// @Summary service重置
-// @Description service重置
-// @Accept json
-// @Produce json
-// @Param virtualspace_id path uint true "virtualspace_id"
-// @Param environment_id path uint true "environment_id"
-// @Param service_name path string true "service_name"
-// @Success 200 {object} handlers.ResponseStruct{Data=ServiceDetail} "resp"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/reset [post]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      service重置
+// @Description  service重置
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint                                         true  "virtualspace_id"
+// @Param        environment_id   path      uint                                         true  "environment_id"
+// @Param        service_name     path      string                                       true  "service_name"
+// @Success      200              {object}  handlers.ResponseStruct{Data=ServiceDetail}  "resp"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/service/{service_name}/reset [post]
+// @Security     JWT
 func (h *VirtualSpaceHandler) ServicetReset(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		svcDetails, err := h.getServiceDetails(c.Request.Context(), env.Cluster.ClusterName, env.Namespace, c.Param("service_name"))
