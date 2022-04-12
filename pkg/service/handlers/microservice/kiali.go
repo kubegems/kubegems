@@ -17,17 +17,17 @@ type KialiAPIRequest struct {
 	VirtualspaceId string
 }
 
-// @Tags VirtualSpace
-// @Summary kiali代理
-// @Description kiali api 代理
-// @Accept json
-// @Produce json
-// @Param virtualspace_id 	path	uint 	true	"virtualspace_id"
-// @Param environment_id 	path 	uint 	true	"environment_id（通过环境寻找目标集群）"
-// @Param path				path 	string	true	"访问 kiali service 的路径"
-// @Success 200 {object} 	object "kiali 原始响应"
-// @Router /v1/virtualspace/{virtualspace_id}/environment/environment_id/kiali/{kiaklipath} [get]
-// @Security JWT
+// @Tags         VirtualSpace
+// @Summary      kiali代理
+// @Description  kiali api 代理
+// @Accept       json
+// @Produce      json
+// @Param        virtualspace_id  path      uint    true  "virtualspace_id"
+// @Param        environment_id   path      uint    true  "environment_id（通过环境寻找目标集群）"
+// @Param        path             path      string  true  "访问 kiali service 的路径"
+// @Success      200              {object}  object  "kiali 原始响应"
+// @Router       /v1/virtualspace/{virtualspace_id}/environment/environment_id/kiali/{kiaklipath} [get]
+// @Security     JWT
 func (h *VirtualSpaceHandler) KialiAPI(c *gin.Context) {
 	options := h.MicroserviceOptions
 	kialisvc, kialinamespace := options.KialiName, options.KialiNamespace

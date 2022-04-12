@@ -15,14 +15,14 @@ type SystemHandler struct {
 }
 
 // GetConfig 列出所有系统配置
-// @Tags System
-// @Summary 列出所有系统配置
-// @Description 列出所有系统配置
-// @Accept json
-// @Produce json
-// @Success 200 {object} handlers.ResponseStruct{Data=[]models.OnlineConfig} "resp"
-// @Router /v1/system/config [get]
-// @Security JWT
+// @Tags         System
+// @Summary      列出所有系统配置
+// @Description  列出所有系统配置
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  handlers.ResponseStruct{Data=[]models.OnlineConfig}  "resp"
+// @Router       /v1/system/config [get]
+// @Security     JWT
 func (h *SystemHandler) ListConfig(c *gin.Context) {
 	cfgs := []models.OnlineConfig{}
 	if err := h.GetDB().Find(&cfgs).Error; err != nil {
@@ -33,15 +33,15 @@ func (h *SystemHandler) ListConfig(c *gin.Context) {
 }
 
 // GetConfig 获取系统配置
-// @Tags System
-// @Summary 获取系统配置
-// @Description 获取系统配置
-// @Accept json
-// @Produce json
-// @Param name path string true "配置名"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.OnlineConfig} "resp"
-// @Router /v1/system/config/{name} [get]
-// @Security JWT
+// @Tags         System
+// @Summary      获取系统配置
+// @Description  获取系统配置
+// @Accept       json
+// @Produce      json
+// @Param        name  path      string                                             true  "配置名"
+// @Success      200   {object}  handlers.ResponseStruct{Data=models.OnlineConfig}  "resp"
+// @Router       /v1/system/config/{name} [get]
+// @Security     JWT
 func (h *SystemHandler) GetConfig(c *gin.Context) {
 	cfg := models.OnlineConfig{}
 	if err := h.GetDB().First(&cfg, "name = ?", c.Param("name")).Error; err != nil {
@@ -52,16 +52,16 @@ func (h *SystemHandler) GetConfig(c *gin.Context) {
 }
 
 // SetConfig 修改系统配置
-// @Tags System
-// @Summary 修改系统配置
-// @Description 修改系统配置
-// @Accept json
-// @Produce json
-// @Param name path string true "配置名"
-// @Param from body models.OnlineConfig true "配置内容"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/system/config/{name} [put]
-// @Security JWT
+// @Tags         System
+// @Summary      修改系统配置
+// @Description  修改系统配置
+// @Accept       json
+// @Produce      json
+// @Param        name  path      string                                true  "配置名"
+// @Param        from  body      models.OnlineConfig                   true  "配置内容"
+// @Success      200   {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/system/config/{name} [put]
+// @Security     JWT
 func (h *SystemHandler) SetConfig(c *gin.Context) {
 	var oldcfg, newcfg models.OnlineConfig
 	if err := h.GetDB().First(&oldcfg, "name = ?", c.Param("name")).Error; err != nil {

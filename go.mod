@@ -6,7 +6,6 @@ require (
 	code.gitea.io/sdk/gitea v0.15.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/VividCortex/mysqlerr v1.0.0
-	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/alicebob/miniredis/v2 v2.17.0
 	github.com/argoproj/argo-cd/v2 v2.1.10
 	github.com/argoproj/argo-rollouts v1.1.1
@@ -62,7 +61,7 @@ require (
 	github.com/stretchr/testify v1.7.1-0.20210427113832-6241f9ab9942
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
 	github.com/swaggo/gin-swagger v1.3.1
-	github.com/swaggo/swag v1.5.1
+	github.com/swaggo/swag v1.8.1
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
@@ -98,6 +97,7 @@ require (
 	emperror.dev/errors v0.8.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c // indirect
+	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect

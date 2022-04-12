@@ -17,14 +17,14 @@ import (
 )
 
 // ListAuthSourceSimple list authsource simple
-// @Tags AuthSource
-// @Summary AuthSource列表 (no auth)
-// @Description AuthSource列表 (no auth)
-// @Accept json
-// @Produce json
-// @Success 200 {object} handlers.ResponseStruct{Data=[]models.AuthSource} "AuthSource"
-// @Router /v1/system/authsource [get]
-// @Security JWT
+// @Tags         AuthSource
+// @Summary      AuthSource列表 (no auth)
+// @Description  AuthSource列表 (no auth)
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  handlers.ResponseStruct{Data=[]models.AuthSource}  "AuthSource"
+// @Router       /v1/system/authsource [get]
+// @Security     JWT
 func (h *AuthSourceHandler) ListAuthSourceSimple(c *gin.Context) {
 	list := []models.AuthSourceSimple{}
 	if err := h.GetDB().Find(&list).Error; err != nil {
@@ -41,15 +41,15 @@ type vendorData struct {
 	Scopes      []string `json:"scopes"`
 }
 
-// @Tags AuthSource
-// @Summary AuthSource 预定义的源默认值
-// @Description AuthSource 预定义的源默认值
-// @Accept json
-// @Produce json
-// @Success 200 {object} handlers.ResponseStruct{Data=vendorData} "AuthSource"
-// @Param vendor query string true "vendor"
-// @Router /v1/system/authsource/predefined [get]
-// @Security JWT
+// @Tags         AuthSource
+// @Summary      AuthSource 预定义的源默认值
+// @Description  AuthSource 预定义的源默认值
+// @Accept       json
+// @Produce      json
+// @Success      200     {object}  handlers.ResponseStruct{Data=vendorData}  "AuthSource"
+// @Param        vendor  query     string                                    true  "vendor"
+// @Router       /v1/system/authsource/predefined [get]
+// @Security     JWT
 func (h *AuthSourceHandler) GetAuthSourcePredifinedVar(c *gin.Context) {
 	vendor := c.Query("vendor")
 	switch {
@@ -77,16 +77,16 @@ func (h *AuthSourceHandler) GetAuthSourcePredifinedVar(c *gin.Context) {
 }
 
 // ListAuthSource list authsource
-// @Tags AuthSource
-// @Summary AuthSource列表
-// @Description AuthSource列表
-// @Accept json
-// @Produce json
-// @Param page query int false "page"
-// @Param size query int false "page"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.AuthSource}} "AuthSource"
-// @Router /v1/authsource [get]
-// @Security JWT
+// @Tags         AuthSource
+// @Summary      AuthSource列表
+// @Description  AuthSource列表
+// @Accept       json
+// @Produce      json
+// @Param        page  query     int                                                                        false  "page"
+// @Param        size  query     int                                                                        false  "page"
+// @Success      200   {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.AuthSource}}  "AuthSource"
+// @Router       /v1/authsource [get]
+// @Security     JWT
 func (h *AuthSourceHandler) ListAuthSource(c *gin.Context) {
 	var list []models.AuthSource
 	query, err := handlers.GetQuery(c, nil)
@@ -106,15 +106,15 @@ func (h *AuthSourceHandler) ListAuthSource(c *gin.Context) {
 }
 
 // Create create authsource
-// @Tags AuthSource
-// @Summary create AuthSource
-// @Description create AuthSource  oauth(authURL,tokenURL,userInfoURL,redirectURL,appID,appSecret,scopes) ldap(basedn,ldapaddr,binduser,password)
-// @Accept json
-// @Produce json
-// @Param param body models.AuthSource true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.AuthSource} "AuthSource"
-// @Router /v1/authsource [post]
-// @Security JWT
+// @Tags         AuthSource
+// @Summary      create AuthSource
+// @Description  create AuthSource  oauth(authURL,tokenURL,userInfoURL,redirectURL,appID,appSecret,scopes) ldap(basedn,ldapaddr,binduser,password)
+// @Accept       json
+// @Produce      json
+// @Param        param  body      models.AuthSource                                true  "表单"
+// @Success      200    {object}  handlers.ResponseStruct{Data=models.AuthSource}  "AuthSource"
+// @Router       /v1/authsource [post]
+// @Security     JWT
 func (h *AuthSourceHandler) Create(c *gin.Context) {
 	var source models.AuthSource
 	ctx := c.Request.Context()
@@ -135,16 +135,16 @@ func (h *AuthSourceHandler) Create(c *gin.Context) {
 }
 
 // Create modify authsource
-// @Tags AuthSource
-// @Summary modify AuthSource
-// @Description modify AuthSource
-// @Accept json
-// @Produce json
-// @Param param body models.AuthSource true "表单"
-// @Param source_id path uint true "source_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=models.AuthSource} "AuthSource"
-// @Router /v1/authsource/{source_id} [put]
-// @Security JWT
+// @Tags         AuthSource
+// @Summary      modify AuthSource
+// @Description  modify AuthSource
+// @Accept       json
+// @Produce      json
+// @Param        param      body      models.AuthSource                                true  "表单"
+// @Param        source_id  path      uint                                             true  "source_id"
+// @Success      200        {object}  handlers.ResponseStruct{Data=models.AuthSource}  "AuthSource"
+// @Router       /v1/authsource/{source_id} [put]
+// @Security     JWT
 func (h *AuthSourceHandler) Modify(c *gin.Context) {
 	var (
 		source models.AuthSource
@@ -177,15 +177,15 @@ func (h *AuthSourceHandler) Modify(c *gin.Context) {
 }
 
 // Create delete authsource
-// @Tags AuthSource
-// @Summary delete AuthSource
-// @Description delete AuthSource
-// @Accept json
-// @Produce json
-// @Param source_id path uint true "source_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "AuthSource"
-// @Router /v1/authsource/{source_id} [delete]
-// @Security JWT
+// @Tags         AuthSource
+// @Summary      delete AuthSource
+// @Description  delete AuthSource
+// @Accept       json
+// @Produce      json
+// @Param        source_id  path      uint                                  true  "source_id"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "AuthSource"
+// @Router       /v1/authsource/{source_id} [delete]
+// @Security     JWT
 func (h *AuthSourceHandler) Delete(c *gin.Context) {
 	var source models.AuthSource
 	pk := utils.ToUint(c.Param("source_id"))

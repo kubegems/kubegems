@@ -28,18 +28,18 @@ type IngressPorts struct {
 	ServicePort      int     `json:"servicePort"`
 }
 
-// @Tags Application
-// @Summary 获取对应的服务信息
-// @Description 获取对应的服务信息
-// @Accept json
-// @Produce json
-// @Param tenant_id      	path  	int    	true "tenaut id"
-// @Param project_id     	path  	int    	true "project id"
-// @param environment_id 	path	int 	true "environment id"
-// @Param name 				path  	string	true "applicationname"
-// @Success 200 {object} 	handlers.ResponseStruct{Data=RelatedService} "-"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/services [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      获取对应的服务信息
+// @Description  获取对应的服务信息
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                   true  "tenaut id"
+// @Param        project_id      path      int                                   true  "project id"
+// @param        environment_id  path      int                                           true  "environment id"
+// @Param        name            path      string                                        true  "applicationname"
+// @Success      200             {object}  handlers.ResponseStruct{Data=RelatedService}  "-"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/services [get]
+// @Security     JWT
 func (h *ApplicationHandler) ListRelatedService(req *restful.Request, resp *restful.Response) {
 	h.LocalAndRemoteCliFunc(req, resp, nil,
 		func(ctx context.Context, local GitStore, remote agents.Client, namespace string, _ PathRef) (interface{}, error) {
@@ -89,21 +89,21 @@ func (h *ApplicationHandler) ListRelatedService(req *restful.Request, resp *rest
 		}, "")
 }
 
-// @Tags Application
-// @Summary 应用编排中副本数scale(包含运行时调整)
-// @Description 应用编排中副本数scale
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name			path  string	true "application name"
-// @Param name			query  string	true "workload name"
-// @Param body			body  AppReplicas	true "scale replicas,body优先"
-// @Param replicas		query  string	true "scale replicas，如果body不存在值则使用该值"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/replicas [post]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用编排中副本数scale(包含运行时调整)
+// @Description  应用编排中副本数scale
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                           true  "tenaut id"
+// @Param        project_id      path      int                                           true  "project id"
+// @Param        environment_id  path      int                                   true  "environment_id"
+// @Param        name            path      string                                true  "application name"
+// @Param        name            query     string                                true  "workload name"
+// @Param        body            body      AppReplicas                           true  "scale replicas,body优先"
+// @Param        replicas        query     string                                true  "scale replicas，如果body不存在值则使用该值"
+// @Success      200             {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/replicas [post]
+// @Security     JWT
 func (h *ApplicationHandler) SetReplicas(req *restful.Request, resp *restful.Response) {
 	body := &AppReplicas{}
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -127,20 +127,20 @@ type AppReplicas struct {
 	Replicas *int32 `json:"replicas"`
 }
 
-// @Tags Application
-// @Summary 应用编排中副本数scale(包含运行时调整)
-// @Description 应用编排中副本数scale
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name			path  string	true "application name"
-// @Param name			query  string	true "workload name"
-// @Param replicas		query  string	true "scale replicas"
-// @Success 200 {object} handlers.ResponseStruct{Data=AppReplicas} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/replicas [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用编排中副本数scale(包含运行时调整)
+// @Description  应用编排中副本数scale
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                        true  "tenaut id"
+// @Param        project_id      path      int                                        true  "project id"
+// @Param        environment_id  path      int                                        true  "environment_id"
+// @Param        name            path      string                                     true  "application name"
+// @Param        name            query     string                                     true  "workload name"
+// @Param        replicas        query     string                                     true  "scale replicas"
+// @Success      200             {object}  handlers.ResponseStruct{Data=AppReplicas}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/replicas [get]
+// @Security     JWT
 func (h *ApplicationHandler) GetReplicas(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		replicas, err := h.ApplicationProcessor.GetReplicas(ctx, ref)
@@ -158,19 +158,19 @@ type HPAMetrics struct {
 	Memory      int32  `json:"memory" binding:"lte=100"`
 }
 
-// @Tags Application
-// @Summary 应用编排中HPA
-// @Description 应用编排中HPA
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name			path  string	true "application name"
-// @Param body		    body  HPAMetrics	true "hpa metrics"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/hpa [post]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用编排中HPA
+// @Description  应用编排中HPA
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                   true  "tenaut id"
+// @Param        project_id      path      int                                   true  "project id"
+// @Param        environment_id  path      int                                   true  "environment_id"
+// @Param        name            path      string                                true  "application name"
+// @Param        body            body      HPAMetrics                            true  "hpa metrics"
+// @Success      200             {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/hpa [post]
+// @Security     JWT
 func (h *ApplicationHandler) SetHPA(req *restful.Request, resp *restful.Response) {
 	body := &HPAMetrics{}
 	h.NamedRefFunc(req, resp, body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -186,18 +186,18 @@ func (h *ApplicationHandler) SetHPA(req *restful.Request, resp *restful.Response
 	})
 }
 
-// @Tags Application
-// @Summary 应用编排中HPA
-// @Description 应用编排中HPA
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name			path  string	true "application name"
-// @Success 200 {object} handlers.ResponseStruct{Data=HPAMetrics} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/hpa [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用编排中HPA
+// @Description  应用编排中HPA
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                       true  "tenaut id"
+// @Param        project_id      path      int                                       true  "project id"
+// @Param        environment_id  path      int                                       true  "environment_id"
+// @Param        name            path      string                                    true  "application name"
+// @Success      200             {object}  handlers.ResponseStruct{Data=HPAMetrics}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/hpa [get]
+// @Security     JWT
 func (h *ApplicationHandler) GetHPA(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		// hpa
@@ -224,18 +224,18 @@ func (h *ApplicationHandler) GetHPA(req *restful.Request, resp *restful.Response
 	})
 }
 
-// @Tags Application
-// @Summary 应用编排HPA
-// @Description 应用编排中HPA
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name			path  string	true "application name"
-// @Success 200 {object} handlers.ResponseStruct{Data=HPAMetrics} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/hpa [delete]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用编排HPA
+// @Description  应用编排中HPA
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                       true  "tenaut id"
+// @Param        project_id      path      int                                       true  "project id"
+// @Param        environment_id  path      int                                       true  "environment_id"
+// @Param        name            path      string                                    true  "application name"
+// @Success      200             {object}  handlers.ResponseStruct{Data=HPAMetrics}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/hpa [delete]
+// @Security     JWT
 func (h *ApplicationHandler) DeleteHPA(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		// hpa

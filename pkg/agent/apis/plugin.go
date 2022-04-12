@@ -21,16 +21,16 @@ type PluginsRet struct {
 	KubernetesPlugins map[string][]*gemsplugin.Plugin `json:"kubernetes"`
 }
 
-// @Tags Agent.Plugin
-// @Summary 获取Plugin列表数据
-// @Description 获取Plugin列表数据
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param simple query bool true "simple"
-// @Success 200 {object} handlers.ResponseStruct{Data=PluginsRet} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
-// @Security JWT
+// @Tags         Agent.Plugin
+// @Summary      获取Plugin列表数据
+// @Description  获取Plugin列表数据
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                    true  "cluster"
+// @Param        simple   query     bool                                      true  "simple"
+// @Success      200      {object}  handlers.ResponseStruct{Data=PluginsRet}  "Plugins"
+// @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
+// @Security     JWT
 func (h *PluginHandler) List(c *gin.Context) {
 	allPlugins, err := gemsplugin.GetPlugins(h.cluster.Discovery())
 	if err != nil {
@@ -80,17 +80,17 @@ func (h *PluginHandler) List(c *gin.Context) {
 	}
 }
 
-// @Tags Agent.Plugin
-// @Summary 启用插件
-// @Description 启用插件
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param name path string true "name"
-// @Param type query string true "type"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [put]
-// @Security JWT
+// @Tags         Agent.Plugin
+// @Summary      启用插件
+// @Description  启用插件
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        name     path      string                                true  "name"
+// @Param        type     query     string                                true  "type"
+// @Success      200      {object}  handlers.ResponseStruct{Data=string}  "Plugins"
+// @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [put]
+// @Security     JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {
 		plugin.Enabled = true
@@ -102,17 +102,17 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 	handlers.OK(c, "ok")
 }
 
-// @Tags Agent.Plugin
-// @Summary 禁用插件
-// @Description 禁用插件
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param name path string true "name"
-// @Param type query string true "type"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable [put]
-// @Security JWT
+// @Tags         Agent.Plugin
+// @Summary      禁用插件
+// @Description  禁用插件
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        name     path      string                                true  "name"
+// @Param        type     query     string                                true  "type"
+// @Success      200      {object}  handlers.ResponseStruct{Data=string}  "Plugins"
+// @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable [put]
+// @Security     JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
 	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {
 		plugin.Enabled = false

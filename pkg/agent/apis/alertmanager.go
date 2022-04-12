@@ -45,15 +45,15 @@ type alertQuery struct {
 	Unporcessed bool   `form:"unprocessed"`
 }
 
-// @Tags Agent.V1
-// @Summary 检查alertmanagerconfig
-// @Description 检查alertmanagerconfig
-// @Accept json
-// @Produce json
-// @Param form body v1alpha1.AlertmanagerConfig true "body"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} ""
-// @Router /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/alerts/_/actions/check [post]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      检查alertmanagerconfig
+// @Description  检查alertmanagerconfig
+// @Accept       json
+// @Produce      json
+// @Param        form  body      v1alpha1.AlertmanagerConfig           true  "body"
+// @Success      200   {object}  handlers.ResponseStruct{Data=string}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/alerts/_/actions/check [post]
+// @Security     JWT
 func (h *AlertmanagerHandler) CheckConfig(c *gin.Context) {
 	config := &v1alpha1.AlertmanagerConfig{}
 	if err := c.BindJSON(config); err != nil {
@@ -67,21 +67,21 @@ func (h *AlertmanagerHandler) CheckConfig(c *gin.Context) {
 	OK(c, "")
 }
 
-// @Tags Agent.V1
-// @Summary 获取alertmanager中的告警数据
-// @Description 获取alertmanager中的告警数据
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param filter query string false "filter"
-// @Param receiver query string false "receiver"
-// @Param silenced query bool false "silenced"
-// @Param inhibited query bool false "inhibited"
-// @Param active query bool false "active"
-// @Param unprocessed query bool false "unprocessed"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]client.ExtendedAlert} "labelvalues"
-// @Router /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/alerts [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      获取alertmanager中的告警数据
+// @Description  获取alertmanager中的告警数据
+// @Accept       json
+// @Produce      json
+// @Param        cluster      path      string                                                true   "cluster"
+// @Param        filter       query     string                                                false  "filter"
+// @Param        receiver     query     string                                                false  "receiver"
+// @Param        silenced     query     bool                                                  false  "silenced"
+// @Param        inhibited    query     bool                                                  false  "inhibited"
+// @Param        active       query     bool                                                  false  "active"
+// @Param        unprocessed  query     bool                                                  false  "unprocessed"
+// @Success      200          {object}  handlers.ResponseStruct{Data=[]client.ExtendedAlert}  "labelvalues"
+// @Router       /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/alerts [get]
+// @Security     JWT
 func (h *AlertmanagerHandler) ListAlerts(c *gin.Context) {
 	alertapi := client.NewAlertAPI(h.client)
 	query := &alertQuery{}
@@ -93,16 +93,16 @@ func (h *AlertmanagerHandler) ListAlerts(c *gin.Context) {
 	OK(c, alerts)
 }
 
-// @Tags Agent.V1
-// @Summary 为指定告警规则添加silence
-// @Description 添加告警silence
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param from body types.Silence true "silence"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} ""
-// @Router /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/silence/_/actions/create [post]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      为指定告警规则添加silence
+// @Description  添加告警silence
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        from     body      types.Silence                         true  "silence"
+// @Success      200      {object}  handlers.ResponseStruct{Data=string}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/silence/_/actions/create [post]
+// @Security     JWT
 func (h *AlertmanagerHandler) CreateSilence(c *gin.Context) {
 	silenceapi := client.NewSilenceAPI(h.client)
 	silence := types.Silence{}
@@ -113,16 +113,16 @@ func (h *AlertmanagerHandler) CreateSilence(c *gin.Context) {
 	OK(c, "")
 }
 
-// @Tags Agent.V1
-// @Summary get silence
-// @Description get silence
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param filter query string true "filter"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} ""
-// @Router /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/silence [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      get silence
+// @Description  get silence
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        filter   query     string                                true  "filter"
+// @Success      200      {object}  handlers.ResponseStruct{Data=string}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/silence [get]
+// @Security     JWT
 func (h *AlertmanagerHandler) ListSilence(c *gin.Context) {
 	silenceapi := client.NewSilenceAPI(h.client)
 	ret, err := silenceapi.List(c.Request.Context(), c.Query("filter"))
@@ -132,16 +132,16 @@ func (h *AlertmanagerHandler) ListSilence(c *gin.Context) {
 	OK(c, ret)
 }
 
-// @Tags Agent.V1
-// @Summary get silence
-// @Description get silence
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param id query string true "id"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} ""
-// @Router /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/silence/_/actions/delete [delete]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      get silence
+// @Description  get silence
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Param        id       query     string                                true  "id"
+// @Success      200      {object}  handlers.ResponseStruct{Data=string}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/silence/_/actions/delete [delete]
+// @Security     JWT
 func (h *AlertmanagerHandler) DeleteSilence(c *gin.Context) {
 	silenceapi := client.NewSilenceAPI(h.client)
 	if err := silenceapi.Expire(c.Request.Context(), c.Query("id")); err != nil {

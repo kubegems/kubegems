@@ -57,9 +57,9 @@ generate: ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefiniti
 	$(KUSTOMIZE) build ./deploy/default > deploy/bundle.yaml										# Build bundle.yaml
 
 swagger:
-	# go mod vendor
-	# 需要 go install github.com/swaggo/swag/cmd/swag@v1.6.7 其他版本不太行
-	swag i --parseVendor -g cmd/main.go -o docs/swagger
+	go install github.com/swaggo/swag/cmd/swag@v1.8.1
+	swag f -g cmd/main.go
+	swag i --parseDependency --parseInternal -g cmd/main.go -o docs/swagger
 
 check: linter ## Static code check.
 	${LINTER} run ./...

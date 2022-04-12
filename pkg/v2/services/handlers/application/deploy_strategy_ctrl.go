@@ -24,19 +24,19 @@ type StrategyDeploymentControl struct {
 	Args    map[string]interface{} `json:"args,omitempty"`    // 一些指令可能会携带的参数,比如 undo {reversion=1} ; promote {full=true}
 }
 
-// @Tags StrategyDeployment
-// @Summary 更新过程中的控制
-// @Description 更新控制
-// @Accept json
-// @Produce json
-// @Param tenant_id      	path  int    		true "tenaut id"
-// @Param project_id     	path  int    		true "project id"
-// @param environment_id 	path  int 		true "environment id"
-// @Param name 				path  string	true "applicationname"
-// @param body 			 	body  StrategyDeploymentControl	true "command"
-// @Success 200 {object} 	handlers.ResponseStruct{Data=object} "-"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/application/{name}/strategydeploycontrol [post]
-// @Security JWT
+// @Tags         StrategyDeployment
+// @Summary      更新过程中的控制
+// @Description  更新控制
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                   true  "tenaut id"
+// @Param        project_id      path      int                                   true  "project id"
+// @param        environment_id  path      int                                   true  "environment id"
+// @Param        name            path      string                                true  "applicationname"
+// @param        body            body      StrategyDeploymentControl             true  "command"
+// @Success      200             {object}  handlers.ResponseStruct{Data=object}  "-"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/application/{name}/strategydeploycontrol [post]
+// @Security     JWT
 func (h *ApplicationHandler) StrategyDeploymentControl(req *restful.Request, resp *restful.Response) {
 	control := &StrategyDeploymentControl{}
 

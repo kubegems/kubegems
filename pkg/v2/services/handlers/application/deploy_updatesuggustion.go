@@ -47,20 +47,20 @@ type Container struct {
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 }
 
-// @Tags Application
-// @Summary 更新资源建议至 gitrepo
-// @Description 更新资源建议至 gitrepo
-// @Accept json
-// @Produce json
-// @Param cluster	path  string    true "-"
-// @Param group     path  string    true "-"
-// @Param version	path  string	true "-"
-// @param namespace path  string 	true "-"
-// @Param resource 	path  string 	true "-"
-// @Param name	 	path  string 	true "-"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "-"
-// @Router  /v1/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [patch]
-// @Security JWT
+// @Tags         Application
+// @Summary      更新资源建议至 gitrepo
+// @Description  更新资源建议至 gitrepo
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "-"
+// @Param        group      path      string                                true  "-"
+// @Param        version    path      string                                true  "-"
+// @param        namespace  path      string                                true  "-"
+// @Param        resource   path      string                                true  "-"
+// @Param        name       path      string                                true  "-"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  "-"
+// @Router       /v1/cluster/{cluster}/{group}/{version}/namespaces/{namespace}/{resource}/{name} [patch]
+// @Security     JWT
 func (h *ApplicationHandler) UpdateWorkloadResources(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	process := func() error {

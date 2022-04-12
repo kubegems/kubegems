@@ -56,9 +56,10 @@ func WithWatchClient(o *cluster.Options) {
 			return nil, err
 		}
 		delegating, err := client.NewDelegatingClient(client.NewDelegatingClientInput{
-			CacheReader:     cache,
-			Client:          c,
-			UncachedObjects: uncachedObjects,
+			CacheReader:       cache,
+			Client:            c,
+			UncachedObjects:   uncachedObjects,
+			CacheUnstructured: true,
 		})
 		if err != nil {
 			return nil, err
