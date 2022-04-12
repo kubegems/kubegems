@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	kubeutils "github.com/argoproj/gitops-engine/pkg/utils/kube"
@@ -17,19 +16,16 @@ import (
 )
 
 type HelmPlugin struct {
-	Helm      *helm.Helm `json:"helm,omitempty"`
-	ChartsDir string     `json:"chartsDir,omitempty"`
+	Helm *helm.Helm
+	*PluginOptions
 }
 
-func NewHelmPlugin(config *rest.Config, path string) *HelmPlugin {
-	if abs, _ := filepath.Abs(path); abs != path {
-		path = abs
-	}
-	return &HelmPlugin{Helm: &helm.Helm{Config: config}, ChartsDir: path}
+func NewHelmPlugin(config *rest.Config, options *PluginOptions) *HelmPlugin {
+	return &HelmPlugin{Helm: &helm.Helm{Config: config}, PluginOptions: options}
 }
 
 func (r *HelmPlugin) Template(ctx context.Context, plugin Plugin) ([]byte, error) {
-	if err := DownloadPlugin(ctx, &plugin, r.ChartsDir); err != nil {
+	if err := DownloadPlugin(ctx, &plugin, r.CacheDir, r.SearchDirs...); err != nil {
 		return nil, err
 	}
 
@@ -48,7 +44,7 @@ func (r *HelmPlugin) Template(ctx context.Context, plugin Plugin) ([]byte, error
 }
 
 func (r *HelmPlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
-	if err := DownloadPlugin(ctx, &plugin, r.ChartsDir); err != nil {
+	if err := DownloadPlugin(ctx, &plugin, r.CacheDir, r.SearchDirs...); err != nil {
 		return err
 	}
 

@@ -1,8 +1,15 @@
 #! /bin/sh
 
-CACHE_DIR=tmp/plugins
-DEST_REGISTRY=docker.io/kubegems
+usage() {
+    echo "Usage: $0 [options] [image]"
+    echo "Options:"
+    echo "  -h, --help: print this help"
+    echo "  -l, --list: list all images"
+    echo "  -t, --to: copy all images to target registry. (example: ${DEST_REGISTRY})"
+    exit 1
+}
 
+DEST_REGISTRY=docker.io/kubegems
 ACTION=
 
 CUSTOM_IMAGES='
@@ -16,7 +23,7 @@ if ! [ -x "$(command -v docker)" ]; then
 fi
 
 parsed_images() {
-    awk 'match($$0,/image:\s"*([a-z0-9:/@.:\-]+)/,i){print i[1]}'
+    awk 'match($$0,/image:\s"*([a-z0-9:/@.:\-]+)/,i){print i[1]}' | uniq
 }
 
 list_images() {
@@ -24,7 +31,7 @@ list_images() {
         echo ${image}
     done
     bin/kubegems plugins template deploy/plugins/* | parsed_images
-    bin/kubegems plugins template deploy/plugins-local-stack.yaml | bin/kubegems plugins -d ${CACHE_DIR} template - | parsed_images
+    bin/kubegems plugins template deploy/plugins-local-stack.yaml | bin/kubegems plugins template - | parsed_images
 }
 
 copy_image() {
@@ -33,15 +40,6 @@ copy_image() {
     ${CONTAINER_CMD} pull ${image}
     ${CONTAINER_CMD} tag ${image} ${tagedimage}
     ${CONTAINER_CMD} push ${tagedimage}
-}
-
-usage() {
-    echo "Usage: $0 [options] [image]"
-    echo "Options:"
-    echo "  -h, --help: print this help"
-    echo "  -l, --list: list all images"
-    echo "  -t, --to: copy all images to target registry. (example: ${DEST_REGISTRY})"
-    exit 1
 }
 
 OPTS=$(getopt -o t:,l,h -l to:,list,help -- "$@")

@@ -21,6 +21,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/go-logr/logr"
+	"kubegems.io/pkg/apis/plugins/v1beta1"
 	"kubegems.io/pkg/installer/controllers/helm"
 )
 
@@ -30,19 +31,38 @@ const (
 )
 
 // we cache "plugin" in a directory with name "{name}-{version}" under cache directory
-func DownloadPlugin(ctx context.Context, plugin *Plugin, cachedir string) error {
-	pluginCacheDir := ""
-	if plugin.Version == "" {
-		pluginCacheDir = filepath.Join(cachedir, plugin.Name)
-	} else {
-		pluginCacheDir = filepath.Join(cachedir, plugin.Name+"-"+plugin.Version)
+func DownloadPlugin(ctx context.Context, plugin *Plugin, cachedir string, searchdirs ...string) error {
+	log := logr.FromContextOrDiscard(ctx).WithValues("kind", plugin.Kind, "plugin", plugin.Name)
+
+	// from search path
+	for _, dir := range searchdirs {
+		// try with version
+		if plugin.Version != "" {
+			// try without version
+			pluginpath := filepath.Join(dir, fmt.Sprintf("%s-%s", plugin.Name, plugin.Version))
+			if entries, err := os.ReadDir(pluginpath); err == nil && len(entries) > 0 {
+				log.Info("found in search path", "dir", pluginpath)
+				plugin.Path = pluginpath
+				return nil
+			}
+		}
+		// try without version
+		pluginpath := filepath.Join(dir, plugin.Name)
+		if entries, err := os.ReadDir(pluginpath); err == nil && len(entries) > 0 {
+			log.Info("found in search path", "dir", pluginpath)
+			plugin.Path = pluginpath
+			return nil
+		}
 	}
 
-	log := logr.FromContextOrDiscard(ctx).WithValues("kind", plugin.Kind, "plugin", plugin.Name, "dir", pluginCacheDir)
-
 	// cache hint?
+	pluginDirName := fmt.Sprintf("%s-%s", plugin.Name, plugin.Version)
+	if plugin.Version == "" {
+		pluginDirName = plugin.Name
+	}
+	pluginCacheDir := filepath.Join(cachedir, pluginDirName)
 	if entries, err := os.ReadDir(pluginCacheDir); err == nil && len(entries) > 0 {
-		log.Info("already download")
+		log.Info("already download", "cache", pluginCacheDir)
 		plugin.Path = pluginCacheDir
 		return nil
 	}
@@ -51,18 +71,19 @@ func DownloadPlugin(ctx context.Context, plugin *Plugin, cachedir string) error 
 		return fmt.Errorf("plugin %s no repo set and not found in cache dir %s", plugin.Name, pluginCacheDir)
 	}
 
-	log.Info("downloading...")
+	log.Info("downloading...", "cache", pluginCacheDir)
 	dlrepo := DownloadRepo{
 		URI:     plugin.Repo,
 		SubPath: plugin.Path,
 		Version: plugin.Version,
 		Name:    plugin.Name,
+		IsHelm:  plugin.Kind == v1beta1.PluginKindHelm,
 	}
 	if err := Download(ctx, dlrepo, pluginCacheDir); err != nil {
-		log.Error(err, "on download")
+		log.Error(err, "on download", "cache", pluginCacheDir)
 		return err
 	}
-	log.Info("download finished")
+	log.Info("download finished", "cache", pluginCacheDir)
 	plugin.Path = pluginCacheDir
 	return nil
 }
@@ -83,6 +104,7 @@ type DownloadRepo struct {
 	SubPath string
 	Version string
 	Name    string
+	IsHelm  bool
 }
 
 func Download(ctx context.Context, repo DownloadRepo, intodir string) error {
@@ -112,7 +134,7 @@ func Download(ctx context.Context, repo DownloadRepo, intodir string) error {
 		return DownloadTgz(ctx, repo.URI, repo.SubPath, intodir)
 	}
 	// is helm repo?
-	if MayHelm(ctx, repo.URI) {
+	if repo.IsHelm {
 		return DownloadHelmChart(ctx, repo.URI, repo.Name, repo.Version, intodir)
 	}
 	return fmt.Errorf("unsupported scheme: %s", u.Scheme)
