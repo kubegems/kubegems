@@ -14,16 +14,16 @@ import (
 )
 
 // ListMetricTarget 采集器列表
-// @Tags Metrics
-// @Summary  采集器列表
-// @Description 采集器列表
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]MetricTarget} "resp"
-// @Router /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets [get]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      采集器列表
+// @Description  采集器列表
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                                   true  "cluster"
+// @Param        namespace  path      string                                                   true  "namespace"
+// @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.MetricTarget}  "resp"
+// @Router       /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets [get]
+// @Security     JWT
 func (h *MonitorHandler) ListMetricTarget(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -43,17 +43,17 @@ func (h *MonitorHandler) ListMetricTarget(c *gin.Context) {
 }
 
 // AddOrUpdateMetricTarget 添加/更新采集器
-// @Tags Metrics
-// @Summary  添加/更新采集器
-// @Description 添加/更新采集器
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param form body MetricTarget true "采集器内容"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets [post]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      添加/更新采集器
+// @Description  添加/更新采集器
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        form       body      prometheus.MetricTarget               true  "采集器内容"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets [post]
+// @Security     JWT
 func (h *MonitorHandler) AddOrUpdateMetricTarget(c *gin.Context) {
 	req := prometheus.MetricTarget{}
 	if err := c.BindJSON(&req); err != nil {
@@ -88,18 +88,18 @@ func (h *MonitorHandler) AddOrUpdateMetricTarget(c *gin.Context) {
 }
 
 // DeleteMetricTarget 删除采集器
-// @Tags Metrics
-// @Summary  删除采集器
-// @Description 删除采集器
-// @Accept json
-// @Produce json
-// @Param cluster path string true "cluster"
-// @Param namespace path string true "namespace"
-// @Param name path string true "采集器名"
-// @Param type query string true "采集器类型, service/deployment/statefulset/daemonset"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets/{name} [delete]
-// @Security JWT
+// @Tags         Metrics
+// @Summary      删除采集器
+// @Description  删除采集器
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "采集器名"
+// @Param        type       query     string                                true  "采集器类型, service/deployment/statefulset/daemonset"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets/{name} [delete]
+// @Security     JWT
 func (h *MonitorHandler) DeleteMetricTarget(c *gin.Context) {
 	req := &prometheus.MetricTarget{
 		Cluster:      c.Param("cluster"),

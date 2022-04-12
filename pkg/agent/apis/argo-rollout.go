@@ -27,13 +27,13 @@ type ArgoRolloutHandler struct {
 	cluster cluster.Interface
 }
 
-// @Tags Agent.V1
-// @Summary rollout info
-// @Description rollout info(argo rollout)
-// @Param cluster path string true "cluster"
-// @Success 200 {object} object "rollout.RolloutInfo"
-// @Router /v1/proxy/cluster/{cluster}/custom/argoproj.io/v1alpha1/namespaces/{namespace}/rollouts/{name}/actions/info [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      rollout info
+// @Description  rollout info(argo rollout)
+// @Param        cluster  path      string  true  "cluster"
+// @Success      200      {object}  object  "rollout.RolloutInfo"
+// @Router       /v1/proxy/cluster/{cluster}/custom/argoproj.io/v1alpha1/namespaces/{namespace}/rollouts/{name}/actions/info [get]
+// @Security     JWT
 func (h *ArgoRolloutHandler) GetRolloutInfo(c *gin.Context) {
 	namespace, name := c.Param("namespace"), c.Param("name")
 
@@ -55,13 +55,13 @@ func (h *ArgoRolloutHandler) GetRolloutInfo(c *gin.Context) {
 	}
 }
 
-// @Tags Agent.V1
-// @Summary rollout info
-// @Description rollout info(deployment)
-// @Param cluster path string true "cluster"
-// @Success 200 {object} object "rollout.RolloutInfo"
-// @Router /v1/proxy/cluster/{cluster}/custom/argoproj.io/v1alpha1/namespaces/{namespace}/rollouts/{name}/actions/depinfo [get]
-// @Security JWT
+// @Tags         Agent.V1
+// @Summary      rollout info
+// @Description  rollout info(deployment)
+// @Param        cluster  path      string  true  "cluster"
+// @Success      200      {object}  object  "rollout.RolloutInfo"
+// @Router       /v1/proxy/cluster/{cluster}/custom/argoproj.io/v1alpha1/namespaces/{namespace}/rollouts/{name}/actions/depinfo [get]
+// @Security     JWT
 func (h *ArgoRolloutHandler) GetRolloutDepInfo(c *gin.Context) {
 	namespace, name := c.Param("namespace"), c.Param("name")
 

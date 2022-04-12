@@ -27,17 +27,17 @@ type DeploiedHelm struct {
 	Runtime      ManifestRuntime `json:"runtime"`
 }
 
-// @Tags Application
-// @Summary 应用商店应用列表
-// @Description 应用商店应用列表
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]DeploiedManifest} "Application"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/appstoreapplications [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用商店应用列表
+// @Description  应用商店应用列表
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                               true  "tenaut id"
+// @Param        project_id      path      int                                               true  "project id"
+// @Param        environment_id  path      int                                               true  "environment_id"
+// @Success      200             {object}  handlers.ResponseStruct{Data=[]DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/appstoreapplications [get]
+// @Security     JWT
 func (h *ApplicationHandler) ListAppstoreApp(c *gin.Context) {
 	h.NoNameRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		// list argo apps
@@ -84,18 +84,18 @@ func (h *ApplicationHandler) ListAppstoreApp(c *gin.Context) {
 	})
 }
 
-// @Tags Application
-// @Summary 应用商店应用
-// @Description 应用商店应用
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name			 path  string	true "application name"
-// @Success 200 {object} handlers.ResponseStruct{Data=DeploiedManifest} "Application"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/appstoreapplications/{name} [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用商店应用
+// @Description  应用商店应用
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                             true  "tenaut id"
+// @Param        project_id      path      int                                             true  "project id"
+// @Param        environment_id  path      int                                             true  "environment_id"
+// @Param        name            path      string                                          true  "application name"
+// @Success      200             {object}  handlers.ResponseStruct{Data=DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/appstoreapplications/{name} [get]
+// @Security     JWT
 func (h *ApplicationHandler) GetAppstoreApp(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		deploied := &DeploiedManifest{Manifest: Manifest{}}
@@ -108,18 +108,18 @@ func (h *ApplicationHandler) GetAppstoreApp(c *gin.Context) {
 	})
 }
 
-// @Tags Application
-// @Summary 应用商店部署
-// @Description 应用商店部署
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param body			 body  AppStoreDeployForm true "chart 部署信息"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]DeploiedManifest} "Application"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/appstoreapplications [post]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用商店部署
+// @Description  应用商店部署
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                               true  "tenaut id"
+// @Param        project_id      path      int                                               true  "project id"
+// @Param        environment_id  path      int                                               true  "environment_id"
+// @Param        body            body      AppStoreDeployForm                                true  "chart 部署信息"
+// @Success      200             {object}  handlers.ResponseStruct{Data=[]DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/appstoreapplications [post]
+// @Security     JWT
 func (h *ApplicationHandler) CreateAppstoreApp(c *gin.Context) {
 	body := AppStoreDeployForm{}
 	h.NoNameRefFunc(c, &body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -137,18 +137,18 @@ func (h *ApplicationHandler) CreateAppstoreApp(c *gin.Context) {
 	})
 }
 
-// @Tags Application
-// @Summary 应用商店应用列表
-// @Description 应用商店应用列表
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    true "tenaut id"
-// @Param project_id     path  int    true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name			 path  string	true "application name"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]DeploiedManifest} "Application"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/appstoreapplications [delete]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用商店应用列表
+// @Description  应用商店应用列表
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                               true  "tenaut id"
+// @Param        project_id      path      int                                               true  "project id"
+// @Param        environment_id  path      int                                               true  "environment_id"
+// @Param        name            path      string                                            true  "application name"
+// @Success      200             {object}  handlers.ResponseStruct{Data=[]DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/appstoreapplications [delete]
+// @Security     JWT
 func (h *ApplicationHandler) RemoveAppstoreApp(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		// audit

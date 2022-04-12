@@ -36,19 +36,19 @@ var ResourceWhileList = []schema.GroupVersionKind{
 	{Group: rollouts.Group},                                     // argo rollouts(rollouts,analysis_template etc.)
 }
 
-// @Tags ApplicationManifest
-// @Summary 写入文件
-// @Description 修改应用编排
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param name			path  string	true "name"
-// @Param filename		path  string	true "file name"
-// @Param body 			body  FileContent 	true "filecontent"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files/{filename} [put]
-// @Security JWT
+// @Tags         ApplicationManifest
+// @Summary      写入文件
+// @Description  修改应用编排
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      int                                   true  "tenaut id"
+// @Param        project_id  path      int                                   true  "project id"
+// @Param        name        path      string                                true  "name"
+// @Param        filename    path      string                                true  "file name"
+// @Param        body        body      FileContent                           true  "filecontent"
+// @Success      200         {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files/{filename} [put]
+// @Security     JWT
 func (h *ManifestHandler) UpdateFile(req *restful.Request, resp *restful.Response) {
 	body := &FileContent{}
 	h.NamedRefFunc(req, resp, body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -77,20 +77,20 @@ func (h *ManifestHandler) UpdateFile(req *restful.Request, resp *restful.Respons
 	})
 }
 
-// @Tags ApplicationManifest
-// @Summary 写入多个文件
-// @Description 修改应用编排
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param name			path  string	true "name"
-// @Param filename		path  string	true "file name"
-// @Param msg 			query string 	true "commit mesage"
-// @Param body 			body  []FileContent 	true "files"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files [put]
-// @Security JWT
+// @Tags         ApplicationManifest
+// @Summary      写入多个文件
+// @Description  修改应用编排
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      int                                   true  "tenaut id"
+// @Param        project_id  path      int                                   true  "project id"
+// @Param        name        path      string                                true  "name"
+// @Param        filename    path      string                                true  "file name"
+// @Param        msg         query     string                                true  "commit mesage"
+// @Param        body        body      []FileContent                         true  "files"
+// @Success      200         {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files [put]
+// @Security     JWT
 func (h *ManifestHandler) UpdateFiles(req *restful.Request, resp *restful.Response) {
 	files := []FileContent{}
 	h.NamedRefFunc(req, resp, &files, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -111,18 +111,18 @@ func (h *ManifestHandler) UpdateFiles(req *restful.Request, resp *restful.Respon
 	})
 }
 
-// @Tags ApplicationManifest
-// @Summary 删除文件
-// @Description 修改应用编排
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param name			path  string	true "name"
-// @Param filename		path  string	true "file name"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files/{filename} [delete]
-// @Security JWT
+// @Tags         ApplicationManifest
+// @Summary      删除文件
+// @Description  修改应用编排
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      int                                   true  "tenaut id"
+// @Param        project_id  path      int                                   true  "project id"
+// @Param        name        path      string                                true  "name"
+// @Param        filename    path      string                                true  "file name"
+// @Success      200         {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files/{filename} [delete]
+// @Security     JWT
 func (h *ManifestHandler) DeleteFile(req *restful.Request, resp *restful.Response) {
 	body := []byte{}
 	h.NamedRefFunc(req, resp, &body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -148,17 +148,17 @@ type FileContent struct {
 func (h *ManifestHandler) GetFile(req *restful.Request, resp *restful.Response) {
 }
 
-// @Tags ApplicationManifest
-// @Summary 列举文件
-// @Description 应用编排内容
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param name			path  string	true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]FileContent} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files [get]
-// @Security JWT
+// @Tags         ApplicationManifest
+// @Summary      列举文件
+// @Description  应用编排内容
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      int                                          true  "tenaut id"
+// @Param        project_id  path      int                                          true  "project id"
+// @Param        name        path      string                                       true  "name"
+// @Success      200         {object}  handlers.ResponseStruct{Data=[]FileContent}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files [get]
+// @Security     JWT
 func (h *ManifestHandler) ListFiles(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		files := []FileContent{}
@@ -187,17 +187,17 @@ type GitLog struct {
 	Timestamp string `json:"timestamp,omitempty"`
 }
 
-// @Tags ApplicationManifest
-// @Summary 应用编排文件历史
-// @Description 应用编排文件历史
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param name			path  string	true "name"
-// @Success 200 {object} handlers.ResponseStruct{Data=[]GitLog} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitlog [get]
-// @Security JWT
+// @Tags         ApplicationManifest
+// @Summary      应用编排文件历史
+// @Description  应用编排文件历史
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      int                                     true  "tenaut id"
+// @Param        project_id  path      int                                     true  "project id"
+// @Param        name        path      string                                  true  "name"
+// @Success      200         {object}  handlers.ResponseStruct{Data=[]GitLog}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitlog [get]
+// @Security     JWT
 func (h *ManifestHandler) GitLog(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		logs := []GitLog{}
@@ -221,18 +221,18 @@ func (h *ManifestHandler) GitLog(req *restful.Request, resp *restful.Response) {
 	})
 }
 
-// @Tags ApplicationManifest
-// @Summary 应用编排文件diff
-// @Description 应用编排文件diff
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param name			path  string	true "application name"
-// @Param hash			query  string	true "gitcommit hash"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitdiff [get]
-// @Security JWT
+// @Tags         ApplicationManifest
+// @Summary      应用编排文件diff
+// @Description  应用编排文件diff
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      int                                   true  "tenaut id"
+// @Param        project_id  path      int                                   true  "project id"
+// @Param        name        path      string                                true  "application name"
+// @Param        hash        query     string                                true  "gitcommit hash"
+// @Success      200         {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitdiff [get]
+// @Security     JWT
 func (h *ManifestHandler) GitDiff(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		hash := req.QueryParameter("hash")
@@ -254,18 +254,18 @@ func (h *ManifestHandler) GitDiff(req *restful.Request, resp *restful.Response) 
 	})
 }
 
-// @Tags ApplicationManifest
-// @Summary 应用编排文件回滚
-// @Description 回滚应用编排文件
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param name			path  string	true "application name"
-// @Param hash			query  string	true "gitcommit hash to rollback"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitrevert [get]
-// @Security JWT
+// @Tags         ApplicationManifest
+// @Summary      应用编排文件回滚
+// @Description  回滚应用编排文件
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      int                                   true  "tenaut id"
+// @Param        project_id  path      int                                   true  "project id"
+// @Param        name        path      string                                true  "application name"
+// @Param        hash        query     string                                true  "gitcommit hash to rollback"
+// @Success      200         {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitrevert [get]
+// @Security     JWT
 func (h *ManifestHandler) GitRevert(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		hash := req.QueryParameter("hash")
@@ -323,18 +323,18 @@ func IsPermmitedResource(obj runtime.Object) bool {
 	return false
 }
 
-// @Tags ApplicationManifest
-// @Summary 应用编排文件刷新
-// @Description 应用编排文件刷新(git pull)
-// @Accept json
-// @Produce json
-// @Param tenant_id     path  int    	true "tenaut id"
-// @Param project_id    path  int    	true "project id"
-// @Param name			path  string	true "application name"
-// @Param hash			query  string	true "gitcommit hash"
-// @Success 200 {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitpull [post]
-// @Security JWT
+// @Tags         ApplicationManifest
+// @Summary      应用编排文件刷新
+// @Description  应用编排文件刷新(git pull)
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id   path      int                                   true  "tenaut id"
+// @Param        project_id  path      int                                   true  "project id"
+// @Param        name        path      string                                true  "application name"
+// @Param        hash        query     string                                true  "gitcommit hash"
+// @Success      200         {object}  handlers.ResponseStruct{Data=string}  "ok"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitpull [post]
+// @Security     JWT
 func (h *ManifestHandler) GitPull(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		if err := h.Func(ctx, ref, Pull()); err != nil {

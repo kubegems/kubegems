@@ -10,18 +10,18 @@ import (
 	"kubegems.io/pkg/utils/workflow"
 )
 
-// @Tags Application
-// @Summary 应用部署镜像
-// @Description 部署镜像
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    	true "tenaut id"
-// @Param project_id     path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name		     path  string	true "应用名称，全部应用可设置为'_'"
-// @Success 200 {object} handlers.ResponseStruct{Data=DeploiedManifest} "Application"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/_/images [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      应用部署镜像
+// @Description  部署镜像
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                             true  "tenaut id"
+// @Param        project_id      path      int                                             true  "project id"
+// @Param        environment_id  path      int                                             true  "environment_id"
+// @Param        name            path      string                                          true  "应用名称，全部应用可设置为'_'"
+// @Success      200             {object}  handlers.ResponseStruct{Data=DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/_/images [get]
+// @Security     JWT
 func (h *ApplicationHandler) ListImages(req *restful.Request, resp *restful.Response) {
 	h.NoNameRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		dm, err := h.ApplicationProcessor.List(ctx, ref)
@@ -37,18 +37,18 @@ func (h *ApplicationHandler) ListImages(req *restful.Request, resp *restful.Resp
 	})
 }
 
-// @Tags Application
-// @Summary 更新应用镜像并部署
-// @Description 更新部署镜像
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    	true "tenaut id"
-// @Param project_id     path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name		     path  string	true "应用名称，全部应用可设置为'_'"
-// @Success 200 {object} handlers.ResponseStruct{Data=DeploiedManifest} "Application"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/_/images [put]
-// @Security JWT
+// @Tags         Application
+// @Summary      更新应用镜像并部署
+// @Description  更新部署镜像
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                             true  "tenaut id"
+// @Param        project_id      path      int                                             true  "project id"
+// @Param        environment_id  path      int                                             true  "environment_id"
+// @Param        name            path      string                                          true  "应用名称，全部应用可设置为'_'"
+// @Success      200             {object}  handlers.ResponseStruct{Data=DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/_/images [put]
+// @Security     JWT
 func (h *ApplicationHandler) BatchUpdateImages(req *restful.Request, resp *restful.Response) {
 	body := []DeployImages{}
 	h.NoNameRefFunc(req, resp, &body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -84,19 +84,19 @@ func (h *ApplicationHandler) asyncBatchUpdateImages(ctx context.Context, ref Pat
 	return h.Task.Processor.SubmitTask(ctx, ref, "update-image-git(batch)", steps)
 }
 
-// @Tags Application
-// @Summary 更新应用镜像并部署
-// @Description 更新部署镜像
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    	true "tenaut id"
-// @Param project_id     path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name		     path  string	true "应用名称"
-// @Param body		     body  DeployImages	true "更新参数"
-// @Success 200 {object} handlers.ResponseStruct{Data=DeploiedManifest} "Application"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/images [put]
-// @Security JWT
+// @Tags         Application
+// @Summary      更新应用镜像并部署
+// @Description  更新部署镜像
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                             true  "tenaut id"
+// @Param        project_id      path      int                                             true  "project id"
+// @Param        environment_id  path      int                                             true  "environment_id"
+// @Param        name            path      string                                          true  "应用名称"
+// @Param        body            body      DeployImages                                    true  "更新参数"
+// @Success      200             {object}  handlers.ResponseStruct{Data=DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/images [put]
+// @Security     JWT
 func (h *ApplicationHandler) UpdateImages(req *restful.Request, resp *restful.Response) {
 	item := &DeployImages{}
 	h.NamedRefFunc(req, resp, &item, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -159,19 +159,19 @@ type DeployImage struct {
 	Publish string `json:"publish"` // 意为需要更新到的版本，argo更新版本会失败，所以两个版本会存在差异
 }
 
-// @Tags Application
-// @Summary 更新应用镜像并部署
-// @Description 更新部署镜像
-// @Accept json
-// @Produce json
-// @Param tenant_id      path  int    	true "tenaut id"
-// @Param project_id     path  int    	true "project id"
-// @Param environment_id path  int    true "environment_id"
-// @Param name		     path  string	true "应用名称"
-// @Param body		     body  DeployImages	true "更新参数"
-// @Success 200 {object} handlers.ResponseStruct{Data=DeploiedManifest} "Application"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/images [get]
-// @Security JWT
+// @Tags         Application
+// @Summary      更新应用镜像并部署
+// @Description  更新部署镜像
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                             true  "tenaut id"
+// @Param        project_id      path      int                                             true  "project id"
+// @Param        environment_id  path      int                                             true  "environment_id"
+// @Param        name            path      string                                          true  "应用名称"
+// @Param        body            body      DeployImages                                    true  "更新参数"
+// @Success      200             {object}  handlers.ResponseStruct{Data=DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/images [get]
+// @Security     JWT
 func (h *ApplicationHandler) GetImages(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		dm, err := h.ApplicationProcessor.Get(ctx, ref)
@@ -205,20 +205,20 @@ func ConvertDeploiedManifestToView(dm DeploiedManifest) DeployImages {
 	}
 }
 
-// @Tags Application
-// @Summary 更新应用镜像
+// @Tags         Application
+// @Summary      更新应用镜像
 // @Description  更新应用镜像
-// @Accept json
-// @Produce json
-// @Param tenant      path  string    true "租户名称"
-// @Param project     path  string    true "项目名称"
-// @param environment path  string	  true "环境名称"
-// @Param application path  string    true "应用名称"
-// @Param image		  query string    true "需要更新的完整镜像(会根据镜像名称寻找编排中相似的镜像并更新tag)"
-// @Param version     query string    false "istio version to set"
-// @Success 200 {object} handlers.ResponseStruct{Data=object} "status"
-// @Router /tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/images [post]
-// @Security JWT
+// @Accept       json
+// @Produce      json
+// @Param        tenant       path      string                                true   "租户名称"
+// @Param        project      path      string                                true   "项目名称"
+// @param        environment  path      string                                true   "环境名称"
+// @Param        application  path      string                                true   "应用名称"
+// @Param        image        query     string                                true   "需要更新的完整镜像(会根据镜像名称寻找编排中相似的镜像并更新tag)"
+// @Param        version      query     string                                false  "istio version to set"
+// @Success      200          {object}  handlers.ResponseStruct{Data=object}  "status"
+// @Router       /tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/images [post]
+// @Security     JWT
 func (h *ApplicationHandler) DirectUpdateImage(req *restful.Request, resp *restful.Response) {
 	h.NamedRefFunc(req, resp, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		image := req.QueryParameter("image")
