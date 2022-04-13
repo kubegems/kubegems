@@ -8,6 +8,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/pkg/apis/storage"
+	"kubegems.io/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -55,9 +56,8 @@ func (h *PvcHandler) List(c *gin.Context) {
 	for _, obj := range objects {
 		h.annotatePVC(c, &obj, pvcInUse, snapClassInUse)
 	}
-	pageData := NewPageDataFromContext(c, func(i int) SortAndSearchAble {
-		return &objects[i]
-	}, len(objects), objects)
+
+	pageData := pagination.NewTypedSearchSortPageResourceFromContext(c, objects)
 	OK(c, pageData)
 }
 
@@ -97,8 +97,8 @@ func (h *PvcHandler) Get(c *gin.Context) {
 }
 
 func (h *PvcHandler) annotatePVC(c *gin.Context, pvc *v1.PersistentVolumeClaim,
-	pvcInUse map[string]int, snapClassInUse map[string]int) {
-
+	pvcInUse map[string]int, snapClassInUse map[string]int,
+) {
 	inUse, allowSnapshot := false, false
 	if pvc.Annotations == nil {
 		pvc.Annotations = make(map[string]string)
