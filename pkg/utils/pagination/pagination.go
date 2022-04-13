@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PageData struct {
@@ -29,6 +30,10 @@ const defaultPageSize = 10
 type SortAndSearchAble interface {
 	GetName() string
 	GetCreationTimestamp() metav1.Time
+}
+
+type Named interface {
+	GetName() string
 }
 
 type noSortAndSearchAble struct {
@@ -68,6 +73,8 @@ func NewPageDataFromContextReflect(c *gin.Context, list interface{}) PageData {
 // 读取 search 根据 search 对 resource.metadata.name 进行过滤
 // 读取 sort 按照 resource.metadata. 中对应字段进行排序
 // 读取 page size 对上述结果进行分页
+
+// Deprecated: use pagination.NewTypedSearchSortPageResourceFromContext instead
 func NewPageDataFromContext(c *gin.Context, metaAccessor func(i int) SortAndSearchAble, length int, _ interface{}) PageData {
 	var q listQuery
 	_ = c.BindQuery(&q)
@@ -132,5 +139,134 @@ func SortByFunc(datas []SortAndSearchAble, by string) {
 		sort.Slice(datas, func(i, j int) bool {
 			return datas[i].GetCreationTimestamp().UnixNano() > datas[j].GetCreationTimestamp().UnixNano()
 		})
+	}
+}
+
+func ResourceSortBy(by string) func(a, b SortAndSearchAble) bool {
+	switch by {
+	case "createTimeAsc":
+		return func(a, b SortAndSearchAble) bool {
+			return a.GetCreationTimestamp().UnixNano() < b.GetCreationTimestamp().UnixNano()
+		}
+	case "nameAsc", "name":
+		return func(a, b SortAndSearchAble) bool {
+			return strings.Compare((a.GetName()), (b.GetName())) == -1
+		}
+	case "nameDesc":
+		return func(a, b SortAndSearchAble) bool {
+			return strings.Compare((a.GetName()), (b.GetName())) == 1
+		}
+	case "createTimeDesc", "createTime", "time":
+		return func(a, b SortAndSearchAble) bool {
+			return a.GetCreationTimestamp().UnixNano() > b.GetCreationTimestamp().UnixNano()
+		}
+	default:
+		return func(a, b SortAndSearchAble) bool {
+			return a.GetCreationTimestamp().UnixNano() > b.GetCreationTimestamp().UnixNano()
+		}
+	}
+}
+
+func SearchName(search string) func(item Named) bool {
+	if search == "" {
+		return func(Named) bool {
+			return true
+		}
+	}
+	return func(a Named) bool {
+		if o, ok := any(a).(client.Object); ok {
+			return strings.Contains(o.GetName(), search)
+		}
+		return true
+	}
+}
+
+type TypedPageData[T any] struct {
+	Total       int64
+	List        []T
+	CurrentPage int64
+	CurrentSize int64
+}
+
+type (
+	TypedSortFun[T any]   func(a, b T) bool
+	TypedFilterFun[T any] func(item T) bool
+)
+
+func NewTypedSearchSortPageResourceFromContext[T any](c *gin.Context, list []T) TypedPageData[T] {
+	var q listQuery
+	_ = c.BindQuery(&q)
+	search := func(item T) bool {
+		// if *Pod
+		if obj, ok := any(item).(Named); ok {
+			return SearchName(q.Search)(obj)
+		}
+		// if Pod
+		if obj, ok := any(&item).(client.Object); ok {
+			return SearchName(q.Search)(obj)
+		}
+		return true
+	}
+	sort := func(a, b T) bool {
+		// if []*Pod
+		obja, oka := any(a).(SortAndSearchAble)
+		objb, okb := any(b).(SortAndSearchAble)
+		if oka && okb {
+			return ResourceSortBy(q.Sort)(obja, objb)
+		}
+		// if []Pod
+		obja, oka = any(&a).(SortAndSearchAble)
+		objb, okb = any(&b).(SortAndSearchAble)
+		if oka && okb {
+			return ResourceSortBy(q.Sort)(obja, objb)
+		}
+		return false
+	}
+	return NewTypedSearchSortPage(list, q.Page, q.Size, search, sort)
+}
+
+func NewTypedSearchSortPage[T any](list []T, page, size int, pickfun func(item T) bool, sortfun func(a, b T) bool) TypedPageData[T] {
+	if page < 1 {
+		page = 1
+	}
+	if size < 1 {
+		size = defaultPageSize
+	}
+
+	// filter
+	if pickfun != nil {
+		var datas []T
+		for _, item := range list {
+			if pickfun(item) {
+				datas = append(datas, item)
+			}
+		}
+		list = datas
+	}
+
+	// sort
+	if sortfun != nil {
+		sort.Slice(list, func(i, j int) bool {
+			return sortfun(list[i], list[j])
+		})
+	}
+
+	// page
+	total := len(list)
+	startIdx := (page - 1) * size
+	endIdx := startIdx + size
+	if startIdx > total {
+		startIdx = 0
+		endIdx = 0
+	}
+	if endIdx > total {
+		endIdx = total
+	}
+	list = list[startIdx:endIdx]
+	return TypedPageData[T]{
+		Total:       int64(total),
+		List:        list,
+		CurrentPage: int64(page),
+		CurrentSize: int64(size),
 	}
 }

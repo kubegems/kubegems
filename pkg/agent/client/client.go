@@ -64,10 +64,13 @@ func (h *ClientRest) Register(r *route.Router) {
 }
 
 func (h *ClientRest) Get(c *gin.Context) {
-	gvkn := h.parseGVKN(c)
-
-	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(gvkn.GroupVersionKind)
+	obj, gvkn, err := h.readObject(c, false)
+	if err != nil {
+		NotOK(c,
+			apierrors.NewInternalError(errors.New("list object is not client.ObjectList")),
+		)
+		return
+	}
 	ctx := c.Request.Context()
 	if err := h.Cli.Get(ctx, client.ObjectKey{Namespace: gvkn.Namespace, Name: gvkn.Name}, obj); err != nil {
 		NotOK(c, err)
@@ -84,19 +87,17 @@ const (
 )
 
 func (h *ClientRest) List(c *gin.Context) {
-	gvkn := h.parseGVKN(c)
+	list, gvkn := h.listObject(c)
 
-	labelSelectorStr := c.Query(ListOptionLabelSelector)
-	labelSelector, _ := labels.Parse(labelSelectorStr)
-
-	fieldSelectorStr := c.Query(ListOptionFieldSelector)
-	fieldSelector, _ := fields.ParseSelector(fieldSelectorStr)
-
-	list := &unstructured.UnstructuredList{}
-	list.SetGroupVersionKind(gvkn.GroupVersionKind)
-
+	var fieldSelector fields.Selector
+	if fieldSelectorStr := c.Query(ListOptionFieldSelector); fieldSelectorStr != "" {
+		fieldSelector, _ = fields.ParseSelector(fieldSelectorStr)
+	}
+	var labelSelector labels.Selector
+	if labelSelectorStr := c.Query(ListOptionLabelSelector); labelSelectorStr != "" {
+		labelSelector, _ = labels.Parse(c.Query(ListOptionLabelSelector))
+	}
 	limit, _ := strconv.Atoi(c.Query(ListOptionLimit))
-
 	listOptions := &client.ListOptions{
 		Namespace:     gvkn.Namespace,
 		LabelSelector: labelSelector,
@@ -105,45 +106,45 @@ func (h *ClientRest) List(c *gin.Context) {
 		Continue:      c.Query(ListOptionContinue),
 	}
 
-	if iswatch, _ := strconv.ParseBool(c.Query("watch")); iswatch {
-		if watchablecli, ok := h.Cli.(client.WithWatch); ok {
-			watcher, err := watchablecli.Watch(c.Request.Context(), list, listOptions)
-			if err != nil {
-				NotOK(c, err)
-				return
-			}
-
-			defer watcher.Stop()
-
-			pusher, err := stream.StartPusher(c.Writer)
-			if err != nil {
-				NotOK(c, err)
-				return
-			}
-			// send stream
-			for {
-				select {
-				case e, ok := <-watcher.ResultChan():
-					if !ok {
-						return
-					}
-					if err := pusher.Push(e); err != nil {
-						return
-					}
-				case <-c.Request.Context().Done():
-					return
-				}
-			}
-		} else {
-			NotOK(c, apierrors.NewServiceUnavailable("client not watchable"))
-		}
-	} else {
+	iswatch, _ := strconv.ParseBool(c.Query("watch"))
+	if !iswatch {
 		if err := h.Cli.List(c.Request.Context(), list, listOptions); err != nil {
 			NotOK(c, err)
 			return
 		}
 		OK(c, list)
 		return
+	}
+
+	// watch case
+	watchablecli, ok := h.Cli.(client.WithWatch)
+	if !ok {
+		NotOK(c, apierrors.NewServiceUnavailable("client not watchable"))
+	}
+	watcher, err := watchablecli.Watch(c.Request.Context(), list, listOptions)
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	defer watcher.Stop()
+	pusher, err := stream.StartPusher(c.Writer)
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	// send stream
+	for {
+		select {
+		case e, ok := <-watcher.ResultChan():
+			if !ok {
+				return
+			}
+			if err := pusher.Push(e); err != nil {
+				return
+			}
+		case <-c.Request.Context().Done():
+			return
+		}
 	}
 }
 
@@ -161,21 +162,12 @@ func OK(c *gin.Context, data interface{}) {
 }
 
 func (h *ClientRest) Create(c *gin.Context) {
-	gvkn := h.parseGVKN(c)
-
-	content := map[string]interface{}{}
-	if err := json.NewDecoder(c.Request.Body).Decode(&content); err != nil {
+	obj, _, err := h.readObject(c, true)
+	if err != nil {
 		NotOK(c, err)
 		return
 	}
-	defer c.Request.Body.Close()
-
 	options := &client.CreateOptions{}
-
-	obj := &unstructured.Unstructured{Object: content}
-	obj.SetGroupVersionKind(gvkn.GroupVersionKind)
-	obj.SetNamespace(gvkn.Namespace)
-
 	if err := h.Cli.Create(c.Request.Context(), obj, options); err != nil {
 		NotOK(c, err)
 		return
@@ -184,24 +176,13 @@ func (h *ClientRest) Create(c *gin.Context) {
 }
 
 func (h *ClientRest) Update(c *gin.Context) {
-	gvkn := h.parseGVKN(c)
-
-	content := map[string]interface{}{}
-	if err := json.NewDecoder(c.Request.Body).Decode(&content); err != nil {
+	obj, _, err := h.readObject(c, true)
+	if err != nil {
 		NotOK(c, err)
 		return
 	}
-	defer c.Request.Body.Close()
-
 	issubresource, _ := strconv.ParseBool(c.Query("subresource"))
-
 	options := &client.UpdateOptions{}
-
-	obj := &unstructured.Unstructured{Object: content}
-	obj.SetGroupVersionKind(gvkn.GroupVersionKind)
-	obj.SetNamespace(gvkn.Namespace)
-	obj.SetName(gvkn.Name)
-
 	if issubresource {
 		if err := h.Cli.Status().Update(c.Request.Context(), obj, options); err != nil {
 			NotOK(c, err)
@@ -222,7 +203,11 @@ const (
 )
 
 func (h *ClientRest) Delete(c *gin.Context) {
-	gvkn := h.parseGVKN(c)
+	obj, _, err := h.readObject(c, false)
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
 
 	options := &client.DeleteOptions{
 		PropagationPolicy: func() *metav1.DeletionPropagation {
@@ -239,12 +224,6 @@ func (h *ClientRest) Delete(c *gin.Context) {
 			return nil
 		}(),
 	}
-
-	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(gvkn.GroupVersionKind)
-	obj.SetNamespace(gvkn.Namespace)
-	obj.SetName(gvkn.Name)
-
 	if err := h.Cli.Delete(c.Request.Context(), obj, options); err != nil {
 		NotOK(c, err)
 		return
@@ -257,16 +236,13 @@ const (
 )
 
 func (h *ClientRest) Patch(c *gin.Context) {
-	gvkn := h.parseGVKN(c)
+	obj, _, err := h.readObject(c, false)
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
 
-	var obj client.Object
-	var patch client.Patch
-
-	patchtype := types.PatchType(c.Request.Header.Get("Content-Type"))
-
-	issubresource, _ := strconv.ParseBool(c.Query("subresource"))
-
-	data, err := io.ReadAll(&io.LimitedReader{R: c.Request.Body, N: MaxRequestBodyBytes})
+	patchdata, err := io.ReadAll(&io.LimitedReader{R: c.Request.Body, N: MaxRequestBodyBytes})
 	if err != nil {
 		NotOK(c, err)
 		return
@@ -282,12 +258,8 @@ func (h *ClientRest) Patch(c *gin.Context) {
 		}(),
 	}
 
-	obj = &unstructured.Unstructured{}
-	obj.GetObjectKind().SetGroupVersionKind(gvkn.GroupVersionKind)
-	obj.SetName(gvkn.Name)
-	obj.SetNamespace(gvkn.Namespace)
-
-	patch = client.RawPatch(patchtype, data)
+	patch := client.RawPatch(types.PatchType(c.Request.Header.Get("Content-Type")), patchdata)
+	issubresource, _ := strconv.ParseBool(c.Query("subresource"))
 	if issubresource {
 		if err := h.Cli.Status().Patch(c.Request.Context(), obj, patch, options); err != nil {
 			NotOK(c, err)
@@ -436,4 +408,52 @@ func (h *ClientRest) Proxy(c *gin.Context) {
 		NotOK(c, err)
 		return
 	}
+}
+
+func (r *ClientRest) readObject(c *gin.Context, readbody bool) (client.Object, GVKN, error) {
+	gvkn := r.parseGVKN(c)
+	// try decode using typed ObjectList first
+	runobj, err := r.Cli.Scheme().New(gvkn.GroupVersionKind)
+	if err != nil {
+		// fallback to unstructured.Unstructured
+		runobj = &unstructured.Unstructured{}
+	}
+	obj, ok := runobj.(client.Object)
+	if !ok {
+		// fallback to unstructured.Unstructured
+		obj = &unstructured.Unstructured{}
+	}
+	if readbody {
+		if err := json.NewDecoder(c.Request.Body).Decode(&obj); err != nil {
+			return nil, gvkn, apierrors.NewBadRequest(err.Error())
+		}
+		defer c.Request.Body.Close()
+	}
+	obj.GetObjectKind().SetGroupVersionKind(gvkn.GroupVersionKind)
+	// override name/namespace in body if set in url
+	obj.SetNamespace(gvkn.Namespace)
+	if gvkn.Name != "" {
+		obj.SetName(gvkn.Name)
+	}
+	return obj, gvkn, nil
+}
+
+func (r *ClientRest) listObject(c *gin.Context) (client.ObjectList, GVKN) {
+	gvkn := r.parseGVKN(c)
+	if !strings.HasSuffix(gvkn.Kind, "List") {
+		gvkn.GroupVersionKind.Kind = gvkn.GroupVersionKind.Kind + "List"
+	}
+	// try decode using typed ObjectList first
+	runlist, err := r.Cli.Scheme().New(gvkn.GroupVersionKind)
+	if err != nil {
+		// fallback to unstructured.UnstructuredList
+		runlist = &unstructured.UnstructuredList{}
+	}
+	objlist, ok := runlist.(client.ObjectList)
+	if !ok {
+		// fallback to unstructured.UnstructuredList
+		objlist = &unstructured.UnstructuredList{}
+	}
+	objlist.GetObjectKind().SetGroupVersionKind(gvkn.GroupVersionKind)
+	return objlist, gvkn
 }
