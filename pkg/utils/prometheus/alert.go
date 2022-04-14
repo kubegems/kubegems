@@ -23,9 +23,9 @@ const (
 	AlertResourceLabel = "gems_alert_resource"
 	AlertRuleLabel     = "gems_alert_rule"
 
-	severityLabel    = "severity"
-	severityError    = "error"    // 错误
-	severityCritical = "critical" // 严重
+	SeverityLabel    = "severity"
+	SeverityError    = "error"    // 错误
+	SeverityCritical = "critical" // 严重
 
 	exprJsonAnnotationKey = "gems_expr_json"
 	messageAnnotationsKey = "message"
@@ -250,7 +250,7 @@ func (raw *RawAlertResource) UpdateAlertRules(alertRules []AlertRule) error {
 					AlertResourceLabel:  alertRule.Resource,
 					AlertRuleLabel:      alertRule.Rule,
 					AlertScopeLabel:     GetAlertScope(alertRule.Namespace),
-					severityLabel:       level.Severity,
+					SeverityLabel:       level.Severity,
 				},
 				Annotations: map[string]string{
 					messageAnnotationsKey: alertRule.Message,
@@ -286,15 +286,15 @@ func (raw *RawAlertResource) UpdateAlertRules(alertRules []AlertRule) error {
 			inhibitRuleMap[slice.SliceUniqueKey(alertRule.RuleDetail.Labels)] = v1alpha1.InhibitRule{
 				SourceMatch: []v1alpha1.Matcher{
 					{
-						Name:  severityLabel,
-						Value: severityCritical,
+						Name:  SeverityLabel,
+						Value: SeverityCritical,
 						Regex: false,
 					},
 				},
 				TargetMatch: []v1alpha1.Matcher{
 					{
-						Name:  severityLabel,
-						Value: severityError,
+						Name:  SeverityLabel,
+						Value: SeverityError,
 						Regex: false,
 					},
 				},
@@ -396,7 +396,7 @@ func convertAlertRule(namespace string, group monitoringv1.RuleGroup, opts *Moni
 		ret.AlertLevels = append(ret.AlertLevels, AlertLevel{
 			CompareOp:    expr.CompareOp,
 			CompareValue: expr.CompareValue,
-			Severity:     rule.Labels[severityLabel],
+			Severity:     rule.Labels[SeverityLabel],
 		})
 
 		tmpexpr.BaseQueryParams = expr.BaseQueryParams
