@@ -95,7 +95,7 @@ func (h *Helm) ApplyChart(ctx context.Context,
 		if !errors.Is(err, driver.ErrReleaseNotFound) {
 			return nil, err
 		}
-		log.Info("installing")
+		log.Info("installing", "values", values)
 		install := action.NewInstall(cfg)
 		install.ReleaseName, install.Namespace = releaseName, releaseNamespace
 		install.CreateNamespace = true
@@ -103,16 +103,23 @@ func (h *Helm) ApplyChart(ctx context.Context,
 		return install.Run(chart, values)
 	}
 	// check should upgrade
-	if existRelease.Info.Status == release.StatusDeployed && reflect.DeepEqual(existRelease.Config, values) {
-		log.Info("already deployed and no values changed")
+	if existRelease.Info.Status == release.StatusDeployed && equalmap(existRelease.Config, values) {
+		log.Info("already uptodate", "values", values)
 		return existRelease, nil
 	}
-	log.Info("upgrading")
+	log.Info("upgrading", "old", existRelease.Config, "new", values)
 	client := action.NewUpgrade(cfg)
 	client.Namespace = releaseNamespace
 	client.ResetValues = true
 	client.DryRun = options.DryRun
 	return client.Run(releaseName, chart, values)
+}
+
+func equalmap(a, b map[string]interface{}) bool {
+	if len(a) == 0 && len(b) == 0 {
+		return true
+	}
+	return reflect.DeepEqual(a, b)
 }
 
 func NewHelmConfig(namespace string, restConfig *rest.Config) (*action.Configuration, error) {
