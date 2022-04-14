@@ -572,7 +572,7 @@ func (h *EnvironmentHandler) GetEnvironmentResource(c *gin.Context) {
 // @Description  环境网络隔离开关
 // @Accept       json
 // @Produce      json
-// @Param        environment_id  path      uint                                                   true  "environment_id"
+// @Param        environment_id  path      uint                                                       true   "environment_id"
 // @Param        param           body      handlers.IsolatedSwitch                                true  "表单"
 // @Success      200             {object}  handlers.ResponseStruct{Data=handlers.IsolatedSwitch}  "object"
 // @Router       /v1/environment/{environment_id}/action/networkisolate [post]
@@ -626,7 +626,6 @@ func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 type EnvironmentObservabilityRet struct {
 	EnvironmentName string `json:"environmentName"`
 	ClusterName     string `json:"clusterName"`
-	Namespace       string `json:"namespace"`
 
 	Labels map[string]string `json:"labels"`
 
@@ -649,8 +648,6 @@ type EnvironmentObservabilityRet struct {
 	LoggingCollectorCount int    `json:"loggingCollectorCount"`
 	ErrorLogCount         int64  `json:"errorLogCount"`
 	LogRate               string `json:"logRate"`
-
-	EventCount int `json:"eventCount"` // 事件数量
 }
 
 // @Tags         EnvironmentObservabilityDetails
@@ -677,7 +674,6 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	ret := EnvironmentObservabilityRet{
 		EnvironmentName: env.EnvironmentName,
 		ClusterName:     env.Cluster.ClusterName,
-		Namespace:       env.Namespace,
 	}
 	if err := h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
 		eg := errgroup.Group{}
@@ -802,28 +798,6 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 				return err
 			}
 			ret.LoggingCollectorCount = len(flowList.Items)
-			return nil
-		})
-
-		eg.Go(func() error {
-			resp, err := cli.Extend().LokiQuery(ctx,
-				fmt.Sprintf(`sum(count_over_time({namespace="%s", container="gems-eventer"}| json | line_format "{{.metadata_namespace}}" |= "%s" [%s]))`, gems.NamespaceLogging, env.Namespace, dur))
-			if err != nil {
-				return err
-			}
-			if len(resp.Result) > 0 {
-				if result, ok := resp.Result[0].(map[string]interface{}); ok {
-					value := result["value"]
-					if vals, ok := value.([]interface{}); ok {
-						for _, v := range vals {
-							if count, ok := v.(string); ok {
-								ret.EventCount, _ = strconv.Atoi(count)
-								return nil
-							}
-						}
-					}
-				}
-			}
 			return nil
 		})
 
