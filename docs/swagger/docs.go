@@ -3671,6 +3671,61 @@ var doc = `{
                 }
             }
         },
+        "/v1/environment/{environment_id}/observability": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "环境可观测性概览",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "EnvironmentObservabilityDetails"
+                ],
+                "summary": "环境可观测性概览",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "environment_id",
+                        "name": "environment_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "过去多长时间: 30s,5m,1h,1d,1w, 默认1h",
+                        "name": "duration",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "object",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/environment.EnvironmentObservabilityRet"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/environment/{environment_id}/resources": {
             "get": {
                 "security": [
@@ -13323,7 +13378,11 @@ var doc = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
+<<<<<<< HEAD
                                                                 "$ref": "#/definitions/models.Tenant"
+=======
+                                                                "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                                             }
                                                         }
                                                     }
@@ -13361,7 +13420,11 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
+<<<<<<< HEAD
                             "$ref": "#/definitions/models.Tenant"
+=======
+                            "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                         }
                     }
                 ],
@@ -13377,7 +13440,11 @@ var doc = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
+<<<<<<< HEAD
                                             "$ref": "#/definitions/models.Tenant"
+=======
+                                            "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                         }
                                     }
                                 }
@@ -13469,7 +13536,11 @@ var doc = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
+<<<<<<< HEAD
                                             "$ref": "#/definitions/models.Tenant"
+=======
+                                            "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                         }
                                     }
                                 }
@@ -13509,7 +13580,11 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
+<<<<<<< HEAD
                             "$ref": "#/definitions/models.Tenant"
+=======
+                            "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                         }
                     }
                 ],
@@ -13525,7 +13600,11 @@ var doc = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
+<<<<<<< HEAD
                                             "$ref": "#/definitions/models.Tenant"
+=======
+                                            "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                         }
                                     }
                                 }
@@ -13611,7 +13690,11 @@ var doc = `{
                                         "Data": {
                                             "type": "array",
                                             "items": {
+<<<<<<< HEAD
                                                 "$ref": "#/definitions/models.Tenant"
+=======
+                                                "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                             }
                                         }
                                     }
@@ -13663,7 +13746,11 @@ var doc = `{
                                         "Data": {
                                             "type": "array",
                                             "items": {
+<<<<<<< HEAD
                                                 "$ref": "#/definitions/models.Tenant"
+=======
+                                                "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                             }
                                         }
                                     }
@@ -18758,7 +18845,11 @@ var doc = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
+<<<<<<< HEAD
                                                                 "$ref": "#/definitions/models.TenantResourceQuota"
+=======
+                                                                "$ref": "#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                                             }
                                                         }
                                                     }
@@ -18803,7 +18894,11 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
+<<<<<<< HEAD
                             "$ref": "#/definitions/models.TenantResourceQuota"
+=======
+                            "$ref": "#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                         }
                     }
                 ],
@@ -18819,7 +18914,11 @@ var doc = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
+<<<<<<< HEAD
                                             "$ref": "#/definitions/models.TenantResourceQuota"
+=======
+                                            "$ref": "#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                         }
                                     }
                                 }
@@ -18931,7 +19030,11 @@ var doc = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
+<<<<<<< HEAD
                                             "$ref": "#/definitions/models.TenantResourceQuota"
+=======
+                                            "$ref": "#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                         }
                                     }
                                 }
@@ -19859,7 +19962,11 @@ var doc = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
+<<<<<<< HEAD
                                                                 "$ref": "#/definitions/models.Tenant"
+=======
+                                                                "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                                                             }
                                                         }
                                                     }
@@ -22629,7 +22736,79 @@ var doc = `{
                 }
             }
         },
+<<<<<<< HEAD
         "application.DeploymentStrategy": {
+=======
+        "environment.EnvironmentObservabilityRet": {
+            "type": "object",
+            "properties": {
+                "alertResourceMap": {
+                    "description": "告警规则的资源map",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "alertRuleCount": {
+                    "description": "告警规则列表",
+                    "type": "integer"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "containerRestartTotal": {
+                    "type": "integer"
+                },
+                "cpu": {
+                    "type": "string"
+                },
+                "criticalAlertCount": {
+                    "type": "integer"
+                },
+                "environmentName": {
+                    "type": "string"
+                },
+                "errorAlertCount": {
+                    "type": "integer"
+                },
+                "errorLogCount": {
+                    "type": "integer"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "logRate": {
+                    "type": "string"
+                },
+                "logging": {
+                    "description": "是否启日志",
+                    "type": "boolean"
+                },
+                "loggingCollectorCount": {
+                    "type": "integer"
+                },
+                "memory": {
+                    "type": "string"
+                },
+                "monitorCollectorCount": {
+                    "description": "metrics采集器数量",
+                    "type": "integer"
+                },
+                "monitoring": {
+                    "description": "是否启用监控",
+                    "type": "boolean"
+                },
+                "serviceMesh": {
+                    "description": "是否启用服务网格",
+                    "type": "boolean"
+                }
+            }
+        },
+        "gemsplugin.Plugin": {
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
             "type": "object",
             "required": [
                 "type"
@@ -23014,6 +23193,1623 @@ var doc = `{
                 "content": {
                     "type": "object"
                 },
+<<<<<<< HEAD
+=======
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "string"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                    }
+                },
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
+                    "$ref": "#/definitions/istio.io_api_networking_v1alpha3.Sidecar"
+                },
+                "status": {
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
+                }
+            }
+        },
+        "istio.io_client-go_pkg_apis_networking_v1alpha3.VirtualService": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "string"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "string"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                    }
+                },
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
+                    "$ref": "#/definitions/istio.io_api_networking_v1alpha3.VirtualService"
+                },
+                "status": {
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
+                }
+            }
+        },
+        "istio.io_client-go_pkg_apis_networking_v1beta1.Gateway": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "string"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "string"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                    }
+                },
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
+                    "$ref": "#/definitions/istio.io_api_networking_v1beta1.Gateway"
+                },
+                "status": {
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
+                }
+            }
+        },
+        "istio.io_client-go_pkg_apis_networking_v1beta1.VirtualService": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                    "type": "string"
+                },
+                "creationTimestamp": {
+                    "description": "CreationTimestamp is a timestamp representing the server time when this object was\ncreated. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system.\nRead-only.\nNull for lists.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "string"
+                },
+                "deletionGracePeriodSeconds": {
+                    "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                    "type": "integer"
+                },
+                "deletionTimestamp": {
+                    "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This\nfield is set by the server when a graceful deletion is requested by the user, and is not\ndirectly settable by a client. The resource is expected to be deleted (no longer visible\nfrom resource lists, and not reachable by name) after the time in this field, once the\nfinalizers list is empty. As long as the finalizers list contains items, deletion is blocked.\nOnce the deletionTimestamp is set, this value may not be unset or be set further into the\nfuture, although it may be shortened or the resource may be deleted prior to this time.\nFor example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react\nby sending a graceful termination signal to the containers in the pod. After that 30 seconds,\nthe Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,\nremove the pod from the API. In the presence of network partitions, this object may still\nexist after this timestamp, until an administrator or automated process can determine the\nresource is fully terminated.\nIf not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata\n+optional",
+                    "type": "string"
+                },
+                "finalizers": {
+                    "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "generateName": {
+                    "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+                    "type": "string"
+                },
+                "generation": {
+                    "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "managedFields": {
+                    "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ManagedFieldsEntry"
+                    }
+                },
+                "name": {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                    "type": "string"
+                },
+                "ownerReferences": {
+                    "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.OwnerReference"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                    "type": "string"
+                },
+                "selfLink": {
+                    "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+                    "type": "string"
+                },
+                "spec": {
+                    "description": "Spec defines the implementation of this definition.\n+optional",
+                    "$ref": "#/definitions/istio.io_api_networking_v1beta1.VirtualService"
+                },
+                "status": {
+                    "$ref": "#/definitions/v1alpha1.IstioStatus"
+                },
+                "uid": {
+                    "description": "UID is the unique in time and space value for this object. It is typically generated by\nthe server on successful creation of a resource and is not allowed to change on PUT\noperations.\n\nPopulated by the system.\nRead-only.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#uids\n+optional",
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers.PageData": {
+            "type": "object",
+            "properties": {
+                "currentPage": {
+                    "type": "integer"
+                },
+                "currentSize": {
+                    "type": "integer"
+                },
+                "list": {},
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.AppReplicas": {
+            "type": "object",
+            "properties": {
+                "replicas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.AppStoreDeployForm": {
+            "type": "object",
+            "required": [
+                "chart",
+                "chartVersion",
+                "name",
+                "repoURL",
+                "values"
+            ],
+            "properties": {
+                "chart": {
+                    "description": "chart名称",
+                    "type": "string"
+                },
+                "chartVersion": {
+                    "description": "chart版本",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "repoURL": {
+                    "description": "仓库index地址",
+                    "type": "string"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.ArgoHistory": {
+            "type": "object",
+            "properties": {
+                "environment": {
+                    "type": "string"
+                },
+                "gitVersion": {
+                    "description": "如果发布，有发布的 gitversion（commmit） commitid or branchname",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "images": {
+                    "description": "发布的镜像",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publishAt": {
+                    "description": "如果发布，有发布时间 gitcommit 时间",
+                    "type": "string"
+                },
+                "publisher": {
+                    "description": "如果发布，有发布人",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "如果发布，有发布的状态，从argocd取得",
+                    "type": "string"
+                },
+                "tenant": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.ArgoResourceTree": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.ArgoResourceTree"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "group": {
+                    "type": "string"
+                },
+                "health": {
+                    "$ref": "#/definitions/v1alpha1.HealthStatus"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "info": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.InfoItem"
+                    }
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "liveState": {},
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "networkingInfo": {
+                    "$ref": "#/definitions/v1alpha1.ResourceNetworkingInfo"
+                },
+                "parentRefs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.ResourceRef"
+                    }
+                },
+                "resourceVersion": {
+                    "type": "string"
+                },
+                "sync": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.BlueGreenDeploymentStrategy": {
+            "type": "object",
+            "properties": {
+                "abortScaleDownDelaySeconds": {
+                    "description": "AbortScaleDownDelaySeconds adds a delay in second before scaling down the preview replicaset\nif update is aborted. 0 means not to scale down.\nDefault is 30 second\n+optional",
+                    "type": "integer"
+                },
+                "activeMetadata": {
+                    "description": "ActiveMetadata specify labels and annotations which will be attached to the active pods for\nthe duration which they act as a active pod, and will be removed after",
+                    "$ref": "#/definitions/v1alpha1.PodTemplateMetadata"
+                },
+                "activeService": {
+                    "description": "Name of the service that the rollout modifies as the active service.",
+                    "type": "string"
+                },
+                "antiAffinity": {
+                    "description": "AntiAffinity enables anti-affinity rules for Blue Green deployment\n+optional",
+                    "$ref": "#/definitions/v1alpha1.AntiAffinity"
+                },
+                "autoPromotionEnabled": {
+                    "description": "AutoPromotionEnabled indicates if the rollout should automatically promote the new ReplicaSet\nto the active service or enter a paused state. If not specified, the default value is true.\n+optional",
+                    "type": "boolean"
+                },
+                "autoPromotionSeconds": {
+                    "description": "AutoPromotionSeconds is a duration in seconds in which to delay auto-promotion (default: 0).\nThe countdown begins after the preview ReplicaSet have reached full availability.\nThis option is ignored if autoPromotionEnabled is set to false.\n+optional",
+                    "type": "integer"
+                },
+                "maxUnavailable": {
+                    "description": "MaxUnavailable The maximum number of pods that can be unavailable during a restart operation.\nDefaults to 25% of total replicas.\n+optional",
+                    "$ref": "#/definitions/intstr.IntOrString"
+                },
+                "postPromotionAnalysis": {
+                    "description": "PostPromotionAnalysis configuration to run analysis after a selector switch",
+                    "$ref": "#/definitions/v1alpha1.RolloutAnalysis"
+                },
+                "prePromotionAnalysis": {
+                    "description": "PrePromotionAnalysis configuration to run analysis before a selector switch",
+                    "$ref": "#/definitions/v1alpha1.RolloutAnalysis"
+                },
+                "previewMetadata": {
+                    "description": "PreviewMetadata specify labels and annotations which will be attached to the preview pods for\nthe duration which they act as a preview pod, and will be removed after",
+                    "$ref": "#/definitions/v1alpha1.PodTemplateMetadata"
+                },
+                "previewReplicaCount": {
+                    "description": "PreviewReplicaCount is the number of replicas to run for the preview stack before the\nswitchover. Once the rollout is resumed the desired replicaset will be full scaled up before the switch occurs\n+optional",
+                    "type": "integer"
+                },
+                "previewService": {
+                    "description": "Name of the service that the rollout modifies as the preview service.\n+optional",
+                    "type": "string"
+                },
+                "scaleDownDelayRevisionLimit": {
+                    "description": "ScaleDownDelayRevisionLimit limits the number of old RS that can run at one time before getting scaled down\n+optional",
+                    "type": "integer"
+                },
+                "scaleDownDelaySeconds": {
+                    "description": "ScaleDownDelaySeconds adds a delay before scaling down the previous replicaset.\nIf omitted, the Rollout waits 30 seconds before scaling down the previous ReplicaSet.\nA minimum of 30 seconds is recommended to ensure IP table propagation across the nodes in\na cluster. See https://github.com/argoproj/argo-rollouts/issues/19#issuecomment-476329960 for\nmore information\n+optional",
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.CanaryDeploymentStrategy": {
+            "type": "object",
+            "properties": {
+                "abortScaleDownDelaySeconds": {
+                    "description": "AbortScaleDownDelaySeconds adds a delay in second before scaling down the canary pods when update\nis aborted for canary strategy with traffic routing (not applicable for basic canary).\n0 means canary pods are not scaled down.\nDefault is 30 seconds.\n+optional",
+                    "type": "integer"
+                },
+                "analysis": {
+                    "description": "Analysis runs a separate analysisRun while all the steps execute. This is intended to be a continuous validation of the new ReplicaSet",
+                    "$ref": "#/definitions/v1alpha1.RolloutAnalysisBackground"
+                },
+                "antiAffinity": {
+                    "description": "AntiAffinity enables anti-affinity rules for Canary deployment\n+optional",
+                    "$ref": "#/definitions/v1alpha1.AntiAffinity"
+                },
+                "canaryMetadata": {
+                    "description": "CanaryMetadata specify labels and annotations which will be attached to the canary pods for\nthe duration which they act as a canary, and will be removed after",
+                    "$ref": "#/definitions/v1alpha1.PodTemplateMetadata"
+                },
+                "canaryService": {
+                    "description": "CanaryService holds the name of a service which selects pods with canary version and don't select any pods with stable version.\n+optional",
+                    "type": "string"
+                },
+                "dynamicStableScale": {
+                    "description": "DynamicStableScale is a traffic routing feature which dynamically scales the stable\nReplicaSet to minimize total pods which are running during an update. This is calculated by\nscaling down the stable as traffic is increased to canary. When disabled (the default behavior)\nthe stable ReplicaSet remains fully scaled to support instantaneous aborts.",
+                    "type": "boolean"
+                },
+                "maxSurge": {
+                    "description": "MaxSurge The maximum number of pods that can be scheduled above the original number of\npods.\nValue can be an absolute number (ex: 5) or a percentage of total pods at\nthe start of the update (ex: 10%). This can not be 0 if MaxUnavailable is 0.\nAbsolute number is calculated from percentage by rounding up.\nBy default, a value of 25% is used.\nExample: when this is set to 30%, the new RC can be scaled up by 30%\nimmediately when the rolling update starts. Once old pods have been killed,\nnew RC can be scaled up further, ensuring that total number of pods running\nat any time during the update is at most 130% of original pods.\n+optional",
+                    "$ref": "#/definitions/intstr.IntOrString"
+                },
+                "maxUnavailable": {
+                    "description": "MaxUnavailable The maximum number of pods that can be unavailable during the update.\nValue can be an absolute number (ex: 5) or a percentage of total pods at the start of update (ex: 10%).\nAbsolute number is calculated from percentage by rounding down.\nThis can not be 0 if MaxSurge is 0.\nBy default, a fixed value of 25% is used.\nExample: when this is set to 30%, the old RC can be scaled down by 30%\nimmediately when the rolling update starts. Once new pods are ready, old RC\ncan be scaled down further, followed by scaling up the new RC, ensuring\nthat at least 70% of original number of pods are available at all times\nduring the update.\n+optional",
+                    "$ref": "#/definitions/intstr.IntOrString"
+                },
+                "scaleDownDelayRevisionLimit": {
+                    "description": "ScaleDownDelayRevisionLimit limits the number of old RS that can run at one time before getting scaled down\n+optional",
+                    "type": "integer"
+                },
+                "scaleDownDelaySeconds": {
+                    "description": "ScaleDownDelaySeconds adds a delay before scaling down the previous ReplicaSet when the\ncanary strategy is used with traffic routing (default 30 seconds). A delay in scaling down\nthe previous ReplicaSet is needed after switching the stable service selector to point to\nthe new ReplicaSet, in order to give time for traffic providers to re-target the new pods.\nThis value is ignored with basic, replica-weighted canary without traffic routing.\n+optional",
+                    "type": "integer"
+                },
+                "stableMetadata": {
+                    "description": "StableMetadata specify labels and annotations which will be attached to the stable pods for\nthe duration which they act as a canary, and will be removed after",
+                    "$ref": "#/definitions/v1alpha1.PodTemplateMetadata"
+                },
+                "stableService": {
+                    "description": "StableService holds the name of a service which selects pods with stable version and don't select any pods with canary version.\n+optional",
+                    "type": "string"
+                },
+                "steps": {
+                    "description": "Steps define the order of phases to execute the canary deployment\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.CanaryStep"
+                    }
+                },
+                "trafficRouting": {
+                    "description": "TrafficRouting hosts all the supported service meshes supported to enable more fine-grained traffic routing",
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.RolloutTrafficRouting"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.DeploiedManifest": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "createAt": {
+                    "type": "string"
+                },
+                "creator": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "istioVersion": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ref": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.PathRef"
+                },
+                "runtime": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.ManifestRuntime"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.DeployImage": {
+            "type": "object",
+            "properties": {
+                "publish": {
+                    "description": "意为需要更新到的版本，argo更新版本会失败，所以两个版本会存在差异",
+                    "type": "string"
+                },
+                "running": {
+                    "description": "意为当前 argo 实际正在运行的版本",
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.DeployImages": {
+            "type": "object",
+            "properties": {
+                "images": {
+                    "description": "当前准备发布的镜像(gitrepo 中)",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.DeployImage"
+                    }
+                },
+                "istioVersion": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publishAt": {
+                    "type": "string"
+                },
+                "published": {
+                    "description": "是否已经发布至 argo",
+                    "type": "boolean"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.DeploymentStrategy": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "blueGreen": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.BlueGreenDeploymentStrategy"
+                },
+                "canary": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.CanaryDeploymentStrategy"
+                },
+                "recreat": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.RecreatDeploymentStrategy"
+                },
+                "rolling": {
+                    "$ref": "#/definitions/v1.RollingUpdateDeployment"
+                },
+                "type": {
+                    "description": "更新策略： in(Recreate,RollingUpdate,Canary,BlueGreen)",
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.DeploymentStrategyWithImages": {
+            "type": "object",
+            "properties": {
+                "images": {
+                    "description": "当前准备发布的镜像(gitrepo 中)",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.DeployImage"
+                    }
+                },
+                "istioVersion": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publishAt": {
+                    "type": "string"
+                },
+                "published": {
+                    "description": "是否已经发布至 argo",
+                    "type": "boolean"
+                },
+                "strategy": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.DeploymentStrategy"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.FileContent": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.GitLog": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "type": "string"
+                },
+                "hash": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.HPAMetrics": {
+            "type": "object",
+            "required": [
+                "max_replicas",
+                "min_replicas"
+            ],
+            "properties": {
+                "cpu": {
+                    "type": "integer",
+                    "maximum": 100
+                },
+                "max_replicas": {
+                    "type": "integer"
+                },
+                "memory": {
+                    "type": "integer",
+                    "maximum": 100
+                },
+                "min_replicas": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.IngressPorts": {
+            "type": "object",
+            "properties": {
+                "host": {
+                    "type": "string"
+                },
+                "ingressClassName": {
+                    "type": "string"
+                },
+                "ingressPort": {
+                    "type": "integer"
+                },
+                "servicePort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.IstioTrafficRouting": {
+            "type": "object",
+            "properties": {
+                "destinationRule": {
+                    "description": "DestinationRule references an Istio DestinationRule to modify to shape traffic",
+                    "$ref": "#/definitions/v1alpha1.IstioDestinationRule"
+                },
+                "virtualService": {
+                    "description": "VirtualService references an Istio VirtualService to modify to shape traffic",
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.IstioVirtualService"
+                },
+                "virtualServices": {
+                    "description": "VirtualServices references a list of Istio VirtualService to modify to shape traffic",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.IstioVirtualService"
+                    }
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.IstioVirtualService": {
+            "type": "object",
+            "properties": {
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/v1alpha3.StringMatch"
+                    }
+                },
+                "ignoreUriCase": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name holds the name of the VirtualService",
+                    "type": "string"
+                },
+                "routes": {
+                    "description": "A list of HTTP routes within VirtualService to edit. If omitted, VirtualService must have a single route of this type.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tlsRoutes": {
+                    "description": "A list of TLS/HTTPS routes within VirtualService to edit. If omitted, VirtualService must have a single route of this type.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.TLSRoute"
+                    }
+                },
+                "uri": {
+                    "$ref": "#/definitions/v1alpha3.StringMatch"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.Manifest": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "createAt": {
+                    "type": "string"
+                },
+                "creator": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "istioVersion": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ref": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.PathRef"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.ManifestRuntime": {
+            "type": "object",
+            "properties": {
+                "createAt": {
+                    "description": "运行时创建时间",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "运行时创建人",
+                    "type": "string"
+                },
+                "deployStatus": {
+                    "description": "异步部署的状态，取最新一个",
+                    "type": "string"
+                },
+                "images": {
+                    "description": "运行时镜像",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "istioVersion": {
+                    "description": "运行时的 istio version",
+                    "type": "string"
+                },
+                "kind": {
+                    "description": "运行时负载类型",
+                    "type": "string"
+                },
+                "message": {
+                    "description": "运行时消息提示",
+                    "type": "string"
+                },
+                "raw": {
+                    "description": "运行时"
+                },
+                "status": {
+                    "description": "运行时状态",
+                    "type": "string"
+                },
+                "workloadName": {
+                    "description": "运行时",
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.PathRef": {
+            "type": "object",
+            "properties": {
+                "environment": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "project": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.RecreatDeploymentStrategy": {
+            "type": "object",
+            "properties": {
+                "waitShutdown": {
+                    "description": "暂未使用",
+                    "type": "boolean"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.RelatedService": {
+            "type": "object",
+            "properties": {
+                "ingresses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.IngressPorts"
+                    }
+                },
+                "ports": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ServicePort"
+                    }
+                },
+                "serviceIP": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.RolloutTrafficRouting": {
+            "type": "object",
+            "properties": {
+                "alb": {
+                    "description": "Nginx holds ALB Ingress specific configuration to route traffic",
+                    "$ref": "#/definitions/v1alpha1.ALBTrafficRouting"
+                },
+                "ambassador": {
+                    "description": "Ambassador holds specific configuration to use Ambassador to route traffic",
+                    "$ref": "#/definitions/v1alpha1.AmbassadorTrafficRouting"
+                },
+                "istio": {
+                    "description": "Istio holds Istio specific configuration to route traffic",
+                    "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.IstioTrafficRouting"
+                },
+                "nginx": {
+                    "description": "Nginx holds Nginx Ingress specific configuration to route traffic",
+                    "$ref": "#/definitions/v1alpha1.NginxTrafficRouting"
+                },
+                "smi": {
+                    "description": "SMI holds TrafficSplit specific configuration to route traffic",
+                    "$ref": "#/definitions/v1alpha1.SMITrafficRouting"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.StrategyDeploymentControl": {
+            "type": "object",
+            "properties": {
+                "args": {
+                    "description": "一些指令可能会携带的参数,比如 undo {reversion=1} ; promote {full=true}",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "command": {
+                    "description": "指令名称 in(pause,restart,retry,promote,terminate,undo)",
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_handlers_application.SyncRequest": {
+            "type": "object",
+            "properties": {
+                "resources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.SyncOperationResource"
+                    }
+                }
+            }
+        },
+        "kubegems.io_pkg_service_models.Application": {
+            "type": "object",
+            "properties": {
+                "applicationName": {
+                    "description": "应用名字",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "创建人",
+                    "type": "string"
+                },
+                "environment": {
+                    "description": "关联的环境",
+                    "$ref": "#/definitions/kubegems.io_pkg_service_models.Environment"
+                },
+                "environmentID": {
+                    "description": "关联的环境",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "images": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "kind": {
+                    "description": "类型",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "project": {
+                    "description": "所属项",
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "description": "所属项目ID",
+                    "type": "integer"
+                },
+                "remark": {
+                    "description": "备注",
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_models.Environment": {
+            "type": "object",
+            "properties": {
+                "applications": {
+                    "description": "关联的应用",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_pkg_service_models.Application"
+                    }
+                },
+                "cluster": {
+                    "description": "关联的集群",
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "description": "所属集群ID",
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "创建者",
+                    "$ref": "#/definitions/models.User"
+                },
+                "creatorID": {
+                    "description": "创建人ID",
+                    "type": "integer"
+                },
+                "deletePolicy": {
+                    "description": "删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)",
+                    "type": "string"
+                },
+                "environmentName": {
+                    "description": "环境名字",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "limitRange": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "metaType": {
+                    "description": "元类型(开发(dev)，测试(test)，生产(prod))等选项之一",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "环境关联的namespace",
+                    "type": "string"
+                },
+                "project": {
+                    "description": "所属项目",
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "description": "所属项目ID",
+                    "type": "integer"
+                },
+                "remark": {
+                    "description": "备注",
+                    "type": "string"
+                },
+                "resourceQuota": {
+                    "description": "环境资源限制(这个会和namespace下的ResourceQuota对等)",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "users": {
+                    "description": "关联的用户",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "virtualSpace": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_models.VirtualSpace"
+                },
+                "virtualSpaceID": {
+                    "description": "虚拟空间",
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_models.SystemRole": {
+            "type": "object",
+            "required": [
+                "roleCode"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "roleCode": {
+                    "description": "系统级角色Code(管理员admin, 普通用户ordinary)",
+                    "type": "string"
+                },
+                "roleName": {
+                    "description": "角色名字",
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
+        "kubegems.io_pkg_service_models.Tenant": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "description": "是否激活",
+                    "type": "boolean"
+                },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Project"
+                    }
+                },
+                "remark": {
+                    "description": "备注",
+                    "type": "string"
+                },
+                "resourceQuotas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota"
+                    }
+                },
+                "tenantName": {
+                    "description": "租户名字",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
+        "kubegems.io_pkg_service_models.TenantResourceQuota": {
+            "type": "object",
+            "required": [
+                "clusterID",
+                "tenantID"
+            ],
+            "properties": {
+                "cluster": {
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "type": "integer"
+                },
+                "content": {
+                    "description": "配置内容",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/kubegems.io_pkg_service_models.Tenant"
+                },
+                "tenantID": {
+                    "type": "integer"
+                },
+                "tenantResourceQuotaApply": {
+                    "$ref": "#/definitions/models.TenantResourceQuotaApply"
+                },
+                "tenantResourceQuotaApplyID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_pkg_service_models.VirtualSpace": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "environments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_pkg_v2_models.Environment"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "virtualSpaceName": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_v2_models.Application": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "creator": {
+                    "type": "string"
+                },
+                "environment": {
+                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.Environment"
+                },
+                "environmentID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "remark": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_pkg_v2_models.Environment": {
+            "type": "object",
+            "properties": {
+                "applications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_pkg_v2_models.Application"
+                    }
+                },
+                "cluster": {
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "type": "integer"
+                },
+                "creator": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "creatorID": {
+                    "type": "integer"
+                },
+                "deletePolicy": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "limitRange": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "metaType": {
+                    "description": "MetaTpe (dev, prod, test, pub ...)",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "resourceQuota": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "virtualSpace": {
+                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.VirtualSpace"
+                },
+                "virtualSpaceID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_pkg_v2_models.SystemRole": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
+        "kubegems.io_pkg_v2_models.Tenant": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Project"
+                    }
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "resourceQuotas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_pkg_v2_models.TenantResourceQuota"
+                    }
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
+        "kubegems.io_pkg_v2_models.TenantResourceQuota": {
+            "type": "object",
+            "required": [
+                "clusterID",
+                "tenantID"
+            ],
+            "properties": {
+                "cluster": {
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+                },
+                "tenantID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_pkg_v2_models.VirtualSpace": {
+            "type": "object",
+            "properties": {
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                 "createdAt": {
                     "type": "string"
                 },
@@ -24041,30 +25837,36 @@ var doc = `{
                 }
             }
         },
-        "models.CPUMemoryStatus": {
+        "models.CVEAllowlist": {
             "type": "object",
             "properties": {
-                "currentLimit": {
-                    "description": "带单位",
+                "creationTime": {
                     "type": "string"
                 },
-                "currentRate": {
-                    "type": "number"
+                "expires_at": {
+                    "type": "integer"
                 },
-                "status": {
-                    "description": "扩容或缩容",
+                "id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.CVEAllowlistItem"
+                    }
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "updateTime": {
                     "type": "string"
-                },
-                "suggestLimit": {
-                    "description": "带单位",
-                    "type": "string"
-                },
-                "suggestMaxLimit": {
-                    "description": "带单位",
-                    "type": "string"
-                },
-                "suggestMinLimit": {
-                    "description": "带单位",
+                }
+            }
+        },
+        "models.CVEAllowlistItem": {
+            "type": "object",
+            "properties": {
+                "cve_id": {
                     "type": "string"
                 }
             }
@@ -24097,6 +25899,7 @@ var doc = `{
         },
         "models.Cluster": {
             "type": "object",
+<<<<<<< HEAD
             "properties": {
                 "destination_rule": {
                     "type": "string"
@@ -24142,6 +25945,26 @@ var doc = `{
             "type": "object",
             "properties": {
                 "applications": {
+=======
+            "required": [
+                "kubeConfig",
+                "name"
+            ],
+            "properties": {
+                "agentAddr": {
+                    "type": "string"
+                },
+                "apiserver": {
+                    "type": "string"
+                },
+                "clusterResourceQuota": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "environments": {
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.Application"
@@ -24154,6 +25977,7 @@ var doc = `{
                 "clusterID": {
                     "type": "integer"
                 },
+<<<<<<< HEAD
                 "creator": {
                     "type": "object",
                     "$ref": "#/definitions/models.User"
@@ -24174,6 +25998,25 @@ var doc = `{
                 "metaType": {
                     "description": "MetaTpe (dev, prod, test, pub ...)",
                     "type": "string"
+=======
+                "kubeConfig": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "oversoldConfig": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "primary": {
+                    "type": "boolean"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                 },
                 "name": {
                     "type": "string"
@@ -24181,6 +26024,7 @@ var doc = `{
                 "namespace": {
                     "type": "string"
                 },
+<<<<<<< HEAD
                 "project": {
                     "type": "object",
                     "$ref": "#/definitions/models.Project"
@@ -24207,6 +26051,38 @@ var doc = `{
                 },
                 "virtualSpaceID": {
                     "type": "integer"
+=======
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ContainerInfo": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "type": "string"
+                },
+                "isProxy": {
+                    "type": "boolean"
+                },
+                "isReady": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DashboardRef": {
+            "type": "object",
+            "properties": {
+                "template": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                 }
             }
         },
@@ -24575,32 +26451,65 @@ var doc = `{
                 }
             }
         },
-        "models.Project": {
+        "models.Pod": {
             "type": "object",
             "properties": {
-                "applications": {
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "appLabel": {
+                    "type": "boolean"
+                },
+                "containers": {
                     "type": "array",
                     "items": {
+<<<<<<< HEAD
                         "$ref": "#/definitions/models.Application"
+=======
+                        "$ref": "#/definitions/models.ContainerInfo"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                     }
                 },
                 "createdAt": {
                     "description": "创建时间",
                     "type": "string"
                 },
-                "environments": {
+                "createdBy": {
                     "type": "array",
                     "items": {
+<<<<<<< HEAD
                         "$ref": "#/definitions/models.Environment"
+=======
+                        "$ref": "#/definitions/models.Reference"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                     }
                 },
-                "id": {
-                    "type": "integer"
+                "istioContainers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ContainerInfo"
+                    }
+                },
+                "istioInitContainers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ContainerInfo"
+                    }
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "projectAlias": {
                     "description": "项目别名",
                     "type": "string"
                 },
+<<<<<<< HEAD
                 "projectName": {
                     "description": "项目名字",
                     "type": "string"
@@ -24627,12 +26536,78 @@ var doc = `{
                 "tenantID": {
                     "description": "所属的租户ID",
                     "type": "integer"
+=======
+                "proxyStatus": {
+                    "$ref": "#/definitions/models.ProxyStatus"
                 },
-                "users": {
+                "serviceAccountName": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusMessage": {
+                    "type": "string"
+                },
+                "statusReason": {
+                    "type": "string"
+                },
+                "versionLabel": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "models.Project": {
+            "type": "object",
+            "properties": {
+                "chart_count": {
+                    "type": "integer"
+                },
+                "creation_time": {
+                    "type": "string"
+                },
+                "current_user_role_id": {
+                    "type": "integer"
+                },
+                "current_user_role_ids": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.User"
+                        "type": "integer"
                     }
+                },
+                "cve_allowlist": {
+                    "$ref": "#/definitions/models.CVEAllowlist"
+                },
+                "deleted": {
+                    "type": "boolean"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner_id": {
+                    "type": "integer"
+                },
+                "owner_name": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "registry_id": {
+                    "type": "integer"
+                },
+                "repo_count": {
+                    "type": "integer"
+                },
+                "update_time": {
+                    "type": "string"
                 }
             }
         },
@@ -24669,6 +26644,7 @@ var doc = `{
                 }
             }
         },
+<<<<<<< HEAD
         "models.Registry": {
             "type": "object",
             "properties": {
@@ -24736,6 +26712,161 @@ var doc = `{
                     "type": "string"
                 },
                 "users": {
+=======
+        "models.ProxyStatus": {
+            "type": "object",
+            "properties": {
+                "CDS": {
+                    "type": "string"
+                },
+                "EDS": {
+                    "type": "string"
+                },
+                "LDS": {
+                    "type": "string"
+                },
+                "RDS": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Reference": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Registry": {
+            "type": "object",
+            "properties": {
+                "creator": {
+                    "description": "创建者",
+                    "$ref": "#/definitions/models.User"
+                },
+                "creatorID": {
+                    "type": "integer"
+                },
+                "enableExtends": {
+                    "description": "是否启用扩展功能，支持harbor等高级仓库",
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "password": {
+                    "description": "密码",
+                    "type": "string"
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "description": "项目ID",
+                    "type": "integer"
+                },
+                "registryAddress": {
+                    "description": "仓库地址",
+                    "type": "string"
+                },
+                "registryName": {
+                    "description": "仓库名称",
+                    "type": "string"
+                },
+                "updateTime": {
+                    "description": "更新时间",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "用户名",
+                    "type": "string"
+                }
+            }
+        },
+        "models.Runtime": {
+            "type": "object",
+            "properties": {
+                "dashboardRefs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.DashboardRef"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ServiceOverview": {
+            "type": "object",
+            "properties": {
+                "additionalDetailSample": {
+                    "description": "Additional detail sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
+                    "$ref": "#/definitions/models.AdditionalItem"
+                },
+                "appLabel": {
+                    "description": "Has label app\nrequired: true\nexample: true",
+                    "type": "boolean"
+                },
+                "healthAnnotations": {
+                    "description": "Annotations of the service",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "istioReferences": {
+                    "description": "Istio References",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.IstioValidationKey"
+                    }
+                },
+                "istioSidecar": {
+                    "description": "Define if Pods related to this Service has an IstioSidecar deployed\nrequired: true\nexample: true",
+                    "type": "boolean"
+                },
+                "kialiWizard": {
+                    "description": "Kiali Wizard scenario, if any",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Labels for Service",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name of the Service\nrequired: true\nexample: reviews-v1",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace of the Service",
+                    "type": "string"
+                },
+                "selector": {
+                    "description": "Selector for Service",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "models.TenantResourceQuotaApply": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "配置内容",
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.User"
@@ -24859,8 +26990,12 @@ var doc = `{
                     "type": "string"
                 },
                 "tenant": {
+<<<<<<< HEAD
                     "type": "object",
                     "$ref": "#/definitions/models.Tenant"
+=======
+                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 1bb491d (✨ feat(observability): add environment info)
                 },
                 "tenantID": {
                     "description": "租户ID",
@@ -25072,40 +27207,120 @@ var doc = `{
         "models.Workload": {
             "type": "object",
             "properties": {
-                "clusterName": {
-                    "type": "string"
+                "additionalDetailSample": {
+                    "description": "Additional item sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
+                    "$ref": "#/definitions/models.AdditionalItem"
                 },
-                "color": {
-                    "description": "eg, yellow",
-                    "type": "string"
-                },
-                "conditions": {
-                    "description": "按容器名分组",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/models.Condition"
+                "additionalDetails": {
+                    "description": "Additional details to display, such as configured annotations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AdditionalItem"
                     }
                 },
-                "cpulimitStdvar": {
-                    "type": "number"
+                "appLabel": {
+                    "description": "Define if Pods related to this Workload has the label App\nrequired: true\nexample: true",
+                    "type": "boolean"
                 },
-                "createdAt": {
-                    "type": "string"
-                },
-                "id": {
+                "availableReplicas": {
+                    "description": "Number of available replicas\nrequired: true\nexample: 1",
                     "type": "integer"
                 },
-                "memoryLimitStdvar": {
-                    "type": "number"
+                "createdAt": {
+                    "description": "Creation timestamp (in RFC3339 format)\nrequired: true\nexample: 2018-07-31T12:24:17Z",
+                    "type": "string"
+                },
+                "currentReplicas": {
+                    "description": "Number of current replicas pods that matches controller selector labels\nrequired: true\nexample: 2",
+                    "type": "integer"
+                },
+                "dashboardAnnotations": {
+                    "description": "Dashboard annotations\nrequired: false",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "desiredReplicas": {
+                    "description": "Number of desired replicas defined by the user in the controller Spec\nrequired: true\nexample: 2",
+                    "type": "integer"
+                },
+                "healthAnnotations": {
+                    "description": "HealthAnnotations\nrequired: false",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "istioInjectionAnnotation": {
+                    "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
+                    "type": "boolean"
+                },
+                "istioReferences": {
+                    "description": "Istio References",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.IstioValidationKey"
+                    }
+                },
+                "istioSidecar": {
+                    "description": "Define if Pods related to this Workload has an IstioSidecar deployed\nrequired: true\nexample: true",
+                    "type": "boolean"
+                },
+                "labels": {
+                    "description": "Workload labels",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "name": {
+                    "description": "Name of the workload\nrequired: true\nexample: reviews-v1",
                     "type": "string"
                 },
-                "namespace": {
+                "podCount": {
+                    "description": "Number of current workload pods\nrequired: true\nexample: 1",
+                    "type": "integer"
+                },
+                "pods": {
+                    "description": "Pods bound to the workload",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Pod"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "Kubernetes ResourceVersion\nrequired: true\nexample: 192892127",
                     "type": "string"
+                },
+                "runtimes": {
+                    "description": "Runtimes and associated dashboards",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Runtime"
+                    }
+                },
+                "serviceAccountNames": {
+                    "description": "Names of the workload service accounts",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "services": {
+                    "description": "Services that match workload selector",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ServiceOverview"
+                    }
                 },
                 "type": {
+                    "description": "Type of the workload\nrequired: true\nexample: deployment",
                     "type": "string"
+                },
+                "versionLabel": {
+                    "description": "Define if Pods related to this Workload has the label Version\nrequired: true\nexample: true",
+                    "type": "boolean"
                 }
             }
         },

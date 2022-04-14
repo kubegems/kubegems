@@ -23,4 +23,6 @@ func (h *EnvironmentHandler) RegistRouter(rg *gin.RouterGroup) {
 
 	rg.POST("/environment/:environment_id/action/networkisolate", h.CheckByEnvironmentID, h.EnvironmentSwitch)
 	rg.GET("/environment/:environment_id/resources", h.CheckByEnvironmentID, h.GetEnvironmentResource)
+
+	rg.GET("/environment/:environment_id/observability", h.CheckByEnvironmentID, h.EnvironmentObservabilityDetails)
 }
