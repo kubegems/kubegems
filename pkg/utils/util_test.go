@@ -179,3 +179,36 @@ func TestDesEncryptor_DecryptBase64(t *testing.T) {
 		}
 	})
 }
+
+func TestConvertBytes(t *testing.T) {
+	type args struct {
+		bytes float64
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "1",
+			args: args{
+				bytes: 2347234,
+			},
+			want: "2.24MB",
+		},
+		{
+			name: "2",
+			args: args{
+				bytes: 1024000,
+			},
+			want: "1000KB",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ConvertBytes(tt.args.bytes); got != tt.want {
+				t.Errorf("ConvertBytes() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

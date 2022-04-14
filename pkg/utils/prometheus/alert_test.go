@@ -81,7 +81,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 										Labels: map[string]string{
 											AlertNameLabel:      "alert-1",
 											AlertNamespaceLabel: GlobalAlertNamespace,
-											severityLabel:       severityError,
+											SeverityLabel:       SeverityError,
 										},
 										Annotations: map[string]string{
 											exprJsonAnnotationKey: `{
@@ -123,7 +123,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				AlertLevels: []AlertLevel{{
 					CompareOp:    "==",
 					CompareValue: "0",
-					Severity:     severityError,
+					Severity:     SeverityError,
 				}},
 				Receivers: []Receiver{{Name: "receiver-1"}},
 				IsOpen:    true,

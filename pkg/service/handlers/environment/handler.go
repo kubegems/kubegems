@@ -7,22 +7,28 @@ import (
 	"strconv"
 	"time"
 
+	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/gems/v1beta1"
+	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 	"kubegems.io/pkg/log"
 	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/utils"
 	ut "kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -561,16 +567,16 @@ func (h *EnvironmentHandler) GetEnvironmentResource(c *gin.Context) {
 	handlers.OK(c, envREs)
 }
 
-// @Tags NetworkIsolated
-// @Summary 环境网络隔离开关
-// @Description 环境网络隔离开关
-// @Accept json
-// @Produce json
-// @Param environment_id path uint true "environment_id"
-// @Param param body handlers.IsolatedSwitch true "表单"
-// @Success 200 {object} handlers.ResponseStruct{Data=handlers.IsolatedSwitch} "object"
-// @Router /v1/environment/{environment_id}/action/networkisolate [post]
-// @Security JWT
+// @Tags         NetworkIsolated
+// @Summary      环境网络隔离开关
+// @Description  环境网络隔离开关
+// @Accept       json
+// @Produce      json
+// @Param        environment_id  path      uint                                                       true   "environment_id"
+// @Param        param           body      handlers.IsolatedSwitch                                true  "表单"
+// @Success      200             {object}  handlers.ResponseStruct{Data=handlers.IsolatedSwitch}  "object"
+// @Router       /v1/environment/{environment_id}/action/networkisolate [post]
+// @Security     JWT
 func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 	form := handlers.IsolatedSwitch{}
 	if err := c.BindJSON(&form); err != nil {
@@ -615,4 +621,193 @@ func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, tnetpol)
+}
+
+type EnvironmentObservabilityRet struct {
+	EnvironmentName string `json:"environmentName"`
+	ClusterName     string `json:"clusterName"`
+
+	Labels map[string]string `json:"labels"`
+
+	Monitoring  bool `json:"monitoring"`  // 是否启用监控
+	Logging     bool `json:"logging"`     // 是否启日志
+	ServiceMesh bool `json:"serviceMesh"` // 是否启用服务网格
+
+	ContainerRestartTotal int64 `json:"containerRestartTotal"`
+
+	CPU    string `json:"cpu"`
+	Memory string `json:"memory"`
+
+	MonitorCollectorCount int `json:"monitorCollectorCount"` // metrics采集器数量
+
+	AlertRuleCount     int            `json:"alertRuleCount"`   // 告警规则列表
+	AlertResourceMap   map[string]int `json:"alertResourceMap"` // 告警规则的资源map
+	ErrorAlertCount    int            `json:"errorAlertCount"`
+	CriticalAlertCount int            `json:"criticalAlertCount"`
+
+	LoggingCollectorCount int    `json:"loggingCollectorCount"`
+	ErrorLogCount         int64  `json:"errorLogCount"`
+	LogRate               string `json:"logRate"`
+}
+
+// @Tags         EnvironmentObservabilityDetails
+// @Summary      环境可观测性概览
+// @Description  环境可观测性概览
+// @Accept       json
+// @Produce      json
+// @Param        environment_id  path      uint                                                   true  "environment_id"
+// @Param        duration        query     string                                                     false  "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
+// @Success      200             {object}  handlers.ResponseStruct{Data=EnvironmentObservabilityRet}  "object"
+// @Router       /v1/environment/{environment_id}/observability [get]
+// @Security     JWT
+func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
+	env := models.Environment{}
+	if err := h.GetDB().Preload("Cluster").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	dur := c.DefaultQuery("duration", "1h")
+	ctx := c.Request.Context()
+	monitoropts := prometheus.MonitorOptions{}
+	h.DynamicConfig.Get(ctx, &monitoropts)
+	ret := EnvironmentObservabilityRet{
+		EnvironmentName: env.EnvironmentName,
+		ClusterName:     env.Cluster.ClusterName,
+	}
+	if err := h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		eg := errgroup.Group{}
+		// labels
+		eg.Go(func() error {
+			envObj := gemsv1beta1.Environment{}
+			if err := cli.Get(ctx, types.NamespacedName{Namespace: env.Namespace, Name: env.EnvironmentName}, &envObj); err != nil {
+				return err
+			}
+			ret.Labels = envObj.Labels
+			return nil
+		})
+
+		// obervability status
+		ret.Monitoring = true
+		ret.Logging = true
+		ret.ServiceMesh = env.VirtualSpaceID != nil
+
+		// contaienr restart
+		eg.Go(func() error {
+			containerRestart, err := cli.Extend().PrometheusVector(ctx,
+				fmt.Sprintf(`sum(increase(kube_pod_container_status_restarts_total{namespace="%s"}[%s]))`, env.Namespace, dur))
+			if err != nil {
+				return err
+			}
+			if containerRestart.Len() == 0 {
+				ret.ContainerRestartTotal = 0
+			} else {
+				ret.ContainerRestartTotal = int64(containerRestart[0].Value)
+			}
+			return nil
+		})
+
+		// cpu
+		eg.Go(func() error {
+			cpu, err := cli.Extend().PrometheusVector(ctx,
+				fmt.Sprintf(`round(gems_namespace_cpu_usage_cores{namespace="%s"}, 0.01)`, env.Namespace))
+			if err != nil {
+				return err
+			}
+			if cpu.Len() == 0 {
+				ret.CPU = ""
+			} else {
+				ret.CPU = fmt.Sprintf("%.2fCore", cpu[0].Value)
+			}
+			return nil
+		})
+
+		// memory
+		eg.Go(func() error {
+			memory, err := cli.Extend().PrometheusVector(ctx,
+				fmt.Sprintf(`gems_namespace_memory_usage_bytes{namespace="%s"}`, env.Namespace))
+			if err != nil {
+				return err
+			}
+			if memory.Len() == 0 {
+				ret.Memory = ""
+			} else {
+				ret.Memory = utils.ConvertBytes(float64(memory[0].Value))
+			}
+			return nil
+		})
+
+		// metrics
+		eg.Go(func() error {
+			metrics, err := cli.Extend().ListMetricTargets(ctx, env.Namespace)
+			if err != nil {
+				return err
+			}
+			ret.MonitorCollectorCount = len(metrics)
+			return nil
+		})
+
+		// alert rules
+		eg.Go(func() error {
+			promeAlertRules, err := cli.Extend().GetPromeAlertRules(ctx, "")
+			if err != nil {
+				return err
+			}
+
+			raw, err := cli.Extend().GetRawAlertResource(ctx, env.Namespace, &monitoropts)
+			if err != nil {
+				return err
+			}
+			alertrules, err := raw.ToAlerts(false)
+			if err != nil {
+				return err
+			}
+			for index := range alertrules {
+				key := prometheus.RealTimeAlertKey(alertrules[index].Namespace, alertrules[index].Name)
+				if promRule, ok := promeAlertRules[key]; ok {
+					alertrules[index].State = promRule.State
+					for _, v := range promRule.Alerts {
+						if v.Labels[prometheus.SeverityLabel] == prometheus.SeverityError {
+							ret.ErrorAlertCount++
+						} else if v.Labels[prometheus.SeverityLabel] == prometheus.SeverityCritical {
+							ret.CriticalAlertCount++
+						}
+					}
+				} else {
+					alertrules[index].State = "inactive"
+				}
+			}
+			alertResourceMap := make(map[string]int)
+			for _, v := range alertrules {
+				if count, ok := alertResourceMap[v.Resource]; ok {
+					count++
+					alertResourceMap[v.Resource] = count
+				} else {
+					alertResourceMap[v.Resource] = 1
+				}
+			}
+
+			ret.AlertRuleCount = len(alertrules)
+			ret.AlertResourceMap = alertResourceMap
+			return nil
+		})
+
+		eg.Go(func() error {
+			flowList := loggingv1beta1.FlowList{}
+			if err := cli.List(ctx, &flowList, client.InNamespace(env.Namespace)); err != nil {
+				return err
+			}
+			ret.LoggingCollectorCount = len(flowList.Items)
+			return nil
+		})
+
+		// TODO:
+		ret.ErrorLogCount = 0
+		ret.LogRate = "10/min"
+		return eg.Wait()
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, ret)
 }
