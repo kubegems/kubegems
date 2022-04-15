@@ -3,6 +3,7 @@ package webhooks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	v1 "k8s.io/api/admission/v1"
@@ -22,7 +23,7 @@ func (r *ResourceMutate) MutateTenantGateway(ctx context.Context, req admission.
 
 	switch req.Operation {
 	case v1.Create, v1.Update:
-		tgDefault(tg)
+		tgDefault(tg, r.Repo)
 		modifyed, _ := json.Marshal(tg)
 		return admission.PatchResponseFromRaw(req.Object.Raw, modifyed)
 	default:
@@ -30,7 +31,7 @@ func (r *ResourceMutate) MutateTenantGateway(ctx context.Context, req admission.
 	}
 }
 
-func tgDefault(tg *gemsv1beta1.TenantGateway) {
+func tgDefault(tg *gemsv1beta1.TenantGateway, repo string) {
 	defaultReplicas := int32(1)
 	if tg.Labels == nil {
 		tg.Labels = make(map[string]string)
@@ -75,7 +76,7 @@ func tgDefault(tg *gemsv1beta1.TenantGateway) {
 	}
 
 	if tg.Spec.Image.Repository == "" {
-		tg.Spec.Image.Repository = "kubegems/nginx-ingress"
+		tg.Spec.Image.Repository = fmt.Sprintf("%s/%s", repo, "nginx-ingress")
 	}
 	if tg.Spec.Image.Tag == "" {
 		tg.Spec.Image.Tag = "1.11.1"
