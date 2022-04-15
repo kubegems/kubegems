@@ -13,21 +13,12 @@ spec:
   path: local-path-provisioner-0.0.22/deploy/chart/local-path-provisioner
   version: 0.0.22
   values:
-    configmap:
-      helperPod: |-
-        apiVersion: v1
-        kind: Pod
-        metadata:
-          name: helper-pod
-        spec:
-          containers:
-          - name: helper-pod
-            {{- if .Values.image.registry }}
-            image: {{ printf "%s/%s/busybox" .Values.image.registry .Values.image.repository }}
-            {{- else }}
-            image: busybox
-            {{- end }}
-            imagePullPolicy: IfNotPresent
+    storageClass:
+      provisionerName: rancher.io/local-path
+    nodePathMap:
+    - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+      paths:
+        - /data
     image:
       {{- if .Values.image.registry }}
       # repository: rancher/local-path-provisioner
