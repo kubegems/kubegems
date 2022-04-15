@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -49,12 +50,13 @@ var (
 // @Description  Tenant列表
 // @Accept       json
 // @Produce      json
-// @Param        TenantName  query     string                                                                 false  "TenantName"
-// @Param        preload     query     string                                                                 false  "choices ResourceQuotas,Users,Projects"
-// @Param        page        query     int                                                                    false  "page"
-// @Param        size        query     int                                                                    false  "page"
-// @Param        search      query     string                                                                 false  "search in (TenantName,Remark)"
-// @Success      200         {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Tenant}}  "Tenant"
+// @Param        TenantName                     query     string                                                                 false  "TenantName"
+// @Param        preload                        query     string                                                                 false  "choices ResourceQuotas,Users,Projects"
+// @Param        page                           query     int                                                                    false  "page"
+// @Param        size                           query     int                                                                    false  "page"
+// @Param        search                         query     string                                                                 false  "search in (TenantName,Remark)"
+// @Param        containAllocatedResourcequota  query     bool                                                                   false  "是否包含已分配的resourcequota"
+// @Success      200                            {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Tenant}}  "Tenant"
 // @Router       /v1/tenant [get]
 // @Security     JWT
 func (h *TenantHandler) ListTenant(c *gin.Context) {
@@ -75,7 +77,74 @@ func (h *TenantHandler) ListTenant(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, handlers.Page(total, list, int64(page), int64(size)))
+
+	pagedata := handlers.Page(total, list, int64(page), int64(size))
+	if ok, _ := strconv.ParseBool(c.Query("containAllocatedResourcequota")); ok {
+		tids := []uint{}
+		tenants := pagedata.List.([]models.Tenant)
+		for i := range tenants {
+			tids = append(tids, tenants[i].ID)
+		}
+
+		type tenantallocated struct {
+			EnvironmentID uint
+			TenantID      uint
+			ResourceQuota datatypes.JSON
+		}
+		allocated := []tenantallocated{}
+		if err := h.GetDB().Raw(`select environments.id as environment_id, tenants.id as tenant_id, environments.resource_quota
+		from environments left join projects on environments.project_id = projects.id
+				left join tenants on projects.tenant_id = tenants.id where tenant_id in ?`, tids).Scan(&allocated).Error; err != nil {
+			handlers.NotOK(c, err)
+			return
+		}
+
+		tenantAllocatedMap := map[uint]v1.ResourceList{}
+		// for
+		for _, v := range allocated {
+			envquota := v1.ResourceList{}
+			if err := json.Unmarshal(v.ResourceQuota, &envquota); err != nil {
+				log.Error(err, "unmarshal env quota")
+			}
+			if quota, ok := tenantAllocatedMap[v.TenantID]; ok {
+				cpuReq := quota[v1.ResourceRequestsCPU]
+				cpuReq.Add(envquota[v1.ResourceRequestsCPU])
+				quota[v1.ResourceRequestsCPU] = cpuReq
+
+				cpuLim := quota[v1.ResourceLimitsCPU]
+				cpuLim.Add(envquota[v1.ResourceLimitsCPU])
+				quota[v1.ResourceLimitsCPU] = cpuLim
+
+				memReq := quota[v1.ResourceRequestsMemory]
+				memReq.Add(envquota[v1.ResourceRequestsMemory])
+				quota[v1.ResourceRequestsMemory] = memReq
+
+				memLim := quota[v1.ResourceLimitsMemory]
+				memLim.Add(envquota[v1.ResourceLimitsMemory])
+				quota[v1.ResourceLimitsMemory] = memLim
+
+				storageReq := quota[v1.ResourceRequestsStorage]
+				storageReq.Add(envquota[v1.ResourceRequestsStorage])
+				quota[v1.ResourceRequestsStorage] = storageReq
+
+				pods := quota["count/pods"]
+				pods.Add(envquota["count/pods"])
+				quota["count/pods"] = pods
+
+				tenantAllocatedMap[v.TenantID] = quota
+			} else {
+				tenantAllocatedMap[v.TenantID] = envquota
+			}
+		}
+
+		for i := range tenants {
+			tenants[i].AllocatedResourcequota = tenantAllocatedMap[tenants[i].ID]
+		}
+
+		pagedata.List = tenants
+	}
+
+	handlers.OK(c, pagedata)
 }
 
 // RetrieveTenant Tenant详情
