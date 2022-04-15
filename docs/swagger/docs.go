@@ -9855,6 +9855,81 @@ var doc = `{
                 }
             }
         },
+        "/v1/proxy/cluster/{cluster}/custom/loki/v1/query": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Loki Query",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.V1"
+                ],
+                "summary": "Loki Query",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The max number of entries to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "loki query language",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The evaluation time for the query as a nanosecond Unix epoch or another supported format. Defaults to now",
+                        "name": "time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The order to all results",
+                        "name": "direction",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/proxy/cluster/{cluster}/custom/loki/v1/queryrange": {
             "get": {
                 "security": [
@@ -13353,6 +13428,12 @@ var doc = `{
                         "type": "string",
                         "description": "search in (TenantName,Remark)",
                         "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否包含已分配的resourcequota",
+                        "name": "containAllocatedResourcequota",
                         "in": "query"
                     }
                 ],
@@ -22774,6 +22855,10 @@ var doc = `{
                 "errorLogCount": {
                     "type": "integer"
                 },
+                "eventCount": {
+                    "description": "事件数量",
+                    "type": "integer"
+                },
                 "labels": {
                     "type": "object",
                     "additionalProperties": {
@@ -22800,6 +22885,9 @@ var doc = `{
                 "monitoring": {
                     "description": "是否启用监控",
                     "type": "boolean"
+                },
+                "namespace": {
+                    "type": "string"
                 },
                 "serviceMesh": {
                     "description": "是否启用服务网格",
@@ -24307,151 +24395,6 @@ var doc = `{
                 }
             }
         },
-        "kubegems.io_pkg_service_models.Application": {
-            "type": "object",
-            "properties": {
-                "applicationName": {
-                    "description": "应用名字",
-                    "type": "string"
-                },
-                "createdAt": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "creator": {
-                    "description": "创建人",
-                    "type": "string"
-                },
-                "environment": {
-                    "description": "关联的环境",
-                    "$ref": "#/definitions/kubegems.io_pkg_service_models.Environment"
-                },
-                "environmentID": {
-                    "description": "关联的环境",
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "images": {
-                    "description": "环境下的limitrage",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "kind": {
-                    "description": "类型",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "环境下的limitrage",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "project": {
-                    "description": "所属项",
-                    "$ref": "#/definitions/models.Project"
-                },
-                "projectID": {
-                    "description": "所属项目ID",
-                    "type": "integer"
-                },
-                "remark": {
-                    "description": "备注",
-                    "type": "string"
-                }
-            }
-        },
-        "kubegems.io_pkg_service_models.Environment": {
-            "type": "object",
-            "properties": {
-                "applications": {
-                    "description": "关联的应用",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/kubegems.io_pkg_service_models.Application"
-                    }
-                },
-                "cluster": {
-                    "description": "关联的集群",
-                    "$ref": "#/definitions/models.Cluster"
-                },
-                "clusterID": {
-                    "description": "所属集群ID",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "创建者",
-                    "$ref": "#/definitions/models.User"
-                },
-                "creatorID": {
-                    "description": "创建人ID",
-                    "type": "integer"
-                },
-                "deletePolicy": {
-                    "description": "删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)",
-                    "type": "string"
-                },
-                "environmentName": {
-                    "description": "环境名字",
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "limitRange": {
-                    "description": "环境下的limitrage",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "metaType": {
-                    "description": "元类型(开发(dev)，测试(test)，生产(prod))等选项之一",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "环境关联的namespace",
-                    "type": "string"
-                },
-                "project": {
-                    "description": "所属项目",
-                    "$ref": "#/definitions/models.Project"
-                },
-                "projectID": {
-                    "description": "所属项目ID",
-                    "type": "integer"
-                },
-                "remark": {
-                    "description": "备注",
-                    "type": "string"
-                },
-                "resourceQuota": {
-                    "description": "环境资源限制(这个会和namespace下的ResourceQuota对等)",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "users": {
-                    "description": "关联的用户",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
-                },
-                "virtualSpace": {
-                    "$ref": "#/definitions/kubegems.io_pkg_service_models.VirtualSpace"
-                },
-                "virtualSpaceID": {
-                    "description": "虚拟空间",
-                    "type": "integer"
-                }
-            }
-        },
         "kubegems.io_pkg_service_models.SystemRole": {
             "type": "object",
             "required": [
@@ -24480,6 +24423,9 @@ var doc = `{
         "kubegems.io_pkg_service_models.Tenant": {
             "type": "object",
             "properties": {
+                "allocatedResourcequota": {
+                    "$ref": "#/definitions/v1.ResourceList"
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -24535,7 +24481,7 @@ var doc = `{
                     "type": "integer"
                 },
                 "content": {
-                    "description": "配置内容",
+                    "description": "项目资源限制",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -24554,160 +24500,6 @@ var doc = `{
                     "$ref": "#/definitions/models.TenantResourceQuotaApply"
                 },
                 "tenantResourceQuotaApplyID": {
-                    "type": "integer"
-                }
-            }
-        },
-        "kubegems.io_pkg_service_models.VirtualSpace": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "type": "string"
-                },
-                "environments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/kubegems.io_pkg_v2_models.Environment"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isActive": {
-                    "type": "boolean"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
-                },
-                "virtualSpaceName": {
-                    "type": "string"
-                }
-            }
-        },
-        "kubegems.io_pkg_v2_models.Application": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "creator": {
-                    "type": "string"
-                },
-                "environment": {
-                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.Environment"
-                },
-                "environmentID": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "images": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "kind": {
-                    "type": "string"
-                },
-                "labels": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "project": {
-                    "$ref": "#/definitions/models.Project"
-                },
-                "projectID": {
-                    "type": "integer"
-                },
-                "remark": {
-                    "type": "string"
-                }
-            }
-        },
-        "kubegems.io_pkg_v2_models.Environment": {
-            "type": "object",
-            "properties": {
-                "applications": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/kubegems.io_pkg_v2_models.Application"
-                    }
-                },
-                "cluster": {
-                    "$ref": "#/definitions/models.Cluster"
-                },
-                "clusterID": {
-                    "type": "integer"
-                },
-                "creator": {
-                    "$ref": "#/definitions/models.User"
-                },
-                "creatorID": {
-                    "type": "integer"
-                },
-                "deletePolicy": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "limitRange": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "metaType": {
-                    "description": "MetaTpe (dev, prod, test, pub ...)",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "project": {
-                    "$ref": "#/definitions/models.Project"
-                },
-                "projectID": {
-                    "type": "integer"
-                },
-                "remark": {
-                    "type": "string"
-                },
-                "resourceQuota": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
-                },
-                "virtualSpace": {
-                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.VirtualSpace"
-                },
-                "virtualSpaceID": {
                     "type": "integer"
                 }
             }
@@ -24790,6 +24582,7 @@ var doc = `{
                     "type": "integer"
                 },
                 "content": {
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -24806,6 +24599,7 @@ var doc = `{
                 }
             }
         },
+<<<<<<< HEAD
         "kubegems.io_pkg_v2_models.VirtualSpace": {
             "type": "object",
             "properties": {
@@ -24821,6 +24615,13 @@ var doc = `{
                     "type": "string"
                 },
                 "tenantID": {
+=======
+        "kubegems.io_pkg_v2_services_handlers.PageData": {
+            "type": "object",
+            "properties": {
+                "list": {},
+                "page": {
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     "type": "integer"
                 },
                 "tenantName": {
@@ -25711,7 +25512,10 @@ var doc = `{
                 },
                 "environment": {
                     "description": "关联的环境",
+<<<<<<< HEAD
                     "type": "object",
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     "$ref": "#/definitions/models.Environment"
                 },
                 "environmentID": {
@@ -25722,15 +25526,24 @@ var doc = `{
                     "type": "integer"
                 },
                 "images": {
+<<<<<<< HEAD
                     "description": "镜像,逗号分割",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
+=======
+                    "description": "项目资源限制",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                 },
                 "kind": {
                     "description": "类型",
                     "type": "string"
                 },
                 "labels": {
+<<<<<<< HEAD
                     "description": "Label",
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
@@ -25738,6 +25551,16 @@ var doc = `{
                 "project": {
                     "description": "所属项",
                     "type": "object",
+=======
+                    "description": "项目资源限制",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "project": {
+                    "description": "所属项",
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     "$ref": "#/definitions/models.Project"
                 },
                 "projectID": {
@@ -25837,36 +25660,30 @@ var doc = `{
                 }
             }
         },
-        "models.CVEAllowlist": {
+        "models.CPUMemoryStatus": {
             "type": "object",
             "properties": {
-                "creationTime": {
+                "currentLimit": {
+                    "description": "带单位",
                     "type": "string"
                 },
-                "expires_at": {
-                    "type": "integer"
+                "currentRate": {
+                    "type": "number"
                 },
-                "id": {
-                    "type": "integer"
-                },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.CVEAllowlistItem"
-                    }
-                },
-                "project_id": {
-                    "type": "integer"
-                },
-                "updateTime": {
+                "status": {
+                    "description": "扩容或缩容",
                     "type": "string"
-                }
-            }
-        },
-        "models.CVEAllowlistItem": {
-            "type": "object",
-            "properties": {
-                "cve_id": {
+                },
+                "suggestLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                },
+                "suggestMaxLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                },
+                "suggestMinLimit": {
+                    "description": "带单位",
                     "type": "string"
                 }
             }
@@ -25947,27 +25764,48 @@ var doc = `{
                 "applications": {
 =======
             "required": [
+                "clusterName",
+                "defaultStorageClass",
+                "imageRepo",
                 "kubeConfig",
-                "name"
+                "vendor"
             ],
             "properties": {
                 "agentAddr": {
+                    "description": "if empty, using apiserver proxy",
                     "type": "string"
                 },
                 "apiserver": {
+                    "description": "APIServer地址 根据kubeconfig添加后，自动填充",
+                    "type": "string"
+                },
+                "clusterName": {
                     "type": "string"
                 },
                 "clusterResourceQuota": {
+                    "description": "环境下的limitrage",
                     "type": "array",
                     "items": {
                         "type": "integer"
                     }
                 },
+                "defaultStorageClass": {
+                    "description": "DefaultStorageClass 默认storageclass, 默认local-path",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "soft delete",
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
                 "environments": {
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
                     "type": "array",
                     "items": {
+<<<<<<< HEAD
                         "$ref": "#/definitions/models.Application"
+=======
+                        "$ref": "#/definitions/models.Environment"
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     }
                 },
                 "cluster": {
@@ -25991,6 +25829,7 @@ var doc = `{
                 "id": {
                     "type": "integer"
                 },
+<<<<<<< HEAD
                 "limitRange": {
                     "type": "object",
                     "$ref": "#/definitions/datatypes.JSON"
@@ -25999,22 +25838,31 @@ var doc = `{
                     "description": "MetaTpe (dev, prod, test, pub ...)",
                     "type": "string"
 =======
+=======
+                "imageRepo": {
+                    "description": "ImageRepo 安装kubegems核心组件时使用的镜像仓库",
+                    "type": "string"
+                },
+                "installNamespace": {
+                    "description": "agent service namespace",
+                    "type": "string"
+                },
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                 "kubeConfig": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     }
                 },
-                "name": {
-                    "type": "string"
-                },
                 "oversoldConfig": {
+                    "description": "installer plugins Values",
                     "type": "array",
                     "items": {
                         "type": "integer"
                     }
                 },
                 "primary": {
+                    "description": "是否主集群",
                     "type": "boolean"
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
                 },
@@ -26042,6 +25890,7 @@ var doc = `{
                 "users": {
                     "type": "array",
                     "items": {
+<<<<<<< HEAD
                         "$ref": "#/definitions/models.User"
                     }
                 },
@@ -26053,36 +25902,139 @@ var doc = `{
                     "type": "integer"
 =======
                 "version": {
+=======
+                        "$ref": "#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota"
+                    }
+                },
+                "values": {
+                    "description": "installer plugins Values",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "vendor": {
+                    "description": "Vendor 集群提供商(gke tke ack selfhosted)",
+                    "type": "string",
+                    "enum": [
+                        "selfhosted",
+                        "gke",
+                        "ack",
+                        "tke"
+                    ]
+                },
+                "version": {
+                    "description": "apiserver version",
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     "type": "string"
                 }
             }
         },
-        "models.ContainerInfo": {
+        "models.Condition": {
             "type": "object",
             "properties": {
-                "image": {
-                    "type": "string"
+                "CPUStatus": {
+                    "$ref": "#/definitions/models.CPUMemoryStatus"
                 },
-                "isProxy": {
-                    "type": "boolean"
+                "MemoryStatus": {
+                    "$ref": "#/definitions/models.CPUMemoryStatus"
                 },
-                "isReady": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
+                "pods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
-        "models.DashboardRef": {
+        "models.Environment": {
             "type": "object",
             "properties": {
-                "template": {
+                "applications": {
+                    "description": "关联的应用",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Application"
+                    }
+                },
+                "cluster": {
+                    "description": "关联的集群",
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "description": "所属集群ID",
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "创建者",
+                    "$ref": "#/definitions/models.User"
+                },
+                "creatorID": {
+                    "description": "创建人ID",
+                    "type": "integer"
+                },
+                "deletePolicy": {
+                    "description": "删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)",
                     "type": "string"
                 },
-                "title": {
+                "environmentName": {
+                    "description": "环境名字",
                     "type": "string"
+<<<<<<< HEAD
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
+=======
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "limitRange": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "metaType": {
+                    "description": "元类型(开发(dev)，测试(test)，生产(prod))等选项之一",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "环境关联的namespace",
+                    "type": "string"
+                },
+                "project": {
+                    "description": "所属项目",
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "description": "所属项目ID",
+                    "type": "integer"
+                },
+                "remark": {
+                    "description": "备注",
+                    "type": "string"
+                },
+                "resourceQuota": {
+                    "description": "环境资源限制(这个会和namespace下的ResourceQuota对等)",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "users": {
+                    "description": "关联的用户",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "virtualSpace": {
+                    "$ref": "#/definitions/models.VirtualSpace"
+                },
+                "virtualSpaceID": {
+                    "description": "虚拟空间",
+                    "type": "integer"
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                 }
             }
         },
@@ -26157,7 +26109,10 @@ var doc = `{
                     "type": "integer"
                 },
                 "omitempty": {
+<<<<<<< HEAD
                     "type": "object",
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     "$ref": "#/definitions/models.Environment"
                 },
                 "role": {
@@ -26451,32 +26406,28 @@ var doc = `{
                 }
             }
         },
-        "models.Pod": {
+        "models.Project": {
             "type": "object",
             "properties": {
-                "annotations": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "appLabel": {
-                    "type": "boolean"
-                },
-                "containers": {
+                "applications": {
                     "type": "array",
                     "items": {
+<<<<<<< HEAD
 <<<<<<< HEAD
                         "$ref": "#/definitions/models.Application"
 =======
                         "$ref": "#/definitions/models.ContainerInfo"
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
+=======
+                        "$ref": "#/definitions/models.Application"
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     }
                 },
                 "createdAt": {
                     "description": "创建时间",
                     "type": "string"
                 },
+<<<<<<< HEAD
                 "createdBy": {
                     "type": "array",
                     "items": {
@@ -26494,17 +26445,15 @@ var doc = `{
                     }
                 },
                 "istioInitContainers": {
+=======
+                "environments": {
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.ContainerInfo"
+                        "$ref": "#/definitions/models.Environment"
                     }
                 },
-                "labels": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
+<<<<<<< HEAD
                 "projectAlias": {
                     "description": "项目别名",
                     "type": "string"
@@ -26545,36 +26494,37 @@ var doc = `{
                 },
                 "status": {
                     "type": "string"
-                },
-                "statusMessage": {
-                    "type": "string"
-                },
-                "statusReason": {
-                    "type": "string"
-                },
-                "versionLabel": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "models.Project": {
-            "type": "object",
-            "properties": {
-                "chart_count": {
+=======
+                "id": {
                     "type": "integer"
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                 },
-                "creation_time": {
+                "projectAlias": {
+                    "description": "项目别名",
                     "type": "string"
                 },
-                "current_user_role_id": {
-                    "type": "integer"
+                "projectName": {
+                    "description": "项目名字",
+                    "type": "string"
                 },
-                "current_user_role_ids": {
+                "registries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Registry"
+                    }
+                },
+                "remark": {
+                    "description": "项目备注",
+                    "type": "string"
+                },
+                "resourceQuota": {
+                    "description": "项目资源限制",
                     "type": "array",
                     "items": {
                         "type": "integer"
                     }
                 },
+<<<<<<< HEAD
                 "cve_allowlist": {
                     "$ref": "#/definitions/models.CVEAllowlist"
                 },
@@ -26602,12 +26552,20 @@ var doc = `{
                 },
                 "registry_id": {
                     "type": "integer"
+=======
+                "tenant": {
+                    "$ref": "#/definitions/kubegems.io_pkg_v2_models.Tenant"
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                 },
-                "repo_count": {
+                "tenantID": {
+                    "description": "所属的租户ID",
                     "type": "integer"
                 },
-                "update_time": {
-                    "type": "string"
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
                 }
             }
         },
@@ -26644,6 +26602,7 @@ var doc = `{
                 }
             }
         },
+<<<<<<< HEAD
 <<<<<<< HEAD
         "models.Registry": {
             "type": "object",
@@ -26741,6 +26700,8 @@ var doc = `{
                 }
             }
         },
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
         "models.Registry": {
             "type": "object",
             "properties": {
@@ -26790,83 +26751,16 @@ var doc = `{
                 }
             }
         },
-        "models.Runtime": {
-            "type": "object",
-            "properties": {
-                "dashboardRefs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.DashboardRef"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ServiceOverview": {
-            "type": "object",
-            "properties": {
-                "additionalDetailSample": {
-                    "description": "Additional detail sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
-                    "$ref": "#/definitions/models.AdditionalItem"
-                },
-                "appLabel": {
-                    "description": "Has label app\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "healthAnnotations": {
-                    "description": "Annotations of the service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "istioReferences": {
-                    "description": "Istio References",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IstioValidationKey"
-                    }
-                },
-                "istioSidecar": {
-                    "description": "Define if Pods related to this Service has an IstioSidecar deployed\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "kialiWizard": {
-                    "description": "Kiali Wizard scenario, if any",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "Labels for Service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "Name of the Service\nrequired: true\nexample: reviews-v1",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace of the Service",
-                    "type": "string"
-                },
-                "selector": {
-                    "description": "Selector for Service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "models.TenantResourceQuotaApply": {
             "type": "object",
             "properties": {
                 "content": {
+<<<<<<< HEAD
                     "description": "配置内容",
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
+=======
+                    "description": "项目资源限制",
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.User"
@@ -27175,6 +27069,41 @@ var doc = `{
                 }
             }
         },
+        "models.VirtualSpace": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "environments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Environment"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "virtualSpaceName": {
+                    "type": "string"
+                }
+            }
+        },
         "models.VirtualSpaceUserRels": {
             "type": "object",
             "required": [
@@ -27196,7 +27125,10 @@ var doc = `{
                     "type": "integer"
                 },
                 "virtualSpace": {
+<<<<<<< HEAD
                     "type": "object",
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
                     "$ref": "#/definitions/models.VirtualSpace"
                 },
                 "virtualSpaceID": {
@@ -27207,120 +27139,40 @@ var doc = `{
         "models.Workload": {
             "type": "object",
             "properties": {
-                "additionalDetailSample": {
-                    "description": "Additional item sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
-                    "$ref": "#/definitions/models.AdditionalItem"
+                "clusterName": {
+                    "type": "string"
                 },
-                "additionalDetails": {
-                    "description": "Additional details to display, such as configured annotations",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.AdditionalItem"
+                "color": {
+                    "description": "eg, yellow",
+                    "type": "string"
+                },
+                "conditions": {
+                    "description": "按容器名分组",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Condition"
                     }
                 },
-                "appLabel": {
-                    "description": "Define if Pods related to this Workload has the label App\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "availableReplicas": {
-                    "description": "Number of available replicas\nrequired: true\nexample: 1",
-                    "type": "integer"
+                "cpulimitStdvar": {
+                    "type": "number"
                 },
                 "createdAt": {
-                    "description": "Creation timestamp (in RFC3339 format)\nrequired: true\nexample: 2018-07-31T12:24:17Z",
                     "type": "string"
                 },
-                "currentReplicas": {
-                    "description": "Number of current replicas pods that matches controller selector labels\nrequired: true\nexample: 2",
+                "id": {
                     "type": "integer"
                 },
-                "dashboardAnnotations": {
-                    "description": "Dashboard annotations\nrequired: false",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "desiredReplicas": {
-                    "description": "Number of desired replicas defined by the user in the controller Spec\nrequired: true\nexample: 2",
-                    "type": "integer"
-                },
-                "healthAnnotations": {
-                    "description": "HealthAnnotations\nrequired: false",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "istioInjectionAnnotation": {
-                    "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
-                    "type": "boolean"
-                },
-                "istioReferences": {
-                    "description": "Istio References",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IstioValidationKey"
-                    }
-                },
-                "istioSidecar": {
-                    "description": "Define if Pods related to this Workload has an IstioSidecar deployed\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "labels": {
-                    "description": "Workload labels",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                "memoryLimitStdvar": {
+                    "type": "number"
                 },
                 "name": {
-                    "description": "Name of the workload\nrequired: true\nexample: reviews-v1",
                     "type": "string"
                 },
-                "podCount": {
-                    "description": "Number of current workload pods\nrequired: true\nexample: 1",
-                    "type": "integer"
-                },
-                "pods": {
-                    "description": "Pods bound to the workload",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Pod"
-                    }
-                },
-                "resourceVersion": {
-                    "description": "Kubernetes ResourceVersion\nrequired: true\nexample: 192892127",
+                "namespace": {
                     "type": "string"
-                },
-                "runtimes": {
-                    "description": "Runtimes and associated dashboards",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Runtime"
-                    }
-                },
-                "serviceAccountNames": {
-                    "description": "Names of the workload service accounts",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "services": {
-                    "description": "Services that match workload selector",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ServiceOverview"
-                    }
                 },
                 "type": {
-                    "description": "Type of the workload\nrequired: true\nexample: deployment",
                     "type": "string"
-                },
-                "versionLabel": {
-                    "description": "Define if Pods related to this Workload has the label Version\nrequired: true\nexample: true",
-                    "type": "boolean"
                 }
             }
         },
