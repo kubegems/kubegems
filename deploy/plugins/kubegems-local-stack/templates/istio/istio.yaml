@@ -13,6 +13,9 @@ spec:
   version: {{ .Values.istio.kialiVersion }}  # update to related version when istio version changed
   # see: https://github.com/istio/istio/blob/master/manifests/addons/values-kiali.yaml
   values:
+    server:
+      # we using kiali after our agent proxy
+      web_root: /api/v1/service-proxy/cluster/{{ .Values.clusterName }}/namespace/{{ .Values.istio.namespace }}/service/kiali/port/20001/kiali
     auth:
       strategy: anonymous
     deployment:

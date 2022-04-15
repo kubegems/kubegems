@@ -9,10 +9,11 @@ metadata:
   name: mysql
   namespace: kubegems
 spec:
+  enabled: true
   kind: helm
   installNamespace: kubegems
   repo: https://charts.bitnami.com/bitnami
-  enabled: true
+  version: 8.9.0
 ---
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
@@ -20,8 +21,8 @@ metadata:
   name: kubegems
   namespace: kubegems
 spec:
-  kind: helm
   enabled: true
+  kind: helm
   installNamespace: kubegems
   values:
     mysql:
