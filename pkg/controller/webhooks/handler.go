@@ -106,6 +106,7 @@ type ResourceMutate struct {
 	Client  client.Client
 	decoder *admission.Decoder
 	Log     logr.Logger
+	Repo    string
 }
 
 type LabelInjectorMutate struct {
@@ -128,8 +129,8 @@ func GetLabelInjectorMutateHandler(client *client.Client, log *logr.Logger) *web
 	return &webhook.Admission{Handler: &LabelInjectorMutate{Client: *client, Log: *log}}
 }
 
-func GetMutateHandler(client *client.Client, log *logr.Logger) *webhook.Admission {
-	return &webhook.Admission{Handler: &ResourceMutate{Client: *client, Log: *log}}
+func GetMutateHandler(client *client.Client, log *logr.Logger, repo string) *webhook.Admission {
+	return &webhook.Admission{Handler: &ResourceMutate{Client: *client, Log: *log, Repo: repo}}
 }
 
 func GetValidateHandler(client *client.Client, log *logr.Logger) *webhook.Admission {
