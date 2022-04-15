@@ -32,7 +32,7 @@ func (h *LokiHandler) _http(path string, method string, params map[string]string
 	paramStr := _query(params)
 	requestData, _ := json.Marshal(data)
 	url := fmt.Sprintf("%s%s?%s", h.Server, path, paramStr)
-	log.WithField("h", "loki").Infof("http request to: %v", url)
+	log.Debugf("http request to: %v", url)
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(requestData))
 	if err != nil {
 		return nil, fmt.Errorf("初始化 requests 错误 %v", err)
@@ -55,6 +55,40 @@ func (h *LokiHandler) _http(path string, method string, params map[string]string
 
 type LokiHandler struct {
 	Server string
+}
+
+// @Tags         Agent.V1
+// @Summary      Loki Query
+// @Description  Loki Query
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true   "cluster"
+// @Param        limit      query     string                                false  "The max number of entries to return"
+// @Param        query      query     string                                true   "loki query language"
+// @Param        time       query     int                                   false  "The evaluation time for the query as a nanosecond Unix epoch or another supported format. Defaults to now"
+// @Param        direction  query     string                                true   "The order to all results"
+// @Success      200        {object}  handlers.ResponseStruct{Data=object}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/loki/v1/query [get]
+// @Security     JWT
+func (h *LokiHandler) Query(c *gin.Context) {
+	var data loki.QueryRangeParam
+	if err := c.ShouldBindQuery(&data); err != nil {
+		NotOK(c, err)
+		return
+	}
+
+	data.Query, _ = url.QueryUnescape(data.Query)
+	body, err := h._http("/loki/api/v1/query", "GET", data.ToMap(), nil)
+	if err != nil {
+		NotOK(c, fmt.Errorf("请求错误 %v", err))
+		return
+	}
+	res := loki.QueryResponse{}
+	if err := json.Unmarshal([]byte(body), &res); err != nil {
+		NotOK(c, fmt.Errorf("解析loki数据错误 err=%v,data=%v", err.Error(), string(body)))
+		return
+	}
+	OK(c, res.Data)
 }
 
 // @Tags         Agent.V1

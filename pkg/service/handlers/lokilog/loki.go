@@ -11,6 +11,14 @@ import (
 
 type LokiCli = LogHandler
 
+func (c LokiCli) LokiQuery(ctx context.Context, cluster string, query map[string]string) (*loki.QueryResponseData, error) {
+	url := formatURL(nil, nil, query, "/custom/loki/v1/query")
+	ret := &loki.QueryResponseData{}
+
+	err := c.query(ctx, cluster, url, ret)
+	return ret, err
+}
+
 func (c LokiCli) LokiQueryRange(ctx context.Context, cluster string, query map[string]string) (*loki.QueryResponseData, error) {
 	url := formatURL(nil, nil, query, "/custom/loki/v1/queryrange")
 	ret := &loki.QueryResponseData{}
