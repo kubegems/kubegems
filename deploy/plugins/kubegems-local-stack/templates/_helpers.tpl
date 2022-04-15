@@ -22,6 +22,14 @@
 {{- end -}}
 {{- end -}}
 
+{{- define "monitoring.grafana.address" -}}
+{{- if .Values.monitoring.enabled  }}
+    {{- printf "http://kube-prometheus-stack-grafana.%s:80" .Values.monitoring.namespace }}
+{{- else -}}
+    {{- .Values.monitoring.externalGrafana.address }}
+{{- end -}}
+{{- end -}}
+
 {{- define "logging.loki.address" -}}
 {{- if .Values.logging.enabled  }}
     {{- printf "http://loki-stack.%s:3100" .Values.logging.namespace }}

@@ -7,7 +7,9 @@ import (
 	csiv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	networkingpkgv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networkingpkgv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	istiopkgv1alpha1 "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -32,6 +34,8 @@ func AddToschema(schema *runtime.Scheme) {
 	_ = applicationv1beta1.AddToScheme(schema)
 	_ = loggingv1beta1.AddToScheme(schema)
 	_ = pluginv1beta1.AddToScheme(schema)
+	_ = networkingpkgv1alpha3.AddToScheme(schema)
+	_ = networkingpkgv1beta1.AddToScheme(schema)
 }
 
 // nolint: gochecknoinits

@@ -20,7 +20,9 @@ monitoring:
   # externalPrometheus:
   #   address: http://kube-prometheus-stack-prometheus.prometheus:9090
   # externalAlertmanager:
-  #   address: http://kube-prometheus-stack-alertmanager.alertmanager:9093
+  #   address: http://kube-prometheus-stack-alertmanager.prometheus:9093
+  # externalGrafana:
+  #   address: http://kube-prometheus-stack-grafana.prometheus:80
 observability:
   enabled: true
   namespace: observability
@@ -33,7 +35,7 @@ observability:
 gateway:
   enabled: true
   namespace: kubegems-gateway
-  version:
+  version: ""
 kubegems:
   version: latest
   registry: docker.io
@@ -49,10 +51,11 @@ gpu:
 istio:
   enabled: true
   namespace: istio-system
+  repository: docker.io/istio
+  version: 1.11.7 # istio/istio-operator version
+  kialiVersion: 1.38.1
+  chartVersion: 1.12.6 # must >1.12.0
   operator:
-    version: 1.12.6 # operator version
-    hub: docker.io/istio
-    tag: 1.11.2 # istio version
     tracing:
       sampling: 50
 argo-rollouts:

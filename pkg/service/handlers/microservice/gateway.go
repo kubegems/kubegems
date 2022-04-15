@@ -16,22 +16,19 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
+	microservice "kubegems.io/pkg/service/handlers/microservice/options"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	virtualSpaceKey        = networking.AnnotationVirtualSpace
-	istioGatewayKey        = networking.AnnotationIstioGateway
-	istioGatewayNamespace  = gemlabels.NamespaceGateway
-	istioOperatorNamespace = "istio-system"
-	istioOperatorName      = "gems-istio"
+	virtualSpaceKey = networking.AnnotationVirtualSpace
+	istioGatewayKey = networking.AnnotationIstioGateway
 )
 
 type IstioGatewayInstance struct {
@@ -47,6 +44,7 @@ type IstioGatewayInstance struct {
 }
 
 type IstioGatewayHandler struct {
+	MicroserviceOptions *microservice.MicroserviceOptions
 	base.BaseHandler
 }
 
@@ -60,7 +58,12 @@ type IstioGatewayHandler struct {
 // @Success      200              {object}  handlers.ResponseStruct{Data=[]IstioGatewayInstance}  "IstioOperator"
 // @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [get]
 // @Security     JWT
+// nolint: funlen
 func (h *IstioGatewayHandler) ListGateway(c *gin.Context) {
+	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
+	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
+	istioGatewayNamespace := h.MicroserviceOptions.GatewayNamespace
+
 	vs := models.VirtualSpace{}
 	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -140,7 +143,12 @@ func (h *IstioGatewayHandler) ListGateway(c *gin.Context) {
 // @Success      200              {object}  handlers.ResponseStruct{Data=IstioGatewayInstance}  "IstioOperator"
 // @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways/{name} [get]
 // @Security     JWT
+// nolint: funlen,gocognit
 func (h *IstioGatewayHandler) GetGateway(c *gin.Context) {
+	istioGatewayNamespace := h.MicroserviceOptions.GatewayNamespace
+	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
+	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
+
 	vs := models.VirtualSpace{}
 	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -264,7 +272,12 @@ func (h *IstioGatewayHandler) GetGateway(c *gin.Context) {
 // @Success      200              {object}  handlers.ResponseStruct{Data=IstioGatewayInstance}  "网关内容"
 // @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [post]
 // @Security     JWT
+// nolint: funlen
 func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
+	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
+	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
+	istioGatewayNamespace := h.MicroserviceOptions.GatewayNamespace
+
 	vs := models.VirtualSpace{}
 	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -321,7 +334,7 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 		}
 
 		op.Spec.Components.IngressGateways = append(op.Spec.Components.IngressGateways,
-			istioGateway(vs.VirtualSpaceName, gw.Name, gw.Enabled))
+			istioGateway(vs.VirtualSpaceName, istioGatewayNamespace, gw.Name, gw.Enabled))
 
 		return tc.Update(ctx, &op)
 	}); err != nil {
@@ -344,6 +357,10 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 // @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [put]
 // @Security     JWT
 func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
+	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
+	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
+	istioGatewayNamespace := h.MicroserviceOptions.GatewayNamespace
+
 	vs := models.VirtualSpace{}
 	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -388,7 +405,7 @@ func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
 			return fmt.Errorf("网关%s不存在", gw.Name)
 		}
 
-		op.Spec.Components.IngressGateways[index] = istioGateway(vs.VirtualSpaceName, gw.Name, gw.Enabled)
+		op.Spec.Components.IngressGateways[index] = istioGateway(vs.VirtualSpaceName, istioGatewayNamespace, gw.Name, gw.Enabled)
 		return tc.Update(ctx, &op)
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -398,10 +415,10 @@ func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
 	handlers.OK(c, gw)
 }
 
-func istioGateway(vsName, name string, enabled bool) *v1alpha1.GatewaySpec {
+func istioGateway(vsName, ns, name string, enabled bool) *v1alpha1.GatewaySpec {
 	return &v1alpha1.GatewaySpec{
 		Name:      name,
-		Namespace: istioGatewayNamespace,
+		Namespace: ns,
 		Enabled: &v1alpha1.BoolValueForPB{
 			BoolValue: prototypes.BoolValue{Value: enabled},
 		},
@@ -440,6 +457,9 @@ func istioGateway(vsName, name string, enabled bool) *v1alpha1.GatewaySpec {
 // @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways/{name} [delete]
 // @Security     JWT
 func (h *IstioGatewayHandler) DeleteGateway(c *gin.Context) {
+	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
+	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
+
 	vs := models.VirtualSpace{}
 	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)

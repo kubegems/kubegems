@@ -15,8 +15,8 @@ type MicroServiceHandler struct {
 func NewMicroServiceHandler(si base.BaseHandler, options *microserviceoptions.MicroserviceOptions) *MicroServiceHandler {
 	return &MicroServiceHandler{
 		vsh: &VirtualSpaceHandler{BaseHandler: si, MicroserviceOptions: options},
-		vdh: &VirtualDomainHandler{BaseHandler: si},
-		igh: &IstioGatewayHandler{BaseHandler: si},
+		vdh: &VirtualDomainHandler{BaseHandler: si, MicroserviceOptions: options},
+		igh: &IstioGatewayHandler{BaseHandler: si, MicroserviceOptions: options},
 	}
 }
 

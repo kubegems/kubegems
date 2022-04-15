@@ -1,0 +1,63 @@
+{{- if .Values.monitoring.enabled -}}
+# ref. https://github.com/istio/istio/blob/master/samples/addons/extras/prometheus-operator.yaml 有增删
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istio-component-monitor
+  namespace: istio-system
+  labels:
+    monitoring: istio-components
+    release: istio
+spec:
+  jobLabel: istio
+  targetLabels: [app]
+  selector:
+    matchExpressions:
+      - { key: istio, operator: In, values: [pilot] }
+  namespaceSelector:
+    matchNames:
+      - istio-system
+  endpoints:
+    - path: /metrics
+      port: http-monitoring
+      honorLabels: true
+      relabelings:
+        - regex: endpoint|service|container|pod|namespace
+          action: labeldrop
+---
+# ref. https://github.com/istio/istio/blob/master/samples/addons/extras/prometheus-operator.yaml 有增删
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-stats-monitor
+  namespace: istio-system
+  labels:
+    monitoring: istio-proxies
+    release: istio
+spec:
+  selector:
+    matchExpressions:
+      - { key: istio-prometheus-ignore, operator: DoesNotExist }
+  namespaceSelector:
+    any: true
+  jobLabel: envoy-stats
+  podMetricsEndpoints:
+    - path: /stats/prometheus
+      relabelings:
+        - action: keep
+          sourceLabels: [__meta_kubernetes_pod_container_name]
+          regex: "istio-proxy"
+        - action: keep
+          sourceLabels:
+            [__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape]
+        - sourceLabels:
+            [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+          action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          targetLabel: __address__
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: envoy_(cluster|http_InboundPassthroughClusterIpv4|http_admin|http_agent|http_inbound|http_stats|listener|server|vhost)_(.*)
+          action: drop
+{{- end }}

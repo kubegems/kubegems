@@ -10,11 +10,9 @@ import (
 	"github.com/argoproj/argo-rollouts/pkg/apiclient/rollout"
 	rolloutsv1alpha1 "github.com/argoproj/argo-rollouts/pkg/apis/rollouts/v1alpha1"
 	"github.com/gin-gonic/gin"
-	istioclinetworkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/stream"
@@ -22,10 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func init() {
-	istioclinetworkingv1alpha3.AddToScheme(scheme.Scheme)
-	rolloutsv1alpha1.AddToScheme(scheme.Scheme)
-}
+
 
 type ImageDetails struct {
 	Running string // 意为当前 argo 实际正在运行的版本

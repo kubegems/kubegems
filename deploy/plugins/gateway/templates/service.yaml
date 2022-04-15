@@ -4,6 +4,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: nginx-ingress-operator-controller-manager-metrics-service
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
     - name: https

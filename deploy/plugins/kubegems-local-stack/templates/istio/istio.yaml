@@ -10,15 +10,25 @@ spec:
   kind: helm
   installNamespace: {{ .Values.istio.namespace }}
   repo: https://kiali.org/helm-charts
-  version: 1.49.0
+  version: {{ .Values.istio.kialiVersion }}  # update to related version when istio version changed
+  # see: https://github.com/istio/istio/blob/master/manifests/addons/values-kiali.yaml
   values:
     auth:
       strategy: anonymous
     deployment:
+      pod_annotations:
+        sidecar.istio.io/inject: "false"
       {{- if .Values.image.registry }}
       # image_name: quay.io/kiali/kiali
       image_name: {{ printf "%s/%s/kiali" .Values.image.registry .Values.image.repository }}
       {{- end }} 
+    external_services:
+      grafana:
+        url: {{ include "monitoring.grafana.address" . }}
+      prometheus:
+        url: {{ include "monitoring.prometheus.address" . }}
+      tracing:
+        url: {{ include "observability.jaeger.address" . }}
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
 apiVersion: plugins.kubegems.io/v1beta1
@@ -30,21 +40,23 @@ spec:
   enabled: true
   kind: helm
   installNamespace: {{ .Values.istio.namespace }}
-  repo: https://github.com/istio/istio/archive/refs/tags/{{ .Values.istio.operator.version }}.tar.gz
-  path: istio-{{ .Values.istio.operator.version }}/manifests/charts/istio-operator
-  version: {{ .Values.istio.operator.version }}
+  repo: https://github.com/istio/istio/archive/refs/tags/{{ .Values.istio.chartVersion }}.tar.gz
+  path: istio-{{ .Values.istio.chartVersion }}/manifests/charts/istio-operator
+  version: {{ .Values.istio.chartVersion }}
   values:
-    operatorNamespace: {{ .Values.istio.namespace }}
     {{- if .Values.image.registry }}
-    # hub: gcr.io/istio-testing
+    # hub: gcr.io/istio-testing  # in chart default hub just for testing
     hub: {{ printf "%s/%s" .Values.image.registry .Values.image.repository }}
+    {{- else }}
+    hub: {{ .Values.istio.repository }}
     {{- end }}
+    tag:  {{ .Values.istio.version }}
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 metadata:
-  name: gems-istio
+  name: kubegems-istio
   namespace: {{ .Values.istio.namespace }}
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
@@ -62,7 +74,7 @@ spec:
       - name: istio-ingressgateway
         enabled: false
       - name: istio-eastwestgateway
-        namespace: gemcloud-gateway-system
+        namespace: {{ .Values.gateway.namespace }}
         label:
           istio: eastwestgateway
           app: istio-eastwestgateway
@@ -79,7 +91,7 @@ spec:
               cpu: 4000m
               memory: 4Gi
             requests:
-              cpu: 100M
+              cpu: 100m
               memory: 128Mi
           hpaSpec:
             minReplicas: 1
@@ -98,8 +110,8 @@ spec:
               - name: tls-webhook
                 port: 15017
                 targetPort: 15017
-  hub: {{ .Values.istio.operator.hub }}
-  tag: {{ .Values.istio.operator.tag }}
+  hub: {{ .Values.istio.repository }}
+  tag: {{ .Values.istio.version }}
   meshConfig:
     defaultConfig:
       proxyMetadata:
@@ -110,7 +122,6 @@ spec:
         zipkin:
           address: "jaeger-collector.observability.svc.cluster.local:9411"
     enableTracing: true
-  tag: 1.11.0
   values:
     gateways:
       istio-ingressgateway:

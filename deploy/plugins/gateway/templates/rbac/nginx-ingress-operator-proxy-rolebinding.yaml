@@ -9,4 +9,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: nginx-ingress-operator-controller-manager
-    namespace: gateway-system
+    namespace: "{{ .Release.Namespace }}"

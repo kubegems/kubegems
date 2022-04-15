@@ -36,7 +36,6 @@ import (
 	messagehandler "kubegems.io/pkg/service/handlers/message"
 	"kubegems.io/pkg/service/handlers/metrics"
 	microservice "kubegems.io/pkg/service/handlers/microservice"
-	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
 	myinfohandler "kubegems.io/pkg/service/handlers/myinfo"
 	noproxyhandler "kubegems.io/pkg/service/handlers/noproxy"
 	"kubegems.io/pkg/service/handlers/observability"
@@ -329,7 +328,7 @@ func (r *Router) Complete() error {
 
 	// microservice  handler
 	// TODO: kiali在每个集群配置可能不相同，先写死，后面看要不要支持配置
-	microservicehandler := microservice.NewMicroServiceHandler(basehandler, microserviceoptions.NewDefaultOptions())
+	microservicehandler := microservice.NewMicroServiceHandler(basehandler, r.Opts.Microservice)
 	microservicehandler.RegistRouter(rg)
 
 	// logoperator handler

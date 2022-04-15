@@ -7,11 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
+	microservice "kubegems.io/pkg/service/handlers/microservice/options"
 	"kubegems.io/pkg/service/models"
 )
 
 type VirtualDomainHandler struct {
 	base.BaseHandler
+	MicroserviceOptions *microservice.MicroserviceOptions
 }
 
 // ListVirtualDomain 列表 VirtualDomain
