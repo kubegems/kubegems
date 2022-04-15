@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -27,6 +28,8 @@ type Tenant struct {
 	ResourceQuotas []*TenantResourceQuota
 	Users          []*User `gorm:"many2many:tenant_user_rels;"`
 	Projects       []*Project
+
+	AllocatedResourcequota v1.ResourceList `gorm:"-"`
 }
 
 // TenantUserRels 租户-用户-关系表
