@@ -235,7 +235,7 @@ func NewTypedSearchSortPage[T any](list []T, page, size int, pickfun func(item T
 
 	// filter
 	if pickfun != nil {
-		var datas []T
+		datas := []T{}
 		for _, item := range list {
 			if pickfun(item) {
 				datas = append(datas, item)
