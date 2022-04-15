@@ -399,6 +399,9 @@ definitions:
         type: integer
       errorLogCount:
         type: integer
+      eventCount:
+        description: 事件数量
+        type: integer
       labels:
         additionalProperties:
           type: string
@@ -418,6 +421,8 @@ definitions:
       monitoring:
         description: 是否启用监控
         type: boolean
+      namespace:
+        type: string
       serviceMesh:
         description: 是否启用服务网格
         type: boolean
@@ -3146,111 +3151,6 @@ definitions:
           $ref: '#/definitions/v1alpha1.SyncOperationResource'
         type: array
     type: object
-  kubegems.io_pkg_service_models.Application:
-    properties:
-      applicationName:
-        description: 应用名字
-        type: string
-      createdAt:
-        description: 创建时间
-        type: string
-      creator:
-        description: 创建人
-        type: string
-      environment:
-        $ref: '#/definitions/kubegems.io_pkg_service_models.Environment'
-        description: 关联的环境
-      environmentID:
-        description: 关联的环境
-        type: integer
-      id:
-        type: integer
-      images:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      kind:
-        description: 类型
-        type: string
-      labels:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      project:
-        $ref: '#/definitions/models.Project'
-        description: 所属项
-      projectID:
-        description: 所属项目ID
-        type: integer
-      remark:
-        description: 备注
-        type: string
-    type: object
-  kubegems.io_pkg_service_models.Environment:
-    properties:
-      applications:
-        description: 关联的应用
-        items:
-          $ref: '#/definitions/kubegems.io_pkg_service_models.Application'
-        type: array
-      cluster:
-        $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
-      clusterID:
-        description: 所属集群ID
-        type: integer
-      creator:
-        $ref: '#/definitions/models.User'
-        description: 创建者
-      creatorID:
-        description: 创建人ID
-        type: integer
-      deletePolicy:
-        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
-        type: string
-      environmentName:
-        description: 环境名字
-        type: string
-      id:
-        type: integer
-      limitRange:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      metaType:
-        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
-        type: string
-      namespace:
-        description: 环境关联的namespace
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-        description: 所属项目
-      projectID:
-        description: 所属项目ID
-        type: integer
-      remark:
-        description: 备注
-        type: string
-      resourceQuota:
-        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
-        items:
-          type: integer
-        type: array
-      users:
-        description: 关联的用户
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpace:
-        $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
-      virtualSpaceID:
-        description: 虚拟空间
-        type: integer
-    type: object
   kubegems.io_pkg_service_models.SystemRole:
     properties:
       id:
@@ -3270,6 +3170,8 @@ definitions:
     type: object
   kubegems.io_pkg_service_models.Tenant:
     properties:
+      allocatedResourcequota:
+        $ref: '#/definitions/v1.ResourceList'
       createdAt:
         type: string
       id:
@@ -3305,7 +3207,7 @@ definitions:
       clusterID:
         type: integer
       content:
-        description: 配置内容
+        description: 项目资源限制
         items:
           type: integer
         type: array
@@ -3322,108 +3224,6 @@ definitions:
     required:
     - clusterID
     - tenantID
-    type: object
-  kubegems.io_pkg_service_models.VirtualSpace:
-    properties:
-      createdAt:
-        type: string
-      createdBy:
-        type: string
-      environments:
-        items:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
-        type: array
-      id:
-        type: integer
-      isActive:
-        type: boolean
-      updatedAt:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpaceName:
-        type: string
-    type: object
-  kubegems.io_pkg_v2_models.Application:
-    properties:
-      createdAt:
-        type: string
-      creator:
-        type: string
-      environment:
-        $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
-      environmentID:
-        type: integer
-      id:
-        type: integer
-      images:
-        items:
-          type: integer
-        type: array
-      kind:
-        type: string
-      labels:
-        items:
-          type: integer
-        type: array
-      name:
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-      projectID:
-        type: integer
-      remark:
-        type: string
-    type: object
-  kubegems.io_pkg_v2_models.Environment:
-    properties:
-      applications:
-        items:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Application'
-        type: array
-      cluster:
-        $ref: '#/definitions/models.Cluster'
-      clusterID:
-        type: integer
-      creator:
-        $ref: '#/definitions/models.User'
-      creatorID:
-        type: integer
-      deletePolicy:
-        type: string
-      id:
-        type: integer
-      limitRange:
-        items:
-          type: integer
-        type: array
-      metaType:
-        description: MetaTpe (dev, prod, test, pub ...)
-        type: string
-      name:
-        type: string
-      namespace:
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-      projectID:
-        type: integer
-      remark:
-        type: string
-      resourceQuota:
-        items:
-          type: integer
-        type: array
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpace:
-        $ref: '#/definitions/kubegems.io_pkg_v2_models.VirtualSpace'
-      virtualSpaceID:
-        type: integer
     type: object
   kubegems.io_pkg_v2_models.SystemRole:
     properties:
@@ -3474,6 +3274,7 @@ definitions:
       clusterID:
         type: integer
       content:
+        description: installer plugins Values
         items:
           type: integer
         type: array
@@ -3486,29 +3287,6 @@ definitions:
     required:
     - clusterID
     - tenantID
-    type: object
-  kubegems.io_pkg_v2_models.VirtualSpace:
-    properties:
-      createdAt:
-        type: string
-      createdBy:
-        type: string
-      environments:
-        items:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
-        type: array
-      id:
-        type: integer
-      isActive:
-        type: boolean
-      name:
-        type: string
-      updatedAt:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
     type: object
   kubegems.io_pkg_v2_services_handlers.PageData:
     properties:
@@ -4482,14 +4260,68 @@ definitions:
           Populated by the system. Read-only.
           +optional
         type: integer
+      message:
+        type: string
+      startsAt:
+        description: 告警开始时间
+        type: string
+      status:
+        description: firing or resolved
+        type: string
+      value:
+        type: string
+    type: object
+  models.Application:
+    properties:
+      applicationName:
+        description: 应用名字
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      creator:
+        description: 创建人
+        type: string
+      environment:
+        $ref: '#/definitions/models.Environment'
+        description: 关联的环境
+      environmentID:
+        description: 关联的环境
+        type: integer
+      id:
+        type: integer
+      images:
+        description: 项目资源限制
+        items:
+          type: integer
+        type: array
       kind:
-        description: |-
-          Kind is a string value representing the REST resource this object represents.
-          Servers may infer this from the endpoint the client submits requests to.
-          Cannot be updated.
-          In CamelCase.
-          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-          +optional
+        description: 类型
+        type: string
+      labels:
+        description: 项目资源限制
+        items:
+          type: integer
+        type: array
+      project:
+        $ref: '#/definitions/models.Project'
+        description: 所属项
+      projectID:
+        description: 所属项目ID
+        type: integer
+      remark:
+        description: 备注
+        type: string
+    type: object
+  models.AuditLog:
+    properties:
+      action:
+        description: 动作名字 (启用，禁用，开启，关闭，添加，删除，修改等)
+        type: string
+      clientIP:
+        description: 客户端ip 发起请求的客户端IP
+        type: string
+      createdAt:
         type: string
       labels:
         additionalProperties:
@@ -7497,26 +7329,24 @@ definitions:
       userInfoURL:
         type: string
     type: object
-  models.CVEAllowlist:
+  models.CPUMemoryStatus:
     properties:
-      creationTime:
+      currentLimit:
+        description: 带单位
         type: string
-      expires_at:
-        type: integer
-      id:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/models.CVEAllowlistItem'
-        type: array
-      project_id:
-        type: integer
-      updateTime:
+      currentRate:
+        type: number
+      status:
+        description: 扩容或缩容
         type: string
-    type: object
-  models.CVEAllowlistItem:
-    properties:
-      cve_id:
+      suggestLimit:
+        description: 带单位
+        type: string
+      suggestMaxLimit:
+        description: 带单位
+        type: string
+      suggestMinLimit:
+        description: 带单位
         type: string
     type: object
   models.ChartRepo:
@@ -7539,61 +7369,151 @@ definitions:
   models.Cluster:
     properties:
       agentAddr:
+        description: if empty, using apiserver proxy
         type: string
       apiserver:
+        description: APIServer地址 根据kubeconfig添加后，自动填充
+        type: string
+      clusterName:
         type: string
       clusterResourceQuota:
+        description: 环境下的limitrage
         items:
           type: integer
         type: array
+      defaultStorageClass:
+        description: DefaultStorageClass 默认storageclass, 默认local-path
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+        description: soft delete
       environments:
         items:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+          $ref: '#/definitions/models.Environment'
         type: array
       id:
         type: integer
+      imageRepo:
+        description: ImageRepo 安装kubegems核心组件时使用的镜像仓库
+        type: string
+      installNamespace:
+        description: agent service namespace
+        type: string
       kubeConfig:
         items:
           type: integer
         type: array
-      name:
-        type: string
       oversoldConfig:
+        description: installer plugins Values
         items:
           type: integer
         type: array
       primary:
+        description: 是否主集群
         type: boolean
       runtime:
         description: docker or containerd
         type: string
       tenantResourceQuotas:
         items:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.TenantResourceQuota'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota'
         type: array
+      values:
+        description: installer plugins Values
+        items:
+          type: integer
+        type: array
+      vendor:
+        description: Vendor 集群提供商(gke tke ack selfhosted)
+        enum:
+        - selfhosted
+        - gke
+        - ack
+        - tke
+        type: string
       version:
+        description: apiserver version
         type: string
     required:
+    - clusterName
+    - defaultStorageClass
+    - imageRepo
     - kubeConfig
-    - name
+    - vendor
     type: object
-  models.ContainerInfo:
+  models.Condition:
     properties:
-      image:
-        type: string
-      isProxy:
-        type: boolean
-      isReady:
-        type: boolean
-      name:
-        type: string
+      CPUStatus:
+        $ref: '#/definitions/models.CPUMemoryStatus'
+      MemoryStatus:
+        $ref: '#/definitions/models.CPUMemoryStatus'
+      pods:
+        items:
+          type: string
+        type: array
     type: object
-  models.DashboardRef:
+  models.Environment:
     properties:
-      template:
+      applications:
+        description: 关联的应用
+        items:
+          $ref: '#/definitions/models.Application'
+        type: array
+      cluster:
+        $ref: '#/definitions/models.Cluster'
+        description: 关联的集群
+      clusterID:
+        description: 所属集群ID
+        type: integer
+      creator:
+        $ref: '#/definitions/models.User'
+        description: 创建者
+      creatorID:
+        description: 创建人ID
+        type: integer
+      deletePolicy:
+        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
         type: string
-      title:
+      environmentName:
+        description: 环境名字
         type: string
+      id:
+        type: integer
+      limitRange:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      metaType:
+        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
+        type: string
+      namespace:
+        description: 环境关联的namespace
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+        description: 所属项目
+      projectID:
+        description: 所属项目ID
+        type: integer
+      remark:
+        description: 备注
+        type: string
+      resourceQuota:
+        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
+        items:
+          type: integer
+        type: array
+      users:
+        description: 关联的用户
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      virtualSpace:
+        $ref: '#/definitions/models.VirtualSpace'
+      virtualSpaceID:
+        description: 虚拟空间
+        type: integer
     type: object
   models.EnvironmentResource:
     properties:
@@ -7640,7 +7560,7 @@ definitions:
       id:
         type: integer
       omitempty:
-        $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+        $ref: '#/definitions/models.Environment'
       role:
         description: 环境级角色("reader", "operator")
         type: string
@@ -7835,85 +7755,48 @@ definitions:
     required:
     - name
     type: object
-  models.Pod:
-    properties:
-      annotations:
-        additionalProperties:
-          type: string
-        type: object
-      appLabel:
-        type: boolean
-      containers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      createdAt:
-        type: string
-      createdBy:
-        items:
-          $ref: '#/definitions/models.Reference'
-        type: array
-      istioContainers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      istioInitContainers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      labels:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      proxyStatus:
-        $ref: '#/definitions/models.ProxyStatus'
-      serviceAccountName:
-        type: string
-      status:
-        type: string
-      statusMessage:
-        type: string
-      statusReason:
-        type: string
-      versionLabel:
-        type: boolean
-    type: object
   models.Project:
     properties:
-      chart_count:
-        type: integer
-      creation_time:
+      applications:
+        items:
+          $ref: '#/definitions/models.Application'
+        type: array
+      createdAt:
+        description: 创建时间
         type: string
-      current_user_role_id:
+      environments:
+        items:
+          $ref: '#/definitions/models.Environment'
+        type: array
+      id:
         type: integer
-      current_user_role_ids:
+      projectAlias:
+        description: 项目别名
+        type: string
+      projectName:
+        description: 项目名字
+        type: string
+      registries:
+        items:
+          $ref: '#/definitions/models.Registry'
+        type: array
+      remark:
+        description: 项目备注
+        type: string
+      resourceQuota:
+        description: 项目资源限制
         items:
           type: integer
         type: array
-      cve_allowlist:
-        $ref: '#/definitions/models.CVEAllowlist'
-      deleted:
-        type: boolean
-      metadata:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      owner_id:
+      tenant:
+        $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+      tenantID:
+        description: 所属的租户ID
         type: integer
-      owner_name:
-        type: string
-      project_id:
-        type: integer
-      registry_id:
-        type: integer
-      repo_count:
-        type: integer
-      update_time:
-        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
     type: object
   models.ProjectUserRels:
     properties:
@@ -7936,24 +7819,6 @@ definitions:
     - projectID
     - role
     - userID
-    type: object
-  models.ProxyStatus:
-    properties:
-      CDS:
-        type: string
-      EDS:
-        type: string
-      LDS:
-        type: string
-      RDS:
-        type: string
-    type: object
-  models.Reference:
-    properties:
-      kind:
-        type: string
-      name:
-        type: string
     type: object
   models.Registry:
     properties:
@@ -7990,72 +7855,10 @@ definitions:
         description: 用户名
         type: string
     type: object
-  models.Runtime:
-    properties:
-      dashboardRefs:
-        items:
-          $ref: '#/definitions/models.DashboardRef'
-        type: array
-      name:
-        type: string
-    type: object
-  models.ServiceOverview:
-    properties:
-      additionalDetailSample:
-        $ref: '#/definitions/models.AdditionalItem'
-        description: |-
-          Additional detail sample, such as type of api being served (graphql, grpc, rest)
-          example: rest
-          required: false
-      appLabel:
-        description: |-
-          Has label app
-          required: true
-          example: true
-        type: boolean
-      healthAnnotations:
-        additionalProperties:
-          type: string
-        description: Annotations of the service
-        type: object
-      istioReferences:
-        description: Istio References
-        items:
-          $ref: '#/definitions/models.IstioValidationKey'
-        type: array
-      istioSidecar:
-        description: |-
-          Define if Pods related to this Service has an IstioSidecar deployed
-          required: true
-          example: true
-        type: boolean
-      kialiWizard:
-        description: Kiali Wizard scenario, if any
-        type: string
-      labels:
-        additionalProperties:
-          type: string
-        description: Labels for Service
-        type: object
-      name:
-        description: |-
-          Name of the Service
-          required: true
-          example: reviews-v1
-        type: string
-      namespace:
-        description: Namespace of the Service
-        type: string
-      selector:
-        additionalProperties:
-          type: string
-        description: Selector for Service
-        type: object
-    type: object
   models.TenantResourceQuotaApply:
     properties:
       content:
-        description: 配置内容
+        description: 项目资源限制
         items:
           type: integer
         type: array
@@ -8167,6 +7970,29 @@ definitions:
       virtualDomainName:
         type: string
     type: object
+  models.VirtualSpace:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      environments:
+        items:
+          $ref: '#/definitions/models.Environment'
+        type: array
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      updatedAt:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      virtualSpaceName:
+        type: string
+    type: object
   models.VirtualSpaceUserRels:
     properties:
       id:
@@ -8179,7 +8005,7 @@ definitions:
       userID:
         type: integer
       virtualSpace:
-        $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+        $ref: '#/definitions/models.VirtualSpace'
       virtualSpaceID:
         type: integer
     required:
@@ -8187,134 +8013,30 @@ definitions:
     type: object
   models.Workload:
     properties:
-      additionalDetailSample:
-        $ref: '#/definitions/models.AdditionalItem'
-        description: |-
-          Additional item sample, such as type of api being served (graphql, grpc, rest)
-          example: rest
-          required: false
-      additionalDetails:
-        description: Additional details to display, such as configured annotations
-        items:
-          $ref: '#/definitions/models.AdditionalItem'
-        type: array
-      appLabel:
-        description: |-
-          Define if Pods related to this Workload has the label App
-          required: true
-          example: true
-        type: boolean
-      availableReplicas:
-        description: |-
-          Number of available replicas
-          required: true
-          example: 1
-        type: integer
+      clusterName:
+        type: string
+      color:
+        description: eg, yellow
+        type: string
+      conditions:
+        additionalProperties:
+          $ref: '#/definitions/models.Condition'
+        description: 按容器名分组
+        type: object
+      cpulimitStdvar:
+        type: number
       createdAt:
-        description: |-
-          Creation timestamp (in RFC3339 format)
-          required: true
-          example: 2018-07-31T12:24:17Z
         type: string
-      currentReplicas:
-        description: |-
-          Number of current replicas pods that matches controller selector labels
-          required: true
-          example: 2
+      id:
         type: integer
-      dashboardAnnotations:
-        additionalProperties:
-          type: string
-        description: |-
-          Dashboard annotations
-          required: false
-        type: object
-      desiredReplicas:
-        description: |-
-          Number of desired replicas defined by the user in the controller Spec
-          required: true
-          example: 2
-        type: integer
-      healthAnnotations:
-        additionalProperties:
-          type: string
-        description: |-
-          HealthAnnotations
-          required: false
-        type: object
-      istioInjectionAnnotation:
-        description: |-
-          Define if Workload has an explicit Istio policy annotation
-          Istio supports this as a label as well - this will be defined if the label is set, too.
-          If both annotation and label are set, if any is false, injection is disabled.
-          It's mapped as a pointer to show three values nil, true, false
-        type: boolean
-      istioReferences:
-        description: Istio References
-        items:
-          $ref: '#/definitions/models.IstioValidationKey'
-        type: array
-      istioSidecar:
-        description: |-
-          Define if Pods related to this Workload has an IstioSidecar deployed
-          required: true
-          example: true
-        type: boolean
-      labels:
-        additionalProperties:
-          type: string
-        description: Workload labels
-        type: object
+      memoryLimitStdvar:
+        type: number
       name:
-        description: |-
-          Name of the workload
-          required: true
-          example: reviews-v1
         type: string
-      podCount:
-        description: |-
-          Number of current workload pods
-          required: true
-          example: 1
-        type: integer
-      pods:
-        description: Pods bound to the workload
-        items:
-          $ref: '#/definitions/models.Pod'
-        type: array
-      resourceVersion:
-        description: |-
-          Kubernetes ResourceVersion
-          required: true
-          example: 192892127
+      namespace:
         type: string
-      runtimes:
-        description: Runtimes and associated dashboards
-        items:
-          $ref: '#/definitions/models.Runtime'
-        type: array
-      serviceAccountNames:
-        description: Names of the workload service accounts
-        items:
-          type: string
-        type: array
-      services:
-        description: Services that match workload selector
-        items:
-          $ref: '#/definitions/models.ServiceOverview'
-        type: array
       type:
-        description: |-
-          Type of the workload
-          required: true
-          example: deployment
         type: string
-      versionLabel:
-        description: |-
-          Define if Pods related to this Workload has the label Version
-          required: true
-          example: true
-        type: boolean
     type: object
   models.WorkloadListItem:
     properties:
@@ -23203,7 +22925,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -23518,7 +23240,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -23570,7 +23292,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                  $ref: '#/definitions/models.Environment'
               type: object
       security:
       - JWT: []
@@ -23592,7 +23314,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+          $ref: '#/definitions/models.Environment'
       produces:
       - application/json
       responses:
@@ -23603,7 +23325,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                  $ref: '#/definitions/models.Environment'
               type: object
       security:
       - JWT: []
@@ -25643,7 +25365,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -25667,7 +25389,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+          $ref: '#/definitions/models.Environment'
       produces:
       - application/json
       responses:
@@ -25678,7 +25400,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                  $ref: '#/definitions/models.Environment'
               type: object
       security:
       - JWT: []
@@ -25739,7 +25461,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                  $ref: '#/definitions/models.Environment'
               type: object
       security:
       - JWT: []
@@ -28092,6 +27814,53 @@ paths:
       summary: Loki LabelValues
       tags:
       - Agent.V1
+  /v1/proxy/cluster/{cluster}/custom/loki/v1/query:
+    get:
+      consumes:
+      - application/json
+      description: Loki Query
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: The max number of entries to return
+        in: query
+        name: limit
+        type: string
+      - description: loki query language
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: The evaluation time for the query as a nanosecond Unix epoch
+          or another supported format. Defaults to now
+        in: query
+        name: time
+        type: integer
+      - description: The order to all results
+        in: query
+        name: direction
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: object
+              type: object
+      security:
+      - JWT: []
+      summary: Loki Query
+      tags:
+      - Agent.V1
   /v1/proxy/cluster/{cluster}/custom/loki/v1/queryrange:
     get:
       consumes:
@@ -30008,7 +29777,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -33635,7 +33404,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+                          $ref: '#/definitions/models.VirtualSpace'
                         type: array
                     type: object
               type: object
@@ -33654,7 +33423,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+          $ref: '#/definitions/models.VirtualSpace'
       produces:
       - application/json
       responses:
@@ -33665,7 +33434,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+                  $ref: '#/definitions/models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -33715,7 +33484,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+                  $ref: '#/definitions/models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -33747,7 +33516,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+                  $ref: '#/definitions/models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -33769,7 +33538,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+          $ref: '#/definitions/models.VirtualSpace'
       produces:
       - application/json
       responses:
@@ -33780,7 +33549,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+                  $ref: '#/definitions/models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -33998,7 +33767,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -34022,7 +33791,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+          $ref: '#/definitions/models.Environment'
       produces:
       - application/json
       responses:
