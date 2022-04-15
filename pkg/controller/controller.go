@@ -66,6 +66,7 @@ type Options struct {
 	WebhookAddr          string `json:"webhookAddr,omitempty" description:"The address the webhook endpoint binds to."`
 	EnableLeaderElection bool   `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
 	Enablewebhook        bool   `json:"enablewebhook,omitempty" description:"Enable webhook for controller manager."`
+	Repository           string `json:"repository,omitempty" description:"default image repo."`
 }
 
 func NewDefaultOptions() *Options {
@@ -75,6 +76,7 @@ func NewDefaultOptions() *Options {
 		ProbeAddr:            ":8081",
 		EnableLeaderElection: false,
 		Enablewebhook:        true,
+		Repository:           "docker.io/kubegems",
 	}
 }
 
@@ -120,7 +122,7 @@ func Run(ctx context.Context, options *Options) error {
 	}
 	// setup webhooks
 	if options.Enablewebhook {
-		if err := setUpWebhook(mgr, setupLog); err != nil {
+		if err := setUpWebhook(mgr, setupLog, options.Repository); err != nil {
 			return err
 		}
 	}
@@ -198,7 +200,7 @@ func setupControllers(mgr ctrl.Manager, options *Options, setupLog logr.Logger) 
 	return nil
 }
 
-func setUpWebhook(mgr ctrl.Manager, setupLog logr.Logger) error {
+func setUpWebhook(mgr ctrl.Manager, setupLog logr.Logger, repo string) error {
 	setupLog.Info("registering webhooks")
 
 	// webhooks register handler
@@ -210,7 +212,7 @@ func setUpWebhook(mgr ctrl.Manager, setupLog logr.Logger) error {
 	ws.Register("/validate", validateHandler)
 
 	mutateLogger := ctrl.Log.WithName("mutate-webhook")
-	mutateHandler := webhooks.GetMutateHandler(&c, &mutateLogger)
+	mutateHandler := webhooks.GetMutateHandler(&c, &mutateLogger, repo)
 	ws.Register("/mutate", mutateHandler)
 
 	labelInjectorLogger := ctrl.Log.WithName("inject-label-mutate-webhook")
