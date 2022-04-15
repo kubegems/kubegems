@@ -33,8 +33,8 @@ func (l *EventHandler) Event(c *gin.Context) {
 	}
 
 	query.Direction = "backward"
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "500"))
-	if limit > 500 {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "5000"))
+	if limit > 5000 {
 		handlers.NotOK(c, errors.New("超过500条限制"))
 		return
 	}
