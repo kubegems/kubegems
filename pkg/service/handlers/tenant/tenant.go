@@ -50,12 +50,13 @@ var (
 // @Description  Tenant列表
 // @Accept       json
 // @Produce      json
-// @Param        TenantName  query     string                                                                 false  "TenantName"
-// @Param        preload     query     string                                                                 false  "choices ResourceQuotas,Users,Projects"
-// @Param        page        query     int                                                                    false  "page"
-// @Param        size        query     int                                                                    false  "page"
-// @Param        search      query     string                                                                 false  "search in (TenantName,Remark)"
-// @Success      200         {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Tenant}}  "Tenant"
+// @Param        TenantName                     query     string                                                                 false  "TenantName"
+// @Param        preload                        query     string                                                                 false  "choices ResourceQuotas,Users,Projects"
+// @Param        page                           query     int                                                                    false  "page"
+// @Param        size                           query     int                                                                    false  "page"
+// @Param        search                         query     string                                                                 false  "search in (TenantName,Remark)"
+// @Param        containAllocatedResourcequota  query     bool                                                                   false  "是否包含已分配的resourcequota"
+// @Success      200                            {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Tenant}}  "Tenant"
 // @Router       /v1/tenant [get]
 // @Security     JWT
 func (h *TenantHandler) ListTenant(c *gin.Context) {
