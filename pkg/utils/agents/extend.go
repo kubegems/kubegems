@@ -21,6 +21,7 @@ import (
 	"kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
+	"kubegems.io/pkg/utils/loki"
 	"kubegems.io/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -421,5 +422,19 @@ func (c *ExtendClient) ListMetricTargets(ctx context.Context, namespace string) 
 	sort.Slice(ret, func(i, j int) bool {
 		return strings.ToLower(ret[i].Name) < strings.ToLower(ret[j].Name)
 	})
+	return ret, nil
+}
+
+func (c *ExtendClient) LokiQuery(ctx context.Context, logql string) (loki.QueryResponseData, error) {
+	ret := loki.QueryResponseData{}
+	values := url.Values{}
+	values.Add("query", logql)
+	if err := c.DoRequest(ctx, Request{
+		Path:  "/custom/loki/v1/query",
+		Query: values,
+		Into:  WrappedResponse(&ret),
+	}); err != nil {
+		return ret, fmt.Errorf("loki query failed, cluster: %s, logql: %s, %v", c.Name, logql, err)
+	}
 	return ret, nil
 }
