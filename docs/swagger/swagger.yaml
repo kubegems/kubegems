@@ -230,6 +230,9 @@ definitions:
         type: integer
       errorLogCount:
         type: integer
+      eventCount:
+        description: 事件数量
+        type: integer
       labels:
         additionalProperties:
           type: string
@@ -249,6 +252,8 @@ definitions:
       monitoring:
         description: 是否启用监控
         type: boolean
+      namespace:
+        type: string
       serviceMesh:
         description: 是否启用服务网格
         type: boolean
@@ -2818,111 +2823,6 @@ definitions:
           $ref: '#/definitions/v1alpha1.SyncOperationResource'
         type: array
     type: object
-  kubegems.io_pkg_service_models.Application:
-    properties:
-      applicationName:
-        description: 应用名字
-        type: string
-      createdAt:
-        description: 创建时间
-        type: string
-      creator:
-        description: 创建人
-        type: string
-      environment:
-        $ref: '#/definitions/kubegems.io_pkg_service_models.Environment'
-        description: 关联的环境
-      environmentID:
-        description: 关联的环境
-        type: integer
-      id:
-        type: integer
-      images:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      kind:
-        description: 类型
-        type: string
-      labels:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      project:
-        $ref: '#/definitions/models.Project'
-        description: 所属项
-      projectID:
-        description: 所属项目ID
-        type: integer
-      remark:
-        description: 备注
-        type: string
-    type: object
-  kubegems.io_pkg_service_models.Environment:
-    properties:
-      applications:
-        description: 关联的应用
-        items:
-          $ref: '#/definitions/kubegems.io_pkg_service_models.Application'
-        type: array
-      cluster:
-        $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
-      clusterID:
-        description: 所属集群ID
-        type: integer
-      creator:
-        $ref: '#/definitions/models.User'
-        description: 创建者
-      creatorID:
-        description: 创建人ID
-        type: integer
-      deletePolicy:
-        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
-        type: string
-      environmentName:
-        description: 环境名字
-        type: string
-      id:
-        type: integer
-      limitRange:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      metaType:
-        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
-        type: string
-      namespace:
-        description: 环境关联的namespace
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-        description: 所属项目
-      projectID:
-        description: 所属项目ID
-        type: integer
-      remark:
-        description: 备注
-        type: string
-      resourceQuota:
-        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
-        items:
-          type: integer
-        type: array
-      users:
-        description: 关联的用户
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpace:
-        $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
-      virtualSpaceID:
-        description: 虚拟空间
-        type: integer
-    type: object
   kubegems.io_pkg_service_models.SystemRole:
     properties:
       id:
@@ -2942,6 +2842,8 @@ definitions:
     type: object
   kubegems.io_pkg_service_models.Tenant:
     properties:
+      allocatedResourcequota:
+        $ref: '#/definitions/v1.ResourceList'
       createdAt:
         type: string
       id:
@@ -2977,7 +2879,7 @@ definitions:
       clusterID:
         type: integer
       content:
-        description: 配置内容
+        description: 项目资源限制
         items:
           type: integer
         type: array
@@ -2992,6 +2894,7 @@ definitions:
       tenantResourceQuotaApplyID:
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
         type: integer
+<<<<<<< HEAD
       scaleDownDelaySeconds:
         description: |-
           ScaleDownDelaySeconds adds a delay before scaling down the previous ReplicaSet when the
@@ -3177,6 +3080,11 @@ definitions:
         $ref: '#/definitions/kubegems.io_pkg_v2_models.VirtualSpace'
       virtualSpaceID:
         type: integer
+=======
+    required:
+    - clusterID
+    - tenantID
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
     type: object
   kubegems.io_pkg_v2_models.SystemRole:
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
@@ -3205,6 +3113,7 @@ definitions:
       max_replicas:
 =======
       content:
+        description: installer plugins Values
         items:
           type: integer
         type: array
@@ -3219,6 +3128,7 @@ definitions:
     - max_replicas
     - min_replicas
     type: object
+<<<<<<< HEAD
   application.IngressPorts:
     properties:
       host:
@@ -3276,6 +3186,24 @@ definitions:
         type: object
     type: object
   application.Manifest:
+=======
+  kubegems.io_pkg_v2_services_handlers.PageData:
+    properties:
+      list: {}
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  kubegems.io_pkg_v2_services_handlers_application.AppReplicas:
+    properties:
+      replicas:
+        type: integer
+    type: object
+  kubegems.io_pkg_v2_services_handlers_application.AppStoreDeployForm:
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
     properties:
       annotations:
         additionalProperties:
@@ -4054,20 +3982,31 @@ definitions:
       environment:
         $ref: '#/definitions/models.Environment'
         description: 关联的环境
+<<<<<<< HEAD
         type: object
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
       environmentID:
         description: 关联的环境
         type: integer
       id:
         type: integer
       images:
+<<<<<<< HEAD
         $ref: '#/definitions/datatypes.JSON'
         description: 镜像,逗号分割
         type: object
+=======
+        description: 项目资源限制
+        items:
+          type: integer
+        type: array
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
       kind:
         description: 类型
         type: string
       labels:
+<<<<<<< HEAD
         $ref: '#/definitions/datatypes.JSON'
         description: Label
         type: object
@@ -4075,6 +4014,15 @@ definitions:
         $ref: '#/definitions/models.Project'
         description: 所属项
         type: object
+=======
+        description: 项目资源限制
+        items:
+          type: integer
+        type: array
+      project:
+        $ref: '#/definitions/models.Project'
+        description: 所属项
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
       projectID:
         description: 所属项目ID
         type: integer
@@ -4144,26 +4092,24 @@ definitions:
         description: 创建时间
         type: string
     type: object
-  models.CVEAllowlist:
+  models.CPUMemoryStatus:
     properties:
-      creationTime:
+      currentLimit:
+        description: 带单位
         type: string
-      expires_at:
-        type: integer
-      id:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/models.CVEAllowlistItem'
-        type: array
-      project_id:
-        type: integer
-      updateTime:
+      currentRate:
+        type: number
+      status:
+        description: 扩容或缩容
         type: string
-    type: object
-  models.CVEAllowlistItem:
-    properties:
-      cve_id:
+      suggestLimit:
+        description: 带单位
+        type: string
+      suggestMaxLimit:
+        description: 带单位
+        type: string
+      suggestMinLimit:
+        description: 带单位
         type: string
     type: object
   models.ChartRepo:
@@ -4201,47 +4147,86 @@ definitions:
         type: string
 =======
       agentAddr:
+        description: if empty, using apiserver proxy
         type: string
       apiserver:
+        description: APIServer地址 根据kubeconfig添加后，自动填充
+        type: string
+      clusterName:
         type: string
       clusterResourceQuota:
+        description: 环境下的limitrage
         items:
           type: integer
         type: array
+      defaultStorageClass:
+        description: DefaultStorageClass 默认storageclass, 默认local-path
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+        description: soft delete
       environments:
         items:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+          $ref: '#/definitions/models.Environment'
         type: array
       id:
         type: integer
+      imageRepo:
+        description: ImageRepo 安装kubegems核心组件时使用的镜像仓库
+        type: string
+      installNamespace:
+        description: agent service namespace
+        type: string
       kubeConfig:
         items:
           type: integer
         type: array
-      name:
-        type: string
       oversoldConfig:
+        description: installer plugins Values
         items:
           type: integer
         type: array
       primary:
+        description: 是否主集群
         type: boolean
       runtime:
         description: docker or containerd
         type: string
       tenantResourceQuotas:
         items:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.TenantResourceQuota'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota'
         type: array
+      values:
+        description: installer plugins Values
+        items:
+          type: integer
+        type: array
+      vendor:
+        description: Vendor 集群提供商(gke tke ack selfhosted)
+        enum:
+        - selfhosted
+        - gke
+        - ack
+        - tke
+        type: string
       version:
+        description: apiserver version
         type: string
     required:
+    - clusterName
+    - defaultStorageClass
+    - imageRepo
     - kubeConfig
+<<<<<<< HEAD
     - name
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
+=======
+    - vendor
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
     type: object
-  models.ContainerInfo:
+  models.Condition:
     properties:
+<<<<<<< HEAD
 <<<<<<< HEAD
       CPUStatus:
         $ref: '#/definitions/models.CPUMemoryStatus'
@@ -4249,10 +4234,17 @@ definitions:
       MemoryStatus:
         $ref: '#/definitions/models.CPUMemoryStatus'
         type: object
+=======
+      CPUStatus:
+        $ref: '#/definitions/models.CPUMemoryStatus'
+      MemoryStatus:
+        $ref: '#/definitions/models.CPUMemoryStatus'
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
       pods:
         items:
           type: string
         type: array
+<<<<<<< HEAD
 =======
       image:
         type: string
@@ -4262,13 +4254,48 @@ definitions:
         type: boolean
       name:
         type: string
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
     type: object
-  models.DashboardRef:
+  models.Environment:
     properties:
-      template:
+      applications:
+        description: 关联的应用
+        items:
+          $ref: '#/definitions/models.Application'
+        type: array
+      cluster:
+        $ref: '#/definitions/models.Cluster'
+        description: 关联的集群
+      clusterID:
+        description: 所属集群ID
+        type: integer
+      creator:
+        $ref: '#/definitions/models.User'
+        description: 创建者
+      creatorID:
+        description: 创建人ID
+        type: integer
+      deletePolicy:
+        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
         type: string
-      title:
+      environmentName:
+        description: 环境名字
         type: string
+      id:
+        type: integer
+      limitRange:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      metaType:
+        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
+        type: string
+      namespace:
+        description: 环境关联的namespace
+        type: string
+<<<<<<< HEAD
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
     type: object
   models.Environment:
@@ -4312,13 +4339,36 @@ definitions:
         $ref: '#/definitions/datatypes.JSON'
         type: object
       users:
+=======
+      project:
+        $ref: '#/definitions/models.Project'
+        description: 所属项目
+      projectID:
+        description: 所属项目ID
+        type: integer
+      remark:
+        description: 备注
+        type: string
+      resourceQuota:
+        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
+        items:
+          type: integer
+        type: array
+      users:
+        description: 关联的用户
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
         items:
           $ref: '#/definitions/models.User'
         type: array
       virtualSpace:
         $ref: '#/definitions/models.VirtualSpace'
+<<<<<<< HEAD
         type: object
       virtualSpaceID:
+=======
+      virtualSpaceID:
+        description: 虚拟空间
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
         type: integer
     type: object
   models.EnvironmentResource:
@@ -4366,7 +4416,10 @@ definitions:
         type: integer
       omitempty:
         $ref: '#/definitions/models.Environment'
+<<<<<<< HEAD
         type: object
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
       role:
         type: string
       user:
@@ -4569,25 +4622,24 @@ definitions:
     required:
     - name
     type: object
-  models.Pod:
+  models.Project:
     properties:
-      annotations:
-        additionalProperties:
-          type: string
-        type: object
-      appLabel:
-        type: boolean
-      containers:
+      applications:
         items:
+<<<<<<< HEAD
 <<<<<<< HEAD
           $ref: '#/definitions/models.Application'
 =======
           $ref: '#/definitions/models.ContainerInfo'
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
+=======
+          $ref: '#/definitions/models.Application'
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
         type: array
       createdAt:
         description: 创建时间
         type: string
+<<<<<<< HEAD
       createdBy:
         items:
 <<<<<<< HEAD
@@ -4625,40 +4677,33 @@ definitions:
           $ref: '#/definitions/models.ContainerInfo'
         type: array
       istioInitContainers:
+=======
+      environments:
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
         items:
-          $ref: '#/definitions/models.ContainerInfo'
+          $ref: '#/definitions/models.Environment'
         type: array
-      labels:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      proxyStatus:
-        $ref: '#/definitions/models.ProxyStatus'
-      serviceAccountName:
-        type: string
-      status:
-        type: string
-      statusMessage:
-        type: string
-      statusReason:
-        type: string
-      versionLabel:
-        type: boolean
-    type: object
-  models.Project:
-    properties:
-      chart_count:
+      id:
         type: integer
-      creation_time:
+      projectAlias:
+        description: 项目别名
         type: string
-      current_user_role_id:
-        type: integer
-      current_user_role_ids:
+      projectName:
+        description: 项目名字
+        type: string
+      registries:
+        items:
+          $ref: '#/definitions/models.Registry'
+        type: array
+      remark:
+        description: 项目备注
+        type: string
+      resourceQuota:
+        description: 项目资源限制
         items:
           type: integer
         type: array
+<<<<<<< HEAD
       cve_allowlist:
         $ref: '#/definitions/models.CVEAllowlist'
       deleted:
@@ -4679,9 +4724,17 @@ definitions:
       registry_id:
         type: integer
       repo_count:
+=======
+      tenant:
+        $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+      tenantID:
+        description: 所属的租户ID
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
         type: integer
-      update_time:
-        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
     type: object
   models.ProjectUserRels:
     properties:
@@ -4708,6 +4761,9 @@ definitions:
     - userID
     type: object
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
   models.Registry:
     properties:
       creator:
@@ -4745,6 +4801,7 @@ definitions:
         description: 用户名
         type: string
     type: object
+<<<<<<< HEAD
   models.SystemRole:
     properties:
       code:
@@ -4875,6 +4932,12 @@ definitions:
       content:
         description: 配置内容
 >>>>>>> 1bb491d (✨ feat(observability): add environment info)
+=======
+  models.TenantResourceQuotaApply:
+    properties:
+      content:
+        description: 项目资源限制
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
         items:
           $ref: '#/definitions/models.User'
         type: array
@@ -5090,6 +5153,29 @@ definitions:
       virtualSpaceName:
         type: string
     type: object
+  models.VirtualSpace:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      environments:
+        items:
+          $ref: '#/definitions/models.Environment'
+        type: array
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      updatedAt:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      virtualSpaceName:
+        type: string
+    type: object
   models.VirtualSpaceUserRels:
     properties:
       id:
@@ -5104,7 +5190,10 @@ definitions:
         type: integer
       virtualSpace:
         $ref: '#/definitions/models.VirtualSpace'
+<<<<<<< HEAD
         type: object
+=======
+>>>>>>> 96ca1ec (📃 docs(swagger): make swagger)
       virtualSpaceID:
         type: integer
     required:
@@ -5112,134 +5201,30 @@ definitions:
     type: object
   models.Workload:
     properties:
-      additionalDetailSample:
-        $ref: '#/definitions/models.AdditionalItem'
-        description: |-
-          Additional item sample, such as type of api being served (graphql, grpc, rest)
-          example: rest
-          required: false
-      additionalDetails:
-        description: Additional details to display, such as configured annotations
-        items:
-          $ref: '#/definitions/models.AdditionalItem'
-        type: array
-      appLabel:
-        description: |-
-          Define if Pods related to this Workload has the label App
-          required: true
-          example: true
-        type: boolean
-      availableReplicas:
-        description: |-
-          Number of available replicas
-          required: true
-          example: 1
-        type: integer
+      clusterName:
+        type: string
+      color:
+        description: eg, yellow
+        type: string
+      conditions:
+        additionalProperties:
+          $ref: '#/definitions/models.Condition'
+        description: 按容器名分组
+        type: object
+      cpulimitStdvar:
+        type: number
       createdAt:
-        description: |-
-          Creation timestamp (in RFC3339 format)
-          required: true
-          example: 2018-07-31T12:24:17Z
         type: string
-      currentReplicas:
-        description: |-
-          Number of current replicas pods that matches controller selector labels
-          required: true
-          example: 2
+      id:
         type: integer
-      dashboardAnnotations:
-        additionalProperties:
-          type: string
-        description: |-
-          Dashboard annotations
-          required: false
-        type: object
-      desiredReplicas:
-        description: |-
-          Number of desired replicas defined by the user in the controller Spec
-          required: true
-          example: 2
-        type: integer
-      healthAnnotations:
-        additionalProperties:
-          type: string
-        description: |-
-          HealthAnnotations
-          required: false
-        type: object
-      istioInjectionAnnotation:
-        description: |-
-          Define if Workload has an explicit Istio policy annotation
-          Istio supports this as a label as well - this will be defined if the label is set, too.
-          If both annotation and label are set, if any is false, injection is disabled.
-          It's mapped as a pointer to show three values nil, true, false
-        type: boolean
-      istioReferences:
-        description: Istio References
-        items:
-          $ref: '#/definitions/models.IstioValidationKey'
-        type: array
-      istioSidecar:
-        description: |-
-          Define if Pods related to this Workload has an IstioSidecar deployed
-          required: true
-          example: true
-        type: boolean
-      labels:
-        additionalProperties:
-          type: string
-        description: Workload labels
-        type: object
+      memoryLimitStdvar:
+        type: number
       name:
-        description: |-
-          Name of the workload
-          required: true
-          example: reviews-v1
         type: string
-      podCount:
-        description: |-
-          Number of current workload pods
-          required: true
-          example: 1
-        type: integer
-      pods:
-        description: Pods bound to the workload
-        items:
-          $ref: '#/definitions/models.Pod'
-        type: array
-      resourceVersion:
-        description: |-
-          Kubernetes ResourceVersion
-          required: true
-          example: 192892127
+      namespace:
         type: string
-      runtimes:
-        description: Runtimes and associated dashboards
-        items:
-          $ref: '#/definitions/models.Runtime'
-        type: array
-      serviceAccountNames:
-        description: Names of the workload service accounts
-        items:
-          type: string
-        type: array
-      services:
-        description: Services that match workload selector
-        items:
-          $ref: '#/definitions/models.ServiceOverview'
-        type: array
       type:
-        description: |-
-          Type of the workload
-          required: true
-          example: deployment
         type: string
-      versionLabel:
-        description: |-
-          Define if Pods related to this Workload has the label Version
-          required: true
-          example: true
-        type: boolean
     type: object
   models.WorkloadListItem:
     properties:
@@ -25093,6 +25078,53 @@ paths:
       summary: Loki LabelValues
       tags:
       - Agent.V1
+  /v1/proxy/cluster/{cluster}/custom/loki/v1/query:
+    get:
+      consumes:
+      - application/json
+      description: Loki Query
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: The max number of entries to return
+        in: query
+        name: limit
+        type: string
+      - description: loki query language
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: The evaluation time for the query as a nanosecond Unix epoch
+          or another supported format. Defaults to now
+        in: query
+        name: time
+        type: integer
+      - description: The order to all results
+        in: query
+        name: direction
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: object
+              type: object
+      security:
+      - JWT: []
+      summary: Loki Query
+      tags:
+      - Agent.V1
   /v1/proxy/cluster/{cluster}/custom/loki/v1/queryrange:
     get:
       consumes:
@@ -26444,6 +26476,10 @@ paths:
         in: query
         name: search
         type: string
+      - description: 是否包含已分配的resourcequota
+        in: query
+        name: containAllocatedResourcequota
+        type: boolean
       produces:
       - application/json
       responses:
