@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-
 func TestRemoveNulls(t *testing.T) {
 	tests := []struct {
 		name string
@@ -13,16 +12,16 @@ func TestRemoveNulls(t *testing.T) {
 		want map[string]interface{}
 	}{
 		{
-			name: "",
+			name: "nil map value",
 			args: map[string]interface{}{
 				"nested": map[string]interface{}{
-					"foo": "",
+					"bar": nil,
 				},
 			},
 			want: map[string]interface{}{},
 		},
 		{
-			name: "",
+			name: "map with nil val",
 			args: map[string]interface{}{
 				"nested": map[string]interface{}{
 					"foo": "",
@@ -31,7 +30,23 @@ func TestRemoveNulls(t *testing.T) {
 			},
 			want: map[string]interface{}{
 				"nested": map[string]interface{}{
+					"foo": "",
 					"var": "val",
+				},
+			},
+		},
+		{
+			name: "remove no val",
+			args: map[string]interface{}{
+				"nested": map[string]interface{}{
+					"foo":  "",
+					"bool": false,
+				},
+			},
+			want: map[string]interface{}{
+				"nested": map[string]interface{}{
+					"foo":  "",
+					"bool": false,
 				},
 			},
 		},

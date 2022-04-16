@@ -62,6 +62,13 @@ spec:
           {{- end }}
     prometheus:
       prometheusSpec:
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+        additionalScrapeConfigs: |
+{{ .Files.Get "files/prometheus/scrape-additional.yaml" | indent 10 }}
+        retention: 30d
         image:
           {{- if .Values.image.registry }}
           # repository: quay.io/prometheus/prometheus
