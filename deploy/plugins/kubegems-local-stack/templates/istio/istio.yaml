@@ -14,8 +14,7 @@ spec:
   # see: https://github.com/istio/istio/blob/master/manifests/addons/values-kiali.yaml
   values:
     server:
-      # we using kiali after our agent proxy
-      web_root: /api/v1/service-proxy/cluster/{{ .Values.clusterName }}/namespace/{{ .Values.istio.namespace }}/service/kiali/port/20001/kiali
+      web_history_mode: hash
     auth:
       strategy: anonymous
     deployment:
