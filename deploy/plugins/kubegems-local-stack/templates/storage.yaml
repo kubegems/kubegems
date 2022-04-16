@@ -14,6 +14,7 @@ spec:
   version: 0.0.22
   values:
     storageClass:
+      defaultClass: true
       provisionerName: rancher.io/local-path
     nodePathMap:
     - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
