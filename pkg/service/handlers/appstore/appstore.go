@@ -14,7 +14,7 @@ import (
 	"kubegems.io/pkg/utils/pagination"
 )
 
-const InternalChartRepoName = "gems"
+const InternalChartRepoName = "kubegems"
 
 type Chart struct {
 	Name        string              `json:"name"`
