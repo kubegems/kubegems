@@ -55,7 +55,8 @@ func (ms *MessageSwitcher) saveFingerprintMapToDB(fingerprintMap map[string][]Al
 		envinfo := clusterNS2EnvMap[fmt.Sprintf("%s/%s",
 			alerts[0].Labels[prometheus.AlertClusterKey],
 			alerts[0].Labels[prometheus.AlertNamespaceLabel])]
-		alertInfos = append(alertInfos, models.AlertInfo{
+
+		tmpAlertInfo := models.AlertInfo{
 			Fingerprint:     fingerprint,
 			Name:            alerts[0].Labels[prometheus.AlertNameLabel], // 铁定有元素的，不会越界
 			Namespace:       alerts[0].Labels[prometheus.AlertNamespaceLabel],
@@ -64,7 +65,8 @@ func (ms *MessageSwitcher) saveFingerprintMapToDB(fingerprintMap map[string][]Al
 			ProjectName:     envinfo.ProjectName,
 			EnvironmentName: envinfo.EnvironmentName,
 			Labels:          labelbyts,
-		})
+		}
+		alertInfos = append(alertInfos, tmpAlertInfo)
 
 		for _, alert := range alerts {
 			alertMessages = append(alertMessages, models.AlertMessage{
@@ -75,6 +77,7 @@ func (ms *MessageSwitcher) saveFingerprintMapToDB(fingerprintMap map[string][]Al
 				EndsAt:      utils.TimeZeroToNull(alert.EndsAt),
 				CreatedAt:   &now,
 				Status:      alert.Status,
+				AlertInfo:   &tmpAlertInfo,
 			})
 		}
 	}
