@@ -134,9 +134,9 @@ local function getparents(kind, id)
     end
     table.insert(ret, current)
     local cdata = cjson.decode(current)
-    if cdata["owner"] then
-        for k, parent in ipairs(cdata["owner"]) do
-            getparents(parent["kind"], parent["id"])
+    if cdata["Owner"] then
+        for k, parent in ipairs(cdata["Owner"]) do
+            getparents(parent["Kind"], parent["ID"])
         end 
     end
 end
