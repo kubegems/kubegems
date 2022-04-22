@@ -3,6 +3,7 @@ package appstore
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,6 @@ import (
 	"helm.sh/helm/v3/pkg/repo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/pagination"
 )
 
@@ -90,17 +90,7 @@ func (h *AppstoreHandler) AppDetail(c *gin.Context) {
 		reponame = InternalChartRepoName
 	}
 
-	repourl := ""
-	if reponame == InternalChartRepoName {
-		repourl = "http://gems-chartmuseum.gemcloud-system:8030/gems" // TODO: 这里需要统一，由于默认仓库在数据库中无记录。所以之前写死的
-	} else {
-		modelrepo := &models.ChartRepo{ChartRepoName: reponame}
-		if err := h.GetDB().Where(modelrepo).Find(modelrepo).Error; err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-		repourl = modelrepo.URL
-	}
+	repourl := strings.TrimSuffix(h.AppStoreOpt.Addr, "/") + "/" + reponame
 
 	index, err := h.ChartmuseumClient.ListChartVersions(c.Request.Context(), reponame, name)
 	if err != nil {
