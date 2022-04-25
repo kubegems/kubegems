@@ -17,8 +17,7 @@ const (
 	MetricTargetDaemonset   = "daemonset"
 	MetricTargetWorkload    = "workload" // 临时解决不知道哪种workload的情况
 
-	annotationsTargetNameKey = gems.AnnotationsMetricsTargetNameKey
-	allNamespace             = "_all"
+	allNamespace = "_all"
 )
 
 type MetricTarget struct {
@@ -54,7 +53,7 @@ func (t *MetricTarget) GetMeta() metav1.ObjectMeta {
 		Namespace: t.Namespace,
 		Name:      t.Name,
 		Annotations: map[string]string{
-			annotationsTargetNameKey: t.TargetType + "-" + t.TargetName,
+			gems.AnnotationsMonitorCollector: t.TargetType + "-" + t.TargetName,
 		},
 	}
 }
@@ -138,7 +137,7 @@ func MutateServiceMonitorFunc(t *MetricTarget, sm *v1.ServiceMonitor) func() err
 	return func() error {
 		sm.Spec = v1.ServiceMonitorSpec{
 			Selector:          *metav1.SetAsLabelSelector(t.TargetLabels),
-			NamespaceSelector: namespaceSelector(t.TargetNamespace, t.Namespace),
+			NamespaceSelector: NamespaceSelector(t.TargetNamespace, t.Namespace),
 			Endpoints:         make([]v1.Endpoint, len(t.TargetEndpoints)),
 		}
 		for i, ep := range t.TargetEndpoints {
@@ -157,7 +156,7 @@ func MutatePodMonitorFunc(t *MetricTarget, pm *v1.PodMonitor) func() error {
 	return func() error {
 		pm.Spec = v1.PodMonitorSpec{
 			Selector:            *metav1.SetAsLabelSelector(t.TargetLabels),
-			NamespaceSelector:   namespaceSelector(t.TargetNamespace, t.Namespace),
+			NamespaceSelector:   NamespaceSelector(t.TargetNamespace, t.Namespace),
 			PodMetricsEndpoints: make([]v1.PodMetricsEndpoint, len(t.TargetEndpoints)),
 		}
 		for i, ep := range t.TargetEndpoints {
@@ -174,7 +173,7 @@ func MutatePodMonitorFunc(t *MetricTarget, pm *v1.PodMonitor) func() error {
 
 func getTargetTypeFromAnno(anno map[string]string) string {
 	if anno != nil {
-		tmp := strings.SplitN(anno[annotationsTargetNameKey], "-", 2)
+		tmp := strings.SplitN(anno[gems.AnnotationsMonitorCollector], "-", 2)
 		if len(tmp) > 1 {
 			return tmp[0]
 		}
@@ -184,7 +183,7 @@ func getTargetTypeFromAnno(anno map[string]string) string {
 
 func getTargetNameFromAnno(anno map[string]string) string {
 	if anno != nil {
-		tmp := strings.SplitN(anno[annotationsTargetNameKey], "-", 2)
+		tmp := strings.SplitN(anno[gems.AnnotationsMonitorCollector], "-", 2)
 		if len(tmp) > 1 {
 			return tmp[1]
 		}
@@ -203,7 +202,7 @@ func targetNamespace(s v1.NamespaceSelector) string {
 }
 
 // 默认当前ns
-func namespaceSelector(ns string, def string) v1.NamespaceSelector {
+func NamespaceSelector(ns string, def string) v1.NamespaceSelector {
 	if ns == "" {
 		ns = def
 	}
