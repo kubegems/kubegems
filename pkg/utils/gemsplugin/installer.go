@@ -15,7 +15,7 @@ type InstallerOptions struct {
 
 func DefaultInstallerOptions() *InstallerOptions {
 	return &InstallerOptions{
-		OperatorImage: "kubegems/installer-operator:" + version.Get().GitVersion,
+		OperatorImage: "installer-operator:" + version.Get().GitVersion,
 		InstallerYaml: defaultInstallerObj,
 	}
 }

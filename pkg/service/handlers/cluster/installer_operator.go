@@ -273,7 +273,7 @@ spec:
         - upstream=http://127.0.0.1:8081/
         - logtostderr=true
         - v=10
-        image: kubegems/kube-rbac-proxy:v0.8.0
+        image: {{ .Cluster.ImageRepo }}/kube-rbac-proxy:v0.8.0
         imagePullPolicy: IfNotPresent
         name: kube-rbac-proxy
         ports:
@@ -290,7 +290,7 @@ spec:
           value: explicit
         - name: RUNNING_MODE 
           value: "worker"
-        image: {{ .InstallerOptions.OperatorImage }}
+        image: {{ .Cluster.ImageRepo }}/{{ .InstallerOptions.OperatorImage }}
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
