@@ -30,4 +30,7 @@ const (
 	FinalizerEnvironment   = "finalizer." + GroupName + "/environment"
 )
 
-const AnnotationsMetricsTargetNameKey = GroupName + "/metricTargetName"
+const (
+	AnnotationsMonitorCollector = GroupName + "/monitoring"
+	AnnotationsLogCollector     = GroupName + "/logging"
+)

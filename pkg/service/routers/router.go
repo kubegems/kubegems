@@ -39,6 +39,7 @@ import (
 	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
 	myinfohandler "kubegems.io/pkg/service/handlers/myinfo"
 	noproxyhandler "kubegems.io/pkg/service/handlers/noproxy"
+	"kubegems.io/pkg/service/handlers/observability"
 	projecthandler "kubegems.io/pkg/service/handlers/project"
 	proxyhandler "kubegems.io/pkg/service/handlers/proxy"
 	registryhandler "kubegems.io/pkg/service/handlers/registry"
@@ -334,6 +335,9 @@ func (r *Router) Complete() error {
 	// logoperator handler
 	logoperatorHandler := &logoperatorhandler.LogOperatorHandler{BaseHandler: basehandler}
 	logoperatorHandler.RegistRouter(rg)
+
+	// observability handler
+	(&observability.ObservabilityHandler{BaseHandler: basehandler}).RegistRouter(rg)
 
 	// workload 的反向代理
 	proxyHandler := proxyhandler.ProxyHandler{BaseHandler: basehandler}
