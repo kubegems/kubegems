@@ -15,6 +15,11 @@ spec:
   values:
     storageClass:
       defaultClass: true
+      provisionerName: rancher.io/local-path
+    nodePathMap:
+      - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+        paths:
+          - /data
 ---
 # https://kubernetes.github.io/ingress-nginx/deploy/#quick-start
 apiVersion: plugins.kubegems.io/v1beta1

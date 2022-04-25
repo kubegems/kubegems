@@ -76,7 +76,7 @@ KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://raw.githubusercon
 Install kubegems installer using helm.
 
 ```sh
-helm install --namespace kubegems-installer --create-namespace kubegems-installer charts/kubegems-installer
+helm install --namespace kubegems-installer --create-namespace kubegems-installer plugins/kubegems-installer
 ```
 
 or deploy installer from generated manifests.
