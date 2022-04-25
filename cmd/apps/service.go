@@ -13,6 +13,7 @@ import (
 	"kubegems.io/pkg/service/options"
 	"kubegems.io/pkg/utils/config"
 	"kubegems.io/pkg/utils/database"
+	"kubegems.io/pkg/utils/debug"
 	"kubegems.io/pkg/version"
 )
 
@@ -31,6 +32,9 @@ func NewServiceCmd() *cobra.Command {
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
 
+			if err := debug.ApplyPortForwardingOptions(ctx, options); err != nil {
+				return err
+			}
 			return service.Run(ctx, options)
 		},
 	}
