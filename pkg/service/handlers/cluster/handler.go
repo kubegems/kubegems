@@ -213,16 +213,20 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		return
 	}
 	recordOnly := c.DefaultQuery("record_only", "true") == "true"
+	if recordOnly {
+		if err := h.GetDB().Delete(cluster).Error; err != nil {
+			handlers.NotOK(c, err)
+			return
+		}
+	} else {
+		if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+			installeropts := new(gemsplugin.InstallerOptions)
+			h.DynamicConfig.Get(ctx, installeropts)
 
-	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
-		installeropts := new(gemsplugin.InstallerOptions)
-		h.DynamicConfig.Get(ctx, installeropts)
-
-		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
-			if err := tx.Delete(cluster).Error; err != nil {
-				return err
-			}
-			if !recordOnly {
+			return h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
+				if err := tx.Delete(cluster).Error; err != nil {
+					return err
+				}
 				installer := ClusterInstaller{
 					Cluster:          cluster,
 					Clientset:        clientSet,
@@ -231,27 +235,21 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 					InstallerOptions: installeropts,
 				}
 				return installer.UnInstall(ctx)
-			}
-			return nil
+			})
 		}); err != nil {
-			log.Error(err, "delete cluster")
-			return err
+			handlers.NotOK(c, err)
+			return
 		}
-
-		h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
-			msg.EventKind = msgbus.Delete
-			msg.ResourceType = msgbus.Cluster
-			msg.ResourceID = cluster.ID
-			msg.Detail = fmt.Sprintf("删除了集群%s", cluster.ClusterName)
-			msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
-		})
-
-		handlers.NoContent(c, nil)
-		return nil
-	}); err != nil {
-		handlers.NotOK(c, err)
-		return
 	}
+
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind = msgbus.Delete
+		msg.ResourceType = msgbus.Cluster
+		msg.ResourceID = cluster.ID
+		msg.Detail = fmt.Sprintf("删除了集群%s", cluster.ClusterName)
+		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
+	})
+	handlers.NoContent(c, nil)
 }
 
 // ListClusterEnvironment 获取属于Cluster的 Environment 列表
