@@ -5,6 +5,8 @@ kind: ServiceMonitor
 metadata:
   name: istio-component-monitor
   namespace: istio-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
   labels:
     monitoring: istio-components
     release: istio
@@ -31,6 +33,8 @@ kind: PodMonitor
 metadata:
   name: envoy-stats-monitor
   namespace: istio-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
   labels:
     monitoring: istio-proxies
     release: istio
