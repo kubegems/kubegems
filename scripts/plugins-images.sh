@@ -13,14 +13,9 @@ DEST_REGISTRY=docker.io/kubegems
 ACTION=
 
 CUSTOM_IMAGES='
-istio/proxyv2:1.11.2
-istio/istiod:1.11.2
+istio/proxyv2:1.11.7
+istio/istiod:1.11.7
 '
-
-CONTAINER_CMD=docker
-if ! [ -x "$(command -v docker)" ]; then
-    CONTAINER_CMD=podman
-fi
 
 parsed_images() {
     awk 'match($$0,/image:\s"*([a-z0-9:/@.:\-]+)/,i){print i[1]}' | uniq
@@ -37,9 +32,11 @@ list_images() {
 copy_image() {
     tagedimage=${DEST_REGISTRY}/${1##*/}
     echo "copying [${image}] --> [${tagedimage}]"
-    ${CONTAINER_CMD} pull ${image}
-    ${CONTAINER_CMD} tag ${image} ${tagedimage}
-    ${CONTAINER_CMD} push ${tagedimage}
+    if [ "${tagedimage}" = "${image}" ]; then
+        echo "skipping [${image}]"
+        return
+    fi
+    skopeo copy docker://${image} docker://${tagedimage}
 }
 
 OPTS=$(getopt -o t:,l,h -l to:,list,help -- "$@")
