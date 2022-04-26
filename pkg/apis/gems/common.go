@@ -31,6 +31,9 @@ const (
 )
 
 const (
-	AnnotationsMonitorCollector = GroupName + "/monitoring"
-	AnnotationsLogCollector     = GroupName + "/logging"
+	LabelMonitorCollector = GroupName + "/monitoring"
+	LabelLogCollector     = GroupName + "/logging"
+
+	StatusEnabled  = "enabled"
+	StatusDisabled = "disabled"
 )
