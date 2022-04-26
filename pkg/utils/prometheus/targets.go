@@ -53,7 +53,7 @@ func (t *MetricTarget) GetMeta() metav1.ObjectMeta {
 		Namespace: t.Namespace,
 		Name:      t.Name,
 		Annotations: map[string]string{
-			gems.AnnotationsMonitorCollector: t.TargetType + "-" + t.TargetName,
+			gems.LabelMonitorCollector: t.TargetType + "-" + t.TargetName,
 		},
 	}
 }
@@ -173,7 +173,7 @@ func MutatePodMonitorFunc(t *MetricTarget, pm *v1.PodMonitor) func() error {
 
 func getTargetTypeFromAnno(anno map[string]string) string {
 	if anno != nil {
-		tmp := strings.SplitN(anno[gems.AnnotationsMonitorCollector], "-", 2)
+		tmp := strings.SplitN(anno[gems.LabelMonitorCollector], "-", 2)
 		if len(tmp) > 1 {
 			return tmp[0]
 		}
@@ -183,7 +183,7 @@ func getTargetTypeFromAnno(anno map[string]string) string {
 
 func getTargetNameFromAnno(anno map[string]string) string {
 	if anno != nil {
-		tmp := strings.SplitN(anno[gems.AnnotationsMonitorCollector], "-", 2)
+		tmp := strings.SplitN(anno[gems.LabelMonitorCollector], "-", 2)
 		if len(tmp) > 1 {
 			return tmp[1]
 		}

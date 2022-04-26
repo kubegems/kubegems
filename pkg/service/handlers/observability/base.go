@@ -10,7 +10,10 @@ type ObservabilityHandler struct {
 }
 
 func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
-	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/:service", h.CheckByClusterNamespace, h.GetMonitorCollector)
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.GetMonitorCollector)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.AddOrUpdateMonitorCollector)
-	rg.DELETE("/observability/cluster/:cluster/namespaces/:namespace/monitor/:service", h.CheckByClusterNamespace, h.DeleteMonitorCollector)
+	rg.DELETE("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.
+		CheckByClusterNamespace, h.DeleteMonitorCollector)
+
+	rg.PUT("/observability/cluster/:cluster/namespaces/:namespace/logging", h.CheckByClusterNamespace, h.NamespaceLogCollector)
 }

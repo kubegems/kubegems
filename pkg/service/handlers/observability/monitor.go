@@ -14,39 +14,8 @@ import (
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/pagination"
-	"kubegems.io/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
-// ListMetricTarget 采集器列表
-// @Tags         Metrics
-// @Summary      采集器列表
-// @Description  采集器列表
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                                   true  "cluster"
-// @Param        namespace  path      string                                                   true  "namespace"
-// @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.MetricTarget}  "resp"
-// @Router       /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets [get]
-// @Security     JWT
-func (h *ObservabilityHandler) ListMetricTarget(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-	if namespace == "_all" {
-		namespace = corev1.NamespaceAll
-	}
-	ret := []*prometheus.MetricTarget{}
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, tc agents.Client) error {
-		var err error
-		ret, err = tc.Extend().ListMetricTargets(ctx, namespace)
-		return err
-	}); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, pagination.NewPageDataFromContextReflect(c, ret))
-}
 
 type MonitorCollector struct {
 	Service string `json:"service"` // 服务名
@@ -62,14 +31,14 @@ type MonitorCollector struct {
 // @Produce      json
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
-// @Param        service       path      string               true  "服务名"
+// @Param        service       query      string               true  "服务名"
 // @Success      200        {object}  handlers.ResponseStruct{Data=MonitorCollector}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/{service} [get]
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [get]
 // @Security     JWT
 func (h *ObservabilityHandler) GetMonitorCollector(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
-	svcname := c.Param("service")
+	svcname := c.Query("service")
 
 	ret := MonitorCollector{
 		Service: svcname,
@@ -181,7 +150,10 @@ func (h *ObservabilityHandler) AddOrUpdateMonitorCollector(c *gin.Context) {
 			return err
 		}
 
-		svc.Annotations[gems.AnnotationsMonitorCollector] = svc.Name
+		if svc.Labels == nil {
+			svc.Labels = make(map[string]string)
+		}
+		svc.Labels[gems.LabelMonitorCollector] = gems.StatusEnabled
 		return cli.Update(ctx, &svc)
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -199,25 +171,37 @@ func (h *ObservabilityHandler) AddOrUpdateMonitorCollector(c *gin.Context) {
 // @Produce      json
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
-// @Param        service       path      string               true  "服务名"
+// @Param        service       query      string               true  "服务名"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/{service} [delete]
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [delete]
 // @Security     JWT
 func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
-	svcname := c.Param("service")
+	svcname := c.Query("service")
 
 	h.SetAuditData(c, "删除", "监控采集器", svcname)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		return cli.Delete(ctx, &v1.ServiceMonitor{
+		svc := corev1.Service{}
+		if err := cli.Get(ctx, types.NamespacedName{
+			Namespace: namespace,
+			Name:      svcname,
+		}, &svc); err != nil {
+			return err
+		}
+
+		if err := cli.Delete(ctx, &v1.ServiceMonitor{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
 				Name:      svcname,
 			},
-		})
+		}); err != nil {
+			return err
+		}
+		delete(svc.Labels, gems.LabelMonitorCollector)
+		return cli.Update(ctx, &svc)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
