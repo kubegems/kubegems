@@ -33,8 +33,8 @@ const (
 // @Description  namespace级日志采集器
 // @Accept       json
 // @Produce      json
-// @Param        cluster    path      string                                             true  "cluster"
-// @Param        namespace  path      string                                             true  "namespace"
+// @Param        cluster    path      string                                            true  "cluster"
+// @Param        namespace  path      string                                            true  "namespace"
 // @Param        enable     query     bool                                  true  "是否启用日志采集"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging [put]
@@ -134,7 +134,7 @@ type AppInfo struct {
 // @Produce      json
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
-// @Success      200        {object}  handlers.ResponseStruct{Data=map[string]*AppInfo}  "resp"
+// @Success      200        {object}  handlers.ResponseStruct{Data=map[string]AppInfo}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps [get]
 // @Security     JWT
 func (h *ObservabilityHandler) ListLogApps(c *gin.Context) {
