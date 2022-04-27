@@ -3151,22 +3151,145 @@ definitions:
           $ref: '#/definitions/v1alpha1.SyncOperationResource'
         type: array
     type: object
-  kubegems.io_pkg_service_models.SystemRole:
+  kubegems.io_pkg_service_models.Application:
     properties:
+      applicationName:
+        description: 应用名字
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      creator:
+        description: 创建人
+        type: string
+      environment:
+        $ref: '#/definitions/kubegems.io_pkg_service_models.Environment'
+        description: 关联的环境
+      environmentID:
+        description: 关联的环境
+        type: integer
       id:
         type: integer
-      roleCode:
-        description: 系统级角色Code(管理员admin, 普通用户ordinary)
+      images:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      kind:
+        description: 类型
         type: string
-      roleName:
-        description: 角色名字
+      labels:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      project:
+        $ref: '#/definitions/models.Project'
+        description: 所属项
+      projectID:
+        description: 所属项目ID
+        type: integer
+      remark:
+        description: 备注
         type: string
+    type: object
+  kubegems.io_pkg_service_models.Environment:
+    properties:
+      applications:
+        description: 关联的应用
+        items:
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Application'
+        type: array
+      cluster:
+        $ref: '#/definitions/models.Cluster'
+        description: 关联的集群
+      clusterID:
+        description: 所属集群ID
+        type: integer
+      creator:
+        $ref: '#/definitions/models.User'
+        description: 创建者
+      creatorID:
+        description: 创建人ID
+        type: integer
+      deletePolicy:
+        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
+        type: string
+      environmentName:
+        description: 环境名字
+        type: string
+      id:
+        type: integer
+      limitRange:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      metaType:
+        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
+        type: string
+      namespace:
+        description: 环境关联的namespace
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+        description: 所属项目
+      projectID:
+        description: 所属项目ID
+        type: integer
+      remark:
+        description: 备注
+        type: string
+      resourceQuota:
+        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
+        items:
+          type: integer
+        type: array
       users:
+        description: 关联的用户
         items:
           $ref: '#/definitions/models.User'
         type: array
-    required:
-    - roleCode
+      virtualSpace:
+        $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
+      virtualSpaceID:
+        description: 虚拟空间
+        type: integer
+    type: object
+  kubegems.io_pkg_service_models.Registry:
+    properties:
+      creator:
+        $ref: '#/definitions/models.User'
+        description: 创建者
+      creatorID:
+        type: integer
+      enableExtends:
+        description: 是否启用扩展功能，支持harbor等高级仓库
+        type: boolean
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      password:
+        description: 密码
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+      projectID:
+        description: 项目ID
+        type: integer
+      registryAddress:
+        description: 仓库地址
+        type: string
+      registryName:
+        description: 仓库名称
+        type: string
+      updateTime:
+        description: 更新时间
+        type: string
+      username:
+        description: 用户名
+        type: string
     type: object
   kubegems.io_pkg_service_models.Tenant:
     properties:
@@ -3207,7 +3330,7 @@ definitions:
       clusterID:
         type: integer
       content:
-        description: 项目资源限制
+        description: 原始数据 记录的是request和response以及http_code
         items:
           type: integer
         type: array
@@ -3225,20 +3348,136 @@ definitions:
     - clusterID
     - tenantID
     type: object
-  kubegems.io_pkg_v2_models.SystemRole:
+  kubegems.io_pkg_service_models.VirtualSpace:
     properties:
-      code:
+      createdAt:
         type: string
+      createdBy:
+        type: string
+      environments:
+        items:
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+        type: array
       id:
         type: integer
-      name:
+      isActive:
+        type: boolean
+      updatedAt:
         type: string
       users:
         items:
           $ref: '#/definitions/models.User'
         type: array
-    required:
-    - code
+      virtualSpaceName:
+        type: string
+    type: object
+  kubegems.io_pkg_v2_models.Application:
+    properties:
+      createdAt:
+        type: string
+      creator:
+        type: string
+      environment:
+        $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+      environmentID:
+        type: integer
+      id:
+        type: integer
+      images:
+        description: 原始数据 记录的是request和response以及http_code
+        items:
+          type: integer
+        type: array
+      kind:
+        type: string
+      labels:
+        description: 原始数据 记录的是request和response以及http_code
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+      projectID:
+        type: integer
+      remark:
+        type: string
+    type: object
+  kubegems.io_pkg_v2_models.Environment:
+    properties:
+      applications:
+        items:
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Application'
+        type: array
+      cluster:
+        $ref: '#/definitions/models.Cluster'
+      clusterID:
+        type: integer
+      creator:
+        $ref: '#/definitions/models.User'
+      creatorID:
+        type: integer
+      deletePolicy:
+        type: string
+      id:
+        type: integer
+      limitRange:
+        description: 原始数据 记录的是request和response以及http_code
+        items:
+          type: integer
+        type: array
+      metaType:
+        description: MetaTpe (dev, prod, test, pub ...)
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+      projectID:
+        type: integer
+      remark:
+        type: string
+      resourceQuota:
+        description: 原始数据 记录的是request和response以及http_code
+        items:
+          type: integer
+        type: array
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      virtualSpace:
+        $ref: '#/definitions/kubegems.io_pkg_v2_models.VirtualSpace'
+      virtualSpaceID:
+        type: integer
+    type: object
+  kubegems.io_pkg_v2_models.Registry:
+    properties:
+      address:
+        type: string
+      creator:
+        $ref: '#/definitions/models.User'
+      creatorID:
+        type: integer
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+      projectID:
+        type: integer
+      updateTime:
+        type: string
+      username:
+        type: string
     type: object
   kubegems.io_pkg_v2_models.Tenant:
     properties:
@@ -3274,7 +3513,7 @@ definitions:
       clusterID:
         type: integer
       content:
-        description: installer plugins Values
+        description: 原始数据 记录的是request和response以及http_code
         items:
           type: integer
         type: array
@@ -3287,6 +3526,29 @@ definitions:
     required:
     - clusterID
     - tenantID
+    type: object
+  kubegems.io_pkg_v2_models.VirtualSpace:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      environments:
+        items:
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+        type: array
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
     type: object
   kubegems.io_pkg_v2_services_handlers.PageData:
     properties:
@@ -3891,6 +4153,21 @@ definitions:
           $ref: '#/definitions/v1alpha1.SyncOperationResource'
         type: array
     type: object
+  kubernetes.Host:
+    properties:
+      cluster:
+        type: string
+      complete_input:
+        description: |-
+          CompleteInput is true when Service, Namespace and Cluster fields are present.
+          It is true for simple service names and FQDN services.
+          It is false for service.namespace format and service entries.
+        type: boolean
+      namespace:
+        type: string
+      service:
+        type: string
+    type: object
   labels.Matcher:
     properties:
       name:
@@ -4269,48 +4546,6 @@ definitions:
         description: firing or resolved
         type: string
       value:
-        type: string
-    type: object
-  models.Application:
-    properties:
-      applicationName:
-        description: 应用名字
-        type: string
-      createdAt:
-        description: 创建时间
-        type: string
-      creator:
-        description: 创建人
-        type: string
-      environment:
-        $ref: '#/definitions/models.Environment'
-        description: 关联的环境
-      environmentID:
-        description: 关联的环境
-        type: integer
-      id:
-        type: integer
-      images:
-        description: 项目资源限制
-        items:
-          type: integer
-        type: array
-      kind:
-        description: 类型
-        type: string
-      labels:
-        description: 项目资源限制
-        items:
-          type: integer
-        type: array
-      project:
-        $ref: '#/definitions/models.Project'
-        description: 所属项
-      projectID:
-        description: 所属项目ID
-        type: integer
-      remark:
-        description: 备注
         type: string
     type: object
   models.AuditLog:
@@ -7368,78 +7603,18 @@ definitions:
     type: object
   models.Cluster:
     properties:
-      agentAddr:
-        description: if empty, using apiserver proxy
+      destination_rule:
         type: string
-      apiserver:
-        description: APIServer地址 根据kubeconfig添加后，自动填充
+      direction:
         type: string
-      clusterName:
-        type: string
-      clusterResourceQuota:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      defaultStorageClass:
-        description: DefaultStorageClass 默认storageclass, 默认local-path
-        type: string
-      deletedAt:
-        $ref: '#/definitions/gorm.DeletedAt'
-        description: soft delete
-      environments:
-        items:
-          $ref: '#/definitions/models.Environment'
-        type: array
-      id:
+      port:
         type: integer
-      imageRepo:
-        description: ImageRepo 安装kubegems核心组件时使用的镜像仓库
+      service_fqdn:
+        $ref: '#/definitions/kubernetes.Host'
+      subset:
         type: string
-      installNamespace:
-        description: agent service namespace
+      type:
         type: string
-      kubeConfig:
-        items:
-          type: integer
-        type: array
-      oversoldConfig:
-        description: installer plugins Values
-        items:
-          type: integer
-        type: array
-      primary:
-        description: 是否主集群
-        type: boolean
-      runtime:
-        description: docker or containerd
-        type: string
-      tenantResourceQuotas:
-        items:
-          $ref: '#/definitions/kubegems.io_pkg_service_models.TenantResourceQuota'
-        type: array
-      values:
-        description: installer plugins Values
-        items:
-          type: integer
-        type: array
-      vendor:
-        description: Vendor 集群提供商(gke tke ack selfhosted)
-        enum:
-        - selfhosted
-        - gke
-        - ack
-        - tke
-        type: string
-      version:
-        description: apiserver version
-        type: string
-    required:
-    - clusterName
-    - defaultStorageClass
-    - imageRepo
-    - kubeConfig
-    - vendor
     type: object
   models.Condition:
     properties:
@@ -7451,69 +7626,6 @@ definitions:
         items:
           type: string
         type: array
-    type: object
-  models.Environment:
-    properties:
-      applications:
-        description: 关联的应用
-        items:
-          $ref: '#/definitions/models.Application'
-        type: array
-      cluster:
-        $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
-      clusterID:
-        description: 所属集群ID
-        type: integer
-      creator:
-        $ref: '#/definitions/models.User'
-        description: 创建者
-      creatorID:
-        description: 创建人ID
-        type: integer
-      deletePolicy:
-        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
-        type: string
-      environmentName:
-        description: 环境名字
-        type: string
-      id:
-        type: integer
-      limitRange:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      metaType:
-        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
-        type: string
-      namespace:
-        description: 环境关联的namespace
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-        description: 所属项目
-      projectID:
-        description: 所属项目ID
-        type: integer
-      remark:
-        description: 备注
-        type: string
-      resourceQuota:
-        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
-        items:
-          type: integer
-        type: array
-      users:
-        description: 关联的用户
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpace:
-        $ref: '#/definitions/models.VirtualSpace'
-      virtualSpaceID:
-        description: 虚拟空间
-        type: integer
     type: object
   models.EnvironmentResource:
     properties:
@@ -7560,7 +7672,7 @@ definitions:
       id:
         type: integer
       omitempty:
-        $ref: '#/definitions/models.Environment'
+        $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
       role:
         description: 环境级角色("reader", "operator")
         type: string
@@ -7759,39 +7871,34 @@ definitions:
     properties:
       applications:
         items:
-          $ref: '#/definitions/models.Application'
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Application'
         type: array
       createdAt:
-        description: 创建时间
         type: string
       environments:
         items:
-          $ref: '#/definitions/models.Environment'
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
         type: array
       id:
         type: integer
-      projectAlias:
-        description: 项目别名
+      name:
         type: string
-      projectName:
-        description: 项目名字
+      projectAlias:
         type: string
       registries:
         items:
-          $ref: '#/definitions/models.Registry'
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Registry'
         type: array
       remark:
-        description: 项目备注
         type: string
       resourceQuota:
-        description: 项目资源限制
+        description: 原始数据 记录的是request和response以及http_code
         items:
           type: integer
         type: array
       tenant:
-        $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+        $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
       tenantID:
-        description: 所属的租户ID
         type: integer
       users:
         items:
@@ -7820,45 +7927,27 @@ definitions:
     - role
     - userID
     type: object
-  models.Registry:
+  models.SystemRole:
     properties:
-      creator:
-        $ref: '#/definitions/models.User'
-        description: 创建者
-      creatorID:
-        type: integer
-      enableExtends:
-        description: 是否启用扩展功能，支持harbor等高级仓库
-        type: boolean
       id:
         type: integer
-      isDefault:
-        type: boolean
-      password:
-        description: 密码
+      roleCode:
+        description: 系统级角色Code(管理员admin, 普通用户ordinary)
         type: string
-      project:
-        $ref: '#/definitions/models.Project'
-      projectID:
-        description: 项目ID
-        type: integer
-      registryAddress:
-        description: 仓库地址
+      roleName:
+        description: 角色名字
         type: string
-      registryName:
-        description: 仓库名称
-        type: string
-      updateTime:
-        description: 更新时间
-        type: string
-      username:
-        description: 用户名
-        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+    required:
+    - roleCode
     type: object
   models.TenantResourceQuotaApply:
     properties:
       content:
-        description: 项目资源限制
+        description: 原始数据 记录的是request和response以及http_code
         items:
           type: integer
         type: array
@@ -7879,7 +7968,7 @@ definitions:
         description: 租户级角色(管理员admin, 普通用户ordinary)
         type: string
       tenant:
-        $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+        $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
       tenantID:
         description: 租户ID
         type: integer
@@ -7894,30 +7983,42 @@ definitions:
   models.User:
     properties:
       createdAt:
+        description: 加入时间
         type: string
       email:
+        description: 邮箱
         type: string
       id:
         type: integer
       isActive:
+        description: 是否激活
         type: boolean
       lastLoginAt:
+        description: 最后登录时间
         type: string
       phone:
+        description: 电话
+        type: string
+      role:
+        description: 角色，不同关联对象下表示的角色不同, 用来做join查询的时候处理角色字段的(请勿删除)
+        type: string
+      source:
+        type: string
+      sourceVendor:
         type: string
       systemRole:
-        $ref: '#/definitions/kubegems.io_pkg_v2_models.SystemRole'
+        $ref: '#/definitions/models.SystemRole'
       systemRoleID:
         type: integer
       tenants:
         items:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
         type: array
       username:
+        description: 用户名
         type: string
     required:
     - email
-    - phone
     - username
     type: object
   models.UserCreate:
@@ -7970,29 +8071,6 @@ definitions:
       virtualDomainName:
         type: string
     type: object
-  models.VirtualSpace:
-    properties:
-      createdAt:
-        type: string
-      createdBy:
-        type: string
-      environments:
-        items:
-          $ref: '#/definitions/models.Environment'
-        type: array
-      id:
-        type: integer
-      isActive:
-        type: boolean
-      updatedAt:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpaceName:
-        type: string
-    type: object
   models.VirtualSpaceUserRels:
     properties:
       id:
@@ -8005,7 +8083,7 @@ definitions:
       userID:
         type: integer
       virtualSpace:
-        $ref: '#/definitions/models.VirtualSpace'
+        $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
       virtualSpaceID:
         type: integer
     required:
@@ -8225,6 +8303,53 @@ definitions:
     - min_replicas
     - name
     - namespace
+    type: object
+  observability.AppInfo:
+    properties:
+      appLabel:
+        type: string
+      collectedBy:
+        description: 由哪个flow采集的日志
+        type: string
+    type: object
+  observability.LogCollector:
+    properties:
+      apps:
+        additionalProperties:
+          type: string
+        description: 要采集的应用, appname-applabel key-value
+        type: object
+      clusterOutputs:
+        items:
+          type: string
+        type: array
+      enableMetrics:
+        description: 是否启用日志采集监控
+        type: boolean
+      geoIPLookupKeys:
+        description: GeoIP keys
+        items:
+          type: string
+        type: array
+      outputs:
+        items:
+          type: string
+        type: array
+      throttle:
+        description: 日志条目限速, 条/10s
+        type: integer
+    type: object
+  observability.MonitorCollector:
+    properties:
+      path:
+        description: 采集路径
+        type: string
+      port:
+        description: 端口名
+        type: string
+      service:
+        description: 服务名
+        type: string
     type: object
   pagination.PageData:
     properties:
@@ -22925,7 +23050,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Environment'
+                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
                         type: array
                     type: object
               type: object
@@ -23240,7 +23365,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Environment'
+                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
                         type: array
                     type: object
               type: object
@@ -23292,7 +23417,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Environment'
+                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
               type: object
       security:
       - JWT: []
@@ -23314,7 +23439,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.Environment'
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
       produces:
       - application/json
       responses:
@@ -23325,7 +23450,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Environment'
+                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
               type: object
       security:
       - JWT: []
@@ -25082,6 +25207,230 @@ paths:
       summary: OAUTH登录callback
       tags:
       - AAAAA
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging:
+    put:
+      consumes:
+      - application/json
+      description: namespace级日志采集器
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 是否启用日志采集
+        in: query
+        name: enable
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: namespace级日志采集器
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps:
+    get:
+      consumes:
+      - application/json
+      description: 获取支持日志采集的应用及标签
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  additionalProperties:
+                    $ref: '#/definitions/observability.AppInfo'
+                  type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 获取支持日志采集的应用及标签
+      tags:
+      - Observability
+    post:
+      consumes:
+      - application/json
+      description: 应用级日志采集器
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 采集器内容
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/observability.LogCollector'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 应用级日志采集器
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor:
+    delete:
+      consumes:
+      - application/json
+      description: 删除监控采集器
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 服务名
+        in: query
+        name: service
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 删除监控采集器
+      tags:
+      - Observability
+    get:
+      consumes:
+      - application/json
+      description: 监控采集器详情
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 服务名
+        in: query
+        name: service
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/observability.MonitorCollector'
+              type: object
+      security:
+      - JWT: []
+      summary: 监控采集器详情
+      tags:
+      - Observability
+    post:
+      consumes:
+      - application/json
+      description: 添加/更新监控采集器
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 采集器内容
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/observability.MonitorCollector'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 添加/更新监控采集器
+      tags:
+      - Observability
   /v1/project:
     get:
       consumes:
@@ -25365,7 +25714,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Environment'
+                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
                         type: array
                     type: object
               type: object
@@ -25389,7 +25738,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.Environment'
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
       produces:
       - application/json
       responses:
@@ -25400,7 +25749,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Environment'
+                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
               type: object
       security:
       - JWT: []
@@ -25461,7 +25810,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Environment'
+                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
               type: object
       security:
       - JWT: []
@@ -25632,7 +25981,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Registry'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
                         type: array
                     type: object
               type: object
@@ -25656,7 +26005,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.Registry'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
       produces:
       - application/json
       responses:
@@ -25667,7 +26016,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -25700,7 +26049,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -25732,7 +26081,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -25769,7 +26118,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -25801,7 +26150,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -28451,7 +28800,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Registry'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
                         type: array
                     type: object
               type: object
@@ -28503,7 +28852,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -28525,7 +28874,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.Registry'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
       produces:
       - application/json
       responses:
@@ -28536,7 +28885,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -28989,7 +29338,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_service_models.SystemRole'
+                          $ref: '#/definitions/models.SystemRole'
                         type: array
                     type: object
               type: object
@@ -29008,7 +29357,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_service_models.SystemRole'
+          $ref: '#/definitions/models.SystemRole'
       produces:
       - application/json
       responses:
@@ -29019,7 +29368,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_service_models.SystemRole'
+                  $ref: '#/definitions/models.SystemRole'
               type: object
       security:
       - JWT: []
@@ -29069,7 +29418,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_service_models.SystemRole'
+                  $ref: '#/definitions/models.SystemRole'
               type: object
       security:
       - JWT: []
@@ -29233,7 +29582,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
                         type: array
                     type: object
               type: object
@@ -29252,7 +29601,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
       produces:
       - application/json
       responses:
@@ -29263,7 +29612,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
               type: object
       security:
       - JWT: []
@@ -29337,7 +29686,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
               type: object
       security:
       - JWT: []
@@ -29359,7 +29708,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
       produces:
       - application/json
       responses:
@@ -29370,7 +29719,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
               type: object
       security:
       - JWT: []
@@ -29399,7 +29748,7 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                    $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
                   type: array
               type: object
       security:
@@ -29429,7 +29778,7 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                    $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
                   type: array
               type: object
       security:
@@ -29777,7 +30126,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Environment'
+                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
                         type: array
                     type: object
               type: object
@@ -33189,7 +33538,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
                         type: array
                     type: object
               type: object
@@ -33404,7 +33753,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.VirtualSpace'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
                         type: array
                     type: object
               type: object
@@ -33423,7 +33772,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.VirtualSpace'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
       produces:
       - application/json
       responses:
@@ -33434,7 +33783,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.VirtualSpace'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -33484,7 +33833,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.VirtualSpace'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -33516,7 +33865,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.VirtualSpace'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -33538,7 +33887,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.VirtualSpace'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
       produces:
       - application/json
       responses:
@@ -33549,7 +33898,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.VirtualSpace'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -33767,7 +34116,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Environment'
+                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
                         type: array
                     type: object
               type: object
@@ -33791,7 +34140,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.Environment'
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
       produces:
       - application/json
       responses:
