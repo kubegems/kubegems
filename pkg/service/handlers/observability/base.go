@@ -16,4 +16,6 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 		CheckByClusterNamespace, h.DeleteMonitorCollector)
 
 	rg.PUT("/observability/cluster/:cluster/namespaces/:namespace/logging", h.CheckByClusterNamespace, h.NamespaceLogCollector)
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/apps", h.CheckByClusterNamespace, h.ListLogApps)
+	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/logging/apps", h.CheckByClusterNamespace, h.AddAppLogCollector)
 }
