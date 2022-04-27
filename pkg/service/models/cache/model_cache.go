@@ -99,6 +99,14 @@ func (t *ModelCache) BuildCacheIfNotExist() error {
 		dataMap[n.cacheKey()] = n
 		dataMap[envCacheKey(n.Cluster, n.Namespace)] = n
 	}
+	vspaces := []models.VirtualSpace{}
+	if err := t.DB.Find(&vspaces).Error; err != nil {
+		return err
+	}
+	for _, vspace := range vspaces {
+		n := &Entity{Name: vspace.VirtualSpaceName, Kind: models.ResVirtualSpace, ID: vspace.ID, Owner: []*Entity{}}
+		dataMap[n.cacheKey()] = n
+	}
 	if len(dataMap) == 0 {
 		log.Info("empty cache data")
 		return nil
