@@ -29,15 +29,33 @@ var (
 	ResourceIngresses              corev1.ResourceName = "count/ingresses.extensions"
 )
 
+const (
+	ResourceNvidiaGPU = "nvidia.com/gpu"
+	RequestsNvdiaGPUs = corev1.DefaultResourceRequestsPrefix + ResourceNvidiaGPU
+	LimitsNvdiaGPUs   = "limits." + ResourceNvidiaGPU
+)
+
 var (
 	TenantLimitResources = []corev1.ResourceName{
 		corev1.ResourceLimitsCPU,
 		corev1.ResourceLimitsMemory,
 		corev1.ResourceRequestsStorage,
+		RequestsNvdiaGPUs,
 	}
 	EnvironmentLimitResources = []corev1.ResourceName{
-		corev1.ResourceCPU, corev1.ResourceMemory, corev1.ResourceRequestsStorage,
-		corev1.ResourcePods, ResourceDeployments, ResourceStatefulSets, ResourceServices, ResourceConfigMaps, ResourceSecrets, ResourceJobs, ResourceCronJobs, ResourcePersistentVolumeClaims,
+		corev1.ResourceCPU,
+		corev1.ResourceMemory,
+		corev1.ResourceRequestsStorage,
+		corev1.ResourcePods,
+		ResourceDeployments,
+		ResourceStatefulSets,
+		ResourceServices,
+		ResourceConfigMaps,
+		ResourceSecrets,
+		ResourceJobs,
+		ResourceCronJobs,
+		ResourcePersistentVolumeClaims,
+		RequestsNvdiaGPUs,
 	}
 )
 
@@ -60,6 +78,9 @@ func GetDefaultTeantResourceQuota() corev1.ResourceList {
 		corev1.ResourceLimitsCPU:       resource.MustParse("0"),
 		corev1.ResourceLimitsMemory:    resource.MustParse("0Gi"),
 		corev1.ResourceRequestsStorage: resource.MustParse("0Gi"),
+
+		RequestsNvdiaGPUs: resource.MustParse("0"),
+		LimitsNvdiaGPUs:   resource.MustParse("0"),
 	}
 }
 
@@ -84,6 +105,9 @@ func GetDefaultEnvironmentResourceQuota() corev1.ResourceList {
 		ResourceConfigMaps:             resource.MustParse("512"),
 		ResourceServices:               resource.MustParse("512"),
 		ResourcePersistentVolumeClaims: resource.MustParse("512"),
+
+		RequestsNvdiaGPUs: resource.MustParse("0"),
+		LimitsNvdiaGPUs:   resource.MustParse("0"),
 	}
 }
 
