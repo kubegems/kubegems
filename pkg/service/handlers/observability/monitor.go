@@ -29,9 +29,9 @@ type MonitorCollector struct {
 // @Description  监控采集器详情
 // @Accept       json
 // @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        service       query      string               true  "服务名"
+// @Param        cluster    path      string                                          true  "cluster"
+// @Param        namespace  path      string                                          true  "namespace"
+// @Param        service    query     string                                          true  "服务名"
 // @Success      200        {object}  handlers.ResponseStruct{Data=MonitorCollector}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [get]
 // @Security     JWT
@@ -87,7 +87,7 @@ func (h *ObservabilityHandler) GetMonitorCollector(c *gin.Context) {
 // @Produce      json
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
-// @Param        form       body      MonitorCollector               true  "采集器内容"
+// @Param        form       body      MonitorCollector                      true  "采集器内容"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [post]
 // @Security     JWT
@@ -171,7 +171,7 @@ func (h *ObservabilityHandler) AddOrUpdateMonitorCollector(c *gin.Context) {
 // @Produce      json
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
-// @Param        service       query      string               true  "服务名"
+// @Param        service    query     string                                true  "服务名"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [delete]
 // @Security     JWT

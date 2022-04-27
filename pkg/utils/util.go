@@ -6,6 +6,7 @@ import (
 	"crypto/des"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"math"
 	"math/rand"
 	"regexp"
@@ -80,10 +81,10 @@ func MakePassword(input string) (string, error) {
 
 func GeneratePassword() string {
 	r := []rune{}
-	r = append(r, randomRune(4, runeKindLower)...)
-	r = append(r, randomRune(3, runeKindUpper)...)
-	r = append(r, randomRune(2, runeKindNum)...)
-	r = append(r, randomRune(1, runeKindChar)...)
+	r = append(r, RandomRune(4, RuneKindLower)...)
+	r = append(r, RandomRune(3, RuneKindUpper)...)
+	r = append(r, RandomRune(2, RuneKindNum)...)
+	r = append(r, RandomRune(1, RuneKindChar)...)
 	rand.Shuffle(len(r), func(i, j int) {
 		if rand.Intn(10) > 5 {
 			r[i], r[j] = r[j], r[i]
@@ -104,10 +105,10 @@ func JoinFlagName(prefix, key string) string {
 }
 
 const (
-	runeKindNum   = "num"
-	runeKindLower = "lower"
-	runeKindUpper = "upper"
-	runeKindChar  = "char"
+	RuneKindNum   = "num"
+	RuneKindLower = "lower"
+	RuneKindUpper = "upper"
+	RuneKindChar  = "char"
 )
 
 var (
@@ -117,17 +118,17 @@ var (
 	charRunes        = []rune("!.@#$%~")
 )
 
-func randomRune(n int, kind string) []rune {
+func RandomRune(n int, kind string) []rune {
 	b := make([]rune, n)
 	var l []rune
 	switch kind {
-	case runeKindChar:
+	case RuneKindChar:
 		l = charRunes
-	case runeKindUpper:
+	case RuneKindUpper:
 		l = upperLetterRunes
-	case runeKindLower:
+	case RuneKindLower:
 		l = lowerLetterRunes
-	case runeKindNum:
+	case RuneKindNum:
 		l = numRunes
 	default:
 		l = lowerLetterRunes
@@ -135,6 +136,7 @@ func randomRune(n int, kind string) []rune {
 	length := len(l)
 	for i := range b {
 		b[i] = l[rand.Intn(length)]
+		fmt.Println(rand.Intn(length))
 	}
 	return b
 }

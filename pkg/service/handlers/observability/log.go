@@ -2,7 +2,11 @@ package observability
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"strconv"
+	"strings"
+	"time"
 
 	v1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
 	"github.com/banzaicloud/logging-operator/pkg/sdk/model/filter"
@@ -12,22 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/slice"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
-type LogCollector struct {
-	EnableNamespace bool     // 一键开启namespace所有应用采集
-	Apps            []string `json:"apps"` // 要采集的应用
-	Output          string
-	ClusterOutput   string
-	PluginConfig
-}
-
-type PluginConfig struct {
-	Throttle        int      // 日志条目限速, 条/10s
-	GeoIPLookupKeys []string // GeoIP keys
-}
 
 const (
 	defaultGlobalOutput = "containers-console"
@@ -39,9 +33,9 @@ const (
 // @Description  namespace级日志采集器
 // @Accept       json
 // @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        enable       query      bool               true  "是否启用日志采集"
+// @Param        cluster    path      string                                             true  "cluster"
+// @Param        namespace  path      string                                             true  "namespace"
+// @Param        enable     query     bool                                  true  "是否启用日志采集"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging [put]
 // @Security     JWT
@@ -119,4 +113,205 @@ func (h *ObservabilityHandler) NamespaceLogCollector(c *gin.Context) {
 	}
 
 	handlers.OK(c, "ok")
+}
+
+var applables = []string{
+	"app",                     // istio app label
+	gems.LabelApplication,     // kubegems app label
+	"apps.kubernetes.io/name", // k8s app label
+}
+
+type AppInfo struct {
+	AppLabel    string `json:"appLabel"`
+	CollectedBy string `json:"collectedBy"` // 由哪个flow采集的日志
+}
+
+// ListLogApps 获取支持日志采集的应用及标签
+// @Tags         Observability
+// @Summary      获取支持日志采集的应用及标签
+// @Description  获取支持日志采集的应用及标签
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Success      200        {object}  handlers.ResponseStruct{Data=map[string]*AppInfo}  "resp"
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps [get]
+// @Security     JWT
+func (h *ObservabilityHandler) ListLogApps(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	podList := corev1.PodList{}
+	flowList := v1beta1.FlowList{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		if err := cli.List(ctx, &podList, client.InNamespace(namespace)); err != nil {
+			return err
+		}
+		return cli.List(ctx, &flowList, client.InNamespace(namespace))
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	ret := getAppsLogStatus(podList, flowList)
+	handlers.OK(c, ret)
+}
+
+type LogCollector struct {
+	Apps           map[string]string `json:"apps"` // 要采集的应用, appname-applabel key-value
+	Outputs        []string          `json:"outputs"`
+	ClusterOutputs []string          `json:"clusterOutputs"`
+	EnableMetrics  bool              `json:"enableMetrics"` // 是否启用日志采集监控
+	PluginConfig   `json:"pluginConfig"`
+}
+
+type PluginConfig struct {
+	Throttle        int      `json:"throttle"`        // 日志条目限速, 条/10s
+	GeoIPLookupKeys []string `json:"geoIPLookupKeys"` // GeoIP keys
+}
+
+// AddAppLogCollector 应用级日志采集器
+// @Tags         Observability
+// @Summary      应用级日志采集器
+// @Description  应用级日志采集器
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        form       body      LogCollector                          true  "采集器内容"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps [post]
+// @Security     JWT
+func (h *ObservabilityHandler) AddAppLogCollector(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	req := LogCollector{}
+	if err := c.BindJSON(&req); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		defaultFlow := v1beta1.Flow{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: namespace,
+				Name:      fmt.Sprintf("appflow-%s", string(utils.RandomRune(4, utils.RuneKindLower))),
+			},
+		}
+		_, err := controllerutil.CreateOrUpdate(ctx, cli, &defaultFlow, func() error {
+			defaultFlow.Spec = v1beta1.FlowSpec{
+				Filters:          []v1beta1.Filter{{}},
+				LocalOutputRefs:  req.Outputs,
+				GlobalOutputRefs: req.ClusterOutputs,
+			}
+			if req.EnableMetrics {
+				defaultFlow.Spec.Filters[0].Prometheus = &filter.PrometheusConfig{
+					Labels: filter.Label{
+						"container": "$.kubernetes.container_name",
+						"namespace": "$.kubernetes.namespace_name",
+						"node":      "$.kubernetes.host",
+						"pod":       "$.kubernetes.pod_name",
+					},
+					Metrics: []filter.MetricSection{
+						{
+							Name: "logging_entry_count",
+							Type: "counter",
+							Desc: "Total number of log entries generated by either application containers or system components",
+						},
+					},
+				}
+			}
+			if len(req.PluginConfig.GeoIPLookupKeys) > 0 {
+				keys := strings.Join(req.GeoIPLookupKeys, ", ")
+				defaultFlow.Spec.Filters[0].GeoIP = &filter.GeoIP{
+					GeoipLookupKeys: keys,
+					Records: []filter.Record{
+						{
+							"city":         fmt.Sprintf(`${city.names.en["%s"]}`, keys),
+							"latitude":     fmt.Sprintf(`${location.latitude["%s"]}`, keys),
+							"longitude":    fmt.Sprintf(`${location.longitude["%s"]}`, keys),
+							"country":      fmt.Sprintf(`${country.iso_code["%s"]}`, keys),
+							"country_name": fmt.Sprintf(`${country.names.en["%s"]}`, keys),
+							"postal_code":  fmt.Sprintf(`${postal.code["%s"]}`, keys),
+						},
+					},
+				}
+			}
+			if req.PluginConfig.Throttle > 0 {
+				defaultFlow.Spec.Filters[0].RecordModifier = &filter.RecordModifier{
+					Records: []filter.Record{
+						{
+							"throttle_group_key": "${record['kubernetes']['namespace_name']+record['kubernetes']['pod_name']}",
+						},
+					},
+				}
+				defaultFlow.Spec.Filters[0].Throttle = &filter.Throttle{
+					GroupKey:                 "throttle_group_key",
+					GroupBucketLimit:         req.Throttle,
+					GroupBucketPeriodSeconds: 10,
+				}
+			}
+			if len(req.Apps) == 0 {
+				return fmt.Errorf("must specify at least one app")
+			}
+
+			podList := corev1.PodList{}
+			flowList := v1beta1.FlowList{}
+			if err := cli.List(ctx, &podList, client.InNamespace(namespace)); err != nil {
+				return err
+			}
+			if err := cli.List(ctx, &flowList, client.InNamespace(namespace)); err != nil {
+				return err
+			}
+			logstatus := getAppsLogStatus(podList, flowList)
+
+			for appname, applabel := range req.Apps {
+				if !slice.ContainStr(applables, applabel) {
+					return fmt.Errorf("app label %s is not valid, must be one of %v", applabel, applables)
+				}
+				if status, ok := logstatus[appname]; ok {
+					if status.CollectedBy != "" {
+						return fmt.Errorf("app %s has been collected by flow %s", appname, status.CollectedBy)
+					}
+				}
+				defaultFlow.Spec.Match = append(defaultFlow.Spec.Match, v1beta1.Match{
+					Select: &v1beta1.Select{
+						Labels: map[string]string{
+							applabel: appname,
+						},
+					},
+				})
+			}
+			return nil
+		})
+		return err
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	handlers.OK(c, "ok")
+}
+
+func getAppsLogStatus(podList corev1.PodList, flowList v1beta1.FlowList) map[string]*AppInfo {
+	ret := map[string]*AppInfo{}
+	for _, pod := range podList.Items {
+		if pod.Labels != nil {
+			for _, applabel := range applables {
+				if appname, ok := pod.Labels[applabel]; ok {
+					ret[appname] = &AppInfo{AppLabel: applabel}
+					break
+				}
+			}
+		}
+	}
+	for _, flow := range flowList.Items {
+		for _, selector := range flow.Spec.Match {
+			for _, appname := range selector.Select.Labels {
+				if appinfo, ok := ret[appname]; ok {
+					appinfo.CollectedBy = flow.Name
+				}
+			}
+		}
+	}
+	return ret
 }
