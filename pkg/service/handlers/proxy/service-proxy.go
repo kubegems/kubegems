@@ -1,10 +1,12 @@
 package proxy
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/service/handlers"
+	proxyutil "kubegems.io/pkg/service/handlers/proxy/util"
 	"kubegems.io/pkg/utils/slice"
 )
 
@@ -43,5 +45,11 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 	}
 
 	reversep := h.ReverseProxyOn(agentcli)
+	reversep.Transport = &proxyutil.Transport{
+		PathPrepend:   fmt.Sprintf("/api/v1/service-proxy/cluster/%s/namespace/%s/service/%s/port/%s/", cluster, namespace, service, port),
+		AgentPrefix:   agentPrefix,
+		RoundTripper:  reversep.Transport,
+		AgentBaseAddr: agentcli.BaseAddr().Path,
+	}
 	reversep.ServeHTTP(c.Writer, req.Request)
 }
