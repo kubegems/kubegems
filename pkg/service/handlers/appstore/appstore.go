@@ -90,17 +90,7 @@ func (h *AppstoreHandler) AppDetail(c *gin.Context) {
 		reponame = InternalChartRepoName
 	}
 
-	repourl := ""
-	if reponame == InternalChartRepoName {
-		repourl = h.AppStoreOpt.Addr + "/" + reponame
-	} else {
-		modelrepo := &models.ChartRepo{ChartRepoName: reponame}
-		if err := h.GetDB().Where(modelrepo).Find(modelrepo).Error; err != nil {
-			handlers.NotOK(c, err)
-			return
-		}
-		repourl = modelrepo.URL
-	}
+	repourl := strings.TrimSuffix(h.AppStoreOpt.Addr, "/") + "/" + reponame
 
 	index, err := h.ChartmuseumClient.ListChartVersions(c.Request.Context(), reponame, name)
 	if err != nil {

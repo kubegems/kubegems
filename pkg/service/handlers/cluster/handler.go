@@ -213,19 +213,29 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		return
 	}
 	recordOnly := c.DefaultQuery("record_only", "true") == "true"
+	if recordOnly {
+		if err := h.GetDB().Delete(cluster).Error; err != nil {
+			handlers.NotOK(c, err)
+			return
+		}
+	} else {
+		if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+			installeropts := new(gemsplugin.InstallerOptions)
+			h.DynamicConfig.Get(ctx, installeropts)
 
-	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
-		installeropts := new(gemsplugin.InstallerOptions)
-		h.DynamicConfig.Get(ctx, installeropts)
-
-		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
-			if err := tx.Delete(cluster).Error; err != nil {
-				return err
-			}
-			if !recordOnly {
-				return OpratorInstaller{Config: config}.Remove(ctx)
-			}
-			return nil
+			return h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
+				if err := tx.Delete(cluster).Error; err != nil {
+					return err
+				}
+				installer := ClusterInstaller{
+					Cluster:          cluster,
+					Clientset:        clientSet,
+					RestConfig:       config,
+					KubegemsVersion:  version.Get(),
+					InstallerOptions: installeropts,
+				}
+				return installer.UnInstall(ctx)
+			})
 		}); err != nil {
 			handlers.NotOK(c, err)
 			return
