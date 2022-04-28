@@ -124,7 +124,7 @@ func (h *MyHandler) ResetPassword(c *gin.Context) {
 	handlers.OK(c, nil)
 }
 
-// GetConfig 获取用户配置
+// GetMyConfig 获取用户配置
 // @Tags         System
 // @Summary      获取用户配置
 // @Description  获取用户配置
