@@ -747,21 +747,21 @@ func (h *AlertsHandler) AlertByGroup(c *gin.Context) {
 // @Description  搜索告警
 // @Accept       json
 // @Produce      json
-// @Param        tenant_id     path     string                                                                       true  "租户ID，所有租户为_all"
-// @Param        project   query     string                                                                       false  "项目名，默认所有"
-// @Param        environment   query     string                                                                       false  "环境名，默认所有"
-// @Param        cluster   query     string                                                                       false  "集群名，默认所有"
-// @Param        namespace   query     string                                                                       false  "命名空间，默认所有"
-// @Param        alertname   query     string                                                                       false  "告警名，默认所有"
-// @Param        resource    query     string                                                                       false  "告警资源，默认所有"
-// @Param        rule        query     string                                                                       false  "告警指标，默认所有"
-// @Param        labelpairs  query     string                                                                       false  "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
-// @Param        start       query     string                                                                       false  "开始时间"
-// @Param        end         query     string                                                                       false  "结束时间"
-// @Param        status      query     string                                                                       false  "状态(firing, resolved)"
-// @Param        page        query     int                                                                          false  "page"
-// @Param        size        query     int                                                                          false  "size"
-// @Success      200         {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]AlertMessageGroup}}  "resp"
+// @Param        tenant_id    path      string                                                                       true   "租户ID，所有租户为_all"
+// @Param        project      query     string                                                                       false  "项目名，默认所有"
+// @Param        environment  query     string                                                                       false  "环境名，默认所有"
+// @Param        cluster      query     string                                                                       false  "集群名，默认所有"
+// @Param        namespace    query     string                                                                       false  "命名空间，默认所有"
+// @Param        alertname    query     string                                                                       false  "告警名，默认所有"
+// @Param        resource     query     string                                                                       false  "告警资源，默认所有"
+// @Param        rule         query     string                                                                       false  "告警指标，默认所有"
+// @Param        labelpairs   query     string                                                                       false  "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
+// @Param        start        query     string                                                                       false  "开始时间"
+// @Param        end          query     string                                                                       false  "结束时间"
+// @Param        status       query     string                                                                       false  "状态(firing, resolved)"
+// @Param        page         query     int                                                                          false  "page"
+// @Param        size         query     int                                                                          false  "size"
+// @Success      200          {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]AlertMessageGroup}}  "resp"
 // @Router       /v1/alerts/tenant/{tenant_id}/search [get]
 // @Security     JWT
 func (h *AlertsHandler) SearchAlert(c *gin.Context) {
