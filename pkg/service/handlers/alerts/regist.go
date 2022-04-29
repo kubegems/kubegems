@@ -30,7 +30,6 @@ func (h *AlertsHandler) RegistRouter(rg *gin.RouterGroup) {
 		h.CheckByClusterNamespace, h.AlertRepeats)
 
 	// TODO: 权限
-	rg.GET("/alerts/search", h.SearchAlert)
 	rg.GET("/alerts/blacklist", h.ListBlackList)
 	rg.POST("/alerts/blacklist", h.AddToBlackList)
 	rg.DELETE("/alerts/blacklist/:fingerprint", h.RemoveInBlackList)
@@ -38,6 +37,7 @@ func (h *AlertsHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/alerts/today", h.AlertToday)
 	rg.GET("/alerts/graph", h.AlertGraph)
 	rg.GET("/alerts/group", h.AlertByGroup)
+	rg.GET("/alerts/tenant/:tenant_id/search", h.CheckByTenantID, h.SearchAlert)
 }
 
 type AlertmanagerConfigHandler struct {
