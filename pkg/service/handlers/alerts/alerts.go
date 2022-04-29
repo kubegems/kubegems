@@ -478,101 +478,6 @@ func (h *AlertsHandler) AlertRepeats(c *gin.Context) {
 	handlers.OK(c, handlers.Page(total, messages, int64(page), int64(size)))
 }
 
-// SearchAlert 搜索告警
-// @Tags         Alert
-// @Summary      搜索告警
-// @Description  搜索告警
-// @Accept       json
-// @Produce      json
-// @Param        cluster     query     string                                                                       false  "集群,默认所有"
-// @Param        namespace   query     string                                                                       false  "告警命名空间，默认所有"
-// @Param        alertname   query     string                                                                       false  "告警规则名，默认所有"
-// @Param        resource    query     string                                                                       false  "告警资源，默认所有"
-// @Param        rule        query     string                                                                       false  "告警指标，默认所有"
-// @Param        labelpairs  query     string                                                                       false  "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
-// @Param        start       query     string                                                                       false  "开始时间"
-// @Param        end         query     string                                                                       false  "结束时间"
-// @Param        status      query     string                                                                       false  "状态(firing, resolved)"
-// @Param        page        query     int                                                                          false  "page"
-// @Param        size        query     int                                                                          false  "size"
-// @Success      200         {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]AlertMessageGroup}}  "resp"
-// @Router       /v1/alerts/search [get]
-// @Security     JWT
-func (h *AlertsHandler) SearchAlert(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
-	cluster := c.Query("cluster")
-	namespace := c.Query("namespace")
-	alertName := c.Query("alertname")
-	resoure := c.Query("resource")
-	rule := c.Query("rule")
-	labelpairs := c.QueryMap("labelpairs")
-	start := c.Query("start")
-	end := c.Query("end")
-	var total int64
-	var messages []AlertMessageGroup
-	// 若同时有resolved和firing。展示resolved
-	// select max(status) from alert_messages
-	// output: resolved
-	tmpQuery := h.GetDB().Table("alert_messages").
-		Select(`alert_messages.fingerprint, 
-			max(starts_at) as starts_at,
-			max(ends_at) as ends_at, 
-			max(value) as value, 
-			max(message) as message, 
-			max(created_at) as created_at, 
-			max(status) as status,
-			max(labels) as labels,
-			max(silence_creator) as silence_creator,
-			count(created_at) as count`).
-		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
-		Group("alert_messages.fingerprint")
-
-	if cluster != "" {
-		tmpQuery.Where("cluster_name = ?", cluster)
-	}
-	if namespace != "" {
-		tmpQuery.Where("namespace = ?", namespace)
-	}
-	if alertName != "" {
-		tmpQuery.Where("name = ?", alertName)
-	}
-	if resoure != "" {
-		tmpQuery.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, prometheus.AlertResourceLabel), resoure)
-	}
-	if rule != "" {
-		tmpQuery.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, prometheus.AlertRuleLabel), rule)
-	}
-	for k, v := range labelpairs {
-		tmpQuery.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, k), v)
-	}
-	if start != "" {
-		tmpQuery.Where("created_at >= ?", start)
-	}
-	if end != "" {
-		tmpQuery.Where("created_at <= ?", end)
-	}
-
-	// 中间表
-	query := h.GetDB().Table("(?) as t", tmpQuery)
-	status := c.Query("status")
-	if status != "" {
-		query.Where("status = ?", status)
-	}
-
-	// 总数, 不能直接count，需要count临时表
-	if err := query.Count(&total).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	// 分页
-	if err := query.Order("created_at desc").Limit(size).Offset((page - 1) * size).Scan(&messages).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, handlers.Page(total, messages, int64(page), int64(size)))
-}
-
 type AlertCountStatus struct {
 	TodayCount     int  `json:"todayCount"`
 	YesterdayCount int  `json:"yesterdayCount"`
@@ -828,11 +733,107 @@ func (h *AlertsHandler) AlertByGroup(c *gin.Context) {
 	}
 
 	ret := []TableRet{}
-	if err := query.Scan(&ret).Error; err != nil {
+	// 最多的10条
+	if err := query.Order("count desc").Limit(10).Scan(&ret).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	handlers.OK(c, ret)
+}
+
+// SearchAlert 搜索告警
+// @Tags         Alert
+// @Summary      搜索告警
+// @Description  搜索告警
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id     path     string                                                                       true  "租户ID，所有租户为_all"
+// @Param        project   query     string                                                                       false  "项目名，默认所有"
+// @Param        environment   query     string                                                                       false  "环境名，默认所有"
+// @Param        cluster   query     string                                                                       false  "集群名，默认所有"
+// @Param        namespace   query     string                                                                       false  "命名空间，默认所有"
+// @Param        alertname   query     string                                                                       false  "告警名，默认所有"
+// @Param        resource    query     string                                                                       false  "告警资源，默认所有"
+// @Param        rule        query     string                                                                       false  "告警指标，默认所有"
+// @Param        labelpairs  query     string                                                                       false  "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
+// @Param        start       query     string                                                                       false  "开始时间"
+// @Param        end         query     string                                                                       false  "结束时间"
+// @Param        status      query     string                                                                       false  "状态(firing, resolved)"
+// @Param        page        query     int                                                                          false  "page"
+// @Param        size        query     int                                                                          false  "size"
+// @Success      200         {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]AlertMessageGroup}}  "resp"
+// @Router       /v1/alerts/tenant/{tenant_id}/search [get]
+// @Security     JWT
+func (h *AlertsHandler) SearchAlert(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	tenantID := c.Param("tenant_id")
+	project := c.Query("project")
+	environment := c.Query("environment")
+	cluster := c.Query("cluster")
+	namespace := c.Query("namespace")
+	alertName := c.Query("alertname")
+	resoure := c.Query("resource")
+	rule := c.Query("rule")
+	labelpairs := c.QueryMap("labelpairs")
+	start := c.Query("start")
+	end := c.Query("end")
+	status := c.Query("status")
+	var total int64
+	var messages []models.AlertMessage
+
+	query := h.GetDB().Preload("AlertInfo").Joins("AlertInfo")
+	if tenantID != "_all" {
+		t := models.Tenant{}
+		h.GetDB().First(&t, "id = ?", tenantID)
+		query.Where("tenant_name = ?", t.TenantName)
+	}
+	if project != "" {
+		query.Where("project_name = ?", project)
+	}
+	if environment != "" {
+		query.Where("environment_name = ?", environment)
+	}
+	if cluster != "" {
+		query.Where("cluster_name = ?", cluster)
+	}
+	if namespace != "" {
+		query.Where("namespace = ?", namespace)
+	}
+	if alertName != "" {
+		query.Where("name = ?", alertName)
+	}
+	if resoure != "" {
+		query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, prometheus.AlertResourceLabel), resoure)
+	}
+	if rule != "" {
+		query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, prometheus.AlertRuleLabel), rule)
+	}
+	for k, v := range labelpairs {
+		query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, k), v)
+	}
+
+	if start != "" {
+		query.Where("created_at >= ?", start)
+	}
+	if end != "" {
+		query.Where("created_at <= ?", end)
+	}
+	if status != "" {
+		query.Where("status = ?", status)
+	}
+
+	// 总数, 不能直接count，需要count临时表
+	if err := query.Model(&models.AlertMessage{}).Count(&total).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	// 分页
+	if err := query.Order("created_at desc").Limit(size).Offset((page - 1) * size).Find(&messages).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, handlers.Page(total, messages, int64(page), int64(size)))
 }
 
 func fillInPoints(points []AlertGraph, samples []model.SamplePair) {
