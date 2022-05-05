@@ -607,8 +607,7 @@ func (h *ApplicationProcessor) deployArgoApplication(ctx context.Context, ref Pa
 	}
 
 	// 这里可能涉及到argo app的更新,使用创建或者更新
-	// existargoapp, err := h.Argo.EnsureArgoApp(ctx, argoapplication)
-	existargoapp, err := h.Argo.CreateArgoApp(ctx, argoapplication)
+	existargoapp, err := h.Argo.EnsureArgoApp(ctx, argoapplication)
 	if err != nil {
 		return nil, err
 	}
