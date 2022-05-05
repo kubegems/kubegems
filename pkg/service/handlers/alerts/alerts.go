@@ -858,6 +858,9 @@ func fillInPoints(points []AlertGraph, samples []model.SamplePair) {
 
 // 每天一个sample
 func newDefaultSamplePair(start, end time.Time) []model.SamplePair {
+	start = utils.DayStartTime(start)
+	end = utils.NextDayStartTime(end)
+
 	ret := []model.SamplePair{}
 	for tmp := start; tmp.Before(end); tmp = tmp.Add(24 * time.Hour) {
 		ret = append(ret, model.SamplePair{
