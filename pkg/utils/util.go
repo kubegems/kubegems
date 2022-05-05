@@ -6,7 +6,6 @@ import (
 	"crypto/des"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"math"
 	"math/rand"
 	"regexp"
@@ -136,7 +135,6 @@ func RandomRune(n int, kind string) []rune {
 	length := len(l)
 	for i := range b {
 		b[i] = l[rand.Intn(length)]
-		fmt.Println(rand.Intn(length))
 	}
 	return b
 }

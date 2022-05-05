@@ -27,6 +27,7 @@ import (
 	"kubegems.io/pkg/utils"
 	ut "kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/loki"
 	"kubegems.io/pkg/utils/msgbus"
 	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/slice"
@@ -647,7 +648,7 @@ type EnvironmentObservabilityRet struct {
 	CriticalAlertCount int            `json:"criticalAlertCount"`
 
 	LoggingCollectorCount int    `json:"loggingCollectorCount"`
-	ErrorLogCount         int64  `json:"errorLogCount"`
+	ErrorLogCount         int    `json:"errorLogCount"`
 	LogRate               string `json:"logRate"`
 
 	EventCount int `json:"eventCount"` // 事件数量
@@ -811,29 +812,54 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 			if err != nil {
 				return err
 			}
-			if len(resp.Result) > 0 {
-				if result, ok := resp.Result[0].(map[string]interface{}); ok {
-					value := result["value"]
-					if vals, ok := value.([]interface{}); ok {
-						for _, v := range vals {
-							if count, ok := v.(string); ok {
-								ret.EventCount, _ = strconv.Atoi(count)
-								return nil
-							}
-						}
-					}
-				}
+			ret.EventCount = getLokiRespValue(resp)
+			return nil
+		})
+
+		eg.Go(func() error {
+			resp, err := cli.Extend().LokiQuery(ctx,
+				fmt.Sprintf(`sum(count_over_time({stream=~"stdout|stderr", namespace="%s"} |~ "error" [%s]))`, env.Namespace, dur))
+			if err != nil {
+				return err
+			}
+			ret.ErrorLogCount = getLokiRespValue(resp)
+			return nil
+		})
+
+		eg.Go(func() error {
+			resp, err := cli.Extend().LokiQuery(ctx,
+				fmt.Sprintf(`sum(count_over_time({stream=~"stdout|stderr", namespace="%s"} [1m]))`, env.Namespace))
+			if err != nil {
+				return err
+			}
+			rate := getLokiRespValue(resp)
+			if rate > 0 {
+				ret.LogRate = fmt.Sprintf("%d/min", rate)
 			}
 			return nil
 		})
 
-		// TODO:
-		ret.ErrorLogCount = 0
-		ret.LogRate = "10/min"
 		return eg.Wait()
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	handlers.OK(c, ret)
+}
+
+func getLokiRespValue(resp loki.QueryResponseData) int {
+	if len(resp.Result) > 0 {
+		if result, ok := resp.Result[0].(map[string]interface{}); ok {
+			value := result["value"]
+			if vals, ok := value.([]interface{}); ok {
+				for _, v := range vals {
+					if count, ok := v.(string); ok {
+						ret, _ := strconv.Atoi(count)
+						return ret
+					}
+				}
+			}
+		}
+	}
+	return 0
 }
