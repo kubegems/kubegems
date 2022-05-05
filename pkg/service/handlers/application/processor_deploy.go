@@ -651,6 +651,7 @@ func (p *ApplicationProcessor) BatchUpdateImages(ctx context.Context, ref PathRe
 	// 如果失败，则为这些应用创建一个失败的任务
 	ref.Name = ""
 	err := p.Manifest.Func(ctx, ref,
+		Pull(),
 		FsFunc(
 			// 对每个需要更新的 app 更新镜像
 			func(ctx context.Context, fs billy.Filesystem) error {
