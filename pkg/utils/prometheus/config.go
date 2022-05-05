@@ -95,6 +95,7 @@ units:
   ops: "次/s"
   count: "个"
   times: "次"
+  lines: "行"
   us: "微秒"
   ms: "毫秒"
   s: "秒"
@@ -401,6 +402,29 @@ resources:
         showName: "存储卷使用量"
         units: [b, kb, mb, gb, tb]
         labels: [tenant, project, environment, namespace]
+  log:
+    namespaced: true
+    showName: "日志"
+    rules:
+      logCount:
+        expr: gems_namespace_logs_count_last_1m
+        showName: "过去一分钟日志行数"
+        units: [lines]
+        labels: [tenant, project, environment, namespace]
+      errorLogCount:
+        expr: gems_namespace_error_logs_count_last_1m
+        showName: "过去一分钟错误日志行数"
+        units: [lines]
+        labels: [tenant, project, environment, namespace]
+  event:
+    namespaced: true
+    showName: "事件"
+    rules:
+      errorLogCount:
+        expr: gems_namespace_events_count_last_1m
+        showName: "过去一分钟事件数"
+        units: [count]
+        labels: [tenant, project, environment, namespace, type, source_component, involvedObject_kind]
 `)
 	opts := &MonitorOptions{}
 	if err := yaml.Unmarshal(bts, opts); err != nil {
