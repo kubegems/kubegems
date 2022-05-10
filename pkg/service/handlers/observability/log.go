@@ -18,6 +18,7 @@ import (
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/prometheus"
 	"kubegems.io/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -132,8 +133,8 @@ type AppInfo struct {
 // @Description  获取支持日志采集的应用及标签
 // @Accept       json
 // @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
+// @Param        cluster    path      string                                                       true  "cluster"
+// @Param        namespace  path      string                                                       true  "namespace"
 // @Success      200        {object}  handlers.ResponseStruct{Data=map[string]AppInfo}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps [get]
 // @Security     JWT
@@ -328,4 +329,212 @@ func getAppsLogStatus(podList corev1.PodList, flowList v1beta1.FlowList) map[str
 		}
 	}
 	return ret
+}
+
+// ListLoggingReceivers 日志告警接收器列表
+// @Tags         Observability
+// @Summary      日志告警接收器列表
+// @Description  日志告警接收器列表
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                                     true  "cluster"
+// @Param        namespace  path      string                                                     true  "namespace"
+// @Param        search     query     string                                                     true  "search"
+// @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.ReceiverConfig}  "resp"
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/receivers [get]
+// @Security     JWT
+func (h *ObservabilityHandler) ListLoggingReceivers(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	search := c.Query("search")
+
+	ret := []prometheus.ReceiverConfig{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		var err error
+		ret, err = cli.Extend().ListReceivers(ctx, namespace, prometheus.LoggingAlertmanagerConfigName, search)
+		return err
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, ret)
+}
+
+// CreateLoggingReceiver 创建日志告警接收器
+// @Tags         Observability
+// @Summary      创建日志告警接收器
+// @Description  创建日志告警接收器
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        form       body      prometheus.ReceiverConfig             true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/receivers [post]
+// @Security     JWT
+func (h *ObservabilityHandler) CreateLoggingReceiver(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	req := prometheus.ReceiverConfig{}
+	if err := c.BindJSON(&req); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	h.SetAuditData(c, "创建", "日志告警接收器", req.Name)
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+
+	h.m.Lock()
+	defer h.m.Unlock()
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Extend().CreateReceiver(ctx, namespace, prometheus.LoggingAlertmanagerConfigName, req)
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
+// UpdateLoggingReceiver 更新日志告警接收器
+// @Tags         Observability
+// @Summary      更新日志告警接收器
+// @Description  更新日志告警接收器
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Param        form       body      prometheus.ReceiverConfig             true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/receivers/{name} [put]
+// @Security     JWT
+func (h *ObservabilityHandler) UpdateLoggingReceiver(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	req := prometheus.ReceiverConfig{}
+	if err := c.BindJSON(&req); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	h.SetAuditData(c, "修改", "日志告警接收器", req.Name)
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+
+	h.m.Lock()
+	defer h.m.Unlock()
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Extend().UpdateReceiver(ctx, namespace, prometheus.LoggingAlertmanagerConfigName, req)
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
+// DeleteLoggingReceiver 删除日志告警接收器
+// @Tags         Observability
+// @Summary      删除日志告警接收器
+// @Description  删除日志告警接收器
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        name       path      string                                true  "name"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/receivers/{name} [delete]
+// @Security     JWT
+func (h *ObservabilityHandler) DeleteLoggingReceiver(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+	h.SetAuditData(c, "删除", "日志告警接收器", name)
+
+	h.m.Lock()
+	defer h.m.Unlock()
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		return cli.Extend().DeleteReceiver(ctx, namespace, name, prometheus.LoggingAlertmanagerConfigName)
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
+// ListLoggingAlertRule 日志告警规则列表
+// @Tags         Observability
+// @Summary      日志告警规则列表
+// @Description  日志告警规则列表
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.LoggingAlertRule}  "resp"
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [get]
+// @Security     JWT
+func (h *ObservabilityHandler) ListLoggingAlertRule(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+
+	ret := []prometheus.LoggingAlertRule{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		var err error
+		ret, err = cli.Extend().ListLoggingAlertRules(ctx, namespace)
+		return err
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, ret)
+}
+
+// CreateLoggingAlertRule 创建日志告警规则
+// @Tags         Observability
+// @Summary      创建日志告警规则
+// @Description  创建日志告警规则
+// @Accept       json
+// @Produce      json
+// @Param        cluster    path      string                                true  "cluster"
+// @Param        namespace  path      string                                true  "namespace"
+// @Param        form       body      prometheus.LoggingAlertRule           true  "body"
+// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [post]
+// @Security     JWT
+func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+	h.SetAuditData(c, "创建", "日志告警规则", name)
+
+	req := prometheus.LoggingAlertRule{}
+	if err := c.BindJSON(&req); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	_, _, _, hasOp := prometheus.SplitLogql(req.Expr)
+	if hasOp {
+		handlers.NotOK(c, fmt.Errorf("logql不能包含比较运算符(<|<=|==|!=|>|>=)"))
+		return
+	}
+	if len(req.AlertLevels) == 0 {
+		handlers.NotOK(c, fmt.Errorf("告警级别不能为空"))
+		return
+	}
+
+	h.m.Lock()
+	defer h.m.Unlock()
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		raw, err := cli.Extend().GetRawLoggingAlertResource(ctx, namespace)
+		if err != nil {
+			return err
+		}
+		if err := raw.ModifyLoggingAlertRule(req, prometheus.Add); err != nil {
+			return err
+		}
+		return cli.Extend().CommitRawLoggingAlertResource(ctx, raw)
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
 }

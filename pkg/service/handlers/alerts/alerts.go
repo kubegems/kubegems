@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,77 +20,33 @@ import (
 	"kubegems.io/pkg/utils/prometheus"
 )
 
-/*
-prometheusrule 和 alertmanagerconfig 的配合使用
-prometheusrule 按照名字分组
-alertmanagerconfig 则根据labels匹配
-*/
-
-type Receiver struct {
-	Name     string `json:"name"`
-	Interval string `json:"interval"` // 分组间隔
-}
-
-type AlertLevel struct {
-	Op       string  `json:"op"`
-	Value    float64 `json:"value"`
-	Severity string  `json:"severity"`
-}
-
 // ListAlertRule 获取AlertRule列表
 // @Tags         Alert
 // @Summary      获取AlertRule列表
 // @Description  获取AlertRule列表
 // @Accept       json
 // @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "规则"
+// @Param        cluster    path      string                                                       true  "cluster"
+// @Param        namespace  path      string                                                       true  "namespace"
+// @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.MonitorAlertRule}  "规则"
 // @Router       /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert [get]
 // @Security     JWT
 func (h *AlertsHandler) ListAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 
-	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
-		promeAlertRules, err := cli.Extend().GetPromeAlertRules(ctx, "")
-		if err != nil {
-			return nil, err
-		}
-
+	ret := []prometheus.MonitorAlertRule{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		monitoropts := new(prometheus.MonitorOptions)
 		h.DynamicConfig.Get(ctx, monitoropts)
-		ret := []prometheus.AlertRule{}
-		if namespace == allNamespace {
-			ret, err = cli.Extend().ListAllAlertRules(ctx, monitoropts)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
-			if err != nil {
-				return nil, err
-			}
-			ret, err = raw.ToAlerts(false)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		for i := range ret {
-			key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
-			if promRule, ok := promeAlertRules[key]; ok {
-				ret[i].State = promRule.State
-			} else {
-				ret[i].State = "inactive"
-			}
-		}
-
-		sort.Slice(ret, func(i, j int) bool {
-			return strings.ToLower(ret[i].Name) < strings.ToLower(ret[j].Name)
-		})
-		return ret, nil
-	})(c)
+		var err error
+		ret, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, monitoropts)
+		return err
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, ret)
 }
 
 // GetAlertRule AlertRule详情
@@ -114,7 +69,7 @@ func (h *AlertsHandler) GetAlertRule(c *gin.Context) {
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
 		monitoropts := new(prometheus.MonitorOptions)
 		h.DynamicConfig.Get(ctx, monitoropts)
-		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +175,7 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
-		req := prometheus.AlertRule{}
+		req := prometheus.MonitorAlertRule{}
 		if err := c.BindJSON(&req); err != nil {
 			return nil, err
 		}
@@ -234,8 +189,17 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 		}
 
 		// get、update、commit
-		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
+			return nil, err
+		}
+
+		// check name duplicated in log alert
+		logAMConfig, err := cli.Extend().GetOrCreateAlertmanagerConfig(ctx, namespace, prometheus.LoggingAlertmanagerConfigName)
+		if err != nil {
+			return nil, err
+		}
+		if err := prometheus.CheckAlertNameInAMConfig(req.Name, logAMConfig, "日志"); err != nil {
 			return nil, err
 		}
 
@@ -243,7 +207,7 @@ func (h *AlertsHandler) CreateAlertRule(c *gin.Context) {
 			return nil, err
 		}
 
-		if err := cli.Extend().CommitRawAlertResource(ctx, raw); err != nil {
+		if err := cli.Extend().CommitRawMonitorAlertResource(ctx, raw); err != nil {
 			return nil, err
 		}
 		return "ok", nil
@@ -268,7 +232,7 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
-		req := prometheus.AlertRule{}
+		req := prometheus.MonitorAlertRule{}
 		if err := c.BindJSON(&req); err != nil {
 			return nil, err
 		}
@@ -282,7 +246,7 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 		}
 
 		// get、update、commit
-		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +255,7 @@ func (h *AlertsHandler) ModifyAlertRule(c *gin.Context) {
 			return nil, err
 		}
 
-		if err := cli.Extend().CommitRawAlertResource(ctx, raw); err != nil {
+		if err := cli.Extend().CommitRawMonitorAlertResource(ctx, raw); err != nil {
 			return nil, err
 		}
 		return "ok", nil
@@ -314,16 +278,18 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	name := c.Param("name")
-	req := prometheus.AlertRule{
-		Namespace: namespace,
-		Name:      name,
+	req := prometheus.MonitorAlertRule{
+		BaseAlertRule: prometheus.BaseAlertRule{
+			Namespace: namespace,
+			Name:      name,
+		},
 	}
 
 	h.ClusterFunc(cluster, func(ctx context.Context, cli agents.Client) (interface{}, error) {
 		// get、update、commit
 		monitoropts := new(prometheus.MonitorOptions)
 		h.DynamicConfig.Get(ctx, monitoropts)
-		raw, err := cli.Extend().GetRawAlertResource(ctx, namespace, monitoropts)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, monitoropts)
 		if err != nil {
 			return nil, err
 		}
@@ -332,7 +298,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 			return nil, err
 		}
 
-		if err := cli.Extend().CommitRawAlertResource(ctx, raw); err != nil {
+		if err := cli.Extend().CommitRawMonitorAlertResource(ctx, raw); err != nil {
 			return nil, err
 		}
 

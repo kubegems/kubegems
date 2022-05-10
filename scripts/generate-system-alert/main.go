@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	alerts := []prometheus.AlertRule{}
+	alerts := []prometheus.MonitorAlertRule{}
 	file, err := os.Open("scripts/generate-system-alert/system-alert.yaml")
 	if err != nil {
 		panic(err)
@@ -22,10 +22,12 @@ func main() {
 		panic(err)
 	}
 
-	raw := &prometheus.RawAlertResource{
-		AlertmanagerConfig: prometheus.GetBaseAlertmanagerConfig(prometheus.GlobalAlertNamespace),
-		PrometheusRule:     prometheus.GetBasePrometheusRule(prometheus.GlobalAlertNamespace),
-		MonitorOptions:     prometheus.DefaultMonitorOptions(),
+	raw := &prometheus.RawMonitorAlertResource{
+		Base: &prometheus.BaseAlertResource{
+			AMConfig: prometheus.GetBaseAlertmanagerConfig(prometheus.GlobalAlertNamespace, prometheus.MonitorAlertmanagerConfigName),
+		},
+		PrometheusRule: prometheus.GetBasePrometheusRule(prometheus.GlobalAlertNamespace),
+		MonitorOptions: prometheus.DefaultMonitorOptions(),
 	}
 
 	for _, alert := range alerts {
@@ -37,7 +39,7 @@ func main() {
 		}
 	}
 
-	amout, _ := yaml.Marshal(raw.AlertmanagerConfig)
+	amout, _ := yaml.Marshal(raw.Base.AMConfig)
 	prout, _ := yaml.Marshal(raw.PrometheusRule)
 	os.WriteFile("../installer/roles/installer/files/alertmanager/config.yaml", amout, 0644)
 	os.WriteFile("../installer/roles/installer/files/prometheus/alerting.rule.yaml", prout, 0644)

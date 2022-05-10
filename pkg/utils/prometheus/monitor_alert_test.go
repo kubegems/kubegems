@@ -26,7 +26,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []AlertRule
+		want    []MonitorAlertRule
 		wantErr bool
 	}{
 		{
@@ -107,9 +107,20 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 			args: args{
 				containOrigin: false,
 			},
-			want: []AlertRule{{
-				Namespace: GlobalAlertNamespace,
-				Name:      "alert-1",
+			want: []MonitorAlertRule{{
+				BaseAlertRule: BaseAlertRule{
+					Namespace: GlobalAlertNamespace,
+					Name:      "alert-1",
+					For:       "1m",
+					AlertLevels: []AlertLevel{{
+						CompareOp:    "==",
+						CompareValue: "0",
+						Severity:     SeverityError,
+					}},
+					Receivers: []AlertReceiver{{Name: "receiver-1"}},
+					IsOpen:    true,
+				},
+
 				BaseQueryParams: BaseQueryParams{
 					Resource: "node",
 					Rule:     "statusCondition",
@@ -119,15 +130,8 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 						"status":    "true",
 					},
 				},
-				For: "1m",
-				AlertLevels: []AlertLevel{{
-					CompareOp:    "==",
-					CompareValue: "0",
-					Severity:     SeverityError,
-				}},
-				Receivers: []Receiver{{Name: "receiver-1"}},
-				IsOpen:    true,
-				Promql:    `kube_node_status_condition{condition=~"Ready", status=~"true"}`,
+
+				Promql: `kube_node_status_condition{condition=~"Ready", status=~"true"}`,
 			}},
 			wantErr: false,
 		},
@@ -135,11 +139,13 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			raw := &RawAlertResource{
-				AlertmanagerConfig: tt.fields.AlertmanagerConfig,
-				PrometheusRule:     tt.fields.PrometheusRule,
-				Silences:           tt.fields.Silences,
-				MonitorOptions:     DefaultMonitorOptions(),
+			raw := &RawMonitorAlertResource{
+				Base: &BaseAlertResource{
+					AMConfig: tt.fields.AlertmanagerConfig,
+					Silences: tt.fields.Silences,
+				},
+				PrometheusRule: tt.fields.PrometheusRule,
+				MonitorOptions: DefaultMonitorOptions(),
 			}
 			got, err := raw.ToAlerts(tt.args.containOrigin)
 			if (err != nil) != tt.wantErr {

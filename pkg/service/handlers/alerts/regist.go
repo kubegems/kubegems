@@ -51,7 +51,7 @@ func (h *AlertmanagerConfigHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/alerts/cluster/:cluster/namespaces/:namespace/receiver",
 		h.CheckByClusterNamespace, h.CreateReceiver)
 	rg.PUT("/alerts/cluster/:cluster/namespaces/:namespace/receiver/:name",
-		h.CheckByClusterNamespace, h.ModifyReceiver)
+		h.CheckByClusterNamespace, h.UpdateReceiver)
 	rg.DELETE("/alerts/cluster/:cluster/namespaces/:namespace/receiver/:name",
 		h.CheckByClusterNamespace, h.DeleteReceiver)
 	rg.POST("/alerts/cluster/:cluster/namespaces/:namespace/receiver/:name/actions/test",
