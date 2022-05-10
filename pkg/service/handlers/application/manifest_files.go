@@ -174,6 +174,10 @@ func (h *ManifestHandler) ListFiles(c *gin.Context) {
 				if filename == "" || filename[0] == '.' {
 					return nil
 				}
+				// ignore readme file
+				if strings.ToLower(filename) == "readme.md" {
+					return nil
+				}
 				files = append(files, FileContent{Name: filename, Content: string(content)})
 				return nil
 			})
