@@ -9,33 +9,15 @@ import (
 	"strings"
 	"time"
 
-	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
 )
 
 const (
 	allNamespace = "_all"
-)
-
-var (
-	defaultReceiverName = "gemcloud-default-webhook"
-	defaultReceiverURL  = "http://gems-agent.gemcloud-system:8041/alert"
-	defaultReceiver     = v1alpha1.Receiver{
-		Name: defaultReceiverName,
-		WebhookConfigs: []v1alpha1.WebhookConfig{
-			{
-				URL: &defaultReceiverURL,
-			},
-		},
-	}
-
-	nullReceiverName = "null"
-	nullReceiver     = v1alpha1.Receiver{Name: nullReceiverName}
 )
 
 // Deprecated. use cli.Extend().ListSilences instead
@@ -142,16 +124,4 @@ func deleteSilenceIfExist(ctx context.Context, namespace, alertName string, cli 
 		})
 	}
 	return nil
-}
-
-func updateAlertmanagerConfig(ctx context.Context, amConfig *v1alpha1.AlertmanagerConfig, cli agents.Client) (*v1alpha1.AlertmanagerConfig, error) {
-	if err := cli.Extend().CheckAlertmanagerConfig(ctx, amConfig); err != nil {
-		log.Errorf("check alertmanager config failed: %v", err)
-		return amConfig, err
-	}
-
-	if err := cli.Update(ctx, amConfig); err != nil {
-		return nil, err
-	}
-	return amConfig, nil
 }

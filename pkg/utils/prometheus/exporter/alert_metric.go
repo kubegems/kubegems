@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/options"
@@ -60,7 +61,7 @@ func (c *AlertAndMetricCollector) Update(ch chan<- prometheus.Metric) error {
 	}
 
 	return c.cs.ExecuteInEachCluster(context.TODO(), func(ctx context.Context, cli agents.Client) error {
-		alertrules, err := cli.Extend().ListAllAlertRules(ctx, monitoropts)
+		alertrules, err := cli.Extend().ListMonitorAlertRules(ctx, corev1.NamespaceAll, monitoropts)
 		if err != nil {
 			log.Error(err, "list alert rules failed", "cluster", cli.Name())
 			return nil

@@ -9,21 +9,28 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	prommodel "github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/pkg/rulefmt"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils/loki"
 	"kubegems.io/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
@@ -32,6 +39,7 @@ var (
 		"service":   "alertmanager",
 		"port":      "9093",
 	}
+	allNamespace = "_all"
 )
 
 type ExtendClient struct {
@@ -204,11 +212,21 @@ func (c *ExtendClient) CheckAlertmanagerConfig(ctx context.Context, data *monito
 	})
 }
 
-// TODO: 使用原生prometheus api
 func (c *ExtendClient) GetPromeAlertRules(ctx context.Context, name string) (map[string]prometheus.RealTimeAlertRule, error) {
 	ret := map[string]prometheus.RealTimeAlertRule{}
 	if err := c.DoRequest(ctx, Request{
 		Path: fmt.Sprintf("/custom/prometheus/v1/alertrule?name=%s", name),
+		Into: WrappedResponse(&ret),
+	}); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (c *ExtendClient) GetLokiAlertRules(ctx context.Context) (map[string]prometheus.RealTimeAlertRule, error) {
+	ret := map[string]prometheus.RealTimeAlertRule{}
+	if err := c.DoRequest(ctx, Request{
+		Path: fmt.Sprintf("/custom/loki/v1/alertrule"),
 		Into: WrappedResponse(&ret),
 	}); err != nil {
 		return nil, err
@@ -269,33 +287,34 @@ func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prom
 	return ret, nil
 }
 
-func (c *ExtendClient) ListAllAlertRules(ctx context.Context, opts *prometheus.MonitorOptions) ([]prometheus.AlertRule, error) {
-	ruleList := monitoringv1.PrometheusRuleList{}
-	configList := monitoringv1alpha1.AlertmanagerConfigList{}
+func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace string, opts *prometheus.MonitorOptions) ([]prometheus.MonitorAlertRule, error) {
+	if namespace == allNamespace {
+		namespace = v1.NamespaceAll
+	}
+	promeRuleList := monitoringv1.PrometheusRuleList{}
+	ret := []prometheus.MonitorAlertRule{}
+	if err := c.List(ctx, &promeRuleList, client.InNamespace(namespace), client.MatchingLabels(prometheus.PrometheusRuleSelector)); err != nil {
+		return nil, err
+	}
 
+	// amconfig 按照namespace分组
+	amConfigList := monitoringv1alpha1.AlertmanagerConfigList{}
+	if err := c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
+		return nil, err
+	}
 	configNamespaceMap := map[string]*monitoringv1alpha1.AlertmanagerConfig{}
-	silenceNamespaceMap := map[string][]alertmanagertypes.Silence{}
-
-	ret := []prometheus.AlertRule{}
-	if err := c.List(ctx, &ruleList, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.PrometheusRuleSelector)); err != nil {
-		return nil, err
-	}
-	if err := c.List(ctx, &configList, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
-		return nil, err
-	}
-
-	// 按照namespace分组
-	for _, v := range configList.Items {
-		if v.Name == prometheus.AlertmanagerConfigName {
+	for _, v := range amConfigList.Items {
+		if v.Name == prometheus.MonitorAlertmanagerConfigName {
 			configNamespaceMap[v.Namespace] = v
 		}
 	}
 
-	// 按照namespace分组
+	// silence 按照namespace分组
 	allSilences, err := c.ListSilences(ctx, nil, prometheus.SilenceCommentForAlertrulePrefix)
 	if err != nil {
 		return nil, err
 	}
+	silenceNamespaceMap := map[string][]alertmanagertypes.Silence{}
 	for _, silence := range allSilences {
 		for _, m := range silence.Matchers {
 			if m.Name == prometheus.AlertNamespaceLabel {
@@ -304,18 +323,26 @@ func (c *ExtendClient) ListAllAlertRules(ctx context.Context, opts *prometheus.M
 		}
 	}
 
-	for _, rule := range ruleList.Items {
+	// realtime alert rules 按照namespace+name 分组
+	realTimeAlertRules, err := c.GetPromeAlertRules(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, rule := range promeRuleList.Items {
 		if rule.Name == prometheus.PrometheusRuleName {
 			amconfig, ok := configNamespaceMap[rule.Namespace]
 			if !ok {
 				log.Warnf("alertmanager config %s in namespace %s not found", rule.Name, rule.Namespace)
 				continue
 			}
-			raw := &prometheus.RawAlertResource{
-				PrometheusRule:     rule,
-				AlertmanagerConfig: amconfig,
-				Silences:           silenceNamespaceMap[rule.Namespace],
-				MonitorOptions:     opts,
+			raw := &prometheus.RawMonitorAlertResource{
+				Base: &prometheus.BaseAlertResource{
+					AMConfig: amconfig,
+					Silences: silenceNamespaceMap[rule.Namespace],
+				},
+				PrometheusRule: rule,
+				MonitorOptions: opts,
 			}
 
 			alerts, err := raw.ToAlerts(false)
@@ -326,42 +353,206 @@ func (c *ExtendClient) ListAllAlertRules(ctx context.Context, opts *prometheus.M
 		}
 	}
 
+	for i := range ret {
+		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
+		if promRule, ok := realTimeAlertRules[key]; ok {
+			ret[i].State = promRule.State
+		} else {
+			ret[i].State = "inactive"
+		}
+	}
+	sort.Slice(ret, func(i, j int) bool {
+		return strings.ToLower(ret[i].Name) < strings.ToLower(ret[j].Name)
+	})
+
 	return ret, nil
 }
 
-// GetRawAlertResource get specified namespace's alert
-func (c *ExtendClient) GetRawAlertResource(ctx context.Context, namespace string, opts *prometheus.MonitorOptions) (*prometheus.RawAlertResource, error) {
-	amcfg, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace)
+func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace string) ([]prometheus.LoggingAlertRule, error) {
+	if namespace == allNamespace {
+		namespace = v1.NamespaceAll
+	}
+	cm := v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: gems.NamespaceLogging,
+			Name:      prometheus.LoggingAlertRuleCMName,
+		},
+	}
+	if err := c.Get(ctx, client.ObjectKeyFromObject(&cm), &cm); err != nil {
+		return nil, err
+	}
+
+	// 当前namespace或者所有namespace的map
+	groupNamespaceMap := map[string]*rulefmt.RuleGroups{}
+	for k, v := range cm.Data {
+		if k == "recording.rules" {
+			continue
+		}
+		if namespace != v1.NamespaceAll && namespace != k {
+			continue
+		}
+		groups, errs := rulefmt.Parse([]byte(v))
+		if len(errs) > 0 {
+			return nil, errors.Wrap(errs[0], "parse rule groups")
+		}
+		groupNamespaceMap[k] = groups
+	}
+
+	// amconfig 按照namespace分组
+	amConfigList := monitoringv1alpha1.AlertmanagerConfigList{}
+	if err := c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
+		return nil, err
+	}
+	configNamespaceMap := map[string]*monitoringv1alpha1.AlertmanagerConfig{}
+	for _, v := range amConfigList.Items {
+		if v.Name == prometheus.MonitorAlertmanagerConfigName {
+			configNamespaceMap[v.Namespace] = v
+		}
+	}
+
+	// silence 按照namespace分组
+	allSilences, err := c.ListSilences(ctx, nil, prometheus.SilenceCommentForAlertrulePrefix)
+	if err != nil {
+		return nil, err
+	}
+	silenceNamespaceMap := map[string][]alertmanagertypes.Silence{}
+	for _, silence := range allSilences {
+		for _, m := range silence.Matchers {
+			if m.Name == prometheus.AlertNamespaceLabel {
+				silenceNamespaceMap[m.Value] = append(silenceNamespaceMap[m.Value], silence)
+			}
+		}
+	}
+
+	// realtime alert rules 按照namespace+name 分组
+	realTimeAlertRules, err := c.GetLokiAlertRules(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	promerule, err := c.GetOrCreatePrometheusRule(ctx, namespace)
+	ret := []prometheus.LoggingAlertRule{}
+	for thisNamesapce, rulegroups := range groupNamespaceMap {
+		amconfig, ok := configNamespaceMap[thisNamesapce]
+		if !ok {
+			log.Warnf("alertmanager in namespace %s not found", thisNamesapce)
+			continue
+		}
+		raw := &prometheus.RawLoggingAlertRule{
+			Base: &prometheus.BaseAlertResource{
+				AMConfig: amconfig,
+				Silences: silenceNamespaceMap[thisNamesapce],
+			},
+			ConfigMap:  &cm,
+			RuleGroups: rulegroups,
+		}
+
+		alerts, err := raw.ToAlerts()
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, alerts...)
+	}
+
+	for i := range ret {
+		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
+		if promRule, ok := realTimeAlertRules[key]; ok {
+			ret[i].State = promRule.State
+		} else {
+			ret[i].State = "inactive"
+		}
+	}
+	sort.Slice(ret, func(i, j int) bool {
+		return strings.ToLower(ret[i].Name) < strings.ToLower(ret[j].Name)
+	})
+
+	return ret, nil
+}
+
+func (c *ExtendClient) getBaseAlertResource(ctx context.Context, namespace string) (*prometheus.BaseAlertResource, error) {
+	loggingAMConfig, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, prometheus.LoggingAlertmanagerConfigName)
 	if err != nil {
 		return nil, err
 	}
-
 	silence, err := c.ListSilences(ctx, map[string]string{
 		prometheus.AlertNamespaceLabel: namespace,
 	}, prometheus.SilenceCommentForAlertrulePrefix)
 	if err != nil {
 		return nil, err
 	}
-
-	return &prometheus.RawAlertResource{
-		AlertmanagerConfig: amcfg,
-		PrometheusRule:     promerule,
-		Silences:           silence,
-		MonitorOptions:     opts,
+	return &prometheus.BaseAlertResource{
+		AMConfig: loggingAMConfig,
+		Silences: silence,
 	}, nil
 }
 
-func (c *ExtendClient) GetOrCreateAlertmanagerConfig(ctx context.Context, namespace string) (*monitoringv1alpha1.AlertmanagerConfig, error) {
+// GetRawMonitorAlertResource get specified namespace's alert
+func (c *ExtendClient) GetRawMonitorAlertResource(ctx context.Context, namespace string, opts *prometheus.MonitorOptions) (*prometheus.RawMonitorAlertResource, error) {
+	base, err := c.getBaseAlertResource(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	promerule, err := c.GetOrCreatePrometheusRule(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return &prometheus.RawMonitorAlertResource{
+		Base:           base,
+		PrometheusRule: promerule,
+		MonitorOptions: opts,
+	}, nil
+}
+
+func (c *ExtendClient) GetRawLoggingAlertResource(ctx context.Context, namespace string) (*prometheus.RawLoggingAlertRule, error) {
+	base, err := c.getBaseAlertResource(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	cm := v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: gems.NamespaceLogging,
+			Name:      prometheus.LoggingAlertRuleCMName,
+		},
+	}
+	if err := c.Get(ctx, client.ObjectKeyFromObject(&cm), &cm); err != nil {
+		return nil, err
+	}
+
+	raw := &prometheus.RawLoggingAlertRule{
+		Base:       base,
+		ConfigMap:  &cm,
+		RuleGroups: &rulefmt.RuleGroups{},
+	}
+	groupstr, ok := cm.Data[namespace]
+	if ok {
+		groups, errs := rulefmt.Parse([]byte(groupstr))
+		if len(errs) > 0 {
+			return nil, errs[0]
+		}
+		raw.RuleGroups = groups
+	}
+
+	return raw, nil
+}
+
+func (c *ExtendClient) CommitRawLoggingAlertResource(ctx context.Context, raw *prometheus.RawLoggingAlertRule) error {
+	bts, err := yaml.Marshal(raw.RuleGroups)
+	if err != nil {
+		return err
+	}
+	raw.ConfigMap.Data[raw.Base.AMConfig.Namespace] = string(bts)
+	if err := c.Update(ctx, raw.ConfigMap); err != nil {
+		return err
+	}
+	return c.Update(ctx, raw.Base.AMConfig)
+}
+
+func (c *ExtendClient) GetOrCreateAlertmanagerConfig(ctx context.Context, namespace string, name string) (*monitoringv1alpha1.AlertmanagerConfig, error) {
 	aconfig := &monitoringv1alpha1.AlertmanagerConfig{}
-	err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: prometheus.AlertmanagerConfigName}, aconfig)
+	err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, aconfig)
 	if kerrors.IsNotFound(err) {
 		// 初始化
-		aconfig = prometheus.GetBaseAlertmanagerConfig(namespace)
+		aconfig = prometheus.GetBaseAlertmanagerConfig(namespace, name)
 		if err := c.CheckAlertmanagerConfig(ctx, aconfig); err != nil {
 			return nil, err
 		}
@@ -387,15 +578,15 @@ func (c *ExtendClient) GetOrCreatePrometheusRule(ctx context.Context, namespace 
 	return prule, err
 }
 
-func (c *ExtendClient) CommitRawAlertResource(ctx context.Context, raw *prometheus.RawAlertResource) error {
-	if err := c.CheckAlertmanagerConfig(ctx, raw.AlertmanagerConfig); err != nil {
+func (c *ExtendClient) CommitRawMonitorAlertResource(ctx context.Context, raw *prometheus.RawMonitorAlertResource) error {
+	if err := c.CheckAlertmanagerConfig(ctx, raw.Base.AMConfig); err != nil {
 		return err
 	}
 
 	if err := c.Update(ctx, raw.PrometheusRule); err != nil {
 		return err
 	}
-	return c.Update(ctx, raw.AlertmanagerConfig)
+	return c.Update(ctx, raw.Base.AMConfig)
 }
 
 func (c *ExtendClient) ListMetricTargets(ctx context.Context, namespace string) ([]*prometheus.MetricTarget, error) {
@@ -437,4 +628,158 @@ func (c *ExtendClient) LokiQuery(ctx context.Context, logql string) (loki.QueryR
 		return ret, fmt.Errorf("loki query failed, cluster: %s, logql: %s, %v", c.Name, logql, err)
 	}
 	return ret, nil
+}
+
+func (c *ExtendClient) CreateOrUpdateAlertEmailSecret(ctx context.Context, namespace string, rec *prometheus.ReceiverConfig) error {
+	sec := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prometheus.EmailSecretName,
+			Namespace: namespace,
+			Labels:    prometheus.EmailSecretLabel,
+		},
+		Type: v1.SecretTypeOpaque,
+	}
+	_, err := controllerutil.CreateOrUpdate(ctx, c.TypedClient, sec, func() error {
+		if sec.Data == nil {
+			sec.Data = make(map[string][]byte)
+		}
+		for _, v := range rec.EmailConfigs {
+			sec.Data[prometheus.EmailSecretKey(rec.Name, v.From)] = []byte(v.AuthPassword) // 不需要encode
+		}
+		return nil
+	})
+	return err
+}
+
+func (c *ExtendClient) DeleteAlertEmailSecret(ctx context.Context, namespace string, rec v1alpha1.Receiver) error {
+	sec := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prometheus.EmailSecretName,
+			Namespace: namespace,
+		},
+	}
+	if err := c.Get(ctx, client.ObjectKeyFromObject(sec), sec); err != nil {
+		return err
+	}
+	for _, v := range rec.EmailConfigs {
+		delete(sec.Data, prometheus.EmailSecretKey(rec.Name, v.From))
+	}
+	return c.Update(ctx, sec)
+}
+
+func (c *ExtendClient) ListReceivers(ctx context.Context, namespace, amConfigName, search string) ([]prometheus.ReceiverConfig, error) {
+	ret := []prometheus.ReceiverConfig{}
+	if namespace == allNamespace {
+		configlist := &v1alpha1.AlertmanagerConfigList{}
+		emailsecretlist := &v1.SecretList{}
+
+		if err := c.List(ctx, configlist, client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
+			return nil, err
+		}
+		if err := c.List(ctx, emailsecretlist, client.MatchingLabels(prometheus.EmailSecretLabel)); err != nil {
+			return nil, err
+		}
+
+		for _, config := range configlist.Items {
+			if config.Name != amConfigName {
+				continue
+			}
+			var secret *v1.Secret
+			for _, v := range emailsecretlist.Items {
+				if v.Namespace == namespace && v.Name == prometheus.EmailSecretName {
+					secret = &v
+				}
+			}
+			for _, rec := range config.Spec.Receivers {
+				if rec.Name != prometheus.NullReceiverName {
+					if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
+						ret = append(ret, prometheus.ToGemsReceiver(rec, config.Namespace, secret))
+					}
+				}
+			}
+		}
+	} else {
+		config, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, amConfigName)
+		if err != nil {
+			return nil, err
+		}
+
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prometheus.EmailSecretName,
+				Namespace: namespace,
+			},
+		}
+		if err := c.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
+			if !kerrors.IsNotFound(err) {
+				return nil, err
+			}
+		}
+
+		for _, rec := range config.Spec.Receivers {
+			if rec.Name != prometheus.NullReceiverName {
+				if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
+					ret = append(ret, prometheus.ToGemsReceiver(rec, config.Namespace, secret))
+				}
+			}
+		}
+	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return strings.ToLower(ret[i].Name) < strings.ToLower(ret[j].Name)
+	})
+	return ret, nil
+}
+
+func (c *ExtendClient) CreateReceiver(ctx context.Context, namespace, amConfigName string, rec prometheus.ReceiverConfig) error {
+	aconfig, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, amConfigName)
+	if err != nil {
+		return err
+	}
+	if err := rec.Precheck(); err != nil {
+		return err
+	}
+	if err := c.CreateOrUpdateAlertEmailSecret(ctx, namespace, &rec); err != nil {
+		return err
+	}
+
+	receiver := prometheus.ToAlertmanagerReceiver(rec)
+	if err := prometheus.ModifyReceiver(ctx, aconfig, &receiver, prometheus.Add); err != nil {
+		return err
+	}
+	return c.Update(ctx, aconfig)
+}
+
+func (c *ExtendClient) UpdateReceiver(ctx context.Context, namespace, amConfigName string, rec prometheus.ReceiverConfig) error {
+	aconfig, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, amConfigName)
+	if err != nil {
+		return err
+	}
+	if err := rec.Precheck(); err != nil {
+		return err
+	}
+	if err := c.CreateOrUpdateAlertEmailSecret(ctx, namespace, &rec); err != nil {
+		return err
+	}
+
+	receiver := prometheus.ToAlertmanagerReceiver(rec)
+	if err := prometheus.ModifyReceiver(ctx, aconfig, &receiver, prometheus.Update); err != nil {
+		return err
+	}
+	return c.Update(ctx, aconfig)
+}
+
+func (c *ExtendClient) DeleteReceiver(ctx context.Context, namespace, name, amConfigName string) error {
+	receiver := v1alpha1.Receiver{Name: name}
+	aconfig, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, amConfigName)
+	if err != nil {
+		return err
+	}
+	if err := prometheus.ModifyReceiver(ctx, aconfig, &receiver, prometheus.Delete); err != nil {
+		return err
+	}
+	if err := c.DeleteAlertEmailSecret(ctx, namespace, receiver); err != nil {
+		return err
+	}
+	return c.Update(ctx, aconfig)
 }

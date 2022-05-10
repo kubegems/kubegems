@@ -5,14 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
-	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/set"
 	"kubegems.io/pkg/utils/slice"
 )
 
@@ -28,8 +23,8 @@ const (
 	SeverityCritical = "critical" // 严重
 
 	exprJsonAnnotationKey = "gems_expr_json"
-	messageAnnotationsKey = "message"
-	valueAnnotationKey    = "value"
+	MessageAnnotationsKey = "message"
+	ValueAnnotationKey    = "value"
 
 	alertRuleKeyFormat = "gems-%s-%s"
 	AlertClusterKey    = "cluster"
@@ -44,224 +39,155 @@ const (
 	SilenceCommentForAlertrulePrefix = "silence for"
 )
 
-// 里面资源的namespace必须相同
-type RawAlertResource struct {
-	*v1alpha1.AlertmanagerConfig
-	*monitoringv1.PrometheusRule
-	Silences []alertmanagertypes.Silence
-
-	*MonitorOptions
-}
-
 type AlertLevel struct {
 	CompareOp    string `json:"compareOp"`
 	CompareValue string `json:"compareValue"` // 支持表达式, eg. 24 * 60
-	Severity     string `json:"severity"`
+	Severity     string `json:"severity"`     // error, critical
 }
 
-type Receiver struct {
+type AlertReceiver struct {
 	Name     string `json:"name"`
 	Interval string `json:"interval"` // 分组间隔
 }
 
-type AlertRule struct {
+type BaseAlertRule struct {
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 
-	BaseQueryParams `json:",inline"`
-	For             string `json:"for"`     // 持续时间, eg. 10s, 1m, 1h
-	Message         string `json:"message"` // 告警消息，若为空后端自动填充
+	For     string `json:"for"`     // 持续时间, eg. 10s, 1m, 1h
+	Message string `json:"message"` // 告警消息，若为空后端自动填充
 
-	AlertLevels []AlertLevel `json:"alertLevels"` // 告警级别
-	Receivers   []Receiver   `json:"receivers"`   // 接收器
+	InhibitLabels []string        // 如果有多个告警级别，需要配置告警抑制的labels
+	AlertLevels   []AlertLevel    `json:"alertLevels"` // 告警级别
+	Receivers     []AlertReceiver `json:"receivers"`   // 接收器
 
 	IsOpen bool   `json:"isOpen"` // 是否启用
 	State  string `json:"state"`  // 状态
-
-	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
-
-	Promql string `json:"promql"` // 仅用于告知前端展示
-	// 相关配置
-	RuleContext `json:"-"`
-	Origin      *monitoringv1.RuleGroup `json:"origin,omitempty"` // 原始的prometheusrule
 }
 
-// TODO: unit test
-func (r *AlertRule) CheckAndModify(opts *MonitorOptions) error {
-	// check resource
-	res, ok := opts.Resources[r.Resource]
-	if !ok {
-		return fmt.Errorf("invalid resource: %s", r.Resource)
-	}
-
-	// check rule
-	ruleCtx, err := r.FindRuleContext(opts)
-	if err != nil {
-		return err
-	}
-	r.RuleContext = ruleCtx
-
-	// check AlertLevels
-	if len(r.AlertLevels) == 0 {
-		return fmt.Errorf("alert level can't be null")
-	}
-
-	severities := set.NewSet[string]()
-	for _, v := range r.AlertLevels {
-		severities.Append(v.Severity)
-		if !slice.ContainStr(opts.Operators, v.CompareOp) {
-			return fmt.Errorf("invalid operator: %s", v.CompareOp)
-		}
-		if _, ok := opts.Severity[v.Severity]; !ok {
-			return fmt.Errorf("invalid severity: %s", v.Severity)
-		}
-	}
-
-	if severities.Len() < len(r.AlertLevels) {
-		return fmt.Errorf("有重复的告警级别")
-	}
-
-	// format message
-	if r.Message == "" {
-		r.Message = fmt.Sprintf("%s: [集群:{{ $externalLabels.%s }}] ", r.Name, AlertClusterKey)
-		for _, label := range r.RuleDetail.Labels {
-			r.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
-		}
-
-		r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.RuleDetail.ShowName, `{{ $value | printf "%.1f" }}`, opts.Units[r.Unit])
-	}
-
-	return r.checkAndModifyReceivers()
+type AlertRule interface {
+	GetNamespace() string
+	GetName() string
+	GetInhibitLabels() []string
+	GetAlertLevels() []AlertLevel
+	GetReceivers() []AlertReceiver
 }
 
-func (r *AlertRule) checkAndModifyReceivers() error {
-	if len(r.Receivers) == 0 {
-		return fmt.Errorf("接收器不能为空")
-	}
+type AlertRuleList[T AlertRule] []T
 
-	set := map[string]struct{}{}
-	found := false
-	for _, rec := range r.Receivers {
-		if rec.Name == DefaultReceiverName {
-			found = true
-		}
-		if _, ok := set[rec.Name]; ok {
-			return fmt.Errorf("接收器: %s重复", rec.Name)
-		} else {
-			set[rec.Name] = struct{}{}
-		}
+func (l AlertRuleList[T]) ToAlertRuleList() []AlertRule {
+	ret := make([]AlertRule, len(l))
+	for i, v := range l {
+		ret[i] = v
 	}
-
-	if !found {
-		r.Receivers = append(r.Receivers, Receiver{
-			Name:     DefaultReceiverName,
-			Interval: r.Receivers[0].Interval,
-		})
-	}
-	return nil
+	return ret
 }
 
-// 默认认为namespace全部一致
-func (raw *RawAlertResource) ToAlerts(containOrigin bool) ([]AlertRule, error) {
-	receiverMap := map[string][]Receiver{}
-	routes, err := raw.AlertmanagerConfig.Spec.Route.ChildRoutes()
+func (l AlertRuleList[T]) modify(newAlertRule T, act Action) (AlertRuleList[T], error) {
+	index := -1
+	for i := range l {
+		if l[i].GetName() == newAlertRule.GetName() {
+			index = i
+			break
+		}
+	}
+
+	switch act {
+	case Add:
+		if index != -1 { // found
+			return l, fmt.Errorf("告警规则 %s 已存在！", newAlertRule.GetName())
+		}
+		l = append(l, newAlertRule)
+	case Update:
+		if index == -1 { // not found
+			return l, fmt.Errorf("告警规则 %s 不存在！", newAlertRule.GetName())
+		}
+		l[index] = newAlertRule
+	case Delete:
+		if index == -1 { // not found
+			return l, fmt.Errorf("告警规则 %s 不存在！", newAlertRule.GetName())
+		}
+		l = append(l[:index], l[index+1:]...)
+	}
+	return l, nil
+}
+
+func (r BaseAlertRule) GetNamespace() string {
+	return r.Namespace
+}
+
+func (r BaseAlertRule) GetName() string {
+	return r.Name
+}
+
+func (r BaseAlertRule) GetInhibitLabels() []string {
+	return r.InhibitLabels
+}
+
+func (r BaseAlertRule) GetAlertLevels() []AlertLevel {
+	return r.AlertLevels
+}
+
+func (r BaseAlertRule) GetReceivers() []AlertReceiver {
+	return r.Receivers
+}
+
+type BaseAlertResource struct {
+	AMConfig *v1alpha1.AlertmanagerConfig
+	Silences []alertmanagertypes.Silence
+}
+
+func (base *BaseAlertResource) GetReceiverMap() (map[string][]AlertReceiver, error) {
+	routes, err := base.AMConfig.Spec.Route.ChildRoutes()
 	if err != nil {
 		return nil, err
 	}
 	// 以 alert name 为 key
+	ret := map[string][]AlertReceiver{}
 	for _, route := range routes {
 		for _, m := range route.Matchers {
 			if m.Name == AlertNameLabel {
-				receiverMap[m.Value] = append(receiverMap[m.Value], Receiver{
+				ret[m.Value] = append(ret[m.Value], AlertReceiver{
 					Name:     route.Receiver,
 					Interval: route.RepeatInterval,
 				})
 			}
 		}
 	}
+	return ret, nil
+}
 
-	silenceMap := map[string]alertmanagertypes.Silence{}
-	for _, s := range raw.Silences {
+func (base *BaseAlertResource) GetSilenceMap() map[string]alertmanagertypes.Silence {
+	ret := map[string]alertmanagertypes.Silence{}
+	for _, s := range base.Silences {
 		// 有fingerprint- 前缀的是告警黑名单
 		if !strings.HasPrefix(s.Comment, "fingerprint-") {
 			for _, matcher := range s.Matchers {
 				if matcher.Name == AlertNameLabel {
-					silenceMap[matcher.Value] = s
+					ret[matcher.Value] = s
 				}
 			}
 		}
 	}
-
-	ret := []AlertRule{}
-	for i, group := range raw.PrometheusRule.Spec.Groups {
-		alertname := group.Name
-
-		// expr规则
-		alertrule, err := convertAlertRule(raw.PrometheusRule.Namespace, group, raw.MonitorOptions)
-		if err != nil {
-			log.Error(err, "convert prometheus rule")
-			return nil, err
-		}
-		// 接收器
-		alertrule.Receivers = receiverMap[alertname]
-
-		// 是否启用
-		isOpen := true
-		if _, ok := silenceMap[alertname]; ok {
-			isOpen = false
-		}
-		alertrule.IsOpen = isOpen
-		if containOrigin {
-			alertrule.Origin = &raw.PrometheusRule.Spec.Groups[i]
-		}
-		ret = append(ret, alertrule)
-	}
-
-	return ret, nil
+	return ret
 }
 
-// 所有alertrule都是一个namespace
-func (raw *RawAlertResource) UpdateAlertRules(alertRules []AlertRule) error {
-	groups := make([]monitoringv1.RuleGroup, len(alertRules))
-	routes := []apiextensionsv1.JSON{}
-	inhibitRuleMap := map[string]v1alpha1.InhibitRule{}
-	for i, alertRule := range alertRules {
-		// 更新 PrometheusRule
-		groups[i].Name = alertRule.Name
-		for _, level := range alertRule.AlertLevels {
-			expr := CompareQueryParams{
-				BaseQueryParams: alertRule.BaseQueryParams,
-				CompareOp:       level.CompareOp,
-				CompareValue:    level.CompareValue,
+func (base *BaseAlertResource) GetInhibitRuleMap() map[string]v1alpha1.InhibitRule {
+	ret := map[string]v1alpha1.InhibitRule{}
+	for _, v := range base.AMConfig.Spec.InhibitRules {
+		for _, m := range v.SourceMatch {
+			if m.Name == AlertNameLabel {
+				ret[m.Name] = v
 			}
-			bts, _ := json.Marshal(expr)
-
-			promql, err := expr.ConstructPromql(alertRule.Namespace, raw.MonitorOptions)
-			if err != nil {
-				return err
-			}
-			groups[i].Rules = append(groups[i].Rules, monitoringv1.Rule{
-				Alert: alertRule.Name,
-				Expr:  intstr.FromString(promql),
-				For:   alertRule.For,
-				Labels: map[string]string{
-					AlertNamespaceLabel: alertRule.Namespace,
-					AlertNameLabel:      alertRule.Name,
-					AlertResourceLabel:  alertRule.Resource,
-					AlertRuleLabel:      alertRule.Rule,
-					AlertScopeLabel:     GetAlertScope(alertRule.Namespace),
-					SeverityLabel:       level.Severity,
-				},
-				Annotations: map[string]string{
-					messageAnnotationsKey: alertRule.Message,
-					valueAnnotationKey:    `{{ $value | printf "%.1f" }}`,
-					exprJsonAnnotationKey: string(bts),
-				},
-			})
 		}
+	}
+	return ret
+}
 
-		// 更新AlertmanagerConfig routes
-		for _, receiver := range alertRule.Receivers {
+func (base *BaseAlertResource) UpdateRoutes(alertrules AlertRuleList[AlertRule]) {
+	base.AMConfig.Spec.Route.Routes = nil
+	for _, alertrule := range alertrules {
+		for _, receiver := range alertrule.GetReceivers() {
 			rawRouteData, _ := json.Marshal(v1alpha1.Route{
 				Receiver:       receiver.Name,
 				RepeatInterval: receiver.Interval,
@@ -269,21 +195,35 @@ func (raw *RawAlertResource) UpdateAlertRules(alertRules []AlertRule) error {
 				Matchers: []v1alpha1.Matcher{
 					{
 						Name:  AlertNamespaceLabel,
-						Value: alertRule.Namespace,
+						Value: alertrule.GetNamespace(),
 					},
 					{
 						Name:  AlertNameLabel,
-						Value: alertRule.Name,
+						Value: alertrule.GetName(),
 					},
 				},
 			})
-			routes = append(routes, apiextensionsv1.JSON{Raw: rawRouteData})
+			base.AMConfig.Spec.Route.Routes = append(base.AMConfig.Spec.Route.Routes, apiextensionsv1.JSON{Raw: rawRouteData})
 		}
+	}
+	base.AMConfig.Spec.Route.Receiver = NullReceiverName
+	base.AMConfig.Spec.Route.GroupBy = []string{AlertNamespaceLabel, AlertNameLabel}
+	base.AMConfig.Spec.Route.GroupInterval = "30s" // ref. https://zhuanlan.zhihu.com/p/63270049. group_interval设短点好
+	base.AMConfig.Spec.Route.GroupWait = "30s"     // 使用默认值
+	base.AMConfig.Spec.Route.Matchers = nil
+}
 
+func (base *BaseAlertResource) UpdateInhibitRules(alertrules AlertRuleList[AlertRule]) error {
+	base.AMConfig.Spec.InhibitRules = nil
+	inhibitRuleMap := map[string]v1alpha1.InhibitRule{}
+	for _, alertrule := range alertrules {
 		// 更新AlertmanagerConfig inhibitRules
 		// 先用map为同一label的去重
-		if len(alertRule.AlertLevels) > 1 {
-			inhibitRuleMap[slice.SliceUniqueKey(alertRule.RuleDetail.Labels)] = v1alpha1.InhibitRule{
+		if len(alertrule.GetAlertLevels()) > 1 {
+			if len(alertrule.GetInhibitLabels()) == 0 {
+				return fmt.Errorf("有多个告警级别时，告警抑制标签不能为空!")
+			}
+			inhibitRuleMap[slice.SliceUniqueKey(alertrule.GetInhibitLabels())] = v1alpha1.InhibitRule{
 				SourceMatch: []v1alpha1.Matcher{
 					{
 						Name:  SeverityLabel,
@@ -298,132 +238,47 @@ func (raw *RawAlertResource) UpdateAlertRules(alertRules []AlertRule) error {
 						Regex: false,
 					},
 				},
-				Equal: append(alertRule.RuleDetail.Labels, AlertNamespaceLabel, AlertNameLabel),
+				Equal: append(alertrule.GetInhibitLabels(), AlertNamespaceLabel, AlertNameLabel),
 			}
 		}
 	}
-	// 添加inhibitrule
-	raw.AlertmanagerConfig.Spec.InhibitRules = nil
-	for _, v := range inhibitRuleMap {
-		raw.AlertmanagerConfig.Spec.InhibitRules = append(raw.AlertmanagerConfig.Spec.InhibitRules, v)
-	}
 
+	for _, v := range inhibitRuleMap {
+		base.AMConfig.Spec.InhibitRules = append(base.AMConfig.Spec.InhibitRules, v)
+	}
+	return nil
+}
+
+func (base *BaseAlertResource) AddNullReceivers() {
 	// 检查并添加空接收器
 	foundNull := false
-	for _, v := range raw.AlertmanagerConfig.Spec.Receivers {
+	for _, v := range base.AMConfig.Spec.Receivers {
 		if v.Name == NullReceiverName {
 			foundNull = true
 			continue
 		}
 	}
 	if !foundNull {
-		raw.AlertmanagerConfig.Spec.Receivers = append(raw.AlertmanagerConfig.Spec.Receivers, NullReceiver)
+		base.AMConfig.Spec.Receivers = append(base.AMConfig.Spec.Receivers, NullReceiver)
 	}
-
-	raw.PrometheusRule.Spec.Groups = groups
-	raw.AlertmanagerConfig.Spec.Route.Routes = routes
-	raw.AlertmanagerConfig.Spec.Route.Receiver = NullReceiverName
-	raw.AlertmanagerConfig.Spec.Route.GroupBy = []string{AlertNamespaceLabel, AlertNameLabel}
-	raw.AlertmanagerConfig.Spec.Route.GroupInterval = "30s" // ref. https://zhuanlan.zhihu.com/p/63270049. group_interval设短点好
-	raw.AlertmanagerConfig.Spec.Route.GroupWait = "30s"     // 使用默认值
-	raw.AlertmanagerConfig.Spec.Route.Matchers = nil
-
-	return nil
 }
 
-func (raw *RawAlertResource) ModifyAlertRule(newAlertRule AlertRule, act Action) error {
-	alerts, err := raw.ToAlerts(false)
+func CheckAlertNameInAMConfig(name string, amconfig *v1alpha1.AlertmanagerConfig, msg string) error {
+	routes, err := amconfig.Spec.Route.ChildRoutes()
 	if err != nil {
 		return err
 	}
-
-	index := -1
-	for i := range alerts {
-		if alerts[i].Name == newAlertRule.Name {
-			index = i
-			break
+	for _, v := range routes {
+		for _, m := range v.Matchers {
+			if m.Name == AlertNameLabel && m.Value == name {
+				return fmt.Errorf("已有同名的%s告警规则: %s", msg, name)
+			}
 		}
 	}
-
-	switch act {
-	case Add:
-		if index != -1 { // found
-			return fmt.Errorf("告警规则 %s 已存在！", newAlertRule.Name)
-		}
-		alerts = append(alerts, newAlertRule)
-	case Update:
-		if index == -1 { // not found
-			return fmt.Errorf("告警规则 %s 不存在！", newAlertRule.Name)
-		}
-		alerts[index] = newAlertRule
-	case Delete:
-		if index == -1 { // not found
-			return fmt.Errorf("告警规则 %s 不存在！", newAlertRule.Name)
-		}
-		alerts = append(alerts[:index], alerts[index+1:]...)
-	}
-
-	return raw.UpdateAlertRules(alerts)
+	return nil
 }
 
-// TODO: unit test
-func convertAlertRule(namespace string, group monitoringv1.RuleGroup, opts *MonitorOptions) (AlertRule, error) {
-	ret := AlertRule{}
-	tmpexpr := CompareQueryParams{}
-	for _, rule := range group.Rules {
-		if rule.Labels[AlertNamespaceLabel] != namespace ||
-			rule.Labels[AlertNameLabel] == "" {
-			return ret, fmt.Errorf("rule label not valid: %v", rule.Labels)
-		}
-
-		exprJson := rule.Annotations[exprJsonAnnotationKey]
-		if exprJson == "" {
-			return ret, fmt.Errorf("rule annotation not contains expr json key: %v", rule)
-		}
-
-		expr := CompareQueryParams{}
-		if err := json.Unmarshal([]byte(exprJson), &expr); err != nil {
-			return ret, err
-		}
-
-		ret.Namespace = namespace
-		ret.Name = rule.Labels[AlertNameLabel]
-
-		ret.BaseQueryParams = expr.BaseQueryParams
-		ret.For = rule.For
-		ret.Message = rule.Annotations[messageAnnotationsKey]
-
-		ret.AlertLevels = append(ret.AlertLevels, AlertLevel{
-			CompareOp:    expr.CompareOp,
-			CompareValue: expr.CompareValue,
-			Severity:     rule.Labels[SeverityLabel],
-		})
-
-		tmpexpr.BaseQueryParams = expr.BaseQueryParams
-	}
-
-	// 填入ruleCtx
-	ruleCtx, err := ret.FindRuleContext(opts)
-	if err != nil {
-		return ret, err
-	}
-	ret.RuleContext = ruleCtx
-
-	// 填入promql
-	promql, err := tmpexpr.ConstructPromql(namespace, opts)
-	if err != nil {
-		return ret, nil
-	}
-	ret.Promql = promql
-
-	return ret, err
-}
-
-func RealTimeAlertKey(namespace, name string) string {
-	return fmt.Sprintf(alertRuleKeyFormat, namespace, name)
-}
-
-func GetAlertScope(namespace string) string {
+func getAlertScope(namespace string) string {
 	if namespace == GlobalAlertNamespace {
 		return ScopeSystemAdmin
 	}

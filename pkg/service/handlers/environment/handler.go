@@ -759,7 +759,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 				return err
 			}
 
-			raw, err := cli.Extend().GetRawAlertResource(ctx, env.Namespace, &monitoropts)
+			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, env.Namespace, &monitoropts)
 			if err != nil {
 				return err
 			}

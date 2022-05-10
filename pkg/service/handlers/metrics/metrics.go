@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	prommodel "github.com/prometheus/common/model"
+	v1 "k8s.io/api/core/v1"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/service/handlers/base"
@@ -288,9 +289,9 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 		return
 	}
 
-	allalerts := []prometheus.AlertRule{}
+	allalerts := []prometheus.MonitorAlertRule{}
 	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
-		alerts, err := cli.Extend().ListAllAlertRules(ctx, monitoropts)
+		alerts, err := cli.Extend().ListMonitorAlertRules(ctx, v1.NamespaceAll, monitoropts)
 		if err != nil {
 			return fmt.Errorf("list alert in cluster %s failed: %v", cli.Name(), err)
 		}

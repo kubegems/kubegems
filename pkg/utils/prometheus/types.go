@@ -20,8 +20,10 @@ const (
 )
 
 const (
-	AlertmanagerConfigName = "gemcloud"
-	PrometheusRuleName     = "gemcloud"
+	MonitorAlertmanagerConfigName = "gemcloud"
+	LoggingAlertmanagerConfigName = "kubegems-default-logging-amconfig"
+
+	PrometheusRuleName = "gemcloud"
 )
 
 var (
@@ -161,14 +163,14 @@ func (r *RealTimeAlertRule) Less(i, j int) bool {
 	return r.Alerts[i].ActiveAt.After(r.Alerts[j].ActiveAt)
 } // 倒排
 
-func GetBaseAlertmanagerConfig(namespace string) *v1alpha1.AlertmanagerConfig {
+func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerConfig {
 	return &v1alpha1.AlertmanagerConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: v1alpha1.SchemeGroupVersion.String(),
 			Kind:       v1alpha1.AlertmanagerConfigKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      AlertmanagerConfigName,
+			Name:      name,
 			Namespace: namespace,
 			Labels:    AlertmanagerConfigSelector,
 		},
