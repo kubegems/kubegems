@@ -195,6 +195,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.register("loki", "v1", "labelvalues", ActionList, lokiHandler.LabelValues)
 	routes.register("loki", "v1", "tail", ActionList, lokiHandler.Tail)
 	routes.register("loki", "v1", "series", ActionList, lokiHandler.Series)
+	routes.register("loki", "v1", "alertrule", ActionList, lokiHandler.AlertRule)
 
 	jobHandle := &JobHandler{C: cluster.GetClient(), cluster: cluster}
 	routes.register("batch", "v1", "jobs", ActionList, jobHandle.List)
