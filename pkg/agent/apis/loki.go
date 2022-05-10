@@ -14,9 +14,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"kubegems.io/pkg/agent/ws"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/loki"
+	"kubegems.io/pkg/utils/prometheus"
 )
 
 var cstZone = time.FixedZone("GMT", 8*3600)
@@ -131,7 +134,7 @@ func (h *LokiHandler) QueryRange(c *gin.Context) {
 // @Description  Loki Labels
 // @Accept       json
 // @Produce      json
-// @Param        cluster  path      string                                true  "cluster"
+// @Param        cluster  path      string                                                                 true  "cluster"
 // @Param        start    query     string                                true  "The start time for the query as a nanosecond Unix epoch"
 // @Param        end      query     string                                true  "The end time for the query as a nanosecond Unix epoch"
 // @Success      200      {object}  handlers.ResponseStruct{Data=object}  ""
@@ -302,6 +305,57 @@ func (h *LokiHandler) Tail(c *gin.Context) {
 	sHandler := newLogStreamHandler(wsServer, wsClient, filterArgs)
 	sHandler.handle()
 	log.WithField("h", "tail").Info("end with handle")
+}
+
+// @Tags         Agent.V1
+// @Summary      Loki Alert Rule
+// @Description  Loki Alert Rule
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true  "cluster"
+// @Success      200      {object}  handlers.ResponseStruct{Data=map[string]prometheus.RealTimeAlertRule}  ""
+// @Router       /v1/proxy/cluster/{cluster}/custom/loki/v1/alertrule [get]
+// @Security     JWT
+func (h *LokiHandler) AlertRule(c *gin.Context) {
+	body, err := h._http("/prometheus/api/v1/rules", "GET", nil, nil)
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	resp := loki.LokiPromeRuleResp{}
+	if err := json.Unmarshal(body, &resp); err != nil {
+		NotOK(c, errors.Wrap(err, "get loki prome rule"))
+		return
+	}
+	// gems-namespace-name 作为key
+	ret := make(map[string]prometheus.RealTimeAlertRule)
+	for _, g := range resp.Data.Groups {
+		for _, r := range g.Rules {
+			switch v := r.(type) {
+			case v1.AlertingRule:
+				namespace := v.Labels[prometheus.AlertNamespaceLabel]
+				name := v.Labels[prometheus.AlertNameLabel]
+				if namespace != "" && name != "" {
+					key := prometheus.RealTimeAlertKey(string(namespace), string(name))
+					if v.Name == g.Name {
+						alert, ok := ret[key]
+						if ok {
+							alert.Alerts = append(alert.Alerts, v.Alerts...)
+							alert.State = getState(alert.State, v.State)
+						} else {
+							alert = prometheus.RealTimeAlertRule{
+								Alerts: v.Alerts,
+								Name:   v.Name,
+								State:  getState("", v.State),
+							}
+						}
+						ret[key] = alert
+					}
+				}
+			}
+		}
+	}
+	OK(c, ret)
 }
 
 type logStreamHandler struct {

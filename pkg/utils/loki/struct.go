@@ -2,6 +2,8 @@ package loki
 
 import (
 	"encoding/json"
+
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type LabelResponse struct {
@@ -64,6 +66,14 @@ func (l *LabelParam) ToMap() map[string]string {
 	var m map[string]string
 	_ = json.Unmarshal(b, &m)
 	return m
+}
+
+type LokiPromeRuleResp struct {
+	Status    string         `json:"status"`
+	Data      v1.RulesResult `json:"data"`
+	ErrorType v1.ErrorType   `json:"errorType"`
+	Error     string         `json:"error"`
+	Warnings  []string       `json:"warnings,omitempty"`
 }
 
 type QueryRangeParam struct {
