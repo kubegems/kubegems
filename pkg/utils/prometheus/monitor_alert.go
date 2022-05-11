@@ -167,7 +167,17 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 
 // TODO: unit test
 func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup, opts *MonitorOptions) (MonitorAlertRule, error) {
-	ret := MonitorAlertRule{}
+	if len(group.Rules) == 0 {
+		return MonitorAlertRule{}, fmt.Errorf("rule %s is null", group.Name)
+	}
+	ret := MonitorAlertRule{
+		BaseAlertRule: &BaseAlertRule{
+			Namespace: namespace,
+			Name:      group.Name,
+			For:       group.Rules[0].For,
+			Message:   group.Rules[0].Annotations[MessageAnnotationsKey],
+		},
+	}
 	tmpexpr := CompareQueryParams{}
 	for _, rule := range group.Rules {
 		if rule.Labels[AlertNamespaceLabel] != namespace ||
@@ -185,13 +195,7 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup, opts 
 			return ret, err
 		}
 
-		ret.Namespace = namespace
-		ret.Name = rule.Labels[AlertNameLabel]
-
 		ret.BaseQueryParams = expr.BaseQueryParams
-		ret.For = rule.For
-		ret.Message = rule.Annotations[MessageAnnotationsKey]
-
 		ret.AlertLevels = append(ret.AlertLevels, AlertLevel{
 			CompareOp:    expr.CompareOp,
 			CompareValue: expr.CompareValue,
