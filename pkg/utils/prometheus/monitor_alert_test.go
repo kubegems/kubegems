@@ -108,7 +108,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				containOrigin: false,
 			},
 			want: []MonitorAlertRule{{
-				BaseAlertRule: BaseAlertRule{
+				BaseAlertRule: &BaseAlertRule{
 					Namespace: GlobalAlertNamespace,
 					Name:      "alert-1",
 					For:       "1m",

@@ -10,8 +10,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/set"
-	"kubegems.io/pkg/utils/slice"
 )
 
 // 里面资源的namespace必须相同
@@ -24,7 +22,7 @@ type RawMonitorAlertResource struct {
 type MonitorAlertRule struct {
 	BaseQueryParams `json:",inline"`
 
-	BaseAlertRule `json:",inline"`
+	*BaseAlertRule `json:",inline"`
 
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
 
@@ -51,26 +49,6 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 	}
 	r.RuleContext = ruleCtx
 
-	// check AlertLevels
-	if len(r.AlertLevels) == 0 {
-		return fmt.Errorf("alert level can't be null")
-	}
-
-	severities := set.NewSet[string]()
-	for _, v := range r.AlertLevels {
-		severities.Append(v.Severity)
-		if !slice.ContainStr(opts.Operators, v.CompareOp) {
-			return fmt.Errorf("invalid operator: %s", v.CompareOp)
-		}
-		if _, ok := opts.Severity[v.Severity]; !ok {
-			return fmt.Errorf("invalid severity: %s", v.Severity)
-		}
-	}
-
-	if severities.Len() < len(r.AlertLevels) {
-		return fmt.Errorf("有重复的告警级别")
-	}
-
 	// format message
 	if r.Message == "" {
 		r.Message = fmt.Sprintf("%s: [集群:{{ $externalLabels.%s }}] ", r.Name, AlertClusterKey)
@@ -81,34 +59,7 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 		r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.RuleDetail.ShowName, `{{ $value | printf "%.1f" }}`, opts.Units[r.Unit])
 	}
 
-	return r.checkAndModifyReceivers()
-}
-
-func (r *MonitorAlertRule) checkAndModifyReceivers() error {
-	if len(r.Receivers) == 0 {
-		return fmt.Errorf("接收器不能为空")
-	}
-
-	set := map[string]struct{}{}
-	found := false
-	for _, rec := range r.Receivers {
-		if rec.Name == DefaultReceiverName {
-			found = true
-		}
-		if _, ok := set[rec.Name]; ok {
-			return fmt.Errorf("接收器: %s重复", rec.Name)
-		} else {
-			set[rec.Name] = struct{}{}
-		}
-	}
-
-	if !found {
-		r.Receivers = append(r.Receivers, AlertReceiver{
-			Name:     DefaultReceiverName,
-			Interval: r.Receivers[0].Interval,
-		})
-	}
-	return nil
+	return r.BaseAlertRule.checkAndModify(opts)
 }
 
 // 默认认为namespace全部一致

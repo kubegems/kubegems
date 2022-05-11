@@ -368,7 +368,7 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 	return ret, nil
 }
 
-func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace string) ([]prometheus.LoggingAlertRule, error) {
+func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace string, containsRealTime bool) ([]prometheus.LoggingAlertRule, error) {
 	if namespace == allNamespace {
 		namespace = v1.NamespaceAll
 	}
@@ -405,7 +405,7 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	}
 	configNamespaceMap := map[string]*monitoringv1alpha1.AlertmanagerConfig{}
 	for _, v := range amConfigList.Items {
-		if v.Name == prometheus.MonitorAlertmanagerConfigName {
+		if v.Name == prometheus.LoggingAlertmanagerConfigName {
 			configNamespaceMap[v.Namespace] = v
 		}
 	}
@@ -457,6 +457,9 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
 		if promRule, ok := realTimeAlertRules[key]; ok {
 			ret[i].State = promRule.State
+			if containsRealTime {
+				ret[i].RealTimeAlerts = realTimeAlertRules[key].Alerts
+			}
 		} else {
 			ret[i].State = "inactive"
 		}
