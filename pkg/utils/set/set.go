@@ -24,6 +24,11 @@ func NewSet[T Ordered]() *Set[T] {
 	}
 }
 
+func (s *Set[T]) Has(value T) bool {
+	_, ok := s.maps[value]
+	return ok
+}
+
 func (s *Set[T]) Append(vals ...T) *Set[T] {
 	for _, val := range vals {
 		if _, ok := s.maps[val]; ok {

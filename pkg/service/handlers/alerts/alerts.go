@@ -279,7 +279,7 @@ func (h *AlertsHandler) DeleteAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	req := prometheus.MonitorAlertRule{
-		BaseAlertRule: prometheus.BaseAlertRule{
+		BaseAlertRule: &prometheus.BaseAlertRule{
 			Namespace: namespace,
 			Name:      name,
 		},

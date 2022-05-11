@@ -32,6 +32,17 @@ type LoggingAlertRule struct {
 	Origin         string          `json:"origin,omitempty"`         // 原始的prometheusrule
 }
 
+func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
+	_, _, _, hasOp := SplitLogql(r.Expr)
+	if hasOp {
+		return fmt.Errorf("logql不能包含比较运算符(<|<=|==|!=|>|>=)")
+	}
+	if r.Message == "" {
+		r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, `{{ $value | printf "%.1f" }}`)
+	}
+	return r.BaseAlertRule.checkAndModify(opts)
+}
+
 var logqlReg = regexp.MustCompile("(.*)(<|<=|==|!=|>|>=)(.*)")
 
 func SplitLogql(logql string) (query, op, value string, hasOp bool) {

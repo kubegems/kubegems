@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"kubegems.io/pkg/utils/set"
 	"kubegems.io/pkg/utils/slice"
 )
 
@@ -57,12 +58,58 @@ type BaseAlertRule struct {
 	For     string `json:"for"`     // 持续时间, eg. 10s, 1m, 1h
 	Message string `json:"message"` // 告警消息，若为空后端自动填充
 
-	InhibitLabels []string        // 如果有多个告警级别，需要配置告警抑制的labels
-	AlertLevels   []AlertLevel    `json:"alertLevels"` // 告警级别
-	Receivers     []AlertReceiver `json:"receivers"`   // 接收器
+	InhibitLabels []string        `json:"inhibitLabels"` // 如果有多个告警级别，需要配置告警抑制的labels
+	AlertLevels   []AlertLevel    `json:"alertLevels"`   // 告警级别
+	Receivers     []AlertReceiver `json:"receivers"`     // 接收器
 
 	IsOpen bool   `json:"isOpen"` // 是否启用
 	State  string `json:"state"`  // 状态
+}
+
+func (r *BaseAlertRule) checkAndModify(opts *MonitorOptions) error {
+	// check receivers
+
+	if len(r.Receivers) == 0 {
+		return fmt.Errorf("接收器不能为空")
+	}
+	receverSet := set.NewSet[string]()
+	for _, rec := range r.Receivers {
+		if receverSet.Has(rec.Name) {
+			return fmt.Errorf("接收器: %s重复", rec.Name)
+		} else {
+			receverSet.Append(rec.Name)
+		}
+	}
+	if !receverSet.Has(DefaultReceiverName) {
+		r.Receivers = append(r.Receivers, AlertReceiver{
+			Name:     DefaultReceiverName,
+			Interval: r.Receivers[0].Interval,
+		})
+	}
+
+	// check alert levels
+	if len(r.AlertLevels) == 0 {
+		return fmt.Errorf("告警级别不能为空")
+	}
+	severitySet := set.NewSet[string]()
+	for _, v := range r.AlertLevels {
+		if severitySet.Has(v.Severity) {
+			return fmt.Errorf("有重复的告警级别")
+		} else {
+			if !slice.ContainStr(opts.Operators, v.CompareOp) {
+				return fmt.Errorf("invalid operator: %s", v.CompareOp)
+			}
+			if _, ok := opts.Severity[v.Severity]; !ok {
+				return fmt.Errorf("invalid severity: %s", v.Severity)
+			}
+			severitySet.Append(v.Severity)
+		}
+	}
+
+	if len(r.Receivers) > 0 && len(r.InhibitLabels) == 0 {
+		return fmt.Errorf("有多个告警级别时，告警抑制标签不能为空!")
+	}
+	return nil
 }
 
 type AlertRule interface {
@@ -177,7 +224,7 @@ func (base *BaseAlertResource) GetInhibitRuleMap() map[string]v1alpha1.InhibitRu
 	for _, v := range base.AMConfig.Spec.InhibitRules {
 		for _, m := range v.SourceMatch {
 			if m.Name == AlertNameLabel {
-				ret[m.Name] = v
+				ret[m.Value] = v
 			}
 		}
 	}
@@ -220,11 +267,16 @@ func (base *BaseAlertResource) UpdateInhibitRules(alertrules AlertRuleList[Alert
 		// 更新AlertmanagerConfig inhibitRules
 		// 先用map为同一label的去重
 		if len(alertrule.GetAlertLevels()) > 1 {
-			if len(alertrule.GetInhibitLabels()) == 0 {
-				return fmt.Errorf("有多个告警级别时，告警抑制标签不能为空!")
-			}
 			inhibitRuleMap[slice.SliceUniqueKey(alertrule.GetInhibitLabels())] = v1alpha1.InhibitRule{
 				SourceMatch: []v1alpha1.Matcher{
+					{
+						Name:  AlertNamespaceLabel,
+						Value: alertrule.GetNamespace(),
+					},
+					{
+						Name:  AlertNameLabel,
+						Value: alertrule.GetName(),
+					},
 					{
 						Name:  SeverityLabel,
 						Value: SeverityCritical,
@@ -232,6 +284,14 @@ func (base *BaseAlertResource) UpdateInhibitRules(alertrules AlertRuleList[Alert
 					},
 				},
 				TargetMatch: []v1alpha1.Matcher{
+					{
+						Name:  AlertNamespaceLabel,
+						Value: alertrule.GetNamespace(),
+					},
+					{
+						Name:  AlertNameLabel,
+						Value: alertrule.GetName(),
+					},
 					{
 						Name:  SeverityLabel,
 						Value: SeverityError,
