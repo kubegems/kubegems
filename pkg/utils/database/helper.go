@@ -92,9 +92,11 @@ type AlertPosition struct {
 
 	EnvironmentID   uint
 	EnvironmentName string
+
+	From string // 告警来自哪里，monitor/logging
 }
 
-func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope string) (AlertPosition, error) {
+func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope, resource string) (AlertPosition, error) {
 	ret := AlertPosition{}
 	if scope == "" || scope == prometheus.ScopeNormal {
 		sql := `select environments.id as environment_id, environments.environment_name, environments.cluster_id, projects.id as project_id, projects.project_name, tenants.id as tenant_id, tenants.tenant_name
@@ -127,6 +129,12 @@ func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope string
 	ret.ClusterName = cluster
 	ret.Namespace = namespace
 	ret.AlertName = name
+
+	if resource == "" {
+		ret.From = "logging"
+	} else {
+		ret.From = "monitor"
+	}
 	return ret, nil
 }
 
