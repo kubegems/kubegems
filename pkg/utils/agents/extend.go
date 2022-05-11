@@ -291,29 +291,41 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 	if namespace == allNamespace {
 		namespace = v1.NamespaceAll
 	}
+
 	promeRuleList := monitoringv1.PrometheusRuleList{}
-	ret := []prometheus.MonitorAlertRule{}
-	if err := c.List(ctx, &promeRuleList, client.InNamespace(namespace), client.MatchingLabels(prometheus.PrometheusRuleSelector)); err != nil {
+	amConfigList := monitoringv1alpha1.AlertmanagerConfigList{}
+	var allSilences []alertmanagertypes.Silence
+	var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
+
+	eg := errgroup.Group{}
+	eg.Go(func() error {
+		return c.List(ctx, &promeRuleList, client.InNamespace(namespace), client.MatchingLabels(prometheus.PrometheusRuleSelector))
+	})
+	eg.Go(func() error {
+		return c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(prometheus.AlertmanagerConfigSelector))
+	})
+	eg.Go(func() error {
+		var err error
+		allSilences, err = c.ListSilences(ctx, nil, prometheus.SilenceCommentForAlertrulePrefix)
+		return err
+	})
+	eg.Go(func() error {
+		var err error
+		realTimeAlertRules, err = c.GetPromeAlertRules(ctx, "")
+		return err
+	})
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
 
 	// amconfig 按照namespace分组
-	amConfigList := monitoringv1alpha1.AlertmanagerConfigList{}
-	if err := c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
-		return nil, err
-	}
 	configNamespaceMap := map[string]*monitoringv1alpha1.AlertmanagerConfig{}
 	for _, v := range amConfigList.Items {
 		if v.Name == prometheus.MonitorAlertmanagerConfigName {
 			configNamespaceMap[v.Namespace] = v
 		}
 	}
-
 	// silence 按照namespace分组
-	allSilences, err := c.ListSilences(ctx, nil, prometheus.SilenceCommentForAlertrulePrefix)
-	if err != nil {
-		return nil, err
-	}
 	silenceNamespaceMap := map[string][]alertmanagertypes.Silence{}
 	for _, silence := range allSilences {
 		for _, m := range silence.Matchers {
@@ -323,12 +335,7 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 		}
 	}
 
-	// realtime alert rules 按照namespace+name 分组
-	realTimeAlertRules, err := c.GetPromeAlertRules(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-
+	ret := []prometheus.MonitorAlertRule{}
 	for _, rule := range promeRuleList.Items {
 		if rule.Name == prometheus.PrometheusRuleName {
 			amconfig, ok := configNamespaceMap[rule.Namespace]
@@ -353,6 +360,7 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 		}
 	}
 
+	// realtime alert rules 按照namespace+name 分组
 	for i := range ret {
 		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
 		if promRule, ok := realTimeAlertRules[key]; ok {
@@ -378,7 +386,29 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 			Name:      prometheus.LoggingAlertRuleCMName,
 		},
 	}
-	if err := c.Get(ctx, client.ObjectKeyFromObject(&cm), &cm); err != nil {
+	amConfigList := monitoringv1alpha1.AlertmanagerConfigList{}
+	configNamespaceMap := map[string]*monitoringv1alpha1.AlertmanagerConfig{}
+	var allSilences []alertmanagertypes.Silence
+	var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
+
+	eg := errgroup.Group{}
+	eg.Go(func() error {
+		return c.Get(ctx, client.ObjectKeyFromObject(&cm), &cm)
+	})
+	eg.Go(func() error {
+		return c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(prometheus.AlertmanagerConfigSelector))
+	})
+	eg.Go(func() error {
+		var err error
+		allSilences, err = c.ListSilences(ctx, nil, prometheus.SilenceCommentForAlertrulePrefix)
+		return err
+	})
+	eg.Go(func() error {
+		var err error
+		realTimeAlertRules, err = c.GetLokiAlertRules(ctx)
+		return err
+	})
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
 
@@ -399,11 +429,6 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	}
 
 	// amconfig 按照namespace分组
-	amConfigList := monitoringv1alpha1.AlertmanagerConfigList{}
-	if err := c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
-		return nil, err
-	}
-	configNamespaceMap := map[string]*monitoringv1alpha1.AlertmanagerConfig{}
 	for _, v := range amConfigList.Items {
 		if v.Name == prometheus.LoggingAlertmanagerConfigName {
 			configNamespaceMap[v.Namespace] = v
@@ -411,10 +436,6 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	}
 
 	// silence 按照namespace分组
-	allSilences, err := c.ListSilences(ctx, nil, prometheus.SilenceCommentForAlertrulePrefix)
-	if err != nil {
-		return nil, err
-	}
 	silenceNamespaceMap := map[string][]alertmanagertypes.Silence{}
 	for _, silence := range allSilences {
 		for _, m := range silence.Matchers {
@@ -425,11 +446,6 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	}
 
 	// realtime alert rules 按照namespace+name 分组
-	realTimeAlertRules, err := c.GetLokiAlertRules(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	ret := []prometheus.LoggingAlertRule{}
 	for thisNamesapce, rulegroups := range groupNamespaceMap {
 		amconfig, ok := configNamespaceMap[thisNamesapce]
