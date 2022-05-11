@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -362,42 +361,22 @@ func (h *REST) Patch(c *gin.Context) {
 		NotOK(c, err)
 		return
 	}
+	defer c.Request.Body.Close()
 
 	var patch client.Patch
-
+	var patchoptions []client.PatchOption
 	switch patchtype := types.PatchType(c.Request.Header.Get("Content-Type")); patchtype {
-	// 依旧支持使用原生的patch类型
 	case types.MergePatchType, types.ApplyPatchType, types.JSONPatchType, types.StrategicMergePatchType:
 		patchdata, _ := io.ReadAll(c.Request.Body)
-		defer c.Request.Body.Close()
-
 		patch = client.RawPatch(patchtype, patchdata)
 	default:
-		// TODO: move to patch type : types.JSONPatchType
-		// 默认是获取整个对象进行patch
-		exist, ok := obj.DeepCopyObject().(client.Object)
-		if !ok {
-			NotOK(c, fmt.Errorf("%T is not a client.Object", obj))
-			return
-		}
-		// read obj
-		if err := json.NewDecoder(c.Request.Body).Decode(obj); err != nil {
-			NotOK(c, err)
-			return
-		}
-		// get exists
-		if err = h.client.Get(c.Request.Context(), client.ObjectKeyFromObject(obj), exist); err != nil {
-			NotOK(c, err)
-			return
-		}
-		// 所有类型全部都使用 json merge，要求client端传完整的对象数据
-		// 因不使用 strategic patch 不需要具体类型，可以使用 unstructured
-		patch = &kube.JsonPatchType{From: exist}
+		_ = json.NewDecoder(c.Request.Body).Decode(obj)
+		obj.SetManagedFields(nil)
+		patch = client.Apply
+		patchoptions = append(patchoptions, client.FieldOwner("kubegems-agent"), client.ForceOwnership)
 	}
-
-	if err := h.client.Patch(c.Request.Context(), obj, patch); err != nil {
+	if err := h.client.Patch(c.Request.Context(), obj, patch, patchoptions...); err != nil {
 		NotOK(c, err)
-		return
 	} else {
 		OK(c, obj)
 	}
