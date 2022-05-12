@@ -1,55 +1,5 @@
 basePath: /
 definitions:
-  alerthandler.AlertCountStatus:
-    properties:
-      isIncrease:
-        description: 今天相比昨天，是否在增加
-        type: boolean
-      percent:
-        description: 增加/减少的百分数，-1 表示无穷大，0 表示不增不减
-        type: integer
-      todayCount:
-        type: integer
-      yesterdayCount:
-        type: integer
-    type: object
-  alerthandler.AlertMessageGroup:
-    properties:
-      count:
-        description: 计数
-        type: integer
-      createdAt:
-        description: 上次告警时间
-        type: string
-      endsAt:
-        description: 告警结束时间
-        type: string
-      fingerprint:
-        description: group by字段
-        type: string
-      labels:
-        items:
-          type: integer
-        type: array
-      message:
-        description: 附加字段
-        type: string
-      silenceCreator:
-        type: string
-      startsAt:
-        description: 告警开始时间
-        type: string
-      status:
-        description: firing or resolved
-        type: string
-    type: object
-  alerthandler.TableRet:
-    properties:
-      count:
-        type: integer
-      groupValue:
-        type: string
-    type: object
   apis.ComponentStatus:
     properties:
       count:
@@ -3210,6 +3160,41 @@ definitions:
         description: 虚拟空间
         type: integer
     type: object
+  kubegems.io_pkg_service_models.Registry:
+    properties:
+      creator:
+        $ref: '#/definitions/models.User'
+        description: 创建者
+      creatorID:
+        type: integer
+      enableExtends:
+        description: 是否启用扩展功能，支持harbor等高级仓库
+        type: boolean
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      password:
+        description: 密码
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+      projectID:
+        description: 项目ID
+        type: integer
+      registryAddress:
+        description: 仓库地址
+        type: string
+      registryName:
+        description: 仓库名称
+        type: string
+      updateTime:
+        description: 更新时间
+        type: string
+      username:
+        description: 用户名
+        type: string
+    type: object
   kubegems.io_pkg_service_models.Tenant:
     properties:
       allocatedResourcequota:
@@ -3249,7 +3234,6 @@ definitions:
       clusterID:
         type: integer
       content:
-        description: 配置内容
         items:
           type: integer
         type: array
@@ -3368,6 +3352,31 @@ definitions:
         $ref: '#/definitions/kubegems.io_pkg_v2_models.VirtualSpace'
       virtualSpaceID:
         type: integer
+    type: object
+  kubegems.io_pkg_v2_models.Registry:
+    properties:
+      address:
+        type: string
+      creator:
+        $ref: '#/definitions/models.User'
+      creatorID:
+        type: integer
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+      projectID:
+        type: integer
+      updateTime:
+        type: string
+      username:
+        type: string
     type: object
   kubegems.io_pkg_v2_models.Tenant:
     properties:
@@ -4461,28 +4470,6 @@ definitions:
         description: 带单位
         type: string
     type: object
-  models.CVEAllowlist:
-    properties:
-      creationTime:
-        type: string
-      expires_at:
-        type: integer
-      id:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/models.CVEAllowlistItem'
-        type: array
-      project_id:
-        type: integer
-      updateTime:
-        type: string
-    type: object
-  models.CVEAllowlistItem:
-    properties:
-      cve_id:
-        type: string
-    type: object
   models.ChartRepo:
     properties:
       chartRepoName:
@@ -4775,22 +4762,6 @@ definitions:
         description: 单位
         type: string
     type: object
-  models.OIDCUser:
-    properties:
-      creation_time:
-        type: string
-      id:
-        type: integer
-      secret:
-        description: secret in plain text
-        type: string
-      subiss:
-        type: string
-      update_time:
-        type: string
-      user_id:
-        type: integer
-    type: object
   models.OnlineConfig:
     properties:
       content:
@@ -4810,38 +4781,40 @@ definitions:
     type: object
   models.Project:
     properties:
-      chart_count:
-        type: integer
-      creation_time:
+      applications:
+        items:
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Application'
+        type: array
+      createdAt:
         type: string
-      current_user_role_id:
+      environments:
+        items:
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Environment'
+        type: array
+      id:
         type: integer
-      current_user_role_ids:
+      name:
+        type: string
+      projectAlias:
+        type: string
+      registries:
+        items:
+          $ref: '#/definitions/kubegems.io_pkg_v2_models.Registry'
+        type: array
+      remark:
+        type: string
+      resourceQuota:
         items:
           type: integer
         type: array
-      cve_allowlist:
-        $ref: '#/definitions/models.CVEAllowlist'
-      deleted:
-        type: boolean
-      metadata:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      owner_id:
+      tenant:
+        $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
+      tenantID:
         type: integer
-      owner_name:
-        type: string
-      project_id:
-        type: integer
-      registry_id:
-        type: integer
-      repo_count:
-        type: integer
-      update_time:
-        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
     type: object
   models.ProjectUserRels:
     properties:
@@ -4865,41 +4838,6 @@ definitions:
     - role
     - userID
     type: object
-  models.Registry:
-    properties:
-      creator:
-        $ref: '#/definitions/models.User'
-        description: 创建者
-      creatorID:
-        type: integer
-      enableExtends:
-        description: 是否启用扩展功能，支持harbor等高级仓库
-        type: boolean
-      id:
-        type: integer
-      isDefault:
-        type: boolean
-      password:
-        description: 密码
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-      projectID:
-        description: 项目ID
-        type: integer
-      registryAddress:
-        description: 仓库地址
-        type: string
-      registryName:
-        description: 仓库名称
-        type: string
-      updateTime:
-        description: 更新时间
-        type: string
-      username:
-        description: 用户名
-        type: string
-    type: object
   models.SystemRole:
     properties:
       id:
@@ -4920,7 +4858,6 @@ definitions:
   models.TenantResourceQuotaApply:
     properties:
       content:
-        description: 配置内容
         items:
           type: integer
         type: array
@@ -4941,7 +4878,7 @@ definitions:
         description: 租户级角色(管理员admin, 普通用户ordinary)
         type: string
       tenant:
-        $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+        $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
       tenantID:
         description: 租户ID
         type: integer
@@ -4955,43 +4892,44 @@ definitions:
     type: object
   models.User:
     properties:
-      admin_role_in_auth:
-        description: AdminRoleInAuth to store the admin privilege granted by external
-          authentication provider
-        type: boolean
-      comment:
+      createdAt:
+        description: 加入时间
         type: string
-      creation_time:
-        type: string
-      deleted:
-        type: boolean
       email:
+        description: 邮箱
         type: string
-      oidc_user_meta:
-        $ref: '#/definitions/models.OIDCUser'
-      password:
-        type: string
-      password_version:
-        type: string
-      realname:
-        type: string
-      reset_uuid:
-        type: string
-      role_id:
-        description: |-
-          if this field is named as "RoleID", beego orm can not map role_id
-          to it.
+      id:
         type: integer
-      role_name:
-        type: string
-      sysadmin_flag:
+      isActive:
+        description: 是否激活
         type: boolean
-      update_time:
+      lastLoginAt:
+        description: 最后登录时间
         type: string
-      user_id:
+      phone:
+        description: 电话
+        type: string
+      role:
+        description: 角色，不同关联对象下表示的角色不同, 用来做join查询的时候处理角色字段的(请勿删除)
+        type: string
+      source:
+        type: string
+      sourceVendor:
+        type: string
+      systemRole:
+        $ref: '#/definitions/models.SystemRole'
+      systemRoleID:
         type: integer
+      tenants:
+        items:
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
+        type: array
       username:
+        description: 用户名
         type: string
+    required:
+    - email
+    - username
     type: object
   models.UserCreate:
     properties:
@@ -5276,6 +5214,50 @@ definitions:
     - name
     - namespace
     type: object
+  observability.AlertCountStatus:
+    properties:
+      isIncrease:
+        description: 今天相比昨天，是否在增加
+        type: boolean
+      percent:
+        description: 增加/减少的百分数，-1 表示无穷大，0 表示不增不减
+        type: integer
+      todayCount:
+        type: integer
+      yesterdayCount:
+        type: integer
+    type: object
+  observability.AlertMessageGroup:
+    properties:
+      count:
+        description: 计数
+        type: integer
+      createdAt:
+        description: 上次告警时间
+        type: string
+      endsAt:
+        description: 告警结束时间
+        type: string
+      fingerprint:
+        description: group by字段
+        type: string
+      labels:
+        description: 配置内容
+        items:
+          type: integer
+        type: array
+      message:
+        description: 附加字段
+        type: string
+      silenceCreator:
+        type: string
+      startsAt:
+        description: 告警开始时间
+        type: string
+      status:
+        description: firing or resolved
+        type: string
+    type: object
   observability.AppInfo:
     properties:
       appLabel:
@@ -5321,6 +5303,13 @@ definitions:
         type: string
       service:
         description: 服务名
+        type: string
+    type: object
+  observability.TableRet:
+    properties:
+      count:
+        type: integer
+      groupValue:
         type: string
     type: object
   pagination.PageData:
@@ -18076,794 +18065,6 @@ paths:
       summary: 移除告警黑名单
       tags:
       - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert:
-    get:
-      consumes:
-      - application/json
-      description: 获取AlertRule列表
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 规则
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/prometheus.MonitorAlertRule'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 获取AlertRule列表
-      tags:
-      - Alert
-    post:
-      consumes:
-      - application/json
-      description: 创建AlertRule
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 规则
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 创建AlertRule
-      tags:
-      - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}:
-    delete:
-      consumes:
-      - application/json
-      description: 修改AlertRule
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 规则
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 修改AlertRule
-      tags:
-      - Alert
-    get:
-      consumes:
-      - application/json
-      description: AlertRule详情
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 规则
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: AlertRule详情
-      tags:
-      - Alert
-    put:
-      consumes:
-      - application/json
-      description: 修改AlertRule
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 规则
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 修改AlertRule
-      tags:
-      - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/actions/disable:
-    post:
-      consumes:
-      - application/json
-      description: 禁用AlertRule
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 禁用AlertRule
-      tags:
-      - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/actions/enable:
-    post:
-      consumes:
-      - application/json
-      description: 启用AlertRule
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 启用AlertRule
-      tags:
-      - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/history:
-    get:
-      consumes:
-      - application/json
-      description: 告警历史
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: 告警状态(resolved, firing),  为空则是所有状态
-        in: query
-        name: status
-        type: string
-      - description: CreatedAt_gte
-        in: query
-        name: CreatedAt_gte
-        type: string
-      - description: CreatedAt_lte
-        in: query
-        name: CreatedAt_lte
-        type: string
-      - description: page
-        in: query
-        name: page
-        type: integer
-      - description: size
-        in: query
-        name: size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 规则
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/alerthandler.AlertMessageGroup'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 告警历史
-      tags:
-      - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/alert/{name}/repeats:
-    get:
-      consumes:
-      - application/json
-      description: 重复的告警记录
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: 告警指纹
-        in: query
-        name: fingerprint
-        required: true
-        type: string
-      - description: 告警开始时间
-        in: query
-        name: starts_at
-        required: true
-        type: string
-      - description: page
-        in: query
-        name: page
-        type: integer
-      - description: size
-        in: query
-        name: size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 规则
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/models.AlertMessage'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 重复的告警记录
-      tags:
-      - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver:
-    get:
-      consumes:
-      - application/json
-      description: 在namespace下获取receiver列表
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: search
-        in: query
-        name: search
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/prometheus.ReceiverConfig'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 在namespace下获取receiver列表
-      tags:
-      - Alert
-    post:
-      consumes:
-      - application/json
-      description: 在namespace下创建receiver
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.ReceiverConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 在namespace下创建receiver
-      tags:
-      - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name}:
-    delete:
-      consumes:
-      - application/json
-      description: 在namespace下创建receiver
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 在namespace下删除receiver
-      tags:
-      - Alert
-    put:
-      consumes:
-      - application/json
-      description: 在namespace下修改receiver
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.ReceiverConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 在namespace下修改receiver
-      tags:
-      - Alert
-  /v1/alerts/cluster/{cluster}/namespaces/{namespace}/receiver/{name}/actions/test:
-    post:
-      consumes:
-      - application/json
-      description: 发送测试邮件
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.EmailConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 发送测试邮件
-      tags:
-      - Alert
-  /v1/alerts/graph:
-    get:
-      consumes:
-      - application/json
-      description: 告警趋势图
-      parameters:
-      - description: 租户名
-        in: query
-        name: tenant
-        required: true
-        type: string
-      - description: 开始时间，格式 2006-01-02T15:04:05Z07:00
-        in: query
-        name: start
-        type: string
-      - description: 结束时间，格式 2006-01-02T15:04:05Z07:00
-        in: query
-        name: end
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/model.SampleStream'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 告警趋势图
-      tags:
-      - Alert
-  /v1/alerts/group:
-    get:
-      consumes:
-      - application/json
-      description: 告警分组统计
-      parameters:
-      - description: 租户名
-        in: query
-        name: tenant
-        required: true
-        type: string
-      - description: 开始时间，格式 2006-01-02T15:04:05Z07:00
-        in: query
-        name: start
-        type: string
-      - description: 结束时间，格式 2006-01-02T15:04:05Z07:00
-        in: query
-        name: end
-        type: string
-      - description: 按什么分组(project_name, alert_type)
-        in: query
-        name: groupby
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/alerthandler.TableRet'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 告警分组统计
-      tags:
-      - Alert
-  /v1/alerts/tenant/{tenant_id}/search:
-    get:
-      consumes:
-      - application/json
-      description: 搜索告警
-      parameters:
-      - description: 租户ID，所有租户为_all
-        in: path
-        name: tenant_id
-        required: true
-        type: string
-      - description: 项目名，默认所有
-        in: query
-        name: project
-        type: string
-      - description: 环境名，默认所有
-        in: query
-        name: environment
-        type: string
-      - description: 集群名，默认所有
-        in: query
-        name: cluster
-        type: string
-      - description: 命名空间，默认所有
-        in: query
-        name: namespace
-        type: string
-      - description: 告警名，默认所有
-        in: query
-        name: alertname
-        type: string
-      - description: 告警资源，默认所有
-        in: query
-        name: resource
-        type: string
-      - description: 告警指标，默认所有
-        in: query
-        name: rule
-        type: string
-      - description: 标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1
-        in: query
-        name: labelpairs
-        type: string
-      - description: 开始时间
-        in: query
-        name: start
-        type: string
-      - description: 结束时间
-        in: query
-        name: end
-        type: string
-      - description: 状态(firing, resolved)
-        in: query
-        name: status
-        type: string
-      - description: page
-        in: query
-        name: page
-        type: integer
-      - description: size
-        in: query
-        name: size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  allOf:
-                  - $ref: '#/definitions/pagination.PageData'
-                  - properties:
-                      List:
-                        items:
-                          $ref: '#/definitions/alerthandler.AlertMessageGroup'
-                        type: array
-                    type: object
-              type: object
-      security:
-      - JWT: []
-      summary: 搜索告警
-      tags:
-      - Alert
-  /v1/alerts/today:
-    get:
-      consumes:
-      - application/json
-      description: 今日告警数量统计
-      parameters:
-      - description: 租户名
-        in: query
-        name: tenant
-        required: true
-        type: string
-      - description: 状态(firing, resolved)
-        in: query
-        name: status
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  $ref: '#/definitions/alerthandler.AlertCountStatus'
-              type: object
-      security:
-      - JWT: []
-      summary: 今日告警数量统计
-      tags:
-      - Alert
   /v1/approve:
     get:
       consumes:
@@ -21809,6 +21010,200 @@ paths:
       summary: OAUTH登录callback
       tags:
       - AAAAA
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/disable:
+    post:
+      consumes:
+      - application/json
+      description: 禁用告警规则
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 禁用告警规则
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/enable:
+    post:
+      consumes:
+      - application/json
+      description: 启用告警规则
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 启用告警规则
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/history:
+    get:
+      consumes:
+      - application/json
+      description: 告警历史
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: 告警状态(resolved, firing),  为空则是所有状态
+        in: query
+        name: status
+        type: string
+      - description: CreatedAt_gte
+        in: query
+        name: CreatedAt_gte
+        type: string
+      - description: CreatedAt_lte
+        in: query
+        name: CreatedAt_lte
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 规则
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/observability.AlertMessageGroup'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 告警历史
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/repeats:
+    get:
+      consumes:
+      - application/json
+      description: 重复的告警记录
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: 告警指纹
+        in: query
+        name: fingerprint
+        required: true
+        type: string
+      - description: 告警开始时间
+        in: query
+        name: starts_at
+        required: true
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 规则
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/models.AlertMessage'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 重复的告警记录
+      tags:
+      - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging:
     put:
       consumes:
@@ -22033,82 +21428,6 @@ paths:
       summary: 更新日志告警规则
       tags:
       - Observability
-  /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name}/actions/disable:
-    post:
-      consumes:
-      - application/json
-      description: 禁用日志告警规则
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 禁用日志告警规则
-      tags:
-      - Observability
-  /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name}/actions/enable:
-    post:
-      consumes:
-      - application/json
-      description: 启用日志告警规则
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 启用日志告警规则
-      tags:
-      - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps:
     get:
       consumes:
@@ -22180,165 +21499,6 @@ paths:
       security:
       - JWT: []
       summary: 应用级日志采集器
-      tags:
-      - Observability
-  /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/receivers:
-    get:
-      consumes:
-      - application/json
-      description: 日志告警接收器列表
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: search
-        in: query
-        name: search
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/prometheus.ReceiverConfig'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 日志告警接收器列表
-      tags:
-      - Observability
-    post:
-      consumes:
-      - application/json
-      description: 创建日志告警接收器
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.ReceiverConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 创建日志告警接收器
-      tags:
-      - Observability
-  /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/receivers/{name}:
-    delete:
-      consumes:
-      - application/json
-      description: 删除日志告警接收器
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 删除日志告警接收器
-      tags:
-      - Observability
-    put:
-      consumes:
-      - application/json
-      description: 更新日志告警接收器
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.ReceiverConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 更新日志告警接收器
       tags:
       - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor:
@@ -22452,6 +21612,615 @@ paths:
       security:
       - JWT: []
       summary: 添加/更新监控采集器
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts:
+    get:
+      consumes:
+      - application/json
+      description: 监控告警规则列表
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/prometheus.MonitorAlertRule'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 监控告警规则列表
+      tags:
+      - Observability
+    post:
+      consumes:
+      - application/json
+      description: 创建监控告警规则
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/prometheus.MonitorAlertRule'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 创建监控告警规则
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: 修改监控告警规则
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 修改监控告警规则
+      tags:
+      - Observability
+    get:
+      consumes:
+      - application/json
+      description: 监控告警规则详情
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/prometheus.MonitorAlertRule'
+              type: object
+      security:
+      - JWT: []
+      summary: 监控告警规则详情
+      tags:
+      - Observability
+    put:
+      consumes:
+      - application/json
+      description: 修改监控告警规则
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/prometheus.MonitorAlertRule'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 修改监控告警规则
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers:
+    get:
+      consumes:
+      - application/json
+      description: （日志/监控）告警接收器列表
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 接收器类型(monitior/logging)
+        in: query
+        name: scope
+        required: true
+        type: string
+      - description: search
+        in: query
+        name: search
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/prometheus.ReceiverConfig'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: （日志/监控）告警接收器列表
+      tags:
+      - Observability
+    post:
+      consumes:
+      - application/json
+      description: 创建（日志/监控）告警接收器
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 接收器类型(monitior/logging)
+        in: query
+        name: scope
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/prometheus.ReceiverConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 创建（日志/监控）告警接收器
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除（日志/监控）告警接收器
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 接收器类型(monitior/logging)
+        in: query
+        name: scope
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 删除（日志/监控）告警接收器
+      tags:
+      - Observability
+    put:
+      consumes:
+      - application/json
+      description: 更新（日志/监控）告警接收器
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 接收器类型(monitior/logging)
+        in: query
+        name: scope
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/prometheus.ReceiverConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 更新（日志/监控）告警接收器
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/actions/test:
+    post:
+      consumes:
+      - application/json
+      description: 发送测试邮件
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/prometheus.EmailConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 发送测试邮件
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/alerts/graph:
+    get:
+      consumes:
+      - application/json
+      description: 告警趋势图
+      parameters:
+      - description: 租户ID
+        in: query
+        name: tenant_id
+        required: true
+        type: string
+      - description: 开始时间，格式 2006-01-02T15:04:05Z07:00
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，格式 2006-01-02T15:04:05Z07:00
+        in: query
+        name: end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/model.SampleStream'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 告警趋势图
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/alerts/group:
+    get:
+      consumes:
+      - application/json
+      description: 告警分组统计
+      parameters:
+      - description: 租户ID
+        in: query
+        name: tenant_id
+        required: true
+        type: string
+      - description: 开始时间，格式 2006-01-02T15:04:05Z07:00
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，格式 2006-01-02T15:04:05Z07:00
+        in: query
+        name: end
+        type: string
+      - description: 按什么分组(project_name, alert_type)
+        in: query
+        name: groupby
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/observability.TableRet'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 告警分组统计
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/alerts/search:
+    get:
+      consumes:
+      - application/json
+      description: 搜索告警
+      parameters:
+      - description: 租户ID，所有租户为_all
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: 项目名，默认所有
+        in: query
+        name: project
+        type: string
+      - description: 环境名，默认所有
+        in: query
+        name: environment
+        type: string
+      - description: 集群名，默认所有
+        in: query
+        name: cluster
+        type: string
+      - description: 命名空间，默认所有
+        in: query
+        name: namespace
+        type: string
+      - description: 告警名，默认所有
+        in: query
+        name: alertname
+        type: string
+      - description: 告警资源，默认所有
+        in: query
+        name: resource
+        type: string
+      - description: 告警指标，默认所有
+        in: query
+        name: rule
+        type: string
+      - description: 标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1
+        in: query
+        name: labelpairs
+        type: string
+      - description: 开始时间
+        in: query
+        name: start
+        type: string
+      - description: 结束时间
+        in: query
+        name: end
+        type: string
+      - description: 状态(firing, resolved)
+        in: query
+        name: status
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  allOf:
+                  - $ref: '#/definitions/pagination.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/observability.AlertMessageGroup'
+                        type: array
+                    type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 搜索告警
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/alerts/today:
+    get:
+      consumes:
+      - application/json
+      description: 今日告警数量统计
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: 状态(firing, resolved)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/observability.AlertCountStatus'
+              type: object
+      security:
+      - JWT: []
+      summary: 今日告警数量统计
       tags:
       - Observability
   /v1/project:
@@ -23004,7 +22773,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Registry'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
                         type: array
                     type: object
               type: object
@@ -23028,7 +22797,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.Registry'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
       produces:
       - application/json
       responses:
@@ -23039,7 +22808,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -23072,7 +22841,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -23104,7 +22873,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -23141,7 +22910,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -23173,7 +22942,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -25853,7 +25622,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/models.Registry'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
                         type: array
                     type: object
               type: object
@@ -25905,7 +25674,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -25927,7 +25696,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/models.Registry'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
       produces:
       - application/json
       responses:
@@ -25938,7 +25707,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/models.Registry'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Registry'
               type: object
       security:
       - JWT: []
@@ -26635,7 +26404,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
                         type: array
                     type: object
               type: object
@@ -26654,7 +26423,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
       produces:
       - application/json
       responses:
@@ -26665,7 +26434,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
               type: object
       security:
       - JWT: []
@@ -26739,7 +26508,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
               type: object
       security:
       - JWT: []
@@ -26761,7 +26530,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
       produces:
       - application/json
       responses:
@@ -26772,7 +26541,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
               type: object
       security:
       - JWT: []
@@ -26801,7 +26570,7 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                    $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
                   type: array
               type: object
       security:
@@ -26831,7 +26600,7 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                    $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
                   type: array
               type: object
       security:
@@ -30591,7 +30360,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_pkg_v2_models.Tenant'
+                          $ref: '#/definitions/kubegems.io_pkg_service_models.Tenant'
                         type: array
                     type: object
               type: object

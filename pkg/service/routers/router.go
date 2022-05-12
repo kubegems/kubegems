@@ -271,10 +271,6 @@ func (r *Router) Complete() error {
 	}
 	metricsHandler.RegistRouter(rg)
 
-	// 告警
-	alertmgrHandler := &alerthandler.AlertmanagerConfigHandler{AlertsHandler: alertRuleHandler}
-	alertmgrHandler.RegistRouter(rg)
-
 	// 环境
 	environmentHandler := &environmenthandler.EnvironmentHandler{BaseHandler: basehandler}
 	environmentHandler.RegistRouter(rg)

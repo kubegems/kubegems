@@ -1,4 +1,4 @@
-package alerthandler
+package observability
 
 import (
 	"reflect"

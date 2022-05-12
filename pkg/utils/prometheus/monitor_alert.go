@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -29,7 +30,7 @@ type MonitorAlertRule struct {
 	Promql string `json:"promql"` // 仅用于告知前端展示
 	// 相关配置
 	RuleContext `json:"-"`
-	Origin      *monitoringv1.RuleGroup `json:"origin,omitempty"` // 原始的prometheusrule
+	Origin      string `json:"origin,omitempty"` // 原始的prometheusrule
 }
 
 var _ AlertRule = MonitorAlertRule{}
@@ -56,14 +57,14 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 			r.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 		}
 
-		r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.RuleDetail.ShowName, `{{ $value | printf "%.1f" }}`, opts.Units[r.Unit])
+		r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.RuleDetail.ShowName, valueAnnotationExpr, opts.Units[r.Unit])
 	}
 
 	return r.BaseAlertRule.checkAndModify(opts)
 }
 
 // 默认认为namespace全部一致
-func (raw *RawMonitorAlertResource) ToAlerts(containOrigin bool) (AlertRuleList[MonitorAlertRule], error) {
+func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[MonitorAlertRule], error) {
 	receiverMap, err := raw.Base.GetReceiverMap()
 	if err != nil {
 		return nil, err
@@ -87,8 +88,9 @@ func (raw *RawMonitorAlertResource) ToAlerts(containOrigin bool) (AlertRuleList[
 			isOpen = false
 		}
 		alertrule.IsOpen = isOpen
-		if containOrigin {
-			alertrule.Origin = &raw.PrometheusRule.Spec.Groups[i]
+		if hasDetail {
+			bts, _ := yaml.Marshal(raw.PrometheusRule.Spec.Groups[i])
+			alertrule.Origin = string(bts)
 		}
 		ret = append(ret, alertrule)
 	}
@@ -156,8 +158,8 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 				SeverityLabel:       level.Severity,
 			},
 			Annotations: map[string]string{
-				MessageAnnotationsKey: alertRule.Message,
-				ValueAnnotationKey:    `{{ $value | printf "%.1f" }}`,
+				messageAnnotationsKey: alertRule.Message,
+				valueAnnotationKey:    valueAnnotationExpr,
 				exprJsonAnnotationKey: string(bts),
 			},
 		})
@@ -175,7 +177,7 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup, opts 
 			Namespace: namespace,
 			Name:      group.Name,
 			For:       group.Rules[0].For,
-			Message:   group.Rules[0].Annotations[MessageAnnotationsKey],
+			Message:   group.Rules[0].Annotations[messageAnnotationsKey],
 		},
 	}
 	tmpexpr := CompareQueryParams{}

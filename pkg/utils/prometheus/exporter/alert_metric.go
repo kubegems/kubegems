@@ -61,7 +61,7 @@ func (c *AlertAndMetricCollector) Update(ch chan<- prometheus.Metric) error {
 	}
 
 	return c.cs.ExecuteInEachCluster(context.TODO(), func(ctx context.Context, cli agents.Client) error {
-		alertrules, err := cli.Extend().ListMonitorAlertRules(ctx, corev1.NamespaceAll, monitoropts)
+		alertrules, err := cli.Extend().ListMonitorAlertRules(ctx, corev1.NamespaceAll, monitoropts, false)
 		if err != nil {
 			log.Error(err, "list alert rules failed", "cluster", cli.Name())
 			return nil
