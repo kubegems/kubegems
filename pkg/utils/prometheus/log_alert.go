@@ -38,7 +38,7 @@ func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
 		return fmt.Errorf("logql不能包含比较运算符(<|<=|==|!=|>|>=)")
 	}
 	if r.Message == "" {
-		r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, `{{ $value | printf "%.1f" }}`)
+		r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, valueAnnotationExpr)
 	}
 	return r.BaseAlertRule.checkAndModify(opts)
 }
@@ -58,7 +58,7 @@ func SplitLogql(logql string) (query, op, value string, hasOp bool) {
 	return
 }
 
-func (raw *RawLoggingAlertRule) ToAlerts() (AlertRuleList[LoggingAlertRule], error) {
+func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingAlertRule], error) {
 	receiverMap, err := raw.Base.GetReceiverMap()
 	if err != nil {
 		return nil, err
@@ -84,7 +84,9 @@ func (raw *RawLoggingAlertRule) ToAlerts() (AlertRuleList[LoggingAlertRule], err
 		inhitbitRule := inhibitRuleMap[group.Name]
 		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, AlertNamespaceLabel), AlertNameLabel)
 
-		alertrule.Origin = raw.ConfigMap.Data[raw.Base.AMConfig.Namespace]
+		if hasDetail {
+			alertrule.Origin = raw.ConfigMap.Data[raw.Base.AMConfig.Namespace]
+		}
 
 		ret = append(ret, alertrule)
 	}
@@ -92,7 +94,7 @@ func (raw *RawLoggingAlertRule) ToAlerts() (AlertRuleList[LoggingAlertRule], err
 }
 
 func (raw *RawLoggingAlertRule) ModifyLoggingAlertRule(r LoggingAlertRule, act Action) error {
-	alertRules, err := raw.ToAlerts()
+	alertRules, err := raw.ToAlerts(false)
 	if err != nil {
 		return err
 	}
@@ -126,7 +128,7 @@ func rawToLoggingAlertRule(namespace string, group rulefmt.RuleGroup) (LoggingAl
 			Namespace: namespace,
 			Name:      group.Name,
 			For:       group.Rules[0].For.String(),
-			Message:   group.Rules[0].Annotations[MessageAnnotationsKey],
+			Message:   group.Rules[0].Annotations[messageAnnotationsKey],
 		},
 	}
 
@@ -167,8 +169,8 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 				SeverityLabel:       level.Severity,
 			},
 			Annotations: map[string]string{
-				MessageAnnotationsKey: r.Message,
-				ValueAnnotationKey:    `{{ $value | printf "%.1f" }}`,
+				messageAnnotationsKey: r.Message,
+				valueAnnotationKey:    valueAnnotationExpr,
 			},
 		})
 	}

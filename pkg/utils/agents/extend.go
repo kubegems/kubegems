@@ -287,7 +287,7 @@ func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prom
 	return ret, nil
 }
 
-func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace string, opts *prometheus.MonitorOptions) ([]prometheus.MonitorAlertRule, error) {
+func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace string, opts *prometheus.MonitorOptions, hasDetail bool) ([]prometheus.MonitorAlertRule, error) {
 	if namespace == allNamespace {
 		namespace = v1.NamespaceAll
 	}
@@ -352,7 +352,7 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 				MonitorOptions: opts,
 			}
 
-			alerts, err := raw.ToAlerts(false)
+			alerts, err := raw.ToAlerts(hasDetail)
 			if err != nil {
 				return nil, err
 			}
@@ -365,6 +365,11 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
 		if promRule, ok := realTimeAlertRules[key]; ok {
 			ret[i].State = promRule.State
+			if hasDetail {
+				tmp := realTimeAlertRules[key]
+				sort.Sort(&tmp)
+				ret[i].RealTimeAlerts = tmp.Alerts
+			}
 		} else {
 			ret[i].State = "inactive"
 		}
@@ -376,7 +381,7 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 	return ret, nil
 }
 
-func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace string, containsRealTime bool) ([]prometheus.LoggingAlertRule, error) {
+func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace string, hasDetail bool) ([]prometheus.LoggingAlertRule, error) {
 	if namespace == allNamespace {
 		namespace = v1.NamespaceAll
 	}
@@ -462,7 +467,7 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 			RuleGroups: rulegroups,
 		}
 
-		alerts, err := raw.ToAlerts()
+		alerts, err := raw.ToAlerts(hasDetail)
 		if err != nil {
 			return nil, err
 		}
@@ -473,8 +478,10 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
 		if promRule, ok := realTimeAlertRules[key]; ok {
 			ret[i].State = promRule.State
-			if containsRealTime {
-				ret[i].RealTimeAlerts = realTimeAlertRules[key].Alerts
+			if hasDetail {
+				tmp := realTimeAlertRules[key]
+				sort.Sort(&tmp)
+				ret[i].RealTimeAlerts = tmp.Alerts
 			}
 		} else {
 			ret[i].State = "inactive"

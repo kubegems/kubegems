@@ -291,7 +291,7 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 
 	allalerts := []prometheus.MonitorAlertRule{}
 	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
-		alerts, err := cli.Extend().ListMonitorAlertRules(ctx, v1.NamespaceAll, monitoropts)
+		alerts, err := cli.Extend().ListMonitorAlertRules(ctx, v1.NamespaceAll, monitoropts, false)
 		if err != nil {
 			return fmt.Errorf("list alert in cluster %s failed: %v", cli.Name(), err)
 		}

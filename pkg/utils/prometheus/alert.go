@@ -24,8 +24,9 @@ const (
 	SeverityCritical = "critical" // 严重
 
 	exprJsonAnnotationKey = "gems_expr_json"
-	MessageAnnotationsKey = "message"
-	ValueAnnotationKey    = "value"
+	messageAnnotationsKey = "message"
+	valueAnnotationKey    = "value"
+	valueAnnotationExpr   = `{{ $value | printf "%.1f" }}`
 
 	alertRuleKeyFormat = "gems-%s-%s"
 	AlertClusterKey    = "cluster"
@@ -106,7 +107,7 @@ func (r *BaseAlertRule) checkAndModify(opts *MonitorOptions) error {
 		}
 	}
 
-	if len(r.Receivers) > 0 && len(r.InhibitLabels) == 0 {
+	if len(r.AlertLevels) > 1 && len(r.InhibitLabels) == 0 {
 		return fmt.Errorf("有多个告警级别时，告警抑制标签不能为空!")
 	}
 	return nil
