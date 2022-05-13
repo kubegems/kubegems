@@ -2,6 +2,7 @@ package observability
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/service/handlers"
@@ -9,11 +10,13 @@ import (
 	"kubegems.io/pkg/utils/prometheus"
 )
 
-func getAMConfigName(scope string) (ret string) {
+func getAMConfigName(scope string) (ret string, err error) {
 	if scope == "logging" {
 		ret = prometheus.LoggingAlertmanagerConfigName
 	} else if scope == "monitor" {
 		ret = prometheus.MonitorAlertmanagerConfigName
+	} else {
+		err = fmt.Errorf("scope must be one of logging/monitor")
 	}
 	return
 }
@@ -26,7 +29,7 @@ func getAMConfigName(scope string) (ret string) {
 // @Produce      json
 // @Param        cluster    path      string                                                     true  "cluster"
 // @Param        namespace  path      string                                                     true  "namespace"
-// @Param        scope      query     string                                                     true  "接收器类型(monitior/logging)"
+// @Param        scope      query     string                                                     true  "接收器类型(monitor/logging)"
 // @Param        search     query     string                                                     true  "search"
 // @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.ReceiverConfig}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers [get]
@@ -38,8 +41,11 @@ func (h *ObservabilityHandler) ListReceiver(c *gin.Context) {
 
 	ret := []prometheus.ReceiverConfig{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		var err error
-		ret, err = cli.Extend().ListReceivers(ctx, namespace, getAMConfigName(c.Query("scope")), search)
+		scope, err := getAMConfigName(c.Query("scope"))
+		if err != nil {
+			return err
+		}
+		ret, err = cli.Extend().ListReceivers(ctx, namespace, scope, search)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -56,7 +62,7 @@ func (h *ObservabilityHandler) ListReceiver(c *gin.Context) {
 // @Produce      json
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
-// @Param        scope      query     string                                true  "接收器类型(monitior/logging)"
+// @Param        scope      query     string                                true  "接收器类型(monitor/logging)"
 // @Param        form       body      prometheus.ReceiverConfig             true  "body"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers [post]
@@ -75,7 +81,11 @@ func (h *ObservabilityHandler) CreateReceiver(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		return cli.Extend().CreateReceiver(ctx, namespace, getAMConfigName(c.Query("scope")), req)
+		scope, err := getAMConfigName(c.Query("scope"))
+		if err != nil {
+			return err
+		}
+		return cli.Extend().CreateReceiver(ctx, namespace, scope, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -91,7 +101,7 @@ func (h *ObservabilityHandler) CreateReceiver(c *gin.Context) {
 // @Produce      json
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
-// @Param        scope      query     string                                true  "接收器类型(monitior/logging)"
+// @Param        scope      query     string                                true  "接收器类型(monitor/logging)"
 // @Param        name       path      string                                true  "name"
 // @Param        form       body      prometheus.ReceiverConfig             true  "body"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
@@ -111,7 +121,11 @@ func (h *ObservabilityHandler) UpdateReceiver(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		return cli.Extend().UpdateReceiver(ctx, namespace, getAMConfigName(c.Query("scope")), req)
+		scope, err := getAMConfigName(c.Query("scope"))
+		if err != nil {
+			return err
+		}
+		return cli.Extend().UpdateReceiver(ctx, namespace, scope, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -127,7 +141,7 @@ func (h *ObservabilityHandler) UpdateReceiver(c *gin.Context) {
 // @Produce      json
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
-// @Param        scope      query     string                                true  "接收器类型(monitior/logging)"
+// @Param        scope      query     string                                true  "接收器类型(monitor/logging)"
 // @Param        name       path      string                                true  "name"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/{name} [delete]
@@ -142,7 +156,11 @@ func (h *ObservabilityHandler) DeleteReceiver(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		return cli.Extend().DeleteReceiver(ctx, namespace, name, getAMConfigName(c.Query("scope")))
+		scope, err := getAMConfigName(c.Query("scope"))
+		if err != nil {
+			return err
+		}
+		return cli.Extend().DeleteReceiver(ctx, namespace, name, scope)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
