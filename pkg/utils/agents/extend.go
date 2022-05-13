@@ -694,58 +694,35 @@ func (c *ExtendClient) DeleteAlertEmailSecret(ctx context.Context, namespace str
 }
 
 func (c *ExtendClient) ListReceivers(ctx context.Context, namespace, amConfigName, search string) ([]prometheus.ReceiverConfig, error) {
-	ret := []prometheus.ReceiverConfig{}
 	if namespace == allNamespace {
-		configlist := &v1alpha1.AlertmanagerConfigList{}
-		emailsecretlist := &v1.SecretList{}
+		namespace = v1.NamespaceAll
+	}
 
-		if err := c.List(ctx, configlist, client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
-			return nil, err
-		}
-		if err := c.List(ctx, emailsecretlist, client.MatchingLabels(prometheus.EmailSecretLabel)); err != nil {
-			return nil, err
-		}
+	configlist := &v1alpha1.AlertmanagerConfigList{}
+	if err := c.List(ctx, configlist, client.MatchingLabels(prometheus.AlertmanagerConfigSelector), client.InNamespace(namespace)); err != nil {
+		return nil, err
+	}
 
-		for _, config := range configlist.Items {
-			if config.Name != amConfigName {
-				continue
-			}
-			var secret *v1.Secret
-			for _, v := range emailsecretlist.Items {
-				if v.Namespace == namespace && v.Name == prometheus.EmailSecretName {
-					secret = &v
-				}
-			}
-			for _, rec := range config.Spec.Receivers {
-				if rec.Name != prometheus.NullReceiverName {
-					if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
-						ret = append(ret, prometheus.ToGemsReceiver(rec, config.Namespace, secret))
-					}
-				}
-			}
+	emailsecretlist := &v1.SecretList{}
+	if err := c.List(ctx, emailsecretlist, client.MatchingLabels(prometheus.EmailSecretLabel), client.InNamespace(namespace)); err != nil {
+		return nil, err
+	}
+	secretNamespaceMap := map[string]*v1.Secret{}
+	for i, v := range emailsecretlist.Items {
+		if v.Name == prometheus.EmailSecretName {
+			secretNamespaceMap[v.Namespace] = &emailsecretlist.Items[i]
 		}
-	} else {
-		config, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, amConfigName)
-		if err != nil {
-			return nil, err
-		}
+	}
 
-		secret := &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      prometheus.EmailSecretName,
-				Namespace: namespace,
-			},
+	ret := []prometheus.ReceiverConfig{}
+	for _, config := range configlist.Items {
+		if config.Name != amConfigName {
+			continue
 		}
-		if err := c.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
-			if !kerrors.IsNotFound(err) {
-				return nil, err
-			}
-		}
-
 		for _, rec := range config.Spec.Receivers {
 			if rec.Name != prometheus.NullReceiverName {
 				if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
-					ret = append(ret, prometheus.ToGemsReceiver(rec, config.Namespace, secret))
+					ret = append(ret, prometheus.ToGemsReceiver(rec, config.Namespace, secretNamespaceMap[config.Namespace]))
 				}
 			}
 		}
