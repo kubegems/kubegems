@@ -66,7 +66,7 @@ func (ms *MessageSwitcher) DispatchMessage(msg *msgbus.NotifyMessage) {
 			webhookAlert.CommonLabels[prometheus.AlertNamespaceLabel],
 			webhookAlert.CommonLabels[prometheus.AlertNameLabel],
 			webhookAlert.CommonLabels[prometheus.AlertScopeLabel],
-			webhookAlert.CommonLabels[prometheus.AlertResourceLabel],
+			webhookAlert.CommonLabels[prometheus.AlertFromLabel],
 		)
 		toUsers := webhookAlert.GetAlertUsers(pos)
 		now := time.Now()

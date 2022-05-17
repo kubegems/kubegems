@@ -18,6 +18,10 @@ const (
 	// 用于从告警中获取告警资源
 	AlertResourceLabel = "gems_alert_resource"
 	AlertRuleLabel     = "gems_alert_rule"
+	AlertFromLabel     = "gems_alert_from" // 告警来自哪里，logging/monitor
+
+	AlertFromMonitor = "monitor"
+	AlertFromLogging = "logging"
 
 	SeverityLabel    = "severity"
 	SeverityError    = "error"    // 错误
@@ -56,6 +60,7 @@ type BaseAlertRule struct {
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 
+	Expr    string `json:"expr"`    // promql/logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
 	For     string `json:"for"`     // 持续时间, eg. 10s, 1m, 1h
 	Message string `json:"message"` // 告警消息，若为空后端自动填充
 
@@ -67,9 +72,29 @@ type BaseAlertRule struct {
 	State  string `json:"state"`  // 状态
 }
 
-func (r *BaseAlertRule) checkAndModify(opts *MonitorOptions) error {
-	// check receivers
+func CheckQueryExprNamespace(expr, namespace string) error {
+	if namespace != "" {
+		if !strings.Contains(expr, fmt.Sprintf(`namespace="%s"`, namespace)) {
+			return fmt.Errorf("query expr %s must contains namespace %s", expr, namespace)
+		}
+	}
+	return nil
+}
 
+func (r *BaseAlertRule) checkAndModify(opts *MonitorOptions) error {
+	_, _, _, hasOp := SplitQueryExpr(r.Expr)
+	if hasOp {
+		return fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
+	}
+	if r.Message == "" {
+		r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, valueAnnotationExpr)
+	}
+
+	if err := CheckQueryExprNamespace(r.Expr, r.Namespace); err != nil {
+		return err
+	}
+
+	// check receivers
 	if len(r.Receivers) == 0 {
 		return fmt.Errorf("接收器不能为空")
 	}

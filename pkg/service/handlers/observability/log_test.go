@@ -41,7 +41,7 @@ func Test_splitLogql(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotQuery, gotOp, gotValue, gotHasOp := prometheus.SplitLogql(tt.args.logql)
+			gotQuery, gotOp, gotValue, gotHasOp := prometheus.SplitQueryExpr(tt.args.logql)
 			if gotQuery != tt.wantQuery {
 				t.Errorf("splitLogql() gotQuery = %v, want %v", gotQuery, tt.wantQuery)
 			}

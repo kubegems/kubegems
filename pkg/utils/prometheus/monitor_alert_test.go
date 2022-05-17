@@ -108,9 +108,10 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				containOrigin: false,
 			},
 			want: []MonitorAlertRule{{
-				BaseAlertRule: &BaseAlertRule{
+				BaseAlertRule: BaseAlertRule{
 					Namespace: GlobalAlertNamespace,
 					Name:      "alert-1",
+					Expr:      `kube_node_status_condition{condition=~"Ready", status=~"true"}`,
 					For:       "1m",
 					AlertLevels: []AlertLevel{{
 						CompareOp:    "==",
@@ -121,17 +122,17 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 					IsOpen:    true,
 				},
 
-				BaseQueryParams: BaseQueryParams{
-					Resource: "node",
-					Rule:     "statusCondition",
-					Unit:     "",
-					LabelPairs: map[string]string{
-						"condition": "Ready",
-						"status":    "true",
+				PromqlGenerator: &PromqlGenerator{
+					BaseQueryParams: BaseQueryParams{
+						Resource: "node",
+						Rule:     "statusCondition",
+						Unit:     "",
+						LabelPairs: map[string]string{
+							"condition": "Ready",
+							"status":    "true",
+						},
 					},
 				},
-
-				Promql: `kube_node_status_condition{condition=~"Ready", status=~"true"}`,
 			}},
 			wantErr: false,
 		},

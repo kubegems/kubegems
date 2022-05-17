@@ -143,7 +143,7 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 			labels := map[string]string{}
 			json.Unmarshal(alertmsg.AlertInfo.Labels, &labels)
 
-			pos, err := h.GetDataBase().GetAlertPosition(alertmsg.AlertInfo.ClusterName, alertmsg.AlertInfo.Namespace, alertmsg.AlertInfo.Name, labels[prometheus.AlertScopeLabel], labels[prometheus.AlertResourceLabel])
+			pos, err := h.GetDataBase().GetAlertPosition(alertmsg.AlertInfo.ClusterName, alertmsg.AlertInfo.Namespace, alertmsg.AlertInfo.Name, labels[prometheus.AlertScopeLabel], labels[prometheus.AlertFromLabel])
 			if err != nil {
 				handlers.NotOK(c, err)
 				return

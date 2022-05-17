@@ -83,10 +83,13 @@ type BaseQueryParams struct {
 	LabelPairs map[string]string `json:"labelpairs,omitempty"` // 标签键值对
 }
 
-type CompareQueryParams struct {
+type PromqlGenerator struct {
 	BaseQueryParams `json:",inline"`
 	CompareOp       string `json:"compareOp"`
 	CompareValue    string `json:"compareValue"`
+
+	// 相关配置
+	RuleContext `json:"-"`
 }
 
 type RuleContext struct {
@@ -123,22 +126,22 @@ func (params *BaseQueryParams) FindRuleContext(cfg *MonitorOptions) (RuleContext
 	return ctx, nil
 }
 
-func (params *CompareQueryParams) ConstructPromql(namespace string, opts *MonitorOptions) (string, error) {
-	ruleCtx, err := params.FindRuleContext(opts)
+func (g *PromqlGenerator) ConstructPromql(namespace string, opts *MonitorOptions) (string, error) {
+	ruleCtx, err := g.FindRuleContext(opts)
 	if err != nil {
-		return "", fmt.Errorf("constructPromql params: %v, err: %w", params, err)
+		return "", fmt.Errorf("constructPromql params: %v, err: %w", g, err)
 	}
 	query := promql.New(ruleCtx.RuleDetail.Expr)
-	if namespace != GlobalAlertNamespace {
+	if namespace != GlobalAlertNamespace && namespace != "" {
 		query.AddSelector(PromqlNamespaceKey, promql.LabelEqual, namespace)
 	}
 
-	for label, value := range params.LabelPairs {
+	for label, value := range g.LabelPairs {
 		query.AddSelector(label, promql.LabelRegex, value)
 	}
 	return query.
-		Arithmetic(promql.BinaryArithmeticOperators(UnitValueMap[params.Unit].Op), UnitValueMap[params.Unit].Value).
-		Compare(promql.ComparisonOperator(params.CompareOp), params.CompareValue).
+		Arithmetic(promql.BinaryArithmeticOperators(UnitValueMap[g.Unit].Op), UnitValueMap[g.Unit].Value).
+		Compare(promql.ComparisonOperator(g.CompareOp), g.CompareValue).
 		ToPromql(), nil
 }
 
