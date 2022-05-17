@@ -130,6 +130,39 @@ func (p *prometheusHandler) Matrix(c *gin.Context) {
 }
 
 // @Tags         Agent.V1
+// @Summary      Prometheus Labelnames
+// @Description  Prometheus Labelnames
+// @Accept       json
+// @Produce      json
+// @Param        cluster  path      string                                true   "cluster"
+// @Param        start    query     string                                false  "start"
+// @Param        end      query     string                                false  "end"
+// @Param        match    query     string                                false  "query"
+// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "labels"
+// @Router       /v1/proxy/cluster/{cluster}/custom/prometheus/v1/labelnames [get]
+// @Security     JWT
+func (p *prometheusHandler) LabelNames(c *gin.Context) {
+	match := c.QueryArray("match")
+	s, errs := time.Parse("2006-01-02T15:04:05Z", c.Query("start"))
+	e, erre := time.Parse("2006-01-02T15:04:05Z", c.Query("end"))
+	if errs != nil || erre != nil {
+		s = time.Now().AddDate(-1, 0, 0)
+		e = time.Now().AddDate(1, 0, 0)
+	}
+
+	v1api := v1.NewAPI(p.client)
+	labels, warns, err := v1api.LabelNames(context.Background(), match, s, e)
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	OK(c, map[string]interface{}{
+		"labels": labels,
+		"warns":  warns,
+	})
+}
+
+// @Tags         Agent.V1
 // @Summary      Prometheus LabelValues
 // @Description  Prometheus LabelValues
 // @Accept       json
