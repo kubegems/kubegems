@@ -95,7 +95,7 @@ func listSilences(ctx context.Context, namespace string, cli agents.Client) ([]*
 	// 只返回活跃的
 	var ret []*alerttypes.Silence
 	for _, v := range silences {
-		if v.Status.State == alerttypes.SilenceStateActive && !strings.HasPrefix(v.Comment, prometheus.SilenceCommentForAlertrulePrefix) {
+		if v.Status.State == alerttypes.SilenceStateActive && strings.HasPrefix(v.Comment, prometheus.SilenceCommentForAlertrulePrefix) {
 			ret = append(ret, v)
 		}
 	}
@@ -580,6 +580,7 @@ func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 
 	switch c.Query("groupby") {
 	case "alert_type":
+		// TODO: unknown group
 		query.Select("concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule') as group_value, count(alert_infos.fingerprint) as count").
 			Group("concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule')")
 	case "project_name":
