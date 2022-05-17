@@ -754,41 +754,25 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// alert rules
 		eg.Go(func() error {
-			promeAlertRules, err := cli.Extend().GetPromeAlertRules(ctx, "")
+			alertrules, err := cli.Extend().ListMonitorAlertRules(ctx, env.Namespace, &monitoropts, false)
 			if err != nil {
 				return err
 			}
 
-			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, env.Namespace, &monitoropts)
-			if err != nil {
-				return err
-			}
-			alertrules, err := raw.ToAlerts(false)
-			if err != nil {
-				return err
-			}
-			for index := range alertrules {
-				key := prometheus.RealTimeAlertKey(alertrules[index].Namespace, alertrules[index].Name)
-				if promRule, ok := promeAlertRules[key]; ok {
-					alertrules[index].State = promRule.State
-					for _, v := range promRule.Alerts {
-						if v.Labels[prometheus.SeverityLabel] == prometheus.SeverityError {
-							ret.ErrorAlertCount++
-						} else if v.Labels[prometheus.SeverityLabel] == prometheus.SeverityCritical {
-							ret.CriticalAlertCount++
-						}
-					}
-				} else {
-					alertrules[index].State = "inactive"
-				}
-			}
 			alertResourceMap := make(map[string]int)
 			for _, v := range alertrules {
-				if count, ok := alertResourceMap[v.Resource]; ok {
-					count++
-					alertResourceMap[v.Resource] = count
+				var key string
+				if v.PromqlGenerator == nil {
+					key = v.Expr
 				} else {
-					alertResourceMap[v.Resource] = 1
+					key = v.PromqlGenerator.BaseQueryParams.Resource
+				}
+
+				if count, ok := alertResourceMap[key]; ok {
+					count++
+					alertResourceMap[key] = count
+				} else {
+					alertResourceMap[key] = 1
 				}
 			}
 
