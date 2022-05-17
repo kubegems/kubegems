@@ -48,4 +48,21 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/tenant/:tenant_id/alerts/graph", h.CheckByClusterNamespace, h.AlertGraph)
 	rg.GET("/observability/tenant/:tenant_id/alerts/group", h.CheckByClusterNamespace, h.AlertByGroup)
 	rg.GET("/observability/tenant/:tenant_id/alerts/search", h.CheckByClusterNamespace, h.SearchAlert)
+
+	// metrics
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/metrics/queryrange", h.CheckByClusterNamespace, h.QueryRange)
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/metrics/labelvalues", h.CheckByClusterNamespace, h.LabelValues)
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/metrics/labelnames", h.CheckByClusterNamespace, h.LabelNames)
+
+	// template
+	rg.GET("/observability/template/resources/:resource_name:/rules/:rule_name", h.CheckIsSysADMIN, h.GetMetricTemplate)
+	rg.POST("/observability/template/resources/:resource_name:/rules/:rule_name", h.CheckIsSysADMIN, h.AddOrUpdateMetricTemplate)
+	rg.DELETE("/observability/template/resources/:resource_name:/rules/:rule_name", h.CheckIsSysADMIN, h.DeleteMetricTemplate)
+
+	// dashboard
+	rg.GET("/observability/environment/:environment_id/monitor/dashboard", h.CheckByEnvironmentID, h.ListDashboard)
+	rg.GET("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.DashboardDetail)
+	rg.POST("/observability/environment/:environment_id/monitor/dashboard", h.CheckByEnvironmentID, h.CreateDashboard)
+	rg.PUT("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.UpdateDashboard)
+	rg.DELETE("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.UpdateDashboard)
 }

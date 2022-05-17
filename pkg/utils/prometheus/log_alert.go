@@ -8,6 +8,7 @@ import (
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/rulefmt"
+	"github.com/prometheus/prometheus/promql/parser"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	"kubegems.io/pkg/log"
@@ -25,27 +26,18 @@ type RawLoggingAlertRule struct {
 }
 
 type LoggingAlertRule struct {
-	BaseAlertRule `json:",inline"`
-	Expr          string `json:"expr"` // logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
-
+	BaseAlertRule  `json:",inline"`
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
 	Origin         string          `json:"origin,omitempty"`         // 原始的prometheusrule
 }
 
 func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
-	_, _, _, hasOp := SplitLogql(r.Expr)
-	if hasOp {
-		return fmt.Errorf("logql不能包含比较运算符(<|<=|==|!=|>|>=)")
-	}
-	if r.Message == "" {
-		r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, valueAnnotationExpr)
-	}
 	return r.BaseAlertRule.checkAndModify(opts)
 }
 
 var logqlReg = regexp.MustCompile("(.*)(<|<=|==|!=|>|>=)(.*)")
 
-func SplitLogql(logql string) (query, op, value string, hasOp bool) {
+func SplitQueryExpr(logql string) (query, op, value string, hasOp bool) {
 	substrs := logqlReg.FindStringSubmatch(logql)
 	if len(substrs) == 4 {
 		query = substrs[1]
@@ -85,7 +77,8 @@ func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingA
 		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, AlertNamespaceLabel), AlertNameLabel)
 
 		if hasDetail {
-			alertrule.Origin = raw.ConfigMap.Data[raw.Base.AMConfig.Namespace]
+			bts, _ := yaml.Marshal(group)
+			alertrule.Origin = string(bts)
 		}
 
 		ret = append(ret, alertrule)
@@ -137,7 +130,7 @@ func rawToLoggingAlertRule(namespace string, group rulefmt.RuleGroup) (LoggingAl
 			rule.Labels[AlertNameLabel] == "" {
 			return ret, fmt.Errorf("rule %s label not valid: %v", group.Name, rule.Labels)
 		}
-		query, op, value, hasOp := SplitLogql(rule.Expr.Value)
+		query, op, value, hasOp := SplitQueryExpr(rule.Expr.Value)
 		if !hasOp {
 			return ret, fmt.Errorf("rule %s expr %s not valid", group.Name, rule.Expr.Value)
 		}
@@ -157,6 +150,9 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 	if err != nil {
 		return ret, err
 	}
+	if _, err := parser.ParseExpr(r.Expr); err != nil {
+		return ret, err
+	}
 	for _, level := range r.AlertLevels {
 		ret.Rules = append(ret.Rules, rulefmt.RuleNode{
 			Alert: yaml.Node{Kind: yaml.ScalarNode, Value: r.Name},
@@ -165,6 +161,7 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 			Labels: map[string]string{
 				AlertNamespaceLabel: r.Namespace,
 				AlertNameLabel:      r.Name,
+				AlertFromLabel:      AlertFromLogging,
 				AlertScopeLabel:     getAlertScope(r.Namespace),
 				SeverityLabel:       level.Severity,
 			},

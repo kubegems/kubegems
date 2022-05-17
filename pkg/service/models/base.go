@@ -151,7 +151,7 @@ func migrateModels(db *gorm.DB) error {
 		// 告警消息表
 		&AlertMessage{},
 		// 监控面板表
-		&MetricDashborad{},
+		&MonitorDashboard{},
 		// 配置
 		&OnlineConfig{},
 		// 登陆源

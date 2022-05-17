@@ -234,6 +234,26 @@ func (c *ExtendClient) GetLokiAlertRules(ctx context.Context) (map[string]promet
 	return ret, nil
 }
 
+func (c *ExtendClient) GetPrometheusLabelNames(ctx context.Context, match, start, end string) ([]string, error) {
+	resp := struct {
+		Labels []string    `json:"labels,omitempty"`
+		Warns  interface{} `json:"warns,omitempty"`
+	}{}
+	values := url.Values{}
+	values.Add("match", match)
+	values.Add("start", start)
+	values.Add("end", end)
+	if err := c.DoRequest(ctx, Request{
+		Path:  "/custom/prometheus/v1/labelnames",
+		Query: values,
+		Into:  WrappedResponse(&resp),
+	}); err != nil {
+		return nil, fmt.Errorf("prometheus label names failed, cluster: %s, promql: %s, %v", c.Name, match, err)
+	}
+
+	return resp.Labels, nil
+}
+
 func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, match, label, start, end string) ([]string, error) {
 	resp := struct {
 		Labels []string    `json:"labels,omitempty"`
@@ -494,8 +514,8 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	return ret, nil
 }
 
-func (c *ExtendClient) getBaseAlertResource(ctx context.Context, namespace string) (*prometheus.BaseAlertResource, error) {
-	loggingAMConfig, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, prometheus.LoggingAlertmanagerConfigName)
+func (c *ExtendClient) getBaseAlertResource(ctx context.Context, namespace, amconfigName string) (*prometheus.BaseAlertResource, error) {
+	loggingAMConfig, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, amconfigName)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +533,7 @@ func (c *ExtendClient) getBaseAlertResource(ctx context.Context, namespace strin
 
 // GetRawMonitorAlertResource get specified namespace's alert
 func (c *ExtendClient) GetRawMonitorAlertResource(ctx context.Context, namespace string, opts *prometheus.MonitorOptions) (*prometheus.RawMonitorAlertResource, error) {
-	base, err := c.getBaseAlertResource(ctx, namespace)
+	base, err := c.getBaseAlertResource(ctx, namespace, prometheus.MonitorAlertmanagerConfigName)
 	if err != nil {
 		return nil, err
 	}
@@ -530,7 +550,7 @@ func (c *ExtendClient) GetRawMonitorAlertResource(ctx context.Context, namespace
 }
 
 func (c *ExtendClient) GetRawLoggingAlertResource(ctx context.Context, namespace string) (*prometheus.RawLoggingAlertRule, error) {
-	base, err := c.getBaseAlertResource(ctx, namespace)
+	base, err := c.getBaseAlertResource(ctx, namespace, prometheus.LoggingAlertmanagerConfigName)
 	if err != nil {
 		return nil, err
 	}
@@ -606,6 +626,8 @@ func (c *ExtendClient) GetOrCreatePrometheusRule(ctx context.Context, namespace 
 
 func (c *ExtendClient) CommitRawMonitorAlertResource(ctx context.Context, raw *prometheus.RawMonitorAlertResource) error {
 	if err := c.CheckAlertmanagerConfig(ctx, raw.Base.AMConfig); err != nil {
+		bts, _ := yaml.Marshal(raw.Base.AMConfig)
+		log.Error(err, "amconfig", string(bts))
 		return err
 	}
 
