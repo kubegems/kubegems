@@ -151,6 +151,15 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		Step:      c.Query("step"),
 		Expr:      c.Query("expr"),
 		Label:     c.Query("label"),
+
+		PromqlGenerator: &prometheus.PromqlGenerator{
+			BaseQueryParams: prometheus.BaseQueryParams{
+				Resource:   c.Query("resource"),
+				Rule:       c.Query("rule"),
+				Unit:       c.Query("unit"),
+				LabelPairs: c.QueryMap("labelpairs"),
+			},
+		},
 	}
 	if q.Namespace == "_all" {
 		q.Namespace = ""

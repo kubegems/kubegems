@@ -4536,7 +4536,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Observability"
+                    "Metrics"
                 ],
                 "summary": "获取prometheu查询模板",
                 "parameters": [
@@ -4590,7 +4590,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Observability"
+                    "Metrics"
                 ],
                 "summary": "添加prometheu查询模板",
                 "parameters": [
@@ -4653,7 +4653,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Observability"
+                    "Metrics"
                 ],
                 "summary": "删除prometheu查询模板",
                 "parameters": [
@@ -7429,6 +7429,179 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "dashboard id",
                         "name": "dashboard_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/template/resources/{resource_name}/rules/{rule_name}": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "获取prometheu查询模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "获取prometheu查询模板",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "resource",
+                        "name": "resource_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "rule",
+                        "name": "rule_name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/prometheus.RuleDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "添加prometheu查询模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "添加prometheu查询模板",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "resource",
+                        "name": "resource_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "rule",
+                        "name": "rule_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "查询模板配置",
+                        "name": "from",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/prometheus.RuleDetail"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "删除prometheu查询模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "删除prometheu查询模板",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "resource",
+                        "name": "resource_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "rule",
+                        "name": "rule_name",
                         "in": "path",
                         "required": true
                     }
@@ -26603,24 +26776,6 @@ const docTemplate = `{
                 }
             }
         },
-        "kubernetes.Host": {
-            "type": "object",
-            "properties": {
-                "cluster": {
-                    "type": "string"
-                },
-                "complete_input": {
-                    "description": "CompleteInput is true when Service, Namespace and Cluster fields are present.\nIt is true for simple service names and FQDN services.\nIt is false for service.namespace format and service entries.",
-                    "type": "boolean"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "service": {
-                    "type": "string"
-                }
-            }
-        },
         "labels.Matcher": {
             "type": "object",
             "properties": {
@@ -27230,34 +27385,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CPUMemoryStatus": {
-            "type": "object",
-            "properties": {
-                "currentLimit": {
-                    "description": "带单位",
-                    "type": "string"
-                },
-                "currentRate": {
-                    "type": "number"
-                },
-                "status": {
-                    "description": "扩容或缩容",
-                    "type": "string"
-                },
-                "suggestLimit": {
-                    "description": "带单位",
-                    "type": "string"
-                },
-                "suggestMaxLimit": {
-                    "description": "带单位",
-                    "type": "string"
-                },
-                "suggestMinLimit": {
-                    "description": "带单位",
-                    "type": "string"
-                }
-            }
-        },
         "models.CVEAllowlist": {
             "type": "object",
             "properties": {
@@ -27320,41 +27447,132 @@ const docTemplate = `{
         },
         "models.Cluster": {
             "type": "object",
+            "required": [
+                "clusterName",
+                "defaultStorageClass",
+                "imageRepo",
+                "kubeConfig",
+                "vendor"
+            ],
             "properties": {
-                "destination_rule": {
+                "agentAddr": {
+                    "description": "if empty, using apiserver proxy",
                     "type": "string"
                 },
-                "direction": {
+                "apiserver": {
+                    "description": "APIServer地址 根据kubeconfig添加后，自动填充",
                     "type": "string"
                 },
-                "port": {
+                "clusterName": {
+                    "type": "string"
+                },
+                "clusterResourceQuota": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "defaultStorageClass": {
+                    "description": "DefaultStorageClass 默认storageclass, 默认local-path",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "soft delete",
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "environments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Environment"
+                    }
+                },
+                "id": {
                     "type": "integer"
                 },
-                "service_fqdn": {
-                    "$ref": "#/definitions/kubernetes.Host"
-                },
-                "subset": {
+                "imageRepo": {
+                    "description": "ImageRepo 安装kubegems核心组件时使用的镜像仓库",
                     "type": "string"
                 },
-                "type": {
+                "installNamespace": {
+                    "description": "agent service namespace",
+                    "type": "string"
+                },
+                "kubeConfig": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "oversoldConfig": {
+                    "description": "installer plugins Values",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "primary": {
+                    "description": "是否主集群",
+                    "type": "boolean"
+                },
+                "runtime": {
+                    "description": "docker or containerd",
+                    "type": "string"
+                },
+                "tenantResourceQuotas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TenantResourceQuota"
+                    }
+                },
+                "values": {
+                    "description": "installer plugins Values",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "vendor": {
+                    "description": "Vendor 集群提供商(gke tke ack selfhosted)",
+                    "type": "string",
+                    "enum": [
+                        "selfhosted",
+                        "gke",
+                        "ack",
+                        "tke"
+                    ]
+                },
+                "version": {
+                    "description": "apiserver version",
                     "type": "string"
                 }
             }
         },
-        "models.Condition": {
+        "models.ContainerInfo": {
             "type": "object",
             "properties": {
-                "CPUStatus": {
-                    "$ref": "#/definitions/models.CPUMemoryStatus"
+                "image": {
+                    "type": "string"
                 },
-                "MemoryStatus": {
-                    "$ref": "#/definitions/models.CPUMemoryStatus"
+                "isProxy": {
+                    "type": "boolean"
                 },
-                "pods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "isReady": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DashboardRef": {
+            "type": "object",
+            "properties": {
+                "template": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },
@@ -27792,6 +28010,30 @@ const docTemplate = `{
                 }
             }
         },
+        "models.OIDCUser": {
+            "type": "object",
+            "properties": {
+                "creation_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "secret": {
+                    "description": "secret in plain text",
+                    "type": "string"
+                },
+                "subiss": {
+                    "type": "string"
+                },
+                "update_time": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.OnlineConfig": {
             "type": "object",
             "required": [
@@ -27814,6 +28056,74 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "models.Pod": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "appLabel": {
+                    "type": "boolean"
+                },
+                "containers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ContainerInfo"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Reference"
+                    }
+                },
+                "istioContainers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ContainerInfo"
+                    }
+                },
+                "istioInitContainers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ContainerInfo"
+                    }
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "proxyStatus": {
+                    "$ref": "#/definitions/models.ProxyStatus"
+                },
+                "serviceAccountName": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusMessage": {
+                    "type": "string"
+                },
+                "statusReason": {
+                    "type": "string"
+                },
+                "versionLabel": {
+                    "type": "boolean"
                 }
             }
         },
@@ -27901,6 +28211,34 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ProxyStatus": {
+            "type": "object",
+            "properties": {
+                "CDS": {
+                    "type": "string"
+                },
+                "EDS": {
+                    "type": "string"
+                },
+                "LDS": {
+                    "type": "string"
+                },
+                "RDS": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Reference": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Registry": {
             "type": "object",
             "properties": {
@@ -27947,6 +28285,77 @@ const docTemplate = `{
                 "username": {
                     "description": "用户名",
                     "type": "string"
+                }
+            }
+        },
+        "models.Runtime": {
+            "type": "object",
+            "properties": {
+                "dashboardRefs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.DashboardRef"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ServiceOverview": {
+            "type": "object",
+            "properties": {
+                "additionalDetailSample": {
+                    "description": "Additional detail sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
+                    "$ref": "#/definitions/models.AdditionalItem"
+                },
+                "appLabel": {
+                    "description": "Has label app\nrequired: true\nexample: true",
+                    "type": "boolean"
+                },
+                "healthAnnotations": {
+                    "description": "Annotations of the service",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "istioReferences": {
+                    "description": "Istio References",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.IstioValidationKey"
+                    }
+                },
+                "istioSidecar": {
+                    "description": "Define if Pods related to this Service has an IstioSidecar deployed\nrequired: true\nexample: true",
+                    "type": "boolean"
+                },
+                "kialiWizard": {
+                    "description": "Kiali Wizard scenario, if any",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "Labels for Service",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name of the Service\nrequired: true\nexample: reviews-v1",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace of the Service",
+                    "type": "string"
+                },
+                "selector": {
+                    "description": "Selector for Service",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -28036,7 +28445,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "content": {
-                    "description": "原始数据 记录的是request和response以及http_code",
+                    "description": "环境下的limitrage",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -28063,7 +28472,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "content": {
-                    "description": "原始数据 记录的是request和response以及http_code",
+                    "description": "环境下的limitrage",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -28114,58 +28523,55 @@ const docTemplate = `{
         },
         "models.User": {
             "type": "object",
-            "required": [
-                "email",
-                "username"
-            ],
             "properties": {
-                "createdAt": {
-                    "description": "加入时间",
-                    "type": "string"
-                },
-                "email": {
-                    "description": "邮箱",
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isActive": {
-                    "description": "是否激活",
+                "admin_role_in_auth": {
+                    "description": "AdminRoleInAuth to store the admin privilege granted by external authentication provider",
                     "type": "boolean"
                 },
-                "lastLoginAt": {
-                    "description": "最后登录时间",
+                "comment": {
                     "type": "string"
                 },
-                "phone": {
-                    "description": "电话",
+                "creation_time": {
                     "type": "string"
                 },
-                "role": {
-                    "description": "角色，不同关联对象下表示的角色不同, 用来做join查询的时候处理角色字段的(请勿删除)",
+                "deleted": {
+                    "type": "boolean"
+                },
+                "email": {
                     "type": "string"
                 },
-                "source": {
+                "oidc_user_meta": {
+                    "$ref": "#/definitions/models.OIDCUser"
+                },
+                "password": {
                     "type": "string"
                 },
-                "sourceVendor": {
+                "password_version": {
                     "type": "string"
                 },
-                "systemRole": {
-                    "$ref": "#/definitions/models.SystemRole"
+                "realname": {
+                    "type": "string"
                 },
-                "systemRoleID": {
+                "reset_uuid": {
+                    "type": "string"
+                },
+                "role_id": {
+                    "description": "if this field is named as \"RoleID\", beego orm can not map role_id\nto it.",
                     "type": "integer"
                 },
-                "tenants": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Tenant"
-                    }
+                "role_name": {
+                    "type": "string"
+                },
+                "sysadmin_flag": {
+                    "type": "boolean"
+                },
+                "update_time": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 },
                 "username": {
-                    "description": "用户名",
                     "type": "string"
                 }
             }
@@ -28310,40 +28716,120 @@ const docTemplate = `{
         "models.Workload": {
             "type": "object",
             "properties": {
-                "clusterName": {
-                    "type": "string"
+                "additionalDetailSample": {
+                    "description": "Additional item sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
+                    "$ref": "#/definitions/models.AdditionalItem"
                 },
-                "color": {
-                    "description": "eg, yellow",
-                    "type": "string"
-                },
-                "conditions": {
-                    "description": "按容器名分组",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/models.Condition"
+                "additionalDetails": {
+                    "description": "Additional details to display, such as configured annotations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AdditionalItem"
                     }
                 },
-                "cpulimitStdvar": {
-                    "type": "number"
+                "appLabel": {
+                    "description": "Define if Pods related to this Workload has the label App\nrequired: true\nexample: true",
+                    "type": "boolean"
                 },
-                "createdAt": {
-                    "type": "string"
-                },
-                "id": {
+                "availableReplicas": {
+                    "description": "Number of available replicas\nrequired: true\nexample: 1",
                     "type": "integer"
                 },
-                "memoryLimitStdvar": {
-                    "type": "number"
+                "createdAt": {
+                    "description": "Creation timestamp (in RFC3339 format)\nrequired: true\nexample: 2018-07-31T12:24:17Z",
+                    "type": "string"
+                },
+                "currentReplicas": {
+                    "description": "Number of current replicas pods that matches controller selector labels\nrequired: true\nexample: 2",
+                    "type": "integer"
+                },
+                "dashboardAnnotations": {
+                    "description": "Dashboard annotations\nrequired: false",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "desiredReplicas": {
+                    "description": "Number of desired replicas defined by the user in the controller Spec\nrequired: true\nexample: 2",
+                    "type": "integer"
+                },
+                "healthAnnotations": {
+                    "description": "HealthAnnotations\nrequired: false",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "istioInjectionAnnotation": {
+                    "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
+                    "type": "boolean"
+                },
+                "istioReferences": {
+                    "description": "Istio References",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.IstioValidationKey"
+                    }
+                },
+                "istioSidecar": {
+                    "description": "Define if Pods related to this Workload has an IstioSidecar deployed\nrequired: true\nexample: true",
+                    "type": "boolean"
+                },
+                "labels": {
+                    "description": "Workload labels",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "name": {
+                    "description": "Name of the workload\nrequired: true\nexample: reviews-v1",
                     "type": "string"
                 },
-                "namespace": {
+                "podCount": {
+                    "description": "Number of current workload pods\nrequired: true\nexample: 1",
+                    "type": "integer"
+                },
+                "pods": {
+                    "description": "Pods bound to the workload",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Pod"
+                    }
+                },
+                "resourceVersion": {
+                    "description": "Kubernetes ResourceVersion\nrequired: true\nexample: 192892127",
                     "type": "string"
+                },
+                "runtimes": {
+                    "description": "Runtimes and associated dashboards",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Runtime"
+                    }
+                },
+                "serviceAccountNames": {
+                    "description": "Names of the workload service accounts",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "services": {
+                    "description": "Services that match workload selector",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ServiceOverview"
+                    }
                 },
                 "type": {
+                    "description": "Type of the workload\nrequired: true\nexample: deployment",
                     "type": "string"
+                },
+                "versionLabel": {
+                    "description": "Define if Pods related to this Workload has the label Version\nrequired: true\nexample: true",
+                    "type": "boolean"
                 }
             }
         },
@@ -28881,12 +29367,6 @@ const docTemplate = `{
                         "$ref": "#/definitions/prometheus.AlertLevel"
                     }
                 },
-                "compareOp": {
-                    "type": "string"
-                },
-                "compareValue": {
-                    "type": "string"
-                },
                 "expr": {
                     "description": "promql/logql表达式，不能包含比较运算符(\u003c, \u003c=, \u003e, \u003e=, ==)",
                     "type": "string"
@@ -28906,13 +29386,6 @@ const docTemplate = `{
                     "description": "是否启用",
                     "type": "boolean"
                 },
-                "labelpairs": {
-                    "description": "标签键值对",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
                 "message": {
                     "description": "告警消息，若为空后端自动填充",
                     "type": "string"
@@ -28926,6 +29399,9 @@ const docTemplate = `{
                 "origin": {
                     "description": "原始的prometheusrule",
                     "type": "string"
+                },
+                "promqlGenerator": {
+                    "$ref": "#/definitions/prometheus.PromqlGenerator"
                 },
                 "realTimeAlerts": {
                     "description": "实时告警",
@@ -28941,6 +29417,28 @@ const docTemplate = `{
                         "$ref": "#/definitions/prometheus.AlertReceiver"
                     }
                 },
+                "state": {
+                    "description": "状态",
+                    "type": "string"
+                }
+            }
+        },
+        "prometheus.PromqlGenerator": {
+            "type": "object",
+            "properties": {
+                "compareOp": {
+                    "type": "string"
+                },
+                "compareValue": {
+                    "type": "string"
+                },
+                "labelpairs": {
+                    "description": "标签键值对",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "resource": {
                     "description": "告警资源, eg. node、pod",
                     "type": "string"
@@ -28954,10 +29452,6 @@ const docTemplate = `{
                 },
                 "ruleDetail": {
                     "$ref": "#/definitions/prometheus.RuleDetail"
-                },
-                "state": {
-                    "description": "状态",
-                    "type": "string"
                 },
                 "unit": {
                     "description": "单位",

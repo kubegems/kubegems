@@ -3658,21 +3658,6 @@ definitions:
           $ref: '#/definitions/v1alpha1.SyncOperationResource'
         type: array
     type: object
-  kubernetes.Host:
-    properties:
-      cluster:
-        type: string
-      complete_input:
-        description: |-
-          CompleteInput is true when Service, Namespace and Cluster fields are present.
-          It is true for simple service names and FQDN services.
-          It is false for service.namespace format and service entries.
-        type: boolean
-      namespace:
-        type: string
-      service:
-        type: string
-    type: object
   labels.Matcher:
     properties:
       name:
@@ -4114,26 +4099,6 @@ definitions:
       userInfoURL:
         type: string
     type: object
-  models.CPUMemoryStatus:
-    properties:
-      currentLimit:
-        description: 带单位
-        type: string
-      currentRate:
-        type: number
-      status:
-        description: 扩容或缩容
-        type: string
-      suggestLimit:
-        description: 带单位
-        type: string
-      suggestMaxLimit:
-        description: 带单位
-        type: string
-      suggestMinLimit:
-        description: 带单位
-        type: string
-    type: object
   models.CVEAllowlist:
     properties:
       creationTime:
@@ -4175,29 +4140,96 @@ definitions:
     type: object
   models.Cluster:
     properties:
-      destination_rule:
+      agentAddr:
+        description: if empty, using apiserver proxy
         type: string
-      direction:
+      apiserver:
+        description: APIServer地址 根据kubeconfig添加后，自动填充
         type: string
-      port:
+      clusterName:
+        type: string
+      clusterResourceQuota:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      defaultStorageClass:
+        description: DefaultStorageClass 默认storageclass, 默认local-path
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+        description: soft delete
+      environments:
+        items:
+          $ref: '#/definitions/models.Environment'
+        type: array
+      id:
         type: integer
-      service_fqdn:
-        $ref: '#/definitions/kubernetes.Host'
-      subset:
+      imageRepo:
+        description: ImageRepo 安装kubegems核心组件时使用的镜像仓库
         type: string
-      type:
+      installNamespace:
+        description: agent service namespace
+        type: string
+      kubeConfig:
+        items:
+          type: integer
+        type: array
+      oversoldConfig:
+        description: installer plugins Values
+        items:
+          type: integer
+        type: array
+      primary:
+        description: 是否主集群
+        type: boolean
+      runtime:
+        description: docker or containerd
+        type: string
+      tenantResourceQuotas:
+        items:
+          $ref: '#/definitions/models.TenantResourceQuota'
+        type: array
+      values:
+        description: installer plugins Values
+        items:
+          type: integer
+        type: array
+      vendor:
+        description: Vendor 集群提供商(gke tke ack selfhosted)
+        enum:
+        - selfhosted
+        - gke
+        - ack
+        - tke
+        type: string
+      version:
+        description: apiserver version
+        type: string
+    required:
+    - clusterName
+    - defaultStorageClass
+    - imageRepo
+    - kubeConfig
+    - vendor
+    type: object
+  models.ContainerInfo:
+    properties:
+      image:
+        type: string
+      isProxy:
+        type: boolean
+      isReady:
+        type: boolean
+      name:
         type: string
     type: object
-  models.Condition:
+  models.DashboardRef:
     properties:
-      CPUStatus:
-        $ref: '#/definitions/models.CPUMemoryStatus'
-      MemoryStatus:
-        $ref: '#/definitions/models.CPUMemoryStatus'
-      pods:
-        items:
-          type: string
-        type: array
+      template:
+        type: string
+      title:
+        type: string
     type: object
   models.Environment:
     properties:
@@ -4501,6 +4533,22 @@ definitions:
     required:
     - name
     type: object
+  models.OIDCUser:
+    properties:
+      creation_time:
+        type: string
+      id:
+        type: integer
+      secret:
+        description: secret in plain text
+        type: string
+      subiss:
+        type: string
+      update_time:
+        type: string
+      user_id:
+        type: integer
+    type: object
   models.OnlineConfig:
     properties:
       content:
@@ -4517,6 +4565,51 @@ definitions:
         type: string
     required:
     - name
+    type: object
+  models.Pod:
+    properties:
+      annotations:
+        additionalProperties:
+          type: string
+        type: object
+      appLabel:
+        type: boolean
+      containers:
+        items:
+          $ref: '#/definitions/models.ContainerInfo'
+        type: array
+      createdAt:
+        type: string
+      createdBy:
+        items:
+          $ref: '#/definitions/models.Reference'
+        type: array
+      istioContainers:
+        items:
+          $ref: '#/definitions/models.ContainerInfo'
+        type: array
+      istioInitContainers:
+        items:
+          $ref: '#/definitions/models.ContainerInfo'
+        type: array
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      proxyStatus:
+        $ref: '#/definitions/models.ProxyStatus'
+      serviceAccountName:
+        type: string
+      status:
+        type: string
+      statusMessage:
+        type: string
+      statusReason:
+        type: string
+      versionLabel:
+        type: boolean
     type: object
   models.Project:
     properties:
@@ -4575,6 +4668,24 @@ definitions:
     - role
     - userID
     type: object
+  models.ProxyStatus:
+    properties:
+      CDS:
+        type: string
+      EDS:
+        type: string
+      LDS:
+        type: string
+      RDS:
+        type: string
+    type: object
+  models.Reference:
+    properties:
+      kind:
+        type: string
+      name:
+        type: string
+    type: object
   models.Registry:
     properties:
       creator:
@@ -4609,6 +4720,68 @@ definitions:
       username:
         description: 用户名
         type: string
+    type: object
+  models.Runtime:
+    properties:
+      dashboardRefs:
+        items:
+          $ref: '#/definitions/models.DashboardRef'
+        type: array
+      name:
+        type: string
+    type: object
+  models.ServiceOverview:
+    properties:
+      additionalDetailSample:
+        $ref: '#/definitions/models.AdditionalItem'
+        description: |-
+          Additional detail sample, such as type of api being served (graphql, grpc, rest)
+          example: rest
+          required: false
+      appLabel:
+        description: |-
+          Has label app
+          required: true
+          example: true
+        type: boolean
+      healthAnnotations:
+        additionalProperties:
+          type: string
+        description: Annotations of the service
+        type: object
+      istioReferences:
+        description: Istio References
+        items:
+          $ref: '#/definitions/models.IstioValidationKey'
+        type: array
+      istioSidecar:
+        description: |-
+          Define if Pods related to this Service has an IstioSidecar deployed
+          required: true
+          example: true
+        type: boolean
+      kialiWizard:
+        description: Kiali Wizard scenario, if any
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        description: Labels for Service
+        type: object
+      name:
+        description: |-
+          Name of the Service
+          required: true
+          example: reviews-v1
+        type: string
+      namespace:
+        description: Namespace of the Service
+        type: string
+      selector:
+        additionalProperties:
+          type: string
+        description: Selector for Service
+        type: object
     type: object
   models.SystemRole:
     properties:
@@ -4666,7 +4839,7 @@ definitions:
       clusterID:
         type: integer
       content:
-        description: 原始数据 记录的是request和response以及http_code
+        description: 环境下的limitrage
         items:
           type: integer
         type: array
@@ -4687,7 +4860,7 @@ definitions:
   models.TenantResourceQuotaApply:
     properties:
       content:
-        description: 原始数据 记录的是request和response以及http_code
+        description: 环境下的limitrage
         items:
           type: integer
         type: array
@@ -4722,44 +4895,43 @@ definitions:
     type: object
   models.User:
     properties:
-      createdAt:
-        description: 加入时间
-        type: string
-      email:
-        description: 邮箱
-        type: string
-      id:
-        type: integer
-      isActive:
-        description: 是否激活
+      admin_role_in_auth:
+        description: AdminRoleInAuth to store the admin privilege granted by external
+          authentication provider
         type: boolean
-      lastLoginAt:
-        description: 最后登录时间
+      comment:
         type: string
-      phone:
-        description: 电话
+      creation_time:
         type: string
-      role:
-        description: 角色，不同关联对象下表示的角色不同, 用来做join查询的时候处理角色字段的(请勿删除)
+      deleted:
+        type: boolean
+      email:
         type: string
-      source:
+      oidc_user_meta:
+        $ref: '#/definitions/models.OIDCUser'
+      password:
         type: string
-      sourceVendor:
+      password_version:
         type: string
-      systemRole:
-        $ref: '#/definitions/models.SystemRole'
-      systemRoleID:
+      realname:
+        type: string
+      reset_uuid:
+        type: string
+      role_id:
+        description: |-
+          if this field is named as "RoleID", beego orm can not map role_id
+          to it.
         type: integer
-      tenants:
-        items:
-          $ref: '#/definitions/models.Tenant'
-        type: array
-      username:
-        description: 用户名
+      role_name:
         type: string
-    required:
-    - email
-    - username
+      sysadmin_flag:
+        type: boolean
+      update_time:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
     type: object
   models.UserCreate:
     properties:
@@ -4854,30 +5026,134 @@ definitions:
     type: object
   models.Workload:
     properties:
-      clusterName:
-        type: string
-      color:
-        description: eg, yellow
-        type: string
-      conditions:
-        additionalProperties:
-          $ref: '#/definitions/models.Condition'
-        description: 按容器名分组
-        type: object
-      cpulimitStdvar:
-        type: number
-      createdAt:
-        type: string
-      id:
+      additionalDetailSample:
+        $ref: '#/definitions/models.AdditionalItem'
+        description: |-
+          Additional item sample, such as type of api being served (graphql, grpc, rest)
+          example: rest
+          required: false
+      additionalDetails:
+        description: Additional details to display, such as configured annotations
+        items:
+          $ref: '#/definitions/models.AdditionalItem'
+        type: array
+      appLabel:
+        description: |-
+          Define if Pods related to this Workload has the label App
+          required: true
+          example: true
+        type: boolean
+      availableReplicas:
+        description: |-
+          Number of available replicas
+          required: true
+          example: 1
         type: integer
-      memoryLimitStdvar:
-        type: number
+      createdAt:
+        description: |-
+          Creation timestamp (in RFC3339 format)
+          required: true
+          example: 2018-07-31T12:24:17Z
+        type: string
+      currentReplicas:
+        description: |-
+          Number of current replicas pods that matches controller selector labels
+          required: true
+          example: 2
+        type: integer
+      dashboardAnnotations:
+        additionalProperties:
+          type: string
+        description: |-
+          Dashboard annotations
+          required: false
+        type: object
+      desiredReplicas:
+        description: |-
+          Number of desired replicas defined by the user in the controller Spec
+          required: true
+          example: 2
+        type: integer
+      healthAnnotations:
+        additionalProperties:
+          type: string
+        description: |-
+          HealthAnnotations
+          required: false
+        type: object
+      istioInjectionAnnotation:
+        description: |-
+          Define if Workload has an explicit Istio policy annotation
+          Istio supports this as a label as well - this will be defined if the label is set, too.
+          If both annotation and label are set, if any is false, injection is disabled.
+          It's mapped as a pointer to show three values nil, true, false
+        type: boolean
+      istioReferences:
+        description: Istio References
+        items:
+          $ref: '#/definitions/models.IstioValidationKey'
+        type: array
+      istioSidecar:
+        description: |-
+          Define if Pods related to this Workload has an IstioSidecar deployed
+          required: true
+          example: true
+        type: boolean
+      labels:
+        additionalProperties:
+          type: string
+        description: Workload labels
+        type: object
       name:
+        description: |-
+          Name of the workload
+          required: true
+          example: reviews-v1
         type: string
-      namespace:
+      podCount:
+        description: |-
+          Number of current workload pods
+          required: true
+          example: 1
+        type: integer
+      pods:
+        description: Pods bound to the workload
+        items:
+          $ref: '#/definitions/models.Pod'
+        type: array
+      resourceVersion:
+        description: |-
+          Kubernetes ResourceVersion
+          required: true
+          example: 192892127
         type: string
+      runtimes:
+        description: Runtimes and associated dashboards
+        items:
+          $ref: '#/definitions/models.Runtime'
+        type: array
+      serviceAccountNames:
+        description: Names of the workload service accounts
+        items:
+          type: string
+        type: array
+      services:
+        description: Services that match workload selector
+        items:
+          $ref: '#/definitions/models.ServiceOverview'
+        type: array
       type:
+        description: |-
+          Type of the workload
+          required: true
+          example: deployment
         type: string
+      versionLabel:
+        description: |-
+          Define if Pods related to this Workload has the label Version
+          required: true
+          example: true
+        type: boolean
     type: object
   models.WorkloadListItem:
     properties:
@@ -5286,10 +5562,6 @@ definitions:
         items:
           $ref: '#/definitions/prometheus.AlertLevel'
         type: array
-      compareOp:
-        type: string
-      compareValue:
-        type: string
       expr:
         description: promql/logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
         type: string
@@ -5304,11 +5576,6 @@ definitions:
       isOpen:
         description: 是否启用
         type: boolean
-      labelpairs:
-        additionalProperties:
-          type: string
-        description: 标签键值对
-        type: object
       message:
         description: 告警消息，若为空后端自动填充
         type: string
@@ -5319,6 +5586,8 @@ definitions:
       origin:
         description: 原始的prometheusrule
         type: string
+      promqlGenerator:
+        $ref: '#/definitions/prometheus.PromqlGenerator'
       realTimeAlerts:
         description: 实时告警
         items:
@@ -5329,6 +5598,21 @@ definitions:
         items:
           $ref: '#/definitions/prometheus.AlertReceiver'
         type: array
+      state:
+        description: 状态
+        type: string
+    type: object
+  prometheus.PromqlGenerator:
+    properties:
+      compareOp:
+        type: string
+      compareValue:
+        type: string
+      labelpairs:
+        additionalProperties:
+          type: string
+        description: 标签键值对
+        type: object
       resource:
         description: 告警资源, eg. node、pod
         type: string
@@ -5339,9 +5623,6 @@ definitions:
         type: string
       ruleDetail:
         $ref: '#/definitions/prometheus.RuleDetail'
-      state:
-        description: 状态
-        type: string
       unit:
         description: 单位
         type: string
@@ -20366,7 +20647,7 @@ paths:
       - JWT: []
       summary: 删除prometheu查询模板
       tags:
-      - Observability
+      - Metrics
     get:
       consumes:
       - application/json
@@ -20398,7 +20679,7 @@ paths:
       - JWT: []
       summary: 获取prometheu查询模板
       tags:
-      - Observability
+      - Metrics
     post:
       consumes:
       - application/json
@@ -20436,7 +20717,7 @@ paths:
       - JWT: []
       summary: 添加prometheu查询模板
       tags:
-      - Observability
+      - Metrics
   /v1/my/auth:
     get:
       consumes:
@@ -22113,6 +22394,109 @@ paths:
       security:
       - JWT: []
       summary: 更新监控dashboad
+      tags:
+      - Observability
+  /v1/observability/template/resources/{resource_name}/rules/{rule_name}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除prometheu查询模板
+      parameters:
+      - description: resource
+        in: path
+        name: resource_name
+        required: true
+        type: string
+      - description: rule
+        in: path
+        name: rule_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 删除prometheu查询模板
+      tags:
+      - Observability
+    get:
+      consumes:
+      - application/json
+      description: 获取prometheu查询模板
+      parameters:
+      - description: resource
+        in: path
+        name: resource_name
+        required: true
+        type: string
+      - description: rule
+        in: path
+        name: rule_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/prometheus.RuleDetail'
+              type: object
+      security:
+      - JWT: []
+      summary: 获取prometheu查询模板
+      tags:
+      - Observability
+    post:
+      consumes:
+      - application/json
+      description: 添加prometheu查询模板
+      parameters:
+      - description: resource
+        in: path
+        name: resource_name
+        required: true
+        type: string
+      - description: rule
+        in: path
+        name: rule_name
+        required: true
+        type: string
+      - description: 查询模板配置
+        in: body
+        name: from
+        required: true
+        schema:
+          $ref: '#/definitions/prometheus.RuleDetail'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 添加prometheu查询模板
       tags:
       - Observability
   /v1/observability/tenant/{tenant_id}/alerts/graph:

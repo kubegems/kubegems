@@ -412,15 +412,15 @@ func (h *ObservabilityHandler) GetLoggingAlertRule(c *gin.Context) {
 func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
-	name := c.Param("name")
-	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "创建", "日志告警规则", name)
 
 	req := prometheus.LoggingAlertRule{}
 	if err := c.BindJSON(&req); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+	req.Namespace = namespace
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+	h.SetAuditData(c, "创建", "日志告警规则", req.Name)
 
 	h.m.Lock()
 	defer h.m.Unlock()
@@ -476,6 +476,7 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	req.Namespace = namespace
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 	h.SetAuditData(c, "更新", "日志告警规则", req.Name)
 
