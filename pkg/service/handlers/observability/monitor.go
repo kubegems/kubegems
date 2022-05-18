@@ -302,6 +302,7 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 		return
 	}
 	req.Namespace = namespace
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 	h.SetAuditData(c, "创建", "监控告警规则", req.Name)
 
 	h.m.Lock()
@@ -362,7 +363,8 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 		return
 	}
 	req.Namespace = namespace
-	h.SetAuditData(c, "更新", "告警规则", req.Name)
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+	h.SetAuditData(c, "更新", "监控告警规则", req.Name)
 
 	h.m.Lock()
 	defer h.m.Unlock()
@@ -413,6 +415,8 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 			Name:      name,
 		},
 	}
+	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+	h.SetAuditData(c, "删除", "监控告警规则", req.Name)
 
 	h.m.Lock()
 	defer h.m.Unlock()
