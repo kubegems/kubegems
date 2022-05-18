@@ -762,7 +762,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 			alertResourceMap := make(map[string]int)
 			for _, v := range alertrules {
 				var key string
-				if v.PromqlGenerator == nil {
+				if v.PromqlGenerator.IsEmpty() {
 					key = v.Expr
 				} else {
 					key = v.PromqlGenerator.BaseQueryParams.Resource

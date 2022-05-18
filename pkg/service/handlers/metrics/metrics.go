@@ -302,7 +302,7 @@ func (h *MonitorHandler) DeleteMetricTemplate(c *gin.Context) {
 		return
 	}
 	for _, v := range allalerts {
-		if v.Resource == resName && v.Rule == ruleName {
+		if !v.PromqlGenerator.IsEmpty() && v.PromqlGenerator.Resource == resName && v.PromqlGenerator.Rule == ruleName {
 			handlers.NotOK(c, fmt.Errorf("prometheus 模板 %s.%s 正在被告警规则%s使用", resName, ruleName, v.Name))
 			return
 		}

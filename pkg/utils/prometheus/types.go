@@ -92,6 +92,10 @@ type PromqlGenerator struct {
 	RuleContext `json:"-"`
 }
 
+func (g *PromqlGenerator) IsEmpty() bool {
+	return g == nil || g.Resource == ""
+}
+
 type RuleContext struct {
 	ResourceDetail ResourceDetail
 	RuleDetail     RuleDetail

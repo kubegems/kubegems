@@ -154,7 +154,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				return
 			}
 			for i := range got {
-				got[i].RuleContext = RuleContext{}
+				got[i].PromqlGenerator.RuleContext = RuleContext{}
 			}
 			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Errorf("RawAlertResource.ToAlerts() = %v, want %v", got, tt.want)
