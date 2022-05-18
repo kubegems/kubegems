@@ -21,7 +21,7 @@ type RawMonitorAlertResource struct {
 }
 
 type MonitorAlertRule struct {
-	*PromqlGenerator `json:"promqlGenerator"`
+	PromqlGenerator *PromqlGenerator `json:"promqlGenerator"`
 
 	BaseAlertRule  `json:",inline"`
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
@@ -32,21 +32,22 @@ var _ AlertRule = MonitorAlertRule{}
 
 // TODO: unit test
 func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
-	if r.PromqlGenerator == nil && r.BaseAlertRule.Expr == "" {
-		return fmt.Errorf("模板与原生promql不能同时为空")
-	}
-	if r.PromqlGenerator != nil {
+	if r.PromqlGenerator.IsEmpty() {
+		if r.BaseAlertRule.Expr == "" {
+			return fmt.Errorf("模板与原生promql不能同时为空")
+		}
+	} else {
 		if r.BaseAlertRule.Expr != "" {
 			return fmt.Errorf("模板与原生promql只能指定一种")
 		}
 		// check resource
-		res, ok := opts.Resources[r.Resource]
+		res, ok := opts.Resources[r.PromqlGenerator.Resource]
 		if !ok {
-			return fmt.Errorf("invalid resource: %s", r.Resource)
+			return fmt.Errorf("invalid resource: %s", r.PromqlGenerator.Resource)
 		}
 
 		// check rule
-		ruleCtx, err := r.FindRuleContext(opts)
+		ruleCtx, err := r.PromqlGenerator.FindRuleContext(opts)
 		if err != nil {
 			return err
 		}
@@ -55,11 +56,11 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 		// format message
 		if r.BaseAlertRule.Message == "" {
 			r.Message = fmt.Sprintf("%s: [集群:{{ $externalLabels.%s }}] ", r.Name, AlertClusterKey)
-			for _, label := range r.RuleDetail.Labels {
+			for _, label := range r.PromqlGenerator.RuleDetail.Labels {
 				r.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 			}
 
-			r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.RuleDetail.ShowName, valueAnnotationExpr, opts.Units[r.Unit])
+			r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.PromqlGenerator.RuleDetail.ShowName, valueAnnotationExpr, opts.Units[r.PromqlGenerator.Unit])
 		}
 
 		// 优先采用模板
@@ -151,7 +152,7 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 		return ret, err
 	}
 	for _, level := range alertRule.AlertLevels {
-		if alertRule.PromqlGenerator == nil {
+		if alertRule.PromqlGenerator.IsEmpty() {
 			ret.Rules = append(ret.Rules, monitoringv1.Rule{
 				Alert: alertRule.Name,
 				Expr:  intstr.FromString(fmt.Sprintf("%s%s%s", alertRule.Expr, level.CompareOp, level.CompareValue)),
@@ -170,7 +171,7 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 			})
 		} else {
 			expr := PromqlGenerator{
-				BaseQueryParams: alertRule.BaseQueryParams,
+				BaseQueryParams: alertRule.PromqlGenerator.BaseQueryParams,
 				CompareOp:       level.CompareOp,
 				CompareValue:    level.CompareValue,
 			}
@@ -188,8 +189,8 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 					AlertNamespaceLabel: alertRule.Namespace,
 					AlertNameLabel:      alertRule.Name,
 					AlertFromLabel:      AlertFromMonitor,
-					AlertResourceLabel:  alertRule.Resource,
-					AlertRuleLabel:      alertRule.Rule,
+					AlertResourceLabel:  alertRule.PromqlGenerator.Resource,
+					AlertRuleLabel:      alertRule.PromqlGenerator.Rule,
 					AlertScopeLabel:     getAlertScope(alertRule.Namespace),
 					SeverityLabel:       level.Severity,
 				},

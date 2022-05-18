@@ -173,19 +173,20 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 		if v.Name == "" {
 			return nil, fmt.Errorf("图表名不能为空")
 		}
-		if v.PromqlGenerator != nil {
+
+		if v.PromqlGenerator.IsEmpty() {
+			if v.Expr == "" {
+				return nil, fmt.Errorf("模板与原生promql不能同时为空")
+			}
+			if err := prometheus.CheckQueryExprNamespace(v.Expr, env.Namespace); err != nil {
+				return nil, err
+			}
+		} else {
 			if v.Expr != "" {
 				return nil, fmt.Errorf("模板与原生promql只能指定一种")
 			}
 			_, err := v.PromqlGenerator.BaseQueryParams.FindRuleContext(monitoropts)
 			if err != nil {
-				return nil, err
-			}
-		} else {
-			if v.Expr == "" {
-				return nil, fmt.Errorf("模板与原生promql不能同时为空")
-			}
-			if err := prometheus.CheckQueryExprNamespace(v.Expr, env.Namespace); err != nil {
 				return nil, err
 			}
 		}

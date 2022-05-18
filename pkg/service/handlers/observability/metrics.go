@@ -164,7 +164,18 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 	}
 
 	// 优先选用原生promql
-	if q.Expr == "" {
+	if q.PromqlGenerator.IsEmpty() {
+		if q.Expr == "" {
+			return fmt.Errorf("模板与原生promql不能同时为空")
+		}
+		if err := prometheus.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
+			return err
+		}
+		q.SeriesSelector = q.Expr
+	} else {
+		if q.Expr != "" {
+			return fmt.Errorf("模板与原生promql只能指定一种")
+		}
 		q.PromqlGenerator = &prometheus.PromqlGenerator{
 			BaseQueryParams: prometheus.BaseQueryParams{
 				Resource:   c.Query("resource"),
@@ -197,11 +208,6 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			Round(0.001). // 默认保留三位小数
 			ToPromql()
 		log.Infof("promql: %s", q.Expr)
-	} else {
-		if err := prometheus.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
-			return err
-		}
-		q.SeriesSelector = q.Expr
 	}
 
 	return f(q)
@@ -327,7 +333,7 @@ func (h *ObservabilityHandler) DeleteMetricTemplate(c *gin.Context) {
 		return
 	}
 	for _, v := range allalerts {
-		if v.Resource == resName && v.Rule == ruleName {
+		if !v.PromqlGenerator.IsEmpty() && v.PromqlGenerator.Resource == resName && v.PromqlGenerator.Rule == ruleName {
 			handlers.NotOK(c, fmt.Errorf("prometheus 模板 %s.%s 正在被告警规则%s使用", resName, ruleName, v.Name))
 			return
 		}
