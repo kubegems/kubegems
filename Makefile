@@ -78,10 +78,11 @@ test: generate ## Run tests.
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
 ##@ Build
-
-build: ## Build binaries.
+build-binaries: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
+
+build: build-binaries plugins-download
 
 plugins-download: ## Build plugins-cache
 	${BIN_DIR}/kubegems plugins -c bin/plugins template deploy/plugins/* | ${BIN_DIR}/kubegems plugins -c bin/plugins download -
