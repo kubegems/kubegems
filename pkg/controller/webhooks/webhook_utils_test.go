@@ -3,7 +3,7 @@ package webhooks
 import (
 	"testing"
 
-	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 )
@@ -11,7 +11,7 @@ import (
 func TestCheckGatewayAndIngressProtocol(t *testing.T) {
 	type args struct {
 		tg        gemsv1beta1.TenantGateway
-		ingresses []ext_v1beta1.Ingress
+		ingresses []networkingv1.Ingress
 	}
 	tests := []struct {
 		name    string
@@ -22,7 +22,7 @@ func TestCheckGatewayAndIngressProtocol(t *testing.T) {
 			name: "gateway no ConfigMapData",
 			args: args{
 				tg: gemsv1beta1.TenantGateway{},
-				ingresses: []ext_v1beta1.Ingress{
+				ingresses: []networkingv1.Ingress{
 					{
 						ObjectMeta: v1.ObjectMeta{
 							Annotations: map[string]string{
@@ -44,7 +44,7 @@ func TestCheckGatewayAndIngressProtocol(t *testing.T) {
 						},
 					},
 				},
-				ingresses: []ext_v1beta1.Ingress{
+				ingresses: []networkingv1.Ingress{
 					{
 						ObjectMeta: v1.ObjectMeta{
 							Annotations: map[string]string{
@@ -66,7 +66,7 @@ func TestCheckGatewayAndIngressProtocol(t *testing.T) {
 						},
 					},
 				},
-				ingresses: []ext_v1beta1.Ingress{
+				ingresses: []networkingv1.Ingress{
 					{
 						ObjectMeta: v1.ObjectMeta{
 							Annotations: map[string]string{
@@ -88,7 +88,7 @@ func TestCheckGatewayAndIngressProtocol(t *testing.T) {
 						},
 					},
 				},
-				ingresses: []ext_v1beta1.Ingress{
+				ingresses: []networkingv1.Ingress{
 					{
 						ObjectMeta: v1.ObjectMeta{
 							Annotations: map[string]string{

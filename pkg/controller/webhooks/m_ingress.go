@@ -10,7 +10,7 @@ import (
 
 	v1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
-	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
@@ -27,7 +27,7 @@ var (
 )
 
 func (r *ResourceMutate) MutateIngress(ctx context.Context, req admission.Request) admission.Response {
-	ingress := &ext_v1beta1.Ingress{}
+	ingress := &networkingv1.Ingress{}
 	err := r.decoder.Decode(req, ingress)
 	if err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
@@ -63,7 +63,7 @@ func (r *ResourceMutate) MutateIngress(ctx context.Context, req admission.Reques
 			}
 		}
 
-		if err := CheckGatewayAndIngressProtocol(tgs.Items[0], []ext_v1beta1.Ingress{*ingress}); err != nil {
+		if err := CheckGatewayAndIngressProtocol(tgs.Items[0], []networkingv1.Ingress{*ingress}); err != nil {
 			log.Log.Error(err, "ingress and gateway protocol check failed")
 			return admission.Denied(err.Error())
 		}

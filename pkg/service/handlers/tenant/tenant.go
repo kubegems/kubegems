@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -1395,9 +1395,9 @@ type TenantGatewayForm struct {
 
 type TenantGatewayDetail struct {
 	TenantGatewayForm `json:"tenant_gateway"`
-	Ingresses         []ext_v1beta1.Ingress `json:"ingresses"`
-	Pods              []v1.Pod              `json:"pods"`
-	Addresses         []string              `json:"addresses"`
+	Ingresses         []networkingv1.Ingress `json:"ingresses"`
+	Pods              []v1.Pod               `json:"pods"`
+	Addresses         []string               `json:"addresses"`
 }
 
 const (

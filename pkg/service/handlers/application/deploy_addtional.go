@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/pointer"
 	"kubegems.io/pkg/utils/agents"
@@ -25,7 +25,7 @@ type IngressPorts struct {
 	IngressClassName *string `json:"ingressClassName"`
 	Host             string  `json:"host"`
 	IngressPort      int     `json:"ingressPort"`
-	ServicePort      int     `json:"servicePort"`
+	ServicePort      string  `json:"servicePort"`
 }
 
 // @Tags         Application
@@ -61,17 +61,22 @@ func (h *ApplicationHandler) ListRelatedService(c *gin.Context) {
 			_ = remote.Get(ctx, client.ObjectKeyFromObject(service), service)
 
 			// list ingress 选择backend为这个 svc 的 ingress
-			ingressList := &extensionsv1beta1.IngressList{}
+			ingressList := &networkingv1.IngressList{}
 			_ = remote.List(ctx, ingressList, client.InNamespace(namespace))
 
 			var ingresses []IngressPorts
 			for _, ingress := range ingressList.Items {
 				for _, rule := range ingress.Spec.Rules {
 					for _, path := range rule.HTTP.Paths {
-						if path.Backend.ServiceName == service.Name {
+						if path.Backend.Service.Name == service.Name {
 							ingresses = append(ingresses, IngressPorts{
-								Host:             rule.Host,
-								ServicePort:      path.Backend.ServicePort.IntValue(),
+								Host: rule.Host,
+								ServicePort: func() string {
+									if name := path.Backend.Service.Port.Name; name != "" {
+										return name
+									}
+									return strconv.Itoa(int(path.Backend.Service.Port.Number))
+								}(),
 								IngressClassName: ingress.Spec.IngressClassName,
 							})
 						}

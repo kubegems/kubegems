@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	ext_v1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
 )
 
@@ -16,7 +16,7 @@ func IsGatewayHTTP2(tg gemsv1beta1.TenantGateway) bool {
 	return false
 }
 
-func IsIngressGRPC(ingress ext_v1beta1.Ingress) bool {
+func IsIngressGRPC(ingress networkingv1.Ingress) bool {
 	if ingress.Annotations != nil {
 		_, ok := ingress.Annotations["nginx.org/grpc-services"]
 		return ok
@@ -24,7 +24,7 @@ func IsIngressGRPC(ingress ext_v1beta1.Ingress) bool {
 	return false
 }
 
-func CheckGatewayAndIngressProtocol(tg gemsv1beta1.TenantGateway, ingresses []ext_v1beta1.Ingress) error {
+func CheckGatewayAndIngressProtocol(tg gemsv1beta1.TenantGateway, ingresses []networkingv1.Ingress) error {
 	if !IsGatewayHTTP2(tg) {
 		for _, ingress := range ingresses {
 			if IsIngressGRPC(ingress) {
