@@ -34,41 +34,35 @@ const (
 func DownloadPlugin(ctx context.Context, plugin *Plugin, cachedir string, searchdirs ...string) error {
 	log := logr.FromContextOrDiscard(ctx).WithValues("kind", plugin.Kind, "plugin", plugin.Name)
 
-	// from search path
+	// from search path, fill path from seach dir
 	for _, dir := range searchdirs {
-		// try with version
-		if plugin.Version != "" {
-			// try without version
-			pluginpath := filepath.Join(dir, fmt.Sprintf("%s-%s", plugin.Name, plugin.Version))
-			if entries, err := os.ReadDir(pluginpath); err == nil && len(entries) > 0 {
-				log.Info("found in search path", "dir", pluginpath)
-				plugin.Path = pluginpath
-				return nil
-			}
+		pluginpath, err := filepath.Abs(filepath.Join(dir, plugin.Name))
+		if err != nil {
+			log.Error(err, "failed to get absolute path")
+			continue
 		}
-		// try without version
-		pluginpath := filepath.Join(dir, plugin.Name)
 		if entries, err := os.ReadDir(pluginpath); err == nil && len(entries) > 0 {
-			log.Info("found in search path", "dir", pluginpath)
-			plugin.Path = pluginpath
-			return nil
+			log.Info("found in search path,copy it to cache", "dir", pluginpath)
+			plugin.Repo = fmt.Sprintf("file://%s", pluginpath)
+			break
 		}
+	}
+	if plugin.Repo == "" {
+		return fmt.Errorf("plugin %s no repo set and not found in search dirs %s", plugin.Name, strings.Join(searchdirs, ","))
 	}
 
 	// cache hint?
-	pluginDirName := fmt.Sprintf("%s-%s", plugin.Name, plugin.Version)
+	pluginCacheName := fmt.Sprintf("%s-%s", plugin.Name, plugin.Version)
 	if plugin.Version == "" {
-		pluginDirName = plugin.Name
+		pluginCacheName = plugin.Name
 	}
-	pluginCacheDir := filepath.Join(cachedir, pluginDirName)
-	if entries, err := os.ReadDir(pluginCacheDir); err == nil && len(entries) > 0 {
+
+	pluginCacheDir := filepath.Join(cachedir, pluginCacheName)
+	// we download plugin every time when no version specified
+	if plugin.Version != "" && isCached(pluginCacheDir) {
 		log.Info("already download", "cache", pluginCacheDir)
 		plugin.Path = pluginCacheDir
 		return nil
-	}
-
-	if plugin.Repo == "" {
-		return fmt.Errorf("plugin %s no repo set and not found in cache dir %s", plugin.Name, pluginCacheDir)
 	}
 
 	log.Info("downloading...", "cache", pluginCacheDir)
@@ -107,6 +101,13 @@ type DownloadRepo struct {
 	IsHelm  bool
 }
 
+func isCached(path string) bool {
+	if entries, err := os.ReadDir(path); err == nil && len(entries) > 0 {
+		return true
+	}
+	return false
+}
+
 func Download(ctx context.Context, repo DownloadRepo, intodir string) error {
 	u, err := url.ParseRequestURI(repo.URI)
 	if err != nil {
@@ -119,7 +120,16 @@ func Download(ctx context.Context, repo DownloadRepo, intodir string) error {
 
 	// is local path ?
 	if u.Scheme == "file" || u.Scheme == "" {
-		return DownloadFile(ctx, repo.URI, repo.SubPath, intodir)
+		if err := DownloadFile(ctx, repo.URI, repo.SubPath, intodir); err != nil {
+			return fmt.Errorf("copy file %s: %v", repo.URI, err)
+		}
+		// download helm dependecy chart
+		if repo.IsHelm {
+			if _, _, err := helm.DownloadChart(ctx, "", intodir, ""); err != nil {
+				return fmt.Errorf("download helm dependencies: %v", err)
+			}
+		}
+		return nil
 	}
 	// is git ?
 	if strings.HasSuffix(u.Path, ".git") {

@@ -105,6 +105,9 @@ else
 	buildah push ${IMG}
 endif
 
+clean:
+	- rm -rf ${BIN_DIR}
+
 CONTROLLER_GEN = ${BIN_DIR}/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	GOBIN=${BIN_DIR} go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.7.0
