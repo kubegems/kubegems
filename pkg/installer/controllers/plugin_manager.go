@@ -39,11 +39,12 @@ func NewDefaultOPluginptions() *PluginOptions {
 }
 
 func NewPluginManager(restconfig *rest.Config, options *PluginOptions) *PluginManager {
+	templater := &Templater{Config: restconfig}
 	return &PluginManager{
 		Installers: map[pluginsv1beta1.PluginKind]PluginInstaller{
 			pluginsv1beta1.PluginKindHelm:      NewHelmPlugin(restconfig, options),
 			pluginsv1beta1.PluginKindKustomize: NewNativePlugin(restconfig, options, KustomizeTemplatePlugin),
-			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options, TemplatesTemplatePlugin),
+			pluginsv1beta1.PluginKindTemplate:  NewNativePlugin(restconfig, options, templater.Template),
 			pluginsv1beta1.PluginKindInline:    NewNativePlugin(restconfig, options, InlineTemplatePlugin),
 		},
 		Options: options,

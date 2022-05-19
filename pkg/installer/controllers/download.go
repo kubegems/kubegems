@@ -34,7 +34,7 @@ const (
 func DownloadPlugin(ctx context.Context, plugin *Plugin, cachedir string, searchdirs ...string) error {
 	log := logr.FromContextOrDiscard(ctx).WithValues("kind", plugin.Kind, "plugin", plugin.Name)
 
-	// from search path, fill path from seach dir
+	// from search path, fill path from search dir
 	for _, dir := range searchdirs {
 		pluginpath, err := filepath.Abs(filepath.Join(dir, plugin.Name))
 		if err != nil {

@@ -9,23 +9,32 @@ spec:
   installNamespace: kubegems
   values:
     global:
-      storageClass: local-path
-      kubegemsVersion: latest
+      storageClass: local-path # change me to use a production storage class
+      kubegemsVersion: main
       imageRegistry: registry.cn-beijing.aliyuncs.com
-    redis:
-      image:
-        registry: registry.cn-beijing.aliyuncs.com
-        repository: kubegems/redis
-    chartmuseum:
-      image:
-        repository: registry.cn-beijing.aliyuncs.com/kubegems/chartmuseum
+    ingress:
+      hostname: "*" # change me to use a production hostname
     gitea:
+      persistence:
+        storageClass: local-path # change me to use a production storage class
       image:
         repository: registry.cn-beijing.aliyuncs.com/kubegems/gitea
       postgresql:
         image:
           registry: registry.cn-beijing.aliyuncs.com
           repository: kubegems/postgresql
+          tag: "11.11.0-debian-10"
+    mysql:
+      image:
+        repository: kubegems/mysql
+        tag: "8.0"
+    redis:
+      image:
+        repository: kubegems/redis
+        tag: "6.2.7-debian-10"
+    chartmuseum:
+      image:
+        repository: registry.cn-beijing.aliyuncs.com/kubegems/chartmuseum
     argo-cd:
       global:
         image:

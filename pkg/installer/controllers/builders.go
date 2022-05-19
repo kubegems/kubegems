@@ -13,6 +13,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
 	"helm.sh/helm/v3/pkg/releaseutil"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/kustomize/api/filesys"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/yaml"
@@ -48,8 +49,12 @@ func InlineTemplatePlugin(ctx context.Context, plugin Plugin) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
+type Templater struct {
+	Config *rest.Config
+}
+
 // TemplatesTemplate using helm template engine to render,but allow apply to different namespaces
-func TemplatesTemplatePlugin(ctx context.Context, plugin Plugin) ([]byte, error) {
+func (t Templater) Template(ctx context.Context, plugin Plugin) ([]byte, error) {
 	options := chartutil.ReleaseOptions{
 		Name:      plugin.Name,
 		Namespace: plugin.Namespace,
@@ -65,9 +70,18 @@ func TemplatesTemplatePlugin(ctx context.Context, plugin Plugin) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	renderdFiles, err := engine.Render(chart, valuesToRender)
-	if err != nil {
-		return nil, err
+
+	var renderdFiles map[string]string
+	if t.Config != nil {
+		renderdFiles, err = engine.RenderWithClient(chart, valuesToRender, t.Config)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		renderdFiles, err = engine.Render(chart, valuesToRender)
+		if err != nil {
+			return nil, err
+		}
 	}
 	_, manifests, err := releaseutil.SortManifests(renderdFiles, caps.APIVersions, releaseutil.InstallOrder)
 	if err != nil {

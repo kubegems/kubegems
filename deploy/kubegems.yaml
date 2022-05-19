@@ -10,6 +10,9 @@ spec:
   values:
     global:
       storageClass: local-path # change me to use a production storage class
-      kubegemsVersion: latest
+      kubegemsVersion: main
+    gitea:
+      persistence:
+        storageClass: local-path # change me to use a production storage class
     ingress:
-      hostname: "*"
+      hostname: "*" # change me to use a production hostname
