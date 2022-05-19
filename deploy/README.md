@@ -30,7 +30,7 @@ and create a kind cluster
 sudo kind create cluster --name kubegems --kubeconfig ${HOME}/.kube/config
 ```
 
-or you can use below config to quick setup a faster kind cluster.
+or you can use below config to quick setup a kind cluster.
 
 ```sh
 cat <<EOF | tee kind-tmp.yaml
@@ -86,24 +86,43 @@ kubectl create namespace kubegems-installer
 kubectl apply --namespace kubegems-installer -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/installer.yaml
 ```
 
-if you has no storage plugin installed:
+Wait until installer is ready.
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/plugins-extends.yaml
+kubectl --namespace kubegems-installer get pods
+```
+
+Optional: install nginx-ingress and local-path-provisioner if you has no storage plugin or ingress controller installed(from kubeadm):
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/extends.yaml
 ```
 
 Deploy kubegems core components:
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/plugins-core.yaml
+kubectl create namespace kubegems
+kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml
 ```
+
+> Note: if you want to customize kubegems version or use a different storageClass,you must download and edit the `kubegems.yaml` file before apply.
 
 Wait until everything becomes OK.
 
-## Generate Installer Manifests
+```sh
+kubectl -n kubegems get pods
+```
 
-Regenerate installer manifests using helm:
+Accessing kubegems dashboard:
 
 ```sh
-make generate-installer-manifests
+# use nginx-ingress
+PORT=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -ojsonpath='{.spec.ports[0].nodePort}')
+ADDRESS=$(kubectl -n ingress-nginx get node -ojsonpath='{.items[0].status.addresses[0].address}')
+echo http://$ADDRESS:$PORT
+```
+
+```sh
+# use port-forward
+kubectl -n kubegems port-forward svc/kubegems-dashboard 8080:80
 ```
