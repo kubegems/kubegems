@@ -111,12 +111,11 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		}
 	} else {
 		// GET for oauth
-		code := c.Query("code")
-		if code == "" {
-			handlers.NotOK(c, fmt.Errorf("invalid code"))
+		cred.Code = c.Query("code")
+		if cred.Code == "" {
+			handlers.NotOK(c, fmt.Errorf("empty code"))
 			return
 		}
-		cred.Code = c.Query("code")
 	}
 
 	if cred.Source == "" {
@@ -143,31 +142,31 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	}
 	uinfo, err := authenticator.GetUserInfo(ctx, cred)
 	if err != nil {
-		log.Error(err, "login failed", "cred", cred)
+		log.Error(err, "get user info", "source", cred.Source, "username", cred.Username)
 		handlers.Unauthorized(c, err.Error())
 		return
 	}
 	uinternel, err := h.getOrCreateUser(ctx, uinfo)
 	if err != nil {
-		log.Error(err, "handle login error", "username", uinfo.Username)
+		log.Error(err, "update user", "username", uinfo.Username)
 		handlers.Unauthorized(c, "system error")
 		return
 	}
 	now := time.Now()
 	uinternel.LastLoginAt = &now
 	h.DB.WithContext(ctx).Updates(uinternel)
-	user := &models.User{
+
+	userpayload := &models.User{
 		Username:     uinternel.Username,
 		Email:        uinternel.Email,
 		ID:           uinternel.ID,
 		SystemRoleID: uinternel.SystemRoleID,
 		Source:       uinternel.Source,
 	}
-
-	jwtInstance := h.JWTOptions.ToJWT()
-	token, _, err := jwtInstance.GenerateToken(user, h.JWTOptions.Expire)
+	token, _, err := h.JWTOptions.ToJWT().GenerateToken(userpayload, h.JWTOptions.Expire)
 	if err != nil {
 		handlers.Unauthorized(c, err)
+		return
 	}
 	data := map[string]string{"token": token}
 	handlers.OK(c, data)
