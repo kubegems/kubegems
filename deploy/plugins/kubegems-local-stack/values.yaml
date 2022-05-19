@@ -1,6 +1,6 @@
 image:
   registry: ""
-  repository: ""
+  repository: kubegems
 clusterName: local
 storageClass: local-path
 logging:
@@ -14,7 +14,7 @@ logging:
   #   address: http://loki-stack.loki-stack:3100
 monitoring:
   enabled: true
-  namespace: prometheus
+  namespace: kubegems-monitoring
   operator:
     version: 34.9.0
   # externalPrometheus:
@@ -30,6 +30,8 @@ observability:
     version: 2.30.0
   jaeger:
     version: 1.30.0
+    # externalElasticsearch:
+    # address: http://0.0.0.0:9200
   # externalJaeger:
   #   ddress: http://jaeger-query.observability:16686
 gateway:

@@ -1,4 +1,6 @@
 {{- if .Values.observability.enabled }}
+{{- if not .Values.observability.jaeger.externalElasticsearch -}}
+---
 # https://github.com/elastic/helm-charts
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
@@ -18,6 +20,7 @@ spec:
     # image: "docker.elastic.co/elasticsearch/elasticsearch"
     image: {{ printf "%s/%s/elasticsearch" .Values.image.registry .Values.image.repository }}
     {{- end }}
+{{- end }}
 ---
 # https://github.com/jaegertracing/helm-charts
 apiVersion: plugins.kubegems.io/v1beta1
@@ -57,5 +60,9 @@ spec:
     type: elasticsearch
     options:
       es:
+        {{- if .Values.observability.jaeger.externalElasticsearch -}}
+        server-urls: {{ .Values.observability.jaeger.externalElasticsearch.address }}
+        {{- else -}}
         server-urls: http://elasticsearch-master.observability:9200
+        {{- end -}}
 {{- end -}}

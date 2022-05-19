@@ -503,6 +503,9 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			values["kubegems"] = map[string]interface{}{
 				"version": version.Get().GitVersion,
 			}
+			values["image"] = map[string]interface{}{
+				"registry": cluster.ImageRepo, // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
+			}
 			values["clusterName"] = cluster.ClusterName
 			values["storageClass"] = cluster.DefaultStorageClass
 
