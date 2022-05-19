@@ -1,4 +1,27 @@
 {{/*
+Return the proper image name
+{{ include "common.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
+*/}}
+{{- define "kubegems.images.image" -}}
+{{- $registryName := .imageRoot.registry -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $tag := .imageRoot.tag | toString -}}
+{{- if .global.kubegemsVersion }}
+    {{- $tag = .global.kubegemsVersion | toString -}}
+{{- end }}
+{{- if .global }}
+    {{- if .global.imageRegistry }}
+        {{- $registryName = .global.imageRegistry -}}
+    {{- end -}}
+{{- end -}}
+{{- if $registryName }}
+    {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+{{- else -}}
+    {{- printf "%s:%s" $repositoryName $tag -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the proper kubegems dashboard name
 */}}
 {{- define "kubegems.dashboard.fullname" -}}
@@ -9,7 +32,7 @@ Return the proper kubegems dashboard name
 Return the proper kubegems image name
 */}}
 {{- define "kubegems.dashboard.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.dashboard.image "global" .Values.global) -}}
+{{- include "kubegems.images.image" (dict "imageRoot" .Values.dashboard.image "global" .Values.global) -}}
 {{- end -}}
 
 {{- define "kubegems.api.address" -}}
@@ -26,14 +49,30 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "kubegems.init.fullname" -}}
+{{- if .Values.global.kubegemsVersion -}}
+{{- (printf "%s-init-%s" (include "common.names.fullname" .) .Values.global.kubegemsVersion) | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
 {{- printf "%s-init" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
 Return the proper kubegems.api image name
 */}}
 {{- define "kubegems.init.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.init.image "global" .Values.global) -}}
+{{- include "kubegems.images.image" (dict "imageRoot" .Values.init.image "global" .Values.global) -}}
+{{- end -}}
+
+{{- define "kubegems.init.charts.image" -}}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global) }}
+{{- end -}}
+
+{{- define "kubegems.init.charts.fullname" -}}
+{{- if .Values.global.kubegemsVersion -}}
+    {{- (printf "%s-charts-init-%s" (include "common.names.fullname" .) .Values.global.kubegemsVersion ) | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+    {{- printf "%s-charts-init" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -60,7 +99,7 @@ Return the api jwt secretName
 Return the proper kubegems.api image name
 */}}
 {{- define "kubegems.api.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.api.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.api.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
@@ -74,7 +113,7 @@ Return the proper kubegems msgbus name
 Return the proper kubegems image name
 */}}
 {{- define "kubegems.msgbus.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.msgbus.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.msgbus.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
@@ -88,7 +127,7 @@ Return the proper kubegems msgbus name
 Return the proper kubegems image name
 */}}
 {{- define "kubegems.worker.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.worker.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.worker.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*

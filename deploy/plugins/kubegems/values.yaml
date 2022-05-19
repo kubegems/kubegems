@@ -15,6 +15,7 @@ global:
   ##
   imagePullSecrets: []
   storageClass: ""
+  kubegemsVersion: "latest"
 
 ## @section Common parameters
 
@@ -1883,10 +1884,10 @@ volumePermissions:
 ## @param mysql.auth.password  The nonroot password of the MySQL.
 ## @param mysql.auth.database  Create database of the MySQL.
 mysql:
-  enabled: false
+  enabled: true
   architecture: standalone
   auth:
-    rootPassword: "password" # root password must be set in order upgradeable
+    rootPassword: "" # root password must be set in order upgradeable
     username: ""
     password: ""
     database: "kubegems"
@@ -1904,7 +1905,7 @@ mysql:
 ## @param externalDatabase.existingSecretPasswordKey Name of an existing secret key containing the database credentials
 ##
 externalDatabase:
-  enabled: true
+  enabled: false
   host: mysql
   port: 3306
   database: "kubegems"

@@ -6,18 +6,6 @@ metadata:
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
-  name: mysql
-  namespace: kubegems
-spec:
-  enabled: true
-  kind: helm
-  installNamespace: kubegems
-  repo: https://charts.bitnami.com/bitnami
-  version: 8.9.0
----
-apiVersion: plugins.kubegems.io/v1beta1
-kind: Plugin
-metadata:
   name: kubegems
   namespace: kubegems
 spec:
@@ -25,7 +13,7 @@ spec:
   kind: helm
   installNamespace: kubegems
   values:
-    mysql:
-      enabled: false
-    externalDatabase:
-      enabled: true
+    global:
+      storageClass: local-path # change me to use a production storage class
+      imageRegistry: docker.io
+      kubegemsVersion: main

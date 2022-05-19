@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "common.names.fullname" . }}-charts-init
+  name: {{ template "kubegems.init.charts.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: kubegems
@@ -55,7 +55,7 @@ spec:
       {{- end }}
       containers:
         - name: charts-init
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global) }}
+          image: {{ include "kubegems.init.charts.image" . }}
           imagePullPolicy: {{ .Values.init.charts.image.pullPolicy }}
           {{- if .Values.init.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.init.containerSecurityContext "enabled" | toYaml | nindent 12 }}

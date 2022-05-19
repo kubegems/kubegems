@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubegems
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems
+  namespace: kubegems
+spec:
+  enabled: true
+  kind: helm
+  installNamespace: kubegems
+  values:
+    global:
+      storageClass: local-path
+      imageRegistry: registry.cn-beijing.aliyuncs.com
+      kubegemsVersion: main
+    redis:
+      image:
+        registry: registry.cn-beijing.aliyuncs.com
+        repository: kubegems/redis
+    chartmuseum:
+      image:
+        repository: registry.cn-beijing.aliyuncs.com/kubegems/chartmuseum
+    gitea:
+      image:
+        repository: registry.cn-beijing.aliyuncs.com/kubegems/gitea
+      postgresql:
+        image:
+          registry: registry.cn-beijing.aliyuncs.com
+          repository: kubegems/postgresql
+    argo-cd:
+      global:
+        image:
+          repository: registry.cn-beijing.aliyuncs.com/kubegems/argocd
+      dex:
+        image:
+          repository: registry.cn-beijing.aliyuncs.com/kubegems/dex
+      redis:
+        image:
+          repository: registry.cn-beijing.aliyuncs.com/kubegems/redis
