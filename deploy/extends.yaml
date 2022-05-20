@@ -21,15 +21,15 @@ spec:
         paths:
           - /data
 ---
-# https://kubernetes.github.io/ingress-nginx/deploy/#quick-start
+# https://github.com/bitnami/charts/tree/master/bitnami/nginx-ingress-controller/#installing-the-chart
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
-  name: ingress-nginx
+  name: nginx-ingress-controller
   namespace: kubegems-installer
 spec:
   enabled: true
   kind: helm
   installNamespace: ingress-nginx
-  repo: https://kubernetes.github.io/ingress-nginx
-  version: 4.0.19
+  repo: https://charts.bitnami.com/bitnami
+  version: 9.2.1

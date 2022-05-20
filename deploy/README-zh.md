@@ -92,7 +92,7 @@ kubectl apply --namespace kubegems-installer -f https://raw.githubusercontent.co
 kubectl --namespace kubegems-installer get pod
 ```
 
-可选：如果您没有安装存储插件或 ingress 控制器（来自 kubeadm），可以使用如下方式安装 nginx-ingress 和 local-path-provisioner：
+可选：如果您没有安装存储插件或 ingress 控制器（来自 kubeadm），可以使用如下方式安装 nginx-ingress-controller 和 local-path-provisioner：
 
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/extends.yaml

@@ -92,7 +92,7 @@ Wait until installer is ready.
 kubectl --namespace kubegems-installer get pods
 ```
 
-Optional: install nginx-ingress and local-path-provisioner if you has no storage plugin or ingress controller installed(from kubeadm):
+Optional: install nginx-ingress-controller and local-path-provisioner if you has no storage plugin or ingress controller installed(from kubeadm):
 
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/extends.yaml
