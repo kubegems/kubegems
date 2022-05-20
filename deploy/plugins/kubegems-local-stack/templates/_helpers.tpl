@@ -1,6 +1,6 @@
 {{- define "observability.jaeger.address" -}}
 {{- if .Values.observability.enabled  }}
-    {{- printf "http://jaeger-query.%s:16686" .Values.observability.namespace }}
+    {{- printf "http://jaeger-operator-jaeger-query.%s:16686" .Values.observability.namespace }}
 {{- else -}}
     {{- .Values.observability.externalJaeger.address }}
 {{- end -}}

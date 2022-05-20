@@ -41,28 +41,41 @@ spec:
       repository: {{ printf "%s/%s/jaeger-operator" .Values.image.registry  .Values.image.repository }}
       {{- end }}
       tag: {{ .Values.observability.jaeger.version }}
+    rbac:
+      clusterRole: true
+    jaeger:
+      create: true
+      spec: 
+        strategy: production
+        ingress:
+          enabled: false
+        collector:
+          options:
+            collector.zipkin.host-port: "9411"
+        storage:
+          type: elasticsearch
+          options:
+            es:
+              {{- if .Values.observability.jaeger.externalElasticsearch }}
+              server-urls: {{ .Values.observability.jaeger.externalElasticsearch.address }}
+              {{- else }}
+              server-urls: http://elasticsearch-master.observability:9200
+              {{- end }}
 ---
-apiVersion: jaegertracing.io/v1
-kind: Jaeger
+kind: Service
+apiVersion: v1
 metadata:
-  name: jaeger
-  namespace: observability
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+  name: jaeger-query  # jaeger-operator's svc name is jaeger-operator-jaeger-query,create a new service for jaeger-query
+  namespace: {{.Values.observability.namespace }}
 spec:
-  strategy: production
-  ingress:
-    enabled: false
-  collector:
-    options:
-      collector.zipkin.host-port: "9411"
-  storage:
-    type: elasticsearch
-    options:
-      es:
-        {{- if .Values.observability.jaeger.externalElasticsearch -}}
-        server-urls: {{ .Values.observability.jaeger.externalElasticsearch.address }}
-        {{- else -}}
-        server-urls: http://elasticsearch-master.observability:9200
-        {{- end -}}
+  selector:
+    app: jaeger
+    app.kubernetes.io/component: query
+  ports:
+    - name: http-query
+      port: 16686
+      targetPort: 16686
+    - name: grpc-query
+      port: 16685
+      targetPort: 16685
 {{- end -}}
