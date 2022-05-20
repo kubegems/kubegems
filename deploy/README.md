@@ -105,7 +105,14 @@ kubectl create namespace kubegems
 kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml
 ```
 
-> Note: if you want to customize kubegems version or use a different storageClass,you must download and edit the `kubegems.yaml` file before apply.
+Note: if you want to customize kubegems version or use a different storageClass,you must download and edit the `kubegems.yaml` file before apply.
+
+```sh
+export STORAGE_CLASS=standard   # change to your storageClass
+export KUBEGEMS_VERSION=latest  # change to specify kubegems version
+curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml | sed -e "s/local-path/${STORAGE_CLASS}/g" -e "s/main/${KUBEGEMS_VERSION}/g" > kubegems.yaml
+kubectl apply -f kubegems.yaml
+```
 
 Wait until everything becomes OK.
 

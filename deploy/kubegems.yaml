@@ -15,4 +15,4 @@ spec:
       persistence:
         storageClass: local-path # change me to use a production storage class
     ingress:
-      hostname: "*" # change me to use a production hostname
+      hostname: dashboard.kubegems.io # change me to use a production hostname

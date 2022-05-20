@@ -13,7 +13,7 @@ spec:
       kubegemsVersion: main
       imageRegistry: registry.cn-beijing.aliyuncs.com
     ingress:
-      hostname: "*" # change me to use a production hostname
+      hostname: dashboard.kubegems.io # change me to use a production hostname
     gitea:
       persistence:
         storageClass: local-path # change me to use a production storage class
