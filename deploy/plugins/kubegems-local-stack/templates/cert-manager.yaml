@@ -13,31 +13,17 @@ spec:
   values:
     installCRDs: true
     image:
-      {{- if .Values.image.registry }}
       # repository: quay.io/jetstack/cert-manager-controller
-      repository: {{ printf "%s/%s/cert-manager-controller" .Values.image.registry  .Values.image.repository }}
-      {{- end }}
+      {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-controller" "context" .) }}
     webhook: 
       image:
-        {{- if .Values.image.registry }}
         # repository: quay.io/jetstack/cert-manager-webhook
-        repository: {{ printf "%s/%s/cert-manager-webhook" .Values.image.registry  .Values.image.repository }}
-        {{- end }}
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-webhook" "context" .) }}
     startupapicheck:  
       image:
-        {{- if .Values.image.registry }}
         # repository: quay.io/jetstack/cert-manager-ctl
-        repository: {{ printf "%s/%s/cert-manager-ctl" .Values.image.registry  .Values.image.repository }}
-        {{- end }}
-    controller:
-      image:
-        {{- if .Values.image.registry }}
-        # repository: quay.io/jetstack/cert-manager-controller
-        repository: {{ printf "%s/%s/cert-manager-controller" .Values.image.registry  .Values.image.repository }}
-        {{- end }}
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-ctl" "context" .) }}
     cainjector:
       image:
-        {{- if .Values.image.registry }}
         # repository: quay.io/jetstack/cert-manager-cainjector
-        repository: {{ printf "%s/%s/cert-manager-cainjector" .Values.image.registry  .Values.image.repository }}
-        {{- end }}
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-cainjector" "context" .) }}

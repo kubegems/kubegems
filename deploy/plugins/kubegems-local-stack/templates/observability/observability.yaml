@@ -16,10 +16,8 @@ spec:
   values:
     replicas: 1
     minimumMasterNodes: 1
-    {{- if .Values.image.registry }}
     # image: "docker.elastic.co/elasticsearch/elasticsearch"
-    image: {{ printf "%s/%s/elasticsearch" .Values.image.registry .Values.image.repository }}
-    {{- end }}
+    {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.elastic.co" "repository" "elasticsearch/elasticsearch" "context" .) }}
 {{- end }}
 ---
 # https://github.com/jaegertracing/helm-charts
@@ -33,13 +31,11 @@ spec:
   kind: helm
   installNamespace: {{.Values.observability.namespace }}
   repo: https://jaegertracing.github.io/helm-charts
-  version: {{ .Values.observability.operator.version }}
+  version: {{ .Values.observability.chartVersion }}
   values:
     image:
-      {{- if .Values.image.registry }}
-      # repository: jaegertracing/jaeger-operator
-      repository: {{ printf "%s/%s/jaeger-operator" .Values.image.registry  .Values.image.repository }}
-      {{- end }}
+      # repository: docker.io/jaegertracing/jaeger-operator
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "jaegertracing/jaeger-operator" "context" .) }}
       tag: {{ .Values.observability.jaeger.version }}
     rbac:
       clusterRole: true

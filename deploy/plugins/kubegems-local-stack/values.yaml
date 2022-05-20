@@ -1,8 +1,8 @@
-image:
-  registry: ""
-  repository: kubegems
-clusterName: local
-storageClass: local-path
+global:
+  imageRegistry: ""
+  imageRepository: ""
+  clusterName: local
+  storageClass: local-path
 logging:
   enabled: true
   namespace: logging
@@ -26,8 +26,7 @@ monitoring:
 observability:
   enabled: true
   namespace: observability
-  operator:
-    version: 2.30.0
+  chartVersion: 2.30.0
   jaeger:
     version: 1.30.0
     # externalElasticsearch:
@@ -53,7 +52,6 @@ gpu:
 istio:
   enabled: true
   namespace: istio-system
-  repository: docker.io/istio
   version: 1.11.7 # istio/istio-operator version
   kialiVersion: 1.38.1
   chartVersion: 1.12.6 # must >1.12.0

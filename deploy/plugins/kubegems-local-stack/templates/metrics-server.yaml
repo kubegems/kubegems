@@ -14,7 +14,5 @@ spec:
     args:
       - --kubelet-insecure-tls
     image:
-      {{- if .Values.image.registry }}
       # repository: k8s.gcr.io/metrics-server/metrics-server
-      repository: {{ printf "%s/%s/metrics-server" .Values.image.registry  .Values.image.repository }}
-      {{- end }}
+      {{ include "common.images.repository" ( dict "registry" "k8s.gcr.io" "repository" "metrics-server/metrics-server" "context" .) }}

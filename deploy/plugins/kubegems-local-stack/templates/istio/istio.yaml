@@ -20,10 +20,8 @@ spec:
     deployment:
       pod_annotations:
         sidecar.istio.io/inject: "false"
-      {{- if .Values.image.registry }}
       # image_name: quay.io/kiali/kiali
-      image_name: {{ printf "%s/%s/kiali" .Values.image.registry .Values.image.repository }}
-      {{- end }} 
+      {{ include "common.images.repository" ( dict "key" "image_name" "registry" "quay.io" "repository" "kiali/kiali" "context" .) }}
     external_services:
       grafana:
         url: {{ include "monitoring.grafana.address" . }}
@@ -46,12 +44,8 @@ spec:
   path: istio-{{ .Values.istio.chartVersion }}/manifests/charts/istio-operator
   version: {{ .Values.istio.chartVersion }}
   values:
-    {{- if .Values.image.registry }}
     # hub: gcr.io/istio-testing  # in chart default hub just for testing
-    hub: {{ printf "%s/%s" .Values.image.registry .Values.image.repository }}
-    {{- else }}
-    hub: {{ .Values.istio.repository }}
-    {{- end }}
+    {{ include "common.images.repository" ( dict "key" "hub" "registry" "gcr.io" "repository" "istio-testing" "context" .) }}
     tag:  {{ .Values.istio.version }}
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
@@ -80,14 +74,14 @@ spec:
         label:
           istio: eastwestgateway
           app: istio-eastwestgateway
-          topology.istio.io/network: {{ .Values.clusterName }}
+          topology.istio.io/network: {{ .Values.global.clusterName }}
         enabled: true
         k8s:
           env:
             - name: ISTIO_META_ROUTER_MODE
               value: "sni-dnat"
             - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-              value: {{ .Values.clusterName }}
+              value: {{ .Values.global.clusterName }}
           resources:
             limits:
               cpu: 4000m
@@ -112,7 +106,7 @@ spec:
               - name: tls-webhook
                 port: 15017
                 targetPort: 15017
-  hub: {{ .Values.istio.repository }}
+  {{ include "common.images.repository" ( dict "key" "hub" "registry" "gcr.io" "repository" "istio" "context" .) }}
   tag: {{ .Values.istio.version }}
   meshConfig:
     defaultConfig:
@@ -131,8 +125,8 @@ spec:
     global:
       meshID: mesh-default
       multiCluster:
-        clusterName: {{ .Values.clusterName }}
-      network: {{ .Values.clusterName }}
+        clusterName: {{ .Values.global.clusterName }}
+      network: {{ .Values.global.clusterName }}
       proxy_init:
         resources:
           limits:

@@ -19,53 +19,52 @@ spec:
       create: false
     kube-state-metrics:
       image:
-        {{- if .Values.image.registry }}
         # repository: k8s.gcr.io/kube-state-metrics/kube-state-metrics
-        repository: {{ printf "%s/%s/kube-state-metrics" .Values.image.registry .Values.image.repository }}
-        {{- end }}
+        {{ include "common.images.repository" ( dict "registry" "k8s.gcr.io" "repository" "kube-state-metrics/kube-state-metrics" "context" .) }}
     grafana:
       adminPassword: demo!@#admin
       initChownData:
         image:
-          {{- if .Values.image.registry }}
-          # repository: busybox
-          repository: {{ printf "%s/%s/busybox" .Values.image.registry .Values.image.repository }}
-          {{- end }}
+          # repository: docker.io/library/busybox
+          {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "library/busybox" "context" .) }}
       image:
-        {{- if .Values.image.registry }}
-        # repository: grafana/grafana
-        repository: {{ printf "%s/%s/grafana" .Values.image.registry .Values.image.repository }}
-        {{- end }}
+        # repository: docker.io/grafana/grafana
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/grafana" "context" .) }}
+      sidecar:
+        image:
+          # repository: quay.io/kiwigrid/k8s-sidecar
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "kiwigrid/k8s-sidecar" "context" .) }}
+        dashboards:
+          enabled: true
+        datasources:
+          enabled: true
     prometheusOperator:
       tls:
         enabled: false
       admissionWebhooks:
         enabled: false
       image:
-        {{- if .Values.image.registry }}
         # repository: quay.io/prometheus-operator/prometheus-operator
-        repository: {{ printf "%s/%s/prometheus-operator" .Values.image.registry .Values.image.repository }}
-        {{- end }}
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus-operator/prometheus-operator" "context" .) }}
         # tag: v0.50.1-gems
       prometheusConfigReloader:
         image:
-          {{- if .Values.image.registry }}
           # repository: quay.io/prometheus-operator/prometheus-config-reloader
-          repository: {{ printf "%s/%s/prometheus-config-reloader" .Values.image.registry .Values.image.repository }}
-          {{- end }}
-        # tag: v0.50.1-gems
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus-operator/prometheus-config-reloader" "context" .) }}
+          # tag: v0.50.1-gems
+        thanosImage:
+          # repository: quay.io/thanos/thanos
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "thanos/thanos" "context" .) }}
     prometheus:
       prometheusSpec:
         image:
-          {{- if .Values.image.registry }}
           # repository: quay.io/prometheus/prometheus
-          repository: {{ printf "%s/%s/prometheus" .Values.image.registry .Values.image.repository }}
-          {{- end }}
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus/prometheus" "context" .) }}
         enableAdminAPI: true
         enableFeatures: 
           - remote-write-receiver
         externalLabels:
-          cluster: {{ .Values.clusterName }}
+          cluster: {{ .Values.global.clusterName }}
         externalUrl: http://prometheus.{{ .Values.clusterName }}.kubegems.io:9090
         ruleSelector:
           matchExpressions:
@@ -87,7 +86,7 @@ spec:
             spec:
               accessModes:
               - ReadWriteOnce
-              storageClassName: {{ .Values.storageClass }}
+              storageClassName: {{ .Values.global.storageClass }}
               resources:
                 requests:
                   storage: 200Gi
@@ -96,10 +95,8 @@ spec:
       # templateFiles:
       alertmanagerSpec:
         image:
-          {{- if .Values.image.registry }}  
           # repository: quay.io/prometheus/alertmanager
-          repository: {{ printf "%s/%s/alertmanager" .Values.image.registry .Values.image.repository }}
-          {{- end }}
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus/alertmanager" "context" .) }}
         alertmanagerConfigSelector:
           matchExpressions:
             - key: alertmanagerconfig.kubegems.io/name
@@ -112,12 +109,12 @@ spec:
             spec:
               accessModes:
               - ReadWriteOnce
-              storageClassName: {{ .Values.storageClass }}
+              storageClassName: {{ .Values.global.storageClass }}
               resources:
                 requests:
                   storage: 10Gi
               volumeMode: Filesystem
-        externalUrl: http://alertmanager.{{ .Values.clusterName }}.kubegems.io:9093
+        externalUrl: http://alertmanager.{{ .Values.global.clusterName }}.kubegems.io:9093
         resources:
           limits:
             cpu: 500m
@@ -127,8 +124,6 @@ spec:
             memory: 128Mi
     prometheus-node-exporter:
       image:
-        {{- if .Values.image.registry }}  
         # repository: quay.io/prometheus/node-exporter
-        repository: {{ printf "%s/%s/node-exporter" .Values.image.registry .Values.image.repository }}
-        {{- end }}
-{{- end }}
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus/node-exporter" "context" .) }}
+{{- end -}}

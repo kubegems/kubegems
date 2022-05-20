@@ -1,4 +1,4 @@
-{{- if .Values.logging.enabled }}
+{{- if .Values.logging.enabled -}}
 # https://banzaicloud.com/docs/one-eye/logging-operator/install/#helm
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
@@ -13,10 +13,8 @@ spec:
   version: {{ .Values.logging.operator.version }}
   values:
     image:
-      {{- if .Values.image.registry }}
       # repository: ghcr.io/banzaicloud/logging-operator
-      repository: {{ printf "%s/%s/logging-operator" .Values.image.registry  .Values.image.repository }}
-      {{- end }}
+      {{ include "common.images.repository" ( dict "registry" "ghcr.io" "repository" "banzaicloud/logging-operator" "context" .) }}
 ---
 # https://github.com/grafana/helm-charts/tree/main/charts/loki
 apiVersion: plugins.kubegems.io/v1beta1
@@ -33,14 +31,10 @@ spec:
   values:
     promtail: 
       image:
-        {{- if .Values.image.registry }}
-        # repository: grafana/promtail
-        repository: {{ printf "%s/%s/promtail" .Values.image.registry  .Values.image.repository }}
-        {{- end }}
+        # repository: docker.io/grafana/promtail
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/promtail" "context" .) }}
     loki: 
       image:
-        {{- if .Values.image.registry }}
-        # repository: grafana/loki
-        repository: {{ printf "%s/%s/loki" .Values.image.registry  .Values.image.repository }}
-        {{- end }}
-{{- end }}
+        # repository: docker.io/grafana/loki
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/loki" "context" .) }}
+{{- end -}}

@@ -16,11 +16,11 @@ spec:
         - --api-lokiserver={{ include "logging.loki.address" . }}
         - --api-jaegerserver={{ include "observability.jaeger.address" . }}
       image:
+        {{ include "common.images.registry" . }}
+        {{ include "common.images.repository" ( dict "repository" "kubegems/kubegems" "context" .) }}
         tag: "{{ .Values.kubegems.version }}"
-        registry: "{{ .Values.kubegems.registry }}"
-        repository: "{{ .Values.kubegems.repository }}"
     controller:
       image:
+        {{ include "common.images.registry" . }}
+        {{ include "common.images.repository" ( dict "repository" "kubegems/kubegems" "context" .) }}
         tag: "{{ .Values.kubegems.version }}"
-        registry: "{{ .Values.kubegems.registry }}"
-        repository: "{{ .Values.kubegems.repository }}"

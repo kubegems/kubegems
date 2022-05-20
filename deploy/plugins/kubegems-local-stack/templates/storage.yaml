@@ -21,15 +21,11 @@ spec:
       paths:
         - /data
     image:
-      {{- if .Values.image.registry }}
-      # repository: rancher/local-path-provisioner
-      repository: {{ printf "%s/%s/local-path-provisioner" .Values.image.registry  .Values.image.repository }}
-      {{- end }}
+      # repository: docker.io/rancher/local-path-provisioner
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "rancher/local-path-provisioner" "context" .) }}
     helperImage:
-      {{- if .Values.image.registry }}
-      # repository: busybox
-      repository: {{ printf "%s/%s/busybox" .Values.image.registry  .Values.image.repository }}
-      {{- end }}
+      # repository: docker.io/library/busybox
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "library/busybox" "context" .) }}
 ---
 # https://github.com/kubernetes-csi/external-snapshotter/tree/master/client/config/crd
 apiVersion: plugins.kubegems.io/v1beta1

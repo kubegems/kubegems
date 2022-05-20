@@ -14,14 +14,8 @@ spec:
   values:
     controller:
       image:
-        {{- if .Values.image.registry }}
-        registry: {{ .Values.image.registry }}
-        repository: {{ printf "%s/argo-rollouts" .Values.image.repository }}
-        {{- else }}
-        registry: quay.io
-        repository: argoproj/argo-rollouts
-        {{- end }}
-
+        {{ include "common.images.registry" . }}
+        {{ include "common.images.repository" ( dict "repository" "argoproj/argo-rollouts" "context" .) }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ClusterAnalysisTemplate

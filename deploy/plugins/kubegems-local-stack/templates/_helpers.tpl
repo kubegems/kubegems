@@ -41,3 +41,40 @@
 {{- define "kubegems.local.agent.alert" -}}
     {{- printf "https://kubegems-local-agent.%s:8041/alert" .Values.kubegems.local.namespace }}
 {{- end -}}
+
+{{/*
+{{ include "common.images.registry" . }}
+*/}}
+{{- define "common.images.registry" -}}
+{{- $globalRegistry := .Values.global.imageRegistry -}}
+{{- if $globalRegistry -}}
+registry: {{ $globalRegistry }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+{{ include "common.images.repository" ( dict "default" "library/alpine" "context" .) }}
+*/}}
+{{- define "common.images.repository" -}}
+{{- $repository := .repository -}}
+{{- $registry := .registry -}}
+{{- $key := .key -}}
+{{- if not $key -}}
+  {{- $key = "repository" -}}
+{{- end -}}
+{{- $globalRegistry := .context.Values.global.imageRegistry -}}
+{{- $globalRepository := .context.Values.global.imageRepository -}}
+{{- if and $registry $globalRegistry -}}
+    {{- $registry = $globalRegistry -}}
+{{- end -}}
+{{- if $globalRepository -}}
+    {{- $repository = printf "%s%s" $globalRepository (regexFind "/.*" $repository)  -}}
+{{- end -}}
+{{- if or $globalRegistry $globalRepository -}}
+    {{- if $registry -}}
+        {{- printf "%s: %s/%s" $key $registry $repository -}}
+    {{- else -}}
+        {{- printf "%s: %s" $key $repository -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
