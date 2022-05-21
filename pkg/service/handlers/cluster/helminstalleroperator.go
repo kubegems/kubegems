@@ -7,7 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
-	"kubegems.io/pkg/installer/controllers"
 	"kubegems.io/pkg/installer/controllers/helm"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/kube"
@@ -59,7 +58,7 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 			Enabled:          true,
 			Kind:             pluginsv1beta1.PluginKindTemplate,
 			InstallNamespace: i.InstallNamespace, // set ns to install ns
-			Values:           controllers.MarshalValues(i.PluginsValues),
+			Values:           pluginsv1beta1.Values{Object: i.PluginsValues},
 		},
 	}
 	if err := kube.Apply(ctx, i.Config, []client.Object{allinoneplugin}, kube.WithCreateNamespace()); err != nil {

@@ -31,7 +31,7 @@ type PluginSpec struct {
 	Dependencies []Dependency `json:"dependencies,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// plugin values, helm values
-	Values runtime.RawExtension `json:"values,omitempty"`
+	Values Values `json:"values,omitempty"`
 	// plugin version,also helm chart version
 	Version string `json:"version,omitempty"`
 	// plugin repo url
@@ -59,11 +59,11 @@ type PluginStatus struct {
 	// plugin installNamespace,if empty use .metadata.namespace
 	InstallNamespace string `json:"installNamespace,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Values            runtime.RawExtension `json:"values,omitempty"`
-	Version           string               `json:"version,omitempty"`
-	CreationTimestamp metav1.Time          `json:"creationTimestamp,omitempty"`
-	UpgradeTimestamp  metav1.Time          `json:"upgradeTimestamp,omitempty"`
-	DeletionTimestamp *metav1.Time         `json:"deletionTimestamp,omitempty"`
+	Values            Values       `json:"values,omitempty"`
+	Version           string       `json:"version,omitempty"`
+	CreationTimestamp metav1.Time  `json:"creationTimestamp,omitempty"`
+	UpgradeTimestamp  metav1.Time  `json:"upgradeTimestamp,omitempty"`
+	DeletionTimestamp *metav1.Time `json:"deletionTimestamp,omitempty"`
 	// Contains the rendered templates/NOTES.txt if available
 	Notes string `json:"notes,omitempty"`
 }

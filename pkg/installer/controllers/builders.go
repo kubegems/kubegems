@@ -85,6 +85,11 @@ func (t Templater) Template(ctx context.Context, plugin Plugin) ([]byte, error) 
 	}
 	_, manifests, err := releaseutil.SortManifests(renderdFiles, caps.APIVersions, releaseutil.InstallOrder)
 	if err != nil {
+		out := os.Stderr
+		for file, val := range renderdFiles {
+			fmt.Fprintf(out, "---\n# Source: %s\n%s\n", file, val)
+		}
+		fmt.Fprintln(out, "---")
 		return nil, err
 	}
 	out := bytes.NewBuffer(nil)

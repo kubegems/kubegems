@@ -67,6 +67,7 @@ func NewPluginTemplateCmd(global *controllers.PluginOptions) *cobra.Command {
 					}
 					if fi.IsDir() {
 						// template current directory
+						pm.Options.SearchDirs = append(pm.Options.SearchDirs, filepath.Dir(path))
 						err := templatePrint(ctx, pm, &pluginsv1beta1.Plugin{
 							ObjectMeta: metav1.ObjectMeta{Name: filepath.Base(path), Namespace: "default"},
 							Spec:       pluginsv1beta1.PluginSpec{Enabled: true, Kind: controllers.DetectPluginType(path)},
