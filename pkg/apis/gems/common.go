@@ -8,8 +8,8 @@ const (
 	LabelZone        = GroupName + "/zone"
 	LabelPlugins     = GroupName + "/plugins"
 
-	NamespaceSystem   = "gemcloud-system"
-	NamespaceMonitor  = "gemcloud-monitoring-system"
+	NamespaceSystem   = "kubegems"
+	NamespaceMonitor  = "kubegems-monitoring"
 	NamespaceLogging  = "gemcloud-logging-system"
 	NamespaceGateway  = "gemcloud-gateway-system"
 	NamespaceWorkflow = "gemcloud-workflow-system"
@@ -33,6 +33,9 @@ const (
 const (
 	LabelMonitorCollector = GroupName + "/monitoring"
 	LabelLogCollector     = GroupName + "/logging"
+
+	LabelAlertmanagerConfig = "alertmanagerconfig.kubegems.io/name"
+	LabelPrometheusRule     = "prometheusrule.kubegems.io/name"
 
 	StatusEnabled  = "enabled"
 	StatusDisabled = "disabled"
