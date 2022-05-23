@@ -55,7 +55,7 @@ spec:
           ca: {}
           cert: {}
           insecureSkipVerify: true
-      url: https://kubegems-local-agent.{{ .Values.kubegems.local.namespace }}:8041/alert
+      url: https://kubegems-local-agent.{{ index .Values "kubegems-local" "namespace" }}:8041/alert
   route:
     groupBy:
     - gems_namespace
