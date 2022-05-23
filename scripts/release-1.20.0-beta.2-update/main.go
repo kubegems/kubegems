@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/agent/indexer"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/apis/networking"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/kube"
@@ -44,7 +45,9 @@ func main() {
 func updateAMConfig(cli client.Client) {
 	ctx := context.TODO()
 	amCfgs := v1alpha1.AlertmanagerConfigList{}
-	if err := cli.List(ctx, &amCfgs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
+	if err := cli.List(ctx, &amCfgs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{
+		gems.LabelAlertmanagerConfig: prometheus.MonitorAlertmanagerConfigName,
+	})); err != nil {
 		panic(err)
 	}
 

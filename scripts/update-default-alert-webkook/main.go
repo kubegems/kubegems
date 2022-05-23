@@ -8,6 +8,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"kubegems.io/pkg/agent/cluster"
 	"kubegems.io/pkg/agent/indexer"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,7 +34,9 @@ func main() {
 	c.GetCache().WaitForCacheSync(ctx)
 
 	amCfgs := v1alpha1.AlertmanagerConfigList{}
-	if err := c.GetClient().List(ctx, &amCfgs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(prometheus.AlertmanagerConfigSelector)); err != nil {
+	if err := c.GetClient().List(ctx, &amCfgs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{
+		gems.LabelAlertmanagerConfig: prometheus.MonitorAlertmanagerConfigName,
+	})); err != nil {
 		panic(err)
 	}
 
