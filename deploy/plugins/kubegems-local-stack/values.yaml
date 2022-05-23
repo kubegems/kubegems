@@ -16,7 +16,7 @@ monitoring:
   enabled: true
   namespace: kubegems-monitoring
   operator:
-    version: 34.9.0
+    version: 35.2.0
   # externalPrometheus:
   #   address: http://kube-prometheus-stack-prometheus.prometheus:9090
   # externalAlertmanager:
