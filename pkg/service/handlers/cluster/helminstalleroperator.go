@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	pluginscommon "kubegems.io/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	"kubegems.io/pkg/installer/controllers/helm"
 	"kubegems.io/pkg/log"
@@ -15,10 +16,10 @@ import (
 
 const (
 	KubeGemPluginsPath               = "plugins"
-	KubeGemsInstallerPluginName      = "kubegems-installer"
-	KubeGemsInstallerPluginNamespace = "kubegems-installer"
-	KubeGemsLocalPluginsNamespace    = "kubegems-local"
-	KubeGemsLocalPluginsName         = "kubegems-local-stack"
+	KubeGemsInstallerPluginName      = pluginscommon.KubeGemsInstallerPluginsNamespace
+	KubeGemsInstallerPluginNamespace = pluginscommon.KubeGemsInstallerPluginsNamespace
+	KubeGemsLocalPluginsNamespace    = pluginscommon.KubeGemsLocalPluginsNamespace
+	KubeGemsLocalPluginsName         = pluginscommon.KubeGemsLocalPluginsName
 )
 
 type OpratorInstaller struct {

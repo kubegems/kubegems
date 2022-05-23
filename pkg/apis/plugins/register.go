@@ -18,3 +18,16 @@ package plugins
 
 // GroupName is the group name used in this package
 const GroupName = "plugins.kubegems.io"
+
+const (
+	AnnotationDescription  = "plugins.kubegems.io/description"
+	AnnotationCategory     = "plugins.kubegems.io/category"
+	AnnotationMainCategory = "plugins.kubegems.io/main-category"
+	AnnotationIcon         = "plugins.kubegems.io/icon"
+)
+
+const (
+	KubeGemsLocalPluginsName          = "kubegems-local-stack"
+	KubeGemsLocalPluginsNamespace     = "kubegems-local"
+	KubeGemsInstallerPluginsNamespace = "kubegems-installer"
+)

@@ -1,4 +1,4 @@
-package controllers
+package v1beta1
 
 import (
 	"reflect"

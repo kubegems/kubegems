@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func KustomizeTemplatePlugin(ctx context.Context, plugin Plugin) ([]byte, error) {
+func KustomizeTemplatePlugin(ctx context.Context, plugin *Plugin) ([]byte, error) {
 	return KustomizeBuild(ctx, plugin.Path)
 }
 
@@ -37,7 +37,7 @@ func KustomizeBuild(ctx context.Context, dir string) ([]byte, error) {
 	return []byte(yml), nil
 }
 
-func InlineTemplatePlugin(ctx context.Context, plugin Plugin) ([]byte, error) {
+func InlineTemplatePlugin(ctx context.Context, plugin *Plugin) ([]byte, error) {
 	out := bytes.NewBuffer(nil)
 	for _, obj := range plugin.Resources {
 		out.WriteString("---\n")
@@ -54,7 +54,7 @@ type Templater struct {
 }
 
 // TemplatesTemplate using helm template engine to render,but allow apply to different namespaces
-func (t Templater) Template(ctx context.Context, plugin Plugin) ([]byte, error) {
+func (t Templater) Template(ctx context.Context, plugin *Plugin) ([]byte, error) {
 	options := chartutil.ReleaseOptions{
 		Name:      plugin.Name,
 		Namespace: plugin.Namespace,
@@ -69,6 +69,10 @@ func (t Templater) Template(ctx context.Context, plugin Plugin) ([]byte, error) 
 	valuesToRender, err := chartutil.ToRenderValues(chart, plugin.Values, options, caps)
 	if err != nil {
 		return nil, err
+	}
+
+	if vals, ok := valuesToRender.AsMap()["Values"].(chartutil.Values); ok {
+		plugin.FullValues = vals
 	}
 
 	var renderdFiles map[string]string
@@ -104,7 +108,7 @@ func (t Templater) Template(ctx context.Context, plugin Plugin) ([]byte, error) 
 
 const chartFileName = "Chart.yaml"
 
-func Load(plugin Plugin) (*chart.Chart, error) {
+func Load(plugin *Plugin) (*chart.Chart, error) {
 	absdir, err := filepath.Abs(plugin.Path)
 	if err != nil {
 		return nil, err

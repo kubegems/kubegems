@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -500,15 +501,19 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			json.Unmarshal(cluster.Values, &values)
 
 			// override values
+			values["kubegems-local"] = map[string]interface{}{
+				"version": version.Get().GitVersion,
+			}
 			values["kubegems"] = map[string]interface{}{
 				"version": version.Get().GitVersion,
 			}
-			values["image"] = map[string]interface{}{
-				"registry": cluster.ImageRepo, // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
-			}
-			values["clusterName"] = cluster.ClusterName
-			values["storageClass"] = cluster.DefaultStorageClass
 
+			registryHost := strings.SplitAfter(cluster.ImageRepo, "/")[0]
+			values["global"] = map[string]interface{}{
+				"imageRegistry": registryHost, // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
+				"clusterName":   cluster.ClusterName,
+				"storageClass":  cluster.DefaultStorageClass,
+			}
 			// installer
 			installer := OpratorInstaller{
 				Config: config,

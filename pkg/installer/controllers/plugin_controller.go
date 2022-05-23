@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -32,7 +33,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-const PluginFinalizerName = "plugins.kubegems.io/finalizer"
+const (
+	PluginFinalizerName             = "plugins.kubegems.io/finalizer"
+	PluginAnnotationsShowFullValues = "plugins.kubegems.io/show-full-values"
+)
 
 // PluginReconciler reconciles a Memcached object
 type PluginReconciler struct {
@@ -92,11 +96,19 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	beforeStatus := plugin.Status.DeepCopy()
+	beforePlugin := plugin.DeepCopy()
 
 	err := r.Sync(ctx, plugin)
 	// update status if updated whenever the sync has error or no
+
 	if !apiequality.Semantic.DeepEqual(plugin.Status, beforeStatus) {
-		if err := r.Status().Update(ctx, plugin); err != nil {
+		if err := r.Status().Update(ctx, plugin.DeepCopy()); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+	// patch .spec
+	if !reflect.DeepEqual(plugin.Spec, beforePlugin.Spec) {
+		if err := r.Patch(ctx, plugin, client.MergeFrom(beforePlugin)); err != nil {
 			return ctrl.Result{}, err
 		}
 	}

@@ -1,27 +1,36 @@
 package apis
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/pkg/agent/cluster"
-	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	pluginscommon "kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/gemsplugin"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PluginHandler struct {
 	cluster cluster.Interface
 }
 
-type PluginsRet struct {
-	CorePlugins       map[string][]*gemsplugin.Plugin `json:"core"`
-	KubernetesPlugins map[string][]*gemsplugin.Plugin `json:"kubernetes"`
+type PluginSimpleStatus struct {
+	Enabled bool `json:"enabled"`
+	Healthy bool `json:"healthy"`
+}
+
+type PluginStatus struct {
+	Name        string `json:"name"`
+	Namespace   string `json:"namespace"`
+	Description string `json:"description"`
+	Version     string `json:"version"`
+	PluginSimpleStatus
+
+	mainCategory string `json:"-"`
+	category     string `json:"-"`
 }
 
 // @Tags         Agent.Plugin
@@ -31,77 +40,77 @@ type PluginsRet struct {
 // @Produce      json
 // @Param        cluster  path      string                                    true  "cluster"
 // @Param        simple   query     bool                                      true  "simple"
-// @Success      200      {object}  handlers.ResponseStruct{Data=PluginsRet}  "Plugins"
+// @Success      200      {object}  handlers.ResponseStruct{Data=map[string]map[string]PluginStatus}  "Plugins"
 // @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
 // @Security     JWT
 func (h *PluginHandler) List(c *gin.Context) {
-	simple, _ := strconv.ParseBool(c.Query("simple"))
-	if simple {
-		ret, err := h.PluginSimple(c.Request.Context())
-		if err != nil {
-			NotOK(c, err)
-			return
+	plugins, err := gemsplugin.ListPlugins(c.Request.Context(), h.cluster.GetClient())
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	// convert to view model
+	viewplugins := make([]PluginStatus, 0, len(plugins))
+	for _, plugin := range plugins {
+		viewplugin := PluginStatus{
+			Name:        plugin.Name,
+			Namespace:   plugin.Namespace,
+			Version:     plugin.Version,
+			Description: plugin.Description,
+			PluginSimpleStatus: PluginSimpleStatus{
+				Enabled: plugin.Enabled,
+				Healthy: true, // todo: check health
+			},
+		}
+		if annotaions := plugin.Annotations; annotaions != nil {
+			viewplugin.mainCategory = annotaions[pluginscommon.AnnotationMainCategory]
+			viewplugin.category = annotaions[pluginscommon.AnnotationCategory]
+			viewplugin.Description = annotaions[pluginscommon.AnnotationDescription]
+		}
+		viewplugins = append(viewplugins, viewplugin)
+	}
+
+	if simple, _ := strconv.ParseBool(c.Query("simple")); simple {
+		ret := map[string]PluginSimpleStatus{}
+		for _, v := range viewplugins {
+			ret[v.Name] = v.PluginSimpleStatus
 		}
 		OK(c, ret)
-	} else {
-		allPlugins, err := gemsplugin.GetPlugins(h.cluster.Discovery())
-		if err != nil {
-			log.Error(err, "get plugins")
-			NotOK(c, err)
-			return
-		}
-		ret := PluginsRet{
-			CorePlugins:       make(map[string][]*gemsplugin.Plugin),
-			KubernetesPlugins: make(map[string][]*gemsplugin.Plugin),
-		}
-		for pluginName, v := range allPlugins.Spec.CorePlugins {
-			v.Status.IsHealthy = gemsplugin.IsPluginHelthy(h.cluster, v)
-			v.Name = pluginName
-			ret.CorePlugins[v.Details.Catalog] = append(ret.CorePlugins[v.Details.Catalog], v)
-		}
-		for pluginName, v := range allPlugins.Spec.KubernetesPlugins {
-			v.Status.IsHealthy = gemsplugin.IsPluginHelthy(h.cluster, v)
-			v.Name = pluginName
-			ret.KubernetesPlugins[v.Details.Catalog] = append(ret.KubernetesPlugins[v.Details.Catalog], v)
-		}
-
-		for _, v := range ret.CorePlugins {
-			sort.Slice(v, func(i, j int) bool {
-				return v[i].Name < v[j].Name
+		return
+	}
+	mainCategoryFunc := func(t PluginStatus) string {
+		return t.mainCategory
+	}
+	categoryfunc := func(t PluginStatus) string {
+		return t.category
+	}
+	categoryPlugins := map[string]map[string][]PluginStatus{}
+	for maincategory, list := range withCategory(viewplugins, mainCategoryFunc) {
+		categorized := withCategory(list, categoryfunc)
+		// sort
+		for _, list := range categorized {
+			sort.Slice(list, func(i, j int) bool {
+				return list[i].Name < list[j].Name
 			})
 		}
-		for _, v := range ret.KubernetesPlugins {
-			sort.Slice(v, func(i, j int) bool {
-				return v[i].Name < v[j].Name
-			})
-		}
-
-		OK(c, ret)
+		categoryPlugins[maincategory] = categorized
 	}
+	OK(c, categoryPlugins)
 }
 
-type PluginStatus map[string]bool
-
-// plugin name -> display plugin name
-// TODO: move after frontend updated
-var PluginNameMapping = map[string]string{
-	"argo-rollouts": "argo_rollouts",
-}
-
-func (h *PluginHandler) PluginSimple(ctx context.Context) (PluginStatus, error) {
-	pluginList := &pluginsv1beta1.PluginList{}
-	if err := h.cluster.GetClient().List(ctx, pluginList, &client.ListOptions{}); err != nil {
-		return nil, err
-	}
-	ret := PluginStatus{}
-	for _, plugin := range pluginList.Items {
-		if retname, ok := PluginNameMapping[plugin.Name]; ok {
-			ret[retname] = plugin.Spec.Enabled
-		} else {
-			ret[plugin.Name] = plugin.Spec.Enabled
+func withCategory[T any](list []T, getCate func(T) string) map[string][]T {
+	ret := map[string][]T{}
+	for _, v := range list {
+		cate := getCate(v)
+		if cate == "" {
+			cate = "others"
 		}
+		if _, ok := ret[cate]; !ok {
+			ret[cate] = []T{}
+		}
+		ret[cate] = append(ret[cate], v)
 	}
-	return ret, nil
+	return ret
 }
 
 // @Tags         Agent.Plugin
@@ -116,9 +125,12 @@ func (h *PluginHandler) PluginSimple(ctx context.Context) (PluginStatus, error) 
 // @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [put]
 // @Security     JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
-	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {
-		plugin.Enabled = true
-	}); err != nil {
+	name := c.Param("name")
+	if name == "" {
+		handlers.NotOK(c, fmt.Errorf("empty plugin name"))
+		return
+	}
+	if err := gemsplugin.EnablePlugin(c.Request.Context(), h.cluster.GetClient(), name, false); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
 		handlers.NotOK(c, err)
 		return
@@ -138,44 +150,15 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable [put]
 // @Security     JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
-	if err := h.updatePlugin(c, func(plugin *gemsplugin.Plugin) {
-		plugin.Enabled = false
-	}); err != nil {
+	name := c.Param("name")
+	if name == "" {
+		handlers.NotOK(c, fmt.Errorf("empty plugin name"))
+		return
+	}
+	if err := gemsplugin.EnablePlugin(c.Request.Context(), h.cluster.GetClient(), name, true); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
 		handlers.NotOK(c, err)
 		return
 	}
 	handlers.OK(c, "ok")
-}
-
-func (h *PluginHandler) updatePlugin(
-	c *gin.Context,
-	mutatePlugin func(plugin *gemsplugin.Plugin),
-) error {
-	plugintype := c.Query("type")
-	name := c.Param("name")
-	allPlugins, err := gemsplugin.GetPlugins(h.cluster.Discovery())
-	if err != nil {
-		return err
-	}
-	var found *gemsplugin.Plugin
-	switch plugintype {
-	case gemsplugin.TypeCorePlugins:
-		if v, ok := allPlugins.Spec.CorePlugins[name]; ok {
-			found = v
-		} else {
-			return fmt.Errorf("no such plugin")
-		}
-	case gemsplugin.TypeKubernetesPlugins:
-		if v, ok := allPlugins.Spec.KubernetesPlugins[name]; ok {
-			found = v
-		} else {
-			return fmt.Errorf("no such plugin")
-		}
-	default:
-		return fmt.Errorf("unknown plugin type")
-	}
-
-	mutatePlugin(found)
-	return gemsplugin.UpdatePlugins(h.cluster.Discovery(), allPlugins)
 }

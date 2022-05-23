@@ -10,7 +10,7 @@ spec:
   kind: helm
   installNamespace: {{ .Values.logging.namespace }}
   repo: https://kubernetes-charts.banzaicloud.com
-  version: {{ .Values.logging.operator.version }}
+  version: {{ .Values.logging.version }}
   values:
     image:
       # repository: ghcr.io/banzaicloud/logging-operator
@@ -27,7 +27,7 @@ spec:
   kind: helm
   installNamespace: {{ .Values.logging.namespace }}
   repo: https://grafana.github.io/helm-charts
-  version: {{ .Values.logging.loki.version }}
+  version: {{ .Values.logging.values.loki.version }}
   values:
     promtail: 
       image:

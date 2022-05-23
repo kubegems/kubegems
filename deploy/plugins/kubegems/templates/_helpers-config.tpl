@@ -233,7 +233,7 @@ Return the proper argocd password secret
 */}}
 {{- define "kubegems.argocd.password.secret" -}}
 {{- $argocd := index .Values "argo-cd" -}}
-{{- if and $argocd.enabled $argocd.configs.secret.createSecret -}}
+{{- if and $argocd.enabled -}}
     {{- printf "argocd-initial-admin-secret" -}}
 {{- else if and .Values.externalArgoCD.enabled .Values.externalArgoCD.existingSecret -}}
     {{- .Values.externalArgoCD.existingSecret -}}

@@ -8,7 +8,6 @@ import (
 	kversion "k8s.io/apimachinery/pkg/version"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/gemsplugin"
 	"kubegems.io/pkg/utils/kube"
 )
 
@@ -74,12 +73,6 @@ func (h *ClusterHandler) ValidateKubeConfig(c *gin.Context) {
 	}
 	for _, sc := range scList.Items {
 		resp.StorageClasses = append(resp.StorageClasses, sc.GetName())
-	}
-
-	plugins, err := gemsplugin.GetPlugins(clientSet.DiscoveryClient)
-	if err == nil {
-		resp.ExistInstaller = true
-		resp.ClusterName = plugins.Spec.ClusterName
 	}
 	handlers.OK(c, resp)
 }

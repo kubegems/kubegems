@@ -1,0 +1,54 @@
+{{- if .Values.kubegems.enabled -}}
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems
+  namespace: {{ .Values.kubegems.namespace }}
+spec:
+  enabled: true
+  kind: helm
+  values:
+    global:
+      storageClass: "{{ .Values.global.storageClass }}"
+      kubegemsVersion: "{{ .Values.kubegems.version }}"
+      imageRegistry: "{{ .Values.global.imageRegistry }}"
+    ingress:
+      hostname: "{{ .Values.kubegems.values.ingress.hostname }}"
+    gitea:
+      persistence:
+        storageClass: "{{ .Values.global.storageClass }}"
+      image:
+        # repository: gitea/gitea
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "gitea/gitea" "context" .) }}
+      postgresql:
+        image:
+          # repository: bitnami/postgresql
+          {{ include "common.images.repository" ( dict "repository" "bitnami/postgresql" "context" .) }}
+    mysql:
+      image:
+        # repository: bitnami/mysql
+        {{ include "common.images.repository" ( dict "repository" "bitnami/mysql" "context" .) }}
+        tag: "8.0"
+    redis:
+      image:
+        # repository: bitnami/redis
+        {{ include "common.images.repository" ( dict "repository" "bitnami/redis" "context" .) }}
+        tag: "6.2.7-debian-10"
+    chartmuseum:
+      image:
+        # repository: ghcr.io/helm/chartmuseum
+        {{ include "common.images.repository" ( dict "registry" "ghcr.io" "repository" "helm/chartmuseum" "context" .) }}
+    argo-cd:
+      global:
+        image:
+          # repository: quay.io/argoproj/argocd
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "argoproj/argocd" "context" .) }}
+      dex:
+        image:
+          # repository: ghcr.io/dexidp/dex
+          {{ include "common.images.repository" ( dict "registry" "ghcr.io" "repository" "dexidp/dex" "context" .) }}
+      redis:
+        image:
+          # repository: redis
+          {{ include "common.images.repository" ( dict "repository" "library/redis" "context" .) }}
+{{- end -}}

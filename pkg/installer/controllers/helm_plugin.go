@@ -24,8 +24,8 @@ func NewHelmPlugin(config *rest.Config, options *PluginOptions) *HelmPlugin {
 	return &HelmPlugin{Helm: &helm.Helm{Config: config}, PluginOptions: options}
 }
 
-func (r *HelmPlugin) Template(ctx context.Context, plugin Plugin) ([]byte, error) {
-	if err := DownloadPlugin(ctx, &plugin, r.CacheDir, r.SearchDirs...); err != nil {
+func (r *HelmPlugin) Template(ctx context.Context, plugin *Plugin) ([]byte, error) {
+	if err := DownloadPlugin(ctx, plugin, r.CacheDir, r.SearchDirs...); err != nil {
 		return nil, err
 	}
 
@@ -43,8 +43,8 @@ func (r *HelmPlugin) Template(ctx context.Context, plugin Plugin) ([]byte, error
 	return []byte(upgradeRelease.Manifest), nil
 }
 
-func (r *HelmPlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
-	if err := DownloadPlugin(ctx, &plugin, r.CacheDir, r.SearchDirs...); err != nil {
+func (r *HelmPlugin) Apply(ctx context.Context, plugin *Plugin, status *PluginStatus) error {
+	if err := DownloadPlugin(ctx, plugin, r.CacheDir, r.SearchDirs...); err != nil {
 		return err
 	}
 
@@ -74,7 +74,7 @@ func (r *HelmPlugin) Apply(ctx context.Context, plugin Plugin, status *PluginSta
 	return nil
 }
 
-func (r *HelmPlugin) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (r *HelmPlugin) Remove(ctx context.Context, plugin *Plugin, status *PluginStatus) error {
 	log := logr.FromContextOrDiscard(ctx)
 
 	if status.Phase == pluginsv1beta1.PluginPhaseNone {

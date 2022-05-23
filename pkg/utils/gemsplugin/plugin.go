@@ -3,13 +3,15 @@ package gemsplugin
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 
-	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"kubegems.io/pkg/agent/cluster"
-	"kubegems.io/pkg/log"
+	pluginscommon "kubegems.io/pkg/apis/plugins"
+	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -65,73 +67,69 @@ type Status struct {
 	Host        string   `json:"host,omitempty"`
 }
 
-func GetPlugins(dis discovery.DiscoveryInterface) (*Plugins, error) {
-	ctx := context.TODO()
-	obj, err := dis.RESTClient().Get().AbsPath(realPluginURL).Do(ctx).Raw()
-	if err != nil {
-		log.Errorf("error getting plugins: %v", err)
-		return nil, err
-	}
-
-	gemsplugins := &Plugins{}
-	if err := json.Unmarshal(obj, gemsplugins); err != nil {
-		log.Errorf("error unmarshalling plugins: %v", err)
-	}
-	return gemsplugins, err
+type PluginState struct {
+	Annotations map[string]string      `json:"annotations"`
+	Enabled     bool                   `json:"enabled"`
+	Name        string                 `json:"name"`
+	Namespace   string                 `json:"namespace"`
+	Version     string                 `json:"version"`
+	Description string                 `json:"description"`
+	Values      map[string]interface{} `json:"values"`
 }
 
-func UpdatePlugins(dis discovery.DiscoveryInterface, plugins *Plugins) error {
-	ctx := context.TODO()
-	obj, err := json.Marshal(plugins)
-	if err != nil {
-		return err
+func ListPlugins(ctx context.Context, cli client.Client) ([]PluginState, error) {
+	allinoneplugin := &pluginsv1beta1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pluginscommon.KubeGemsLocalPluginsName,
+			Namespace: pluginscommon.KubeGemsLocalPluginsNamespace,
+		},
 	}
-	_, err = dis.RESTClient().Put().AbsPath(realPluginURL).Body(obj).DoRaw(ctx)
-	if err != nil {
-		log.Errorf("error update plugins: %v", err)
-		return err
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(allinoneplugin), allinoneplugin); err != nil {
+		return nil, err
 	}
-	return nil
+	vals := allinoneplugin.Spec.Values.Object
+	_ = vals
+
+	globalValues := vals["global"]
+	_ = globalValues
+	delete(vals, "global")
+
+	var plugins map[string]PluginState
+	if err := json.Unmarshal(allinoneplugin.Spec.Values.Raw, &plugins); err != nil {
+		return nil, err
+	}
+	result := []PluginState{}
+	for name, plugin := range plugins {
+		if name == "global" {
+			continue
+		}
+		plugin.Name = name
+		result = append(result, plugin)
+	}
+	return result, nil
+}
+
+func EnablePlugin(ctx context.Context, cli client.Client, name string, enable bool) error {
+	allinoneplugin := &pluginsv1beta1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pluginscommon.KubeGemsLocalPluginsName,
+			Namespace: pluginscommon.KubeGemsLocalPluginsNamespace,
+		},
+	}
+	patch := client.RawPatch(types.MergePatchType, []byte(`{"spec":{"values":{"`+name+`":{"enabled":`+strconv.FormatBool(enable)+`}}}}`))
+	return cli.Patch(ctx, allinoneplugin, patch)
+}
+
+func GetPlugins(dis discovery.DiscoveryInterface) (*Plugins, error) {
+	gemsplugins := &Plugins{}
+	// TODO: remove this function
+	return gemsplugins, nil
 }
 
 func IsPluginHelthy(clus cluster.Interface, plugin *Plugin) bool {
 	if !plugin.Enabled {
 		return false
 	}
-	if len(plugin.Deployment)+len(plugin.Statefulset)+len(plugin.Daemonset) == 0 {
-		return false
-	}
-
-	ctx := context.TODO()
-	for _, v := range plugin.Deployment {
-		obj := appsv1.Deployment{}
-		err := clus.GetClient().Get(ctx, types.NamespacedName{
-			Namespace: plugin.Namespace,
-			Name:      v,
-		}, &obj)
-		if err != nil || obj.Spec.Replicas == nil || obj.Status.ReadyReplicas != *obj.Spec.Replicas {
-			return false
-		}
-	}
-	for _, v := range plugin.Statefulset {
-		obj := appsv1.StatefulSet{}
-		err := clus.GetClient().Get(ctx, types.NamespacedName{
-			Namespace: plugin.Namespace,
-			Name:      v,
-		}, &obj)
-		if err != nil || obj.Spec.Replicas == nil || obj.Status.ReadyReplicas != *obj.Spec.Replicas {
-			return false
-		}
-	}
-	for _, v := range plugin.Daemonset {
-		obj := appsv1.DaemonSet{}
-		err := clus.GetClient().Get(ctx, types.NamespacedName{
-			Namespace: plugin.Namespace,
-			Name:      v,
-		}, &obj)
-		if err != nil || obj.Status.NumberReady != obj.Status.DesiredNumberScheduled {
-			return false
-		}
-	}
+	// TODO: plgin status
 	return true
 }

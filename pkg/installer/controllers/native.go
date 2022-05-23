@@ -43,7 +43,7 @@ func WithManagedResourceSelectByPluginName(namespace, name string) gitops.Option
 	})
 }
 
-type TemplateFunc func(ctx context.Context, plugin Plugin) ([]byte, error)
+type TemplateFunc func(ctx context.Context, plugin *Plugin) ([]byte, error)
 
 func NewNativePlugin(restconfig *rest.Config, options *PluginOptions, buildfun TemplateFunc) *NativePlugin {
 	return &NativePlugin{
@@ -53,8 +53,8 @@ func NewNativePlugin(restconfig *rest.Config, options *PluginOptions, buildfun T
 	}
 }
 
-func (n *NativePlugin) Template(ctx context.Context, plugin Plugin) ([]byte, error) {
-	if err := DownloadPlugin(ctx, &plugin, n.PluginOptions.CacheDir, n.PluginOptions.SearchDirs...); err != nil {
+func (n *NativePlugin) Template(ctx context.Context, plugin *Plugin) ([]byte, error) {
+	if err := DownloadPlugin(ctx, plugin, n.PluginOptions.CacheDir, n.PluginOptions.SearchDirs...); err != nil {
 		return nil, err
 	}
 	// tmplate
@@ -70,7 +70,7 @@ func (n *NativePlugin) Template(ctx context.Context, plugin Plugin) ([]byte, err
 	return append(manifestdoc, inlinedoc...), nil
 }
 
-func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (n *NativePlugin) Apply(ctx context.Context, plugin *Plugin, status *PluginStatus) error {
 	log := logr.FromContextOrDiscard(ctx).WithValues("name", plugin.Name, "namespace", plugin.Namespace)
 
 	// check already uptodate
@@ -127,7 +127,7 @@ func (n *NativePlugin) Apply(ctx context.Context, plugin Plugin, status *PluginS
 	return nil
 }
 
-func (n *NativePlugin) Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (n *NativePlugin) Remove(ctx context.Context, plugin *Plugin, status *PluginStatus) error {
 	log := logr.FromContextOrDiscard(ctx)
 	namespace, name := plugin.Namespace, plugin.Name
 

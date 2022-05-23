@@ -1,10 +1,17 @@
-{{- if .Values.kubegems.installer.enabled -}}
+{{- if index .Values "kubegems-installer" "enabled" -}}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kubegems-installer
-  namespace: kubegems-installer
+  namespace: {{ index .Values "kubegems-installer" "namespace" }}
 spec:
   kind: helm
   enabled: true
+  values:
+    globale:
+      imageRegistry: "{{ .Values.global.imageRegistry }}"
+      storageClass: "{{ .Values.global.storageClass }}"
+    installer:
+      image:
+        tag: {{ index .Values "kubegems-installer" "version" }}
 {{- end }}

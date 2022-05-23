@@ -14,7 +14,7 @@ import (
 func TestTemplatesBuildPlugin(t *testing.T) {
 	type args struct {
 		ctx    context.Context
-		plugin Plugin
+		plugin *Plugin
 	}
 	tests := []struct {
 		name       string
@@ -27,7 +27,7 @@ func TestTemplatesBuildPlugin(t *testing.T) {
 			name: "test build kubegem-local-stack",
 			args: args{
 				ctx: context.Background(),
-				plugin: func(t *testing.T) Plugin {
+				plugin: func(t *testing.T) *Plugin {
 					plugindefinition := "../../../deploy/plugins/kubegems-local-stack.yaml"
 					plugindpath := "../../../deploy/plugins/kubegems-local-stack"
 					content, err := ioutil.ReadFile(plugindefinition)

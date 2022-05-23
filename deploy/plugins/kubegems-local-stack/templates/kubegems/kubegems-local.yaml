@@ -2,12 +2,10 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kubegems-local
-  namespace: "{{ .Release.Namespace }}"
+  namespace: "{{ index .Values "kubegems-local" "namespace" }}"
 spec:
   kind: helm
   enabled: true
-  dependencies:
-    - name: cert-manager
   values:
     agent:
       extraArgs:
@@ -18,9 +16,9 @@ spec:
       image:
         {{ include "common.images.registry" . }}
         {{ include "common.images.repository" ( dict "repository" "kubegems/kubegems" "context" .) }}
-        tag: "{{ .Values.kubegems.version }}"
+        tag: "{{ index .Values "kubegems-local" "version" }}"
     controller:
       image:
         {{ include "common.images.registry" . }}
         {{ include "common.images.repository" ( dict "repository" "kubegems/kubegems" "context" .) }}
-        tag: "{{ .Values.kubegems.version }}"
+        tag: "{{ index .Values "kubegems-local" "version" }}"

@@ -14,9 +14,9 @@ var ErrUnknownPluginKind = errors.New("unknown plugin kind")
 
 type PluginInstaller interface {
 	// plugin is the plugin to apply,if plugin.path set use it directly.
-	Template(ctx context.Context, plugin Plugin) ([]byte, error)
-	Apply(ctx context.Context, plugin Plugin, status *PluginStatus) error
-	Remove(ctx context.Context, plugin Plugin, status *PluginStatus) error
+	Template(ctx context.Context, plugin *Plugin) ([]byte, error)
+	Apply(ctx context.Context, plugin *Plugin, status *PluginStatus) error
+	Remove(ctx context.Context, plugin *Plugin, status *PluginStatus) error
 }
 
 type PluginOptions struct {
@@ -76,7 +76,7 @@ func (m *PluginManager) Template(ctx context.Context, apiplugin *pluginsv1beta1.
 
 func (m *PluginManager) Download(ctx context.Context, apiplugin *pluginsv1beta1.Plugin) error {
 	plugin := PluginFromPlugin(apiplugin)
-	return DownloadPlugin(ctx, &plugin, m.Options.CacheDir, m.Options.SearchDirs...)
+	return DownloadPlugin(ctx, plugin, m.Options.CacheDir, m.Options.SearchDirs...)
 }
 
 func (m *PluginManager) Apply(ctx context.Context, apiplugin *pluginsv1beta1.Plugin, options ...PluginManagerOption) error {
@@ -94,10 +94,14 @@ func (m *PluginManager) Apply(ctx context.Context, apiplugin *pluginsv1beta1.Plu
 
 	err := m.apply(ctx, thisPlugin, thisStatus)
 	apiplugin.Status = thisStatus.toPluginStatus()
+
+	if len(thisPlugin.FullValues) > 0 {
+		apiplugin.Spec.Values = pluginsv1beta1.Values{Object: thisPlugin.FullValues}
+	}
 	return err
 }
 
-func (m *PluginManager) apply(ctx context.Context, plugin Plugin, status *PluginStatus) error {
+func (m *PluginManager) apply(ctx context.Context, plugin *Plugin, status *PluginStatus) error {
 	installer, ok := m.Installers[plugin.Kind]
 	if !ok {
 		return ErrUnknownPluginKind

@@ -5,60 +5,108 @@ global:
   storageClass: local-path
 logging:
   enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务.
+    plugins.kubegems.io/category: 日志中心
+    plugins.kubegems.io/main-category: core
   namespace: logging
-  operator:
-    version: 3.17.4
-  loki:
-    version: 2.6.2
-  # externalLoki:
-  #   address: http://loki-stack.loki-stack:3100
+  version: 3.17.4 # logging-operator version
+  values:
+    loki:
+      version: 2.6.2
+    # externalLoki:
+    #   address: http://loki-stack.loki-stack:3100
 monitoring:
   enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems平台监控&告警控制器,包含Prometheus和AlertManager服务.
+    plugins.kubegems.io/category: 监控&告警
+    plugins.kubegems.io/main-category: core
   namespace: kubegems-monitoring
-  operator:
-    version: 35.2.0
-  # externalPrometheus:
-  #   address: http://kube-prometheus-stack-prometheus.prometheus:9090
-  # externalAlertmanager:
-  #   address: http://kube-prometheus-stack-alertmanager.prometheus:9093
-  # externalGrafana:
-  #   address: http://kube-prometheus-stack-grafana.prometheus:80
+  version: 35.2.0 # monitoring-operator version
+  values:
+    # externalPrometheus:
+    #   address: http://kube-prometheus-stack-prometheus.prometheus:9090
+    # externalAlertmanager:
+    #   address: http://kube-prometheus-stack-alertmanager.prometheus:9093
+    # externalGrafana:
+    #   address: http://kube-prometheus-stack-grafana.prometheus:80
 observability:
   enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems平台服务追踪套件.
+    plugins.kubegems.io/category: 链路追踪
+    plugins.kubegems.io/main-category: core
   namespace: observability
-  chartVersion: 2.30.0
-  jaeger:
-    version: 1.30.0
+  version: 1.30.0 # jaeger tag
+  values:
+    chartVersion: 2.30.0
     # externalElasticsearch:
-    # address: http://0.0.0.0:9200
-  # externalJaeger:
-  #   ddress: http://jaeger-query.observability:16686
-gateway:
-  enabled: true
-  namespace: kubegems-gateway
-  version: ""
-kubegems:
-  version: latest
-  registry: docker.io
-  repository: kubegems/kubegems
-  installer:
-    enabled: false
-    namespace: kubegems-installer
-  local:
-    namespace: kubegems-local
-gpu:
-  enabled: false
-  namespace: kube-system
+    #   address: http://0.0.0.0:9200
+    # externalJaeger:
+    #   ddress: http://jaeger-query.observability:16686
 istio:
   enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems 平台 Istio 服务治理套件.
+    plugins.kubegems.io/category: 服务网格
+    plugins.kubegems.io/main-category: core
   namespace: istio-system
   version: 1.11.7 # istio/istio-operator version
-  kialiVersion: 1.38.1
-  chartVersion: 1.12.6 # must >1.12.0
-  operator:
-    tracing:
-      sampling: 50
+  values:
+    kialiVersion: 1.38.1
+    chartVersion: 1.12.6 # must >1.12.0
+    operator:
+      tracing:
+        sampling: 50
+gateway:
+  enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems 默认网关.
+    plugins.kubegems.io/category: 网关
+    plugins.kubegems.io/main-category: core
+  namespace: kubegems-gateway
+  version: latest
+kubegems:
+  enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems平台管理容器.
+    plugins.kubegems.io/category: kubegems
+    plugins.kubegems.io/main-category: core
+  namespace: kubegems
+  version: latest
+  values:
+    ingress:
+      hostname: "dashboard.kubegems.io"
+kubegems-local:
+  enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems local 组件.
+    plugins.kubegems.io/category: kubegems
+    plugins.kubegems.io/main-category: core
+  namespace: kubegems-local
+  version: latest
+kubegems-installer:
+  enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems 安装组件.
+    plugins.kubegems.io/category: kubegems
+    plugins.kubegems.io/main-category: core
+  namespace: kubegems-installer
+  version: latest
+gpu:
+  enabled: false
+  annotations:
+    plugins.kubegems.io/description: nvdia gpu 组件.
+    plugins.kubegems.io/category: GPU
+    plugins.kubegems.io/main-category: kubernetes
+  namespace: kube-system
+  version: latest
 argo-rollouts:
   enabled: true
+  annotations:
+    plugins.kubegems.io/description: KubeGems内部应用策略部署的GitOps引擎,支持蓝绿、金丝雀发布等高级策略.
+    plugins.kubegems.io/category: GitOps
+    plugins.kubegems.io/main-category: core
   namespace: argo-rollouts
   version: 2.14.0

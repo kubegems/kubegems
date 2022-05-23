@@ -1,5 +1,5 @@
 {{- if .Values.observability.enabled }}
-{{- if not .Values.observability.jaeger.externalElasticsearch -}}
+{{- if not .Values.observability.values.externalElasticsearch -}}
 ---
 # https://github.com/elastic/helm-charts
 apiVersion: plugins.kubegems.io/v1beta1
@@ -31,12 +31,12 @@ spec:
   kind: helm
   installNamespace: {{.Values.observability.namespace }}
   repo: https://jaegertracing.github.io/helm-charts
-  version: {{ .Values.observability.chartVersion }}
+  version: {{ .Values.observability.values.chartVersion }}
   values:
     image:
       # repository: docker.io/jaegertracing/jaeger-operator
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "jaegertracing/jaeger-operator" "context" .) }}
-      tag: {{ .Values.observability.jaeger.version }}
+      tag: {{ .Values.observability.version }}
     rbac:
       clusterRole: true
     jaeger:
@@ -52,8 +52,8 @@ spec:
           type: elasticsearch
           options:
             es:
-              {{- if .Values.observability.jaeger.externalElasticsearch }}
-              server-urls: {{ .Values.observability.jaeger.externalElasticsearch.address }}
+              {{- if .Values.observability.values.externalElasticsearch }}
+              server-urls: {{ .Values.observability.values.externalElasticsearch.address }}
               {{- else }}
               server-urls: http://elasticsearch-master.observability:9200
               {{- end }}

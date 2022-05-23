@@ -1,25 +1,23 @@
 package controllers
 
 import (
-	"encoding/json"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
-	"sigs.k8s.io/yaml"
 )
 
 type Plugin struct {
-	Kind      pluginsv1beta1.PluginKind `json:"kind,omitempty"`
-	Name      string                    `json:"name,omitempty"`
-	Namespace string                    `json:"namespace,omitempty"`
-	Repo      string                    `json:"repo,omitempty"`
-	Version   string                    `json:"version,omitempty"`
-	Path      string                    `json:"path,omitempty"`
-	DryRun    bool                      `json:"dryRun,omitempty"`
-	Resources []runtime.RawExtension    `json:"resources,omitempty"`
-	Values    map[string]interface{}    `json:"values,omitempty"`
+	Kind       pluginsv1beta1.PluginKind `json:"kind,omitempty"`
+	Name       string                    `json:"name,omitempty"`
+	Namespace  string                    `json:"namespace,omitempty"`
+	Repo       string                    `json:"repo,omitempty"`
+	Version    string                    `json:"version,omitempty"`
+	Path       string                    `json:"path,omitempty"`
+	DryRun     bool                      `json:"dryRun,omitempty"`
+	Resources  []runtime.RawExtension    `json:"resources,omitempty"`
+	Values     map[string]interface{}    `json:"values,omitempty"`
+	FullValues map[string]interface{}    `json:"fullValues,omitempty"`
 }
 
 type PluginStatus struct {
@@ -78,8 +76,8 @@ func PluginStatusFromPlugin(plugin *pluginsv1beta1.Plugin) *PluginStatus {
 	}
 }
 
-func PluginFromPlugin(plugin *pluginsv1beta1.Plugin) Plugin {
-	return Plugin{
+func PluginFromPlugin(plugin *pluginsv1beta1.Plugin) *Plugin {
+	return &Plugin{
 		Name:      plugin.Name,
 		Kind:      plugin.Spec.Kind,
 		Values:    plugin.Spec.Values.Object,
@@ -93,58 +91,5 @@ func PluginFromPlugin(plugin *pluginsv1beta1.Plugin) Plugin {
 			}
 			return plugin.Spec.InstallNamespace
 		}(),
-	}
-}
-
-func MarshalValues(vals map[string]interface{}) runtime.RawExtension {
-	if vals == nil {
-		return runtime.RawExtension{}
-	}
-	bytes, _ := json.Marshal(vals)
-	return runtime.RawExtension{Raw: bytes}
-}
-
-func UnmarshalValues(val runtime.RawExtension) map[string]interface{} {
-	if val.Raw == nil {
-		return nil
-	}
-	var vals interface{}
-	_ = yaml.Unmarshal(val.Raw, &vals)
-
-	if kvs, ok := vals.(map[string]interface{}); ok {
-		RemoveNulls(kvs)
-		return kvs
-	}
-	if arr, ok := vals.([]interface{}); ok {
-		// is format of --set K=V
-		kvs := make(map[string]interface{}, len(arr))
-		for _, kv := range arr {
-			if kv, ok := kv.(map[string]interface{}); ok {
-				for k, v := range kv {
-					kvs[k] = v
-				}
-			}
-		}
-		RemoveNulls(kvs)
-		return kvs
-	}
-	return nil
-}
-
-// https://github.com/helm/helm/blob/bed1a42a398b30a63a279d68cc7319ceb4618ec3/pkg/chartutil/coalesce.go#L37
-// helm CoalesceValues cant handle nested null,like `{a: {b: null}}`, which want to be `{}`
-func RemoveNulls(m map[string]interface{}) {
-	for k, v := range m {
-		if val, ok := v.(map[string]interface{}); ok {
-			RemoveNulls(val)
-			if len(val) == 0 {
-				delete(m, k)
-			}
-			continue
-		}
-		if v == nil {
-			delete(m, k)
-			continue
-		}
 	}
 }

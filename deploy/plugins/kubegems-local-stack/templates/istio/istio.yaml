@@ -10,7 +10,7 @@ spec:
   kind: helm
   installNamespace: {{ .Values.istio.namespace }}
   repo: https://kiali.org/helm-charts
-  version: {{ .Values.istio.kialiVersion }}  # update to related version when istio version changed
+  version: {{ .Values.istio.values.kialiVersion }}  # update to related version when istio version changed
   # see: https://github.com/istio/istio/blob/master/manifests/addons/values-kiali.yaml
   values:
     server:
@@ -40,9 +40,9 @@ spec:
   enabled: true
   kind: helm
   installNamespace: {{ .Values.istio.namespace }}
-  repo: https://github.com/istio/istio/archive/refs/tags/{{ .Values.istio.chartVersion }}.tar.gz
-  path: istio-{{ .Values.istio.chartVersion }}/manifests/charts/istio-operator
-  version: {{ .Values.istio.chartVersion }}
+  repo: https://github.com/istio/istio/archive/refs/tags/{{ .Values.istio.values.chartVersion }}.tar.gz
+  path: istio-{{ .Values.istio.values.chartVersion }}/manifests/charts/istio-operator
+  version: {{ .Values.istio.values.chartVersion }}
   values:
     # hub: gcr.io/istio-testing  # in chart default hub just for testing
     {{ include "common.images.repository" ( dict "key" "hub" "registry" "gcr.io" "repository" "istio-testing" "context" .) }}
@@ -114,7 +114,7 @@ spec:
         ISTIO_META_DNS_AUTO_ALLOCATE: "true"
         ISTIO_META_DNS_CAPTURE: "true"
       tracing:
-        sampling: {{ .Values.istio.operator.tracing.sampling }}
+        sampling: {{ .Values.istio.values.operator.tracing.sampling }}
         zipkin:
           address: "jaeger-collector.observability.svc.cluster.local:9411"
     enableTracing: true
