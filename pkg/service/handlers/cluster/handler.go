@@ -508,11 +508,15 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				"version": version.Get().GitVersion,
 			}
 
-			registryHost := strings.SplitAfter(cluster.ImageRepo, "/")[0]
+			splits := strings.Split(cluster.ImageRepo, "/")
+			if len(splits) == 1 {
+				splits = append(splits, "kubegems")
+			}
 			values["global"] = map[string]interface{}{
-				"imageRegistry": registryHost, // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
-				"clusterName":   cluster.ClusterName,
-				"storageClass":  cluster.DefaultStorageClass,
+				"imageRegistry":   splits[0], // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
+				"imageRepository": splits[1], // eg. kubegems, kubegems-testing
+				"clusterName":     cluster.ClusterName,
+				"storageClass":    cluster.DefaultStorageClass,
 			}
 			// installer
 			installer := OpratorInstaller{
