@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/argoproj/argo-cd/v2/util/io"
@@ -26,23 +25,6 @@ import (
 	"kubegems.io/pkg/utils/kube"
 )
 
-var isDebug = false
-
-func IsDebug() bool {
-	return os.Getenv("DEBUG") == "true"
-}
-
-func init() {
-	if str, ok := os.LookupEnv("DEBUG"); ok {
-		log.Info("debug mode set from environment", "debug", str)
-		isDebug, _ = strconv.ParseBool(str)
-	}
-}
-
-const (
-	KubegemsNamespace = "kubegems"
-)
-
 // ApplyPortForwardingOptions using apiserver port forward port for options
 func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) error {
 	// debug mode only
@@ -59,50 +41,57 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 		return err
 	}
 
-	group := &errgroup.Group{}
-
-	sec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "gems-secret", v1.GetOptions{})
+	kubegemsSec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "kubegems-config", v1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
+	group := &errgroup.Group{}
 	// mysql
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, KubegemsNamespace, "mysql", 3306)
+		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "mysql", 3306)
+		if err != nil {
+			return err
+		}
+		mysqlSec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "mysql", v1.GetOptions{})
 		if err != nil {
 			return err
 		}
 		opts.Mysql.Addr = addr
-		opts.Mysql.Password = string(sec.Data["mysql-root-password"])
+		opts.Mysql.Password = string(mysqlSec.Data["mysql-root-password"])
 		return nil
 	})
 
 	// redis
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, KubegemsNamespace, "kubegems-redis-master", 6379)
+		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-redis-master", 6379)
+		if err != nil {
+			return err
+		}
+		redisSec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "kubegems-redis", v1.GetOptions{})
 		if err != nil {
 			return err
 		}
 		opts.Redis.Addr = addr
-		opts.Redis.Password = string(sec.Data["redis-password"])
+		opts.Redis.Password = string(redisSec.Data["redis-password"])
 		return nil
 	})
 
 	// git
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, KubegemsNamespace, "kubegems-gitea-http", 3000)
+		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-gitea-http", 3000)
 		if err != nil {
 			return err
 		}
 		opts.Git.Addr = "http://" + addr
-		opts.Git.Username = string(sec.Data["gitea-root-user"])
-		opts.Git.Password = string(sec.Data["gitea-root-password"])
+		opts.Git.Username = string(kubegemsSec.Data["GIT_USERNAME"])
+		opts.Git.Password = string(kubegemsSec.Data["GIT_PASSWORD"])
 		return nil
 	})
 
 	// chartmuseum
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, KubegemsNamespace, "kubegems-chartmuseum", 8080)
+		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-chartmuseum", 8080)
 		if err != nil {
 			return err
 		}
@@ -112,12 +101,16 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 
 	// argo
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, KubegemsNamespace, "kubegems-argocd-server", 80)
+		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-argocd-server", 80)
+		if err != nil {
+			return err
+		}
+		argoSec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "argocd-initial-admin-secret", v1.GetOptions{})
 		if err != nil {
 			return err
 		}
 		opts.Argo.Addr = "http://" + addr
-		opts.Argo.Password = string(sec.Data["argo-admin-password"])
+		opts.Argo.Password = string(argoSec.Data["password"])
 		return nil
 	})
 
