@@ -15,6 +15,8 @@ spec:
   enabled: {{ .Values.monitoring.enabled }}
   version: {{ .Values.monitoring.operator.version }}
   values:
+    defaultRules:
+      create: false
     kube-state-metrics:
       image:
         {{- if .Values.image.registry }}
@@ -22,6 +24,7 @@ spec:
         repository: {{ printf "%s/%s/kube-state-metrics" .Values.image.registry .Values.image.repository }}
         {{- end }}
     grafana:
+      adminPassword: demo!@#admin
       initChownData:
         image:
           {{- if .Values.image.registry }}
@@ -33,54 +36,95 @@ spec:
         # repository: grafana/grafana
         repository: {{ printf "%s/%s/grafana" .Values.image.registry .Values.image.repository }}
         {{- end }}
-      sidecar:
-        image:
-          {{- if .Values.image.registry }}
-          # repository: quay.io/kiwigrid/k8s-sidecar
-          repository: {{ printf "%s/%s/k8s-sidecar" .Values.image.registry .Values.image.repository }}
-          {{- end }}
-        dashboards:
-          enabled: true
-        datasources:
-          enabled: true
     prometheusOperator:
+      tls:
+        enabled: false
+      admissionWebhooks:
+        enabled: false
       image:
         {{- if .Values.image.registry }}
         # repository: quay.io/prometheus-operator/prometheus-operator
         repository: {{ printf "%s/%s/prometheus-operator" .Values.image.registry .Values.image.repository }}
         {{- end }}
+        # tag: v0.50.1-gems
       prometheusConfigReloader:
         image:
           {{- if .Values.image.registry }}
           # repository: quay.io/prometheus-operator/prometheus-config-reloader
           repository: {{ printf "%s/%s/prometheus-config-reloader" .Values.image.registry .Values.image.repository }}
           {{- end }}
-        thanosImage:
-          {{- if .Values.image.registry }}
-          # repository: quay.io/thanos/thanos
-          repository: {{ printf "%s/%s/thanos" .Values.image.registry .Values.image.repository }}
-          {{- end }}
+        # tag: v0.50.1-gems
     prometheus:
       prometheusSpec:
-        serviceMonitorSelectorNilUsesHelmValues: false
-        podMonitorSelectorNilUsesHelmValues: false
-        probeSelectorNilUsesHelmValues: false
-        ruleSelectorNilUsesHelmValues: false
-        additionalScrapeConfigs: |
-{{ .Files.Get "files/prometheus/scrape-additional.yaml" | indent 10 }}
-        retention: 30d
         image:
           {{- if .Values.image.registry }}
           # repository: quay.io/prometheus/prometheus
           repository: {{ printf "%s/%s/prometheus" .Values.image.registry .Values.image.repository }}
           {{- end }}
+        enableAdminAPI: true
+        enableFeatures: 
+          - remote-write-receiver
+        externalLabels:
+          cluster: {{ .Values.clusterName }}
+        externalUrl: http://prometheus.{{ .Values.clusterName }}.kubegems.io:9090
+        ruleSelector:
+          matchExpressions:
+            - key: prometheusrule.kubegems.io/name
+              operator: Exists
+        probeSelectorNilUsesHelmValues: false
+        additionalScrapeConfigs: |
+{{ .Files.Get "files/prometheus/scrape-additional.yaml" | indent 10 }}
+        retention: 30d
+        resources:
+          limits:
+            cpu: 4
+            memory: 8Gi
+          requests:
+            cpu: 2
+            memory: 4Gi
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+              - ReadWriteOnce
+              storageClassName: {{ .Values.storageClass }}
+              resources:
+                requests:
+                  storage: 200Gi
+              volumeMode: Filesystem
     alertmanager:
+      # templateFiles:
       alertmanagerSpec:
         image:
           {{- if .Values.image.registry }}  
           # repository: quay.io/prometheus/alertmanager
           repository: {{ printf "%s/%s/alertmanager" .Values.image.registry .Values.image.repository }}
           {{- end }}
+        alertmanagerConfigSelector:
+          matchExpressions:
+            - key: alertmanagerconfig.kubegems.io/name
+              operator: Exists
+        alertmanagerConfiguration:
+          name: kubegems-default-monitor-amconfig
+        retention: 240h
+        storage:
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+              - ReadWriteOnce
+              storageClassName: {{ .Values.storageClass }}
+              resources:
+                requests:
+                  storage: 10Gi
+              volumeMode: Filesystem
+        externalUrl: http://alertmanager.{{ .Values.clusterName }}.kubegems.io:9093
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
     prometheus-node-exporter:
       image:
         {{- if .Values.image.registry }}  
