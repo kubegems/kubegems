@@ -20,6 +20,8 @@ type PluginHandler struct {
 type PluginStatus struct {
 	Name         string `json:"name"`
 	Namespace    string `json:"namespace"`
+	Required     bool   `json:"required"`
+	Icon         string `json:"icon"`
 	Description  string `json:"description"`
 	Version      string `json:"version"`
 	Enabled      bool   `json:"enabled"`
@@ -60,6 +62,8 @@ func (h *PluginHandler) List(c *gin.Context) {
 			viewplugin.mainCategory = annotaions[pluginscommon.AnnotationMainCategory]
 			viewplugin.category = annotaions[pluginscommon.AnnotationCategory]
 			viewplugin.Description = annotaions[pluginscommon.AnnotationDescription]
+			viewplugin.Icon = annotaions[pluginscommon.AnnotationIcon]
+			viewplugin.Required, _ = strconv.ParseBool(annotaions[pluginscommon.AnnotationRequired])
 		}
 		viewplugins = append(viewplugins, viewplugin)
 	}

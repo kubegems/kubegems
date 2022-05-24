@@ -78,6 +78,7 @@ kubegems:
     plugins.kubegems.io/description: KubeGems平台管理容器.
     plugins.kubegems.io/category: kubegems
     plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/required: true
     plugins.kubegems.io/health-check: "deployments.apps/*"
   namespace: kubegems
   version: latest
@@ -90,6 +91,7 @@ kubegems-local:
     plugins.kubegems.io/description: KubeGems local 组件.
     plugins.kubegems.io/category: kubegems
     plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/required: true
     plugins.kubegems.io/health-check: "deployments.apps/*"
   namespace: kubegems-local
   version: latest
@@ -99,6 +101,7 @@ kubegems-installer:
     plugins.kubegems.io/description: KubeGems 安装组件.
     plugins.kubegems.io/category: kubegems
     plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/required: true
     plugins.kubegems.io/health-check: "deployments.apps/*"
   namespace: kubegems-installer
   version: latest
@@ -116,6 +119,7 @@ argo-rollouts:
     plugins.kubegems.io/description: KubeGems内部应用策略部署的GitOps引擎,支持蓝绿、金丝雀发布等高级策略.
     plugins.kubegems.io/category: GitOps
     plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/required: true
     plugins.kubegems.io/health-check: "deployments.apps/*"
   namespace: argo-rollouts
   version: 2.14.0
@@ -126,5 +130,6 @@ local-path:
     plugins.kubegems.io/description: rancher local path 组件
     plugins.kubegems.io/category: 存储插件
     plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/required: true
     plugins.kubegems.io/health-check: "deployments.apps/*"
   version: 0.0.22
