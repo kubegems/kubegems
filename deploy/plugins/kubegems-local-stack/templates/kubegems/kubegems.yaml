@@ -28,12 +28,11 @@ spec:
       image:
         # repository: bitnami/mysql
         {{ include "common.images.repository" ( dict "repository" "bitnami/mysql" "context" .) }}
-        tag: "8.0"
     redis:
       image:
         # repository: bitnami/redis
         {{ include "common.images.repository" ( dict "repository" "bitnami/redis" "context" .) }}
-        tag: "6.2.7-debian-10"
+        tag: "6.2.7"
     chartmuseum:
       image:
         # repository: ghcr.io/helm/chartmuseum
