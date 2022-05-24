@@ -7,6 +7,7 @@ import (
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/utils/prometheus/promql"
 	"kubegems.io/pkg/utils/slice"
 )
@@ -20,20 +21,13 @@ const (
 )
 
 const (
-	MonitorAlertmanagerConfigName = "gemcloud"
+	MonitorAlertmanagerConfigName = "kubegems-default-monitor-amconfig"
 	LoggingAlertmanagerConfigName = "kubegems-default-logging-amconfig"
 
-	PrometheusRuleName = "gemcloud"
+	DefaultAlertPrometheusRuleName = "kubegems-default-alert-rule"
 )
 
 var (
-	AlertmanagerConfigSelector = map[string]string{
-		"alertmanagerConfig": "gemcloud",
-	}
-	PrometheusRuleSelector = map[string]string{
-		"prometheusRule": "gemcloud",
-	}
-
 	// 单位表
 	UnitValueMap = map[string]UnitValue{
 		"percent": defaultUnitValue,
@@ -179,14 +173,16 @@ func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerCon
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Labels:    AlertmanagerConfigSelector,
+			Labels: map[string]string{
+				gems.LabelAlertmanagerConfig: name,
+			},
 		},
 		Spec: v1alpha1.AlertmanagerConfigSpec{
 			Route: &v1alpha1.Route{
 				GroupBy:       []string{AlertNamespaceLabel, AlertNameLabel},
 				GroupWait:     "30s",
 				GroupInterval: "30s",
-				Continue:      true,
+				Continue:      false,
 				Receiver:      NullReceiverName, // 默认发给空接收器，避免defaultReceiver收到不该收到的alert
 			},
 			Receivers:    []v1alpha1.Receiver{NullReceiver, DefaultReceiver},
@@ -202,9 +198,11 @@ func GetBasePrometheusRule(namespace string) *monitoringv1.PrometheusRule {
 			Kind:       monitoringv1.PrometheusRuleKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      PrometheusRuleName,
+			Name:      DefaultAlertPrometheusRuleName,
 			Namespace: namespace,
-			Labels:    PrometheusRuleSelector,
+			Labels: map[string]string{
+				gems.LabelPrometheusRule: DefaultAlertPrometheusRuleName,
+			},
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{},
 	}
