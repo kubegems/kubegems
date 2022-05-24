@@ -49,11 +49,11 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 	group := &errgroup.Group{}
 	// mysql
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "mysql", 3306)
+		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-mysql", 3306)
 		if err != nil {
 			return err
 		}
-		mysqlSec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "mysql", v1.GetOptions{})
+		mysqlSec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "kubegems-mysql", v1.GetOptions{})
 		if err != nil {
 			return err
 		}

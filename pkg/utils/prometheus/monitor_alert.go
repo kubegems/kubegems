@@ -9,6 +9,7 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/prometheus/promql/parser"
+	"kubegems.io/pkg/utils/slice"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -81,7 +82,7 @@ func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[Moni
 		return nil, err
 	}
 	silenceMap := raw.Base.GetSilenceMap()
-
+	inhibitRuleMap := raw.Base.GetInhibitRuleMap()
 	ret := AlertRuleList[MonitorAlertRule]{}
 	for i, group := range raw.PrometheusRule.Spec.Groups {
 		// expr规则
@@ -98,6 +99,13 @@ func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[Moni
 			isOpen = false
 		}
 		alertrule.IsOpen = isOpen
+		// inhibit rule
+		inhitbitRule := inhibitRuleMap[group.Name]
+		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, AlertNamespaceLabel), AlertNameLabel)
+		if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
+			return ret, fmt.Errorf("alert rule %v inhibit label can't be null", alertrule)
+		}
+
 		if hasDetail {
 			bts, _ := yaml.Marshal(raw.PrometheusRule.Spec.Groups[i])
 			alertrule.Origin = string(bts)
@@ -149,7 +157,7 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 	// 更新 PrometheusRule
 	ret := monitoringv1.RuleGroup{Name: alertRule.Name}
 	if _, err := parser.ParseExpr(alertRule.Expr); err != nil {
-		return ret, err
+		return ret, errors.Wrapf(err, "parse expr: %s", alertRule.Expr)
 	}
 	for _, level := range alertRule.AlertLevels {
 		if alertRule.PromqlGenerator.IsEmpty() {

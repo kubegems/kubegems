@@ -41,11 +41,11 @@ func (h *ObservabilityHandler) ListDashboard(c *gin.Context) {
 // @Produce      json
 // @Param        environment_id  path      string                                                   true  "环境ID"
 // @Param        dashboard_id    path      uint                                                     true  "dashboard id"
-// @Success      200             {object}  handlers.ResponseStruct{Data=[]models.MonitorDashboard}  "监控dashboard列表"
+// @Success      200             {object}  handlers.ResponseStruct{Data=models.MonitorDashboard}  "监控dashboard列表"
 // @Router       /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [get]
 // @Security     JWT
 func (h *ObservabilityHandler) DashboardDetail(c *gin.Context) {
-	ret := []models.MonitorDashboard{}
+	ret := models.MonitorDashboard{}
 	if err := h.GetDB().Find(&ret, "id = ?", c.Param("dashboard_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
