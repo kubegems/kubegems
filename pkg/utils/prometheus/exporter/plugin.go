@@ -44,7 +44,7 @@ func (c *PluginCollector) Update(ch chan<- prometheus.Metric) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	allPlugins, err := gemsplugin.ListPlugins(ctx, c.clus.GetClient(), gemsplugin.WithHealthy(true))
+	_, allPlugins, err := gemsplugin.ListPlugins(ctx, c.clus.GetClient(), gemsplugin.WithHealthy(true))
 	if err != nil {
 		log.Error(err, "get plugins failed")
 		return err

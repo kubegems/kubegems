@@ -40,7 +40,7 @@ func WithHealthy(b bool) ListPluginOption {
 	}
 }
 
-func ListPlugins(ctx context.Context, cli client.Client, options ...ListPluginOption) ([]PluginState, error) {
+func ListPlugins(ctx context.Context, cli client.Client, options ...ListPluginOption) (map[string]interface{}, []PluginState, error) {
 	opt := ListPluginOptions{
 		WithHealthy: true,
 	}
@@ -54,11 +54,11 @@ func ListPlugins(ctx context.Context, cli client.Client, options ...ListPluginOp
 		},
 	}
 	if err := cli.Get(ctx, client.ObjectKeyFromObject(allinoneplugin), allinoneplugin); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var plugins map[string]PluginState
 	if err := json.Unmarshal(allinoneplugin.Spec.Values.Raw, &plugins); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	result := []PluginState{}
 	for name, plugin := range plugins {
@@ -71,7 +71,8 @@ func ListPlugins(ctx context.Context, cli client.Client, options ...ListPluginOp
 		}
 		result = append(result, plugin)
 	}
-	return result, nil
+	globalVals, _ := allinoneplugin.Spec.Values.Object["global"].(map[string]interface{})
+	return globalVals, result, nil
 }
 
 func checkHealthy(ctx context.Context, cli client.Client, plugin *PluginState) {

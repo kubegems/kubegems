@@ -42,7 +42,7 @@ type PluginStatus struct {
 // @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
 // @Security     JWT
 func (h *PluginHandler) List(c *gin.Context) {
-	plugins, err := gemsplugin.ListPlugins(c.Request.Context(), h.cluster.GetClient())
+	_, plugins, err := gemsplugin.ListPlugins(c.Request.Context(), h.cluster.GetClient())
 	if err != nil {
 		NotOK(c, err)
 		return
