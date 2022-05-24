@@ -1,15 +1,12 @@
 package clusterhandler
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
-	"text/template"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,8 +14,6 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -29,7 +24,6 @@ import (
 	"kubegems.io/pkg/service/models"
 	"kubegems.io/pkg/utils"
 	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/gemsplugin"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/msgbus"
 	"kubegems.io/pkg/version"
@@ -221,21 +215,15 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		}
 	} else {
 		if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
-			installeropts := new(gemsplugin.InstallerOptions)
-			h.DynamicConfig.Get(ctx, installeropts)
-
 			return h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
 				}
-				installer := ClusterInstaller{
-					Cluster:          cluster,
-					Clientset:        clientSet,
-					RestConfig:       config,
-					KubegemsVersion:  version.Get(),
-					InstallerOptions: installeropts,
+				installer := OpratorInstaller{
+					Config:           config,
+					InstallNamespace: cluster.InstallNamespace,
 				}
-				return installer.UnInstall(ctx)
+				return installer.Remove(ctx)
 			})
 		}); err != nil {
 			handlers.NotOK(c, err)
@@ -439,6 +427,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		return
 	}
 
+	// nolint: dogsled
 	apiserver, _, _, _, err := kube.GetKubeconfigInfos(cluster.KubeConfig)
 	if err != nil {
 		handlers.NotOK(c, fmt.Errorf("kubeconfig 格式错误"))
@@ -473,8 +462,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				"deleted_at",
 			}),
 		}
-
-		// 控制集群只检验
+		// 控制集群检验
 		if cluster.Primary {
 			var primarysCount int64
 			if err := h.GetDataBase().DB().Model(&models.Cluster{}).Where(`'primary' = ?`, true).Count(&primarysCount).Error; err != nil {
@@ -483,49 +471,38 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			if primarysCount > 0 {
 				return fmt.Errorf("控制集群只能有一个")
 			}
-			if err := h.GetDB().Clauses(txClause).Create(cluster).Error; err != nil {
+		}
+		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
+			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
-			return nil
-		}
-
-		installeropts := new(gemsplugin.InstallerOptions)
-		h.DynamicConfig.Get(ctx, installeropts)
-
-		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
 			if cluster.InstallNamespace == "" {
-				// local components install namespace
 				cluster.InstallNamespace = KubeGemsLocalPluginsNamespace
 			}
-			values := map[string]interface{}{}
-			json.Unmarshal(cluster.Values, &values)
-
-			// override values
-			values["kubegems-local"] = map[string]interface{}{
-				"version": version.Get().GitVersion,
-			}
-			values["kubegems"] = map[string]interface{}{
-				"version": version.Get().GitVersion,
-			}
-
 			splits := strings.Split(cluster.ImageRepo, "/")
 			if len(splits) == 1 {
 				splits = append(splits, "kubegems")
 			}
-			values["global"] = map[string]interface{}{
-				"imageRegistry":   splits[0], // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
-				"imageRepository": splits[1], // eg. kubegems, kubegems-testing
-				"clusterName":     cluster.ClusterName,
-				"storageClass":    cluster.DefaultStorageClass,
+			kubegemsVersion := version.Get().GitVersion
+			values := map[string]interface{}{
+				"global": map[string]interface{}{
+					"imageRegistry":   splits[0], // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
+					"imageRepository": splits[1], // eg. kubegems, kubegems-testing
+					"clusterName":     cluster.ClusterName,
+					"storageClass":    cluster.DefaultStorageClass,
+				},
+				"kubegems-local": map[string]interface{}{
+					"version": kubegemsVersion,
+				},
+				"kubegems": map[string]interface{}{
+					"version": kubegemsVersion,
+					"enabled": cluster.Primary,
+				},
 			}
-			// installer
 			installer := OpratorInstaller{
-				Config: config,
-				// values to template `deploy/plugins/kubegems-local-plugins`
-				PluginsValues: values,
-			}
-			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
-				return err
+				Config:           config,
+				PluginsValues:    values,
+				InstallNamespace: cluster.InstallNamespace,
 			}
 			return installer.Apply(ctx)
 		}); err != nil {
@@ -552,7 +529,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 type ClusterQuota struct {
 	Version        string                          `json:"version"`
 	OversoldConfig datatypes.JSON                  `json:"oversoldConfig"`
-	Resoruces      types.ClusterResourceStatistics `json:"resources"`
+	Resources      types.ClusterResourceStatistics `json:"resources"`
 	Workloads      types.ClusterWorkloadStatistics `json:"workloads"`
 }
 
@@ -579,7 +556,7 @@ func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 
 		return ClusterQuota{
 			Version:        cluster.Version,
-			Resoruces:      resources,
+			Resources:      resources,
 			OversoldConfig: cluster.OversoldConfig,
 			Workloads:      workloads,
 		}, nil
@@ -645,91 +622,4 @@ func withClusterAndK8sClient(
 		}
 	}
 	return f(ctx, clientSet, restconfig)
-}
-
-const (
-	kubegemsInstallerNamespace = "kubegems-installer"
-)
-
-func (i *ClusterInstaller) CreateNamespaceIfNotExists(ctx context.Context) error {
-	_, err := i.Clientset.CoreV1().Namespaces().Get(ctx, kubegemsInstallerNamespace, metav1.GetOptions{})
-	if err == nil {
-		return nil
-	}
-	if errors.IsNotFound(err) {
-		if _, err = i.Clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: kubegemsInstallerNamespace,
-			},
-		}, metav1.CreateOptions{}); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-type ClusterInstaller struct {
-	Clientset  *kubernetes.Clientset
-	RestConfig *rest.Config
-
-	Cluster          *models.Cluster
-	InstallerOptions *gemsplugin.InstallerOptions
-	KubegemsVersion  version.Version
-}
-
-func (i *ClusterInstaller) getInstallerOperatorBts() ([]byte, error) {
-	installerOperatorbuf := new(bytes.Buffer)
-	if err := installerOperatorTpl.Execute(installerOperatorbuf, i); err != nil {
-		log.Error(err, "installer operator template")
-		return nil, err
-	}
-	return installerOperatorbuf.Bytes(), nil
-}
-
-func (i *ClusterInstaller) getInstallerBts() ([]byte, error) {
-	bts, err := json.Marshal(i.InstallerOptions.InstallerYaml)
-	if err != nil {
-		return nil, err
-	}
-	installerTpl, err := template.New("installer").Parse(string(bts))
-	if err != nil {
-		return nil, err
-	}
-	installerBuf := new(bytes.Buffer)
-	if err := installerTpl.Execute(installerBuf, i); err != nil {
-		log.Error(err, "installer template")
-		return nil, err
-	}
-	return installerBuf.Bytes(), nil
-}
-
-func (i *ClusterInstaller) Install(ctx context.Context) error {
-	// install crd
-	if err := i.CreateNamespaceIfNotExists(ctx); err != nil {
-		return err
-	}
-	installerBts, err := i.getInstallerOperatorBts()
-	if err != nil {
-		return err
-	}
-	if err := kube.CreateByYamlOrJson(ctx, i.RestConfig, installerBts); err != nil {
-		log.Error(err, "create installer yaml")
-		return err
-	}
-
-	// install plugin, 与crd分开部署，以刷新restmap
-	pluginsBts, err := i.getInstallerBts()
-	if err != nil {
-		return err
-	}
-	return kube.CreateByYamlOrJson(ctx, i.RestConfig, pluginsBts)
-}
-
-func (i *ClusterInstaller) UnInstall(ctx context.Context) error {
-	installerBts, err := i.getInstallerOperatorBts()
-	if err != nil {
-		return err
-	}
-	return kube.DeleteByYamlOrJson(ctx, i.RestConfig, installerBts)
 }

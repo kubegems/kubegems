@@ -33,6 +33,7 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 	chartpath := filepath.Join(KubeGemPluginsPath, KubeGemsInstallerPluginName)
 	log.FromContextOrDiscard(ctx).Info("applying kubegems-installer chart", "chartPath", chartpath)
 
+	// install kubegems-installer
 	relese, err := (&helm.Helm{Config: i.Config}).ApplyChart(ctx,
 		KubeGemsInstallerPluginName, KubeGemsInstallerPluginNamespace,
 		chartpath, i.PluginsValues, helm.ApplyOptions{},
@@ -88,17 +89,6 @@ func (i OpratorInstaller) Remove(ctx context.Context) error {
 			return err
 		}
 	}
-
-	// wait all plugins removed,then remove charts
-
-	// need to remove installer-operator by hand
-
-	// log.FromContextOrDiscard(ctx).Info("removing kubegems-installer chart")
-	// helm := controllers.Helm{Config: i.Config}
-	// relese, err := helm.RemoveChart(ctx, KubeGemInstallerChartName, i.InstallNamespace)
-	// if err != nil {
-	// 	return err
-	// }
-	// _ = relese
+	// remove kubegems-installer by hand
 	return nil
 }

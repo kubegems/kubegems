@@ -17,7 +17,6 @@ type Cluster struct {
 	ImageRepo string `gorm:"type:varchar(255);default:docker.io/kubegems" binding:"required"`
 	// DefaultStorageClass 默认storageclass, 默认local-path
 	DefaultStorageClass  string         `gorm:"type:varchar(255);default:local-path" binding:"required"`
-	Values               datatypes.JSON // installer plugins Values
 	InstallNamespace     string         // agent service namespace
 	Version              string         // apiserver version
 	AgentAddr            string         // if empty, using apiserver proxy
