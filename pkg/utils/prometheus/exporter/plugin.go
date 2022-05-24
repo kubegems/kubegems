@@ -1,8 +1,10 @@
 package exporter
 
 import (
+	"context"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/agent/cluster"
@@ -39,43 +41,24 @@ func (c *PluginCollector) Update(ch chan<- prometheus.Metric) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	gemsplugins, err := gemsplugin.GetPlugins(c.clus.Discovery())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	allPlugins, err := gemsplugin.ListPlugins(ctx, c.clus.GetClient(), gemsplugin.WithHealthy(true))
 	if err != nil {
 		log.Error(err, "get plugins failed")
 		return err
 	}
-
-	allPlugins := map[string]*gemsplugin.Plugin{}
-	for k, v := range gemsplugins.Spec.CorePlugins {
-		v.Type = gemsplugin.TypeCorePlugins
-		allPlugins[k] = v
+	for _, p := range allPlugins {
+		ch <- prometheus.MustNewConstMetric(c.pluginStatus, prometheus.GaugeValue,
+			func() float64 {
+				if p.Healthy {
+					return 1
+				}
+				return 0
+			}(),
+			p.Name, p.Namespace, strconv.FormatBool(p.Enabled), p.Version,
+		)
 	}
-	for k, v := range gemsplugins.Spec.KubernetesPlugins {
-		v.Type = gemsplugin.TypeKubernetesPlugins
-		allPlugins[k] = v
-	}
-
-	wg := sync.WaitGroup{}
-	for pluginName, plugin := range allPlugins {
-		plugin.Name = pluginName
-		wg.Add(1)
-		go func(p *gemsplugin.Plugin) {
-			defer wg.Done()
-
-			ch <- prometheus.MustNewConstMetric(
-				c.pluginStatus,
-				prometheus.GaugeValue,
-				func() float64 {
-					if gemsplugin.IsPluginHelthy(c.clus, p) {
-						return 1
-					}
-					return 0
-				}(),
-				p.Type, p.Name, p.Namespace, strconv.FormatBool(p.Enabled), p.Version,
-			)
-		}(plugin)
-	}
-	wg.Wait()
-
 	return nil
 }

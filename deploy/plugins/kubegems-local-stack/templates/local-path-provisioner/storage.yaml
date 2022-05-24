@@ -1,3 +1,4 @@
+{{- if index .Values "local-path" "enabled" -}}
 # local-path-provisioner
 # https://github.com/rancher/local-path-provisioner/tree/master/deploy/chart
 apiVersion: plugins.kubegems.io/v1beta1
@@ -8,10 +9,10 @@ metadata:
 spec:
   enabled: true
   kind: helm
-  installNamespace: local-path-storage
-  repo: https://github.com/rancher/local-path-provisioner/archive/refs/tags/v0.0.22.tar.gz
-  path: local-path-provisioner-0.0.22/deploy/chart/local-path-provisioner
-  version: 0.0.22
+  installNamespace: {{ index .Values "local-path" "namespace" }}
+  repo: https://github.com/rancher/local-path-provisioner/archive/refs/tags/v{{ index .Values "local-path" "version" }}.tar.gz
+  path: local-path-provisioner-{{ index .Values "local-path" "version" }}/deploy/chart/local-path-provisioner
+  version: "{{ index .Values "local-path" "version" }}"
   values:
     storageClass:
       defaultClass: true
@@ -26,6 +27,7 @@ spec:
     helperImage:
       # repository: docker.io/library/busybox
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "library/busybox" "context" .) }}
+{{- end }}
 ---
 # https://github.com/kubernetes-csi/external-snapshotter/tree/master/client/config/crd
 apiVersion: plugins.kubegems.io/v1beta1

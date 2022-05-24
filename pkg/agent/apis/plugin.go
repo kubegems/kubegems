@@ -17,18 +17,14 @@ type PluginHandler struct {
 	cluster cluster.Interface
 }
 
-type PluginSimpleStatus struct {
-	Enabled bool `json:"enabled"`
-	Healthy bool `json:"healthy"`
-}
-
 type PluginStatus struct {
-	Name        string `json:"name"`
-	Namespace   string `json:"namespace"`
-	Description string `json:"description"`
-	Version     string `json:"version"`
-	PluginSimpleStatus
-
+	Name         string `json:"name"`
+	Namespace    string `json:"namespace"`
+	Description  string `json:"description"`
+	Version      string `json:"version"`
+	Enabled      bool   `json:"enabled"`
+	Healthy      bool   `json:"healthy"`
+	Message      string `json:"message"`
 	mainCategory string `json:"-"`
 	category     string `json:"-"`
 }
@@ -53,14 +49,12 @@ func (h *PluginHandler) List(c *gin.Context) {
 	viewplugins := make([]PluginStatus, 0, len(plugins))
 	for _, plugin := range plugins {
 		viewplugin := PluginStatus{
-			Name:        plugin.Name,
-			Namespace:   plugin.Namespace,
-			Version:     plugin.Version,
-			Description: plugin.Description,
-			PluginSimpleStatus: PluginSimpleStatus{
-				Enabled: plugin.Enabled,
-				Healthy: true, // todo: check health
-			},
+			Name:      plugin.Name,
+			Namespace: plugin.Namespace,
+			Version:   plugin.Version,
+			Enabled:   plugin.Enabled,
+			Healthy:   plugin.Healthy,
+			Message:   plugin.Message,
 		}
 		if annotaions := plugin.Annotations; annotaions != nil {
 			viewplugin.mainCategory = annotaions[pluginscommon.AnnotationMainCategory]
@@ -69,11 +63,10 @@ func (h *PluginHandler) List(c *gin.Context) {
 		}
 		viewplugins = append(viewplugins, viewplugin)
 	}
-
 	if simple, _ := strconv.ParseBool(c.Query("simple")); simple {
-		ret := map[string]PluginSimpleStatus{}
+		ret := map[string]bool{}
 		for _, v := range viewplugins {
-			ret[v.Name] = v.PluginSimpleStatus
+			ret[v.Name] = v.Healthy
 		}
 		OK(c, ret)
 		return

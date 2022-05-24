@@ -24,6 +24,7 @@ const (
 	AnnotationCategory     = "plugins.kubegems.io/category"
 	AnnotationMainCategory = "plugins.kubegems.io/main-category"
 	AnnotationIcon         = "plugins.kubegems.io/icon"
+	AnnotationHealthCheck  = "plugins.kubegems.io/health-check"
 )
 
 const (
