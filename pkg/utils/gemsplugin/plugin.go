@@ -19,10 +19,6 @@ const (
 	TypeKubernetesPlugins = "kubernetes"
 )
 
-const (
-	realPluginURL = "/apis/plugins.kubegems.io/v1beta1/namespaces/kubegems-installer/installers/kubegems-plugins" // real plugin resource position
-)
-
 type Plugins struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata.

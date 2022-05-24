@@ -73,9 +73,9 @@ type BaseAlertRule struct {
 }
 
 func CheckQueryExprNamespace(expr, namespace string) error {
-	if namespace != "" {
+	if namespace != "" && namespace != GlobalAlertNamespace {
 		if !strings.Contains(expr, fmt.Sprintf(`namespace="%s"`, namespace)) {
-			return fmt.Errorf("query expr %s must contains namespace %s", expr, namespace)
+			return fmt.Errorf(`query expr %[1]s must contains namespace %[2]s, eg: {namespace="%[2]s"}`, expr, namespace)
 		}
 	}
 	return nil

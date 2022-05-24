@@ -75,6 +75,9 @@ func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingA
 		// inhibit rule
 		inhitbitRule := inhibitRuleMap[group.Name]
 		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, AlertNamespaceLabel), AlertNameLabel)
+		if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
+			return ret, fmt.Errorf("alert rule %v inhibit label can't be null", alertrule)
+		}
 
 		if hasDetail {
 			bts, _ := yaml.Marshal(group)
@@ -151,7 +154,7 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 		return ret, err
 	}
 	if _, err := parser.ParseExpr(r.Expr); err != nil {
-		return ret, err
+		return ret, errors.Wrapf(err, "parse expr: %s", r.Expr)
 	}
 	for _, level := range r.AlertLevels {
 		ret.Rules = append(ret.Rules, rulefmt.RuleNode{
