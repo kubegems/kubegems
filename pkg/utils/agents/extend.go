@@ -35,8 +35,8 @@ import (
 
 var (
 	alertProxyHeader = map[string]string{
-		"namespace": "gemcloud-monitoring-system",
-		"service":   "alertmanager",
+		"namespace": gems.NamespaceMonitor,
+		"service":   "kube-prometheus-stack-alertmanager",
 		"port":      "9093",
 	}
 	allNamespace = "_all"
@@ -319,10 +319,12 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 
 	eg := errgroup.Group{}
 	eg.Go(func() error {
-		return c.List(ctx, &promeRuleList, client.InNamespace(namespace), client.MatchingLabels(prometheus.PrometheusRuleSelector))
+		return c.List(ctx, &promeRuleList, client.InNamespace(namespace), client.HasLabels([]string{gems.LabelPrometheusRule}))
 	})
 	eg.Go(func() error {
-		return c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(prometheus.AlertmanagerConfigSelector))
+		return c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(map[string]string{
+			gems.LabelAlertmanagerConfig: prometheus.MonitorAlertmanagerConfigName,
+		}))
 	})
 	eg.Go(func() error {
 		var err error
@@ -341,9 +343,7 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 	// amconfig 按照namespace分组
 	configNamespaceMap := map[string]*monitoringv1alpha1.AlertmanagerConfig{}
 	for _, v := range amConfigList.Items {
-		if v.Name == prometheus.MonitorAlertmanagerConfigName {
-			configNamespaceMap[v.Namespace] = v
-		}
+		configNamespaceMap[v.Namespace] = v
 	}
 	// silence 按照namespace分组
 	silenceNamespaceMap := map[string][]alertmanagertypes.Silence{}
@@ -357,7 +357,7 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 
 	ret := []prometheus.MonitorAlertRule{}
 	for _, rule := range promeRuleList.Items {
-		if rule.Name == prometheus.PrometheusRuleName {
+		if rule.Name == prometheus.DefaultAlertPrometheusRuleName {
 			amconfig, ok := configNamespaceMap[rule.Namespace]
 			if !ok {
 				log.Warnf("alertmanager config %s in namespace %s not found", rule.Name, rule.Namespace)
@@ -421,7 +421,9 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 		return c.Get(ctx, client.ObjectKeyFromObject(&cm), &cm)
 	})
 	eg.Go(func() error {
-		return c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(prometheus.AlertmanagerConfigSelector))
+		return c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(map[string]string{
+			gems.LabelAlertmanagerConfig: prometheus.LoggingAlertmanagerConfigName,
+		}))
 	})
 	eg.Go(func() error {
 		var err error
@@ -455,9 +457,7 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 
 	// amconfig 按照namespace分组
 	for _, v := range amConfigList.Items {
-		if v.Name == prometheus.LoggingAlertmanagerConfigName {
-			configNamespaceMap[v.Namespace] = v
-		}
+		configNamespaceMap[v.Namespace] = v
 	}
 
 	// silence 按照namespace分组
@@ -613,7 +613,7 @@ func (c *ExtendClient) GetOrCreateAlertmanagerConfig(ctx context.Context, namesp
 
 func (c *ExtendClient) GetOrCreatePrometheusRule(ctx context.Context, namespace string) (*monitoringv1.PrometheusRule, error) {
 	prule := &monitoringv1.PrometheusRule{}
-	err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: prometheus.PrometheusRuleName}, prule)
+	err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: prometheus.DefaultAlertPrometheusRuleName}, prule)
 	if kerrors.IsNotFound(err) {
 		prule = prometheus.GetBasePrometheusRule(namespace)
 		if err := c.Create(ctx, prule); err != nil {
@@ -721,7 +721,9 @@ func (c *ExtendClient) ListReceivers(ctx context.Context, namespace, amConfigNam
 	}
 
 	configlist := &v1alpha1.AlertmanagerConfigList{}
-	if err := c.List(ctx, configlist, client.MatchingLabels(prometheus.AlertmanagerConfigSelector), client.InNamespace(namespace)); err != nil {
+	if err := c.List(ctx, configlist, client.MatchingLabels(map[string]string{
+		gems.LabelAlertmanagerConfig: amConfigName,
+	}), client.InNamespace(namespace)); err != nil {
 		return nil, err
 	}
 
