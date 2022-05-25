@@ -9,6 +9,7 @@ import (
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
 	"github.com/gin-gonic/gin"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -744,11 +745,11 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// metrics
 		eg.Go(func() error {
-			metrics, err := cli.Extend().ListMetricTargets(ctx, env.Namespace)
-			if err != nil {
+			sms := monitoringv1.ServiceMonitorList{}
+			if err := cli.List(ctx, &sms, client.InNamespace(env.Namespace)); err != nil {
 				return err
 			}
-			ret.MonitorCollectorCount = len(metrics)
+			ret.MonitorCollectorCount = len(sms.Items)
 			return nil
 		})
 
