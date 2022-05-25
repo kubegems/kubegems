@@ -88,8 +88,8 @@ build-binaries: ## Build binaries.
 build: build-binaries plugins-download
 
 plugins-download: ## Build plugins-cache
-	${BIN_DIR}/kubegems plugins -c bin/plugins template deploy/plugins/* | ${BIN_DIR}/kubegems plugins -c bin/plugins download -
-	${BIN_DIR}/kubegems plugins -c bin/plugins download deploy/*.yaml
+	${BIN_DIR}/kubegems plugins -c bin/plugins -d deploy/plugins template deploy/plugins/* | ${BIN_DIR}/kubegems plugins -c bin/plugins -d deploy/plugins download -
+	${BIN_DIR}/kubegems plugins -c bin/plugins -d deploy/plugins download deploy/*.yaml
 
 CHARTS = kubegems kubegems-local kubegems-installer
 helm-package: ## Build helm chart
