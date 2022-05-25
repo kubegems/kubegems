@@ -24,20 +24,26 @@ definitions:
           $ref: '#/definitions/resource.Quantity'
         type: object
     type: object
-  apis.PluginsRet:
+  apis.PluginStatus:
     properties:
-      core:
-        additionalProperties:
-          items:
-            $ref: '#/definitions/gemsplugin.Plugin'
-          type: array
-        type: object
-      kubernetes:
-        additionalProperties:
-          items:
-            $ref: '#/definitions/gemsplugin.Plugin'
-          type: array
-        type: object
+      description:
+        type: string
+      enabled:
+        type: boolean
+      healthy:
+        type: boolean
+      icon:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      required:
+        type: boolean
+      version:
+        type: string
     type: object
   apis.SecretWithCertsInfo:
     properties:
@@ -330,45 +336,6 @@ definitions:
       serviceMesh:
         description: 是否启用服务网格
         type: boolean
-    type: object
-  gemsplugin.Plugin:
-    properties:
-      catalog:
-        type: string
-      daemonset:
-        items:
-          type: string
-        type: array
-      default_class:
-        type: boolean
-      deployment:
-        items:
-          type: string
-        type: array
-      description:
-        type: string
-      enabled:
-        type: boolean
-      healthy:
-        description: 返回给前端
-        type: boolean
-      host:
-        type: string
-      manual: {}
-      name:
-        description: 返回给前端
-        type: string
-      namespace:
-        type: string
-      operator: {}
-      required:
-        type: boolean
-      statefulset:
-        items:
-          type: string
-        type: array
-      version:
-        type: string
     type: object
   gorm.DeletedAt:
     properties:
@@ -2881,7 +2848,7 @@ definitions:
       ingressPort:
         type: integer
       servicePort:
-        type: integer
+        type: string
     type: object
   kubegems.io_pkg_service_handlers_application.IstioTrafficRouting:
     properties:
@@ -3484,7 +3451,7 @@ definitions:
       ingressPort:
         type: integer
       servicePort:
-        type: integer
+        type: string
     type: object
   kubegems.io_pkg_v2_services_handlers_application.IstioTrafficRouting:
     properties:
@@ -4176,7 +4143,7 @@ definitions:
           type: integer
         type: array
       oversoldConfig:
-        description: installer plugins Values
+        description: 集群资源超卖设置
         items:
           type: integer
         type: array
@@ -4189,11 +4156,6 @@ definitions:
       tenantResourceQuotas:
         items:
           $ref: '#/definitions/models.TenantResourceQuota'
-        type: array
-      values:
-        description: installer plugins Values
-        items:
-          type: integer
         type: array
       vendor:
         description: Vendor 集群提供商(gke tke ack selfhosted)
@@ -4494,7 +4456,6 @@ definitions:
       ruleDetail:
         $ref: '#/definitions/prometheus.RuleDetail'
       unit:
-        description: 单位
         type: string
     type: object
   models.MonitorDashboard:
@@ -5528,33 +5489,6 @@ definitions:
         description: 状态
         type: string
     type: object
-  prometheus.MetricTarget:
-    properties:
-      name:
-        description: 采集器名，前端默认构造为[{name}-{service/deployment/...}-metrics]
-        type: string
-      namespace:
-        description: 采集器所在namespace
-        type: string
-      target_endpoints:
-        items:
-          $ref: '#/definitions/prometheus.TargetEndpoint'
-        type: array
-      target_labels:
-        additionalProperties:
-          type: string
-        description: 标签筛选
-        type: object
-      target_name:
-        description: 要采集的service/deployment/statefulset/daemonset名
-        type: string
-      target_namespace:
-        description: '要采集的目标namespace, 支持所有namespace: _all'
-        type: string
-      target_type:
-        description: 采集器类型, service/deployment/statefulset/daemonset
-        type: string
-    type: object
   prometheus.MonitorAlertRule:
     properties:
       alertLevels:
@@ -5693,21 +5627,6 @@ definitions:
         items:
           type: string
         type: array
-    type: object
-  prometheus.TargetEndpoint:
-    properties:
-      honor_labels:
-        description: 是否优先选用原生标签
-        type: boolean
-      interval:
-        description: 多久采集一次, default 30s
-        type: string
-      path:
-        description: '采集路径, default: /metrics'
-        type: string
-      port:
-        description: 端口名
-        type: string
     type: object
   prometheus.WebhookConfig:
     properties:
@@ -20362,362 +20281,6 @@ paths:
       summary: 获取消息详情
       tags:
       - Message
-  /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets:
-    get:
-      consumes:
-      - application/json
-      description: 采集器列表
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/prometheus.MetricTarget'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 采集器列表
-      tags:
-      - Metrics
-    post:
-      consumes:
-      - application/json
-      description: 添加/更新采集器
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: 采集器内容
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.MetricTarget'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 添加/更新采集器
-      tags:
-      - Metrics
-  /v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets/{name}:
-    delete:
-      consumes:
-      - application/json
-      description: 删除采集器
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: 采集器名
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: 采集器类型, service/deployment/statefulset/daemonset
-        in: query
-        name: type
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 删除采集器
-      tags:
-      - Metrics
-  /v1/metrics/labelvalues:
-    get:
-      consumes:
-      - application/json
-      description: 查询label对应的标签值
-      parameters:
-      - description: 要查询的标签
-        in: query
-        name: label
-        required: true
-        type: string
-      - description: 集群名
-        in: query
-        name: cluster
-        required: true
-        type: string
-      - description: 命名空间， 非管理员必传
-        in: query
-        name: namespace
-        type: string
-      - description: 查询资源
-        in: query
-        name: resource
-        required: true
-        type: string
-      - description: 查询规则
-        in: query
-        name: rule
-        required: true
-        type: string
-      - description: 单位
-        in: query
-        name: unit
-        required: true
-        type: string
-      - description: 标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all
-        in: query
-        name: labelpairs
-        type: string
-      - description: 开始时间，默认现在-30m
-        in: query
-        name: start
-        type: string
-      - description: 结束时间，默认现在
-        in: query
-        name: end
-        type: string
-      - description: step, 单位秒，默认0
-        in: query
-        name: step
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Metrics配置
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    type: string
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 监控标签值
-      tags:
-      - Metrics
-  /v1/metrics/queryrange:
-    get:
-      consumes:
-      - application/json
-      description: 监控指标查询
-      parameters:
-      - description: 集群名
-        in: query
-        name: cluster
-        required: true
-        type: string
-      - description: 命名空间， 非管理员必传
-        in: query
-        name: namespace
-        type: string
-      - description: 查询资源
-        in: query
-        name: resource
-        required: true
-        type: string
-      - description: 查询规则
-        in: query
-        name: rule
-        required: true
-        type: string
-      - description: 单位
-        in: query
-        name: unit
-        required: true
-        type: string
-      - description: 标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all
-        in: query
-        name: labelpairs
-        type: string
-      - description: 开始时间，默认现在-30m
-        in: query
-        name: start
-        type: string
-      - description: 结束时间，默认现在
-        in: query
-        name: end
-        type: string
-      - description: step, 单位秒，默认0
-        in: query
-        name: step
-        type: integer
-      - description: 限制返回前多少条指标，默认20
-        in: query
-        name: topk
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Metrics配置
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: object
-              type: object
-      security:
-      - JWT: []
-      summary: 监控指标查询
-      tags:
-      - Metrics
-  /v1/metrics/template/resources/{resource_name}/rules/{rule_name}:
-    delete:
-      consumes:
-      - application/json
-      description: 删除prometheu查询模板
-      parameters:
-      - description: resource
-        in: path
-        name: resource_name
-        required: true
-        type: string
-      - description: rule
-        in: path
-        name: rule_name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 删除prometheu查询模板
-      tags:
-      - Metrics
-    get:
-      consumes:
-      - application/json
-      description: 获取prometheu查询模板
-      parameters:
-      - description: resource
-        in: path
-        name: resource_name
-        required: true
-        type: string
-      - description: rule
-        in: path
-        name: rule_name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  $ref: '#/definitions/prometheus.RuleDetail'
-              type: object
-      security:
-      - JWT: []
-      summary: 获取prometheu查询模板
-      tags:
-      - Metrics
-    post:
-      consumes:
-      - application/json
-      description: 添加prometheu查询模板
-      parameters:
-      - description: resource
-        in: path
-        name: resource_name
-        required: true
-        type: string
-      - description: rule
-        in: path
-        name: rule_name
-        required: true
-        type: string
-      - description: 查询模板配置
-        in: body
-        name: from
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.RuleDetail'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 添加prometheu查询模板
-      tags:
-      - Metrics
   /v1/my/auth:
     get:
       consumes:
@@ -22349,9 +21912,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  items:
-                    $ref: '#/definitions/models.MonitorDashboard'
-                  type: array
+                  $ref: '#/definitions/models.MonitorDashboard'
               type: object
       security:
       - JWT: []
@@ -25682,7 +25243,11 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/apis.PluginsRet'
+                  additionalProperties:
+                    additionalProperties:
+                      $ref: '#/definitions/apis.PluginStatus'
+                    type: object
+                  type: object
               type: object
       security:
       - JWT: []

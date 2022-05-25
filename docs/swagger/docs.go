@@ -4113,587 +4113,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "采集器列表",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Metrics"
-                ],
-                "summary": "采集器列表",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/prometheus.MetricTarget"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "添加/更新采集器",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Metrics"
-                ],
-                "summary": "添加/更新采集器",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "采集器内容",
-                        "name": "form",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/prometheus.MetricTarget"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/metrics/cluster/{cluster}/namespaces/{namespace}/targets/{name}": {
-            "delete": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "删除采集器",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Metrics"
-                ],
-                "summary": "删除采集器",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "采集器名",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "采集器类型, service/deployment/statefulset/daemonset",
-                        "name": "type",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/metrics/labelvalues": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "查询label对应的标签值",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Metrics"
-                ],
-                "summary": "监控标签值",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "要查询的标签",
-                        "name": "label",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "集群名",
-                        "name": "cluster",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "命名空间， 非管理员必传",
-                        "name": "namespace",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "查询资源",
-                        "name": "resource",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "查询规则",
-                        "name": "rule",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "单位",
-                        "name": "unit",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master\u0026labelpairs[pod]=_all",
-                        "name": "labelpairs",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "开始时间，默认现在-30m",
-                        "name": "start",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "结束时间，默认现在",
-                        "name": "end",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "step, 单位秒，默认0",
-                        "name": "step",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Metrics配置",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/metrics/queryrange": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "监控指标查询",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Metrics"
-                ],
-                "summary": "监控指标查询",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "集群名",
-                        "name": "cluster",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "命名空间， 非管理员必传",
-                        "name": "namespace",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "查询资源",
-                        "name": "resource",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "查询规则",
-                        "name": "rule",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "单位",
-                        "name": "unit",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master\u0026labelpairs[pod]=_all",
-                        "name": "labelpairs",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "开始时间，默认现在-30m",
-                        "name": "start",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "结束时间，默认现在",
-                        "name": "end",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "step, 单位秒，默认0",
-                        "name": "step",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "限制返回前多少条指标，默认20",
-                        "name": "topk",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Metrics配置",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "object"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/metrics/template/resources/{resource_name}/rules/{rule_name}": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "获取prometheu查询模板",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Metrics"
-                ],
-                "summary": "获取prometheu查询模板",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "resource",
-                        "name": "resource_name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "rule",
-                        "name": "rule_name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "$ref": "#/definitions/prometheus.RuleDetail"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "添加prometheu查询模板",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Metrics"
-                ],
-                "summary": "添加prometheu查询模板",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "resource",
-                        "name": "resource_name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "rule",
-                        "name": "rule_name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "查询模板配置",
-                        "name": "from",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/prometheus.RuleDetail"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "删除prometheu查询模板",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Metrics"
-                ],
-                "summary": "删除prometheu查询模板",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "resource",
-                        "name": "resource_name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "rule",
-                        "name": "rule_name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/my/auth": {
             "get": {
                 "security": [
@@ -7325,10 +6744,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/models.MonitorDashboard"
-                                            }
+                                            "$ref": "#/definitions/models.MonitorDashboard"
                                         }
                                     }
                                 }
@@ -11701,7 +11117,13 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/apis.PluginsRet"
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "$ref": "#/definitions/apis.PluginStatus"
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -23785,26 +23207,35 @@ const docTemplate = `{
                 }
             }
         },
-        "apis.PluginsRet": {
+        "apis.PluginStatus": {
             "type": "object",
             "properties": {
-                "core": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/gemsplugin.Plugin"
-                        }
-                    }
+                "description": {
+                    "type": "string"
                 },
-                "kubernetes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/gemsplugin.Plugin"
-                        }
-                    }
+                "enabled": {
+                    "type": "boolean"
+                },
+                "healthy": {
+                    "type": "boolean"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         },
@@ -24244,63 +23675,6 @@ const docTemplate = `{
                 "serviceMesh": {
                     "description": "是否启用服务网格",
                     "type": "boolean"
-                }
-            }
-        },
-        "gemsplugin.Plugin": {
-            "type": "object",
-            "properties": {
-                "catalog": {
-                    "type": "string"
-                },
-                "daemonset": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "default_class": {
-                    "type": "boolean"
-                },
-                "deployment": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "enabled": {
-                    "type": "boolean"
-                },
-                "healthy": {
-                    "description": "返回给前端",
-                    "type": "boolean"
-                },
-                "host": {
-                    "type": "string"
-                },
-                "manual": {},
-                "name": {
-                    "description": "返回给前端",
-                    "type": "string"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "operator": {},
-                "required": {
-                    "type": "boolean"
-                },
-                "statefulset": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "version": {
-                    "type": "string"
                 }
             }
         },
@@ -25792,7 +25166,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "servicePort": {
-                    "type": "integer"
+                    "type": "string"
                 }
             }
         },
@@ -26530,7 +25904,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "servicePort": {
-                    "type": "integer"
+                    "type": "string"
                 }
             }
         },
@@ -27505,7 +26879,7 @@ const docTemplate = `{
                     }
                 },
                 "oversoldConfig": {
-                    "description": "installer plugins Values",
+                    "description": "集群资源超卖设置",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -27523,13 +26897,6 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.TenantResourceQuota"
-                    }
-                },
-                "values": {
-                    "description": "installer plugins Values",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
                     }
                 },
                 "vendor": {
@@ -27954,7 +27321,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/prometheus.RuleDetail"
                 },
                 "unit": {
-                    "description": "单位",
                     "type": "string"
                 }
             }
@@ -29319,44 +28685,6 @@ const docTemplate = `{
                 }
             }
         },
-        "prometheus.MetricTarget": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "description": "采集器名，前端默认构造为[{name}-{service/deployment/...}-metrics]",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "采集器所在namespace",
-                    "type": "string"
-                },
-                "target_endpoints": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/prometheus.TargetEndpoint"
-                    }
-                },
-                "target_labels": {
-                    "description": "标签筛选",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "target_name": {
-                    "description": "要采集的service/deployment/statefulset/daemonset名",
-                    "type": "string"
-                },
-                "target_namespace": {
-                    "description": "要采集的目标namespace, 支持所有namespace: _all",
-                    "type": "string"
-                },
-                "target_type": {
-                    "description": "采集器类型, service/deployment/statefulset/daemonset",
-                    "type": "string"
-                }
-            }
-        },
         "prometheus.MonitorAlertRule": {
             "type": "object",
             "properties": {
@@ -29543,27 +28871,6 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
-                }
-            }
-        },
-        "prometheus.TargetEndpoint": {
-            "type": "object",
-            "properties": {
-                "honor_labels": {
-                    "description": "是否优先选用原生标签",
-                    "type": "boolean"
-                },
-                "interval": {
-                    "description": "多久采集一次, default 30s",
-                    "type": "string"
-                },
-                "path": {
-                    "description": "采集路径, default: /metrics",
-                    "type": "string"
-                },
-                "port": {
-                    "description": "端口名",
-                    "type": "string"
                 }
             }
         },
