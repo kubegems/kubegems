@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	agentURL = "https://kubegems-local-agent.{{ .Values.kubegems.local.namespace }}:8041/alert"
+	agentURL = `https://kubegems-local-agent.{{ index .Values "kubegems-local" "namespace" }}:8041/alert`
 )
 
 func main() {
