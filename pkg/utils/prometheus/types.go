@@ -90,6 +90,13 @@ func (g *PromqlGenerator) IsEmpty() bool {
 	return g == nil || g.Resource == ""
 }
 
+func (g *PromqlGenerator) GetUnit() string {
+	if g != nil {
+		return g.Unit
+	}
+	return ""
+}
+
 type RuleContext struct {
 	ResourceDetail ResourceDetail
 	RuleDetail     RuleDetail

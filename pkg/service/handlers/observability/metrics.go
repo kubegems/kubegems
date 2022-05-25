@@ -172,6 +172,8 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		q.End = now.Format(time.RFC3339)
 	}
 
+	monitoropts := new(prometheus.MonitorOptions)
+	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	// 优先选用原生promql
 	if q.PromqlGenerator.IsEmpty() {
 		if q.Expr == "" {
@@ -180,7 +182,18 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		if err := prometheus.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
 			return err
 		}
+
 		q.SeriesSelector = q.Expr
+		unit := q.PromqlGenerator.GetUnit()
+		if unit != "" {
+			_, ok := monitoropts.Units[unit]
+			if !ok {
+				return fmt.Errorf("unit %s not valid", unit)
+			}
+			q.Expr = promql.New(q.Expr).Arithmetic(promql.
+				BinaryArithmeticOperators(prometheus.UnitValueMap[unit].Op), prometheus.UnitValueMap[unit].Value).
+				ToPromql()
+		}
 	} else {
 		if q.Expr != "" {
 			return fmt.Errorf("模板与原生promql只能指定一种")
@@ -193,8 +206,6 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 				LabelPairs: c.QueryMap("labelpairs"),
 			},
 		}
-		monitoropts := new(prometheus.MonitorOptions)
-		h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 		ruleCtx, err := q.PromqlGenerator.BaseQueryParams.FindRuleContext(monitoropts)
 		if err != nil {
 			return err
