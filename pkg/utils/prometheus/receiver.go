@@ -12,11 +12,12 @@ import (
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"kubegems.io/pkg/apis/gems"
 )
 
 var (
 	DefaultReceiverName = "gemcloud-default-webhook"
-	DefaultReceiverURL  = "https://gems-agent.gemcloud-system:8041/alert"
+	DefaultReceiverURL  = fmt.Sprintf("https://kubegems-local-agent.%s:8041/alert", gems.NamespaceSystem)
 	DefaultReceiver     = v1alpha1.Receiver{
 		Name: DefaultReceiverName,
 		WebhookConfigs: []v1alpha1.WebhookConfig{

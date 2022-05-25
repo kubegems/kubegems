@@ -19,7 +19,7 @@ import (
 // @Description  监控dashboard列表
 // @Accept       json
 // @Produce      json
-// @Param        environment_id  path      string                                                   true  "环境ID"
+// @Param        environment_id  path      string                                                 true  "环境ID"
 // @Success      200             {object}  handlers.ResponseStruct{Data=[]models.MonitorDashboard}  "监控dashboard列表"
 // @Router       /v1/observability/environment/{environment_id}/monitor/dashboard [get]
 // @Security     JWT
@@ -40,7 +40,7 @@ func (h *ObservabilityHandler) ListDashboard(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        environment_id  path      string                                                   true  "环境ID"
-// @Param        dashboard_id    path      uint                                                     true  "dashboard id"
+// @Param        dashboard_id    path      uint                                                   true  "dashboard id"
 // @Success      200             {object}  handlers.ResponseStruct{Data=models.MonitorDashboard}  "监控dashboard列表"
 // @Router       /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [get]
 // @Security     JWT
@@ -180,6 +180,11 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 			}
 			if err := prometheus.CheckQueryExprNamespace(v.Expr, env.Namespace); err != nil {
 				return nil, err
+			}
+			if v.Unit != "" {
+				if _, ok := monitoropts.Units[v.Unit]; !ok {
+					return nil, fmt.Errorf("unit %s not valid", v.Unit)
+				}
 			}
 		} else {
 			if v.Expr != "" {

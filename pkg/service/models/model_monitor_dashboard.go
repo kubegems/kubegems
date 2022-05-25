@@ -51,4 +51,5 @@ type MetricGraph struct {
 	// 查询目标
 	*prometheus.PromqlGenerator `json:"promqlGenerator"`
 	Expr                        string `json:"expr"`
+	Unit                        string `json:"unit"`
 }

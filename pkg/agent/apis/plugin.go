@@ -36,8 +36,8 @@ type PluginStatus struct {
 // @Description  获取Plugin列表数据
 // @Accept       json
 // @Produce      json
-// @Param        cluster  path      string                                    true  "cluster"
-// @Param        simple   query     bool                                      true  "simple"
+// @Param        cluster  path      string                                                            true  "cluster"
+// @Param        simple   query     bool                                                              true  "simple"
 // @Success      200      {object}  handlers.ResponseStruct{Data=map[string]map[string]PluginStatus}  "Plugins"
 // @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
 // @Security     JWT
