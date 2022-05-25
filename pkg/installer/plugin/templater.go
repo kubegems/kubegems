@@ -1,4 +1,4 @@
-package controllers
+package plugin
 
 import (
 	"bytes"
@@ -14,65 +14,35 @@ import (
 	"helm.sh/helm/v3/pkg/engine"
 	"helm.sh/helm/v3/pkg/releaseutil"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/kustomize/api/filesys"
-	"sigs.k8s.io/kustomize/api/krusty"
+	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/yaml"
 )
-
-func KustomizeTemplatePlugin(ctx context.Context, plugin *Plugin) ([]byte, error) {
-	return KustomizeBuild(ctx, plugin.Path)
-}
-
-// build kustomization
-func KustomizeBuild(ctx context.Context, dir string) ([]byte, error) {
-	k := krusty.MakeKustomizer(krusty.MakeDefaultOptions())
-	m, err := k.Run(filesys.MakeFsOnDisk(), dir)
-	if err != nil {
-		return nil, err
-	}
-	yml, err := m.AsYaml()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(yml), nil
-}
-
-func InlineTemplatePlugin(ctx context.Context, plugin *Plugin) ([]byte, error) {
-	out := bytes.NewBuffer(nil)
-	for _, obj := range plugin.Resources {
-		out.WriteString("---\n")
-		_, err := out.Write(obj.Raw)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return out.Bytes(), nil
-}
 
 type Templater struct {
 	Config *rest.Config
 }
 
 // TemplatesTemplate using helm template engine to render,but allow apply to different namespaces
-func (t Templater) Template(ctx context.Context, plugin *Plugin) ([]byte, error) {
+func (t Templater) Template(ctx context.Context, plugin *pluginsv1beta1.Plugin, dir string) ([]byte, error) {
+	chart, err := Load(plugin.Name, plugin.Spec.Version, dir)
+	if err != nil {
+		return nil, err
+	}
+
 	options := chartutil.ReleaseOptions{
 		Name:      plugin.Name,
 		Namespace: plugin.Namespace,
 		IsInstall: true,
 	}
-	chart, err := Load(plugin)
-	if err != nil {
-		return nil, err
-	}
 
 	caps := chartutil.DefaultCapabilities
-	valuesToRender, err := chartutil.ToRenderValues(chart, plugin.Values, options, caps)
+	valuesToRender, err := chartutil.ToRenderValues(chart, plugin.Spec.Values.Object, options, caps)
 	if err != nil {
 		return nil, err
 	}
 
 	if vals, ok := valuesToRender.AsMap()["Values"].(chartutil.Values); ok {
-		plugin.FullValues = vals
+		plugin.Spec.Values = pluginsv1beta1.Values{Object: vals}
 	}
 
 	var renderdFiles map[string]string
@@ -108,8 +78,11 @@ func (t Templater) Template(ctx context.Context, plugin *Plugin) ([]byte, error)
 
 const chartFileName = "Chart.yaml"
 
-func Load(plugin *Plugin) (*chart.Chart, error) {
-	absdir, err := filepath.Abs(plugin.Path)
+func Load(name, version, path string) (*chart.Chart, error) {
+	if version == "" {
+		version = "0.0.0"
+	}
+	absdir, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
@@ -140,17 +113,11 @@ func Load(plugin *Plugin) (*chart.Chart, error) {
 	if err = filepath.Walk(absdir, walk); err != nil {
 		return nil, err
 	}
-
 	if !containsChartFile {
 		chartfile := chart.Metadata{
 			APIVersion: chart.APIVersionV2,
-			Name:       plugin.Name,
-			Version: func() string {
-				if plugin.Version != "" {
-					return plugin.Version
-				}
-				return "0.0.0"
-			}(),
+			Name:       name,
+			Version:    version,
 		}
 		chartfilecontent, err := yaml.Marshal(chartfile)
 		if err != nil {

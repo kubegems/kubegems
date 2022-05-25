@@ -9,7 +9,6 @@ require (
 	github.com/alicebob/miniredis/v2 v2.17.0
 	github.com/argoproj/argo-cd/v2 v2.1.10
 	github.com/argoproj/argo-rollouts v1.1.1
-	github.com/argoproj/gitops-engine v0.4.2
 	github.com/banzaicloud/logging-operator/pkg/sdk v0.7.2
 	github.com/cloudflare/cfssl v1.6.1
 	github.com/containerd/containerd v1.4.13
@@ -84,6 +83,7 @@ require (
 	k8s.io/api v0.22.4
 	k8s.io/apiextensions-apiserver v0.21.4
 	k8s.io/apimachinery v0.21.4
+	k8s.io/cli-runtime v0.21.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kubectl v0.21.2
 	k8s.io/metrics v0.21.2
@@ -120,6 +120,7 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
+	github.com/argoproj/gitops-engine v0.4.2 // indirect
 	github.com/argoproj/pkg v0.11.1-0.20211203175135-36c59d8fafe0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
 	github.com/astaxie/beego v1.12.1 // indirect
@@ -333,7 +334,6 @@ require (
 	istio.io/gogo-genproto v0.0.0-20220126213228-fbb7617c3d36 // indirect
 	istio.io/pkg v0.0.0-20220126213228-1356f485563a // indirect
 	k8s.io/apiserver v0.21.2 // indirect
-	k8s.io/cli-runtime v0.21.2 // indirect
 	k8s.io/component-base v0.21.4 // indirect
 	k8s.io/component-helpers v0.21.2 // indirect
 	k8s.io/klog/v2 v2.8.0 // indirect

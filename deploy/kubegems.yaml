@@ -6,6 +6,7 @@ metadata:
 spec:
   enabled: true
   kind: helm
+  repo: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
   values:
     global:

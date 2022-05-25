@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package plugin
 
 import (
 	"context"
@@ -22,13 +22,11 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -38,21 +36,30 @@ const (
 	PluginAnnotationsShowFullValues = "plugins.kubegems.io/show-full-values"
 )
 
-// PluginReconciler reconciles a Memcached object
-type PluginReconciler struct {
+// Reconciler reconciles a Memcached object
+type Reconciler struct {
 	client.Client
-	PluginManager *PluginManager
+	Applier *PluginApplier
 }
 
-func NewAndSetupPluginReconciler(ctx context.Context, mgr manager.Manager, options *PluginOptions, concurrent int) error {
-	reconciler := &PluginReconciler{
-		Client:        mgr.GetClient(),
-		PluginManager: NewPluginManager(mgr.GetConfig(), options),
+type Options struct {
+	Cache      string
+	SearchDirs []string
+}
+
+func NewDefaultOptions() *Options {
+	return &Options{}
+}
+
+func SetupReconciler(ctx context.Context, mgr manager.Manager, options *Options) error {
+	reconciler := &Reconciler{
+		Client:  mgr.GetClient(),
+		Applier: NewApplier(mgr.GetConfig(), mgr.GetClient(), options),
 	}
-	if err := reconciler.SetupWithManager(mgr, concurrent); err != nil {
-		return err
-	}
-	return nil
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&pluginsv1beta1.Plugin{}).
+		// WithOptions(controller.Options{}).
+		Complete(reconciler)
 }
 
 //+kubebuilder:rbac:groups=kubegems.io,resources=installers,verbs=get;list;watch;create;update;patch;delete
@@ -64,7 +71,7 @@ func NewAndSetupPluginReconciler(ctx context.Context, mgr manager.Manager, optio
 //
 // For more details, check Reconcile and its Result here:
 // -  https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
-func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logr.FromContextOrDiscard(ctx)
 
 	plugin := &pluginsv1beta1.Plugin{}
@@ -76,7 +83,7 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	// then lets add the finalizer and update the object. This is equivalent
 	// registering our finalizer.
 	if plugin.DeletionTimestamp == nil && !controllerutil.ContainsFinalizer(plugin, PluginFinalizerName) {
-		log.Info("add finalizer")
+		log.Info("add finalizer", "finalizer", PluginFinalizerName)
 		controllerutil.AddFinalizer(plugin, PluginFinalizerName)
 		if err := r.Update(ctx, plugin); err != nil {
 			return ctrl.Result{}, err
@@ -85,7 +92,8 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// check the object is being deleted then remove the finalizer
 	if plugin.DeletionTimestamp != nil && controllerutil.ContainsFinalizer(plugin, PluginFinalizerName) {
-		if plugin.Status.Phase == pluginsv1beta1.PluginPhaseNone || plugin.Status.Phase == pluginsv1beta1.PluginPhaseRemoved {
+		if plugin.Status.Phase == pluginsv1beta1.PluginPhaseNone || plugin.Status.Phase == "" {
+			log.Info("remvove finalizer", "finalizer", PluginFinalizerName)
 			controllerutil.RemoveFinalizer(plugin, PluginFinalizerName)
 			if err := r.Update(ctx, plugin); err != nil {
 				return ctrl.Result{}, err
@@ -95,25 +103,21 @@ func (r *PluginReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		log.Info("waiting for plugin to be removed, then remove finalizer")
 	}
 
-	beforeStatus := plugin.Status.DeepCopy()
 	beforePlugin := plugin.DeepCopy()
-
 	err := r.Sync(ctx, plugin)
-	// update status if updated whenever the sync has error or no
-
-	if !apiequality.Semantic.DeepEqual(plugin.Status, beforeStatus) {
-		if err := r.Status().Update(ctx, plugin.DeepCopy()); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-	// patch .spec
-	if !reflect.DeepEqual(plugin.Spec, beforePlugin.Spec) {
-		if err := r.Patch(ctx, plugin, client.MergeFrom(beforePlugin)); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-	if err != nil {
+	if err := r.Status().Update(ctx, plugin.DeepCopy()); err != nil {
 		return ctrl.Result{}, err
+	}
+
+	if !reflect.DeepEqual(plugin.Spec.Values.Object, beforePlugin.Spec.Values.Object) {
+		valbytes, err := plugin.Spec.Values.MarshalJSON()
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		patch := client.RawPatch(types.MergePatchType, []byte(`{"spec":{"values":`+string(valbytes)+`}}`))
+		if err := r.Patch(ctx, plugin, patch); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 	return ctrl.Result{}, err
 }
@@ -128,7 +132,7 @@ func (e DependencyError) Error() string {
 }
 
 // Sync
-func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plugin) error {
+func (r *Reconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plugin) error {
 	shouldRemove := (!plugin.Spec.Enabled) || plugin.DeletionTimestamp != nil
 
 	// todo: check dependencies
@@ -161,16 +165,9 @@ func (r *PluginReconciler) Sync(ctx context.Context, plugin *pluginsv1beta1.Plug
 
 	if shouldRemove {
 		// remove
-		return r.PluginManager.Remove(ctx, plugin)
+		return r.Applier.Remove(ctx, plugin)
 	} else {
 		// apply
-		return r.PluginManager.Apply(ctx, plugin)
+		return r.Applier.Apply(ctx, plugin)
 	}
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *PluginReconciler) SetupWithManager(mgr ctrl.Manager, concurrent int) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&pluginsv1beta1.Plugin{}).WithOptions(controller.Options{MaxConcurrentReconciles: concurrent}).
-		Complete(r)
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
+	"log"
 	"reflect"
 
 	"github.com/go-logr/logr"
@@ -17,6 +17,7 @@ import (
 	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 )
 
@@ -68,7 +69,6 @@ func (h *Helm) ApplyChart(ctx context.Context,
 	}
 
 	version, repo := options.Version, options.Repo
-	log.Info("loading chart")
 	chart, err := LoadChart(ctx, chartNameOrPath, repo, version)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (h *Helm) ApplyChart(ctx context.Context,
 	}
 	// check should upgrade
 	if existRelease.Info.Status == release.StatusDeployed && equalmap(existRelease.Config, values) {
-		log.Info("already uptodate", "values", values)
+		log.Info("already uptodate")
 		return existRelease, nil
 	}
 	log.Info("upgrading", "old", existRelease.Config, "new", values)
@@ -125,12 +125,12 @@ func equalmap(a, b map[string]interface{}) bool {
 func NewHelmConfig(namespace string, restConfig *rest.Config) (*action.Configuration, error) {
 	log := func(format string, v ...interface{}) {
 	}
-	cligetter, err := NewRESTClientGetter(restConfig)
-	if err != nil {
-		return nil, err
+	configflag := genericclioptions.NewConfigFlags(true)
+	configflag.WrapConfigFn = func(*rest.Config) *rest.Config {
+		return restConfig
 	}
 	config := &action.Configuration{}
-	config.Init(cligetter, namespace, "", log) // release storage namespace
+	config.Init(configflag, namespace, "", log) // release storage namespace
 	if kc, ok := config.KubeClient.(*kube.Client); ok {
 		kc.Namespace = namespace // install to namespace
 	}
@@ -160,19 +160,20 @@ func DownloadChart(ctx context.Context, repo, name, version string) (string, *ch
 	if err != nil {
 		return "", nil, err
 	}
+
 	// dependencies update
 	if err := action.CheckDependencies(chart, chart.Metadata.Dependencies); err != nil {
 		man := &downloader.Manager{
-			Out:              io.Discard,
+			Out:              log.Default().Writer(),
 			ChartPath:        chartPath,
 			Keyring:          chartPathOptions.Keyring,
-			SkipUpdate:       false,
+			SkipUpdate:       true,
 			Getters:          getter.All(settings),
 			RepositoryConfig: settings.RepositoryConfig,
 			RepositoryCache:  settings.RepositoryCache,
 			Debug:            settings.Debug,
 		}
-		if err := man.Update(); err != nil {
+		if err := man.Build(); err != nil {
 			return "", nil, err
 		}
 		chart, err = loader.Load(chartPath)

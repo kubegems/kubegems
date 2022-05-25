@@ -1,11 +1,11 @@
 apiVersion: v2
-appVersion: v2.3.0
+appVersion: 0.0.0
 dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami
     tags:
       - bitnami-common
-    version: 1.x.x
+    version: 1.14.1
 description: kubegems-installer
 home: kubegems.io
 keywords:
@@ -16,4 +16,4 @@ maintainers:
 name: kubegems-installer
 sources:
   - https://kubegems.io
-version: 0.1.0
+version: 0.0.0

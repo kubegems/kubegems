@@ -107,11 +107,25 @@ spec:
               installNamespace:
                 description: plugin installNamespace,if empty use .metadata.namespace
                 type: string
+              managed:
+                items:
+                  properties:
+                    apiVersion:
+                      type: string
+                    error:
+                      type: string
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  type: object
+                type: array
               message:
                 description: Message is the message associated with the status
                 type: string
               notes:
-                description: Contains the rendered templates/NOTES.txt if available
                 type: string
               phase:
                 description: Phase is the current state of the release

@@ -59,13 +59,21 @@ type PluginStatus struct {
 	// plugin installNamespace,if empty use .metadata.namespace
 	InstallNamespace string `json:"installNamespace,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Values            Values       `json:"values,omitempty"`
-	Version           string       `json:"version,omitempty"`
-	CreationTimestamp metav1.Time  `json:"creationTimestamp,omitempty"`
-	UpgradeTimestamp  metav1.Time  `json:"upgradeTimestamp,omitempty"`
-	DeletionTimestamp *metav1.Time `json:"deletionTimestamp,omitempty"`
-	// Contains the rendered templates/NOTES.txt if available
-	Notes string `json:"notes,omitempty"`
+	Values            Values            `json:"values,omitempty"`
+	Version           string            `json:"version,omitempty"`
+	CreationTimestamp metav1.Time       `json:"creationTimestamp,omitempty"`
+	UpgradeTimestamp  metav1.Time       `json:"upgradeTimestamp,omitempty"`
+	DeletionTimestamp *metav1.Time      `json:"deletionTimestamp,omitempty"`
+	Notes             string            `json:"notes,omitempty"` // Contains the rendered templates/NOTES.txt if available
+	Managed           []ManagedResource `json:"managed,omitempty"`
+}
+
+type ManagedResource struct {
+	APIVersion string `json:"apiVersion,omitempty"`
+	Kind       string `json:"kind,omitempty"`
+	Namespace  string `json:"namespace,omitempty"`
+	Name       string `json:"name,omitempty"`
+	Error      string `json:"error,omitempty"`
 }
 
 //+kubebuilder:object:root=true

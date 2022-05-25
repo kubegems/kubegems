@@ -1,13 +1,13 @@
 dependencies:
 - name: common
   repository: https://charts.bitnami.com/bitnami
-  version: 1.14.0
+  version: 1.14.1
 - name: mysql
   repository: https://charts.bitnami.com/bitnami
   version: 8.9.6
 - name: redis
   repository: https://charts.bitnami.com/bitnami
-  version: 16.9.6
+  version: 16.9.11
 - name: gitea
   repository: https://dl.gitea.io/charts
   version: 5.0.8
@@ -16,6 +16,6 @@ dependencies:
   version: 3.35.4
 - name: chartmuseum
   repository: https://chartmuseum.github.io/charts
-  version: 3.7.1
-digest: sha256:777cd1316b2c458f4f4cacf9ce7e165bf34b0ae8a49ee183c24cd4e22b46996b
-generated: "2022-05-19T13:43:11.450177481+08:00"
+  version: 3.8.0
+digest: sha256:1f84715783514785fe82c3a89c7620a1c71bcdf6ab9c436b8f135a845e143478
+generated: "2022-05-25T14:31:28.41809811+08:00"

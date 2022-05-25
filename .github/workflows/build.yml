@@ -48,10 +48,11 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
+            ~/.cache/helm
             bin/plugins
+            **.tgz
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-
+          restore-keys: ${{ runner.os }}-go-
       # Build binary
       - run: make build
 

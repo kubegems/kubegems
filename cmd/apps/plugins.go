@@ -15,19 +15,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
-	"kubegems.io/pkg/installer/controllers"
+	"kubegems.io/pkg/installer/plugin"
 	"kubegems.io/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 )
 
 func NewPluginCmd() *cobra.Command {
-	globalOptions := controllers.NewDefaultOPluginptions()
+	globalOptions := plugin.NewDefaultOptions()
 	cmd := &cobra.Command{
 		Use:   "plugins",
 		Short: "plugins commands",
 	}
-	cmd.PersistentFlags().StringVarP(&globalOptions.CacheDir, "cache", "c", globalOptions.CacheDir, "cache download plugins to this directory")
+	cmd.PersistentFlags().StringVarP(&globalOptions.Cache, "cache", "c", globalOptions.Cache, "cache download plugins to this directory")
 	cmd.PersistentFlags().StringSliceVarP(&globalOptions.SearchDirs, "directory", "d", globalOptions.SearchDirs, "search plugins in directories")
 
 	cmd.AddCommand(NewPluginTemplateCmd(globalOptions))
@@ -36,7 +36,7 @@ func NewPluginCmd() *cobra.Command {
 }
 
 // nolint: gocognit
-func NewPluginTemplateCmd(global *controllers.PluginOptions) *cobra.Command {
+func NewPluginTemplateCmd(global *plugin.Options) *cobra.Command {
 	pretty := false
 	cmd := &cobra.Command{
 		Use:   "template",
@@ -48,39 +48,13 @@ func NewPluginTemplateCmd(global *controllers.PluginOptions) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
-			pm := controllers.NewPluginManager(nil, global)
-			// to avoid log message mix in yaml contents
-			log.Default().SetOutput(io.Discard)
-			for _, path := range args {
-				var content []byte
-				var err error
-				// nolint:nestif
-				if path == "-" {
-					content, err = io.ReadAll(os.Stdin)
-					if err != nil {
-						return err
-					}
-				} else {
-					fi, err := os.Stat(path)
-					if err != nil {
-						return err
-					}
-					if fi.IsDir() {
-						// template current directory
-						pm.Options.SearchDirs = append(pm.Options.SearchDirs, filepath.Dir(path))
-						err := templatePrint(ctx, pm, &pluginsv1beta1.Plugin{
-							ObjectMeta: metav1.ObjectMeta{Name: filepath.Base(path), Namespace: "default"},
-							Spec:       pluginsv1beta1.PluginSpec{Enabled: true, Kind: controllers.DetectPluginType(path)},
-						}, pretty)
-						if err != nil {
-							return err
-						}
-						continue
-					}
-					content, err = os.ReadFile(path)
-					if err != nil {
-						return err
-					}
+			log.Default().SetOutput(io.Discard) // disable logs to stdout
+
+			pm := plugin.NewApplier(nil, nil, global)
+			if len(args) == 1 && args[0] == "-" {
+				content, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
 				}
 				// template every plugin
 				objs, err := kube.SplitYAMLFilterByExample[*pluginsv1beta1.Plugin](content)
@@ -92,6 +66,47 @@ func NewPluginTemplateCmd(global *controllers.PluginOptions) *cobra.Command {
 						return err
 					}
 				}
+				return nil
+			}
+
+			for _, path := range args {
+				matches, err := filepath.Glob(path)
+				if err != nil {
+					return err
+				}
+				for _, path := range matches {
+					fi, err := os.Stat(path)
+					if err != nil {
+						return err
+					}
+					if fi.IsDir() {
+						// template current directory
+						pm.Options.SearchDirs = append(pm.Options.SearchDirs, filepath.Dir(path))
+						err := templatePrint(ctx, pm, &pluginsv1beta1.Plugin{
+							ObjectMeta: metav1.ObjectMeta{Name: filepath.Base(path), Namespace: "default"},
+							Spec:       pluginsv1beta1.PluginSpec{Enabled: true, Kind: plugin.DetectPluginType(path)},
+						}, pretty)
+						if err != nil {
+							return err
+						}
+						continue
+					}
+					content, err := os.ReadFile(path)
+					if err != nil {
+						return err
+					}
+
+					// template every plugin
+					objs, err := kube.SplitYAMLFilterByExample[*pluginsv1beta1.Plugin](content)
+					if err != nil {
+						return err
+					}
+					for _, obj := range objs {
+						if err := templatePrint(ctx, pm, obj, pretty); err != nil {
+							return err
+						}
+					}
+				}
 			}
 			return nil
 		},
@@ -100,7 +115,7 @@ func NewPluginTemplateCmd(global *controllers.PluginOptions) *cobra.Command {
 	return cmd
 }
 
-func templatePrint(ctx context.Context, pm *controllers.PluginManager, plugin *pluginsv1beta1.Plugin, pretty bool) error {
+func templatePrint(ctx context.Context, pm *plugin.PluginApplier, plugin *pluginsv1beta1.Plugin, pretty bool) error {
 	manifestdoc, err := pm.Template(ctx, plugin)
 	if err != nil {
 		return err
@@ -124,7 +139,7 @@ func templatePrint(ctx context.Context, pm *controllers.PluginManager, plugin *p
 	return nil
 }
 
-func NewPluginsDownloadCmd(global *controllers.PluginOptions) *cobra.Command {
+func NewPluginsDownloadCmd(global *plugin.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "download",
 		Short:   "download plugins",
@@ -149,13 +164,12 @@ func NewPluginsDownloadCmd(global *controllers.PluginOptions) *cobra.Command {
 						return err
 					}
 				}
-				pm := controllers.NewPluginManager(nil, global)
 				objs, err := kube.SplitYAMLFilterByExample[*pluginsv1beta1.Plugin](filecontent)
 				if err != nil {
 					return err
 				}
 				for _, obj := range objs {
-					if err := pm.Download(ctx, obj); err != nil {
+					if _, err := plugin.Download(ctx, obj, global.Cache, global.SearchDirs...); err != nil {
 						return err
 					}
 				}

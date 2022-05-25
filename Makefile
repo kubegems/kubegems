@@ -5,18 +5,16 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 BUILD_DATE?=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-GIT_VERSION?=$(shell git describe --tags --dirty 2>/dev/null)
+GIT_VERSION?=$(shell git describe --exact-match --tags 2>/dev/null || echo "v0.0.0-$(shell git symbolic-ref --short HEAD)")
 GIT_COMMIT?=$(shell git rev-parse HEAD 2>/dev/null)
 GIT_BRANCH?=$(shell git symbolic-ref --short HEAD 2>/dev/null)
-
+# semver version
+VERSION?=$(shell echo "${GIT_VERSION}" | sed -e 's/^v//')
 BIN_DIR = ${PWD}/bin
-ifeq (${GIT_VERSION},)
-	GIT_VERSION=${GIT_BRANCH}
-endif
 
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
-ifeq (${IMAGE_TAG},main)
+ifeq (${IMAGE_TAG},v0.0.0-main)
    IMAGE_TAG = latest
 endif
 # Image URL to use all building/pushing image targets
@@ -29,9 +27,14 @@ ldflags+=-X '${GOPACKAGE}/pkg/version.gitCommit=${GIT_COMMIT}'
 ldflags+=-X '${GOPACKAGE}/pkg/version.buildDate=${BUILD_DATE}'
 
 
+# HELM BUILD
+HELM_USER?=kubegems
+HELM_PASSWORD?=
+HELM_ADDR?=https://charts.kubegems.io/kubegems
+
 ##@ All
 
-all: container-build ## build all
+all: build container ## build all
 
 ##@ General
 
@@ -88,10 +91,14 @@ plugins-download: ## Build plugins-cache
 	${BIN_DIR}/kubegems plugins -c bin/plugins template deploy/plugins/* | ${BIN_DIR}/kubegems plugins -c bin/plugins download -
 	${BIN_DIR}/kubegems plugins -c bin/plugins download deploy/*.yaml
 
-plugins-images: ## List all images used in all plugins
-	sh scripts/plugins-images.sh --list
+CHARTS = kubegems kubegems-local kubegems-installer
+helm-package: ## Build helm chart
+	$(foreach var,$(CHARTS),helm package -u -d bin/plugins --version=${VERSION} --app-version=${VERSION} deploy/plugins/$(var);)
 
-container: build ## Build container image.
+helm-push:
+	$(foreach var,$(CHARTS),curl -u ${HELM_USER}:${HELM_PASSWORD} --data-binary "@bin/plugins/$(var)-${VERSION}.tgz" ${HELM_ADDR};)
+
+container: ## Build container image.
 ifneq (, $(shell which docker))
 	docker build -t ${IMG} .
 else

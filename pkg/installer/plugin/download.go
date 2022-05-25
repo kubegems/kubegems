@@ -1,4 +1,4 @@
-package controllers
+package plugin
 
 import (
 	"archive/tar"
@@ -21,8 +21,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/go-logr/logr"
-	"kubegems.io/pkg/apis/plugins/v1beta1"
-	"kubegems.io/pkg/installer/controllers/helm"
+	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	"kubegems.io/pkg/installer/helm"
 )
 
 const (
@@ -30,124 +30,77 @@ const (
 	defaultFileMode = 0o644
 )
 
-// we cache "plugin" in a directory with name "{name}-{version}" under cache directory
-func DownloadPlugin(ctx context.Context, plugin *Plugin, cachedir string, searchdirs ...string) error {
-	log := logr.FromContextOrDiscard(ctx).WithValues("kind", plugin.Kind, "plugin", plugin.Name)
-
-	// from search path, fill path from search dir
-	for _, dir := range searchdirs {
-		pluginpath, err := filepath.Abs(filepath.Join(dir, plugin.Name))
-		if err != nil {
-			log.Error(err, "failed to get absolute path")
-			continue
-		}
-		if entries, err := os.ReadDir(pluginpath); err == nil && len(entries) > 0 {
-			log.Info("found in search path,copy it to cache", "dir", pluginpath)
-			plugin.Repo = fmt.Sprintf("file://%s", pluginpath)
-			break
-		}
+// we cache "bundle" in a directory with name "{name}-{version}" under cache directory
+func Download(ctx context.Context, bundle *pluginsv1beta1.Plugin, cachedir string, searchdirs ...string) (string, error) {
+	log := logr.FromContextOrDiscard(ctx)
+	if cachedir == "" {
+		cachedir = filepath.Join(os.TempDir(), "kubegems", "plugins")
 	}
-	if plugin.Repo == "" {
-		return fmt.Errorf("plugin %s no repo set and not found in search dirs %s", plugin.Name, strings.Join(searchdirs, ","))
+	name, repo, version := bundle.Name, bundle.Spec.Repo, bundle.Spec.Version
+	pluginpath := fmt.Sprintf("%s-%s", name, version)
+	if version == "" {
+		pluginpath = name
 	}
 
-	// cache hint?
-	pluginCacheName := fmt.Sprintf("%s-%s", plugin.Name, plugin.Version)
-	if plugin.Version == "" {
-		pluginCacheName = plugin.Name
-	}
-
-	pluginCacheDir := filepath.Join(cachedir, pluginCacheName)
-	// we download plugin every time when no version specified
-	if plugin.Version != "" && isCached(pluginCacheDir) {
-		log.Info("already download", "cache", pluginCacheDir)
-		plugin.Path = pluginCacheDir
-		return nil
-	}
-
-	log.Info("downloading...", "cache", pluginCacheDir)
-	dlrepo := DownloadRepo{
-		URI:     plugin.Repo,
-		SubPath: plugin.Path,
-		Version: plugin.Version,
-		Name:    plugin.Name,
-		IsHelm:  plugin.Kind == v1beta1.PluginKindHelm,
-	}
-	if err := Download(ctx, dlrepo, pluginCacheDir); err != nil {
-		log.Error(err, "on download", "cache", pluginCacheDir)
-		return err
-	}
-	log.Info("download finished", "cache", pluginCacheDir)
-	plugin.Path = pluginCacheDir
-	return nil
-}
-
-type Downloader struct {
-	CacheDir string
-}
-
-// cases
-// 1. URI: charts.example.com/repository
-// 1. URI: files.example.com/blob/filename.tgz
-// 1. URI: git.example.com/foo/bar.git														Subpath: deploy/manifests
-// 1. URI: https://github.com/rancher/local-path-provisioner/archive/refs/tags/v0.0.22.zip	Subpath: deploy/manifests
-// 1. URI: https://github.com/rancher/local-path-provisioner/archive/refs/heads/master.zip 	Subpath:
-
-type DownloadRepo struct {
-	URI     string
-	SubPath string
-	Version string
-	Name    string
-	IsHelm  bool
-}
-
-func isCached(path string) bool {
-	if entries, err := os.ReadDir(path); err == nil && len(entries) > 0 {
-		return true
-	}
-	return false
-}
-
-func Download(ctx context.Context, repo DownloadRepo, intodir string) error {
-	u, err := url.ParseRequestURI(repo.URI)
-	if err != nil {
-		return err
-	}
-
-	if repo.SubPath != "" && !strings.HasSuffix(repo.SubPath, "/") {
-		repo.SubPath += "/"
-	}
-
-	// is local path ?
-	if u.Scheme == "file" || u.Scheme == "" {
-		if err := DownloadFile(ctx, repo.URI, repo.SubPath, intodir); err != nil {
-			return fmt.Errorf("copy file %s: %v", repo.URI, err)
-		}
-		// download helm dependecy chart
-		if repo.IsHelm {
-			if _, _, err := helm.DownloadChart(ctx, "", intodir, ""); err != nil {
-				return fmt.Errorf("download helm dependencies: %v", err)
+	allpath := append(searchdirs, cachedir)
+	for _, dir := range allpath {
+		fullsearchpath := filepath.Join(dir, pluginpath)
+		noversionedpath := filepath.Join(dir, name)
+		for _, path := range []string{fullsearchpath, noversionedpath} {
+			if tgzfile, ok := isTgz(path); ok {
+				log.Info("found in search path", "file", tgzfile)
+				return tgzfile, nil
 			}
+			if !isNotEmpty(path) {
+				continue
+			}
+			log.Info("found in search path", "dir", path)
+			return path, nil
 		}
-		return nil
 	}
+
+	if repo == "" {
+		return "", fmt.Errorf("no find in pathes %s and no repo specified", allpath)
+	}
+
+	into := filepath.Join(cachedir, pluginpath)
+	log.Info("downloading...", "cache", into)
+
 	// is git ?
-	if strings.HasSuffix(u.Path, ".git") {
-		return DownloadGit(ctx, repo.URI, repo.Version, repo.SubPath, intodir)
+	if strings.HasSuffix(repo, ".git") {
+		return into, DownloadGit(ctx, repo, version, bundle.Spec.Path, into)
 	}
 	// is zip ?
-	if strings.HasSuffix(u.Path, ".zip") {
-		return DownloadZip(ctx, repo.URI, repo.SubPath, intodir)
+	if strings.HasSuffix(repo, ".zip") {
+		return into, DownloadZip(ctx, repo, bundle.Spec.Path, into)
 	}
 	// is tar.gz ?
-	if strings.HasSuffix(u.Path, ".tar.gz") || strings.HasSuffix(u.Path, ".tgz") {
-		return DownloadTgz(ctx, repo.URI, repo.SubPath, intodir)
+	if strings.HasSuffix(repo, ".tar.gz") || strings.HasSuffix(repo, ".tgz") {
+		return into, DownloadTgz(ctx, repo, bundle.Spec.Path, into)
 	}
 	// is helm repo?
-	if repo.IsHelm {
-		return DownloadHelmChart(ctx, repo.URI, repo.Name, repo.Version, intodir)
+	if bundle.Spec.Kind == pluginsv1beta1.PluginKindHelm {
+		return into, DownloadHelmChart(ctx, repo, name, version, into)
 	}
-	return fmt.Errorf("unsupported scheme: %s", u.Scheme)
+	return "", fmt.Errorf("unknown download source")
+}
+
+func isNotEmpty(path string) bool {
+	entries, err := os.ReadDir(path)
+	return err == nil && len(entries) >= 0
+}
+
+func isTgz(path string) (string, bool) {
+	for _, p := range []string{path + ".tgz", path + ".tar.gz"} {
+		if _, err := os.Stat(p); err == nil {
+			return p, true
+		}
+	}
+	return path, false
+}
+
+func DownloadS3(ctx context.Context, url string, bucket string, path string, intodir string) error {
+	return nil
 }
 
 func DownloadZip(ctx context.Context, uri, subpath, into string) error {
@@ -230,7 +183,7 @@ func DownloadFile(ctx context.Context, src string, subpath, into string) error {
 		return fmt.Errorf("unsupported host: %s", u.Host)
 	}
 
-	basedir := u.Path
+	basedir := src
 	if !strings.HasSuffix(basedir, "/") {
 		basedir += "/"
 	}
@@ -334,30 +287,15 @@ func DownloadGit(ctx context.Context, cloneurl string, rev string, subpath, into
 }
 
 func DownloadHelmChart(ctx context.Context, repo, name, version, intodir string) error {
-	chartPath, chart, err := helm.DownloadChart(ctx, repo, name, version)
+	log := logr.FromContextOrDiscard(ctx)
+	chartPath, _, err := helm.DownloadChart(ctx, repo, name, version)
 	if err != nil {
 		return err
 	}
-	// untgz chartPath into intodir
-	f, err := os.Open(chartPath)
-	if err != nil {
-		return err
-	}
-	return UnTarGz(f, chart.Name(), intodir)
-}
-
-func MayHelm(ctx context.Context, uri string) bool {
-	indexfile := uri + "/index.yaml"
-	resp, err := http.Get(indexfile)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return false
-	}
-	// todo: more check
-	return true
+	intofile := filepath.Join(filepath.Dir(intodir), filepath.Base(chartPath))
+	log.Info("downloaded chart", "dir", intofile)
+	// just move the chart.tgz into intodir
+	return os.Rename(chartPath, intofile)
 }
 
 func UnTarGz(r io.Reader, subpath, into string) error {
@@ -404,4 +342,17 @@ func UnTarGz(r io.Reader, subpath, into string) error {
 		_, _ = io.Copy(dest, tr)
 	}
 	return nil
+}
+
+func DetectPluginType(path string) pluginsv1beta1.PluginKind {
+	// helm ?
+	if _, err := os.Stat(filepath.Join(path, "Chart.yaml")); err == nil {
+		return pluginsv1beta1.PluginKindHelm
+	}
+	// kustomize ?
+	if _, err := os.Stat(filepath.Join(path, "kustomization.yaml")); err == nil {
+		return pluginsv1beta1.PluginKindKustomize
+	}
+	// default template
+	return pluginsv1beta1.PluginKindTemplate
 }

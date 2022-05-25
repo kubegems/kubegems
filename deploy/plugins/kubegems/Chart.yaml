@@ -1,31 +1,31 @@
 apiVersion: v2
-appVersion: v2.3.0
+appVersion: v0.0.0
 dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami
     tags:
       - bitnami-common
-    version: 1.x.x
+    version: 1.14.1
   - name: mysql
     repository: https://charts.bitnami.com/bitnami
     condition: mysql.enabled
-    version: 8.x.x
+    version: 8.9.6
   - name: redis
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled
-    version: 16.x.x
+    version: 16.9.11
   - name: gitea
     repository: https://dl.gitea.io/charts
     condition: gitea.enabled
-    version: 5.x.x
+    version: 5.0.8
   - name: argo-cd
     repository: https://argoproj.github.io/argo-helm
     condition: argo-cd.enabled
-    version: 3.x.x
+    version: 3.35.4
   - name: chartmuseum
     repository: https://chartmuseum.github.io/charts
     condition: chartmuseum.enabled
-    version: 3.x.x
+    version: 3.8.0
 description: KubeGems components.
 home: kubegems.io
 keywords:
@@ -36,4 +36,4 @@ maintainers:
 name: kubegems
 sources:
   - https://kubegems.io
-version: 1.0.1
+version: 0.0.0

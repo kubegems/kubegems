@@ -107,11 +107,25 @@ spec:
               installNamespace:
                 description: plugin installNamespace,if empty use .metadata.namespace
                 type: string
+              managed:
+                items:
+                  properties:
+                    apiVersion:
+                      type: string
+                    error:
+                      type: string
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  type: object
+                type: array
               message:
                 description: Message is the message associated with the status
                 type: string
               notes:
-                description: Contains the rendered templates/NOTES.txt if available
                 type: string
               phase:
                 description: Phase is the current state of the release
@@ -148,7 +162,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.1.0
+    helm.sh/chart: kubegems-installer-0.0.0
   name: kubegems-installer
   namespace: kubegems-installer
 ---
@@ -163,7 +177,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.1.0
+    helm.sh/chart: kubegems-installer-0.0.0
   name: kubegems-installer
   namespace: kubegems-installer
 roleRef:
@@ -186,7 +200,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.1.0
+    helm.sh/chart: kubegems-installer-0.0.0
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -205,7 +219,7 @@ spec:
         app.kubernetes.io/instance: kubegems-installer
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: kubegems-installer
-        helm.sh/chart: kubegems-installer-0.1.0
+        helm.sh/chart: kubegems-installer-0.0.0
     spec:
       containers:
       - args:

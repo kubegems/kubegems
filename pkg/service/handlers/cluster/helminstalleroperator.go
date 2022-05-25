@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/rest"
 	pluginscommon "kubegems.io/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
-	"kubegems.io/pkg/installer/controllers/helm"
+	"kubegems.io/pkg/installer/helm"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"

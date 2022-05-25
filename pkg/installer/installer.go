@@ -9,7 +9,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"kubegems.io/pkg/apis/plugins"
 	pluginv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
-	"kubegems.io/pkg/installer/controllers"
+	"kubegems.io/pkg/installer/plugin"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -59,9 +59,9 @@ func Run(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	pluginsoptions := controllers.NewDefaultOPluginptions()
-	pluginsoptions.SearchDirs = append(pluginsoptions.SearchDirs, options.PluginsDir)
-	if err := controllers.NewAndSetupPluginReconciler(ctx, mgr, pluginsoptions, PluginsControllerConcurrency); err != nil {
+	poptions := plugin.NewDefaultOptions()
+	poptions.SearchDirs = append(poptions.SearchDirs, options.PluginsDir)
+	if err := plugin.SetupReconciler(ctx, mgr, poptions); err != nil {
 		setupLog.Error(err, "unable to create plugin controller", "controller", "plugin")
 		return err
 	}
