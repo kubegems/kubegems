@@ -12,6 +12,8 @@ spec:
   version: 1.8.0
   values:
     installCRDs: true
+    startupapicheck:
+      enabled: false
     image:
       # repository: quay.io/jetstack/cert-manager-controller
       {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-controller" "context" .) }}

@@ -2,6 +2,7 @@ package installer
 
 import (
 	"context"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -60,7 +61,7 @@ func Run(ctx context.Context, options *Options) error {
 	}
 
 	poptions := plugin.NewDefaultOptions()
-	poptions.SearchDirs = append(poptions.SearchDirs, options.PluginsDir)
+	poptions.SearchDirs = append(poptions.SearchDirs, strings.Split(options.PluginsDir, ",")...)
 	if err := plugin.SetupReconciler(ctx, mgr, poptions); err != nil {
 		setupLog.Error(err, "unable to create plugin controller", "controller", "plugin")
 		return err

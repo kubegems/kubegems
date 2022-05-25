@@ -27,6 +27,7 @@ import (
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -58,7 +59,9 @@ func SetupReconciler(ctx context.Context, mgr manager.Manager, options *Options)
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&pluginsv1beta1.Plugin{}).
-		// WithOptions(controller.Options{}).
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: 5,
+		}).
 		Complete(reconciler)
 }
 
@@ -105,6 +108,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	beforePlugin := plugin.DeepCopy()
 	err := r.Sync(ctx, plugin)
+	if err != nil {
+		plugin.Status.Phase = pluginsv1beta1.PluginPhaseFailed
+		plugin.Status.Message = err.Error()
+	}
 	if err := r.Status().Update(ctx, plugin.DeepCopy()); err != nil {
 		return ctrl.Result{}, err
 	}

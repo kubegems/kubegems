@@ -8,6 +8,5 @@ metadata:
 spec:
   kind: template
   installNamespace: {{ .Values.gateway.namespace }}
-  version: {{ .Values.gateway.version }}
   enabled: true
 {{- end }}

@@ -5,7 +5,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 BUILD_DATE?=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-GIT_VERSION?=$(shell git describe --exact-match --tags 2>/dev/null || echo "v0.0.0-$(shell git symbolic-ref --short HEAD)")
+GIT_VERSION?=$(shell git describe --exact-match --tags 2>/dev/null || git symbolic-ref --short HEAD)
 GIT_COMMIT?=$(shell git rev-parse HEAD 2>/dev/null)
 GIT_BRANCH?=$(shell git symbolic-ref --short HEAD 2>/dev/null)
 # semver version
@@ -14,7 +14,7 @@ BIN_DIR = ${PWD}/bin
 
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
-ifeq (${IMAGE_TAG},v0.0.0-main)
+ifeq (${IMAGE_TAG},main)
    IMAGE_TAG = latest
 endif
 # Image URL to use all building/pushing image targets
@@ -93,7 +93,7 @@ plugins-download: ## Build plugins-cache
 
 CHARTS = kubegems kubegems-local kubegems-installer
 helm-package: ## Build helm chart
-	$(foreach var,$(CHARTS),helm package -u -d bin/plugins --version=${VERSION} --app-version=${VERSION} deploy/plugins/$(var);)
+	$(foreach var,$(CHARTS),helm package -d bin/plugins --version=${VERSION} --app-version=${VERSION} deploy/plugins/$(var);)
 
 helm-push:
 	$(foreach var,$(CHARTS),curl -u ${HELM_USER}:${HELM_PASSWORD} --data-binary "@bin/plugins/$(var)-${VERSION}.tgz" ${HELM_ADDR};)
