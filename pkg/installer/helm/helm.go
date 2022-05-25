@@ -173,7 +173,7 @@ func DownloadChart(ctx context.Context, repo, name, version string) (string, *ch
 			RepositoryCache:  settings.RepositoryCache,
 			Debug:            settings.Debug,
 		}
-		if err := man.Build(); err != nil {
+		if err := man.Update(); err != nil {
 			return "", nil, err
 		}
 		chart, err = loader.Load(chartPath)
