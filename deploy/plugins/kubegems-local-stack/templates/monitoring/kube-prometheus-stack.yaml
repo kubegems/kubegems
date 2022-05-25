@@ -71,8 +71,6 @@ spec:
             - key: prometheusrule.kubegems.io/name
               operator: Exists
         probeSelectorNilUsesHelmValues: false
-        additionalScrapeConfigs: |
-{{ .Files.Get "files/prometheus/scrape-additional.yaml" | indent 10 }}
         retention: 30d
         resources:
           limits:
