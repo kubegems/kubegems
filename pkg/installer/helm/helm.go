@@ -167,7 +167,7 @@ func DownloadChart(ctx context.Context, repo, name, version string) (string, *ch
 			Out:              log.Default().Writer(),
 			ChartPath:        chartPath,
 			Keyring:          chartPathOptions.Keyring,
-			SkipUpdate:       true,
+			SkipUpdate:       false,
 			Getters:          getter.All(settings),
 			RepositoryConfig: settings.RepositoryConfig,
 			RepositoryCache:  settings.RepositoryCache,
