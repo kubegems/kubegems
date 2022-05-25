@@ -637,33 +637,6 @@ func (c *ExtendClient) CommitRawMonitorAlertResource(ctx context.Context, raw *p
 	return c.Update(ctx, raw.Base.AMConfig)
 }
 
-func (c *ExtendClient) ListMetricTargets(ctx context.Context, namespace string) ([]*prometheus.MetricTarget, error) {
-	pms := monitoringv1.PodMonitorList{}
-	sms := monitoringv1.ServiceMonitorList{}
-	g := errgroup.Group{}
-	g.Go(func() error {
-		return c.List(ctx, &pms, client.InNamespace(namespace))
-	})
-	g.Go(func() error {
-		return c.List(ctx, &sms, client.InNamespace(namespace))
-	})
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
-
-	ret := []*prometheus.MetricTarget{}
-	for _, v := range pms.Items {
-		ret = append(ret, prometheus.ConvertToMetricTarget(v))
-	}
-	for _, v := range sms.Items {
-		ret = append(ret, prometheus.ConvertToMetricTarget(v))
-	}
-	sort.Slice(ret, func(i, j int) bool {
-		return strings.ToLower(ret[i].Name) < strings.ToLower(ret[j].Name)
-	})
-	return ret, nil
-}
-
 func (c *ExtendClient) LokiQuery(ctx context.Context, logql string) (loki.QueryResponseData, error) {
 	ret := loki.QueryResponseData{}
 	values := url.Values{}

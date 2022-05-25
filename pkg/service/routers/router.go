@@ -34,7 +34,6 @@ import (
 	logqueryhandler "kubegems.io/pkg/service/handlers/logquery"
 	lokiloghandler "kubegems.io/pkg/service/handlers/lokilog"
 	messagehandler "kubegems.io/pkg/service/handlers/message"
-	"kubegems.io/pkg/service/handlers/metrics"
 	microservice "kubegems.io/pkg/service/handlers/microservice"
 	myinfohandler "kubegems.io/pkg/service/handlers/myinfo"
 	noproxyhandler "kubegems.io/pkg/service/handlers/noproxy"
@@ -265,11 +264,6 @@ func (r *Router) Complete() error {
 		BaseHandler: basehandler,
 	}
 	alertRuleHandler.RegistRouter(rg)
-
-	metricsHandler := &metrics.MonitorHandler{
-		BaseHandler: basehandler,
-	}
-	metricsHandler.RegistRouter(rg)
 
 	// 环境
 	environmentHandler := &environmenthandler.EnvironmentHandler{BaseHandler: basehandler}
