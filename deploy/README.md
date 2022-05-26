@@ -124,7 +124,7 @@ Accessing kubegems dashboard:
 
 ```sh
 # use nginx-ingress
-PORT=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -ojsonpath='{.spec.ports[0].nodePort}')
+PORT=$(kubectl -n ingress-nginx get svc nginx-ingress-controller -ojsonpath='{.spec.ports[0].nodePort}')
 ADDRESS=$(kubectl -n ingress-nginx get node -ojsonpath='{.items[0].status.addresses[0].address}')
 echo http://$ADDRESS:$PORT
 ```
