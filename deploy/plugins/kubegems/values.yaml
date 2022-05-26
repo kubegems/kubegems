@@ -1884,8 +1884,6 @@ volumePermissions:
 mysql:
   enabled: true
   architecture: standalone
-  image:
-    repository: kubegems/mysql
   auth:
     rootPassword: "" # root password must be set in order upgradeable
     username: ""
@@ -1924,8 +1922,6 @@ redis:
   architecture: standalone
   auth:
     password: ""
-  image:
-    repository: keubegems/redis
   ## @param master.persistence.enabled Enable persistence on Redis&trade; master nodes using Persistent Volume Claims
   ##
   master:
@@ -1989,8 +1985,6 @@ externalArgoCD:
 ## @skip gitea.gitea.admin
 gitea:
   enabled: true
-  image:
-    repository: kubegems/gitea
   memcached:
     enabled: false
   postgresql:
@@ -2026,8 +2020,6 @@ externalGit:
 ## @skip chartmuseum.env
 chartmuseum:
   enabled: true
-  image:
-    repository: kubegems/chartmuseum
   env:
     open:
       DEPTH: 1
