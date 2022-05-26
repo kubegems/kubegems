@@ -15,15 +15,15 @@ dependencies:
     condition: redis.enabled
     version: 16.9.11
   - name: gitea
-    repository: https://charts.kubegems.io/kubegems
+    repository: https://dl.gitea.io/charts
     condition: gitea.enabled
     version: 5.0.8
   - name: argo-cd
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://argoproj.github.io/argo-helm
     condition: argo-cd.enabled
-    version: 3.3.5
+    version: 3.35.4
   - name: chartmuseum
-    repository: https://charts.kubegems.io/kubegems
+    repository: https://chartmuseum.github.io/charts
     condition: chartmuseum.enabled
     version: 3.8.0
 description: KubeGems components.
