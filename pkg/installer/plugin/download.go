@@ -80,7 +80,7 @@ func Download(ctx context.Context, bundle *pluginsv1beta1.Plugin, cachedir strin
 	}
 	// is helm repo?
 	if bundle.Spec.Kind == pluginsv1beta1.PluginKindHelm {
-		return into, DownloadHelmChart(ctx, repo, name, version, into)
+		return DownloadHelmChart(ctx, repo, name, version, into)
 	}
 	return "", fmt.Errorf("unknown download source")
 }
@@ -286,17 +286,17 @@ func DownloadGit(ctx context.Context, cloneurl string, rev string, subpath, into
 	})
 }
 
-func DownloadHelmChart(ctx context.Context, repo, name, version, intodir string) error {
+func DownloadHelmChart(ctx context.Context, repo, name, version, intodir string) (string, error) {
 	log := logr.FromContextOrDiscard(ctx)
 	chartPath, _, err := helm.DownloadChart(ctx, repo, name, version)
 	if err != nil {
-		return err
+		return "", err
 	}
 	intofile := filepath.Join(filepath.Dir(intodir), filepath.Base(chartPath))
 	os.MkdirAll(filepath.Dir(intofile), defaultDirMode)
 	log.Info("downloaded chart", "dir", intofile)
 	// just move the chart.tgz into intodir
-	return os.Rename(chartPath, intofile)
+	return intofile, os.Rename(chartPath, intofile)
 }
 
 func UnTarGz(r io.Reader, subpath, into string) error {
