@@ -76,8 +76,13 @@ func (p *NativeApplier) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin
 	if err != nil {
 		return err
 	}
+
+	ns := bundle.Spec.InstallNamespace
+	if ns != "" {
+		ns = bundle.Namespace
+	}
 	// override namespace
-	setNamespaceIfNotSet(bundle, resources)
+	setNamespaceIfNotSet(ns, resources)
 
 	managedResources, err := p.Sync(ctx, resources, bundle.Status.Managed, true)
 	if err != nil {
@@ -85,6 +90,8 @@ func (p *NativeApplier) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin
 	}
 	bundle.Status.Values = pluginsv1beta1.Values{Object: bundle.Spec.Values.Object}
 	bundle.Status.Managed = managedResources
+	bundle.Status.InstallNamespace = ns
+	bundle.Status.Version = bundle.Spec.Version
 	bundle.Status.Phase = pluginsv1beta1.PluginPhaseInstalled
 	now := metav1.Now()
 	bundle.Status.UpgradeTimestamp = now
@@ -111,11 +118,7 @@ func (p *NativeApplier) Remove(ctx context.Context, bundle *pluginsv1beta1.Plugi
 	return nil
 }
 
-func setNamespaceIfNotSet(bundle *pluginsv1beta1.Plugin, list []*unstructured.Unstructured) {
-	ns := bundle.Spec.InstallNamespace
-	if ns != "" {
-		ns = bundle.Namespace
-	}
+func setNamespaceIfNotSet(ns string, list []*unstructured.Unstructured) {
 	for _, item := range list {
 		if item.GetNamespace() == "" {
 			item.SetNamespace(ns)
