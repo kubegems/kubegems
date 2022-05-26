@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -166,6 +165,7 @@ func EnablePlugin(ctx context.Context, cli client.Client, name string, enable bo
 			Namespace: pluginscommon.KubeGemsLocalPluginsNamespace,
 		},
 	}
-	patch := client.RawPatch(types.MergePatchType, []byte(`{"spec":{"values":{"`+name+`":{"enabled":`+strconv.FormatBool(enable)+`}}}}`))
+	patchData := fmt.Sprintf(`{"spec":{"values":{"%s":{"enabled":%t}}}}`, name, enable)
+	patch := client.RawPatch(types.MergePatchType, []byte(patchData))
 	return cli.Patch(ctx, allinoneplugin, patch)
 }

@@ -127,7 +127,7 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("empty plugin name"))
 		return
 	}
-	if err := gemsplugin.EnablePlugin(c.Request.Context(), h.cluster.GetClient(), name, false); err != nil {
+	if err := gemsplugin.EnablePlugin(c.Request.Context(), h.cluster.GetClient(), name, true); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
 		handlers.NotOK(c, err)
 		return
@@ -152,7 +152,7 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("empty plugin name"))
 		return
 	}
-	if err := gemsplugin.EnablePlugin(c.Request.Context(), h.cluster.GetClient(), name, true); err != nil {
+	if err := gemsplugin.EnablePlugin(c.Request.Context(), h.cluster.GetClient(), name, false); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
 		handlers.NotOK(c, err)
 		return
