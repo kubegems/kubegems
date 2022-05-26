@@ -10,7 +10,7 @@ spec:
   installNamespace: kubegems
   values:
     global:
-      storageClass: local-path # change me to use a production storage class
+      imageRegistry: registry.cn-beijing.aliyuncs.com
       kubegemsVersion: main
     mysql:
       persistence:
@@ -20,6 +20,14 @@ spec:
         persistence:
           enabled: true
     gitea:
+      image:
+        repository: kuebgems/gitea
+      persistence:
+        enabled: true
+        size: 10Gi 
+    chartmuseum:
+      image:
+        repository: kuebgems/chartmuseum
       persistence:
         enabled: true
     chartmuseum:
