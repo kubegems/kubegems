@@ -20,11 +20,9 @@ Return the proper database host
 */}}
 {{- define "kubegems.database.host" -}}
 {{- if .Values.mysql.enabled -}}
-    {{- if eq .Values.mysql.architecture "replication" -}}
-        {{- printf "%s-%s" (include "kubegems.mysql.fullname" .) "primary" | trunc 63 | trimSuffix "-" -}}
-    {{- else -}}
-        {{- include "kubegems.mysql.fullname" . -}}
-    {{- end -}}
+    {{- printf "%s-headless" (include "kubegems.mysql.fullname" .)  | trunc 63 | trimSuffix "-" -}}
+{{- else if .Values.postgresql.enabled -}}
+    {{- include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) -}}
 {{- else if .Values.externalDatabase.enabled -}}
     {{- .Values.externalDatabase.host -}}
 {{- end -}}
@@ -35,9 +33,9 @@ Return the proper database port
 */}}
 {{- define "kubegems.database.port" -}}
 {{- if .Values.mysql.enabled -}}
-{{- .Values.mysql.primary.service.port -}}
+    {{- .Values.mysql.primary.service.port -}}
 {{- else if and .Values.externalDatabase.enabled .Values.externalDatabase.port -}}
-{{- .Values.externalDatabase.port -}}
+    {{- .Values.externalDatabase.port -}}
 {{- end -}}
 {{- end -}}
 
@@ -52,7 +50,7 @@ Return the proper database
         {{- /*keep empty,use default*/ -}}
     {{- end -}}
 {{- else if and .Values.externalDatabase.enabled .Values.externalDatabase.database -}}
-{{- .Values.externalDatabase.database -}}
+    {{- .Values.externalDatabase.database -}}
 {{- end -}}
 {{- end -}}
 
@@ -66,8 +64,7 @@ Return the proper database username
     {{- else -}}
         {{- /*keep empty,use default*/ -}}
     {{- end -}}
-{{- end -}}
-{{- if .Values.externalDatabase.enabled -}}
+{{- else if .Values.externalDatabase.enabled -}}
     {{- .Values.externalDatabase.username -}}
 {{- end -}}
 {{- end -}}
@@ -126,11 +123,7 @@ Return the proper redis host
 */}}
 {{- define "kubegems.redis.host" -}}
 {{- if .Values.redis.enabled -}}
-    {{- if eq .Values.redis.architecture "replication" -}}
-        {{- printf "%s-%s" (include "kubegems.redis.fullname" .) "primary" | trunc 63 | trimSuffix "-" -}}
-    {{- else -}}
-        {{- printf "%s-master" (include "kubegems.redis.fullname" . ) -}}
-    {{- end -}}
+    {{- printf "%s-headless" (include "kubegems.redis.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- else if .Values.externalRedis.enabled -}}
     {{- .Values.externalRedis.host -}}
 {{- end -}}

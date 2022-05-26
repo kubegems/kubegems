@@ -1983,7 +1983,12 @@ gitea:
   enabled: true
   memcached:
     enabled: false
+  postgresql:
+    enabled: false
   gitea:
+    config:
+      database:
+        DB_TYPE: "sqlite3"
     admin:
       # username: ""
       # password: ""
