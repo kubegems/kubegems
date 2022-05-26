@@ -2015,6 +2015,8 @@ chartmuseum:
     open:
       DEPTH: 1
       DISABLE_API: false
+  securityContext:
+    runAsUser: 0
 
 ## @section External Chartmuseum configuration
 ## @param externalAppstore.enabled  Enable external Chartmuseum
