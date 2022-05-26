@@ -290,6 +290,13 @@ func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, e
 		return nil, fmt.Errorf("prometheus query range failed, cluster: %s, promql: %s, %v", c.Name, query, err)
 	}
 
+	for i := range ret {
+		if len(ret[i].Metric) == 0 {
+			ret[i].Metric = prommodel.Metric{
+				"__name__": prommodel.LabelValue(query),
+			}
+		}
+	}
 	return ret, nil
 }
 
