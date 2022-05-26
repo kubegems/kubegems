@@ -20,19 +20,12 @@ spec:
         storageClass: local-path # change me to use a production storage class
       image:
         repository: registry.cn-beijing.aliyuncs.com/kubegems/gitea
-      postgresql:
-        image:
-          registry: registry.cn-beijing.aliyuncs.com
-          repository: kubegems/postgresql
-          tag: "11.11.0-debian-10"
     mysql:
       image:
         repository: kubegems/mysql
-        tag: "8.0"
     redis:
       image:
         repository: kubegems/redis
-        tag: "6.2.7-debian-10"
     chartmuseum:
       image:
         repository: registry.cn-beijing.aliyuncs.com/kubegems/chartmuseum

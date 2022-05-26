@@ -10,5 +10,5 @@ spec:
   repo: https://nvidia.github.io/k8s-device-plugin
   installNamespace: {{ .Values.gpu.namespace }}
   version: 0.11.0
-{{- end -}}
+{{- end }}
 #TODO: https://github.com/tkestack/gpu-manager
