@@ -76,6 +76,10 @@ spec:
               kind:
                 description: plugin kind, e.g. "helm","kustomize","native".
                 type: string
+              name:
+                description: plugin name, helm chart name,set to .metadata.name if
+                  empty
+                type: string
               path:
                 description: plugin repo path
                 type: string

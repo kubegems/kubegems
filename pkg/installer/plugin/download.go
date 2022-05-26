@@ -36,7 +36,10 @@ func Download(ctx context.Context, bundle *pluginsv1beta1.Plugin, cachedir strin
 	if cachedir == "" {
 		cachedir = filepath.Join(os.TempDir(), "kubegems", "plugins")
 	}
-	name, repo, version := bundle.Name, bundle.Spec.Repo, bundle.Spec.Version
+	name, repo, version := bundle.Spec.Name, bundle.Spec.Repo, bundle.Spec.Version
+	if name == "" {
+		name = bundle.Name
+	}
 	pluginpath := fmt.Sprintf("%s-%s", name, version)
 	if version == "" {
 		pluginpath = name

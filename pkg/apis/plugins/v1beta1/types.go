@@ -25,6 +25,8 @@ type PluginSpec struct {
 	Enabled bool `json:"enabled,omitempty"`
 	// plugin kind, e.g. "helm","kustomize","native".
 	Kind PluginKind `json:"kind,omitempty"`
+	// plugin name, helm chart name,set to .metadata.name if empty
+	Name string `json:"name,omitempty"`
 	// plugin install namespace, same with metadata.namespace if empty.
 	InstallNamespace string `json:"installNamespace,omitempty"`
 	// dependencies on other plugins
