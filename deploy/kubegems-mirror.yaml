@@ -10,8 +10,6 @@ spec:
   installNamespace: kubegems
   values:
     global:
-      storageClass: local-path # change me to use a production storage class
-      kubegemsVersion: main
       imageRegistry: registry.cn-beijing.aliyuncs.com
     ingress:
       hostname: dashboard.kubegems.io # change me to use a production hostname
@@ -28,14 +26,9 @@ spec:
         repository: kubegems/redis
     chartmuseum:
       image:
-        repository: registry.cn-beijing.aliyuncs.com/kubegems/chartmuseum
-    argo-cd:
-      global:
-        image:
-          repository: registry.cn-beijing.aliyuncs.com/kubegems/argocd
-      dex:
-        image:
-          repository: registry.cn-beijing.aliyuncs.com/kubegems/dex
-      redis:
-        image:
-          repository: registry.cn-beijing.aliyuncs.com/kubegems/redis
+        repository: kuebgems/chartmuseum
+      persistence:
+        enabled: true
+        sieze: 5Gi
+    ingress:
+      hostname: dashboard.kubegems.io

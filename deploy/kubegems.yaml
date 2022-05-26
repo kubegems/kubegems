@@ -10,43 +10,20 @@ spec:
   installNamespace: kubegems
   values:
     global:
-      imageRegistry: registry.cn-beijing.aliyuncs.com
-      kubegemsVersion: main
       storageClass: local-path # change me to use a production storage class
+      kubegemsVersion: main
     mysql:
-      image:
-        repository: kubegems/mysql
-        persistent:
-          enabled: true
-          size: 20Gi
+      persistence:
+        enabled: true
     redis:
-      image:
-        repository: kubegems/redis
       master:
         persistence:
           enabled: true
-          size: 5Gi
-      volumePermissions:
-        enabled: true
-        image:
-          repository: kubegems/bitnami-shell
-    argo-cd:
-      image:
-        repository: kuebgems/argo-cd
-      redis:
-        image:
-          repository: kuebgems/redis
     gitea:
-      image:
-        repository: kuebgems/gitea
       persistence:
         enabled: true
-        size: 10Gi 
     chartmuseum:
-      image:
-        repository: kuebgems/chartmuseum
       persistence:
         enabled: true
-        sieze: 5Gi
     ingress:
-      hostname: dashboard.kubegems.io
+      hostname: dashboard.kubegems.io # change me to use a production hostname
