@@ -8,13 +8,11 @@
 ## @param global.storageClass Global StorageClass for Persistent Volume(s)
 ##
 global:
-  imageRegistry: "docker.io"
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-  storageClass: ""
   kubegemsVersion: "main"
 
 ## @section Common parameters
@@ -1886,8 +1884,6 @@ volumePermissions:
 mysql:
   enabled: true
   architecture: standalone
-  image:
-    repository: kubegems/mysql
   auth:
     rootPassword: "" # root password must be set in order upgradeable
     username: ""
@@ -1926,15 +1922,11 @@ redis:
   architecture: standalone
   auth:
     password: ""
-  image:
-    repository: keubegems/redis
   ## @param master.persistence.enabled Enable persistence on Redis&trade; master nodes using Persistent Volume Claims
   ##
   master:
   volumePermissions:
     enabled: true
-    image:
-      repository: kubegems/bitnami-shell
 ## @section External RedisCache configuration
 ##
 ## @param externalRedis.enabled  Enable external redis
@@ -1957,18 +1949,20 @@ externalRedis:
 ## @param argo-cd.configs.secret.argocdServerAdminPassword The password for the ArgoCD server admin user,keep empty to auto-generate.
 argo-cd:
   enabled: true
-  image:
-    repository: kuebgems/argo-cd
-  configs:
+  config:
     secret:
       argocdServerAdminPassword: ""
+  controller:
+    extraArgs: ["--redisdb", "1"]
   server:
-    config:
-      users.session.duration: "0"
+    extraArgs: ["--redisdb", "1"]
+  repoServer:
+    extraArgs: ["--redisdb", "1"]
   redis:
-    image:
-      repository: kuebgems/redis
-
+    enabled: false
+  externalRedis:
+    host: kubegems-redis-headless
+    existingSecret: kubegems-redis
 ## @section External ArgoCD configuration
 ##
 ## @param externalArgoCD.enabled  Enable external Argo CD
@@ -1991,8 +1985,6 @@ externalArgoCD:
 ## @skip gitea.gitea.admin
 gitea:
   enabled: true
-  image:
-    repository: kubegems/gitea
   memcached:
     enabled: false
   postgresql:
@@ -2028,8 +2020,6 @@ externalGit:
 ## @skip chartmuseum.env
 chartmuseum:
   enabled: true
-  image:
-    repository: kubegems/chartmuseum
   env:
     open:
       DEPTH: 1

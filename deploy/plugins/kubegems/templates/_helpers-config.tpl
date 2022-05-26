@@ -190,7 +190,7 @@ Return the proper argocd address
 */}}
 {{- define "kubegems.argocd.address" -}}
 {{- if (index .Values "argo-cd" "enabled") -}}
-    {{- printf "http://%s-server:" (include "kubegems.argocd.fullname" .) -}}{{- (index .Values "argo-cd" "server" "service" "servicePortHttp") }}
+    {{- printf "http://%s-server:" (include "kubegems.argocd.fullname" .) -}}{{- (index .Values "argo-cd" "server" "service" "ports" "http") }}
 {{- else if .Values.externalArgoCD.enabled -}}
     {{- .Values.externalArgoCD.address -}}
 {{- end -}}
