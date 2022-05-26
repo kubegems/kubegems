@@ -1,8 +1,9 @@
 global:
-  imageRegistry: ""
-  imageRepository: ""
+  imageRegistry: "docker.io"
+  imageRepository: "kubegems"
   clusterName: local
   storageClass: local-path
+  runtime: containerd
 logging:
   enabled: true
   annotations:
@@ -10,11 +11,11 @@ logging:
     plugins.kubegems.io/category: 日志中心
     plugins.kubegems.io/main-category: core
     plugins.kubegems.io/health-check: "statefulsets.apps/loki-*,deployments.apps/logging-*"
-  namespace: logging
-  version: 3.17.4 # logging-operator version
+  namespace: kubegems-logging
+  version: 3.17.6 # logging-operator version
   values:
     loki:
-      version: 2.6.2
+      version: 2.11.1
     # externalLoki:
     #   address: http://loki-stack.loki-stack:3100
 monitoring:
@@ -133,3 +134,13 @@ local-path:
     plugins.kubegems.io/required: "true"
     plugins.kubegems.io/health-check: "deployments.apps/*"
   version: 0.0.22
+eventer:
+  enabled: true
+  namespace: kubegems-eventer
+  annotations:
+    plugins.kubegems.io/description: Kubernetes集群事件收集器(需开启 logging 套件)
+    plugins.kubegems.io/category: 事件中心
+    plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/required: "true"
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+  version: 1.4.12
