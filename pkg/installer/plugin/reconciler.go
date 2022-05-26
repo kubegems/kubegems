@@ -33,6 +33,10 @@ import (
 )
 
 const (
+	MaxConcurrentReconciles = 5
+)
+
+const (
 	PluginFinalizerName             = "plugins.kubegems.io/finalizer"
 	PluginAnnotationsShowFullValues = "plugins.kubegems.io/show-full-values"
 )
@@ -60,7 +64,7 @@ func SetupReconciler(ctx context.Context, mgr manager.Manager, options *Options)
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&pluginsv1beta1.Plugin{}).
 		WithOptions(controller.Options{
-			MaxConcurrentReconciles: 5,
+			MaxConcurrentReconciles: MaxConcurrentReconciles,
 		}).
 		Complete(reconciler)
 }

@@ -292,7 +292,7 @@ func DownloadHelmChart(ctx context.Context, repo, name, version, intodir string)
 	if err != nil {
 		return "", err
 	}
-	intofile := filepath.Join(filepath.Dir(intodir), filepath.Base(chartPath))
+	intofile := filepath.Join(filepath.Dir(intodir), fmt.Sprintf("%s-%s.tgz", name, version))
 	os.MkdirAll(filepath.Dir(intofile), defaultDirMode)
 	log.Info("downloaded chart", "dir", intofile)
 	// just move the chart.tgz into intodir
