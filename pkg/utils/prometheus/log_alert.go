@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	LoggingAlertRuleCMName = "loki-recording-rules"
+	LoggingAlertRuleCMName  = "loki-alerting-rules"
+	LoggingRecordingRuleKey = "loki-alerting-rules.yaml" // loki helm 部署 recording rule就是这个名字。。
 )
 
 type RawLoggingAlertRule struct {
