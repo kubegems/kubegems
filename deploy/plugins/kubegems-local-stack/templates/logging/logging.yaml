@@ -332,7 +332,7 @@ spec:
           type: local
           local:
             directory: /rules
-        rule_path: /rules/scratch
+        rule_path: /tmp/rules
         alertmanager_url: {{ include "monitoring.alertmanager.address" .}}
         ring:
           kvstore:
