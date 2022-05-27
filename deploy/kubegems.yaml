@@ -11,21 +11,6 @@ spec:
   values:
     global:
       kubegemsVersion: main
-    mysql:
-      persistence:
-        enabled: true
-    redis:
-      master:
-        persistence:
-          enabled: true
-    gitea:
-      persistence:
-        enabled: true
-    chartmuseum:
-      persistence:
-        enabled: true
-    chartmuseum:
-      persistence:
-        enabled: true
+      storageClass: local-path # change me to use a different storage class
     ingress:
       hostname: dashboard.kubegems.io # change me to use a production hostname
