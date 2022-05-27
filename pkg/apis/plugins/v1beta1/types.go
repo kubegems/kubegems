@@ -78,6 +78,10 @@ type ManagedResource struct {
 	Error      string `json:"error,omitempty"`
 }
 
+func (m ManagedResource) String() string {
+	return m.APIVersion + "/" + m.Kind + "/" + m.Namespace + "/" + m.Name
+}
+
 //+kubebuilder:object:root=true
 type PluginList struct {
 	metav1.TypeMeta `json:",inline"`

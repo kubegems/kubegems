@@ -47,6 +47,7 @@ func (r *HelmApplier) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, 
 	}
 	bundle.Status.Phase = pluginsv1beta1.PluginPhaseInstalled
 	bundle.Status.Message = applyedRelease.Info.Description
+	bundle.Status.InstallNamespace = applyedRelease.Namespace
 	bundle.Status.CreationTimestamp = convtime(applyedRelease.Info.FirstDeployed.Time)
 	bundle.Status.UpgradeTimestamp = convtime(applyedRelease.Info.LastDeployed.Time)
 	bundle.Status.Values = pluginsv1beta1.Values{Object: applyedRelease.Config}

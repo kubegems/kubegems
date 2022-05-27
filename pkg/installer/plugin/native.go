@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -17,6 +19,7 @@ import (
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/kustomize/api/filesys"
 	"sigs.k8s.io/kustomize/api/krusty"
 )
@@ -84,7 +87,7 @@ func (p *NativeApplier) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin
 	// override namespace
 	setNamespaceIfNotSet(ns, resources)
 
-	managedResources, err := p.Sync(ctx, resources, bundle.Status.Managed, true)
+	managedResources, err := p.Sync(ctx, resources, bundle.Status.Managed, &SyncOptions{ServerSideApply: true, CreateNamespace: true})
 	if err != nil {
 		return err
 	}
@@ -106,7 +109,10 @@ func (p *NativeApplier) Remove(ctx context.Context, bundle *pluginsv1beta1.Plugi
 	log := logr.FromContextOrDiscard(ctx)
 	log.Info("removing plugin")
 
-	managedResources, err := p.Sync(ctx, nil, bundle.Status.Managed, true)
+	managedResources, err := p.Sync(ctx, nil, bundle.Status.Managed, &SyncOptions{
+		ServerSideApply: true,
+		CreateNamespace: true,
+	})
 	if err != nil {
 		return err
 	}
@@ -126,61 +132,99 @@ func setNamespaceIfNotSet(ns string, list []*unstructured.Unstructured) {
 	}
 }
 
+type SyncOptions struct {
+	ServerSideApply bool
+	CreateNamespace bool
+}
+
 func (a *NativeApplier) Sync(
 	ctx context.Context,
 	resources []*unstructured.Unstructured,
-	managed []pluginsv1beta1.ManagedResource,
-	serverSideApply bool,
+	premanaged []pluginsv1beta1.ManagedResource,
+	options *SyncOptions,
 ) ([]pluginsv1beta1.ManagedResource, error) {
-	pruned := diff(resources, managed)
-
 	log := logr.FromContextOrDiscard(ctx)
-
-	errs := []string{}
+	managedmap := map[pluginsv1beta1.ManagedResource]bool{}
+	for _, item := range premanaged {
+		managedmap[item] = false
+	}
 	// apply
-	managedResources := make([]pluginsv1beta1.ManagedResource, 0, len(resources))
+	errs := []string{}
 	for _, item := range resources {
-		managedResources = append(managedResources, pluginsv1beta1.ManagedResource{
-			APIVersion: item.GetAPIVersion(),
-			Kind:       item.GetKind(),
-			Namespace:  item.GetNamespace(),
-			Name:       item.GetName(),
-		})
-		log.Info("applying resource", "gvk", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
-		if err := a.apply(ctx, item, serverSideApply); err != nil {
+		log.Info("applying resource", "resource", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
+		if options.CreateNamespace {
+			a.createNsIfNotExists(ctx, item.GetNamespace())
+		}
+		if err := a.apply(ctx, item, options.ServerSideApply); err != nil {
 			err = fmt.Errorf("%s %s/%s: %v", item.GetObjectKind().GroupVersionKind().String(), item.GetNamespace(), item.GetName(), err)
 			log.Error(err, "applying resource")
 			errs = append(errs, err.Error())
+			continue
 		}
+		managedmap[manFromResource(item)] = true // set managed
 	}
 	// remove
-	for _, item := range pruned {
-		partial := &metav1.PartialObjectMetadata{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: item.APIVersion,
-				Kind:       item.Kind,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      item.Name,
-				Namespace: item.Namespace,
-			},
+	for item, managed := range managedmap {
+		if managed {
+			continue
 		}
-
+		partial := partialFromMan(item)
 		log.Info("deleting resource", "gvk", partial.GetObjectKind().GroupVersionKind().String(), "name", partial.GetName(), "namespace", partial.GetNamespace())
 		if err := a.Client.Delete(ctx, partial, &client.DeleteOptions{}); err != nil {
 			if !apierrors.IsNotFound(err) {
 				err = fmt.Errorf("%s %s/%s: %v", partial.GetObjectKind().GroupVersionKind().String(), partial.GetNamespace(), partial.GetName(), err)
 				log.Error(err, "deleting resource")
 				errs = append(errs, err.Error())
+				// if not removed, keep in managed
+				continue
 			}
 		}
+		// remove from managed if removed
+		delete(managedmap, manFromResource(partial))
 	}
-
+	managedResources := make([]pluginsv1beta1.ManagedResource, 0, len(resources))
+	for item := range managedmap {
+		managedResources = append(managedResources, item)
+	}
+	sort.Slice(managedResources, func(i, j int) bool {
+		return strings.Compare(managedResources[i].APIVersion, managedResources[j].APIVersion) == 1
+	})
 	if len(errs) > 0 {
 		return managedResources, errors.New(strings.Join(errs, "\n"))
 	} else {
 		return managedResources, nil
 	}
+}
+
+func manFromResource(obj client.Object) pluginsv1beta1.ManagedResource {
+	return pluginsv1beta1.ManagedResource{
+		APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
+		Namespace:  obj.GetNamespace(),
+		Name:       obj.GetName(),
+	}
+}
+
+func partialFromMan(man pluginsv1beta1.ManagedResource) *metav1.PartialObjectMetadata {
+	return &metav1.PartialObjectMetadata{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: man.APIVersion,
+			Kind:       man.Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      man.Name,
+			Namespace: man.Namespace,
+		},
+	}
+}
+
+func (a *NativeApplier) createNsIfNotExists(ctx context.Context, name string) error {
+	if name == "" {
+		return nil
+	}
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	_, err := controllerutil.CreateOrUpdate(ctx, a.Client, ns, func() error { return nil })
+	return err
 }
 
 func (a *NativeApplier) apply(ctx context.Context, obj client.Object, serversideapply bool) error {

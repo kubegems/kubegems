@@ -3,11 +3,12 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: kubevela
-  namespace: {{ .Values.kubevela.namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   enabled: true
   kind: helm
   repo: https://charts.kubevela.net/core
+  installNamespace: {{ .Values.kubevela.namespace }}
   name: vela-core
   version: {{ .Values.kubevela.version }}
   values:

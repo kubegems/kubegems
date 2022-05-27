@@ -28,6 +28,7 @@ func (t Templater) Template(ctx context.Context, plugin *pluginsv1beta1.Plugin, 
 	if err != nil {
 		return nil, err
 	}
+	plugin.Status.Version = chart.Metadata.Version
 
 	options := chartutil.ReleaseOptions{
 		Name:      plugin.Name,

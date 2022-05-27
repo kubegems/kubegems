@@ -19,6 +19,8 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 
 	"github.com/go-logr/logr"
@@ -53,7 +55,9 @@ type Options struct {
 }
 
 func NewDefaultOptions() *Options {
-	return &Options{}
+	cachedir, _ := os.UserHomeDir()
+	cachedir = filepath.Join(cachedir, ".cache", "kubegems", "plugins")
+	return &Options{Cache: cachedir}
 }
 
 func SetupReconciler(ctx context.Context, mgr manager.Manager, options *Options) error {
