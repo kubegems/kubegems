@@ -213,8 +213,8 @@ Return the proper argocd password secret
 */}}
 {{- define "kubegems.argocd.password" -}}
 {{- with index .Values "argo-cd" -}}
-{{- if and .enabled (not .configs.secret.createSecret ) -}}
-    {{- .configs.secret.argocdServerAdminPassword -}}
+{{- if and .enabled (not .config.secret.create) -}}
+    {{- .config.secret.argocdServerAdminPassword -}}
 {{- else if and $.Values.externalArgoCD.enabled -}}
     {{- $.Values.externalArgoCD.password -}}
 {{- end -}}
@@ -227,7 +227,7 @@ Return the proper argocd password secret
 {{- define "kubegems.argocd.password.secret" -}}
 {{- $argocd := index .Values "argo-cd" -}}
 {{- if and $argocd.enabled -}}
-    {{- printf "argocd-initial-admin-secret" -}}
+    {{- printf "argocd-secret" -}}
 {{- else if and .Values.externalArgoCD.enabled .Values.externalArgoCD.existingSecret -}}
     {{- .Values.externalArgoCD.existingSecret -}}
 {{- end -}}
@@ -238,11 +238,11 @@ Return the proper argocd password secret key
 */}}
 {{- define "kubegems.argocd.password.secret.key" -}}
 {{- if index .Values "argo-cd" "enabled" -}}
-    {{- "password" -}}
+    {{- "clearPassword" -}}
 {{- else if .Values.externalArgoCD.existingSecretKey -}}
     {{- .Values.externalArgoCD.existingSecretKey -}}
 {{- else -}}
-    {{- "argocd-password" -}}
+    {{- "clearPassword" -}}
 {{- end -}}
 {{- end -}}
 

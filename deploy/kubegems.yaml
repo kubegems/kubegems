@@ -10,7 +10,6 @@ spec:
   installNamespace: kubegems
   values:
     global:
-      imageRegistry: registry.cn-beijing.aliyuncs.com
       kubegemsVersion: main
     mysql:
       persistence:
