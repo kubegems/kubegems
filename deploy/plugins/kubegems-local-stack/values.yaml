@@ -38,7 +38,7 @@ observability:
   enabled: true
   annotations:
     plugins.kubegems.io/description: KubeGems平台服务追踪套件.
-    plugins.kubegems.io/category: 链路追踪
+    plugins.kubegems.io/category: 服务网格
     plugins.kubegems.io/main-category: core
     plugins.kubegems.io/health-check: "statefulsets.apps/*,deployments.apps/*"
   namespace: observability
@@ -153,3 +153,12 @@ kubevela:
     plugins.kubegems.io/category: OAM
     plugins.kubegems.io/main-category: core
   version: 1.3.5
+metrics-server:
+  enabled: false
+  namespace: kube-system
+  annotations:
+    plugins.kubegems.io/description: Metrics Server 是 Kubernetes 内置自动缩放管道的可扩展、高效的容器资源指标来源。
+    plugins.kubegems.io/category: Metrics
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/health-check: "deployments.apps/metrics-server"
+  version: 3.8.2

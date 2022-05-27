@@ -7,9 +7,9 @@ metadata:
 spec:
   kind: helm
   repo: https://kubernetes-sigs.github.io/metrics-server
-  installNamespace: kube-system
-  enabled: true
-  version: 3.8.2
+  installNamespace: {{ index .Values "metrics-server" "namespace" }}
+  enabled: {{ index .Values "metrics-server" "enabled" }}
+  version: {{ index .Values "metrics-server" "version" }}
   values:
     args:
       - --kubelet-insecure-tls

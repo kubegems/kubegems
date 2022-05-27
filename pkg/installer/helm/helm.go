@@ -111,6 +111,7 @@ func (h *Helm) ApplyChart(ctx context.Context,
 	log.Info("upgrading", "old", existRelease.Config, "new", values)
 	client := action.NewUpgrade(cfg)
 	client.Namespace = releaseNamespace
+	client.Install = true
 	client.ResetValues = true
 	client.MaxHistory = 1
 	client.DryRun = options.DryRun
