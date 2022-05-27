@@ -193,6 +193,25 @@ spec:
             - throttle_group_key
             url: {{ include "logging.loki.address" . }}
 ---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: loki-redis
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  name: redis
+  enabled: true
+  kind: helm
+  installNamespace: {{ .Values.logging.namespace }}
+  repo: https://charts.bitnami.com/bitnami
+  version: 16.9.11
+  values:
+    architecture: standalone
+    replica:
+      replicaCount: 1
+    auth:
+      enabled: false
+---
 # https://github.com/grafana/helm-charts/tree/main/charts/loki
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
@@ -223,4 +242,108 @@ spec:
       accessModes:
       - ReadWriteOnce
       size: 10Gi
+    config:
+      auth_enabled: false
+      server:
+        http_listen_port: 3100
+        grpc_server_max_recv_msg_size: 10000000
+        grpc_server_max_send_msg_size: 10000000
+        grpc_server_max_concurrent_streams: 0
+      frontend:
+        compress_responses: true
+      query_range:
+        results_cache:
+          cache:
+            redis:
+              endpoint: loki-redis-headless:6379
+              expiration: 1h
+        cache_results: true
+      compactor:
+        shared_store: filesystem
+        working_directory: /data/loki/boltdb-shipper-compactor
+      ingester:
+        lifecycler:
+          address: 127.0.0.1
+          ring:
+            kvstore:
+              store: inmemory
+            replication_factor: 1
+          final_sleep: 0s
+        chunk_idle_period: 5m
+        chunk_retain_period: 30
+        wal:
+          enabled: true
+          dir: /data/wal
+          flush_on_shutdown: true
+      schema_config:
+        configs:
+        - from: "2022-02-01"
+          index:
+            period: 24h
+            prefix: index_
+          object_store: filesystem
+          schema: v11
+          store: boltdb-shipper
+      storage_config:
+        boltdb_shipper:
+          active_index_directory: /data/loki/boltdb-shipper-active
+          cache_location: /data/loki/boltdb-shipper-cache
+          cache_ttl: 24h
+          shared_store: filesystem
+        filesystem:
+          directory: /data/loki/chunks
+        index_queries_cache_config:
+          redis:
+            endpoint: loki-redis-headless:6379
+            expiration: 1h
+      chunk_store_config:
+        max_look_back_period: 0s
+        chunk_cache_config:
+          redis:
+            endpoint: loki-redis-headless:6379
+            expiration: 1h
+        write_dedupe_cache_config:
+          redis:
+            endpoint: loki-redis-headless:6379
+            expiration: 1h
+      table_manager:
+        chunk_tables_provisioning:
+          inactive_read_throughput: 0
+          inactive_write_throughput: 0
+          provisioned_read_throughput: 0
+          provisioned_write_throughput: 0
+        index_tables_provisioning:
+          inactive_read_throughput: 0
+          inactive_write_throughput: 0
+          provisioned_read_throughput: 0
+          provisioned_write_throughput: 0
+        retention_deletes_enabled: false
+        retention_period: 0
+      limits_config:
+        split_queries_by_interval: 24h
+        enforce_metric_name: false
+        reject_old_samples: true
+        reject_old_samples_max_age: 168h
+        ingestion_rate_mb: 64
+        ingestion_burst_size_mb: 128
+        max_entries_limit_per_query: 50000
+      ruler:
+        storage:
+          type: local
+          local:
+            directory: /rules
+        rule_path: /rules/scratch
+        alertmanager_url: {{ include "monitoring.alertmanager.address" .}}
+        ring:
+          kvstore:
+            store: inmemory
+        enable_api: true
+    alerting_groups:
+      - name: kubegems-loki-recoring-rules
+        interval: 1m
+        rules:
+        - record: gems_loki_logs_count_last_1m
+          expr: sum(count_over_time({stream=~"stdout|stderr"}[1m])) by (namespace, pod, container)
+        - record: gems_loki_error_logs_count_last_1m
+          expr: sum(count_over_time({stream=~"stdout|stderr"} |~ `error` [1m])) by (namespace, pod, container)
 {{- end -}}

@@ -6,10 +6,10 @@ metadata:
   name: kubernetes-event-exporter
   namespace: {{ .Release.Namespace }}
 spec:
+  enabled: true
   kind: helm
   repo: https://charts.bitnami.com/bitnami
   installNamespace: {{ .Values.eventer.namespace }}
-  enabled: true
   version: 1.4.12
   values:
     image:
