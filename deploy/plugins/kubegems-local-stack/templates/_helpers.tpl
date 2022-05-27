@@ -1,7 +1,7 @@
 {{- define "observability.jaeger.address" -}}
 {{- if .Values.observability.enabled  }}
     {{- printf "http://jaeger-operator-jaeger-query.%s:16686" .Values.observability.namespace }}
-{{- else -}}
+{{- else if .Values.observability.values.externalJaeger -}}
     {{- .Values.observability.values.externalJaeger.address }}
 {{- end -}}
 {{- end -}}
@@ -9,7 +9,7 @@
 {{- define "monitoring.prometheus.address" -}}
 {{- if .Values.monitoring.enabled  }}
     {{- printf "http://kube-prometheus-stack-prometheus.%s:9090" .Values.monitoring.namespace }}
-{{- else -}}
+{{- else if and .Values.monitoring.values .Values.monitoring.values.externalPrometheus -}}
     {{- .Values.monitoring.values.externalPrometheus.address }}
 {{- end -}}
 {{- end -}}
@@ -17,7 +17,7 @@
 {{- define "monitoring.alertmanager.address" -}}
 {{- if .Values.monitoring.enabled  }}
     {{- printf "http://kube-prometheus-stack-alertmanager.%s:9093" .Values.monitoring.namespace }}
-{{- else -}}
+{{- else if and .Values.monitoring.values .Values.monitoring.values.externalAlertmanager -}}
     {{- .Values.monitoring.values.externalAlertmanager.address }}
 {{- end -}}
 {{- end -}}
@@ -25,7 +25,7 @@
 {{- define "monitoring.grafana.address" -}}
 {{- if .Values.monitoring.enabled  }}
     {{- printf "http://kube-prometheus-stack-grafana.%s:80" .Values.monitoring.namespace }}
-{{- else -}}
+{{- else if and .Values.monitoring.values .Values.monitoring.values.externalGrafana -}}
     {{- .Values.monitoring.values.externalGrafana.address }}
 {{- end -}}
 {{- end -}}
@@ -33,7 +33,7 @@
 {{- define "logging.loki.address" -}}
 {{- if .Values.logging.enabled  }}
     {{- printf "http://loki-stack.%s:3100" .Values.logging.namespace }}
-{{- else -}}
+{{- else if .Values.logging.values.externalLoki -}}
     {{- .Values.logging.values.externalLoki.address }}
 {{- end -}}
 {{- end -}}
