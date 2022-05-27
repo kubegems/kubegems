@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	defaultGlobalOutput = "containers-console"
+	defaultGlobalOutput = "kubegems-container-console-output"
 )
 
 // NamespaceLogCollector namespace级日志采集器
@@ -76,6 +76,8 @@ func (h *ObservabilityHandler) NamespaceLogCollector(c *gin.Context) {
 									},
 								},
 							},
+						},
+						{
 							RecordModifier: &filter.RecordModifier{
 								Records: []filter.Record{
 									{
@@ -83,6 +85,8 @@ func (h *ObservabilityHandler) NamespaceLogCollector(c *gin.Context) {
 									},
 								},
 							},
+						},
+						{
 							Throttle: &filter.Throttle{
 								GroupKey:                 "throttle_group_key",
 								GroupBucketLimit:         4000,
