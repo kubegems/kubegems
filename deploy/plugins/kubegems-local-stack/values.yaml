@@ -74,13 +74,14 @@ gateway:
   namespace: kubegems-gateway
   version: latest
 kubegems:
-  enabled: true
+  enabled: false
   annotations:
     plugins.kubegems.io/description: KubeGems平台管理容器.
     plugins.kubegems.io/category: kubegems
     plugins.kubegems.io/main-category: core
     plugins.kubegems.io/required: "true"
     plugins.kubegems.io/health-check: "deployments.apps/*"
+    plugins.kubegems.io/ignore-on-disabled: "true"
   namespace: kubegems
   version: latest
   values:

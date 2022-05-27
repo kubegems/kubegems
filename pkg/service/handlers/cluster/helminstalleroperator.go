@@ -23,30 +23,44 @@ const (
 )
 
 type OpratorInstaller struct {
-	Config           *rest.Config           // target cluster config
-	Version          string                 // version of the installer chart
-	InstallNamespace string                 // namespace where the local-components is installed
-	PluginsValues    map[string]interface{} // values pass to `plugins-local-template.yaml`
+	Config *rest.Config // target cluster config
 }
 
-func (i OpratorInstaller) Apply(ctx context.Context) error {
+type GlobalValues struct {
+	ImageRegistry   string `json:"imageRegistry"`
+	ImageRepository string `json:"imageRepository"`
+	ClusterName     string `json:"clusterName"`
+	StorageClass    string `json:"storageClass"`
+	KubegemsVersion string `json:"kubegemsVersion"`
+}
+
+func (i OpratorInstaller) Apply(ctx context.Context, ns string, values GlobalValues) error {
+	if ns == "" {
+		ns = KubeGemsLocalPluginsNamespace
+	}
 	chartpath := filepath.Join(KubeGemPluginsPath, KubeGemsInstallerPluginName)
 	log.FromContextOrDiscard(ctx).Info("applying kubegems-installer chart", "chartPath", chartpath)
-
-	// install kubegems-installer
+	// 	installer:
+	//   image:
+	//     registry: docker.io
+	//     repository: kubegems/kubegems
+	//     tag: latest
+	installerValues := map[string]interface{}{
+		"installer": map[string]interface{}{
+			"image": map[string]interface{}{
+				"registry": values.ImageRegistry,
+				"tag":      values.KubegemsVersion,
+			},
+		},
+	}
 	relese, err := (&helm.Helm{Config: i.Config}).ApplyChart(ctx,
 		KubeGemsInstallerPluginName, KubeGemsInstallerPluginNamespace,
-		chartpath, i.PluginsValues, helm.ApplyOptions{},
+		chartpath, installerValues, helm.ApplyOptions{},
 	)
 	if err != nil {
 		return err
 	}
 	log.Info("apply kubegems installer succeed", "namespace", relese.Namespace, "name", relese.Name, "version", relese.Version)
-
-	if i.InstallNamespace == "" {
-		i.InstallNamespace = KubeGemsLocalPluginsNamespace
-	}
-
 	allinoneplugin := &pluginsv1beta1.Plugin{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: pluginsv1beta1.GroupVersion.String(),
@@ -54,41 +68,51 @@ func (i OpratorInstaller) Apply(ctx context.Context) error {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      KubeGemsLocalPluginsName,
-			Namespace: i.InstallNamespace,
+			Namespace: ns,
 		},
 		Spec: pluginsv1beta1.PluginSpec{
 			Enabled:          true,
 			Kind:             pluginsv1beta1.PluginKindTemplate,
-			InstallNamespace: i.InstallNamespace, // set ns to install ns
-			Values:           pluginsv1beta1.Values{Object: i.PluginsValues},
+			InstallNamespace: ns, // set ns to install ns
+			Values: pluginsv1beta1.Values{Object: map[string]interface{}{
+				"global": map[string]interface{}{
+					"imageRegistry":   values.ImageRegistry,   // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
+					"imageRepository": values.ImageRepository, // eg. kubegems, kubegems-testing
+					"clusterName":     values.ClusterName,
+					"storageClass":    values.StorageClass,
+				},
+				"kubegems-installer": map[string]interface{}{
+					"version": values.KubegemsVersion,
+				},
+				"kubegems-local": map[string]interface{}{
+					"version": values.KubegemsVersion,
+				},
+			}},
 		},
 	}
+	log.Info("applying kubegems plugins", "plugin", allinoneplugin)
 	if err := kube.Apply(ctx, i.Config, []client.Object{allinoneplugin}, kube.WithCreateNamespace()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (i OpratorInstaller) Remove(ctx context.Context) error {
-	if i.InstallNamespace == "" {
-		i.InstallNamespace = KubeGemsLocalPluginsNamespace
+func (i OpratorInstaller) Remove(ctx context.Context, ns string) error {
+	if ns == "" {
+		ns = KubeGemsLocalPluginsNamespace
 	}
-
-	// remove all plugins
-	log.FromContextOrDiscard(ctx).Info("removing kubegems plugins")
-	plugins := &pluginsv1beta1.PluginList{}
 	cli, err := kube.NewClient(i.Config)
 	if err != nil {
 		return err
 	}
-	if err := cli.List(ctx, plugins, client.InNamespace(i.InstallNamespace)); err != nil {
-		return err
+	// remove all in one plugin
+	allinoneplugin := &pluginsv1beta1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      KubeGemsLocalPluginsName,
+			Namespace: ns,
+		},
 	}
-	for _, plugin := range plugins.Items {
-		if err := cli.Delete(ctx, &plugin); err != nil {
-			return err
-		}
-	}
+	log.FromContextOrDiscard(ctx).Info("removing kubegems plugins", "plugin", allinoneplugin)
+	return cli.Delete(ctx, allinoneplugin)
 	// remove kubegems-installer by hand
-	return nil
 }

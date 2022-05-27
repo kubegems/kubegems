@@ -15,15 +15,9 @@ spec:
     ingress:
       hostname: "{{ .Values.kubegems.values.ingress.hostname }}"
     gitea:
-      persistence:
-        storageClass: "{{ .Values.global.storageClass }}"
       image:
         # repository: gitea/gitea
         {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "gitea/gitea" "context" .) }}
-      postgresql:
-        image:
-          # repository: bitnami/postgresql
-          {{ include "common.images.repository" ( dict "repository" "bitnami/postgresql" "context" .) }}
     mysql:
       image:
         # repository: bitnami/mysql
@@ -32,7 +26,6 @@ spec:
       image:
         # repository: bitnami/redis
         {{ include "common.images.repository" ( dict "repository" "bitnami/redis" "context" .) }}
-        tag: "6.2.7"
     chartmuseum:
       image:
         # repository: ghcr.io/helm/chartmuseum
@@ -42,10 +35,6 @@ spec:
         image:
           # repository: quay.io/argoproj/argocd
           {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "argoproj/argocd" "context" .) }}
-      dex:
-        image:
-          # repository: ghcr.io/dexidp/dex
-          {{ include "common.images.repository" ( dict "registry" "ghcr.io" "repository" "dexidp/dex" "context" .) }}
       redis:
         image:
           # repository: redis

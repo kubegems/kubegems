@@ -68,6 +68,11 @@ func ListPlugins(ctx context.Context, cli client.Client, options ...ListPluginOp
 		if opt.WithHealthy {
 			checkHealthy(ctx, cli, &plugin)
 		}
+		if annotations := plugin.Annotations; annotations != nil {
+			if _, ok := annotations[pluginscommon.AnnotationIgnoreOnDisabled]; ok {
+				continue
+			}
+		}
 		result = append(result, plugin)
 	}
 	globalVals, _ := allinoneplugin.Spec.Values.Object["global"].(map[string]interface{})

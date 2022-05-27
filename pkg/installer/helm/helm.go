@@ -62,12 +62,16 @@ func (h *Helm) ApplyChart(ctx context.Context,
 	releaseName, releaseNamespace string, chartNameOrPath string,
 	values map[string]interface{}, options ApplyOptions,
 ) (*release.Release, error) {
-	log := logr.FromContextOrDiscard(ctx).WithValues("name", releaseName, "namespace", releaseNamespace, "repo", options.Repo, "version", options.Version)
-
+	log := logr.FromContextOrDiscard(ctx).WithValues(
+		"release name", releaseName,
+		"release namespace", releaseNamespace,
+		"name", chartNameOrPath,
+		"repo", options.Repo,
+		"version", options.Version,
+	)
 	if chartNameOrPath == "" {
 		chartNameOrPath = releaseName
 	}
-
 	version, repo := options.Version, options.Repo
 	chart, err := LoadChart(ctx, chartNameOrPath, repo, version)
 	if err != nil {
@@ -76,8 +80,6 @@ func (h *Helm) ApplyChart(ctx context.Context,
 	if releaseName == "" {
 		releaseName = chart.Name()
 	}
-
-	// do dry run
 	if options.DryRun {
 		log.Info("dry run installing")
 		install := action.NewInstall(&action.Configuration{})
@@ -85,7 +87,6 @@ func (h *Helm) ApplyChart(ctx context.Context,
 		install.DryRun, install.DisableHooks, install.ClientOnly, install.CreateNamespace = true, true, true, true
 		return install.Run(chart, values)
 	}
-
 	cfg, err := NewHelmConfig(releaseNamespace, h.Config)
 	if err != nil {
 		return nil, err

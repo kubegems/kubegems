@@ -219,11 +219,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
 				}
-				installer := OpratorInstaller{
-					Config:           config,
-					InstallNamespace: cluster.InstallNamespace,
-				}
-				return installer.Remove(ctx)
+				return OpratorInstaller{Config: config}.Remove(ctx, cluster.InstallNamespace)
 			})
 		}); err != nil {
 			handlers.NotOK(c, err)
@@ -476,35 +472,18 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
-			if cluster.InstallNamespace == "" {
-				cluster.InstallNamespace = KubeGemsLocalPluginsNamespace
-			}
 			splits := strings.Split(cluster.ImageRepo, "/")
 			if len(splits) == 1 {
-				splits = append(splits, "kubegems")
+				splits = append(splits, "")
 			}
-			kubegemsVersion := version.Get().GitVersion
-			values := map[string]interface{}{
-				"global": map[string]interface{}{
-					"imageRegistry":   splits[0], // eg. docker.io or registry.cn-hangzhou.aliyuncs.com
-					"imageRepository": splits[1], // eg. kubegems, kubegems-testing
-					"clusterName":     cluster.ClusterName,
-					"storageClass":    cluster.DefaultStorageClass,
-				},
-				"kubegems-local": map[string]interface{}{
-					"version": kubegemsVersion,
-				},
-				"kubegems": map[string]interface{}{
-					"version": kubegemsVersion,
-					"enabled": cluster.Primary,
-				},
-			}
-			installer := OpratorInstaller{
-				Config:           config,
-				PluginsValues:    values,
-				InstallNamespace: cluster.InstallNamespace,
-			}
-			return installer.Apply(ctx)
+			registry, repository := splits[0], splits[1]
+			return OpratorInstaller{Config: config}.Apply(ctx, cluster.InstallNamespace, GlobalValues{
+				ImageRegistry:   registry,
+				ImageRepository: repository,
+				ClusterName:     cluster.ClusterName,
+				StorageClass:    cluster.DefaultStorageClass,
+				KubegemsVersion: version.Get().GitVersion,
+			})
 		}); err != nil {
 			log.Error(err, "create cluster")
 			return err
