@@ -73,12 +73,16 @@ func (c *AgentMessageCollector) Run() error {
 		c.clusterStatus.Store(cluster, stopch)
 	}
 
+	ticker := time.NewTicker(10 * time.Second)
 	for {
 		select {
 		case <-c.context.Done():
+			ticker.Stop()
 			return c.context.Err()
 		case msg := <-c.messageCh:
 			msgswitch.DispatchMessage(msg)
+		case <-ticker.C:
+			c.Refresh()
 		}
 	}
 }
