@@ -32,7 +32,7 @@
 
 {{- define "logging.loki.address" -}}
 {{- if .Values.logging.enabled  }}
-    {{- printf "http://loki-stack.%s:3100" .Values.logging.namespace }}
+    {{- printf "http://loki.%s:3100" .Values.logging.namespace }}
 {{- else if .Values.logging.values.externalLoki -}}
     {{- .Values.logging.values.externalLoki.address }}
 {{- end -}}

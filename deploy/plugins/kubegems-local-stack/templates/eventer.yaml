@@ -9,10 +9,12 @@ spec:
   kind: helm
   repo: https://charts.bitnami.com/bitnami
   installNamespace: {{ .Values.eventer.namespace }}
+  enabled: true
   version: 1.4.12
   values:
     image:
-      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "bitnami/kubernetes-event-exporter" "context" .) }}
+      {{ include "common.images.registry" . }}
+      {{ include "common.images.repository" ( dict "repository" "bitnami/kubernetes-event-exporter" "context" .) }}
     config:
       logLevel: error
       logFormat: json

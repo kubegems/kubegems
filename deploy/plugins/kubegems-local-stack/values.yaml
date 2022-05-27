@@ -1,9 +1,9 @@
 global:
-  imageRegistry: "docker.io"
-  imageRepository: "kubegems"
-  clusterName: local
-  storageClass: local-path
-  runtime: containerd
+  imageRegistry:
+  imageRepository:
+  clusterName:
+  storageClass:
+  runtime:
 logging:
   enabled: true
   annotations:
