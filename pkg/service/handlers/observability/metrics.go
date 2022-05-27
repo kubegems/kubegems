@@ -195,9 +195,6 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 				ToPromql()
 		}
 	} else {
-		if q.Expr != "" {
-			return fmt.Errorf("模板与原生promql只能指定一种")
-		}
 		q.PromqlGenerator = &prometheus.PromqlGenerator{
 			BaseQueryParams: prometheus.BaseQueryParams{
 				Resource:   c.Query("resource"),

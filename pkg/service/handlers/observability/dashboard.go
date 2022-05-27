@@ -187,9 +187,6 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 				}
 			}
 		} else {
-			if v.Expr != "" {
-				return nil, fmt.Errorf("模板与原生promql只能指定一种")
-			}
 			_, err := v.PromqlGenerator.BaseQueryParams.FindRuleContext(monitoropts)
 			if err != nil {
 				return nil, err

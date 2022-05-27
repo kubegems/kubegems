@@ -38,9 +38,6 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
 	} else {
-		if r.BaseAlertRule.Expr != "" {
-			return fmt.Errorf("模板与原生promql只能指定一种")
-		}
 		// check resource
 		res, ok := opts.Resources[r.PromqlGenerator.Resource]
 		if !ok {
