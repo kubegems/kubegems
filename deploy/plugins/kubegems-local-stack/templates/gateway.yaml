@@ -9,4 +9,8 @@ spec:
   kind: template
   installNamespace: {{ .Values.gateway.namespace }}
   enabled: true
+  values:
+    namespace: {{ .Values.gateway.namespace }}
+    image:
+      {{ include "common.images.registry" . }}
 {{- end }}

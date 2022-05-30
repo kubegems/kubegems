@@ -1,1 +1,3 @@
-repository: docker.io/kubegems
+namespace:
+image:
+  registry:
