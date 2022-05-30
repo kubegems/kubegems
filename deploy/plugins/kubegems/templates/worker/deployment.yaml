@@ -138,6 +138,10 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.worker.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           volumeMounts:
+          {{- if .Values.persistence.enabled }}
+            - name: data
+              mountPath: /app/data
+          {{- end }}
           {{- if .Values.worker.extraVolumeMounts }}
           {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraVolumeMounts "context" $) | nindent 12 }}
           {{- end }}
@@ -145,6 +149,11 @@ spec:
         {{- include "common.tplvalues.render" ( dict "value" .Values.worker.sidecars "context" $) | nindent 8 }}
         {{- end }}
       volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "kubegems.pvc.name" . }}
+        {{- end }}
         {{- if .Values.worker.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraVolumes "context" $) | nindent 8 }}
         {{- end }}

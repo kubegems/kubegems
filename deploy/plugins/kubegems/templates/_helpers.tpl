@@ -21,6 +21,14 @@ Return the proper image name
 {{- end -}}
 {{- end -}}
 
+{{- define "kubegems.fullname" -}}
+{{- printf "%s" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "kubegems.pvc.name" -}}
+    {{- default (printf "%s-data" (include "kubegems.fullname" .)) .Values.persistence.existingClaim -}}
+{{- end -}}
+
 {{/*
 Return the proper kubegems dashboard name
 */}}

@@ -160,27 +160,59 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Agent Metrics parameters
 
-| Name                                             | Description                                                                 | Value                    |
-| ------------------------------------------------ | --------------------------------------------------------------------------- | ------------------------ |
-| `agent.metrics.enabled`                          | Create a service for accessing the metrics endpoint                         | `true`                   |
-| `agent.metrics.service.type`                     | controller metrics service type                                             | `ClusterIP`              |
-| `agent.metrics.service.port`                     | controller metrics service HTTP port                                        | `9100`                   |
-| `agent.metrics.service.nodePort`                 | Node port for HTTP                                                          | `""`                     |
-| `agent.metrics.service.clusterIP`                | controller metrics service Cluster IP                                       | `""`                     |
-| `agent.metrics.service.extraPorts`               | Extra ports to expose (normally used with the `sidecar` value)              | `[]`                     |
-| `agent.metrics.service.loadBalancerIP`           | controller metrics service Load Balancer IP                                 | `""`                     |
-| `agent.metrics.service.loadBalancerSourceRanges` | controller metrics service Load Balancer sources                            | `[]`                     |
-| `agent.metrics.service.externalTrafficPolicy`    | controller metrics service external traffic policy                          | `Cluster`                |
-| `agent.metrics.service.annotations`              | Additional custom annotations for controller metrics service                | `{}`                     |
-| `agent.metrics.serviceMonitor.enabled`           | Specify if a servicemonitor will be deployed for prometheus-operator        | `true`                   |
-| `agent.metrics.serviceMonitor.jobLabel`          | Specify the jobLabel to use for the prometheus-operator                     | `app.kubernetes.io/name` |
-| `agent.metrics.serviceMonitor.honorLabels`       | Honor metrics labels                                                        | `false`                  |
-| `agent.metrics.serviceMonitor.selector`          | Prometheus instance selector labels                                         | `{}`                     |
-| `agent.metrics.serviceMonitor.scrapeTimeout`     | Timeout after which the scrape is ended                                     | `""`                     |
-| `agent.metrics.serviceMonitor.interval`          | Scrape interval. If not set, the Prometheus default scrape interval is used | `""`                     |
-| `agent.metrics.serviceMonitor.additionalLabels`  | Used to pass Labels that are required by the installed Prometheus Operator  | `{}`                     |
-| `agent.metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                    | `undefined`              |
-| `agent.metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                  | `undefined`              |
+| Name                                             | Description                                                                                       | Value                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `agent.metrics.enabled`                          | Create a service for accessing the metrics endpoint                                               | `true`                                     |
+| `agent.metrics.service.type`                     | controller metrics service type                                                                   | `ClusterIP`                                |
+| `agent.metrics.service.port`                     | controller metrics service HTTP port                                                              | `9100`                                     |
+| `agent.metrics.service.nodePort`                 | Node port for HTTP                                                                                | `""`                                       |
+| `agent.metrics.service.clusterIP`                | controller metrics service Cluster IP                                                             | `""`                                       |
+| `agent.metrics.service.extraPorts`               | Extra ports to expose (normally used with the `sidecar` value)                                    | `[]`                                       |
+| `agent.metrics.service.loadBalancerIP`           | controller metrics service Load Balancer IP                                                       | `""`                                       |
+| `agent.metrics.service.loadBalancerSourceRanges` | controller metrics service Load Balancer sources                                                  | `[]`                                       |
+| `agent.metrics.service.externalTrafficPolicy`    | controller metrics service external traffic policy                                                | `Cluster`                                  |
+| `agent.metrics.service.annotations`              | Additional custom annotations for controller metrics service                                      | `{}`                                       |
+| `agent.metrics.serviceMonitor.enabled`           | Specify if a servicemonitor will be deployed for prometheus-operator                              | `true`                                     |
+| `agent.metrics.serviceMonitor.jobLabel`          | Specify the jobLabel to use for the prometheus-operator                                           | `app.kubernetes.io/name`                   |
+| `agent.metrics.serviceMonitor.honorLabels`       | Honor metrics labels                                                                              | `false`                                    |
+| `agent.metrics.serviceMonitor.selector`          | Prometheus instance selector labels                                                               | `{}`                                       |
+| `agent.metrics.serviceMonitor.scrapeTimeout`     | Timeout after which the scrape is ended                                                           | `""`                                       |
+| `agent.metrics.serviceMonitor.interval`          | Scrape interval. If not set, the Prometheus default scrape interval is used                       | `""`                                       |
+| `agent.metrics.serviceMonitor.additionalLabels`  | Used to pass Labels that are required by the installed Prometheus Operator                        | `{}`                                       |
+| `agent.metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                          | `instance`                                 |
+| `agent.metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                                        | `endpoint|service|container|pod|namespace` |
+| `kubectl.image.registry`                         | kubectl image registry                                                                            | `docker.io`                                |
+| `kubectl.image.repository`                       | kubectl image repository                                                                          | `kubegems/gems-kubectl`                    |
+| `kubectl.image.tag`                              | kubectl image tag (immutable tags are recommended)                                                | `latest`                                   |
+| `kubectl.image.pullPolicy`                       | kubectl image pull policy                                                                         | `IfNotPresent`                             |
+| `kubectl.image.pullSecrets`                      | kubectl image pull secrets                                                                        | `[]`                                       |
+| `kubectl.image.debug`                            | Enable kubectl image debug mode                                                                   | `false`                                    |
+| `kubectl.replicaCount`                           | Number of kubectl replicas to deploy                                                              | `1`                                        |
+| `kubectl.resources.limits`                       | The resources limits for the kubectl containers                                                   | `{}`                                       |
+| `kubectl.resources.requests`                     | The requested resources for the kubectl containers                                                | `{}`                                       |
+| `kubectl.podSecurityContext.enabled`             | Enabled kubectl pods' Security Context                                                            | `true`                                     |
+| `kubectl.podSecurityContext.fsGroup`             | Set kubectl pod's Security Context fsGroup                                                        | `1001`                                     |
+| `kubectl.containerSecurityContext.enabled`       | Enabled kubectl containers' Security Context                                                      | `true`                                     |
+| `kubectl.containerSecurityContext.runAsUser`     | Set kubectl containers' Security Context runAsUser                                                | `1001`                                     |
+| `kubectl.containerSecurityContext.runAsNonRoot`  | Set kubectl containers' Security Context runAsNonRoot                                             | `true`                                     |
+| `kubectl.existingConfigmap`                      | The name of an existing ConfigMap with your custom configuration for kubectl                      | `nil`                                      |
+| `kubectl.command`                                | Override default container command (useful when using custom images)                              | `[]`                                       |
+| `kubectl.args`                                   | Override default container args (useful when using custom images)                                 | `[]`                                       |
+| `kubectl.hostAliases`                            | kubectl pods host aliases                                                                         | `[]`                                       |
+| `kubectl.podLabels`                              | Extra labels for kubectl pods                                                                     | `{}`                                       |
+| `kubectl.podAnnotations`                         | Annotations for kubectl pods                                                                      | `{}`                                       |
+| `kubectl.podAffinityPreset`                      | Pod affinity preset. Ignored if `kubectl.affinity` is set. Allowed values: `soft` or `hard`       | `""`                                       |
+| `kubectl.podAntiAffinityPreset`                  | Pod anti-affinity preset. Ignored if `kubectl.affinity` is set. Allowed values: `soft` or `hard`  | `soft`                                     |
+| `kubectl.nodeAffinityPreset.type`                | Node affinity preset type. Ignored if `kubectl.affinity` is set. Allowed values: `soft` or `hard` | `""`                                       |
+| `kubectl.nodeAffinityPreset.key`                 | Node label key to match. Ignored if `kubectl.affinity` is set                                     | `""`                                       |
+| `kubectl.nodeAffinityPreset.values`              | Node label values to match. Ignored if `kubectl.affinity` is set                                  | `[]`                                       |
+| `kubectl.affinity`                               | Affinity for kubectl pods assignment                                                              | `{}`                                       |
+| `kubectl.nodeSelector`                           | Node labels for kubectl pods assignment                                                           | `{}`                                       |
+| `kubectl.tolerations`                            | Tolerations for kubectl pods assignment                                                           | `[]`                                       |
+| `kubectl.updateStrategy.type`                    | kubectl statefulset strategy type                                                                 | `RollingUpdate`                            |
+| `kubectl.priorityClassName`                      | kubectl pods' priorityClassName                                                                   | `""`                                       |
+| `kubectl.schedulerName`                          | Name of the k8s scheduler (other than default) for kubectl pods                                   | `""`                                       |
+| `kubectl.lifecycleHooks`                         | for the kubectl container(s) to automate configuration before or after startup                    | `{}`                                       |
 
 
 ### Controller Parameters
@@ -194,7 +226,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `controller.image.pullSecrets`                     | controller image pull secrets                                                                        | `[]`                |
 | `controller.image.debug`                           | Enable controller image debug mode                                                                   | `false`             |
 | `controller.replicaCount`                          | Number of controller replicas to deploy                                                              | `1`                 |
-| `controller.containerPorts.webhook`                | controller webhook port                                                                              | `443`               |
+| `controller.containerPorts.webhook`                | controller webhook port                                                                              | `9443`              |
 | `controller.containerPorts.probe`                  | controller probe port                                                                                | `8080`              |
 | `controller.livenessProbe.enabled`                 | Enable livenessProbe on controller containers                                                        | `true`              |
 | `controller.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                              | `10`                |

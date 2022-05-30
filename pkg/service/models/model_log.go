@@ -73,7 +73,7 @@ func (snapshot *LogQuerySnapshot) BeforeCreate(tx *gorm.DB) error {
 		lineCount int64
 		err       error
 	)
-	lokiExportDir := "lokiExport"
+	lokiExportDir := "data/lokiExport"
 
 	lokiSnapshotDir := path.Join(lokiExportDir, "snapshot", time.Now().UTC().Format("20060102"))
 	err = utils.EnsurePathExists(lokiSnapshotDir)

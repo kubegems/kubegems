@@ -92,6 +92,9 @@ plugins-download: ## Build plugins-cache
 	${BIN_DIR}/kubegems plugins -c bin/plugins -d deploy/plugins download deploy/*.yaml
 
 CHARTS = kubegems kubegems-local kubegems-installer
+helm-readme: readme-generator
+	$(foreach var,$(CHARTS),readme-generator -v deploy/plugins/$(var)/values.yaml -r deploy/plugins/$(var)/README.md;)
+
 helm-package: ## Build helm chart
 	$(foreach var,$(CHARTS),helm package -d bin/plugins --version=${VERSION} --app-version=${VERSION} deploy/plugins/$(var);)
 
@@ -133,3 +136,15 @@ K8S_VERSION = 1.20.0
 setup-envtest: ## setup operator test environment
 	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 	setup-envtest use ${K8S_VERSION}
+
+.PHONY: readme-generator
+readme-generator:
+ifeq (, $(shell which readme-generator))
+	@{ \
+	set -e ;\
+	echo 'installing readme-generator-for-helm' ;\
+	npm install -g readme-generator-for-helm ;\
+	}
+else
+	echo 'readme-generator-for-helm is already installed'
+endif

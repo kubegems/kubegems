@@ -46,11 +46,12 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Global parameters
 
-| Name                      | Description                                     | Value |
-| ------------------------- | ----------------------------------------------- | ----- |
-| `global.imageRegistry`    | Global Docker image registry                    | `""`  |
-| `global.imagePullSecrets` | Global Docker registry secret names as an array | `[]`  |
-| `global.storageClass`     | Global StorageClass for Persistent Volume(s)    | `""`  |
+| Name                      | Description                                     | Value  |
+| ------------------------- | ----------------------------------------------- | ------ |
+| `global.imageRegistry`    | Global Docker image registry                    | `""`   |
+| `global.imagePullSecrets` | Global Docker registry secret names as an array | `[]`   |
+| `global.storageClass`     | Global StorageClass for Persistent Volume(s)    | `""`   |
+| `global.kubegemsVersion`  | Global kubegems version                         | `main` |
 
 
 ### Common parameters
@@ -178,44 +179,54 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Init Job Parameters
 
-| Name                                         | Description                                                                                    | Value               |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------- |
-| `init.image.registry`                        | API image registry                                                                             | `docker.io`         |
-| `init.image.repository`                      | API image repository                                                                           | `kubegems/kubegems` |
-| `init.image.tag`                             | API image tag (immutable tags are recommended)                                                 | `latest`            |
-| `init.image.pullPolicy`                      | API image pull policy                                                                          | `IfNotPresent`      |
-| `init.image.pullSecrets`                     | API image pull secrets                                                                         | `[]`                |
-| `init.image.debug`                           | Enable API image debug mode                                                                    | `false`             |
-| `init.replicaCount`                          | Number of API replicas to deploy                                                               | `1`                 |
-| `init.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for API                       | `nil`               |
-| `init.restartPolicy`                         | The restart policy for job,valid values: "OnFailure", "Never"                                  | `OnFailure`         |
-| `init.command`                               | Override default container command (useful when using custom images)                           | `[]`                |
-| `init.args`                                  | Override default container args (useful when using custom images)                              | `[]`                |
-| `init.hostAliases`                           | API pods host aliases                                                                          | `[]`                |
-| `init.podLabels`                             | Extra labels for API pods                                                                      | `{}`                |
-| `init.podAnnotations`                        | Annotations for API pods                                                                       | `{}`                |
-| `init.podAffinityPreset`                     | Pod affinity preset. Ignored if `init.affinity` is set. Allowed values: `soft` or `hard`       | `""`                |
-| `init.podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `init.affinity` is set. Allowed values: `soft` or `hard`  | `soft`              |
-| `init.nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `init.affinity` is set. Allowed values: `soft` or `hard` | `""`                |
-| `init.nodeAffinityPreset.key`                | Node label key to match. Ignored if `init.affinity` is set                                     | `""`                |
-| `init.nodeAffinityPreset.values`             | Node label values to match. Ignored if `init.affinity` is set                                  | `[]`                |
-| `init.affinity`                              | Affinity for API pods assignment                                                               | `{}`                |
-| `init.nodeSelector`                          | Node labels for API pods assignment                                                            | `{}`                |
-| `init.tolerations`                           | Tolerations for API pods assignment                                                            | `[]`                |
-| `init.updateStrategy.type`                   | API statefulset strategy type                                                                  | `RollingUpdate`     |
-| `init.priorityClassName`                     | API pods' priorityClassName                                                                    | `""`                |
-| `init.schedulerName`                         | Name of the k8s scheduler (other than default) for API pods                                    | `""`                |
-| `init.lifecycleHooks`                        | for the API container(s) to automate configuration before or after startup                     | `{}`                |
-| `init.extraEnvVars`                          | Array with extra environment variables to add to API nodes                                     | `[]`                |
-| `init.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for API nodes                             | `nil`               |
-| `init.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for API nodes                                | `nil`               |
-| `init.resources.limits`                      | The resources limits for the API containers                                                    | `{}`                |
-| `init.resources.requests`                    | The requested resources for the API containers                                                 | `{}`                |
-| `init.podSecurityContext.enabled`            | Enabled API pods' Security Context                                                             | `true`              |
-| `init.podSecurityContext.fsGroup`            | Set API pod's Security Context fsGroup                                                         | `1001`              |
-| `init.containerSecurityContext.enabled`      | Enabled API containers' Security Context                                                       | `true`              |
-| `init.containerSecurityContext.runAsUser`    | Set API containers' Security Context runAsUser                                                 | `1001`              |
-| `init.containerSecurityContext.runAsNonRoot` | Set API containers' Security Context runAsNonRoot                                              | `true`              |
+| Name                                         | Description                                                                                    | Value                      |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------- |
+| `init.charts.image.registry`                 | image registry                                                                                 | `docker.io`                |
+| `init.charts.image.repository`               | image repository                                                                               | `kubegems/charts-uploader` |
+| `init.charts.image.tag`                      | image tag (immutable tags are recommended)                                                     | `latest`                   |
+| `init.charts.image.pullPolicy`               | image pull policy                                                                              | `IfNotPresent`             |
+| `init.charts.image.pullSecrets`              | image pull secrets                                                                             | `[]`                       |
+| `init.charts.image.debug`                    | Enable image debug mode                                                                        | `false`                    |
+| `init.charts.replicaCount`                   | Number of API replicas to deploy                                                               | `1`                        |
+| `init.charts.restartPolicy`                  | The restart policy for job,valid values: "OnFailure", "Never"                                  | `OnFailure`                |
+| `init.charts.command`                        | Override default container command (useful when using custom images)                           | `[]`                       |
+| `init.charts.args`                           | Override default container args (useful when using custom images)                              | `[]`                       |
+| `init.image.registry`                        | API image registry                                                                             | `docker.io`                |
+| `init.image.repository`                      | API image repository                                                                           | `kubegems/kubegems`        |
+| `init.image.tag`                             | API image tag (immutable tags are recommended)                                                 | `latest`                   |
+| `init.image.pullPolicy`                      | API image pull policy                                                                          | `IfNotPresent`             |
+| `init.image.pullSecrets`                     | API image pull secrets                                                                         | `[]`                       |
+| `init.image.debug`                           | Enable API image debug mode                                                                    | `false`                    |
+| `init.replicaCount`                          | Number of API replicas to deploy                                                               | `1`                        |
+| `init.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for API                       | `nil`                      |
+| `init.restartPolicy`                         | The restart policy for job,valid values: "OnFailure", "Never"                                  | `OnFailure`                |
+| `init.command`                               | Override default container command (useful when using custom images)                           | `[]`                       |
+| `init.args`                                  | Override default container args (useful when using custom images)                              | `[]`                       |
+| `init.hostAliases`                           | API pods host aliases                                                                          | `[]`                       |
+| `init.podLabels`                             | Extra labels for API pods                                                                      | `{}`                       |
+| `init.podAnnotations`                        | Annotations for API pods                                                                       | `{}`                       |
+| `init.podAffinityPreset`                     | Pod affinity preset. Ignored if `init.affinity` is set. Allowed values: `soft` or `hard`       | `""`                       |
+| `init.podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `init.affinity` is set. Allowed values: `soft` or `hard`  | `soft`                     |
+| `init.nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `init.affinity` is set. Allowed values: `soft` or `hard` | `""`                       |
+| `init.nodeAffinityPreset.key`                | Node label key to match. Ignored if `init.affinity` is set                                     | `""`                       |
+| `init.nodeAffinityPreset.values`             | Node label values to match. Ignored if `init.affinity` is set                                  | `[]`                       |
+| `init.affinity`                              | Affinity for API pods assignment                                                               | `{}`                       |
+| `init.nodeSelector`                          | Node labels for API pods assignment                                                            | `{}`                       |
+| `init.tolerations`                           | Tolerations for API pods assignment                                                            | `[]`                       |
+| `init.updateStrategy.type`                   | API statefulset strategy type                                                                  | `RollingUpdate`            |
+| `init.priorityClassName`                     | API pods' priorityClassName                                                                    | `""`                       |
+| `init.schedulerName`                         | Name of the k8s scheduler (other than default) for API pods                                    | `""`                       |
+| `init.lifecycleHooks`                        | for the API container(s) to automate configuration before or after startup                     | `{}`                       |
+| `init.extraEnvVars`                          | Array with extra environment variables to add to API nodes                                     | `[]`                       |
+| `init.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for API nodes                             | `nil`                      |
+| `init.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for API nodes                                | `nil`                      |
+| `init.resources.limits`                      | The resources limits for the API containers                                                    | `{}`                       |
+| `init.resources.requests`                    | The requested resources for the API containers                                                 | `{}`                       |
+| `init.podSecurityContext.enabled`            | Enabled API pods' Security Context                                                             | `true`                     |
+| `init.podSecurityContext.fsGroup`            | Set API pod's Security Context fsGroup                                                         | `1001`                     |
+| `init.containerSecurityContext.enabled`      | Enabled API containers' Security Context                                                       | `true`                     |
+| `init.containerSecurityContext.runAsUser`    | Set API containers' Security Context runAsUser                                                 | `1001`                     |
+| `init.containerSecurityContext.runAsNonRoot` | Set API containers' Security Context runAsNonRoot                                              | `true`                     |
 
 
 ### API Parameters
@@ -259,7 +270,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `api.containerSecurityContext.runAsUser`    | Set API containers' Security Context runAsUser                                                | `1001`              |
 | `api.containerSecurityContext.runAsNonRoot` | Set API containers' Security Context runAsNonRoot                                             | `true`              |
 | `api.jwt.enabled`                           | Enable jwt authentication                                                                     | `true`              |
-| `api.jwt.useCertManager`                    | using cert-manager for jwt secret generation                                                  | `true`              |
+| `api.jwt.useCertManager`                    | using cert-manager for jwt secret generation                                                  | `false`             |
 | `api.jwt.secretName`                        | secret name alternative                                                                       | `""`                |
 | `api.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for API                      | `nil`               |
 | `api.command`                               | Override default container command (useful when using custom images)                          | `[]`                |
@@ -544,7 +555,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `ingress.pathType`                                | Ingress path type                                                                                                                | `ImplementationSpecific` |
 | `ingress.apiVersion`                              | Force Ingress API version (automatically detected if not set)                                                                    | `nil`                    |
 | `ingress.hostname`                                | Default host for the ingress record                                                                                              | `dashboard.kubegems.io`  |
-| `ingress.ingressClassName`                        | Ingress class name                                                                                                               | `nginx-ingress`          |
+| `ingress.ingressClassName`                        | Ingress class name                                                                                                               | `nginx`                  |
 | `ingress.path`                                    | Default path for the ingress record                                                                                              | `/`                      |
 | `ingress.annotations`                             | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations. | `{}`                     |
 | `ingress.tls`                                     | Enable TLS configuration for the host defined at `ingress.hostname` parameter                                                    | `false`                  |
@@ -570,39 +581,53 @@ The command removes all the Kubernetes components associated with the chart and 
 | `volumePermissions.containerSecurityContext.runAsUser` | Set init container's Security Context runAsUser                                                 | `0`                                |
 
 
+### Persistence parameters
+
+| Name                        | Description                           | Value               |
+| --------------------------- | ------------------------------------- | ------------------- |
+| `persistence.enabled`       | Enable persistent storage             | `true`              |
+| `persistence.storageClass`  | Storage class name                    | `""`                |
+| `persistence.accessModes`   | PVC Access Mode for volume            | `["ReadWriteOnce"]` |
+| `persistence.size`          | PVC Size for volume                   | `6Gi`               |
+| `persistence.existingClaim` | Specify if the PVC already exists     | `""`                |
+| `persistence.annotations`   | Additional custom annotations for PVC | `{}`                |
+| `persistence.selector`      | PVC selector                          | `{}`                |
+
+
 ### Database configuration
 
 | Name                      | Description                           | Value        |
 | ------------------------- | ------------------------------------- | ------------ |
-| `mysql.enabled`           | Enable MySQL                          | `false`      |
+| `mysql.enabled`           | Enable MySQL                          | `true`       |
 | `mysql.architecture`      | architecture.                         | `standalone` |
-| `mysql.auth.rootPassword` | The password for the MySQL root user. | `password`   |
+| `mysql.auth.rootPassword` | The password for the MySQL root user. | `""`         |
 | `mysql.auth.username`     | The nonroot username of the MySQL.    | `""`         |
 | `mysql.auth.password`     | The nonroot password of the MySQL.    | `""`         |
-| `mysql.auth.database`     | Create database of the MySQL.         | `""`         |
+| `mysql.auth.database`     | Create database of the MySQL.         | `kubegems`   |
 
 
 ### External Database configuration
 
 | Name                                         | Description                                                             | Value                 |
 | -------------------------------------------- | ----------------------------------------------------------------------- | --------------------- |
-| `externalDatabase.enabled`                   | Enable External Database Configuration                                  | `true`                |
+| `externalDatabase.enabled`                   | Enable External Database Configuration                                  | `false`               |
 | `externalDatabase.host`                      | Database host                                                           | `mysql`               |
 | `externalDatabase.port`                      | Database port number                                                    | `3306`                |
 | `externalDatabase.username`                  | Non-root username for Concourse                                         | `""`                  |
 | `externalDatabase.password`                  | Password for the non-root username for Concourse                        | `""`                  |
-| `externalDatabase.database`                  | Concourse database name                                                 | `""`                  |
+| `externalDatabase.database`                  | Concourse database name                                                 | `kubegems`            |
 | `externalDatabase.existingSecret`            | Name of an existing secret resource containing the database credentials | `mysql`               |
 | `externalDatabase.existingSecretPasswordKey` | Name of an existing secret key containing the database credentials      | `mysql-root-password` |
 
 
 ### RedisCache configuration
 
-| Name                  | Description                                          | Value        |
-| --------------------- | ---------------------------------------------------- | ------------ |
-| `redis.enabled`       | Enable redis                                         | `true`       |
-| `redis.architecture`  | architecture.                                        | `standalone` |
-| `redis.auth.password` | The password for the redis,keep emty to use default. | `""`         |
+| Name                              | Description                                                                                     | Value        |
+| --------------------------------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| `redis.enabled`                   | Enable redis                                                                                    | `true`       |
+| `redis.architecture`              | architecture.                                                                                   | `standalone` |
+| `redis.auth.password`             | The password for the redis,keep emty to use default.                                            | `""`         |
+| `redis.volumePermissions.enabled` | Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup` | `true`       |
 
 
 ### External RedisCache configuration
@@ -619,10 +644,16 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### ArgoCD configuration
 
-| Name                                               | Description                                                                | Value  |
-| -------------------------------------------------- | -------------------------------------------------------------------------- | ------ |
-| `argo-cd.enabled`                                  | Enable Argo CD                                                             | `true` |
-| `argo-cd.configs.secret.argocdServerAdminPassword` | The password for the ArgoCD server admin user,keep empty to auto-generate. | `""`   |
+| Name                                              | Description                                                                | Value                     |
+| ------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------- |
+| `argo-cd.enabled`                                 | Enable Argo CD                                                             | `true`                    |
+| `argo-cd.config.secret.argocdServerAdminPassword` | The password for the ArgoCD server admin user,keep empty to auto-generate. | `""`                      |
+| `argo-cd.controller.extraArgs`                    | Extra ArgoCD controller args                                               | `["--redisdb","1"]`       |
+| `argo-cd.server.extraArgs`                        | Extra ArgoCD server args                                                   | `["--redisdb","1"]`       |
+| `argo-cd.repoServer.extraArgs`                    | Extra ArgoCD repo server args                                              | `["--redisdb","1"]`       |
+| `argo-cd.redis.enabled`                           | Disable Argo CD redis to use kubegems redis                                | `false`                   |
+| `argo-cd.externalRedis.host`                      | Kubegems Redis host                                                        | `kubegems-redis-headless` |
+| `argo-cd.externalRedis.existingSecret`            | Kubegems Redis secret                                                      | `kubegems-redis`          |
 
 
 ### External ArgoCD configuration
@@ -639,9 +670,12 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Gitea configuration
 
-| Name            | Description  | Value  |
-| --------------- | ------------ | ------ |
-| `gitea.enabled` | Enable Gitea | `true` |
+| Name                                  | Description                                                       | Value     |
+| ------------------------------------- | ----------------------------------------------------------------- | --------- |
+| `gitea.enabled`                       | Enable Gitea                                                      | `true`    |
+| `gitea.memcached.enabled`             | Disable Gitea memcached by default                                | `false`   |
+| `gitea.postgresql.enabled`            | Disable Gitea postgresql by default,use built in sqlite3 instead. | `false`   |
+| `gitea.gitea.config.database.DB_TYPE` | Use sqlite3 by default                                            | `sqlite3` |
 
 
 ### External Git configuration
@@ -654,6 +688,22 @@ The command removes all the Kubernetes components associated with the chart and 
 | `externalGit.password`                  | Git password                                                       | `""`                      |
 | `externalGit.existingSecret`            | Name of an existing secret resource containing the Git credentials | `""`                      |
 | `externalGit.existingSecretPasswordKey` | Name of an existing secret key containing the Git credentials      | `""`                      |
+
+
+### Chartmuseum configuration
+
+| Name                  | Description                       | Value  |
+| --------------------- | --------------------------------- | ------ |
+| `chartmuseum.enabled` | Enable Chartmuseum                | `true` |
+| `chartmuseum.env`     | Chartmuseum environment variables | `1`    |
+
+
+### External Chartmuseum configuration
+
+| Name                       | Description                  | Value                             |
+| -------------------------- | ---------------------------- | --------------------------------- |
+| `externalAppstore.enabled` | Enable external Chartmuseum  | `false`                           |
+| `externalAppstore.address` | External Chartmuseum address | `https://chartmuseum.example.com` |
 
 
 See https://github.com/bitnami-labs/readme-generator-for-helm to create the table

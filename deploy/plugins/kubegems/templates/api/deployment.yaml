@@ -143,6 +143,10 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.api.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: data
+              mountPath: /app/data
+            {{- end }}
             {{- if .Values.api.jwt.enabled }}
             - name: jwt-certs
               mountPath: /certs/jwt
@@ -160,6 +164,11 @@ spec:
           secret:
             secretName: {{ template "kubegems.api.jwt.secretName" . }}
             defaultMode: 420
+        {{- end }}
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "kubegems.pvc.name" . }}
         {{- end }}
         {{- if .Values.api.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.api.extraVolumes "context" $) | nindent 8 }}

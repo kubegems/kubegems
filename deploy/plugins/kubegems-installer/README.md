@@ -104,9 +104,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | `installer.customStartupProbe`                    | Custom startupProbe that overrides the default one                                                  | `{}`                |
 | `installer.resources.limits`                      | The resources limits for the installer containers                                                   | `{}`                |
 | `installer.resources.requests`                    | The requested resources for the installer containers                                                | `{}`                |
-| `installer.podSecurityContext.enabled`            | Enabled installer pods' Security Context                                                            | `true`              |
+| `installer.podSecurityContext.enabled`            | Enabled installer pods' Security Context                                                            | `false`             |
 | `installer.podSecurityContext.fsGroup`            | Set installer pod's Security Context fsGroup                                                        | `1001`              |
-| `installer.containerSecurityContext.enabled`      | Enabled installer containers' Security Context                                                      | `true`              |
+| `installer.containerSecurityContext.enabled`      | Enabled installer containers' Security Context                                                      | `false`             |
 | `installer.containerSecurityContext.runAsUser`    | Set installer containers' Security Context runAsUser                                                | `1001`              |
 | `installer.containerSecurityContext.runAsNonRoot` | Set installer containers' Security Context runAsNonRoot                                             | `true`              |
 | `installer.leaderElection.enabled`                | Enable leader election                                                                              | `true`              |
@@ -162,18 +162,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | `installer.metrics.serviceMonitor.additionalLabels`  | Used to pass Labels that are required by the installed Prometheus Operator  | `{}`                     |
 | `installer.metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                    | `{}`                     |
 | `installer.metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                  | `{}`                     |
-
-
-### Installer Charts image
-
-| Name                       | Description                                       | Value                      |
-| -------------------------- | ------------------------------------------------- | -------------------------- |
-| `charts.image.registry`    | charts image registry                             | `docker.io`                |
-| `charts.image.repository`  | charts image repository                           | `kubegems/kubegems-charts` |
-| `charts.image.tag`         | charts image tag (immutable tags are recommended) | `latest`                   |
-| `charts.image.pullPolicy`  | charts image pull policy                          | `IfNotPresent`             |
-| `charts.image.pullSecrets` | charts image pull secrets                         | `[]`                       |
-| `charts.image.debug`       | Enable charts image debug mode                    | `false`                    |
 
 
 ### RBAC Parameters

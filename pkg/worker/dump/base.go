@@ -27,7 +27,7 @@ func (o *DumpOptions) RegistFlags(prefix string, fs *pflag.FlagSet) {
 
 func NewDefaultDumpOptions() *DumpOptions {
 	return &DumpOptions{
-		Dir:               "dump", // 默认当前路径下的dump
+		Dir:               "data/dump", // 默认当前路径下的dump
 		ExecCron:          "@daily",
 		DataStoreDuration: "30d",
 	}

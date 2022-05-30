@@ -6,13 +6,16 @@
 ## @param global.imageRegistry Global Docker image registry
 ## @param global.imagePullSecrets Global Docker registry secret names as an array
 ## @param global.storageClass Global StorageClass for Persistent Volume(s)
+## @param global.kubegemsVersion Global kubegems version
 ##
 global:
+  imageRegistry: ""
+  storageClass: ""
+  imagePullSecrets: []
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
   ##
-  imagePullSecrets: []
   kubegemsVersion: "main"
 
 ## @section Common parameters
@@ -457,16 +460,16 @@ init:
       ## Enable debug mode
       ##
       debug: false
-    ## @param init.replicaCount Number of API replicas to deploy
+    ## @param init.charts.replicaCount Number of API replicas to deploy
     ##
     replicaCount: 1
-    ## @param init.restartPolicy The restart policy for job,valid values: "OnFailure", "Never"
+    ## @param init.charts.restartPolicy The restart policy for job,valid values: "OnFailure", "Never"
     ##
     restartPolicy: OnFailure
-    ## @param init.command Override default container command (useful when using custom images)
+    ## @param init.charts.command Override default container command (useful when using custom images)
     ##
     command: []
-    ## @param init.args Override default container args (useful when using custom images)
+    ## @param init.charts.args Override default container args (useful when using custom images)
     ##
     args: []
   ## @param init.image.registry API image registry
@@ -1873,6 +1876,27 @@ volumePermissions:
   containerSecurityContext:
     runAsUser: 0
 
+## @section Persistence parameters
+## @param persistence.enabled Enable persistent storage
+## @param persistence.storageClass Storage class name
+## @param persistence.accessModes PVC Access Mode for volume
+## @param persistence.size PVC Size for volume
+## @param persistence.existingClaim Specify if the PVC already exists
+## @param persistence.annotations Additional custom annotations for PVC
+## @param persistence.selector PVC selector
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 6Gi
+  existingClaim: ""
+  annotations: {}
+  selector: {}
+  ##   matchLabels:
+  ##     app: my-app
+  ##
+
 ## @section Database configuration
 ##
 ## @param mysql.enabled  Enable MySQL
@@ -1917,14 +1941,12 @@ externalDatabase:
 ## @param redis.enabled  Enable redis
 ## @param redis.architecture  architecture.
 ## @param redis.auth.password  The password for the redis,keep emty to use default.
+## @param redis.volumePermissions.enabled  Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup`
 redis:
   enabled: true
   architecture: standalone
   auth:
     password: ""
-  ## @param master.persistence.enabled Enable persistence on Redis&trade; master nodes using Persistent Volume Claims
-  ##
-  master:
   volumePermissions:
     enabled: true
 ## @section External RedisCache configuration
@@ -1946,7 +1968,13 @@ externalRedis:
 ## @section ArgoCD configuration
 ##
 ## @param argo-cd.enabled  Enable Argo CD
-## @param argo-cd.configs.secret.argocdServerAdminPassword The password for the ArgoCD server admin user,keep empty to auto-generate.
+## @param argo-cd.config.secret.argocdServerAdminPassword The password for the ArgoCD server admin user,keep empty to auto-generate.
+## @param argo-cd.controller.extraArgs Extra ArgoCD controller args
+## @param argo-cd.server.extraArgs Extra ArgoCD server args
+## @param argo-cd.repoServer.extraArgs Extra ArgoCD repo server args
+## @param argo-cd.redis.enabled Disable Argo CD redis to use kubegems redis
+## @param argo-cd.externalRedis.host Kubegems Redis host
+## @param argo-cd.externalRedis.existingSecret Kubegems Redis secret
 argo-cd:
   enabled: true
   config:
@@ -1963,6 +1991,7 @@ argo-cd:
   externalRedis:
     host: kubegems-redis-headless
     existingSecret: kubegems-redis
+
 ## @section External ArgoCD configuration
 ##
 ## @param externalArgoCD.enabled  Enable external Argo CD
@@ -1982,6 +2011,9 @@ externalArgoCD:
 ## @section Gitea configuration
 ##
 ## @param gitea.enabled  Enable Gitea
+## @param gitea.memcached.enabled  Disable Gitea memcached by default
+## @param gitea.postgresql.enabled  Disable Gitea postgresql by default,use built in sqlite3 instead.
+## @param gitea.gitea.config.database.DB_TYPE  Use sqlite3 by default
 ## @skip gitea.gitea.admin
 gitea:
   enabled: true
@@ -2027,7 +2059,8 @@ chartmuseum:
       ALLOW_OVERWRITE: true
 
 ## @section External Chartmuseum configuration
-## @param externalAppstore.enabled  Enable external Chartmuseum
+## @param externalAppstore.enabled Enable external Chartmuseum
+## @param externalAppstore.address External Chartmuseum address
 externalAppstore:
   enabled: false
   address: "https://chartmuseum.example.com"
