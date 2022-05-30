@@ -113,7 +113,6 @@ func (h *Helm) ApplyChart(ctx context.Context,
 	client.Namespace = releaseNamespace
 	client.Install = true
 	client.ResetValues = true
-	client.MaxHistory = 1
 	client.DryRun = options.DryRun
 	return client.Run(releaseName, chart, values)
 }
