@@ -66,46 +66,6 @@ spec:
             value: "true"
     cni:
       enabled: true
-    ingressGateways:
-      - name: istio-ingressgateway
-        enabled: false
-      - name: istio-eastwestgateway
-        namespace: {{ .Values.gateway.namespace }}
-        label:
-          istio: eastwestgateway
-          app: istio-eastwestgateway
-          topology.istio.io/network: {{ .Values.global.clusterName }}
-        enabled: true
-        k8s:
-          env:
-            - name: ISTIO_META_ROUTER_MODE
-              value: "sni-dnat"
-            - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-              value: {{ .Values.global.clusterName }}
-          resources:
-            limits:
-              cpu: 4000m
-              memory: 4Gi
-            requests:
-              cpu: 100m
-              memory: 128Mi
-          hpaSpec:
-            minReplicas: 1
-            maxReplicas: 3
-          service:
-            ports:
-              - name: status-port
-                port: 15021
-                targetPort: 15021
-              - name: tls
-                port: 15443
-                targetPort: 15443
-              - name: tls-istiod
-                port: 15012
-                targetPort: 15012
-              - name: tls-webhook
-                port: 15017
-                targetPort: 15017
   {{ include "common.images.repository" ( dict "key" "hub" "registry" "gcr.io" "repository" "istio" "context" .) }}
   tag: {{ .Values.istio.version }}
   meshConfig:
