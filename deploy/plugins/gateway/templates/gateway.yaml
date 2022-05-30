@@ -14,249 +14,257 @@ spec:
     singular: nginxingresscontroller
   scope: Namespaced
   versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          description: NginxIngressController is the Schema for the nginxingresscontrollers API
-          properties:
-            apiVersion:
-              description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
-              type: string
-            kind:
-              description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: NginxIngressControllerSpec defines the desired state of NginxIngressController
-              properties:
-                appProtect:
-                  description: App Protect support configuration. Requires enableCRDs set to true.
-                  nullable: true
-                  properties:
-                    enable:
-                      description: Enable App Protect WAF.
-                      type: boolean
-                  required:
-                    - enable
-                  type: object
-                appProtectDos:
-                  description: App Protect Dos support configuration. Requires enableCRDs set to true.
-                  nullable: true
-                  properties:
-                    debug:
-                      description: Enable debug mode.
-                      type: boolean
-                    enable:
-                      description: Enable App Protect Dos.
-                      type: boolean
-                    maxDaemons:
-                      description: Max number of ADMD instances.
-                      type: integer
-                    maxWorkers:
-                      description: Max number of nginx processes to support.
-                      type: integer
-                    memory:
-                      description: RAM memory size in MB.
-                      type: integer
-                  required:
-                    - enable
-                  type: object
-                configMapData:
-                  additionalProperties:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NginxIngressController is the Schema for the nginxingresscontrollers API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NginxIngressControllerSpec defines the desired state of NginxIngressController
+            properties:
+              appProtect:
+                description: App Protect support configuration. Requires enableCRDs set to true.
+                nullable: true
+                properties:
+                  enable:
+                    description: Enable App Protect.
+                    type: boolean
+                required:
+                - enable
+                type: object
+              configMapData:
+                additionalProperties:
+                  type: string
+                description: Initial values of the Ingress Controller ConfigMap. Check https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/ for more information about possible values.
+                nullable: true
+                type: object
+              defaultSecret:
+                description: The TLS Secret for TLS termination of the default server. The format is namespace/name. The secret must be of the type kubernetes.io/tls. If not specified, the operator will generate and deploy a TLS Secret with a self-signed certificate and key.
+                type: string
+              enableCRDs:
+                description: Enables the use of NGINX Ingress Resource Definitions (VirtualServer and VirtualServerRoute). Default is true.
+                nullable: true
+                type: boolean
+              enableLatencyMetrics:
+                description: Bucketed response times from when NGINX establishes a connection to an upstream server to when the last byte of the response body is received by NGINX. **Note** The metric for the upstream isn't available until traffic is sent to the upstream.
+                nullable: true
+                type: boolean
+              enableLeaderElection:
+                description: Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources – only one replica will report status. Default is true.
+                nullable: true
+                type: boolean
+              enablePreviewPolicies:
+                description: Enables preview policies. Requires enableCRDs set to true.
+                type: boolean
+              enableSnippets:
+                description: Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources. Requires enableCRDs set to true.
+                type: boolean
+              enableTLSPassthrough:
+                description: Enable TLS Passthrough on port 443. Requires enableCRDs set to true.
+                type: boolean
+              globalConfiguration:
+                description: The GlobalConfiguration resource for global configuration of the Ingress Controller. Format is namespace/name. Requires enableCRDs set to true.
+                type: string
+              healthStatus:
+                description: Adds a new location to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller.
+                nullable: true
+                properties:
+                  enable:
+                    description: Enable the HealthStatus.
+                    type: boolean
+                  uri:
+                    description: URI of the location. Default is `/nginx-health`.
                     type: string
-                  description: Initial values of the Ingress Controller ConfigMap. Check https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/ for more information about possible values.
-                  nullable: true
-                  type: object
-                defaultSecret:
-                  description: The TLS Secret for TLS termination of the default server. The format is namespace/name. The secret must be of the type kubernetes.io/tls. If not specified, the operator will generate and deploy a TLS Secret with a self-signed certificate and key.
-                  type: string
-                enableCRDs:
-                  description: Enables the use of NGINX Ingress Resource Definitions (VirtualServer and VirtualServerRoute). Default is true.
-                  nullable: true
-                  type: boolean
-                enableLatencyMetrics:
-                  description: Bucketed response times from when NGINX establishes a connection to an upstream server to when the last byte of the response body is received by NGINX. **Note** The metric for the upstream isn't available until traffic is sent to the upstream.
-                  nullable: true
-                  type: boolean
-                enableLeaderElection:
-                  description: Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources – only one replica will report status. Default is true.
-                  nullable: true
-                  type: boolean
-                enablePreviewPolicies:
-                  description: Enables preview policies. Requires enableCRDs set to true.
-                  type: boolean
-                enableSnippets:
-                  description: Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources. Requires enableCRDs set to true.
-                  type: boolean
-                enableTLSPassthrough:
-                  description: Enable TLS Passthrough on port 443. Requires enableCRDs set to true.
-                  type: boolean
-                globalConfiguration:
-                  description: The GlobalConfiguration resource for global configuration of the Ingress Controller. Format is namespace/name. Requires enableCRDs set to true.
-                  type: string
-                healthStatus:
-                  description: Adds a new location to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller.
-                  nullable: true
-                  properties:
-                    enable:
-                      description: Enable the HealthStatus.
-                      type: boolean
-                    uri:
-                      description: URI of the location. Default is `/nginx-health`.
+                required:
+                - enable
+                type: object
+              image:
+                description: The image of the Ingress Controller.
+                properties:
+                  pullPolicy:
+                    description: The ImagePullPolicy of the image.
+                    enum:
+                    - Never
+                    - Always
+                    - IfNotPresent
+                    type: string
+                  repository:
+                    description: The repository of the image.
+                    type: string
+                  tag:
+                    description: The tag (version) of the image.
+                    type: string
+                required:
+                - pullPolicy
+                - repository
+                - tag
+                type: object
+              ingressClass:
+                description: A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class (in other words, have the annotation “kubernetes.io/ingress.class”). Additionally, the Ingress controller processes Ingress resources that do not have that annotation, which can be disabled by setting UseIngressClassOnly to true. Default is `nginx`.
+                type: string
+              logLevel:
+                description: Log level for V logs. Format is 0 - 3
+                maximum: 3
+                minimum: 0
+                type: integer
+              nginxDebug:
+                description: 'Enable debugging for NGINX. Uses the nginx-debug binary. Requires ‘error-log-level: debug’ in the ConfigMapData.'
+                type: boolean
+              nginxPlus:
+                description: Deploys the Ingress Controller for NGINX Plus. The default is false meaning the Ingress Controller will be deployed for NGINX OSS.
+                type: boolean
+              nginxReloadTimeout:
+                description: Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
+                type: integer
+              nginxStatus:
+                description: NGINX stub_status, or the NGINX Plus API.
+                nullable: true
+                properties:
+                  allowCidrs:
+                    description: Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas. (default “127.0.0.1”)
+                    type: string
+                  enable:
+                    description: Enable the NginxStatus.
+                    type: boolean
+                  port:
+                    description: Set the port where the NGINX stub_status or the NGINX Plus API is exposed. Default is 8080. Format is 1023 - 65535
+                    maximum: 65535
+                    minimum: 1023
+                    nullable: true
+                    type: integer
+                required:
+                - enable
+                type: object
+              prometheus:
+                description: NGINX or NGINX Plus metrics in the Prometheus format.
+                nullable: true
+                properties:
+                  enable:
+                    description: Enable Prometheus metrics.
+                    type: boolean
+                  port:
+                    description: Sets the port where the Prometheus metrics are exposed. Default is 9113. Format is 1023 - 65535
+                    maximum: 65535
+                    minimum: 1023
+                    nullable: true
+                    type: integer
+                  secret:
+                    description: A Secret with a TLS certificate and key for TLS termination of the Prometheus endpoint. The secret must be of the type kubernetes.io/tls. If specified, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start. Format is namespace/name.
+                    type: string
+                required:
+                - enable
+                type: object
+              replicas:
+                description: The number of replicas of the Ingress Controller pod. The default is 1. Only applies if the type is set to deployment.
+                format: int32
+                nullable: true
+                type: integer
+              reportIngressStatus:
+                description: Update the address field in the status of Ingresses resources.
+                nullable: true
+                properties:
+                  enable:
+                    description: Enable the ReportIngressStatus.
+                    type: boolean
+                  externalService:
+                    description: 'Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. The external address of the service is used when reporting the status of Ingress resources. Note: if serviceType is LoadBalancer, the value of this field will be ignored, and the operator will use the name of the created LoadBalancer service instead.'
+                    type: string
+                  ingressLink:
+                    description: 'Specifies the name of the IngressLink resource, which exposes the Ingress Controller pods via a BIG-IP system. The IP of the BIG-IP system is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. Requires reportIngressStatus.enable set to true. Note: If serviceType is LoadBalancer or reportIngressStatus.externalService is set, the value of this field will be ignored.'
+                    type: string
+                required:
+                - enable
+                type: object
+              service:
+                description: The service of the Ingress controller.
+                nullable: true
+                properties:
+                  extraLabels:
+                    additionalProperties:
                       type: string
-                  required:
-                    - enable
-                  type: object
-                image:
-                  description: The image of the Ingress Controller.
-                  properties:
-                    pullPolicy:
-                      description: The ImagePullPolicy of the image.
-                      enum:
-                        - Never
-                        - Always
-                        - IfNotPresent
+                    description: Specifies extra labels of the service.
+                    type: object
+                type: object
+              serviceType:
+                description: 'The type of the Service for the Ingress Controller. Valid Service types are: NodePort and LoadBalancer.'
+                enum:
+                - NodePort
+                - LoadBalancer
+                type: string
+              type:
+                description: The type of the Ingress Controller installation - deployment or daemonset.
+                enum:
+                - deployment
+                - daemonset
+                type: string
+              useIngressClassOnly:
+                description: Ignore Ingress resources without the “kubernetes.io/ingress.class” annotation.
+                type: boolean
+              watchNamespace:
+                description: Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces.
+                type: string
+              wildcardTLS:
+                description: A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified. The secret must be of the type kubernetes.io/tls. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start. Format is namespace/name.
+                type: string
+              workload:
+                description: The Workload of the Ingress controller.
+                nullable: true
+                properties:
+                  extraLabels:
+                    additionalProperties:
                       type: string
-                    repository:
-                      description: The repository of the image.
-                      type: string
-                    tag:
-                      description: The tag (version) of the image.
-                      type: string
-                  required:
-                    - pullPolicy
-                    - repository
-                    - tag
-                  type: object
-                ingressClass:
-                  description: A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class (in other words, have the annotation “kubernetes.io/ingress.class”). Default is `nginx`.
-                  type: string
-                logLevel:
-                  description: Log level for V logs. Format is 0 - 3
-                  maximum: 3
-                  minimum: 0
-                  type: integer
-                nginxDebug:
-                  description: "Enable debugging for NGINX. Uses the nginx-debug binary. Requires ‘error-log-level: debug’ in the ConfigMapData."
-                  type: boolean
-                nginxPlus:
-                  description: Deploys the Ingress Controller for NGINX Plus. The default is false meaning the Ingress Controller will be deployed for NGINX OSS.
-                  type: boolean
-                nginxReloadTimeout:
-                  description: Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
-                  type: integer
-                nginxStatus:
-                  description: NGINX stub_status, or the NGINX Plus API.
-                  nullable: true
-                  properties:
-                    allowCidrs:
-                      description: Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas. (default “127.0.0.1”)
-                      type: string
-                    enable:
-                      description: Enable the NginxStatus.
-                      type: boolean
-                    port:
-                      description: Set the port where the NGINX stub_status or the NGINX Plus API is exposed. Default is 8080. Format is 1023 - 65535
-                      maximum: 65535
-                      minimum: 1023
-                      nullable: true
-                      type: integer
-                  required:
-                    - enable
-                  type: object
-                prometheus:
-                  description: NGINX or NGINX Plus metrics in the Prometheus format.
-                  nullable: true
-                  properties:
-                    enable:
-                      description: Enable Prometheus metrics.
-                      type: boolean
-                    port:
-                      description: Sets the port where the Prometheus metrics are exposed. Default is 9113. Format is 1023 - 65535
-                      maximum: 65535
-                      minimum: 1023
-                      nullable: true
-                      type: integer
-                    secret:
-                      description: A Secret with a TLS certificate and key for TLS termination of the Prometheus endpoint. The secret must be of the type kubernetes.io/tls. If specified, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start. Format is namespace/name.
-                      type: string
-                  required:
-                    - enable
-                  type: object
-                replicas:
-                  description: The number of replicas of the Ingress Controller pod. The default is 1. Only applies if the type is set to deployment.
-                  format: int32
-                  nullable: true
-                  type: integer
-                reportIngressStatus:
-                  description: Update the address field in the status of Ingresses resources.
-                  nullable: true
-                  properties:
-                    enable:
-                      description: Enable the ReportIngressStatus.
-                      type: boolean
-                    externalService:
-                      description: "Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. The external address of the service is used when reporting the status of Ingress resources. Note: if serviceType is LoadBalancer, the value of this field will be ignored, and the operator will use the name of the created LoadBalancer service instead."
-                      type: string
-                    ingressLink:
-                      description: "Specifies the name of the IngressLink resource, which exposes the Ingress Controller pods via a BIG-IP system. The IP of the BIG-IP system is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. Requires reportIngressStatus.enable set to true. Note: If serviceType is LoadBalancer or reportIngressStatus.externalService is set, the value of this field will be ignored."
-                      type: string
-                  required:
-                    - enable
-                  type: object
-                service:
-                  description: The service of the Ingress controller.
-                  nullable: true
-                  properties:
-                    extraAnnotations:
-                      additionalProperties:
-                        type: string
-                      description: Specifies extra annotations of the service.
-                      type: object
-                    extraLabels:
-                      additionalProperties:
-                        type: string
-                      description: Specifies extra labels of the service.
-                      type: object
-                  type: object
-                serviceType:
-                  description: "The type of the Service for the Ingress Controller. Valid Service types are: NodePort and LoadBalancer."
-                  enum:
-                    - NodePort
-                    - LoadBalancer
-                  type: string
-                type:
-                  description: The type of the Ingress Controller installation - deployment or daemonset.
-                  enum:
-                    - deployment
-                    - daemonset
-                  type: string
-                watchNamespace:
-                  description: Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces.
-                  type: string
-                wildcardTLS:
-                  description: A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified. The secret must be of the type kubernetes.io/tls. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start. Format is namespace/name.
-                  type: string
-              required:
-                - image
-                - serviceType
-                - type
-              type: object
-            status:
-              description: NginxIngressControllerStatus defines the observed state of NginxIngressController
-              properties:
-                deployed:
-                  description: Deployed is true if the Operator has finished the deployment of the NginxIngressController.
-                  type: boolean
-              required:
-                - deployed
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                    description: Specifies extra labels of the workload(deployment or daemonset) of nginx.
+                    type: object
+                  resources:
+                    description: Specifies resource request and limit of the nginx container
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                    type: object
+                type: object
+            required:
+            - image
+            - serviceType
+            - type
+            type: object
+          status:
+            description: NginxIngressControllerStatus defines the observed state of NginxIngressController
+            properties:
+              deployed:
+                description: Deployed is true if the Operator has finished the deployment of the NginxIngressController.
+                type: boolean
+            required:
+            - deployed
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
@@ -276,37 +284,37 @@ metadata:
   name: nginx-ingress-operator-leader-election-role
   namespace: {{ .Values.namespace }}
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
-      - coordination.k8s.io
-    resources:
-      - leases
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - create
-      - patch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -314,166 +322,165 @@ metadata:
   creationTimestamp: null
   name: nginx-ingress-operator-manager-role
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-      - endpoints
-      - events
-      - namespaces
-      - persistentvolumeclaims
-      - pods
-      - secrets
-      - serviceaccounts
-      - services
-      - services/finalizers
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - apiextensions.k8s.io
-    resources:
-      - customresourcedefinitions
-    verbs:
-      - create
-      - delete
-      - get
-      - update
-  - apiGroups:
-      - appprotect.f5.com
-      - appprotectdos.f5.com
-      - k8s.nginx.org
-    resources:
-      - "*"
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - apps
-    resources:
-      - daemonsets
-      - deployments
-      - replicasets
-      - statefulsets
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - k8s.nginx.org
-    resources:
-      - nginxingresscontrollers
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - k8s.nginx.org
-    resources:
-      - nginxingresscontrollers/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - k8s.nginx.org
-    resources:
-      - nginxingresscontrollers/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingressclasses
-    verbs:
-      - create
-      - delete
-      - get
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingresses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingresses/status
-    verbs:
-      - update
-  - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
-      - clusterrolebindings
-      - clusterroles
-      - rolebindings
-      - roles
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - security.openshift.io
-    resources:
-      - securitycontextconstraints
-    verbs:
-      - create
-      - get
-      - list
-      - update
-      - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - endpoints
+  - events
+  - namespaces
+  - persistentvolumeclaims
+  - pods
+  - secrets
+  - serviceaccounts
+  - services
+  - services/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - create
+  - delete
+  - get
+  - update
+- apiGroups:
+  - appprotect.f5.com
+  - k8s.nginx.org
+  resources:
+  - '*'
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - nginxingresscontrollers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - nginxingresscontrollers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - nginxingresscontrollers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingressclasses
+  verbs:
+  - create
+  - delete
+  - get
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses/status
+  verbs:
+  - update
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  - clusterroles
+  - rolebindings
+  - roles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - create
+  - get
+  - list
+  - update
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: nginx-ingress-operator-metrics-reader
 rules:
-  - nonResourceURLs:
-      - /metrics
-    verbs:
-      - get
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: nginx-ingress-operator-proxy-role
 rules:
-  - apiGroups:
-      - authentication.k8s.io
-    resources:
-      - tokenreviews
-    verbs:
-      - create
-  - apiGroups:
-      - authorization.k8s.io
-    resources:
-      - subjectaccessreviews
-    verbs:
-      - create
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -485,9 +492,9 @@ roleRef:
   kind: Role
   name: nginx-ingress-operator-leader-election-role
 subjects:
-  - kind: ServiceAccount
-    name: nginx-ingress-operator-controller-manager
-    namespace: {{ .Values.namespace }}
+- kind: ServiceAccount
+  name: nginx-ingress-operator-controller-manager
+  namespace: {{ .Values.namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -498,9 +505,9 @@ roleRef:
   kind: ClusterRole
   name: nginx-ingress-operator-manager-role
 subjects:
-  - kind: ServiceAccount
-    name: nginx-ingress-operator-controller-manager
-    namespace: {{ .Values.namespace }}
+- kind: ServiceAccount
+  name: nginx-ingress-operator-controller-manager
+  namespace: {{ .Values.namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -511,9 +518,9 @@ roleRef:
   kind: ClusterRole
   name: nginx-ingress-operator-proxy-role
 subjects:
-  - kind: ServiceAccount
-    name: nginx-ingress-operator-controller-manager
-    namespace: {{ .Values.namespace }}
+- kind: ServiceAccount
+  name: nginx-ingress-operator-controller-manager
+  namespace: {{ .Values.namespace }}
 ---
 apiVersion: v1
 data:
@@ -543,10 +550,9 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   ports:
-    - name: https
-      port: 8443
-      protocol: TCP
-      targetPort: https
+  - name: https
+    port: 8443
+    targetPort: https
   selector:
     control-plane: controller-manager
 ---
@@ -564,70 +570,57 @@ spec:
       control-plane: controller-manager
   template:
     metadata:
-      annotations:
-        kubectl.kubernetes.io/default-container: manager
       labels:
         control-plane: controller-manager
     spec:
       containers:
-        - args:
-            - --secure-listen-address=0.0.0.0:8443
-            - --upstream=http://127.0.0.1:8080/
-            - --logtostderr=true
-            - --v=0
-          {{- if .Values.image.registry }}
-          image: {{ .Values.image.registry }}/kubegems/kube-rbac-proxy:v0.8.0
-          {{- else }}
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-          {{- end }}
-          name: kube-rbac-proxy
-          ports:
-            - containerPort: 8443
-              name: https
-              protocol: TCP
-          resources:
-            limits:
-              cpu: 500m
-              memory: 128Mi
-            requests:
-              cpu: 5m
-              memory: 64Mi
-        - args:
-            - --health-probe-bind-address=:8081
-            - --metrics-bind-address=127.0.0.1:8080
-            - --leader-elect
-          command:
-            - /manager
-          env:
-            - name: WATCH_NAMESPACE
-              value: ""
-          {{- if .Values.image.registry }}
-          image: {{ .Values.image.registry }}/kubegems/nginx-ingress-operator:0.5.1
-          {{- else }}
-          image: nginx/nginx-ingress-operator:0.5.1
-          {{- end }}
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 8081
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          name: manager
-          readinessProbe:
-            httpGet:
-              path: /readyz
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          resources:
-            limits:
-              cpu: 500m
-              memory: 256Mi
-            requests:
-              cpu: 250m
-              memory: 128Mi
-          securityContext:
-            allowPrivilegeEscalation: false
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        {{- if .Values.image.registry }}
+        image: {{ .Values.image.registry }}/kubegems/kube-rbac-proxy:v0.8.0
+        {{- else }}
+        image: kubegems/kube-rbac-proxy:v0.8.0
+        {{- end }}
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        command:
+        - /manager
+        {{- if .Values.image.registry }}
+        image: {{ .Values.image.registry }}/kubegems/nginx-ingress-operator:0.3.2
+        {{- else }}
+        image: kubegems/nginx-ingress-operator:0.3.2
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 250m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
       securityContext:
         runAsNonRoot: true
       serviceAccountName: nginx-ingress-operator-controller-manager
