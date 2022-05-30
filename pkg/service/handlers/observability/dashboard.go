@@ -187,9 +187,12 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 				}
 			}
 		} else {
-			_, err := v.PromqlGenerator.BaseQueryParams.FindRuleContext(monitoropts)
+			rulectx, err := v.PromqlGenerator.BaseQueryParams.FindRuleContext(monitoropts)
 			if err != nil {
 				return nil, err
+			}
+			if rulectx.ResourceDetail.Namespaced == false {
+				return nil, fmt.Errorf("图表: %s 错误！普通用户不能查询集群范围资源", v.Name)
 			}
 		}
 	}
