@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/pkg/agent/cluster"
+	pluginscommon "kubegems.io/pkg/apis/plugins"
 	"kubegems.io/pkg/log"
 	"kubegems.io/pkg/utils/gemsplugin"
 )
@@ -57,7 +58,7 @@ func (c *PluginCollector) Update(ch chan<- prometheus.Metric) error {
 				}
 				return 0
 			}(),
-			p.Name, p.Namespace, strconv.FormatBool(p.Enabled), p.Version,
+			p.Annotations[pluginscommon.AnnotationMainCategory], p.Name, p.Namespace, strconv.FormatBool(p.Enabled), p.Version,
 		)
 	}
 	return nil
