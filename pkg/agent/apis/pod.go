@@ -45,7 +45,7 @@ type PodHandler struct {
 // @Security     JWT
 func (h *PodHandler) List(c *gin.Context) {
 	ns := c.Param("namespace")
-	// 网关namespace必须是gemcloud-gateway-system
+	// 网关namespace必须是kubegems-gateway
 	if c.Query("topkind") == "TenantGateway" {
 		ns = gemlabels.NamespaceGateway
 	}

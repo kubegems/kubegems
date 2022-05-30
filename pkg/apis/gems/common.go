@@ -11,7 +11,7 @@ const (
 	NamespaceSystem   = "kubegems"
 	NamespaceMonitor  = "kubegems-monitoring"
 	NamespaceLogging  = "kubegems-logging"
-	NamespaceGateway  = "gemcloud-gateway-system"
+	NamespaceGateway  = "kubegems-gateway"
 	NamespaceWorkflow = "gemcloud-workflow-system"
 )
 

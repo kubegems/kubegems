@@ -5,6 +5,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"kubegems.io/pkg/apis/gems"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"kubegems.io/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -22,6 +23,11 @@ var forbiddenBindNamespaces = []string{
 	"gemcloud-monitoring-system",
 	"gemcloud-system",
 	"gemcloud-workflow-system",
+	gems.NamespaceSystem,
+	gems.NamespaceMonitor,
+	gems.NamespaceLogging,
+	gems.NamespaceGateway,
+	gems.NamespaceWorkflow,
 }
 
 // @Tags         Agent.V1
