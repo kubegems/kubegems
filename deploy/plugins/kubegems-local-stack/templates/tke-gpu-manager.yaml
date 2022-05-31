@@ -1,5 +1,4 @@
-{{- if .Values.gpu.enabled -}}
-# https://github.com/NVIDIA/k8s-device-plugin#deployment-via-helm
+{{- if .Values.tke-gpu-manager.enabled -}}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
