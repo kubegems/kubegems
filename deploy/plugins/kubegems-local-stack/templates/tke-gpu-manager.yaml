@@ -1,4 +1,3 @@
-{{- if .Values.tke-gpu-manager.enabled -}}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
@@ -6,7 +5,10 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
 spec:
   kind: helm
-  repo: https://charts.kubegems.io/charts
-  installNamespace: {{ .Values.tke-gpu-manager.namespace }}
-  version: 1.1.5
-{{- end }}
+  repo: https://charts.kubegems.io/kubegems
+  installNamespace: {{ index .Values "tke-gpu-manager" "namespace" }}
+  enabled: {{ index .Values "tke-gpu-manager" "enabled" }}
+  version: {{ index .Values "tke-gpu-manager" "version" }}
+  values:
+    image:
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "tkestack/gpu-manager" "context" .) }}

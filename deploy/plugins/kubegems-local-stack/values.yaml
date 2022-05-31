@@ -34,6 +34,42 @@ monitoring:
     #   address: http://kube-prometheus-stack-alertmanager.prometheus:9093
     # externalGrafana:
     #   address: http://kube-prometheus-stack-grafana.prometheus:80
+grafana:
+  enabled: false
+  annotations:
+    plugins.kubegems.io/description: 开源的监控数据查询和可视化平台.
+    plugins.kubegems.io/category: 监控&告警
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/health-check: "statefulsets.apps/*,deployments.apps/*"
+  namespace: kubegems-monitoring
+  version: 6.29.5
+prometheus-node-exporter:
+  enabled: false
+  annotations:
+    plugins.kubegems.io/description: 物理机监控指标采集器
+    plugins.kubegems.io/category: 监控&告警
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/health-check: "statefulsets.apps/*,deployments.apps/*"
+  namespace: kubegems-monitoring
+  version: 3.3.0
+node-problem-detector:
+  enabled: false
+  annotations:
+    plugins.kubegems.io/description: Kubernees集群节点事件诊断器.
+    plugins.kubegems.io/category: 监控&告警
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/health-check: "statefulsets.apps/*,deployments.apps/*"
+  namespace: kube-system
+  version: 2.2.2
+node-local-dns:
+  enabled: false
+  annotations:
+    plugins.kubegems.io/description: Kuberntes主机DNS缓存服务.
+    plugins.kubegems.io/category: 网络
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/health-check: "statefulsets.apps/*,deployments.apps/*"
+  namespace: kube-system
+  version: 0.1.1
 observability:
   enabled: true
   annotations:
@@ -73,20 +109,6 @@ gateway:
     plugins.kubegems.io/health-check: "deployments.apps/*"
   namespace: kubegems-gateway
   version: latest
-kubegems:
-  enabled: false
-  annotations:
-    plugins.kubegems.io/description: KubeGems平台管理容器.
-    plugins.kubegems.io/category: kubegems
-    plugins.kubegems.io/main-category: core
-    plugins.kubegems.io/required: "true"
-    plugins.kubegems.io/health-check: "deployments.apps/*"
-    plugins.kubegems.io/ignore-on-disabled: "true"
-  namespace: kubegems
-  version: latest
-  values:
-    ingress:
-      hostname: "dashboard.kubegems.io"
 kubegems-local:
   enabled: true
   annotations:
@@ -97,24 +119,22 @@ kubegems-local:
     plugins.kubegems.io/health-check: "deployments.apps/*"
   namespace: kubegems-local
   version: latest
-kubegems-installer:
-  enabled: true
-  annotations:
-    plugins.kubegems.io/description: KubeGems 安装组件.
-    plugins.kubegems.io/category: kubegems
-    plugins.kubegems.io/main-category: core
-    plugins.kubegems.io/required: "true"
-    plugins.kubegems.io/health-check: "deployments.apps/*"
-  namespace: kubegems-installer
-  version: latest
-gpu:
+nvidia-device-plugin:
   enabled: false
   annotations:
     plugins.kubegems.io/description: nvdia gpu 组件.
     plugins.kubegems.io/category: GPU
     plugins.kubegems.io/main-category: kubernetes
   namespace: kube-system
-  version: latest
+  version: 0.11.0
+tke-gpu-manager:
+  enabled: false
+  annotations:
+    plugins.kubegems.io/description: 腾讯云(TKE)开源的GPU显卡资源虚拟化分配的Kubernetes插件.
+    plugins.kubegems.io/category: GPU
+    plugins.kubegems.io/main-category: kubernetes
+  namespace: kube-system
+  version: 1.1.5
 argo-rollouts:
   enabled: true
   annotations:
