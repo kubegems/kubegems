@@ -5,7 +5,7 @@ global:
   storageClass:
   runtime:
 logging:
-  enabled: true
+  enabled: false
   annotations:
     plugins.kubegems.io/description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务.
     plugins.kubegems.io/category: 日志中心
@@ -71,7 +71,7 @@ node-local-dns:
   namespace: kube-system
   version: 0.1.1
 observability:
-  enabled: true
+  enabled: false
   annotations:
     plugins.kubegems.io/description: KubeGems平台服务追踪套件.
     plugins.kubegems.io/category: 服务网格
@@ -86,7 +86,7 @@ observability:
     # externalJaeger:
     #   ddress: http://jaeger-query.observability:16686
 istio:
-  enabled: true
+  enabled: false
   annotations:
     plugins.kubegems.io/description: KubeGems 平台 Istio 服务治理套件.
     plugins.kubegems.io/category: 服务网格
