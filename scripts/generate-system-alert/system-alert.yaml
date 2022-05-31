@@ -86,7 +86,7 @@
     rule: restartTimesLast5m
     unit: times
     labelpairs:
-      namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1m
   alertLevels:
     - compareOp: ">"
@@ -101,7 +101,7 @@
     resource: container
     rule: statusTerminatedReason
     labelpairs:
-      namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
       reason: "OOMKilled"
   for: 1m
   alertLevels:
@@ -118,7 +118,7 @@
     rule: volumeUsagePercent
     unit: percent
     labelpairs:
-      namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1m
   alertLevels:
     - compareOp: ">"
@@ -242,7 +242,7 @@
     rule: expirationRemainTime
     unit: d
     labelpairs:
-      namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1h
   alertLevels:
     - compareOp: "<"
@@ -257,7 +257,7 @@
     resource: cert
     rule: status
     labelpairs:
-      namespace: "gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"
+      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
       condition: "False|Unknown"
   for: 0m
   alertLevels:

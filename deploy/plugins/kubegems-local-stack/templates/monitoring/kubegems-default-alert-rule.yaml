@@ -110,12 +110,12 @@ spec:
     rules:
     - alert: KubernetesPodCrashLooping
       annotations:
-        gems_expr_json: '{"resource":"container","rule":"restartTimesLast5m","unit":"times","labelpairs":{"namespace":"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"},"compareOp":"\u003e","compareValue":"2"}'
+        gems_expr_json: '{"resource":"container","rule":"restartTimesLast5m","unit":"times","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"2"}'
         message: 'KubernetesPodCrashLooping: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
           $labels.namespace }}] [pod:{{"{{"}} $labels.pod }}] [container:{{"{{"}} $labels.container
           }}] 容器过去5m重启次数 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}次'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_container_restart_times_last_5m{namespace=~"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"}
+      expr: gems_container_restart_times_last_5m{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
         > 2
       for: 1m
       labels:
@@ -130,13 +130,13 @@ spec:
     rules:
     - alert: KubernetesPodOOMKilling
       annotations:
-        gems_expr_json: '{"resource":"container","rule":"statusTerminatedReason","unit":"","labelpairs":{"namespace":"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer","reason":"OOMKilled"},"compareOp":"\u003e","compareValue":"0"}'
+        gems_expr_json: '{"resource":"container","rule":"statusTerminatedReason","unit":"","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage","reason":"OOMKilled"},"compareOp":"\u003e","compareValue":"0"}'
         message: 'KubernetesPodOOMKilling: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
           $labels.namespace }}] [pod:{{"{{"}} $labels.pod }}] [container:{{"{{"}} $labels.container
           }}] [reason:{{"{{"}} $labels.reason }}] 容器终止原因 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f"
           }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_pod_container_status_terminated_reason{namespace=~"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer",
+      expr: kube_pod_container_status_terminated_reason{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage",
         reason=~"OOMKilled"} > 0
       for: 1m
       labels:
@@ -151,13 +151,13 @@ spec:
     rules:
     - alert: KubegemsPvcUsageTooHigh
       annotations:
-        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","unit":"percent","labelpairs":{"namespace":"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"},"compareOp":"\u003e","compareValue":"80"}'
+        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","unit":"percent","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"80"}'
         message: 'KubegemsPvcUsageTooHigh: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [namespace:{{"{{"}} $labels.namespace }}] [persistentvolumeclaim:{{"{{"}}
           $labels.persistentvolumeclaim }}] 存储卷存储卷使用率 触发告警, 当前值: {{"{{ $value"}} | printf
           "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_pvc_usage_percent{namespace=~"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"}
+      expr: gems_pvc_usage_percent{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
         > 80
       for: 1m
       labels:
@@ -170,13 +170,13 @@ spec:
         severity: error
     - alert: KubegemsPvcUsageTooHigh
       annotations:
-        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","unit":"percent","labelpairs":{"namespace":"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"},"compareOp":"\u003e","compareValue":"90"}'
+        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","unit":"percent","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"90"}'
         message: 'KubegemsPvcUsageTooHigh: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [namespace:{{"{{"}} $labels.namespace }}] [persistentvolumeclaim:{{"{{"}}
           $labels.persistentvolumeclaim }}] 存储卷存储卷使用率 触发告警, 当前值: {{"{{ $value"}} | printf
           "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_pvc_usage_percent{namespace=~"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"}
+      expr: gems_pvc_usage_percent{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
         > 90
       for: 1m
       labels:
@@ -336,12 +336,12 @@ spec:
     rules:
     - alert: CertManagerCertExpirySoon
       annotations:
-        gems_expr_json: '{"resource":"cert","rule":"expirationRemainTime","unit":"d","labelpairs":{"namespace":"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"},"compareOp":"\u003c","compareValue":"7"}'
+        gems_expr_json: '{"resource":"cert","rule":"expirationRemainTime","unit":"d","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003c","compareValue":"7"}'
         message: 'CertManagerCertExpirySoon: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
           $labels.namespace }}] [name:{{"{{"}} $labels.name }}] 证书剩余到期时间 触发告警, 当前值: {{"{{ $value"}}
           | printf "%.1f" }}天'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_cert_expiration_remain_seconds{namespace=~"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"}
+      expr: gems_cert_expiration_remain_seconds{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
         / (24 * 60 * 60) < 7
       for: 1h
       labels:
@@ -356,12 +356,12 @@ spec:
     rules:
     - alert: CertManagerCertNotReady
       annotations:
-        gems_expr_json: '{"resource":"cert","rule":"status","unit":"","labelpairs":{"condition":"False|Unknown","namespace":"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"},"compareOp":"==","compareValue":"1"}'
+        gems_expr_json: '{"resource":"cert","rule":"status","unit":"","labelpairs":{"condition":"False|Unknown","namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"==","compareValue":"1"}'
         message: 'CertManagerCertNotReady: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
           $labels.namespace }}] [name:{{"{{"}} $labels.name }}] [condition:{{"{{"}} $labels.condition
           }}] 证书状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: certmanager_certificate_ready_status{condition=~"False|Unknown", namespace=~"gemcloud.*|istio-system|observability|kube-system|local-path-storage|kubegems-installer"}
+      expr: certmanager_certificate_ready_status{condition=~"False|Unknown", namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
         == 1
       for: 0m
       labels:
