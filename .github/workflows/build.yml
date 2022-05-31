@@ -29,6 +29,7 @@ jobs:
       # This is used to complete the identity challenge
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
+      pull-requests: read
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
