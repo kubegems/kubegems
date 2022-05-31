@@ -10,5 +10,6 @@ spec:
   enabled: {{ index .Values "tke-gpu-manager" "enabled" }}
   version: {{ index .Values "tke-gpu-manager" "version" }}
   values:
+    rumtime: {{ include "common.container.runtime" . }}
     image:
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "tkestack/gpu-manager" "context" .) }}
