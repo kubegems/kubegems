@@ -1,4 +1,3 @@
-{{- if .Values.node-exporter.enabled }}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
@@ -7,9 +6,9 @@ metadata:
 spec:
   kind: helm
   repo: https://prometheus-community.github.io/helm-charts
-  installNamespace: {{ .Values.node-exporter.namespace }}
-  enabled: {{ .Values.node-exporter.enabled }}
-  version: {{ .Values.node-exporter.version }}
+  installNamespace: {{ index .Values "prometheus-node-exporter" "namespace" }}
+  enabled: {{ index .Values "prometheus-node-exporter" "enabled" }}
+  version: {{ index .Values "prometheus-node-exporter" "version" }}
   values:
     image:
       # repository: quay.io/prometheus/node-exporter
@@ -34,4 +33,3 @@ spec:
     - --no-collector.nfsd
     - --no-collector.schedstat
     - --no-collector.bcache
-{{- end -}}

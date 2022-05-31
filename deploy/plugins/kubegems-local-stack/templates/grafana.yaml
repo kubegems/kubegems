@@ -1,4 +1,3 @@
-{{- if .Values.grafana.enabled }}
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
@@ -7,12 +6,11 @@ metadata:
 spec:
   kind: helm
   repo: https://grafana.github.io/helm-charts
-  installNamespace: {{ .Values.grafana.namespace }}
-  enabled: {{ .Values.grafana.enabled }}
-  version: {{ .Values.grafana.version }}
+  installNamespace: {{ index .Values "grafana" "namespace" }}
+  enabled: {{ index .Values "grafana" "enabled" }}
+  version: {{ index .Values "grafana" "version" }}
   values:
     image:
       # repository: quay.io/prometheus/node-exporter
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/grafana" "context" .) }}
     adminPassword: "demo!@#admin"
-{{- end -}}
