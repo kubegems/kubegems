@@ -4,17 +4,17 @@ on:
   push:
     branches:
       - main
+      - ‘release-*’
     # Publish semver tags as releases.
     tags: ["v*.*.*"]
+  pull_request:
+    branches:
+      - 'main'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ${{ secrets.REGISTRY }}
-  SECONDARY_REGISTRY: ${{ secrets.SECONDARY_REGISTRY }}
-  # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -64,20 +64,18 @@ jobs:
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2.0.0
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ secrets.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       # Login against another registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.SECONDARY_REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2.0.0
         with:
-          registry: ${{ env.SECONDARY_REGISTRY }}
+          registry: ${{ secrets.SECONDARY_REGISTRY }}
           username: ${{ secrets.SECONDARY_REGISTRY_USERNAME }}
           password: ${{ secrets.SECONDARY_REGISTRY_PASSWORD }}
 
@@ -87,7 +85,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3.6.2
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},${{ env.SECONDARY_REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ secrets.REGISTRY }}/${{ env.IMAGE_NAME }},${{ secrets.SECONDARY_REGISTRY }}/${{ env.IMAGE_NAME }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -96,6 +94,6 @@ jobs:
         uses: docker/build-push-action@v2.9.0
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
