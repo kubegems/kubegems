@@ -8,11 +8,13 @@ const (
 	LabelZone        = GroupName + "/zone"
 	LabelPlugins     = GroupName + "/plugins"
 
-	NamespaceSystem   = "kubegems"
-	NamespaceMonitor  = "kubegems-monitoring"
-	NamespaceLogging  = "kubegems-logging"
-	NamespaceGateway  = "kubegems-gateway"
-	NamespaceWorkflow = "gemcloud-workflow-system"
+	NamespaceSystem    = "kubegems"
+	NamespaceLocal     = "kubegems-local"
+	NamespaceInstaller = "kubegems-installer"
+	NamespaceMonitor   = "kubegems-monitoring"
+	NamespaceLogging   = "kubegems-logging"
+	NamespaceGateway   = "kubegems-gateway"
+	NamespaceWorkflow  = "gemcloud-workflow-system"
 )
 
 var CommonLabels = []string{

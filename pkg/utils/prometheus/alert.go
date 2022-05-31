@@ -337,15 +337,12 @@ func (base *BaseAlertResource) UpdateInhibitRules(alertrules AlertRuleList[Alert
 
 func (base *BaseAlertResource) AddNullReceivers() {
 	// 检查并添加空接收器
-	foundNull := false
-	for _, v := range base.AMConfig.Spec.Receivers {
-		if v.Name == NullReceiverName {
-			foundNull = true
-			continue
-		}
-	}
-	if !foundNull {
+	if !findReceiver(base.AMConfig, NullReceiverName) {
 		base.AMConfig.Spec.Receivers = append(base.AMConfig.Spec.Receivers, NullReceiver)
+	}
+	// 检查并添加默认接收器
+	if !findReceiver(base.AMConfig, DefaultReceiverName) {
+		base.AMConfig.Spec.Receivers = append(base.AMConfig.Spec.Receivers, DefaultReceiver)
 	}
 }
 

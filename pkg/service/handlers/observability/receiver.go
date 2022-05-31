@@ -41,11 +41,11 @@ func (h *ObservabilityHandler) ListReceiver(c *gin.Context) {
 
 	ret := []prometheus.ReceiverConfig{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		scope, err := getAMConfigName(c.Query("scope"))
+		amConfigName, err := getAMConfigName(c.Query("scope"))
 		if err != nil {
 			return err
 		}
-		ret, err = cli.Extend().ListReceivers(ctx, namespace, scope, search)
+		ret, err = cli.Extend().ListReceivers(ctx, namespace, amConfigName, search)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -81,11 +81,11 @@ func (h *ObservabilityHandler) CreateReceiver(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		scope, err := getAMConfigName(c.Query("scope"))
+		amConfigName, err := getAMConfigName(c.Query("scope"))
 		if err != nil {
 			return err
 		}
-		return cli.Extend().CreateReceiver(ctx, namespace, scope, req)
+		return cli.Extend().CreateReceiver(ctx, namespace, amConfigName, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -121,11 +121,11 @@ func (h *ObservabilityHandler) UpdateReceiver(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		scope, err := getAMConfigName(c.Query("scope"))
+		amConfigName, err := getAMConfigName(c.Query("scope"))
 		if err != nil {
 			return err
 		}
-		return cli.Extend().UpdateReceiver(ctx, namespace, scope, req)
+		return cli.Extend().UpdateReceiver(ctx, namespace, amConfigName, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -156,11 +156,11 @@ func (h *ObservabilityHandler) DeleteReceiver(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		scope, err := getAMConfigName(c.Query("scope"))
+		amConfigName, err := getAMConfigName(c.Query("scope"))
 		if err != nil {
 			return err
 		}
-		return cli.Extend().DeleteReceiver(ctx, namespace, name, scope)
+		return cli.Extend().DeleteReceiver(ctx, namespace, name, amConfigName)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

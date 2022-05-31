@@ -17,7 +17,7 @@ import (
 
 var (
 	DefaultReceiverName = "gemcloud-default-webhook"
-	DefaultReceiverURL  = fmt.Sprintf("https://kubegems-local-agent.%s:8041/alert", gems.NamespaceSystem)
+	DefaultReceiverURL  = fmt.Sprintf("https://kubegems-local-agent.%s:8041/alert", gems.NamespaceLocal)
 	DefaultReceiver     = v1alpha1.Receiver{
 		Name: DefaultReceiverName,
 		WebhookConfigs: []v1alpha1.WebhookConfig{
@@ -128,7 +128,25 @@ func ModifyReceiver(ctx context.Context, aconfig *v1alpha1.AlertmanagerConfig, r
 		aconfig.Spec.Receivers[index] = *receiver
 		aconfig.Spec.Route.Receiver = NullReceiverName
 	}
+
+	// 检查并添加空接收器
+	if !findReceiver(aconfig, NullReceiverName) {
+		aconfig.Spec.Receivers = append(aconfig.Spec.Receivers, NullReceiver)
+	}
+	// 检查并添加默认接收器
+	if !findReceiver(aconfig, DefaultReceiverName) {
+		aconfig.Spec.Receivers = append(aconfig.Spec.Receivers, DefaultReceiver)
+	}
 	return nil
+}
+
+func findReceiver(aconfig *v1alpha1.AlertmanagerConfig, targetName string) bool {
+	for _, v := range aconfig.Spec.Receivers {
+		if v.Name == targetName {
+			return true
+		}
+	}
+	return false
 }
 
 func EmailSecretKey(receverName, from string) string {
