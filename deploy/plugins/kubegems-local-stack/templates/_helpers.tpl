@@ -53,6 +53,16 @@ registry: {{ $globalRegistry }}
 {{- end -}}
 
 {{/*
+{{ include "common.container.runtime" . }}
+*/}}
+{{- define "common.container.runtime" -}}
+{{- $globalRuntime := .Values.global.runtime -}}
+{{- if $globalRuntime -}}
+runtime: {{ $globalRuntime }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 {{ include "common.images.repository" ( dict "default" "library/alpine" "context" .) }}
 */}}
 {{- define "common.images.repository" -}}
