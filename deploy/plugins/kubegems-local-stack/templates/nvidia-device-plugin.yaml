@@ -1,0 +1,14 @@
+{{- if .Values.gpu.enabled -}}
+# https://github.com/NVIDIA/k8s-device-plugin#deployment-via-helm
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: nvidia-device-plugin
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  repo: https://nvidia.github.io/k8s-device-plugin
+  installNamespace: {{ .Values.nvidia-device-plugin.namespace }}
+  version: 0.11.0
+{{- end }}
+#TODO: https://github.com/tkestack/gpu-manager
