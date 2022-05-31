@@ -21,6 +21,8 @@ spec:
       image:
         # repository: k8s.gcr.io/kube-state-metrics/kube-state-metrics
         {{ include "common.images.repository" ( dict "registry" "k8s.gcr.io" "repository" "kube-state-metrics/kube-state-metrics" "context" .) }}
+      metricLabelsAllowlist:
+        - namespaces=[*] # scrape namespace labels
     grafana:
       adminPassword: demo!@#admin
       initChownData:
