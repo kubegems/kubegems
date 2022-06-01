@@ -145,7 +145,7 @@ class GemsData:
         for tenant in self.data_loader.tenants:
             tenant_name = tenant['name']
             tenant_data = self.store.tenants[tenant_name]
-            tenant_quotas = self._get_tenant_quotas(tenant_data) 
+            tenant_quotas = self._get_tenant_quotas(tenant_data)
             for quota in tenant.get('quotas', []):
                 cluster_name = quota['cluster']
                 clusterid = self.store.clusters[cluster_name]['ID']
@@ -308,7 +308,7 @@ class GemsData:
                             }
                             self.post('/api/v1/environment/{0}/user'.format(environment_data['ID']), data)
                             logging.info("user %s added to environment %s" % (member, environment_name))
-    
+
     def _get_environment_members(self, environment):
         member_list = self.list('/api/v1/environment/{0}/user?{1}'.format(environment['ID'], qs))
         return { member['ID']: member for member in member_list }
@@ -326,7 +326,7 @@ class GemsData:
                         tenant_id=tenant_id,
                         project_id=project_id,
                         name=app['name'],
-                    ) 
+                    )
                     resp = requests.put(url, json=content, headers={'Authorization': 'Bearer ' + self.jwt_token})
                     if resp.status_code not in [200, 201]:
                         raise Exception("Failed to create application manifests %s, code is %d, %s" % (app['name'], resp.status_code, resp.text))
@@ -349,7 +349,7 @@ class GemsData:
 
 
 if __name__ == '__main__':
-    d = GemsData("http://localhost:8045", "admin", "demo!@#admin")
+    d = GemsData("http://127.0.0.1:8000", "admin", "demo!@#admin")
     d.create_clusters()
     d.create_users()
 
@@ -364,3 +364,4 @@ if __name__ == '__main__':
     d.add_environment_members()
 
     d.create_project_scope_applications()
+    d.create_environment_scope_applications()

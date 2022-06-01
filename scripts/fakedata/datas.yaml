@@ -1,5 +1,5 @@
 clusters:
-  - name: g-cluster-1
+  - name: dev
     # kubeconfig kubeconfigs/g-cluste-1.yaml
 
 users:
@@ -34,7 +34,7 @@ users:
 tenants:
   - name: "g-ten-1"
     quotas:
-      - cluster: g-cluster-1
+      - cluster: dev
         content:
           limits.cpu: "4"
           limits.memory: "6Gi"
@@ -61,7 +61,7 @@ tenants:
             - "g-user5"
         environments:
           - name: dev
-            cluster: g-cluster-1
+            cluster: dev
             namespace: g-dev
             applications:
               - name: hello-world
@@ -73,7 +73,7 @@ tenants:
               requests.memory: "2Gi"
               requests.storage: "2Gi"
           - name: test
-            cluster: g-cluster-1
+            cluster: dev
             namespace: g-test
             applications:
               - name: hello-world
@@ -85,7 +85,7 @@ tenants:
               requests.memory: "2Gi"
               requests.storage: "2Gi"
           - name: prod
-            cluster: g-cluster-1
+            cluster: dev
             namespace: g-prod
             applications:
               - name: hello-world
