@@ -87,7 +87,7 @@ func LoadConfigFile(fs *pflag.FlagSet) {
 	v.AddConfigPath(".")
 	v.AddConfigPath("config")
 	if err := v.ReadInConfig(); err != nil {
-		log.Warnf("no config file found")
+		log.Warnf("no config file found or config file format error: %v", err)
 	}
 
 	fs.VisitAll(func(f *pflag.Flag) {

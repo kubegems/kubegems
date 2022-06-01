@@ -40,27 +40,37 @@ func prepareDependencies(ctx context.Context, opts *options.Options) (*Dependenc
 	// redis
 	rediscli, err := redis.NewClient(opts.Redis)
 	if err != nil {
+		log.Errorf("failed to init redis: %v", err)
+		return nil, err
+	}
+	_, err = rediscli.Ping(ctx).Result()
+	if err != nil {
+		log.Errorf("failed to ping redis: %v", err)
 		return nil, err
 	}
 
 	// database
 	db, err := database.NewDatabase(opts.Mysql)
 	if err != nil {
+		log.Errorf("failed to init database: %v", err)
 		return nil, err
 	}
 	// agents
 	agentclientset, err := agents.NewClientSet(db)
 	if err != nil {
+		log.Errorf("failed to init agents: %v", err)
 		return nil, err
 	}
 	// git
 	gitprovider, err := git.NewProvider(opts.Git)
 	if err != nil {
+		log.Errorf("failed to init git: %v", err)
 		return nil, err
 	}
 	// argo
 	argocli, err := argo.NewClient(ctx, opts.Argo)
 	if err != nil {
+		log.Errorf("failed to init argo: %v", err)
 		return nil, err
 	}
 
