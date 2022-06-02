@@ -23,10 +23,10 @@ global:
 kubeVersion: ""
 ## @param nameOverride String to partially override common.names.fullname
 ##
-nameOverride: "kubegems-local"
+nameOverride: ""
 ## @param fullnameOverride String to fully override common.names.fullname
 ##
-fullnameOverride: "kubegems-local"
+fullnameOverride: ""
 ## @param commonLabels Labels to add to all deployed objects
 ##
 commonLabels: {}
