@@ -36,27 +36,6 @@ spec:
       redis:
         image:
           repository: kubegems/redis
-      controller:
-        extraEnvVars:
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: redis-password
-              name: kubegems-redis
-      server:
-        extraEnvVars:
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: redis-password
-              name: kubegems-redis
-      repoServer:
-        extraEnvVars:
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: redis-password
-              name: kubegems-redis
     gitea:
       image:
         repository: kubegems/gitea
