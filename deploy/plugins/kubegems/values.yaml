@@ -1989,6 +1989,8 @@ argo-cd:
             name: '{{ include "argocd.redis.secretName" . }}' # rederd by inner "common.tplvalues.render"
             key: '{{ include "argocd.redis.secretPasswordKey" . }}' # rederd by inner "common.tplvalues.render"
   server:
+    config:
+      users.session.duration: "0"
     extraArgs: ["--redisdb", "1"]
     config:
       users.session.duration: "0"

@@ -23,10 +23,10 @@ global:
 kubeVersion: ""
 ## @param nameOverride String to partially override common.names.fullname
 ##
-nameOverride: ""
+nameOverride: "kubegems-local"
 ## @param fullnameOverride String to fully override common.names.fullname
 ##
-fullnameOverride: ""
+fullnameOverride: "kubegems-local"
 ## @param commonLabels Labels to add to all deployed objects
 ##
 commonLabels: {}
@@ -72,7 +72,7 @@ agent:
   image:
     registry: docker.io
     repository: kubegems/kubegems
-    tag: latest
+    tag: main
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -182,7 +182,7 @@ agent:
   ## @param agent.tls.secretName customize default tls secret name
   tls:
     enabled: true
-    useCertManager: true
+    useCertManager: false
     secretName: ""
 
   ## @param agent.httpSignature.enabled Enable agent HTTP Signature validation
@@ -889,7 +889,7 @@ controller:
     ## @param controller.webhook.enabled Specifies whether the webhook should be enabled
     enabled: true
     ## @param controller.webhook.useCertManager using cert-manager to generate a  certificate
-    useCertManager: true
+    useCertManager: false
     ## @param controller.webhook.secretName tls secret name for webhook
     secretName: ""
     service:
