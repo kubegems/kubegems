@@ -38,6 +38,7 @@ type TenantResourceQuotaStatus struct {
 	Allocated corev1.ResourceList `json:"allocated,omitempty"`
 	// Used 实际使用了的资源
 	Used corev1.ResourceList `json:"used,omitempty"`
+	// Deprecated: duplicate with LastUpdateTime.
 	// LastCountTime last count time
 	LastCountTime metav1.Time `json:"lastCountTime,omitempty"`
 	// LastUpdateTime last update time

@@ -147,9 +147,7 @@ func setupControllers(mgr ctrl.Manager, options *Options, setupLog logr.Logger) 
 		return err
 	}
 	if err := (&gemscontroller.TenantResourceQuotaReconciler{
-		Client: mgr.GetClient(), Scheme: mgr.GetScheme(),
-		Log:      ctrl.Log.WithName("controllers").WithName("TenantResourceQuota"),
-		Recorder: mgr.GetEventRecorderFor("TenantResourceQuota"),
+		Client: mgr.GetClient(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TenantResourceQuota")
 		return err
