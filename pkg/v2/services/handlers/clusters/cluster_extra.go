@@ -5,8 +5,8 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/agent/apis/types"
 	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/pkg/utils/statistics"
 	"kubegems.io/pkg/v2/models"
 	"kubegems.io/pkg/v2/services/handlers"
 )
@@ -69,8 +69,8 @@ func (h *Handler) ListLogQuerySnapshot(req *restful.Request, resp *restful.Respo
 type ClusterQuota struct {
 	Version        string                          `json:"version"`
 	OversoldConfig []byte                          `json:"oversoldConfig"`
-	Resoruces      types.ClusterResourceStatistics `json:"resources"`
-	Workloads      types.ClusterWorkloadStatistics `json:"workloads"`
+	Resoruces      statistics.ClusterResourceStatistics `json:"resources"`
+	Workloads      statistics.ClusterWorkloadStatistics `json:"workloads"`
 }
 
 func (h *Handler) GetClusterQuotaStastic(req *restful.Request, resp *restful.Response) {
@@ -79,11 +79,11 @@ func (h *Handler) GetClusterQuotaStastic(req *restful.Request, resp *restful.Res
 		if err != nil {
 			return nil, err
 		}
-		resources := types.ClusterResourceStatistics{}
+		resources := statistics.ClusterResourceStatistics{}
 		if err := cli.Extend().ClusterResourceStatistics(ctx, &resources); err != nil {
 			return nil, err
 		}
-		workloads := types.ClusterWorkloadStatistics{}
+		workloads := statistics.ClusterWorkloadStatistics{}
 		if err := cli.Extend().ClusterWorkloadStatistics(ctx, &workloads); err != nil {
 			return nil, err
 		}

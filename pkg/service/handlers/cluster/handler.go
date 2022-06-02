@@ -17,7 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"kubegems.io/pkg/agent/apis/types"
 	"kubegems.io/pkg/log"
 	msgclient "kubegems.io/pkg/msgbus/client"
 	"kubegems.io/pkg/service/handlers"
@@ -26,6 +25,7 @@ import (
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/kube"
 	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/pkg/utils/statistics"
 	"kubegems.io/pkg/version"
 )
 
@@ -506,10 +506,10 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 }
 
 type ClusterQuota struct {
-	Version        string                          `json:"version"`
-	OversoldConfig datatypes.JSON                  `json:"oversoldConfig"`
-	Resources      types.ClusterResourceStatistics `json:"resources"`
-	Workloads      types.ClusterWorkloadStatistics `json:"workloads"`
+	Version        string                               `json:"version"`
+	OversoldConfig datatypes.JSON                       `json:"oversoldConfig"`
+	Resources      statistics.ClusterResourceStatistics `json:"resources"`
+	Workloads      statistics.ClusterWorkloadStatistics `json:"workloads"`
 }
 
 // ClusterStatistics 集群资源状态
@@ -524,11 +524,11 @@ type ClusterQuota struct {
 // @Security     JWT
 func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
-		resources := types.ClusterResourceStatistics{}
+		resources := statistics.ClusterResourceStatistics{}
 		if err := cli.Extend().ClusterResourceStatistics(ctx, &resources); err != nil {
 			return nil, err
 		}
-		workloads := types.ClusterWorkloadStatistics{}
+		workloads := statistics.ClusterWorkloadStatistics{}
 		if err := cli.Extend().ClusterWorkloadStatistics(ctx, &workloads); err != nil {
 			return nil, err
 		}

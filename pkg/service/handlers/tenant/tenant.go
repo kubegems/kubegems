@@ -888,6 +888,14 @@ func CreateOrUpdateTenantResourceQuota(ctx context.Context, h base.BaseHandler, 
 // @Router       /v1/tenant/{tenant_id}/tenantresourcequota/{:cluster_id} [put]
 // @Security     JWT
 func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
+	// request
+	reqtrq := models.TenantResourceQuota{}
+	if err := c.ShouldBind(reqtrq); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	// origin
 	var trq models.TenantResourceQuota
 	if err := h.GetDB().Preload(
 		"Cluster",
@@ -897,29 +905,13 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 		return
 	}
 
-	cluster := trq.Cluster
-	tenant := trq.Tenant
-	need := v1.ResourceList{}
-	origin := v1.ResourceList{}
-	json.Unmarshal(trq.Content, &origin)
-	oversold := trq.Cluster.OversoldConfig
-	clustername := trq.Cluster.ClusterName
-	trq.Cluster = nil
-	trq.Tenant = nil
-
 	ctx := c.Request.Context()
-
-	if err := c.ShouldBind(&trq); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	json.Unmarshal(trq.Content, &need)
-	if err := h.ValidateTenantResourceQuota(ctx, oversold, clustername, origin, need); err != nil {
+	if err := h.ValidateTenantResourceQuota(ctx, trq.Cluster.ClusterName, trq.Cluster.OversoldConfig, trq.Content, reqtrq.Content); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	h.SetAuditData(c, "更新", "集群租户资源限制", fmt.Sprintf("集群[%v]/租户[%v]", cluster.ClusterName, tenant.TenantName))
+	h.SetAuditData(c, "更新", "集群租户资源限制", fmt.Sprintf("集群[%v]/租户[%v]", trq.Cluster.ClusterName, trq.Tenant.TenantName))
 	h.SetExtraAuditData(c, models.ResTenant, trq.TenantID)
 
 	if e := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -1323,11 +1315,7 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 	quota.TenantResourceQuotaApply.Content = req.Content
 	quota.TenantResourceQuotaApply.Username = u.GetUsername()
 
-	need := v1.ResourceList{}
-	origin := v1.ResourceList{}
-	json.Unmarshal(req.Content, &need)
-	json.Unmarshal(quota.Content, &origin)
-	if err := h.ValidateTenantResourceQuota(ctx, quota.Cluster.OversoldConfig, quota.Cluster.ClusterName, origin, need); err != nil {
+	if err := h.ValidateTenantResourceQuota(ctx, quota.Cluster.ClusterName, quota.Cluster.OversoldConfig, quota.Content, req.Content); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -1798,4 +1786,14 @@ func (h *TenantHandler) GetObjectTenantGatewayAddr(c *gin.Context) {
 		}
 	}
 	handlers.OK(c, ret)
+}
+
+func ParseOversoldConfig(datda []byte) map[v1.ResourceName]float32 {
+	oversoldConfig := map[v1.ResourceName]float32{
+		v1.ResourceCPU:     1,
+		v1.ResourceStorage: 1,
+		v1.ResourceMemory:  1,
+	}
+	_ = json.Unmarshal(datda, &oversoldConfig)
+	return oversoldConfig
 }
