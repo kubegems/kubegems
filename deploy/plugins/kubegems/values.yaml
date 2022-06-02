@@ -1982,10 +1982,30 @@ argo-cd:
       argocdServerAdminPassword: ""
   controller:
     extraArgs: ["--redisdb", "1"]
+    extraEnvVars:
+      - name: REDIS_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: '{{ include "argocd.redis.secretName" . }}' # rederd by inner "common.tplvalues.render"
+            key: '{{ include "argocd.redis.secretPasswordKey" . }}' # rederd by inner "common.tplvalues.render"
   server:
     extraArgs: ["--redisdb", "1"]
+    config:
+      users.session.duration: "0"
+    extraEnvVars:
+      - name: REDIS_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: '{{ include "argocd.redis.secretName" . }}' # rederd by inner "common.tplvalues.render"
+            key: '{{ include "argocd.redis.secretPasswordKey" . }}' # rederd by inner "common.tplvalues.render"
   repoServer:
     extraArgs: ["--redisdb", "1"]
+    extraEnvVars:
+      - name: REDIS_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: '{{ include "argocd.redis.secretName" . }}' # rederd by inner "common.tplvalues.render"
+            key: '{{ include "argocd.redis.secretPasswordKey" . }}' # rederd by inner "common.tplvalues.render"
   redis:
     enabled: false
   externalRedis:
