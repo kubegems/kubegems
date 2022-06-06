@@ -3,11 +3,11 @@ package apis
 import (
 	"strconv"
 
-	"github.com/cloudflare/cfssl/certinfo"
 	"github.com/gin-gonic/gin"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/pkg/utils/certificate"
 	"kubegems.io/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -18,8 +18,8 @@ type SecretHandler struct {
 }
 
 type SecretWithCertsInfo struct {
-	Secret   *corev1.Secret                  `json:"secret,omitempty"`
-	CertInfo map[string]certinfo.Certificate `json:"certInfo,omitempty"`
+	Secret   *corev1.Secret                     `json:"secret,omitempty"`
+	CertInfo map[string]certificate.Certificate `json:"certInfo,omitempty"`
 }
 
 func (s SecretWithCertsInfo) GetName() string {
@@ -83,17 +83,17 @@ func (h *SecretHandler) List(c *gin.Context) {
 	}
 }
 
-func parseCertsInfo(secret corev1.Secret) map[string]certinfo.Certificate {
+func parseCertsInfo(secret corev1.Secret) map[string]certificate.Certificate {
 	if secret.Type != corev1.SecretTypeTLS {
 		return nil
 	}
-	ret := map[string]certinfo.Certificate{}
+	ret := map[string]certificate.Certificate{}
 	for k, v := range secret.Data {
 		// tls.crt ca.crt
 		if k != corev1.TLSCertKey && k != corev1.ServiceAccountRootCAKey {
 			continue
 		}
-		cert, err := certinfo.ParseCertificatePEM(v)
+		cert, err := certificate.ParseCertInfo(v)
 		if err != nil {
 			continue
 		}
