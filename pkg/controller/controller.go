@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"time"
 
-	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
+	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"github.com/go-logr/logr"
 	nginx_v1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	istioclinetworkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"

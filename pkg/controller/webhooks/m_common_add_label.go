@@ -13,7 +13,7 @@ import (
 	meta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
+	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 	gemlabels "kubegems.io/pkg/apis/gems"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"

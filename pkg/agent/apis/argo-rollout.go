@@ -87,7 +87,8 @@ func (h *ArgoRolloutHandler) GetRolloutDepInfo(c *gin.Context) {
 const WatcherRefreshInterval = 5 * time.Second
 
 func ServeWatchThen(c *gin.Context, cli client.Client, namespace, name string, watchlist client.ObjectList,
-	onchangefunc func(obj client.Object) (interface{}, error)) {
+	onchangefunc func(obj client.Object) (interface{}, error),
+) {
 	ctx := c.Request.Context()
 	watchablecli, ok := cli.(client.WithWatch)
 	if !ok {
@@ -301,5 +302,7 @@ func NewRolloutInfo(ro *rolloutsv1alpha1.Rollout,
 				list[i] = &allARs[i]
 			}
 			return list
-		}())
+		}(),
+		nil,
+	)
 }

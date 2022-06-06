@@ -10,7 +10,7 @@ import (
 	// "net/url"
 	// "sync"
 
-	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/api/v1beta1"
+	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"github.com/gin-gonic/gin"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -26,9 +26,7 @@ import (
 	// "src.kubegems.io/controller/gemlabels"
 )
 
-var (
-	PrimaryKeyName = "tenant_id"
-)
+var PrimaryKeyName = "tenant_id"
 
 type AggrValue struct {
 	Min  float64
@@ -65,7 +63,6 @@ func (h *LogOperatorHandler) GetTenantNamespaces(c *gin.Context) ([]string, erro
 		namespaces = append(namespaces, e.Namespace)
 	}
 	return namespaces, nil
-
 }
 
 func (h *LogOperatorHandler) Flows(c *gin.Context) {
@@ -88,7 +85,6 @@ func (h *LogOperatorHandler) Flows(c *gin.Context) {
 }
 
 func (h *LogOperatorHandler) Outputs(c *gin.Context) {
-
 	cluster := c.Param("cluster")
 	tenant := c.Param(PrimaryKeyName)
 	ctx := c.Request.Context()
