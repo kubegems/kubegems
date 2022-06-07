@@ -13,6 +13,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart/loader"
 	helm_repo "helm.sh/helm/v3/pkg/repo"
+	"kubegems.io/pkg/apis/gems"
 )
 
 type Options struct {
@@ -21,7 +22,7 @@ type Options struct {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		Addr: "http://gems-chartmuseum.gemcloud-system:8030",
+		Addr: fmt.Sprintf("http://kubegems-chartmuseum.%s:8080", gems.NamespaceSystem),
 	}
 }
 

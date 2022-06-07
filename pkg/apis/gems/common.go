@@ -36,8 +36,11 @@ const (
 	LabelMonitorCollector = GroupName + "/monitoring"
 	LabelLogCollector     = GroupName + "/logging"
 
-	LabelAlertmanagerConfig = "alertmanagerconfig.kubegems.io/name"
-	LabelPrometheusRule     = "prometheusrule.kubegems.io/name"
+	LabelAlertmanagerConfigName = "alertmanagerconfig.kubegems.io/name"
+	LabelAlertmanagerConfigType = "alertmanagerconfig.kubegems.io/type"
+
+	LabelPrometheusRuleName = "prometheusrule.kubegems.io/name"
+	LabelPrometheusRuleType = "prometheusrule.kubegems.io/type"
 
 	StatusEnabled  = "enabled"
 	StatusDisabled = "disabled"

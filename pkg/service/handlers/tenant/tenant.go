@@ -1091,7 +1091,7 @@ func (h *TenantHandler) ListEnvironment(c *gin.Context) {
 		Model:                  "Environment",
 		SearchFields:           []string{"EnvironmentName"},
 		PreloadFields:          []string{"Creator", "Cluster", "Project", "ResourceQuota", "Applications", "Users"},
-		PreloadSensitiveFields: map[string]string{"Cluster": "id, cluster_name"},
+		PreloadSensitiveFields: map[string]string{"Cluster": "id, cluster_name, version"},
 		Where:                  []*handlers.QArgs{handlers.Args("project_id in (?)", projectids)},
 	}
 	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
