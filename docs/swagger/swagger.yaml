@@ -49,7 +49,7 @@ definitions:
     properties:
       certInfo:
         additionalProperties:
-          $ref: '#/definitions/certinfo.Certificate'
+          $ref: '#/definitions/certificate.Certificate'
         type: object
       secret:
         $ref: '#/definitions/v1.Secret'
@@ -163,12 +163,12 @@ definitions:
       userInfoURL:
         type: string
     type: object
-  certinfo.Certificate:
+  certificate.Certificate:
     properties:
       authority_key_id:
         type: string
       issuer:
-        $ref: '#/definitions/certinfo.Name'
+        $ref: '#/definitions/certificate.Name'
       not_after:
         type: string
       not_before:
@@ -184,20 +184,25 @@ definitions:
       sigalg:
         type: string
       subject:
-        $ref: '#/definitions/certinfo.Name'
+        $ref: '#/definitions/certificate.Name'
       subject_key_id:
         type: string
     type: object
-  certinfo.Name:
+  certificate.Name:
     properties:
       common_name:
         type: string
       country:
         type: string
+      extra_names:
+        items:
+          $ref: '#/definitions/pkix.AttributeTypeAndValue'
+        type: array
       locality:
         type: string
       names:
-        items: {}
+        items:
+          $ref: '#/definitions/pkix.AttributeTypeAndValue'
         type: array
       organization:
         type: string
@@ -256,11 +261,11 @@ definitions:
           type: integer
         type: array
       resources:
-        $ref: '#/definitions/types.ClusterResourceStatistics'
+        $ref: '#/definitions/statistics.ClusterResourceStatistics'
       version:
         type: string
       workloads:
-        $ref: '#/definitions/types.ClusterWorkloadStatistics'
+        $ref: '#/definitions/statistics.ClusterWorkloadStatistics'
     type: object
   clusterhandler.ValidateKubeConfigReq:
     properties:
@@ -2672,6 +2677,9 @@ definitions:
           that at least 70% of original number of pods are available at all times
           during the update.
           +optional
+      pingPong:
+        $ref: '#/definitions/v1alpha1.PingPongSpec'
+        description: PingPongSpec holds the ping and pong services
       scaleDownDelayRevisionLimit:
         description: |-
           ScaleDownDelayRevisionLimit limits the number of old RS that can run at one time before getting scaled down
@@ -2995,6 +3003,10 @@ definitions:
         $ref: '#/definitions/v1alpha1.AmbassadorTrafficRouting'
         description: Ambassador holds specific configuration to use Ambassador to
           route traffic
+      appMesh:
+        $ref: '#/definitions/v1alpha1.AppMeshTrafficRouting'
+        description: AppMesh holds specific configuration to use AppMesh to route
+          traffic
       istio:
         $ref: '#/definitions/kubegems.io_pkg_service_handlers_application.IstioTrafficRouting'
         description: Istio holds Istio specific configuration to route traffic
@@ -3275,6 +3287,9 @@ definitions:
           that at least 70% of original number of pods are available at all times
           during the update.
           +optional
+      pingPong:
+        $ref: '#/definitions/v1alpha1.PingPongSpec'
+        description: PingPongSpec holds the ping and pong services
       scaleDownDelayRevisionLimit:
         description: |-
           ScaleDownDelayRevisionLimit limits the number of old RS that can run at one time before getting scaled down
@@ -3598,6 +3613,10 @@ definitions:
         $ref: '#/definitions/v1alpha1.AmbassadorTrafficRouting'
         description: Ambassador holds specific configuration to use Ambassador to
           route traffic
+      appMesh:
+        $ref: '#/definitions/v1alpha1.AppMeshTrafficRouting'
+        description: AppMesh holds specific configuration to use AppMesh to route
+          traffic
       istio:
         $ref: '#/definitions/kubegems.io_pkg_v2_services_handlers_application.IstioTrafficRouting'
         description: Istio holds Istio specific configuration to route traffic
@@ -3707,7 +3726,7 @@ definitions:
         type: array
       readyReplicas:
         description: |-
-          Total number of ready pods targeted by this deployment.
+          readyReplicas is the number of pods targeted by this Deployment with a Ready Condition.
           +optional
         type: integer
       replicas:
@@ -4066,6 +4085,26 @@ definitions:
       userInfoURL:
         type: string
     type: object
+  models.CPUMemoryStatus:
+    properties:
+      currentLimit:
+        description: 带单位
+        type: string
+      currentRate:
+        type: number
+      status:
+        description: 扩容或缩容
+        type: string
+      suggestLimit:
+        description: 带单位
+        type: string
+      suggestMaxLimit:
+        description: 带单位
+        type: string
+      suggestMinLimit:
+        description: 带单位
+        type: string
+    type: object
   models.CVEAllowlist:
     properties:
       creationTime:
@@ -4175,23 +4214,16 @@ definitions:
     - kubeConfig
     - vendor
     type: object
-  models.ContainerInfo:
+  models.Condition:
     properties:
-      image:
-        type: string
-      isProxy:
-        type: boolean
-      isReady:
-        type: boolean
-      name:
-        type: string
-    type: object
-  models.DashboardRef:
-    properties:
-      template:
-        type: string
-      title:
-        type: string
+      CPUStatus:
+        $ref: '#/definitions/models.CPUMemoryStatus'
+      MemoryStatus:
+        $ref: '#/definitions/models.CPUMemoryStatus'
+      pods:
+        items:
+          type: string
+        type: array
     type: object
   models.Environment:
     properties:
@@ -4527,51 +4559,6 @@ definitions:
     required:
     - name
     type: object
-  models.Pod:
-    properties:
-      annotations:
-        additionalProperties:
-          type: string
-        type: object
-      appLabel:
-        type: boolean
-      containers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      createdAt:
-        type: string
-      createdBy:
-        items:
-          $ref: '#/definitions/models.Reference'
-        type: array
-      istioContainers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      istioInitContainers:
-        items:
-          $ref: '#/definitions/models.ContainerInfo'
-        type: array
-      labels:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      proxyStatus:
-        $ref: '#/definitions/models.ProxyStatus'
-      serviceAccountName:
-        type: string
-      status:
-        type: string
-      statusMessage:
-        type: string
-      statusReason:
-        type: string
-      versionLabel:
-        type: boolean
-    type: object
   models.Project:
     properties:
       chart_count:
@@ -4629,24 +4616,6 @@ definitions:
     - role
     - userID
     type: object
-  models.ProxyStatus:
-    properties:
-      CDS:
-        type: string
-      EDS:
-        type: string
-      LDS:
-        type: string
-      RDS:
-        type: string
-    type: object
-  models.Reference:
-    properties:
-      kind:
-        type: string
-      name:
-        type: string
-    type: object
   models.Registry:
     properties:
       creator:
@@ -4681,68 +4650,6 @@ definitions:
       username:
         description: 用户名
         type: string
-    type: object
-  models.Runtime:
-    properties:
-      dashboardRefs:
-        items:
-          $ref: '#/definitions/models.DashboardRef'
-        type: array
-      name:
-        type: string
-    type: object
-  models.ServiceOverview:
-    properties:
-      additionalDetailSample:
-        $ref: '#/definitions/models.AdditionalItem'
-        description: |-
-          Additional detail sample, such as type of api being served (graphql, grpc, rest)
-          example: rest
-          required: false
-      appLabel:
-        description: |-
-          Has label app
-          required: true
-          example: true
-        type: boolean
-      healthAnnotations:
-        additionalProperties:
-          type: string
-        description: Annotations of the service
-        type: object
-      istioReferences:
-        description: Istio References
-        items:
-          $ref: '#/definitions/models.IstioValidationKey'
-        type: array
-      istioSidecar:
-        description: |-
-          Define if Pods related to this Service has an IstioSidecar deployed
-          required: true
-          example: true
-        type: boolean
-      kialiWizard:
-        description: Kiali Wizard scenario, if any
-        type: string
-      labels:
-        additionalProperties:
-          type: string
-        description: Labels for Service
-        type: object
-      name:
-        description: |-
-          Name of the Service
-          required: true
-          example: reviews-v1
-        type: string
-      namespace:
-        description: Namespace of the Service
-        type: string
-      selector:
-        additionalProperties:
-          type: string
-        description: Selector for Service
-        type: object
     type: object
   models.SystemRole:
     properties:
@@ -4987,134 +4894,30 @@ definitions:
     type: object
   models.Workload:
     properties:
-      additionalDetailSample:
-        $ref: '#/definitions/models.AdditionalItem'
-        description: |-
-          Additional item sample, such as type of api being served (graphql, grpc, rest)
-          example: rest
-          required: false
-      additionalDetails:
-        description: Additional details to display, such as configured annotations
-        items:
-          $ref: '#/definitions/models.AdditionalItem'
-        type: array
-      appLabel:
-        description: |-
-          Define if Pods related to this Workload has the label App
-          required: true
-          example: true
-        type: boolean
-      availableReplicas:
-        description: |-
-          Number of available replicas
-          required: true
-          example: 1
-        type: integer
+      clusterName:
+        type: string
+      color:
+        description: eg, yellow
+        type: string
+      conditions:
+        additionalProperties:
+          $ref: '#/definitions/models.Condition'
+        description: 按容器名分组
+        type: object
+      cpulimitStdvar:
+        type: number
       createdAt:
-        description: |-
-          Creation timestamp (in RFC3339 format)
-          required: true
-          example: 2018-07-31T12:24:17Z
         type: string
-      currentReplicas:
-        description: |-
-          Number of current replicas pods that matches controller selector labels
-          required: true
-          example: 2
+      id:
         type: integer
-      dashboardAnnotations:
-        additionalProperties:
-          type: string
-        description: |-
-          Dashboard annotations
-          required: false
-        type: object
-      desiredReplicas:
-        description: |-
-          Number of desired replicas defined by the user in the controller Spec
-          required: true
-          example: 2
-        type: integer
-      healthAnnotations:
-        additionalProperties:
-          type: string
-        description: |-
-          HealthAnnotations
-          required: false
-        type: object
-      istioInjectionAnnotation:
-        description: |-
-          Define if Workload has an explicit Istio policy annotation
-          Istio supports this as a label as well - this will be defined if the label is set, too.
-          If both annotation and label are set, if any is false, injection is disabled.
-          It's mapped as a pointer to show three values nil, true, false
-        type: boolean
-      istioReferences:
-        description: Istio References
-        items:
-          $ref: '#/definitions/models.IstioValidationKey'
-        type: array
-      istioSidecar:
-        description: |-
-          Define if Pods related to this Workload has an IstioSidecar deployed
-          required: true
-          example: true
-        type: boolean
-      labels:
-        additionalProperties:
-          type: string
-        description: Workload labels
-        type: object
+      memoryLimitStdvar:
+        type: number
       name:
-        description: |-
-          Name of the workload
-          required: true
-          example: reviews-v1
         type: string
-      podCount:
-        description: |-
-          Number of current workload pods
-          required: true
-          example: 1
-        type: integer
-      pods:
-        description: Pods bound to the workload
-        items:
-          $ref: '#/definitions/models.Pod'
-        type: array
-      resourceVersion:
-        description: |-
-          Kubernetes ResourceVersion
-          required: true
-          example: 192892127
+      namespace:
         type: string
-      runtimes:
-        description: Runtimes and associated dashboards
-        items:
-          $ref: '#/definitions/models.Runtime'
-        type: array
-      serviceAccountNames:
-        description: Names of the workload service accounts
-        items:
-          type: string
-        type: array
-      services:
-        description: Services that match workload selector
-        items:
-          $ref: '#/definitions/models.ServiceOverview'
-        type: array
       type:
-        description: |-
-          Type of the workload
-          required: true
-          example: deployment
         type: string
-      versionLabel:
-        description: |-
-          Define if Pods related to this Workload has the label Version
-          required: true
-          example: true
-        type: boolean
     type: object
   models.WorkloadListItem:
     properties:
@@ -5412,6 +5215,15 @@ definitions:
       total:
         type: integer
     type: object
+  pkix.AttributeTypeAndValue:
+    properties:
+      type:
+        items:
+          type: integer
+        type: array
+      value:
+        type: any
+    type: object
   prometheus.AlertLevel:
     properties:
       compareOp:
@@ -5532,6 +5344,9 @@ definitions:
         items:
           $ref: '#/definitions/prometheus.AlertReceiver'
         type: array
+      source:
+        description: 来自哪个prometheusrule
+        type: string
       state:
         description: 状态
         type: string
@@ -5591,6 +5406,9 @@ definitions:
       name:
         type: string
       namespace:
+        type: string
+      source:
+        description: 来自哪个alertmanagerconfig
         type: string
       webhookConfigs:
         items:
@@ -5727,10 +5545,14 @@ definitions:
         type: array
       objectMeta:
         $ref: '#/definitions/v1.ObjectMeta'
+      ping:
+        type: boolean
       pods:
         items:
           $ref: '#/definitions/rollout.PodInfo'
         type: array
+      pong:
+        type: boolean
       preview:
         type: boolean
       replicas:
@@ -5844,6 +5666,38 @@ definitions:
       username:
         type: string
     type: object
+  statistics.ClusterPodResourceStatistics:
+    properties:
+      limit:
+        $ref: '#/definitions/v1.ResourceList'
+      request:
+        $ref: '#/definitions/v1.ResourceList'
+    type: object
+  statistics.ClusterResourceStatistics:
+    properties:
+      allocated:
+        $ref: '#/definitions/v1.ResourceList'
+        description: 集群下的资源分配总量
+      capacity:
+        $ref: '#/definitions/v1.ResourceList'
+        description: 集群资源的总容量，即物理资源总量
+      free:
+        $ref: '#/definitions/v1.ResourceList'
+        description: 集群资源的真实剩余量
+      podResourceStats:
+        $ref: '#/definitions/statistics.ClusterPodResourceStatistics'
+        description: pod资源统计
+      tenantAllocated:
+        $ref: '#/definitions/v1.ResourceList'
+        description: 集群下的租户资源分配总量
+      used:
+        $ref: '#/definitions/v1.ResourceList'
+        description: 集群资源的真实使用量
+    type: object
+  statistics.ClusterWorkloadStatistics:
+    additionalProperties:
+      type: integer
+    type: object
   tenanthandler.tenantStatisticsData:
     properties:
       count.applications:
@@ -5885,25 +5739,6 @@ definitions:
       value:
         description: The bool value.
         type: boolean
-    type: object
-  types.ClusterResourceStatistics:
-    properties:
-      allocated:
-        $ref: '#/definitions/v1.ResourceList'
-        description: 集群下的资源分配总量
-      capacity:
-        $ref: '#/definitions/v1.ResourceList'
-        description: 集群资源的总容量，即物理资源总量
-      tenantAllocated:
-        $ref: '#/definitions/v1.ResourceList'
-        description: 集群下的租户资源分配总量
-      used:
-        $ref: '#/definitions/v1.ResourceList'
-        description: 集群资源的真实使用量
-    type: object
-  types.ClusterWorkloadStatistics:
-    additionalProperties:
-      type: integer
     type: object
   types.Duration:
     properties:
@@ -6457,10 +6292,10 @@ definitions:
           Arguments to the entrypoint.
           The docker image's CMD is used if this is not provided.
           Variable references $(VAR_NAME) are expanded using the container's environment. If a variable
-          cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax
-          can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
-          regardless of whether the variable exists or not.
-          Cannot be updated.
+          cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced
+          to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will
+          produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless
+          of whether the variable exists or not. Cannot be updated.
           More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
           +optional
         items:
@@ -6471,10 +6306,10 @@ definitions:
           Entrypoint array. Not executed within a shell.
           The docker image's ENTRYPOINT is used if this is not provided.
           Variable references $(VAR_NAME) are expanded using the container's environment. If a variable
-          cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax
-          can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
-          regardless of whether the variable exists or not.
-          Cannot be updated.
+          cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced
+          to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will
+          produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless
+          of whether the variable exists or not. Cannot be updated.
           More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
           +optional
         items:
@@ -6575,8 +6410,8 @@ definitions:
       securityContext:
         $ref: '#/definitions/v1.SecurityContext'
         description: |-
-          Security options the pod should run with.
-          More info: https://kubernetes.io/docs/concepts/policy/security-context/
+          SecurityContext defines the security options the container should be run with.
+          If set, the fields of SecurityContext override the equivalent fields of PodSecurityContext.
           More info: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
           +optional
       startupProbe:
@@ -6670,6 +6505,7 @@ definitions:
         description: |-
           Names by which this image is known.
           e.g. ["k8s.gcr.io/hyperkube:v1.0.7", "dockerhub.io/google_containers/hyperkube:v1.0.7"]
+          +optional
         items:
           type: string
         type: array
@@ -6799,8 +6635,7 @@ definitions:
       image:
         description: |-
           The image the container is running.
-          More info: https://kubernetes.io/docs/concepts/containers/images
-          TODO(dchen1107): Which image the container is running with?
+          More info: https://kubernetes.io/docs/concepts/containers/images.
         type: string
       imageID:
         description: ImageID of the container's image.
@@ -6819,11 +6654,7 @@ definitions:
         description: Specifies whether the container has passed its readiness probe.
         type: boolean
       restartCount:
-        description: |-
-          The number of times the container has been restarted, currently based on
-          the number of dead containers that have not yet been removed.
-          Note that this is calculated from dead containers. But those containers are subject to
-          garbage collection. This value will get capped at 5 by GC.
+        description: The number of times the container has been restarted.
         type: integer
       started:
         description: |-
@@ -6974,11 +6805,12 @@ definitions:
       value:
         description: |-
           Variable references $(VAR_NAME) are expanded
-          using the previous defined environment variables in the container and
+          using the previously defined environment variables in the container and
           any service environment variables. If a variable cannot be resolved,
-          the reference in the input string will be unchanged. The $(VAR_NAME)
-          syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
-          references will never be expanded, regardless of whether the variable
+          the reference in the input string will be unchanged. Double $$ are reduced
+          to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+          "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+          Escaped references will never be expanded, regardless of whether the variable
           exists or not.
           Defaults to "".
           +optional
@@ -7021,10 +6853,10 @@ definitions:
           Arguments to the entrypoint.
           The docker image's CMD is used if this is not provided.
           Variable references $(VAR_NAME) are expanded using the container's environment. If a variable
-          cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax
-          can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
-          regardless of whether the variable exists or not.
-          Cannot be updated.
+          cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced
+          to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will
+          produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless
+          of whether the variable exists or not. Cannot be updated.
           More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
           +optional
         items:
@@ -7035,10 +6867,10 @@ definitions:
           Entrypoint array. Not executed within a shell.
           The docker image's ENTRYPOINT is used if this is not provided.
           Variable references $(VAR_NAME) are expanded using the container's environment. If a variable
-          cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax
-          can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
-          regardless of whether the variable exists or not.
-          Cannot be updated.
+          cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced
+          to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will
+          produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless
+          of whether the variable exists or not. Cannot be updated.
           More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
           +optional
         items:
@@ -7096,7 +6928,14 @@ definitions:
           This name must be unique among all containers, init containers and ephemeral containers.
         type: string
       ports:
-        description: Ports are not allowed for ephemeral containers.
+        description: |-
+          Ports are not allowed for ephemeral containers.
+          +optional
+          +patchMergeKey=containerPort
+          +patchStrategy=merge
+          +listType=map
+          +listMapKey=containerPort
+          +listMapKey=protocol
         items:
           $ref: '#/definitions/v1.ContainerPort'
         type: array
@@ -7114,7 +6953,8 @@ definitions:
       securityContext:
         $ref: '#/definitions/v1.SecurityContext'
         description: |-
-          SecurityContext is not allowed for ephemeral containers.
+          Optional: SecurityContext defines the security options the ephemeral container should be run with.
+          If set, the fields of SecurityContext override the equivalent fields of PodSecurityContext.
           +optional
       startupProbe:
         $ref: '#/definitions/v1.Probe'
@@ -7143,8 +6983,10 @@ definitions:
         description: |-
           If set, the name of the container from PodSpec that this ephemeral container targets.
           The ephemeral container will be run in the namespaces (IPC, PID, etc) of this container.
-          If not set then the ephemeral container is run in whatever namespaces are shared
-          for the pod. Note that the container runtime must support this feature.
+          If not set then the ephemeral container uses the namespaces configured in the Pod spec.
+
+          The container runtime must implement support for this feature. If the runtime does not
+          support namespace targeting then the result of setting this field is undefined.
           +optional
         type: string
       terminationMessagePath:
@@ -7186,7 +7028,7 @@ definitions:
         type: array
       volumeMounts:
         description: |-
-          Pod volumes to mount into the container's filesystem.
+          Pod volumes to mount into the container's filesystem. Subpath mounts are not allowed for ephemeral containers.
           Cannot be updated.
           +optional
           +patchMergeKey=mountPath
@@ -7365,6 +7207,22 @@ definitions:
           +optional
         type: boolean
     type: object
+  v1.GRPCAction:
+    properties:
+      port:
+        description: Port number of the gRPC service. Number must be in the range
+          1 to 65535.
+        type: integer
+      service:
+        description: |-
+          Service is the name of the service to place in the gRPC HealthCheckRequest
+          (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
+
+          If this is not specified, the default behavior is defined by gRPC.
+          +optional
+          +default=""
+        type: string
+    type: object
   v1.GitRepoVolumeSource:
     properties:
       directory:
@@ -7445,27 +7303,6 @@ definitions:
       value:
         description: The header field value
         type: string
-    type: object
-  v1.Handler:
-    properties:
-      exec:
-        $ref: '#/definitions/v1.ExecAction'
-        description: |-
-          One and only one of the following should be specified.
-          Exec specifies the action to take.
-          +optional
-      httpGet:
-        $ref: '#/definitions/v1.HTTPGetAction'
-        description: |-
-          HTTPGet specifies the http request to perform.
-          +optional
-      tcpSocket:
-        $ref: '#/definitions/v1.TCPSocketAction'
-        description: |-
-          TCPSocket specifies an action involving a TCP port.
-          TCP hooks not yet supported
-          TODO: implement a realistic TCP lifecycle hook
-          +optional
     type: object
   v1.HostAlias:
     properties:
@@ -7599,9 +7436,11 @@ definitions:
           for each index.
           When value is `Indexed`, .spec.completions must be specified and
           `.spec.parallelism` must be less than or equal to 10^5.
+          In addition, The Pod name takes the form
+          `$(job-name)-$(index)-$(random-string)`,
+          the Pod hostname takes the form `$(job-name)-$(index)`.
 
-          This field is alpha-level and is only honored by servers that enable the
-          IndexedJob feature gate. More completion modes can be added in the future.
+          This field is beta-level. More completion modes can be added in the future.
           If the Job controller observes a mode that it doesn't recognize, the
           controller skips updates for the Job.
           +optional
@@ -7654,9 +7493,11 @@ definitions:
           false to true), the Job controller will delete all active Pods associated
           with this Job. Users must design their workload to gracefully handle this.
           Suspending a Job will reset the StartTime field of the Job, effectively
-          resetting the ActiveDeadlineSeconds timer too. This is an alpha field and
-          requires the SuspendJob feature gate to be enabled; otherwise this field
-          may not be set to true. Defaults to false.
+          resetting the ActiveDeadlineSeconds timer too. Defaults to false.
+
+          This field is beta-level, gated by SuspendJob feature flag (enabled by
+          default).
+
           +optional
         type: boolean
       template:
@@ -7673,8 +7514,6 @@ definitions:
           guarantees (e.g. finalizers) will be honored. If this field is unset,
           the Job won't be automatically deleted. If this field is set to zero,
           the Job becomes eligible to be deleted immediately after it finishes.
-          This field is alpha-level and is only honored by servers that enable the
-          TTLAfterFinished feature.
           +optional
         type: integer
     type: object
@@ -7747,7 +7586,7 @@ definitions:
   v1.Lifecycle:
     properties:
       postStart:
-        $ref: '#/definitions/v1.Handler'
+        $ref: '#/definitions/v1.LifecycleHandler'
         description: |-
           PostStart is called immediately after a container is created. If the handler fails,
           the container is terminated and restarted according to its restart policy.
@@ -7755,18 +7594,37 @@ definitions:
           More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
           +optional
       preStop:
-        $ref: '#/definitions/v1.Handler'
+        $ref: '#/definitions/v1.LifecycleHandler'
         description: |-
           PreStop is called immediately before a container is terminated due to an
           API request or management event such as liveness/startup probe failure,
           preemption, resource contention, etc. The handler is not called if the
-          container crashes or exits. The reason for termination is passed to the
-          handler. The Pod's termination grace period countdown begins before the
-          PreStop hooked is executed. Regardless of the outcome of the handler, the
+          container crashes or exits. The Pod's termination grace period countdown begins before the
+          PreStop hook is executed. Regardless of the outcome of the handler, the
           container will eventually terminate within the Pod's termination grace
-          period. Other management of the container blocks until the hook completes
+          period (unless delayed by finalizers). Other management of the container blocks until the hook completes
           or until the termination grace period is reached.
           More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
+          +optional
+    type: object
+  v1.LifecycleHandler:
+    properties:
+      exec:
+        $ref: '#/definitions/v1.ExecAction'
+        description: |-
+          Exec specifies the action to take.
+          +optional
+      httpGet:
+        $ref: '#/definitions/v1.HTTPGetAction'
+        description: |-
+          HTTPGet specifies the http request to perform.
+          +optional
+      tcpSocket:
+        $ref: '#/definitions/v1.TCPSocketAction'
+        description: |-
+          Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
+          for the backward compatibility. There are no validation of this field and
+          lifecycle hooks will fail in runtime when tcp handler is specified.
           +optional
     type: object
   v1.LoadBalancerIngress:
@@ -7840,6 +7698,16 @@ definitions:
         description: |-
           Operation is the type of operation which lead to this ManagedFieldsEntry being created.
           The only valid values for this field are 'Apply' and 'Update'.
+        type: string
+      subresource:
+        description: |-
+          Subresource is the name of the subresource used to update that object, or
+          empty string if the object was updated through the main resource. The
+          value of this field is used to distinguish between managers, even if they
+          share the same name. For example, a status update will be distinct from a
+          regular update using the same manager name.
+          Note that the APIVersion field is not related to the Subresource field and
+          it always corresponds to the version of the main resource.
         type: string
       time:
         description: |-
@@ -8285,8 +8153,9 @@ definitions:
       configSource:
         $ref: '#/definitions/v1.NodeConfigSource'
         description: |-
-          If specified, the source to get node configuration from
-          The DynamicKubeletConfig feature gate must be enabled for the Kubelet to use this field
+          Deprecated. If specified, the source of the node's configuration.
+          The DynamicKubeletConfig feature gate must be enabled for the Kubelet to use this field.
+          This field is deprecated as of 1.22: https://git.k8s.io/enhancements/keps/sig-node/281-dynamic-kubelet-configuration
           +optional
       externalID:
         description: |-
@@ -8977,16 +8846,39 @@ definitions:
           This field can be used to specify either:
           * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot)
           * An existing PVC (PersistentVolumeClaim)
-          * An existing custom resource that implements data population (Alpha)
-          In order to use custom resource types that implement data population,
-          the AnyVolumeDataSource feature gate must be enabled.
           If the provisioner or an external controller can support the specified data source,
           it will create a new volume based on the contents of the specified data source.
+          If the AnyVolumeDataSource feature gate is enabled, this field will always have
+          the same contents as the DataSourceRef field.
+          +optional
+      dataSourceRef:
+        $ref: '#/definitions/v1.TypedLocalObjectReference'
+        description: |-
+          Specifies the object from which to populate the volume with data, if a non-empty
+          volume is desired. This may be any local object from a non-empty API group (non
+          core object) or a PersistentVolumeClaim object.
+          When this field is specified, volume binding will only succeed if the type of
+          the specified object matches some installed volume populator or dynamic
+          provisioner.
+          This field will replace the functionality of the DataSource field and as such
+          if both fields are non-empty, they must have the same value. For backwards
+          compatibility, both fields (DataSource and DataSourceRef) will be set to the same
+          value automatically if one of them is empty and the other is non-empty.
+          There are two important differences between DataSource and DataSourceRef:
+          * While DataSource only allows two specific types of objects, DataSourceRef
+            allows any non-core object, as well as PersistentVolumeClaim objects.
+          * While DataSource ignores disallowed values (dropping them), DataSourceRef
+            preserves all values, and generates an error if a disallowed value is
+            specified.
+          (Alpha) Using this field requires the AnyVolumeDataSource feature gate to be enabled.
           +optional
       resources:
         $ref: '#/definitions/v1.ResourceRequirements'
         description: |-
           Resources represents the minimum resources the volume should have.
+          If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements
+          that are lower than previous value but must still be higher than capacity recorded in the
+          status field of the claim.
           More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources
           +optional
       selector:
@@ -9022,6 +8914,19 @@ definitions:
         items:
           type: string
         type: array
+      allocatedResources:
+        $ref: '#/definitions/v1.ResourceList'
+        description: |-
+          The storage resource within AllocatedResources tracks the capacity allocated to a PVC. It may
+          be larger than the actual capacity when a volume expansion operation is requested.
+          For storage quota, the larger value from allocatedResources and PVC.spec.resources is used.
+          If allocatedResources is not set, PVC.spec.resources alone is used for quota calculation.
+          If a volume expansion capacity request is lowered, allocatedResources is only
+          lowered if there are no expansion operations in progress and if the actual volume capacity
+          is equal or lower than the requested capacity.
+          This is an alpha field and requires enabling RecoverVolumeExpansionFailure feature.
+          +featureGate=RecoverVolumeExpansionFailure
+          +optional
       capacity:
         $ref: '#/definitions/v1.ResourceList'
         description: |-
@@ -9040,6 +8945,15 @@ definitions:
       phase:
         description: |-
           Phase represents the current phase of PersistentVolumeClaim.
+          +optional
+        type: string
+      resizeStatus:
+        description: |-
+          ResizeStatus stores status of resize operation.
+          ResizeStatus is not set by default but when expansion is complete resizeStatus is set to empty
+          string by resize controller or kubelet.
+          This is an alpha field and requires enabling RecoverVolumeExpansionFailure feature.
+          +featureGate=RecoverVolumeExpansionFailure
           +optional
         type: string
     type: object
@@ -9556,7 +9470,7 @@ definitions:
           and the ones listed in the namespaces field.
           null selector and null or empty namespaces list means "this pod's namespace".
           An empty selector ({}) matches all namespaces.
-          This field is alpha-level and is only honored when PodAffinityNamespaceSelector feature is enabled.
+          This field is beta-level and is only honored when PodAffinityNamespaceSelector feature is enabled.
           +optional
       namespaces:
         description: |-
@@ -9688,6 +9602,16 @@ definitions:
         description: ip is an IP address (IPv4 or IPv6) assigned to the pod
         type: string
     type: object
+  v1.PodOS:
+    properties:
+      name:
+        description: |-
+          Name is the name of the operating system. The currently supported values are linux and windows.
+          Additional value may be defined in future and can be one of:
+          https://github.com/opencontainers/runtime-spec/blob/master/config.md#platform-specific-configuration
+          Clients should expect to handle additional values and treat unrecognized values in this field as os: null
+        type: string
+    type: object
   v1.PodReadinessGate:
     properties:
       conditionType:
@@ -9708,6 +9632,7 @@ definitions:
           3. The permission bits are OR'd with rw-rw----
 
           If unset, the Kubelet will not modify the ownership and permissions of any volume.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: integer
       fsGroupChangePolicy:
@@ -9718,6 +9643,7 @@ definitions:
           It will have no effect on ephemeral volume types such as: secret, configmaps
           and emptydir.
           Valid values are "OnRootMismatch" and "Always". If not specified, "Always" is used.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: string
       runAsGroup:
@@ -9727,6 +9653,7 @@ definitions:
           May also be set in SecurityContext.  If set in both SecurityContext and
           PodSecurityContext, the value specified in SecurityContext takes precedence
           for that container.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: integer
       runAsNonRoot:
@@ -9746,6 +9673,7 @@ definitions:
           May also be set in SecurityContext.  If set in both SecurityContext and
           PodSecurityContext, the value specified in SecurityContext takes precedence
           for that container.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: integer
       seLinuxOptions:
@@ -9756,17 +9684,20 @@ definitions:
           container.  May also be set in SecurityContext.  If set in
           both SecurityContext and PodSecurityContext, the value specified in SecurityContext
           takes precedence for that container.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
       seccompProfile:
         $ref: '#/definitions/v1.SeccompProfile'
         description: |-
           The seccomp options to use by the containers in this pod.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
       supplementalGroups:
         description: |-
           A list of groups applied to the first process run in each container, in addition
           to the container's primary GID.  If unspecified, no groups will be added to
           any container.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         items:
           type: integer
@@ -9775,6 +9706,7 @@ definitions:
         description: |-
           Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported
           sysctls (by the container runtime) might fail to launch.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         items:
           $ref: '#/definitions/v1.Sysctl'
@@ -9785,6 +9717,7 @@ definitions:
           The Windows specific settings applied to all containers.
           If unspecified, the options within a container's SecurityContext will be used.
           If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.
+          Note that this field cannot be set when spec.os.name is linux.
           +optional
     type: object
   v1.PodSpec:
@@ -9847,7 +9780,7 @@ definitions:
           pod to perform user-initiated actions such as debugging. This list cannot be specified when
           creating a pod, and it cannot be modified by updating the pod spec. In order to add an
           ephemeral container to an existing pod, use the pod's ephemeralcontainers subresource.
-          This field is alpha-level and is only honored by servers that enable the EphemeralContainers feature.
+          This field is beta-level and available on clusters that haven't disabled the EphemeralContainers feature gate.
           +optional
           +patchMergeKey=name
           +patchStrategy=merge
@@ -9939,7 +9872,40 @@ definitions:
           Selector which must match a node's labels for the pod to be scheduled on that node.
           More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
           +optional
+          +mapType=atomic
         type: object
+      os:
+        $ref: '#/definitions/v1.PodOS'
+        description: |-
+          Specifies the OS of the containers in the pod.
+          Some pod and container fields are restricted if this is set.
+
+          If the OS field is set to linux, the following fields must be unset:
+          -securityContext.windowsOptions
+
+          If the OS field is set to windows, following fields must be unset:
+          - spec.hostPID
+          - spec.hostIPC
+          - spec.securityContext.seLinuxOptions
+          - spec.securityContext.seccompProfile
+          - spec.securityContext.fsGroup
+          - spec.securityContext.fsGroupChangePolicy
+          - spec.securityContext.sysctls
+          - spec.shareProcessNamespace
+          - spec.securityContext.runAsUser
+          - spec.securityContext.runAsGroup
+          - spec.securityContext.supplementalGroups
+          - spec.containers[*].securityContext.seLinuxOptions
+          - spec.containers[*].securityContext.seccompProfile
+          - spec.containers[*].securityContext.capabilities
+          - spec.containers[*].securityContext.readOnlyRootFilesystem
+          - spec.containers[*].securityContext.privileged
+          - spec.containers[*].securityContext.allowPrivilegeEscalation
+          - spec.containers[*].securityContext.procMount
+          - spec.containers[*].securityContext.runAsUser
+          - spec.containers[*].securityContext.runAsGroup
+          +optional
+          This is an alpha field and requires the IdentifyPodOS feature
       overhead:
         $ref: '#/definitions/v1.ResourceList'
         description: |-
@@ -9949,8 +9915,8 @@ definitions:
           The RuntimeClass admission controller will reject Pod create requests which have the overhead already
           set. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value
           defined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero.
-          More info: https://git.k8s.io/enhancements/keps/sig-node/20190226-pod-overhead.md
-          This field is alpha-level as of Kubernetes v1.16, and is only honored by servers that enable the PodOverhead feature.
+          More info: https://git.k8s.io/enhancements/keps/sig-node/688-pod-overhead/README.md
+          This field is beta-level as of Kubernetes v1.18, and is only honored by servers that enable the PodOverhead feature.
           +optional
       preemptionPolicy:
         description: |-
@@ -9984,7 +9950,7 @@ definitions:
           If specified, all readiness gates will be evaluated for pod readiness.
           A pod is ready when all its containers are ready AND
           all conditions specified in the readiness gates have status equal to "True"
-          More info: https://git.k8s.io/enhancements/keps/sig-network/0007-pod-ready%2B%2B.md
+          More info: https://git.k8s.io/enhancements/keps/sig-network/580-pod-readiness-gates
           +optional
         items:
           $ref: '#/definitions/v1.PodReadinessGate'
@@ -10003,7 +9969,7 @@ definitions:
           to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run.
           If unset or empty, the "legacy" RuntimeClass will be used, which is an implicit class with an
           empty definition that uses the default runtime handler.
-          More info: https://git.k8s.io/enhancements/keps/sig-node/runtime-class.md
+          More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class
           This is a beta feature as of Kubernetes v1.14.
           +optional
         type: string
@@ -10125,7 +10091,7 @@ definitions:
       ephemeralContainerStatuses:
         description: |-
           Status for any ephemeral containers that have run in this pod.
-          This field is alpha-level and is only populated by servers that enable the EphemeralContainers feature.
+          This field is beta-level and available on clusters that haven't disabled the EphemeralContainers feature gate.
           +optional
         items:
           $ref: '#/definitions/v1.ContainerStatus'
@@ -10486,7 +10452,6 @@ definitions:
       exec:
         $ref: '#/definitions/v1.ExecAction'
         description: |-
-          One and only one of the following should be specified.
           Exec specifies the action to take.
           +optional
       failureThreshold:
@@ -10495,6 +10460,13 @@ definitions:
           Defaults to 3. Minimum value is 1.
           +optional
         type: integer
+      grpc:
+        $ref: '#/definitions/v1.GRPCAction'
+        description: |-
+          GRPC specifies an action involving a GRPC port.
+          This is an alpha field and requires enabling GRPCContainerProbe feature gate.
+          +featureGate=GRPCContainerProbe
+          +optional
       httpGet:
         $ref: '#/definitions/v1.HTTPGetAction'
         description: |-
@@ -10522,8 +10494,6 @@ definitions:
         $ref: '#/definitions/v1.TCPSocketAction'
         description: |-
           TCPSocket specifies an action involving a TCP port.
-          TCP hooks not yet supported
-          TODO: implement a realistic TCP lifecycle hook
           +optional
       terminationGracePeriodSeconds:
         description: |-
@@ -10535,7 +10505,8 @@ definitions:
           value overrides the value provided by the pod spec.
           Value must be non-negative integer. The value zero indicates stop immediately via
           the kill signal (no opportunity to shut down).
-          This is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate.
+          This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate.
+          Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.
           +optional
         type: integer
       timeoutSeconds:
@@ -11100,6 +11071,7 @@ definitions:
       type:
         description: |-
           Used to facilitate programmatic handling of secret data.
+          More info: https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
           +optional
         type: string
       uid:
@@ -11233,6 +11205,7 @@ definitions:
           AllowPrivilegeEscalation is true always when the container is:
           1) run as Privileged
           2) has CAP_SYS_ADMIN
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: boolean
       capabilities:
@@ -11240,12 +11213,14 @@ definitions:
         description: |-
           The capabilities to add/drop when running containers.
           Defaults to the default set of capabilities granted by the container runtime.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
       privileged:
         description: |-
           Run container in privileged mode.
           Processes in privileged containers are essentially equivalent to root on the host.
           Defaults to false.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: boolean
       procMount:
@@ -11254,12 +11229,14 @@ definitions:
           The default is DefaultProcMount which uses the container runtime defaults for
           readonly paths and masked paths.
           This requires the ProcMountType feature flag to be enabled.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: string
       readOnlyRootFilesystem:
         description: |-
           Whether this container has a read-only root filesystem.
           Default is false.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: boolean
       runAsGroup:
@@ -11268,6 +11245,7 @@ definitions:
           Uses runtime default if unset.
           May also be set in PodSecurityContext.  If set in both SecurityContext and
           PodSecurityContext, the value specified in SecurityContext takes precedence.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: integer
       runAsNonRoot:
@@ -11286,6 +11264,7 @@ definitions:
           Defaults to user specified in image metadata if unspecified.
           May also be set in PodSecurityContext.  If set in both SecurityContext and
           PodSecurityContext, the value specified in SecurityContext takes precedence.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
         type: integer
       seLinuxOptions:
@@ -11295,6 +11274,7 @@ definitions:
           If unspecified, the container runtime will allocate a random SELinux context for each
           container.  May also be set in PodSecurityContext.  If set in both SecurityContext and
           PodSecurityContext, the value specified in SecurityContext takes precedence.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
       seccompProfile:
         $ref: '#/definitions/v1.SeccompProfile'
@@ -11302,6 +11282,7 @@ definitions:
           The seccomp options to use by this container. If seccomp options are
           provided at both the pod & container level, the container options
           override the pod options.
+          Note that this field cannot be set when spec.os.name is windows.
           +optional
       windowsOptions:
         $ref: '#/definitions/v1.WindowsSecurityContextOptions'
@@ -11309,6 +11290,7 @@ definitions:
           The Windows specific settings applied to all containers.
           If unspecified, the options from the PodSecurityContext will be used.
           If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.
+          Note that this field cannot be set when spec.os.name is linux.
           +optional
     type: object
   v1.Service:
@@ -11579,8 +11561,6 @@ definitions:
           RFC-6335 and http://www.iana.org/assignments/service-names).
           Non-standard protocols should use prefixed names such as
           mycompany.com/my-custom-protocol.
-          This is a beta field that is guarded by the ServiceAppProtocol feature
-          gate and enabled by default.
           +optional
         type: string
       name:
@@ -11633,11 +11613,14 @@ definitions:
       allocateLoadBalancerNodePorts:
         description: |-
           allocateLoadBalancerNodePorts defines if NodePorts will be automatically
-          allocated for services with type LoadBalancer.  Default is "true". It may be
-          set to "false" if the cluster load-balancer does not rely on NodePorts.
-          allocateLoadBalancerNodePorts may only be set for services with type LoadBalancer
-          and will be cleared if the type is changed to any other type.
-          This field is alpha-level and is only honored by servers that enable the ServiceLBNodePortControl feature.
+          allocated for services with type LoadBalancer.  Default is "true". It
+          may be set to "false" if the cluster load-balancer does not rely on
+          NodePorts.  If the caller requests specific NodePorts (by specifying a
+          value), those requests will be respected, regardless of this field.
+          This field may only be set for services with type LoadBalancer and will
+          be cleared if the type is changed to any other type.
+          This field is beta-level and is only honored by servers that enable the ServiceLBNodePortControl feature.
+          +featureGate=ServiceLBNodePortControl
           +optional
         type: boolean
       clusterIP:
@@ -11680,12 +11663,9 @@ definitions:
           clients must ensure that clusterIPs[0] and clusterIP have the same
           value.
 
-          Unless the "IPv6DualStack" feature gate is enabled, this field is
-          limited to one value, which must be the same as the clusterIP field.  If
-          the feature gate is enabled, this field may hold a maximum of two
-          entries (dual-stack IPs, in either order).  These IPs must correspond to
-          the values of the ipFamilies field. Both clusterIPs and ipFamilies are
-          governed by the ipFamilyPolicy field.
+          This field may hold a maximum of two entries (dual-stack IPs, in either order).
+          These IPs must correspond to the values of the ipFamilies field. Both
+          clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.
           More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
           +listType=atomic
           +optional
@@ -11748,17 +11728,16 @@ definitions:
       ipFamilies:
         description: |-
           IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this
-          service, and is gated by the "IPv6DualStack" feature gate.  This field
-          is usually assigned automatically based on cluster configuration and the
-          ipFamilyPolicy field. If this field is specified manually, the requested
-          family is available in the cluster, and ipFamilyPolicy allows it, it
-          will be used; otherwise creation of the service will fail.  This field
-          is conditionally mutable: it allows for adding or removing a secondary
-          IP family, but it does not allow changing the primary IP family of the
-          Service.  Valid values are "IPv4" and "IPv6".  This field only applies
-          to Services of types ClusterIP, NodePort, and LoadBalancer, and does
-          apply to "headless" services.  This field will be wiped when updating a
-          Service to type ExternalName.
+          service. This field is usually assigned automatically based on cluster
+          configuration and the ipFamilyPolicy field. If this field is specified
+          manually, the requested family is available in the cluster,
+          and ipFamilyPolicy allows it, it will be used; otherwise creation of
+          the service will fail. This field is conditionally mutable: it allows
+          for adding or removing a secondary IP family, but it does not allow
+          changing the primary IP family of the Service. Valid values are "IPv4"
+          and "IPv6".  This field only applies to Services of types ClusterIP,
+          NodePort, and LoadBalancer, and does apply to "headless" services.
+          This field will be wiped when updating a Service to type ExternalName.
 
           This field may hold a maximum of two entries (dual-stack families, in
           either order).  These families must correspond to the values of the
@@ -11772,14 +11751,13 @@ definitions:
       ipFamilyPolicy:
         description: |-
           IPFamilyPolicy represents the dual-stack-ness requested or required by
-          this Service, and is gated by the "IPv6DualStack" feature gate.  If
-          there is no value provided, then this field will be set to SingleStack.
-          Services can be "SingleStack" (a single IP family), "PreferDualStack"
-          (two IP families on dual-stack configured clusters or a single IP family
-          on single-stack clusters), or "RequireDualStack" (two IP families on
-          dual-stack configured clusters, otherwise fail). The ipFamilies and
-          clusterIPs fields depend on the value of this field.  This field will be
-          wiped when updating a service to type ExternalName.
+          this Service. If there is no value provided, then this field will be set
+          to SingleStack. Services can be "SingleStack" (a single IP family),
+          "PreferDualStack" (two IP families on dual-stack configured clusters or
+          a single IP family on single-stack clusters), or "RequireDualStack"
+          (two IP families on dual-stack configured clusters, otherwise fail). The
+          ipFamilies and clusterIPs fields depend on the value of this field. This
+          field will be wiped when updating a service to type ExternalName.
           +optional
         type: string
       loadBalancerClass:
@@ -11811,7 +11789,7 @@ definitions:
           If specified and supported by the platform, this will restrict traffic through the cloud-provider
           load-balancer will be restricted to the specified client IPs. This field will be ignored if the
           cloud-provider does not support the feature."
-          More info: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/
+          More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/
           +optional
         items:
           type: string
@@ -11851,6 +11829,7 @@ definitions:
           Ignored if type is ExternalName.
           More info: https://kubernetes.io/docs/concepts/services-networking/service/
           +optional
+          +mapType=atomic
         type: object
       sessionAffinity:
         description: |-
@@ -11866,26 +11845,6 @@ definitions:
         description: |-
           sessionAffinityConfig contains the configurations of session affinity.
           +optional
-      topologyKeys:
-        description: |-
-          topologyKeys is a preference-order list of topology keys which
-          implementations of services should use to preferentially sort endpoints
-          when accessing this Service, it can not be used at the same time as
-          externalTrafficPolicy=Local.
-          Topology keys must be valid label keys and at most 16 keys may be specified.
-          Endpoints are chosen based on the first topology key with available backends.
-          If this field is specified and all entries have no backends that match
-          the topology of the client, the service has no backends for that client
-          and connections should fail.
-          The special value "*" may be used to mean "any topology". This catch-all
-          value, if used, only makes sense as the last value in the list.
-          If this is not specified or empty, no topology constraints will be applied.
-          This field is alpha-level and is only honored by servers that enable the ServiceTopology feature.
-          This field is deprecated and will be removed in a future version.
-          +optional
-        items:
-          type: string
-        type: array
       type:
         description: |-
           type determines how the Service is exposed. Defaults to ClusterIP. Valid
@@ -12101,7 +12060,7 @@ definitions:
             but giving higher precedence to topologies that would help reduce the
             skew.
           A constraint is considered "Unsatisfiable" for an incoming pod
-          if and only if every possible node assigment for that pod would violate
+          if and only if every possible node assignment for that pod would violate
           "MaxSkew" on some topology.
           For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
           labelSelector spread as 3/1/1:
@@ -12211,9 +12170,6 @@ definitions:
 
           A pod can use both types of ephemeral volumes and
           persistent volumes at the same time.
-
-          This is a beta feature and only available when the GenericEphemeralVolume
-          feature gate is enabled.
 
           +optional
       fc:
@@ -12817,6 +12773,17 @@ definitions:
           GMSACredentialSpecName is the name of the GMSA credential spec to use.
           +optional
         type: string
+      hostProcess:
+        description: |-
+          HostProcess determines if a container should be run as a 'Host Process' container.
+          This field is alpha-level and will only be honored by components that enable the
+          WindowsHostProcessContainers feature flag. Setting this field without the feature
+          flag will result in errors when validating the Pod. All of a Pod's containers must
+          have the same effective HostProcess value (it is not allowed to have a mix of HostProcess
+          containers and non-HostProcess containers).  In addition, if HostProcess is true
+          then HostNetwork must also be set to true.
+          +optional
+        type: boolean
       runAsUserName:
         description: |-
           The UserName in Windows to run the entrypoint of the container process.
@@ -12845,6 +12812,11 @@ definitions:
         description: ServicePort refers to the port that the Ingress action should
           route traffic to
         type: integer
+      stickinessConfig:
+        $ref: '#/definitions/v1alpha1.StickinessConfig'
+        description: |-
+          AdditionalForwardConfig allows to specify further settings on the ForwaredConfig
+          +optional
     type: object
   v1alpha1.AlertmanagerConfig:
     properties:
@@ -13376,6 +13348,24 @@ definitions:
         items:
           $ref: '#/definitions/v1alpha1.Argument'
         type: array
+      dryRun:
+        description: |-
+          DryRun object contains the settings for running the analysis in Dry-Run mode
+          +patchMergeKey=metricName
+          +patchStrategy=merge
+          +optional
+        items:
+          $ref: '#/definitions/v1alpha1.DryRun'
+        type: array
+      measurementRetention:
+        description: |-
+          MeasurementRetention object contains the settings for retaining the number of measurements during the analysis
+          +patchMergeKey=metricName
+          +patchStrategy=merge
+          +optional
+        items:
+          $ref: '#/definitions/v1alpha1.MeasurementRetention'
+        type: array
       metrics:
         description: |-
           Metrics contains the list of metrics to query as part of an analysis run
@@ -13393,6 +13383,47 @@ definitions:
       requiredDuringSchedulingIgnoredDuringExecution:
         $ref: '#/definitions/v1alpha1.RequiredDuringSchedulingIgnoredDuringExecution'
         description: +optional
+    type: object
+  v1alpha1.AppMeshTrafficRouting:
+    properties:
+      virtualNodeGroup:
+        $ref: '#/definitions/v1alpha1.AppMeshVirtualNodeGroup'
+        description: VirtualNodeGroup references an AppMesh Route targets that are
+          formed by a set of VirtualNodes that are used to shape traffic
+      virtualService:
+        $ref: '#/definitions/v1alpha1.AppMeshVirtualService'
+        description: VirtualService references an AppMesh VirtualService and VirtualRouter
+          to modify to shape traffic
+    type: object
+  v1alpha1.AppMeshVirtualNodeGroup:
+    properties:
+      canaryVirtualNodeRef:
+        $ref: '#/definitions/v1alpha1.AppMeshVirtualNodeReference'
+        description: CanaryVirtualNodeRef is the virtual node ref to modify labels
+          with canary ReplicaSet pod template hash value
+      stableVirtualNodeRef:
+        $ref: '#/definitions/v1alpha1.AppMeshVirtualNodeReference'
+        description: StableVirtualNodeRef is the virtual node name to modify labels
+          with stable ReplicaSet pod template hash value
+    type: object
+  v1alpha1.AppMeshVirtualNodeReference:
+    properties:
+      name:
+        description: Name is the name of VirtualNode CR
+        type: string
+    type: object
+  v1alpha1.AppMeshVirtualService:
+    properties:
+      name:
+        description: Name is the name of virtual service
+        type: string
+      routes:
+        description: Routes is list of HTTP routes within virtual router associated
+          with virtual service to edit. If omitted, virtual service must have a single
+          route of this type.
+        items:
+          type: string
+        type: array
     type: object
   v1alpha1.Argument:
     properties:
@@ -13721,6 +13752,14 @@ definitions:
       interval:
         type: string
       query:
+        type: string
+    type: object
+  v1alpha1.DryRun:
+    properties:
+      metricName:
+        description: |-
+          Name of the metric which needs to be evaluated in the Dry-Run mode. Wildcard '*' is supported and denotes all
+          the available metrics.
         type: string
     type: object
   v1alpha1.EmailConfig:
@@ -14068,6 +14107,17 @@ definitions:
           +optional
         type: string
     type: object
+  v1alpha1.MeasurementRetention:
+    properties:
+      limit:
+        description: Limit is the maximum number of measurements to be retained for
+          this given metric.
+        type: integer
+      metricName:
+        description: MetricName is the name of the metric on which this retention
+          policy should be applied.
+        type: string
+    type: object
   v1alpha1.Metric:
     properties:
       consecutiveErrorLimit:
@@ -14348,6 +14398,15 @@ definitions:
           +optional
         type: string
     type: object
+  v1alpha1.PingPongSpec:
+    properties:
+      pingService:
+        description: name of the ping service
+        type: string
+      pongService:
+        description: name of the pong service
+        type: string
+    type: object
   v1alpha1.PodTemplateMetadata:
     properties:
       annotations:
@@ -14553,6 +14612,24 @@ definitions:
         items:
           $ref: '#/definitions/v1alpha1.AnalysisRunArgument'
         type: array
+      dryRun:
+        description: |-
+          DryRun object contains the settings for running the analysis in Dry-Run mode
+          +patchMergeKey=metricName
+          +patchStrategy=merge
+          +optional
+        items:
+          $ref: '#/definitions/v1alpha1.DryRun'
+        type: array
+      measurementRetention:
+        description: |-
+          MeasurementRetention object contains the settings for retaining the number of measurements during the analysis
+          +patchMergeKey=metricName
+          +patchStrategy=merge
+          +optional
+        items:
+          $ref: '#/definitions/v1alpha1.MeasurementRetention'
+        type: array
       templates:
         description: Templates reference to a list of analysis templates to combine
           for an AnalysisRun
@@ -14569,6 +14646,24 @@ definitions:
           +patchStrategy=merge
         items:
           $ref: '#/definitions/v1alpha1.AnalysisRunArgument'
+        type: array
+      dryRun:
+        description: |-
+          DryRun object contains the settings for running the analysis in Dry-Run mode
+          +patchMergeKey=metricName
+          +patchStrategy=merge
+          +optional
+        items:
+          $ref: '#/definitions/v1alpha1.DryRun'
+        type: array
+      measurementRetention:
+        description: |-
+          MeasurementRetention object contains the settings for retaining the number of measurements during the analysis
+          +patchMergeKey=metricName
+          +patchStrategy=merge
+          +optional
+        items:
+          $ref: '#/definitions/v1alpha1.MeasurementRetention'
         type: array
       startingStep:
         description: |-
@@ -14693,6 +14788,10 @@ definitions:
         $ref: '#/definitions/v1alpha1.AmbassadorTrafficRouting'
         description: Ambassador holds specific configuration to use Ambassador to
           route traffic
+      appMesh:
+        $ref: '#/definitions/v1alpha1.AppMeshTrafficRouting'
+        description: AppMesh holds specific configuration to use AppMesh to route
+          traffic
       istio:
         $ref: '#/definitions/v1alpha1.IstioTrafficRouting'
         description: Istio holds Istio specific configuration to route traffic
@@ -14955,6 +15054,13 @@ definitions:
         description: +kubebuilder:validation:MinLength=1
         type: string
     type: object
+  v1alpha1.StickinessConfig:
+    properties:
+      durationSeconds:
+        type: integer
+      enabled:
+        type: boolean
+    type: object
   v1alpha1.SyncOperationResource:
     properties:
       group:
@@ -15109,6 +15215,9 @@ definitions:
     type: object
   v1alpha1.WebMetric:
     properties:
+      body:
+        description: Body is the body of the we metric (must be POST/PUT)
+        type: string
       headers:
         description: |-
           +patchMergeKey=key
@@ -15123,6 +15232,9 @@ definitions:
       jsonPath:
         description: 'JSONPath is a JSON Path to use as the result variable (default:
           "{$}")'
+        type: string
+      method:
+        description: Method is the method of the web metric (empty defaults to GET)
         type: string
       timeoutSeconds:
         description: 'TimeoutSeconds is the timeout for the request in seconds (default:
@@ -15195,7 +15307,8 @@ definitions:
           same namespace with the proxy using the certificates.
           The secret (of type `generic`)should contain the
           following keys and values: `key: <privateKey>`,
-          `cert: <serverCert>`, `cacert: <CACertificate>`.
+          `cert: <clientCert>`, `cacert: <CACertificate>`.
+          Here CACertificate is used to verify the server certificate.
           Secret of type tls for client certificates along with
           ca.crt key for CA certificates is also supported.
           Only one of client certificates and CA certificate
@@ -15204,6 +15317,21 @@ definitions:
           **NOTE:** This field is currently applicable only at gateways.
           Sidecars will continue to use the certificate paths.
         type: string
+      insecure_skip_verify:
+        $ref: '#/definitions/types.BoolValue'
+        description: |-
+          InsecureSkipVerify specifies whether the proxy should skip verifying the
+          CA signature and SAN for the server certificate corresponding to the host.
+          This flag should only be set if global CA signature verifcation is
+          enabled, `VerifyCertAtClient` environmental variable is set to `true`,
+          but no verification is desired for a specific host. If enabled with or
+          without `VerifyCertAtClient` enabled, verification of the CA signature and
+          SAN will be skipped.
+
+          `InsecureSkipVerify` is `false` by default.
+          `VerifyCertAtClient` is `false` by default in Istio version 1.9 but will
+          be `true` by default in a later version where, going forward, it will be
+          enabled by default.
       mode:
         description: |-
           Indicates whether connections to this port should be secured
@@ -15594,6 +15722,15 @@ definitions:
           On a redirect, Specifies the HTTP status code to use in the redirect
           response. The default response code is MOVED_PERMANENTLY (301).
         type: integer
+      redirectPort:
+        description: "Types that are valid to be assigned to RedirectPort:\n\t*HTTPRedirect_Port\n\t*HTTPRedirect_DerivePort"
+      scheme:
+        description: |-
+          On a redirect, overwrite the scheme portion of the URL with this value.
+          For example, `http` or `https`.
+          If unset, the original scheme will be used.
+          If `derivePort` is set to `FROM_PROTOCOL_DEFAULT`, this will impact the port used as well
+        type: string
       uri:
         description: |-
           On a redirect, overwrite the Path portion of the URL with this
@@ -15622,6 +15759,7 @@ definitions:
         description: |-
           Specifies the conditions under which retry takes place.
           One or more policies can be specified using a ‘,’ delimited list.
+          If `retry_on` specifies a valid HTTP status, it will be added to retriable_status_codes retry policy.
           See the [retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on)
           and [gRPC retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-grpc-on) for more details.
         type: string
@@ -15699,6 +15837,7 @@ definitions:
           Percentage of the traffic to be mirrored by the `mirror` field.
           Use of integer `mirror_percent` value is deprecated. Use the
           double `mirror_percentage` field instead
+          $hide_from_docs
       mirror_percentage:
         $ref: '#/definitions/v1alpha3.Percent'
         description: |-
@@ -15752,10 +15891,9 @@ definitions:
         description: Header manipulation rules
       weight:
         description: |-
-          The proportion of traffic to be forwarded to the service
-          version. (0-100). Sum of weights across destinations SHOULD BE == 100.
-          If there is only one destination in a rule, the weight value is assumed to
-          be 100.
+          Weight specifies the relative proportion of traffic to be forwarded to the destination. A destination will receive `weight/(sum of all weights)` requests.
+          If there is only one destination in a rule, it will receive all traffic.
+          Otherwise, if weight is `0`, the destination will not receive any traffic.
         type: integer
     type: object
   v1alpha3.Headers:
@@ -15781,7 +15919,7 @@ definitions:
           (will create a comma-separated list of values)
         type: object
       remove:
-        description: Remove a the specified headers
+        description: Remove the specified headers
         items:
           type: string
         type: array
@@ -15882,6 +16020,13 @@ definitions:
       port:
         $ref: '#/definitions/v1alpha3.Port'
         description: The port associated with the listener.
+      tls:
+        $ref: '#/definitions/v1alpha3.ServerTLSSettings'
+        description: |-
+          Set of TLS related options that will enable TLS termination on the
+          sidecar for requests originating from outside the mesh.
+          Currently supports only SIMPLE and MUTUAL TLS modes.
+          $hide_from_docs
     type: object
   v1alpha3.L4MatchAttributes:
     properties:
@@ -15943,7 +16088,7 @@ definitions:
     properties:
       distribute:
         description: |-
-          Optional: only one of distribute or failover can be set.
+          Optional: only one of distribute, failover or failoverPriority can be set.
           Explicitly specify loadbalancing weight across different zones and geographical locations.
           Refer to [Locality weighted load balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/locality_weight)
           If empty, the locality weight is set according to the endpoints number within it.
@@ -15957,12 +16102,55 @@ definitions:
           e.g. true means that turn on locality load balancing for this DestinationRule no matter what mesh wide settings is.
       failover:
         description: |-
-          Optional: only failover or distribute can be set.
+          Optional: only one of distribute, failover or failoverPriority can be set.
           Explicitly specify the region traffic will land on when endpoints in local region becomes unhealthy.
           Should be used together with OutlierDetection to detect unhealthy endpoints.
           Note: if no OutlierDetection specified, this will not take effect.
         items:
           $ref: '#/definitions/v1alpha3.LocalityLoadBalancerSetting_Failover'
+        type: array
+      failover_priority:
+        description: |-
+          failoverPriority is an ordered list of labels used to sort endpoints to do priority based load balancing.
+          This is to support traffic failover across different groups of endpoints.
+          Suppose there are total N labels specified:
+
+          1. Endpoints matching all N labels with the client proxy have priority P(0) i.e. the highest priority.
+          2. Endpoints matching the first N-1 labels with the client proxy have priority P(1) i.e. second highest priority.
+          3. By extension of this logic, endpoints matching only the first label with the client proxy has priority P(N-1) i.e. second lowest priority.
+          4. All the other endpoints have priority P(N) i.e. lowest priority.
+
+          Note: For a label to be considered for match, the previous labels must match, i.e. nth label would be considered matched only if first n-1 labels match.
+
+          It can be any label specified on both client and server workloads.
+          The following labels which have special semantic meaning are also supported:
+
+            - `topology.istio.io/network` is used to match the network metadata of an endpoint, which can be specified by pod/namespace label `topology.istio.io/network`, sidecar env `ISTIO_META_NETWORK` or MeshNetworks.
+            - `topology.istio.io/cluster` is used to match the clusterID of an endpoint, which can be specified by pod label `topology.istio.io/cluster` or pod env `ISTIO_META_CLUSTER_ID`.
+            - `topology.kubernetes.io/region` is used to match the region metadata of an endpoint, which maps to Kubernetes node label `topology.kubernetes.io/region` or the deprecated label `failure-domain.beta.kubernetes.io/region`.
+            - `topology.kubernetes.io/zone` is used to match the zone metadata of an endpoint, which maps to Kubernetes node label `topology.kubernetes.io/zone` or the deprecated label `failure-domain.beta.kubernetes.io/zone`.
+            - `topology.istio.io/subzone` is used to match the subzone metadata of an endpoint, which maps to Istio node label `topology.istio.io/subzone`.
+
+          The below topology config indicates the following priority levels:
+
+          ```yaml
+          failoverPriority:
+          - "topology.istio.io/network"
+          - "topology.kubernetes.io/region"
+          - "topology.kubernetes.io/zone"
+          - "topology.istio.io/subzone"
+          ```
+
+          1. endpoints match same [network, region, zone, subzone] label with the client proxy have the highest priority.
+          2. endpoints have same [network, region, zone] label but different [subzone] label with the client proxy have the second highest priority.
+          3. endpoints have same [network, region] label but different [zone] label with the client proxy have the third highest priority.
+          4. endpoints have same [network] but different [region] labels with the client proxy have the fourth highest priority.
+          5. all the other endpoints have the same lowest priority.
+
+          Optional: only one of distribute, failover or failoverPriority can be set.
+          And it should be used together with `OutlierDetection` to detect unhealthy endpoints, otherwise has no effect.
+        items:
+          type: string
         type: array
     type: object
   v1alpha3.LocalityLoadBalancerSetting_Distribute:
@@ -16141,9 +16329,9 @@ definitions:
           to which the request/connection should be forwarded to.
       weight:
         description: |-
-          The proportion of traffic to be forwarded to the service
-          version. If there is only one destination in a rule, all traffic will be
-          routed to it irrespective of the weight.
+          Weight specifies the relative proportion of traffic to be forwarded to the destination. A destination will receive `weight/(sum of all weights)` requests.
+          If there is only one destination in a rule, it will receive all traffic.
+          Otherwise, if weight is `0`, the destination will not receive any traffic.
         type: integer
     type: object
   v1alpha3.Server:
@@ -16831,6 +17019,15 @@ definitions:
           On a redirect, Specifies the HTTP status code to use in the redirect
           response. The default response code is MOVED_PERMANENTLY (301).
         type: integer
+      redirectPort:
+        description: "Types that are valid to be assigned to RedirectPort:\n\t*HTTPRedirect_Port\n\t*HTTPRedirect_DerivePort"
+      scheme:
+        description: |-
+          On a redirect, overwrite the scheme portion of the URL with this value.
+          For example, `http` or `https`.
+          If unset, the original scheme will be used.
+          If `derivePort` is set to `FROM_PROTOCOL_DEFAULT`, this will impact the port used as well
+        type: string
       uri:
         description: |-
           On a redirect, overwrite the Path portion of the URL with this
@@ -16859,6 +17056,7 @@ definitions:
         description: |-
           Specifies the conditions under which retry takes place.
           One or more policies can be specified using a ‘,’ delimited list.
+          If `retry_on` specifies a valid HTTP status, it will be added to retriable_status_codes retry policy.
           See the [retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on)
           and [gRPC retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-grpc-on) for more details.
         type: string
@@ -16936,6 +17134,7 @@ definitions:
           Percentage of the traffic to be mirrored by the `mirror` field.
           Use of integer `mirror_percent` value is deprecated. Use the
           double `mirror_percentage` field instead
+          $hide_from_docs
       mirror_percentage:
         $ref: '#/definitions/v1beta1.Percent'
         description: |-
@@ -16989,10 +17188,9 @@ definitions:
         description: Header manipulation rules
       weight:
         description: |-
-          The proportion of traffic to be forwarded to the service
-          version. (0-100). Sum of weights across destinations SHOULD BE == 100.
-          If there is only one destination in a rule, the weight value is assumed to
-          be 100.
+          Weight specifies the relative proportion of traffic to be forwarded to the destination. A destination will receive `weight/(sum of all weights)` requests.
+          If there is only one destination in a rule, it will receive all traffic.
+          Otherwise, if weight is `0`, the destination will not receive any traffic.
         type: integer
     type: object
   v1beta1.Headers:
@@ -17018,7 +17216,7 @@ definitions:
           (will create a comma-separated list of values)
         type: object
       remove:
-        description: Remove a the specified headers
+        description: Remove the specified headers
         items:
           type: string
         type: array
@@ -17128,9 +17326,9 @@ definitions:
           to which the request/connection should be forwarded to.
       weight:
         description: |-
-          The proportion of traffic to be forwarded to the service
-          version. If there is only one destination in a rule, all traffic will be
-          routed to it irrespective of the weight.
+          Weight specifies the relative proportion of traffic to be forwarded to the destination. A destination will receive `weight/(sum of all weights)` requests.
+          If there is only one destination in a rule, it will receive all traffic.
+          Otherwise, if weight is `0`, the destination will not receive any traffic.
         type: integer
     type: object
   v1beta1.Server:
@@ -21297,6 +21495,11 @@ paths:
         name: name
         required: true
         type: string
+      - description: source
+        in: query
+        name: source
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -21639,11 +21842,6 @@ paths:
         name: namespace
         required: true
         type: string
-      - description: 接收器类型(monitor/logging)
-        in: query
-        name: scope
-        required: true
-        type: string
       - description: body
         in: body
         name: form
@@ -21683,9 +21881,9 @@ paths:
         name: namespace
         required: true
         type: string
-      - description: 接收器类型(monitor/logging)
+      - description: source
         in: query
-        name: scope
+        name: source
         required: true
         type: string
       - description: name
@@ -21723,11 +21921,6 @@ paths:
       - description: namespace
         in: path
         name: namespace
-        required: true
-        type: string
-      - description: 接收器类型(monitor/logging)
-        in: query
-        name: scope
         required: true
         type: string
       - description: name
@@ -23949,6 +24142,34 @@ paths:
       security:
       - JWT: []
       summary: 扩缩容
+      tags:
+      - Agent.V1
+  /v1/proxy/cluster/{cluster}/api-resources:
+    get:
+      consumes:
+      - application/json
+      description: 获取k8s api-resources
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    type: object
+                  type: array
+              type: object
+      summary: 获取k8s api-resources
       tags:
       - Agent.V1
   /v1/proxy/cluster/{cluster}/custom/alertmanager/v1/alerts:

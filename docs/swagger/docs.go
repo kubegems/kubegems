@@ -5924,6 +5924,13 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "source",
+                        "name": "source",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -6349,13 +6356,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "接收器类型(monitor/logging)",
-                        "name": "scope",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
                         "description": "body",
                         "name": "form",
                         "in": "body",
@@ -6487,13 +6487,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "接收器类型(monitor/logging)",
-                        "name": "scope",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "name",
                         "name": "name",
                         "in": "path",
@@ -6564,8 +6557,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "接收器类型(monitor/logging)",
-                        "name": "scope",
+                        "description": "source",
+                        "name": "source",
                         "in": "query",
                         "required": true
                     },
@@ -8982,6 +8975,53 @@ const docTemplate = `{
                                     "properties": {
                                         "Data": {
                                             "$ref": "#/definitions/models.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/api-resources": {
+            "get": {
+                "description": "获取k8s api-resources",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.V1"
+                ],
+                "summary": "获取k8s api-resources",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
                                         }
                                     }
                                 }
@@ -23245,7 +23285,7 @@ const docTemplate = `{
                 "certInfo": {
                     "type": "object",
                     "additionalProperties": {
-                        "$ref": "#/definitions/certinfo.Certificate"
+                        "$ref": "#/definitions/certificate.Certificate"
                     }
                 },
                 "secret": {
@@ -23419,14 +23459,14 @@ const docTemplate = `{
                 }
             }
         },
-        "certinfo.Certificate": {
+        "certificate.Certificate": {
             "type": "object",
             "properties": {
                 "authority_key_id": {
                     "type": "string"
                 },
                 "issuer": {
-                    "$ref": "#/definitions/certinfo.Name"
+                    "$ref": "#/definitions/certificate.Name"
                 },
                 "not_after": {
                     "type": "string"
@@ -23450,14 +23490,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "subject": {
-                    "$ref": "#/definitions/certinfo.Name"
+                    "$ref": "#/definitions/certificate.Name"
                 },
                 "subject_key_id": {
                     "type": "string"
                 }
             }
         },
-        "certinfo.Name": {
+        "certificate.Name": {
             "type": "object",
             "properties": {
                 "common_name": {
@@ -23466,12 +23506,20 @@ const docTemplate = `{
                 "country": {
                     "type": "string"
                 },
+                "extra_names": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pkix.AttributeTypeAndValue"
+                    }
+                },
                 "locality": {
                     "type": "string"
                 },
                 "names": {
                     "type": "array",
-                    "items": {}
+                    "items": {
+                        "$ref": "#/definitions/pkix.AttributeTypeAndValue"
+                    }
                 },
                 "organization": {
                     "type": "string"
@@ -23558,13 +23606,13 @@ const docTemplate = `{
                     }
                 },
                 "resources": {
-                    "$ref": "#/definitions/types.ClusterResourceStatistics"
+                    "$ref": "#/definitions/statistics.ClusterResourceStatistics"
                 },
                 "version": {
                     "type": "string"
                 },
                 "workloads": {
-                    "$ref": "#/definitions/types.ClusterWorkloadStatistics"
+                    "$ref": "#/definitions/statistics.ClusterWorkloadStatistics"
                 }
             }
         },
@@ -24929,6 +24977,10 @@ const docTemplate = `{
                     "description": "MaxUnavailable The maximum number of pods that can be unavailable during the update.\nValue can be an absolute number (ex: 5) or a percentage of total pods at the start of update (ex: 10%).\nAbsolute number is calculated from percentage by rounding down.\nThis can not be 0 if MaxSurge is 0.\nBy default, a fixed value of 25% is used.\nExample: when this is set to 30%, the old RC can be scaled down by 30%\nimmediately when the rolling update starts. Once new pods are ready, old RC\ncan be scaled down further, followed by scaling up the new RC, ensuring\nthat at least 70% of original number of pods are available at all times\nduring the update.\n+optional",
                     "$ref": "#/definitions/intstr.IntOrString"
                 },
+                "pingPong": {
+                    "description": "PingPongSpec holds the ping and pong services",
+                    "$ref": "#/definitions/v1alpha1.PingPongSpec"
+                },
                 "scaleDownDelayRevisionLimit": {
                     "description": "ScaleDownDelayRevisionLimit limits the number of old RS that can run at one time before getting scaled down\n+optional",
                     "type": "integer"
@@ -25373,6 +25425,10 @@ const docTemplate = `{
                     "description": "Ambassador holds specific configuration to use Ambassador to route traffic",
                     "$ref": "#/definitions/v1alpha1.AmbassadorTrafficRouting"
                 },
+                "appMesh": {
+                    "description": "AppMesh holds specific configuration to use AppMesh to route traffic",
+                    "$ref": "#/definitions/v1alpha1.AppMeshTrafficRouting"
+                },
                 "istio": {
                     "description": "Istio holds Istio specific configuration to route traffic",
                     "$ref": "#/definitions/kubegems.io_pkg_service_handlers_application.IstioTrafficRouting"
@@ -25666,6 +25722,10 @@ const docTemplate = `{
                 "maxUnavailable": {
                     "description": "MaxUnavailable The maximum number of pods that can be unavailable during the update.\nValue can be an absolute number (ex: 5) or a percentage of total pods at the start of update (ex: 10%).\nAbsolute number is calculated from percentage by rounding down.\nThis can not be 0 if MaxSurge is 0.\nBy default, a fixed value of 25% is used.\nExample: when this is set to 30%, the old RC can be scaled down by 30%\nimmediately when the rolling update starts. Once new pods are ready, old RC\ncan be scaled down further, followed by scaling up the new RC, ensuring\nthat at least 70% of original number of pods are available at all times\nduring the update.\n+optional",
                     "$ref": "#/definitions/intstr.IntOrString"
+                },
+                "pingPong": {
+                    "description": "PingPongSpec holds the ping and pong services",
+                    "$ref": "#/definitions/v1alpha1.PingPongSpec"
                 },
                 "scaleDownDelayRevisionLimit": {
                     "description": "ScaleDownDelayRevisionLimit limits the number of old RS that can run at one time before getting scaled down\n+optional",
@@ -26111,6 +26171,10 @@ const docTemplate = `{
                     "description": "Ambassador holds specific configuration to use Ambassador to route traffic",
                     "$ref": "#/definitions/v1alpha1.AmbassadorTrafficRouting"
                 },
+                "appMesh": {
+                    "description": "AppMesh holds specific configuration to use AppMesh to route traffic",
+                    "$ref": "#/definitions/v1alpha1.AppMeshTrafficRouting"
+                },
                 "istio": {
                     "description": "Istio holds Istio specific configuration to route traffic",
                     "$ref": "#/definitions/kubegems.io_pkg_v2_services_handlers_application.IstioTrafficRouting"
@@ -26256,7 +26320,7 @@ const docTemplate = `{
                     }
                 },
                 "readyReplicas": {
-                    "description": "Total number of ready pods targeted by this deployment.\n+optional",
+                    "description": "readyReplicas is the number of pods targeted by this Deployment with a Ready Condition.\n+optional",
                     "type": "integer"
                 },
                 "replicas": {
@@ -26759,6 +26823,34 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CPUMemoryStatus": {
+            "type": "object",
+            "properties": {
+                "currentLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                },
+                "currentRate": {
+                    "type": "number"
+                },
+                "status": {
+                    "description": "扩容或缩容",
+                    "type": "string"
+                },
+                "suggestLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                },
+                "suggestMaxLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                },
+                "suggestMinLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                }
+            }
+        },
         "models.CVEAllowlist": {
             "type": "object",
             "properties": {
@@ -26915,31 +27007,20 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ContainerInfo": {
+        "models.Condition": {
             "type": "object",
             "properties": {
-                "image": {
-                    "type": "string"
+                "CPUStatus": {
+                    "$ref": "#/definitions/models.CPUMemoryStatus"
                 },
-                "isProxy": {
-                    "type": "boolean"
+                "MemoryStatus": {
+                    "$ref": "#/definitions/models.CPUMemoryStatus"
                 },
-                "isReady": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.DashboardRef": {
-            "type": "object",
-            "properties": {
-                "template": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
+                "pods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -27425,74 +27506,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Pod": {
-            "type": "object",
-            "properties": {
-                "annotations": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "appLabel": {
-                    "type": "boolean"
-                },
-                "containers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ContainerInfo"
-                    }
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Reference"
-                    }
-                },
-                "istioContainers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ContainerInfo"
-                    }
-                },
-                "istioInitContainers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ContainerInfo"
-                    }
-                },
-                "labels": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "proxyStatus": {
-                    "$ref": "#/definitions/models.ProxyStatus"
-                },
-                "serviceAccountName": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "statusMessage": {
-                    "type": "string"
-                },
-                "statusReason": {
-                    "type": "string"
-                },
-                "versionLabel": {
-                    "type": "boolean"
-                }
-            }
-        },
         "models.Project": {
             "type": "object",
             "properties": {
@@ -27577,34 +27590,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ProxyStatus": {
-            "type": "object",
-            "properties": {
-                "CDS": {
-                    "type": "string"
-                },
-                "EDS": {
-                    "type": "string"
-                },
-                "LDS": {
-                    "type": "string"
-                },
-                "RDS": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Reference": {
-            "type": "object",
-            "properties": {
-                "kind": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "models.Registry": {
             "type": "object",
             "properties": {
@@ -27651,77 +27636,6 @@ const docTemplate = `{
                 "username": {
                     "description": "用户名",
                     "type": "string"
-                }
-            }
-        },
-        "models.Runtime": {
-            "type": "object",
-            "properties": {
-                "dashboardRefs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.DashboardRef"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ServiceOverview": {
-            "type": "object",
-            "properties": {
-                "additionalDetailSample": {
-                    "description": "Additional detail sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
-                    "$ref": "#/definitions/models.AdditionalItem"
-                },
-                "appLabel": {
-                    "description": "Has label app\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "healthAnnotations": {
-                    "description": "Annotations of the service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "istioReferences": {
-                    "description": "Istio References",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IstioValidationKey"
-                    }
-                },
-                "istioSidecar": {
-                    "description": "Define if Pods related to this Service has an IstioSidecar deployed\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "kialiWizard": {
-                    "description": "Kiali Wizard scenario, if any",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "Labels for Service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "Name of the Service\nrequired: true\nexample: reviews-v1",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace of the Service",
-                    "type": "string"
-                },
-                "selector": {
-                    "description": "Selector for Service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -28082,120 +27996,40 @@ const docTemplate = `{
         "models.Workload": {
             "type": "object",
             "properties": {
-                "additionalDetailSample": {
-                    "description": "Additional item sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
-                    "$ref": "#/definitions/models.AdditionalItem"
+                "clusterName": {
+                    "type": "string"
                 },
-                "additionalDetails": {
-                    "description": "Additional details to display, such as configured annotations",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.AdditionalItem"
+                "color": {
+                    "description": "eg, yellow",
+                    "type": "string"
+                },
+                "conditions": {
+                    "description": "按容器名分组",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Condition"
                     }
                 },
-                "appLabel": {
-                    "description": "Define if Pods related to this Workload has the label App\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "availableReplicas": {
-                    "description": "Number of available replicas\nrequired: true\nexample: 1",
-                    "type": "integer"
+                "cpulimitStdvar": {
+                    "type": "number"
                 },
                 "createdAt": {
-                    "description": "Creation timestamp (in RFC3339 format)\nrequired: true\nexample: 2018-07-31T12:24:17Z",
                     "type": "string"
                 },
-                "currentReplicas": {
-                    "description": "Number of current replicas pods that matches controller selector labels\nrequired: true\nexample: 2",
+                "id": {
                     "type": "integer"
                 },
-                "dashboardAnnotations": {
-                    "description": "Dashboard annotations\nrequired: false",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "desiredReplicas": {
-                    "description": "Number of desired replicas defined by the user in the controller Spec\nrequired: true\nexample: 2",
-                    "type": "integer"
-                },
-                "healthAnnotations": {
-                    "description": "HealthAnnotations\nrequired: false",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "istioInjectionAnnotation": {
-                    "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
-                    "type": "boolean"
-                },
-                "istioReferences": {
-                    "description": "Istio References",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IstioValidationKey"
-                    }
-                },
-                "istioSidecar": {
-                    "description": "Define if Pods related to this Workload has an IstioSidecar deployed\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "labels": {
-                    "description": "Workload labels",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                "memoryLimitStdvar": {
+                    "type": "number"
                 },
                 "name": {
-                    "description": "Name of the workload\nrequired: true\nexample: reviews-v1",
                     "type": "string"
                 },
-                "podCount": {
-                    "description": "Number of current workload pods\nrequired: true\nexample: 1",
-                    "type": "integer"
-                },
-                "pods": {
-                    "description": "Pods bound to the workload",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Pod"
-                    }
-                },
-                "resourceVersion": {
-                    "description": "Kubernetes ResourceVersion\nrequired: true\nexample: 192892127",
+                "namespace": {
                     "type": "string"
-                },
-                "runtimes": {
-                    "description": "Runtimes and associated dashboards",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Runtime"
-                    }
-                },
-                "serviceAccountNames": {
-                    "description": "Names of the workload service accounts",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "services": {
-                    "description": "Services that match workload selector",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ServiceOverview"
-                    }
                 },
                 "type": {
-                    "description": "Type of the workload\nrequired: true\nexample: deployment",
                     "type": "string"
-                },
-                "versionLabel": {
-                    "description": "Define if Pods related to this Workload has the label Version\nrequired: true\nexample: true",
-                    "type": "boolean"
                 }
             }
         },
@@ -28574,6 +28408,20 @@ const docTemplate = `{
                 }
             }
         },
+        "pkix.AttributeTypeAndValue": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "value": {
+                    "type": "any"
+                }
+            }
+        },
         "prometheus.AlertLevel": {
             "type": "object",
             "properties": {
@@ -28745,6 +28593,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/prometheus.AlertReceiver"
                     }
                 },
+                "source": {
+                    "description": "来自哪个prometheusrule",
+                    "type": "string"
+                },
                 "state": {
                     "description": "状态",
                     "type": "string"
@@ -28819,6 +28671,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "namespace": {
+                    "type": "string"
+                },
+                "source": {
+                    "description": "来自哪个alertmanagerconfig",
                     "type": "string"
                 },
                 "webhookConfigs": {
@@ -29026,11 +28882,17 @@ const docTemplate = `{
                 "objectMeta": {
                     "$ref": "#/definitions/v1.ObjectMeta"
                 },
+                "ping": {
+                    "type": "boolean"
+                },
                 "pods": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/rollout.PodInfo"
                     }
+                },
+                "pong": {
+                    "type": "boolean"
                 },
                 "preview": {
                     "type": "boolean"
@@ -29205,6 +29067,52 @@ const docTemplate = `{
                 }
             }
         },
+        "statistics.ClusterPodResourceStatistics": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "$ref": "#/definitions/v1.ResourceList"
+                },
+                "request": {
+                    "$ref": "#/definitions/v1.ResourceList"
+                }
+            }
+        },
+        "statistics.ClusterResourceStatistics": {
+            "type": "object",
+            "properties": {
+                "allocated": {
+                    "description": "集群下的资源分配总量",
+                    "$ref": "#/definitions/v1.ResourceList"
+                },
+                "capacity": {
+                    "description": "集群资源的总容量，即物理资源总量",
+                    "$ref": "#/definitions/v1.ResourceList"
+                },
+                "free": {
+                    "description": "集群资源的真实剩余量",
+                    "$ref": "#/definitions/v1.ResourceList"
+                },
+                "podResourceStats": {
+                    "description": "pod资源统计",
+                    "$ref": "#/definitions/statistics.ClusterPodResourceStatistics"
+                },
+                "tenantAllocated": {
+                    "description": "集群下的租户资源分配总量",
+                    "$ref": "#/definitions/v1.ResourceList"
+                },
+                "used": {
+                    "description": "集群资源的真实使用量",
+                    "$ref": "#/definitions/v1.ResourceList"
+                }
+            }
+        },
+        "statistics.ClusterWorkloadStatistics": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "integer"
+            }
+        },
         "tenanthandler.tenantStatisticsData": {
             "type": "object",
             "properties": {
@@ -29267,33 +29175,6 @@ const docTemplate = `{
                     "description": "The bool value.",
                     "type": "boolean"
                 }
-            }
-        },
-        "types.ClusterResourceStatistics": {
-            "type": "object",
-            "properties": {
-                "allocated": {
-                    "description": "集群下的资源分配总量",
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
-                "capacity": {
-                    "description": "集群资源的总容量，即物理资源总量",
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
-                "tenantAllocated": {
-                    "description": "集群下的租户资源分配总量",
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
-                "used": {
-                    "description": "集群资源的真实使用量",
-                    "$ref": "#/definitions/v1.ResourceList"
-                }
-            }
-        },
-        "types.ClusterWorkloadStatistics": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "integer"
             }
         },
         "types.Duration": {
@@ -29755,14 +29636,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "args": {
-                    "description": "Arguments to the entrypoint.\nThe docker image's CMD is used if this is not provided.\nVariable references $(VAR_NAME) are expanded using the container's environment. If a variable\ncannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax\ncan be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,\nregardless of whether the variable exists or not.\nCannot be updated.\nMore info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell\n+optional",
+                    "description": "Arguments to the entrypoint.\nThe docker image's CMD is used if this is not provided.\nVariable references $(VAR_NAME) are expanded using the container's environment. If a variable\ncannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced\nto a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will\nproduce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless\nof whether the variable exists or not. Cannot be updated.\nMore info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell\n+optional",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "command": {
-                    "description": "Entrypoint array. Not executed within a shell.\nThe docker image's ENTRYPOINT is used if this is not provided.\nVariable references $(VAR_NAME) are expanded using the container's environment. If a variable\ncannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax\ncan be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,\nregardless of whether the variable exists or not.\nCannot be updated.\nMore info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell\n+optional",
+                    "description": "Entrypoint array. Not executed within a shell.\nThe docker image's ENTRYPOINT is used if this is not provided.\nVariable references $(VAR_NAME) are expanded using the container's environment. If a variable\ncannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced\nto a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will\nproduce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless\nof whether the variable exists or not. Cannot be updated.\nMore info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell\n+optional",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -29818,7 +29699,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1.ResourceRequirements"
                 },
                 "securityContext": {
-                    "description": "Security options the pod should run with.\nMore info: https://kubernetes.io/docs/concepts/policy/security-context/\nMore info: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/\n+optional",
+                    "description": "SecurityContext defines the security options the container should be run with.\nIf set, the fields of SecurityContext override the equivalent fields of PodSecurityContext.\nMore info: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/\n+optional",
                     "$ref": "#/definitions/v1.SecurityContext"
                 },
                 "startupProbe": {
@@ -29869,7 +29750,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "names": {
-                    "description": "Names by which this image is known.\ne.g. [\"k8s.gcr.io/hyperkube:v1.0.7\", \"dockerhub.io/google_containers/hyperkube:v1.0.7\"]",
+                    "description": "Names by which this image is known.\ne.g. [\"k8s.gcr.io/hyperkube:v1.0.7\", \"dockerhub.io/google_containers/hyperkube:v1.0.7\"]\n+optional",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -29986,7 +29867,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "image": {
-                    "description": "The image the container is running.\nMore info: https://kubernetes.io/docs/concepts/containers/images\nTODO(dchen1107): Which image the container is running with?",
+                    "description": "The image the container is running.\nMore info: https://kubernetes.io/docs/concepts/containers/images.",
                     "type": "string"
                 },
                 "imageID": {
@@ -30006,7 +29887,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "restartCount": {
-                    "description": "The number of times the container has been restarted, currently based on\nthe number of dead containers that have not yet been removed.\nNote that this is calculated from dead containers. But those containers are subject to\ngarbage collection. This value will get capped at 5 by GC.",
+                    "description": "The number of times the container has been restarted.",
                     "type": "integer"
                 },
                 "started": {
@@ -30144,7 +30025,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {
-                    "description": "Variable references $(VAR_NAME) are expanded\nusing the previous defined environment variables in the container and\nany service environment variables. If a variable cannot be resolved,\nthe reference in the input string will be unchanged. The $(VAR_NAME)\nsyntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped\nreferences will never be expanded, regardless of whether the variable\nexists or not.\nDefaults to \"\".\n+optional",
+                    "description": "Variable references $(VAR_NAME) are expanded\nusing the previously defined environment variables in the container and\nany service environment variables. If a variable cannot be resolved,\nthe reference in the input string will be unchanged. Double $$ are reduced\nto a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.\n\"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\".\nEscaped references will never be expanded, regardless of whether the variable\nexists or not.\nDefaults to \"\".\n+optional",
                     "type": "string"
                 },
                 "valueFrom": {
@@ -30178,14 +30059,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "args": {
-                    "description": "Arguments to the entrypoint.\nThe docker image's CMD is used if this is not provided.\nVariable references $(VAR_NAME) are expanded using the container's environment. If a variable\ncannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax\ncan be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,\nregardless of whether the variable exists or not.\nCannot be updated.\nMore info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell\n+optional",
+                    "description": "Arguments to the entrypoint.\nThe docker image's CMD is used if this is not provided.\nVariable references $(VAR_NAME) are expanded using the container's environment. If a variable\ncannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced\nto a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will\nproduce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless\nof whether the variable exists or not. Cannot be updated.\nMore info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell\n+optional",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "command": {
-                    "description": "Entrypoint array. Not executed within a shell.\nThe docker image's ENTRYPOINT is used if this is not provided.\nVariable references $(VAR_NAME) are expanded using the container's environment. If a variable\ncannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax\ncan be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,\nregardless of whether the variable exists or not.\nCannot be updated.\nMore info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell\n+optional",
+                    "description": "Entrypoint array. Not executed within a shell.\nThe docker image's ENTRYPOINT is used if this is not provided.\nVariable references $(VAR_NAME) are expanded using the container's environment. If a variable\ncannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced\nto a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will\nproduce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless\nof whether the variable exists or not. Cannot be updated.\nMore info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell\n+optional",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -30226,7 +30107,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "ports": {
-                    "description": "Ports are not allowed for ephemeral containers.",
+                    "description": "Ports are not allowed for ephemeral containers.\n+optional\n+patchMergeKey=containerPort\n+patchStrategy=merge\n+listType=map\n+listMapKey=containerPort\n+listMapKey=protocol",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1.ContainerPort"
@@ -30241,7 +30122,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1.ResourceRequirements"
                 },
                 "securityContext": {
-                    "description": "SecurityContext is not allowed for ephemeral containers.\n+optional",
+                    "description": "Optional: SecurityContext defines the security options the ephemeral container should be run with.\nIf set, the fields of SecurityContext override the equivalent fields of PodSecurityContext.\n+optional",
                     "$ref": "#/definitions/v1.SecurityContext"
                 },
                 "startupProbe": {
@@ -30257,7 +30138,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "targetContainerName": {
-                    "description": "If set, the name of the container from PodSpec that this ephemeral container targets.\nThe ephemeral container will be run in the namespaces (IPC, PID, etc) of this container.\nIf not set then the ephemeral container is run in whatever namespaces are shared\nfor the pod. Note that the container runtime must support this feature.\n+optional",
+                    "description": "If set, the name of the container from PodSpec that this ephemeral container targets.\nThe ephemeral container will be run in the namespaces (IPC, PID, etc) of this container.\nIf not set then the ephemeral container uses the namespaces configured in the Pod spec.\n\nThe container runtime must implement support for this feature. If the runtime does not\nsupport namespace targeting then the result of setting this field is undefined.\n+optional",
                     "type": "string"
                 },
                 "terminationMessagePath": {
@@ -30280,7 +30161,7 @@ const docTemplate = `{
                     }
                 },
                 "volumeMounts": {
-                    "description": "Pod volumes to mount into the container's filesystem.\nCannot be updated.\n+optional\n+patchMergeKey=mountPath\n+patchStrategy=merge",
+                    "description": "Pod volumes to mount into the container's filesystem. Subpath mounts are not allowed for ephemeral containers.\nCannot be updated.\n+optional\n+patchMergeKey=mountPath\n+patchStrategy=merge",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1.VolumeMount"
@@ -30409,6 +30290,19 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.GRPCAction": {
+            "type": "object",
+            "properties": {
+                "port": {
+                    "description": "Port number of the gRPC service. Number must be in the range 1 to 65535.",
+                    "type": "integer"
+                },
+                "service": {
+                    "description": "Service is the name of the service to place in the gRPC HealthCheckRequest\n(see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).\n\nIf this is not specified, the default behavior is defined by gRPC.\n+optional\n+default=\"\"",
+                    "type": "string"
+                }
+            }
+        },
         "v1.GitRepoVolumeSource": {
             "type": "object",
             "properties": {
@@ -30481,23 +30375,6 @@ const docTemplate = `{
                 "value": {
                     "description": "The header field value",
                     "type": "string"
-                }
-            }
-        },
-        "v1.Handler": {
-            "type": "object",
-            "properties": {
-                "exec": {
-                    "description": "One and only one of the following should be specified.\nExec specifies the action to take.\n+optional",
-                    "$ref": "#/definitions/v1.ExecAction"
-                },
-                "httpGet": {
-                    "description": "HTTPGet specifies the http request to perform.\n+optional",
-                    "$ref": "#/definitions/v1.HTTPGetAction"
-                },
-                "tcpSocket": {
-                    "description": "TCPSocket specifies an action involving a TCP port.\nTCP hooks not yet supported\nTODO: implement a realistic TCP lifecycle hook\n+optional",
-                    "$ref": "#/definitions/v1.TCPSocketAction"
                 }
             }
         },
@@ -30605,7 +30482,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "completionMode": {
-                    "description": "CompletionMode specifies how Pod completions are tracked. It can be\n` + "`" + `NonIndexed` + "`" + ` (default) or ` + "`" + `Indexed` + "`" + `.\n\n` + "`" + `NonIndexed` + "`" + ` means that the Job is considered complete when there have\nbeen .spec.completions successfully completed Pods. Each Pod completion is\nhomologous to each other.\n\n` + "`" + `Indexed` + "`" + ` means that the Pods of a\nJob get an associated completion index from 0 to (.spec.completions - 1),\navailable in the annotation batch.kubernetes.io/job-completion-index.\nThe Job is considered complete when there is one successfully completed Pod\nfor each index.\nWhen value is ` + "`" + `Indexed` + "`" + `, .spec.completions must be specified and\n` + "`" + `.spec.parallelism` + "`" + ` must be less than or equal to 10^5.\n\nThis field is alpha-level and is only honored by servers that enable the\nIndexedJob feature gate. More completion modes can be added in the future.\nIf the Job controller observes a mode that it doesn't recognize, the\ncontroller skips updates for the Job.\n+optional",
+                    "description": "CompletionMode specifies how Pod completions are tracked. It can be\n` + "`" + `NonIndexed` + "`" + ` (default) or ` + "`" + `Indexed` + "`" + `.\n\n` + "`" + `NonIndexed` + "`" + ` means that the Job is considered complete when there have\nbeen .spec.completions successfully completed Pods. Each Pod completion is\nhomologous to each other.\n\n` + "`" + `Indexed` + "`" + ` means that the Pods of a\nJob get an associated completion index from 0 to (.spec.completions - 1),\navailable in the annotation batch.kubernetes.io/job-completion-index.\nThe Job is considered complete when there is one successfully completed Pod\nfor each index.\nWhen value is ` + "`" + `Indexed` + "`" + `, .spec.completions must be specified and\n` + "`" + `.spec.parallelism` + "`" + ` must be less than or equal to 10^5.\nIn addition, The Pod name takes the form\n` + "`" + `$(job-name)-$(index)-$(random-string)` + "`" + `,\nthe Pod hostname takes the form ` + "`" + `$(job-name)-$(index)` + "`" + `.\n\nThis field is beta-level. More completion modes can be added in the future.\nIf the Job controller observes a mode that it doesn't recognize, the\ncontroller skips updates for the Job.\n+optional",
                     "type": "string"
                 },
                 "completions": {
@@ -30625,7 +30502,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1.LabelSelector"
                 },
                 "suspend": {
-                    "description": "Suspend specifies whether the Job controller should create Pods or not. If\na Job is created with suspend set to true, no Pods are created by the Job\ncontroller. If a Job is suspended after creation (i.e. the flag goes from\nfalse to true), the Job controller will delete all active Pods associated\nwith this Job. Users must design their workload to gracefully handle this.\nSuspending a Job will reset the StartTime field of the Job, effectively\nresetting the ActiveDeadlineSeconds timer too. This is an alpha field and\nrequires the SuspendJob feature gate to be enabled; otherwise this field\nmay not be set to true. Defaults to false.\n+optional",
+                    "description": "Suspend specifies whether the Job controller should create Pods or not. If\na Job is created with suspend set to true, no Pods are created by the Job\ncontroller. If a Job is suspended after creation (i.e. the flag goes from\nfalse to true), the Job controller will delete all active Pods associated\nwith this Job. Users must design their workload to gracefully handle this.\nSuspending a Job will reset the StartTime field of the Job, effectively\nresetting the ActiveDeadlineSeconds timer too. Defaults to false.\n\nThis field is beta-level, gated by SuspendJob feature flag (enabled by\ndefault).\n\n+optional",
                     "type": "boolean"
                 },
                 "template": {
@@ -30633,7 +30510,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1.PodTemplateSpec"
                 },
                 "ttlSecondsAfterFinished": {
-                    "description": "ttlSecondsAfterFinished limits the lifetime of a Job that has finished\nexecution (either Complete or Failed). If this field is set,\nttlSecondsAfterFinished after the Job finishes, it is eligible to be\nautomatically deleted. When the Job is being deleted, its lifecycle\nguarantees (e.g. finalizers) will be honored. If this field is unset,\nthe Job won't be automatically deleted. If this field is set to zero,\nthe Job becomes eligible to be deleted immediately after it finishes.\nThis field is alpha-level and is only honored by servers that enable the\nTTLAfterFinished feature.\n+optional",
+                    "description": "ttlSecondsAfterFinished limits the lifetime of a Job that has finished\nexecution (either Complete or Failed). If this field is set,\nttlSecondsAfterFinished after the Job finishes, it is eligible to be\nautomatically deleted. When the Job is being deleted, its lifecycle\nguarantees (e.g. finalizers) will be honored. If this field is unset,\nthe Job won't be automatically deleted. If this field is set to zero,\nthe Job becomes eligible to be deleted immediately after it finishes.\n+optional",
                     "type": "integer"
                 }
             }
@@ -30699,11 +30576,28 @@ const docTemplate = `{
             "properties": {
                 "postStart": {
                     "description": "PostStart is called immediately after a container is created. If the handler fails,\nthe container is terminated and restarted according to its restart policy.\nOther management of the container blocks until the hook completes.\nMore info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks\n+optional",
-                    "$ref": "#/definitions/v1.Handler"
+                    "$ref": "#/definitions/v1.LifecycleHandler"
                 },
                 "preStop": {
-                    "description": "PreStop is called immediately before a container is terminated due to an\nAPI request or management event such as liveness/startup probe failure,\npreemption, resource contention, etc. The handler is not called if the\ncontainer crashes or exits. The reason for termination is passed to the\nhandler. The Pod's termination grace period countdown begins before the\nPreStop hooked is executed. Regardless of the outcome of the handler, the\ncontainer will eventually terminate within the Pod's termination grace\nperiod. Other management of the container blocks until the hook completes\nor until the termination grace period is reached.\nMore info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks\n+optional",
-                    "$ref": "#/definitions/v1.Handler"
+                    "description": "PreStop is called immediately before a container is terminated due to an\nAPI request or management event such as liveness/startup probe failure,\npreemption, resource contention, etc. The handler is not called if the\ncontainer crashes or exits. The Pod's termination grace period countdown begins before the\nPreStop hook is executed. Regardless of the outcome of the handler, the\ncontainer will eventually terminate within the Pod's termination grace\nperiod (unless delayed by finalizers). Other management of the container blocks until the hook completes\nor until the termination grace period is reached.\nMore info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks\n+optional",
+                    "$ref": "#/definitions/v1.LifecycleHandler"
+                }
+            }
+        },
+        "v1.LifecycleHandler": {
+            "type": "object",
+            "properties": {
+                "exec": {
+                    "description": "Exec specifies the action to take.\n+optional",
+                    "$ref": "#/definitions/v1.ExecAction"
+                },
+                "httpGet": {
+                    "description": "HTTPGet specifies the http request to perform.\n+optional",
+                    "$ref": "#/definitions/v1.HTTPGetAction"
+                },
+                "tcpSocket": {
+                    "description": "Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept\nfor the backward compatibility. There are no validation of this field and\nlifecycle hooks will fail in runtime when tcp handler is specified.\n+optional",
+                    "$ref": "#/definitions/v1.TCPSocketAction"
                 }
             }
         },
@@ -30769,6 +30663,10 @@ const docTemplate = `{
                 },
                 "operation": {
                     "description": "Operation is the type of operation which lead to this ManagedFieldsEntry being created.\nThe only valid values for this field are 'Apply' and 'Update'.",
+                    "type": "string"
+                },
+                "subresource": {
+                    "description": "Subresource is the name of the subresource used to update that object, or\nempty string if the object was updated through the main resource. The\nvalue of this field is used to distinguish between managers, even if they\nshare the same name. For example, a status update will be distinct from a\nregular update using the same manager name.\nNote that the APIVersion field is not related to the Subresource field and\nit always corresponds to the version of the main resource.",
                     "type": "string"
                 },
                 "time": {
@@ -31046,7 +30944,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "configSource": {
-                    "description": "If specified, the source to get node configuration from\nThe DynamicKubeletConfig feature gate must be enabled for the Kubelet to use this field\n+optional",
+                    "description": "Deprecated. If specified, the source of the node's configuration.\nThe DynamicKubeletConfig feature gate must be enabled for the Kubelet to use this field.\nThis field is deprecated as of 1.22: https://git.k8s.io/enhancements/keps/sig-node/281-dynamic-kubelet-configuration\n+optional",
                     "$ref": "#/definitions/v1.NodeConfigSource"
                 },
                 "externalID": {
@@ -31455,11 +31353,15 @@ const docTemplate = `{
                     }
                 },
                 "dataSource": {
-                    "description": "This field can be used to specify either:\n* An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot)\n* An existing PVC (PersistentVolumeClaim)\n* An existing custom resource that implements data population (Alpha)\nIn order to use custom resource types that implement data population,\nthe AnyVolumeDataSource feature gate must be enabled.\nIf the provisioner or an external controller can support the specified data source,\nit will create a new volume based on the contents of the specified data source.\n+optional",
+                    "description": "This field can be used to specify either:\n* An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot)\n* An existing PVC (PersistentVolumeClaim)\nIf the provisioner or an external controller can support the specified data source,\nit will create a new volume based on the contents of the specified data source.\nIf the AnyVolumeDataSource feature gate is enabled, this field will always have\nthe same contents as the DataSourceRef field.\n+optional",
+                    "$ref": "#/definitions/v1.TypedLocalObjectReference"
+                },
+                "dataSourceRef": {
+                    "description": "Specifies the object from which to populate the volume with data, if a non-empty\nvolume is desired. This may be any local object from a non-empty API group (non\ncore object) or a PersistentVolumeClaim object.\nWhen this field is specified, volume binding will only succeed if the type of\nthe specified object matches some installed volume populator or dynamic\nprovisioner.\nThis field will replace the functionality of the DataSource field and as such\nif both fields are non-empty, they must have the same value. For backwards\ncompatibility, both fields (DataSource and DataSourceRef) will be set to the same\nvalue automatically if one of them is empty and the other is non-empty.\nThere are two important differences between DataSource and DataSourceRef:\n* While DataSource only allows two specific types of objects, DataSourceRef\n  allows any non-core object, as well as PersistentVolumeClaim objects.\n* While DataSource ignores disallowed values (dropping them), DataSourceRef\n  preserves all values, and generates an error if a disallowed value is\n  specified.\n(Alpha) Using this field requires the AnyVolumeDataSource feature gate to be enabled.\n+optional",
                     "$ref": "#/definitions/v1.TypedLocalObjectReference"
                 },
                 "resources": {
-                    "description": "Resources represents the minimum resources the volume should have.\nMore info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources\n+optional",
+                    "description": "Resources represents the minimum resources the volume should have.\nIf RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements\nthat are lower than previous value but must still be higher than capacity recorded in the\nstatus field of the claim.\nMore info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources\n+optional",
                     "$ref": "#/definitions/v1.ResourceRequirements"
                 },
                 "selector": {
@@ -31490,6 +31392,10 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "allocatedResources": {
+                    "description": "The storage resource within AllocatedResources tracks the capacity allocated to a PVC. It may\nbe larger than the actual capacity when a volume expansion operation is requested.\nFor storage quota, the larger value from allocatedResources and PVC.spec.resources is used.\nIf allocatedResources is not set, PVC.spec.resources alone is used for quota calculation.\nIf a volume expansion capacity request is lowered, allocatedResources is only\nlowered if there are no expansion operations in progress and if the actual volume capacity\nis equal or lower than the requested capacity.\nThis is an alpha field and requires enabling RecoverVolumeExpansionFailure feature.\n+featureGate=RecoverVolumeExpansionFailure\n+optional",
+                    "$ref": "#/definitions/v1.ResourceList"
+                },
                 "capacity": {
                     "description": "Represents the actual resources of the underlying volume.\n+optional",
                     "$ref": "#/definitions/v1.ResourceList"
@@ -31503,6 +31409,10 @@ const docTemplate = `{
                 },
                 "phase": {
                     "description": "Phase represents the current phase of PersistentVolumeClaim.\n+optional",
+                    "type": "string"
+                },
+                "resizeStatus": {
+                    "description": "ResizeStatus stores status of resize operation.\nResizeStatus is not set by default but when expansion is complete resizeStatus is set to empty\nstring by resize controller or kubelet.\nThis is an alpha field and requires enabling RecoverVolumeExpansionFailure feature.\n+featureGate=RecoverVolumeExpansionFailure\n+optional",
                     "type": "string"
                 }
             }
@@ -31748,7 +31658,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1.LabelSelector"
                 },
                 "namespaceSelector": {
-                    "description": "A label query over the set of namespaces that the term applies to.\nThe term is applied to the union of the namespaces selected by this field\nand the ones listed in the namespaces field.\nnull selector and null or empty namespaces list means \"this pod's namespace\".\nAn empty selector ({}) matches all namespaces.\nThis field is alpha-level and is only honored when PodAffinityNamespaceSelector feature is enabled.\n+optional",
+                    "description": "A label query over the set of namespaces that the term applies to.\nThe term is applied to the union of the namespaces selected by this field\nand the ones listed in the namespaces field.\nnull selector and null or empty namespaces list means \"this pod's namespace\".\nAn empty selector ({}) matches all namespaces.\nThis field is beta-level and is only honored when PodAffinityNamespaceSelector feature is enabled.\n+optional",
                     "$ref": "#/definitions/v1.LabelSelector"
                 },
                 "namespaces": {
@@ -31860,6 +31770,15 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.PodOS": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Name is the name of the operating system. The currently supported values are linux and windows.\nAdditional value may be defined in future and can be one of:\nhttps://github.com/opencontainers/runtime-spec/blob/master/config.md#platform-specific-configuration\nClients should expect to handle additional values and treat unrecognized values in this field as os: null",
+                    "type": "string"
+                }
+            }
+        },
         "v1.PodReadinessGate": {
             "type": "object",
             "properties": {
@@ -31873,15 +31792,15 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "fsGroup": {
-                    "description": "A special supplemental group that applies to all containers in a pod.\nSome volume types allow the Kubelet to change the ownership of that volume\nto be owned by the pod:\n\n1. The owning GID will be the FSGroup\n2. The setgid bit is set (new files created in the volume will be owned by FSGroup)\n3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume.\n+optional",
+                    "description": "A special supplemental group that applies to all containers in a pod.\nSome volume types allow the Kubelet to change the ownership of that volume\nto be owned by the pod:\n\n1. The owning GID will be the FSGroup\n2. The setgid bit is set (new files created in the volume will be owned by FSGroup)\n3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "integer"
                 },
                 "fsGroupChangePolicy": {
-                    "description": "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume\nbefore being exposed inside Pod. This field will only apply to\nvolume types which support fsGroup based ownership(and permissions).\nIt will have no effect on ephemeral volume types such as: secret, configmaps\nand emptydir.\nValid values are \"OnRootMismatch\" and \"Always\". If not specified, \"Always\" is used.\n+optional",
+                    "description": "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume\nbefore being exposed inside Pod. This field will only apply to\nvolume types which support fsGroup based ownership(and permissions).\nIt will have no effect on ephemeral volume types such as: secret, configmaps\nand emptydir.\nValid values are \"OnRootMismatch\" and \"Always\". If not specified, \"Always\" is used.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "string"
                 },
                 "runAsGroup": {
-                    "description": "The GID to run the entrypoint of the container process.\nUses runtime default if unset.\nMay also be set in SecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence\nfor that container.\n+optional",
+                    "description": "The GID to run the entrypoint of the container process.\nUses runtime default if unset.\nMay also be set in SecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence\nfor that container.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "integer"
                 },
                 "runAsNonRoot": {
@@ -31889,33 +31808,33 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "runAsUser": {
-                    "description": "The UID to run the entrypoint of the container process.\nDefaults to user specified in image metadata if unspecified.\nMay also be set in SecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence\nfor that container.\n+optional",
+                    "description": "The UID to run the entrypoint of the container process.\nDefaults to user specified in image metadata if unspecified.\nMay also be set in SecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence\nfor that container.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "integer"
                 },
                 "seLinuxOptions": {
-                    "description": "The SELinux context to be applied to all containers.\nIf unspecified, the container runtime will allocate a random SELinux context for each\ncontainer.  May also be set in SecurityContext.  If set in\nboth SecurityContext and PodSecurityContext, the value specified in SecurityContext\ntakes precedence for that container.\n+optional",
+                    "description": "The SELinux context to be applied to all containers.\nIf unspecified, the container runtime will allocate a random SELinux context for each\ncontainer.  May also be set in SecurityContext.  If set in\nboth SecurityContext and PodSecurityContext, the value specified in SecurityContext\ntakes precedence for that container.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "$ref": "#/definitions/v1.SELinuxOptions"
                 },
                 "seccompProfile": {
-                    "description": "The seccomp options to use by the containers in this pod.\n+optional",
+                    "description": "The seccomp options to use by the containers in this pod.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "$ref": "#/definitions/v1.SeccompProfile"
                 },
                 "supplementalGroups": {
-                    "description": "A list of groups applied to the first process run in each container, in addition\nto the container's primary GID.  If unspecified, no groups will be added to\nany container.\n+optional",
+                    "description": "A list of groups applied to the first process run in each container, in addition\nto the container's primary GID.  If unspecified, no groups will be added to\nany container.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "array",
                     "items": {
                         "type": "integer"
                     }
                 },
                 "sysctls": {
-                    "description": "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported\nsysctls (by the container runtime) might fail to launch.\n+optional",
+                    "description": "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported\nsysctls (by the container runtime) might fail to launch.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1.Sysctl"
                     }
                 },
                 "windowsOptions": {
-                    "description": "The Windows specific settings applied to all containers.\nIf unspecified, the options within a container's SecurityContext will be used.\nIf set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.\n+optional",
+                    "description": "The Windows specific settings applied to all containers.\nIf unspecified, the options within a container's SecurityContext will be used.\nIf set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.\nNote that this field cannot be set when spec.os.name is linux.\n+optional",
                     "$ref": "#/definitions/v1.WindowsSecurityContextOptions"
                 }
             }
@@ -31955,7 +31874,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "ephemeralContainers": {
-                    "description": "List of ephemeral containers run in this pod. Ephemeral containers may be run in an existing\npod to perform user-initiated actions such as debugging. This list cannot be specified when\ncreating a pod, and it cannot be modified by updating the pod spec. In order to add an\nephemeral container to an existing pod, use the pod's ephemeralcontainers subresource.\nThis field is alpha-level and is only honored by servers that enable the EphemeralContainers feature.\n+optional\n+patchMergeKey=name\n+patchStrategy=merge",
+                    "description": "List of ephemeral containers run in this pod. Ephemeral containers may be run in an existing\npod to perform user-initiated actions such as debugging. This list cannot be specified when\ncreating a pod, and it cannot be modified by updating the pod spec. In order to add an\nephemeral container to an existing pod, use the pod's ephemeralcontainers subresource.\nThis field is beta-level and available on clusters that haven't disabled the EphemeralContainers feature gate.\n+optional\n+patchMergeKey=name\n+patchStrategy=merge",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1.EphemeralContainer"
@@ -32003,14 +31922,18 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "nodeSelector": {
-                    "description": "NodeSelector is a selector which must be true for the pod to fit on a node.\nSelector which must match a node's labels for the pod to be scheduled on that node.\nMore info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n+optional",
+                    "description": "NodeSelector is a selector which must be true for the pod to fit on a node.\nSelector which must match a node's labels for the pod to be scheduled on that node.\nMore info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n+optional\n+mapType=atomic",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
                 },
+                "os": {
+                    "description": "Specifies the OS of the containers in the pod.\nSome pod and container fields are restricted if this is set.\n\nIf the OS field is set to linux, the following fields must be unset:\n-securityContext.windowsOptions\n\nIf the OS field is set to windows, following fields must be unset:\n- spec.hostPID\n- spec.hostIPC\n- spec.securityContext.seLinuxOptions\n- spec.securityContext.seccompProfile\n- spec.securityContext.fsGroup\n- spec.securityContext.fsGroupChangePolicy\n- spec.securityContext.sysctls\n- spec.shareProcessNamespace\n- spec.securityContext.runAsUser\n- spec.securityContext.runAsGroup\n- spec.securityContext.supplementalGroups\n- spec.containers[*].securityContext.seLinuxOptions\n- spec.containers[*].securityContext.seccompProfile\n- spec.containers[*].securityContext.capabilities\n- spec.containers[*].securityContext.readOnlyRootFilesystem\n- spec.containers[*].securityContext.privileged\n- spec.containers[*].securityContext.allowPrivilegeEscalation\n- spec.containers[*].securityContext.procMount\n- spec.containers[*].securityContext.runAsUser\n- spec.containers[*].securityContext.runAsGroup\n+optional\nThis is an alpha field and requires the IdentifyPodOS feature",
+                    "$ref": "#/definitions/v1.PodOS"
+                },
                 "overhead": {
-                    "description": "Overhead represents the resource overhead associated with running a pod for a given RuntimeClass.\nThis field will be autopopulated at admission time by the RuntimeClass admission controller. If\nthe RuntimeClass admission controller is enabled, overhead must not be set in Pod create requests.\nThe RuntimeClass admission controller will reject Pod create requests which have the overhead already\nset. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value\ndefined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero.\nMore info: https://git.k8s.io/enhancements/keps/sig-node/20190226-pod-overhead.md\nThis field is alpha-level as of Kubernetes v1.16, and is only honored by servers that enable the PodOverhead feature.\n+optional",
+                    "description": "Overhead represents the resource overhead associated with running a pod for a given RuntimeClass.\nThis field will be autopopulated at admission time by the RuntimeClass admission controller. If\nthe RuntimeClass admission controller is enabled, overhead must not be set in Pod create requests.\nThe RuntimeClass admission controller will reject Pod create requests which have the overhead already\nset. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value\ndefined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero.\nMore info: https://git.k8s.io/enhancements/keps/sig-node/688-pod-overhead/README.md\nThis field is beta-level as of Kubernetes v1.18, and is only honored by servers that enable the PodOverhead feature.\n+optional",
                     "$ref": "#/definitions/v1.ResourceList"
                 },
                 "preemptionPolicy": {
@@ -32026,7 +31949,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "readinessGates": {
-                    "description": "If specified, all readiness gates will be evaluated for pod readiness.\nA pod is ready when all its containers are ready AND\nall conditions specified in the readiness gates have status equal to \"True\"\nMore info: https://git.k8s.io/enhancements/keps/sig-network/0007-pod-ready%2B%2B.md\n+optional",
+                    "description": "If specified, all readiness gates will be evaluated for pod readiness.\nA pod is ready when all its containers are ready AND\nall conditions specified in the readiness gates have status equal to \"True\"\nMore info: https://git.k8s.io/enhancements/keps/sig-network/580-pod-readiness-gates\n+optional",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1.PodReadinessGate"
@@ -32037,7 +31960,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "runtimeClassName": {
-                    "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used\nto run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run.\nIf unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an\nempty definition that uses the default runtime handler.\nMore info: https://git.k8s.io/enhancements/keps/sig-node/runtime-class.md\nThis is a beta feature as of Kubernetes v1.14.\n+optional",
+                    "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used\nto run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run.\nIf unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an\nempty definition that uses the default runtime handler.\nMore info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class\nThis is a beta feature as of Kubernetes v1.14.\n+optional",
                     "type": "string"
                 },
                 "schedulerName": {
@@ -32113,7 +32036,7 @@ const docTemplate = `{
                     }
                 },
                 "ephemeralContainerStatuses": {
-                    "description": "Status for any ephemeral containers that have run in this pod.\nThis field is alpha-level and is only populated by servers that enable the EphemeralContainers feature.\n+optional",
+                    "description": "Status for any ephemeral containers that have run in this pod.\nThis field is beta-level and available on clusters that haven't disabled the EphemeralContainers feature gate.\n+optional",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1.ContainerStatus"
@@ -32306,12 +32229,16 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "exec": {
-                    "description": "One and only one of the following should be specified.\nExec specifies the action to take.\n+optional",
+                    "description": "Exec specifies the action to take.\n+optional",
                     "$ref": "#/definitions/v1.ExecAction"
                 },
                 "failureThreshold": {
                     "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 3. Minimum value is 1.\n+optional",
                     "type": "integer"
+                },
+                "grpc": {
+                    "description": "GRPC specifies an action involving a GRPC port.\nThis is an alpha field and requires enabling GRPCContainerProbe feature gate.\n+featureGate=GRPCContainerProbe\n+optional",
+                    "$ref": "#/definitions/v1.GRPCAction"
                 },
                 "httpGet": {
                     "description": "HTTPGet specifies the http request to perform.\n+optional",
@@ -32330,11 +32257,11 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "tcpSocket": {
-                    "description": "TCPSocket specifies an action involving a TCP port.\nTCP hooks not yet supported\nTODO: implement a realistic TCP lifecycle hook\n+optional",
+                    "description": "TCPSocket specifies an action involving a TCP port.\n+optional",
                     "$ref": "#/definitions/v1.TCPSocketAction"
                 },
                 "terminationGracePeriodSeconds": {
-                    "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure.\nThe grace period is the duration in seconds after the processes running in the pod are sent\na termination signal and the time when the processes are forcibly halted with a kill signal.\nSet this value longer than the expected cleanup time for your process.\nIf this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this\nvalue overrides the value provided by the pod spec.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down).\nThis is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate.\n+optional",
+                    "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure.\nThe grace period is the duration in seconds after the processes running in the pod are sent\na termination signal and the time when the processes are forcibly halted with a kill signal.\nSet this value longer than the expected cleanup time for your process.\nIf this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this\nvalue overrides the value provided by the pod spec.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down).\nThis is a beta field and requires enabling ProbeTerminationGracePeriod feature gate.\nMinimum value is 1. spec.terminationGracePeriodSeconds is used if unset.\n+optional",
                     "type": "integer"
                 },
                 "timeoutSeconds": {
@@ -32706,7 +32633,7 @@ const docTemplate = `{
                     }
                 },
                 "type": {
-                    "description": "Used to facilitate programmatic handling of secret data.\n+optional",
+                    "description": "Used to facilitate programmatic handling of secret data.\nMore info: https://kubernetes.io/docs/concepts/configuration/secret/#secret-types\n+optional",
                     "type": "string"
                 },
                 "uid": {
@@ -32806,27 +32733,27 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "allowPrivilegeEscalation": {
-                    "description": "AllowPrivilegeEscalation controls whether a process can gain more\nprivileges than its parent process. This bool directly controls if\nthe no_new_privs flag will be set on the container process.\nAllowPrivilegeEscalation is true always when the container is:\n1) run as Privileged\n2) has CAP_SYS_ADMIN\n+optional",
+                    "description": "AllowPrivilegeEscalation controls whether a process can gain more\nprivileges than its parent process. This bool directly controls if\nthe no_new_privs flag will be set on the container process.\nAllowPrivilegeEscalation is true always when the container is:\n1) run as Privileged\n2) has CAP_SYS_ADMIN\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "boolean"
                 },
                 "capabilities": {
-                    "description": "The capabilities to add/drop when running containers.\nDefaults to the default set of capabilities granted by the container runtime.\n+optional",
+                    "description": "The capabilities to add/drop when running containers.\nDefaults to the default set of capabilities granted by the container runtime.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "$ref": "#/definitions/v1.Capabilities"
                 },
                 "privileged": {
-                    "description": "Run container in privileged mode.\nProcesses in privileged containers are essentially equivalent to root on the host.\nDefaults to false.\n+optional",
+                    "description": "Run container in privileged mode.\nProcesses in privileged containers are essentially equivalent to root on the host.\nDefaults to false.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "boolean"
                 },
                 "procMount": {
-                    "description": "procMount denotes the type of proc mount to use for the containers.\nThe default is DefaultProcMount which uses the container runtime defaults for\nreadonly paths and masked paths.\nThis requires the ProcMountType feature flag to be enabled.\n+optional",
+                    "description": "procMount denotes the type of proc mount to use for the containers.\nThe default is DefaultProcMount which uses the container runtime defaults for\nreadonly paths and masked paths.\nThis requires the ProcMountType feature flag to be enabled.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "string"
                 },
                 "readOnlyRootFilesystem": {
-                    "description": "Whether this container has a read-only root filesystem.\nDefault is false.\n+optional",
+                    "description": "Whether this container has a read-only root filesystem.\nDefault is false.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "boolean"
                 },
                 "runAsGroup": {
-                    "description": "The GID to run the entrypoint of the container process.\nUses runtime default if unset.\nMay also be set in PodSecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence.\n+optional",
+                    "description": "The GID to run the entrypoint of the container process.\nUses runtime default if unset.\nMay also be set in PodSecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "integer"
                 },
                 "runAsNonRoot": {
@@ -32834,19 +32761,19 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "runAsUser": {
-                    "description": "The UID to run the entrypoint of the container process.\nDefaults to user specified in image metadata if unspecified.\nMay also be set in PodSecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence.\n+optional",
+                    "description": "The UID to run the entrypoint of the container process.\nDefaults to user specified in image metadata if unspecified.\nMay also be set in PodSecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "type": "integer"
                 },
                 "seLinuxOptions": {
-                    "description": "The SELinux context to be applied to the container.\nIf unspecified, the container runtime will allocate a random SELinux context for each\ncontainer.  May also be set in PodSecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence.\n+optional",
+                    "description": "The SELinux context to be applied to the container.\nIf unspecified, the container runtime will allocate a random SELinux context for each\ncontainer.  May also be set in PodSecurityContext.  If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "$ref": "#/definitions/v1.SELinuxOptions"
                 },
                 "seccompProfile": {
-                    "description": "The seccomp options to use by this container. If seccomp options are\nprovided at both the pod \u0026 container level, the container options\noverride the pod options.\n+optional",
+                    "description": "The seccomp options to use by this container. If seccomp options are\nprovided at both the pod \u0026 container level, the container options\noverride the pod options.\nNote that this field cannot be set when spec.os.name is windows.\n+optional",
                     "$ref": "#/definitions/v1.SeccompProfile"
                 },
                 "windowsOptions": {
-                    "description": "The Windows specific settings applied to all containers.\nIf unspecified, the options from the PodSecurityContext will be used.\nIf set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.\n+optional",
+                    "description": "The Windows specific settings applied to all containers.\nIf unspecified, the options from the PodSecurityContext will be used.\nIf set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.\nNote that this field cannot be set when spec.os.name is linux.\n+optional",
                     "$ref": "#/definitions/v1.WindowsSecurityContextOptions"
                 }
             }
@@ -32972,7 +32899,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "appProtocol": {
-                    "description": "The application protocol for this port.\nThis field follows standard Kubernetes label syntax.\nUn-prefixed names are reserved for IANA standard service names (as per\nRFC-6335 and http://www.iana.org/assignments/service-names).\nNon-standard protocols should use prefixed names such as\nmycompany.com/my-custom-protocol.\nThis is a beta field that is guarded by the ServiceAppProtocol feature\ngate and enabled by default.\n+optional",
+                    "description": "The application protocol for this port.\nThis field follows standard Kubernetes label syntax.\nUn-prefixed names are reserved for IANA standard service names (as per\nRFC-6335 and http://www.iana.org/assignments/service-names).\nNon-standard protocols should use prefixed names such as\nmycompany.com/my-custom-protocol.\n+optional",
                     "type": "string"
                 },
                 "name": {
@@ -33001,7 +32928,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "allocateLoadBalancerNodePorts": {
-                    "description": "allocateLoadBalancerNodePorts defines if NodePorts will be automatically\nallocated for services with type LoadBalancer.  Default is \"true\". It may be\nset to \"false\" if the cluster load-balancer does not rely on NodePorts.\nallocateLoadBalancerNodePorts may only be set for services with type LoadBalancer\nand will be cleared if the type is changed to any other type.\nThis field is alpha-level and is only honored by servers that enable the ServiceLBNodePortControl feature.\n+optional",
+                    "description": "allocateLoadBalancerNodePorts defines if NodePorts will be automatically\nallocated for services with type LoadBalancer.  Default is \"true\". It\nmay be set to \"false\" if the cluster load-balancer does not rely on\nNodePorts.  If the caller requests specific NodePorts (by specifying a\nvalue), those requests will be respected, regardless of this field.\nThis field may only be set for services with type LoadBalancer and will\nbe cleared if the type is changed to any other type.\nThis field is beta-level and is only honored by servers that enable the ServiceLBNodePortControl feature.\n+featureGate=ServiceLBNodePortControl\n+optional",
                     "type": "boolean"
                 },
                 "clusterIP": {
@@ -33009,7 +32936,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "clusterIPs": {
-                    "description": "ClusterIPs is a list of IP addresses assigned to this service, and are\nusually assigned randomly.  If an address is specified manually, is\nin-range (as per system configuration), and is not in use, it will be\nallocated to the service; otherwise creation of the service will fail.\nThis field may not be changed through updates unless the type field is\nalso being changed to ExternalName (which requires this field to be\nempty) or the type field is being changed from ExternalName (in which\ncase this field may optionally be specified, as describe above).  Valid\nvalues are \"None\", empty string (\"\"), or a valid IP address.  Setting\nthis to \"None\" makes a \"headless service\" (no virtual IP), which is\nuseful when direct endpoint connections are preferred and proxying is\nnot required.  Only applies to types ClusterIP, NodePort, and\nLoadBalancer. If this field is specified when creating a Service of type\nExternalName, creation will fail. This field will be wiped when updating\na Service to type ExternalName.  If this field is not specified, it will\nbe initialized from the clusterIP field.  If this field is specified,\nclients must ensure that clusterIPs[0] and clusterIP have the same\nvalue.\n\nUnless the \"IPv6DualStack\" feature gate is enabled, this field is\nlimited to one value, which must be the same as the clusterIP field.  If\nthe feature gate is enabled, this field may hold a maximum of two\nentries (dual-stack IPs, in either order).  These IPs must correspond to\nthe values of the ipFamilies field. Both clusterIPs and ipFamilies are\ngoverned by the ipFamilyPolicy field.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies\n+listType=atomic\n+optional",
+                    "description": "ClusterIPs is a list of IP addresses assigned to this service, and are\nusually assigned randomly.  If an address is specified manually, is\nin-range (as per system configuration), and is not in use, it will be\nallocated to the service; otherwise creation of the service will fail.\nThis field may not be changed through updates unless the type field is\nalso being changed to ExternalName (which requires this field to be\nempty) or the type field is being changed from ExternalName (in which\ncase this field may optionally be specified, as describe above).  Valid\nvalues are \"None\", empty string (\"\"), or a valid IP address.  Setting\nthis to \"None\" makes a \"headless service\" (no virtual IP), which is\nuseful when direct endpoint connections are preferred and proxying is\nnot required.  Only applies to types ClusterIP, NodePort, and\nLoadBalancer. If this field is specified when creating a Service of type\nExternalName, creation will fail. This field will be wiped when updating\na Service to type ExternalName.  If this field is not specified, it will\nbe initialized from the clusterIP field.  If this field is specified,\nclients must ensure that clusterIPs[0] and clusterIP have the same\nvalue.\n\nThis field may hold a maximum of two entries (dual-stack IPs, in either order).\nThese IPs must correspond to the values of the ipFamilies field. Both\nclusterIPs and ipFamilies are governed by the ipFamilyPolicy field.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies\n+listType=atomic\n+optional",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -33039,14 +32966,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "ipFamilies": {
-                    "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this\nservice, and is gated by the \"IPv6DualStack\" feature gate.  This field\nis usually assigned automatically based on cluster configuration and the\nipFamilyPolicy field. If this field is specified manually, the requested\nfamily is available in the cluster, and ipFamilyPolicy allows it, it\nwill be used; otherwise creation of the service will fail.  This field\nis conditionally mutable: it allows for adding or removing a secondary\nIP family, but it does not allow changing the primary IP family of the\nService.  Valid values are \"IPv4\" and \"IPv6\".  This field only applies\nto Services of types ClusterIP, NodePort, and LoadBalancer, and does\napply to \"headless\" services.  This field will be wiped when updating a\nService to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in\neither order).  These families must correspond to the values of the\nclusterIPs field, if specified. Both clusterIPs and ipFamilies are\ngoverned by the ipFamilyPolicy field.\n+listType=atomic\n+optional",
+                    "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this\nservice. This field is usually assigned automatically based on cluster\nconfiguration and the ipFamilyPolicy field. If this field is specified\nmanually, the requested family is available in the cluster,\nand ipFamilyPolicy allows it, it will be used; otherwise creation of\nthe service will fail. This field is conditionally mutable: it allows\nfor adding or removing a secondary IP family, but it does not allow\nchanging the primary IP family of the Service. Valid values are \"IPv4\"\nand \"IPv6\".  This field only applies to Services of types ClusterIP,\nNodePort, and LoadBalancer, and does apply to \"headless\" services.\nThis field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in\neither order).  These families must correspond to the values of the\nclusterIPs field, if specified. Both clusterIPs and ipFamilies are\ngoverned by the ipFamilyPolicy field.\n+listType=atomic\n+optional",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "ipFamilyPolicy": {
-                    "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by\nthis Service, and is gated by the \"IPv6DualStack\" feature gate.  If\nthere is no value provided, then this field will be set to SingleStack.\nServices can be \"SingleStack\" (a single IP family), \"PreferDualStack\"\n(two IP families on dual-stack configured clusters or a single IP family\non single-stack clusters), or \"RequireDualStack\" (two IP families on\ndual-stack configured clusters, otherwise fail). The ipFamilies and\nclusterIPs fields depend on the value of this field.  This field will be\nwiped when updating a service to type ExternalName.\n+optional",
+                    "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by\nthis Service. If there is no value provided, then this field will be set\nto SingleStack. Services can be \"SingleStack\" (a single IP family),\n\"PreferDualStack\" (two IP families on dual-stack configured clusters or\na single IP family on single-stack clusters), or \"RequireDualStack\"\n(two IP families on dual-stack configured clusters, otherwise fail). The\nipFamilies and clusterIPs fields depend on the value of this field. This\nfield will be wiped when updating a service to type ExternalName.\n+optional",
                     "type": "string"
                 },
                 "loadBalancerClass": {
@@ -33058,7 +32985,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "loadBalancerSourceRanges": {
-                    "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider\nload-balancer will be restricted to the specified client IPs. This field will be ignored if the\ncloud-provider does not support the feature.\"\nMore info: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/\n+optional",
+                    "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider\nload-balancer will be restricted to the specified client IPs. This field will be ignored if the\ncloud-provider does not support the feature.\"\nMore info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/\n+optional",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -33076,7 +33003,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "selector": {
-                    "description": "Route service traffic to pods with label keys and values matching this\nselector. If empty or not present, the service is assumed to have an\nexternal process managing its endpoints, which Kubernetes will not\nmodify. Only applies to types ClusterIP, NodePort, and LoadBalancer.\nIgnored if type is ExternalName.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/\n+optional",
+                    "description": "Route service traffic to pods with label keys and values matching this\nselector. If empty or not present, the service is assumed to have an\nexternal process managing its endpoints, which Kubernetes will not\nmodify. Only applies to types ClusterIP, NodePort, and LoadBalancer.\nIgnored if type is ExternalName.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/\n+optional\n+mapType=atomic",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
@@ -33089,13 +33016,6 @@ const docTemplate = `{
                 "sessionAffinityConfig": {
                     "description": "sessionAffinityConfig contains the configurations of session affinity.\n+optional",
                     "$ref": "#/definitions/v1.SessionAffinityConfig"
-                },
-                "topologyKeys": {
-                    "description": "topologyKeys is a preference-order list of topology keys which\nimplementations of services should use to preferentially sort endpoints\nwhen accessing this Service, it can not be used at the same time as\nexternalTrafficPolicy=Local.\nTopology keys must be valid label keys and at most 16 keys may be specified.\nEndpoints are chosen based on the first topology key with available backends.\nIf this field is specified and all entries have no backends that match\nthe topology of the client, the service has no backends for that client\nand connections should fail.\nThe special value \"*\" may be used to mean \"any topology\". This catch-all\nvalue, if used, only makes sense as the last value in the list.\nIf this is not specified or empty, no topology constraints will be applied.\nThis field is alpha-level and is only honored by servers that enable the ServiceTopology feature.\nThis field is deprecated and will be removed in a future version.\n+optional",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 },
                 "type": {
                     "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid\noptions are ExternalName, ClusterIP, NodePort, and LoadBalancer.\n\"ClusterIP\" allocates a cluster-internal IP address for load-balancing\nto endpoints. Endpoints are determined by the selector or if that is not\nspecified, by manual construction of an Endpoints object or\nEndpointSlice objects. If clusterIP is \"None\", no virtual IP is\nallocated and the endpoints are published as a set of endpoints rather\nthan a virtual IP.\n\"NodePort\" builds on ClusterIP and allocates a port on every node which\nroutes to the same endpoints as the clusterIP.\n\"LoadBalancer\" builds on NodePort and creates an external load-balancer\n(if supported in the current cloud) which routes to the same endpoints\nas the clusterIP.\n\"ExternalName\" aliases this service to the specified externalName.\nSeveral other fields do not apply to ExternalName services.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types\n+optional",
@@ -33241,7 +33161,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "whenUnsatisfiable": {
-                    "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy\nthe spread constraint.\n- DoNotSchedule (default) tells the scheduler not to schedule it.\n- ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod\nif and only if every possible node assigment for that pod would violate\n\"MaxSkew\" on some topology.\nFor example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same\nlabelSelector spread as 3/1/1:\n+-------+-------+-------+\n| zone1 | zone2 | zone3 |\n+-------+-------+-------+\n| P P P |   P   |   P   |\n+-------+-------+-------+\nIf WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled\nto zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies\nMaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler\nwon't make it *more* imbalanced.\nIt's a required field.",
+                    "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy\nthe spread constraint.\n- DoNotSchedule (default) tells the scheduler not to schedule it.\n- ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod\nif and only if every possible node assignment for that pod would violate\n\"MaxSkew\" on some topology.\nFor example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same\nlabelSelector spread as 3/1/1:\n+-------+-------+-------+\n| zone1 | zone2 | zone3 |\n+-------+-------+-------+\n| P P P |   P   |   P   |\n+-------+-------+-------+\nIf WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled\nto zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies\nMaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler\nwon't make it *more* imbalanced.\nIt's a required field.",
                     "type": "string"
                 }
             }
@@ -33303,7 +33223,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1.EmptyDirVolumeSource"
                 },
                 "ephemeral": {
-                    "description": "Ephemeral represents a volume that is handled by a cluster storage driver.\nThe volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts,\nand deleted when the pod is removed.\n\nUse this if:\na) the volume is only needed while the pod runs,\nb) features of normal volumes like restoring from snapshot or capacity\n   tracking are needed,\nc) the storage driver is specified through a storage class, and\nd) the storage driver supports dynamic volume provisioning through\n   a PersistentVolumeClaim (see EphemeralVolumeSource for more\n   information on the connection between this volume type\n   and PersistentVolumeClaim).\n\nUse PersistentVolumeClaim or one of the vendor-specific\nAPIs for volumes that persist for longer than the lifecycle\nof an individual pod.\n\nUse CSI for light-weight local ephemeral volumes if the CSI driver is meant to\nbe used that way - see the documentation of the driver for\nmore information.\n\nA pod can use both types of ephemeral volumes and\npersistent volumes at the same time.\n\nThis is a beta feature and only available when the GenericEphemeralVolume\nfeature gate is enabled.\n\n+optional",
+                    "description": "Ephemeral represents a volume that is handled by a cluster storage driver.\nThe volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts,\nand deleted when the pod is removed.\n\nUse this if:\na) the volume is only needed while the pod runs,\nb) features of normal volumes like restoring from snapshot or capacity\n   tracking are needed,\nc) the storage driver is specified through a storage class, and\nd) the storage driver supports dynamic volume provisioning through\n   a PersistentVolumeClaim (see EphemeralVolumeSource for more\n   information on the connection between this volume type\n   and PersistentVolumeClaim).\n\nUse PersistentVolumeClaim or one of the vendor-specific\nAPIs for volumes that persist for longer than the lifecycle\nof an individual pod.\n\nUse CSI for light-weight local ephemeral volumes if the CSI driver is meant to\nbe used that way - see the documentation of the driver for\nmore information.\n\nA pod can use both types of ephemeral volumes and\npersistent volumes at the same time.\n\n+optional",
                     "$ref": "#/definitions/v1.EphemeralVolumeSource"
                 },
                 "fc": {
@@ -33660,6 +33580,10 @@ const docTemplate = `{
                     "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.\n+optional",
                     "type": "string"
                 },
+                "hostProcess": {
+                    "description": "HostProcess determines if a container should be run as a 'Host Process' container.\nThis field is alpha-level and will only be honored by components that enable the\nWindowsHostProcessContainers feature flag. Setting this field without the feature\nflag will result in errors when validating the Pod. All of a Pod's containers must\nhave the same effective HostProcess value (it is not allowed to have a mix of HostProcess\ncontainers and non-HostProcess containers).  In addition, if HostProcess is true\nthen HostNetwork must also be set to true.\n+optional",
+                    "type": "boolean"
+                },
                 "runAsUserName": {
                     "description": "The UserName in Windows to run the entrypoint of the container process.\nDefaults to the user specified in image metadata if unspecified.\nMay also be set in PodSecurityContext. If set in both SecurityContext and\nPodSecurityContext, the value specified in SecurityContext takes precedence.\n+optional",
                     "type": "string"
@@ -33684,6 +33608,10 @@ const docTemplate = `{
                 "servicePort": {
                     "description": "ServicePort refers to the port that the Ingress action should route traffic to",
                     "type": "integer"
+                },
+                "stickinessConfig": {
+                    "description": "AdditionalForwardConfig allows to specify further settings on the ForwaredConfig\n+optional",
+                    "$ref": "#/definitions/v1alpha1.StickinessConfig"
                 }
             }
         },
@@ -33968,6 +33896,20 @@ const docTemplate = `{
                         "$ref": "#/definitions/v1alpha1.Argument"
                     }
                 },
+                "dryRun": {
+                    "description": "DryRun object contains the settings for running the analysis in Dry-Run mode\n+patchMergeKey=metricName\n+patchStrategy=merge\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.DryRun"
+                    }
+                },
+                "measurementRetention": {
+                    "description": "MeasurementRetention object contains the settings for retaining the number of measurements during the analysis\n+patchMergeKey=metricName\n+patchStrategy=merge\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.MeasurementRetention"
+                    }
+                },
                 "metrics": {
                     "description": "Metrics contains the list of metrics to query as part of an analysis run\n+patchMergeKey=name\n+patchStrategy=merge",
                     "type": "array",
@@ -33987,6 +33929,57 @@ const docTemplate = `{
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                     "description": "+optional",
                     "$ref": "#/definitions/v1alpha1.RequiredDuringSchedulingIgnoredDuringExecution"
+                }
+            }
+        },
+        "v1alpha1.AppMeshTrafficRouting": {
+            "type": "object",
+            "properties": {
+                "virtualNodeGroup": {
+                    "description": "VirtualNodeGroup references an AppMesh Route targets that are formed by a set of VirtualNodes that are used to shape traffic",
+                    "$ref": "#/definitions/v1alpha1.AppMeshVirtualNodeGroup"
+                },
+                "virtualService": {
+                    "description": "VirtualService references an AppMesh VirtualService and VirtualRouter to modify to shape traffic",
+                    "$ref": "#/definitions/v1alpha1.AppMeshVirtualService"
+                }
+            }
+        },
+        "v1alpha1.AppMeshVirtualNodeGroup": {
+            "type": "object",
+            "properties": {
+                "canaryVirtualNodeRef": {
+                    "description": "CanaryVirtualNodeRef is the virtual node ref to modify labels with canary ReplicaSet pod template hash value",
+                    "$ref": "#/definitions/v1alpha1.AppMeshVirtualNodeReference"
+                },
+                "stableVirtualNodeRef": {
+                    "description": "StableVirtualNodeRef is the virtual node name to modify labels with stable ReplicaSet pod template hash value",
+                    "$ref": "#/definitions/v1alpha1.AppMeshVirtualNodeReference"
+                }
+            }
+        },
+        "v1alpha1.AppMeshVirtualNodeReference": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Name is the name of VirtualNode CR",
+                    "type": "string"
+                }
+            }
+        },
+        "v1alpha1.AppMeshVirtualService": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Name is the name of virtual service",
+                    "type": "string"
+                },
+                "routes": {
+                    "description": "Routes is list of HTTP routes within virtual router associated with virtual service to edit. If omitted, virtual service must have a single route of this type.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -34229,6 +34222,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "query": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1alpha1.DryRun": {
+            "type": "object",
+            "properties": {
+                "metricName": {
+                    "description": "Name of the metric which needs to be evaluated in the Dry-Run mode. Wildcard '*' is supported and denotes all\nthe available metrics.",
                     "type": "string"
                 }
             }
@@ -34602,6 +34604,19 @@ const docTemplate = `{
                 }
             }
         },
+        "v1alpha1.MeasurementRetention": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "description": "Limit is the maximum number of measurements to be retained for this given metric.",
+                    "type": "integer"
+                },
+                "metricName": {
+                    "description": "MetricName is the name of the metric on which this retention policy should be applied.",
+                    "type": "string"
+                }
+            }
+        },
         "v1alpha1.Metric": {
             "type": "object",
             "properties": {
@@ -34861,6 +34876,19 @@ const docTemplate = `{
                 }
             }
         },
+        "v1alpha1.PingPongSpec": {
+            "type": "object",
+            "properties": {
+                "pingService": {
+                    "description": "name of the ping service",
+                    "type": "string"
+                },
+                "pongService": {
+                    "description": "name of the pong service",
+                    "type": "string"
+                }
+            }
+        },
         "v1alpha1.PodTemplateMetadata": {
             "type": "object",
             "properties": {
@@ -35096,6 +35124,20 @@ const docTemplate = `{
                         "$ref": "#/definitions/v1alpha1.AnalysisRunArgument"
                     }
                 },
+                "dryRun": {
+                    "description": "DryRun object contains the settings for running the analysis in Dry-Run mode\n+patchMergeKey=metricName\n+patchStrategy=merge\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.DryRun"
+                    }
+                },
+                "measurementRetention": {
+                    "description": "MeasurementRetention object contains the settings for retaining the number of measurements during the analysis\n+patchMergeKey=metricName\n+patchStrategy=merge\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.MeasurementRetention"
+                    }
+                },
                 "templates": {
                     "description": "Templates reference to a list of analysis templates to combine for an AnalysisRun",
                     "type": "array",
@@ -35113,6 +35155,20 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1alpha1.AnalysisRunArgument"
+                    }
+                },
+                "dryRun": {
+                    "description": "DryRun object contains the settings for running the analysis in Dry-Run mode\n+patchMergeKey=metricName\n+patchStrategy=merge\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.DryRun"
+                    }
+                },
+                "measurementRetention": {
+                    "description": "MeasurementRetention object contains the settings for retaining the number of measurements during the analysis\n+patchMergeKey=metricName\n+patchStrategy=merge\n+optional",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1alpha1.MeasurementRetention"
                     }
                 },
                 "startingStep": {
@@ -35240,6 +35296,10 @@ const docTemplate = `{
                 "ambassador": {
                     "description": "Ambassador holds specific configuration to use Ambassador to route traffic",
                     "$ref": "#/definitions/v1alpha1.AmbassadorTrafficRouting"
+                },
+                "appMesh": {
+                    "description": "AppMesh holds specific configuration to use AppMesh to route traffic",
+                    "$ref": "#/definitions/v1alpha1.AppMeshTrafficRouting"
                 },
                 "istio": {
                     "description": "Istio holds Istio specific configuration to route traffic",
@@ -35537,6 +35597,17 @@ const docTemplate = `{
                 }
             }
         },
+        "v1alpha1.StickinessConfig": {
+            "type": "object",
+            "properties": {
+                "durationSeconds": {
+                    "type": "integer"
+                },
+                "enabled": {
+                    "type": "boolean"
+                }
+            }
+        },
         "v1alpha1.SyncOperationResource": {
             "type": "object",
             "properties": {
@@ -35696,6 +35767,10 @@ const docTemplate = `{
         "v1alpha1.WebMetric": {
             "type": "object",
             "properties": {
+                "body": {
+                    "description": "Body is the body of the we metric (must be POST/PUT)",
+                    "type": "string"
+                },
                 "headers": {
                     "description": "+patchMergeKey=key\n+patchStrategy=merge\nHeaders are optional HTTP headers to use in the request",
                     "type": "array",
@@ -35709,6 +35784,10 @@ const docTemplate = `{
                 },
                 "jsonPath": {
                     "description": "JSONPath is a JSON Path to use as the result variable (default: \"{$}\")",
+                    "type": "string"
+                },
+                "method": {
+                    "description": "Method is the method of the web metric (empty defaults to GET)",
                     "type": "string"
                 },
                 "timeoutSeconds": {
@@ -35769,8 +35848,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "credential_name": {
-                    "description": "The name of the secret that holds the TLS certs for the\nclient including the CA certificates. Secret must exist in the\nsame namespace with the proxy using the certificates.\nThe secret (of type ` + "`" + `generic` + "`" + `)should contain the\nfollowing keys and values: ` + "`" + `key: \u003cprivateKey\u003e` + "`" + `,\n` + "`" + `cert: \u003cserverCert\u003e` + "`" + `, ` + "`" + `cacert: \u003cCACertificate\u003e` + "`" + `.\nSecret of type tls for client certificates along with\nca.crt key for CA certificates is also supported.\nOnly one of client certificates and CA certificate\nor credentialName can be specified.\n\n**NOTE:** This field is currently applicable only at gateways.\nSidecars will continue to use the certificate paths.",
+                    "description": "The name of the secret that holds the TLS certs for the\nclient including the CA certificates. Secret must exist in the\nsame namespace with the proxy using the certificates.\nThe secret (of type ` + "`" + `generic` + "`" + `)should contain the\nfollowing keys and values: ` + "`" + `key: \u003cprivateKey\u003e` + "`" + `,\n` + "`" + `cert: \u003cclientCert\u003e` + "`" + `, ` + "`" + `cacert: \u003cCACertificate\u003e` + "`" + `.\nHere CACertificate is used to verify the server certificate.\nSecret of type tls for client certificates along with\nca.crt key for CA certificates is also supported.\nOnly one of client certificates and CA certificate\nor credentialName can be specified.\n\n**NOTE:** This field is currently applicable only at gateways.\nSidecars will continue to use the certificate paths.",
                     "type": "string"
+                },
+                "insecure_skip_verify": {
+                    "description": "InsecureSkipVerify specifies whether the proxy should skip verifying the\nCA signature and SAN for the server certificate corresponding to the host.\nThis flag should only be set if global CA signature verifcation is\nenabled, ` + "`" + `VerifyCertAtClient` + "`" + ` environmental variable is set to ` + "`" + `true` + "`" + `,\nbut no verification is desired for a specific host. If enabled with or\nwithout ` + "`" + `VerifyCertAtClient` + "`" + ` enabled, verification of the CA signature and\nSAN will be skipped.\n\n` + "`" + `InsecureSkipVerify` + "`" + ` is ` + "`" + `false` + "`" + ` by default.\n` + "`" + `VerifyCertAtClient` + "`" + ` is ` + "`" + `false` + "`" + ` by default in Istio version 1.9 but will\nbe ` + "`" + `true` + "`" + ` by default in a later version where, going forward, it will be\nenabled by default.",
+                    "$ref": "#/definitions/types.BoolValue"
                 },
                 "mode": {
                     "description": "Indicates whether connections to this port should be secured\nusing TLS. The value of this field determines how TLS is enforced.",
@@ -36071,9 +36154,16 @@ const docTemplate = `{
                     "description": "On a redirect, overwrite the Authority/Host portion of the URL with\nthis value.",
                     "type": "string"
                 },
+                "redirectPort": {
+                    "description": "Types that are valid to be assigned to RedirectPort:\n\t*HTTPRedirect_Port\n\t*HTTPRedirect_DerivePort"
+                },
                 "redirect_code": {
                     "description": "On a redirect, Specifies the HTTP status code to use in the redirect\nresponse. The default response code is MOVED_PERMANENTLY (301).",
                     "type": "integer"
+                },
+                "scheme": {
+                    "description": "On a redirect, overwrite the scheme portion of the URL with this value.\nFor example, ` + "`" + `http` + "`" + ` or ` + "`" + `https` + "`" + `.\nIf unset, the original scheme will be used.\nIf ` + "`" + `derivePort` + "`" + ` is set to ` + "`" + `FROM_PROTOCOL_DEFAULT` + "`" + `, this will impact the port used as well",
+                    "type": "string"
                 },
                 "uri": {
                     "description": "On a redirect, overwrite the Path portion of the URL with this\nvalue. Note that the entire path will be replaced, irrespective of the\nrequest URI being matched as an exact path or prefix.",
@@ -36093,7 +36183,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/types.Duration"
                 },
                 "retry_on": {
-                    "description": "Specifies the conditions under which retry takes place.\nOne or more policies can be specified using a ‘,’ delimited list.\nSee the [retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on)\nand [gRPC retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-grpc-on) for more details.",
+                    "description": "Specifies the conditions under which retry takes place.\nOne or more policies can be specified using a ‘,’ delimited list.\nIf ` + "`" + `retry_on` + "`" + ` specifies a valid HTTP status, it will be added to retriable_status_codes retry policy.\nSee the [retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on)\nand [gRPC retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-grpc-on) for more details.",
                     "type": "string"
                 },
                 "retry_remote_localities": {
@@ -36146,7 +36236,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1alpha3.Destination"
                 },
                 "mirror_percent": {
-                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nUse of integer ` + "`" + `mirror_percent` + "`" + ` value is deprecated. Use the\ndouble ` + "`" + `mirror_percentage` + "`" + ` field instead",
+                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nUse of integer ` + "`" + `mirror_percent` + "`" + ` value is deprecated. Use the\ndouble ` + "`" + `mirror_percentage` + "`" + ` field instead\n$hide_from_docs",
                     "$ref": "#/definitions/types.UInt32Value"
                 },
                 "mirror_percentage": {
@@ -36194,7 +36284,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1alpha3.Headers"
                 },
                 "weight": {
-                    "description": "The proportion of traffic to be forwarded to the service\nversion. (0-100). Sum of weights across destinations SHOULD BE == 100.\nIf there is only one destination in a rule, the weight value is assumed to\nbe 100.",
+                    "description": "Weight specifies the relative proportion of traffic to be forwarded to the destination. A destination will receive ` + "`" + `weight/(sum of all weights)` + "`" + ` requests.\nIf there is only one destination in a rule, it will receive all traffic.\nOtherwise, if weight is ` + "`" + `0` + "`" + `, the destination will not receive any traffic.",
                     "type": "integer"
                 }
             }
@@ -36223,7 +36313,7 @@ const docTemplate = `{
                     }
                 },
                 "remove": {
-                    "description": "Remove a the specified headers",
+                    "description": "Remove the specified headers",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -36280,6 +36370,10 @@ const docTemplate = `{
                 "port": {
                     "description": "The port associated with the listener.",
                     "$ref": "#/definitions/v1alpha3.Port"
+                },
+                "tls": {
+                    "description": "Set of TLS related options that will enable TLS termination on the\nsidecar for requests originating from outside the mesh.\nCurrently supports only SIMPLE and MUTUAL TLS modes.\n$hide_from_docs",
+                    "$ref": "#/definitions/v1alpha3.ServerTLSSettings"
                 }
             }
         },
@@ -36337,7 +36431,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "distribute": {
-                    "description": "Optional: only one of distribute or failover can be set.\nExplicitly specify loadbalancing weight across different zones and geographical locations.\nRefer to [Locality weighted load balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/locality_weight)\nIf empty, the locality weight is set according to the endpoints number within it.",
+                    "description": "Optional: only one of distribute, failover or failoverPriority can be set.\nExplicitly specify loadbalancing weight across different zones and geographical locations.\nRefer to [Locality weighted load balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/locality_weight)\nIf empty, the locality weight is set according to the endpoints number within it.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1alpha3.LocalityLoadBalancerSetting_Distribute"
@@ -36348,10 +36442,17 @@ const docTemplate = `{
                     "$ref": "#/definitions/types.BoolValue"
                 },
                 "failover": {
-                    "description": "Optional: only failover or distribute can be set.\nExplicitly specify the region traffic will land on when endpoints in local region becomes unhealthy.\nShould be used together with OutlierDetection to detect unhealthy endpoints.\nNote: if no OutlierDetection specified, this will not take effect.",
+                    "description": "Optional: only one of distribute, failover or failoverPriority can be set.\nExplicitly specify the region traffic will land on when endpoints in local region becomes unhealthy.\nShould be used together with OutlierDetection to detect unhealthy endpoints.\nNote: if no OutlierDetection specified, this will not take effect.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/v1alpha3.LocalityLoadBalancerSetting_Failover"
+                    }
+                },
+                "failover_priority": {
+                    "description": "failoverPriority is an ordered list of labels used to sort endpoints to do priority based load balancing.\nThis is to support traffic failover across different groups of endpoints.\nSuppose there are total N labels specified:\n\n1. Endpoints matching all N labels with the client proxy have priority P(0) i.e. the highest priority.\n2. Endpoints matching the first N-1 labels with the client proxy have priority P(1) i.e. second highest priority.\n3. By extension of this logic, endpoints matching only the first label with the client proxy has priority P(N-1) i.e. second lowest priority.\n4. All the other endpoints have priority P(N) i.e. lowest priority.\n\nNote: For a label to be considered for match, the previous labels must match, i.e. nth label would be considered matched only if first n-1 labels match.\n\nIt can be any label specified on both client and server workloads.\nThe following labels which have special semantic meaning are also supported:\n\n  - ` + "`" + `topology.istio.io/network` + "`" + ` is used to match the network metadata of an endpoint, which can be specified by pod/namespace label ` + "`" + `topology.istio.io/network` + "`" + `, sidecar env ` + "`" + `ISTIO_META_NETWORK` + "`" + ` or MeshNetworks.\n  - ` + "`" + `topology.istio.io/cluster` + "`" + ` is used to match the clusterID of an endpoint, which can be specified by pod label ` + "`" + `topology.istio.io/cluster` + "`" + ` or pod env ` + "`" + `ISTIO_META_CLUSTER_ID` + "`" + `.\n  - ` + "`" + `topology.kubernetes.io/region` + "`" + ` is used to match the region metadata of an endpoint, which maps to Kubernetes node label ` + "`" + `topology.kubernetes.io/region` + "`" + ` or the deprecated label ` + "`" + `failure-domain.beta.kubernetes.io/region` + "`" + `.\n  - ` + "`" + `topology.kubernetes.io/zone` + "`" + ` is used to match the zone metadata of an endpoint, which maps to Kubernetes node label ` + "`" + `topology.kubernetes.io/zone` + "`" + ` or the deprecated label ` + "`" + `failure-domain.beta.kubernetes.io/zone` + "`" + `.\n  - ` + "`" + `topology.istio.io/subzone` + "`" + ` is used to match the subzone metadata of an endpoint, which maps to Istio node label ` + "`" + `topology.istio.io/subzone` + "`" + `.\n\nThe below topology config indicates the following priority levels:\n\n` + "`" + `` + "`" + `` + "`" + `yaml\nfailoverPriority:\n- \"topology.istio.io/network\"\n- \"topology.kubernetes.io/region\"\n- \"topology.kubernetes.io/zone\"\n- \"topology.istio.io/subzone\"\n` + "`" + `` + "`" + `` + "`" + `\n\n1. endpoints match same [network, region, zone, subzone] label with the client proxy have the highest priority.\n2. endpoints have same [network, region, zone] label but different [subzone] label with the client proxy have the second highest priority.\n3. endpoints have same [network, region] label but different [zone] label with the client proxy have the third highest priority.\n4. endpoints have same [network] but different [region] labels with the client proxy have the fourth highest priority.\n5. all the other endpoints have the same lowest priority.\n\nOptional: only one of distribute, failover or failoverPriority can be set.\nAnd it should be used together with ` + "`" + `OutlierDetection` + "`" + ` to detect unhealthy endpoints, otherwise has no effect.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 }
             }
@@ -36484,7 +36585,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1alpha3.Destination"
                 },
                 "weight": {
-                    "description": "The proportion of traffic to be forwarded to the service\nversion. If there is only one destination in a rule, all traffic will be\nrouted to it irrespective of the weight.",
+                    "description": "Weight specifies the relative proportion of traffic to be forwarded to the destination. A destination will receive ` + "`" + `weight/(sum of all weights)` + "`" + ` requests.\nIf there is only one destination in a rule, it will receive all traffic.\nOtherwise, if weight is ` + "`" + `0` + "`" + `, the destination will not receive any traffic.",
                     "type": "integer"
                 }
             }
@@ -36995,9 +37096,16 @@ const docTemplate = `{
                     "description": "On a redirect, overwrite the Authority/Host portion of the URL with\nthis value.",
                     "type": "string"
                 },
+                "redirectPort": {
+                    "description": "Types that are valid to be assigned to RedirectPort:\n\t*HTTPRedirect_Port\n\t*HTTPRedirect_DerivePort"
+                },
                 "redirect_code": {
                     "description": "On a redirect, Specifies the HTTP status code to use in the redirect\nresponse. The default response code is MOVED_PERMANENTLY (301).",
                     "type": "integer"
+                },
+                "scheme": {
+                    "description": "On a redirect, overwrite the scheme portion of the URL with this value.\nFor example, ` + "`" + `http` + "`" + ` or ` + "`" + `https` + "`" + `.\nIf unset, the original scheme will be used.\nIf ` + "`" + `derivePort` + "`" + ` is set to ` + "`" + `FROM_PROTOCOL_DEFAULT` + "`" + `, this will impact the port used as well",
+                    "type": "string"
                 },
                 "uri": {
                     "description": "On a redirect, overwrite the Path portion of the URL with this\nvalue. Note that the entire path will be replaced, irrespective of the\nrequest URI being matched as an exact path or prefix.",
@@ -37017,7 +37125,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/types.Duration"
                 },
                 "retry_on": {
-                    "description": "Specifies the conditions under which retry takes place.\nOne or more policies can be specified using a ‘,’ delimited list.\nSee the [retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on)\nand [gRPC retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-grpc-on) for more details.",
+                    "description": "Specifies the conditions under which retry takes place.\nOne or more policies can be specified using a ‘,’ delimited list.\nIf ` + "`" + `retry_on` + "`" + ` specifies a valid HTTP status, it will be added to retriable_status_codes retry policy.\nSee the [retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on)\nand [gRPC retry policies](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-grpc-on) for more details.",
                     "type": "string"
                 },
                 "retry_remote_localities": {
@@ -37070,7 +37178,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1beta1.Destination"
                 },
                 "mirror_percent": {
-                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nUse of integer ` + "`" + `mirror_percent` + "`" + ` value is deprecated. Use the\ndouble ` + "`" + `mirror_percentage` + "`" + ` field instead",
+                    "description": "Percentage of the traffic to be mirrored by the ` + "`" + `mirror` + "`" + ` field.\nUse of integer ` + "`" + `mirror_percent` + "`" + ` value is deprecated. Use the\ndouble ` + "`" + `mirror_percentage` + "`" + ` field instead\n$hide_from_docs",
                     "$ref": "#/definitions/types.UInt32Value"
                 },
                 "mirror_percentage": {
@@ -37118,7 +37226,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1beta1.Headers"
                 },
                 "weight": {
-                    "description": "The proportion of traffic to be forwarded to the service\nversion. (0-100). Sum of weights across destinations SHOULD BE == 100.\nIf there is only one destination in a rule, the weight value is assumed to\nbe 100.",
+                    "description": "Weight specifies the relative proportion of traffic to be forwarded to the destination. A destination will receive ` + "`" + `weight/(sum of all weights)` + "`" + ` requests.\nIf there is only one destination in a rule, it will receive all traffic.\nOtherwise, if weight is ` + "`" + `0` + "`" + `, the destination will not receive any traffic.",
                     "type": "integer"
                 }
             }
@@ -37147,7 +37255,7 @@ const docTemplate = `{
                     }
                 },
                 "remove": {
-                    "description": "Remove a the specified headers",
+                    "description": "Remove the specified headers",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -37263,7 +37371,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/v1beta1.Destination"
                 },
                 "weight": {
-                    "description": "The proportion of traffic to be forwarded to the service\nversion. If there is only one destination in a rule, all traffic will be\nrouted to it irrespective of the weight.",
+                    "description": "Weight specifies the relative proportion of traffic to be forwarded to the destination. A destination will receive ` + "`" + `weight/(sum of all weights)` + "`" + ` requests.\nIf there is only one destination in a rule, it will receive all traffic.\nOtherwise, if weight is ` + "`" + `0` + "`" + `, the destination will not receive any traffic.",
                     "type": "integer"
                 }
             }

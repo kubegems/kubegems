@@ -14,8 +14,8 @@ type ClusterHandler struct {
 // @Description  获取k8s api-resources
 // @Accept       json
 // @Produce      json
-// @Param        cluster  path      string                                                          true  "cluster"
-// @Success      200      {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]object}}  "resp"
+// @Param        cluster  path      string                                  true  "cluster"
+// @Success      200      {object}  handlers.ResponseStruct{Data=[]object}  "resp"
 // @Router       /v1/proxy/cluster/{cluster}/api-resources [get]
 func (h *ClusterHandler) APIResources(c *gin.Context) {
 	ret, err := h.cluster.Discovery().ServerPreferredResources()
