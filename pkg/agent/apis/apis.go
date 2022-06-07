@@ -231,6 +231,9 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	alertHandler := &AlertHandler{Watcher: w}
 	routes.r.POST("/alert", alertHandler.Webhook)
 
+	clusterHandler := &ClusterHandler{cluster: cluster}
+	routes.r.GET("/v1/api-resources", clusterHandler.APIResources)
+
 	// service client 使用的内部 apis
 	clientrest := client.ClientRest{Cli: cluster.GetClient()}
 	clientrest.Register(routes.r)
