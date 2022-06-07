@@ -58,6 +58,7 @@ type ReceiverConfig struct {
 	Namespace      string          `json:"namespace"`
 	EmailConfigs   []EmailConfig   `json:"emailConfigs"`
 	WebhookConfigs []WebhookConfig `json:"webhookConfigs"`
+	Source         string          `json:"source"` // 来自哪个alertmanagerconfig
 }
 
 func (rec *ReceiverConfig) Precheck() error {
@@ -68,6 +69,9 @@ func (rec *ReceiverConfig) Precheck() error {
 	}
 	if rec.Name == DefaultReceiverName {
 		return fmt.Errorf("不能修改默认接收器")
+	}
+	if rec.Source == "" {
+		return fmt.Errorf("receiver source cant't be null")
 	}
 	return nil
 }
@@ -163,10 +167,11 @@ func findReceiverIndex(rules []v1alpha1.Receiver, name string) int {
 	return index
 }
 
-func ToGemsReceiver(rec v1alpha1.Receiver, namespace string, sec *corev1.Secret) ReceiverConfig {
+func ToGemsReceiver(rec v1alpha1.Receiver, namespace, source string, sec *corev1.Secret) ReceiverConfig {
 	ret := ReceiverConfig{
 		Name:      rec.Name,
 		Namespace: namespace,
+		Source:    source,
 	}
 
 	if sec != nil {

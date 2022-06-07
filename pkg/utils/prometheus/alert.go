@@ -20,8 +20,8 @@ const (
 	AlertRuleLabel     = "gems_alert_rule"
 	AlertFromLabel     = "gems_alert_from" // 告警来自哪里，logging/monitor
 
-	AlertFromMonitor = "monitor"
-	AlertFromLogging = "logging"
+	AlertTypeMonitor = "monitor"
+	AlertTypeLogging = "logging"
 
 	SeverityLabel    = "severity"
 	SeverityError    = "error"    // 错误
@@ -344,21 +344,6 @@ func (base *BaseAlertResource) AddNullReceivers() {
 	if !findReceiver(base.AMConfig, DefaultReceiverName) {
 		base.AMConfig.Spec.Receivers = append(base.AMConfig.Spec.Receivers, DefaultReceiver)
 	}
-}
-
-func CheckAlertNameInAMConfig(name string, amconfig *v1alpha1.AlertmanagerConfig, msg string) error {
-	routes, err := amconfig.Spec.Route.ChildRoutes()
-	if err != nil {
-		return err
-	}
-	for _, v := range routes {
-		for _, m := range v.Matchers {
-			if m.Name == AlertNameLabel && m.Value == name {
-				return fmt.Errorf("已有同名的%s告警规则: %s", msg, name)
-			}
-		}
-	}
-	return nil
 }
 
 func getAlertScope(namespace string) string {

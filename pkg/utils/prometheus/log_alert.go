@@ -165,7 +165,7 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 			Labels: map[string]string{
 				AlertNamespaceLabel: r.Namespace,
 				AlertNameLabel:      r.Name,
-				AlertFromLabel:      AlertFromLogging,
+				AlertFromLabel:      AlertTypeLogging,
 				AlertScopeLabel:     getAlertScope(r.Namespace),
 				SeverityLabel:       level.Severity,
 			},

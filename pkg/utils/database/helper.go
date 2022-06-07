@@ -131,7 +131,7 @@ func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope, from 
 	ret.AlertName = name
 
 	if from == "" {
-		ret.From = prometheus.AlertFromMonitor
+		ret.From = prometheus.AlertTypeMonitor
 	} else {
 		ret.From = from
 	}

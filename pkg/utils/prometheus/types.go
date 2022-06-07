@@ -21,10 +21,9 @@ const (
 )
 
 const (
-	MonitorAlertmanagerConfigName = "kubegems-default-monitor-amconfig"
-	LoggingAlertmanagerConfigName = "kubegems-default-logging-amconfig"
-
-	DefaultAlertPrometheusRuleName = "kubegems-default-alert-rule"
+	// prometheusrule and alertmanagerconfigname
+	MonitorAlertCRDName = "kubegems-default-monitor-alert-rule"
+	LoggingAlertCRDName = "kubegems-default-logging-alert-rule"
 )
 
 var (
@@ -181,7 +180,14 @@ func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerCon
 			Name:      name,
 			Namespace: namespace,
 			Labels: map[string]string{
-				gems.LabelAlertmanagerConfig: name,
+				gems.LabelAlertmanagerConfigName: name,
+				gems.LabelAlertmanagerConfigType: func() string {
+					if name == MonitorAlertCRDName {
+						return AlertTypeMonitor
+					} else {
+						return AlertTypeLogging
+					}
+				}(),
 			},
 		},
 		Spec: v1alpha1.AlertmanagerConfigSpec{
@@ -198,17 +204,18 @@ func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerCon
 	}
 }
 
-func GetBasePrometheusRule(namespace string) *monitoringv1.PrometheusRule {
+func GetBasePrometheusRule(namespace, name string) *monitoringv1.PrometheusRule {
 	return &monitoringv1.PrometheusRule{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: monitoringv1.SchemeGroupVersion.String(),
 			Kind:       monitoringv1.PrometheusRuleKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      DefaultAlertPrometheusRuleName,
+			Name:      name,
 			Namespace: namespace,
 			Labels: map[string]string{
-				gems.LabelPrometheusRule: DefaultAlertPrometheusRuleName,
+				gems.LabelPrometheusRuleName: MonitorAlertCRDName,
+				gems.LabelPrometheusRuleType: AlertTypeMonitor,
 			},
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{},

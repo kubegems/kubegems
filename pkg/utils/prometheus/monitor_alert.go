@@ -27,12 +27,16 @@ type MonitorAlertRule struct {
 	BaseAlertRule  `json:",inline"`
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
 	Origin         string          `json:"origin,omitempty"`         // 原始的prometheusrule
+	Source         string          `json:"source"`                   // 来自哪个prometheusrule
 }
 
 var _ AlertRule = MonitorAlertRule{}
 
 // TODO: unit test
 func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
+	if r.Source == "" {
+		return fmt.Errorf("source不能为空")
+	}
 	if r.PromqlGenerator.IsEmpty() {
 		if r.BaseAlertRule.Expr == "" {
 			return fmt.Errorf("模板与原生promql不能同时为空")
@@ -107,6 +111,7 @@ func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[Moni
 			bts, _ := yaml.Marshal(raw.PrometheusRule.Spec.Groups[i])
 			alertrule.Origin = string(bts)
 		}
+		alertrule.Source = raw.PrometheusRule.Name
 		ret = append(ret, alertrule)
 	}
 
@@ -165,7 +170,7 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 				Labels: map[string]string{
 					AlertNamespaceLabel: alertRule.Namespace,
 					AlertNameLabel:      alertRule.Name,
-					AlertFromLabel:      AlertFromMonitor,
+					AlertFromLabel:      AlertTypeMonitor,
 					AlertScopeLabel:     getAlertScope(alertRule.Namespace),
 					SeverityLabel:       level.Severity,
 				},
@@ -193,7 +198,7 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 				Labels: map[string]string{
 					AlertNamespaceLabel: alertRule.Namespace,
 					AlertNameLabel:      alertRule.Name,
-					AlertFromLabel:      AlertFromMonitor,
+					AlertFromLabel:      AlertTypeMonitor,
 					AlertResourceLabel:  alertRule.PromqlGenerator.Resource,
 					AlertRuleLabel:      alertRule.PromqlGenerator.Rule,
 					AlertScopeLabel:     getAlertScope(alertRule.Namespace),

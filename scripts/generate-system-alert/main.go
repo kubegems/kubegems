@@ -35,13 +35,14 @@ func main() {
 
 	raw := &prometheus.RawMonitorAlertResource{
 		Base: &prometheus.BaseAlertResource{
-			AMConfig: prometheus.GetBaseAlertmanagerConfig(gems.NamespaceMonitor, prometheus.MonitorAlertmanagerConfigName),
+			AMConfig: prometheus.GetBaseAlertmanagerConfig(gems.NamespaceMonitor, prometheus.MonitorAlertCRDName),
 		},
-		PrometheusRule: prometheus.GetBasePrometheusRule(gems.NamespaceMonitor),
+		PrometheusRule: prometheus.GetBasePrometheusRule(gems.NamespaceMonitor, prometheus.MonitorAlertCRDName),
 		MonitorOptions: prometheus.DefaultMonitorOptions(),
 	}
 
 	for _, alert := range alerts {
+		alert.Source = prometheus.MonitorAlertCRDName
 		if err := alert.CheckAndModify(raw.MonitorOptions); err != nil {
 			panic(err)
 		}
@@ -53,7 +54,7 @@ func main() {
 	raw.Base.AMConfig.Spec.Receivers[1].WebhookConfigs[0].URL = &agentURL
 
 	os.WriteFile("deploy/plugins/kubegems-local-stack/templates/monitoring/kubegems-default-monitor-amconfig.yaml", getOutput(raw.Base.AMConfig), 0644)
-	os.WriteFile("deploy/plugins/kubegems-local-stack/templates/monitoring/kubegems-default-alert-rule.yaml", getOutput(raw.PrometheusRule), 0644)
+	os.WriteFile("deploy/plugins/kubegems-local-stack/templates/monitoring/kubegems-default-monitor-promrule.yaml", getOutput(raw.PrometheusRule), 0644)
 }
 
 var reg = regexp.MustCompile("{{ %")

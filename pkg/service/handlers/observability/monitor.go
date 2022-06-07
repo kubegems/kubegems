@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -15,6 +16,7 @@ import (
 	"kubegems.io/pkg/service/handlers"
 	"kubegems.io/pkg/utils/agents"
 	"kubegems.io/pkg/utils/prometheus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -315,17 +317,19 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 		}
 
 		// get、update、commit
-		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, monitoropts)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source, monitoropts)
 		if err != nil {
 			return err
 		}
 
-		// check name duplicated in log alert
-		logAMConfig, err := cli.Extend().GetOrCreateAlertmanagerConfig(ctx, namespace, prometheus.LoggingAlertmanagerConfigName)
-		if err != nil {
+		// check name duplicated
+		amconfigList := v1alpha1.AlertmanagerConfigList{}
+		if err := cli.List(ctx, &amconfigList, client.InNamespace(namespace), client.HasLabels([]string{
+			gems.LabelAlertmanagerConfigType,
+		})); err != nil {
 			return err
 		}
-		if err := prometheus.CheckAlertNameInAMConfig(req.Name, logAMConfig, "日志"); err != nil {
+		if err := checkAlertName(req.Name, amconfigList.Items); err != nil {
 			return err
 		}
 
@@ -339,6 +343,24 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, "ok")
+}
+
+func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error {
+	for _, v := range amconfigs {
+		routes, err := v.Spec.Route.ChildRoutes()
+		if err != nil {
+			return err
+		}
+		for _, v := range routes {
+			for _, m := range v.Matchers {
+				if m.Name == prometheus.AlertNameLabel && m.Value == name {
+					return fmt.Errorf("dunplicated name in: %s", name)
+				}
+			}
+		}
+
+	}
+	return nil
 }
 
 // UpdateMonitorAlertRule 修改监控告警规则
@@ -376,7 +398,7 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 		}
 
 		// get、update、commit
-		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, monitoropts)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source, monitoropts)
 		if err != nil {
 			return err
 		}
@@ -402,6 +424,7 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 // @Param        cluster    path      string                                true  "cluster"
 // @Param        namespace  path      string                                true  "namespace"
 // @Param        name       path      string                                true  "name"
+// @Param        source     query     string                                true  "source"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
 // @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [delete]
 // @Security     JWT
@@ -409,6 +432,7 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	name := c.Param("name")
+	source := c.Query("source")
 	req := prometheus.MonitorAlertRule{
 		BaseAlertRule: prometheus.BaseAlertRule{
 			Namespace: namespace,
@@ -424,7 +448,7 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 		// get、update、commit
 		monitoropts := new(prometheus.MonitorOptions)
 		h.DynamicConfig.Get(ctx, monitoropts)
-		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, monitoropts)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, source, monitoropts)
 		if err != nil {
 			return err
 		}

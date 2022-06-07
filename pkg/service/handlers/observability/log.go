@@ -11,6 +11,7 @@ import (
 	v1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"github.com/banzaicloud/logging-operator/pkg/sdk/logging/model/filter"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -440,11 +441,14 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 		}
 
 		// check name duplicated in log alert
-		monitorAMConfig, err := cli.Extend().GetOrCreateAlertmanagerConfig(ctx, namespace, prometheus.MonitorAlertmanagerConfigName)
-		if err != nil {
+		// check name duplicated
+		amconfigList := v1alpha1.AlertmanagerConfigList{}
+		if err := cli.List(ctx, &amconfigList, client.InNamespace(namespace), client.HasLabels([]string{
+			gems.LabelAlertmanagerConfigType,
+		})); err != nil {
 			return err
 		}
-		if err := prometheus.CheckAlertNameInAMConfig(req.Name, monitorAMConfig, "监控"); err != nil {
+		if err := checkAlertName(req.Name, amconfigList.Items); err != nil {
 			return err
 		}
 
