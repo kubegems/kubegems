@@ -5,7 +5,8 @@ KubeGems local components.(check existing examples)
 ## TL;DR
 
 ```console
-$ helm install my-release kubegems-local
+$ helm repo add kubegems https://charts.kubegems.io/kubegems
+$ helm install my-release kubegems/kubegems-local
 ```
 
 ## Introduction
@@ -22,7 +23,7 @@ kubegems local components.
 To install the chart with the release name `my-release`:
 
 ```console
-helm install my-release bitnami/kubegems-local
+helm install my-release kubegems/kubegems-local
 ```
 
 The command deploys kubegems-local on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
@@ -355,14 +356,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | `ingress.secrets`     | Custom TLS certificates as secrets                                                                                               | `[]`                     |
 
 
-See https://github.com/bitnami-labs/readme-generator-for-helm to create the table
-
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
-
-```console
-helm install my-release kubegems-local
-```
-
 > NOTE: Once this chart is deployed, it is not possible to change the application's access credentials, such as usernames or passwords, using Helm. To change these application credentials after deployment, delete any persistent volumes (PVs) used by the chart and re-deploy it, or use the application's built-in administrative tools if available.
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
@@ -374,12 +367,6 @@ helm install my-release -f values.yaml kubegems-local
 > **Tip**: You can use the default [values.yaml](values.yaml)
 
 ## Configuration and installation details
-
-### [Rolling VS Immutable tags](https://docs.bitnami.com/containers/how-to/understand-rolling-tags-containers/)
-
-It is strongly recommended to use immutable tags in a production environment. This ensures your deployment does not change automatically if the same tag is updated with a different image.
-
-Bitnami will release a new chart updating its containers if a new version of the main container, significant changes, or critical vulnerabilities exist.
 
 ### Additional environment variables
 
@@ -398,19 +385,9 @@ Alternatively, you can use a ConfigMap or a Secret with the environment variable
 
 If additional containers are needed in the same pod as kubegems-local (such as additional metrics or logging exporters), they can be defined using the `sidecars` parameter. If these sidecars export extra ports, extra port definitions can be added using the `service.extraPorts` parameter.
 
-### Pod affinity
-
-This chart allows you to set your custom affinity using the `affinity` parameter. Find more information about Pod affinity in the [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity).
-
-As an alternative, use one of the preset configurations for pod affinity, pod anti-affinity, and node affinity available at the [bitnami/common](https://github.com/bitnami/charts/tree/master/bitnami/common#affinities) chart. To do so, set the `podAffinityPreset`, `podAntiAffinityPreset`, or `nodeAffinityPreset` parameters.
-
-## Troubleshooting
-
-Find more information about how to deal with common errors related to Bitnami's Helm charts in [this troubleshooting guide](https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues).
-
 ## License
 
-Copyright &copy; 2022 Kubegems
+Copyright &copy; 2022 KubeGems
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
