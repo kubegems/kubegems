@@ -26,7 +26,7 @@ dependencies:
     repository: https://charts.kubegems.io/kubegems
     condition: chartmuseum.enabled
     version: 3.8.0
-description: KubeGems components.
+description: KubeGems core service and dashboard.
 home: kubegems.io
 keywords:
   - kubegems

@@ -6,7 +6,7 @@ dependencies:
     tags:
       - bitnami-common
     version: 1.14.1
-description: kubegems-installer
+description: KubeGems installer/plugins operator.
 home: kubegems.io
 keywords:
   - kubegems
