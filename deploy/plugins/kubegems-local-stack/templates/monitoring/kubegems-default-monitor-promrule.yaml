@@ -4,8 +4,9 @@ kind: PrometheusRule
 metadata:
   creationTimestamp: null
   labels:
-    prometheusrule.kubegems.io/name: kubegems-default-alert-rule
-  name: kubegems-default-alert-rule
+    prometheusrule.kubegems.io/name: kubegems-default-monitor-alert-rule
+    prometheusrule.kubegems.io/type: monitor
+  name: kubegems-default-monitor-alert-rule
   namespace: {{ .Values.monitoring.namespace }}
 spec:
   groups:

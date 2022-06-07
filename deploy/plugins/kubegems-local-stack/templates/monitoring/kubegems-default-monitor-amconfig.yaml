@@ -4,8 +4,9 @@ kind: AlertmanagerConfig
 metadata:
   creationTimestamp: null
   labels:
-    alertmanagerconfig.kubegems.io/name: kubegems-default-monitor-amconfig
-  name: kubegems-default-monitor-amconfig
+    alertmanagerconfig.kubegems.io/name: kubegems-default-monitor-alert-rule
+    alertmanagerconfig.kubegems.io/type: monitor
+  name: kubegems-default-monitor-alert-rule
   namespace: {{ .Values.monitoring.namespace }}
 spec:
   inhibitRules:

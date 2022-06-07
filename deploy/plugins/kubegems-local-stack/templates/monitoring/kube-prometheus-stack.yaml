@@ -102,7 +102,7 @@ spec:
             - key: alertmanagerconfig.kubegems.io/name
               operator: Exists
         alertmanagerConfiguration:
-          name: kubegems-default-monitor-amconfig
+          name: kubegems-default-monitor-alert-rule
         retention: 240h
         storage:
           volumeClaimTemplate:
