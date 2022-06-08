@@ -11,7 +11,6 @@ import (
 
 	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
@@ -226,7 +225,7 @@ func (c *ExtendClient) GetPromeAlertRules(ctx context.Context, name string) (map
 func (c *ExtendClient) GetLokiAlertRules(ctx context.Context) (map[string]prometheus.RealTimeAlertRule, error) {
 	ret := map[string]prometheus.RealTimeAlertRule{}
 	if err := c.DoRequest(ctx, Request{
-		Path: fmt.Sprintf("/custom/loki/v1/alertrule"),
+		Path: "/custom/loki/v1/alertrule",
 		Into: WrappedResponse(&ret),
 	}); err != nil {
 		return nil, err
@@ -688,7 +687,7 @@ func (c *ExtendClient) CreateOrUpdateAlertEmailSecret(ctx context.Context, names
 	return err
 }
 
-func (c *ExtendClient) DeleteAlertEmailSecret(ctx context.Context, namespace string, rec v1alpha1.Receiver) error {
+func (c *ExtendClient) DeleteAlertEmailSecret(ctx context.Context, namespace string, rec monitoringv1alpha1.Receiver) error {
 	sec := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      prometheus.EmailSecretName,
@@ -720,7 +719,7 @@ func (c *ExtendClient) ListReceivers(ctx context.Context, namespace, scope, sear
 		}
 	}
 
-	configlist := &v1alpha1.AlertmanagerConfigList{}
+	configlist := &monitoringv1alpha1.AlertmanagerConfigList{}
 	if err := c.List(ctx, configlist, client.MatchingLabels(map[string]string{
 		gems.LabelAlertmanagerConfigType: scope,
 	}), client.InNamespace(namespace)); err != nil {

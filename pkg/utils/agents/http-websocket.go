@@ -100,12 +100,7 @@ func (c TypedClient) DoRawRequest(ctx context.Context, clientreq Request) (*http
 	}
 	req.URL.RawQuery = query.Encode()
 
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return c.http.Do(req)
 }
 
 func (c TypedClient) DoRequest(ctx context.Context, req Request) error {
