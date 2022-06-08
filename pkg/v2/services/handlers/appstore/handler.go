@@ -8,10 +8,10 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
 	"helm.sh/helm/v3/pkg/repo"
-	"kubegems.io/pkg/utils/helm"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/handlers"
-	"kubegems.io/pkg/v2/services/handlers/base"
+	"kubegems.io/kubegems/pkg/utils/helm"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/v2/services/handlers/base"
 )
 
 const InternalChartRepoName = "gems"

@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	argocdcli "github.com/argoproj/argo-cd/v2/pkg/apiclient"
-	gemlabels "kubegems.io/pkg/apis/gems"
+	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 )
 
 func NewArgoCDCli(options *Options) (*argocdcli.Client, error) {

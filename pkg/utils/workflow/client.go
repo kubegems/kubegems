@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 type Client struct {

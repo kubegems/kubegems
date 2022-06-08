@@ -14,8 +14,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/retry"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/retry"
 )
 
 const (

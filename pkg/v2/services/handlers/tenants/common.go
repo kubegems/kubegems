@@ -3,7 +3,7 @@ package tenanthandler
 import (
 	"context"
 
-	"kubegems.io/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/models"
 )
 
 func (h *Handler) getTenant(ctx context.Context, name string) (*models.TenantCommon, error) {

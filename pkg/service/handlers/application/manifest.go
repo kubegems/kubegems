@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/handlers"
 )
 
 type ManifestHandler struct {

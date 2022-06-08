@@ -13,9 +13,9 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/workflow"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

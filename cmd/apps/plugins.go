@@ -14,9 +14,9 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
-	"kubegems.io/pkg/installer/plugin"
-	"kubegems.io/pkg/utils/kube"
+	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
+	"kubegems.io/kubegems/pkg/installer/plugin"
+	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 )

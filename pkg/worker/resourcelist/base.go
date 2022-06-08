@@ -2,9 +2,9 @@ package resourcelist
 
 import (
 	"github.com/robfig/cron/v3"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/database"
 )
 
 func NewResourceCache(db *database.Database, agents *agents.ClientSet) *ResourceCache {

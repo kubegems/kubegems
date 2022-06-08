@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 func (h *Handler) ListPlugins(req *restful.Request, resp *restful.Response) {

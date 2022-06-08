@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"golang.org/x/sys/unix"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 // Proxy forwards a TCP request to a TCP service.

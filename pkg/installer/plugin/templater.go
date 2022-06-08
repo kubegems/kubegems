@@ -14,7 +14,7 @@ import (
 	"helm.sh/helm/v3/pkg/engine"
 	"helm.sh/helm/v3/pkg/releaseutil"
 	"k8s.io/client-go/rest"
-	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/yaml"
 )
 

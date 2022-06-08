@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/client-go/kubernetes"
 	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
-	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/agent/cluster"
 )
 
 const ChangeCauseAnnotation = "kubernetes.io/change-cause"

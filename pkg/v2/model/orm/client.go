@@ -6,11 +6,11 @@ import (
 	"reflect"
 	"strings"
 
-	"kubegems.io/pkg/v2/model/utils"
+	"kubegems.io/kubegems/pkg/v2/model/utils"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"kubegems.io/pkg/v2/model/client"
+	"kubegems.io/kubegems/pkg/v2/model/client"
 )
 
 type Client struct {

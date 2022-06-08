@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/datatypes"
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/utils/resourcequota"
+	"kubegems.io/kubegems/pkg/utils/resourcequota"
 )
 
 /*

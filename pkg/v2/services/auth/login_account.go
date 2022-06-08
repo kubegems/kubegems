@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/v2/models"
 )
 
 type AccountLoginUtil struct {

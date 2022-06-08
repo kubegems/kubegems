@@ -12,9 +12,9 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	"k8s.io/client-go/tools/clientcmd"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/httpsigs"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/httpsigs"
 )
 
 type ClientSet struct {

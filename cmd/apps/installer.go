@@ -7,8 +7,8 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/pkg/installer"
-	"kubegems.io/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/installer"
+	"kubegems.io/kubegems/pkg/utils/config"
 )
 
 func NewInstallerCmd() *cobra.Command {

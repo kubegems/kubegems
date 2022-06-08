@@ -33,10 +33,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	gemlabels "kubegems.io/pkg/apis/gems"
-	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/controller/handler"
-	"kubegems.io/pkg/utils/maps"
+	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/controller/handler"
+	"kubegems.io/kubegems/pkg/utils/maps"
 )
 
 const (

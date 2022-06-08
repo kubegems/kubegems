@@ -8,7 +8,7 @@ import (
 	"github.com/opentracing-contrib/go-gin/ginhttp"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go/config"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 type logger struct{}

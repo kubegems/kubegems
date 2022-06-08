@@ -13,10 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	gemlabels "kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/argo"
+	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/argo"
 )
 
 type SyncRequest struct {

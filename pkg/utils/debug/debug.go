@@ -19,10 +19,10 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/options"
-	"kubegems.io/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/options"
+	"kubegems.io/kubegems/pkg/utils/kube"
 )
 
 // ApplyPortForwardingOptions using apiserver port forward port for options

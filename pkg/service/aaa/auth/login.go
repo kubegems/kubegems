@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"gorm.io/gorm"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 const (

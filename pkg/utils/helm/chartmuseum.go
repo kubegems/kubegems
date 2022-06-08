@@ -13,7 +13,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart/loader"
 	helm_repo "helm.sh/helm/v3/pkg/repo"
-	"kubegems.io/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/apis/gems"
 )
 
 type Options struct {

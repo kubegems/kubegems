@@ -7,7 +7,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 func GetKubeClient(kubeconfig []byte) (*rest.Config, *kubernetes.Clientset, error) {

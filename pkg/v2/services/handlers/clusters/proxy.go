@@ -9,9 +9,9 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/gorilla/websocket"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 const (

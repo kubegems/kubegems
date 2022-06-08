@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	restful "github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/v2/model/validate"
+	"kubegems.io/kubegems/pkg/v2/model/validate"
 )
 
 func BindData(req *restful.Request, data interface{}) error {

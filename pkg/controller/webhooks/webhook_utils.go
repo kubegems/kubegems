@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	networkingv1 "k8s.io/api/networking/v1"
-	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 )
 
 func IsGatewayHTTP2(tg gemsv1beta1.TenantGateway) bool {

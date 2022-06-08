@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/resource"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils"
 )
 
 const (

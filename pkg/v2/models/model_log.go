@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/loki"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/loki"
 )
 
 // LogQueryHistory

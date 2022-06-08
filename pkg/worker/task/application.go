@@ -1,12 +1,12 @@
 package task
 
 import (
-	"kubegems.io/pkg/service/handlers/application"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/git"
-	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/service/handlers/application"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/redis"
 )
 
 type ApplicationTasker struct {

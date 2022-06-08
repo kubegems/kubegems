@@ -7,10 +7,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/msgbus"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type MessageRet []models.Message

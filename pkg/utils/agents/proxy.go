@@ -13,8 +13,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/proxy"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/proxy"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )

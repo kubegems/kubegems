@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"gorm.io/gorm"
-	"kubegems.io/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/models"
 )
 
 const (

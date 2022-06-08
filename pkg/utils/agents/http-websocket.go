@@ -11,7 +11,7 @@ import (
 	"path"
 
 	"github.com/gorilla/websocket"
-	"kubegems.io/pkg/utils/httputil"
+	"kubegems.io/kubegems/pkg/utils/httputil"
 )
 
 func (c TypedClient) DialWebsocket(ctx context.Context, rpath string, headers http.Header) (*websocket.Conn, *http.Response, error) {

@@ -13,8 +13,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"kubegems.io/pkg/apis/networking"
-	"kubegems.io/pkg/utils/set"
+	"kubegems.io/kubegems/pkg/apis/networking"
+	"kubegems.io/kubegems/pkg/utils/set"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

@@ -9,8 +9,8 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
-	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
-	"kubegems.io/pkg/installer/helm"
+	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
+	"kubegems.io/kubegems/pkg/installer/helm"
 )
 
 type HelmApplier struct {

@@ -12,8 +12,8 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 const (

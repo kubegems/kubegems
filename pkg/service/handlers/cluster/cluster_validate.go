@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kversion "k8s.io/apimachinery/pkg/version"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/gemsplugin"
-	"kubegems.io/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
+	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

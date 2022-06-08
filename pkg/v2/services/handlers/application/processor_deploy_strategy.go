@@ -22,8 +22,8 @@ import (
 	"k8s.io/client-go/util/retry"
 	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	"k8s.io/utils/pointer"
-	"kubegems.io/pkg/apis/application"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/apis/application"
+	"kubegems.io/kubegems/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

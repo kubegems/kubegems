@@ -3,7 +3,7 @@ package cache
 import (
 	"encoding/json"
 
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 type UserResource struct {

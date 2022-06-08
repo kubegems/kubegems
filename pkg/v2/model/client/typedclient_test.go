@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"kubegems.io/pkg/apis/application/v1beta1"
+	"kubegems.io/kubegems/pkg/apis/application/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

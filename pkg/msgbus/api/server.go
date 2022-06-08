@@ -6,13 +6,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/msgbus/options"
-	"kubegems.io/pkg/msgbus/switcher"
-	"kubegems.io/pkg/service/aaa"
-	"kubegems.io/pkg/service/aaa/auth"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/msgbus/options"
+	"kubegems.io/kubegems/pkg/msgbus/switcher"
+	"kubegems.io/kubegems/pkg/service/aaa"
+	"kubegems.io/kubegems/pkg/service/aaa/auth"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/redis"
 )
 
 func NewGinServer(opts *options.Options, database *database.Database, redis *redis.Client, ms *switcher.MessageSwitcher) (*gin.Engine, error) {

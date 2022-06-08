@@ -1,16 +1,16 @@
 package options
 
 import (
-	microservice "kubegems.io/pkg/service/handlers/microservice/options"
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/git"
-	"kubegems.io/pkg/utils/helm"
-	"kubegems.io/pkg/utils/jwt"
-	"kubegems.io/pkg/utils/msgbus"
-	"kubegems.io/pkg/utils/prometheus"
-	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/utils/system"
+	microservice "kubegems.io/kubegems/pkg/service/handlers/microservice/options"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/helm"
+	"kubegems.io/kubegems/pkg/utils/jwt"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
 type Options struct {

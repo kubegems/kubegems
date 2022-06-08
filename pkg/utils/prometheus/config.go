@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
-	gemlabels "kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/log"
+	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 const (

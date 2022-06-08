@@ -15,9 +15,9 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
-	applicationv1beta1 "kubegems.io/pkg/apis/application/v1beta1"
-	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	pluginv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	applicationv1beta1 "kubegems.io/kubegems/pkg/apis/application/v1beta1"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 )
 
 func AddToschema(schema *runtime.Scheme) {

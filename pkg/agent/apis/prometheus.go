@@ -12,9 +12,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/clusterinfo"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/clusterinfo"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 func dynamicTimeStep(start time.Time, end time.Time) time.Duration {

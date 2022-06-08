@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 	kclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 

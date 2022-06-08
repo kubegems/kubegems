@@ -13,7 +13,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/repo"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 	"sigs.k8s.io/yaml"
 )
 

@@ -1,6 +1,6 @@
 package options
 
-import "kubegems.io/pkg/apis/gems"
+import "kubegems.io/kubegems/pkg/apis/gems"
 
 type MicroserviceOptions struct {
 	KialiName         string `json:"kialiName,omitempty"`

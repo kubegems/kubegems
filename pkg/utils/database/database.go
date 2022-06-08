@@ -6,7 +6,7 @@ import (
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 type Options struct {

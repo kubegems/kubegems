@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"kubegems.io/pkg/agent/cluster"
-	pluginscommon "kubegems.io/pkg/apis/plugins"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/gemsplugin"
+	"kubegems.io/kubegems/pkg/agent/cluster"
+	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 )
 
 type PluginCollector struct {

@@ -13,9 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
-	"kubegems.io/pkg/agent/cluster"
-	"kubegems.io/pkg/agent/ws"
-	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/agent/ws"
+	"kubegems.io/kubegems/pkg/service/handlers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

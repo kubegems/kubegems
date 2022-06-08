@@ -8,8 +8,8 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 func createDatabaseIfNotExists(dsn, dbname string) error {

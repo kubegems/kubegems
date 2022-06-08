@@ -8,12 +8,12 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"kubegems.io/pkg/apis/application"
-	"kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/git"
-	"kubegems.io/pkg/v2/services/handlers"
-	"kubegems.io/pkg/v2/services/handlers/base"
+	"kubegems.io/kubegems/pkg/apis/application"
+	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/v2/services/handlers/base"
 )
 
 const StatusNoArgoApp = "NoArgoApp"

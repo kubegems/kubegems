@@ -2,7 +2,7 @@ package v1beta1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"kubegems.io/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/apis/gems"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 

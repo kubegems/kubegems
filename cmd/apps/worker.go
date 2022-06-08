@@ -7,9 +7,9 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/pkg/utils/config"
-	"kubegems.io/pkg/version"
-	"kubegems.io/pkg/worker"
+	"kubegems.io/kubegems/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/version"
+	"kubegems.io/kubegems/pkg/worker"
 )
 
 func NewWorkerCmd() *cobra.Command {

@@ -10,10 +10,10 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-logr/logr"
 	"github.com/opentracing/opentracing-go"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/handlers/base"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/handlers/base"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 type Cache struct {

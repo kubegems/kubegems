@@ -5,10 +5,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/handlers/base"
-	microservice "kubegems.io/pkg/service/handlers/microservice/options"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/handlers/base"
+	microservice "kubegems.io/kubegems/pkg/service/handlers/microservice/options"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 type VirtualDomainHandler struct {

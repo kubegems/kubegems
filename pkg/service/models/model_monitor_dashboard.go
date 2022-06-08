@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 // MonitorDashboard 监控面板

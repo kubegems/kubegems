@@ -9,7 +9,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/repo"
 	helm_repo "helm.sh/helm/v3/pkg/repo"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 // MaxSyncVerionCount 最大同步版本，仅同步某个chart的最近的 n 个版本

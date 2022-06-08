@@ -10,11 +10,11 @@ import (
 	"github.com/pkg/errors"
 	promemodel "github.com/prometheus/common/model"
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/database"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

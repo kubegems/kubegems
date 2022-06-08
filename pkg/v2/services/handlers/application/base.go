@@ -7,10 +7,10 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-logr/logr"
 	"github.com/opentracing/opentracing-go"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/v2/services/handlers"
-	"kubegems.io/pkg/v2/services/handlers/base"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/v2/services/handlers/base"
 )
 
 type BaseHandler struct {

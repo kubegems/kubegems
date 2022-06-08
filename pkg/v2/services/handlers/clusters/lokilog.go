@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/loki"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/loki"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 const LokiExportDir = "lokiExport"

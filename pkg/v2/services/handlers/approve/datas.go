@@ -3,7 +3,7 @@ package approvehandler
 import (
 	"time"
 
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 type Approve struct {

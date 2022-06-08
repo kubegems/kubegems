@@ -11,8 +11,8 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
-	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/apis/networking"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/apis/networking"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )

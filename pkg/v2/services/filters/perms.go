@@ -5,9 +5,9 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils/slice"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/auth/user"
+	"kubegems.io/kubegems/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/auth/user"
 )
 
 type PermMiddleware struct {

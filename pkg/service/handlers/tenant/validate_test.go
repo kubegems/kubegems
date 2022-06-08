@@ -5,7 +5,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"kubegems.io/pkg/utils/statistics"
+	"kubegems.io/kubegems/pkg/utils/statistics"
 )
 
 func TestCheckOverSold(t *testing.T) {

@@ -9,11 +9,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/aaa"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/models/cache"
-	"kubegems.io/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/aaa"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/models/cache"
+	"kubegems.io/kubegems/pkg/utils/slice"
 )
 
 var normalActions = []string{

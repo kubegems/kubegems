@@ -15,7 +15,7 @@ import (
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
-	gemlabels "kubegems.io/pkg/apis/gems"
+	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

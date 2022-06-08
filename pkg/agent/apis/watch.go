@@ -13,7 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path"
 
-	"kubegems.io/pkg/utils/workflow"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 )
 
 const (

@@ -7,10 +7,10 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/labels"
-	"kubegems.io/pkg/apis/application"
-	gemlabels "kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/apis/application"
+	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/argo"
 )
 
 type ApplicationCollector struct {

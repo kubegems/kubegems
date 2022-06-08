@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/models/cache"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/models/cache"
 )
 
 const (

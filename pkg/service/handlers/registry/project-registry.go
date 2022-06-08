@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 // PostProjectRegistry 创建一个属于 Project 的Registry

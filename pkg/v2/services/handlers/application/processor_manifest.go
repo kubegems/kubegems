@@ -17,8 +17,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/git"
 	"sigs.k8s.io/kustomize/api/types"
 	"sigs.k8s.io/yaml"
 )

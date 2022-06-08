@@ -7,15 +7,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
-	"kubegems.io/pkg/agent/apis"
-	"kubegems.io/pkg/agent/cluster"
-	"kubegems.io/pkg/agent/indexer"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/kube"
-	"kubegems.io/pkg/utils/pprof"
-	"kubegems.io/pkg/utils/prometheus"
-	"kubegems.io/pkg/utils/prometheus/exporter"
-	"kubegems.io/pkg/utils/system"
+	"kubegems.io/kubegems/pkg/agent/apis"
+	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/agent/indexer"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/utils/pprof"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
 type Options struct {

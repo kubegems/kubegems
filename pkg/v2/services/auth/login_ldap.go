@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-ldap/ldap/v3"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 type LdapLoginUtils struct {

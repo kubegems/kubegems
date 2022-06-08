@@ -2,7 +2,7 @@ package auditloghandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers/base"
+	"kubegems.io/kubegems/pkg/service/handlers/base"
 )
 
 type AuditLogHandler struct {

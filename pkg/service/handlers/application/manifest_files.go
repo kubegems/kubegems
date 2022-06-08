@@ -20,8 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/git"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

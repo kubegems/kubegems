@@ -5,10 +5,10 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/handlers"
-	"kubegems.io/pkg/v2/services/handlers/base"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/v2/services/handlers/base"
 )
 
 type Handler struct {

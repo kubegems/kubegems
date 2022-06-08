@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/clusterinfo"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/clusterinfo"
 )
 
 type CertCollector struct {

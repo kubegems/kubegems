@@ -1,11 +1,11 @@
 package options
 
 import (
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/jwt"
-	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/utils/system"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/jwt"
+	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
 type Options struct {

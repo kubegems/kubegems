@@ -7,14 +7,14 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	_ "kubegems.io/docs/swagger"
-	"kubegems.io/pkg/service"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/options"
-	"kubegems.io/pkg/utils/config"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/debug"
-	"kubegems.io/pkg/version"
+	_ "kubegems.io/kubegems/docs/swagger"
+	"kubegems.io/kubegems/pkg/service"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/options"
+	"kubegems.io/kubegems/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/debug"
+	"kubegems.io/kubegems/pkg/version"
 )
 
 func NewServiceCmd() *cobra.Command {

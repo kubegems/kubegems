@@ -11,8 +11,8 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/slice"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/v2/model/client"
+	"kubegems.io/kubegems/pkg/v2/model/client"
 )
 
 var (

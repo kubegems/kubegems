@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/loki"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/loki"
 )
 
 type LokiCli = LogHandler

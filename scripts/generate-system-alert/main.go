@@ -7,8 +7,8 @@ import (
 	"regexp"
 
 	"github.com/ghodss/yaml"
-	"kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 const (

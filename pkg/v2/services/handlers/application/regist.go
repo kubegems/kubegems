@@ -6,12 +6,12 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"github.com/goharbor/harbor/src/pkg/scan/vuln"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/git"
-	"kubegems.io/pkg/utils/route"
-	"kubegems.io/pkg/utils/workflow"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/route"
+	"kubegems.io/kubegems/pkg/utils/workflow"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 type ApplicationHandler struct {

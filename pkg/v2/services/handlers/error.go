@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/go-playground/validator/v10"
-	"kubegems.io/pkg/v2/model/validate"
+	"kubegems.io/kubegems/pkg/v2/model/validate"
 )
 
 func ParseError(err error) interface{} {

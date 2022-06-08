@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 type Msg struct {

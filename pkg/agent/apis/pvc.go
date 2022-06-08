@@ -7,8 +7,8 @@ import (
 	v1snap "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"kubegems.io/pkg/apis/storage"
-	"kubegems.io/pkg/utils/pagination"
+	"kubegems.io/kubegems/pkg/apis/storage"
+	"kubegems.io/kubegems/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

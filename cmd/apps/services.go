@@ -8,11 +8,11 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/pkg/utils/config"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services"
-	"kubegems.io/pkg/v2/services/options"
+	"kubegems.io/kubegems/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services"
+	"kubegems.io/kubegems/pkg/v2/services/options"
 )
 
 func NewServicesCmd() *cobra.Command {

@@ -15,11 +15,11 @@ import (
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"gorm.io/datatypes"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 // DisableAlertRule 禁用告警规则

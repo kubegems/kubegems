@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"k8s.io/client-go/tools/remotecommand"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 type StreamHandler struct {

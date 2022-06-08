@@ -11,7 +11,7 @@ import (
 	extensionsv1beta1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/pointer"
-	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

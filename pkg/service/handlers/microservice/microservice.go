@@ -2,8 +2,8 @@ package microservice
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers/base"
-	microserviceoptions "kubegems.io/pkg/service/handlers/microservice/options"
+	"kubegems.io/kubegems/pkg/service/handlers/base"
+	microserviceoptions "kubegems.io/kubegems/pkg/service/handlers/microservice/options"
 )
 
 type MicroServiceHandler struct {

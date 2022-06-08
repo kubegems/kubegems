@@ -8,8 +8,8 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"kubegems.io/pkg/utils/set"
-	"kubegems.io/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/utils/set"
+	"kubegems.io/kubegems/pkg/utils/slice"
 )
 
 const (

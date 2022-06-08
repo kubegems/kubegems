@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 var (

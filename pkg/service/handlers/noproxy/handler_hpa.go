@@ -9,8 +9,8 @@ import (
 	v2beta1 "k8s.io/api/autoscaling/v2beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )

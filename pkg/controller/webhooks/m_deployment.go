@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
-	"kubegems.io/pkg/utils/resourcequota"
+	"kubegems.io/kubegems/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

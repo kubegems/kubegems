@@ -8,10 +8,10 @@ import (
 
 	"github.com/pkg/errors"
 	promemodel "github.com/prometheus/common/model"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/agents"
 )
 
 const (

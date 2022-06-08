@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type DatabaseHelper struct {

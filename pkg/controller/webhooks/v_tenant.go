@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	v1 "k8s.io/api/admission/v1"
-	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

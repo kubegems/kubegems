@@ -9,7 +9,7 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 // COPY from kiali，有删改

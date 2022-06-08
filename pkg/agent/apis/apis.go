@@ -9,16 +9,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/labels"
-	"kubegems.io/pkg/agent/client"
-	"kubegems.io/pkg/agent/cluster"
-	"kubegems.io/pkg/agent/middleware"
-	"kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/apis/plugins"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/prometheus/exporter"
-	"kubegems.io/pkg/utils/route"
-	"kubegems.io/pkg/utils/system"
-	"kubegems.io/pkg/version"
+	"kubegems.io/kubegems/pkg/agent/client"
+	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/agent/middleware"
+	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/apis/plugins"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
+	"kubegems.io/kubegems/pkg/utils/route"
+	"kubegems.io/kubegems/pkg/utils/system"
+	"kubegems.io/kubegems/pkg/version"
 )
 
 type DebugOptions struct {

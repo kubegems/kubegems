@@ -6,7 +6,7 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/v2/model/client"
+	"kubegems.io/kubegems/pkg/v2/model/client"
 )
 
 func GetQuery(opts ...client.Option) *client.Query {

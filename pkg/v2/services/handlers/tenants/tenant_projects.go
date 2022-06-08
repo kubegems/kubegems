@@ -3,8 +3,8 @@ package tenanthandler
 import (
 	"github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 func (h *Handler) ListTenantProject(req *restful.Request, resp *restful.Response) {

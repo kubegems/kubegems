@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"kubegems.io/pkg/v2/model/client"
+	"kubegems.io/kubegems/pkg/v2/model/client"
 )
 
 var (

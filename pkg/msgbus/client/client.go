@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"time"
 
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/msgbus"
-	"kubegems.io/pkg/utils/set"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/utils/set"
 )
 
 func NewMessageBusClient(database *database.Database, options *msgbus.Options) *MsgBusClient {

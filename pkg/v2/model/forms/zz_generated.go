@@ -1,8 +1,8 @@
 package forms
 
 import (
-	"kubegems.io/pkg/v2/model/client"
-	"kubegems.io/pkg/v2/model/orm"
+	"kubegems.io/kubegems/pkg/v2/model/client"
+	"kubegems.io/kubegems/pkg/v2/model/orm"
 )
 
 type WorkloadCommonList struct {

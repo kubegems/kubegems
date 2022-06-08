@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils"
 )
 
 type UserMessageStatus struct {

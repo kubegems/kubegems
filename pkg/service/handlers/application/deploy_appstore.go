@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/handlers"
 )
 
 type HelmManifest struct {

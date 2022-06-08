@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
 )
 
 // 获取各个集群的告警信息

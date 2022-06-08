@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 var ErrCantRegister = errors.New("can't register flag")

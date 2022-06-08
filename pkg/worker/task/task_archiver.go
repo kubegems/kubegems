@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/utils/workflow"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 )
 
 // 用于转移超过时间的任务记录至database

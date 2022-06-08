@@ -9,13 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/apis/gems/v1beta1"
-	msgclient "kubegems.io/pkg/msgbus/client"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
 )
 
 var (

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/pkg/version"
+	"kubegems.io/kubegems/pkg/version"
 )
 
 func NewVersionCmd() *cobra.Command {

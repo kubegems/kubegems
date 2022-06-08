@@ -2,7 +2,7 @@ package apis
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/agent/cluster"
 )
 
 type ClusterHandler struct {

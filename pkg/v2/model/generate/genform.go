@@ -142,8 +142,8 @@ func writeCode(code, dest string) {
 func genFormCode(forms, orms map[string]TypeDefine) {
 	head := `package forms
 import (
-	"kubegems.io/pkg/model/orm"
-	"kubegems.io/pkg/model/client"
+	"kubegems.io/kubegems/pkg/model/orm"
+	"kubegems.io/kubegems/pkg/model/client"
 )`
 	r := []string{head}
 	keys := []string{}

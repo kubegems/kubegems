@@ -1,13 +1,13 @@
 package worker
 
 import (
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/git"
-	"kubegems.io/pkg/utils/helm"
-	"kubegems.io/pkg/utils/prometheus"
-	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/worker/dump"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/helm"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/worker/dump"
 )
 
 type Options struct {

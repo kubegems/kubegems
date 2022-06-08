@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"time"
 
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/msgbus"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 func NewMessageSwitch(_ context.Context, db *database.Database) *MessageSwitcher {

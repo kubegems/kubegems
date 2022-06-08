@@ -11,11 +11,11 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/harbor"
-	"kubegems.io/pkg/utils/slice"
-	"kubegems.io/pkg/v2/model/client"
+	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/harbor"
+	"kubegems.io/kubegems/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/v2/model/client"
 )
 
 func (c *Client) registHook(obj client.Object, phase client.HookPhase, fn func(tx *gorm.DB, obj client.Object) error) {
@@ -188,7 +188,7 @@ const (
 	syncKindUpsert = "upsert"
 	syncKindDelete = "delete"
 
-	imagePullSecretKeyPrefix  = "kubegems.io/imagePullSecrets-"
+	imagePullSecretKeyPrefix  = "kubegems.io/kubegems/imagePullSecrets-"
 	defaultServiceAccountName = "default"
 )
 

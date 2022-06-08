@@ -16,10 +16,10 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"kubegems.io/pkg/agent/ws"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/loki"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/agent/ws"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/loki"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 var cstZone = time.FixedZone("GMT", 8*3600)

@@ -3,7 +3,7 @@ package git
 import (
 	"fmt"
 
-	"kubegems.io/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/apis/gems"
 )
 
 var DefaultCommiter = &Commiter{

@@ -15,8 +15,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/cmd/apps"
-	"kubegems.io/pkg/version"
+	"kubegems.io/kubegems/cmd/apps"
+	"kubegems.io/kubegems/pkg/version"
 )
 
 const ErrExitCode = 1

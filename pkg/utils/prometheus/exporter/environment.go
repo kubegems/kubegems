@@ -4,9 +4,9 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/database"
 )
 
 type EnvironmentCollector struct {

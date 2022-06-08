@@ -12,9 +12,9 @@ import (
 	"k8s.io/api/storage/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
-	"kubegems.io/pkg/apis/storage"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/apis/storage"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

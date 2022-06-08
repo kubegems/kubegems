@@ -7,10 +7,10 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/pkg/msgbus"
-	"kubegems.io/pkg/msgbus/options"
-	"kubegems.io/pkg/utils/config"
-	"kubegems.io/pkg/version"
+	"kubegems.io/kubegems/pkg/msgbus"
+	"kubegems.io/kubegems/pkg/msgbus/options"
+	"kubegems.io/kubegems/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/version"
 )
 
 func NewMsgbusCmd() *cobra.Command {

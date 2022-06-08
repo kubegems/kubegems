@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/v2/store"
+	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/v2/store"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

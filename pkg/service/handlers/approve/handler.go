@@ -9,11 +9,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	msgclient "kubegems.io/pkg/msgbus/client"
-	"kubegems.io/pkg/service/handlers"
-	tenanthandler "kubegems.io/pkg/service/handlers/tenant"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/msgbus"
+	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	tenanthandler "kubegems.io/kubegems/pkg/service/handlers/tenant"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
 )
 
 type Approve struct {

@@ -16,8 +16,8 @@ import (
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/models/validate"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/models/validate"
 )
 
 var namer = schema.NamingStrategy{}

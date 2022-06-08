@@ -3,7 +3,7 @@ package observability
 import (
 	"testing"
 
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 func Test_splitLogql(t *testing.T) {

@@ -12,7 +12,7 @@ import (
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/apis/gems"
 )
 
 var (

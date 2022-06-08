@@ -3,7 +3,7 @@ package base
 import (
 	"context"
 
-	"kubegems.io/pkg/v2/model/client"
+	"kubegems.io/kubegems/pkg/v2/model/client"
 )
 
 func (h *BaseHandler) GetByName(ctx context.Context, obj interface{}, name string) error {

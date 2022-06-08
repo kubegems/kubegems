@@ -6,8 +6,8 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/utils/harbor"
-	"kubegems.io/pkg/utils/workflow"
+	"kubegems.io/kubegems/pkg/utils/harbor"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 )
 
 // @Tags         Application

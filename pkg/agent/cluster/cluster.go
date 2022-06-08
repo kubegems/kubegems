@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	metricsvebeta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
-	"kubegems.io/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"

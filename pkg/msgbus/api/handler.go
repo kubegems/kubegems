@@ -6,10 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"kubegems.io/pkg/msgbus/switcher"
-	"kubegems.io/pkg/service/aaa"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/msgbus/switcher"
+	"kubegems.io/kubegems/pkg/service/aaa"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
 )
 
 type MessageHandler struct {

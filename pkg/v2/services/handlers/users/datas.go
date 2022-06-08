@@ -1,8 +1,8 @@
 package userhandler
 
 import (
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 type UserListResp struct {

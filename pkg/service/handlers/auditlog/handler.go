@@ -1,8 +1,8 @@
 package auditloghandler
 
 import (
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
 
 	"github.com/gin-gonic/gin"
 )

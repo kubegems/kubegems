@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/loki"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/loki"
 )
 
 // QueryRange 获取事件

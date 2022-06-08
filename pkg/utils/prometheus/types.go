@@ -7,9 +7,9 @@ import (
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/utils/prometheus/promql"
-	"kubegems.io/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
+	"kubegems.io/kubegems/pkg/utils/slice"
 )
 
 type Action int
@@ -182,10 +182,10 @@ func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerCon
 			Labels: map[string]string{
 				gems.LabelAlertmanagerConfigName: name,
 				gems.LabelAlertmanagerConfigType: func() string {
-					if name == MonitorAlertCRDName {
-						return AlertTypeMonitor
-					} else {
+					if name == LoggingAlertCRDName {
 						return AlertTypeLogging
+					} else {
+						return AlertTypeMonitor
 					}
 				}(),
 			},
@@ -214,7 +214,7 @@ func GetBasePrometheusRule(namespace, name string) *monitoringv1.PrometheusRule 
 			Name:      name,
 			Namespace: namespace,
 			Labels: map[string]string{
-				gems.LabelPrometheusRuleName: MonitorAlertCRDName,
+				gems.LabelPrometheusRuleName: name,
 				gems.LabelPrometheusRuleType: AlertTypeMonitor,
 			},
 		},

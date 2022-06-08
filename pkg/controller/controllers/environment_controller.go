@@ -30,17 +30,17 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	gemlabels "kubegems.io/pkg/apis/gems"
-	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
-	"kubegems.io/pkg/utils/maps"
-	"kubegems.io/pkg/utils/slice"
+	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/utils/maps"
+	"kubegems.io/kubegems/pkg/utils/slice"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
-	imagePullSecretKeyPrefix = "kubegems.io/imagePullSecrets-"
+	imagePullSecretKeyPrefix = "kubegems.io/kubegems/imagePullSecrets-"
 )
 
 // EnvironmentReconciler reconciles a Environment object

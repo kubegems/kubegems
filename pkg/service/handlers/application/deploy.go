@@ -8,12 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"kubegems.io/pkg/apis/application"
-	"kubegems.io/pkg/apis/gems"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/handlers/base"
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/apis/application"
+	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/handlers/base"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/git"
 )
 
 const StatusNoArgoApp = "NoArgoApp"

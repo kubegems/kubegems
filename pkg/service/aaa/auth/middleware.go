@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/aaa"
-	"kubegems.io/pkg/service/aaa/auth/user"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils/jwt"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/aaa"
+	"kubegems.io/kubegems/pkg/service/aaa/auth/user"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/jwt"
 )
 
 type AuthMiddleware struct {

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/handlers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

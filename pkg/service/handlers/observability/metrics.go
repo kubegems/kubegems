@@ -8,11 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 	prommodel "github.com/prometheus/common/model"
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/prometheus"
-	"kubegems.io/pkg/utils/prometheus/promql"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 )
 
 type MetricQueryReq struct {

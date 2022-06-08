@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/agent/cluster"
-	"kubegems.io/pkg/utils/certificate"
-	"kubegems.io/pkg/utils/pagination"
+	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/utils/certificate"
+	"kubegems.io/kubegems/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

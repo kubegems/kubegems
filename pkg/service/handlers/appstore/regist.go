@@ -2,8 +2,8 @@ package appstore
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers/base"
-	"kubegems.io/pkg/utils/helm"
+	"kubegems.io/kubegems/pkg/service/handlers/base"
+	"kubegems.io/kubegems/pkg/utils/helm"
 )
 
 type AppstoreHandler struct {

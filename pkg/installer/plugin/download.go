@@ -21,8 +21,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/go-logr/logr"
-	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
-	"kubegems.io/pkg/installer/helm"
+	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
+	"kubegems.io/kubegems/pkg/installer/helm"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 

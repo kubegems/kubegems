@@ -1,4 +1,4 @@
-module kubegems.io
+module kubegems.io/kubegems
 
 go 1.18
 

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/msgbus"
 )
 
 type AlertInfo struct {

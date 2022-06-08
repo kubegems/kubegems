@@ -6,18 +6,18 @@ import (
 
 	kialiconfig "github.com/kiali/kiali/config"
 	"golang.org/x/sync/errgroup"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/options"
-	"kubegems.io/pkg/service/routers"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/git"
-	_ "kubegems.io/pkg/utils/kube" // 用于 AddToSchema
-	"kubegems.io/pkg/utils/pprof"
-	"kubegems.io/pkg/utils/prometheus/exporter"
-	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/utils/tracing"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/options"
+	"kubegems.io/kubegems/pkg/service/routers"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/git"
+	_ "kubegems.io/kubegems/pkg/utils/kube" // 用于 AddToSchema
+	"kubegems.io/kubegems/pkg/utils/pprof"
+	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
+	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/utils/tracing"
 )
 
 type Dependencies struct {

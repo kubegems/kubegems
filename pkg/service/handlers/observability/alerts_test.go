@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils"
 )
 
 func Test_newDefaultSamplePair(t *testing.T) {

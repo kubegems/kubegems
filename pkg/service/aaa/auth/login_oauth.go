@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/oauth2"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils"
 )
 
 const desKey = "semgebuk"

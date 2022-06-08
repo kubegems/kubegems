@@ -13,14 +13,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/stream"
-	"kubegems.io/pkg/utils/workflow"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/stream"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-
 
 type ImageDetails struct {
 	Running string // 意为当前 argo 实际正在运行的版本

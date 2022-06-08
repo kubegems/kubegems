@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"kubegems.io/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/git"
 )
 
 const BaseEnv = "base"

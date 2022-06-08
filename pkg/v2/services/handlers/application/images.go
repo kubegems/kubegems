@@ -12,10 +12,10 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"github.com/goharbor/harbor/src/pkg/scan/vuln"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/harbor"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/harbor"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 const (

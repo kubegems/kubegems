@@ -5,10 +5,10 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/statistics"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/statistics"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 func (h *Handler) ListEnvironment(req *restful.Request, resp *restful.Response) {
@@ -67,8 +67,8 @@ func (h *Handler) ListLogQuerySnapshot(req *restful.Request, resp *restful.Respo
 }
 
 type ClusterQuota struct {
-	Version        string                          `json:"version"`
-	OversoldConfig []byte                          `json:"oversoldConfig"`
+	Version        string                               `json:"version"`
+	OversoldConfig []byte                               `json:"oversoldConfig"`
 	Resoruces      statistics.ClusterResourceStatistics `json:"resources"`
 	Workloads      statistics.ClusterWorkloadStatistics `json:"workloads"`
 }

@@ -7,9 +7,9 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/pkg/agent"
-	"kubegems.io/pkg/utils/config"
-	"kubegems.io/pkg/version"
+	"kubegems.io/kubegems/pkg/agent"
+	"kubegems.io/kubegems/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/version"
 )
 
 func NewAgentCmd() *cobra.Command {

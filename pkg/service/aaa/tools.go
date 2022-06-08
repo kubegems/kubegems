@@ -2,7 +2,7 @@ package aaa
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 type ContextUserGetter interface {

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 func Log(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {

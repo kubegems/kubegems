@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
-	"kubegems.io/pkg/utils/pagination"
+	"kubegems.io/kubegems/pkg/utils/pagination"
 )
 
 const (

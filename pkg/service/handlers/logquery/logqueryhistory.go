@@ -3,8 +3,8 @@ package logqueryhandler
 import (
 	"strconv"
 
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
 
 	"github.com/gin-gonic/gin"
 )

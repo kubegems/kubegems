@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"kubegems.io/pkg/log"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 // Parse 从多个方式加载配置

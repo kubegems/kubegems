@@ -2,7 +2,7 @@ package eventhandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers/lokilog"
+	"kubegems.io/kubegems/pkg/service/handlers/lokilog"
 )
 
 type EventHandler struct {

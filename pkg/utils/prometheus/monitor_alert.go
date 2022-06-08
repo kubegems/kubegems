@@ -9,7 +9,7 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/prometheus/promql/parser"
-	"kubegems.io/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/utils/slice"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 )

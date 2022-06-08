@@ -7,8 +7,8 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"kubegems.io/pkg/controller"
-	"kubegems.io/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/controller"
+	"kubegems.io/kubegems/pkg/utils/config"
 )
 
 func NewControllerCmd() *cobra.Command {

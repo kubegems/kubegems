@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	gemsv1beta1 "kubegems.io/pkg/apis/gems/v1beta1"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 )
 
 var (

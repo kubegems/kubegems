@@ -5,10 +5,10 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
 )
 
 // BaseHandler is the base handler for all handlers

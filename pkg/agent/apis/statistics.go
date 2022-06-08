@@ -6,8 +6,8 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/utils/resourcequota"
-	"kubegems.io/pkg/utils/statistics"
+	"kubegems.io/kubegems/pkg/utils/resourcequota"
+	"kubegems.io/kubegems/pkg/utils/statistics"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

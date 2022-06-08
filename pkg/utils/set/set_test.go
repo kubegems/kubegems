@@ -3,7 +3,7 @@ package set
 import (
 	"testing"
 
-	"kubegems.io/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/utils/slice"
 )
 
 func TestSlice(t *testing.T) {

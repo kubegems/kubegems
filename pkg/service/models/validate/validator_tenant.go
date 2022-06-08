@@ -3,7 +3,7 @@ package validate
 import (
 	"github.com/go-playground/validator/v10"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 func (v *Validator) TenantStructLevelValidation(sl validator.StructLevel) {

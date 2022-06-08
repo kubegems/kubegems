@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/spf13/pflag"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils"
 )
 
 type Options struct {

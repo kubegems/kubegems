@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"k8s.io/client-go/rest"
-	pluginsv1beta1 "kubegems.io/pkg/apis/plugins/v1beta1"
+	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

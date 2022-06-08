@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/helm"
-	"kubegems.io/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/helm"
+	"kubegems.io/kubegems/pkg/v2/models"
 )
 
 const (

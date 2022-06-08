@@ -12,9 +12,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	"go.uber.org/zap"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils"
-	gempro "kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils"
+	gempro "kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 var (

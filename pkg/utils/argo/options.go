@@ -3,7 +3,7 @@ package argo
 import (
 	"fmt"
 
-	"kubegems.io/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/apis/gems"
 )
 
 type Options struct {

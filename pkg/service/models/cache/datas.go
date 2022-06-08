@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"kubegems.io/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 type CommonResourceIface interface {

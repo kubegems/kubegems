@@ -5,7 +5,7 @@ import (
 
 	restful "github.com/emicklei/go-restful/v3"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils/pagination"
+	"kubegems.io/kubegems/pkg/utils/pagination"
 )
 
 type Response struct {

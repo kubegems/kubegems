@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/aaa"
-	"kubegems.io/pkg/service/aaa/audit"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/service/models/cache"
-	"kubegems.io/pkg/utils"
-	"kubegems.io/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/service/aaa"
+	"kubegems.io/kubegems/pkg/service/aaa/audit"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/models/cache"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/slice"
 )
 
 var normalActions = []string{

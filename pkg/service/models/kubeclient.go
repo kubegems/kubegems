@@ -1,7 +1,7 @@
 package models
 
 import (
-	"kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 )
 
 var _kubeClient KubeClient

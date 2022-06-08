@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/handlers"
 )
 
 // 如果是非成功的响应，使用 NotOK

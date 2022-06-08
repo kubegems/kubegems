@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/utils/slice"
-	"kubegems.io/pkg/v2/model/client"
+	"kubegems.io/kubegems/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/v2/model/client"
 )
 
 const (

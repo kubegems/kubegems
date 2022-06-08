@@ -1,6 +1,6 @@
 package forms
 
-import "kubegems.io/pkg/v2/model/client"
+import "kubegems.io/kubegems/pkg/v2/model/client"
 
 type BaseForm struct {
 	object client.Object `json:"-"`

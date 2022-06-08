@@ -4,7 +4,7 @@ import (
 	"time"
 
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 )
 
 type KubeClientIfe interface {

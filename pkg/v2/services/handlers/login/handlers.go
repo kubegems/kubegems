@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/jwt"
-	"kubegems.io/pkg/v2/models"
-	"kubegems.io/pkg/v2/services/auth"
-	"kubegems.io/pkg/v2/services/handlers"
-	"kubegems.io/pkg/v2/services/handlers/base"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/jwt"
+	"kubegems.io/kubegems/pkg/v2/models"
+	"kubegems.io/kubegems/pkg/v2/services/auth"
+	"kubegems.io/kubegems/pkg/v2/services/handlers"
+	"kubegems.io/kubegems/pkg/v2/services/handlers/base"
 )
 
 var tags = []string{"login"}

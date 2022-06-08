@@ -7,14 +7,14 @@ import (
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 	"golang.org/x/sync/errgroup"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/argo"
-	"kubegems.io/pkg/utils/database"
-	"kubegems.io/pkg/utils/git"
-	"kubegems.io/pkg/utils/helm"
-	"kubegems.io/pkg/utils/redis"
-	"kubegems.io/pkg/utils/workflow"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/helm"
+	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 )
 
 type Tasker interface {

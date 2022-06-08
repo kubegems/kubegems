@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-	"kubegems.io/pkg/service/models"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils"
 )
 
 type AccountLoginUtil struct {

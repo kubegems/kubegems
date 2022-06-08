@@ -17,9 +17,9 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/kubectl/pkg/util/deployment"
 	"k8s.io/utils/pointer"
-	"kubegems.io/pkg/agent/cluster"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/stream"
+	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/stream"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

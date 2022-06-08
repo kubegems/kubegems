@@ -6,7 +6,7 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

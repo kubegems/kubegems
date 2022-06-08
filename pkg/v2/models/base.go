@@ -8,7 +8,7 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
-	"kubegems.io/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/database"
 )
 
 func createDatabaseIfNotExists(dsn, dbname string) error {

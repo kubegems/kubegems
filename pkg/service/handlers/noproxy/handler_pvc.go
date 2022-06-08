@@ -9,9 +9,9 @@ import (
 	snapv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/pkg/apis/storage"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/apis/storage"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

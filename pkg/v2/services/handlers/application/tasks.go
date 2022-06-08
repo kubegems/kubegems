@@ -7,8 +7,8 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/gin-contrib/sse"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils/workflow"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 )
 
 type TaskHandler struct {

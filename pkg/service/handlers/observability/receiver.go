@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/service/handlers"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 func checkScope(scope string) error {

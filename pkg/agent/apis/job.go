@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	v1 "k8s.io/api/batch/v1"
-	"kubegems.io/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/agent/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

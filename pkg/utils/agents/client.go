@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"kubegems.io/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

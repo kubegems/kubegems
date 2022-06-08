@@ -2,8 +2,8 @@ package application
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubegems.io/pkg/utils/agents"
-	"kubegems.io/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/argo"
 )
 
 type ApplicationHandler struct {

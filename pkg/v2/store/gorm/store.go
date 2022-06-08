@@ -3,7 +3,7 @@ package gormstore
 import (
 	"context"
 
-	"kubegems.io/pkg/v2/store"
+	"kubegems.io/kubegems/pkg/v2/store"
 )
 
 type GORMStore struct{}

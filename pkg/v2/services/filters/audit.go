@@ -2,8 +2,8 @@ package filters
 
 import (
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/v2/services/auth/user"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/v2/services/auth/user"
 )
 
 type AuditMiddleware struct{}

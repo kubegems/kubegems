@@ -9,8 +9,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/pflag"
-	"kubegems.io/pkg/log"
-	"kubegems.io/pkg/utils"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils"
 )
 
 type DumpOptions struct {
