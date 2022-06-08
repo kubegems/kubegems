@@ -116,16 +116,16 @@ func (h *ApplicationHandler) EnableStrategyDeployment(req *restful.Request, resp
 }
 
 // @Tags         StrategyDeployment
-// @Summary 切换更新策略
-// @Description 切换更新策略
+// @Summary      切换更新策略
+// @Description  切换更新策略
 // @Accept       json
 // @Produce      json
-// @Param        tenant_id                 path                                                           int        true  "tenaut id"
-// @Param        project_id                path                                                           int        true  "project id"
-// @param        environment_id            path  int                                                           true  "environment id"
-// @Param        name                                                                                          path        string  true  "applicationname"
-// @Success 200 {object} 	handlers.ResponseStruct{Data=DeploymentStrategy} "-"
-// @Router /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/strategyswitch [post]
+// @Param        tenant_id       path      int     true                                              "tenaut id"
+// @Param        project_id      path      int     true                                              "project id"
+// @param        environment_id  path      int     true                                              "environment id"
+// @Param        name            path      string  true                                              "applicationname"
+// @Success      200             {object}          handlers.ResponseStruct{Data=DeploymentStrategy}  "-"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/strategyswitch [post]
 // @Security     JWT
 //
 // 开始灰度发布流程

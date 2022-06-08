@@ -40,7 +40,7 @@ import (
 )
 
 const (
-	imagePullSecretKeyPrefix = "kubegems.io/kubegems/imagePullSecrets-"
+	imagePullSecretKeyPrefix = "kubegems.io/imagePullSecrets-"
 )
 
 // EnvironmentReconciler reconciles a Environment object

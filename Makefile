@@ -66,7 +66,7 @@ generate: ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefiniti
 	| tee deploy/installer.yaml
 
 swagger:
-	go install github.com/swaggo/swag/cmd/swag@v1.8.1
+	go install github.com/swaggo/swag/cmd/swag@67cb7684c8adf9591bb221880e2079c34019dc39
 	swag f -g cmd/main.go
 	swag i --parseDependency --parseInternal -g cmd/main.go -o docs/swagger
 
