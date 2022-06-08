@@ -25,7 +25,6 @@ import (
 // @Security     JWT
 func (l *EventHandler) Event(c *gin.Context) {
 	clustername := c.Param("cluster")
-
 	var query loki.QueryRangeParam
 	if err := c.ShouldBindQuery(&query); err != nil {
 		handlers.NotOK(c, err)

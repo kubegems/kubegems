@@ -7,102 +7,97 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/service/models/cache"
 )
 
 const (
-	AuditDataKey      = "auditdata"
-	AuditExtraDataKey = "auditextradata"
-	AuditEnable       = "auditenable"
+	AuditSubjectKey   = "audit_subject"
+	AuditExtraDataKey = "audit_extra_datas"
 )
 
-type AuditActionData struct {
-	Action string
-	Module string
-	Name   string
-}
-
 // SetAuditData 设置上下文的审计数据
-func (audit *DefaultAuditInstance) SetAuditData(c *gin.Context, action, mod, name string) {
-	data := &AuditActionData{
-		Action: action,
-		Module: mod,
-		Name:   name,
+func (audit *DefaultAuditInstance) SetAuditData(c *gin.Context, action, module, name string) {
+	subject := map[string]string{
+		"action": action,
+		"module": module,
+		"name":   name,
 	}
-	c.Set(AuditDataKey, data)
+	c.Set(AuditSubjectKey, subject)
 }
 
 // SetExtraAuditData 设置上下文的审计数据 的系统环境信息（租户，项目，环境）
 func (audit *DefaultAuditInstance) SetExtraAuditData(c *gin.Context, kind string, uid uint) {
-	extra := audit.cache.FindParents(kind, uid)
-	if len(extra) > 0 {
-		c.Set(AuditExtraDataKey, extra)
+	var ctxdata map[string]string
+	contextDatas := audit.cache.FindParents(kind, uid)
+	extra, exist := c.Get(AuditExtraDataKey)
+	if exist {
+		ctxdata = extra.(map[string]string)
+	} else {
+		ctxdata = make(map[string]string)
 	}
+	for _, cData := range contextDatas {
+		switch cData.GetKind() {
+		case models.ResTenant:
+			ctxdata["tenant"] = cData.GetName()
+		case models.ResProject:
+			ctxdata["project"] = cData.GetName()
+		case models.ResEnvironment:
+			ctxdata["environment"] = cData.GetName()
+			ctxdata["cluster"] = cData.GetCluster()
+			ctxdata["namespace"] = cData.GetNamespace()
+		}
+	}
+	c.Set(AuditExtraDataKey, ctxdata)
+
 }
 
 // SetExtraAuditDataByClusterNamespace 根据集群namesapce设置上下文的审计数据 的系统环境信息（租户，项目，环境）
 func (audit *DefaultAuditInstance) SetExtraAuditDataByClusterNamespace(c *gin.Context, cluster, namespace string) {
 	env := audit.cache.FindEnvironment(cluster, namespace)
-	if env != nil {
-		extra := audit.cache.FindParents(env.GetKind(), env.GetID())
-		if len(extra) > 0 {
-			c.Set(AuditExtraDataKey, extra)
-		}
+	if env == nil {
+		return
 	}
-}
-
-func (audit *DefaultAuditInstance) SetProxyAuditData(c *gin.Context, pobj *ProxyObject) {
+	audit.SetExtraAuditData(c, models.ResEnvironment, env.GetID())
 }
 
 func GetExtraAuditData(c *gin.Context) (string, map[string]string) {
 	var tenant string
 	tags := map[string]string{}
-	extraIfe, exist := c.Get(AuditExtraDataKey)
+	contextDataIface, exist := c.Get(AuditExtraDataKey)
 	if !exist {
-		return "", tags
+		return tenant, tags
 	}
-	extra := extraIfe.([]cache.CommonResourceIface)
-	for _, p := range extra {
-		switch p.GetKind() {
-		case models.ResTenant:
-			tags["租户"] = p.GetName()
-			tenant = p.GetName()
-		case models.ResProject:
-			tags["项目"] = p.GetName()
-		case models.ResEnvironment:
-			tags["环境"] = p.GetName()
-			tags["集群"] = p.GetCluster()
-			tags["namespace"] = p.GetNamespace()
-		}
+	contextDatas, ok := contextDataIface.(map[string]string)
+	if !ok {
+		return tenant, tags
+	}
+	if v, exist := contextDatas["tenant"]; exist {
+		tenant = v
+		tags["租户"] = tenant
+	}
+	if v, exist := contextDatas["project"]; exist {
+		tags["项目"] = v
+	}
+	if v, exist := contextDatas["application"]; exist {
+		tags["应用"] = v
+	}
+	if v, exist := contextDatas["environment"]; exist {
+		tags["环境"] = v
+	}
+	if v, exist := contextDatas["cluster"]; exist {
+		tags["集群"] = v
+	}
+	if v, exist := contextDatas["namespace"]; exist {
+		tags["namespace"] = v
 	}
 	return tenant, tags
 }
 
-func GetAuditData(c *gin.Context) *AuditActionData {
-	dataIfe, exsit := c.Get(AuditDataKey)
+func GetAuditData(c *gin.Context) map[string]string {
+	subjectIface, exsit := c.Get(AuditSubjectKey)
 	if !exsit {
 		return nil
 	}
-	data := dataIfe.(*AuditActionData)
-	return data
-}
-
-func GetProxyAuditData(c *gin.Context) (*AuditActionData, map[string]string) {
-	objIfe, exist := c.Get("proxyobj")
-	if !exist {
-		return nil, nil
-	}
-	pobj := objIfe.(*ProxyObject)
-	tags := map[string]string{
-		"Cluster":   pobj.Cluster,
-		"Namesapce": pobj.Namespace,
-	}
-
-	return &AuditActionData{
-		Action: pobj.Action,
-		Module: pobj.Version + "/" + pobj.Resource,
-		Name:   pobj.Name,
-	}, tags
+	return subjectIface.(map[string]string)
 }
 
 func (audit *DefaultAuditInstance) SaveAuditLog(c *gin.Context) {
@@ -143,9 +138,9 @@ func (audit *DefaultAuditInstance) LogIt(c *gin.Context, t time.Time, raw gin.H)
 	)
 
 	if data := GetAuditData(c); data != nil {
-		module = data.Module
-		action = data.Action
-		name = data.Name
+		module = data["module"]
+		action = data["action"]
+		name = data["name"]
 	}
 
 	tenant, tags = GetExtraAuditData(c)

@@ -333,5 +333,7 @@ func (r *Router) Complete() error {
 	rg.Any("/proxy/cluster/:cluster/*action", proxyHandler.Proxy)
 	router.Any("/v1/service-proxy/cluster/:cluster/namespace/:namespace/service/:service/port/:port/*action", proxyHandler.ProxyService)
 
+	registPlugins(rg, basehandler)
+
 	return nil
 }

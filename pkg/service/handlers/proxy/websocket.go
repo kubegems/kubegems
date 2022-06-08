@@ -58,7 +58,6 @@ func (wsp *WebSocketProxy) audit(msg []byte) {
 	if tmsg.MsgType != "input" {
 		return
 	}
-	// 不知道为什么要发这个，eg. \u001b[19;5R    \u001b[7;5R
 	// ESC按键UNICODE
 	if strings.Contains(tmsg.Input, "\u001b") {
 		return

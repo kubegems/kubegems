@@ -1,0 +1,9 @@
+apiVersion: nacos.io/v1alpha1
+kind: Nacos
+metadata:
+  name: nacos
+  namespace:  nacos
+spec:
+  type: cluster
+  image: nacos/nacos-server:1.4.1
+  replicas: 3

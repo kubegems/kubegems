@@ -90,13 +90,7 @@ func (audit *DefaultAuditInstance) AuditProxyFunc(c *gin.Context, proxyobj *Prox
 	if !proxyobj.InNamespace() {
 		return
 	}
-	n := audit.cache.FindEnvironment(proxyobj.Cluster, proxyobj.Namespace)
-	if n != nil {
-		extra := audit.cache.FindParents(n.GetKind(), n.GetID())
-		if len(extra) > 0 {
-			c.Set(AuditExtraDataKey, extra)
-		}
-	}
+	audit.SetExtraAuditDataByClusterNamespace(c, module, proxyobj.Namespace)
 }
 
 func (audit *DefaultAuditInstance) WebsocketAuditFunc(username string, parents []cache.CommonResourceIface, ip string, proxyobj *ProxyObject) func(cmd string) {
