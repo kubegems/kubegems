@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/clusterinfo"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
@@ -172,6 +173,7 @@ func (p *prometheusHandler) LabelNames(c *gin.Context) {
 // @Param        end      query     string                                false  "end"
 // @Param        match    query     string                                false  "query"
 // @Param        label    query     string                                false  "label"
+// @Param        search   query     string                                false  "search"
 // @Success      200      {object}  handlers.ResponseStruct{Data=object}  "labelvalues"
 // @Router       /v1/proxy/cluster/{cluster}/custom/prometheus/v1/labelvalues [get]
 // @Security     JWT
@@ -186,13 +188,32 @@ func (p *prometheusHandler) LabelValues(c *gin.Context) {
 	}
 
 	v1api := v1.NewAPI(p.client)
-	labels, warns, err := v1api.LabelValues(context.Background(), label, match, s, e)
+	alllabels, warns, err := v1api.LabelValues(context.Background(), label, match, s, e)
 	if err != nil {
 		NotOK(c, err)
 		return
 	}
+
+	// 避免append
+	tmp := make([]model.LabelValue, len(alllabels))
+	index := -1
+	for _, v := range alllabels {
+		if strings.Contains(string(v), c.Query("search")) {
+			index++
+			tmp[index] = v
+		}
+	}
+
+	// 限制最多100条
+	var ret []model.LabelValue
+	if index > 99 {
+		ret = tmp[:100]
+	} else {
+		ret = tmp[:index+1]
+	}
+
 	OK(c, map[string]interface{}{
-		"labels": labels,
+		"labels": ret,
 		"warns":  warns,
 	})
 }

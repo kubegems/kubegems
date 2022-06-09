@@ -96,10 +96,10 @@ func (h *TaskHandler) List(req *restful.Request, resp *restful.Response) {
 // @Description  应用列表的异步任务列表
 // @Accept       json
 // @Produce      json
-// @Param        tenant_id       path      int                                              true  "tenaut id"
-// @Param        project_id      path      int                                              true  "project id"
-// @Param        environment_id  path      int                                              true  "environment_id"
-// @Param        names                                                                            query  string  false  "names,逗号','分隔,限制返回结果为这些name"
+// @Param        tenant_id       path      int                                              true   "tenaut id"
+// @Param        project_id      path      int                                              true   "project id"
+// @Param        environment_id  path      int                                              true   "environment_id"
+// @Param        names           query     string                                           false  "names,逗号','分隔,限制返回结果为这些name"
 // @Success      200             {object}  handlers.ResponseStruct{Data=[]ApplicationTask}  "task status"
 // @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/_/tasks [get]
 // @Security     JWT
