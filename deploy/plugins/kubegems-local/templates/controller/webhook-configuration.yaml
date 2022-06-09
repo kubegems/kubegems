@@ -1,8 +1,8 @@
 {{/*
     If the user does not have cert-manager and is not providing a secret with the certificates, the chart needs to generate the secret
   */}}
-{{- $ca := genCA "kubegems-ca" 365 }}
-{{- $cert := genSignedCert (include "kubegems-local.controller.fullname" .) nil (list (printf "%s.%s.svc" (include "kubegems-local.controller.webhook.fullname" .) .Release.Namespace) (printf "%s.%s.svc.%s" (include "kubegems-local.controller.webhook.fullname" .) .Release.Namespace .Values.clusterDomain)) 365 $ca }}
+{{- $ca := genCA "kubegems-ca" 3650 }}
+{{- $cert := genSignedCert (include "kubegems-local.controller.fullname" .) nil (list (printf "%s.%s.svc" (include "kubegems-local.controller.webhook.fullname" .) .Release.Namespace) (printf "%s.%s.svc.%s" (include "kubegems-local.controller.webhook.fullname" .) .Release.Namespace .Values.clusterDomain)) 3650 $ca }}
 
 {{- if not .Values.controller.webhook.useCertManager }}
 apiVersion: v1

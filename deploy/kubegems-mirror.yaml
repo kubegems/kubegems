@@ -32,16 +32,19 @@ spec:
           repository: kubegems/bitnami-shell
     argo-cd:
       image:
-        repository: kuebgems/argo-cd
+        repository: kubegems/argo-cd
+      redis:
+        image:
+          repository: kubegems/redis
     gitea:
       image:
-        repository: kuebgems/gitea
+        repository: kubegems/gitea
       persistence:
         enabled: true
         size: 10Gi 
     chartmuseum:
       image:
-        repository: kuebgems/chartmuseum
+        repository: kubegems/chartmuseum
       persistence:
         enabled: true
         sieze: 5Gi

@@ -58,7 +58,7 @@ registry: {{ $globalRegistry }}
 {{- define "common.container.runtime" -}}
 {{- $globalRuntime := .Values.global.runtime -}}
 {{- if $globalRuntime -}}
-runtime: {{ $globalRuntime }}
+{{- printf "%s" $globalRuntime -}}
 {{- end -}}
 {{- end -}}
 

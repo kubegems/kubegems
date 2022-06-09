@@ -24,6 +24,7 @@ spec:
       metricLabelsAllowlist:
         - namespaces=[*] # scrape namespace labels
     grafana:
+      enabled: false
       adminPassword: demo!@#admin
       initChownData:
         image:
@@ -122,6 +123,8 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
+    nodeExporter:
+      enabled: false
     prometheus-node-exporter:
       image:
         # repository: quay.io/prometheus/node-exporter

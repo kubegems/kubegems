@@ -19,7 +19,7 @@ logging:
     # externalLoki:
     #   address: http://loki-stack.loki-stack:3100
 monitoring:
-  enabled: true
+  enabled: false
   annotations:
     plugins.kubegems.io/description: KubeGems平台监控&告警控制器,包含Prometheus和AlertManager服务.
     plugins.kubegems.io/category: 监控&告警
@@ -136,7 +136,7 @@ tke-gpu-manager:
   namespace: kube-system
   version: 1.1.5
 argo-rollouts:
-  enabled: true
+  enabled: false
   annotations:
     plugins.kubegems.io/description: KubeGems内部应用策略部署的GitOps引擎,支持蓝绿、金丝雀发布等高级策略.
     plugins.kubegems.io/category: GitOps
@@ -156,7 +156,7 @@ local-path:
     plugins.kubegems.io/health-check: "deployments.apps/*"
   version: 0.0.22
 eventer:
-  enabled: true
+  enabled: false
   namespace: kubegems-eventer
   annotations:
     plugins.kubegems.io/description: Kubernetes集群事件收集器(需开启 logging 套件)
