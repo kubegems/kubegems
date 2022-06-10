@@ -14,7 +14,7 @@ require (
 	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21
 	github.com/emersion/go-smtp v0.15.0
 	github.com/emicklei/go-restful-openapi/v2 v2.8.0
-	github.com/emicklei/go-restful/v3 v3.7.3
+	github.com/emicklei/go-restful/v3 v3.8.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gin-contrib/sse v0.1.0
