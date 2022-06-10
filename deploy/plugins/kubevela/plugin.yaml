@@ -1,0 +1,12 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubevela
+  annotations:
+    plugins.kubegems.io/category: OAM
+    plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+spec:
+  disabled: true
+  kind: "template"
+  installNamespace: vela-system

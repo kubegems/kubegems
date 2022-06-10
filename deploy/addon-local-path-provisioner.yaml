@@ -1,0 +1,19 @@
+# https://github.com/rancher/local-path-provisioner/tree/master/deploy/chart
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: local-path-provisioner
+  namespace: local-path-storage
+spec:
+  kind: helm
+  url: https://github.com/rancher/local-path-provisioner/archive/refs/tags/v0.0.22.tar.gz
+  path: local-path-provisioner-0.0.22/deploy/chart/local-path-provisioner
+  version: 0.0.22
+  values:
+    storageClass:
+      defaultClass: true
+      provisionerName: rancher.io/local-path
+    nodePathMap:
+      - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+        paths:
+          - /data

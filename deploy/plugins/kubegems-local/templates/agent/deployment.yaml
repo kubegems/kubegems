@@ -83,6 +83,10 @@ spec:
             {{- if .Values.agent.httpSignature.enabled }}
             - --api-enablehttpsigs
             {{- end}}
+            - --api-prometheusserver={{ include "monitoring.prometheus.address" . }}
+            - --api-alertmanagerserver={{ include "monitoring.alertmanager.address" . }}
+            - --api-lokiserver={{ include "logging.loki.address" . }}
+            - --api-jaegerserver={{ include "observability.jaeger.address" . }}
             {{- if .Values.agent.metrics.enabled }}
             # todo: metrics args here
             {{- end }}

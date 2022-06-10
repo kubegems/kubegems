@@ -1,0 +1,11 @@
+# https://github.com/bitnami/charts/tree/master/bitnami/nginx-ingress-controller/#installing-the-chart
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: nginx-ingress-controller
+  namespace: ingress-nginx
+spec:
+  kind: helm
+  url: https://charts.bitnami.com/bitnami
+  chart: nginx-ingress-controller
+  version: 9.2.1

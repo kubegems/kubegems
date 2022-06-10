@@ -1,0 +1,469 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  creationTimestamp: null
+  labels:
+    prometheusrule.kubegems.io/name: kubegems-default-alert-rule
+  name: kubegems-default-alert-rule
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+  - name: KubernetesNodeNotReady
+    rules:
+    - alert: KubernetesNodeNotReady
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"statusCondition","unit":"","labelpairs":{"condition":"Ready","status":"true"},"compareOp":"==","compareValue":"0"}'
+        message: 'KubernetesNodeNotReady: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
+          }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: kube_node_status_condition{condition=~"Ready", status=~"true"} == 0
+      for: 5m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: statusCondition
+        gems_alert_scope: system-admin
+        gems_alertname: KubernetesNodeNotReady
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: KubernetesMemoryPressure
+    rules:
+    - alert: KubernetesMemoryPressure
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"statusCondition","unit":"","labelpairs":{"condition":"MemoryPressure","status":"true"},"compareOp":"==","compareValue":"1"}'
+        message: 'KubernetesMemoryPressure: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
+          }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: kube_node_status_condition{condition=~"MemoryPressure", status=~"true"}
+        == 1
+      for: 5m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: statusCondition
+        gems_alert_scope: system-admin
+        gems_alertname: KubernetesMemoryPressure
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: KubernetesDiskPressure
+    rules:
+    - alert: KubernetesDiskPressure
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"statusCondition","unit":"","labelpairs":{"condition":"DiskPressure","status":"true"},"compareOp":"==","compareValue":"1"}'
+        message: 'KubernetesDiskPressure: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
+          }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: kube_node_status_condition{condition=~"DiskPressure", status=~"true"}
+        == 1
+      for: 5m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: statusCondition
+        gems_alert_scope: system-admin
+        gems_alertname: KubernetesDiskPressure
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: KubernetesOutOfDisk
+    rules:
+    - alert: KubernetesOutOfDisk
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"statusCondition","unit":"","labelpairs":{"condition":"OutOfDisk","status":"true"},"compareOp":"==","compareValue":"1"}'
+        message: 'KubernetesOutOfDisk: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
+          }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: kube_node_status_condition{condition=~"OutOfDisk", status=~"true"} ==
+        1
+      for: 5m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: statusCondition
+        gems_alert_scope: system-admin
+        gems_alertname: KubernetesOutOfDisk
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: KubernetesPodNumberTooHigh
+    rules:
+    - alert: KubernetesPodNumberTooHigh
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"runningPodPercent","unit":"percent","compareOp":"\u003e","compareValue":"90"}'
+        message: 'KubernetesPodNumberTooHigh: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] 节点pod使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_running_pod_percent > 90
+      for: 1h
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: runningPodPercent
+        gems_alert_scope: system-admin
+        gems_alertname: KubernetesPodNumberTooHigh
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: KubernetesPodCrashLooping
+    rules:
+    - alert: KubernetesPodCrashLooping
+      annotations:
+        gems_expr_json: '{"resource":"container","rule":"restartTimesLast5m","unit":"times","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"2"}'
+        message: 'KubernetesPodCrashLooping: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
+          $labels.namespace }}] [pod:{{"{{"}} $labels.pod }}] [container:{{"{{"}} $labels.container
+          }}] 容器过去5m重启次数 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}次'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_container_restart_times_last_5m{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
+        > 2
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: container
+        gems_alert_rule: restartTimesLast5m
+        gems_alert_scope: system-admin
+        gems_alertname: KubernetesPodCrashLooping
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: KubernetesPodOOMKilling
+    rules:
+    - alert: KubernetesPodOOMKilling
+      annotations:
+        gems_expr_json: '{"resource":"container","rule":"statusTerminatedReason","unit":"","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage","reason":"OOMKilled"},"compareOp":"\u003e","compareValue":"0"}'
+        message: 'KubernetesPodOOMKilling: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
+          $labels.namespace }}] [pod:{{"{{"}} $labels.pod }}] [container:{{"{{"}} $labels.container
+          }}] [reason:{{"{{"}} $labels.reason }}] 容器终止原因 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f"
+          }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: kube_pod_container_status_terminated_reason{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage",
+        reason=~"OOMKilled"} > 0
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: container
+        gems_alert_rule: statusTerminatedReason
+        gems_alert_scope: system-admin
+        gems_alertname: KubernetesPodOOMKilling
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: KubegemsPvcUsageTooHigh
+    rules:
+    - alert: KubegemsPvcUsageTooHigh
+      annotations:
+        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","unit":"percent","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"80"}'
+        message: 'KubegemsPvcUsageTooHigh: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] [namespace:{{"{{"}} $labels.namespace }}] [persistentvolumeclaim:{{"{{"}}
+          $labels.persistentvolumeclaim }}] 存储卷存储卷使用率 触发告警, 当前值: {{"{{ $value"}} | printf
+          "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_pvc_usage_percent{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
+        > 80
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: pvc
+        gems_alert_rule: volumeUsagePercent
+        gems_alert_scope: system-admin
+        gems_alertname: KubegemsPvcUsageTooHigh
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+    - alert: KubegemsPvcUsageTooHigh
+      annotations:
+        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","unit":"percent","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"90"}'
+        message: 'KubegemsPvcUsageTooHigh: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] [namespace:{{"{{"}} $labels.namespace }}] [persistentvolumeclaim:{{"{{"}}
+          $labels.persistentvolumeclaim }}] 存储卷存储卷使用率 触发告警, 当前值: {{"{{ $value"}} | printf
+          "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_pvc_usage_percent{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
+        > 90
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: pvc
+        gems_alert_rule: volumeUsagePercent
+        gems_alert_scope: system-admin
+        gems_alertname: KubegemsPvcUsageTooHigh
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: HostHighCpuLoad
+    rules:
+    - alert: HostHighCpuLoad
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"cpuUsagePercent","unit":"percent","compareOp":"\u003e","compareValue":"80"}'
+        message: 'HostHighCpuLoad: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}} $labels.host
+          }}] 节点CPU使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_cpu_usage_percent > 80
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: cpuUsagePercent
+        gems_alert_scope: system-admin
+        gems_alertname: HostHighCpuLoad
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: HostHighMemoryLoad
+    rules:
+    - alert: HostHighMemoryLoad
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"memoryUsagePercent","unit":"percent","compareOp":"\u003e","compareValue":"90"}'
+        message: 'HostHighMemoryLoad: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
+          $labels.host }}] 节点内存使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_memory_usage_percent > 90
+      for: 5m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: memoryUsagePercent
+        gems_alert_scope: system-admin
+        gems_alertname: HostHighMemoryLoad
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: HostUnusualDiskReadRate
+    rules:
+    - alert: HostUnusualDiskReadRate
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"diskReadBPS","unit":"mbps","compareOp":"\u003e","compareValue":"50"}'
+        message: 'HostUnusualDiskReadRate: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
+          $labels.host }}] 节点磁盘每秒读取量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}MB/s'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_disk_read_bps / (1024 * 1024) > 50
+      for: 5m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: diskReadBPS
+        gems_alert_scope: system-admin
+        gems_alertname: HostUnusualDiskReadRate
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: HostUnusualDiskWriteRate
+    rules:
+    - alert: HostUnusualDiskWriteRate
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"diskWriteBPS","unit":"mbps","compareOp":"\u003e","compareValue":"50"}'
+        message: 'HostUnusualDiskWriteRate: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
+          $labels.host }}] 节点磁盘每秒写入量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}MB/s'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_disk_write_bps / (1024 * 1024) > 50
+      for: 5m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: diskWriteBPS
+        gems_alert_scope: system-admin
+        gems_alertname: HostUnusualDiskWriteRate
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: HostNetworkReceiveErrors
+    rules:
+    - alert: HostNetworkReceiveErrors
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"networkInErrPercent","unit":"percent","compareOp":"\u003e","compareValue":"1"}'
+        message: 'HostNetworkReceiveErrors: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
+          $labels.host }}] [instance:{{"{{"}} $labels.instance }}] [device:{{"{{"}} $labels.device
+          }}] 节点网络接口收包错误率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_network_receive_errs_percent > 1
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: networkInErrPercent
+        gems_alert_scope: system-admin
+        gems_alertname: HostNetworkReceiveErrors
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: HostNetworkTransmitErrors
+    rules:
+    - alert: HostNetworkTransmitErrors
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"networkOutErrPercent","unit":"percent","compareOp":"\u003e","compareValue":"1"}'
+        message: 'HostNetworkTransmitErrors: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
+          $labels.host }}] [instance:{{"{{"}} $labels.instance }}] [device:{{"{{"}} $labels.device
+          }}] 节点网络接口发包错误率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_network_send_errs_percent > 1
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: networkOutErrPercent
+        gems_alert_scope: system-admin
+        gems_alertname: HostNetworkTransmitErrors
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: HostHighLoad5
+    rules:
+    - alert: HostHighLoad5
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"load5","unit":"","compareOp":"\u003e","compareValue":"gems_node_cpu_total_cores"}'
+        message: 'HostHighLoad5: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}} $labels.host
+          }}] 节点最近5分钟平均负载 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_load5 > gems_node_cpu_total_cores
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: load5
+        gems_alert_scope: system-admin
+        gems_alertname: HostHighLoad5
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+    - alert: HostHighLoad5
+      annotations:
+        gems_expr_json: '{"resource":"node","rule":"load5","unit":"","compareOp":"\u003e","compareValue":"1.5
+          * gems_node_cpu_total_cores"}'
+        message: 'HostHighLoad5: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}} $labels.host
+          }}] 节点最近5分钟平均负载 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_node_load5 > 1.5 * gems_node_cpu_total_cores
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: node
+        gems_alert_rule: load5
+        gems_alert_scope: system-admin
+        gems_alertname: HostHighLoad5
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: CertManagerCertExpirySoon
+    rules:
+    - alert: CertManagerCertExpirySoon
+      annotations:
+        gems_expr_json: '{"resource":"cert","rule":"expirationRemainTime","unit":"d","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003c","compareValue":"7"}'
+        message: 'CertManagerCertExpirySoon: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
+          $labels.namespace }}] [name:{{"{{"}} $labels.name }}] 证书剩余到期时间 触发告警, 当前值: {{"{{ $value"}}
+          | printf "%.1f" }}天'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_cert_expiration_remain_seconds{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
+        / (24 * 60 * 60) < 7
+      for: 1h
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: cert
+        gems_alert_rule: expirationRemainTime
+        gems_alert_scope: system-admin
+        gems_alertname: CertManagerCertExpirySoon
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: CertManagerCertNotReady
+    rules:
+    - alert: CertManagerCertNotReady
+      annotations:
+        gems_expr_json: '{"resource":"cert","rule":"status","unit":"","labelpairs":{"condition":"False|Unknown","namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"==","compareValue":"1"}'
+        message: 'CertManagerCertNotReady: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
+          $labels.namespace }}] [name:{{"{{"}} $labels.name }}] [condition:{{"{{"}} $labels.condition
+          }}] 证书状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: certmanager_certificate_ready_status{condition=~"False|Unknown", namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
+        == 1
+      for: 0m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: cert
+        gems_alert_rule: status
+        gems_alert_scope: system-admin
+        gems_alertname: CertManagerCertNotReady
+        gems_namespace: {{ .Release.Namespace }}
+        severity: error
+  - name: ClusterHighCpuLoad
+    rules:
+    - alert: ClusterHighCpuLoad
+      annotations:
+        gems_expr_json: '{"resource":"cluster","rule":"cpuUsagePercent","unit":"percent","compareOp":"\u003e","compareValue":"80"}'
+        message: 'ClusterHighCpuLoad: [集群:{{"{{"}} $externalLabels.cluster }}] 集群CPU使用率
+          触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100 > 80
+      for: 0m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: cluster
+        gems_alert_rule: cpuUsagePercent
+        gems_alert_scope: system-admin
+        gems_alertname: ClusterHighCpuLoad
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: ClusterHighMemoryLoad
+    rules:
+    - alert: ClusterHighMemoryLoad
+      annotations:
+        gems_expr_json: '{"resource":"cluster","rule":"memoryUsagePercent","unit":"percent","compareOp":"\u003e","compareValue":"90"}'
+        message: 'ClusterHighMemoryLoad: [集群:{{"{{"}} $externalLabels.cluster }}] 集群内存使用率
+          触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: (1- sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes))
+        * 100 > 90
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: cluster
+        gems_alert_rule: memoryUsagePercent
+        gems_alert_scope: system-admin
+        gems_alertname: ClusterHighMemoryLoad
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: ClusterComponentCertExpirySoon
+    rules:
+    - alert: ClusterComponentCertExpirySoon
+      annotations:
+        gems_expr_json: '{"resource":"cluster","rule":"certExpirationRemainTime","unit":"d","labelpairs":{"component":"apiserver"},"compareOp":"\u003c","compareValue":"7"}'
+        message: 'ClusterComponentCertExpirySoon: [集群:{{"{{"}} $externalLabels.cluster }}]
+          [component:{{"{{"}} $labels.component }}] 集群证书剩余到期时间 触发告警, 当前值: {{"{{ $value"}} | printf
+          "%.1f" }}天'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_agent_cluster_component_cert_expiration_remain_seconds{component=~"apiserver"}
+        / (24 * 60 * 60) < 7
+      for: 1h
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: cluster
+        gems_alert_rule: certExpirationRemainTime
+        gems_alert_scope: system-admin
+        gems_alertname: ClusterComponentCertExpirySoon
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: GemsPluginFailed
+    rules:
+    - alert: GemsPluginFailed
+      annotations:
+        gems_expr_json: '{"resource":"plugin","rule":"status","unit":"","labelpairs":{"enabled":"true"},"compareOp":"==","compareValue":"0"}'
+        message: 'GemsPluginFailed: [集群:{{"{{"}} $externalLabels.cluster }}] [type:{{"{{"}} $labels.type
+          }}] [namespace:{{"{{"}} $labels.namespace }}] [plugin:{{"{{"}} $labels.plugin }}] [version:{{"{{"}}
+          $labels.version }}] [enabled:{{"{{"}} $labels.enabled }}] 插件状态 触发告警, 当前值: {{"{{ $value"}}
+          | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: gems_server_plugin_status{enabled=~"true"} == 0
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: plugin
+        gems_alert_rule: status
+        gems_alert_scope: system-admin
+        gems_alertname: GemsPluginFailed
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical
+  - name: ExporterDown
+    rules:
+    - alert: ExporterDown
+      annotations:
+        gems_expr_json: '{"resource":"exporter","rule":"status","unit":"","labelpairs":{"job":"alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"},"compareOp":"==","compareValue":"0"}'
+        message: 'ExporterDown: [集群:{{"{{"}} $externalLabels.cluster }}] [instance:{{"{{"}} $labels.instance
+          }}] [job:{{"{{"}} $labels.job }}] 采集器状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
+        value: '{{"{{ $value"}} | printf "%.1f" }}'
+      expr: up{job=~"alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"}
+        == 0
+      for: 1m
+      labels:
+        gems_alert_from: monitor
+        gems_alert_resource: exporter
+        gems_alert_rule: status
+        gems_alert_scope: system-admin
+        gems_alertname: ExporterDown
+        gems_namespace: {{ .Release.Namespace }}
+        severity: critical

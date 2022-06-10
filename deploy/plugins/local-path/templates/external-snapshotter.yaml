@@ -1,0 +1,12 @@
+# https://github.com/kubernetes-csi/external-snapshotter/tree/master/client/config/crd
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: external-snapshotter
+  namespace: "kube-system"
+spec:
+  enabled: true
+  kind: kustomize
+  url: https://github.com/kubernetes-csi/external-snapshotter/archive/refs/tags/v5.0.1.tar.gz
+  path: external-snapshotter-5.0.1/client/config/crd
+  version: 5.0.1

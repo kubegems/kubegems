@@ -73,36 +73,46 @@ KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://raw.githubusercon
 
 ## 部署 KubeGems
 
-使用 helm 安装 kubegems 安装程序。
-
-```sh
-helm install --namespace kubegems-installer --create-namespace kubegems-installer plugins/kubegems-installer
-```
-
-或从生成的清单部署安装程序。
+安装 kubegems installer:
 
 ```sh
 kubectl create namespace kubegems-installer
-kubectl apply --namespace kubegems-installer -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/installer.yaml
+kubectl apply -f https://github.com/kubegems/kubegems/raw/main/deploy/installer.yaml
 ```
 
 等待安装程序准备就绪。
 
 ```sh
-kubectl --namespace kubegems-installer get pod
+kubectl --namespace bundle-controller get pods
 ```
 
-可选：如果您没有安装存储插件或 ingress 控制器（来自 kubeadm），可以使用如下方式安装 nginx-ingress-controller 和 local-path-provisioner：
+可选项:
 
-```sh
-kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/extends.yaml
-```
+1. 如果没有 ingress controller，可以安装 nginx-ingress-controller:
+
+  ```sh
+  kubectl create namespace ingress-nginx
+  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-nginx-ingress.yaml
+  ```
+
+1. 如果没有CSI插件，可以安装 local-path-provisioner:
+
+  ```sh
+  kubectl create namespace local-path-provisioner
+  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-local-path-provisioner.yaml
+  ```
 
 部署 kubegems 核心组件：
 
 ```sh
 kubectl create namespace kubegems
 kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml
+```
+
+如果您的网络在获取 docker.io quay.io gcr.io 上的镜像时较为缓慢，可以使用我们在阿里云上的镜像：
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems-mirror.yaml
 ```
 
 注意：如果您想自定义 kubegems 版本或使用不同的 storageClass，您必须在 apply 前下载并编辑 `kubegems.yaml` 文件。

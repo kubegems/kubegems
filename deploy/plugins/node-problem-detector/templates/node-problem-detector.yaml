@@ -1,0 +1,13 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: node-problem-detector
+  namespace: {{ .Release.Namespace }}
+spec:
+  kind: helm
+  url: https://charts.deliveryhero.io
+  version: {{ .Chart.AppVersion }}
+  values:
+    image:
+      # repository: quay.io/prometheus/node-exporter
+      {{ include "common.images.repository" ( dict "registry" "k8s.gcr.io" "repository" "node-problem-detector/node-problem-detector" "context" .) }}

@@ -82,11 +82,11 @@ require (
 	k8s.io/api v0.23.5
 	k8s.io/apiextensions-apiserver v0.23.5
 	k8s.io/apimachinery v0.23.5
-	k8s.io/cli-runtime v0.23.5
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kubectl v0.23.5
 	k8s.io/metrics v0.23.5
 	k8s.io/utils v0.0.0-20220127004650-9b3446523e65
+	kubegems.io/bundle-controller v1.0.0-alpha1
 	sigs.k8s.io/controller-runtime v0.11.0
 	sigs.k8s.io/kustomize/api v0.11.4
 	sigs.k8s.io/yaml v1.3.0
@@ -295,6 +295,7 @@ require (
 	istio.io/gogo-genproto v0.0.0-20220413184606-e76735307e2d // indirect
 	istio.io/pkg v0.0.0-20220413180906-765b7512325f // indirect
 	k8s.io/apiserver v0.23.5 // indirect
+	k8s.io/cli-runtime v0.23.5 // indirect
 	k8s.io/component-base v0.23.5 // indirect
 	k8s.io/component-helpers v0.23.5 // indirect
 	k8s.io/klog/v2 v2.40.1 // indirect
@@ -335,5 +336,4 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.23.5
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.5
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.5
-
 )

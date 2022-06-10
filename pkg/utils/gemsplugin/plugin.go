@@ -2,14 +2,15 @@ package gemsplugin
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	bundlev1 "kubegems.io/bundle-controller/pkg/apis/bundle/v1beta1"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -23,6 +24,7 @@ type PluginState struct {
 	Name        string                 `json:"name"`
 	Namespace   string                 `json:"namespace"`
 	Version     string                 `json:"version"`
+	AppVersion  string                 `json:"appVersion"`
 	Message     string                 `json:"message"`
 	Values      map[string]interface{} `json:"values"`
 }
@@ -39,44 +41,60 @@ func WithHealthy(b bool) ListPluginOption {
 	}
 }
 
-func ListPlugins(ctx context.Context, cli client.Client, options ...ListPluginOption) (map[string]interface{}, []PluginState, error) {
+func ListPlugins(ctx context.Context, cli client.Client, options ...ListPluginOption) (map[string]string, []PluginState, error) {
 	opt := ListPluginOptions{
 		WithHealthy: true,
 	}
 	for _, option := range options {
 		option(&opt)
 	}
-	allinoneplugin := &pluginsv1beta1.Plugin{
+	plugins := &pluginsv1beta1.PluginList{}
+	if err := cli.List(ctx, plugins, client.InNamespace(pluginscommon.KubeGemsLocalPluginsNamespace)); err != nil {
+		return nil, nil, err
+	}
+
+	globalvalues := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pluginscommon.KubeGemsLocalPluginsName,
+			Name:      pluginscommon.KubeGemsGlobalValuesConfigMapName,
 			Namespace: pluginscommon.KubeGemsLocalPluginsNamespace,
 		},
 	}
-	if err := cli.Get(ctx, client.ObjectKeyFromObject(allinoneplugin), allinoneplugin); err != nil {
-		return nil, nil, err
-	}
-	var plugins map[string]PluginState
-	if err := json.Unmarshal(allinoneplugin.Spec.Values.Raw, &plugins); err != nil {
-		return nil, nil, err
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(globalvalues), globalvalues); err != nil {
+		// return nil, nil, err
 	}
 	result := []PluginState{}
-	for name, plugin := range plugins {
-		if name == "global" {
-			continue
-		}
-		plugin.Name = name
-		if opt.WithHealthy {
-			checkHealthy(ctx, cli, &plugin)
-		}
-		if annotations := plugin.Annotations; annotations != nil {
+	for _, bundle := range plugins.Items {
+		if annotations := bundle.Annotations; annotations != nil {
 			if _, ok := annotations[pluginscommon.AnnotationIgnoreOnDisabled]; ok {
 				continue
 			}
 		}
-		result = append(result, plugin)
+		state := PluginState{
+			Annotations: bundle.Annotations,
+			Enabled:     !bundle.Spec.Disabled,
+			Description: "",
+			Healthy:     true,
+			Name:        bundle.Name,
+			Namespace:   bundle.Spec.InstallNamespace,
+			Version:     bundle.Spec.Version,
+			Values:      make(map[string]interface{}),
+			AppVersion:  bundle.Annotations[pluginscommon.AnnotationAppVersion],
+		}
+		if state.Version == "" {
+			state.Version = state.AppVersion
+		}
+		// health check
+		if bundle.Status.Phase != bundlev1.PhaseInstalled {
+			state.Healthy = false
+			state.Message = bundle.Status.Message
+		} else if opt.WithHealthy {
+			checkHealthy(ctx, cli, &state)
+		} else {
+			state.Healthy = true
+		}
+		result = append(result, state)
 	}
-	globalVals, _ := allinoneplugin.Spec.Values.Object["global"].(map[string]interface{})
-	return globalVals, result, nil
+	return globalvalues.Data, result, nil
 }
 
 func checkHealthy(ctx context.Context, cli client.Client, plugin *PluginState) {
@@ -164,13 +182,10 @@ func matchAndCheck[T any](list []T, exp string, check func(T) error) error {
 }
 
 func EnablePlugin(ctx context.Context, cli client.Client, name string, enable bool) error {
-	allinoneplugin := &pluginsv1beta1.Plugin{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      pluginscommon.KubeGemsLocalPluginsName,
-			Namespace: pluginscommon.KubeGemsLocalPluginsNamespace,
-		},
+	plugin := &pluginsv1beta1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: pluginscommon.KubeGemsLocalPluginsNamespace},
 	}
-	patchData := fmt.Sprintf(`{"spec":{"values":{"%s":{"enabled":%t}}}}`, name, enable)
+	patchData := fmt.Sprintf(`{"spec":{"disabled":%t}}`, !enable)
 	patch := client.RawPatch(types.MergePatchType, []byte(patchData))
-	return cli.Patch(ctx, allinoneplugin, patch)
+	return cli.Patch(ctx, plugin, patch)
 }

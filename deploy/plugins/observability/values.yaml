@@ -1,0 +1,6 @@
+global:
+  imageRegistry: ""
+  imageRepository: ""
+chartVersion: 2.30.0
+elasticsearch:
+  address: "" # override the default address

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: nvidia-device-plugin
+version: 1.0.0
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+appVersion: 0.11.0
+description: Nvidia GPU显卡设备调度插件.

@@ -1,3 +1,2 @@
-namespace:
-image:
-  registry:
+global:
+  imageRegistry: ""

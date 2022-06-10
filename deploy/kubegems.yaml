@@ -4,10 +4,8 @@ metadata:
   name: kubegems
   namespace: kubegems
 spec:
-  enabled: true
   kind: helm
-  repo: https://charts.kubegems.io/kubegems
-  installNamespace: kubegems
+  url: https://charts.kubegems.io/kubegems
   values:
     global:
       kubegemsVersion: main

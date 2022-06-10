@@ -32,8 +32,8 @@ func AddToschema(schema *runtime.Scheme) {
 	_ = istiov1beta1.AddToScheme(schema)
 	_ = istiopkgv1alpha1.SchemeBuilder.AddToScheme(schema)
 	_ = applicationv1beta1.AddToScheme(schema)
-	_ = loggingv1beta1.AddToScheme(schema)
 	_ = pluginv1beta1.AddToScheme(schema)
+	_ = loggingv1beta1.AddToScheme(schema)
 	_ = networkingpkgv1alpha3.AddToScheme(schema)
 	_ = networkingpkgv1beta1.AddToScheme(schema)
 }

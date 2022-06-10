@@ -21,6 +21,7 @@ const GroupName = "plugins.kubegems.io"
 
 const (
 	AnnotationDescription      = "plugins.kubegems.io/description"
+	AnnotationAppVersion       = "plugins.kubegems.io/appVersion"
 	AnnotationCategory         = "plugins.kubegems.io/category"
 	AnnotationMainCategory     = "plugins.kubegems.io/main-category"
 	AnnotationIcon             = "plugins.kubegems.io/icon"
@@ -30,7 +31,6 @@ const (
 )
 
 const (
-	KubeGemsLocalPluginsName          = "kubegems-local-stack"
 	KubeGemsLocalPluginsNamespace     = "kubegems-local"
-	KubeGemsInstallerPluginsNamespace = "kubegems-installer"
+	KubeGemsGlobalValuesConfigMapName = "kubegems-global-values"
 )

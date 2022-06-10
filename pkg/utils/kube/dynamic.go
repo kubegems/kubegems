@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	"kubegems.io/bundle-controller/pkg/utils"
 	"kubegems.io/kubegems/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -51,21 +52,25 @@ func Apply[T client.Object](ctx context.Context, config *rest.Config, resources 
 
 	// nolint: nestif
 	if opts.CreateNamespace {
-		namespaces := []string{}
+		namespaces := map[string]struct{}{}
 		for _, obj := range resources {
-			if obj.GetNamespace() == "" {
+			ns := obj.GetNamespace()
+			if ns == "" {
 				continue
 			}
-			if err := cli.Get(ctx, types.NamespacedName{Name: obj.GetNamespace()}, &corev1.Namespace{}); err != nil {
+			if _, ok := namespaces[ns]; ok {
+				continue
+			}
+			if err := cli.Get(ctx, types.NamespacedName{Name: ns}, &corev1.Namespace{}); err != nil {
 				if !errors.IsNotFound(err) {
 					return err
 				}
-				namespaces = append(namespaces, obj.GetNamespace())
+				namespaces[ns] = struct{}{}
 			}
 		}
-		log.Info("create namespaces", "namespaces", namespaces)
-		for _, ns := range namespaces {
-			if err := cli.Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ns}}); err != nil {
+		for name := range namespaces {
+			log.Info("create namespaces", "namespace", name)
+			if err := cli.Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: name}}); err != nil {
 				if errors.IsAlreadyExists(err) {
 					continue
 				}
@@ -74,16 +79,8 @@ func Apply[T client.Object](ctx context.Context, config *rest.Config, resources 
 		}
 	}
 	for _, obj := range resources {
-		data, err := json.Marshal(obj)
-		if err != nil {
-			return fmt.Errorf("json marshal: %w", err)
-		}
-		// using server side apply
-		if err := cli.Patch(ctx, obj, client.RawPatch(types.ApplyPatchType, data),
-			client.FieldOwner("kubegems"),
-			client.ForceOwnership,
-		); err != nil {
-			log.Error(err, "apply object", "data", string(data))
+		log.Info("applying...", "gvk", obj.GetObjectKind().GroupVersionKind().String(), "name", obj.GetName(), "namespace", obj.GetNamespace())
+		if err := utils.ApplyResource(ctx, cli, obj, utils.ApplyOptions{ServerSideApply: true, FieldOwner: "kubegems"}); err != nil {
 			return err
 		}
 	}

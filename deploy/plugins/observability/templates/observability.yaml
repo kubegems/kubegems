@@ -1,0 +1,55 @@
+
+# https://github.com/jaegertracing/helm-charts
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: jaeger-operator
+  namespace: {{ .Release.Namespace }}
+spec:
+  kind: helm
+  url: https://jaegertracing.github.io/helm-charts
+  version: {{ .Values.chartVersion }}
+  values:
+    image:
+      # repository: docker.io/jaegertracing/jaeger-operator
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "jaegertracing/jaeger-operator" "context" .) }}
+      tag: {{ .Chart.AppVersion }}
+    rbac:
+      clusterRole: true
+    jaeger:
+      create: true
+      spec: 
+        strategy: production
+        ingress:
+          enabled: false
+        collector:
+          options:
+            collector.zipkin.host-port: "9411"
+        storage:
+          dependencies:
+            enabled: false
+          type: elasticsearch
+          options:
+            es:
+              {{- if .Values.elasticsearch.address }}
+              server-urls: {{ .Values.elasticsearch.address }}
+              {{- else }}
+              server-urls: http://elasticsearch-master.observability:9200
+              {{- end }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: jaeger-query  # jaeger-operator's svc name is jaeger-operator-jaeger-query,create a new service for jaeger-query
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: jaeger
+    app.kubernetes.io/component: query
+  ports:
+    - name: http-query
+      port: 16686
+      targetPort: 16686
+    - name: grpc-query
+      port: 16685
+      targetPort: 16685

@@ -1,0 +1,14 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: grafana
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  url: https://grafana.github.io/helm-charts
+  version: "{{ .Chart.AppVersion }}"
+  values:
+    adminPassword: "demo!@#admin"
+    image:
+      # repository: quay.io/prometheus/node-exporter
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/grafana" "context" .) }}

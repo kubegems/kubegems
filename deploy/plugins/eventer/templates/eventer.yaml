@@ -1,0 +1,25 @@
+# https://github.com/NVIDIA/k8s-device-plugin#deployment-via-helm
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubernetes-event-exporter
+  namespace: {{ .Release.Namespace }}
+spec:
+  kind: helm
+  url: https://charts.bitnami.com/bitnami
+  version: {{ .Chart.AppVersion }}
+  values:
+    image:
+      {{ include "common.images.registry" . }}
+      {{ include "common.images.repository" ( dict "repository" "bitnami/kubernetes-event-exporter" "context" .) }}
+    config:
+      logLevel: error
+      logFormat: json
+      route:
+        routes:
+          - match:
+              - receiver: "dump"
+      receivers:
+        - name: "dump"
+          file:
+            path: "/dev/stdout"
