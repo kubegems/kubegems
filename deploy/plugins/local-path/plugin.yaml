@@ -1,0 +1,13 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: local-path
+  annotations:
+    plugins.kubegems.io/category: 存储插件
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/required: "true"
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+spec:
+  disabled: true
+  kind: template
+  installNamespace: local-path-storage

@@ -3,179 +3,99 @@ package apps
 import (
 	"context"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
+	"unsafe"
 
 	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
-	"kubegems.io/kubegems/pkg/installer/plugin"
-	"kubegems.io/kubegems/pkg/utils/kube"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/yaml"
+	"go.uber.org/zap"
+	"kubegems.io/bundle-controller/cmd/bundle/apps"
+	bundlev1 "kubegems.io/bundle-controller/pkg/apis/bundle/v1beta1"
+	"kubegems.io/bundle-controller/pkg/bundle"
+	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 )
 
 func NewPluginCmd() *cobra.Command {
-	globalOptions := plugin.NewDefaultOptions()
-	cmd := &cobra.Command{
-		Use:   "plugins",
-		Short: "plugins commands",
-	}
-	cmd.PersistentFlags().StringVarP(&globalOptions.Cache, "cache", "c", globalOptions.Cache, "cache download plugins to this directory")
-	cmd.PersistentFlags().StringSliceVarP(&globalOptions.SearchDirs, "directory", "d", globalOptions.SearchDirs, "search plugins in directories")
-
-	cmd.AddCommand(NewPluginTemplateCmd(globalOptions))
-	cmd.AddCommand(NewPluginsDownloadCmd(globalOptions))
+	cmd := NewBundleControllerCmd()
 	return cmd
 }
 
-// nolint: gocognit
-func NewPluginTemplateCmd(global *plugin.Options) *cobra.Command {
-	pretty := false
+func NewBundleControllerCmd() *cobra.Command {
+	globalOptions := bundle.NewDefaultOptions()
+	cmd := &cobra.Command{
+		Use:   "plugins",
+		Short: "commands of plugins",
+	}
+	cmd.AddCommand(
+		NewDownloadCmd(globalOptions),
+		NewTemplateCmd(globalOptions),
+	)
+	cmd.PersistentFlags().StringVarP(&globalOptions.CacheDir, "cache-dir", "c", globalOptions.CacheDir, "cache directory")
+	cmd.PersistentFlags().StringSliceVarP(&globalOptions.SearchDirs, "search-dir", "s", globalOptions.SearchDirs, "search bundles in directory")
+	return cmd
+}
+
+func NewTemplateCmd(options *bundle.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "template",
-		Short: "template plugin",
+		Short: "template a bundle",
 		Example: `
-		kubegem plugins template deploy/plugins/kubegem-local-stack
-		kubegem plugins template deploy/plugins-core.yaml
+# template a helm bundle into stdout
+bundle -c bundles template helm-bundle.yaml
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
-			log.Default().SetOutput(io.Discard) // disable logs to stdout
 
-			pm := plugin.NewApplier(nil, nil, global)
-			if len(args) == 1 && args[0] == "-" {
-				content, err := io.ReadAll(os.Stdin)
+			apply := bundle.NewDefaultApply(nil, nil, options)
+			return forBundleInPathes(args, func(bundle *bundlev1.Bundle) error {
+				content, err := apply.Template(ctx, bundle)
 				if err != nil {
 					return err
 				}
-				// template every plugin
-				objs, err := kube.SplitYAMLFilterByExample[*pluginsv1beta1.Plugin](content)
-				if err != nil {
-					return err
-				}
-				for _, obj := range objs {
-					if err := templatePrint(ctx, pm, obj, pretty); err != nil {
-						return err
-					}
-				}
+				fmt.Print(string(content))
 				return nil
-			}
-
-			for _, path := range args {
-				matches, err := filepath.Glob(path)
-				if err != nil {
-					return err
-				}
-				for _, path := range matches {
-					fi, err := os.Stat(path)
-					if err != nil {
-						return err
-					}
-					if fi.IsDir() {
-						// template current directory
-						pm.Options.SearchDirs = append(pm.Options.SearchDirs, filepath.Dir(path))
-						err := templatePrint(ctx, pm, &pluginsv1beta1.Plugin{
-							ObjectMeta: metav1.ObjectMeta{Name: filepath.Base(path), Namespace: "default"},
-							Spec:       pluginsv1beta1.PluginSpec{Enabled: true, Kind: plugin.DetectPluginType(path)},
-						}, pretty)
-						if err != nil {
-							return err
-						}
-						continue
-					}
-					content, err := os.ReadFile(path)
-					if err != nil {
-						return err
-					}
-
-					// template every plugin
-					objs, err := kube.SplitYAMLFilterByExample[*pluginsv1beta1.Plugin](content)
-					if err != nil {
-						return err
-					}
-					for _, obj := range objs {
-						if err := templatePrint(ctx, pm, obj, pretty); err != nil {
-							return err
-						}
-					}
-				}
-			}
-			return nil
+			})
 		},
 	}
-	cmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "pretty print")
 	return cmd
 }
 
-func templatePrint(ctx context.Context, pm *plugin.PluginApplier, plugin *pluginsv1beta1.Plugin, pretty bool) error {
-	manifestdoc, err := pm.Template(ctx, plugin)
-	if err != nil {
-		return err
-	}
-	if !pretty {
-		fmt.Print(string(manifestdoc))
-		return nil
-	}
-	objects, err := kube.SplitYAMLFilterByExample[runtime.Object](manifestdoc)
-	if err != nil {
-		return err
-	}
-	for _, obj := range objects {
-		raw, err := yaml.Marshal(obj)
-		if err != nil {
-			return err
-		}
-		fmt.Println("---")
-		fmt.Print(string(raw))
-	}
-	return nil
-}
-
-func NewPluginsDownloadCmd(global *plugin.Options) *cobra.Command {
+func NewDownloadCmd(options *bundle.Options) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "download",
-		Short:   "download plugins",
-		Example: `kubegem plugins download deploy/plugins-core.yaml`,
+		Use:   "download",
+		Short: "download a bundle",
+		Example: `
+# download a helm bundle into bundles
+bundle -c bundles download helm-bundle.yaml
+		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
 
-			ctx = logr.NewContext(ctx, zap.New(zap.UseDevMode(true)))
+			zapl, _ := zap.NewDevelopment()
+			ctx = logr.NewContext(ctx, zapr.NewLogger(zapl))
 
-			for _, path := range args {
-				var filecontent []byte
-				var err error
-				if path == "-" {
-					filecontent, err = io.ReadAll(os.Stdin)
-					if err != nil {
-						return err
-					}
-				} else {
-					filecontent, err = os.ReadFile(path)
-					if err != nil {
-						return err
-					}
-				}
-				objs, err := kube.SplitYAMLFilterByExample[*pluginsv1beta1.Plugin](filecontent)
-				if err != nil {
-					return err
-				}
-				for _, obj := range objs {
-					if _, err := plugin.Download(ctx, obj, global.Cache, global.SearchDirs...); err != nil {
-						return err
-					}
-				}
-			}
-			return nil
+			apply := bundle.NewDefaultApply(nil, nil, options)
+
+			return forBundleInPathes(args, func(bundle *bundlev1.Bundle) error {
+				_, err := apply.Download(ctx, bundle)
+				return err
+			})
 		},
 	}
 	return cmd
+}
+
+func forBundleInPathes(pathes []string, fun func(*bundlev1.Bundle) error) error {
+	return apps.ForBundleInPathes(pathes, PluginFromDir, func(plugin *pluginv1beta1.Plugin) error {
+		return fun((*bundlev1.Bundle)(unsafe.Pointer(plugin)))
+	})
+}
+
+func PluginFromDir(dir string) *pluginv1beta1.Plugin {
+	return (*pluginv1beta1.Plugin)(unsafe.Pointer(apps.BundleFromDir(dir)))
 }

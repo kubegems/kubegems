@@ -4,10 +4,8 @@ metadata:
   name: kubegems
   namespace: kubegems
 spec:
-  enabled: true
   kind: helm
-  repo: https://charts.kubegems.io/kubegems
-  installNamespace: kubegems
+  url: https://charts.kubegems.io/kubegems
   values:
     global:
       imageRegistry: registry.cn-beijing.aliyuncs.com
@@ -41,7 +39,7 @@ spec:
         repository: kubegems/gitea
       persistence:
         enabled: true
-        size: 10Gi 
+        size: 10Gi
     chartmuseum:
       image:
         repository: kubegems/chartmuseum

@@ -83,9 +83,9 @@ func (h *ClusterHandler) ValidateKubeConfig(c *gin.Context) {
 		handlers.OK(c, resp)
 		return
 	}
-	if globalvals, _, err := gemsplugin.ListPlugins(ctx, cli); err == nil {
-		if name, ok := globalvals["clusterName"]; ok {
-			resp.ClusterName, _ = name.(string)
+	if globalvals, plugins, err := gemsplugin.ListPlugins(ctx, cli); err == nil && len(plugins) > 0 {
+		if name, ok := globalvals["global.clusterName"]; ok {
+			resp.ClusterName = name
 		}
 		resp.ExistInstaller = true
 	}

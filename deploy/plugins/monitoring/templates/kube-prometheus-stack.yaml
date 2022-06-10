@@ -1,0 +1,128 @@
+# https://github.com/prometheus-operator/prometheus-operator/tree/main/helm
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter
+# https://artifacthub.io/packages/helm/banzaicloud-stable/grafana-operator
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kube-prometheus-stack
+  namespace: {{ .Release.Namespace }}
+spec:
+  kind: helm
+  url: https://prometheus-community.github.io/helm-charts
+  version: {{ .Chart.AppVersion }}
+  values:
+    defaultRules:
+      create: false
+    kube-state-metrics:
+      image:
+        # repository: k8s.gcr.io/kube-state-metrics/kube-state-metrics
+        {{ include "common.images.repository" ( dict "registry" "k8s.gcr.io" "repository" "kube-state-metrics/kube-state-metrics" "context" .) }}
+      metricLabelsAllowlist:
+        - namespaces=[*] # scrape namespace labels
+    grafana:
+      enabled: false
+      adminPassword: demo!@#admin
+      initChownData:
+        image:
+          # repository: docker.io/library/busybox
+          {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "library/busybox" "context" .) }}
+      image:
+        # repository: docker.io/grafana/grafana
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/grafana" "context" .) }}
+      sidecar:
+        image:
+          # repository: quay.io/kiwigrid/k8s-sidecar
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "kiwigrid/k8s-sidecar" "context" .) }}
+        dashboards:
+          enabled: true
+        datasources:
+          enabled: true
+    prometheusOperator:
+      tls:
+        enabled: false
+      admissionWebhooks:
+        enabled: false
+      image:
+        # repository: quay.io/prometheus-operator/prometheus-operator
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus-operator/prometheus-operator" "context" .) }}
+        # tag: v0.50.1-gems
+      prometheusConfigReloader:
+        image:
+          # repository: quay.io/prometheus-operator/prometheus-config-reloader
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus-operator/prometheus-config-reloader" "context" .) }}
+          # tag: v0.50.1-gems
+        thanosImage:
+          # repository: quay.io/thanos/thanos
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "thanos/thanos" "context" .) }}
+    prometheus:
+      prometheusSpec:
+        image:
+          # repository: quay.io/prometheus/prometheus
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus/prometheus" "context" .) }}
+        enableAdminAPI: true
+        enableFeatures: 
+          - remote-write-receiver
+        externalLabels:
+          cluster: {{ .Values.global.clusterName }}
+        externalUrl: http://prometheus.{{ .Values.global.clusterName }}.kubegems.io:9090
+        ruleSelector:
+          matchExpressions:
+            - key: prometheusrule.kubegems.io/name
+              operator: Exists
+        probeSelectorNilUsesHelmValues: false
+        retention: 30d
+        resources:
+          limits:
+            cpu: 4
+            memory: 8Gi
+          requests:
+            cpu: 2
+            memory: 4Gi
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+              - ReadWriteOnce
+              storageClassName: {{ .Values.global.storageClass }}
+              resources:
+                requests:
+                  storage: 200Gi
+              volumeMode: Filesystem
+    alertmanager:
+      # templateFiles:
+      alertmanagerSpec:
+        image:
+          # repository: quay.io/prometheus/alertmanager
+          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus/alertmanager" "context" .) }}
+        alertmanagerConfigSelector:
+          matchExpressions:
+            - key: alertmanagerconfig.kubegems.io/name
+              operator: Exists
+        alertmanagerConfiguration:
+          name: kubegems-default-monitor-amconfig
+        retention: 240h
+        storage:
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+              - ReadWriteOnce
+              storageClassName: {{ .Values.global.storageClass }}
+              resources:
+                requests:
+                  storage: 10Gi
+              volumeMode: Filesystem
+        externalUrl: http://alertmanager.{{ .Values.global.clusterName }}.kubegems.io:9093
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+    nodeExporter:
+      enabled: false
+    prometheus-node-exporter:
+      image:
+        # repository: quay.io/prometheus/node-exporter
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus/node-exporter" "context" .) }}

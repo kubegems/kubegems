@@ -1,0 +1,8 @@
+apiVersion: v2
+name: grafana
+version: 1.0.0
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+appVersion: 6.29.5

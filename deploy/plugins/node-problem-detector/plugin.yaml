@@ -1,0 +1,12 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: node-problem-detector
+  annotations:
+    plugins.kubegems.io/category: 监控&告警
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/health-check: "statefulsets.apps/*,deployments.apps/*"
+spec:
+  disabled: true
+  kind: template
+  installNamespace: kube-system

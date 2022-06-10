@@ -1,0 +1,12 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: metrics-server
+  annotations:
+    plugins.kubegems.io/category: Metrics
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/health-check: "deployments.apps/metrics-server"
+spec:
+  disabled: true
+  kind: template
+  installNamespace: kube-system

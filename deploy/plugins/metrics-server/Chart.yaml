@@ -1,0 +1,9 @@
+apiVersion: v2
+name: metrics-server
+version: 1.0.0
+appVersion: 3.8.2 # metrics-server version
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+description: Metrics Server 是 Kubernetes 内置自动缩放管道的可扩展、高效的容器资源指标来源。

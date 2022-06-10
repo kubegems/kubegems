@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.7.0
+    controller-gen.kubebuilder.io/version: v0.9.0
     meta.helm.sh/release-name: kubegems-installer
     meta.helm.sh/release-namespace: kubegems-installer
   creationTimestamp: null
@@ -17,23 +17,27 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - description: Status of the plugin
+    - description: Kind of the bundle
+      jsonPath: .spec.kind
+      name: Kind
+      type: string
+    - description: Status of the bundle
       jsonPath: .status.phase
       name: Status
       type: string
-    - description: Install Namespace of the plugin
-      jsonPath: .status.installNamespace
-      name: InstallNamespace
+    - description: Install Namespace of the bundle
+      jsonPath: .status.namespace
+      name: Namespace
       type: string
-    - description: Version of the plugin
+    - description: Version of the bundle
       jsonPath: .status.version
       name: Version
       type: string
-    - description: UpgradeTimestamp of the plugin
+    - description: UpgradeTimestamp of the bundle
       jsonPath: .status.upgradeTimestamp
       name: UpgradeTimestamp
       type: date
-    - description: CreationTimestamp of the plugin
+    - description: CreationTimestamp of the bundle
       jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -55,92 +59,223 @@ spec:
             type: object
           spec:
             properties:
+              chart:
+                description: Chart is the name of the chart to install.
+                type: string
               dependencies:
-                description: dependencies on other plugins
+                description: Dependencies is a list of bundles that this bundle depends
+                  on. The bundle will be installed after all dependencies are exists.
                 items:
+                  description: 'ObjectReference contains enough information to let
+                    you inspect or modify the referred object. --- New uses of this
+                    type are discouraged because of difficulty describing its usage
+                    when embedded in APIs. 1. Ignored fields.  It includes many fields
+                    which are not generally honored.  For instance, ResourceVersion
+                    and FieldPath are both very rarely valid in actual usage. 2. Invalid
+                    usage help.  It is impossible to add specific help for individual
+                    usage.  In most embedded usages, there are particular restrictions
+                    like, "must refer only to types A and B" or "UID not honored"
+                    or "name must be restricted". Those cannot be well described when
+                    embedded. 3. Inconsistent validation.  Because the usages are
+                    different, the validation rules are different by usage, which
+                    makes it hard for users to predict what will happen. 4. The fields
+                    are both imprecise and overly precise.  Kind is not a precise
+                    mapping to a URL. This can produce ambiguity during interpretation
+                    and require a REST mapping.  In most cases, the dependency is
+                    on the group,resource tuple and the version of the actual struct
+                    is irrelevant. 5. We cannot easily change it.  Because this type
+                    is embedded in many locations, updates to this type will affect
+                    numerous schemas.  Don''t make new APIs embed an underspecified
+                    API type they do not control. Instead of using this type, create
+                    a locally provided and used type that is well-focused on your
+                    reference. For example, ServiceReferences for admission registration:
+                    https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533
+                    .'
                   properties:
+                    apiVersion:
+                      description: API version of the referent.
+                      type: string
+                    fieldPath:
+                      description: 'If referring to a piece of an object instead of
+                        an entire object, this string should contain a valid JSON/Go
+                        field access statement, such as desiredState.manifest.containers[2].
+                        For example, if the object reference is to a container within
+                        a pod, this would take on a value like: "spec.containers{name}"
+                        (where "name" refers to the name of the container that triggered
+                        the event) or if no container name is specified "spec.containers[2]"
+                        (container with index 2 in this pod). This syntax is chosen
+                        only to have some well-defined way of referencing a part of
+                        an object. TODO: this design is not final and this field is
+                        subject to change in the future.'
+                      type: string
+                    kind:
+                      description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
                     name:
+                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
                       type: string
                     namespace:
+                      description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
                       type: string
-                    version:
+                    resourceVersion:
+                      description: 'Specific resourceVersion to which this reference
+                        is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                      type: string
+                    uid:
+                      description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                       type: string
                   type: object
                 type: array
-              enabled:
+              disabled:
+                description: Disabled indicates that the bundle should not be installed.
                 type: boolean
               installNamespace:
-                description: plugin install namespace, same with metadata.namespace
-                  if empty.
+                description: InstallNamespace is the namespace to install the bundle
+                  into. If not specified, the bundle will be installed into the namespace
+                  of the bundle.
                 type: string
               kind:
-                description: plugin kind, e.g. "helm","kustomize","native".
-                type: string
-              name:
-                description: plugin name, helm chart name,set to .metadata.name if
-                  empty
+                description: Kind bundle kind.
+                enum:
+                - helm
+                - kustomize
+                - template
                 type: string
               path:
-                description: plugin repo path
+                description: Path is the path in a tarball to the chart/kustomize.
                 type: string
-              repo:
-                description: plugin repo url
+              url:
+                description: URL is the URL of helm repository, git clone url, tarball
+                  url, s3 url, etc.
                 type: string
-              resources:
-                description: inline resources
-                items:
-                  type: object
-                type: array
-                x-kubernetes-preserve-unknown-fields: true
               values:
-                description: plugin values, helm values
+                description: Values is a nested map of helm values.
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              valuesFrom:
+                description: ValuesFiles is a list of references to helm values files.
+                  Ref can be a configmap or secret.
+                items:
+                  properties:
+                    kind:
+                      description: Kind is the type of resource being referenced
+                      enum:
+                      - ConfigMap
+                      - Secret
+                      type: string
+                    name:
+                      description: Name is the name of resource being referenced
+                      type: string
+                    optional:
+                      description: Optional set to true to ignore referense not found
+                        error
+                      type: boolean
+                    prefix:
+                      description: An optional identifier to prepend to each key in
+                        the ConfigMap. Must be a C_IDENTIFIER.
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  type: object
+                type: array
               version:
-                description: plugin version,also helm chart version
+                description: Version is the version of helm chart, git revision, etc.
                 type: string
             type: object
           status:
             properties:
               creationTimestamp:
+                description: CreationTimestamp is the first creation timestamp of
+                  the bundle.
                 format: date-time
                 type: string
-              deletionTimestamp:
-                format: date-time
-                type: string
-              installNamespace:
-                description: plugin installNamespace,if empty use .metadata.namespace
-                type: string
-              managed:
-                items:
-                  properties:
-                    apiVersion:
-                      type: string
-                    error:
-                      type: string
-                    kind:
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  type: object
-                type: array
               message:
-                description: Message is the message associated with the status
+                description: Message is the message associated with the status In
+                  helm, it's the notes contens.
                 type: string
-              notes:
+              namespace:
+                description: Namespace is the namespace where the bundle is installed.
                 type: string
               phase:
                 description: Phase is the current state of the release
                 type: string
+              resources:
+                description: Resources is a list of resources created/managed by the
+                  bundle.
+                items:
+                  description: 'ObjectReference contains enough information to let
+                    you inspect or modify the referred object. --- New uses of this
+                    type are discouraged because of difficulty describing its usage
+                    when embedded in APIs. 1. Ignored fields.  It includes many fields
+                    which are not generally honored.  For instance, ResourceVersion
+                    and FieldPath are both very rarely valid in actual usage. 2. Invalid
+                    usage help.  It is impossible to add specific help for individual
+                    usage.  In most embedded usages, there are particular restrictions
+                    like, "must refer only to types A and B" or "UID not honored"
+                    or "name must be restricted". Those cannot be well described when
+                    embedded. 3. Inconsistent validation.  Because the usages are
+                    different, the validation rules are different by usage, which
+                    makes it hard for users to predict what will happen. 4. The fields
+                    are both imprecise and overly precise.  Kind is not a precise
+                    mapping to a URL. This can produce ambiguity during interpretation
+                    and require a REST mapping.  In most cases, the dependency is
+                    on the group,resource tuple and the version of the actual struct
+                    is irrelevant. 5. We cannot easily change it.  Because this type
+                    is embedded in many locations, updates to this type will affect
+                    numerous schemas.  Don''t make new APIs embed an underspecified
+                    API type they do not control. Instead of using this type, create
+                    a locally provided and used type that is well-focused on your
+                    reference. For example, ServiceReferences for admission registration:
+                    https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533
+                    .'
+                  properties:
+                    apiVersion:
+                      description: API version of the referent.
+                      type: string
+                    fieldPath:
+                      description: 'If referring to a piece of an object instead of
+                        an entire object, this string should contain a valid JSON/Go
+                        field access statement, such as desiredState.manifest.containers[2].
+                        For example, if the object reference is to a container within
+                        a pod, this would take on a value like: "spec.containers{name}"
+                        (where "name" refers to the name of the container that triggered
+                        the event) or if no container name is specified "spec.containers[2]"
+                        (container with index 2 in this pod). This syntax is chosen
+                        only to have some well-defined way of referencing a part of
+                        an object. TODO: this design is not final and this field is
+                        subject to change in the future.'
+                      type: string
+                    kind:
+                      description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                      type: string
+                    namespace:
+                      description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                      type: string
+                    resourceVersion:
+                      description: 'Specific resourceVersion to which this reference
+                        is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                      type: string
+                    uid:
+                      description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                      type: string
+                  type: object
+                type: array
               upgradeTimestamp:
+                description: UpgradeTimestamp is the time when the bundle was last
+                  upgraded.
                 format: date-time
                 type: string
               values:
+                description: Values is a nested map of final helm values.
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               version:
+                description: Version is the version of the bundle. In helm, Version
+                  is the version of the chart.
                 type: string
             type: object
         type: object
@@ -148,12 +283,6 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -166,7 +295,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.0.0
+    helm.sh/chart: kubegems-installer-1.21.0
   name: kubegems-installer
   namespace: kubegems-installer
 ---
@@ -181,7 +310,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.0.0
+    helm.sh/chart: kubegems-installer-1.21.0
   name: kubegems-installer
   namespace: kubegems-installer
 roleRef:
@@ -204,7 +333,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-0.0.0
+    helm.sh/chart: kubegems-installer-1.21.0
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -223,7 +352,7 @@ spec:
         app.kubernetes.io/instance: kubegems-installer
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: kubegems-installer
-        helm.sh/chart: kubegems-installer-0.0.0
+        helm.sh/chart: kubegems-installer-1.21.0
     spec:
       containers:
       - args:

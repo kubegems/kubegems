@@ -1,0 +1,26 @@
+# local-path-provisioner
+# https://github.com/rancher/local-path-provisioner/tree/master/deploy/chart
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: local-path-provisioner
+  namespace: {{ .Release.Namespace }}
+spec:
+  kind: helm
+  url: https://github.com/rancher/local-path-provisioner/archive/refs/tags/v{{ .Chart.AppVersion }}.tar.gz
+  path: local-path-provisioner-{{ .Chart.AppVersion }}/deploy/chart/local-path-provisioner
+  version: {{ .Chart.AppVersion }}
+  values:
+    storageClass:
+      defaultClass: true
+      provisionerName: rancher.io/local-path
+    nodePathMap:
+    - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+      paths:
+        - /data
+    image:
+      # repository: docker.io/rancher/local-path-provisioner
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "rancher/local-path-provisioner" "context" .) }}
+    helperImage:
+      # repository: docker.io/library/busybox
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "library/busybox" "context" .) }}

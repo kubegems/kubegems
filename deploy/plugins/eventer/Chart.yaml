@@ -1,0 +1,9 @@
+apiVersion: v2
+name: eventer
+version: 1.0.0
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+appVersion: 1.4.12
+description: Kubernetes集群事件收集器(需开启 logging 套件)

@@ -1,0 +1,26 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems-local
+  annotations:
+    plugins.kubegems.io/category: KubeGems
+    plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/required: "true"
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+spec:
+  disabled: false
+  kind: helm
+  installNamespace: kubegems-local
+  valuesFrom:
+    - kind: ConfigMap
+      name: kubegems-monitoring-values
+      prefix: monitoring.
+      optional: true
+    - kind: ConfigMap
+      name: kubegems-observability-values
+      prefix: observability.
+      optional: true
+    - kind: ConfigMap
+      name: kubegems-logging-values
+      prefix: logging.
+      optional: true

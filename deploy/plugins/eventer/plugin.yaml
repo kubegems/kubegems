@@ -1,0 +1,18 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: eventer
+  annotations:
+    plugins.kubegems.io/category: 事件中心
+    plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/required: "true"
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+spec:
+  disabled: true
+  kind: template
+  installNamespace: kubegems-eventer
+  valuesFrom:
+    - kind: ConfigMap
+      name: kubegems-logging-values
+      prefix: logging.
+      optional: true

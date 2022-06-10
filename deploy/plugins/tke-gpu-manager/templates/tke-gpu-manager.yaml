@@ -1,0 +1,13 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: tke-gpu-manager
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  url: https://charts.kubegems.io/kubegems
+  version: {{ .Chart.AppVersion }}
+  values:
+    rumtime: {{ .Values.global.runtime }}
+    image:
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "tkestack/gpu-manager" "context" .) }}

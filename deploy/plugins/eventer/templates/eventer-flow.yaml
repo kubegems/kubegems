@@ -1,0 +1,14 @@
+{{- if .Values.logging.enabled -}}
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: Flow
+metadata:
+  name: kubegems-eventer-flow
+  namespace: {{ .Release.Namespace }}
+spec:
+  globalOutputRefs:
+  - kubegems-container-console-output
+  match:
+  - select:
+      labels:
+        app.kubernetes.io/name: kubernetes-event-exporter
+{{- end -}}          

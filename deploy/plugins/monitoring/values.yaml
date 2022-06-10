@@ -1,0 +1,9 @@
+global:
+  imageRegistry: ""
+prometheus:
+  address: "" # set to override default
+alertmanager:
+  address: "" # set to override default
+kubegems-local:
+  alert:
+    address: ""

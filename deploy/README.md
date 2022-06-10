@@ -73,30 +73,34 @@ KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://raw.githubusercon
 
 ## Deploy KubeGems
 
-Install kubegems installer using helm.
-
-```sh
-helm install --namespace kubegems-installer --create-namespace kubegems-installer plugins/kubegems-installer
-```
-
-or deploy installer from generated manifests.
+Install kubegems installer:
 
 ```sh
 kubectl create namespace kubegems-installer
-kubectl apply --namespace kubegems-installer -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/installer.yaml
+kubectl apply -f https://github.com/kubegems/kubegems/raw/main/deploy/installer.yaml
 ```
 
-Wait until installer is ready.
+Wait until ready.
 
 ```sh
 kubectl --namespace kubegems-installer get pods
 ```
 
-Optional: install nginx-ingress-controller and local-path-provisioner if you has no storage plugin or ingress controller installed(from kubeadm):
+Optional:
 
-```sh
-kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/extends.yaml
-```
+1. Install nginx-ingress-controller if no ingress controller is available.
+
+  ```sh
+  kubectl create namespace ingress-nginx
+  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-nginx-ingress.yaml
+  ```
+
+1. local-path-provisioner if no storage plugin is available.
+
+  ```sh
+  kubectl create namespace local-path-storage
+  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-local-path-provisioner.yaml
+  ```
 
 Deploy kubegems core components:
 

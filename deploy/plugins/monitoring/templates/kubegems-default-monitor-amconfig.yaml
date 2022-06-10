@@ -1,0 +1,241 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    alertmanagerconfig.kubegems.io/name: kubegems-default-monitor-amconfig
+  name: kubegems-default-monitor-amconfig
+  namespace: {{ .Release.Namespace }}
+spec:
+  inhibitRules:
+  - equal:
+    - namespace
+    - persistentvolumeclaim
+    - gems_namespace
+    - gems_alertname
+    sourceMatch:
+    - name: gems_namespace
+      value: {{ .Release.Namespace }}
+    - name: gems_alertname
+      value: KubegemsPvcUsageTooHigh
+    - name: severity
+      value: critical
+    targetMatch:
+    - name: gems_namespace
+      value: {{ .Release.Namespace }}
+    - name: gems_alertname
+      value: KubegemsPvcUsageTooHigh
+    - name: severity
+      value: error
+  - equal:
+    - host
+    - gems_namespace
+    - gems_alertname
+    sourceMatch:
+    - name: gems_namespace
+      value: {{ .Release.Namespace }}
+    - name: gems_alertname
+      value: HostHighLoad5
+    - name: severity
+      value: critical
+    targetMatch:
+    - name: gems_namespace
+      value: {{ .Release.Namespace }}
+    - name: gems_alertname
+      value: HostHighLoad5
+    - name: severity
+      value: error
+  receivers:
+  - name: "null"
+  - name: gemcloud-default-webhook
+    webhookConfigs:
+    - httpConfig:
+        tlsConfig:
+          ca: {}
+          cert: {}
+          insecureSkipVerify: true
+      url: {{ index .Values "kubegems-local" "alert" "address" }}
+  route:
+    groupBy:
+    - gems_namespace
+    - gems_alertname
+    groupInterval: 30s
+    groupWait: 30s
+    receiver: "null"
+    routes:
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: KubernetesNodeNotReady
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: KubernetesMemoryPressure
+      receiver: gemcloud-default-webhook
+      repeatInterval: 1h
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: KubernetesDiskPressure
+      receiver: gemcloud-default-webhook
+      repeatInterval: 1h
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: KubernetesOutOfDisk
+      receiver: gemcloud-default-webhook
+      repeatInterval: 1h
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: KubernetesPodNumberTooHigh
+      receiver: gemcloud-default-webhook
+      repeatInterval: 1h
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: KubernetesPodCrashLooping
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: KubernetesPodOOMKilling
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: KubegemsPvcUsageTooHigh
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: HostHighCpuLoad
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: HostHighMemoryLoad
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: HostUnusualDiskReadRate
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: HostUnusualDiskWriteRate
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: HostNetworkReceiveErrors
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: HostNetworkTransmitErrors
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: HostHighLoad5
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: CertManagerCertExpirySoon
+      receiver: gemcloud-default-webhook
+      repeatInterval: 12h
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: CertManagerCertNotReady
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: ClusterHighCpuLoad
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: ClusterHighMemoryLoad
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: ClusterComponentCertExpirySoon
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: GemsPluginFailed
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m
+    - continue: true
+      matchers:
+      - name: gems_namespace
+        value: {{ .Release.Namespace }}
+      - name: gems_alertname
+        value: ExporterDown
+      receiver: gemcloud-default-webhook
+      repeatInterval: 10m

@@ -4,7 +4,7 @@ metadata:
   labels:
     name: nginx-ingress-operator
   name: nginx-ingress-operator-metrics
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
     - name: http-metrics
@@ -22,13 +22,13 @@ metadata:
     name: nginx-ingress-operator
     release: kube-prometheus-stack
   name: nginx-ingress-operator-metrics
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   endpoints:
     - port: http-metrics
   namespaceSelector:
     matchNames:
-      - {{ .Values.namespace }}
+      - {{ .Release.Namespace }}
   selector:
     matchLabels:
       name: nginx-ingress-operator

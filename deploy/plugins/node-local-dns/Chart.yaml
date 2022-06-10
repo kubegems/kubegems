@@ -1,0 +1,9 @@
+apiVersion: v2
+name: node-local-dns
+version: 1.0.0
+appVersion: 0.1.1
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+description: Kuberntes主机DNS缓存服务.

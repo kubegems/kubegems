@@ -1,0 +1,18 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: argo-rollouts
+  annotations:
+    plugins.kubegems.io/category: GitOps
+    plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/required: "true"
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+spec:
+  disabled: true
+  kind: "template"
+  installNamespace: argo-rollouts
+  valuesFrom:
+    - kind: ConfigMap
+      name: kubegems-monitoring-values
+      prefix: monitoring.
+      optional: true

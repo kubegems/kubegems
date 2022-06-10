@@ -1,0 +1,9 @@
+apiVersion: v2
+name: tke-gpu-manager
+version: 1.0.0
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+appVersion: 1.1.5
+description: 腾讯云(TKE)开源的GPU显卡资源虚拟化分配的Kubernetes插件.

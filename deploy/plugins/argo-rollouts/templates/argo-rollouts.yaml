@@ -1,0 +1,40 @@
+# https://github.com/argoproj/argo-helm/tree/master/charts/argo-rollouts
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: argo-rollouts
+  namespace: {{ .Release.Namespace }}
+spec:
+  kind: helm
+  url: https://argoproj.github.io/argo-helm
+  version: {{ .Chart.AppVersion }}
+  values:
+    controller:
+      image:
+        {{ include "common.images.registry" . }}
+        {{ include "common.images.repository" ( dict "repository" "argoproj/argo-rollouts" "context" .) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterAnalysisTemplate
+metadata:
+  name: success-rate
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  metrics:
+  - interval: 1m
+    count: 5
+    failureLimit: 3
+    name: success-rate
+    successCondition: result[0] >= 0.95
+    provider:
+      prometheus:
+        address: {{ .Values.monitoring.prometheus.address }}
+        query: |
+{{ .Files.Get "files/success-rate.promql" | indent 10 }}

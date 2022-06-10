@@ -1,0 +1,12 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: observability
+  annotations:
+    plugins.kubegems.io/category: 服务网格
+    plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/health-check: "statefulsets.apps/*,deployments.apps/*"
+spec:
+  disabled: true
+  kind: template
+  installNamespace: observability

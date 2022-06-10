@@ -1,0 +1,5 @@
+apiVersion: v2
+name: kubevela
+version: 1.0.0
+appVersion: 1.3.5
+description: KubeVela 是一个开箱即用的现代化应用交付与管理平台，它使得应用在面向混合云环境中的交付更简单、快捷.

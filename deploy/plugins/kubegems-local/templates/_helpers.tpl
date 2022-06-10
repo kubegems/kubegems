@@ -19,10 +19,31 @@ Return the agent secretName
 {{- end -}}
 
 {{/*
+Return the proper image name
+{{ include "kubegems-local.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
+*/}}
+{{- define "kubegems-local.images.image" -}}
+{{- $registryName := .imageRoot.registry -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $tag := .imageRoot.tag | toString -}}
+{{- if .global.kubegemsVersion }}
+    {{- $tag = .global.kubegemsVersion | toString -}}
+{{- end }}
+{{- if .global.imageRegistry }}
+    {{- $registryName = .global.imageRegistry -}}
+{{- end -}}
+{{- if $registryName }}
+    {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+{{- else -}}
+    {{- printf "%s:%s" $repositoryName $tag -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the proper kubegems-local.agent image name
 */}}
 {{- define "kubegems-local.agent.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.agent.image "global" .Values.global) }}
+{{ include "kubegems-local.images.image" (dict "imageRoot" .Values.agent.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
@@ -41,7 +62,7 @@ Return the proper agent serviceAccount name
 Return the proper kubegems-local.kubectl image name
 */}}
 {{- define "kubegems-local.kubectl.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.kubectl.image "global" .Values.global) }}
+{{ include "kubegems-local.images.image" (dict "imageRoot" .Values.kubectl.image "global" .Values.global) }}
 {{- end -}}
 
 {{- define "kubegems-local.kubectl.fullname" -}}
@@ -91,7 +112,7 @@ Return the controller webhook secretName
 Return the proper kubegems-local image name
 */}}
 {{- define "kubegems-local.controller.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global) }}
+{{ include "kubegems-local.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
