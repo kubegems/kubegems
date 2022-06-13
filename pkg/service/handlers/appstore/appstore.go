@@ -11,7 +11,6 @@ import (
 	"helm.sh/helm/v3/pkg/repo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/service/handlers"
-	"kubegems.io/kubegems/pkg/utils/helm"
 	"kubegems.io/kubegems/pkg/utils/pagination"
 )
 
@@ -91,7 +90,7 @@ func (h *AppstoreHandler) AppDetail(c *gin.Context) {
 		reponame = InternalChartRepoName
 	}
 
-	repourl := strings.TrimSuffix(helm.NewDefaultOptions().Addr, "/") + "/" + reponame
+	repourl := strings.TrimSuffix(h.AppStoreOpt.Addr, "/") + "/" + reponame
 
 	index, err := h.ChartmuseumClient.ListChartVersions(c.Request.Context(), reponame, name)
 	if err != nil {

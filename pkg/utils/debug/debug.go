@@ -101,16 +101,16 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 
 	// argo
 	group.Go(func() error {
-		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-argocd-server", 80)
+		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-argo-cd-server", 80)
 		if err != nil {
 			return err
 		}
-		argoSec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "argocd-initial-admin-secret", v1.GetOptions{})
+		argoSec, err := clientSet.CoreV1().Secrets(gems.NamespaceSystem).Get(ctx, "argocd-secret", v1.GetOptions{})
 		if err != nil {
 			return err
 		}
 		opts.Argo.Addr = "http://" + addr
-		opts.Argo.Password = string(argoSec.Data["password"])
+		opts.Argo.Password = string(argoSec.Data["clearPassword"])
 		return nil
 	})
 

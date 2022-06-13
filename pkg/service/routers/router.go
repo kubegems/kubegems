@@ -326,7 +326,7 @@ func (r *Router) Complete() error {
 	logoperatorHandler.RegistRouter(rg)
 
 	// observability handler
-	(&observability.ObservabilityHandler{BaseHandler: basehandler}).RegistRouter(rg)
+	(&observability.ObservabilityHandler{BaseHandler: basehandler, AppStoreOpt: r.Opts.Appstore}).RegistRouter(rg)
 
 	// workload 的反向代理
 	proxyHandler := proxyhandler.ProxyHandler{BaseHandler: basehandler}

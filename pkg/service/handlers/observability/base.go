@@ -5,14 +5,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
+	"kubegems.io/kubegems/pkg/utils/helm"
 )
 
 type ObservabilityHandler struct {
 	base.BaseHandler
-	m sync.Mutex
+	AppStoreOpt       *helm.Options
+	ChartmuseumClient *helm.ChartmuseumClient
+	m                 sync.Mutex
 }
 
 func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
+	h.ChartmuseumClient = helm.MustNewChartMuseumClient(&helm.RepositoryConfig{URL: h.AppStoreOpt.Addr})
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.GetMonitorCollector)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.AddOrUpdateMonitorCollector)
 	rg.DELETE("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.DeleteMonitorCollector)
@@ -65,4 +69,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/observability/environment/:environment_id/monitor/dashboard", h.CheckByEnvironmentID, h.CreateDashboard)
 	rg.PUT("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.UpdateDashboard)
 	rg.DELETE("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.UpdateDashboard)
+
+	// exporter
+	rg.GET("/observability/monitor/exporters/:name/schema", h.ExporterSchema)
 }

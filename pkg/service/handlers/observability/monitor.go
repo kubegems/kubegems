@@ -2,9 +2,11 @@ package observability
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hashicorp/go-version"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -468,4 +470,68 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, "ok")
+}
+
+const exporterRepo = "kubegems"
+
+// ExporterSchema 获取exporter的schema
+// @Tags         Observability
+// @Summary      获取exporter的schema
+// @Description  获取exporter的schema
+// @Accept       json
+// @Produce      json
+// @Param        name  path      string                                true  "exporter app name"
+// @Success      200   {object}  handlers.ResponseStruct{Data=object}  "resp"
+// @Router       /v1/observability/monitor/exporters/{name}/schema [get]
+// @Security     JWT
+func (h *ObservabilityHandler) ExporterSchema(c *gin.Context) {
+	name := c.Param("name")
+
+	index, err := h.ChartmuseumClient.ListChartVersions(c.Request.Context(), exporterRepo, name)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	findMaxChartVersion := func() (string, error) {
+		maxVersion, _ := version.NewVersion("0.0.0")
+		for _, v := range *index {
+			thisVersion, err := version.NewVersion(v.Version)
+			if err != nil {
+				return "", err
+			}
+			if thisVersion.GreaterThan(maxVersion) {
+				maxVersion = thisVersion
+			}
+		}
+		return maxVersion.Original(), nil
+	}
+
+	maxVersion, err := findMaxChartVersion()
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	chartfiles, err := h.ChartmuseumClient.GetChartBufferedFiles(c.Request.Context(), exporterRepo, name, maxVersion)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	var schema, values string
+	for _, v := range chartfiles {
+		if v.Name == "values.schema.json" {
+			schema = base64.StdEncoding.EncodeToString(v.Data)
+		} else if v.Name == "values.yaml" {
+			values = base64.StdEncoding.EncodeToString(v.Data)
+		}
+	}
+
+	handlers.OK(c, gin.H{
+		"values.schema.json": schema,
+		"values.yaml":        values,
+		"app":                name,
+		"version":            maxVersion,
+	})
 }
