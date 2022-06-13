@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -432,12 +436,13 @@ func (h *ProjectHandler) DeleteProjectUser(c *gin.Context) {
 // @Description  获取属于 Project 的 Environment 列表
 // @Accept       json
 // @Produce      json
-// @Param        project_id  path      uint                                                                        true   "project_id"
-// @Param        preload     query     string                                                                      false  "choices Creator,Cluster,Project,Applications,Users"
-// @Param        page        query     int                                                                         false  "page"
-// @Param        size        query     int                                                                         false  "page"
-// @Param        search      query     string                                                                      false  "search in (EnvironmentName)"
-// @Success      200         {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}}  "models.Environment"
+// @Param        project_id       path      uint                                                                        true   "project_id"
+// @Param        preload          query     string                                                                      false  "choices Creator,Cluster,Project,Applications,Users"
+// @Param        page             query     int                                                                         false  "page"
+// @Param        size             query     int                                                                         false  "page"
+// @Param        search           query     string                                                                      false  "search in (EnvironmentName)"
+// @Param        containNSLabels  query     bool                                                                        false  "是否包含命名空间标签"
+// @Success      200              {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}}  "models.Environment"
 // @Router       /v1/project/{project_id}/environment [get]
 // @Security     JWT
 func (h *ProjectHandler) ListProjectEnvironment(c *gin.Context) {
@@ -446,6 +451,10 @@ func (h *ProjectHandler) ListProjectEnvironment(c *gin.Context) {
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
+	}
+	// 避免获取集群名空指针
+	if !strings.Contains(query.Preload, "Cluster") {
+		query.MustPreload([]string{"Cluster"})
 	}
 	cond := &handlers.PageQueryCond{
 		Model:                  "Environment",
@@ -458,6 +467,27 @@ func (h *ProjectHandler) ListProjectEnvironment(c *gin.Context) {
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
+	}
+
+	if containNSLabels, _ := strconv.ParseBool(c.Query("containNSLabels")); containNSLabels {
+		eg := errgroup.Group{}
+		for i := range list {
+			index := i
+			eg.Go(func() error {
+				return h.Execute(c.Request.Context(), list[index].Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+					ns := corev1.Namespace{}
+					if err := cli.Get(ctx, types.NamespacedName{Name: list[index].Namespace}, &ns); err != nil {
+						return err
+					}
+					list[index].NSLabels = ns.Labels
+					return nil
+				})
+			})
+		}
+		if err := eg.Wait(); err != nil {
+			handlers.NotOK(c, err)
+			return
+		}
 	}
 	handlers.OK(c, handlers.Page(total, list, page, size))
 }

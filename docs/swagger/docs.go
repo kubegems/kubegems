@@ -1756,7 +1756,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Environment"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                                             }
                                                         }
                                                     }
@@ -2245,7 +2245,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Environment"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                                             }
                                                         }
                                                     }
@@ -2299,7 +2299,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Environment"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                         }
                                     }
                                 }
@@ -2339,7 +2339,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Environment"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                         }
                     }
                 ],
@@ -2355,7 +2355,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Environment"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                         }
                                     }
                                 }
@@ -6864,6 +6864,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/observability/monitor/exporters/{name}/schema": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "获取exporter的schema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "获取exporter的schema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "exporter app name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/observability/template/resources/{resource_name}/rules/{rule_name}": {
             "get": {
                 "security": [
@@ -7833,6 +7882,12 @@ const docTemplate = `{
                         "description": "search in (EnvironmentName)",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否包含命名空间标签",
+                        "name": "containNSLabels",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -7857,7 +7912,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Environment"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                                             }
                                                         }
                                                     }
@@ -7902,7 +7957,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Environment"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                         }
                     }
                 ],
@@ -7918,7 +7973,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Environment"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                         }
                                     }
                                 }
@@ -8023,7 +8078,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Environment"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                         }
                                     }
                                 }
@@ -8316,7 +8371,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Registry"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                                             }
                                                         }
                                                     }
@@ -8361,7 +8416,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Registry"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                         }
                     }
                 ],
@@ -8377,7 +8432,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Registry"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                         }
                                     }
                                 }
@@ -8433,7 +8488,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Registry"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                         }
                                     }
                                 }
@@ -8487,7 +8542,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Registry"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                         }
                                     }
                                 }
@@ -8541,7 +8596,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Registry"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                         }
                                     }
                                 }
@@ -8602,7 +8657,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Registry"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                         }
                                     }
                                 }
@@ -13122,7 +13177,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Registry"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                                             }
                                                         }
                                                     }
@@ -13176,7 +13231,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Registry"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                         }
                                     }
                                 }
@@ -13216,7 +13271,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Registry"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                         }
                     }
                 ],
@@ -13232,7 +13287,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Registry"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Registry"
                                         }
                                     }
                                 }
@@ -14486,7 +14541,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Tenant"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                                                             }
                                                         }
                                                     }
@@ -14524,7 +14579,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Tenant"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                         }
                     }
                 ],
@@ -14540,7 +14595,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Tenant"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                                         }
                                     }
                                 }
@@ -14632,7 +14687,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Tenant"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                                         }
                                     }
                                 }
@@ -14672,7 +14727,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Tenant"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                         }
                     }
                 ],
@@ -14688,7 +14743,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.Tenant"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                                         }
                                     }
                                 }
@@ -14774,7 +14829,7 @@ const docTemplate = `{
                                         "Data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/models.Tenant"
+                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                                             }
                                         }
                                     }
@@ -14826,7 +14881,7 @@ const docTemplate = `{
                                         "Data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/models.Tenant"
+                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                                             }
                                         }
                                     }
@@ -15407,7 +15462,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Environment"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                                             }
                                                         }
                                                     }
@@ -19921,7 +19976,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.TenantResourceQuota"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota"
                                                             }
                                                         }
                                                     }
@@ -19966,7 +20021,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.TenantResourceQuota"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota"
                         }
                     }
                 ],
@@ -19982,7 +20037,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.TenantResourceQuota"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota"
                                         }
                                     }
                                 }
@@ -20094,7 +20149,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.TenantResourceQuota"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota"
                                         }
                                     }
                                 }
@@ -21022,7 +21077,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Tenant"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                                                             }
                                                         }
                                                     }
@@ -21391,7 +21446,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.VirtualSpace"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
                                                             }
                                                         }
                                                     }
@@ -21429,7 +21484,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.VirtualSpace"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
                         }
                     }
                 ],
@@ -21445,7 +21500,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.VirtualSpace"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
                                         }
                                     }
                                 }
@@ -21494,7 +21549,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.VirtualSpace"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
                                         }
                                     }
                                 }
@@ -21534,7 +21589,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.VirtualSpace"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
                         }
                     }
                 ],
@@ -21550,7 +21605,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.VirtualSpace"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
                                         }
                                     }
                                 }
@@ -21639,7 +21694,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.VirtualSpace"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
                                         }
                                     }
                                 }
@@ -22006,7 +22061,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.Environment"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                                                             }
                                                         }
                                                     }
@@ -22051,7 +22106,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Environment"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                         }
                     }
                 ],
@@ -25475,6 +25530,593 @@ const docTemplate = `{
                 }
             }
         },
+        "kubegems.io_kubegems_pkg_service_models.Application": {
+            "type": "object",
+            "properties": {
+                "applicationName": {
+                    "description": "应用名字",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "创建人",
+                    "type": "string"
+                },
+                "environment": {
+                    "description": "关联的环境",
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Environment"
+                },
+                "environmentID": {
+                    "description": "关联的环境",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "images": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "kind": {
+                    "description": "类型",
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "project": {
+                    "description": "所属项",
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "description": "所属项目ID",
+                    "type": "integer"
+                },
+                "remark": {
+                    "description": "备注",
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_service_models.Environment": {
+            "type": "object",
+            "properties": {
+                "applications": {
+                    "description": "关联的应用",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Application"
+                    }
+                },
+                "cluster": {
+                    "description": "关联的集群",
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "description": "所属集群ID",
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "创建者",
+                    "$ref": "#/definitions/models.User"
+                },
+                "creatorID": {
+                    "description": "创建人ID",
+                    "type": "integer"
+                },
+                "deletePolicy": {
+                    "description": "删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)",
+                    "type": "string"
+                },
+                "environmentName": {
+                    "description": "环境名字",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "limitRange": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "metaType": {
+                    "description": "元类型(开发(dev)，测试(test)，生产(prod))等选项之一",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "环境关联的namespace",
+                    "type": "string"
+                },
+                "nslabels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "project": {
+                    "description": "所属项目",
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "description": "所属项目ID",
+                    "type": "integer"
+                },
+                "remark": {
+                    "description": "备注",
+                    "type": "string"
+                },
+                "resourceQuota": {
+                    "description": "环境资源限制(这个会和namespace下的ResourceQuota对等)",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "users": {
+                    "description": "关联的用户",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "virtualSpace": {
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
+                },
+                "virtualSpaceID": {
+                    "description": "虚拟空间",
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_service_models.Registry": {
+            "type": "object",
+            "properties": {
+                "creator": {
+                    "description": "创建者",
+                    "$ref": "#/definitions/models.User"
+                },
+                "creatorID": {
+                    "type": "integer"
+                },
+                "enableExtends": {
+                    "description": "是否启用扩展功能，支持harbor等高级仓库",
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "password": {
+                    "description": "密码",
+                    "type": "string"
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "description": "项目ID",
+                    "type": "integer"
+                },
+                "registryAddress": {
+                    "description": "仓库地址",
+                    "type": "string"
+                },
+                "registryName": {
+                    "description": "仓库名称",
+                    "type": "string"
+                },
+                "updateTime": {
+                    "description": "更新时间",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "用户名",
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_service_models.Tenant": {
+            "type": "object",
+            "properties": {
+                "allocatedResourcequota": {
+                    "$ref": "#/definitions/v1.ResourceList"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "description": "是否激活",
+                    "type": "boolean"
+                },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Project"
+                    }
+                },
+                "remark": {
+                    "description": "备注",
+                    "type": "string"
+                },
+                "resourceQuotas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota"
+                    }
+                },
+                "tenantName": {
+                    "description": "租户名字",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_service_models.TenantResourceQuota": {
+            "type": "object",
+            "required": [
+                "clusterID",
+                "tenantID"
+            ],
+            "properties": {
+                "cluster": {
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "type": "integer"
+                },
+                "content": {
+                    "description": "环境下的limitrage",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.Tenant"
+                },
+                "tenantID": {
+                    "type": "integer"
+                },
+                "tenantResourceQuotaApply": {
+                    "$ref": "#/definitions/models.TenantResourceQuotaApply"
+                },
+                "tenantResourceQuotaApplyID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_service_models.VirtualSpace": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "environments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "virtualSpaceName": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_v2_models.Application": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "creator": {
+                    "type": "string"
+                },
+                "environment": {
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
+                },
+                "environmentID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "images": {
+                    "description": "原始数据 记录的是request和response以及http_code",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "labels": {
+                    "description": "原始数据 记录的是request和response以及http_code",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "remark": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_v2_models.Environment": {
+            "type": "object",
+            "properties": {
+                "applications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Application"
+                    }
+                },
+                "cluster": {
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "type": "integer"
+                },
+                "creator": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "creatorID": {
+                    "type": "integer"
+                },
+                "deletePolicy": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "limitRange": {
+                    "description": "原始数据 记录的是request和response以及http_code",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "metaType": {
+                    "description": "MetaTpe (dev, prod, test, pub ...)",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "resourceQuota": {
+                    "description": "原始数据 记录的是request和response以及http_code",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "virtualSpace": {
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.VirtualSpace"
+                },
+                "virtualSpaceID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_v2_models.Registry": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "creator": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "creatorID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_v2_models.Tenant": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Project"
+                    }
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "resourceQuotas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.TenantResourceQuota"
+                    }
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_v2_models.TenantResourceQuota": {
+            "type": "object",
+            "required": [
+                "clusterID",
+                "tenantID"
+            ],
+            "properties": {
+                "cluster": {
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "clusterID": {
+                    "type": "integer"
+                },
+                "content": {
+                    "description": "原始数据 记录的是request和response以及http_code",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
+                },
+                "tenantID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_v2_models.VirtualSpace": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "environments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
         "kubegems.io_kubegems_pkg_v2_services_handlers.PageData": {
             "type": "object",
             "properties": {
@@ -26222,24 +26864,6 @@ const docTemplate = `{
                 }
             }
         },
-        "kubernetes.Host": {
-            "type": "object",
-            "properties": {
-                "cluster": {
-                    "type": "string"
-                },
-                "complete_input": {
-                    "description": "CompleteInput is true when Service, Namespace and Cluster fields are present.\nIt is true for simple service names and FQDN services.\nIt is false for service.namespace format and service entries.",
-                    "type": "boolean"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "service": {
-                    "type": "string"
-                }
-            }
-        },
         "labels.Matcher": {
             "type": "object",
             "properties": {
@@ -26632,64 +27256,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Application": {
-            "type": "object",
-            "properties": {
-                "applicationName": {
-                    "description": "应用名字",
-                    "type": "string"
-                },
-                "createdAt": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "creator": {
-                    "description": "创建人",
-                    "type": "string"
-                },
-                "environment": {
-                    "description": "关联的环境",
-                    "$ref": "#/definitions/models.Environment"
-                },
-                "environmentID": {
-                    "description": "关联的环境",
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "images": {
-                    "description": "项目资源限制",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "kind": {
-                    "description": "类型",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "项目资源限制",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "project": {
-                    "description": "所属项",
-                    "$ref": "#/definitions/models.Project"
-                },
-                "projectID": {
-                    "description": "所属项目ID",
-                    "type": "integer"
-                },
-                "remark": {
-                    "description": "备注",
-                    "type": "string"
-                }
-            }
-        },
         "models.AuditLog": {
             "type": "object",
             "properties": {
@@ -26849,6 +27415,34 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CPUMemoryStatus": {
+            "type": "object",
+            "properties": {
+                "currentLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                },
+                "currentRate": {
+                    "type": "number"
+                },
+                "status": {
+                    "description": "扩容或缩容",
+                    "type": "string"
+                },
+                "suggestLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                },
+                "suggestMaxLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                },
+                "suggestMinLimit": {
+                    "description": "带单位",
+                    "type": "string"
+                }
+            }
+        },
         "models.ChartRepo": {
             "type": "object",
             "required": [
@@ -26877,139 +27471,82 @@ const docTemplate = `{
         },
         "models.Cluster": {
             "type": "object",
+            "required": [
+                "kubeConfig",
+                "name"
+            ],
             "properties": {
-                "destination_rule": {
+                "agentAddr": {
                     "type": "string"
                 },
-                "direction": {
+                "apiserver": {
                     "type": "string"
                 },
-                "port": {
-                    "type": "integer"
-                },
-                "service_fqdn": {
-                    "$ref": "#/definitions/kubernetes.Host"
-                },
-                "subset": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ContainerInfo": {
-            "type": "object",
-            "properties": {
-                "image": {
-                    "type": "string"
-                },
-                "isProxy": {
-                    "type": "boolean"
-                },
-                "isReady": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.DashboardRef": {
-            "type": "object",
-            "properties": {
-                "template": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Environment": {
-            "type": "object",
-            "properties": {
-                "applications": {
-                    "description": "关联的应用",
+                "clusterResourceQuota": {
+                    "description": "原始数据 记录的是request和response以及http_code",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Application"
+                        "type": "integer"
                     }
                 },
-                "cluster": {
-                    "description": "关联的集群",
-                    "$ref": "#/definitions/models.Cluster"
-                },
-                "clusterID": {
-                    "description": "所属集群ID",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "创建者",
-                    "$ref": "#/definitions/models.User"
-                },
-                "creatorID": {
-                    "description": "创建人ID",
-                    "type": "integer"
-                },
-                "deletePolicy": {
-                    "description": "删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)",
-                    "type": "string"
-                },
-                "environmentName": {
-                    "description": "环境名字",
-                    "type": "string"
+                "environments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
+                    }
                 },
                 "id": {
                     "type": "integer"
                 },
-                "limitRange": {
-                    "description": "环境下的limitrage",
+                "kubeConfig": {
+                    "description": "原始数据 记录的是request和response以及http_code",
                     "type": "array",
                     "items": {
                         "type": "integer"
                     }
                 },
-                "metaType": {
-                    "description": "元类型(开发(dev)，测试(test)，生产(prod))等选项之一",
+                "name": {
                     "type": "string"
                 },
-                "namespace": {
-                    "description": "环境关联的namespace",
-                    "type": "string"
-                },
-                "project": {
-                    "description": "所属项目",
-                    "$ref": "#/definitions/models.Project"
-                },
-                "projectID": {
-                    "description": "所属项目ID",
-                    "type": "integer"
-                },
-                "remark": {
-                    "description": "备注",
-                    "type": "string"
-                },
-                "resourceQuota": {
-                    "description": "环境资源限制(这个会和namespace下的ResourceQuota对等)",
+                "oversoldConfig": {
+                    "description": "原始数据 记录的是request和response以及http_code",
                     "type": "array",
                     "items": {
                         "type": "integer"
                     }
                 },
-                "users": {
-                    "description": "关联的用户",
+                "primary": {
+                    "type": "boolean"
+                },
+                "runtime": {
+                    "description": "docker or containerd",
+                    "type": "string"
+                },
+                "tenantResourceQuotas": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.User"
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.TenantResourceQuota"
                     }
                 },
-                "virtualSpace": {
-                    "$ref": "#/definitions/models.VirtualSpace"
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Condition": {
+            "type": "object",
+            "properties": {
+                "CPUStatus": {
+                    "$ref": "#/definitions/models.CPUMemoryStatus"
                 },
-                "virtualSpaceID": {
-                    "description": "虚拟空间",
-                    "type": "integer"
+                "MemoryStatus": {
+                    "$ref": "#/definitions/models.CPUMemoryStatus"
+                },
+                "pods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -27085,7 +27622,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "omitempty": {
-                    "$ref": "#/definitions/models.Environment"
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                 },
                 "role": {
                     "description": "环境级角色(\"reader\", \"operator\")",
@@ -27327,7 +27864,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "environment": {
-                    "$ref": "#/definitions/models.Environment"
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                 },
                 "environmentID": {
                     "type": "integer"
@@ -27409,126 +27946,53 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Pod": {
-            "type": "object",
-            "properties": {
-                "annotations": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "appLabel": {
-                    "type": "boolean"
-                },
-                "containers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ContainerInfo"
-                    }
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Reference"
-                    }
-                },
-                "istioContainers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ContainerInfo"
-                    }
-                },
-                "istioInitContainers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ContainerInfo"
-                    }
-                },
-                "labels": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "proxyStatus": {
-                    "$ref": "#/definitions/models.ProxyStatus"
-                },
-                "serviceAccountName": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "statusMessage": {
-                    "type": "string"
-                },
-                "statusReason": {
-                    "type": "string"
-                },
-                "versionLabel": {
-                    "type": "boolean"
-                }
-            }
-        },
         "models.Project": {
             "type": "object",
             "properties": {
                 "applications": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Application"
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Application"
                     }
                 },
                 "createdAt": {
-                    "description": "创建时间",
                     "type": "string"
                 },
                 "environments": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Environment"
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
                     }
                 },
                 "id": {
                     "type": "integer"
                 },
-                "projectAlias": {
-                    "description": "项目别名",
+                "name": {
                     "type": "string"
                 },
-                "projectName": {
-                    "description": "项目名字",
+                "projectAlias": {
                     "type": "string"
                 },
                 "registries": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Registry"
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Registry"
                     }
                 },
                 "remark": {
-                    "description": "项目备注",
                     "type": "string"
                 },
                 "resourceQuota": {
-                    "description": "项目资源限制",
+                    "description": "原始数据 记录的是request和response以及http_code",
                     "type": "array",
                     "items": {
                         "type": "integer"
                     }
                 },
                 "tenant": {
-                    "$ref": "#/definitions/models.Tenant"
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                 },
                 "tenantID": {
-                    "description": "所属的租户ID",
                     "type": "integer"
                 },
                 "users": {
@@ -27570,154 +28034,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ProxyStatus": {
-            "type": "object",
-            "properties": {
-                "CDS": {
-                    "type": "string"
-                },
-                "EDS": {
-                    "type": "string"
-                },
-                "LDS": {
-                    "type": "string"
-                },
-                "RDS": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Reference": {
-            "type": "object",
-            "properties": {
-                "kind": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Registry": {
-            "type": "object",
-            "properties": {
-                "creator": {
-                    "description": "创建者",
-                    "$ref": "#/definitions/models.User"
-                },
-                "creatorID": {
-                    "type": "integer"
-                },
-                "enableExtends": {
-                    "description": "是否启用扩展功能，支持harbor等高级仓库",
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isDefault": {
-                    "type": "boolean"
-                },
-                "password": {
-                    "description": "密码",
-                    "type": "string"
-                },
-                "project": {
-                    "$ref": "#/definitions/models.Project"
-                },
-                "projectID": {
-                    "description": "项目ID",
-                    "type": "integer"
-                },
-                "registryAddress": {
-                    "description": "仓库地址",
-                    "type": "string"
-                },
-                "registryName": {
-                    "description": "仓库名称",
-                    "type": "string"
-                },
-                "updateTime": {
-                    "description": "更新时间",
-                    "type": "string"
-                },
-                "username": {
-                    "description": "用户名",
-                    "type": "string"
-                }
-            }
-        },
-        "models.Runtime": {
-            "type": "object",
-            "properties": {
-                "dashboardRefs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.DashboardRef"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ServiceOverview": {
-            "type": "object",
-            "properties": {
-                "additionalDetailSample": {
-                    "description": "Additional detail sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
-                    "$ref": "#/definitions/models.AdditionalItem"
-                },
-                "appLabel": {
-                    "description": "Has label app\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "healthAnnotations": {
-                    "description": "Annotations of the service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "istioReferences": {
-                    "description": "Istio References",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IstioValidationKey"
-                    }
-                },
-                "istioSidecar": {
-                    "description": "Define if Pods related to this Service has an IstioSidecar deployed\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "kialiWizard": {
-                    "description": "Kiali Wizard scenario, if any",
-                    "type": "string"
-                },
-                "labels": {
-                    "description": "Labels for Service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "Name of the Service\nrequired: true\nexample: reviews-v1",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace of the Service",
-                    "type": "string"
-                },
-                "selector": {
-                    "description": "Selector for Service",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "models.SystemRole": {
             "type": "object",
             "required": [
@@ -27743,95 +28059,11 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Tenant": {
-            "type": "object",
-            "properties": {
-                "allocatedResourcequota": {
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isActive": {
-                    "description": "是否激活",
-                    "type": "boolean"
-                },
-                "projects": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Project"
-                    }
-                },
-                "remark": {
-                    "description": "备注",
-                    "type": "string"
-                },
-                "resourceQuotas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.TenantResourceQuota"
-                    }
-                },
-                "tenantName": {
-                    "description": "租户名字",
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
-                }
-            }
-        },
-        "models.TenantResourceQuota": {
-            "type": "object",
-            "required": [
-                "clusterID",
-                "tenantID"
-            ],
-            "properties": {
-                "cluster": {
-                    "$ref": "#/definitions/models.Cluster"
-                },
-                "clusterID": {
-                    "type": "integer"
-                },
-                "content": {
-                    "description": "项目资源限制",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "tenant": {
-                    "$ref": "#/definitions/models.Tenant"
-                },
-                "tenantID": {
-                    "type": "integer"
-                },
-                "tenantResourceQuotaApply": {
-                    "$ref": "#/definitions/models.TenantResourceQuotaApply"
-                },
-                "tenantResourceQuotaApplyID": {
-                    "type": "integer"
-                }
-            }
-        },
         "models.TenantResourceQuotaApply": {
             "type": "object",
             "properties": {
                 "content": {
-                    "description": "项目资源限制",
+                    "description": "环境下的limitrage",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -27865,7 +28097,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tenant": {
-                    "$ref": "#/definitions/models.Tenant"
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
                 },
                 "tenantID": {
                     "description": "租户ID",
@@ -28010,41 +28242,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.VirtualSpace": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "type": "string"
-                },
-                "environments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Environment"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isActive": {
-                    "type": "boolean"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
-                },
-                "virtualSpaceName": {
-                    "type": "string"
-                }
-            }
-        },
         "models.VirtualSpaceUserRels": {
             "type": "object",
             "required": [
@@ -28065,7 +28262,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "virtualSpace": {
-                    "$ref": "#/definitions/models.VirtualSpace"
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace"
                 },
                 "virtualSpaceID": {
                     "type": "integer"
@@ -28075,120 +28272,40 @@ const docTemplate = `{
         "models.Workload": {
             "type": "object",
             "properties": {
-                "additionalDetailSample": {
-                    "description": "Additional item sample, such as type of api being served (graphql, grpc, rest)\nexample: rest\nrequired: false",
-                    "$ref": "#/definitions/models.AdditionalItem"
+                "clusterName": {
+                    "type": "string"
                 },
-                "additionalDetails": {
-                    "description": "Additional details to display, such as configured annotations",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.AdditionalItem"
+                "color": {
+                    "description": "eg, yellow",
+                    "type": "string"
+                },
+                "conditions": {
+                    "description": "按容器名分组",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Condition"
                     }
                 },
-                "appLabel": {
-                    "description": "Define if Pods related to this Workload has the label App\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "availableReplicas": {
-                    "description": "Number of available replicas\nrequired: true\nexample: 1",
-                    "type": "integer"
+                "cpulimitStdvar": {
+                    "type": "number"
                 },
                 "createdAt": {
-                    "description": "Creation timestamp (in RFC3339 format)\nrequired: true\nexample: 2018-07-31T12:24:17Z",
                     "type": "string"
                 },
-                "currentReplicas": {
-                    "description": "Number of current replicas pods that matches controller selector labels\nrequired: true\nexample: 2",
+                "id": {
                     "type": "integer"
                 },
-                "dashboardAnnotations": {
-                    "description": "Dashboard annotations\nrequired: false",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "desiredReplicas": {
-                    "description": "Number of desired replicas defined by the user in the controller Spec\nrequired: true\nexample: 2",
-                    "type": "integer"
-                },
-                "healthAnnotations": {
-                    "description": "HealthAnnotations\nrequired: false",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "istioInjectionAnnotation": {
-                    "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
-                    "type": "boolean"
-                },
-                "istioReferences": {
-                    "description": "Istio References",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IstioValidationKey"
-                    }
-                },
-                "istioSidecar": {
-                    "description": "Define if Pods related to this Workload has an IstioSidecar deployed\nrequired: true\nexample: true",
-                    "type": "boolean"
-                },
-                "labels": {
-                    "description": "Workload labels",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                "memoryLimitStdvar": {
+                    "type": "number"
                 },
                 "name": {
-                    "description": "Name of the workload\nrequired: true\nexample: reviews-v1",
                     "type": "string"
                 },
-                "podCount": {
-                    "description": "Number of current workload pods\nrequired: true\nexample: 1",
-                    "type": "integer"
-                },
-                "pods": {
-                    "description": "Pods bound to the workload",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Pod"
-                    }
-                },
-                "resourceVersion": {
-                    "description": "Kubernetes ResourceVersion\nrequired: true\nexample: 192892127",
+                "namespace": {
                     "type": "string"
-                },
-                "runtimes": {
-                    "description": "Runtimes and associated dashboards",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Runtime"
-                    }
-                },
-                "serviceAccountNames": {
-                    "description": "Names of the workload service accounts",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "services": {
-                    "description": "Services that match workload selector",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ServiceOverview"
-                    }
                 },
                 "type": {
-                    "description": "Type of the workload\nrequired: true\nexample: deployment",
                     "type": "string"
-                },
-                "versionLabel": {
-                    "description": "Define if Pods related to this Workload has the label Version\nrequired: true\nexample: true",
-                    "type": "boolean"
                 }
             }
         },

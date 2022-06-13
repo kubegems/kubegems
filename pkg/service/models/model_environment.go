@@ -54,6 +54,8 @@ type Environment struct {
 	// 虚拟空间
 	VirtualSpaceID *uint
 	VirtualSpace   *VirtualSpace `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:SET NULL;"`
+
+	NSLabels map[string]string `gorm:"-"`
 }
 
 // EnvironmentUserRels
