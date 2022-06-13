@@ -44,7 +44,7 @@ require (
 	github.com/nginxinc/nginx-ingress-operator v0.3.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
-	github.com/opencontainers/distribution-spec v1.0.0
+	github.com/opencontainers/distribution-spec v1.0.1
 	github.com/opentracing-contrib/go-gin v0.0.0-20201220185307-1dd2273433a4
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
