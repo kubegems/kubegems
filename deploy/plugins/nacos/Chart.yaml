@@ -1,0 +1,4 @@
+apiVersion: v2
+name: nacos
+version: 1.0.0
+description: KubeGems nacos 配置中心。
