@@ -6,7 +6,7 @@ metadata:
 spec:
   kind: helm
   url: https://prometheus-community.github.io/helm-charts
-  version: {{ .Chart.Version }}
+  version: {{ .Chart.AppVersion }}
   values:
     image:
       # repository: quay.io/prometheus/node-exporter

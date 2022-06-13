@@ -1,0 +1,29 @@
+# https://cert-manager.io/docs/installation/helm/
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: cert-manager
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  url: https://charts.jetstack.io
+  version: {{ .Chart.AppVersion }}
+  values:
+    installCRDs: true
+    startupapicheck:
+      enabled: false
+    image:
+      # repository: quay.io/jetstack/cert-manager-controller
+      {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-controller" "context" .) }}
+    webhook: 
+      image:
+        # repository: quay.io/jetstack/cert-manager-webhook
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-webhook" "context" .) }}
+    startupapicheck:  
+      image:
+        # repository: quay.io/jetstack/cert-manager-ctl
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-ctl" "context" .) }}
+    cainjector:
+      image:
+        # repository: quay.io/jetstack/cert-manager-cainjector
+        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "jetstack/cert-manager-cainjector" "context" .) }}
