@@ -13,4 +13,5 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: kubegems-kubegems-local-values
+      prefix: kubegems-local.
       optional: true
