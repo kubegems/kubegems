@@ -3,7 +3,11 @@ kind: Plugin
 metadata:
   name: metrics-server
   annotations:
+<<<<<<< HEAD
     plugins.kubegems.io/category: 可观测性
+=======
+    plugins.kubegems.io/category: 监控&告警
+>>>>>>> 22c8945 (fix(charts):  Organize the plugins catalog)
     plugins.kubegems.io/main-category: kubernetes
     plugins.kubegems.io/health-check: "deployments.apps/metrics-server"
 spec:

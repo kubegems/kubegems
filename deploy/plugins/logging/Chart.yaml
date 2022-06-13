@@ -6,4 +6,8 @@ dependencies:
     repository: file://../common
     version: 1.x.x
 appVersion: 3.17.6 # logging-operator version
+<<<<<<< HEAD
 description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务
+=======
+description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务.
+>>>>>>> 22c8945 (fix(charts):  Organize the plugins catalog)
