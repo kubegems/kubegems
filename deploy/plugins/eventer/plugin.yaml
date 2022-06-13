@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: eventer
   annotations:
-    plugins.kubegems.io/category: 事件中心
+    plugins.kubegems.io/category: 可观测性
     plugins.kubegems.io/main-category: core
     plugins.kubegems.io/required: "true"
     plugins.kubegems.io/health-check: "deployments.apps/*"

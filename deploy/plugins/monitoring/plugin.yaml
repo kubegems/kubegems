@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: monitoring
   annotations:
-    plugins.kubegems.io/category: 监控&告警
+    plugins.kubegems.io/category: 可观测性
     plugins.kubegems.io/main-category: core
     plugins.kubegems.io/health-check: "statefulsets.apps/*,deployments.apps/*"
 spec:

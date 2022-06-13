@@ -9,6 +9,8 @@ spec:
   url: https://nvidia.github.io/k8s-device-plugin
   version: {{ .Chart.AppVersion }}
   values:
+    nodeSelector:
+      nvidia.com/gpu: "true"
     image:
       {{ include "common.images.repository" ( dict "registry" "nvcr.io" "repository" "nvidia/k8s-device-plugin" "context" .) }}
 #TODO: https://github.com/tkestack/gpu-manager
