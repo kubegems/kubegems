@@ -122,7 +122,10 @@ spec:
             memory: 128Mi
     nodeExporter:
       enabled: false
-    prometheus-node-exporter:
-      image:
-        # repository: quay.io/prometheus/node-exporter
-        {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus/node-exporter" "context" .) }}
+    # metrics
+    kubeApiServer:
+      serviceMonitor:
+        metricRelabelings:
+          - sourceLabels: [__name__]
+            regex: apiserver_(admission|crd|watch_events)_(.*)
+            action: drop      
