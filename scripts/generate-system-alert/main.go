@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	nstmpl = "{{ .Values.monitoring.namespace }}"
+	nstmpl = "{{ .Release.Namespace }}"
 )
 
 var (
-	agentURL = `https://kubegems-local-agent.{{ index .Values "kubegems-local" "namespace" }}:8041/alert`
+	agentURL = `{{ index .Values "kubegems-local" "alert" "address" }}`
 )
 
 func main() {
@@ -53,8 +53,12 @@ func main() {
 
 	raw.Base.AMConfig.Spec.Receivers[1].WebhookConfigs[0].URL = &agentURL
 
-	os.WriteFile("deploy/plugins/kubegems-local-stack/templates/monitoring/kubegems-default-monitor-amconfig.yaml", getOutput(raw.Base.AMConfig), 0644)
-	os.WriteFile("deploy/plugins/kubegems-local-stack/templates/monitoring/kubegems-default-monitor-promrule.yaml", getOutput(raw.PrometheusRule), 0644)
+	if err := os.WriteFile("deploy/plugins/monitoring/templates/kubegems-default-monitor-amconfig.yaml", getOutput(raw.Base.AMConfig), 0644); err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile("deploy/plugins/monitoring/templates/kubegems-default-monitor-promrule.yaml", getOutput(raw.PrometheusRule), 0644); err != nil {
+		panic(err)
+	}
 }
 
 var reg = regexp.MustCompile("{{ %")
@@ -66,9 +70,6 @@ func getOutput(obj interface{}) []byte {
 	bts = bytes.ReplaceAll(bts, []byte(":{{"), []byte(`:{{"{{"}}`))
 	// bts = bytes.ReplaceAll(bts, []byte("}}]"), []byte(`{{"}}"}}]`))
 	bts = bytes.ReplaceAll(bts, []byte("{{ $value"), []byte(`{{"{{ $value"}}`))
-	buf := bytes.NewBuffer([]byte("{{- if .Values.monitoring.enabled -}}\n"))
-	buf.Write(bytes.ReplaceAll(bts, []byte(gems.NamespaceMonitor), []byte(nstmpl)))
-	buf.Write([]byte("{{- end }}"))
-
-	return buf.Bytes()
+	bts = bytes.ReplaceAll(bts, []byte(gems.NamespaceMonitor), []byte(nstmpl))
+	return bts
 }

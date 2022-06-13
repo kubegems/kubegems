@@ -3,8 +3,9 @@ kind: PrometheusRule
 metadata:
   creationTimestamp: null
   labels:
-    prometheusrule.kubegems.io/name: kubegems-default-alert-rule
-  name: kubegems-default-alert-rule
+    prometheusrule.kubegems.io/name: kubegems-default-monitor-alert-rule
+    prometheusrule.kubegems.io/type: monitor
+  name: kubegems-default-monitor-alert-rule
   namespace: {{ .Release.Namespace }}
 spec:
   groups:
@@ -191,7 +192,7 @@ spec:
     - alert: HostHighCpuLoad
       annotations:
         gems_expr_json: '{"resource":"node","rule":"cpuUsagePercent","unit":"percent","compareOp":"\u003e","compareValue":"80"}'
-        message: 'HostHighCpuLoad: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}} $labels.host
+        message: 'HostHighCpuLoad: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}} $labels.node
           }}] 节点CPU使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_node_cpu_usage_percent > 80
@@ -209,8 +210,8 @@ spec:
     - alert: HostHighMemoryLoad
       annotations:
         gems_expr_json: '{"resource":"node","rule":"memoryUsagePercent","unit":"percent","compareOp":"\u003e","compareValue":"90"}'
-        message: 'HostHighMemoryLoad: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
-          $labels.host }}] 节点内存使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
+        message: 'HostHighMemoryLoad: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] 节点内存使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_node_memory_usage_percent > 90
       for: 5m
@@ -227,8 +228,8 @@ spec:
     - alert: HostUnusualDiskReadRate
       annotations:
         gems_expr_json: '{"resource":"node","rule":"diskReadBPS","unit":"mbps","compareOp":"\u003e","compareValue":"50"}'
-        message: 'HostUnusualDiskReadRate: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
-          $labels.host }}] 节点磁盘每秒读取量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}MB/s'
+        message: 'HostUnusualDiskReadRate: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] 节点磁盘每秒读取量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}MB/s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_node_disk_read_bps / (1024 * 1024) > 50
       for: 5m
@@ -245,8 +246,8 @@ spec:
     - alert: HostUnusualDiskWriteRate
       annotations:
         gems_expr_json: '{"resource":"node","rule":"diskWriteBPS","unit":"mbps","compareOp":"\u003e","compareValue":"50"}'
-        message: 'HostUnusualDiskWriteRate: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
-          $labels.host }}] 节点磁盘每秒写入量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}MB/s'
+        message: 'HostUnusualDiskWriteRate: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] 节点磁盘每秒写入量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}MB/s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_node_disk_write_bps / (1024 * 1024) > 50
       for: 5m
@@ -263,8 +264,8 @@ spec:
     - alert: HostNetworkReceiveErrors
       annotations:
         gems_expr_json: '{"resource":"node","rule":"networkInErrPercent","unit":"percent","compareOp":"\u003e","compareValue":"1"}'
-        message: 'HostNetworkReceiveErrors: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
-          $labels.host }}] [instance:{{"{{"}} $labels.instance }}] [device:{{"{{"}} $labels.device
+        message: 'HostNetworkReceiveErrors: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] [instance:{{"{{"}} $labels.instance }}] [device:{{"{{"}} $labels.device
           }}] 节点网络接口收包错误率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_node_network_receive_errs_percent > 1
@@ -282,8 +283,8 @@ spec:
     - alert: HostNetworkTransmitErrors
       annotations:
         gems_expr_json: '{"resource":"node","rule":"networkOutErrPercent","unit":"percent","compareOp":"\u003e","compareValue":"1"}'
-        message: 'HostNetworkTransmitErrors: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}}
-          $labels.host }}] [instance:{{"{{"}} $labels.instance }}] [device:{{"{{"}} $labels.device
+        message: 'HostNetworkTransmitErrors: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
+          $labels.node }}] [instance:{{"{{"}} $labels.instance }}] [device:{{"{{"}} $labels.device
           }}] 节点网络接口发包错误率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_node_network_send_errs_percent > 1
@@ -301,7 +302,7 @@ spec:
     - alert: HostHighLoad5
       annotations:
         gems_expr_json: '{"resource":"node","rule":"load5","unit":"","compareOp":"\u003e","compareValue":"gems_node_cpu_total_cores"}'
-        message: 'HostHighLoad5: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}} $labels.host
+        message: 'HostHighLoad5: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}} $labels.node
           }}] 节点最近5分钟平均负载 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_node_load5 > gems_node_cpu_total_cores
@@ -318,7 +319,7 @@ spec:
       annotations:
         gems_expr_json: '{"resource":"node","rule":"load5","unit":"","compareOp":"\u003e","compareValue":"1.5
           * gems_node_cpu_total_cores"}'
-        message: 'HostHighLoad5: [集群:{{"{{"}} $externalLabels.cluster }}] [host:{{"{{"}} $labels.host
+        message: 'HostHighLoad5: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}} $labels.node
           }}] 节点最近5分钟平均负载 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_node_load5 > 1.5 * gems_node_cpu_total_cores

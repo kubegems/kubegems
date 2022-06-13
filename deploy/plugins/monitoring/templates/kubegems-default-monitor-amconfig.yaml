@@ -3,8 +3,9 @@ kind: AlertmanagerConfig
 metadata:
   creationTimestamp: null
   labels:
-    alertmanagerconfig.kubegems.io/name: kubegems-default-monitor-amconfig
-  name: kubegems-default-monitor-amconfig
+    alertmanagerconfig.kubegems.io/name: kubegems-default-monitor-alert-rule
+    alertmanagerconfig.kubegems.io/type: monitor
+  name: kubegems-default-monitor-alert-rule
   namespace: {{ .Release.Namespace }}
 spec:
   inhibitRules:
@@ -54,7 +55,7 @@ spec:
           ca: {}
           cert: {}
           insecureSkipVerify: true
-      url: {{ index .Values "kubegems-local" "alert" "address" }}
+      url: '{{ index .Values "kubegems-local" "alert" "address" }}'
   route:
     groupBy:
     - gems_namespace
