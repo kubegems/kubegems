@@ -12,4 +12,3 @@ _.yaml
 local_debug.go
 *.tgz
 scripts/fakedata/kubeconfigs/*.yaml
-pkg/service/routers/plugin_internal.go
