@@ -164,106 +164,106 @@ resources:
         expr: gems_node_cpu_total_cores
         showName: "CPU总量"
         units: [core, mcore]
-        labels: [host]
+        labels: [node]
       cpuUsage:
         expr: gems_node_cpu_usage_cores
         showName: "CPU使用量"
         units: [core, mcore]
-        labels: [host]
+        labels: [node]
       cpuUsagePercent:
         expr: gems_node_cpu_usage_percent
         showName: "CPU使用率"
         units: [percent]
-        labels: [host]
+        labels: [node]
 
       memoryTotal:
         expr: gems_node_memory_total_bytes
         showName: "内存总量"
         units: [b, kb, mb, gb, tb]
-        labels: [host]
+        labels: [node]
       memoryUsage:
         expr: gems_node_memory_usage_bytes
         showName: "内存使用量"
         units: [b, kb, mb, gb, tb]
-        labels: [host]
+        labels: [node]
       memoryUsagePercent:
         expr: gems_node_memory_usage_percent
         showName: "内存使用率"
         units: [percent]
-        labels: [host]
+        labels: [node]
 
       diskTotal:
         expr: gems_node_disk_total_bytes
         showName: "磁盘总量"
         units: [b, kb, mb, gb, tb]
-        labels: [host, device]
+        labels: [node, device]
       diskUsage:
         expr: gems_node_disk_usage_bytes
         showName: "磁盘使用量"
         units: [b, kb, mb, gb, tb]
-        labels: [host, device]
+        labels: [node, device]
       diskUsagePercent:
         expr: gems_node_disk_usage_percent
         showName: "磁盘使用率"
         units: [percent]
-        labels: [host, device]
+        labels: [node, device]
       diskReadIOPS:
         expr: gems_node_disk_read_iops
         showName: "磁盘每秒读取次数"
         units: [ops]
-        labels: [host]
+        labels: [node]
       diskWriteIOPS:
         expr: gems_node_disk_write_iops
         showName: "磁盘每秒写入次数"
         units: [ops]
-        labels: [host]
+        labels: [node]
       diskReadBPS:
         expr: gems_node_disk_read_bps
         showName: "磁盘每秒读取量"
         units: [bps, kbps, mbps]
-        labels: [host]
+        labels: [node]
       diskWriteBPS:
         expr: gems_node_disk_write_bps
         showName: "磁盘每秒写入量"
         units: [bps, kbps, mbps]
-        labels: [host]
+        labels: [node]
 
       networkInBPS:
         expr: gems_node_network_receive_bps
         showName: "网络每秒接收流量"
         units: [bps, kbps, mbps]
-        labels: [host]
+        labels: [node]
       networkOutBPS:
         expr: gems_node_network_send_bps
         showName: "网络每秒发送流量"
         units: [bps, kbps, mbps]
-        labels: [host]
+        labels: [node]
       networkInErrPercent:
         expr: gems_node_network_receive_errs_percent
         showName: "网络接口收包错误率"
         units: [percent]
-        labels: [host, instance, device]
+        labels: [node, instance, device]
       networkOutErrPercent:
         expr: gems_node_network_send_errs_percent
         showName: "网络接口发包错误率"
         units: [percent]
-        labels: [host, instance, device]
+        labels: [node, instance, device]
 
       load1:
         expr: gems_node_load1
         showName: "最近1分钟平均负载"
         units: null
-        labels: [host]
+        labels: [node]
       load5:
         expr: gems_node_load5
         showName: "最近5分钟平均负载"
         units: null
-        labels: [host]
+        labels: [node]
       load15:
         expr: gems_node_load15
         showName: "最近15分钟平均负载"
         units: null
-        labels: [host]
+        labels: [node]
 
       # k8s节点指标
       statusCondition:

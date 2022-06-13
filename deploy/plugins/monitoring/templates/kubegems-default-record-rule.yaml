@@ -22,39 +22,39 @@ spec:
       rules:
         # node cpu
         - record: gems_node_cpu_total_cores
-          expr: count(sum(node_cpu_seconds_total)by(cpu, host))by(host)
+          expr: count(sum(node_cpu_seconds_total)by(cpu, node))by(node)
         - record: gems_node_cpu_usage_cores
-          expr: sum(irate(node_cpu_seconds_total{mode!="idle"}[5m]))by(host)
+          expr: sum(irate(node_cpu_seconds_total{mode!="idle"}[5m]))by(node)
         - record: gems_node_cpu_usage_percent
           expr: (gems_node_cpu_usage_cores / gems_node_cpu_total_cores) * 100
         # node memory
         - record: gems_node_memory_total_bytes
-          expr: sum(node_memory_MemTotal_bytes)by(host)
+          expr: sum(node_memory_MemTotal_bytes)by(node)
         - record: gems_node_memory_usage_bytes
-          expr: sum(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)by(host)
+          expr: sum(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)by(node)
         - record: gems_node_memory_usage_percent
           expr: (gems_node_memory_usage_bytes / gems_node_memory_total_bytes) * 100
         # node storage
         - record: gems_node_disk_total_bytes
-          expr: max(node_filesystem_size_bytes{device=~"/dev/.*", device!~"/dev/loop\\d+"})by(host, device)
+          expr: max(node_filesystem_size_bytes{device=~"/dev/.*", device!~"/dev/loop\\d+"})by(node, device)
         - record: gems_node_disk_usage_bytes
-          expr: max(node_filesystem_size_bytes{device=~"/dev/.*", device!~"/dev/loop\\d+"} - node_filesystem_avail_bytes{device=~"/dev/.*", device!~"/dev/loop\\d+"})by(host, device)
+          expr: max(node_filesystem_size_bytes{device=~"/dev/.*", device!~"/dev/loop\\d+"} - node_filesystem_avail_bytes{device=~"/dev/.*", device!~"/dev/loop\\d+"})by(node, device)
         - record: gems_node_disk_usage_percent
           expr: (gems_node_disk_usage_bytes / gems_node_disk_total_bytes) * 100
         # node io
         - record: gems_node_disk_read_iops
-          expr: sum(irate(node_disk_reads_completed_total[5m]))by(host)
+          expr: sum(irate(node_disk_reads_completed_total[5m]))by(node)
         - record: gems_node_disk_write_iops
-          expr: sum(irate(node_disk_writes_completed_total[5m]))by(host)
+          expr: sum(irate(node_disk_writes_completed_total[5m]))by(node)
         - record: gems_node_disk_read_bps
-          expr: sum(irate(node_disk_read_bytes_total[5m]))by(host)
+          expr: sum(irate(node_disk_read_bytes_total[5m]))by(node)
         - record: gems_node_disk_write_bps
-          expr: sum(irate(node_disk_written_bytes_total[5m]))by(host)
+          expr: sum(irate(node_disk_written_bytes_total[5m]))by(node)
         # node network
         - record: gems_node_network_receive_bps
-          expr: sum(irate(node_network_receive_bytes_total{device!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)"}[5m]))by(host)
+          expr: sum(irate(node_network_receive_bytes_total{device!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)"}[5m]))by(node)
         - record: gems_node_network_send_bps
-          expr: sum(irate(node_network_transmit_bytes_total{device!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)"}[5m]))by(host)
+          expr: sum(irate(node_network_transmit_bytes_total{device!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)"}[5m]))by(node)
         - record: gems_node_network_receive_errs_percent
           expr: (irate(node_network_receive_errs_total[5m]) / irate(node_network_receive_packets_total[5m])) * 100
         - record: gems_node_network_send_errs_percent
@@ -66,11 +66,11 @@ spec:
           expr: (sum(gems_pod_status{phase="Running"})by(node) / sum(kube_node_status_allocatable_pods)by(node)) * 100
         # node load
         - record: gems_node_load1
-          expr: sum(node_load1)by(host)
+          expr: sum(node_load1)by(node)
         - record: gems_node_load5
-          expr: sum(node_load5)by(host)
+          expr: sum(node_load5)by(node)
         - record: gems_node_load15
-          expr: sum(node_load15)by(host)
+          expr: sum(node_load15)by(node)
 
     - name: pod
       rules:                
