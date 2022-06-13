@@ -356,7 +356,7 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 		for _, v := range routes {
 			for _, m := range v.Matchers {
 				if m.Name == prometheus.AlertNameLabel && m.Value == name {
-					return fmt.Errorf("dunplicated name in: %s", name)
+					return fmt.Errorf("duplicated name in: %s", name)
 				}
 			}
 		}

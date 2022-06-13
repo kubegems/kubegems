@@ -9,7 +9,6 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
   labels:
     monitoring: istio-components
-    release: kube-prometheus-stack
 spec:
   jobLabel: istio
   targetLabels: [app]
@@ -37,7 +36,6 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
   labels:
     monitoring: istio-proxies
-    release: kube-prometheus-stack
 spec:
   selector:
     matchExpressions:

@@ -36,4 +36,4 @@ spec:
     - --no-collector.schedstat
     - --no-collector.bcache
     rbac:
-        pspEnabled: false
+      pspEnabled: false

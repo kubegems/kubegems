@@ -100,7 +100,7 @@ spec:
             - key: alertmanagerconfig.kubegems.io/name
               operator: Exists
         alertmanagerConfiguration:
-          name: kubegems-default-monitor-amconfig
+          name: kubegems-default-monitor-alert-rule
         retention: 240h
         storage:
           volumeClaimTemplate:
@@ -128,4 +128,6 @@ spec:
         metricRelabelings:
           - sourceLabels: [__name__]
             regex: apiserver_(admission|crd|watch_events)_(.*)
-            action: drop      
+            action: drop
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
