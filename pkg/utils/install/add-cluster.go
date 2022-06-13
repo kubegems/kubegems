@@ -90,13 +90,14 @@ func ParseInstallerFrom(path string, values GlobalValues) ([]client.Object, erro
 	for _, obj := range objects {
 		switch item := obj.(type) {
 		case *appsv1.Deployment:
-			for i := range item.Spec.Template.Spec.InitContainers {
-				if !strings.Contains(item.Spec.Template.Spec.Containers[i].Image, "kubegems") {
+			for i, container := range item.Spec.Template.Spec.Containers {
+				if !strings.Contains(container.Image, "kubegems/kubegems") {
 					continue
 				}
-				item.Spec.Template.Spec.InitContainers[i].Image = fmt.Sprintf(
+				containerImage := fmt.Sprintf(
 					"%s/%s/kubegems:%s", values.ImageRegistry, values.ImageRepository, values.KubegemsVersion,
 				)
+				item.Spec.Template.Spec.Containers[i].Image = containerImage
 			}
 		}
 	}
