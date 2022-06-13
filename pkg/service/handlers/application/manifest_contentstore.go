@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	jsonpatch "github.com/evanphx/json-patch"
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/util"
 	"k8s.io/apimachinery/pkg/api/errors"

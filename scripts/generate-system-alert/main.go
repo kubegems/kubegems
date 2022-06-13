@@ -6,9 +6,9 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/ghodss/yaml"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"sigs.k8s.io/yaml"
 )
 
 const (
