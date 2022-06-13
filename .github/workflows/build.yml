@@ -4,18 +4,19 @@ on:
   push:
     branches:
       - main
-      - ‘release-*’
+      - "release-*"
     # Publish semver tags as releases.
     tags: ["v*.*.*"]
   pull_request:
     branches:
-      - 'main'
+      - "main"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 env:
   IMAGE_NAME: ${{ github.repository }}
+  GONOPROXY: kubegems.io
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -44,9 +45,8 @@ jobs:
             ~/go/pkg/mod
             ~/.cache/helm
             bin/plugins
-            **.tgz
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
+          key: ${{ runner.os }}-build-${{ hashFiles('**/go.sum,deploy/plugins') }}
+          restore-keys: ${{ runner.os }}-build-
       # Build binary
       - run: make build
 
@@ -87,6 +87,7 @@ jobs:
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v2.9.0
         with:
           context: .
