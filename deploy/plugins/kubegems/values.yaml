@@ -609,7 +609,7 @@ init:
   ## @param init.podSecurityContext.fsGroup Set API pod's Security Context fsGroup
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     fsGroup: 1001
   ## Configure Container Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -618,7 +618,7 @@ init:
   ## @param init.containerSecurityContext.runAsNonRoot Set API containers' Security Context runAsNonRoot
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     runAsUser: 1001
     runAsNonRoot: true
 
@@ -728,7 +728,7 @@ api:
   ## @param api.podSecurityContext.fsGroup Set API pod's Security Context fsGroup
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     fsGroup: 1001
   ## Configure Container Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -737,7 +737,7 @@ api:
   ## @param api.containerSecurityContext.runAsNonRoot Set API containers' Security Context runAsNonRoot
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     runAsUser: 1001
     runAsNonRoot: true
 
@@ -1104,7 +1104,7 @@ msgbus:
   ## @param msgbus.podSecurityContext.fsGroup Set msgbus pod's Security Context fsGroup
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     fsGroup: 1001
   ## Configure Container Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -1113,7 +1113,7 @@ msgbus:
   ## @param msgbus.containerSecurityContext.runAsNonRoot Set msgbus containers' Security Context runAsNonRoot
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     runAsUser: 1001
     runAsNonRoot: true
 
@@ -1472,7 +1472,7 @@ worker:
   ## @param worker.podSecurityContext.fsGroup Set worker pod's Security Context fsGroup
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     fsGroup: 1001
   ## Configure Container Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -1481,7 +1481,7 @@ worker:
   ## @param worker.containerSecurityContext.runAsNonRoot Set worker containers' Security Context runAsNonRoot
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     runAsUser: 1001
     runAsNonRoot: true
 
