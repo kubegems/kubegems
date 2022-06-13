@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ghodss/yaml"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
+	"sigs.k8s.io/yaml"
 )
 
 const (
