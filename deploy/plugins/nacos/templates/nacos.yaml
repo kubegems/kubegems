@@ -1,10 +1,10 @@
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
-  name: nacos-operator
-  namespce: {{ .Release.Namespace }}
+  name: nacos
+  namespace: {{ .Release.Namespace }}
 spec:
   kind: helm
   url: https://github.com/nacos-group/nacos-k8s.git
-  path: operator/chart/nacos-operator
-  version: master
+  path: helm
+  version: v{{ .Chart.AppVersion }}
