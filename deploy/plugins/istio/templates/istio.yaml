@@ -25,7 +25,7 @@ spec:
       prometheus:
         url: {{ .Values.monitoring.prometheus.address }}
       tracing:
-        url: {{ .Values.observability.jaeger.address }}
+        url: {{ .Values.tracing.jaeger.address }}
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
 apiVersion: plugins.kubegems.io/v1beta1
@@ -71,7 +71,7 @@ spec:
       tracing:
         sampling: {{ .Values.operator.tracing.sampling }}
         zipkin:
-          address: "jaeger-collector.observability.svc.cluster.local:9411"
+          address: {{ .Values.tracing.jaeger.zipkin.address }}
     enableTracing: true
   values:
     gateways:
@@ -101,6 +101,6 @@ spec:
             memory: 128Mi
       tracer:
         zipkin:
-          address: {{ .Values.observability.jaeger.address }}
+          address: {{ .Values.tracing.jaeger.zipkin.address }}
     istio_cni:
       enabled: true

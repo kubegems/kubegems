@@ -16,6 +16,6 @@ spec:
       prefix: monitoring.
       optional: true
     - kind: ConfigMap
-      name: kubegems-observability-values
-      prefix: observability.
+      name: kubegems-tracing-values
+      prefix: tracing.
       optional: true

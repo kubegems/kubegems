@@ -10,9 +10,11 @@ kiali:
 operator:
   tracing:
     sampling: 50
-observability:
+tracing:
   jaeger:
     address: ""
+    zipkin:
+      address: ""
 monitoring:
   prometheus:
     address: ""
