@@ -8,6 +8,7 @@ dependencies:
 appVersion: 3.17.6 # logging-operator version
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务
 =======
 description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务.
@@ -15,3 +16,6 @@ description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack
 =======
 description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务
 >>>>>>> 7cefc5e (fix(charts): add opentelemetry collector)
+=======
+description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务
+>>>>>>> 8c4d6712a631126b9a74a60171a69d002c5df720
