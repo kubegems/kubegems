@@ -8,6 +8,7 @@ import (
 
 	v1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/networking"
@@ -21,9 +22,24 @@ func (r *ResourceMutate) MutateTenantGateway(ctx context.Context, req admission.
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
+	ingressclassgvk, err := r.Client.RESTMapper().ResourceFor(schema.GroupVersionResource{
+		Group:    "networking.k8s.io",
+		Resource: "ingressclasses",
+	})
+	if err != nil {
+		return admission.Denied(fmt.Sprintf("get ingressclass gvk failed: %v", err))
+	}
+
+	// https://github.com/nginxinc/kubernetes-ingress/issues/1832
+	tag := "1.11.1"
+	if ingressclassgvk.Version == "v1" {
+		tag = "edge"
+	}
+	r.Log.Info(fmt.Sprintf("use tag: %s because of ingressclass version is: %s", tag, ingressclassgvk.Version))
+
 	switch req.Operation {
 	case v1.Create, v1.Update:
-		tgDefault(tg, r.Repo)
+		tgDefault(tg, r.Repo, tag)
 		modifyed, _ := json.Marshal(tg)
 		return admission.PatchResponseFromRaw(req.Object.Raw, modifyed)
 	default:
@@ -31,7 +47,7 @@ func (r *ResourceMutate) MutateTenantGateway(ctx context.Context, req admission.
 	}
 }
 
-func tgDefault(tg *gemsv1beta1.TenantGateway, repo string) {
+func tgDefault(tg *gemsv1beta1.TenantGateway, repo, tag string) {
 	defaultReplicas := int32(1)
 	if tg.Labels == nil {
 		tg.Labels = make(map[string]string)
@@ -79,7 +95,7 @@ func tgDefault(tg *gemsv1beta1.TenantGateway, repo string) {
 		tg.Spec.Image.Repository = fmt.Sprintf("%s/%s", repo, "nginx-ingress")
 	}
 	if tg.Spec.Image.Tag == "" {
-		tg.Spec.Image.Tag = "1.11.1"
+		tg.Spec.Image.Tag = tag
 	}
 	if tg.Spec.Image.PullPolicy == "" {
 		tg.Spec.Image.PullPolicy = string(corev1.PullIfNotPresent)
