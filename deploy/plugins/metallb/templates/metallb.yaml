@@ -1,0 +1,12 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: metallb
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  url: https://metallb.github.io/metallb
+  version: "{{ .Chart.AppVersion }}"
+  values:
+{{ .Values.metallb | toYaml | indent 4 }}
+    
