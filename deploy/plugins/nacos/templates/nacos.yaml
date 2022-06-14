@@ -2,9 +2,25 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: nacos
-  namespace: {{ .Release.Namespace }}
+  namespace: "{{ .Release.Namespace }}"
 spec:
   kind: helm
   url: https://github.com/nacos-group/nacos-k8s.git
   path: helm
-  version: v{{ .Chart.AppVersion }}
+  version: master
+  values:
+    service:
+      type: ClusterIP
+    nacos:
+      image:
+        # repository: nacos/nacos-server
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "nacos/nacos-server" "context" .) }}
+        tag: v{{ .Chart.AppVersion }}
+      plugin:
+        image:
+          # repository: nacos/nacos-peer-finder-plugin
+          {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "nacos/nacos-peer-finder-plugin" "context" .) }}
+    persistence:
+      enabled: true
+      data:
+        storageClassName: {{ .Values.global.storageClass }}
