@@ -1,0 +1,9 @@
+apiVersion: v2
+name: metallb
+version: 1.0.0
+appVersion: 0.12.1
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+description: 为Kubernetes使用标准路由协议实现的网络负载均衡器。

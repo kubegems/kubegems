@@ -1,0 +1,20 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: metallb
+  annotations:
+    plugins.kubegems.io/category: 负载均衡
+    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+spec:
+  disabled: true
+  kind: template
+  installNamespace: metallb
+  values:
+    metallb:
+      configInline:
+        address-pools:
+          - name: default
+            protocol: layer2
+            addresses:
+              - 198.51.100.0/24
