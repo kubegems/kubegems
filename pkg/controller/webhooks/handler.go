@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	nginx_v1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -151,8 +152,17 @@ func CreateDefaultTenantGateway(client client.Client, log logr.Logger) {
 			IngressClass: defaultGatewayName,
 		},
 	}
+
+	execute := func() error {
+		nicList := nginx_v1alpha1.NginxIngressControllerList{}
+		if err := client.List(context.TODO(), &nicList); err != nil {
+			return err
+		}
+		return client.Create(context.TODO(), &tg)
+	}
+
 	for {
-		err := client.Create(context.TODO(), &tg)
+		err := execute()
 		switch {
 		case err == nil:
 			log.Info("succeed to create default tenant gateway")
