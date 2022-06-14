@@ -8,5 +8,5 @@ metadata:
     plugins.kubegems.io/health-check: "deployments.apps/*"
 spec:
   disabled: true
-  kind: "helm"
+  kind: template
   installNamespace: observability
