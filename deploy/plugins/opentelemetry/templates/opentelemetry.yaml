@@ -1,0 +1,20 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: opentelemetry-collector
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  url: https://open-telemetry.github.io/opentelemetry-helm-charts
+  chart: opentelemetry-collector
+  version: "{{ .Chart.AppVersion }}"
+  values:
+    mode: deployment
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 1
+        memory: 2Gi
+      requests:
+        cpu: 100m
+        memory: 128Mi

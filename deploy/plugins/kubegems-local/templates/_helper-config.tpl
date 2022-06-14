@@ -1,6 +1,6 @@
-{{- define "observability.jaeger.address" -}}
-{{- if and .Values.observability .Values.observability.jaeger  -}}
-{{- .Values.observability.jaeger.address }}
+{{- define "tracing.jaeger.address" -}}
+{{- if and .Values.tracing .Values.tracing.jaeger  -}}
+{{- .Values.tracing.jaeger.address }}
 {{- end -}}
 {{- end -}}
 

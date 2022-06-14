@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: metrics-server
   annotations:
-    plugins.kubegems.io/category: Metrics
+    plugins.kubegems.io/category: 可观测性
     plugins.kubegems.io/main-category: kubernetes
     plugins.kubegems.io/health-check: "deployments.apps/metrics-server"
 spec:

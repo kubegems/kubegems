@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: prometheus-node-exporter
   annotations:
-    plugins.kubegems.io/category: 监控&告警
+    plugins.kubegems.io/category: 可观测性
     plugins.kubegems.io/main-category: kubernetes
 spec:
   disabled: true

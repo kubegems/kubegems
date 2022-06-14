@@ -86,7 +86,7 @@ spec:
             - --api-prometheusserver={{ include "monitoring.prometheus.address" . }}
             - --api-alertmanagerserver={{ include "monitoring.alertmanager.address" . }}
             - --api-lokiserver={{ include "logging.loki.address" . }}
-            - --api-jaegerserver={{ include "observability.jaeger.address" . }}
+            - --api-jaegerserver={{ include "tracing.jaeger.address" . }}
             {{- if .Values.agent.metrics.enabled }}
             # todo: metrics args here
             {{- end }}

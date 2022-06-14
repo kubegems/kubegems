@@ -1,4 +1,0 @@
-{{ include "common.component.configmap" . }}
-data:
-  enabled: "true"
-  jaeger.address: {{ include "jaeger.address" . }}

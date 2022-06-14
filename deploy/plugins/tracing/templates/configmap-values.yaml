@@ -1,0 +1,6 @@
+{{ include "common.component.configmap" . }}
+data:
+  enabled: "true"
+  jaeger.address: {{ include "jaeger.address" . }}
+  jaeger.collector.address: {{ include "jaeger.collector.address" . }}
+  jaeger.zipkin.address: {{ include "jaeger.zipkin.address" . }}

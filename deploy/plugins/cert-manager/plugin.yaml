@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: cert-manager
   annotations:
-    plugins.kubegems.io/category: 证书管理
+    plugins.kubegems.io/category:  安全
     plugins.kubegems.io/main-category: kubernetes
     plugins.kubegems.io/health-check: "deployments.apps/*"
 spec:

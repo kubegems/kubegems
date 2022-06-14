@@ -6,4 +6,4 @@ dependencies:
   - name: common
     repository: file://../common
     version: 1.x.x
-description: Kuberntes主机DNS缓存服务.
+description: Kuberntes主机DNS缓存服务(IPVS模式)
