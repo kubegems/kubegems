@@ -1,0 +1,12 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: opentelemetry
+  annotations:
+    plugins.kubegems.io/category: 可观测性
+    plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+spec:
+  disabled: true
+  kind: "helm"
+  installNamespace: observability

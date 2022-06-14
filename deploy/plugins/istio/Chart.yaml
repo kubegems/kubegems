@@ -6,4 +6,4 @@ dependencies:
   - name: common
     repository: file://../common
     version: 1.x.x
-description: KubeGems 平台 Istio 服务治理套件.
+description: KubeGems 平台 Istio 服务治理套件

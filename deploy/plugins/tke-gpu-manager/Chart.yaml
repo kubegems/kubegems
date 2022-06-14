@@ -6,4 +6,4 @@ dependencies:
     repository: file://../common
     version: 1.x.x
 appVersion: 1.1.5
-description: 腾讯云(TKE)开源的GPU显卡资源虚拟化分配的Kubernetes插件.
+description: 腾讯云(TKE)开源的Kubenretes集群GPU显卡资源虚拟化插件

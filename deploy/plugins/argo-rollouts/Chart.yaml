@@ -1,7 +1,7 @@
 apiVersion: v2
 name: argo-rollouts
 version: 1.0.0
-description: KubeGems内部应用策略部署的GitOps引擎,支持蓝绿、金丝雀发布等高级策略.
+description: KubeGems内部应用策略部署的GitOps引擎,支持蓝绿、金丝雀发布等高级策略
 dependencies:
   - name: common
     repository: file://../common

@@ -6,4 +6,4 @@ dependencies:
   - name: common
     repository: file://../common
     version: 1.x.x
-description: Metrics Server 是 Kubernetes 内置自动缩放管道的可扩展、高效的容器资源指标来源。
+description: Metrics Server 是 Kubernetes 内置自动缩放管道的可扩展、高效的容器资源指标来源

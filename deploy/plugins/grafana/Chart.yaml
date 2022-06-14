@@ -6,4 +6,4 @@ dependencies:
     repository: file://../common
     version: 1.x.x
 appVersion: 6.29.5
-description: 开源的监控数据查询和可视化平台.
+description: 开源的监控数据查询和可视化平台
