@@ -33,6 +33,10 @@ spec:
       jsonPath: .status.version
       name: Version
       type: string
+    - description: app version of the bundle
+      jsonPath: .status.appVersion
+      name: AppVersion
+      type: string
     - description: UpgradeTimestamp of the bundle
       jsonPath: .status.upgradeTimestamp
       name: UpgradeTimestamp
@@ -185,6 +189,9 @@ spec:
             type: object
           status:
             properties:
+              appVersion:
+                description: AppVersion is the app version of the bundle.
+                type: string
               creationTimestamp:
                 description: CreationTimestamp is the first creation timestamp of
                   the bundle.

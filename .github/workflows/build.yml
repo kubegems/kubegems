@@ -46,7 +46,6 @@ jobs:
             ~/.cache/helm
             bin/plugins
           key: ${{ runner.os }}-build-${{ hashFiles('**/go.sum,deploy/plugins') }}
-          restore-keys: ${{ runner.os }}-build-
       # Build binary
       - run: make build
 

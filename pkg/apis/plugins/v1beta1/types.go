@@ -12,6 +12,7 @@ import (
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Status of the bundle"
 // +kubebuilder:printcolumn:name="Namespace",type="string",JSONPath=".status.namespace",description="Install Namespace of the bundle"
 // +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Version of the bundle"
+// +kubebuilder:printcolumn:name="AppVersion",type="string",JSONPath=".status.appVersion",description="app version of the bundle"
 // +kubebuilder:printcolumn:name="UpgradeTimestamp",type="date",JSONPath=".status.upgradeTimestamp",description="UpgradeTimestamp of the bundle"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="CreationTimestamp of the bundle"
 type Plugin struct {
