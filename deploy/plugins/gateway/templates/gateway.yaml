@@ -1,5 +1,5 @@
 # https://kubernetes.io/docs/reference/using-api/deprecation-guide/#ingressclass-v122
-{{- if semverCompare "<1.22" .Capabilities.KubeVersion.Version -}}
+{{ if semverCompare "<1.22" .Capabilities.KubeVersion.Version }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:

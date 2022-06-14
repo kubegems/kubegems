@@ -3258,8 +3258,8 @@ k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b/go.mod h1:jPW/WVKK9YHAvNhRxK0md/
 k8s.io/utils v0.0.0-20211116205334-6203023598ed/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
 k8s.io/utils v0.0.0-20220127004650-9b3446523e65 h1:ONWS0Wgdg5wRiQIAui7L/023aC9+IxrIrydY7l8llsE=
 k8s.io/utils v0.0.0-20220127004650-9b3446523e65/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
-kubegems.io/bundle-controller v1.0.0-alpha2 h1:2w8rSvxFUcdUqPSWaDPJuEeWFpNAMCyaTxDS9k87FPw=
-kubegems.io/bundle-controller v1.0.0-alpha2/go.mod h1:0WLnJ6qAelr6ktEtJRkzVz98GTp7LKOfzi/xWwFid5g=
+kubegems.io/bundle-controller v1.0.0-alpha3 h1:hr73VWioMqOxj/wnVjRbajlU5aL+l9vfTqc49eouCX8=
+kubegems.io/bundle-controller v1.0.0-alpha3/go.mod h1:0WLnJ6qAelr6ktEtJRkzVz98GTp7LKOfzi/xWwFid5g=
 kubegems.io/configer v1.0.0 h1:Ns3mbdDD8mUP/1q19M5DPOEWbH9Zk/S7OB6YomgtTTQ=
 kubegems.io/configer v1.0.0/go.mod h1:zPVFdQeaTCxsASoLi/MoHMxIMpsLnG2Ol9cF7gWQ7as=
 modernc.org/b v1.0.0/go.mod h1:uZWcZfRj1BpYzfN9JTerzlNUnnPsV9O2ZA8JsRcubNg=
