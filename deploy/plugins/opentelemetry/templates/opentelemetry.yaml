@@ -1,7 +1,7 @@
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
-  name: opentelemetry
+  name: opentelemetry-collector
   namespace: "{{ .Release.Namespace }}"
 spec:
   kind: helm
@@ -10,6 +10,7 @@ spec:
   version: "{{ .Chart.AppVersion }}"
   values:
     mode: deployment
+    replicaCount: 2
     resources:
       limits:
         cpu: 1
