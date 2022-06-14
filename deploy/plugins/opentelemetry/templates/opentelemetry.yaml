@@ -9,7 +9,7 @@ spec:
   chart: opentelemetry-collector
   version: "{{ .Chart.AppVersion }}"
   values:
-    mode: daemonset
+    mode: deployment
     resources:
       limits:
         cpu: 1
