@@ -9,8 +9,17 @@ spec:
   chart: opentelemetry-collector
   version: "{{ .Chart.AppVersion }}"
   values:
+    image:
+      repository: {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "otel/opentelemetry-collector-contrib" "context" .) }}
     mode: deployment
     replicaCount: 2
+    ports:
+      metrics:
+        enabled: true
+    clusterRole:
+      create: true
+    serviceMonitor:
+      enabled: true
     resources:
       limits:
         cpu: 1

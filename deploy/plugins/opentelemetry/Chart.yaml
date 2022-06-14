@@ -2,4 +2,4 @@ apiVersion: v2
 name: opentelemetry
 version: 1.0.0
 appVersion: 0.20.0
-description: KubeVela 是一个开箱即用的现代化应用交付与管理平台，它使得应用在面向混合云环境中的交付更简单、快捷
+description: OpenTelemetry是一个API和SDK的集合工具, 您可用它来检测、生成、收集和输出遥测数据（指标、日志和跟踪），以帮助分析软件的性能和行为
