@@ -89,6 +89,8 @@ spec:
                 requests:
                   storage: 200Gi
               volumeMode: Filesystem
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
     alertmanager:
       # templateFiles:
       alertmanagerSpec:
@@ -129,5 +131,3 @@ spec:
           - sourceLabels: [__name__]
             regex: apiserver_(admission|crd|watch_events)_(.*)
             action: drop
-    serviceMonitorSelectorNilUsesHelmValues: false
-    podMonitorSelectorNilUsesHelmValues: false
