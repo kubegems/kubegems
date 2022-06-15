@@ -10,7 +10,7 @@ spec:
   version: "{{ .Chart.AppVersion }}"
   values:
     image:
-      repository: {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "otel/opentelemetry-collector-contrib" "context" .) }}
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "otel/opentelemetry-collector-contrib" "context" .) }}
     mode: deployment
     replicaCount: 2
     ports:
