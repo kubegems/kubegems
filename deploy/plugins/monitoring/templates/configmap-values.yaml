@@ -3,3 +3,4 @@ data:
   enabled: "true"
   prometheus.address: {{ include "prometheus.address" . }}
   alertmanager.address: {{ include "alertmanager.address" . }}
+  alertmanager.rwrite.address: {{ include "alertmanager.rwrite.address" . }}

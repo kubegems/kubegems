@@ -9,6 +9,15 @@ spec:
   chart: opentelemetry-collector
   version: "{{ .Chart.AppVersion }}"
   values:
+    config:
+      exporters:
+        jaeger:
+          endpoint: {{ .Values.jaeger.collector.otel.address }}
+      service:
+        pipelines:
+          traces:
+            exporters:
+              - jaeger
     image:
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "otel/opentelemetry-collector-contrib" "context" .) }}
     mode: deployment

@@ -3,4 +3,5 @@ data:
   enabled: "true"
   jaeger.address: {{ include "jaeger.address" . }}
   jaeger.collector.address: {{ include "jaeger.collector.address" . }}
+  jaeger.collector.otel.address: {{ include "jaeger.collector.otel.address" . }}
   jaeger.zipkin.address: {{ include "jaeger.zipkin.address" . }}
