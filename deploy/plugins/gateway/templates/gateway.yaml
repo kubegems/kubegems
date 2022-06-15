@@ -692,9 +692,9 @@ spec:
         - name: WATCH_NAMESPACE
           value: ""
         {{- if .Values.global.imageRegistry }}
-        image: {{ .Values.global.imageRegistry }}/kubegems/nginx-ingress-operator:0.5.1
+        image: {{ .Values.global.imageRegistry }}/kubegems/nginx-ingress-operator:0.5.2
         {{- else }}
-        image: kubegems/nginx-ingress-operator:0.5.1
+        image: kubegems/nginx-ingress-operator:0.5.2
         {{- end }}
         livenessProbe:
           httpGet:

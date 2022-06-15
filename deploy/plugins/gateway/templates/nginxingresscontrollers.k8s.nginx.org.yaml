@@ -514,6 +514,38 @@ spec:
               wildcardTLS:
                 description: A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified. The secret must be of the type kubernetes.io/tls. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start. Format is namespace/name.
                 type: string
+              workload:
+                description: The Workload of the Ingress controller.
+                nullable: true
+                properties:
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    description: Specifies extra labels of the workload(deployment or daemonset) of nginx.
+                    type: object
+                  resources:
+                    description: Specifies resource request and limit of the nginx container
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                type: object
             required:
             - image
             - serviceType
@@ -538,5 +570,5 @@ status:
     kind: ""
     plural: ""
   conditions: []
-  storedVersions: []  
+  storedVersions: []
 {{- end -}}
