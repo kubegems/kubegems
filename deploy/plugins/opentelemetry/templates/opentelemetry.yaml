@@ -12,7 +12,7 @@ spec:
     config:
       exporters:
         jaeger:
-          endpoint: {{ .Values.jaeger.collector.otel.address }}
+          endpoint: {{ .Values.jaeger.proto.address }}
       service:
         pipelines:
           traces:

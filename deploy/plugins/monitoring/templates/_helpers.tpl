@@ -9,4 +9,3 @@
 {{- define "alertmanager.address" -}}
 {{- .Values.alertmanager.address | default (printf "http://kube-prometheus-stack-alertmanager.%s:9093" .Release.Namespace) -}}
 {{- end -}} 
-ww
