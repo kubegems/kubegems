@@ -1687,16 +1687,9 @@ type GatewayAddr struct {
 // @Router       /v1/tenant/{tenant_id}/cluster/{cluster_id}/tenantgateways/{name}/addresses [get]
 // @Security     JWT
 func (h *TenantHandler) GetObjectTenantGatewayAddr(c *gin.Context) {
-	tenantid, _ := strconv.Atoi(c.Param("tenant_id"))
-	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
-	tenant := models.Tenant{ID: uint(tenantid)}
-	cluster := models.Cluster{ID: uint(clusterid)}
-	if err := h.GetDB().First(&tenant).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
-		return
-	}
-	if err := h.GetDB().First(&cluster).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
+	cluster := models.Cluster{}
+	if err := h.GetDB().First(&cluster, "id = ?", c.Param("cluster_id")).Error; err != nil {
+		handlers.NotOK(c, err)
 		return
 	}
 
