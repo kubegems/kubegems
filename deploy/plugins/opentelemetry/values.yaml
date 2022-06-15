@@ -2,7 +2,8 @@ global:
   imageRegistry: ""
   imageRepository: ""
   clusterName: ""
-config:
-  exporters:
-    jaeger:
-      endpoint: 
+
+tracing:
+  jaeger:
+    proto:
+      address:
