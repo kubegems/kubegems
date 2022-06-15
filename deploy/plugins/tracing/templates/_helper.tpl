@@ -3,7 +3,19 @@
 {{- end -}}
 
 {{- define "jaeger.collector.address" -}}
-    {{- printf "http://jaeger-operator-jaeger-collector.%s:16686" .Release.Namespace -}}
+    {{- printf "http://jaeger-operator-jaeger-collector.%s:14268" .Release.Namespace -}}
+{{- end -}}
+
+{{- define "jaeger.proto.address" -}}
+    {{- printf "http://jaeger-operator-jaeger-collector.%s:14250" .Release.Namespace -}}
+{{- end -}}
+
+{{- define "jaeger.otlp.grpc.address" -}}
+    {{- printf "http://jaeger-operator-jaeger-collector.%s:4317" .Release.Namespace -}}
+{{- end -}}
+
+{{- define "jaeger.otlp.http.address" -}}
+    {{- printf "http://jaeger-operator-jaeger-collector.%s:4318" .Release.Namespace -}}
 {{- end -}}
 
 {{- define "jaeger.zipkin.address" -}}

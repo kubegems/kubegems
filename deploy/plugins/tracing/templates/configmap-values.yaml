@@ -3,4 +3,8 @@ data:
   enabled: "true"
   jaeger.address: {{ include "jaeger.address" . }}
   jaeger.collector.address: {{ include "jaeger.collector.address" . }}
+  jaeger.proto.address: {{ include "jaeger.proto.address" . }}
+  jaeger.otlp.grpc.address: {{ include "jaeger.otlp.grpc.address" . }}
+  jaeger.otlp.http.address: {{ include "jaeger.otlp.httpk.address" . }}
+  jaeger.zipkin.address: {{ include "jaeger.zipkin.address" . }}
   jaeger.zipkin.address: {{ include "jaeger.zipkin.address" . }}

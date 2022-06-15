@@ -10,3 +10,8 @@ spec:
   disabled: true
   kind: template
   installNamespace: observability
+  valuesFrom:
+    - kind: ConfigMap
+      name: kubegems-tracing-values
+      prefix: tracing.
+      optional: true
