@@ -12,7 +12,7 @@ spec:
     config:
       exporters:
         jaeger:
-          endpoint: {{ .Values.jaeger.proto.address }}
+          endpoint: {{ .Values.tracing.jaeger.proto.address }}
       service:
         pipelines:
           traces:
