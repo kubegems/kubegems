@@ -140,6 +140,10 @@ spec:
             directory: /rules
         rule_path: /tmp/rules
         alertmanager_url: {{ .Values.monitoring.alertmanager.address }}
+        remote_write:
+          enabled: true
+          client:
+            url: {{ .Values.monitoring.alertmanager.address }}/api/v1/write
         ring:
           kvstore:
             store: inmemory
