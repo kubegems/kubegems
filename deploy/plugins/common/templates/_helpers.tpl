@@ -58,6 +58,7 @@ registry: {{ $globalRegistry }}
 {{- define "common.images.repository" -}}
 {{- $repository := .repository -}}
 {{- $registry := .registry -}}
+{{- $tag := .tag -}}
 {{- $key := .key -}}
 {{- if not $key -}}
   {{- $key = "repository" -}}
@@ -72,9 +73,17 @@ registry: {{ $globalRegistry }}
 {{- end -}}
 {{- if or $globalRegistry $globalRepository -}}
     {{- if $registry -}}
-        {{- printf "%s: %s/%s" $key $registry $repository -}}
+        {{- if $tag -}}
+            {{- printf "%s: %s/%s:%s" $key $registry $repository $tag -}}
+        {{- else -}}
+            {{- printf "%s: %s/%s" $key $registry $repository -}}
+        {{- end -}}
     {{- else -}}
-        {{- printf "%s: %s" $key $repository -}}
+        {{- if $tag -}}
+            {{- printf "%s: %s:%s" $key $repository $tag -}}
+        {{- else -}}
+            {{- printf "%s: %s" $key $repository -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}

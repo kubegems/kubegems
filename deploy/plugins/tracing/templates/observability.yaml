@@ -19,16 +19,31 @@ spec:
     jaeger:
       create: true
       spec: 
+        {{- $version := .Chart.AppVersion }}
         strategy: production
         ingress:
           enabled: false
+        query:
+          # image: jaegertracing/jaeger-query
+          {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.io" "repository" "jaegertracing/jaeger-query" "tag" $version "context" .) }}
+        ingester:
+          # image: jaegertracing/jaeger-ingester
+          {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.io" "repository" "jaegertracing/jaeger-ingester" "tag" $version "context" .) }}
+        agent:
+          # image: jaegertracing/jaeger-agent
+          {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.io" "repository" "jaegertracing/jaeger-agent" "tag" $version "context" .) }}
         collector:
+          # image: jaegertracing/jaeger-collector
+          {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.io" "repository" "jaegertracing/jaeger-collector" "tag" $version "context" .) }}
           options:
             collector.zipkin.host-port: "9411"
         storage:
           dependencies:
             enabled: false
           type: elasticsearch
+          esIndexCleaner:
+            # image: jaegertracing/jaeger-es-index-cleaner
+            {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.io" "repository" "jaegertracing/jaeger-es-index-cleaner" "tag" $version "context" .) }}
           options:
             es:
               {{- if .Values.elasticsearch.address }}

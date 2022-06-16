@@ -14,6 +14,9 @@ spec:
       replicaCount: 1
     auth:
       enabled: false
+    image:
+      # repository: bitnami/redis
+      {{ include "common.images.repository" ( dict "repository" "bitnami/redis" "context" .) }}
 ---
 # https://github.com/grafana/helm-charts/tree/main/charts/loki
 apiVersion: plugins.kubegems.io/v1beta1
@@ -28,7 +31,7 @@ spec:
   values:
     image:
       # repository: docker.io/grafana/loki
-      {{ include "common.images.repository" ( dict "repository" "grafana/loki" "context" .) }}
+      {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/loki" "context" .) }}
     resources:
       limits:
         cpu: 2
