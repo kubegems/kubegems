@@ -28,7 +28,7 @@ spec:
         Require_ack_response: false
       image:
         pullPolicy: IfNotPresent
-        {{ include "common.images.repository" ( dict "repository" "kubegems/fluent-bit" "context" .) }}
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "kubegems/fluent-bit" "context" .) }}
         tag: 1.8.8-largebuf
       inputTail:
         Docker_Mode: "false"
@@ -86,7 +86,7 @@ spec:
             storageClassName: {{ .Values.global.storageClass }}
       configReloaderImage:
         pullPolicy: IfNotPresent
-        {{ include "common.images.repository" ( dict "repository" "kubegems/configmap-reload" "context" .) }}
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "kubegems/configmap-reload" "context" .) }}
         tag: v0.4.0
       fluentOutLogrotate:
         age: "7"
@@ -97,7 +97,7 @@ spec:
       ignoreSameLogInterval: 60s
       image:
         pullPolicy: IfNotPresent
-        {{ include "common.images.repository" ( dict "repository" "kubegems/fluentd" "context" .) }}
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "kubegems/fluentd" "context" .) }}
         tag: v1.13.3-alpine-11.1
       logLevel: info
       metrics:

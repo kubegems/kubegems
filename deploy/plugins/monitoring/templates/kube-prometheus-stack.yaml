@@ -22,22 +22,6 @@ spec:
         - namespaces=[*] # scrape namespace labels
     grafana:
       enabled: false
-      adminPassword: demo!@#admin
-      initChownData:
-        image:
-          # repository: docker.io/library/busybox
-          {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "library/busybox" "context" .) }}
-      image:
-        # repository: docker.io/grafana/grafana
-        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/grafana" "context" .) }}
-      sidecar:
-        image:
-          # repository: quay.io/kiwigrid/k8s-sidecar
-          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "kiwigrid/k8s-sidecar" "context" .) }}
-        dashboards:
-          enabled: true
-        datasources:
-          enabled: true
     prometheusOperator:
       tls:
         enabled: false
@@ -52,9 +36,6 @@ spec:
           # repository: quay.io/prometheus-operator/prometheus-config-reloader
           {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "prometheus-operator/prometheus-config-reloader" "context" .) }}
           # tag: v0.50.1-gems
-        thanosImage:
-          # repository: quay.io/thanos/thanos
-          {{ include "common.images.repository" ( dict "registry" "quay.io" "repository" "thanos/thanos" "context" .) }}
     prometheus:
       prometheusSpec:
         image:
