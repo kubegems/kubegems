@@ -23,7 +23,7 @@ const apiVersion = "apps/v1"
 // real_cpu real_memory 表示真实的hpa上的值，反向计算出来的百分比
 type hpaForm struct {
 	Cluster     string `json:"cluster" binding:"required"`
-	Kind        string `json:"kind" binding:"required,eq=Statefulset|eq=Deployment"`
+	Kind        string `json:"kind" binding:"required,eq=StatefulSet|eq=Deployment"`
 	Namespace   string `json:"namespace" binding:"required"`
 	Name        string `json:"name" binding:"required"`
 	MinReplicas int32  `json:"min_replicas" binding:"required,gte=1"`
@@ -131,7 +131,7 @@ func (h *HpaHandler) GetObjectHpa(c *gin.Context) {
 func (h *HpaHandler) getRealResource(ctx context.Context, cluster, namespace, name, kind string) (lmt v1.ResourceList, req v1.ResourceList, err error) {
 	var obj client.Object
 	switch kind {
-	case "Statefulset":
+	case "StatefulSet":
 		obj = &appsv1.StatefulSet{}
 	case "Deployment":
 		obj = &appsv1.Deployment{}
@@ -146,7 +146,7 @@ func (h *HpaHandler) getRealResource(ctx context.Context, cluster, namespace, na
 		return
 	}
 	switch kind {
-	case "Statefulset":
+	case "StatefulSet":
 		lmt, req = containerResources(obj.(*appsv1.StatefulSet).Spec.Template.Spec.Containers)
 	case "Deployment":
 		lmt, req = containerResources(obj.(*appsv1.Deployment).Spec.Template.Spec.Containers)
