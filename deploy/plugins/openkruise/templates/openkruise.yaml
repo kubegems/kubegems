@@ -1,0 +1,14 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: openkruise
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  kind: helm
+  url: https://openkruise.github.io/charts/
+  version: "{{ .Chart.AppVersion }}"
+  values:
+    manager:
+      image:
+        {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "openkruise/kruise-manager" "context" .) }}
+    

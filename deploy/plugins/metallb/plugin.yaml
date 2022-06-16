@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: metallb
   annotations:
-    plugins.kubegems.io/category: 负载均衡
+    plugins.kubegems.io/category: 网络
     plugins.kubegems.io/main-category: kubernetes
     plugins.kubegems.io/health-check: "deployments.apps/*"
 spec:

@@ -6,4 +6,4 @@ dependencies:
     repository: file://../common
     version: 1.x.x
 appVersion: 3.3.0
-description: 物理机监控指标采集器
+description: Prometheus 下的一个可用于收集主机指标数据(包括CPU、内存和磁盘)的服务

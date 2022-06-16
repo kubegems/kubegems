@@ -6,4 +6,4 @@ dependencies:
   - name: common
     repository: file://../common
     version: 1.x.x
-description: Kubernetes 集群节点事件诊断器
+description: Kubernetes 节点问题检测器是一个守护程序，用于监视和报告节点(内核)的健康状况

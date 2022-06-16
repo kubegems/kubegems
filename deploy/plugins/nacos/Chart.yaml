@@ -1,7 +1,7 @@
 apiVersion: v2
 name: nacos
 version: 1.0.0
-description: KubeGems 基于 Nacos 的应用配置中心
+description: KubeGems 基于 Nacos 的应用配置和服务发现中心
 appVersion: 2.1.0
 dependencies:
   - name: common
