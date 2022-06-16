@@ -118,11 +118,13 @@ curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegem
 kubectl apply -f kubegems.yaml
 ```
 
-Wait until everything becomes OK.
+It'll take about 5 mins until everything becomes OK.
 
 ```sh
 kubectl -n kubegems get pods
 ```
+
+> There are some `CrashLoopBackOff` pods before services (databse,redis,gitea and argo.) it depends on get ready, That's it, please be patient.
 
 Accessing kubegems dashboard:
 

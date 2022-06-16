@@ -124,11 +124,13 @@ curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegem
 kubectl apply -f kubegems.yaml
 ```
 
-等到一切正常。
+大约需要5分钟才会一切正常，这取决于您的具体配置。
 
 ```sh
 kubectl -n kubegems get pod
 ```
+
+> 在启动完成之前会有许多 pod 的状态为 `CrashLoopBackOff`，这是由于其依赖的服务（mysql、redis、gitea、argocd等）还在启动中，这是正常的，请耐心等待。
 
 访问 kubegems 仪表板：
 
