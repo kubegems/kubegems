@@ -3,9 +3,8 @@ apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
   name: external-snapshotter
-  namespace: "kube-system"
+  namespace: {{ .Release.Namespace }}
 spec:
-  enabled: true
   kind: kustomize
   url: https://github.com/kubernetes-csi/external-snapshotter/archive/refs/tags/v5.0.1.tar.gz
   path: external-snapshotter-5.0.1/client/config/crd
