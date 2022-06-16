@@ -9,6 +9,8 @@ spec:
   chart: redis
   version: 16.9.11
   values:
+    global:
+      imageRegistry: {{ .Values.global.imageRegistry }}
     architecture: standalone
     replica:
       replicaCount: 1
