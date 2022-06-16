@@ -6,6 +6,7 @@ metadata:
 spec:
   kind: helm
   url: https://openkruise.github.io/charts/
+  chart: kruise
   version: "{{ .Chart.AppVersion }}"
   values:
     manager:
