@@ -26,48 +26,6 @@ const (
 	LoggingAlertCRDName = "kubegems-default-logging-alert-rule"
 )
 
-var (
-	// 单位表
-	UnitValueMap = map[string]UnitValue{
-		"percent": defaultUnitValue,
-
-		"core":  defaultUnitValue,
-		"mcore": {Op: "*", Value: "1000"},
-
-		"b":  defaultUnitValue,
-		"kb": {Op: "/", Value: "1024"},
-		"mb": {Op: "/", Value: "(1024 * 1024)"},
-		"gb": {Op: "/", Value: "(1024 * 1024 * 1024)"},
-		"tb": {Op: "/", Value: "(1024 * 1024 * 1024 * 1024)"},
-
-		"bps":  defaultUnitValue,
-		"kbps": {Op: "/", Value: "1024"},
-		"mbps": {Op: "/", Value: "(1024 * 1024)"},
-
-		"ops":   defaultUnitValue,
-		"count": defaultUnitValue,
-		"times": defaultUnitValue,
-
-		"us": {Op: "*", Value: "(1000 * 1000)"},
-		"ms": {Op: "*", Value: "1000"},
-		"s":  defaultUnitValue,
-		"m":  {Op: "/", Value: "60"},
-		"h":  {Op: "/", Value: "(60 * 60)"},
-		"d":  {Op: "/", Value: "(24 * 60 * 60)"},
-		"w":  {Op: "/", Value: "(7 * 24 * 60 * 60)"},
-	}
-
-	defaultUnitValue = UnitValue{
-		Op:    "*",
-		Value: "1",
-	}
-)
-
-type UnitValue struct {
-	Op    string
-	Value string
-}
-
 type BaseQueryParams struct {
 	Resource string `json:"resource"` // 告警资源, eg. node、pod
 	Rule     string `json:"rule"`     // 告警规则名, eg. cpuUsage、memoryUsagePercent
@@ -114,12 +72,6 @@ func (params *BaseQueryParams) FindRuleContext(cfg *MonitorOptions) (RuleContext
 		return ctx, fmt.Errorf("rule %s not in resource %s", params.Rule, params.Resource)
 	}
 
-	if !(ruleDetail.Units == nil && params.Unit == "") {
-		if !slice.ContainStr(ruleDetail.Units, params.Unit) {
-			return ctx, fmt.Errorf("invalid unit: %s in ruledetail: %v", params.Unit, ruleDetail)
-		}
-	}
-
 	for label := range params.LabelPairs {
 		if !slice.ContainStr(ruleDetail.Labels, label) {
 			return ctx, fmt.Errorf("invalid label: %s in ruledetail: %v", label, ruleDetail)
@@ -143,8 +95,9 @@ func (g *PromqlGenerator) ConstructPromql(namespace string, opts *MonitorOptions
 	for label, value := range g.LabelPairs {
 		query.AddSelector(label, promql.LabelRegex, value)
 	}
+	unitValue, err := ParseUnit(g.Unit)
 	return query.
-		Arithmetic(promql.BinaryArithmeticOperators(UnitValueMap[g.Unit].Op), UnitValueMap[g.Unit].Value).
+		Arithmetic(promql.BinaryArithmeticOperators(unitValue.Op), unitValue.Value).
 		Compare(promql.ComparisonOperator(g.CompareOp), g.CompareValue).
 		ToPromql(), nil
 }

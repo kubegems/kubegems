@@ -43,7 +43,6 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 				RuleDetail: RuleDetail{
 					Expr:     "gems_node_cpu_total_cores",
 					ShowName: "CPU总量",
-					Units:    []string{"core", "mcore"},
 					Labels:   []string{"host"},
 				},
 			},

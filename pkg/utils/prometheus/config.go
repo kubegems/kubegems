@@ -21,15 +21,6 @@ func (opts *MonitorOptions) Name() string {
 }
 
 func (opts *MonitorOptions) Validate() error {
-	for _, res := range opts.Resources {
-		for _, rule := range res.Rules {
-			for _, unit := range rule.Units {
-				if _, ok := opts.Units[unit]; !ok {
-					return fmt.Errorf(fmt.Sprintf("unit %s not defind", unit))
-				}
-			}
-		}
-	}
 	return nil
 }
 
@@ -64,12 +55,10 @@ type ResourceDetail struct {
 type RuleDetail struct {
 	Expr     string   `json:"expr"`     // 原生表达式
 	ShowName string   `json:"showName"` // 前端展示
-	Units    []string `json:"units"`    // 支持的单位
 	Labels   []string `json:"labels"`   // 支持的标签
 }
 
 type MonitorOptions struct {
-	Units     map[string]string `json:"units"`     // 单位
 	Severity  map[string]string `json:"severity"`  // 告警级别
 	Operators []string          `json:"operators"` // 运算符
 
@@ -78,32 +67,6 @@ type MonitorOptions struct {
 
 func DefaultMonitorOptions() *MonitorOptions {
 	bts := []byte(`
-# 支持的单位key-value
-# 用户选择时，展示value，接口传key
-units:
-  percent: "%"
-  core: "核"
-  mcore: "毫核"
-  b: "B"
-  kb: "KB"
-  mb: "MB"
-  gb: "GB"
-  tb: "TB"
-  bps: "B/s"
-  kbps: "KB/s"
-  mbps: "MB/s"
-  ops: "次/s"
-  count: "个"
-  times: "次"
-  lines: "行"
-  us: "微秒"
-  ms: "毫秒"
-  s: "秒"
-  m: "分钟"
-  h: "小时"
-  d: "天"
-  w: "周"
-
 # 支持的告警等级
 # 用户选择时，展示value，接口传key
 severity:

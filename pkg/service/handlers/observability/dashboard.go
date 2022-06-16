@@ -182,8 +182,8 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 				return nil, err
 			}
 			if v.Unit != "" {
-				if _, ok := monitoropts.Units[v.Unit]; !ok {
-					return nil, fmt.Errorf("unit %s not valid", v.Unit)
+				if _, err := prometheus.ParseUnit(v.Unit); err != nil {
+					return nil, err
 				}
 			}
 		} else {

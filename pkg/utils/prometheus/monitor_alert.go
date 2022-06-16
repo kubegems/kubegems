@@ -54,6 +54,10 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 			return err
 		}
 		r.PromqlGenerator.RuleContext = ruleCtx
+		unitValue, err := ParseUnit(r.PromqlGenerator.Unit)
+		if err != nil {
+			return err
+		}
 
 		// format message
 		if r.BaseAlertRule.Message == "" {
@@ -62,7 +66,7 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 				r.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 			}
 
-			r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.PromqlGenerator.RuleDetail.ShowName, valueAnnotationExpr, opts.Units[r.PromqlGenerator.Unit])
+			r.Message += fmt.Sprintf("%s%s 触发告警, 当前值: %s%s", res.ShowName, r.PromqlGenerator.RuleDetail.ShowName, valueAnnotationExpr, unitValue.Show)
 		}
 
 		// 优先采用模板

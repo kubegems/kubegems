@@ -68,7 +68,7 @@
   promqlGenerator:
     resource: node
     rule: runningPodPercent
-    unit: percent
+    unit: percent-0-100
   for: 1h
   alertLevels:
     - compareOp: ">"
@@ -84,7 +84,7 @@
   promqlGenerator:
     resource: container
     rule: restartTimesLast5m
-    unit: times
+    unit: custom-次
     labelpairs:
       namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1m
@@ -116,7 +116,7 @@
   promqlGenerator:
     resource: pvc
     rule: volumeUsagePercent
-    unit: percent
+    unit: percent-0-100
     labelpairs:
       namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1m
@@ -138,7 +138,7 @@
   promqlGenerator:
     resource: node
     rule: cpuUsagePercent
-    unit: percent
+    unit: percent-0-100
   for: 1m
   alertLevels:
     - compareOp: ">"
@@ -152,7 +152,7 @@
   promqlGenerator:
     resource: node
     rule: memoryUsagePercent
-    unit: percent
+    unit: percent-0-100
   for: 5m
   alertLevels:
     - compareOp: ">"
@@ -166,7 +166,7 @@
   promqlGenerator:
     resource: node
     rule: diskReadBPS
-    unit: mbps
+    unit: bytes/sec-MB/s
   for: 5m
   alertLevels:
     - compareOp: ">"
@@ -180,7 +180,7 @@
   promqlGenerator:
     resource: node
     rule: diskWriteBPS
-    unit: mbps
+    unit: bytes/sec-MB/s
   for: 5m
   alertLevels:
     - compareOp: ">"
@@ -194,7 +194,7 @@
   promqlGenerator:
     resource: node
     rule: networkInErrPercent
-    unit: percent
+    unit: percent-0-100
   for: 1m
   alertLevels:
     - compareOp: ">"
@@ -208,7 +208,7 @@
   promqlGenerator:
     resource: node
     rule: networkOutErrPercent
-    unit: percent
+    unit: percent-0-100
   for: 1m
   alertLevels:
     - compareOp: ">"
@@ -240,7 +240,7 @@
   promqlGenerator:
     resource: cert
     rule: expirationRemainTime
-    unit: d
+    unit: duration-d
     labelpairs:
       namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1h
@@ -273,7 +273,7 @@
   promqlGenerator:
     resource: cluster
     rule: cpuUsagePercent
-    unit: percent
+    unit: percent-0-100
   for: 0m
   alertLevels:
     - compareOp: ">"
@@ -287,7 +287,7 @@
   promqlGenerator:
     resource: cluster
     rule: memoryUsagePercent
-    unit: percent
+    unit: percent-0-100
   for: 1m
   alertLevels:
     - compareOp: ">"
@@ -303,7 +303,7 @@
     rule: certExpirationRemainTime
     labelpairs:
       component: apiserver
-    unit: d
+    unit: duration-d
   for: 1h
   alertLevels:
     - compareOp: "<"

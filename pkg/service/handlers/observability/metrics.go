@@ -172,6 +172,10 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		q.End = now.Format(time.RFC3339)
 	}
 
+	if _, err := prometheus.ParseUnit(q.PromqlGenerator.GetUnit()); err != nil {
+		return err
+	}
+
 	monitoropts := new(prometheus.MonitorOptions)
 	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	// 优先选用原生promql
@@ -184,16 +188,6 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		}
 
 		q.SeriesSelector = q.Expr
-		unit := q.PromqlGenerator.GetUnit()
-		if unit != "" {
-			_, ok := monitoropts.Units[unit]
-			if !ok {
-				return fmt.Errorf("unit %s not valid", unit)
-			}
-			q.Expr = promql.New(q.Expr).Arithmetic(promql.
-				BinaryArithmeticOperators(prometheus.UnitValueMap[unit].Op), prometheus.UnitValueMap[unit].Value).
-				ToPromql()
-		}
 	} else {
 		q.PromqlGenerator = &prometheus.PromqlGenerator{
 			BaseQueryParams: prometheus.BaseQueryParams{
@@ -221,7 +215,6 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 
 		q.SeriesSelector = query.ToPromql() // SeriesSelector 不能有运算符
 		q.Expr = query.
-			Arithmetic(promql.BinaryArithmeticOperators(prometheus.UnitValueMap[q.Unit].Op), prometheus.UnitValueMap[q.Unit].Value).
 			Round(0.001). // 默认保留三位小数
 			ToPromql()
 		log.Infof("promql: %s", q.Expr)
@@ -281,18 +274,10 @@ func (h *ObservabilityHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	h.SetAuditData(c, "更新", "Prometheus模板", resName+"."+ruleName)
 
 	monitoropts := new(prometheus.MonitorOptions)
 	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
-	for _, unit := range rule.Units {
-		if _, ok := monitoropts.Units[unit]; !ok {
-			handlers.NotOK(c, fmt.Errorf("unit %s is not valid", unit))
-			return
-		}
-	}
-
 	resDetail, ok := monitoropts.Resources[resName]
 	if !ok {
 		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
