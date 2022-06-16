@@ -1,0 +1,9 @@
+apiVersion: v2
+name: openkruise
+version: 1.0.0
+appVersion: 1.2.0
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+description: OpenKruise是一个基于 Kubernetes 的扩展套件，主要聚焦于云原生应用的自动化，比如部署、发布、运维以及可用性防护

@@ -5,7 +5,6 @@ metadata:
   annotations:
     plugins.kubegems.io/category: 可观测性
     plugins.kubegems.io/main-category: core
-    plugins.kubegems.io/required: "true"
     plugins.kubegems.io/health-check: "deployments.apps/*"
 spec:
   disabled: true

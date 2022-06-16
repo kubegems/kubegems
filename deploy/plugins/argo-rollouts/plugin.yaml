@@ -3,9 +3,8 @@ kind: Plugin
 metadata:
   name: argo-rollouts
   annotations:
-    plugins.kubegems.io/category: GitOps
+    plugins.kubegems.io/category: 应用管理
     plugins.kubegems.io/main-category: core
-    plugins.kubegems.io/required: "true"
     plugins.kubegems.io/health-check: "deployments.apps/*"
 spec:
   disabled: true

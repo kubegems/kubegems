@@ -6,4 +6,4 @@ dependencies:
   - name: common
     repository: file://../common
     version: 1.x.x
-description: 为Kubernetes使用标准路由协议实现的网络负载均衡器。
+description: MetalLB 是为 Kubernetes 集群实现的网络负载均衡器(ARP 或 BGP 模式)

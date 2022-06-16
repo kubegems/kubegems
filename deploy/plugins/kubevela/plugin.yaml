@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: kubevela
   annotations:
-    plugins.kubegems.io/category: OAM
+    plugins.kubegems.io/category: 应用管理
     plugins.kubegems.io/main-category: core
     plugins.kubegems.io/health-check: "deployments.apps/*"
 spec:

@@ -3,8 +3,8 @@ kind: Plugin
 metadata:
   name: nacos
   annotations:
-    plugins.kubegems.io/category: 服务发现
-    plugins.kubegems.io/main-category: kubernetes
+    plugins.kubegems.io/category: 应用管理
+    plugins.kubegems.io/main-category: core
     plugins.kubegems.io/health-check: "deployments.apps/*"
 spec:
   disabled: true
