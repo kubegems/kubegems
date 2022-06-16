@@ -20,6 +20,10 @@ endif
 # Image URL to use all building/pushing image targets
 IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
 
+ifdef BUILD_TAGS
+	TAGS = -tags ${BUILD_TAGS}
+endif
+
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
 ldflags+=-X '${GOPACKAGE}/pkg/version.gitVersion=${GIT_VERSION}'
@@ -78,7 +82,7 @@ test: generate ## Run tests.
 ##@ Build
 build-binaries: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
-	CGO_ENABLED=0 go build -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
+	CGO_ENABLED=0 go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
 build: build-binaries plugins-cache
 
