@@ -9,7 +9,7 @@ spec:
   values:
     global:
       imageRegistry: registry.cn-beijing.aliyuncs.com
-      kubegemsVersion: main
+      kubegemsVersion: latest
       storageClass: local-path # change me to use a production storage class
     mysql:
       image:
