@@ -24,7 +24,6 @@ var forbiddenBindNamespaces = []string{
 	gems.NamespaceMonitor,
 	gems.NamespaceLogging,
 	gems.NamespaceGateway,
-	gems.NamespaceWorkflow,
 }
 
 // @Tags         Agent.V1

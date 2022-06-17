@@ -39,7 +39,7 @@ func NewArgoCDCli(options *Options) (*argocdcli.Client, error) {
 
 	if options.Addr == "" {
 		cliopt.PortForward = true
-		cliopt.PortForwardNamespace = gemlabels.NamespaceWorkflow
+		cliopt.PortForwardNamespace = gemlabels.NamespaceSystem
 	}
 
 	cli, err := argocdcli.NewClient(cliopt)

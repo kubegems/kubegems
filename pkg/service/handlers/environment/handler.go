@@ -167,7 +167,6 @@ func ValidateEnvironmentNamespace(ctx context.Context, h base.BaseHandler, tx *g
 		gems.NamespaceLogging,
 		gems.NamespaceSystem,
 		gems.NamespaceMonitor,
-		gems.NamespaceWorkflow,
 		"kube-system",
 		"istio-system",
 		"kube-node-lease",
