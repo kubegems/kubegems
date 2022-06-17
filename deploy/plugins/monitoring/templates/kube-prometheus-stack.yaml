@@ -72,6 +72,19 @@ spec:
               volumeMode: Filesystem
         serviceMonitorSelectorNilUsesHelmValues: false
         podMonitorSelectorNilUsesHelmValues: false
+      additionalServiceMonitors:
+        - name: kubegems-local-agent
+          namespaceSelector:
+            matchNames:
+              - kubegems-local
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: kubegems-local
+              app.kubernetes.io/component: agent
+          endpoints:
+            - path: /metrics
+              port: metrics
+              honorLabels: true
     alertmanager:
       # templateFiles:
       alertmanagerSpec:
