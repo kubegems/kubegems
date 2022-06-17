@@ -1912,7 +1912,7 @@ mysql:
     rootPassword: "" # root password must be set in order upgradeable
     username: ""
     password: ""
-    database: "kubegems"
+    database: "" # no database will be created if not set
 
 ## @section External Database configuration
 ##
@@ -1992,8 +1992,6 @@ argo-cd:
     config:
       users.session.duration: "0"
     extraArgs: ["--redisdb", "1"]
-    config:
-      users.session.duration: "0"
     extraEnvVars:
       - name: REDIS_PASSWORD
         valueFrom:
