@@ -794,7 +794,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		eg.Go(func() error {
 			resp, err := cli.Extend().LokiQuery(ctx,
-				fmt.Sprintf(`sum(count_over_time({namespace="%s", container="event-exporter"}| json | line_format "{{.metadata_namespace}}" |= "%s" [%s]))`, gems.NamespaceLogging, env.Namespace, dur))
+				fmt.Sprintf(`sum(count_over_time({namespace="%s", container="event-exporter"}| json | line_format "{{.metadata_namespace}}" |= "%s" [%s]))`, gems.NamespaceEventer, env.Namespace, dur))
 			if err != nil {
 				return err
 			}

@@ -14,6 +14,7 @@ const (
 	NamespaceMonitor   = "kubegems-monitoring"
 	NamespaceLogging   = "kubegems-logging"
 	NamespaceGateway   = "kubegems-gateway"
+	NamespaceEventer   = "kubegems-eventer"
 	NamespaceWorkflow  = "gemcloud-workflow-system"
 )
 
