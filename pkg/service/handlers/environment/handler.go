@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
-	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/log"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -685,18 +684,20 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 		eg := errgroup.Group{}
 		// labels
 		eg.Go(func() error {
-			envObj := gemsv1beta1.Environment{}
-			if err := cli.Get(ctx, types.NamespacedName{Namespace: env.Namespace, Name: env.EnvironmentName}, &envObj); err != nil {
+			ns := corev1.Namespace{}
+			if err := cli.Get(ctx, types.NamespacedName{Name: env.Namespace}, &ns); err != nil {
 				return err
 			}
-			ret.Labels = envObj.Labels
+			ret.Labels = ns.Labels
+
+			// obervability status
+			ret.Monitoring = true
+			if ns.Labels[gems.LabelLogCollector] == gems.StatusEnabled {
+				ret.Logging = true
+			}
+			ret.ServiceMesh = env.VirtualSpaceID != nil
 			return nil
 		})
-
-		// obervability status
-		ret.Monitoring = true
-		ret.Logging = true
-		ret.ServiceMesh = env.VirtualSpaceID != nil
 
 		// contaienr restart
 		eg.Go(func() error {
@@ -802,24 +803,25 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 		})
 
 		eg.Go(func() error {
-			resp, err := cli.Extend().LokiQuery(ctx,
-				fmt.Sprintf(`sum(count_over_time({stream=~"stdout|stderr", namespace="%s"} |~ "error" [%s]))`, env.Namespace, dur))
+			resp, err := cli.Extend().PrometheusVector(ctx,
+				fmt.Sprintf(`sum(sum_over_time(gems_loki_error_logs_count_last_1m{namespace="%s"}[%s]))`, env.Namespace, dur))
 			if err != nil {
 				return err
 			}
-			ret.ErrorLogCount = getLokiRespValue(resp)
+			if resp.Len() > 0 {
+				ret.ErrorLogCount = int(resp[0].Value)
+			}
 			return nil
 		})
 
 		eg.Go(func() error {
-			resp, err := cli.Extend().LokiQuery(ctx,
-				fmt.Sprintf(`sum(count_over_time({stream=~"stdout|stderr", namespace="%s"} [1m]))`, env.Namespace))
+			resp, err := cli.Extend().PrometheusVector(ctx,
+				fmt.Sprintf(`sum(gems_loki_logs_count_last_1m{namespace="%s"})`, env.Namespace))
 			if err != nil {
 				return err
 			}
-			rate := getLokiRespValue(resp)
-			if rate > 0 {
-				ret.LogRate = fmt.Sprintf("%d/min", rate)
+			if resp.Len() > 0 {
+				ret.LogRate = fmt.Sprintf("%d/min", int(resp[0].Value))
 			}
 			return nil
 		})
