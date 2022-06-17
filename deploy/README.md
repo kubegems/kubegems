@@ -1,5 +1,7 @@
 # Deploy
 
+[english](README.md)|[中文版](README-zh.md)
+
 ## Charts
 
 The `plugins` dir contains kubegems helm charts.
