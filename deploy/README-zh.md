@@ -1,5 +1,7 @@
 # 部署
 
+[english](README.md)|[中文版](README-zh.md)
+
 ## charts
 
 `plugins` 目录包含 kubegems helm charts.
@@ -98,7 +100,7 @@ kubectl --namespace bundle-controller get pods
 1. 如果没有CSI插件，可以安装 local-path-provisioner:
 
   ```sh
-  kubectl create namespace local-path-provisioner
+  kubectl create namespace local-path-storage
   kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-local-path-provisioner.yaml
   ```
 
