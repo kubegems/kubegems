@@ -11,6 +11,12 @@ spec:
   disabled: false
   kind: helm
   installNamespace: kubegems-local
+  values:
+    agent:
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: false
   valuesFrom:
     - kind: ConfigMap
       name: kubegems-monitoring-values
