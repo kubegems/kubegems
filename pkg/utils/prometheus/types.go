@@ -47,13 +47,6 @@ func (g *PromqlGenerator) IsEmpty() bool {
 	return g == nil || g.Resource == ""
 }
 
-func (g *PromqlGenerator) GetUnit() string {
-	if g != nil {
-		return g.Unit
-	}
-	return ""
-}
-
 type RuleContext struct {
 	ResourceDetail ResourceDetail
 	RuleDetail     RuleDetail
@@ -95,9 +88,7 @@ func (g *PromqlGenerator) ConstructPromql(namespace string, opts *MonitorOptions
 	for label, value := range g.LabelPairs {
 		query.AddSelector(label, promql.LabelRegex, value)
 	}
-	unitValue, err := ParseUnit(g.Unit)
 	return query.
-		Arithmetic(promql.BinaryArithmeticOperators(unitValue.Op), unitValue.Value).
 		Compare(promql.ComparisonOperator(g.CompareOp), g.CompareValue).
 		ToPromql(), nil
 }

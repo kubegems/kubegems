@@ -126,7 +126,6 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 					BaseQueryParams: BaseQueryParams{
 						Resource: "node",
 						Rule:     "statusCondition",
-						Unit:     "",
 						LabelPairs: map[string]string{
 							"condition": "Ready",
 							"status":    "true",

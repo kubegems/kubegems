@@ -14123,7 +14123,7 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/models.SystemRole"
+                                                                "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.SystemRole"
                                                             }
                                                         }
                                                     }
@@ -14161,7 +14161,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.SystemRole"
+                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.SystemRole"
                         }
                     }
                 ],
@@ -14177,7 +14177,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.SystemRole"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.SystemRole"
                                         }
                                     }
                                 }
@@ -14226,7 +14226,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/models.SystemRole"
+                                            "$ref": "#/definitions/kubegems.io_kubegems_pkg_service_models.SystemRole"
                                         }
                                     }
                                 }
@@ -25730,6 +25730,31 @@ const docTemplate = `{
                 }
             }
         },
+        "kubegems.io_kubegems_pkg_service_models.SystemRole": {
+            "type": "object",
+            "required": [
+                "roleCode"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "roleCode": {
+                    "description": "系统级角色Code(管理员admin, 普通用户ordinary)",
+                    "type": "string"
+                },
+                "roleName": {
+                    "description": "角色名字",
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
         "kubegems.io_kubegems_pkg_service_models.Tenant": {
             "type": "object",
             "properties": {
@@ -26007,6 +26032,29 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "kubegems.io_kubegems_pkg_v2_models.SystemRole": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
                 }
             }
         },
@@ -26864,6 +26912,24 @@ const docTemplate = `{
                 }
             }
         },
+        "kubernetes.Host": {
+            "type": "object",
+            "properties": {
+                "cluster": {
+                    "type": "string"
+                },
+                "complete_input": {
+                    "description": "CompleteInput is true when Service, Namespace and Cluster fields are present.\nIt is true for simple service names and FQDN services.\nIt is false for service.namespace format and service entries.",
+                    "type": "boolean"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "service": {
+                    "type": "string"
+                }
+            }
+        },
         "labels.Matcher": {
             "type": "object",
             "properties": {
@@ -27471,64 +27537,23 @@ const docTemplate = `{
         },
         "models.Cluster": {
             "type": "object",
-            "required": [
-                "kubeConfig",
-                "name"
-            ],
             "properties": {
-                "agentAddr": {
+                "destination_rule": {
                     "type": "string"
                 },
-                "apiserver": {
+                "direction": {
                     "type": "string"
                 },
-                "clusterResourceQuota": {
-                    "description": "原始数据 记录的是request和response以及http_code",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "environments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment"
-                    }
-                },
-                "id": {
+                "port": {
                     "type": "integer"
                 },
-                "kubeConfig": {
-                    "description": "原始数据 记录的是request和response以及http_code",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "service_fqdn": {
+                    "$ref": "#/definitions/kubernetes.Host"
                 },
-                "name": {
+                "subset": {
                     "type": "string"
                 },
-                "oversoldConfig": {
-                    "description": "原始数据 记录的是request和response以及http_code",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "primary": {
-                    "type": "boolean"
-                },
-                "runtime": {
-                    "description": "docker or containerd",
-                    "type": "string"
-                },
-                "tenantResourceQuotas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.TenantResourceQuota"
-                    }
-                },
-                "version": {
+                "type": {
                     "type": "string"
                 }
             }
@@ -27897,30 +27922,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.OIDCUser": {
-            "type": "object",
-            "properties": {
-                "creation_time": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "secret": {
-                    "description": "secret in plain text",
-                    "type": "string"
-                },
-                "subiss": {
-                    "type": "string"
-                },
-                "update_time": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "models.OnlineConfig": {
             "type": "object",
             "required": [
@@ -28034,31 +28035,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.SystemRole": {
-            "type": "object",
-            "required": [
-                "roleCode"
-            ],
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "roleCode": {
-                    "description": "系统级角色Code(管理员admin, 普通用户ordinary)",
-                    "type": "string"
-                },
-                "roleName": {
-                    "description": "角色名字",
-                    "type": "string"
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
-                }
-            }
-        },
         "models.TenantResourceQuotaApply": {
             "type": "object",
             "properties": {
@@ -28114,53 +28090,41 @@ const docTemplate = `{
         },
         "models.User": {
             "type": "object",
+            "required": [
+                "email",
+                "phone",
+                "username"
+            ],
             "properties": {
-                "admin_role_in_auth": {
-                    "description": "AdminRoleInAuth to store the admin privilege granted by external authentication provider",
-                    "type": "boolean"
-                },
-                "comment": {
+                "createdAt": {
                     "type": "string"
-                },
-                "creation_time": {
-                    "type": "string"
-                },
-                "deleted": {
-                    "type": "boolean"
                 },
                 "email": {
                     "type": "string"
                 },
-                "oidc_user_meta": {
-                    "$ref": "#/definitions/models.OIDCUser"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "password_version": {
-                    "type": "string"
-                },
-                "realname": {
-                    "type": "string"
-                },
-                "reset_uuid": {
-                    "type": "string"
-                },
-                "role_id": {
-                    "description": "if this field is named as \"RoleID\", beego orm can not map role_id\nto it.",
+                "id": {
                     "type": "integer"
                 },
-                "role_name": {
-                    "type": "string"
-                },
-                "sysadmin_flag": {
+                "isActive": {
                     "type": "boolean"
                 },
-                "update_time": {
+                "lastLoginAt": {
                     "type": "string"
                 },
-                "user_id": {
+                "phone": {
+                    "type": "string"
+                },
+                "systemRole": {
+                    "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.SystemRole"
+                },
+                "systemRoleID": {
                     "type": "integer"
+                },
+                "tenants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant"
+                    }
                 },
                 "username": {
                     "type": "string"
@@ -28525,6 +28489,12 @@ const docTemplate = `{
                 },
                 "namespace": {
                     "type": "string"
+                },
+                "real_cpu": {
+                    "type": "integer"
+                },
+                "real_memory": {
+                    "type": "integer"
                 }
             }
         },
@@ -28997,12 +28967,9 @@ const docTemplate = `{
                     "description": "前端展示",
                     "type": "string"
                 },
-                "units": {
-                    "description": "支持的单位",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "unit": {
+                    "description": "使用的单位",
+                    "type": "string"
                 }
             }
         },

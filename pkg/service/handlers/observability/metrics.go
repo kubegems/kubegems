@@ -156,7 +156,6 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			BaseQueryParams: prometheus.BaseQueryParams{
 				Resource:   c.Query("resource"),
 				Rule:       c.Query("rule"),
-				Unit:       c.Query("unit"),
 				LabelPairs: c.QueryMap("labelpairs"),
 			},
 		},
@@ -170,10 +169,6 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 	if q.Start == "" || q.End == "" {
 		q.Start = now.Add(-30 * time.Minute).Format(time.RFC3339)
 		q.End = now.Format(time.RFC3339)
-	}
-
-	if _, err := prometheus.ParseUnit(q.PromqlGenerator.GetUnit()); err != nil {
-		return err
 	}
 
 	monitoropts := new(prometheus.MonitorOptions)
@@ -193,7 +188,6 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			BaseQueryParams: prometheus.BaseQueryParams{
 				Resource:   c.Query("resource"),
 				Rule:       c.Query("rule"),
-				Unit:       c.Query("unit"),
 				LabelPairs: c.QueryMap("labelpairs"),
 			},
 		}

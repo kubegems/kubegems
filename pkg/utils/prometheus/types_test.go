@@ -71,7 +71,6 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 			params := &BaseQueryParams{
 				Resource:   tt.fields.Resource,
 				Rule:       tt.fields.Rule,
-				Unit:       tt.fields.Unit,
 				LabelPairs: tt.fields.LabelPairs,
 			}
 			got, err := params.FindRuleContext(tt.args.cfg)

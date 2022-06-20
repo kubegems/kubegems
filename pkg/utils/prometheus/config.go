@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
 	"sigs.k8s.io/yaml"
@@ -21,10 +22,20 @@ func (opts *MonitorOptions) Name() string {
 }
 
 func (opts *MonitorOptions) Validate() error {
+	for _, res := range opts.Resources {
+		for _, rule := range res.Rules {
+			if _, err := ParseUnit(rule.Unit); err != nil {
+				return errors.Wrapf(err, "res: %s, rule: %s unit not valid", res.ShowName, rule.ShowName)
+			}
+		}
+	}
 	return nil
 }
 
 func (opts *MonitorOptions) JSON() []byte {
+	if err := opts.Validate(); err != nil {
+		panic(err)
+	}
 	bts, _ := json.Marshal(opts)
 	return bts
 }
@@ -56,6 +67,7 @@ type RuleDetail struct {
 	Expr     string   `json:"expr"`     // 原生表达式
 	ShowName string   `json:"showName"` // 前端展示
 	Labels   []string `json:"labels"`   // 支持的标签
+	Unit     string   `json:"unit"`     // 使用的单位
 }
 
 type MonitorOptions struct {
@@ -90,14 +102,17 @@ resources:
         expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100
         showName: "CPU使用率"
         labels: null
+        unit: percent-0-100
       memoryUsagePercent:
         expr: (1- sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes)) * 100
         showName: "内存使用率"
         labels: null
+        unit: percent-0-100
       certExpirationRemainTime:
         expr: gems_agent_cluster_component_cert_expiration_remain_seconds
         showName: "证书剩余到期时间"
         labels: [component]
+        unit: duration-s
   plugin:
     namespaced: false
     showName: "插件"
@@ -122,40 +137,49 @@ resources:
         expr: gems_node_cpu_total_cores
         showName: "CPU总量"
         labels: [node]
+        unit: short
       cpuUsage:
         expr: gems_node_cpu_usage_cores
         showName: "CPU使用量"
         labels: [node]
+        unit: short
       cpuUsagePercent:
         expr: gems_node_cpu_usage_percent
         showName: "CPU使用率"
         labels: [node]
+        unit: percent-0-100
 
       memoryTotal:
         expr: gems_node_memory_total_bytes
         showName: "内存总量"
         labels: [node]
+        unit: bytes-B
       memoryUsage:
         expr: gems_node_memory_usage_bytes
         showName: "内存使用量"
         labels: [node]
+        unit: bytes-B
       memoryUsagePercent:
         expr: gems_node_memory_usage_percent
         showName: "内存使用率"
         labels: [node]
+        unit: percent-0-100
 
       diskTotal:
         expr: gems_node_disk_total_bytes
         showName: "磁盘总量"
         labels: [node, device]
+        unit: bytes-B
       diskUsage:
         expr: gems_node_disk_usage_bytes
         showName: "磁盘使用量"
         labels: [node, device]
+        unit: bytes-B
       diskUsagePercent:
         expr: gems_node_disk_usage_percent
         showName: "磁盘使用率"
         labels: [node, device]
+        unit: percent-0-100
       diskReadIOPS:
         expr: gems_node_disk_read_iops
         showName: "磁盘每秒读取次数"
@@ -168,27 +192,33 @@ resources:
         expr: gems_node_disk_read_bps
         showName: "磁盘每秒读取量"
         labels: [node]
+        unit: bytes/sec-B/s
       diskWriteBPS:
         expr: gems_node_disk_write_bps
         showName: "磁盘每秒写入量"
         labels: [node]
+        unit: bytes/sec-B/s
 
       networkInBPS:
         expr: gems_node_network_receive_bps
         showName: "网络每秒接收流量"
         labels: [node]
+        unit: bytes/sec-B/s
       networkOutBPS:
         expr: gems_node_network_send_bps
         showName: "网络每秒发送流量"
         labels: [node]
+        unit: bytes/sec-B/s
       networkInErrPercent:
         expr: gems_node_network_receive_errs_percent
         showName: "网络接口收包错误率"
         labels: [node, instance, device]
+        unit: percent-0-100
       networkOutErrPercent:
         expr: gems_node_network_send_errs_percent
         showName: "网络接口发包错误率"
         labels: [node, instance, device]
+        unit: percent-0-100
 
       load1:
         expr: gems_node_load1
@@ -216,6 +246,7 @@ resources:
         expr: gems_node_running_pod_percent
         showName: "pod使用率"
         labels: [node]
+        unit: percent-0-100
 
   container:
     namespaced: true
@@ -225,36 +256,44 @@ resources:
         expr: gems_container_cpu_limit_cores
         showName: "CPU总量"
         labels: [node, namespace, pod, container, owner_kind, workload]
+        unit: short
       cpuUsage:
         expr: gems_container_cpu_usage_cores
         showName: "CPU使用量"
         labels: [node, namespace, pod, container, owner_kind, workload]
+        unit: short
       cpuUsagePercent:
         expr: gems_container_cpu_usage_percent
         showName: "CPU使用率"
         labels: [node, namespace, pod, container, owner_kind, workload]
+        unit: percent-0-100
 
       memoryTotal:
         expr: gems_container_memory_limit_bytes
         showName: "内存总量"
         labels: [node, namespace, pod, container, owner_kind, workload]
+        unit: bytes-B
       memoryUsage:
         expr: gems_container_memory_usage_bytes
         showName: "内存使用量"
         labels: [node, namespace, pod, container, owner_kind, workload]
+        unit: bytes-B
       memoryUsagePercent:
         expr: gems_container_memory_usage_percent
         showName: "内存使用率"
         labels: [node, namespace, pod, container, owner_kind, workload]
+        unit: percent-0-100
 
       networkInBPS:
         expr: gems_container_network_receive_bps
         showName: "网络每秒接收流量"
         labels: [node, namespace, pod, container, owner_kind, workload]
+        unit: bytes/sec-B/s
       networkOutBPS:
         expr: gems_container_network_send_bps
         showName: "网络每秒发送流量"
         labels: [node, namespace, pod, container, owner_kind, workload]
+        unit: bytes/sec-B/s
 
       restartTimesLast5m:
         expr: gems_container_restart_times_last_5m
@@ -274,14 +313,17 @@ resources:
         expr: gems_pvc_total_bytes
         showName: "存储卷容量"
         labels: [node, namespace, persistentvolumeclaim]
+        unit: bytes-B
       volumeUsage:
         expr: gems_pvc_usage_bytes
         showName: "存储卷使用量"
         labels: [node, namespace, persistentvolumeclaim]
+        unit: bytes-B
       volumeUsagePercent:
         expr: gems_pvc_usage_percent
         showName: "存储卷使用率"
         labels: [node, namespace, persistentvolumeclaim]
+        unit: percent-0-100
   cert:
     namespaced: true
     showName: "证书"
@@ -290,6 +332,7 @@ resources:
         expr: gems_cert_expiration_remain_seconds
         showName: "剩余到期时间"
         labels: [namespace, name]
+        unit: duration-s
       status:
         expr: certmanager_certificate_ready_status
         showName: "状态"
@@ -302,22 +345,27 @@ resources:
         expr: gems_namespace_cpu_usage_cores
         showName: "CPU使用量"
         labels: [tenant, project, environment, namespace]
+        unit: short
       memoryUsage:
         expr: gems_namespace_memory_usage_bytes
         showName: "内存使用量"
         labels: [tenant, project, environment, namespace]
+        unit: bytes-B
       networkInBPS:
         expr: gems_namespace_network_receive_bps
         showName: "网络每秒接收流量"
         labels: [tenant, project, environment, namespace]
+        unit: bytes/sec-B/s
       networkOutBPS:
         expr: gems_namespace_network_send_bps
         showName: "网络每秒发送流量"
         labels: [tenant, project, environment, namespace]
+        unit: bytes/sec-B/s
       volumeUsage:
         expr: gems_namespace_pvc_usage_bytes
         showName: "存储卷使用量"
         labels: [tenant, project, environment, namespace]
+        unit: bytes-B
   log:
     namespaced: true
     showName: "日志"

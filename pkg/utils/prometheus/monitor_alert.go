@@ -54,7 +54,7 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 			return err
 		}
 		r.PromqlGenerator.RuleContext = ruleCtx
-		unitValue, err := ParseUnit(r.PromqlGenerator.Unit)
+		unitValue, err := ParseUnit(ruleCtx.RuleDetail.Unit)
 		if err != nil {
 			return err
 		}
@@ -256,6 +256,7 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup, opts 
 				return ret, err
 			}
 			generator.RuleContext = ruleCtx
+			generator.BaseQueryParams.Unit = ruleCtx.RuleDetail.Unit
 
 			// 解析 expr
 			generator.CompareOp = ""
