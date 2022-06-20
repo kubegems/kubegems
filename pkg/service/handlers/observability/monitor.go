@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/go-version"
@@ -533,5 +534,6 @@ func (h *ObservabilityHandler) ExporterSchema(c *gin.Context) {
 		"values.yaml":        values,
 		"app":                name,
 		"version":            maxVersion,
+		"repo":               strings.TrimSuffix(h.AppStoreOpt.Addr, "/") + "/" + exporterRepo,
 	})
 }
