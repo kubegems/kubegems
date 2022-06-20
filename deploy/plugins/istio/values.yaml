@@ -12,9 +12,8 @@ operator:
     sampling: 50
 tracing:
   jaeger:
-    address: ""
     zipkin:
-      address: ""
+      address: "jaeger-operator-jaeger-collector.observability:9411"
 monitoring:
   prometheus:
     address: ""

@@ -50,8 +50,7 @@ metadata:
   name: kubegems-istio
   namespace: {{ .Release.Namespace }}
   annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    plugins.kubegems.io/ignore-options: OnUpdate
+    bundle.kubegems.io/ignore-options: OnUpdate
 spec:
   components:
     pilot:
