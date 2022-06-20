@@ -832,7 +832,7 @@ func AfterTenantResourceQuotaSave(ctx context.Context, h base.BaseHandler, tx *g
 		return err
 	}
 	// 这儿有个坑，controller还没有成功创建出来TenantResourceQuota，就去更新租户资源，会报错404；先睡会儿把
-	<-time.NewTimer(time.Second * 2).C
+	time.Sleep(2 * time.Second)
 	// 创建or更新 租户资源
 	if err := CreateOrUpdateTenantResourceQuota(ctx, h, cluster.ClusterName, tenant.TenantName, trq.Content); err != nil {
 		return err
@@ -889,8 +889,8 @@ func CreateOrUpdateTenantResourceQuota(ctx context.Context, h base.BaseHandler, 
 // @Security     JWT
 func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 	// request
-	reqtrq := models.TenantResourceQuota{}
-	if err := c.ShouldBind(reqtrq); err != nil {
+	newreq := models.TenantResourceQuota{}
+	if err := c.ShouldBind(&newreq); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -906,10 +906,13 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	if err := h.ValidateTenantResourceQuota(ctx, trq.Cluster.ClusterName, trq.Cluster.OversoldConfig, trq.Content, reqtrq.Content); err != nil {
+	if err := h.ValidateTenantResourceQuota(ctx, trq.Cluster.ClusterName, trq.Cluster.OversoldConfig, trq.Content, newreq.Content); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+
+	// update
+	trq.Content = newreq.Content
 
 	h.SetAuditData(c, "更新", "集群租户资源限制", fmt.Sprintf("集群[%v]/租户[%v]", trq.Cluster.ClusterName, trq.Tenant.TenantName))
 	h.SetExtraAuditData(c, models.ResTenant, trq.TenantID)
