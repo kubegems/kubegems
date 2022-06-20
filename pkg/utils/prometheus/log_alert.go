@@ -8,7 +8,6 @@ import (
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/rulefmt"
-	"github.com/prometheus/prometheus/promql/parser"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	"kubegems.io/kubegems/pkg/log"
@@ -153,9 +152,6 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 	dur, err := model.ParseDuration(r.For)
 	if err != nil {
 		return ret, err
-	}
-	if _, err := parser.ParseExpr(r.Expr); err != nil {
-		return ret, errors.Wrapf(err, "parse expr: %s", r.Expr)
 	}
 	for _, level := range r.AlertLevels {
 		ret.Rules = append(ret.Rules, rulefmt.RuleNode{
