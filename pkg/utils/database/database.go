@@ -18,10 +18,10 @@ type Options struct {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		Addr:     "gems-mysql:3306",
+		Addr:     "kubegems-mysql:3306",
 		Username: "root",
 		Password: "",
-		Database: "gemcloud",
+		Database: "kubegems",
 	}
 }
 
