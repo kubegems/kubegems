@@ -194,7 +194,7 @@ func (c *ExtendClient) DeleteSilenceIfExist(ctx context.Context, info models.Ale
 	case 1:
 		agentreq := Request{
 			Method:  http.MethodDelete,
-			Path:    fmt.Sprintf("/v1/service-proxy/api/v2/silences/%s", silenceList[0].ID),
+			Path:    fmt.Sprintf("/v1/service-proxy/api/v2/silence/%s", silenceList[0].ID),
 			Headers: HeadersFrom(alertProxyHeader),
 		}
 		return c.DoRequest(ctx, agentreq)

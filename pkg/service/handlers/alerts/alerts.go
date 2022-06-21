@@ -128,7 +128,7 @@ func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 	req := models.AlertInfo{
 		Fingerprint: c.Param("fingerprint"),
 	}
-	h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&req, "fingerprint = ?", req.Fingerprint).Error; err != nil {
 			return err
 		}
@@ -149,7 +149,10 @@ func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 			return err
 		}
 		return cli.Extend().DeleteSilenceIfExist(ctx, req)
-	})
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 	handlers.OK(c, "ok")
 }
 
