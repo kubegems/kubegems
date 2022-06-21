@@ -3035,441 +3035,6 @@ definitions:
           $ref: '#/definitions/v1alpha1.SyncOperationResource'
         type: array
     type: object
-  kubegems.io_kubegems_pkg_service_models.Application:
-    properties:
-      applicationName:
-        description: 应用名字
-        type: string
-      createdAt:
-        description: 创建时间
-        type: string
-      creator:
-        description: 创建人
-        type: string
-      environment:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Environment'
-        description: 关联的环境
-      environmentID:
-        description: 关联的环境
-        type: integer
-      id:
-        type: integer
-      images:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      kind:
-        description: 类型
-        type: string
-      labels:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      project:
-        $ref: '#/definitions/models.Project'
-        description: 所属项
-      projectID:
-        description: 所属项目ID
-        type: integer
-      remark:
-        description: 备注
-        type: string
-    type: object
-  kubegems.io_kubegems_pkg_service_models.Environment:
-    properties:
-      applications:
-        description: 关联的应用
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Application'
-        type: array
-      cluster:
-        $ref: '#/definitions/models.Cluster'
-        description: 关联的集群
-      clusterID:
-        description: 所属集群ID
-        type: integer
-      creator:
-        $ref: '#/definitions/models.User'
-        description: 创建者
-      creatorID:
-        description: 创建人ID
-        type: integer
-      deletePolicy:
-        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
-        type: string
-      environmentName:
-        description: 环境名字
-        type: string
-      id:
-        type: integer
-      limitRange:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      metaType:
-        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
-        type: string
-      namespace:
-        description: 环境关联的namespace
-        type: string
-      nslabels:
-        additionalProperties:
-          type: string
-        type: object
-      project:
-        $ref: '#/definitions/models.Project'
-        description: 所属项目
-      projectID:
-        description: 所属项目ID
-        type: integer
-      remark:
-        description: 备注
-        type: string
-      resourceQuota:
-        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
-        items:
-          type: integer
-        type: array
-      users:
-        description: 关联的用户
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpace:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
-      virtualSpaceID:
-        description: 虚拟空间
-        type: integer
-    type: object
-  kubegems.io_kubegems_pkg_service_models.Registry:
-    properties:
-      creator:
-        $ref: '#/definitions/models.User'
-        description: 创建者
-      creatorID:
-        type: integer
-      enableExtends:
-        description: 是否启用扩展功能，支持harbor等高级仓库
-        type: boolean
-      id:
-        type: integer
-      isDefault:
-        type: boolean
-      password:
-        description: 密码
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-      projectID:
-        description: 项目ID
-        type: integer
-      registryAddress:
-        description: 仓库地址
-        type: string
-      registryName:
-        description: 仓库名称
-        type: string
-      updateTime:
-        description: 更新时间
-        type: string
-      username:
-        description: 用户名
-        type: string
-    type: object
-  kubegems.io_kubegems_pkg_service_models.SystemRole:
-    properties:
-      id:
-        type: integer
-      roleCode:
-        description: 系统级角色Code(管理员admin, 普通用户ordinary)
-        type: string
-      roleName:
-        description: 角色名字
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-    required:
-    - roleCode
-    type: object
-  kubegems.io_kubegems_pkg_service_models.Tenant:
-    properties:
-      allocatedResourcequota:
-        $ref: '#/definitions/v1.ResourceList'
-      createdAt:
-        type: string
-      id:
-        type: integer
-      isActive:
-        description: 是否激活
-        type: boolean
-      projects:
-        items:
-          $ref: '#/definitions/models.Project'
-        type: array
-      remark:
-        description: 备注
-        type: string
-      resourceQuotas:
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota'
-        type: array
-      tenantName:
-        description: 租户名字
-        type: string
-      updatedAt:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-    type: object
-  kubegems.io_kubegems_pkg_service_models.TenantResourceQuota:
-    properties:
-      cluster:
-        $ref: '#/definitions/models.Cluster'
-      clusterID:
-        type: integer
-      content:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      id:
-        type: integer
-      tenant:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Tenant'
-      tenantID:
-        type: integer
-      tenantResourceQuotaApply:
-        $ref: '#/definitions/models.TenantResourceQuotaApply'
-      tenantResourceQuotaApplyID:
-        type: integer
-    required:
-    - clusterID
-    - tenantID
-    type: object
-  kubegems.io_kubegems_pkg_service_models.VirtualSpace:
-    properties:
-      createdAt:
-        type: string
-      createdBy:
-        type: string
-      environments:
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
-        type: array
-      id:
-        type: integer
-      isActive:
-        type: boolean
-      updatedAt:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpaceName:
-        type: string
-    type: object
-  kubegems.io_kubegems_pkg_v2_models.Application:
-    properties:
-      createdAt:
-        type: string
-      creator:
-        type: string
-      environment:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
-      environmentID:
-        type: integer
-      id:
-        type: integer
-      images:
-        description: 原始数据 记录的是request和response以及http_code
-        items:
-          type: integer
-        type: array
-      kind:
-        type: string
-      labels:
-        description: 原始数据 记录的是request和response以及http_code
-        items:
-          type: integer
-        type: array
-      name:
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-      projectID:
-        type: integer
-      remark:
-        type: string
-    type: object
-  kubegems.io_kubegems_pkg_v2_models.Environment:
-    properties:
-      applications:
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Application'
-        type: array
-      cluster:
-        $ref: '#/definitions/models.Cluster'
-      clusterID:
-        type: integer
-      creator:
-        $ref: '#/definitions/models.User'
-      creatorID:
-        type: integer
-      deletePolicy:
-        type: string
-      id:
-        type: integer
-      limitRange:
-        description: 原始数据 记录的是request和response以及http_code
-        items:
-          type: integer
-        type: array
-      metaType:
-        description: MetaTpe (dev, prod, test, pub ...)
-        type: string
-      name:
-        type: string
-      namespace:
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-      projectID:
-        type: integer
-      remark:
-        type: string
-      resourceQuota:
-        description: 原始数据 记录的是request和response以及http_code
-        items:
-          type: integer
-        type: array
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-      virtualSpace:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.VirtualSpace'
-      virtualSpaceID:
-        type: integer
-    type: object
-  kubegems.io_kubegems_pkg_v2_models.Registry:
-    properties:
-      address:
-        type: string
-      creator:
-        $ref: '#/definitions/models.User'
-      creatorID:
-        type: integer
-      id:
-        type: integer
-      isDefault:
-        type: boolean
-      name:
-        type: string
-      password:
-        type: string
-      project:
-        $ref: '#/definitions/models.Project'
-      projectID:
-        type: integer
-      updateTime:
-        type: string
-      username:
-        type: string
-    type: object
-  kubegems.io_kubegems_pkg_v2_models.SystemRole:
-    properties:
-      code:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-    required:
-    - code
-    type: object
-  kubegems.io_kubegems_pkg_v2_models.Tenant:
-    properties:
-      createdAt:
-        type: string
-      id:
-        type: integer
-      isActive:
-        type: boolean
-      name:
-        type: string
-      projects:
-        items:
-          $ref: '#/definitions/models.Project'
-        type: array
-      remark:
-        type: string
-      resourceQuotas:
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.TenantResourceQuota'
-        type: array
-      updatedAt:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-    type: object
-  kubegems.io_kubegems_pkg_v2_models.TenantResourceQuota:
-    properties:
-      cluster:
-        $ref: '#/definitions/models.Cluster'
-      clusterID:
-        type: integer
-      content:
-        description: 原始数据 记录的是request和response以及http_code
-        items:
-          type: integer
-        type: array
-      id:
-        type: integer
-      tenant:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
-      tenantID:
-        type: integer
-    required:
-    - clusterID
-    - tenantID
-    type: object
-  kubegems.io_kubegems_pkg_v2_models.VirtualSpace:
-    properties:
-      createdAt:
-        type: string
-      createdBy:
-        type: string
-      environments:
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
-        type: array
-      id:
-        type: integer
-      isActive:
-        type: boolean
-      name:
-        type: string
-      updatedAt:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
-    type: object
   kubegems.io_kubegems_pkg_v2_services_handlers.PageData:
     properties:
       list: {}
@@ -4385,6 +3950,48 @@ definitions:
       value:
         type: string
     type: object
+  models.Application:
+    properties:
+      applicationName:
+        description: 应用名字
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      creator:
+        description: 创建人
+        type: string
+      environment:
+        $ref: '#/definitions/models.Environment'
+        description: 关联的环境
+      environmentID:
+        description: 关联的环境
+        type: integer
+      id:
+        type: integer
+      images:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      kind:
+        description: 类型
+        type: string
+      labels:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      project:
+        $ref: '#/definitions/models.Project'
+        description: 所属项
+      projectID:
+        description: 所属项目ID
+        type: integer
+      remark:
+        description: 备注
+        type: string
+    type: object
   models.AuditLog:
     properties:
       action:
@@ -4515,6 +4122,28 @@ definitions:
         description: 带单位
         type: string
     type: object
+  models.CVEAllowlist:
+    properties:
+      creationTime:
+        type: string
+      expires_at:
+        type: integer
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/models.CVEAllowlistItem'
+        type: array
+      project_id:
+        type: integer
+      updateTime:
+        type: string
+    type: object
+  models.CVEAllowlistItem:
+    properties:
+      cve_id:
+        type: string
+    type: object
   models.ChartRepo:
     properties:
       chartRepoName:
@@ -4557,6 +4186,73 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  models.Environment:
+    properties:
+      applications:
+        description: 关联的应用
+        items:
+          $ref: '#/definitions/models.Application'
+        type: array
+      cluster:
+        $ref: '#/definitions/models.Cluster'
+        description: 关联的集群
+      clusterID:
+        description: 所属集群ID
+        type: integer
+      creator:
+        $ref: '#/definitions/models.User'
+        description: 创建者
+      creatorID:
+        description: 创建人ID
+        type: integer
+      deletePolicy:
+        description: 删除策略(delNamespace删除namespace,delLabels仅删除关联LABEL)
+        type: string
+      environmentName:
+        description: 环境名字
+        type: string
+      id:
+        type: integer
+      limitRange:
+        description: 环境下的limitrage
+        items:
+          type: integer
+        type: array
+      metaType:
+        description: 元类型(开发(dev)，测试(test)，生产(prod))等选项之一
+        type: string
+      namespace:
+        description: 环境关联的namespace
+        type: string
+      nslabels:
+        additionalProperties:
+          type: string
+        type: object
+      project:
+        $ref: '#/definitions/models.Project'
+        description: 所属项目
+      projectID:
+        description: 所属项目ID
+        type: integer
+      remark:
+        description: 备注
+        type: string
+      resourceQuota:
+        description: 环境资源限制(这个会和namespace下的ResourceQuota对等)
+        items:
+          type: integer
+        type: array
+      users:
+        description: 关联的用户
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      virtualSpace:
+        $ref: '#/definitions/models.VirtualSpace'
+      virtualSpaceID:
+        description: 虚拟空间
+        type: integer
     type: object
   models.EnvironmentResource:
     properties:
@@ -4603,7 +4299,7 @@ definitions:
       id:
         type: integer
       omitempty:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+        $ref: '#/definitions/models.Environment'
       role:
         description: 环境级角色("reader", "operator")
         type: string
@@ -4734,10 +4430,6 @@ definitions:
     type: object
   models.MetricGraph:
     properties:
-      compareOp:
-        type: string
-      compareValue:
-        type: string
       expr:
         type: string
       labelpairs:
@@ -4772,7 +4464,7 @@ definitions:
         description: 结束时间
         type: string
       environment:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+        $ref: '#/definitions/models.Environment'
       environmentID:
         type: integer
       graphs:
@@ -4816,41 +4508,38 @@ definitions:
     type: object
   models.Project:
     properties:
-      applications:
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Application'
-        type: array
-      createdAt:
-        type: string
-      environments:
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
-        type: array
-      id:
+      chart_count:
         type: integer
-      name:
+      creation_time:
         type: string
-      projectAlias:
-        type: string
-      registries:
-        items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Registry'
-        type: array
-      remark:
-        type: string
-      resourceQuota:
-        description: 原始数据 记录的是request和response以及http_code
+      current_user_role_id:
+        type: integer
+      current_user_role_ids:
         items:
           type: integer
         type: array
-      tenant:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
-      tenantID:
+      cve_allowlist:
+        $ref: '#/definitions/models.CVEAllowlist'
+      deleted:
+        type: boolean
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      owner_id:
         type: integer
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
+      owner_name:
+        type: string
+      project_id:
+        type: integer
+      registry_id:
+        type: integer
+      repo_count:
+        type: integer
+      update_time:
+        type: string
     type: object
   models.ProjectUserRels:
     properties:
@@ -4874,10 +4563,119 @@ definitions:
     - role
     - userID
     type: object
+  models.Registry:
+    properties:
+      creator:
+        $ref: '#/definitions/models.User'
+        description: 创建者
+      creatorID:
+        type: integer
+      enableExtends:
+        description: 是否启用扩展功能，支持harbor等高级仓库
+        type: boolean
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      password:
+        description: 密码
+        type: string
+      project:
+        $ref: '#/definitions/models.Project'
+      projectID:
+        description: 项目ID
+        type: integer
+      registryAddress:
+        description: 仓库地址
+        type: string
+      registryName:
+        description: 仓库名称
+        type: string
+      updateTime:
+        description: 更新时间
+        type: string
+      username:
+        description: 用户名
+        type: string
+    type: object
+  models.SystemRole:
+    properties:
+      id:
+        type: integer
+      roleCode:
+        description: 系统级角色Code(管理员admin, 普通用户ordinary)
+        type: string
+      roleName:
+        description: 角色名字
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+    required:
+    - roleCode
+    type: object
+  models.Tenant:
+    properties:
+      allocatedResourcequota:
+        $ref: '#/definitions/v1.ResourceList'
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isActive:
+        description: 是否激活
+        type: boolean
+      projects:
+        items:
+          $ref: '#/definitions/models.Project'
+        type: array
+      remark:
+        description: 备注
+        type: string
+      resourceQuotas:
+        items:
+          $ref: '#/definitions/models.TenantResourceQuota'
+        type: array
+      tenantName:
+        description: 租户名字
+        type: string
+      updatedAt:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+    type: object
+  models.TenantResourceQuota:
+    properties:
+      cluster:
+        $ref: '#/definitions/models.Cluster'
+      clusterID:
+        type: integer
+      content:
+        description: 原始数据 记录的是request和response以及http_code
+        items:
+          type: integer
+        type: array
+      id:
+        type: integer
+      tenant:
+        $ref: '#/definitions/models.Tenant'
+      tenantID:
+        type: integer
+      tenantResourceQuotaApply:
+        $ref: '#/definitions/models.TenantResourceQuotaApply'
+      tenantResourceQuotaApplyID:
+        type: integer
+    required:
+    - clusterID
+    - tenantID
+    type: object
   models.TenantResourceQuotaApply:
     properties:
       content:
-        description: 环境下的limitrage
+        description: 原始数据 记录的是request和response以及http_code
         items:
           type: integer
         type: array
@@ -4898,7 +4696,7 @@ definitions:
         description: 租户级角色(管理员admin, 普通用户ordinary)
         type: string
       tenant:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+        $ref: '#/definitions/models.Tenant'
       tenantID:
         description: 租户ID
         type: integer
@@ -4913,30 +4711,42 @@ definitions:
   models.User:
     properties:
       createdAt:
+        description: 加入时间
         type: string
       email:
+        description: 邮箱
         type: string
       id:
         type: integer
       isActive:
+        description: 是否激活
         type: boolean
       lastLoginAt:
+        description: 最后登录时间
         type: string
       phone:
+        description: 电话
+        type: string
+      role:
+        description: 角色，不同关联对象下表示的角色不同, 用来做join查询的时候处理角色字段的(请勿删除)
+        type: string
+      source:
+        type: string
+      sourceVendor:
         type: string
       systemRole:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.SystemRole'
+        $ref: '#/definitions/models.SystemRole'
       systemRoleID:
         type: integer
       tenants:
         items:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+          $ref: '#/definitions/models.Tenant'
         type: array
       username:
+        description: 用户名
         type: string
     required:
     - email
-    - phone
     - username
     type: object
   models.UserCreate:
@@ -4989,6 +4799,29 @@ definitions:
       virtualDomainName:
         type: string
     type: object
+  models.VirtualSpace:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      environments:
+        items:
+          $ref: '#/definitions/models.Environment'
+        type: array
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      updatedAt:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      virtualSpaceName:
+        type: string
+    type: object
   models.VirtualSpaceUserRels:
     properties:
       id:
@@ -5001,7 +4834,7 @@ definitions:
       userID:
         type: integer
       virtualSpace:
-        $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
+        $ref: '#/definitions/models.VirtualSpace'
       virtualSpaceID:
         type: integer
     required:
@@ -5396,6 +5229,8 @@ definitions:
       isOpen:
         description: 是否启用
         type: boolean
+      logqlGenerator:
+        $ref: '#/definitions/prometheus.LogqlGenerator'
       message:
         description: 告警消息，若为空后端自动填充
         type: string
@@ -5418,6 +5253,20 @@ definitions:
         type: array
       state:
         description: 状态
+        type: string
+    type: object
+  prometheus.LogqlGenerator:
+    properties:
+      duration:
+        description: 时间范围
+        type: string
+      labelpairs:
+        additionalProperties:
+          type: string
+        description: 标签键值对
+        type: object
+      match:
+        description: 正则匹配的字符串
         type: string
     type: object
   prometheus.MonitorAlertRule:
@@ -5472,10 +5321,6 @@ definitions:
     type: object
   prometheus.PromqlGenerator:
     properties:
-      compareOp:
-        type: string
-      compareValue:
-        type: string
       labelpairs:
         additionalProperties:
           type: string
@@ -19170,7 +19015,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -19485,7 +19330,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -19537,7 +19382,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                  $ref: '#/definitions/models.Environment'
               type: object
       security:
       - JWT: []
@@ -19559,7 +19404,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+          $ref: '#/definitions/models.Environment'
       produces:
       - application/json
       responses:
@@ -19570,7 +19415,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                  $ref: '#/definitions/models.Environment'
               type: object
       security:
       - JWT: []
@@ -22890,7 +22735,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -22914,7 +22759,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+          $ref: '#/definitions/models.Environment'
       produces:
       - application/json
       responses:
@@ -22925,7 +22770,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                  $ref: '#/definitions/models.Environment'
               type: object
       security:
       - JWT: []
@@ -22986,7 +22831,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                  $ref: '#/definitions/models.Environment'
               type: object
       security:
       - JWT: []
@@ -23157,7 +23002,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                          $ref: '#/definitions/models.Registry'
                         type: array
                     type: object
               type: object
@@ -23181,7 +23026,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+          $ref: '#/definitions/models.Registry'
       produces:
       - application/json
       responses:
@@ -23192,7 +23037,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                  $ref: '#/definitions/models.Registry'
               type: object
       security:
       - JWT: []
@@ -23225,7 +23070,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                  $ref: '#/definitions/models.Registry'
               type: object
       security:
       - JWT: []
@@ -23257,7 +23102,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                  $ref: '#/definitions/models.Registry'
               type: object
       security:
       - JWT: []
@@ -23294,7 +23139,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                  $ref: '#/definitions/models.Registry'
               type: object
       security:
       - JWT: []
@@ -23326,7 +23171,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                  $ref: '#/definitions/models.Registry'
               type: object
       security:
       - JWT: []
@@ -26082,7 +25927,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                          $ref: '#/definitions/models.Registry'
                         type: array
                     type: object
               type: object
@@ -26134,7 +25979,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                  $ref: '#/definitions/models.Registry'
               type: object
       security:
       - JWT: []
@@ -26156,7 +26001,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+          $ref: '#/definitions/models.Registry'
       produces:
       - application/json
       responses:
@@ -26167,7 +26012,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.Registry'
+                  $ref: '#/definitions/models.Registry'
               type: object
       security:
       - JWT: []
@@ -26620,7 +26465,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.SystemRole'
+                          $ref: '#/definitions/models.SystemRole'
                         type: array
                     type: object
               type: object
@@ -26639,7 +26484,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.SystemRole'
+          $ref: '#/definitions/models.SystemRole'
       produces:
       - application/json
       responses:
@@ -26650,7 +26495,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.SystemRole'
+                  $ref: '#/definitions/models.SystemRole'
               type: object
       security:
       - JWT: []
@@ -26700,7 +26545,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.SystemRole'
+                  $ref: '#/definitions/models.SystemRole'
               type: object
       security:
       - JWT: []
@@ -26864,7 +26709,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+                          $ref: '#/definitions/models.Tenant'
                         type: array
                     type: object
               type: object
@@ -26883,7 +26728,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+          $ref: '#/definitions/models.Tenant'
       produces:
       - application/json
       responses:
@@ -26894,7 +26739,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/models.Tenant'
               type: object
       security:
       - JWT: []
@@ -26968,7 +26813,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/models.Tenant'
               type: object
       security:
       - JWT: []
@@ -26990,7 +26835,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+          $ref: '#/definitions/models.Tenant'
       produces:
       - application/json
       responses:
@@ -27001,7 +26846,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+                  $ref: '#/definitions/models.Tenant'
               type: object
       security:
       - JWT: []
@@ -27030,7 +26875,7 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+                    $ref: '#/definitions/models.Tenant'
                   type: array
               type: object
       security:
@@ -27060,7 +26905,7 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+                    $ref: '#/definitions/models.Tenant'
                   type: array
               type: object
       security:
@@ -27408,7 +27253,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -30175,7 +30020,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota'
+                          $ref: '#/definitions/models.TenantResourceQuota'
                         type: array
                     type: object
               type: object
@@ -30199,7 +30044,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota'
+          $ref: '#/definitions/models.TenantResourceQuota'
       produces:
       - application/json
       responses:
@@ -30210,7 +30055,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota'
+                  $ref: '#/definitions/models.TenantResourceQuota'
               type: object
       security:
       - JWT: []
@@ -30276,7 +30121,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.TenantResourceQuota'
+                  $ref: '#/definitions/models.TenantResourceQuota'
               type: object
       security:
       - JWT: []
@@ -30820,7 +30665,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Tenant'
+                          $ref: '#/definitions/models.Tenant'
                         type: array
                     type: object
               type: object
@@ -31035,7 +30880,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
+                          $ref: '#/definitions/models.VirtualSpace'
                         type: array
                     type: object
               type: object
@@ -31054,7 +30899,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
+          $ref: '#/definitions/models.VirtualSpace'
       produces:
       - application/json
       responses:
@@ -31065,7 +30910,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
+                  $ref: '#/definitions/models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -31115,7 +30960,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
+                  $ref: '#/definitions/models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -31147,7 +30992,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
+                  $ref: '#/definitions/models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -31169,7 +31014,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
+          $ref: '#/definitions/models.VirtualSpace'
       produces:
       - application/json
       responses:
@@ -31180,7 +31025,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/kubegems.io_kubegems_pkg_service_models.VirtualSpace'
+                  $ref: '#/definitions/models.VirtualSpace'
               type: object
       security:
       - JWT: []
@@ -31398,7 +31243,7 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+                          $ref: '#/definitions/models.Environment'
                         type: array
                     type: object
               type: object
@@ -31422,7 +31267,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/kubegems.io_kubegems_pkg_v2_models.Environment'
+          $ref: '#/definitions/models.Environment'
       produces:
       - application/json
       responses:
