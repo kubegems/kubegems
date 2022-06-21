@@ -7,7 +7,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/alicebob/miniredis/v2 v2.21.0
-	github.com/argoproj/argo-cd/v2 v2.3.4
+	github.com/argoproj/argo-cd/v2 v2.3.5
 	github.com/argoproj/argo-rollouts v1.2.1
 	github.com/banzaicloud/logging-operator/pkg/sdk v0.7.26
 	github.com/containerd/containerd v1.6.6
