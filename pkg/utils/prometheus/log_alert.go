@@ -1,8 +1,10 @@
 package prometheus
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -26,12 +28,39 @@ type RawLoggingAlertRule struct {
 }
 
 type LoggingAlertRule struct {
+	LogqlGenerator *LogqlGenerator `json:"logqlGenerator"`
 	BaseAlertRule  `json:",inline"`
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
 	Origin         string          `json:"origin,omitempty"`         // 原始的prometheusrule
 }
 
+type LogqlGenerator struct {
+	Duration   string            `json:"duration"`             // 时间范围
+	Match      string            `json:"match"`                // 正则匹配的字符串
+	LabelPairs map[string]string `json:"labelpairs,omitempty"` // 标签键值对
+}
+
+func (g *LogqlGenerator) ToLogql(namespace string) string {
+	labelvalues := []string{}
+	for k, v := range g.LabelPairs {
+		labelvalues = append(labelvalues, fmt.Sprintf(`%s=~"%s"`, k, v))
+	}
+	labelvalues = append(labelvalues, fmt.Sprintf(`namespace="%s"`, namespace))
+	return fmt.Sprintf(`sum(count_over_time({%s} |~ '%s' [%s]))without(fluentd_thread)`, strings.Join(labelvalues, ", "), g.Match, g.Duration)
+}
+
+func (g *LogqlGenerator) IsEmpty() bool {
+	return g == nil || g.Match == ""
+}
+
 func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
+	if r.LogqlGenerator.IsEmpty() {
+		if r.BaseAlertRule.Expr == "" {
+			return fmt.Errorf("模板与原生promql不能同时为空")
+		}
+	} else {
+		r.BaseAlertRule.Expr = r.LogqlGenerator.ToLogql(r.BaseAlertRule.Namespace)
+	}
 	return r.BaseAlertRule.checkAndModify(opts)
 }
 
@@ -115,6 +144,38 @@ func (raw *RawLoggingAlertRule) ModifyLoggingAlertRule(r LoggingAlertRule, act A
 	return raw.Base.UpdateInhibitRules(alertRules.ToAlertRuleList())
 }
 
+func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
+	ret := rulefmt.RuleGroup{Name: r.Name}
+	dur, err := model.ParseDuration(r.For)
+	if err != nil {
+		return ret, err
+	}
+	for _, level := range r.AlertLevels {
+		rule := rulefmt.RuleNode{
+			Alert: yaml.Node{Kind: yaml.ScalarNode, Value: r.Name},
+			Expr:  yaml.Node{Kind: yaml.ScalarNode, Value: fmt.Sprintf("%s%s%s", r.Expr, level.CompareOp, level.CompareValue)},
+			For:   dur,
+			Labels: map[string]string{
+				AlertNamespaceLabel: r.Namespace,
+				AlertNameLabel:      r.Name,
+				AlertFromLabel:      AlertTypeLogging,
+				AlertScopeLabel:     getAlertScope(r.Namespace),
+				SeverityLabel:       level.Severity,
+			},
+			Annotations: map[string]string{
+				messageAnnotationsKey: r.Message,
+				valueAnnotationKey:    valueAnnotationExpr,
+			},
+		}
+		if !r.LogqlGenerator.IsEmpty() {
+			bts, _ := json.Marshal(r.LogqlGenerator)
+			rule.Annotations[exprJsonAnnotationKey] = string(bts)
+		}
+		ret.Rules = append(ret.Rules, rule)
+	}
+	return ret, nil
+}
+
 func rawToLoggingAlertRule(namespace string, group rulefmt.RuleGroup) (LoggingAlertRule, error) {
 	if len(group.Rules) == 0 {
 		return LoggingAlertRule{}, fmt.Errorf("rule %s is null", group.Name)
@@ -137,39 +198,22 @@ func rawToLoggingAlertRule(namespace string, group rulefmt.RuleGroup) (LoggingAl
 		if !hasOp {
 			return ret, fmt.Errorf("rule %s expr %s not valid", group.Name, rule.Expr.Value)
 		}
-		ret.Expr = query
+
+		exprJson, ok := rule.Annotations[exprJsonAnnotationKey]
+		if ok {
+			// from template
+			generator := LogqlGenerator{}
+			if err := json.Unmarshal([]byte(exprJson), &generator); err != nil {
+				return ret, err
+			}
+			ret.LogqlGenerator = &generator
+		}
 		ret.AlertLevels = append(ret.AlertLevels, AlertLevel{
 			CompareOp:    op,
 			CompareValue: value,
 			Severity:     rule.Labels[SeverityLabel],
 		})
-	}
-	return ret, nil
-}
-
-func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
-	ret := rulefmt.RuleGroup{Name: r.Name}
-	dur, err := model.ParseDuration(r.For)
-	if err != nil {
-		return ret, err
-	}
-	for _, level := range r.AlertLevels {
-		ret.Rules = append(ret.Rules, rulefmt.RuleNode{
-			Alert: yaml.Node{Kind: yaml.ScalarNode, Value: r.Name},
-			Expr:  yaml.Node{Kind: yaml.ScalarNode, Value: fmt.Sprintf("%s%s%s", r.Expr, level.CompareOp, level.CompareValue)},
-			For:   dur,
-			Labels: map[string]string{
-				AlertNamespaceLabel: r.Namespace,
-				AlertNameLabel:      r.Name,
-				AlertFromLabel:      AlertTypeLogging,
-				AlertScopeLabel:     getAlertScope(r.Namespace),
-				SeverityLabel:       level.Severity,
-			},
-			Annotations: map[string]string{
-				messageAnnotationsKey: r.Message,
-				valueAnnotationKey:    valueAnnotationExpr,
-			},
-		})
+		ret.BaseAlertRule.Expr = query
 	}
 	return ret, nil
 }

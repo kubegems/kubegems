@@ -1,15 +1,11 @@
 package prometheus
 
 import (
-	"fmt"
-
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/gems"
-	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
-	"kubegems.io/kubegems/pkg/utils/slice"
 )
 
 type Action int
@@ -25,73 +21,6 @@ const (
 	MonitorAlertCRDName = "kubegems-default-monitor-alert-rule"
 	LoggingAlertCRDName = "kubegems-default-logging-alert-rule"
 )
-
-type BaseQueryParams struct {
-	Resource string `json:"resource"` // 告警资源, eg. node、pod
-	Rule     string `json:"rule"`     // 告警规则名, eg. cpuUsage、memoryUsagePercent
-	Unit     string `json:"unit"`     // 单位
-
-	LabelPairs map[string]string `json:"labelpairs,omitempty"` // 标签键值对
-}
-
-type PromqlGenerator struct {
-	BaseQueryParams `json:",inline"`
-	CompareOp       string `json:"compareOp"`
-	CompareValue    string `json:"compareValue"`
-
-	// 相关配置
-	RuleContext `json:"-"`
-}
-
-func (g *PromqlGenerator) IsEmpty() bool {
-	return g == nil || g.Resource == ""
-}
-
-type RuleContext struct {
-	ResourceDetail ResourceDetail
-	RuleDetail     RuleDetail
-}
-
-// 查询规则上下文
-func (params *BaseQueryParams) FindRuleContext(cfg *MonitorOptions) (RuleContext, error) {
-	ctx := RuleContext{}
-	resourceDetail, ok := cfg.Resources[params.Resource]
-	if !ok {
-		return ctx, fmt.Errorf("invalid resource: %s", params.Resource)
-	}
-
-	ruleDetail, ok := resourceDetail.Rules[params.Rule]
-	if !ok {
-		return ctx, fmt.Errorf("rule %s not in resource %s", params.Rule, params.Resource)
-	}
-
-	for label := range params.LabelPairs {
-		if !slice.ContainStr(ruleDetail.Labels, label) {
-			return ctx, fmt.Errorf("invalid label: %s in ruledetail: %v", label, ruleDetail)
-		}
-	}
-	ctx.ResourceDetail = resourceDetail
-	ctx.RuleDetail = ruleDetail
-	return ctx, nil
-}
-
-func (g *PromqlGenerator) ConstructPromql(namespace string, opts *MonitorOptions) (string, error) {
-	ruleCtx, err := g.FindRuleContext(opts)
-	if err != nil {
-		return "", fmt.Errorf("constructPromql params: %v, err: %w", g, err)
-	}
-	query := promql.New(ruleCtx.RuleDetail.Expr)
-	if namespace != GlobalAlertNamespace && namespace != "" {
-		query.AddSelector(PromqlNamespaceKey, promql.LabelEqual, namespace)
-	}
-
-	for label, value := range g.LabelPairs {
-		query.AddSelector(label, promql.LabelRegex, value)
-	}
-	return query.
-		Compare(promql.ComparisonOperator(g.CompareOp), g.CompareValue).
-		ToPromql(), nil
-}
 
 type RealTimeAlertRule struct {
 	Name string `json:"name"`

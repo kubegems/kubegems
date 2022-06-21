@@ -463,11 +463,11 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 		if namespace != v1.NamespaceAll && namespace != k {
 			continue
 		}
-		groups, errs := rulefmt.Parse([]byte(v))
-		if len(errs) > 0 {
-			return nil, errors.Wrap(errs[0], "parse rule groups")
+		groups := rulefmt.RuleGroups{}
+		if err := yaml.Unmarshal([]byte(v), &groups); err != nil {
+			return nil, errors.Wrapf(err, "decode log rulegroups")
 		}
-		groupNamespaceMap[k] = groups
+		groupNamespaceMap[k] = &groups
 	}
 
 	// amconfig 按照namespace分组
@@ -586,11 +586,11 @@ func (c *ExtendClient) GetRawLoggingAlertResource(ctx context.Context, namespace
 	}
 	groupstr, ok := cm.Data[namespace]
 	if ok {
-		groups, errs := rulefmt.Parse([]byte(groupstr))
-		if len(errs) > 0 {
-			return nil, errs[0]
+		groups := rulefmt.RuleGroups{}
+		if err := yaml.Unmarshal([]byte(groupstr), &groups); err != nil {
+			return nil, errors.Wrapf(err, "decode log rulegroups")
 		}
-		raw.RuleGroups = groups
+		raw.RuleGroups = &groups
 	}
 
 	return raw, nil

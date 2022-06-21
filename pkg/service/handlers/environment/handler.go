@@ -766,7 +766,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 				if v.PromqlGenerator.IsEmpty() {
 					key = v.Expr
 				} else {
-					key = v.PromqlGenerator.BaseQueryParams.Resource
+					key = v.PromqlGenerator.Resource
 				}
 
 				if count, ok := alertResourceMap[key]; ok {

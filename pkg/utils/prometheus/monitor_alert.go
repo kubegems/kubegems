@@ -8,6 +8,7 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/prometheus/promql/parser"
+	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 	"kubegems.io/kubegems/pkg/utils/slice"
 	"sigs.k8s.io/yaml"
 
@@ -28,6 +29,64 @@ type MonitorAlertRule struct {
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
 	Origin         string          `json:"origin,omitempty"`         // 原始的prometheusrule
 	Source         string          `json:"source"`                   // 来自哪个prometheusrule
+}
+
+type PromqlGenerator struct {
+	Resource   string            `json:"resource"`             // 告警资源, eg. node、pod
+	Rule       string            `json:"rule"`                 // 告警规则名, eg. cpuUsage、memoryUsagePercent
+	Unit       string            `json:"unit"`                 // 单位
+	LabelPairs map[string]string `json:"labelpairs,omitempty"` // 标签键值对
+
+	// 相关配置
+	RuleContext `json:"-"`
+}
+
+func (g *PromqlGenerator) IsEmpty() bool {
+	return g == nil || g.Resource == ""
+}
+
+type RuleContext struct {
+	ResourceDetail ResourceDetail
+	RuleDetail     RuleDetail
+}
+
+// 查询规则上下文
+func (g *PromqlGenerator) FindRuleContext(cfg *MonitorOptions) (RuleContext, error) {
+	ctx := RuleContext{}
+	resourceDetail, ok := cfg.Resources[g.Resource]
+	if !ok {
+		return ctx, fmt.Errorf("invalid resource: %s", g.Resource)
+	}
+
+	ruleDetail, ok := resourceDetail.Rules[g.Rule]
+	if !ok {
+		return ctx, fmt.Errorf("rule %s not in resource %s", g.Rule, g.Resource)
+	}
+
+	for label := range g.LabelPairs {
+		if !slice.ContainStr(ruleDetail.Labels, label) {
+			return ctx, fmt.Errorf("invalid label: %s in ruledetail: %v", label, ruleDetail)
+		}
+	}
+	ctx.ResourceDetail = resourceDetail
+	ctx.RuleDetail = ruleDetail
+	return ctx, nil
+}
+
+func (g *PromqlGenerator) ToPromql(namespace string, opts *MonitorOptions) (string, error) {
+	ruleCtx, err := g.FindRuleContext(opts)
+	if err != nil {
+		return "", fmt.Errorf("constructPromql params: %v, err: %w", g, err)
+	}
+	query := promql.New(ruleCtx.RuleDetail.Expr)
+	if namespace != GlobalAlertNamespace && namespace != "" {
+		query.AddSelector(PromqlNamespaceKey, promql.LabelEqual, namespace)
+	}
+
+	for label, value := range g.LabelPairs {
+		query.AddSelector(label, promql.LabelRegex, value)
+	}
+	return query.ToPromql(), nil
 }
 
 var _ AlertRule = MonitorAlertRule{}
@@ -70,7 +129,7 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 		}
 
 		// 优先采用模板
-		promql, err := r.PromqlGenerator.ConstructPromql(r.BaseAlertRule.Namespace, opts)
+		promql, err := r.PromqlGenerator.ToPromql(r.BaseAlertRule.Namespace, opts)
 		if err != nil {
 			return errors.Wrap(err, "ConstructPromql")
 		}
@@ -166,55 +225,29 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule, opts *MonitorOptions) (mo
 		return ret, errors.Wrapf(err, "parse expr: %s", alertRule.Expr)
 	}
 	for _, level := range alertRule.AlertLevels {
-		if alertRule.PromqlGenerator.IsEmpty() {
-			ret.Rules = append(ret.Rules, monitoringv1.Rule{
-				Alert: alertRule.Name,
-				Expr:  intstr.FromString(fmt.Sprintf("%s%s%s", alertRule.Expr, level.CompareOp, level.CompareValue)),
-				For:   alertRule.For,
-				Labels: map[string]string{
-					AlertNamespaceLabel: alertRule.Namespace,
-					AlertNameLabel:      alertRule.Name,
-					AlertFromLabel:      AlertTypeMonitor,
-					AlertScopeLabel:     getAlertScope(alertRule.Namespace),
-					SeverityLabel:       level.Severity,
-				},
-				Annotations: map[string]string{
-					messageAnnotationsKey: alertRule.Message,
-					valueAnnotationKey:    valueAnnotationExpr,
-				},
-			})
-		} else {
-			expr := PromqlGenerator{
-				BaseQueryParams: alertRule.PromqlGenerator.BaseQueryParams,
-				CompareOp:       level.CompareOp,
-				CompareValue:    level.CompareValue,
-			}
-			bts, _ := json.Marshal(expr)
-
-			promql, err := expr.ConstructPromql(alertNamespace(alertRule.Namespace), opts)
-			if err != nil {
-				return ret, err
-			}
-			ret.Rules = append(ret.Rules, monitoringv1.Rule{
-				Alert: alertRule.Name,
-				Expr:  intstr.FromString(promql),
-				For:   alertRule.For,
-				Labels: map[string]string{
-					AlertNamespaceLabel: alertRule.Namespace,
-					AlertNameLabel:      alertRule.Name,
-					AlertFromLabel:      AlertTypeMonitor,
-					AlertResourceLabel:  alertRule.PromqlGenerator.Resource,
-					AlertRuleLabel:      alertRule.PromqlGenerator.Rule,
-					AlertScopeLabel:     getAlertScope(alertRule.Namespace),
-					SeverityLabel:       level.Severity,
-				},
-				Annotations: map[string]string{
-					messageAnnotationsKey: alertRule.Message,
-					valueAnnotationKey:    valueAnnotationExpr,
-					exprJsonAnnotationKey: string(bts),
-				},
-			})
+		rule := monitoringv1.Rule{
+			Alert: alertRule.Name,
+			Expr:  intstr.FromString(fmt.Sprintf("%s%s%s", alertRule.Expr, level.CompareOp, level.CompareValue)),
+			For:   alertRule.For,
+			Labels: map[string]string{
+				AlertNamespaceLabel: alertRule.Namespace,
+				AlertNameLabel:      alertRule.Name,
+				AlertFromLabel:      AlertTypeMonitor,
+				AlertScopeLabel:     getAlertScope(alertRule.Namespace),
+				SeverityLabel:       level.Severity,
+			},
+			Annotations: map[string]string{
+				messageAnnotationsKey: alertRule.Message,
+				valueAnnotationKey:    valueAnnotationExpr,
+			},
 		}
+		if !alertRule.PromqlGenerator.IsEmpty() {
+			rule.Labels[AlertResourceLabel] = alertRule.PromqlGenerator.Resource
+			rule.Labels[AlertRuleLabel] = alertRule.PromqlGenerator.Rule
+			bts, _ := json.Marshal(alertRule.PromqlGenerator)
+			rule.Annotations[exprJsonAnnotationKey] = string(bts)
+		}
+		ret.Rules = append(ret.Rules, rule)
 	}
 	return ret, nil
 }
@@ -237,6 +270,11 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup, opts 
 			rule.Labels[AlertNameLabel] == "" {
 			return ret, fmt.Errorf("rule %s label not valid: %v", group.Name, rule.Labels)
 		}
+		// from promql
+		query, op, value, hasOp := SplitQueryExpr(rule.Expr.String())
+		if !hasOp {
+			return ret, fmt.Errorf("rule %s expr %s not valid", group.Name, rule.Expr.String())
+		}
 
 		exprJson, ok := rule.Annotations[exprJsonAnnotationKey]
 		if ok {
@@ -245,42 +283,21 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup, opts 
 			if err := json.Unmarshal([]byte(exprJson), &generator); err != nil {
 				return ret, err
 			}
-			ret.BaseAlertRule.AlertLevels = append(ret.BaseAlertRule.AlertLevels, AlertLevel{
-				CompareOp:    generator.CompareOp,
-				CompareValue: generator.CompareValue,
-				Severity:     rule.Labels[SeverityLabel],
-			})
 			// 填入ruleCtx
-			ruleCtx, err := generator.BaseQueryParams.FindRuleContext(opts)
+			ruleCtx, err := generator.FindRuleContext(opts)
 			if err != nil {
 				return ret, err
 			}
 			generator.RuleContext = ruleCtx
-			generator.BaseQueryParams.Unit = ruleCtx.RuleDetail.Unit
-
-			// 解析 expr
-			generator.CompareOp = ""
-			generator.CompareValue = ""
-			expr, err := generator.ConstructPromql(alertNamespace(namespace), opts)
-			if err != nil {
-				return ret, errors.Wrap(err, "ConstructPromql")
-			}
-
-			ret.BaseAlertRule.Expr = expr
+			generator.Unit = ruleCtx.RuleDetail.Unit
 			ret.PromqlGenerator = &generator
-		} else {
-			// from promql
-			query, op, value, hasOp := SplitQueryExpr(rule.Expr.String())
-			if !hasOp {
-				return ret, fmt.Errorf("rule %s expr %s not valid", group.Name, rule.Expr.String())
-			}
-			ret.BaseAlertRule.Expr = query
-			ret.BaseAlertRule.AlertLevels = append(ret.BaseAlertRule.AlertLevels, AlertLevel{
-				CompareOp:    op,
-				CompareValue: value,
-				Severity:     rule.Labels[SeverityLabel],
-			})
 		}
+		ret.BaseAlertRule.AlertLevels = append(ret.BaseAlertRule.AlertLevels, AlertLevel{
+			CompareOp:    op,
+			CompareValue: value,
+			Severity:     rule.Labels[SeverityLabel],
+		})
+		ret.BaseAlertRule.Expr = query
 	}
 
 	return ret, nil

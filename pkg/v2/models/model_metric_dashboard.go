@@ -49,5 +49,5 @@ type MetricGraph struct {
 	EnvironmentID string `json:"environment_id,omitempty"`
 
 	// 查询目标
-	prometheus.BaseQueryParams
+	PromqlGenerator prometheus.PromqlGenerator `json:"promqlGenerator"`
 }

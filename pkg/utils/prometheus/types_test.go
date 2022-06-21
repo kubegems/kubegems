@@ -68,19 +68,19 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			params := &BaseQueryParams{
+			g := &PromqlGenerator{
 				Resource:   tt.fields.Resource,
 				Rule:       tt.fields.Rule,
 				LabelPairs: tt.fields.LabelPairs,
 			}
-			got, err := params.FindRuleContext(tt.args.cfg)
+			got, err := g.FindRuleContext(tt.args.cfg)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("BaseQueryParams.FindRuleContext() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("PromqlGenerator.FindRuleContext() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			got.ResourceDetail.Rules = nil
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("BaseQueryParams.FindRuleContext() = %v, want %v", got, tt.want)
+				t.Errorf("PromqlGenerator.FindRuleContext() = %v, want %v", got, tt.want)
 			}
 		})
 	}

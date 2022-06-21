@@ -153,11 +153,9 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		Label:     c.Query("label"),
 
 		PromqlGenerator: &prometheus.PromqlGenerator{
-			BaseQueryParams: prometheus.BaseQueryParams{
-				Resource:   c.Query("resource"),
-				Rule:       c.Query("rule"),
-				LabelPairs: c.QueryMap("labelpairs"),
-			},
+			Resource:   c.Query("resource"),
+			Rule:       c.Query("rule"),
+			LabelPairs: c.QueryMap("labelpairs"),
 		},
 	}
 	if q.Namespace == "_all" {
@@ -185,13 +183,11 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		q.SeriesSelector = q.Expr
 	} else {
 		q.PromqlGenerator = &prometheus.PromqlGenerator{
-			BaseQueryParams: prometheus.BaseQueryParams{
-				Resource:   c.Query("resource"),
-				Rule:       c.Query("rule"),
-				LabelPairs: c.QueryMap("labelpairs"),
-			},
+			Resource:   c.Query("resource"),
+			Rule:       c.Query("rule"),
+			LabelPairs: c.QueryMap("labelpairs"),
 		}
-		ruleCtx, err := q.PromqlGenerator.BaseQueryParams.FindRuleContext(monitoropts)
+		ruleCtx, err := q.PromqlGenerator.FindRuleContext(monitoropts)
 		if err != nil {
 			return err
 		}

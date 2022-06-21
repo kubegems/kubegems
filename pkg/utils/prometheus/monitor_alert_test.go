@@ -123,13 +123,11 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				},
 
 				PromqlGenerator: &PromqlGenerator{
-					BaseQueryParams: BaseQueryParams{
-						Resource: "node",
-						Rule:     "statusCondition",
-						LabelPairs: map[string]string{
-							"condition": "Ready",
-							"status":    "true",
-						},
+					Resource: "node",
+					Rule:     "statusCondition",
+					LabelPairs: map[string]string{
+						"condition": "Ready",
+						"status":    "true",
 					},
 				},
 			}},

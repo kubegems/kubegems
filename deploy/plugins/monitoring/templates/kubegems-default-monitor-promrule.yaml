@@ -13,12 +13,12 @@ spec:
     rules:
     - alert: KubernetesNodeNotReady
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"statusCondition","labelpairs":{"condition":"Ready","status":"true"},"compareOp":"==","compareValue":"0"}'
+        gems_expr_json: '{"resource":"node","rule":"statusCondition","unit":"","labelpairs":{"condition":"Ready","status":"true"}}'
         message: 'KubernetesNodeNotReady: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
           }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_node_status_condition{condition=~"Ready", status=~"true"} == 0
+      expr: kube_node_status_condition{condition=~"Ready", status=~"true"}==0
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -32,13 +32,12 @@ spec:
     rules:
     - alert: KubernetesMemoryPressure
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"statusCondition","labelpairs":{"condition":"MemoryPressure","status":"true"},"compareOp":"==","compareValue":"1"}'
+        gems_expr_json: '{"resource":"node","rule":"statusCondition","unit":"","labelpairs":{"condition":"MemoryPressure","status":"true"}}'
         message: 'KubernetesMemoryPressure: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
           }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_node_status_condition{condition=~"MemoryPressure", status=~"true"}
-        == 1
+      expr: kube_node_status_condition{condition=~"MemoryPressure", status=~"true"}==1
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -52,13 +51,12 @@ spec:
     rules:
     - alert: KubernetesDiskPressure
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"statusCondition","labelpairs":{"condition":"DiskPressure","status":"true"},"compareOp":"==","compareValue":"1"}'
+        gems_expr_json: '{"resource":"node","rule":"statusCondition","unit":"","labelpairs":{"condition":"DiskPressure","status":"true"}}'
         message: 'KubernetesDiskPressure: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
           }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_node_status_condition{condition=~"DiskPressure", status=~"true"}
-        == 1
+      expr: kube_node_status_condition{condition=~"DiskPressure", status=~"true"}==1
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -72,13 +70,12 @@ spec:
     rules:
     - alert: KubernetesOutOfDisk
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"statusCondition","labelpairs":{"condition":"OutOfDisk","status":"true"},"compareOp":"==","compareValue":"1"}'
+        gems_expr_json: '{"resource":"node","rule":"statusCondition","unit":"","labelpairs":{"condition":"OutOfDisk","status":"true"}}'
         message: 'KubernetesOutOfDisk: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
           }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_node_status_condition{condition=~"OutOfDisk", status=~"true"} ==
-        1
+      expr: kube_node_status_condition{condition=~"OutOfDisk", status=~"true"}==1
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -92,11 +89,11 @@ spec:
     rules:
     - alert: KubernetesPodNumberTooHigh
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"runningPodPercent","compareOp":"\u003e","compareValue":"90"}'
+        gems_expr_json: '{"resource":"node","rule":"runningPodPercent","unit":"percent-0-100"}'
         message: 'KubernetesPodNumberTooHigh: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] 节点pod使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_running_pod_percent > 90
+      expr: gems_node_running_pod_percent>90
       for: 1h
       labels:
         gems_alert_from: monitor
@@ -110,13 +107,12 @@ spec:
     rules:
     - alert: KubernetesPodCrashLooping
       annotations:
-        gems_expr_json: '{"resource":"container","rule":"restartTimesLast5m","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"2"}'
+        gems_expr_json: '{"resource":"container","rule":"restartTimesLast5m","unit":"","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
         message: 'KubernetesPodCrashLooping: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
           $labels.namespace }}] [pod:{{"{{"}} $labels.pod }}] [container:{{"{{"}} $labels.container
           }}] 容器过去5m重启次数 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_container_restart_times_last_5m{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
-        > 2
+      expr: gems_container_restart_times_last_5m{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}>2
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -130,14 +126,14 @@ spec:
     rules:
     - alert: KubernetesPodOOMKilling
       annotations:
-        gems_expr_json: '{"resource":"container","rule":"statusTerminatedReason","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage","reason":"OOMKilled"},"compareOp":"\u003e","compareValue":"0"}'
+        gems_expr_json: '{"resource":"container","rule":"statusTerminatedReason","unit":"","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage","reason":"OOMKilled"}}'
         message: 'KubernetesPodOOMKilling: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
           $labels.namespace }}] [pod:{{"{{"}} $labels.pod }}] [container:{{"{{"}} $labels.container
           }}] [reason:{{"{{"}} $labels.reason }}] 容器终止原因 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f"
           }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: kube_pod_container_status_terminated_reason{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage",
-        reason=~"OOMKilled"} > 0
+        reason=~"OOMKilled"}>0
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -151,14 +147,13 @@ spec:
     rules:
     - alert: KubegemsPvcUsageTooHigh
       annotations:
-        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"80"}'
+        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","unit":"percent-0-100","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
         message: 'KubegemsPvcUsageTooHigh: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [namespace:{{"{{"}} $labels.namespace }}] [persistentvolumeclaim:{{"{{"}}
           $labels.persistentvolumeclaim }}] 存储卷存储卷使用率 触发告警, 当前值: {{"{{ $value"}} | printf
           "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_pvc_usage_percent{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
-        > 80
+      expr: gems_pvc_usage_percent{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}>80
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -170,14 +165,13 @@ spec:
         severity: error
     - alert: KubegemsPvcUsageTooHigh
       annotations:
-        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003e","compareValue":"90"}'
+        gems_expr_json: '{"resource":"pvc","rule":"volumeUsagePercent","unit":"percent-0-100","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
         message: 'KubegemsPvcUsageTooHigh: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [namespace:{{"{{"}} $labels.namespace }}] [persistentvolumeclaim:{{"{{"}}
           $labels.persistentvolumeclaim }}] 存储卷存储卷使用率 触发告警, 当前值: {{"{{ $value"}} | printf
           "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_pvc_usage_percent{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
-        > 90
+      expr: gems_pvc_usage_percent{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}>90
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -191,11 +185,11 @@ spec:
     rules:
     - alert: HostHighCpuLoad
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"cpuUsagePercent","compareOp":"\u003e","compareValue":"80"}'
+        gems_expr_json: '{"resource":"node","rule":"cpuUsagePercent","unit":"percent-0-100"}'
         message: 'HostHighCpuLoad: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}} $labels.node
           }}] 节点CPU使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_cpu_usage_percent > 80
+      expr: gems_node_cpu_usage_percent>80
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -209,11 +203,11 @@ spec:
     rules:
     - alert: HostHighMemoryLoad
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"memoryUsagePercent","compareOp":"\u003e","compareValue":"90"}'
+        gems_expr_json: '{"resource":"node","rule":"memoryUsagePercent","unit":"percent-0-100"}'
         message: 'HostHighMemoryLoad: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] 节点内存使用率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_memory_usage_percent > 90
+      expr: gems_node_memory_usage_percent>90
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -227,11 +221,11 @@ spec:
     rules:
     - alert: HostUnusualDiskReadRate
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"diskReadBPS","compareOp":"\u003e","compareValue":"50"}'
+        gems_expr_json: '{"resource":"node","rule":"diskReadBPS","unit":"bytes/sec-B/s"}'
         message: 'HostUnusualDiskReadRate: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] 节点磁盘每秒读取量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}B/s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_disk_read_bps > 50
+      expr: gems_node_disk_read_bps>50
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -245,11 +239,11 @@ spec:
     rules:
     - alert: HostUnusualDiskWriteRate
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"diskWriteBPS","compareOp":"\u003e","compareValue":"50"}'
+        gems_expr_json: '{"resource":"node","rule":"diskWriteBPS","unit":"bytes/sec-B/s"}'
         message: 'HostUnusualDiskWriteRate: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] 节点磁盘每秒写入量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}B/s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_disk_write_bps > 50
+      expr: gems_node_disk_write_bps>50
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -263,12 +257,12 @@ spec:
     rules:
     - alert: HostNetworkReceiveErrors
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"networkInErrPercent","compareOp":"\u003e","compareValue":"1"}'
+        gems_expr_json: '{"resource":"node","rule":"networkInErrPercent","unit":"percent-0-100"}'
         message: 'HostNetworkReceiveErrors: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [instance:{{"{{"}} $labels.instance }}] [device:{{"{{"}} $labels.device
           }}] 节点网络接口收包错误率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_network_receive_errs_percent > 1
+      expr: gems_node_network_receive_errs_percent>1
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -282,12 +276,12 @@ spec:
     rules:
     - alert: HostNetworkTransmitErrors
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"networkOutErrPercent","compareOp":"\u003e","compareValue":"1"}'
+        gems_expr_json: '{"resource":"node","rule":"networkOutErrPercent","unit":"percent-0-100"}'
         message: 'HostNetworkTransmitErrors: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] [instance:{{"{{"}} $labels.instance }}] [device:{{"{{"}} $labels.device
           }}] 节点网络接口发包错误率 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_network_send_errs_percent > 1
+      expr: gems_node_network_send_errs_percent>1
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -301,11 +295,11 @@ spec:
     rules:
     - alert: HostHighLoad5
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"load5","compareOp":"\u003e","compareValue":"gems_node_cpu_total_cores"}'
+        gems_expr_json: '{"resource":"node","rule":"load5","unit":""}'
         message: 'HostHighLoad5: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}} $labels.node
           }}] 节点最近5分钟平均负载 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_load5 > gems_node_cpu_total_cores
+      expr: gems_node_load5>gems_node_cpu_total_cores
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -317,12 +311,11 @@ spec:
         severity: error
     - alert: HostHighLoad5
       annotations:
-        gems_expr_json: '{"resource":"node","rule":"load5","compareOp":"\u003e","compareValue":"1.5
-          * gems_node_cpu_total_cores"}'
+        gems_expr_json: '{"resource":"node","rule":"load5","unit":""}'
         message: 'HostHighLoad5: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}} $labels.node
           }}] 节点最近5分钟平均负载 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_load5 > 1.5 * gems_node_cpu_total_cores
+      expr: gems_node_load5>1.5 * gems_node_cpu_total_cores
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -336,13 +329,12 @@ spec:
     rules:
     - alert: CertManagerCertExpirySoon
       annotations:
-        gems_expr_json: '{"resource":"cert","rule":"expirationRemainTime","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"\u003c","compareValue":"7"}'
+        gems_expr_json: '{"resource":"cert","rule":"expirationRemainTime","unit":"duration-s","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
         message: 'CertManagerCertExpirySoon: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
           $labels.namespace }}] [name:{{"{{"}} $labels.name }}] 证书剩余到期时间 触发告警, 当前值: {{"{{ $value"}}
           | printf "%.1f" }}s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_cert_expiration_remain_seconds{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
-        < 7
+      expr: gems_cert_expiration_remain_seconds{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}<7
       for: 1h
       labels:
         gems_alert_from: monitor
@@ -356,13 +348,12 @@ spec:
     rules:
     - alert: CertManagerCertNotReady
       annotations:
-        gems_expr_json: '{"resource":"cert","rule":"status","labelpairs":{"condition":"False|Unknown","namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"},"compareOp":"==","compareValue":"1"}'
+        gems_expr_json: '{"resource":"cert","rule":"status","unit":"","labelpairs":{"condition":"False|Unknown","namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
         message: 'CertManagerCertNotReady: [集群:{{"{{"}} $externalLabels.cluster }}] [namespace:{{"{{"}}
           $labels.namespace }}] [name:{{"{{"}} $labels.name }}] [condition:{{"{{"}} $labels.condition
           }}] 证书状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: certmanager_certificate_ready_status{condition=~"False|Unknown", namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}
-        == 1
+      expr: certmanager_certificate_ready_status{condition=~"False|Unknown", namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}==1
       for: 0m
       labels:
         gems_alert_from: monitor
@@ -376,11 +367,11 @@ spec:
     rules:
     - alert: ClusterHighCpuLoad
       annotations:
-        gems_expr_json: '{"resource":"cluster","rule":"cpuUsagePercent","compareOp":"\u003e","compareValue":"80"}'
+        gems_expr_json: '{"resource":"cluster","rule":"cpuUsagePercent","unit":"percent-0-100"}'
         message: 'ClusterHighCpuLoad: [集群:{{"{{"}} $externalLabels.cluster }}] 集群CPU使用率
           触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100 > 80
+      expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100>80
       for: 0m
       labels:
         gems_alert_from: monitor
@@ -394,12 +385,12 @@ spec:
     rules:
     - alert: ClusterHighMemoryLoad
       annotations:
-        gems_expr_json: '{"resource":"cluster","rule":"memoryUsagePercent","compareOp":"\u003e","compareValue":"90"}'
+        gems_expr_json: '{"resource":"cluster","rule":"memoryUsagePercent","unit":"percent-0-100"}'
         message: 'ClusterHighMemoryLoad: [集群:{{"{{"}} $externalLabels.cluster }}] 集群内存使用率
           触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: (1- sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes))
-        * 100 > 90
+        * 100>90
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -413,13 +404,12 @@ spec:
     rules:
     - alert: ClusterComponentCertExpirySoon
       annotations:
-        gems_expr_json: '{"resource":"cluster","rule":"certExpirationRemainTime","labelpairs":{"component":"apiserver"},"compareOp":"\u003c","compareValue":"7"}'
+        gems_expr_json: '{"resource":"cluster","rule":"certExpirationRemainTime","unit":"duration-s","labelpairs":{"component":"apiserver"}}'
         message: 'ClusterComponentCertExpirySoon: [集群:{{"{{"}} $externalLabels.cluster }}]
           [component:{{"{{"}} $labels.component }}] 集群证书剩余到期时间 触发告警, 当前值: {{"{{ $value"}} | printf
           "%.1f" }}s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_agent_cluster_component_cert_expiration_remain_seconds{component=~"apiserver"}
-        < 7
+      expr: gems_agent_cluster_component_cert_expiration_remain_seconds{component=~"apiserver"}<7
       for: 1h
       labels:
         gems_alert_from: monitor
@@ -433,13 +423,13 @@ spec:
     rules:
     - alert: GemsPluginFailed
       annotations:
-        gems_expr_json: '{"resource":"plugin","rule":"status","labelpairs":{"enabled":"true"},"compareOp":"==","compareValue":"0"}'
+        gems_expr_json: '{"resource":"plugin","rule":"status","unit":"","labelpairs":{"enabled":"true"}}'
         message: 'GemsPluginFailed: [集群:{{"{{"}} $externalLabels.cluster }}] [type:{{"{{"}} $labels.type
           }}] [namespace:{{"{{"}} $labels.namespace }}] [plugin:{{"{{"}} $labels.plugin }}] [version:{{"{{"}}
           $labels.version }}] [enabled:{{"{{"}} $labels.enabled }}] 插件状态 触发告警, 当前值: {{"{{ $value"}}
           | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_server_plugin_status{enabled=~"true"} == 0
+      expr: gems_server_plugin_status{enabled=~"true"}==0
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -453,12 +443,11 @@ spec:
     rules:
     - alert: ExporterDown
       annotations:
-        gems_expr_json: '{"resource":"exporter","rule":"status","labelpairs":{"job":"alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"},"compareOp":"==","compareValue":"0"}'
+        gems_expr_json: '{"resource":"exporter","rule":"status","unit":"","labelpairs":{"job":"alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"}}'
         message: 'ExporterDown: [集群:{{"{{"}} $externalLabels.cluster }}] [instance:{{"{{"}} $labels.instance
           }}] [job:{{"{{"}} $labels.job }}] 采集器状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: up{job=~"alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"}
-        == 0
+      expr: up{job=~"alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"}==0
       for: 1m
       labels:
         gems_alert_from: monitor

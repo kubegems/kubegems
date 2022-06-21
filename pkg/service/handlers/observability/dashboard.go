@@ -187,7 +187,7 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 				}
 			}
 		} else {
-			rulectx, err := v.PromqlGenerator.BaseQueryParams.FindRuleContext(monitoropts)
+			rulectx, err := v.PromqlGenerator.FindRuleContext(monitoropts)
 			if err != nil {
 				return nil, err
 			}
