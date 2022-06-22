@@ -25,7 +25,7 @@ func TestLogqlGenerator_ToLogql(t *testing.T) {
 					"container": "mycontainer",
 				},
 			},
-			want: `sum(count_over_time({pod=~"mypod", container=~"mycontainer"} |~ 'error' [1m]))without(fluentd_thread)`,
+			want: `sum(count_over_time({pod=~"mypod", container=~"mycontainer", namespace="myns"} |~ "error" [1m]))without(fluentd_thread)`,
 		},
 	}
 	for _, tt := range tests {
@@ -35,7 +35,7 @@ func TestLogqlGenerator_ToLogql(t *testing.T) {
 				Match:      tt.fields.Match,
 				LabelPairs: tt.fields.LabelPairs,
 			}
-			if got := g.ToLogql(); got != tt.want {
+			if got := g.ToLogql("myns"); got != tt.want {
 				t.Errorf("LogqlGenerator.ToLogql() = %v, want %v", got, tt.want)
 			}
 		})

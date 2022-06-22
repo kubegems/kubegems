@@ -46,7 +46,7 @@ func (g *LogqlGenerator) ToLogql(namespace string) string {
 		labelvalues = append(labelvalues, fmt.Sprintf(`%s=~"%s"`, k, v))
 	}
 	labelvalues = append(labelvalues, fmt.Sprintf(`namespace="%s"`, namespace))
-	return fmt.Sprintf(`sum(count_over_time({%s} |~ '%s' [%s]))without(fluentd_thread)`, strings.Join(labelvalues, ", "), g.Match, g.Duration)
+	return fmt.Sprintf(`sum(count_over_time({%s} |~ "%s" [%s]))without(fluentd_thread)`, strings.Join(labelvalues, ", "), g.Match, g.Duration)
 }
 
 func (g *LogqlGenerator) IsEmpty() bool {
@@ -60,6 +60,13 @@ func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
 		}
 	} else {
 		r.BaseAlertRule.Expr = r.LogqlGenerator.ToLogql(r.BaseAlertRule.Namespace)
+		if r.Message == "" {
+			r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] [namespace: {{ $labels.namespace }}] ", r.Name, AlertClusterKey)
+			for label := range r.LogqlGenerator.LabelPairs {
+				r.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
+			}
+			r.Message += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", r.LogqlGenerator.Duration, r.LogqlGenerator.Match, valueAnnotationExpr)
+		}
 	}
 	return r.BaseAlertRule.checkAndModify(opts)
 }
