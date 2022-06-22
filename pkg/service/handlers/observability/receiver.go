@@ -167,7 +167,7 @@ func (h *ObservabilityHandler) DeleteReceiver(c *gin.Context) {
 // @Param        namespace  path      string                                true  "namespace"
 // @Param        form       body      prometheus.EmailConfig                true  "body"
 // @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/actions/test [post]
+// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/_/actions/test [post]
 // @Security     JWT
 func (h *ObservabilityHandler) TestEmail(c *gin.Context) {
 	req := prometheus.EmailConfig{}
