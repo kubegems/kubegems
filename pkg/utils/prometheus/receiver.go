@@ -96,11 +96,13 @@ func ModifyReceiver(ctx context.Context, aconfig *v1alpha1.AlertmanagerConfig, r
 
 	// 更改邮件模板
 	for i := range receiver.EmailConfigs {
-		receiver.EmailConfigs[i].HTML = `{{ template "email.common.html" . }}`
+		// TODO(jojotong): when global config in alertmanager supported, use our template
+		// https://github.com/prometheus-operator/prometheus-operator/issues/4606
+		// receiver.EmailConfigs[i].HTML = `{{ template "email.common.html" . }}`
 		receiver.EmailConfigs[i].Headers = []v1alpha1.KeyValue{
 			{
 				Key:   "subject",
-				Value: `[{{ .CommonLabels.gems_alertname }}:{{ .Alerts.Firing | len }}] created by kubegems in [cluster:{{ .CommonLabels.cluster }}] [namespace:{{ .CommonLabels.gems_namespace }}]`,
+				Value: `Kubegems alert [{{ .CommonLabels.gems_alertname }}:{{ .Alerts.Firing | len }}] in [cluster:{{ .CommonLabels.cluster }}] [namespace:{{ .CommonLabels.gems_namespace }}]`,
 			},
 		}
 	}
