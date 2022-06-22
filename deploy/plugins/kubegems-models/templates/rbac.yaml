@@ -1,11 +1,11 @@
 {{- if .Values.rbac.create }}
-kind: ClusterRoleBinding
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
+kind: ClusterRoleBinding
 metadata:
-  name: {{ include "kubegems.installer.fullname" . }}
+  name: {{ include "kubegems.models.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
-    app.kubernetes.io/component: installer
+    app.kubernetes.io/component: models
     {{- if .Values.commonLabels }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
     {{- end }}
@@ -15,24 +15,19 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  {{- if .Values.rbac.useClusterAdmin }}
-  name: cluster-admin
-  {{- else }}
-  name: {{ include "kubegems.installer.fullname" . }}
-  {{- end }}
+  name: {{ include "kubegems.models.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ template "kubegems.installer.serviceAccountName" . }}
+    name: {{ template "kubegems.models.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 ---
-{{- if not .Values.rbac.useClusterAdmin -}}
-kind: ClusterRole
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
+kind: ClusterRole
 metadata:
-  name: {{ include "kubegems.installer.fullname" . }}
+  name: {{ include "kubegems.models.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
-    app.kubernetes.io/component: installer
+    app.kubernetes.io/component: models
     {{- if .Values.commonLabels }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
     {{- end }}
@@ -41,10 +36,15 @@ metadata:
   {{- end }}
 rules:
   - apiGroups:
+      - "core.oam.dev/v1beta1"
+    resources:
+      - "applications"
+    verbs:
       - "*"
+  - apiGroups:
+      - "models.kubegems.io/v1beta1"
     resources:
       - "*"
     verbs:
       - "*"
-{{- end }}
 {{- end }}

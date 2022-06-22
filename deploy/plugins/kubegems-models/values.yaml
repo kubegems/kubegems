@@ -1,0 +1,418 @@
+## @section Global parameters
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass
+
+## @param global.imageRegistry Global Docker image registry
+## @param global.imagePullSecrets Global Docker registry secret names as an array
+## @param global.storageClass Global StorageClass for Persistent Volume(s)
+##
+global:
+  imageRegistry: ""
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+  storageClass: ""
+
+## @section Common parameters
+
+## @param kubeVersion Override Kubernetes version
+##
+kubeVersion: ""
+## @param nameOverride String to partially override common.names.fullname
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override common.names.fullname
+##
+fullnameOverride: ""
+## @param commonLabels Labels to add to all deployed objects
+##
+commonLabels: {}
+## @param commonAnnotations Annotations to add to all deployed objects
+##
+commonAnnotations: {}
+## @param clusterDomain Kubernetes cluster domain name
+##
+clusterDomain: cluster.local
+## @param extraDeploy Array of extra objects to deploy with the release
+##
+extraDeploy: []
+
+## Enable diagnostic mode in the deployment
+##
+diagnosticMode:
+  ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+  ##
+  enabled: false
+  ## @param diagnosticMode.command Command to override all containers in the deployment
+  ##
+  command:
+    - sleep
+  ## @param diagnosticMode.args Args to override all containers in the deployment
+  ##
+  args:
+    - infinity
+
+## @section models Parameters
+
+## models configuration
+##
+models:
+  ## kubegems models image
+  ## @param models.image.registry models image registry
+  ## @param models.image.repository models image repository
+  ## @param models.image.tag models image tag (immutable tags are recommended)
+  ## @param models.image.pullPolicy models image pull policy
+  ## @param models.image.pullSecrets models image pull secrets
+  ## @param models.image.debug Enable models image debug mode
+  ##
+  image:
+    registry: docker.io
+    repository: kubegems/kubegems
+    tag: latest
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Enable debug mode
+    ##
+    debug: false
+  ## @param models.replicaCount Number of models replicas to deploy
+  ##
+  replicaCount: 1
+  ## @param models.containerPorts.probe models probe container port
+  ##
+  containerPorts:
+    probe: 8080
+  ## Configure extra options for models containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param models.livenessProbe.enabled Enable livenessProbe on models containers
+  ## @param models.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param models.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param models.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param models.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param models.livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param models.readinessProbe.enabled Enable readinessProbe on models containers
+  ## @param models.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param models.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param models.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param models.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param models.readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param models.startupProbe.enabled Enable startupProbe on models containers
+  ## @param models.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param models.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param models.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param models.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param models.startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param models.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## @param models.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param models.customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: {}
+  ## models resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param models.resources.limits The resources limits for the models containers
+  ## @param models.resources.requests The requested resources for the models containers
+  ##
+  resources:
+    limits: {}
+    requests: {}
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param models.podSecurityContext.enabled Enabled models pods' Security Context
+  ## @param models.podSecurityContext.fsGroup Set models pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: false
+    fsGroup: 1001
+  ## Configure Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param models.containerSecurityContext.enabled Enabled models containers' Security Context
+  ## @param models.containerSecurityContext.runAsUser Set models containers' Security Context runAsUser
+  ## @param models.containerSecurityContext.runAsNonRoot Set models containers' Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## Configure Leader Election
+  ##
+  ## @param models.leaderElection.enabled Enable leader election
+  leaderElection:
+    enabled: true
+
+  ## Configure logging
+  ##
+  ## @param models.logLevel Log level
+  logLevel: debug
+
+  ## @param models.existingConfigmap The name of an existing ConfigMap with your custom configuration for models
+  ##
+  existingConfigmap:
+  ## @param models.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param models.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param models.hostAliases models pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param models.podLabels Extra labels for models pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param models.podAnnotations Annotations for models pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param models.podAffinityPreset Pod affinity preset. Ignored if `models.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param models.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `models.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node models.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param models.nodeAffinityPreset.type Node affinity preset type. Ignored if `models.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param models.nodeAffinityPreset.key Node label key to match. Ignored if `models.affinity` is set
+    ##
+    key: ""
+    ## @param models.nodeAffinityPreset.values Node label values to match. Ignored if `models.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+
+  ## @param models.enableAffinity If enabled Affinity for models pods assignment
+  enableAffinity: false
+
+  ## @param models.affinity Affinity for models pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `models.podAffinityPreset`, `models.podAntiAffinityPreset`, and `models.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param models.nodeSelector Node labels for models pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param models.tolerations Tolerations for models pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param models.updateStrategy.type models statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param models.priorityClassName models pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param models.schedulerName Name of the k8s scheduler (other than default) for models pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param models.lifecycleHooks for the models container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param models.extraEnvVars Array with extra environment variables to add to models nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param models.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for models nodes
+  ##
+  extraEnvVarsCM:
+  ## @param models.extraEnvVarsSecret Name of existing Secret containing extra env vars for models nodes
+  ##
+  extraEnvVarsSecret:
+  ## @param models.extraVolumes Optionally specify extra list of additional volumes for the models pod(s)
+  ##
+  extraVolumes: []
+  ## @param models.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the models container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param models.sidecars Add additional sidecar containers to the models pod(s)
+  ## e.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: {}
+  ## @param models.initContainers Add additional init containers to the models pod(s)
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## e.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: {}
+
+  ## @section Agent Metrics parameters
+  ##
+  metrics:
+    ## @param models.metrics.enabled Create a service for accessing the metrics endpoint
+    ##
+    enabled: true
+    ## Metrics service parameters
+    ##
+
+    service:
+      ## @param models.metrics.service.type controller metrics service type
+      ##
+      type: ClusterIP
+      ## @param models.metrics.service.port controller metrics service HTTP port
+      ##
+      port: 9100
+      ## Node ports to expose
+      ## @param models.metrics.service.nodePort Node port for HTTP
+      ## NOTE: choose port between <30000-32767>
+      ##
+      nodePort: ""
+      ## @param models.metrics.service.clusterIP controller metrics service Cluster IP
+      ## e.g.:
+      ## clusterIP: None
+      ##
+      clusterIP: ""
+      ## @param models.metrics.service.extraPorts Extra ports to expose (normally used with the `sidecar` value)
+      ##
+      extraPorts: []
+      ## @param models.metrics.service.loadBalancerIP controller metrics service Load Balancer IP
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+      ##
+      loadBalancerIP: ""
+      ## @param models.metrics.service.loadBalancerSourceRanges controller metrics service Load Balancer sources
+      ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ##   - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: []
+      ## @param models.metrics.service.externalTrafficPolicy controller metrics service external traffic policy
+      ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Cluster
+      ## @param models.metrics.service.annotations [object] Additional custom annotations for controller metrics service
+      ##
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.models.metrics.service.port }}"
+    serviceMonitor:
+      ## @param models.metrics.serviceMonitor.enabled Specify if a servicemonitor will be deployed for prometheus-operator
+      ##
+      enabled: true
+      ## @param models.metrics.serviceMonitor.jobLabel Specify the jobLabel to use for the prometheus-operator
+      ##
+      jobLabel: app.kubernetes.io/name
+      ## @param models.metrics.serviceMonitor.honorLabels Honor metrics labels
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ##
+      honorLabels: false
+      ## @param models.metrics.serviceMonitor.selector Prometheus instance selector labels
+      ## ref: https://github.com/bitnami/plugins/tree/master/bitnami/prometheus-operator#prometheus-configuration
+      ## e.g:
+      ## selector:
+      ##   prometheus: my-prometheus
+      ##
+      selector: {}
+      ## @param models.metrics.serviceMonitor.scrapeTimeout Timeout after which the scrape is ended
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ## e.g:
+      ## scrapeTimeout: 10s
+      ##
+      scrapeTimeout: ""
+      ## @param models.metrics.serviceMonitor.interval Scrape interval. If not set, the Prometheus default scrape interval is used
+      ##
+      interval: ""
+      ## @param models.metrics.serviceMonitor.additionalLabels Used to pass Labels that are required by the installed Prometheus Operator
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+      ##
+      additionalLabels: {}
+
+      ## @param models.metrics.serviceMonitor.metricRelabelings Specify additional relabeling of metrics
+      ## @skip models.metrics.serviceMonitor.metricRelabelings
+      metricRelabelings: {}
+
+      ## @param models.metrics.serviceMonitor.relabelings Specify general relabeling
+      ## @skip models.metrics.serviceMonitor.relabelings
+      relabelings: {}
+
+## @section RBAC Parameters
+
+## RBAC configuration
+##
+rbac:
+  ## @param rbac.create Specifies whether RBAC resources should be created
+  ##
+  create: true
+
+## ServiceAccount configuration
+##
+serviceAccount:
+  ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
+  ##
+  create: true
+  ## @param serviceAccount.name The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the common.names.fullname template
+  ##
+  name: ""
