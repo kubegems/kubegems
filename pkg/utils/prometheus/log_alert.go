@@ -59,6 +59,16 @@ func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
 	} else {
+		if _, err := model.ParseDuration(r.LogqlGenerator.Duration); err != nil {
+			return errors.Wrapf(err, "duration %s not valid", r.LogqlGenerator.Duration)
+		}
+		if _, err := regexp.Compile(r.LogqlGenerator.Match); err != nil {
+			return errors.Wrapf(err, "match %s not valid", r.LogqlGenerator.Match)
+		}
+		if len(r.LogqlGenerator.LabelPairs) == 0 {
+			return fmt.Errorf("labelpairs can't be null")
+		}
+
 		r.BaseAlertRule.Expr = r.LogqlGenerator.ToLogql(r.BaseAlertRule.Namespace)
 		if r.Message == "" {
 			r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] [namespace: {{ $labels.namespace }}] ", r.Name, AlertClusterKey)
