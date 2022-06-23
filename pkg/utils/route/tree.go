@@ -79,9 +79,18 @@ func (t *Tree) addWebService(ws *restful.WebService, meta string, basepath strin
 			t.RouteUpdateFunc(route)
 		}
 
+		if route.Consumes == nil {
+			route.Consumes = []string{restful.MIME_JSON}
+		}
+		if route.Produces == nil {
+			route.Produces = []string{restful.MIME_JSON}
+		}
+
 		rb := ws.
 			Method(route.Method).
 			Path(basepath+route.Path).
+			Consumes(route.Consumes...).
+			Produces(route.Produces...).
 			To(route.Func).
 			Metadata(restfulspec.KeyOpenAPITags, []string{meta}).
 			Doc(route.Summary)
@@ -148,6 +157,8 @@ type Route struct {
 	Path       string
 	Method     string
 	Func       Function
+	Consumes   []string
+	Produces   []string
 	Params     []Param
 	Responses  []ResponseMeta
 	Properties map[string]interface{}
@@ -205,6 +216,18 @@ func (n *Route) Paged() *Route {
 
 func (n *Route) Parameters(params ...Param) *Route {
 	n.Params = append(n.Params, params...)
+	return n
+}
+
+// Accept types of all the responses
+func (n *Route) Accept(mime ...string) *Route {
+	n.Consumes = append(n.Consumes, mime...)
+	return n
+}
+
+// ContentType of all available responses type
+func (n *Route) ContentType(mime ...string) *Route {
+	n.Produces = append(n.Produces, mime...)
 	return n
 }
 

@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package httputil
+package response
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
 	"reflect"
 	"sort"
 )
@@ -83,5 +86,48 @@ func NewPageData(list interface{}, page, size int, filterfn PageFilterFunc, sort
 		Total: int64(total),
 		Page:  int64(page),
 		Size:  int64(size),
+	}
+}
+
+func OK(w http.ResponseWriter, data interface{}) {
+	DoRawResponse(w, http.StatusOK, data, nil)
+}
+
+func BadRequest(w http.ResponseWriter, message string) {
+	DoRawResponse(w, http.StatusBadRequest, Response{Message: message}, nil)
+}
+
+func ServerError(w http.ResponseWriter, err error) {
+	Error(w, http.StatusInternalServerError, err)
+}
+
+func Error(w http.ResponseWriter, status int, err error) {
+	DoRawResponse(w, status, Response{Message: err.Error(), Error: err}, nil)
+}
+
+func DoRawResponse(w http.ResponseWriter, status int, data interface{}, headers map[string]string) {
+	for k, v := range headers {
+		w.Header().Set(k, v)
+	}
+	switch val := data.(type) {
+	case io.Reader:
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.WriteHeader(status)
+		_, _ = io.Copy(w, val)
+	case string:
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(val))
+	case []byte:
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.WriteHeader(status)
+		_, _ = w.Write(val)
+	case nil:
+		w.WriteHeader(status)
+		// do not write a nil representation
+	default:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_ = json.NewEncoder(w).Encode(data)
 	}
 }
