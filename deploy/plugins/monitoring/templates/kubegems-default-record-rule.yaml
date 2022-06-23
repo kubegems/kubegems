@@ -63,7 +63,7 @@ spec:
         - record: gems_node_running_pod_count
           expr: sum(gems_pod_status{phase="Running"})by(node)
         - record: gems_node_running_pod_percent
-          expr: (sum(gems_pod_status{phase="Running"})by(node) / sum(kube_node_status_allocatable_pods)by(node)) * 100
+          expr: (sum(gems_pod_status{phase="Running"})by(node) / sum(kube_node_status_allocatable{resource="pods"})by(node)) * 100
         # node load
         - record: gems_node_load1
           expr: sum(node_load1)by(node)
@@ -95,7 +95,7 @@ spec:
             gems_pod_workload
         - record: gems_container_cpu_limit_cores
           expr: |
-            sum(kube_pod_container_resource_limits_cpu_cores)by(container, pod, namespace, node)
+            sum(kube_pod_container_resource_limits{resource="cpu"})by(container, pod, namespace, node)
             * on (namespace, pod) group_left(owner_kind,workload)
             gems_pod_workload
         - record: gems_container_cpu_usage_percent
@@ -115,7 +115,7 @@ spec:
             gems_pod_workload
         - record: gems_container_memory_limit_bytes
           expr: |
-            sum(kube_pod_container_resource_limits_memory_bytes)by(container, pod, namespace, node)
+            sum(kube_pod_container_resource_limits{resource="memory"})by(container, pod, namespace, node)
             * on (namespace, pod) group_left(owner_kind,workload)
             gems_pod_workload
         - record: gems_container_memory_usage_percent
