@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestBaseQueryParams_FindRuleContext(t *testing.T) {
+func TestPromqlGenerator_FindRuleContext(t *testing.T) {
 	type fields struct {
 		Resource   string
 		Rule       string
@@ -27,9 +27,9 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 			fields: fields{
 				Resource: "node",
 				Rule:     "cpuTotal",
-				Unit:     "core",
+				Unit:     "short",
 				LabelPairs: map[string]string{
-					"host": "master1",
+					"node": "master1",
 				},
 			},
 			args: args{
@@ -43,7 +43,8 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 				RuleDetail: RuleDetail{
 					Expr:     "gems_node_cpu_total_cores",
 					ShowName: "CPU总量",
-					Labels:   []string{"host"},
+					Labels:   []string{"node"},
+					Unit:     "short",
 				},
 			},
 			wantErr: false,
@@ -53,9 +54,9 @@ func TestBaseQueryParams_FindRuleContext(t *testing.T) {
 			fields: fields{
 				Resource: "node",
 				Rule:     "cpuTotal",
-				Unit:     "core",
+				Unit:     "short",
 				LabelPairs: map[string]string{
-					"host":      "master1",
+					"node":      "master1",
 					"container": "mycontainer",
 				},
 			},

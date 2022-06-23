@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -45,6 +46,7 @@ func (g *LogqlGenerator) ToLogql(namespace string) string {
 	for k, v := range g.LabelPairs {
 		labelvalues = append(labelvalues, fmt.Sprintf(`%s=~"%s"`, k, v))
 	}
+	sort.Strings(labelvalues)
 	labelvalues = append(labelvalues, fmt.Sprintf(`namespace="%s"`, namespace))
 	return fmt.Sprintf(`sum(count_over_time({%s} |~ "%s" [%s]))without(fluentd_thread)`, strings.Join(labelvalues, ", "), g.Match, g.Duration)
 }

@@ -26,7 +26,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []MonitorAlertRule
+		want    AlertRuleList[MonitorAlertRule]
 		wantErr bool
 	}{
 		{
@@ -55,7 +55,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 											},
 											{
 												"name": "gems_namespace",
-												"value": "gemcloud-monitoring-system"
+												"value": "kubegems-monitoring"
 											}
 										]
 									}`),
@@ -76,7 +76,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 								Rules: []monitoringv1.Rule{
 									{
 										Alert: "alert-1",
-										Expr:  intstr.FromString(`kube_node_status_condition{condition=~"Ready", status=~"true"} == 0`),
+										Expr:  intstr.FromString(`kube_node_status_condition{condition=~"Ready", status=~"true"}==0`),
 										For:   "1m",
 										Labels: map[string]string{
 											AlertNameLabel:      "alert-1",
@@ -91,9 +91,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 												"labelpairs": {
 													"condition": "Ready",
 													"status": "true"
-												},
-												"compareOp": "==",
-												"compareValue": "0"
+												}
 											}`,
 										},
 									},
@@ -107,7 +105,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 			args: args{
 				containOrigin: false,
 			},
-			want: []MonitorAlertRule{{
+			want: AlertRuleList[MonitorAlertRule]{{
 				BaseAlertRule: BaseAlertRule{
 					Namespace: GlobalAlertNamespace,
 					Name:      "alert-1",
@@ -118,8 +116,9 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 						CompareValue: "0",
 						Severity:     SeverityError,
 					}},
-					Receivers: []AlertReceiver{{Name: "receiver-1"}},
-					IsOpen:    true,
+					Receivers:     []AlertReceiver{{Name: "receiver-1"}},
+					IsOpen:        true,
+					InhibitLabels: []string{},
 				},
 
 				PromqlGenerator: &PromqlGenerator{
@@ -130,6 +129,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 						"status":    "true",
 					},
 				},
+				Source: "myrule",
 			}},
 			wantErr: false,
 		},

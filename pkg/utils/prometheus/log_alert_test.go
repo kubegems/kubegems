@@ -25,7 +25,7 @@ func TestLogqlGenerator_ToLogql(t *testing.T) {
 					"container": "mycontainer",
 				},
 			},
-			want: `sum(count_over_time({pod=~"mypod", container=~"mycontainer", namespace="myns"} |~ "error" [1m]))without(fluentd_thread)`,
+			want: `sum(count_over_time({container=~"mycontainer", pod=~"mypod", namespace="myns"} |~ "error" [1m]))without(fluentd_thread)`,
 		},
 	}
 	for _, tt := range tests {
