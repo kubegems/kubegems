@@ -61,7 +61,9 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	// template
 	rg.GET("/observability/template/resources/:resource_name/rules/:rule_name", h.CheckIsSysADMIN, h.GetMetricTemplate)
 	rg.POST("/observability/template/resources/:resource_name/rules/:rule_name", h.CheckIsSysADMIN, h.AddOrUpdateMetricTemplate)
-	rg.DELETE("/observability/template/resources/:resource_name/rules/:rule_name", h.CheckIsSysADMIN, h.DeleteMetricTemplate)
+	rg.DELETE("/observability/template/resources/:resource_name/rules/:rule_name", h.
+		CheckIsSysADMIN, h.DeleteMetricTemplate)
+	rg.GET("/observability/template/dashboard", h.ListDashboardTemplates)
 
 	// dashboard
 	rg.GET("/observability/environment/:environment_id/monitor/dashboard", h.CheckByEnvironmentID, h.ListDashboard)

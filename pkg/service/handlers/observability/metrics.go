@@ -10,9 +10,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
+	"sigs.k8s.io/yaml"
 )
 
 type MetricQueryReq struct {
@@ -337,4 +339,22 @@ func (h *ObservabilityHandler) DeleteMetricTemplate(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, "ok")
+}
+
+// ListDashboardTemplates 监控面板模板列表
+// @Tags         Observability
+// @Summary      监控面板模板列表
+// @Description  监控面板模板列表
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  handlers.ResponseStruct{Data=[]models.MonitorDashboard}  "resp"
+// @Router       /v1/observability/template/dashboard [delete]
+// @Security     JWT
+func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
+	tpls := []models.MonitorDashboard{}
+	if err := yaml.Unmarshal(alltemplates, &tpls); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, tpls)
 }

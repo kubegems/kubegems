@@ -3,11 +3,11 @@ package observability
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"sigs.k8s.io/yaml"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -136,13 +136,27 @@ func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 }
 
 func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorDashboard, error) {
-	u, exist := h.GetContextUser(c)
-	if !exist {
-		return nil, fmt.Errorf("not login")
-	}
 	req := models.MonitorDashboard{}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, err
+	}
+	if req.Template != "" {
+		tpls := []models.MonitorDashboard{}
+		if err := yaml.Unmarshal(alltemplates, &tpls); err != nil {
+			return nil, err
+		}
+		found := false
+		for _, v := range tpls {
+			if v.Name == req.Template {
+				v.Name = req.Name
+				req = v
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("template %s not found", req.Template)
+		}
 	}
 
 	envid, err := strconv.Atoi(c.Param("environment_id"))
@@ -151,7 +165,10 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 	}
 	uintid := uint(envid)
 	req.EnvironmentID = &uintid
-
+	u, exist := h.GetContextUser(c)
+	if !exist {
+		return nil, fmt.Errorf("not login")
+	}
 	req.Creator = u.GetUsername()
 
 	env := models.Environment{}
@@ -159,17 +176,22 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 		return nil, err
 	}
 
-	now := time.Now().UTC()
 	// 默认查近30m
 	if req.Start == "" || req.End == "" {
-		req.Start = now.Add(-30 * time.Minute).Format(time.RFC3339)
-		req.End = now.Format(time.RFC3339)
+		req.Start = "now-30m"
+		req.End = "now"
+	}
+	if req.Refresh == "" {
+		req.Refresh = "30s"
+	}
+	if req.Step == "" {
+		req.Step = "30s"
 	}
 
 	monitoropts := new(prometheus.MonitorOptions)
 	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	// 逐个校验graph
-	for _, v := range req.Graphs {
+	for i, v := range req.Graphs {
 		if v.Name == "" {
 			return nil, fmt.Errorf("图表名不能为空")
 		}
@@ -194,7 +216,68 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 			if rulectx.ResourceDetail.Namespaced == false {
 				return nil, fmt.Errorf("图表: %s 错误！不能查询集群范围资源", v.Name)
 			}
+			req.Graphs[i].Unit = rulectx.RuleDetail.Unit
+			req.Graphs[i].PromqlGenerator.Unit = rulectx.RuleDetail.Unit
 		}
 	}
 	return &req, nil
 }
+
+var alltemplates = []byte(`
+- name: 容器基础指标监控
+  step: 30s
+  refresh: 30s
+  start: now-30m
+  end: now
+  graphs:
+    - name: 容器CPU总量
+      promqlGenerator:
+        resource: container
+        rule: cpuTotal
+    - name: 容器CPU使用量
+      promqlGenerator:
+        resource: container
+        rule: cpuUsage
+    - name: 容器CPU使用率
+      promqlGenerator:
+        resource: container
+        rule: cpuUsagePercent
+    - name: 容器内存总量
+      promqlGenerator:
+        resource: container
+        rule: memoryTotal
+    - name: 容器内存使用量
+      promqlGenerator:
+        resource: container
+        rule: memoryUsage
+    - name: 容器内存使用率
+      promqlGenerator:
+        resource: container
+        rule: memoryUsagePercent
+    - name: 容器网络接收速率
+      promqlGenerator:
+        resource: container
+        rule: networkInBPS
+    - name: 容器网络发送速率
+      promqlGenerator:
+        resource: container
+        rule: networkOutBPS
+- name: 存储卷监控
+  step: 30s
+  refresh: 30s
+  start: now-30m
+  end: now
+  graphs:
+    - name: 存储卷总量
+      promqlGenerator:
+        resource: pvc
+        rule: volumeTotal
+    - name: 存储卷总量
+      promqlGenerator:
+        resource: pvc
+        rule: volumeUsage
+    - name: 存储卷总量
+      promqlGenerator:
+        resource: pvc
+        rule: volumeUsagePercent
+`)

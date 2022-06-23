@@ -21,6 +21,8 @@ type MonitorDashboard struct {
 	Creator   string        `gorm:"type:varchar(50);" json:"creator"` // 创建者
 	Graphs    MonitorGraphs `json:"graphs"`                           // 图表
 
+	Template string `gorm:"type:varchar(50);" json:"template"` // 模板名
+
 	EnvironmentID *uint
 	Environment   *Environment `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 }
