@@ -346,4 +346,28 @@ webhooks:
       - cronjobs
       - persistentvolumeclaims
     sideEffects: None
+  - admissionReviewVersions:
+    - v1
+    clientConfig:
+      {{- if not .Values.controller.webhook.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "kubegems-local.controller.webhook.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /label-injector
+    failurePolicy: Ignore
+    name: mutate.label-injector-logging.dev
+    rules:
+    - apiGroups:
+      - logging.banzaicloud.io
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - flows
+      - outputs
+    sideEffects: None    
 {{- end }}

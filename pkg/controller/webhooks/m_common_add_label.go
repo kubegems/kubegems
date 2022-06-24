@@ -11,7 +11,6 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
@@ -60,6 +59,7 @@ func (r *LabelInjectorMutate) CommonInjectLabel(ctx context.Context, req admissi
 
 	metadata, err := meta.Accessor(obj)
 	if err != nil {
+		r.Log.Error(err, "getmeta")
 		return admission.Allowed("pass")
 	}
 	originlabels := metadata.GetLabels()
@@ -67,7 +67,7 @@ func (r *LabelInjectorMutate) CommonInjectLabel(ctx context.Context, req admissi
 		originlabels = map[string]string{}
 	}
 
-	ns, err := r.getAndMutateNS(ctx, metadata, req.Operation)
+	ns, err := r.getAndMutateNS(ctx, req)
 	if err != nil {
 		r.Log.Error(err, "getAndMutateNSLabel")
 		return admission.Allowed("pass")
@@ -102,26 +102,24 @@ func (r *LabelInjectorMutate) getComonLabels(ctx context.Context, ns *corev1.Nam
 	return ret
 }
 
-func (r *LabelInjectorMutate) getAndMutateNS(ctx context.Context, obj metav1.Object, op v1.Operation) (*corev1.Namespace, error) {
+func (r *LabelInjectorMutate) getAndMutateNS(ctx context.Context, req admission.Request) (*corev1.Namespace, error) {
 	var ns corev1.Namespace
-	if err := r.Client.Get(ctx, types.NamespacedName{Name: obj.GetNamespace()}, &ns); err != nil {
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: req.Namespace}, &ns); err != nil {
 		return nil, err
-	}
-
-	if obj.GetName() != "default" {
-		return &ns, nil
 	}
 	if ns.Labels == nil {
 		ns.Labels = make(map[string]string)
 	}
 
-	switch obj.(type) {
-	case *loggingv1beta1.Flow:
-		switch op {
-		case v1.Create, v1.Update:
-			ns.Labels[gems.LabelLogCollector] = gems.StatusEnabled
-		case v1.Delete:
-			ns.Labels[gems.LabelLogCollector] = gems.StatusDisabled
+	switch req.Kind.Kind {
+	case "Flow":
+		if req.Name == "default" {
+			switch req.Operation {
+			case v1.Create, v1.Update:
+				ns.Labels[gems.LabelLogCollector] = gems.StatusEnabled
+			case v1.Delete:
+				ns.Labels[gems.LabelLogCollector] = gems.StatusDisabled
+			}
 		}
 	}
 	return &ns, r.Client.Update(ctx, &ns)
