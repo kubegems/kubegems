@@ -85,6 +85,18 @@ spec:
             - path: /metrics
               port: metrics
               honorLabels: true
+        - name: cert-manager
+          namespaceSelector:
+            matchNames:
+              - cert-manager
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: cert-manager
+              app.kubernetes.io/component: controller
+          endpoints:
+            - path: /metrics
+              port: tcp-prometheus-servicemonitor
+              honorLabels: true
     alertmanager:
       # templateFiles:
       alertmanagerSpec:
