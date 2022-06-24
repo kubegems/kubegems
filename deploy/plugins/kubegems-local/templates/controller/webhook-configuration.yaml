@@ -366,6 +366,7 @@ webhooks:
       operations:
       - CREATE
       - UPDATE
+      - DELETE
       resources:
       - flows
       - outputs
