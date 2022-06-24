@@ -53,7 +53,7 @@ func (n *Entity) toEnvPair() map[string]interface{} {
 		return nil
 	}
 	return map[string]interface{}{
-		envCacheKey(n.Namespace, n.Cluster): n,
+		envCacheKey(n.Cluster, n.Namespace): n,
 	}
 }
 
