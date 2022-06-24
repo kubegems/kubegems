@@ -14,7 +14,6 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils"
@@ -52,10 +51,6 @@ func (h *ObservabilityHandler) NamespaceLogCollector(c *gin.Context) {
 				Namespace: namespace,
 				Name:      "default",
 			},
-		}
-		ns := corev1.Namespace{}
-		if err := cli.Get(ctx, types.NamespacedName{Name: namespace}, &ns); err != nil {
-			return err
 		}
 		if enable {
 			_, err := controllerutil.CreateOrUpdate(ctx, cli, &defaultFlow, func() error {
@@ -102,17 +97,12 @@ func (h *ObservabilityHandler) NamespaceLogCollector(c *gin.Context) {
 			if err != nil {
 				return err
 			}
-			if ns.Labels == nil {
-				ns.Labels = make(map[string]string)
-			}
-			ns.Labels[gems.LabelLogCollector] = gems.StatusEnabled
 		} else {
 			if err := cli.Delete(ctx, &defaultFlow); err != nil {
 				return err
 			}
-			delete(ns.Labels, gems.LabelLogCollector)
 		}
-		return cli.Update(ctx, &ns)
+		return nil
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

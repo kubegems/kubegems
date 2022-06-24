@@ -11,10 +11,12 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
+	"kubegems.io/kubegems/pkg/apis/gems"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -64,7 +66,14 @@ func (r *LabelInjectorMutate) CommonInjectLabel(ctx context.Context, req admissi
 	if originlabels == nil {
 		originlabels = map[string]string{}
 	}
-	newLabels := r.GetComonLabels(ctx, req.Namespace)
+
+	ns, err := r.getAndMutateNS(ctx, metadata, req.Operation)
+	if err != nil {
+		r.Log.Error(err, "getAndMutateNSLabel")
+		return admission.Allowed("pass")
+	}
+
+	newLabels := r.getComonLabels(ctx, ns)
 	for k, v := range newLabels {
 		originlabels[k] = v
 	}
@@ -82,12 +91,8 @@ func (r *LabelInjectorMutate) CommonInjectLabel(ctx context.Context, req admissi
 	}
 }
 
-func (r *LabelInjectorMutate) GetComonLabels(ctx context.Context, namespace string) map[string]string {
+func (r *LabelInjectorMutate) getComonLabels(ctx context.Context, ns *corev1.Namespace) map[string]string {
 	ret := map[string]string{}
-	var ns corev1.Namespace
-	if e := r.Client.Get(ctx, types.NamespacedName{Name: namespace}, &ns); e != nil {
-		return ret
-	}
 	nslabel := ns.GetLabels()
 	for _, label := range gemlabels.CommonLabels {
 		if v, exist := nslabel[label]; exist {
@@ -95,4 +100,29 @@ func (r *LabelInjectorMutate) GetComonLabels(ctx context.Context, namespace stri
 		}
 	}
 	return ret
+}
+
+func (r *LabelInjectorMutate) getAndMutateNS(ctx context.Context, obj metav1.Object, op v1.Operation) (*corev1.Namespace, error) {
+	var ns corev1.Namespace
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: obj.GetNamespace()}, &ns); err != nil {
+		return nil, err
+	}
+
+	if obj.GetName() != "default" {
+		return &ns, nil
+	}
+	if ns.Labels == nil {
+		ns.Labels = make(map[string]string)
+	}
+
+	switch obj.(type) {
+	case *loggingv1beta1.Flow:
+		switch op {
+		case v1.Create, v1.Update:
+			ns.Labels[gems.LabelLogCollector] = gems.StatusEnabled
+		case v1.Delete:
+			ns.Labels[gems.LabelLogCollector] = gems.StatusDisabled
+		}
+	}
+	return &ns, r.Client.Update(ctx, &ns)
 }
