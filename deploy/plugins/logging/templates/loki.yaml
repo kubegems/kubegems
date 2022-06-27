@@ -11,6 +11,7 @@ spec:
   values:
     global:
       imageRegistry: {{ .Values.global.imageRegistry }}
+      storageClass: {{ .Values.global.storageClass }}
     architecture: standalone
     replica:
       replicaCount: 1
@@ -45,6 +46,7 @@ spec:
       enabled: true
     persistence:
       enabled: true
+      storageClassName: {{ .Values.global.storageClass }}
       accessModes:
       - ReadWriteOnce
       size: 10Gi
