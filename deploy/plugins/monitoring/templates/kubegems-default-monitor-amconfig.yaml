@@ -31,7 +31,7 @@ spec:
     - name: severity
       value: error
   - equal:
-    - host
+    - node
     - gems_namespace
     - gems_alertname
     sourceMatch:

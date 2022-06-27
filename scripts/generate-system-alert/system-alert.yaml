@@ -164,7 +164,7 @@
   for: 5m
   alertLevels:
     - compareOp: ">"
-      compareValue: "50"
+      compareValue: "50 * 1024 * 1024"
       severity: error
   receivers:
     - name: gemcloud-default-webhook
@@ -177,7 +177,7 @@
   for: 5m
   alertLevels:
     - compareOp: ">"
-      compareValue: "50"
+      compareValue: "50 * 1024 * 1024"
       severity: error
   receivers:
     - name: gemcloud-default-webhook
@@ -221,7 +221,7 @@
     - compareOp: ">"
       compareValue: "1.5 * gems_node_cpu_total_cores"
       severity: critical
-  inhibitLabels: ["host"]
+  inhibitLabels: ["node"]
   receivers:
     - name: gemcloud-default-webhook
       interval: 10m
@@ -236,7 +236,7 @@
   for: 1h
   alertLevels:
     - compareOp: "<"
-      compareValue: "7"
+      compareValue: "7 * 24 * 60 * 60"
       severity: error
   receivers:
     - name: gemcloud-default-webhook
@@ -294,7 +294,7 @@
   for: 1h
   alertLevels:
     - compareOp: "<"
-      compareValue: "7"
+      compareValue: "7 * 24 * 60 * 60"
       severity: critical
   receivers:
     - name: gemcloud-default-webhook

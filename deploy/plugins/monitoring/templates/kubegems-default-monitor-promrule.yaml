@@ -227,7 +227,7 @@ spec:
         message: 'HostUnusualDiskReadRate: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] 节点磁盘每秒读取量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}B/s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_disk_read_bps>50
+      expr: gems_node_disk_read_bps>50 * 1024 * 1024
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -245,7 +245,7 @@ spec:
         message: 'HostUnusualDiskWriteRate: [集群:{{"{{"}} $externalLabels.cluster }}] [node:{{"{{"}}
           $labels.node }}] 节点磁盘每秒写入量 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}B/s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: gems_node_disk_write_bps>50
+      expr: gems_node_disk_write_bps>50 * 1024 * 1024
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -337,6 +337,7 @@ spec:
           | printf "%.1f" }}s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_cert_expiration_remain_seconds{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}<7
+        * 24 * 60 * 60
       for: 1h
       labels:
         gems_alert_from: monitor
@@ -412,6 +413,7 @@ spec:
           "%.1f" }}s'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
       expr: gems_agent_cluster_component_cert_expiration_remain_seconds{component=~"apiserver"}<7
+        * 24 * 60 * 60
       for: 1h
       labels:
         gems_alert_from: monitor
