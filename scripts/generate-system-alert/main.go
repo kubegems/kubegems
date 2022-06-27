@@ -52,6 +52,12 @@ func main() {
 	}
 
 	raw.Base.AMConfig.Spec.Receivers[1].WebhookConfigs[0].URL = &agentURL
+	raw.Base.AMConfig.Annotations = map[string]string{
+		"bundle.kubegems.io/ignore-options": "OnUpdate",
+	}
+	raw.PrometheusRule.Annotations = map[string]string{
+		"bundle.kubegems.io/ignore-options": "OnUpdate",
+	}
 
 	if err := os.WriteFile("deploy/plugins/monitoring/templates/kubegems-default-monitor-amconfig.yaml", getOutput(raw.Base.AMConfig), 0644); err != nil {
 		panic(err)
