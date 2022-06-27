@@ -87,7 +87,7 @@ require (
 	k8s.io/metrics v0.23.5
 	k8s.io/utils v0.0.0-20220127004650-9b3446523e65
 	kubegems.io/bundle-controller v1.0.0-alpha3.0.20220620090423-d9fbaec75395
-	kubegems.io/configer v1.0.0
+	kubegems.io/configer v1.0.1
 	sigs.k8s.io/controller-runtime v0.11.0
 	sigs.k8s.io/kustomize/api v0.11.4
 	sigs.k8s.io/yaml v1.3.0
