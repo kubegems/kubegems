@@ -457,9 +457,6 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	// 当前namespace或者所有namespace的map
 	groupNamespaceMap := map[string]*rulefmt.RuleGroups{}
 	for k, v := range cm.Data {
-		if k == prometheus.LoggingRecordingRuleKey {
-			continue
-		}
 		if namespace != v1.NamespaceAll && namespace != k {
 			continue
 		}
@@ -600,6 +597,9 @@ func (c *ExtendClient) CommitRawLoggingAlertResource(ctx context.Context, raw *p
 	bts, err := yaml.Marshal(raw.RuleGroups)
 	if err != nil {
 		return err
+	}
+	if raw.ConfigMap.Data == nil {
+		raw.ConfigMap.Data = make(map[string]string)
 	}
 	raw.ConfigMap.Data[raw.Base.AMConfig.Namespace] = string(bts)
 	if err := c.Update(ctx, raw.ConfigMap); err != nil {

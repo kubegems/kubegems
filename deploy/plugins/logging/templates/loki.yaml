@@ -160,3 +160,10 @@ spec:
           expr: sum(count_over_time({stream=~"stdout|stderr"}[1m])) by (namespace, pod, container)
         - record: gems_loki_error_logs_count_last_1m
           expr: sum(count_over_time({stream=~"stdout|stderr"} |~ `error` [1m])) by (namespace, pod, container)
+    extraVolumeMounts:
+      - mountPath: /rules/alert
+        name: kubegems-real-alerting-rules      
+    extraVolumes:
+      - configMap:
+          name: kubegems-real-alerting-rules
+        name: kubegems-real-alerting-rules
