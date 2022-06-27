@@ -14,4 +14,6 @@ spec:
     minimumMasterNodes: 1
     # image: "docker.elastic.co/elasticsearch/elasticsearch"
     {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.elastic.co" "repository" "elasticsearch/elasticsearch" "context" .) }}
+    volumeClaimTemplate:
+      storageClassName: {{ .Values.global.storageClass }}
 {{- end -}}
