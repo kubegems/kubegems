@@ -92,7 +92,7 @@ func tgDefault(tg *gemsv1beta1.TenantGateway, repo, tag string) {
 	}
 
 	if tg.Spec.Image.Repository == "" {
-		tg.Spec.Image.Repository = fmt.Sprintf("%s/%s", repo, "nginx-ingress")
+		tg.Spec.Image.Repository = repo
 	}
 	if tg.Spec.Image.Tag == "" {
 		tg.Spec.Image.Tag = tag
