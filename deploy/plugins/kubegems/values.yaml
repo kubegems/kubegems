@@ -442,7 +442,7 @@ init:
   charts:
     image:
       registry: docker.io
-      repository: kubegems/charts-uploader
+      repository: kubegems/appstore-charts
       tag: latest
       ## Specify a imagePullPolicy
       ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1971,10 +1971,14 @@ externalRedis:
 ## @param argo-cd.config.secret.argocdServerAdminPassword The password for the ArgoCD server admin user,keep empty to auto-generate.
 ## @param argo-cd.controller.extraArgs Extra ArgoCD controller args
 ## @param argo-cd.server.extraArgs Extra ArgoCD server args
+## @param argo-cd.server.config.users.session.duration user session duration
 ## @param argo-cd.repoServer.extraArgs Extra ArgoCD repo server args
 ## @param argo-cd.redis.enabled Disable Argo CD redis to use kubegems redis
 ## @param argo-cd.externalRedis.host Kubegems Redis host
 ## @param argo-cd.externalRedis.existingSecret Kubegems Redis secret
+## @skip argo-cd.controller.extraEnvVars
+## @skip argo-cd.server.extraEnvVars
+## @skip argo-cd.repoServer.extraEnvVars
 argo-cd:
   enabled: true
   config:

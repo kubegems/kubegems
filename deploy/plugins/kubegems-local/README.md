@@ -49,6 +49,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `global.imageRegistry`    | Global Docker image registry                    | `""`  |
 | `global.imagePullSecrets` | Global Docker registry secret names as an array | `[]`  |
 | `global.storageClass`     | Global StorageClass for Persistent Volume(s)    | `""`  |
+| `global.kubegemsVersion`  | Kubegems version                                | `""`  |
 
 
 ### Common parameters
@@ -73,7 +74,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------- |
 | `agent.image.registry`                        | agent image registry                                                                            | `docker.io`         |
 | `agent.image.repository`                      | agent image repository                                                                          | `kubegems/kubegems` |
-| `agent.image.tag`                             | agent image tag (immutable tags are recommended)                                                | `latest`            |
+| `agent.image.tag`                             | agent image tag (immutable tags are recommended)                                                | `main`              |
 | `agent.image.pullPolicy`                      | agent image pull policy                                                                         | `IfNotPresent`      |
 | `agent.image.pullSecrets`                     | agent image pull secrets                                                                        | `[]`                |
 | `agent.image.debug`                           | Enable agent image debug mode                                                                   | `false`             |
@@ -108,7 +109,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `agent.containerSecurityContext.runAsUser`    | Set agent containers' Security Context runAsUser                                                | `1001`              |
 | `agent.containerSecurityContext.runAsNonRoot` | Set agent containers' Security Context runAsNonRoot                                             | `true`              |
 | `agent.tls.enabled`                           | Enable agent http listen TLS                                                                    | `true`              |
-| `agent.tls.useCertManager`                    | using cert manager to generate tls secret,if not using self-signed certificates if not exists   | `true`              |
+| `agent.tls.useCertManager`                    | using cert manager to generate tls secret,if not using self-signed certificates if not exists   | `false`             |
 | `agent.tls.secretName`                        | customize default tls secret name                                                               | `""`                |
 | `agent.httpSignature.enabled`                 | Enable agent HTTP Signature validation                                                          | `true`              |
 | `agent.httpSignature.token`                   | HTTP Signature encode token override                                                            | `""`                |
@@ -163,7 +164,7 @@ The command removes all the Kubernetes components associated with the chart and 
 
 | Name                                             | Description                                                                                       | Value                                      |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `agent.metrics.enabled`                          | Create a service for accessing the metrics endpoint                                               | `true`                                     |
+| `agent.metrics.enabled`                          | Create a service for accessing the metrics endpoint                                               | `false`                                    |
 | `agent.metrics.service.type`                     | controller metrics service type                                                                   | `ClusterIP`                                |
 | `agent.metrics.service.port`                     | controller metrics service HTTP port                                                              | `9100`                                     |
 | `agent.metrics.service.nodePort`                 | Node port for HTTP                                                                                | `""`                                       |
@@ -300,7 +301,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | Name                                                  | Description                                                                      | Value       |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------- | ----------- |
 | `controller.webhook.enabled`                          | Specifies whether the webhook should be enabled                                  | `true`      |
-| `controller.webhook.useCertManager`                   | using cert-manager to generate a  certificate                                    | `true`      |
+| `controller.webhook.useCertManager`                   | using cert-manager to generate a  certificate                                    | `false`     |
 | `controller.webhook.secretName`                       | tls secret name for webhook                                                      | `""`        |
 | `controller.webhook.service.type`                     | agent service type                                                               | `ClusterIP` |
 | `controller.webhook.service.ports.http`               | webhook service HTTP port                                                        | `443`       |
@@ -317,7 +318,7 @@ The command removes all the Kubernetes components associated with the chart and 
 
 | Name                                                  | Description                                                                 | Value                    |
 | ----------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------ |
-| `controller.metrics.enabled`                          | Create a service for accessing the metrics endpoint                         | `true`                   |
+| `controller.metrics.enabled`                          | Create a service for accessing the metrics endpoint                         | `false`                  |
 | `controller.metrics.service.type`                     | controller metrics service type                                             | `ClusterIP`              |
 | `controller.metrics.service.port`                     | controller metrics service HTTP port                                        | `9100`                   |
 | `controller.metrics.service.nodePort`                 | Node port for HTTP                                                          | `""`                     |

@@ -182,7 +182,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | Name                                         | Description                                                                                    | Value                      |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------- |
 | `init.charts.image.registry`                 | image registry                                                                                 | `docker.io`                |
-| `init.charts.image.repository`               | image repository                                                                               | `kubegems/charts-uploader` |
+| `init.charts.image.repository`               | image repository                                                                               | `kubegems/appstore-charts` |
 | `init.charts.image.tag`                      | image tag (immutable tags are recommended)                                                     | `latest`                   |
 | `init.charts.image.pullPolicy`               | image pull policy                                                                              | `IfNotPresent`             |
 | `init.charts.image.pullSecrets`              | image pull secrets                                                                             | `[]`                       |
@@ -222,9 +222,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | `init.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for API nodes                                | `nil`                      |
 | `init.resources.limits`                      | The resources limits for the API containers                                                    | `{}`                       |
 | `init.resources.requests`                    | The requested resources for the API containers                                                 | `{}`                       |
-| `init.podSecurityContext.enabled`            | Enabled API pods' Security Context                                                             | `true`                     |
+| `init.podSecurityContext.enabled`            | Enabled API pods' Security Context                                                             | `false`                    |
 | `init.podSecurityContext.fsGroup`            | Set API pod's Security Context fsGroup                                                         | `1001`                     |
-| `init.containerSecurityContext.enabled`      | Enabled API containers' Security Context                                                       | `true`                     |
+| `init.containerSecurityContext.enabled`      | Enabled API containers' Security Context                                                       | `false`                    |
 | `init.containerSecurityContext.runAsUser`    | Set API containers' Security Context runAsUser                                                 | `1001`                     |
 | `init.containerSecurityContext.runAsNonRoot` | Set API containers' Security Context runAsNonRoot                                              | `true`                     |
 
@@ -264,9 +264,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | `api.customStartupProbe`                    | Custom startupProbe that overrides the default one                                            | `{}`                |
 | `api.resources.limits`                      | The resources limits for the API containers                                                   | `{}`                |
 | `api.resources.requests`                    | The requested resources for the API containers                                                | `{}`                |
-| `api.podSecurityContext.enabled`            | Enabled API pods' Security Context                                                            | `true`              |
+| `api.podSecurityContext.enabled`            | Enabled API pods' Security Context                                                            | `false`             |
 | `api.podSecurityContext.fsGroup`            | Set API pod's Security Context fsGroup                                                        | `1001`              |
-| `api.containerSecurityContext.enabled`      | Enabled API containers' Security Context                                                      | `true`              |
+| `api.containerSecurityContext.enabled`      | Enabled API containers' Security Context                                                      | `false`             |
 | `api.containerSecurityContext.runAsUser`    | Set API containers' Security Context runAsUser                                                | `1001`              |
 | `api.containerSecurityContext.runAsNonRoot` | Set API containers' Security Context runAsNonRoot                                             | `true`              |
 | `api.jwt.enabled`                           | Enable jwt authentication                                                                     | `true`              |
@@ -374,9 +374,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | `msgbus.customStartupProbe`                    | Custom startupProbe that overrides the default one                                               | `{}`                |
 | `msgbus.resources.limits`                      | The resources limits for the msgbus containers                                                   | `{}`                |
 | `msgbus.resources.requests`                    | The requested resources for the msgbus containers                                                | `{}`                |
-| `msgbus.podSecurityContext.enabled`            | Enabled msgbus pods' Security Context                                                            | `true`              |
+| `msgbus.podSecurityContext.enabled`            | Enabled msgbus pods' Security Context                                                            | `false`             |
 | `msgbus.podSecurityContext.fsGroup`            | Set msgbus pod's Security Context fsGroup                                                        | `1001`              |
-| `msgbus.containerSecurityContext.enabled`      | Enabled msgbus containers' Security Context                                                      | `true`              |
+| `msgbus.containerSecurityContext.enabled`      | Enabled msgbus containers' Security Context                                                      | `false`             |
 | `msgbus.containerSecurityContext.runAsUser`    | Set msgbus containers' Security Context runAsUser                                                | `1001`              |
 | `msgbus.containerSecurityContext.runAsNonRoot` | Set msgbus containers' Security Context runAsNonRoot                                             | `true`              |
 | `msgbus.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for msgbus                      | `nil`               |
@@ -481,9 +481,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | `worker.customStartupProbe`                    | Custom startupProbe that overrides the default one                                               | `{}`                |
 | `worker.resources.limits`                      | The resources limits for the worker containers                                                   | `{}`                |
 | `worker.resources.requests`                    | The requested resources for the worker containers                                                | `{}`                |
-| `worker.podSecurityContext.enabled`            | Enabled worker pods' Security Context                                                            | `true`              |
+| `worker.podSecurityContext.enabled`            | Enabled worker pods' Security Context                                                            | `false`             |
 | `worker.podSecurityContext.fsGroup`            | Set worker pod's Security Context fsGroup                                                        | `1001`              |
-| `worker.containerSecurityContext.enabled`      | Enabled worker containers' Security Context                                                      | `true`              |
+| `worker.containerSecurityContext.enabled`      | Enabled worker containers' Security Context                                                      | `false`             |
 | `worker.containerSecurityContext.runAsUser`    | Set worker containers' Security Context runAsUser                                                | `1001`              |
 | `worker.containerSecurityContext.runAsNonRoot` | Set worker containers' Security Context runAsNonRoot                                             | `true`              |
 | `worker.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for worker                      | `nil`               |
@@ -603,7 +603,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `mysql.auth.rootPassword` | The password for the MySQL root user. | `""`         |
 | `mysql.auth.username`     | The nonroot username of the MySQL.    | `""`         |
 | `mysql.auth.password`     | The nonroot password of the MySQL.    | `""`         |
-| `mysql.auth.database`     | Create database of the MySQL.         | `kubegems`   |
+| `mysql.auth.database`     | Create database of the MySQL.         | `""`         |
 
 
 ### External Database configuration
@@ -650,6 +650,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `argo-cd.config.secret.argocdServerAdminPassword` | The password for the ArgoCD server admin user,keep empty to auto-generate. | `""`                      |
 | `argo-cd.controller.extraArgs`                    | Extra ArgoCD controller args                                               | `["--redisdb","1"]`       |
 | `argo-cd.server.extraArgs`                        | Extra ArgoCD server args                                                   | `["--redisdb","1"]`       |
+| `argo-cd.server.config.users.session.duration`    | user session duration                                                      | `undefined`               |
 | `argo-cd.repoServer.extraArgs`                    | Extra ArgoCD repo server args                                              | `["--redisdb","1"]`       |
 | `argo-cd.redis.enabled`                           | Disable Argo CD redis to use kubegems redis                                | `false`                   |
 | `argo-cd.externalRedis.host`                      | Kubegems Redis host                                                        | `kubegems-redis-headless` |
