@@ -13,6 +13,8 @@ spec:
       exporters:
         jaeger:
           endpoint: {{ .Values.tracing.jaeger.proto.address }}
+          tls:
+            insecure: true
       service:
         pipelines:
           traces:
