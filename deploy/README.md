@@ -90,13 +90,6 @@ kubectl --namespace kubegems-installer get pods
 
 Optional:
 
-1. Install nginx-ingress-controller if no ingress controller is available.
-
-  ```sh
-  kubectl create namespace ingress-nginx
-  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-nginx-ingress.yaml
-  ```
-
 1. local-path-provisioner if no storage plugin is available.
 
   ```sh
@@ -132,8 +125,8 @@ Accessing kubegems dashboard:
 
 ```sh
 # use nginx-ingress
-PORT=$(kubectl -n ingress-nginx get svc nginx-ingress-controller -ojsonpath='{.spec.ports[0].nodePort}')
-ADDRESS=$(kubectl -n ingress-nginx get node -ojsonpath='{.items[0].status.addresses[0].address}')
+PORT=$(kubectl -n kubegems-gateway get svc default-gateway -ojsonpath='{.spec.ports[0].nodePort}')
+ADDRESS=$(kubectl -n kubegems get ingress kubegems -ojsonpath='{.spec.rules[*].host}')
 echo http://$ADDRESS:$PORT
 ```
 

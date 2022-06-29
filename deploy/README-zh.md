@@ -90,13 +90,6 @@ kubectl --namespace bundle-controller get pods
 
 可选项:
 
-1. 如果没有 ingress controller，可以安装 nginx-ingress-controller:
-
-  ```sh
-  kubectl create namespace ingress-nginx
-  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-nginx-ingress.yaml
-  ```
-
 1. 如果没有CSI插件，可以安装 local-path-provisioner:
 
   ```sh
@@ -138,8 +131,8 @@ kubectl -n kubegems get pod
 
 ```sh
 # 使用 nginx ingress
-PORT=$(kubectl -n ingress-nginx get svc nginx-ingress-controller -ojsonpath='{.spec.ports[0].nodePort}')
-ADDRESS=$(kubectl -n ingress-nginx get node -ojsonpath='{.items[0].status.addresses[0].address}')
+PORT=$(kubectl -n kubegems-gateway get svc default-gateway -ojsonpath='{.spec.ports[0].nodePort}')
+ADDRESS=$(kubectl -n kubegems get ingress kubegems -ojsonpath='{.spec.rules[*].host}')
 echo http://$ADDRESS:$PORT
 ```
 
