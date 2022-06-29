@@ -86,10 +86,6 @@ func (r *BaseAlertRule) checkAndModify(opts *MonitorOptions) error {
 	if hasOp {
 		return fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
 	}
-	if r.Message == "" {
-		r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, valueAnnotationExpr)
-	}
-
 	if err := CheckQueryExprNamespace(r.Expr, r.Namespace); err != nil {
 		return err
 	}

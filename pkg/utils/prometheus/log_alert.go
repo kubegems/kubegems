@@ -59,6 +59,9 @@ func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
 		if r.BaseAlertRule.Expr == "" {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
+		if r.Message == "" {
+			r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, valueAnnotationExpr)
+		}
 	} else {
 		if _, err := model.ParseDuration(r.LogqlGenerator.Duration); err != nil {
 			return errors.Wrapf(err, "duration %s not valid", r.LogqlGenerator.Duration)

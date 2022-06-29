@@ -100,6 +100,9 @@ func (r *MonitorAlertRule) CheckAndModify(opts *MonitorOptions) error {
 		if r.BaseAlertRule.Expr == "" {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
+		if r.Message == "" {
+			r.Message = fmt.Sprintf("%s: [集群:{{ $externalLabels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, valueAnnotationExpr)
+		}
 	} else {
 		// check resource
 		res, ok := opts.Resources[r.PromqlGenerator.Resource]
