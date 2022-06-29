@@ -764,7 +764,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 			for _, v := range alertrules {
 				var key string
 				if v.PromqlGenerator.IsEmpty() {
-					key = v.Expr
+					key = "raw promql"
 				} else {
 					key = v.PromqlGenerator.Resource
 				}
