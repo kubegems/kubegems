@@ -33,7 +33,10 @@ func (r *ResourceMutate) MutateTenantGateway(ctx context.Context, req admission.
 	// https://github.com/nginxinc/kubernetes-ingress/issues/1832
 	tag := "1.11.1"
 	if ingressclassgvk.Version == "v1" {
-		tag = "edge"
+		// https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.0.0
+		// This is the first version to support ingressclass v1
+		// Don't upgrate it, or you'll get error like nginx.conf template not valid
+		tag = "2.0.0"
 	}
 	r.Log.Info(fmt.Sprintf("use tag: %s because of ingressclass version is: %s", tag, ingressclassgvk.Version))
 
