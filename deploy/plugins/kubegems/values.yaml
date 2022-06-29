@@ -1754,7 +1754,7 @@ ingress:
   hostname: dashboard.kubegems.io
   ## @param ingress.ingressClassName Ingress class name
   ##
-  ingressClassName: nginx
+  ingressClassName: default-gateway
   ## @param ingress.path Default path for the ingress record
   ## NOTE: You may need to set this to '/*' in order to use this with ALB ingress controllers
   ##
