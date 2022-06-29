@@ -46,6 +46,7 @@ spec:
           - remote-write-receiver
         externalLabels:
           cluster: {{ .Values.global.clusterName }}
+        # TODO: use correct port when we can get default-gateway's nodeport
         externalUrl: http://prometheus.{{ .Values.global.clusterName }}.kubegems.io:9090
         ruleSelector:
           matchExpressions:
@@ -97,6 +98,10 @@ spec:
             - path: /metrics
               port: tcp-prometheus-servicemonitor
               honorLabels: true
+      ingress:
+        enabled: true
+        ingressClassName: default-gateway
+        hosts: [prometheus.{{ .Values.global.clusterName }}.kubegems.io]
     alertmanager:
       # templateFiles:
       alertmanagerSpec:
@@ -120,6 +125,7 @@ spec:
                 requests:
                   storage: 10Gi
               volumeMode: Filesystem
+        # TODO: use correct port when we can get default-gateway's nodeport
         externalUrl: http://alertmanager.{{ .Values.global.clusterName }}.kubegems.io:9093
         resources:
           limits:
@@ -128,6 +134,10 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
+      ingress:
+        enabled: true
+        ingressClassName: default-gateway
+        hosts: [alertmanager.{{ .Values.global.clusterName }}.kubegems.io]
     nodeExporter:
       enabled: false
     # metrics
