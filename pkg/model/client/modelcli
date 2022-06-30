@@ -1,0 +1,280 @@
+#! /bin/sh
+
+set -e
+
+DEFAULT_BRANCH=main
+REMOTE_URL=
+USERNAME=
+PASSWORD=
+VERSION=
+MESSAGE=
+
+global_usage() {
+    echo "Model CLI"
+    echo ""
+    echo "Usage: $0 <subcommand>"
+    echo ""
+    echo "Subcommands:"
+    echo "  init                Init a local model repository,if remote repository is specified, it will be cloned."
+    echo "  upload              Save current files and upload to remote repository."
+    echo "  download            Download model from remote repository."
+    exit 1
+}
+
+inherit_remote() {
+    if [ -n "$REMOTE_URL" ] && [ -n $USERNAME ] && [ -n $PASSWORD ]; then
+        REMOTE_URL=$(echo $REMOTE_URL | sed -e "s^//^//$USERNAME:$PASSWORD@^")
+    fi
+}
+
+init_usage() {
+    echo "Init a model repository"
+    echo ""
+    echo "Usage: $0 init [options...] <dir>"
+    echo ""
+    echo "Example:"
+    echo "  $0 init new_model"
+    echo "  $0 init -r http://example.com/user/repo.git new_model"
+    echo ""
+    echo "Options:"
+    echo "  -r,--remote           Remote repository URL"
+    echo "  -u,--username         Username of remote repository."
+    echo "  -p,--password         Password of remote repository."
+    echo "  -h,--help             Show this help message."
+    exit 1
+}
+
+initlocal() {
+    OPTS=$(getopt -o r:,u:,p:,h -l remote,username,password,help -- "$@")
+    if [ $? != 0 ]; then
+        usage
+    fi
+    eval set -- "$OPTS"
+    while true; do
+        case $1 in
+        -r | --remote)
+            REMOTE_URL=$2
+            shift 2
+            ;;
+        -u | --username)
+            USERNAME=$2
+            shift 2
+            ;;
+        -p | --password)
+            PASSWORD=$2
+            shift 2
+            ;;
+        -h | --help)
+            init_usage
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "unexpected option: $1"
+            usage
+            ;;
+        esac
+    done
+
+    inherit_remote
+
+    if [ -z $1 ]; then
+        echo "Error: please specify a directory."
+        echo ""
+        init_usage
+    fi
+    git init -q --initial-branch $DEFAULT_BRANCH $1
+    git lfs install
+    (
+        cd $1
+        git lfs track *.bin *.7z *.arrow *.bz2 *.ftz *.gz *.h5 *.joblib *.lfs.* *.model *.msgpack \
+            *.onnx *.ot *.parquet *.pb *.pt *.pth *.rar *.saved_model/**/* *.tar.* *.tflite *.tgz \
+            *.wasm *.xz *.zip *.zstandard *.zstd *.tfevents* >/dev/null 2>&1
+        git add .gitattributes
+        if [ -n "$REMOTE_URL" ]; then
+            git remote add origin ${REMOTE_URL} 2>/dev/null || git remote set-url origin ${REMOTE_URL}
+        fi
+    )
+    echo "🎉🎉🎉 Congratulations,Model repository [$1] initialized successfully."
+    echo ""
+    echo "Next:"
+    echo "  cd $1"
+    echo '  echo "some code" > some_file.py'
+    echo "  $0 upload -t v1.0.0"
+    echo ""
+    echo "Have fun!"
+}
+
+download_usage() {
+    echo "Download model from remote repository into dir."
+    echo ""
+    echo "Usage: $0 download [download-oprions] <dir>"
+    echo ""
+    echo "Example:"
+    echo "  $0 download -t v1.0.0 http://models.kubegems.io/user/hello.git"
+    echo ""
+    echo "  $0 download -u <username> -p <password> http://models.kubegems.io/user/hello.git"
+    echo ""
+    echo "  $0 download http://<username>:<password>@models.kubegems.io/user/hello.git"
+    echo ""
+    echo "  $0 download http://models.kubegems.io/user/hello.git .another-dir"
+    echo ""
+    echo "Options:"
+    echo "  -t,--version          Version to be downloa, if not specified, the latest version will be downloaded."
+    echo "  -u,--username         Username of remote repository."
+    echo "  -p,--password         Password of remote repository."
+    echo "  -h,--help             Show this help message."
+    exit 1
+}
+
+download() {
+    OPTS=$(getopt -o t:,u:,p:,h -l version:,username,password,help -- "$@")
+    if [ $? != 0 ]; then
+        usage
+    fi
+    eval set -- "$OPTS"
+    while true; do
+        case $1 in
+        -t | --version)
+            VERSION=$2
+            shift 2
+            ;;
+        -u | --username)
+            USERNAME=$2
+            shift 2
+            ;;
+        -p | --password)
+            PASSWORD=$2
+            shift 2
+            ;;
+        -h | --help)
+            download_usage
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "unexpected option: $1"
+            usage
+            ;;
+        esac
+    done
+
+    REMOTE_URL=$1
+    DIR=$2
+
+    inherit_remote
+
+    if [ -z $REMOTE_URL ]; then
+        echo "Error: please specify a remote repository."
+        echo ""
+        download_usage
+    fi
+    echo "downloading model from $1 into $2"
+    if [ -n "$VERSION" ]; then
+        DEFAULT_BRANCH=${VERSION}
+    fi
+    git clone --branch=${DEFAULT_BRANCH} --depth=1 $REMOTE_URL $DIR
+}
+
+upload_usage() {
+    echo "Upload model to remote repository"
+    echo ""
+    echo "Usage: $0 [options...] upload [upload-options...]"
+    echo ""
+    echo "Options:"
+    echo "  -m,--message          Message of this upload."
+    echo "  -t,--version          Add a new vesion at remote repository."
+    echo "  -r,--remote           Remote repository URL"
+    echo "  -u,--username         Username of remote repository."
+    echo "  -p,--password         Password of remote repository."
+    exit 1
+}
+
+upload() {
+    OPTS=$(getopt -o t:,m:,r:,u:,p:,h -l version:,message:,remote:,username:,password:,help -- "$@")
+    if [ $? != 0 ]; then
+        usage
+    fi
+    eval set -- "$OPTS"
+    while true; do
+        case $1 in
+        -t | --version)
+            VERSION=$2
+            shift 2
+            ;;
+        -m | --message)
+            MESSAGE=$2
+            shift 2
+            ;;
+        -r | --remote)
+            REMOTE_URL=$2
+            shift 2
+            ;;
+        -u | --username)
+            USERNAME=$2
+            shift 2
+            ;;
+        -p | --password)
+            PASSWORD=$2
+            shift 2
+            ;;
+        -h | --help)
+            upload_usage
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "unexpected option: $1"
+            usage
+            ;;
+        esac
+    done
+
+    inherit_remote
+
+    # main program
+    if [ -z "$MESSAGE" ]; then
+        MESSAGE="upload model $(date +%Y-%m-%d-%H%M%S)"
+    fi
+    if [ -z "$REMOTE_URL" ]; then
+        REMOTE_URL=origin
+    fi
+    echo "uploading with message: $MESSAGE to ${REMOTE_URL} ${VERSION}"
+    git add .
+    git commit -m "$MESSAGE" || true
+    git push ${REMOTE_URL} ${DEFAULT_BRANCH}
+
+    # tag and push
+    if [ -n "$VERSION" ]; then
+        git tag -a "$VERSION" -m "$MESSAGE"
+        git push ${REMOTE_URL} ${VERSION}
+    fi
+}
+
+main() {
+    case $1 in
+    init)
+        shift
+        initlocal $@
+        ;;
+    download)
+        shift
+        download $@
+        ;;
+    upload)
+        shift
+        upload $@
+        ;;
+    *)
+        global_usage
+        ;;
+    esac
+}
+
+main "$@"

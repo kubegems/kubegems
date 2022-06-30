@@ -13,7 +13,10 @@ import (
 // nolint: gomnd
 func (s *Server) CreateRepository(w http.ResponseWriter, r *http.Request) {
 	initbarefunc := func(barepath string) error {
-		if _, err := CallGit(barepath, "init", "--bare", "--shared", "."); err != nil {
+		if err := os.MkdirAll(barepath, 0o755); err != nil {
+			return err
+		}
+		if _, err := CallGit(barepath, "init", "--initial-branch=main", "--bare", "--shared", "."); err != nil {
 			return err
 		}
 		if _, err := CallGit(barepath, "config", "http.receivepack", "true"); err != nil {
