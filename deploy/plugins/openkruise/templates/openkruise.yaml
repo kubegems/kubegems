@@ -9,6 +9,8 @@ spec:
   chart: kruise
   version: "{{ .Chart.AppVersion }}"
   values:
+    installation:
+      createNamespace: false
     manager:
       image:
         {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "openkruise/kruise-manager" "context" .) }}
