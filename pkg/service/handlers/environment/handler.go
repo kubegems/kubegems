@@ -681,6 +681,27 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	}
 	if err := h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
 		eg := errgroup.Group{}
+
+		// log, monitor, mesh status
+		ret.ServiceMesh = env.VirtualSpaceID != nil
+		eg.Go(func() error {
+			smList := monitoringv1.ServiceMonitorList{}
+			if err := cli.List(ctx, &smList, client.InNamespace(env.Namespace)); err != nil {
+				return err
+			}
+			ret.Monitoring = len(smList.Items) != 0
+			return nil
+		})
+
+		eg.Go(func() error {
+			flowList := loggingv1beta1.FlowList{}
+			if err := cli.List(ctx, &flowList, client.InNamespace(env.Namespace)); err != nil {
+				return err
+			}
+			ret.Logging = len(flowList.Items) != 0
+			return nil
+		})
+
 		// labels
 		eg.Go(func() error {
 			ns := corev1.Namespace{}
@@ -688,13 +709,6 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 				return err
 			}
 			ret.Labels = ns.Labels
-
-			// obervability status
-			ret.Monitoring = true
-			if ns.Labels[gems.LabelLogCollector] == gems.StatusEnabled {
-				ret.Logging = true
-			}
-			ret.ServiceMesh = env.VirtualSpaceID != nil
 			return nil
 		})
 
@@ -755,13 +769,27 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// alert rules
 		eg.Go(func() error {
-			alertrules, err := cli.Extend().ListMonitorAlertRules(ctx, env.Namespace, &monitoropts, false)
+			monitoralerts, err := cli.Extend().ListMonitorAlertRules(ctx, env.Namespace, &monitoropts, false)
+			if err != nil {
+				return err
+			}
+			logalerts, err := cli.Extend().ListLoggingAlertRules(ctx, env.Namespace, false)
 			if err != nil {
 				return err
 			}
 
+			addRealtimeAlert := func(levels []prometheus.AlertLevel) {
+				for _, level := range levels {
+					if level.Severity == prometheus.SeverityError {
+						ret.ErrorAlertCount++
+					} else if level.Severity == prometheus.SeverityCritical {
+						ret.CriticalAlertCount++
+					}
+				}
+			}
+
 			alertResourceMap := make(map[string]int)
-			for _, v := range alertrules {
+			for _, v := range monitoralerts {
 				var key string
 				if v.PromqlGenerator.IsEmpty() {
 					key = "raw promql"
@@ -775,9 +803,17 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 				} else {
 					alertResourceMap[key] = 1
 				}
+
+				if v.State == "firing" {
+					addRealtimeAlert(v.AlertLevels)
+				}
+			}
+			alertResourceMap["logging"] = len(logalerts)
+			for _, v := range logalerts {
+				addRealtimeAlert(v.AlertLevels)
 			}
 
-			ret.AlertRuleCount = len(alertrules)
+			ret.AlertRuleCount = len(monitoralerts) + len(logalerts)
 			ret.AlertResourceMap = alertResourceMap
 			return nil
 		})
