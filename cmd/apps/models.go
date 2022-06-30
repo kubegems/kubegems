@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"kubegems.io/kubegems/pkg/model/deployment"
+	"kubegems.io/kubegems/pkg/model/registry"
 	"kubegems.io/kubegems/pkg/model/store"
 	"kubegems.io/kubegems/pkg/utils/config"
 	"kubegems.io/kubegems/pkg/version"
@@ -32,6 +33,7 @@ func NewModelsCmd() *cobra.Command {
 	}
 	config.AutoRegisterFlags(cmd.Flags(), "", options)
 	cmd.AddCommand(newModelsStoreCmd())
+	cmd.AddCommand(newModelRegistryCmd())
 	return cmd
 }
 
@@ -53,5 +55,25 @@ func newModelsStoreCmd() *cobra.Command {
 		},
 	}
 	config.AutoRegisterFlags(cmd.Flags(), "", storeoption)
+	return cmd
+}
+
+func newModelRegistryCmd() *cobra.Command {
+	options := registry.DefaultOptions()
+	cmd := &cobra.Command{
+		Use:          "registry",
+		Short:        "run model registry",
+		SilenceUsage: true,
+		Version:      version.Get().String(),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if err := config.Parse(cmd.Flags()); err != nil {
+				return err
+			}
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer cancel()
+			return registry.Run(ctx, options)
+		},
+	}
+	config.AutoRegisterFlags(cmd.Flags(), "", options)
 	return cmd
 }
