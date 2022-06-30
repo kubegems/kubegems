@@ -41,7 +41,7 @@ spec:
   values:
     # hub: gcr.io/istio-testing  # in chart default hub just for testing
     {{ include "common.images.repository" ( dict "key" "hub" "registry" "gcr.io" "repository" "istio-testing" "context" .) }}
-    tag:  {{ .Values.version }}
+    tag:  {{ .Chart.AppVersion }}
 ---
 # https://github.com/istio/istio/tree/master/manifests/charts/istio-operator
 apiVersion: install.istio.io/v1alpha1
