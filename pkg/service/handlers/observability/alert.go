@@ -660,7 +660,7 @@ func (h *ObservabilityHandler) SearchAlert(c *gin.Context) {
 		query.Where("namespace = ?", namespace)
 	}
 	if alertName != "" {
-		query.Where("name = ?", alertName)
+		query.Where("name like ?", fmt.Sprintf("%%%s%%", alertName))
 	}
 	if resoure != "" {
 		query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, prometheus.AlertResourceLabel), resoure)

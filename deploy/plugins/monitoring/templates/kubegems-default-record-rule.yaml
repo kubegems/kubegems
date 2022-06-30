@@ -90,7 +90,7 @@ spec:
         # container cpu
         - record: gems_container_cpu_usage_cores
           expr: |
-            sum(irate(container_cpu_usage_seconds_total{pod!="", image!=""}[5m]))by(container, pod, namespace, node)
+            sum(irate(container_cpu_usage_seconds_total{pod!="", image!="", container!=""}[5m]))by(container, pod, namespace, node)
             * on (namespace, pod) group_left(owner_kind,workload)
             gems_pod_workload
         - record: gems_container_cpu_limit_cores
@@ -105,7 +105,7 @@ spec:
         # 关于容器内存的讨论，参见 https://src.cloudminds.com/gemscloud/installer-operator/-/issues/30
         - record: gems_container_memory_usage_bytes
           expr: |
-            sum(container_memory_working_set_bytes{pod!="", image!=""})by(container, pod, namespace, node)
+            sum(container_memory_working_set_bytes{pod!="", image!="", container!=""})by(container, pod, namespace, node)
             * on (namespace, pod) group_left(owner_kind,workload)
             gems_pod_workload
         - record: gems_container_memory_rss

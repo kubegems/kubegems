@@ -857,6 +857,8 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 			}
 			if resp.Len() > 0 {
 				ret.LogRate = fmt.Sprintf("%d/min", int(resp[0].Value))
+			} else {
+				ret.LogRate = "0/min"
 			}
 			return nil
 		})
