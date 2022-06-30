@@ -612,7 +612,7 @@ func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 // @Param        cluster      query     string                                                                       false  "集群名，默认所有"
 // @Param        namespace    query     string                                                                       false  "命名空间，默认所有"
 // @Param        alertname    query     string                                                                       false  "告警名，默认所有"
-// @Param        search       query     string                                                                       false  "告警消息内容"
+// @Param        search       query     string                                                                       false  "告警消息内容和标签，中间以空格隔开，eg. pod=mypod container=mycontainer alertcontent"
 // @Param        resource     query     string                                                                       false  "告警资源，默认所有"
 // @Param        rule         query     string                                                                       false  "告警指标，默认所有"
 // @Param        labelpairs   query     string                                                                       false  "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
@@ -664,8 +664,19 @@ func (h *ObservabilityHandler) SearchAlert(c *gin.Context) {
 	if alertName != "" {
 		query.Where("name like ?", fmt.Sprintf("%%%s%%", alertName))
 	}
+
+	// search message and labels
 	if search != "" {
-		query.Where("message like ?", fmt.Sprintf("%%%s%%", search))
+		filters := strings.Split(search, " ")
+		for _, filter := range filters {
+			kvs := strings.Split(filter, "=")
+			switch len(kvs) {
+			case 1:
+				query.Where("message like ?", fmt.Sprintf("%%%s%%", kvs[0]))
+			case 2:
+				query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, kvs[0]), kvs[1])
+			}
+		}
 	}
 	if resoure != "" {
 		query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, prometheus.AlertResourceLabel), resoure)
