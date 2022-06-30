@@ -12,3 +12,7 @@ spec:
     image:
       # repository: quay.io/prometheus/node-exporter
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "grafana/grafana" "context" .) }}
+    ingress:
+      enabled: true
+      ingressClassName: default-gateway
+      hosts: [grafana.{{ .Values.global.clusterName }}.kubegems.io]
