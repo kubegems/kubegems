@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	LoggingAlertRuleCMName = "kubegems-real-alerting-rules"
+	LoggingAlertRuleCMName = "kubegems-loki-rules"
+	LokiRecordingRulesKey  = "kubegems-loki-recording-rules.yaml"
 )
 
 type RawLoggingAlertRule struct {

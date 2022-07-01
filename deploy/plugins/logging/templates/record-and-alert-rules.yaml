@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    bundle.kubegems.io/ignore-options: OnUpdate
+  name: kubegems-loki-rules
+  namespace: {{ .Release.Namespace }}
+data:
+  kubegems-loki-recording-rules.yaml: |-
+    groups:
+      - interval: 1m
+        name: kubegems-loki-recording-rules
+        rules:
+        - expr: sum(count_over_time({stream=~"stdout|stderr"}[1m])) by (namespace, pod, container)
+          record: gems_loki_logs_count_last_1m
+        - expr: sum(count_over_time({stream=~"stdout|stderr"} |~ `error` [1m])) by (namespace, pod, container)
+          record: gems_loki_error_logs_count_last_1m  

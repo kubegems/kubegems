@@ -457,6 +457,10 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	// 当前namespace或者所有namespace的map
 	groupNamespaceMap := map[string]*rulefmt.RuleGroups{}
 	for k, v := range cm.Data {
+		// skip recording rule
+		if k == prometheus.LokiRecordingRulesKey {
+			continue
+		}
 		if namespace != v1.NamespaceAll && namespace != k {
 			continue
 		}

@@ -152,18 +152,7 @@ spec:
         enable_api: true
         wal:
           dir: /data/ruler-wal
-    alerting_groups:
-      - name: kubegems-loki-recoring-rules
-        interval: 1m
-        rules:
-        - record: gems_loki_logs_count_last_1m
-          expr: sum(count_over_time({stream=~"stdout|stderr"}[1m])) by (namespace, pod, container)
-        - record: gems_loki_error_logs_count_last_1m
-          expr: sum(count_over_time({stream=~"stdout|stderr"} |~ `error` [1m])) by (namespace, pod, container)
-    extraVolumeMounts:
-      - mountPath: /rules/alert
-        name: kubegems-real-alerting-rules      
-    extraVolumes:
-      - configMap:
-          name: kubegems-real-alerting-rules
-        name: kubegems-real-alerting-rules
+    # https://github.com/grafana/helm-charts/blob/main/charts/loki/templates/statefulset.yaml#L60-L74
+    useExistingAlertingGroup:
+      enabled: true
+      configmapName: kubegems-loki-rules
