@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  annotations:
-    bundle.kubegems.io/ignore-options: OnUpdate
-  name: kubegems-real-alerting-rules
-  namespace: {{ .Release.Namespace }}
