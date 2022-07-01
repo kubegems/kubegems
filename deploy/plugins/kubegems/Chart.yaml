@@ -19,7 +19,7 @@ dependencies:
     condition: gitea.enabled
     version: 5.0.8
   - name: argo-cd
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://charts.kubegems.io/kubegems
     condition: argo-cd.enabled
     version: 3.3.5
   - name: chartmuseum

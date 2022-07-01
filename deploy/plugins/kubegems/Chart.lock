@@ -12,10 +12,10 @@ dependencies:
   repository: https://charts.kubegems.io/kubegems
   version: 5.0.8
 - name: argo-cd
-  repository: https://charts.bitnami.com/bitnami
+  repository: https://charts.kubegems.io/kubegems
   version: 3.3.5
 - name: chartmuseum
   repository: https://charts.kubegems.io/kubegems
   version: 3.8.0
-digest: sha256:e5fca92a77fb5bd1a11e1ab89888a870ded914b105e3b9d68d1e5399988190ba
-generated: "2022-06-24T14:12:14.610479205+08:00"
+digest: sha256:912fc11e3d0e4f63a68c91b1861ffde44c050d6734e38e6c2bc4daf0b1afdd4f
+generated: "2022-07-01T14:50:50.824785904+08:00"
