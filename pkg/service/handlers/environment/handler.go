@@ -651,6 +651,8 @@ type EnvironmentObservabilityRet struct {
 	LogRate               string `json:"logRate"`
 
 	EventCount int `json:"eventCount"` // 事件数量
+
+	Warning string `json:"warning"`
 }
 
 // @Tags         EnvironmentObservabilityDetails
@@ -679,7 +681,26 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 		ClusterName:     env.Cluster.ClusterName,
 		Namespace:       env.Namespace,
 	}
-	if err := h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+	h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+		// _, plugins, err := gemsplugin.ListPlugins(ctx, cli)
+		// if err != nil {
+		// 	return err
+		// }
+		// var monitoring, logging, istio bool
+		// for _, v := range plugins {
+		// 	switch v.Name {
+		// 	case "monitoring":
+		// 		monitoring = v.Enabled
+		// 		ret.Warning = "插件monitoring未启用"
+		// 	case "logging":
+		// 		logging = v.Enabled
+		// 		ret.Warning = "插件logging未启用"
+		// 	case "istio":
+		// 		istio = v.Enabled
+		// 		ret.Warning = "插件istio未启用"
+		// 	}
+		// }
+
 		eg := errgroup.Group{}
 
 		// log, monitor, mesh status
@@ -863,11 +884,11 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 			return nil
 		})
 
-		return eg.Wait()
-	}); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
+		if err := eg.Wait(); err != nil && ret.Warning == "" {
+			ret.Warning = err.Error()
+		}
+		return nil
+	})
 	handlers.OK(c, ret)
 }
 
