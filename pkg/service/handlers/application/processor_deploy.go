@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -220,6 +221,37 @@ func CompleteDeploiedManifestRuntime(app *v1alpha1.Application, status *Deploied
 	}
 	status.Runtime.Raw = app
 	return status
+}
+
+func (h *ApplicationProcessor) CreateBatch(ctx context.Context, baseref PathRef, names []string) error {
+	var srcfs billy.Filesystem
+	srcref := PathRef{Tenant: baseref.Tenant, Project: baseref.Project, Env: ""}
+	err := h.Manifest.ContentFunc(ctx, srcref, func(ctx context.Context, fs billy.Filesystem) error {
+		srcfs = fs
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	copyfilefunc := func(ctx context.Context, fs billy.Filesystem) error {
+		for _, name := range names {
+			err := ForFileContentFunc(srcfs, name, func(filename string, content []byte) error {
+				destfile := filepath.Join(name, filename)
+				return util.WriteFile(fs, destfile, content, os.ModePerm)
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return h.Manifest.Func(ctx, baseref,
+		Pull(),
+		FsFunc(copyfilefunc),
+		Commit("batch create"),
+	)
 }
 
 func (h *ApplicationProcessor) Create(ctx context.Context, ref PathRef) error {
