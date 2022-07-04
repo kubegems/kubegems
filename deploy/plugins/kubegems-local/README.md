@@ -289,11 +289,12 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Controller RBAC Parameters
 
-| Name                               | Description                                          | Value  |
-| ---------------------------------- | ---------------------------------------------------- | ------ |
-| `controller.rbac.create`           | Specifies whether RBAC resources should be created   | `true` |
-| `controller.serviceAccount.create` | Specifies whether a ServiceAccount should be created | `true` |
-| `controller.serviceAccount.name`   | The name of the ServiceAccount to use.               | `""`   |
+| Name                                          | Description                                                 | Value  |
+| --------------------------------------------- | ----------------------------------------------------------- | ------ |
+| `controller.rbac.create`                      | Specifies whether RBAC resources should be created          | `true` |
+| `controller.rbac.createAggregateClusterRoles` | create clusterrole to binding view, edit, admin clusterrole | `true` |
+| `controller.serviceAccount.create`            | Specifies whether a ServiceAccount should be created        | `true` |
+| `controller.serviceAccount.name`              | The name of the ServiceAccount to use.                      | `""`   |
 
 
 ### Controller Webhook Parameters

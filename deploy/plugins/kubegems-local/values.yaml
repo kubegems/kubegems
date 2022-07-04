@@ -869,8 +869,10 @@ controller:
   ##
   rbac:
     ## @param controller.rbac.create Specifies whether RBAC resources should be created
+    ## @param controller.rbac.createAggregateClusterRoles create clusterrole to binding view, edit, admin clusterrole
     ##
     create: true
+    createAggregateClusterRoles: true
 
   ## ServiceAccount configuration
   ##

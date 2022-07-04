@@ -1,0 +1,40 @@
+{{- if and .Values.rbac.create .Values.rbac.createAggregateClusterRoles }}
+kind: ClusterRole
+apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
+metadata:
+  name: {{ include "kubegems.installer.fullname" . }}-view
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: installer
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+    rbac.authorization.k8s.io/aggregate-to-view: "true"    
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}  
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}    
+rules:
+- apiGroups: ["plugins.kubegems.io"]
+  resources: ["plugins"]
+  verbs: ["get", "list", "watch"]
+---
+kind: ClusterRole
+apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
+metadata:
+  name: {{ include "kubegems.installer.fullname" . }}-edit
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: installer
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}  
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}    
+rules:
+- apiGroups: ["plugins.kubegems.io"]
+  resources: ["plugins"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+{{- end }}
