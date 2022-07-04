@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/model/store/repository"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/route"
 )
 
@@ -70,14 +71,38 @@ func (s *StoreServer) Setup() error {
 	}
 	s.Mongo = mongocli
 
-	// repository
-	commentsRepository := repository.Comments{
-		Collection: mongocli.Database(s.Options.MongoDB.Database).Collection("comments"),
+	rg := route.NewGroup("")
+
+	mongodb := mongocli.Database(s.Options.MongoDB.Database)
+	// comments
+	(&repository.Comments{Collection: mongodb.Collection("comments")}).AddToWebservice(rg)
+	(&repository.Models{Collection: mongodb.Collection("models")}).AddToWebService(rg)
+
+	tree := &route.Tree{
+		// add response wrapper
+		RouteUpdateFunc: func(r *route.Route) {
+			paged := false
+			for _, item := range r.Params {
+				if item.Kind == route.ParamKindQuery && item.Name == "page" {
+					paged = true
+					break
+				}
+			}
+			for i, v := range r.Responses {
+				//  if query parameters exist, response as a paged response
+				if paged {
+					r.Responses[i].Body = response.Response{Data: response.Page{List: v.Body}}
+				} else {
+					r.Responses[i].Body = response.Response{Data: v.Body}
+				}
+			}
+		},
+		Group: rg,
 	}
+
 	ws := &restful.WebService{}
-	if err := commentsRepository.AddToWebservice(ws); err != nil {
-		return err
-	}
+	tree.AddToWebService(ws)
+
 	ws.Filter(restful.CrossOriginResourceSharing{
 		AllowedHeaders: []string{"*"},
 		AllowedMethods: []string{"*"},

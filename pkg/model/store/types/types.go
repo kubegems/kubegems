@@ -27,3 +27,20 @@ type Comment struct {
 	UpdationTime time.Time `json:"updationTime,omitempty"`            // comment's update time
 	Deleted      bool      `json:"deleted,omitempty"`                 // comment's deleted
 }
+
+// model meta in models store
+type Model struct {
+	// nolint: tagliatelle
+	ID        string      `json:"id,omitempty" bson:"_id,omitempty"`
+	Source    string      `json:"source,omitempty"` // source of model (huggingface, ...)
+	Name      string      `json:"name,omitempty"`
+	Registry  string      `json:"registry,omitempty"`
+	Type      string      `json:"type,omitempty"`
+	Tags      []string    `json:"tags,omitempty"`
+	Author    string      `json:"author,omitempty"`
+	License   string      `json:"license,omitempty"`
+	Framework string      `json:"framework,omitempty"`
+	Paper     string      `json:"paper,omitempty"`
+	Intro     string      `json:"intro,omitempty"`
+	Raw       interface{} `json:"raw,omitempty"`
+}

@@ -43,8 +43,7 @@ func (c *Comments) Create(ctx context.Context, postID string, comment *types.Com
 }
 
 type ListCommentOptions struct {
-	Page    int64  `json:"page,omitempty"`
-	Size    int64  `json:"size,omitempty"`
+	CommonListOptions
 	ReplyID string `json:"replyID,omitempty"` // find comments reply to this comment
 }
 
@@ -139,19 +138,18 @@ func (c *Comments) Rating(ctx context.Context, postID string) (Rating, error) {
 	return results[0], nil
 }
 
-// nolint: gomnd,funlen
-func (c *Comments) AddToWebservice(ws *restful.WebService) error {
+// nolint: funlen
+func (c *Comments) AddToWebservice(ws *route.Group) {
 	getpostid := func(req *restful.Request) string {
-		registry := req.PathParameter("registry")
+		source := req.PathParameter("source")
 		model := req.PathParameter("model")
-		return registry + "/" + model
+		return source + "/" + model
 	}
 
 	listmodels := func(r *restful.Request, w *restful.Response) {
 		listoptions := ListCommentOptions{
-			Page:    request.Query(r.Request, "page", int64(1)),
-			Size:    request.Query(r.Request, "size", int64(10)),
-			ReplyID: request.Query(r.Request, "replyID", ""),
+			CommonListOptions: ParseCommonListOptions(r),
+			ReplyID:           request.Query(r.Request, "replyID", ""),
 		}
 		comments, err := c.List(r.Request.Context(), getpostid(r), listoptions)
 		if err != nil {
@@ -186,30 +184,10 @@ func (c *Comments) AddToWebservice(ws *restful.WebService) error {
 		}
 		response.OK(w, avgrating)
 	}
-
-	tree := &route.Tree{
-		// add response wrapper
-		RouteUpdateFunc: func(r *route.Route) {
-			paged := false
-			for _, item := range r.Params {
-				if item.Kind == route.ParamKindQuery && item.Name == "page" {
-					paged = true
-					break
-				}
-			}
-			for i, v := range r.Responses {
-				//  if query parameters exist, response as a paged response
-				if paged {
-					r.Responses[i].Body = response.Response{Data: response.Page{List: v.Body}}
-				} else {
-					r.Responses[i].Body = response.Response{Data: v.Body}
-				}
-			}
-		},
-		Group: route.
-			NewGroup("/registries/{registry}/models/{model}").
+	ws.AddSubGroup(
+		route.NewGroup("/sources/{source}/models/{model}").
 			Parameters(
-				route.PathParameter("registry", "registry name"),
+				route.PathParameter("source", "model source"),
 				route.PathParameter("model", "model name"),
 			).
 			AddSubGroup(
@@ -236,7 +214,5 @@ func (c *Comments) AddToWebservice(ws *restful.WebService) error {
 							ShortDesc("Get average rating"),
 					),
 			),
-	}
-	tree.AddToWebService(ws)
-	return nil
+	)
 }

@@ -95,6 +95,10 @@ func (t *Tree) addWebService(ws *restful.WebService, meta string, basepath strin
 			Metadata(restfulspec.KeyOpenAPITags, []string{meta}).
 			Doc(route.Summary)
 
+		if route.Tags != nil {
+			rb.Metadata(restfulspec.KeyOpenAPITags, route.Tags)
+		}
+
 		for _, param := range baseparams {
 			rb.Param(param)
 		}
@@ -157,6 +161,7 @@ type Route struct {
 	Path       string
 	Method     string
 	Func       Function
+	Tags       []string
 	Consumes   []string
 	Produces   []string
 	Params     []Param
@@ -241,6 +246,11 @@ func (n *Route) SetProperty(k string, v interface{}) *Route {
 		n.Properties = make(map[string]interface{})
 	}
 	n.Properties[k] = v
+	return n
+}
+
+func (n *Route) Tag(tags ...string) *Route {
+	n.Tags = append(n.Tags, tags...)
 	return n
 }
 

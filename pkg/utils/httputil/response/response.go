@@ -16,6 +16,7 @@ package response
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"reflect"
@@ -94,15 +95,20 @@ func OK(w http.ResponseWriter, data interface{}) {
 }
 
 func BadRequest(w http.ResponseWriter, message string) {
-	DoRawResponse(w, http.StatusBadRequest, Response{Message: message}, nil)
+	ErrorResponse(w, StatusError{Status: http.StatusBadRequest, Message: message})
 }
 
 func ServerError(w http.ResponseWriter, err error) {
-	Error(w, http.StatusInternalServerError, err)
+	ErrorResponse(w, StatusError{Status: http.StatusInternalServerError, Message: err.Error()})
 }
 
-func Error(w http.ResponseWriter, status int, err error) {
-	DoRawResponse(w, status, Response{Message: err.Error(), Error: err}, nil)
+func ErrorResponse(w http.ResponseWriter, err error) {
+	serr := &StatusError{}
+	if errors.As(err, &serr) {
+		DoRawResponse(w, serr.Status, Response{Message: err.Error(), Error: err}, nil)
+	} else {
+		DoRawResponse(w, http.StatusBadRequest, Response{Message: err.Error(), Error: err}, nil)
+	}
 }
 
 func DoRawResponse(w http.ResponseWriter, status int, data interface{}, headers map[string]string) {
@@ -129,5 +135,21 @@ func DoRawResponse(w http.ResponseWriter, status int, data interface{}, headers 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		_ = json.NewEncoder(w).Encode(data)
+	}
+}
+
+type StatusError struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
+func (e StatusError) Error() string {
+	return e.Message
+}
+
+func NewError(status int, message string) *StatusError {
+	return &StatusError{
+		Status:  status,
+		Message: message,
 	}
 }
