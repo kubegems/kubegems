@@ -16,3 +16,17 @@ spec:
       enabled: true
       ingressClassName: default-gateway
       hosts: [grafana.{{ .Values.global.clusterName }}.kubegems.io]
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://kube-prometheus-stack-prometheus.kubegems-monitoring:9090
+          access: proxy
+          isDefault: true
+        - name: Loki
+          type: loki
+          url: http://loki-headless.kubegems-logging:3100
+          access: proxy
+          isDefault: false

@@ -12,6 +12,7 @@ spec:
   values:
     server:
       web_history_mode: hash
+      web_fqdn: kiali.{{ .Values.global.clusterName }}.kubegems.io
     auth:
       strategy: anonymous
     deployment:
