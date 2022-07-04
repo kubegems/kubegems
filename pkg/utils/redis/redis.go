@@ -28,7 +28,7 @@ func (o *Options) ToDsn(db int) string {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		Addr:     "gems-redis:6379",
+		Addr:     "kubegems-redis-headless:6379",
 		Password: "",
 	}
 }

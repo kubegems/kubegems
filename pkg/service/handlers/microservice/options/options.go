@@ -16,6 +16,6 @@ func NewDefaultOptions() *MicroserviceOptions {
 		KialiNamespace:    "istio-system",
 		GatewayNamespace:  gems.NamespaceGateway,
 		IstioNamespace:    "istio-system",
-		IstioOperatorName: "gems-istio",
+		IstioOperatorName: "kubegems-istio",
 	}
 }

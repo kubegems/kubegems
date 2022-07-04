@@ -24,7 +24,7 @@ type Options struct {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		Addr:     fmt.Sprintf("http://gems-gitea.%s:3000", gems.NamespaceSystem),
+		Addr:     fmt.Sprintf("http://kubegems-gitea-http.%s:3000", gems.NamespaceSystem),
 		Username: "root",
 		Password: "",
 	}

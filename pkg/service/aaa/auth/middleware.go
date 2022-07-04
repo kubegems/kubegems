@@ -71,7 +71,7 @@ func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIfa
 	}
 	claims, err := l.JWT.ParseToken(token)
 	if err != nil {
-		log.Error(err, "flow", "parse jwt token")
+		log.Error(err, "parse jwt token")
 		return nil, false
 	}
 	bts, _ := json.Marshal(claims.Payload)

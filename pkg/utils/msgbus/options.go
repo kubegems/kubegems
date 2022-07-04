@@ -6,6 +6,6 @@ type Options struct {
 
 func DefaultMsgbusOptions() *Options {
 	return &Options{
-		Addr: "http://gems-msgbus:8080",
+		Addr: "http://kubegems-msgbus:80",
 	}
 }
