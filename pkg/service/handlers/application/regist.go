@@ -60,6 +60,7 @@ func (h *ApplicationHandler) RegistRouter(rg *gin.RouterGroup) error {
 	// 应用部署
 	rg.GET("/tenant/:tenant_id/project/:project_id/environment/:environment_id/applications", h.CheckByEnvironmentID, deploy.List)
 	rg.POST("/tenant/:tenant_id/project/:project_id/environment/:environment_id/applications", h.CheckByEnvironmentID, deploy.Create)
+	rg.POST("/tenant/:tenant_id/project/:project_id/environment/:environment_id/applications-batch", h.CheckByEnvironmentID, deploy.CreateBatch)
 	rg.GET("/tenant/:tenant_id/project/:project_id/environment/:environment_id/applications/:name", h.CheckByEnvironmentID, deploy.Get)
 	rg.DELETE("/tenant/:tenant_id/project/:project_id/environment/:environment_id/applications/:name", h.CheckByEnvironmentID, deploy.Remove)
 	// 应用部署镜像更新

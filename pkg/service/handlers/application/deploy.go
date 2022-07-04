@@ -145,6 +145,34 @@ func (h *ApplicationHandler) Create(c *gin.Context) {
 }
 
 // @Tags         Application
+// @Summary      批量部署应用
+// @Description  批量部署应用
+// @Accept       json
+// @Produce      json
+// @Param        tenant_id       path      int                                             true  "tenaut id"
+// @Param        project_id      path      int                                             true  "project id"
+// @Param        environment_id  path      int                                             true  "environment_id"
+// @Param        body            body      []DeploiedManifest                              true  "body"
+// @Success      200             {object}  handlers.ResponseStruct{Data=DeploiedManifest}  "Application"
+// @Router       /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications-batch [post]
+// @Security     JWT
+func (h *ApplicationHandler) CreateBatch(c *gin.Context) {
+	body := []DeploiedManifest{}
+	h.NoNameRefFunc(c, &body, func(ctx context.Context, ref PathRef) (interface{}, error) {
+		// audit
+		names := make([]string, 0, len(body))
+		for _, v := range body {
+			names = append(names, v.Name)
+		}
+		h.SetAuditData(c, "批量创建", "应用", ref.Name)
+		if err := h.ApplicationProcessor.CreateBatch(ctx, ref, names); err != nil {
+			return nil, err
+		}
+		return "ok", nil
+	})
+}
+
+// @Tags         Application
 // @Summary      应用部署
 // @Description  应用部署
 // @Accept       json
