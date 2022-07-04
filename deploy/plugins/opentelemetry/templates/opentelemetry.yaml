@@ -10,6 +10,9 @@ spec:
   version: "{{ .Chart.AppVersion }}"
   values:
     config:
+      processors:
+        k8sattributes:
+          passthrough: true
       exporters:
         jaeger:
           endpoint: {{ .Values.tracing.jaeger.proto.address }}
@@ -18,6 +21,8 @@ spec:
       service:
         pipelines:
           traces:
+            processors:
+              - k8sattributes
             exporters:
               - jaeger
     image:
@@ -29,6 +34,16 @@ spec:
         enabled: true
     clusterRole:
       create: true
+      rules:
+      - apiGroups:
+        - ''
+        resources:
+        - 'pods'
+        - 'nodes'
+        verbs:
+        - 'get'
+        - 'list'
+        - 'watch'
     serviceMonitor:
       enabled: true
     resources:
