@@ -213,6 +213,11 @@ func (n *Route) ShortDesc(summary string) *Route {
 	return n
 }
 
+func (n *Route) Doc(summary string) *Route {
+	n.Summary = summary
+	return n
+}
+
 func (n *Route) Paged() *Route {
 	n.Params = append(n.Params, QueryParameter("page", "page number").Optional())
 	n.Params = append(n.Params, QueryParameter("size", "page size").Optional())

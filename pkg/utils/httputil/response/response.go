@@ -30,8 +30,8 @@ type Response struct {
 }
 
 type Page struct {
-	List  interface{} `json:"list,omitempty"`
-	Total int64       `json:"total,omitempty"`
+	List  interface{} `json:"list"`
+	Total int64       `json:"total"`
 	Page  int64       `json:"page,omitempty"`
 	Size  int64       `json:"size,omitempty"`
 }
@@ -94,6 +94,10 @@ func OK(w http.ResponseWriter, data interface{}) {
 	DoRawResponse(w, http.StatusOK, data, nil)
 }
 
+func NotFound(w http.ResponseWriter, message string) {
+	ErrorResponse(w, NewError(http.StatusNotFound, message))
+}
+
 func BadRequest(w http.ResponseWriter, message string) {
 	ErrorResponse(w, StatusError{Status: http.StatusBadRequest, Message: message})
 }
@@ -134,7 +138,7 @@ func DoRawResponse(w http.ResponseWriter, status int, data interface{}, headers 
 	default:
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
-		_ = json.NewEncoder(w).Encode(data)
+		_ = json.NewEncoder(w).Encode(Response{Data: data})
 	}
 }
 

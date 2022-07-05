@@ -4,30 +4,32 @@ import (
 	"context"
 	"time"
 
-	"github.com/emicklei/go-restful/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"kubegems.io/kubegems/pkg/model/store/types"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
-	"kubegems.io/kubegems/pkg/utils/route"
 )
 
-type Comments struct {
+type CommentsRepository struct {
 	Collection *mongo.Collection
 }
 
-func (c *Comments) Create(ctx context.Context, postID string, comment *types.Comment) error {
+func NewCommentsRepository(db *mongo.Database) *CommentsRepository {
+	collection := db.Collection("comments")
+	return &CommentsRepository{Collection: collection}
+}
+
+func (c *CommentsRepository) InitSchema(ctx context.Context) error {
+	return nil
+}
+
+func (c *CommentsRepository) Create(ctx context.Context, postID string, comment *Comment) error {
 	now := time.Now()
 	if comment.CreationTime.IsZero() {
 		comment.CreationTime = now
 	}
-	if comment.UpdationTime.IsZero() {
-		comment.UpdationTime = now
-	}
-
+	comment.ID = "" // clear id
+	comment.UpdationTime = now
 	comment.PostID = postID
 	result, err := c.Collection.InsertOne(ctx, comment)
 	if err != nil {
@@ -42,67 +44,94 @@ func (c *Comments) Create(ctx context.Context, postID string, comment *types.Com
 	return nil
 }
 
-type ListCommentOptions struct {
-	CommonListOptions
-	ReplyID string `json:"replyID,omitempty"` // find comments reply to this comment
-}
-
-func (c *Comments) List(ctx context.Context, postID string, listoptions ListCommentOptions) ([]*types.Comment, error) {
-	if listoptions.Page == 0 {
-		listoptions.Page = 1
+func (c *CommentsRepository) Update(ctx context.Context, comment *Comment) error {
+	id, err := primitive.ObjectIDFromHex(comment.ID)
+	if err != nil {
+		return err
 	}
-	offset := (listoptions.Page - 1) * listoptions.Size
-
-	var filter interface{}
-	if listoptions.ReplyID == "" {
-		filter = bson.D{
-			{Key: "postid", Value: postID},
-			{Key: "deleted", Value: false},
-			{Key: "replyid", Value: bson.M{"$exists": false}},
-		}
-	} else {
-		filter = bson.D{
-			{Key: "postid", Value: postID},
-			{Key: "deleted", Value: false},
-			{Key: "replyid", Value: listoptions.ReplyID},
-		}
-	}
-	cur, err := c.Collection.Find(ctx, filter,
-		&options.FindOptions{
-			Skip:  &offset,
-			Limit: &listoptions.Size,
-			Sort: bson.D{
-				{Key: "creationtime", Value: -1},
+	_, err = c.Collection.UpdateOne(ctx,
+		bson.M{"_id": id},
+		bson.M{
+			"$set": bson.M{
+				"updationTime": time.Now(),
+				"content":      comment.Content,
+				"rating":       comment.Rating,
 			},
 		})
+	return err
+}
+
+func (c *CommentsRepository) Delete(ctx context.Context, comment *Comment) error {
+	id, err := primitive.ObjectIDFromHex(comment.ID)
+	if err != nil {
+		return err
+	}
+	result, err := c.Collection.DeleteOne(ctx, bson.M{
+		"_id":      id,
+		"username": comment.Username,
+	})
+	_ = result.DeletedCount
+	return err
+}
+
+type ListCommentOptions struct {
+	CommonListOptions
+	PostID string // find comments of this post
+}
+
+func (o ListCommentOptions) ToConditionAndFindOptions() (interface{}, *options.FindOptions) {
+	condition := bson.M{
+		"postid": o.PostID,
+	}
+	findOptions := options.Find().SetSort(bson.M{"creationTime": -1})
+	if o.Size > 0 {
+		findOptions.SetLimit(o.Size)
+	}
+	if o.Page > 0 {
+		findOptions.SetSkip(o.Size * (o.Page - 1))
+	}
+	return condition, findOptions
+}
+
+func (c *CommentsRepository) List(ctx context.Context, listoptions ListCommentOptions) ([]Comment, error) {
+	cond, findopts := listoptions.ToConditionAndFindOptions()
+	cur, err := c.Collection.Find(ctx, cond, findopts)
 	if err != nil {
 		return nil, err
 	}
 	defer cur.Close(ctx)
 
-	comments := []*types.Comment{}
+	comments := []Comment{}
 	if err := cur.All(ctx, &comments); err != nil {
 		return nil, err
 	}
 	return comments, nil
 }
 
+func (c *CommentsRepository) Count(ctx context.Context, listoptions ListCommentOptions) (int64, error) {
+	cond, _ := listoptions.ToConditionAndFindOptions()
+	count, err := c.Collection.CountDocuments(ctx, cond)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 // nolint: tagliatelle
 type Rating struct {
 	ID     string  `json:"id,omitempty" bson:"_id,omitempty"`
-	Rating float64 `json:"rating,omitempty"`
-	Count  int64   `json:"count,omitempty"`
-	Total  int64   `json:"total,omitempty"`
+	Rating float64 `json:"rating"`
+	Count  int64   `json:"count"`
+	Total  int64   `json:"total"`
 }
 
-func (c *Comments) Rating(ctx context.Context, postID string) (Rating, error) {
-	rating := Rating{
-		ID: postID,
-	}
+func (c *CommentsRepository) Rating(ctx context.Context, ids ...string) ([]Rating, error) {
 	cur, err := c.Collection.Aggregate(ctx, bson.A{
 		bson.M{
 			"$match": bson.M{
-				"postid": postID,
+				"postid": bson.M{
+					"$in": ids,
+				},
 				"rating": bson.M{"$gt": 0},
 			},
 		},
@@ -123,96 +152,13 @@ func (c *Comments) Rating(ctx context.Context, postID string) (Rating, error) {
 	},
 	)
 	if err != nil {
-		return rating, err
+		return nil, err
 	}
 	defer cur.Close(ctx)
 
 	results := []Rating{}
 	if err := cur.All(ctx, &results); err != nil {
-		return rating, err
+		return nil, err
 	}
-	// no rating
-	if len(results) == 0 {
-		return rating, nil
-	}
-	return results[0], nil
-}
-
-// nolint: funlen
-func (c *Comments) AddToWebservice(ws *route.Group) {
-	getpostid := func(req *restful.Request) string {
-		source := req.PathParameter("source")
-		model := req.PathParameter("model")
-		return source + "/" + model
-	}
-
-	listmodels := func(r *restful.Request, w *restful.Response) {
-		listoptions := ListCommentOptions{
-			CommonListOptions: ParseCommonListOptions(r),
-			ReplyID:           request.Query(r.Request, "replyID", ""),
-		}
-		comments, err := c.List(r.Request.Context(), getpostid(r), listoptions)
-		if err != nil {
-			response.ServerError(w, err)
-			return
-		}
-		response.OK(w, response.Page{
-			List: comments,
-			Page: listoptions.Page,
-			Size: listoptions.Size,
-		})
-	}
-
-	postComment := func(r *restful.Request, w *restful.Response) {
-		comment := &types.Comment{}
-		if err := request.Body(r.Request, comment); err != nil {
-			response.BadRequest(w, err.Error())
-			return
-		}
-		if err := c.Create(r.Request.Context(), getpostid(r), comment); err != nil {
-			response.ServerError(w, err)
-			return
-		}
-		response.OK(w, comment)
-	}
-
-	rating := func(r *restful.Request, w *restful.Response) {
-		avgrating, err := c.Rating(r.Request.Context(), getpostid(r))
-		if err != nil {
-			response.ServerError(w, err)
-			return
-		}
-		response.OK(w, avgrating)
-	}
-	ws.AddSubGroup(
-		route.NewGroup("/sources/{source}/models/{model}").
-			Parameters(
-				route.PathParameter("source", "model source"),
-				route.PathParameter("model", "model name"),
-			).
-			AddSubGroup(
-				route.NewGroup("/comments").Tag("comments").
-					AddRoutes(
-						route.GET("").To(listmodels).
-							Paged().
-							Parameters(
-								route.QueryParameter("replyID", "list comments reply to this comment").Optional(),
-							).
-							Response([]types.Comment{}).
-							ShortDesc("List comments for a model"),
-						route.POST("").To(postComment).
-							Parameters(
-								route.BodyParameter("comment", types.Comment{}),
-							).
-							Response(types.Comment{}).
-							ShortDesc("Create a comment"),
-					),
-				route.NewGroup("/rating").Tag("rating").
-					AddRoutes(
-						route.GET("").To(rating).
-							Response(Rating{}).
-							ShortDesc("Get average rating"),
-					),
-			),
-	)
+	return results, nil
 }

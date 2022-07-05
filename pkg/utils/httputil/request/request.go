@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // nolint: forcetypeassert,gomnd,ifshort
@@ -16,6 +17,11 @@ func Query[T any](r *http.Request, key string, defaultValue T) T {
 	switch any(defaultValue).(type) {
 	case string:
 		return any(val).(T)
+	case []string:
+		if val == "" {
+			return defaultValue
+		}
+		return any(strings.Split(val, ",")).(T)
 	case int:
 		intval, _ := strconv.Atoi(val)
 		return any(intval).(T)

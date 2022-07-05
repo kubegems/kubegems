@@ -6,51 +6,69 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/emicklei/go-restful/v3"
 	"github.com/goharbor/harbor/src/lib/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"kubegems.io/kubegems/pkg/model/store/types"
+	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
-	"kubegems.io/kubegems/pkg/utils/route"
 )
 
-type Models struct {
+type ModelsRepository struct {
 	Collection *mongo.Collection
+}
+
+func NewModelsRepository(db *mongo.Database) *ModelsRepository {
+	collection := db.Collection("test1")
+	return &ModelsRepository{Collection: collection}
+}
+
+func (m *ModelsRepository) InitSchema(ctx context.Context) error {
+	const source_name_index = "source_name_index"
+	_, err := m.Collection.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "source", Value: 1},
+			{Key: "name", Value: 1},
+		},
+		Options: &options.IndexOptions{
+			Name:   pointer.String(source_name_index),
+			Unique: pointer.Bool(true),
+		},
+	})
+	return err
 }
 
 type ModelListOptions struct {
 	CommonListOptions
-	Source    string   `json:"source"`
-	Tags      []string `json:"tags,omitempty"`
-	Framework string   `json:"framework,omitempty"`
+	Source    string
+	Tags      []string
+	Framework string
 }
 
-func (o *ModelListOptions) ToConditionAndFindOptions() (bson.D, *options.FindOptions) {
-	cond := bson.D{}
+func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.FindOptions) {
+	cond := bson.M{}
 	if o.Source != "" {
-		cond = append(cond, bson.E{Key: "source", Value: o.Source})
+		cond["source"] = o.Source
 	}
 	if o.Search != "" {
-		cond = append(cond, bson.E{Key: "name", Value: bson.M{"$regex": o.Search}})
+		cond["$text"] = bson.M{"$search": o.Search}
 	}
-	if o.Tags != nil {
-		cond = append(cond, bson.E{Key: "tags", Value: bson.M{"$all": o.Tags}})
+	if len(o.Tags) != 0 {
+		cond["tags"] = bson.M{"$all": o.Tags}
 	}
 	if o.Framework != "" {
-		cond = append(cond, bson.E{Key: "framework", Value: o.Framework})
+		cond["framework"] = o.Framework
 	}
 
-	sort := bson.D{}
+	sort := bson.M{}
 	for _, item := range strings.Split(o.Sort, ",") {
 		if item == "" {
 			continue
 		}
 		if item[0] == '-' {
-			sort = append(sort, bson.E{Key: item[1:], Value: -1})
+			sort[item[1:]] = -1
 		} else {
-			sort = append(sort, bson.E{Key: item, Value: 1})
+			sort[item] = 1
 		}
 	}
 
@@ -63,33 +81,31 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (bson.D, *options.FindOpt
 	return cond, options.Find().SetSort(sort).SetLimit(o.Size).SetSkip((o.Page - 1) * o.Size)
 }
 
-func (m *Models) Get(ctx context.Context, registry string, name string) (types.Model, error) {
-	cond := bson.D{
-		{Key: "registry", Value: registry}, {Key: "name", Value: name},
-	}
-	ret := types.Model{}
+func (m *ModelsRepository) Get(ctx context.Context, source, name string) (Model, error) {
+	cond := bson.M{"source": source, "name": name}
+	ret := Model{}
 	err := m.Collection.FindOne(ctx, cond).Decode(&ret)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return ret, response.NewError(http.StatusNotFound, fmt.Sprintf("model %s not found", name))
 		}
-		return types.Model{}, err
+		return Model{}, err
 	}
 	return ret, nil
 }
 
-func (m *Models) Count(ctx context.Context, opts ModelListOptions) (int64, error) {
+func (m *ModelsRepository) Count(ctx context.Context, opts ModelListOptions) (int64, error) {
 	cond, _ := opts.ToConditionAndFindOptions()
 	return m.Collection.CountDocuments(ctx, cond)
 }
 
-func (m *Models) List(ctx context.Context, opts ModelListOptions) ([]types.Model, error) {
+func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]Model, error) {
 	cond, options := opts.ToConditionAndFindOptions()
 	cur, err := m.Collection.Find(ctx, cond, options)
 	if err != nil {
 		return nil, err
 	}
-	result := []types.Model{}
+	result := []Model{}
 	err = cur.All(ctx, &result)
 	if err != nil {
 		return nil, err
@@ -97,11 +113,13 @@ func (m *Models) List(ctx context.Context, opts ModelListOptions) ([]types.Model
 	return result, nil
 }
 
-func (m *Models) Delete(ctx context.Context, registry string, name string) error {
-	cond := bson.D{
-		{Key: "registry", Value: registry}, {Key: "name", Value: name},
-	}
-	_, err := m.Collection.DeleteOne(ctx, cond)
+func (m *ModelsRepository) Create(ctx context.Context, model Model) error {
+	_, err := m.Collection.InsertOne(ctx, model)
+	return err
+}
+
+func (m *ModelsRepository) Delete(ctx context.Context, source, name string) error {
+	_, err := m.Collection.DeleteOne(ctx, bson.M{"source": source, "name": name})
 	return err
 }
 
@@ -111,86 +129,29 @@ type Selectors struct {
 	Licenses  []string `json:"licenses"`
 }
 
-func (m *Models) ListSelectors(ctx context.Context, registry string, listopts ModelListOptions) (*Selectors, error) {
-	selectors := &Selectors{
-		Tags:      []string{},
-		Libraries: []string{},
-		Licenses:  []string{},
-	}
-
+func (m *ModelsRepository) ListSelectors(ctx context.Context, listopts ModelListOptions) (*Selectors, error) {
 	cond, _ := listopts.ToConditionAndFindOptions()
 	distincttags, _ := m.Collection.Distinct(ctx, "tags", cond)
 	distinctlibraries, _ := m.Collection.Distinct(ctx, "library", cond)
 	distinctlicenses, _ := m.Collection.Distinct(ctx, "license", cond)
 
-	if tags, ok := any(distincttags).([]string); ok {
-		selectors.Tags = tags
+	tostrings := func(data []interface{}) []string {
+		ret := make([]string, 0, len(data))
+		for _, item := range data {
+			switch val := item.(type) {
+			case string:
+				ret = append(ret, val)
+			default:
+				continue
+			}
+		}
+		return ret
 	}
-	if libraries, ok := any(distinctlibraries).([]string); ok {
-		selectors.Libraries = libraries
-	}
-	if licenses, ok := any(distinctlicenses).([]string); ok {
-		selectors.Licenses = licenses
+
+	selectors := &Selectors{
+		Tags:      tostrings(distincttags),
+		Libraries: tostrings(distinctlibraries),
+		Licenses:  tostrings(distinctlicenses),
 	}
 	return selectors, nil
-}
-
-func (m *Models) AddToWebService(rg *route.Group) {
-	list := func(req *restful.Request, resp *restful.Response) {
-		listOptions := ModelListOptions{
-			CommonListOptions: ParseCommonListOptions(req),
-			Tags:              strings.Split(req.QueryParameter("tags"), ","),
-			Framework:         req.QueryParameter("framework"),
-			Source:            req.QueryParameter("source"),
-		}
-		list, err := m.List(req.Request.Context(), listOptions)
-		if err != nil {
-			response.BadRequest(resp, err.Error())
-			return
-		}
-		// ignore total count error
-		total, _ := m.Count(req.Request.Context(), listOptions)
-		response.OK(resp, response.Page{
-			List:  list,
-			Total: total,
-			Page:  listOptions.Page,
-			Size:  listOptions.Size,
-		})
-	}
-
-	get := func(req *restful.Request, resp *restful.Response) {
-		modelid := req.PathParameter("model")
-		ret, err := m.Get(req.Request.Context(), req.PathParameter("source"), modelid)
-		if err != nil {
-			response.ErrorResponse(resp, err)
-			return
-		}
-		response.OK(resp, ret)
-	}
-
-	listSelector := func(req *restful.Request, resp *restful.Response) {
-		listOptions := ModelListOptions{
-			CommonListOptions: ParseCommonListOptions(req),
-			Tags:              strings.Split(req.QueryParameter("tags"), ","),
-			Framework:         req.QueryParameter("framework"),
-			Source:            req.QueryParameter("source"),
-		}
-		selectors, err := m.ListSelectors(req.Request.Context(), req.PathParameter("source"), listOptions)
-		if err != nil {
-			response.BadRequest(resp, err.Error())
-			return
-		}
-		response.OK(resp, selectors)
-	}
-
-	rg.AddSubGroup(route.
-		NewGroup("/sources/{source}").
-		Parameters(route.PathParameter("source", "model source name")).
-		Tag("models").
-		AddRoutes(
-			route.GET("/selectors").To(listSelector).ShortDesc("list selectors"),
-			route.GET("/models/{model}").To(get).ShortDesc("get model"),
-			route.GET("/models").To(list).ShortDesc("list models"),
-		),
-	)
 }
