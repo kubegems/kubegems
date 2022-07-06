@@ -793,12 +793,15 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 	}
 	ctx := c.Request.Context()
 
-	h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&obj).Error; err != nil {
 			return err
 		}
 		return AfterTenantResourceQuotaSave(ctx, h.BaseHandler, tx, &obj)
-	})
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 
 	h.GetDB().Preload("Tenant").Preload("Cluster", func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name") }).First(&obj, obj.ID)
 

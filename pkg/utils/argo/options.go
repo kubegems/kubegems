@@ -15,7 +15,7 @@ type Options struct {
 
 func NewDefaultArgoOptions() *Options {
 	return &Options{
-		Addr: fmt.Sprintf("http://kubegems-argocd-server.%s", gems.NamespaceSystem),
+		Addr: fmt.Sprintf("http://kubegems-argo-cd-server.%s", gems.NamespaceSystem),
 		// 保持为空，则使用 kube port forward
 		// https://argoproj.github.io/argo-cd/operator-manual/security/#authentication
 		// 使用的是第 1 种方式，先 user/password 方式,admin登录web页面,从请求中拿到 admin token

@@ -61,6 +61,7 @@ type ResourceCache struct {
 }
 
 func (c *ResourceCache) WorkloadSync() error {
+	log.Info("start workload sync")
 	start := time.Now()
 	c.DB.DB().Where("1 = 1").Delete(models.Container{})
 	c.DB.DB().Where("1 = 1").Delete(models.Workload{})

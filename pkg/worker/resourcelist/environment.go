@@ -36,6 +36,7 @@ const (
 )
 
 func (c *ResourceCache) EnvironmentSync() error {
+	log.Info("start environment sync")
 	start := time.Now()
 
 	if err := c.Agents.ExecuteInEachCluster(context.Background(), func(ctx context.Context, cli agents.Client) error {
