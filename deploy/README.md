@@ -1,6 +1,6 @@
 # Deploy
 
-[english](README.md)|[中文版](README-zh.md)
+[english](README.md)|[中文版](README_zh.md)
 
 ## Charts
 
