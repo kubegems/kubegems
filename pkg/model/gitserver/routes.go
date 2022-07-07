@@ -23,6 +23,7 @@ func (s *Server) routes(lfsenabled bool, githttpbackendenabled bool) http.Handle
 	// admin
 	repoapi.HandleFunc("", s.CreateRepository).Methods("POST")
 	repoapi.HandleFunc("", s.RemoveRepository).Methods("DELETE")
+	repoapi.HandleFunc("/files", s.ListFiles).Methods("GET")
 
 	// .git
 	gitrepor := r.PathPrefix("/{username}/{repository}.git").Subrouter()

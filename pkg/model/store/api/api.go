@@ -14,13 +14,16 @@ type ModelsAPI struct {
 	ModelRepository   *repository.ModelsRepository
 	CommentRepository *repository.CommentsRepository
 	SourcesRepository *repository.SourcesRepository
+
+	authorization AuthorizationManager
 }
 
-func NewModelsAPI(db *mongo.Database) *ModelsAPI {
+func NewModelsAPI(ctx context.Context, db *mongo.Database) *ModelsAPI {
 	return &ModelsAPI{
 		ModelRepository:   repository.NewModelsRepository(db),
 		CommentRepository: repository.NewCommentsRepository(db),
 		SourcesRepository: repository.NewSourcesRepository(db),
+		authorization:     NewLocalAuthorization(ctx, db),
 	}
 }
 
@@ -39,7 +42,8 @@ func (m *ModelsAPI) InitSchemas(ctx context.Context) error {
 
 type ModelResponse struct {
 	repository.Model
-	Rating repository.Rating `json:"rating"`
+	Rating   repository.Rating `json:"rating"`
+	Versions []string          `json:"versions"` // not used
 }
 
 func (m *ModelsAPI) ListModels(req *restful.Request, resp *restful.Response) {
@@ -69,22 +73,26 @@ func (m *ModelsAPI) ListModels(req *restful.Request, resp *restful.Response) {
 func (m *ModelsAPI) fillRating(ctx context.Context, list []repository.Model) []ModelResponse {
 	ids := make([]string, 0, len(list))
 	for _, model := range list {
-		ids = append(ids, model.Source+"/"+model.Name)
+		ids = append(ids, postidof(model.Source, model.Name))
 	}
 	// ignore
 	ratings, _ := m.CommentRepository.Rating(ctx, ids...)
 	ratingmap := make(map[string]repository.Rating)
-	for _, item := range ratings {
-		ratingmap[item.ID] = item
+	for _, commentrating := range ratings {
+		ratingmap[commentrating.ID] = commentrating
 	}
 	ret := make([]ModelResponse, 0, len(list))
 	for _, model := range list {
 		ret = append(ret, ModelResponse{
 			Model:  model,
-			Rating: ratingmap[model.ID],
+			Rating: ratingmap[postidof(model.Source, model.Name)],
 		})
 	}
 	return ret
+}
+
+func postidof(source, name string) string {
+	return source + "/" + name
 }
 
 func (m *ModelsAPI) GetModel(req *restful.Request, resp *restful.Response) {
@@ -134,12 +142,20 @@ func (m *ModelsAPI) ListSelectors(req *restful.Request, resp *restful.Response) 
 	response.OK(resp, selectors)
 }
 
+type CommentResponse struct {
+	repository.Comment
+	Replies []repository.Comment `json:"replies"`
+}
+
 func (m *ModelsAPI) ListComments(req *restful.Request, resp *restful.Response) {
-	postid := req.PathParameter("source") + "/" + req.PathParameter("model")
+	postid := postidof(req.PathParameter("source"), req.PathParameter("model"))
 
 	listOptions := repository.ListCommentOptions{
 		CommonListOptions: ParseCommonListOptions(req),
 		PostID:            postid,
+		ReplyToID:         req.QueryParameter("reply"),
+		WithReplies:       request.Query(req.Request, "withReplies", false),
+		WithRepliesCount:  request.Query(req.Request, "withRepliesCount", false),
 	}
 	list, err := m.CommentRepository.List(req.Request.Context(), listOptions)
 	if err != nil {
@@ -156,7 +172,7 @@ func (m *ModelsAPI) ListComments(req *restful.Request, resp *restful.Response) {
 }
 
 func (m *ModelsAPI) CreateComment(req *restful.Request, resp *restful.Response) {
-	postid := req.PathParameter("source") + "/" + req.PathParameter("model")
+	postid := postidof(req.PathParameter("source"), req.PathParameter("model"))
 	info, _ := req.Attribute("user").(UserInfo)
 
 	comment := &repository.Comment{}
@@ -193,9 +209,7 @@ func (m *ModelsAPI) UpdateComment(req *restful.Request, resp *restful.Response) 
 
 func (m *ModelsAPI) DeleteComment(req *restful.Request, resp *restful.Response) {
 	info, _ := req.Attribute("user").(UserInfo)
-
 	// check if user is the owner of the comment
-
 	comment := &repository.Comment{
 		ID:       req.PathParameter("comment"),
 		Username: info.Username,
@@ -208,7 +222,7 @@ func (m *ModelsAPI) DeleteComment(req *restful.Request, resp *restful.Response) 
 }
 
 func (m *ModelsAPI) GetRating(req *restful.Request, resp *restful.Response) {
-	postid := req.PathParameter("source") + "/" + req.PathParameter("model")
+	postid := postidof(req.PathParameter("source"), req.PathParameter("model"))
 
 	rating, err := m.CommentRepository.Rating(req.Request.Context(), postid)
 	if err != nil {
@@ -216,10 +230,11 @@ func (m *ModelsAPI) GetRating(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	if len(rating) == 0 {
-		response.NotFound(resp, "rating not found")
+		// return empty rating
+		response.OK(resp, repository.Rating{})
 		return
 	}
-	response.OK(resp, rating)
+	response.OK(resp, rating[0])
 }
 
 func (m *ModelsAPI) GetSource(req *restful.Request, resp *restful.Response) {
@@ -233,47 +248,90 @@ func (m *ModelsAPI) GetSource(req *restful.Request, resp *restful.Response) {
 
 type ResponseSource struct {
 	repository.Source
-	ModelCount int64 `json:"modelCount"`
-	ImageCount int64 `json:"imageCount"`
+	Count *SourceCount `json:"count,omitempty"`
 }
 
 func (m *ModelsAPI) ListSources(req *restful.Request, resp *restful.Response) {
-	listOptions := repository.ListSourceOptions{
-		CommonListOptions: ParseCommonListOptions(req),
-	}
-	list, err := m.SourcesRepository.List(req.Request.Context(), listOptions)
-	if err != nil {
-		response.BadRequest(resp, err.Error())
-		return
-	}
-	total, _ := m.SourcesRepository.Count(req.Request.Context(), listOptions)
-	response.OK(resp, response.Page{
-		List:  list,
-		Total: total,
-		Page:  listOptions.Page,
-		Size:  listOptions.Size,
+	m.IfPermission(req, resp, PermissionNone, func(ctx context.Context) (interface{}, error) {
+		listOptions := repository.ListSourceOptions{
+			CommonListOptions: ParseCommonListOptions(req),
+		}
+		list, err := m.SourcesRepository.List(req.Request.Context(), listOptions)
+		if err != nil {
+			return nil, err
+		}
+		total, _ := m.SourcesRepository.Count(req.Request.Context(), listOptions)
+		withCount := request.Query(req.Request, "count", false)
+		retlist := make([]ResponseSource, len(list))
+		for i, source := range list {
+			retlist[i] = ResponseSource{Source: source}
+			if withCount {
+				count, _ := m.countSource(req.Request.Context(), source.Name)
+				retlist[i].Count = &count
+			}
+		}
+		ret := response.Page{
+			List:  retlist,
+			Total: total,
+			Page:  listOptions.Page,
+			Size:  listOptions.Size,
+		}
+		return ret, nil
 	})
 }
 
+type SourceCount struct {
+	ModelsCount int64 `json:"modelsCount"`
+	ImagesCount int64 `json:"imagesCount"`
+}
+
+func (m *ModelsAPI) countSource(ctx context.Context, source string) (SourceCount, error) {
+	counts := SourceCount{}
+	modelcount, err := m.ModelRepository.Count(ctx, repository.ModelListOptions{Source: source})
+	if err != nil {
+		return counts, err
+	}
+	counts.ModelsCount = modelcount
+	return counts, nil
+}
+
 func (m *ModelsAPI) CreateSource(req *restful.Request, resp *restful.Response) {
-	source := &repository.Source{}
-	if err := req.ReadEntity(&source); err != nil {
-		response.BadRequest(resp, err.Error())
-		return
-	}
-	if err := m.SourcesRepository.Create(req.Request.Context(), source); err != nil {
-		response.BadRequest(resp, err.Error())
-		return
-	}
-	response.OK(resp, source)
+	m.IfPermission(req, resp, PermissionAdmin, func(ctx context.Context) (interface{}, error) {
+		source := &repository.Source{}
+		if err := req.ReadEntity(source); err != nil {
+			return nil, err
+		}
+		if err := m.SourcesRepository.Create(ctx, source); err != nil {
+			return nil, err
+		}
+		return source, nil
+	})
 }
 
 func (m *ModelsAPI) DeleteSource(req *restful.Request, resp *restful.Response) {
-	if err := m.SourcesRepository.Delete(req.Request.Context(), req.PathParameter("source")); err != nil {
-		response.BadRequest(resp, err.Error())
-		return
-	}
-	response.OK(resp, nil)
+	m.IfPermission(req, resp, PermissionAdmin, func(ctx context.Context) (interface{}, error) {
+		source := &repository.Source{
+			Name: req.PathParameter("source"),
+		}
+		if err := m.SourcesRepository.Delete(ctx, source); err != nil {
+			return nil, err
+		}
+		return source, nil
+	})
+}
+
+func (m *ModelsAPI) UpdateSource(req *restful.Request, resp *restful.Response) {
+	m.IfPermission(req, resp, PermissionAdmin, func(ctx context.Context) (interface{}, error) {
+		source := &repository.Source{}
+		if err := req.ReadEntity(source); err != nil {
+			return nil, err
+		}
+		source.Name = req.PathParameter("source")
+		if err := m.SourcesRepository.Update(ctx, source); err != nil {
+			return nil, err
+		}
+		return source, nil
+	})
 }
 
 // nolint: gomnd

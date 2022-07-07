@@ -100,7 +100,29 @@ func (s *SourcesRepository) Create(ctx context.Context, source *Source) error {
 	return nil
 }
 
-func (r SourcesRepository) Delete(ctx context.Context, name string) error {
-	_, err := r.Collection.DeleteOne(ctx, bson.M{"name": name})
+func (s *SourcesRepository) Update(ctx context.Context, source *Source) error {
+	now := time.Now()
+	source.UpdationTime = now
+
+	_, err := s.Collection.UpdateOne(ctx,
+		bson.D{
+			{Key: "name", Value: source.Name},
+		},
+		bson.M{"$set": bson.D{
+			{Key: "icon", Value: source.Icon},
+			{Key: "desc", Value: source.Desc},
+			{Key: "enabled", Value: source.Enabled},
+			{Key: "builtin", Value: source.BuiltIn},
+			{Key: "updationtime", Value: now},
+		}},
+	)
 	return err
+}
+
+func (r SourcesRepository) Delete(ctx context.Context, source *Source) error {
+	result := r.Collection.FindOneAndDelete(ctx, bson.M{"name": source.Name})
+	if err := result.Err(); err != nil {
+		return err
+	}
+	return result.Decode(source)
 }

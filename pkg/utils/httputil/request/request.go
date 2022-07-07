@@ -8,6 +8,24 @@ import (
 	"strings"
 )
 
+type ListOptions struct {
+	Page   int    `json:"page,omitempty"`
+	Size   int    `json:"size,omitempty"`
+	Search string `json:"search,omitempty"`
+	Sort   string `json:"sort,omitempty"`
+	Filter string `json:"filter,omitempty"`
+}
+
+// nolint: gomnd
+func GetListOptions(r *http.Request) ListOptions {
+	return ListOptions{
+		Page:   Query(r, "page", 1),
+		Size:   Query(r, "size", 10),
+		Search: Query(r, "search", ""),
+		Sort:   Query(r, "sort", ""),
+	}
+}
+
 // nolint: forcetypeassert,gomnd,ifshort
 func Query[T any](r *http.Request, key string, defaultValue T) T {
 	val := r.URL.Query().Get(key)

@@ -64,6 +64,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/models/cache"
 	"kubegems.io/kubegems/pkg/service/models/validate"
 	"kubegems.io/kubegems/pkg/service/options"
+	v2 "kubegems.io/kubegems/pkg/service/v2"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
@@ -110,6 +111,12 @@ func (r *Router) Run(ctx context.Context, system *system.Options) error {
 	if err := r.Complete(); err != nil {
 		return err
 	}
+
+	// inner go-restful router
+	if err := r.AddV2Restful(ctx, v2.Dependencies{Agents: r.Agents, Database: r.Database}); err != nil {
+		log.Errorf("add new restful error: %v", err)
+	}
+
 	httpserver := &http.Server{
 		Addr:    system.Listen,
 		Handler: r.gin,

@@ -5,12 +5,19 @@ import (
 	"kubegems.io/kubegems/pkg/utils/route"
 )
 
-func (m *ModelsAPI) AddToWebService(rg *route.Group) {
+// nolint: funlen
+func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 	rg.AddSubGroup(
 		route.NewGroup("/sources").Tag("sources").
 			AddRoutes(
-				route.GET("").To(m.ListSources).Paged().Doc("List sources").Response([]repository.Source{}),
+				route.GET("").To(m.ListSources).Paged().Doc("List sources").Response([]ResponseSource{}).Parameters(
+					route.QueryParameter("count", "with counts in result").Optional().DataType("boolean"),
+				),
 				route.POST("").To(m.CreateSource).Doc("Create source").Parameters(
+					route.BodyParameter("source", repository.Source{}),
+				),
+				route.PUT("/{source}").To(m.UpdateSource).Doc("Update source").Parameters(
+					route.PathParameter("source", "source name"),
 					route.BodyParameter("source", repository.Source{}),
 				),
 				route.GET("/{source}").To(m.GetSource).Doc("Get source").Response(repository.Source{}).Parameters(
@@ -19,7 +26,7 @@ func (m *ModelsAPI) AddToWebService(rg *route.Group) {
 				route.DELETE("/{source}").To(m.DeleteSource).Doc("Delete source").Parameters(
 					route.PathParameter("source", "Source name"),
 				),
-			),
+			).AddSubGroup(),
 		route.
 			NewGroup("/sources/{source}").Parameters(route.PathParameter("source", "model source name")).Tag("models").
 			AddRoutes(
@@ -49,9 +56,15 @@ func (m *ModelsAPI) AddToWebService(rg *route.Group) {
 							Paged().
 							Parameters(
 								route.QueryParameter("reply", "reply id,list comments reply to the id").Optional(),
+								route.QueryParameter("withReplies", "with replies in list result").Optional().DataType("boolean"),
+								route.QueryParameter("withRepliesCount", "with replies count in list result").Optional().DataType("boolean"),
 							),
 						route.POST("/comments").To(m.CreateComment).Doc("create comment").Parameters(
-							route.BodyParameter("comment", repository.Comment{}),
+							route.BodyParameter("comment", repository.Comment{}).Desc(
+								"To add a comment,keep field 'replyTo' empty;"+
+									"To add a reply comment,set field 'replyTo.rootID' to the comment id;"+
+									"To add a reply to reply,set field 'replyTo.rootID' to the top comment id and field 'replyTo.id' to the reply id.",
+							),
 						),
 						route.PUT("/comments/{comment}").To(m.UpdateComment).Doc("update comment").Parameters(
 							route.PathParameter("comment", "comment id"),
@@ -61,6 +74,17 @@ func (m *ModelsAPI) AddToWebService(rg *route.Group) {
 							route.PathParameter("comment", "comment id"),
 						),
 						route.GET("/rating").To(m.GetRating).Doc("get rating").Response(repository.Rating{}),
+					),
+				route.NewGroup("/admins").
+					Tag("admins").
+					AddRoutes(
+						route.GET("").To(m.ListSourceAdmin).Doc("list admins").Response([]string{}),
+						route.POST("/{username}").To(m.AddSourceAdmin).Doc("add source admin").
+							Parameters(route.PathParameter("username", "Username of admin")).
+							Accept("*/*"),
+						route.DELETE("/{username}").To(m.DeleteSourceAdmin).Doc("delete source admin").Parameters(
+							route.PathParameter("username", "Username of admin"),
+						),
 					),
 			),
 	)

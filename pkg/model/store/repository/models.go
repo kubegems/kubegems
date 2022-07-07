@@ -51,7 +51,7 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 		cond["source"] = o.Source
 	}
 	if o.Search != "" {
-		cond["$text"] = bson.M{"$search": o.Search}
+		cond["name"] = bson.M{"$regex": o.Search}
 	}
 	if len(o.Tags) != 0 {
 		cond["tags"] = bson.M{"$all": o.Tags}
@@ -81,15 +81,24 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 	return cond, options.Find().SetSort(sort).SetLimit(o.Size).SetSkip((o.Page - 1) * o.Size)
 }
 
-func (m *ModelsRepository) Get(ctx context.Context, source, name string) (Model, error) {
+type ModelWithAddtional struct {
+	Model    `bson:",inline" json:",inline"`
+	Versions []string `bson:"versions" json:"versions"`
+}
+
+func (m *ModelsRepository) Get(ctx context.Context, source, name string) (ModelWithAddtional, error) {
 	cond := bson.M{"source": source, "name": name}
-	ret := Model{}
+	ret := ModelWithAddtional{}
 	err := m.Collection.FindOne(ctx, cond).Decode(&ret)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return ret, response.NewError(http.StatusNotFound, fmt.Sprintf("model %s not found", name))
 		}
-		return Model{}, err
+		return ModelWithAddtional{}, err
+	}
+	// set default version
+	if len(ret.Versions) == 0 {
+		ret.Versions = []string{"latest"}
 	}
 	return ret, nil
 }
@@ -106,8 +115,7 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 		return nil, err
 	}
 	result := []Model{}
-	err = cur.All(ctx, &result)
-	if err != nil {
+	if err = cur.All(ctx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -124,34 +132,30 @@ func (m *ModelsRepository) Delete(ctx context.Context, source, name string) erro
 }
 
 type Selectors struct {
-	Tags      []string `json:"tags"`
-	Libraries []string `json:"libraries"`
-	Licenses  []string `json:"licenses"`
+	Tags       []string `json:"tags"`
+	Frameworks []string `json:"frameworks"`
+	Licenses   []string `json:"licenses"`
 }
 
 func (m *ModelsRepository) ListSelectors(ctx context.Context, listopts ModelListOptions) (*Selectors, error) {
 	cond, _ := listopts.ToConditionAndFindOptions()
 	distincttags, _ := m.Collection.Distinct(ctx, "tags", cond)
-	distinctlibraries, _ := m.Collection.Distinct(ctx, "library", cond)
+	distinctframeworks, _ := m.Collection.Distinct(ctx, "framework", cond)
 	distinctlicenses, _ := m.Collection.Distinct(ctx, "license", cond)
 
 	tostrings := func(data []interface{}) []string {
 		ret := make([]string, 0, len(data))
 		for _, item := range data {
-			switch val := item.(type) {
-			case string:
+			if val, ok := item.(string); ok && val != "" {
 				ret = append(ret, val)
-			default:
-				continue
 			}
 		}
 		return ret
 	}
-
 	selectors := &Selectors{
-		Tags:      tostrings(distincttags),
-		Libraries: tostrings(distinctlibraries),
-		Licenses:  tostrings(distinctlicenses),
+		Tags:       tostrings(distincttags),
+		Frameworks: tostrings(distinctframeworks),
+		Licenses:   tostrings(distinctlicenses),
 	}
 	return selectors, nil
 }

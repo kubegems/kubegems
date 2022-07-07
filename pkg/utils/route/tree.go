@@ -299,6 +299,11 @@ func (p Param) Optional() Param {
 	return p
 }
 
+func (p Param) Desc(desc string) Param {
+	p.Description = desc
+	return p
+}
+
 func (p Param) DataType(t string) Param {
 	p.Type = t
 	return p
