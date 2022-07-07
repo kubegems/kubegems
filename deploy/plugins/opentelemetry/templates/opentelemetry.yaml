@@ -18,6 +18,14 @@ spec:
           endpoint: {{ .Values.tracing.jaeger.proto.address }}
           tls:
             insecure: true
+        prometheusremotewrite:
+          endpoint: {{ .Values.monitoring.prometheus.rwrite.address }}
+          #wal:
+          #  directory: /wal
+          external_labels:
+            source: opentelemetry
+          resource_to_telemetry_conversion:
+            enabled: true
       service:
         pipelines:
           traces:
@@ -25,10 +33,19 @@ spec:
               - k8sattributes
             exporters:
               - jaeger
+          metrics:
+            exporters:
+              - prometheusremotewrite
     image:
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "otel/opentelemetry-collector-contrib" "context" .) }}
     mode: deployment
     replicaCount: 2
+    #extraConfigMapMounts:
+    #- name: wal
+    #  mountPath: /wal
+    #extraVolumes:
+    #- name: wal
+    #  emtyDir: 
     ports:
       metrics:
         enabled: true
@@ -44,8 +61,6 @@ spec:
         - 'get'
         - 'list'
         - 'watch'
-    serviceMonitor:
-      enabled: true
     resources:
       limits:
         cpu: 1
