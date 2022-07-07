@@ -7,3 +7,8 @@ tracing:
   jaeger:
     proto:
       address:
+
+monitoring:
+  prometheus:
+    rwrite:
+      address:
