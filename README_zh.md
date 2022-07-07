@@ -15,7 +15,7 @@
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubegems)](https://artifacthub.io/packages/search?repo=kubegems)
 ![license](https://img.shields.io/github/license/kubegems/kubegems)
 
-[官方文档](https://www.rainbond.com/docs?channel=github) • [在线演示环境](https://demokubegems.io)
+[官方文档](https://kubegems.io) • [在线演示环境](https://demo.kubegems.io)
 
 ## 介绍
 

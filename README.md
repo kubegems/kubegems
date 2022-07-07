@@ -15,7 +15,7 @@
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubegems)](https://artifacthub.io/packages/search?repo=kubegems)
 ![license](https://img.shields.io/github/license/kubegems/kubegems)
 
-[Documentation](https://www.rainbond.com/docs?channel=github) • [Demo](https://demokubegems.io)
+[Documentation](https://kubegems.io) • [Demo](https://demo.kubegems.io)
 
 ## Introduction
 
