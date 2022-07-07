@@ -14,77 +14,76 @@
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubegems)](https://artifacthub.io/packages/search?repo=kubegems)
 ![license](https://img.shields.io/github/license/kubegems/kubegems)
 
-[Documentation](https://kubegems.io) • [Demo](https://demo.kubegems.io)
+[官方文档](https://kubegems.io) • [在线演示环境](https://demo.kubegems.io)
 
-## Introduction
+## 介绍
 
-> English | [中文](README_zh.md)
+> 中文 | [English](README.md)
 
-[KubeGems](https://kubegems.io) is an open source, enterprise-class multi-tenant container cloud platform. Built around a cloud-native community, and kubegems provides access to multiple kubernetes clusters with rich component management and resource cost analysis capabilities to help enterprises quickly build and build a localized, powerful and low-cost cloud management platform. 
-
+[KubeGems](https://kubegems.io) 是一款以围绕 Kubernetes 通过自研和集成云原生项目而构建的通用性开源 PaaS 云管理平台。经过我们内部近一年的持续迭代，当前 KubeGems 的核心功能已经初步具备多云多租户场景下的统一管理。并通过插件化的方式，在用户界面中灵活控制包括 监控系统、日志系统、微服务治理 等众多插件的启用和关闭。
 <p align="center">
 <img src="https://github.com/kubegems/.github/blob/master/static/image/cluster.drawio.png?raw=true">
 </p>
 
-## Highlights
+## 功能
 
-Kubegems follows the best practices of cloud-native applications and delivers them to users in the simplest and most efficient way.
+Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的方式向用户提供服务。
 
 <details>
-  <summary><b>Multiple kubernetes cluster</b></summary>
+  <summary><b> 多 Kubernetes 集群管理</b></summary>
 </details>
 
 <details>
-  <summary><b>Multi-tenancy</b></summary>
+  <summary><b>多租户</b></summary>
 </details>
 
 <details>
-  <summary><b>Plugins management</b></summary>
+  <summary><b>插件管理</b></summary>
 </details>
 
 <details>
-  <summary><b>GitOps with Argocd/Rollout</b></summary>
+  <summary><b>基于 ArgoCD 的 GitOps</b></summary>
 </details>
 
 <details>
-  <summary><b>Observability (OpenTelemetry)</b></summary>
+  <summary><b> 可观测性 (OpenTelemetry)</b></summary>
 </details>
 
 <details>
-  <summary><b>ServiceMesh based on istio</b></summary>
+  <summary><b>基于 Istio 的微服务治理</b></summary>
 </details>
 
 <details>
-  <summary><b>Applications Store</b></summary>
+  <summary><b>应用商店</b></summary>
 </details>
 
 <details>
-  <summary><b>Smart ML(Machine Learning) Models Serving</b></summary>
+  <summary><b> AI模型服务</b></summary>
 </details>
 
-## Snapshots
+## 截图
 
 <br/>
 <table>
     <tr>
-      <td width="50%" align="center"><b>Tenant Overview</b></td>
-      <td width="50%" align="center"><b>WorkSpace</b></td>
+      <td width="50%" align="center"><b>租户首页</b></td>
+      <td width="50%" align="center"><b>工作空间</b></td>
     </tr>
     <tr>
         <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/tenant.jpg?raw=true"></td>
         <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/workspace.jpg?raw=true"></td>
     </tr>
     <tr>
-      <td width="50%" align="center"><b>Clusters</b></td>
-      <td width="50%" align="center"><b>Plugins</b></td>
+      <td width="50%" align="center"><b>集群管理</b></td>
+      <td width="50%" align="center"><b>插件管理</b></td>
     </tr>
         <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/cluster.jpg?raw=true"></td>
         <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/plugins.jpg?raw=true"></td>
     <tr>
     </tr>
     <tr>
-      <td width="50%" align="center"><b>Appstore</b></td>
-      <td width="50%" align="center"><b>Observability</b></td>
+      <td width="50%" align="center"><b>应用商店</b></td>
+      <td width="50%" align="center"><b>可观测性</b></td>
     </tr>
         <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/appstore.jpg?raw=true"></td>
         <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/observability.jpg?raw=true"></td>
@@ -92,38 +91,38 @@ Kubegems follows the best practices of cloud-native applications and delivers th
     </tr>
 </table>
 
-## Online Demo
+## 在线环境
 
-You can visit our [KubeGems Online Demo](https://demo.kubegems.io)
+您可以访问 KubeGems 的[在线环境](https://demo.kubegems.io)
 
->account: `admin`    password: `demo!@#admin`
+> 用户名：`admin`   密码： `demo!@#admin`
+## 快速开始
 
-## Getting started
+### 安装 Kubernetes 集群
 
-### Install Kubernetes cluster
+您可以通过以下方式安装 Kubernetes 集群，我们推荐 Kubernetes 的版本 v1.20 +
 
-You can Install your k8s cluster using any of the following methods, supported k8s version is v1.20 +
 1. [kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)
 2. [kind](https://kind.sigs.k8s.io/)
 3. [kubekey](https://github.com/kubesphere/kubekey)
-4. Any other ways...
+4. 其他方式
 
-### Installation
+### 安装 KubeGems 
 
-When your k8s cluster is ready, next you can install kubegems insatller operator on your cluster.
+当你的 Kubernetes 集群状态 Ready 后，执行下述命令安装 KuebGems Installer Operator。
 
 ```
 kubectl create namespace kubegems-installer
 kubectl apply -f https://github.com/kubegems/kubegems/raw/main/deploy/installer.yaml
 ```
 
-install kubegems with installer operator.
+通过 operator 安装 KuebGems 核心服务
 
 ```
 kubectl create namespace kubegems
 
-export STORAGE_CLASS=local-path  # export your  storageClass
-export KUBEGEMS_VERSION=v1.22.0  # change to specify kubegems version
+export STORAGE_CLASS=local-path  # 声明storageclass
+export KUBEGEMS_VERSION=v1.22.0  #  安装 kubegems 的版本
 curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml \
 | sed -e "s/local-path/${STORAGE_CLASS}/g" -e "s/latest/${KUBEGEMS_VERSION}/g" \
 > kubegems.yaml
@@ -131,20 +130,21 @@ curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegem
 kubectl apply -f kubegems.yaml
 ```
 
-More informations refer to https://www.kubegems.io/docs/installation/quick-install
+更多信息，请访问 https://www.kubegems.io/docs/installation/quick-install
 
-## Contributing
+## 参与贡献
 
-We very much welcome you to participate in the contribution and sharing of platform experience, standardized applications, plug-in sharing and other fields in the kubegems community.
+我们非常欢迎您参与到 KubeGems 社区的平台经验、标准化应用、插件共享等领域的贡献和分享中来。
+如果您是正在使用 KubeGems 的用户，对 Kubernetes 有深刻的理解，认同技术路线，并且在企业内部有很大的需求，我们欢迎您参与到 KubeGems 项目的开发。
 
-If you are a user who s using KubeGems, and you have a deep understanding of kubegems and agree with the technical route, and there is a great demand within your enterprise, we welcome you to participate in the development of kubegems project.
+更多信息，请访问 https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md
 
-More information refer to [CONTRIBUTING.md](https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md).
+## 告诉我们您的用例
 
-## Let us know who is using KubeGems
-
-You can submit issues to tell us about your case.
+您可以在在此仓库中提交 issues 告诉我们您的 KubeGems 使用案例。
 
 ## License
+
+KubeGems 项目采用 Apache License 2.0 开源协议，如果您修改了代码，请在被修改的文件中说明。
 
 Apache License 2.0, see [LICENSE](https://github.com/kubegems/kubegems/blob/main/LICENSE).
