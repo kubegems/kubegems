@@ -36,7 +36,6 @@ var (
 				"namespace": "$.kubernetes.namespace_name",
 				"node":      "$.kubernetes.host",
 				"pod":       "$.kubernetes.pod_name",
-				"tag":       "${tag}",
 				"flow":      flow,
 			},
 			Metrics: []filter.MetricSection{

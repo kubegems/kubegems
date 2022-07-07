@@ -580,9 +580,17 @@ func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 
 	switch c.Query("groupby") {
 	case "alert_type":
-		// TODO: unknown group
-		query.Select("concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule') as group_value, count(alert_infos.fingerprint) as count").
-			Group("concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule')")
+		// logging, raw promql and from template
+		query.Select(`(case
+	when alert_infos.labels ->> '$.gems_alert_from' = 'logging' then 'logging'
+	when alert_infos.labels ->> '$.gems_alert_from' = 'monitor' && alert_infos.labels ->> '$.gems_alert_resource' is null then 'raw promql'
+	else concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule')
+end) as group_value, count(alert_infos.fingerprint) as count`).
+			Group(`(case
+	when alert_infos.labels ->> '$.gems_alert_from' = 'logging' then 'logging'
+	when alert_infos.labels ->> '$.gems_alert_from' = 'monitor' && alert_infos.labels ->> '$.gems_alert_resource' is null then 'raw promql'
+	else concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule')
+end)`)
 	case "project_name":
 		query.Select("alert_infos.project_name as group_value, count(alert_infos.fingerprint) as count").
 			Group("alert_infos.project_name")
