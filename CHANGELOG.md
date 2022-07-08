@@ -39,6 +39,7 @@ This release brings new plugin management and observability features live. Now y
 * bugfix; environment cache_key error by @pepesi in #127
 * 🐞 fix(gateway): use nginx-ingress 2.0.0 on k8s 1.22+ by @jojotong in #134
 * 🐞 fix(loki): useExistingAlertingGroup to replace build-in alertingroups by @jojotong in #137
+* fix(patch): unable to update some fileds in server side apply by @cnfatal in #148
 ### Others
 * observalibity features by @jojotong in #56
 * makefile support tags for condition build by @pepesi in #111
