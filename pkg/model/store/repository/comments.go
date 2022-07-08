@@ -83,10 +83,9 @@ func (c *CommentsRepository) Delete(ctx context.Context, comment *Comment) error
 
 type ListCommentOptions struct {
 	CommonListOptions
-	PostID           string // find comments of this post
-	ReplyToID        string // find all replies of this comment
-	WithReplies      bool   // include replies in the result
-	WithRepliesCount bool   // include replies count in the result
+	PostID      string // find comments of this post
+	ReplyToID   string // find all replies of this comment
+	WithReplies bool   // include replies in the result
 }
 
 func (o ListCommentOptions) ToConditionAndFindOptions() (interface{}, *options.FindOptions) {
@@ -121,23 +120,29 @@ func (c *CommentsRepository) List(ctx context.Context, listoptions ListCommentOp
 	var cur *mongo.Cursor
 	var err error
 
-	if listoptions.WithReplies || listoptions.WithRepliesCount {
+	if listoptions.WithReplies {
 		aggregate := []bson.M{
 			{"$match": cond},
-			{"$set": bson.M{"id": bson.M{"$toString": "$_id"}}},
-			{"$lookup": bson.M{
-				"from":         "comments",
-				"localField":   "id",
-				"foreignField": "replyto.rootid",
-				"as":           "replies",
-			}},
-			{"$set": bson.M{"repliescount": bson.M{"$size": "$replies"}}},
 			{"$sort": findopts.Sort},
 			{"$skip": findopts.Skip},
 			{"$limit": findopts.Limit},
-		}
-		if !listoptions.WithReplies {
-			aggregate = append(aggregate, bson.M{"$unset": bson.A{"replies"}})
+			{"$lookup": bson.M{
+				"from": "comments",
+				"let": bson.M{
+					"id": bson.M{"$toString": "$_id"},
+				},
+				"pipeline": bson.A{
+					bson.M{
+						"$match": bson.M{
+							"$expr": bson.M{
+								"$eq": bson.A{"$replyto.rootid", "$$id"},
+							},
+						},
+					},
+				},
+				"as": "replies",
+			}},
+			{"$set": bson.M{"repliescount": bson.M{"$size": "$replies"}}},
 		}
 		cur, err = c.Collection.Aggregate(ctx, aggregate, options.Aggregate())
 	} else {

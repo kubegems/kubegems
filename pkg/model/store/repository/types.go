@@ -50,6 +50,8 @@ type Model struct {
 	Framework    string                 `json:"framework"`
 	Paper        []string               `json:"paper"`
 	Intro        string                 `json:"intro"`
+	Downloads    int                    `json:"downloads"`
+	Likes        int                    `json:"likes"`
 	Raw          map[string]interface{} `json:"raw"`
 	CreationTime time.Time              `json:"creationTime"`
 	UpdationTime time.Time              `json:"updationTime"`

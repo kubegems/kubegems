@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/emicklei/go-restful/v3"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -61,34 +62,12 @@ func (m *ModelsAPI) ListModels(req *restful.Request, resp *restful.Response) {
 	}
 	// ignore total count error
 	total, _ := m.ModelRepository.Count(ctx, listOptions)
-	ratinglist := m.fillRating(ctx, list)
 	response.OK(resp, response.Page{
-		List:  ratinglist,
+		List:  list,
 		Total: total,
 		Page:  listOptions.Page,
 		Size:  listOptions.Size,
 	})
-}
-
-func (m *ModelsAPI) fillRating(ctx context.Context, list []repository.Model) []ModelResponse {
-	ids := make([]string, 0, len(list))
-	for _, model := range list {
-		ids = append(ids, postidof(model.Source, model.Name))
-	}
-	// ignore
-	ratings, _ := m.CommentRepository.Rating(ctx, ids...)
-	ratingmap := make(map[string]repository.Rating)
-	for _, commentrating := range ratings {
-		ratingmap[commentrating.ID] = commentrating
-	}
-	ret := make([]ModelResponse, 0, len(list))
-	for _, model := range list {
-		ret = append(ret, ModelResponse{
-			Model:  model,
-			Rating: ratingmap[postidof(model.Source, model.Name)],
-		})
-	}
-	return ret
 }
 
 func postidof(source, name string) string {
@@ -96,13 +75,22 @@ func postidof(source, name string) string {
 }
 
 func (m *ModelsAPI) GetModel(req *restful.Request, resp *restful.Response) {
-	source, name := req.PathParameter("source"), req.PathParameter("model")
+	source, name := decodeSourceModelName(req)
 	model, err := m.ModelRepository.Get(req.Request.Context(), source, name)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 		return
 	}
 	response.OK(resp, model)
+}
+
+func decodeSourceModelName(req *restful.Request) (string, string) {
+	source := req.PathParameter("source")
+	name := req.PathParameter("model")
+	if decodedname, _ := url.PathUnescape(name); decodedname != "" {
+		name = decodedname
+	}
+	return source, name
 }
 
 func (m *ModelsAPI) CreateModel(req *restful.Request, resp *restful.Response) {
@@ -119,7 +107,7 @@ func (m *ModelsAPI) CreateModel(req *restful.Request, resp *restful.Response) {
 }
 
 func (m *ModelsAPI) DeleteModel(req *restful.Request, resp *restful.Response) {
-	source, name := req.PathParameter("source"), req.PathParameter("model")
+	source, name := decodeSourceModelName(req)
 	if err := m.ModelRepository.Delete(req.Request.Context(), source, name); err != nil {
 		response.BadRequest(resp, err.Error())
 		return
@@ -148,14 +136,16 @@ type CommentResponse struct {
 }
 
 func (m *ModelsAPI) ListComments(req *restful.Request, resp *restful.Response) {
-	postid := postidof(req.PathParameter("source"), req.PathParameter("model"))
+	postid := postidof(decodeSourceModelName(req))
+
+	withRepliesCount := request.Query(req.Request, "withRepliesCount", false)
+	withReplies := request.Query(req.Request, "withReplies", false)
 
 	listOptions := repository.ListCommentOptions{
 		CommonListOptions: ParseCommonListOptions(req),
 		PostID:            postid,
 		ReplyToID:         req.QueryParameter("reply"),
-		WithReplies:       request.Query(req.Request, "withReplies", false),
-		WithRepliesCount:  request.Query(req.Request, "withRepliesCount", false),
+		WithReplies:       withReplies || withRepliesCount,
 	}
 	list, err := m.CommentRepository.List(req.Request.Context(), listOptions)
 	if err != nil {
@@ -172,7 +162,7 @@ func (m *ModelsAPI) ListComments(req *restful.Request, resp *restful.Response) {
 }
 
 func (m *ModelsAPI) CreateComment(req *restful.Request, resp *restful.Response) {
-	postid := postidof(req.PathParameter("source"), req.PathParameter("model"))
+	postid := postidof(decodeSourceModelName(req))
 	info, _ := req.Attribute("user").(UserInfo)
 
 	comment := &repository.Comment{}
@@ -222,7 +212,7 @@ func (m *ModelsAPI) DeleteComment(req *restful.Request, resp *restful.Response) 
 }
 
 func (m *ModelsAPI) GetRating(req *restful.Request, resp *restful.Response) {
-	postid := postidof(req.PathParameter("source"), req.PathParameter("model"))
+	postid := postidof(decodeSourceModelName(req))
 
 	rating, err := m.CommentRepository.Rating(req.Request.Context(), postid)
 	if err != nil {

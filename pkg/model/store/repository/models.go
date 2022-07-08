@@ -40,9 +40,10 @@ func (m *ModelsRepository) InitSchema(ctx context.Context) error {
 
 type ModelListOptions struct {
 	CommonListOptions
-	Source    string
-	Tags      []string
-	Framework string
+	Source     string
+	Tags       []string
+	Framework  string
+	WithRating bool
 }
 
 func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.FindOptions) {
@@ -84,6 +85,7 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 type ModelWithAddtional struct {
 	Model    `bson:",inline" json:",inline"`
 	Versions []string `bson:"versions" json:"versions"`
+	Rating   Rating   `bson:"rating" json:"rating"`
 }
 
 func (m *ModelsRepository) Get(ctx context.Context, source, name string) (ModelWithAddtional, error) {
@@ -108,14 +110,63 @@ func (m *ModelsRepository) Count(ctx context.Context, opts ModelListOptions) (in
 	return m.Collection.CountDocuments(ctx, cond)
 }
 
-func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]Model, error) {
+func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]ModelWithAddtional, error) {
 	cond, options := opts.ToConditionAndFindOptions()
-	cur, err := m.Collection.Find(ctx, cond, options)
+	var err error
+	var cursor *mongo.Cursor
+	if opts.WithRating {
+		aggregate := []bson.M{
+			{"$match": cond},
+			{"$sort": options.Sort},
+			{"$skip": options.Skip},
+			{"$limit": options.Limit},
+			{"$lookup": bson.M{
+				"from": "comments",
+				"let": bson.M{
+					"postid": bson.M{"$concat": []string{"$source", "/", "$name"}},
+				},
+				"pipeline": []bson.M{
+					{
+						"$match": bson.M{
+							"$expr": bson.M{
+								"$eq": []string{"$postid", "$$postid"},
+							},
+							"rating": bson.M{"$gt": 0},
+						},
+					},
+					{
+						"$group": bson.M{
+							"_id":    "$postid",
+							"rating": bson.M{"$avg": "$rating"},
+							"count":  bson.M{"$sum": 1},
+							"total":  bson.M{"$sum": "$rating"},
+						},
+					},
+				},
+				"as": "rating",
+			}},
+			{
+				"$project": bson.M{
+					"_id":       0,
+					"source":    1,
+					"name":      1,
+					"rating":    1,
+					"framework": 1,
+					"likes":     1,
+					"downloads": 1,
+				},
+			},
+		}
+		cursor, err = m.Collection.Aggregate(ctx, aggregate)
+	} else {
+		cursor, err = m.Collection.Find(ctx, cond, options)
+	}
+
 	if err != nil {
 		return nil, err
 	}
-	result := []Model{}
-	if err = cur.All(ctx, &result); err != nil {
+	result := []ModelWithAddtional{}
+	if err = cursor.All(ctx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
