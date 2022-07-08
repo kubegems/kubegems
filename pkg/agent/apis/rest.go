@@ -363,19 +363,43 @@ func (h *REST) Patch(c *gin.Context) {
 	}
 	defer c.Request.Body.Close()
 
+	ctx := c.Request.Context()
+
 	var patch client.Patch
 	var patchoptions []client.PatchOption
 	switch patchtype := types.PatchType(c.Request.Header.Get("Content-Type")); patchtype {
-	case types.MergePatchType, types.ApplyPatchType, types.JSONPatchType, types.StrategicMergePatchType:
+	case types.MergePatchType, types.JSONPatchType, types.StrategicMergePatchType:
 		patchdata, _ := io.ReadAll(c.Request.Body)
 		patch = client.RawPatch(patchtype, patchdata)
-	default:
-		_ = json.NewDecoder(c.Request.Body).Decode(obj)
+	case types.ApplyPatchType:
+		if err := json.NewDecoder(c.Request.Body).Decode(obj); err != nil {
+			NotOK(c, err)
+			return
+		}
+		// we don't need to do anything on managedFields in patch
 		obj.SetManagedFields(nil)
 		patch = client.Apply
 		patchoptions = append(patchoptions, client.FieldOwner("kubegems-agent"), client.ForceOwnership)
+	default:
+		/*
+			in this case ,user passed in a full document,and 'patch' to the full document.
+			Actually,it is not a sense of patch, it is a update.
+			It may use patch to avoid  conflict(reversion changed) on update during user get-edit-post's long workflow,
+			In order to achieve it, just remove reversion before update.
+		*/
+		if err := json.NewDecoder(c.Request.Body).Decode(obj); err != nil {
+			NotOK(c, err)
+			return
+		}
+		obj.SetResourceVersion("")
+		if err := h.client.Update(ctx, obj); err != nil {
+			NotOK(c, err)
+			return
+		}
+		OK(c, obj)
+		return
 	}
-	if err := h.client.Patch(c.Request.Context(), obj, patch, patchoptions...); err != nil {
+	if err := h.client.Patch(ctx, obj, patch, patchoptions...); err != nil {
 		NotOK(c, err)
 	} else {
 		OK(c, obj)
