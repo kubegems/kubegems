@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/rand"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -15,9 +16,16 @@ type OAMWebServiceProperties struct {
 	Ports           []OAMWebServicePropertiesPort       `json:"ports,omitempty"`
 	ExposeType      string                              `json:"exposeType,omitempty"`
 	CMD             []string                            `json:"cmd,omitempty"`
+	ENV             []OAMWebServicePropertiesEnv        `json:"env,omitempty"`
 	CPU             string                              `json:"cpu,omitempty"`
 	Memory          string                              `json:"memory,omitempty"`
 	VolumeMounts    OAMWebServicePropertiesVolumeMounts `json:"volumeMounts,omitempty"`
+}
+
+type OAMWebServicePropertiesEnv struct {
+	Name      string               `json:"name"`
+	Value     string               `json:"value"`
+	ValueFrom *corev1.EnvVarSource `json:"valueFrom,omitempty"`
 }
 
 func (o OAMWebServiceProperties) RawExtension() *runtime.RawExtension {

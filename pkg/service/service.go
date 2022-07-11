@@ -115,12 +115,13 @@ func Run(ctx context.Context, opts *options.Options) error {
 	kialiconfig.Set(kialiconfig.NewConfig())
 
 	router := &routers.Router{
-		Opts:     opts,
-		Agents:   deps.Agentscli,
-		Argo:     deps.Argocli,
-		Database: deps.Databse,
-		Redis:    deps.Redis,
-		DyConfig: deps.DyConfigProvider,
+		Opts:        opts,
+		GitProvider: deps.Git,
+		Agents:      deps.Agentscli,
+		Argo:        deps.Argocli,
+		Database:    deps.Databse,
+		Redis:       deps.Redis,
+		DyConfig:    deps.DyConfigProvider,
 	}
 
 	exporterHandler := exporter.NewHandler("gems_server", map[string]exporter.Collectorfunc{

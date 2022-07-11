@@ -114,6 +114,7 @@ func (s *SourcesRepository) Update(ctx context.Context, source *Source) error {
 			{Key: "enabled", Value: source.Enabled},
 			{Key: "builtin", Value: source.BuiltIn},
 			{Key: "updationtime", Value: now},
+			{Key: "images", Value: source.Images},
 		}},
 	)
 	return err

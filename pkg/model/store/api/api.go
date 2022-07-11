@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"net/url"
 
 	"github.com/emicklei/go-restful/v3"
@@ -87,6 +88,12 @@ func (m *ModelsAPI) GetModel(req *restful.Request, resp *restful.Response) {
 func decodeSourceModelName(req *restful.Request) (string, string) {
 	source := req.PathParameter("source")
 	name := req.PathParameter("model")
+
+	// model name may contains '/' so we b64encode model name at frontend
+	if decoded, _ := base64.StdEncoding.DecodeString(name); len(decoded) != 0 {
+		name = string(decoded)
+	}
+
 	if decodedname, _ := url.PathUnescape(name); decodedname != "" {
 		name = decodedname
 	}

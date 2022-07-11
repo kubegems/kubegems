@@ -56,9 +56,10 @@ const (
 
 type ModelSpec struct {
 	// +kubebuilder:validation:Required
-	Name    string `json:"name,omitempty"`
-	Version string `json:"version,omitempty"`
-	URL     string `json:"url,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Version   string `json:"version,omitempty"`
+	URL       string `json:"url,omitempty"`
+	Framework string `json:"framework,omitempty"`
 	// +kubebuilder:validation:Required
 	Image string `json:"image,omitempty"`
 }

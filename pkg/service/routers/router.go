@@ -32,6 +32,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/aaa/audit"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/service/aaa/authorization"
+	"kubegems.io/kubegems/pkg/service/apis"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	alerthandler "kubegems.io/kubegems/pkg/service/handlers/alerts"
 	applicationhandler "kubegems.io/kubegems/pkg/service/handlers/application"
@@ -64,10 +65,10 @@ import (
 	"kubegems.io/kubegems/pkg/service/models/cache"
 	"kubegems.io/kubegems/pkg/service/models/validate"
 	"kubegems.io/kubegems/pkg/service/options"
-	v2 "kubegems.io/kubegems/pkg/service/v2"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/system"
@@ -96,13 +97,13 @@ func RealClientIPMiddleware() gin.HandlerFunc {
 }
 
 type Router struct {
-	Opts     *options.Options
-	Agents   *agents.ClientSet
-	Database *database.Database
-	Redis    *redis.Client
-	Argo     *argo.Client
-	DyConfig options.DynamicConfigurationProviderIface
-
+	Opts          *options.Options
+	Agents        *agents.ClientSet
+	Database      *database.Database
+	Redis         *redis.Client
+	Argo          *argo.Client
+	DyConfig      options.DynamicConfigurationProviderIface
+	GitProvider   *git.SimpleLocalProvider
 	auditInstance *audit.DefaultAuditInstance
 	gin           *gin.Engine
 }
@@ -113,7 +114,14 @@ func (r *Router) Run(ctx context.Context, system *system.Options) error {
 	}
 
 	// inner go-restful router
-	if err := r.AddV2Restful(ctx, v2.Dependencies{Agents: r.Agents, Database: r.Database}); err != nil {
+	if err := r.AddRestAPI(ctx, apis.Dependencies{
+		Agents:   r.Agents,
+		Database: r.Database,
+		Mongo:    r.Opts.Mongo,
+		Gitp:     r.GitProvider,
+		Argo:     r.Argo,
+		Redis:    r.Redis,
+	}); err != nil {
 		log.Errorf("add new restful error: %v", err)
 	}
 

@@ -143,6 +143,6 @@ func (h *ApplicationHandler) RegistRouter(rg *gin.RouterGroup) error {
 
 	// ⬇️ 直接使用名称时路由全部注册为复数
 	// 供外部集成使用,填充名称
-	rg.POST("/tenants/:tenant/projects/:project/environments/:environment/applications/:name/images", deploy.DirectUpdateImage)
+	// rg.POST("/tenants/:tenant/projects/:project/environments/:environment/applications/:name/images", deploy.DirectUpdateImage)
 	return nil
 }

@@ -2,6 +2,7 @@ package apiutil
 
 import (
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
@@ -16,13 +17,13 @@ type RestModule interface {
 	RegisterRoute(r *route.Group)
 }
 
-func NewRestfulAPI(filters []restful.FilterFunction, modules []RestModule) http.Handler {
+func NewRestfulAPI(prefix string, filters []restful.FilterFunction, modules []RestModule) http.Handler {
 	ws := new(restful.WebService)
 	for _, filter := range filters {
 		ws.Filter(filter)
 	}
 
-	rg := route.NewGroup("")
+	rg := route.NewGroup(prefix)
 	for _, module := range modules {
 		module.RegisterRoute(rg)
 	}
@@ -33,7 +34,7 @@ func NewRestfulAPI(filters []restful.FilterFunction, modules []RestModule) http.
 	ws.Filter(restful.OPTIONSFilter())
 	return restful.DefaultContainer.
 		Add(ws).
-		Add(route.BuildOpenAPIWebService([]*restful.WebService{ws}, "docs.json", completeInfo))
+		Add(route.BuildOpenAPIWebService([]*restful.WebService{ws}, path.Join(prefix, "docs.json"), completeInfo))
 }
 
 func LogFilter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {

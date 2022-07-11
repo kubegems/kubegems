@@ -16,8 +16,8 @@ import (
 )
 
 type StoreOptions struct {
-	Listen  string         `json:"listen,omitempty"`
-	MongoDB MongoDBOptions `json:"mongodb,omitempty"`
+	Listen  string          `json:"listen,omitempty"`
+	MongoDB *MongoDBOptions `json:"mongodb,omitempty"`
 }
 
 type MongoDBOptions struct {
@@ -30,7 +30,7 @@ type MongoDBOptions struct {
 func DefaultStoreOptions() *StoreOptions {
 	return &StoreOptions{
 		Listen: ":8080",
-		MongoDB: MongoDBOptions{
+		MongoDB: &MongoDBOptions{
 			Addr:     "mongo:27017",
 			Database: "models",
 			Username: "",
@@ -57,8 +57,7 @@ func (s *StoreServer) Run(ctx context.Context) error {
 	log := logr.FromContextOrDiscard(ctx)
 
 	// setup mongodb
-
-	mongocli, err := s.setupMongo(ctx)
+	mongocli, err := SetupMongo(ctx, s.Options.MongoDB)
 	if err != nil {
 		return fmt.Errorf("setup mongo: %v", err)
 	}
@@ -78,14 +77,14 @@ func (s *StoreServer) Run(ctx context.Context) error {
 	return server.ListenAndServe()
 }
 
-func (s *StoreServer) setupMongo(ctx context.Context) (*mongo.Client, error) {
+func SetupMongo(ctx context.Context, opt *MongoDBOptions) (*mongo.Client, error) {
 	mongoopt := &options.ClientOptions{
-		Hosts: strings.Split(s.Options.MongoDB.Addr, ","),
+		Hosts: strings.Split(opt.Addr, ","),
 	}
-	if s.Options.MongoDB.Username != "" && s.Options.MongoDB.Password != "" {
+	if opt.Username != "" && opt.Password != "" {
 		mongoopt.Auth = &options.Credential{
-			Username: s.Options.MongoDB.Username,
-			Password: s.Options.MongoDB.Password,
+			Username: opt.Username,
+			Password: opt.Password,
 		}
 	}
 	mongocli, err := mongo.NewClient(mongoopt)
@@ -107,40 +106,41 @@ func (s *StoreServer) setupAPI(ctx context.Context, db *mongo.Database) (http.Ha
 	if err := modelsapi.InitSchemas(ctx); err != nil {
 		return nil, fmt.Errorf("init schemas: %v", err)
 	}
-	return apiutil.NewRestfulAPI(
-		[]restful.FilterFunction{s.AuthenticationMiddleware},
+	return apiutil.NewRestfulAPI("",
+		[]restful.FilterFunction{AuthenticationMiddleware(s.authc)},
 		[]apiutil.RestModule{modelsapi},
 	), nil
 }
 
-func (s *StoreServer) AuthenticationMiddleware(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
-	whitelist := []string{
-		"/api/v1/login",
-		"/api/v1/register",
-		"/docs.json",
-	}
-	for _, item := range whitelist {
-		if strings.HasPrefix(req.Request.URL.Path, item) {
-			chain.ProcessFilter(req, resp)
+func AuthenticationMiddleware(authc api.AuthenticationManager) restful.FilterFunction {
+	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+		whitelist := []string{
+			"/api/v1/login",
+			"/api/v1/register",
+			"/docs.json",
+		}
+		for _, item := range whitelist {
+			if strings.HasPrefix(req.Request.URL.Path, item) {
+				chain.ProcessFilter(req, resp)
+				return
+			}
+		}
+		// get token from header
+		token := req.HeaderParameter("Authorization")
+		if token == "" {
+			resp.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+		// get bearer token
+		bearerToken := strings.TrimPrefix(token, "Bearer ")
+		info, err := authc.UserInfo(req.Request.Context(), bearerToken)
+		if err != nil {
+			resp.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		// set user info to request,get userinfo using:
+		//  info, _ := req.Attribute("user").(api.UserInfo)
+		req.SetAttribute("user", info)
+		chain.ProcessFilter(req, resp)
 	}
-
-	// get token from header
-	token := req.HeaderParameter("Authorization")
-	if token == "" {
-		resp.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	// get bearer token
-	bearerToken := strings.TrimPrefix(token, "Bearer ")
-	info, err := s.authc.UserInfo(req.Request.Context(), bearerToken)
-	if err != nil {
-		resp.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	// set user info to request,get userinfo using:
-	//  info, _ := req.Attribute("user").(api.UserInfo)
-	req.SetAttribute("user", info)
-	chain.ProcessFilter(req, resp)
 }

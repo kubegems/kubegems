@@ -15,6 +15,7 @@
 package options
 
 import (
+	"kubegems.io/kubegems/pkg/model/store"
 	microservice "kubegems.io/kubegems/pkg/service/handlers/microservice/options"
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
@@ -40,6 +41,7 @@ type Options struct {
 	Mysql        *database.Options                 `json:"mysql,omitempty"`
 	Redis        *redis.Options                    `json:"redis,omitempty"`
 	Microservice *microservice.MicroserviceOptions `json:"microservice,omitempty"`
+	Mongo        *store.MongoDBOptions             `json:"mongo,omitempty"`
 }
 
 func DefaultOptions() *Options {
@@ -56,6 +58,7 @@ func DefaultOptions() *Options {
 		Redis:        redis.NewDefaultOptions(),
 		System:       system.NewDefaultOptions(),
 		Microservice: microservice.NewDefaultOptions(),
+		Mongo:        store.DefaultStoreOptions().MongoDB,
 	}
 	defaultoptions.System.Listen = ":8020"
 	return defaultoptions
