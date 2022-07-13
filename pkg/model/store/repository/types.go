@@ -38,23 +38,23 @@ type ReplyTo struct {
 // model meta in models store
 type Model struct {
 	// nolint: tagliatelle
-	ID           string                 `json:"id,omitempty" bson:"_id,omitempty"`
-	Source       string                 `json:"source"` // source of model (huggingface, ...)
-	Name         string                 `json:"name"`
-	Registry     string                 `json:"registry"`
-	Type         string                 `json:"type"`
-	Tags         []string               `json:"tags"`
-	Author       string                 `json:"author"`
-	License      string                 `json:"license"`
-	Files        []ModelFile            `json:"files"`
-	Framework    string                 `json:"framework"`
-	Paper        []string               `json:"paper"`
-	Intro        string                 `json:"intro"`
-	Downloads    int                    `json:"downloads"`
-	Likes        int                    `json:"likes"`
-	Raw          map[string]interface{} `json:"raw"`
-	CreationTime time.Time              `json:"creationTime"`
-	UpdationTime time.Time              `json:"updationTime"`
+	ID        string                 `json:"id,omitempty" bson:"_id,omitempty"`
+	Source    string                 `json:"source"` // source of model (huggingface, ...)
+	Name      string                 `json:"name"`
+	Registry  string                 `json:"registry"`
+	Type      string                 `json:"type"`
+	Tags      []string               `json:"tags"`
+	Author    string                 `json:"author"`
+	License   string                 `json:"license"`
+	Files     []ModelFile            `json:"files"`
+	Framework string                 `json:"framework"`
+	Paper     map[string]string      `json:"paper"`
+	Intro     string                 `json:"intro"`
+	Downloads int                    `json:"downloads"`
+	Likes     int                    `json:"likes"`
+	Raw       map[string]interface{} `json:"raw"`
+	CreateAt  time.Time              `json:"createAt"`
+	UpdateAt  time.Time              `json:"updateAt"`
 }
 
 type ModelFile struct {

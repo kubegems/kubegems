@@ -29,7 +29,10 @@ func NewRestfulAPI(prefix string, filters []restful.FilterFunction, modules []Re
 	}
 
 	(&route.Tree{RouteUpdateFunc: listWrrapperFunc, Group: rg}).AddToWebService(ws)
-	ws.Filter(restful.CrossOriginResourceSharing{AllowedHeaders: []string{"*"}, AllowedMethods: []string{"*"}}.Filter)
+	ws.Filter(restful.CrossOriginResourceSharing{
+		AllowedHeaders: []string{".*"},
+		AllowedMethods: []string{"*"},
+	}.Filter)
 	ws.Filter(LogFilter)
 	ws.Filter(restful.OPTIONSFilter())
 	return restful.DefaultContainer.
@@ -39,10 +42,9 @@ func NewRestfulAPI(prefix string, filters []restful.FilterFunction, modules []Re
 
 func LogFilter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	start := time.Now()
-	log.Info(req.Request.URL.String(), "method", req.Request.Method, "start", start)
 	chain.ProcessFilter(req, resp)
 	duration := time.Since(start)
-	log.Info(req.Request.URL.String(), "method", req.Request.Method, "code", resp.StatusCode(), "duration", duration.String())
+	log.Info(req.Request.URL.String(), "method", req.Request.Method, "code", resp.StatusCode(), "remote", req.Request.RemoteAddr, "duration", duration.String())
 }
 
 func completeInfo(s *spec.Swagger) {

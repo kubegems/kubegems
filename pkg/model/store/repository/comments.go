@@ -98,7 +98,7 @@ func (o ListCommentOptions) ToConditionAndFindOptions() (interface{}, *options.F
 		condition["replyto.rootid"] = bson.M{"$exists": false}
 	}
 
-	findOptions := options.Find().SetSort(bson.M{"creationTime": -1})
+	findOptions := options.Find().SetSort(bson.M{"creationtime": -1})
 	if o.Size > 0 {
 		findOptions.SetLimit(o.Size)
 	}

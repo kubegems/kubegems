@@ -1,4 +1,4 @@
-package oam
+package modeldeployments
 
 import (
 	"context"
@@ -8,29 +8,35 @@ import (
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/application"
+	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
+	storemodels "kubegems.io/kubegems/pkg/model/store/api/models"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ModelDeploymentOverview struct {
-	Name      string `json:"name"`
-	ModelName string `json:"modelName"`
-	URL       string `json:"url"`
-	Cluster   string `json:"cluster"`
-	Namespace string `json:"namespace"`
-	Creator   string `json:"creator"`
-
-	Tenant  string `json:"tenant"`
-	Project string `json:"project"`
-	Env     string `json:"env"`
+	AppRef
+	Name         string `json:"name"`
+	ModelName    string `json:"modelName"`
+	ModelVersion string `json:"modelVersion"`
+	URL          string `json:"url"`
+	Cluster      string `json:"cluster"`
+	Namespace    string `json:"namespace"`
+	Creator      string `json:"creator"`
+	Phase        string `json:"phase"`
 }
 
-func (o *OAM) ListAllModelDeployments(req *restful.Request, resp *restful.Response) {
+func EncodeModelName(modelname string) string {
+	// can't use the model name as label value which contains '/'
+	return strings.Replace(modelname, "/", ".", -1)
+}
+
+func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	log := logr.FromContextOrDiscard(ctx).WithValues("method", "ListAllModelDeployments")
-
+	source, modelname := storemodels.DecodeSourceModelName(req)
 	retlist := []ModelDeploymentOverview{}
 	for _, cluster := range o.Clientset.Clusters() {
 		cli, err := o.Clientset.ClientOf(ctx, cluster)
@@ -39,7 +45,10 @@ func (o *OAM) ListAllModelDeployments(req *restful.Request, resp *restful.Respon
 			continue
 		}
 		list := &modelsv1beta1.ModelDeploymentList{}
-		if err := cli.List(ctx, list); err != nil {
+		if err := cli.List(ctx, list, client.MatchingLabels{
+			modelscommon.LabelModelSource: source,
+			modelscommon.LabelModelName:   EncodeModelName(modelname),
+		}); err != nil {
 			log.Error(err, "failed to list model deployments", "cluster", cluster)
 			continue
 		}
@@ -47,20 +56,28 @@ func (o *OAM) ListAllModelDeployments(req *restful.Request, resp *restful.Respon
 			if md.Annotations == nil {
 				md.Annotations = make(map[string]string)
 			}
+
+			appref := &AppRef{}
+			appref.FromJson(md.Annotations[application.AnnotationRef])
 			retlist = append(retlist, ModelDeploymentOverview{
-				Name:      md.Name,
-				ModelName: md.Spec.Model.Name,
-				URL:       md.Spec.Host,
-				Cluster:   cluster,
-				Namespace: md.Namespace,
-				Creator:   md.Annotations[application.AnnotationCreator],
+				Name:         md.Name,
+				ModelName:    md.Spec.Model.Name,
+				ModelVersion: md.Spec.Model.Version,
+				URL:          "http://" + md.Spec.Host,
+				Phase:        string(md.Status.Phase),
+				Cluster:      cluster,
+				Namespace:    md.Namespace,
+				Creator:      appref.Username,
+				AppRef:       *appref,
 			})
 		}
 	}
-	response.OK(resp, retlist)
+	listoptions := request.GetListOptions(req.Request)
+	paged := response.NewPageData(retlist, listoptions.Page, listoptions.Size, nil, nil)
+	response.OK(resp, paged)
 }
 
-func (o *OAM) ListModelDeployments(req *restful.Request, resp *restful.Response) {
+func (o *ModelDeploymentAPI) ListModelDeployments(req *restful.Request, resp *restful.Response) {
 	o.AppRefFunc(req, resp, func(ctx context.Context, cli client.Client, ref AppRef) (interface{}, error) {
 		list := &modelsv1beta1.ModelDeploymentList{}
 		if err := cli.List(ctx, list, client.InNamespace(ref.Namespace)); err != nil {
@@ -74,7 +91,7 @@ func (o *OAM) ListModelDeployments(req *restful.Request, resp *restful.Response)
 	})
 }
 
-func (o *OAM) GetModelDeployment(req *restful.Request, resp *restful.Response) {
+func (o *ModelDeploymentAPI) GetModelDeployment(req *restful.Request, resp *restful.Response) {
 	o.AppRefFunc(req, resp, func(ctx context.Context, cli client.Client, ref AppRef) (interface{}, error) {
 		md := &modelsv1beta1.ModelDeployment{}
 		if err := cli.Get(ctx, client.ObjectKey{Name: ref.Name, Namespace: ref.Namespace}, md); err != nil {
@@ -84,12 +101,24 @@ func (o *OAM) GetModelDeployment(req *restful.Request, resp *restful.Response) {
 	})
 }
 
-func (o *OAM) CreateModelDeployment(req *restful.Request, resp *restful.Response) {
+func (o *ModelDeploymentAPI) CreateModelDeployment(req *restful.Request, resp *restful.Response) {
 	o.AppRefFunc(req, resp, func(ctx context.Context, cli client.Client, ref AppRef) (interface{}, error) {
 		md := &modelsv1beta1.ModelDeployment{}
 		if err := req.ReadEntity(md); err != nil {
 			return nil, err
 		}
+		// 因选择模型商店需要展示特定模型的实例，为便于选择，设置模型名称label
+		if md.Labels == nil {
+			md.Labels = make(map[string]string)
+		}
+
+		md.Labels[modelscommon.LabelModelName] = EncodeModelName(md.Spec.Model.Name)
+		md.Labels[modelscommon.LabelModelSource] = md.Spec.Model.Source
+		// 为便于示租户项目环境，设置annotations
+		if md.Annotations == nil {
+			md.Annotations = make(map[string]string)
+		}
+		md.Annotations[application.AnnotationRef] = ref.Json()
 		// set the namespace
 		md.Namespace = ref.Namespace
 		if err := cli.Create(ctx, md); err != nil {
@@ -99,7 +128,7 @@ func (o *OAM) CreateModelDeployment(req *restful.Request, resp *restful.Response
 	})
 }
 
-func (o *OAM) UpdateModelDeployment(req *restful.Request, resp *restful.Response) {
+func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *restful.Response) {
 	o.AppRefFunc(req, resp, func(ctx context.Context, cli client.Client, ref AppRef) (interface{}, error) {
 		md := &modelsv1beta1.ModelDeployment{}
 		if err := req.ReadEntity(md); err != nil {
@@ -114,7 +143,7 @@ func (o *OAM) UpdateModelDeployment(req *restful.Request, resp *restful.Response
 	})
 }
 
-func (o *OAM) DeleteModelDeployment(req *restful.Request, resp *restful.Response) {
+func (o *ModelDeploymentAPI) DeleteModelDeployment(req *restful.Request, resp *restful.Response) {
 	o.AppRefFunc(req, resp, func(ctx context.Context, cli client.Client, ref AppRef) (interface{}, error) {
 		md := &modelsv1beta1.ModelDeployment{ObjectMeta: metav1.ObjectMeta{Name: ref.Name, Namespace: ref.Namespace}}
 		if err := cli.Delete(ctx, md); err != nil {
@@ -124,7 +153,7 @@ func (o *OAM) DeleteModelDeployment(req *restful.Request, resp *restful.Response
 	})
 }
 
-func (o *OAM) PatchModelDeployment(req *restful.Request, resp *restful.Response) {
+func (o *ModelDeploymentAPI) PatchModelDeployment(req *restful.Request, resp *restful.Response) {
 	o.AppRefFunc(req, resp, func(ctx context.Context, cli client.Client, ref AppRef) (interface{}, error) {
 		md := &modelsv1beta1.ModelDeployment{}
 		if err := req.ReadEntity(md); err != nil {

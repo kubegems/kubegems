@@ -28,5 +28,3 @@ In order to replicate the container startup scripts execute this command:
 
 {{- end }}
 
-{{- include "common.warnings.rollingTag" .Values.models.image }}
-{{- include "kubegems.models.validateValues" . }}

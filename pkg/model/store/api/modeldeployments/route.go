@@ -1,4 +1,4 @@
-package oam
+package modeldeployments
 
 import (
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
@@ -7,12 +7,19 @@ import (
 	"kubegems.io/kubegems/pkg/utils/route"
 )
 
-type OAM struct {
+type ModelDeploymentAPI struct {
 	Clientset *agents.ClientSet
 	Database  *database.Database
 }
 
-func (o *OAM) RegisterRoute(rg *route.Group) {
+func NewModelDeploymentAPI(clientset *agents.ClientSet, database *database.Database) *ModelDeploymentAPI {
+	return &ModelDeploymentAPI{
+		Clientset: clientset,
+		Database:  database,
+	}
+}
+
+func (o *ModelDeploymentAPI) RegisterRoute(rg *route.Group) {
 	rg.AddSubGroup(
 		route.NewGroup("/sources/{source}/models/{model}").
 			Tag("model deployment").
@@ -22,6 +29,7 @@ func (o *OAM) RegisterRoute(rg *route.Group) {
 			).
 			AddRoutes(
 				route.GET("/instances").To(o.ListAllModelDeployments).
+					Paged().
 					Response([]ModelDeploymentOverview{}).
 					Doc("list all model deployments of the model"),
 			),

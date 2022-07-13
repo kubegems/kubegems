@@ -1,12 +1,14 @@
-package api
+package models
 
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"net/url"
 
 	"github.com/emicklei/go-restful/v3"
 	"go.mongodb.org/mongo-driver/mongo"
+	"kubegems.io/kubegems/pkg/model/store/auth"
 	"kubegems.io/kubegems/pkg/model/store/repository"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
@@ -17,16 +19,20 @@ type ModelsAPI struct {
 	CommentRepository *repository.CommentsRepository
 	SourcesRepository *repository.SourcesRepository
 
-	authorization AuthorizationManager
+	authorization auth.AuthorizationManager
 }
 
-func NewModelsAPI(ctx context.Context, db *mongo.Database) *ModelsAPI {
-	return &ModelsAPI{
+func NewModelsAPI(ctx context.Context, db *mongo.Database) (*ModelsAPI, error) {
+	api := &ModelsAPI{
 		ModelRepository:   repository.NewModelsRepository(db),
 		CommentRepository: repository.NewCommentsRepository(db),
 		SourcesRepository: repository.NewSourcesRepository(db),
-		authorization:     NewLocalAuthorization(ctx, db),
+		authorization:     auth.NewLocalAuthorization(ctx, db),
 	}
+	if err := api.InitSchemas(ctx); err != nil {
+		return nil, fmt.Errorf("init schemas: %v", err)
+	}
+	return api, nil
 }
 
 func (m *ModelsAPI) InitSchemas(ctx context.Context) error {
@@ -55,6 +61,7 @@ func (m *ModelsAPI) ListModels(req *restful.Request, resp *restful.Response) {
 		Tags:              request.Query(req.Request, "tags", []string{}),
 		Framework:         req.QueryParameter("framework"),
 		Source:            req.PathParameter("source"),
+		WithRating:        request.Query(req.Request, "withRating", true),
 	}
 	list, err := m.ModelRepository.List(ctx, listOptions)
 	if err != nil {
@@ -76,7 +83,7 @@ func postidof(source, name string) string {
 }
 
 func (m *ModelsAPI) GetModel(req *restful.Request, resp *restful.Response) {
-	source, name := decodeSourceModelName(req)
+	source, name := DecodeSourceModelName(req)
 	model, err := m.ModelRepository.Get(req.Request.Context(), source, name)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
@@ -85,7 +92,7 @@ func (m *ModelsAPI) GetModel(req *restful.Request, resp *restful.Response) {
 	response.OK(resp, model)
 }
 
-func decodeSourceModelName(req *restful.Request) (string, string) {
+func DecodeSourceModelName(req *restful.Request) (string, string) {
 	source := req.PathParameter("source")
 	name := req.PathParameter("model")
 
@@ -114,7 +121,7 @@ func (m *ModelsAPI) CreateModel(req *restful.Request, resp *restful.Response) {
 }
 
 func (m *ModelsAPI) DeleteModel(req *restful.Request, resp *restful.Response) {
-	source, name := decodeSourceModelName(req)
+	source, name := DecodeSourceModelName(req)
 	if err := m.ModelRepository.Delete(req.Request.Context(), source, name); err != nil {
 		response.BadRequest(resp, err.Error())
 		return
@@ -143,7 +150,7 @@ type CommentResponse struct {
 }
 
 func (m *ModelsAPI) ListComments(req *restful.Request, resp *restful.Response) {
-	postid := postidof(decodeSourceModelName(req))
+	postid := postidof(DecodeSourceModelName(req))
 
 	withRepliesCount := request.Query(req.Request, "withRepliesCount", false)
 	withReplies := request.Query(req.Request, "withReplies", false)
@@ -169,8 +176,7 @@ func (m *ModelsAPI) ListComments(req *restful.Request, resp *restful.Response) {
 }
 
 func (m *ModelsAPI) CreateComment(req *restful.Request, resp *restful.Response) {
-	postid := postidof(decodeSourceModelName(req))
-	info, _ := req.Attribute("user").(UserInfo)
+	postid := postidof(DecodeSourceModelName(req))
 
 	comment := &repository.Comment{}
 	if err := req.ReadEntity(comment); err != nil {
@@ -178,7 +184,7 @@ func (m *ModelsAPI) CreateComment(req *restful.Request, resp *restful.Response) 
 		return
 	}
 	// comment username
-	comment.Username = info.Username
+	comment.Username = GetUsername(req)
 	if err := m.CommentRepository.Create(req.Request.Context(), postid, comment); err != nil {
 		response.BadRequest(resp, err.Error())
 		return
@@ -187,8 +193,6 @@ func (m *ModelsAPI) CreateComment(req *restful.Request, resp *restful.Response) 
 }
 
 func (m *ModelsAPI) UpdateComment(req *restful.Request, resp *restful.Response) {
-	info, _ := req.Attribute("user").(UserInfo)
-
 	comment := &repository.Comment{}
 	if err := req.ReadEntity(comment); err != nil {
 		response.BadRequest(resp, err.Error())
@@ -196,7 +200,7 @@ func (m *ModelsAPI) UpdateComment(req *restful.Request, resp *restful.Response) 
 	}
 	comment.ID = req.PathParameter("comment")
 	// comment username
-	comment.Username = info.Username
+	comment.Username = GetUsername(req)
 	if err := m.CommentRepository.Update(req.Request.Context(), comment); err != nil {
 		response.BadRequest(resp, err.Error())
 		return
@@ -205,11 +209,10 @@ func (m *ModelsAPI) UpdateComment(req *restful.Request, resp *restful.Response) 
 }
 
 func (m *ModelsAPI) DeleteComment(req *restful.Request, resp *restful.Response) {
-	info, _ := req.Attribute("user").(UserInfo)
 	// check if user is the owner of the comment
 	comment := &repository.Comment{
 		ID:       req.PathParameter("comment"),
-		Username: info.Username,
+		Username: GetUsername(req),
 	}
 	if err := m.CommentRepository.Delete(req.Request.Context(), comment); err != nil {
 		response.BadRequest(resp, err.Error())
@@ -219,7 +222,7 @@ func (m *ModelsAPI) DeleteComment(req *restful.Request, resp *restful.Response) 
 }
 
 func (m *ModelsAPI) GetRating(req *restful.Request, resp *restful.Response) {
-	postid := postidof(decodeSourceModelName(req))
+	postid := postidof(DecodeSourceModelName(req))
 
 	rating, err := m.CommentRepository.Rating(req.Request.Context(), postid)
 	if err != nil {
@@ -249,7 +252,7 @@ type ResponseSource struct {
 }
 
 func (m *ModelsAPI) ListSources(req *restful.Request, resp *restful.Response) {
-	m.IfPermission(req, resp, PermissionNone, func(ctx context.Context) (interface{}, error) {
+	m.IfPermission(req, resp, auth.PermissionNone, func(ctx context.Context) (interface{}, error) {
 		listOptions := repository.ListSourceOptions{
 			CommonListOptions: ParseCommonListOptions(req),
 		}
@@ -293,7 +296,7 @@ func (m *ModelsAPI) countSource(ctx context.Context, source string) (SourceCount
 }
 
 func (m *ModelsAPI) CreateSource(req *restful.Request, resp *restful.Response) {
-	m.IfPermission(req, resp, PermissionAdmin, func(ctx context.Context) (interface{}, error) {
+	m.IfPermission(req, resp, auth.PermissionAdmin, func(ctx context.Context) (interface{}, error) {
 		source := &repository.Source{}
 		if err := req.ReadEntity(source); err != nil {
 			return nil, err
@@ -306,7 +309,7 @@ func (m *ModelsAPI) CreateSource(req *restful.Request, resp *restful.Response) {
 }
 
 func (m *ModelsAPI) DeleteSource(req *restful.Request, resp *restful.Response) {
-	m.IfPermission(req, resp, PermissionAdmin, func(ctx context.Context) (interface{}, error) {
+	m.IfPermission(req, resp, auth.PermissionAdmin, func(ctx context.Context) (interface{}, error) {
 		source := &repository.Source{
 			Name: req.PathParameter("source"),
 		}
@@ -318,7 +321,7 @@ func (m *ModelsAPI) DeleteSource(req *restful.Request, resp *restful.Response) {
 }
 
 func (m *ModelsAPI) UpdateSource(req *restful.Request, resp *restful.Response) {
-	m.IfPermission(req, resp, PermissionAdmin, func(ctx context.Context) (interface{}, error) {
+	m.IfPermission(req, resp, auth.PermissionAdmin, func(ctx context.Context) (interface{}, error) {
 		source := &repository.Source{}
 		if err := req.ReadEntity(source); err != nil {
 			return nil, err
@@ -339,9 +342,6 @@ func ParseCommonListOptions(r *restful.Request) repository.CommonListOptions {
 		Search: request.Query(r.Request, "search", ""),
 		Sort:   request.Query(r.Request, "sort", ""),
 	}
-	if opts.Sort == "" {
-		opts.Sort = "-creationTime"
-	}
 	if opts.Page < 1 {
 		opts.Page = 1
 	}
@@ -349,4 +349,9 @@ func ParseCommonListOptions(r *restful.Request) repository.CommonListOptions {
 		opts.Size = 10
 	}
 	return opts
+}
+
+func GetUsername(req *restful.Request) string {
+	username, _ := req.Attribute("username").(string)
+	return username
 }

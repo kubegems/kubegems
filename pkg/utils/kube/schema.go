@@ -31,6 +31,7 @@ import (
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	applicationv1beta1 "kubegems.io/kubegems/pkg/apis/application/v1beta1"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
 	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 )
 
@@ -50,6 +51,7 @@ func AddToschema(schema *runtime.Scheme) {
 	_ = loggingv1beta1.AddToScheme(schema)
 	_ = networkingpkgv1alpha3.AddToScheme(schema)
 	_ = networkingpkgv1beta1.AddToScheme(schema)
+	_ = modelsv1beta1.AddToScheme(schema)
 }
 
 // nolint: gochecknoinits

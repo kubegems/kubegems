@@ -135,7 +135,7 @@ func Run(ctx context.Context, opts *options.Options) error {
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return router.Run(ctx, opts.System)
+		return router.Run(ctx)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)

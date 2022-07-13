@@ -14,6 +14,10 @@ type ApplicationsAPI struct {
 	ApplicationProcessor *application.ApplicationProcessor
 }
 
+func NewApplicationsAPI(applicationProcessor *application.ApplicationProcessor) *ApplicationsAPI {
+	return &ApplicationsAPI{ApplicationProcessor: applicationProcessor}
+}
+
 func (m *ApplicationsAPI) RegisterRoute(rg *route.Group) {
 	rg.AddRoutes(
 		route.POST("/tenants/{tenant}/projects/{project}/environments/{environment}/applications/{application}/images").To(

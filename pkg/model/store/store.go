@@ -8,34 +8,31 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/go-logr/logr"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	gomongo "go.mongodb.org/mongo-driver/mongo"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/model/store/api"
+	"kubegems.io/kubegems/pkg/model/store/api/modeldeployments"
+	"kubegems.io/kubegems/pkg/model/store/api/models"
+	"kubegems.io/kubegems/pkg/model/store/auth"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
+	"kubegems.io/kubegems/pkg/utils/jwt"
+	"kubegems.io/kubegems/pkg/utils/mongo"
 )
 
 type StoreOptions struct {
-	Listen  string          `json:"listen,omitempty"`
-	MongoDB *MongoDBOptions `json:"mongodb,omitempty"`
+	Listen string            `json:"listen,omitempty"`
+	Mongo  *mongo.Options    `json:"mongo,omitempty"`
+	Mysql  *database.Options `json:"mysql,omitempty"`
+	Jwt    *jwt.Options      `json:"jwt,omitempty"`
 }
 
-type MongoDBOptions struct {
-	Addr     string `json:"addr,omitempty" description:"mongodb address"`
-	Database string `json:"database,omitempty" description:"mongodb database"`
-	Username string `json:"username,omitempty" description:"mongodb username"`
-	Password string `json:"password,omitempty" description:"mongodb password"`
-}
-
-func DefaultStoreOptions() *StoreOptions {
+func DefaultOptions() *StoreOptions {
 	return &StoreOptions{
 		Listen: ":8080",
-		MongoDB: &MongoDBOptions{
-			Addr:     "mongo:27017",
-			Database: "models",
-			Username: "",
-			Password: "",
-		},
+		Mongo:  mongo.DefaultOptions(),
+		Mysql:  database.NewDefaultOptions(),
+		Jwt:    jwt.DefaultOptions(),
 	}
 }
 
@@ -43,32 +40,45 @@ func Run(ctx context.Context, options *StoreOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
 	server := StoreServer{
 		Options: options,
-		authc:   api.NewJWTAuthenticationManager(),
 	}
 	return server.Run(ctx)
 }
 
 type StoreServer struct {
 	Options *StoreOptions
-	authc   api.AuthenticationManager
 }
 
 func (s *StoreServer) Run(ctx context.Context) error {
 	log := logr.FromContextOrDiscard(ctx)
 
 	// setup mongodb
-	mongocli, err := SetupMongo(ctx, s.Options.MongoDB)
+	mongocli, mongodb, err := mongo.NewMongoDB(ctx, s.Options.Mongo)
 	if err != nil {
 		return fmt.Errorf("setup mongo: %v", err)
 	}
 	defer mongocli.Disconnect(ctx)
 
-	handler, err := s.setupAPI(ctx, mongocli.Database(s.Options.MongoDB.Database))
+	db, err := database.NewDatabase(s.Options.Mysql)
+	if err != nil {
+		return fmt.Errorf("setup mysql: %v", err)
+	}
+	agents, err := agents.NewClientSet(db)
+	if err != nil {
+		return fmt.Errorf("setup agents: %v", err)
+	}
+
+	// setup api
+	handler, err := s.SetupAPI(ctx, APIDependencies{
+		Mongo:    mongodb,
+		Authc:    auth.NewJWTAuthenticationManager(s.Options.Jwt),
+		Database: db,
+		Agents:   agents,
+	})
 	if err != nil {
 		return fmt.Errorf("setup api: %v", err)
 	}
 
-	log.Info("start web service", "listen", s.Options.Listen)
+	log.Info("start model store service", "listen", s.Options.Listen)
 	server := &http.Server{Addr: s.Options.Listen, Handler: handler}
 	go func() {
 		<-ctx.Done()
@@ -77,46 +87,35 @@ func (s *StoreServer) Run(ctx context.Context) error {
 	return server.ListenAndServe()
 }
 
-func SetupMongo(ctx context.Context, opt *MongoDBOptions) (*mongo.Client, error) {
-	mongoopt := &options.ClientOptions{
-		Hosts: strings.Split(opt.Addr, ","),
-	}
-	if opt.Username != "" && opt.Password != "" {
-		mongoopt.Auth = &options.Credential{
-			Username: opt.Username,
-			Password: opt.Password,
-		}
-	}
-	mongocli, err := mongo.NewClient(mongoopt)
-	if err != nil {
-		return nil, err
-	}
-	if err := mongocli.Connect(ctx); err != nil {
-		return nil, err
-	}
-	if err := mongocli.Ping(ctx, nil); err != nil {
-		return nil, err
-	}
-	return mongocli, nil
+type APIDependencies struct {
+	Agents   *agents.ClientSet
+	Database *database.Database
+	Mongo    *gomongo.Database
+	Authc    auth.AuthenticationManager
 }
 
-func (s *StoreServer) setupAPI(ctx context.Context, db *mongo.Database) (http.Handler, error) {
-	// setup web service
-	modelsapi := api.NewModelsAPI(ctx, db)
-	if err := modelsapi.InitSchemas(ctx); err != nil {
-		return nil, fmt.Errorf("init schemas: %v", err)
+func (s *StoreServer) SetupAPI(ctx context.Context, deps APIDependencies) (http.Handler, error) {
+	// models api
+	modelsapi, err := models.NewModelsAPI(ctx, deps.Mongo)
+	if err != nil {
+		return nil, fmt.Errorf("setup models api: %v", err)
 	}
-	return apiutil.NewRestfulAPI("",
-		[]restful.FilterFunction{AuthenticationMiddleware(s.authc)},
-		[]apiutil.RestModule{modelsapi},
+	// modeldeployment api
+	modeldeploymentsapi := modeldeployments.NewModelDeploymentAPI(deps.Agents, deps.Database)
+	return apiutil.NewRestfulAPI("v1",
+		[]restful.FilterFunction{
+			AuthenticationMiddleware(deps.Authc),
+		},
+		[]apiutil.RestModule{
+			modelsapi,
+			modeldeploymentsapi,
+		},
 	), nil
 }
 
-func AuthenticationMiddleware(authc api.AuthenticationManager) restful.FilterFunction {
+func AuthenticationMiddleware(authc auth.AuthenticationManager) restful.FilterFunction {
 	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 		whitelist := []string{
-			"/api/v1/login",
-			"/api/v1/register",
 			"/docs.json",
 		}
 		for _, item := range whitelist {
@@ -139,8 +138,8 @@ func AuthenticationMiddleware(authc api.AuthenticationManager) restful.FilterFun
 			return
 		}
 		// set user info to request,get userinfo using:
-		//  info, _ := req.Attribute("user").(api.UserInfo)
-		req.SetAttribute("user", info)
+		//  username, _ := req.Attribute("username").(string)
+		req.SetAttribute("username", info.Username)
 		chain.ProcessFilter(req, resp)
 	}
 }

@@ -224,7 +224,7 @@ func (r *Reconciler) DeployHuggingFaceModel(ctx context.Context, md *modelsv1bet
 						},
 					},
 					Ports: []OAMWebServicePropertiesPort{
-						{Name: "http", Port: servingPort, Expose: true},
+						{Name: "http", Port: servingPort},
 					},
 				}.RawExtension(),
 				Traits: []oamcommon.ApplicationTrait{

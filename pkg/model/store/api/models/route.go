@@ -1,4 +1,4 @@
-package api
+package models
 
 import (
 	"kubegems.io/kubegems/pkg/model/store/repository"
@@ -45,6 +45,14 @@ func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 					route.QueryParameter("tags", "filter models contains all tags").Optional(),
 				),
 				route.DELETE("/models/{model}").To(m.DeleteModel).Doc("delete model"),
+			).
+			AddSubGroup(route.
+				NewGroup("/sync").Tag("sync models").
+				AddRoutes(
+					route.GET("").To(m.SyncStatus).Doc("sync status").Response(SyncStatus{}),
+					route.POST("").To(m.StartSync).Doc("start sync"),
+					route.DELETE("").To(m.StopSync).Doc("stop sync"),
+				),
 			).
 			AddSubGroup(
 				route.NewGroup("/models/{model}").

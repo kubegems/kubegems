@@ -49,9 +49,13 @@ spec:
                 type: string
               model:
                 properties:
+                  framework:
+                    type: string
                   image:
                     type: string
                   name:
+                    type: string
+                  source:
                     type: string
                   url:
                     type: string
@@ -89,8 +93,6 @@ spec:
                       to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     type: object
                 type: object
-              type:
-                type: string
             type: object
           status:
             properties:
@@ -267,31 +269,150 @@ spec:
                     description: The generation observed by the application controller.
                     format: int64
                     type: integer
-                  policy:
-                    description: PolicyStatus records the status of policy
-                    items:
-                      description: PolicyStatus records the status of policy
-                      properties:
-                        name:
-                          type: string
-                        status:
+                  resourceTracker:
+                    description: ResourceTracker record the status of the ResourceTracker
+                    properties:
+                      apiVersion:
+                        description: API version of the referent.
+                        type: string
+                      fieldPath:
+                        description: 'If referring to a piece of an object instead
+                          of an entire object, this string should contain a valid
+                          JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                          For example, if the object reference is to a container within
+                          a pod, this would take on a value like: "spec.containers{name}"
+                          (where "name" refers to the name of the container that triggered
+                          the event) or if no container name is specified "spec.containers[2]"
+                          (container with index 2 in this pod). This syntax is chosen
+                          only to have some well-defined way of referencing a part
+                          of an object. TODO: this design is not final and this field
+                          is subject to change in the future.'
+                        type: string
+                      kind:
+                        description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                        type: string
+                      name:
+                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                        type: string
+                      namespace:
+                        description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                        type: string
+                      resourceVersion:
+                        description: 'Specific resourceVersion to which this reference
+                          is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                        type: string
+                      uid:
+                        description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                        type: string
+                    type: object
+                  rollout:
+                    description: AppRolloutStatus defines the observed state of AppRollout
+                    properties:
+                      LastSourceAppRevision:
+                        description: LastSourceAppRevision contains the name of the
+                          app that we need to upgrade from. We will restart the rollout
+                          if this is not the same as the spec
+                        type: string
+                      batchRollingState:
+                        description: BatchRollingState only meaningful when the Status
+                          is rolling
+                        type: string
+                      conditions:
+                        description: Conditions of the resource.
+                        items:
+                          description: A Condition that may apply to a resource.
+                          properties:
+                            lastTransitionTime:
+                              description: LastTransitionTime is the last time this
+                                condition transitioned from one status to another.
+                              format: date-time
+                              type: string
+                            message:
+                              description: A Message containing details about this
+                                condition's last transition from one status to another,
+                                if any.
+                              type: string
+                            reason:
+                              description: A Reason for this condition's last transition
+                                from one status to another.
+                              type: string
+                            status:
+                              description: Status of this condition; is it currently
+                                True, False, or Unknown?
+                              type: string
+                            type:
+                              description: Type of this condition. At most one of
+                                each condition type may apply to a resource at any
+                                point in time.
+                              type: string
+                          required:
+                          - lastTransitionTime
+                          - reason
+                          - status
+                          - type
                           type: object
-                          x-kubernetes-preserve-unknown-fields: true
-                        type:
-                          type: string
-                      required:
-                      - name
-                      - type
-                      type: object
-                    type: array
+                        type: array
+                      currentBatch:
+                        description: The current batch the rollout is working on/blocked
+                          it starts from 0
+                        format: int32
+                        type: integer
+                      lastAppliedPodTemplateIdentifier:
+                        description: lastAppliedPodTemplateIdentifier is a string
+                          that uniquely represent the last pod template each workload
+                          type could use different ways to identify that so we cannot
+                          compare between resources We update this field only after
+                          a successful rollout
+                        type: string
+                      lastTargetAppRevision:
+                        description: LastUpgradedTargetAppRevision contains the name
+                          of the app that we upgraded to We will restart the rollout
+                          if this is not the same as the spec
+                        type: string
+                      rollingState:
+                        description: RollingState is the Rollout State
+                        type: string
+                      rolloutOriginalSize:
+                        description: RolloutTargetSize is the size of the target resources.
+                          This is determined once the initial spec verification and
+                          does not change until the rollout is restarted
+                        format: int32
+                        type: integer
+                      rolloutTargetSize:
+                        description: RolloutTargetSize is the size of the target resources.
+                          This is determined once the initial spec verification and
+                          does not change until the rollout is restarted
+                        format: int32
+                        type: integer
+                      targetGeneration:
+                        description: NewPodTemplateIdentifier is a string that uniquely
+                          represent the new pod template each workload type could
+                          use different ways to identify that so we cannot compare
+                          between resources
+                        type: string
+                      upgradedReadyReplicas:
+                        description: UpgradedReadyReplicas is the number of Pods upgraded
+                          by the rollout controller that have a Ready Condition.
+                        format: int32
+                        type: integer
+                      upgradedReplicas:
+                        description: UpgradedReplicas is the number of Pods upgraded
+                          by the rollout controller
+                        format: int32
+                        type: integer
+                    required:
+                    - currentBatch
+                    - lastTargetAppRevision
+                    - rollingState
+                    - upgradedReadyReplicas
+                    - upgradedReplicas
+                    type: object
                   services:
                     description: Services record the status of the application services
                     items:
                       description: ApplicationComponentStatus record the health status
                         of App component
                       properties:
-                        cluster:
-                          type: string
                         env:
                           type: string
                         healthy:
@@ -299,8 +420,6 @@ spec:
                         message:
                           type: string
                         name:
-                          type: string
-                        namespace:
                           type: string
                         scopes:
                           items:
@@ -405,7 +524,7 @@ spec:
                     type: array
                   status:
                     description: ApplicationPhase is a label for the condition of
-                      an application at the current time
+                      a application at the current time
                     type: string
                   workflow:
                     description: Workflow record the status of workflow
@@ -474,32 +593,15 @@ spec:
                             description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                             type: string
                         type: object
-                      finished:
-                        type: boolean
-                      message:
-                        type: string
                       mode:
                         description: WorkflowMode describes the mode of workflow
-                        type: string
-                      startTime:
-                        format: date-time
                         type: string
                       steps:
                         items:
                           description: WorkflowStepStatus record the status of a workflow
-                            step, include step status and subStep status
+                            step
                           properties:
-                            firstExecuteTime:
-                              description: FirstExecuteTime is the first time this
-                                step execution.
-                              format: date-time
-                              type: string
                             id:
-                              type: string
-                            lastExecuteTime:
-                              description: LastExecuteTime is the last time this step
-                                execution.
-                              format: date-time
                               type: string
                             message:
                               description: A human readable message indicating details
@@ -516,44 +618,45 @@ spec:
                                 about why the workflowStep is in this state.
                               type: string
                             subSteps:
-                              items:
-                                description: WorkflowSubStepStatus record the status
-                                  of a workflow subStep
-                                properties:
-                                  firstExecuteTime:
-                                    description: FirstExecuteTime is the first time
-                                      this step execution.
-                                    format: date-time
-                                    type: string
-                                  id:
-                                    type: string
-                                  lastExecuteTime:
-                                    description: LastExecuteTime is the last time
-                                      this step execution.
-                                    format: date-time
-                                    type: string
-                                  message:
-                                    description: A human readable message indicating
-                                      details about why the workflowStep is in this
-                                      state.
-                                    type: string
-                                  name:
-                                    type: string
-                                  phase:
-                                    description: WorkflowStepPhase describes the phase
-                                      of a workflow step.
-                                    type: string
-                                  reason:
-                                    description: A brief CamelCase message indicating
-                                      details about why the workflowStep is in this
-                                      state.
-                                    type: string
-                                  type:
-                                    type: string
-                                required:
-                                - id
-                                type: object
-                              type: array
+                              description: SubStepsStatus record the status of workflow
+                                steps.
+                              properties:
+                                mode:
+                                  description: WorkflowMode describes the mode of
+                                    workflow
+                                  type: string
+                                stepIndex:
+                                  type: integer
+                                steps:
+                                  items:
+                                    description: WorkflowSubStepStatus record the
+                                      status of a workflow step
+                                    properties:
+                                      id:
+                                        type: string
+                                      message:
+                                        description: A human readable message indicating
+                                          details about why the workflowStep is in
+                                          this state.
+                                        type: string
+                                      name:
+                                        type: string
+                                      phase:
+                                        description: WorkflowStepPhase describes the
+                                          phase of a workflow step.
+                                        type: string
+                                      reason:
+                                        description: A brief CamelCase message indicating
+                                          details about why the workflowStep is in
+                                          this state.
+                                        type: string
+                                      type:
+                                        type: string
+                                    required:
+                                    - id
+                                    type: object
+                                  type: array
+                              type: object
                             type:
                               type: string
                           required:
@@ -562,12 +665,9 @@ spec:
                         type: array
                       suspend:
                         type: boolean
-                      suspendState:
-                        type: string
                       terminated:
                         type: boolean
                     required:
-                    - finished
                     - mode
                     - suspend
                     - terminated

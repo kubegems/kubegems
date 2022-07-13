@@ -1,7 +1,8 @@
-package oam
+package modeldeployments
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -10,23 +11,33 @@ import (
 )
 
 type AppRef struct {
-	Tenant  string `json:"tenant,omitempty"`
-	Project string `json:"project,omitempty"`
-	Env     string `json:"environment,omitempty"`
-
+	Tenant    string `json:"tenant,omitempty"`
+	Project   string `json:"project,omitempty"`
+	Env       string `json:"environment,omitempty"`
 	Name      string `json:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
+	Namespace string `json:"namespace,omitempty"` // namespace of the environment
+	Username  string `json:"username,omitempty"`
+}
+
+func (r AppRef) Json() string {
+	content, _ := json.Marshal(r)
+	return string(content)
+}
+
+func (r *AppRef) FromJson(content string) {
+	_ = json.Unmarshal([]byte(content), r)
 }
 
 type APPFunc func(ctx context.Context, cli client.Client, ref AppRef) (interface{}, error)
 
-func (o *OAM) AppRefFunc(req *restful.Request, resp *restful.Response, fun APPFunc) {
+func (o *ModelDeploymentAPI) AppRefFunc(req *restful.Request, resp *restful.Response, fun APPFunc) {
 	ref := AppRef{
 		Tenant:  req.PathParameter("tenant"),
 		Project: req.PathParameter("project"),
 		Env:     req.PathParameter("environment"),
 		Name:    req.PathParameter("name"),
 	}
+	ref.Username, _ = req.Attribute("username").(string)
 	// check permission
 	ctx := req.Request.Context()
 

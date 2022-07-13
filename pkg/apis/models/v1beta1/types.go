@@ -20,7 +20,6 @@ type ModelDeployment struct {
 
 // ModelDeploymentSpec is the spec for a ModelDeployment
 type ModelDeploymentSpec struct {
-	Type      string                      `json:"type,omitempty"`
 	Model     ModelSpec                   `json:"model,omitempty"`
 	ModelPath string                      `json:"modelPath,omitempty"` // path to mount the model from store
 	Replicas  *int32                      `json:"replicas,omitempty"`
@@ -55,6 +54,8 @@ const (
 )
 
 type ModelSpec struct {
+	// +kubebuilder:validation:Required
+	Source string `json:"source,omitempty"`
 	// +kubebuilder:validation:Required
 	Name      string `json:"name,omitempty"`
 	Version   string `json:"version,omitempty"`

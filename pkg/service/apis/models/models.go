@@ -3,22 +3,22 @@ package models
 import (
 	"context"
 
-	"kubegems.io/kubegems/pkg/model/store"
-	"kubegems.io/kubegems/pkg/model/store/api"
+	"kubegems.io/kubegems/pkg/model/store/api/models"
+	"kubegems.io/kubegems/pkg/utils/mongo"
 	"kubegems.io/kubegems/pkg/utils/route"
 )
 
 type ModelsAPI struct {
-	modelsapi *api.ModelsAPI
+	modelsapi *models.ModelsAPI
 }
 
-func NewModelsAPI(ctx context.Context, mongoopt *store.MongoDBOptions) (*ModelsAPI, error) {
-	mongocli, err := store.SetupMongo(ctx, mongoopt)
+func NewModelsAPI(ctx context.Context, mongoopt *mongo.Options) (*ModelsAPI, error) {
+	_, mongodb, err := mongo.NewMongoDB(ctx, mongoopt)
 	if err != nil {
 		return nil, err
 	}
-	modelsapi := api.NewModelsAPI(ctx, mongocli.Database(mongoopt.Database))
-	if err := modelsapi.InitSchemas(ctx); err != nil {
+	modelsapi, err := models.NewModelsAPI(ctx, mongodb)
+	if err != nil {
 		return nil, err
 	}
 	return &ModelsAPI{modelsapi: modelsapi}, nil

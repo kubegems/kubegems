@@ -15,10 +15,21 @@ import (
 )
 
 func NewModelsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "models",
+		Short: "models commands",
+	}
+	cmd.AddCommand(newModelsControllerCmd())
+	cmd.AddCommand(newModelsStoreCmd())
+	cmd.AddCommand(newModelRegistryCmd())
+	return cmd
+}
+
+func newModelsControllerCmd() *cobra.Command {
 	options := deployment.DefaultOptions()
 	cmd := &cobra.Command{
-		Use:          "models",
-		Short:        "run models",
+		Use:          "controller",
+		Short:        "run controller",
 		SilenceUsage: true,
 		Version:      version.Get().String(),
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -27,18 +38,15 @@ func NewModelsCmd() *cobra.Command {
 			}
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
-
 			return deployment.Run(ctx, options)
 		},
 	}
 	config.AutoRegisterFlags(cmd.Flags(), "", options)
-	cmd.AddCommand(newModelsStoreCmd())
-	cmd.AddCommand(newModelRegistryCmd())
 	return cmd
 }
 
 func newModelsStoreCmd() *cobra.Command {
-	storeoption := store.DefaultStoreOptions()
+	storeoption := store.DefaultOptions()
 	cmd := &cobra.Command{
 		Use:          "store",
 		Short:        "run store",

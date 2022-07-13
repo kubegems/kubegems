@@ -19,7 +19,7 @@ type ModelsRepository struct {
 }
 
 func NewModelsRepository(db *mongo.Database) *ModelsRepository {
-	collection := db.Collection("test1")
+	collection := db.Collection("models")
 	return &ModelsRepository{Collection: collection}
 }
 
@@ -62,15 +62,20 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 	}
 
 	sort := bson.M{}
-	for _, item := range strings.Split(o.Sort, ",") {
-		if item == "" {
-			continue
+
+	if o.Sort != "" {
+		for _, item := range strings.Split(o.Sort, ",") {
+			if item == "" {
+				continue
+			}
+			if item[0] == '-' {
+				sort[item[1:]] = -1
+			} else {
+				sort[item] = 1
+			}
 		}
-		if item[0] == '-' {
-			sort[item[1:]] = -1
-		} else {
-			sort[item] = 1
-		}
+	} else {
+		sort["downloads"] = -1
 	}
 
 	if o.Page <= 0 {
@@ -110,6 +115,7 @@ func (m *ModelsRepository) Count(ctx context.Context, opts ModelListOptions) (in
 	return m.Collection.CountDocuments(ctx, cond)
 }
 
+// nolint: funlen
 func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]ModelWithAddtional, error) {
 	cond, options := opts.ToConditionAndFindOptions()
 	var err error
@@ -143,17 +149,19 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 						},
 					},
 				},
-				"as": "rating",
+				"as": "ratings",
 			}},
 			{
 				"$project": bson.M{
-					"_id":       0,
-					"source":    1,
-					"name":      1,
-					"rating":    1,
-					"framework": 1,
-					"likes":     1,
-					"downloads": 1,
+					"_id":        0,
+					"source":     1,
+					"name":       1,
+					"ratings":    1,
+					"framework":  1,
+					"likes":      1,
+					"downloads":  1,
+					"created_at": 1,
+					"updated_at": 1,
 				},
 			},
 		}
@@ -165,11 +173,23 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 	if err != nil {
 		return nil, err
 	}
-	result := []ModelWithAddtional{}
+
+	result := []struct {
+		ModelWithAddtional `bson:",inline" json:",inline"`
+		Ratings            []Rating `bson:"ratings" json:"ratings"`
+	}{}
 	if err = cursor.All(ctx, &result); err != nil {
 		return nil, err
 	}
-	return result, nil
+
+	ret := make([]ModelWithAddtional, len(result))
+	for i, item := range result {
+		ret[i] = item.ModelWithAddtional
+		if len(item.Ratings) > 0 {
+			ret[i].Rating = item.Ratings[0]
+		}
+	}
+	return ret, nil
 }
 
 func (m *ModelsRepository) Create(ctx context.Context, model Model) error {

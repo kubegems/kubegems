@@ -1,43 +1,47 @@
- {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "kubegems.models.fullname" -}}
-{{- printf "%s" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- define "kubegems.controller.fullname" -}}
+{{- printf "%s-controller" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-Return the proper models image name
-*/}}
-{{- define "kubegems.models.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.models.image "global" .Values.global) }}
+{{- define "kubegems.controller.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (printf "%s" (include "kubegems.controller.fullname" .)) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
 {{- end -}}
 
+{{- define "kubegems.controller.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global) }}
+{{- end -}}
+
+{{- define "kubegems.store.fullname" -}}
+{{- printf "%s-controller" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "kubegems.store.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.store.image "global" .Values.global) }}
+{{- end -}}
+
+{{- define "kubegems.mongodb.name" -}}
+{{- include "common.names.dependency.fullname" (dict "chartName" "mongodb" "chartValues" .Values.mongodb "context" $) -}}
+{{- end -}}
+
+{{- define "kubegems.mongo.address" -}}
+{{ printf "%s-headless:%d" (include "kubegems.mongodb.name" .) 27017 }}
+{{- end -}}
 
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "kubegems.imagePullSecrets" -}}
-{{- include "common.images.pullSecrets" (dict "images" (list .Values.models.image ) "global" .Values.global) -}}
-{{- end -}}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "kubegems.models.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (printf "%s" (include "kubegems.models.fullname" .)) .Values.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
-{{- end -}}
+{{- include "common.images.pullSecrets" (dict "images" (list .Values.controller.image .Values.store.image) "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
 Return true if cert-manager required annotations for TLS signed certificates are set in the Ingress annotations
 Ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
 */}}
-{{- define "kubegems.models.ingress.certManagerRequest" -}}
+{{- define "kubegems.ingress.certManagerRequest" -}}
 {{ if or (hasKey . "cert-manager.io/cluster-issuer") (hasKey . "cert-manager.io/issuer") }}
     {{- true -}}
 {{- end -}}

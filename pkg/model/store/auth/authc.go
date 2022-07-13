@@ -1,4 +1,4 @@
-package api
+package auth
 
 import (
 	"context"
@@ -15,11 +15,11 @@ type AuthenticationManager interface {
 	UserInfo(ctx context.Context, token string) (UserInfo, error)
 }
 
-func NewJWTAuthenticationManager() *JWTAuthenticationManager {
-	parser := jwt.DefaultOptions().ToJWT()
-	return &JWTAuthenticationManager{
-		jwtparser: parser,
+func NewJWTAuthenticationManager(opt *jwt.Options) *JWTAuthenticationManager {
+	if opt == nil {
+		opt = jwt.DefaultOptions()
 	}
+	return &JWTAuthenticationManager{jwtparser: opt.ToJWT()}
 }
 
 type JWTAuthenticationManager struct {

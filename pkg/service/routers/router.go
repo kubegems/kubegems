@@ -71,7 +71,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
-	"kubegems.io/kubegems/pkg/utils/system"
 	"kubegems.io/kubegems/pkg/utils/tracing"
 	"kubegems.io/kubegems/pkg/version"
 )
@@ -108,16 +107,16 @@ type Router struct {
 	gin           *gin.Engine
 }
 
-func (r *Router) Run(ctx context.Context, system *system.Options) error {
+func (r *Router) Run(ctx context.Context) error {
 	if err := r.Complete(); err != nil {
 		return err
 	}
 
 	// inner go-restful router
 	if err := r.AddRestAPI(ctx, apis.Dependencies{
+		Opts:     r.Opts,
 		Agents:   r.Agents,
 		Database: r.Database,
-		Mongo:    r.Opts.Mongo,
 		Gitp:     r.GitProvider,
 		Argo:     r.Argo,
 		Redis:    r.Redis,
@@ -126,7 +125,7 @@ func (r *Router) Run(ctx context.Context, system *system.Options) error {
 	}
 
 	httpserver := &http.Server{
-		Addr:    system.Listen,
+		Addr:    r.Opts.System.Listen,
 		Handler: r.gin,
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx // 注入basecontext
