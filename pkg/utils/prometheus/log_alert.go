@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -64,8 +65,12 @@ func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
 			r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, valueAnnotationExpr)
 		}
 	} else {
-		if _, err := model.ParseDuration(r.LogqlGenerator.Duration); err != nil {
+		dur, err := model.ParseDuration(r.LogqlGenerator.Duration)
+		if err != nil {
 			return errors.Wrapf(err, "duration %s not valid", r.LogqlGenerator.Duration)
+		}
+		if time.Duration(dur).Minutes() > 10 {
+			return errors.New("日志模板时长不能超过10m")
 		}
 		if _, err := regexp.Compile(r.LogqlGenerator.Match); err != nil {
 			return errors.Wrapf(err, "match %s not valid", r.LogqlGenerator.Match)
