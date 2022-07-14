@@ -62,6 +62,7 @@ func (m *ModelsAPI) ListModels(req *restful.Request, resp *restful.Response) {
 		Framework:         req.QueryParameter("framework"),
 		Source:            req.PathParameter("source"),
 		WithRating:        request.Query(req.Request, "withRating", true),
+		License:           request.Query(req.Request, "license", ""),
 	}
 	list, err := m.ModelRepository.List(ctx, listOptions)
 	if err != nil {

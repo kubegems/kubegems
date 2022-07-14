@@ -42,6 +42,7 @@ type ModelListOptions struct {
 	CommonListOptions
 	Source     string
 	Tags       []string
+	License    string
 	Framework  string
 	WithRating bool
 }
@@ -59,6 +60,9 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 	}
 	if o.Framework != "" {
 		cond["framework"] = o.Framework
+	}
+	if o.License != "" {
+		cond["license"] = o.License
 	}
 
 	sort := bson.M{}
