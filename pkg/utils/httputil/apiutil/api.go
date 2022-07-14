@@ -35,8 +35,14 @@ func NewRestfulAPI(prefix string, filters []restful.FilterFunction, modules []Re
 	}.Filter)
 	ws.Filter(LogFilter)
 	ws.Filter(restful.OPTIONSFilter())
+
+	healthz := new(restful.WebService)
+	healthz.Path("healthz").Route(
+		healthz.GET("").To(func(req *restful.Request, resp *restful.Response) {}).Doc("health check").Produces("text/plain").Writes("OK"),
+	)
 	return restful.DefaultContainer.
 		Add(ws).
+		Add(healthz).
 		Add(route.BuildOpenAPIWebService([]*restful.WebService{ws}, path.Join(prefix, "docs.json"), completeInfo))
 }
 

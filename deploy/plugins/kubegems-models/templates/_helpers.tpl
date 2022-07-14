@@ -11,15 +11,37 @@
 {{- end -}}
 
 {{- define "kubegems.controller.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global) }}
 {{- end -}}
 
 {{- define "kubegems.store.fullname" -}}
-{{- printf "%s-controller" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-store" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "kubegems.store.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.store.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.store.image "global" .Values.global) }}
+{{- end -}}
+
+{{- /*
+{{ include "kubegems.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
+*/ -}}
+{{- define "kubegems.images.image" -}}
+{{- $registryName := .imageRoot.registry -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $tag := .imageRoot.tag | toString -}}
+{{- if .global.kubegemsVersion }}
+    {{- $tag = .global.kubegemsVersion | toString -}}
+{{- end }}
+{{- if .global }}
+    {{- if .global.imageRegistry }}
+        {{- $registryName = .global.imageRegistry -}}
+    {{- end -}}
+{{- end -}}
+{{- if $registryName }}
+    {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+{{- else -}}
+    {{- printf "%s:%s" $repositoryName $tag -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "kubegems.mongodb.name" -}}
@@ -27,7 +49,7 @@
 {{- end -}}
 
 {{- define "kubegems.mongo.address" -}}
-{{ printf "%s-headless:%d" (include "kubegems.mongodb.name" .) 27017 }}
+{{ printf "%s:%d" (include "kubegems.mongodb.name" .) 27017 }}
 {{- end -}}
 
 {{/*

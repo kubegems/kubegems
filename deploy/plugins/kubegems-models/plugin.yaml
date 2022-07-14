@@ -1,7 +1,7 @@
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
-  name: kubegems-models
+  name: kubegems
   annotations:
     plugins.kubegems.io/category: KubeGems
     plugins.kubegems.io/main-category: core
@@ -10,7 +10,7 @@ metadata:
 spec:
   disabled: false
   kind: helm
-  installNamespace: kubegems-models
+  installNamespace: kubegems
   values:
     controller:
       baseDomain: models.kubegems.io

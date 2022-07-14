@@ -74,6 +74,7 @@ spec:
           {{- else }}
           args:
             - models
+            - store
             - --listen=:{{ .Values.store.service.ports.http }}
             {{- if .Values.store.extraArgs }}
             {{- include "common.tplvalues.render" (dict "value" .Values.store.extraArgs "context" $) | nindent 12 }}
@@ -87,13 +88,21 @@ spec:
             {{- end }}
             - name: MONGO_ADDR
               value: {{ include "kubegems.mongo.address" . }}
+            - name: MONGO_USERNAME
+              value: root
             - name: MONGO_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "kubegems.mongodb.name" .}}
                   key: mongodb-root-password
-          {{- if or .Values.store.extraEnvVarsCM .Values.store.extraEnvVarsSecret }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubegems-mysql
+                  key: mysql-root-password
           envFrom:
+            - secretRef:
+                name: kubegems-config
             {{- if .Values.store.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.store.extraEnvVarsCM "context" $) }}
@@ -102,7 +111,6 @@ spec:
             - secretRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.store.extraEnvVarsSecret "context" $) }}
             {{- end }}
-          {{- end }}
           {{- if .Values.store.resources }}
           resources: {{- toYaml .Values.store.resources | nindent 12 }}
           {{- end }}
@@ -113,7 +121,7 @@ spec:
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.store.livenessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
               path: /healthz
-              port: probe
+              port: http
           {{- else if .Values.store.customLivenessProbe }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.store.customLivenessProbe "context" $) | nindent 12 }}
           {{- end }}
@@ -121,7 +129,7 @@ spec:
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.store.readinessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
               path: /healthz
-              port: probe
+              port: http
           {{- else if .Values.store.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.store.customReadinessProbe "context" $) | nindent 12 }}
           {{- end }}
@@ -136,12 +144,21 @@ spec:
           {{- if .Values.store.lifecycleHooks }}
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.store.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
+          volumeMounts:
+            - name: jwt-certs
+              mountPath: /app/certs/jwt
+              readOnly: true
           {{- if .Values.store.extraVolumeMounts }}
-          volumeMounts: {{- include "common.tplvalues.render" (dict "value" .Values.store.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.store.extraVolumeMounts "context" $) | nindent 12 }}
           {{- end }}
         {{- if .Values.store.sidecars }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.store.sidecars "context" $) | nindent 8 }}
         {{- end }}
-        {{- if .Values.store.extraVolumes }}
-        volumes: {{- include "common.tplvalues.render" (dict "value" .Values.store.extraVolumes "context" $) | nindent 8 }}
-        {{- end }}
+      volumes:
+        - name: jwt-certs
+          secret:
+            secretName: kubegems-api-jwt
+            defaultMode: 420
+      {{- if .Values.store.extraVolumes }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.store.extraVolumes "context" $) | nindent 8 }}
+      {{- end }}

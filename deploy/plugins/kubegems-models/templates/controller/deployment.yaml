@@ -75,6 +75,7 @@ spec:
           {{- else }}
           args:
             - models
+            - controller
             - --basedomain={{ .Values.controller.baseDomain }}
             {{- if .Values.controller.leaderElection.enabled }}
             - --enableleaderelection
