@@ -38,6 +38,8 @@ func DefaultOptions() *StoreOptions {
 
 func Run(ctx context.Context, options *StoreOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
+
+
 	server := StoreServer{
 		Options: options,
 	}

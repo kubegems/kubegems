@@ -39,10 +39,12 @@ func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 					route.QueryParameter("framework", "framework name").Optional(),
 					route.QueryParameter("license", "license name").Optional(),
 					route.QueryParameter("search", "search name").Optional(),
+					route.QueryParameter("tags", "filter models contains all tags").Optional(),
+					route.QueryParameter("task", "task").Optional(),
+					route.QueryParameter("framework", "framework").Optional(),
 					route.QueryParameter("sort",
 						`sort string, eg: "-name,-creationtime", "name,-creationtime"the '-' prefix means descending,otherwise ascending"`,
 					).Optional(),
-					route.QueryParameter("tags", "filter models contains all tags").Optional(),
 				),
 				route.DELETE("/models/{model}").To(m.DeleteModel).Doc("delete model"),
 			).

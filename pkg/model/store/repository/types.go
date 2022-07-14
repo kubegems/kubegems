@@ -36,8 +36,8 @@ type ReplyTo struct {
 }
 
 // model meta in models store
+// nolint: tagliatelle
 type Model struct {
-	// nolint: tagliatelle
 	ID        string                 `json:"id,omitempty" bson:"_id,omitempty"`
 	Source    string                 `json:"source"` // source of model (huggingface, ...)
 	Name      string                 `json:"name"`
@@ -51,6 +51,7 @@ type Model struct {
 	Paper     map[string]string      `json:"paper"`
 	Intro     string                 `json:"intro"`
 	Downloads int                    `json:"downloads"`
+	Task      string                 `json:"task"`
 	Likes     int                    `json:"likes"`
 	Raw       map[string]interface{} `json:"raw"`
 	CreateAt  time.Time              `json:"createAt"`

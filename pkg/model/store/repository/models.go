@@ -44,6 +44,7 @@ type ModelListOptions struct {
 	Tags       []string
 	License    string
 	Framework  string
+	Task       string
 	WithRating bool
 }
 
@@ -63,6 +64,9 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 	}
 	if o.License != "" {
 		cond["license"] = o.License
+	}
+	if o.Task != "" {
+		cond["task"] = o.Task
 	}
 
 	sort := bson.M{}
@@ -157,15 +161,16 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 			}},
 			{
 				"$project": bson.M{
-					"_id":        0,
-					"source":     1,
-					"name":       1,
-					"ratings":    1,
-					"framework":  1,
-					"likes":      1,
-					"downloads":  1,
-					"created_at": 1,
-					"updated_at": 1,
+					"_id":       0,
+					"source":    1,
+					"name":      1,
+					"ratings":   1,
+					"framework": 1,
+					"likes":     1,
+					"task":      1,
+					"downloads": 1,
+					"createat":  bson.M{"$toString": "$create_at"},
+					"updateat":  bson.M{"$toString": "$update_at"},
 				},
 			},
 		}
@@ -210,6 +215,7 @@ type Selectors struct {
 	Tags       []string `json:"tags"`
 	Frameworks []string `json:"frameworks"`
 	Licenses   []string `json:"licenses"`
+	Tasks      []string `json:"tasks"`
 }
 
 func (m *ModelsRepository) ListSelectors(ctx context.Context, listopts ModelListOptions) (*Selectors, error) {
@@ -217,6 +223,7 @@ func (m *ModelsRepository) ListSelectors(ctx context.Context, listopts ModelList
 	distincttags, _ := m.Collection.Distinct(ctx, "tags", cond)
 	distinctframeworks, _ := m.Collection.Distinct(ctx, "framework", cond)
 	distinctlicenses, _ := m.Collection.Distinct(ctx, "license", cond)
+	distincttasks, _ := m.Collection.Distinct(ctx, "task", cond)
 
 	tostrings := func(data []interface{}) []string {
 		ret := make([]string, 0, len(data))
@@ -231,6 +238,7 @@ func (m *ModelsRepository) ListSelectors(ctx context.Context, listopts ModelList
 		Tags:       tostrings(distincttags),
 		Frameworks: tostrings(distinctframeworks),
 		Licenses:   tostrings(distinctlicenses),
+		Tasks:      tostrings(distincttasks),
 	}
 	return selectors, nil
 }
