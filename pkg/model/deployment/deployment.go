@@ -172,7 +172,7 @@ func (r *Reconciler) Sync(ctx context.Context, md *modelsv1beta1.ModelDeployment
 		Mergekvs(md.Annotations, oamapp.Annotations)
 		Mergekvs(md.Labels, oamapp.Labels)
 		_ = controllerutil.SetOwnerReference(md, oamapp, r.Client.Scheme())
-		return r.DeployHuggingFaceModel(ctx, md, oamapp)
+		return r.DeployModel(ctx, md, oamapp)
 	}
 	// oam app update frequently,use patch instead of update
 	if _, err := controllerutil.CreateOrPatch(ctx, r.Client, oamapp, onupdatefun); err != nil {
@@ -202,31 +202,41 @@ func (r *Reconciler) Fulfill(ctx context.Context, md *modelsv1beta1.ModelDeploym
 	return haschange, nil
 }
 
-func (r *Reconciler) DeployHuggingFaceModel(ctx context.Context, md *modelsv1beta1.ModelDeployment, oamapp *oamv1beta1.Application) error {
+func (r *Reconciler) DeployModel(ctx context.Context, md *modelsv1beta1.ModelDeployment, oamapp *oamv1beta1.Application) error {
 	const servingPort = 8080
 	oamapp.Spec = oamv1beta1.ApplicationSpec{
 		Components: []oamcommon.ApplicationComponent{
 			{
 				Name: md.Name,
 				Type: "webservice",
-				Properties: OAMWebServiceProperties{
-					Labels:      md.Labels,
-					Annotations: md.Annotations,
-					Image:       md.Spec.Model.Image,
-					ENV: []OAMWebServicePropertiesEnv{
-						{
-							Name:  "PKG",
-							Value: md.Spec.Model.Framework,
+				Properties: func() *runtime.RawExtension {
+					properties := OAMWebServiceProperties{
+						Labels:      md.Labels,
+						Annotations: md.Annotations,
+						Image:       md.Spec.Model.Image,
+						ENV: []OAMWebServicePropertiesEnv{
+							{
+								Name:  "PKG",
+								Value: md.Spec.Model.Framework,
+							},
+							{
+								Name:  "MODEL",
+								Value: md.Spec.Model.Name,
+							},
 						},
-						{
-							Name:  "MODEL",
-							Value: md.Spec.Model.Name,
+						Ports: []OAMWebServicePropertiesPort{
+							{Name: "http", Port: servingPort},
 						},
-					},
-					Ports: []OAMWebServicePropertiesPort{
-						{Name: "http", Port: servingPort},
-					},
-				}.RawExtension(),
+					}
+					for _, env := range md.Spec.Env {
+						properties.ENV = append(properties.ENV, OAMWebServicePropertiesEnv{
+							Name:      env.Name,
+							Value:     env.Value,
+							ValueFrom: env.ValueFrom,
+						})
+					}
+					return properties.RawExtension()
+				}(),
 				Traits: []oamcommon.ApplicationTrait{
 					{
 						Type: "scaler",

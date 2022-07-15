@@ -23,6 +23,7 @@ type ModelDeploymentSpec struct {
 	Model     ModelSpec                   `json:"model,omitempty"`
 	ModelPath string                      `json:"modelPath,omitempty"` // path to mount the model from store
 	Replicas  *int32                      `json:"replicas,omitempty"`
+	Env       []corev1.EnvVar             `json:"env,omitempty"`
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// Host is the hostname of the model serving endpoint
