@@ -27,16 +27,14 @@ import (
 
 func (r *ResourceMutate) MutateTenantResourceQuota(ctx context.Context, req admission.Request) admission.Response {
 	trq := &gemsv1beta1.TenantResourceQuota{}
-
-	err := r.decoder.Decode(req, trq)
-	if err != nil {
+	if err := r.decoder.Decode(req, trq); err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
-	defaultrq := resourcequota.GetDefaultTeantResourceQuota()
+
 	if trq.Spec.Hard == nil {
 		trq.Spec.Hard = make(v1.ResourceList)
 	}
-	for key, value := range defaultrq {
+	for key, value := range resourcequota.GetDefaultTeantResourceQuota() {
 		if _, exist := trq.Spec.Hard[key]; !exist {
 			trq.Spec.Hard[key] = value
 		}

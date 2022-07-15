@@ -44,47 +44,15 @@ var (
 )
 
 const (
-	ResourceNvidiaGPU = "nvidia.com/gpu"
-	RequestsNvdiaGPUs = corev1.DefaultResourceRequestsPrefix + ResourceNvidiaGPU
-	LimitsNvdiaGPUs   = "limits." + ResourceNvidiaGPU
-)
-
-var (
-	TenantLimitResources = []corev1.ResourceName{
-		corev1.ResourceLimitsCPU,
-		corev1.ResourceLimitsMemory,
-		corev1.ResourceRequestsStorage,
-		RequestsNvdiaGPUs,
-	}
-	EnvironmentLimitResources = []corev1.ResourceName{
-		corev1.ResourceCPU,
-		corev1.ResourceMemory,
-		corev1.ResourceRequestsStorage,
-		corev1.ResourcePods,
-		ResourceDeployments,
-		ResourceStatefulSets,
-		ResourceServices,
-		ResourceConfigMaps,
-		ResourceSecrets,
-		ResourceJobs,
-		ResourceCronJobs,
-		ResourcePersistentVolumeClaims,
-		RequestsNvdiaGPUs,
-	}
+	ResourceNvidiaGPU      = "nvidia.com/gpu"
+	ResourceTKEVCudeCore   = "tencent.com/vcuda-core"
+	ResourceTKEVCudeMemory = "tencent.com/vcuda-memory"
 )
 
 const (
 	DefaultResourceQuotaName = "default"
 	DefaultLimitRangeName    = "default"
 )
-
-func EmptyTenantResourceQuota() corev1.ResourceList {
-	return corev1.ResourceList{
-		corev1.ResourceLimitsCPU:       resource.MustParse("0"),
-		corev1.ResourceLimitsMemory:    resource.MustParse("0Gi"),
-		corev1.ResourceRequestsStorage: resource.MustParse("0Gi"),
-	}
-}
 
 // GetDefaultTeantResourceQuota 获取默认的ResourceQuota
 func GetDefaultTeantResourceQuota() corev1.ResourceList {
@@ -93,8 +61,9 @@ func GetDefaultTeantResourceQuota() corev1.ResourceList {
 		corev1.ResourceLimitsMemory:    resource.MustParse("0Gi"),
 		corev1.ResourceRequestsStorage: resource.MustParse("0Gi"),
 
-		RequestsNvdiaGPUs: resource.MustParse("0"),
-		LimitsNvdiaGPUs:   resource.MustParse("0"),
+		"limits." + ResourceNvidiaGPU:      resource.MustParse("0"),
+		"limits." + ResourceTKEVCudeCore:   resource.MustParse("0"),
+		"limits." + ResourceTKEVCudeMemory: resource.MustParse("0Gi"),
 	}
 }
 
@@ -120,8 +89,13 @@ func GetDefaultEnvironmentResourceQuota() corev1.ResourceList {
 		ResourceServices:               resource.MustParse("512"),
 		ResourcePersistentVolumeClaims: resource.MustParse("512"),
 
-		RequestsNvdiaGPUs: resource.MustParse("0"),
-		LimitsNvdiaGPUs:   resource.MustParse("0"),
+		"limits." + ResourceNvidiaGPU:      resource.MustParse("0"),
+		"limits." + ResourceTKEVCudeCore:   resource.MustParse("0"),
+		"limits." + ResourceTKEVCudeMemory: resource.MustParse("0Gi"),
+
+		"requests." + ResourceNvidiaGPU:      resource.MustParse("0"),
+		"requests." + ResourceTKEVCudeCore:   resource.MustParse("0"),
+		"requests." + ResourceTKEVCudeMemory: resource.MustParse("0Gi"),
 	}
 }
 

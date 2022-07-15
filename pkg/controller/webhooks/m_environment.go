@@ -20,6 +20,7 @@ import (
 	"net/http"
 
 	v1 "k8s.io/api/admission/v1"
+	corev1 "k8s.io/api/core/v1"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -50,16 +51,16 @@ func envDefault(env *gemsv1beta1.Environment) {
 	if len(env.Spec.LimitRageName) == 0 {
 		env.Spec.LimitRageName = resourcequota.DefaultLimitRangeName
 	}
-	defaultResourceQuota := resourcequota.GetDefaultEnvironmentResourceQuota()
+
 	if env.Spec.ResourceQuota == nil {
-		env.Spec.ResourceQuota = defaultResourceQuota
-	} else {
-		for k, v := range defaultResourceQuota {
-			if _, exist := env.Spec.ResourceQuota[k]; !exist {
-				env.Spec.ResourceQuota[k] = v
-			}
+		env.Spec.ResourceQuota = corev1.ResourceList{}
+	}
+	for resourceName, defaultQuantity := range resourcequota.GetDefaultEnvironmentResourceQuota() {
+		if _, exist := env.Spec.ResourceQuota[resourceName]; !exist {
+			env.Spec.ResourceQuota[resourceName] = defaultQuantity
 		}
 	}
+
 	if len(env.Spec.ResourceQuotaName) == 0 {
 		env.Spec.ResourceQuotaName = resourcequota.DefaultResourceQuotaName
 	}
