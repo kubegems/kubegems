@@ -95,18 +95,18 @@ func OK(w http.ResponseWriter, data interface{}) {
 }
 
 func NotFound(w http.ResponseWriter, message string) {
-	ErrorResponse(w, NewError(http.StatusNotFound, message))
+	Error(w, NewError(http.StatusNotFound, message))
 }
 
 func BadRequest(w http.ResponseWriter, message string) {
-	ErrorResponse(w, StatusError{Status: http.StatusBadRequest, Message: message})
+	Error(w, StatusError{Status: http.StatusBadRequest, Message: message})
 }
 
 func ServerError(w http.ResponseWriter, err error) {
-	ErrorResponse(w, StatusError{Status: http.StatusInternalServerError, Message: err.Error()})
+	Error(w, StatusError{Status: http.StatusInternalServerError, Message: err.Error()})
 }
 
-func ErrorResponse(w http.ResponseWriter, err error) {
+func Error(w http.ResponseWriter, err error) {
 	serr := &StatusError{}
 	if errors.As(err, &serr) {
 		DoRawResponse(w, serr.Status, Response{Message: err.Error(), Error: err}, nil)

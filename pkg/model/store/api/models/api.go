@@ -18,16 +18,18 @@ type ModelsAPI struct {
 	ModelRepository   *repository.ModelsRepository
 	CommentRepository *repository.CommentsRepository
 	SourcesRepository *repository.SourcesRepository
+	SyncService       *SyncService
 
 	authorization auth.AuthorizationManager
 }
 
-func NewModelsAPI(ctx context.Context, db *mongo.Database) (*ModelsAPI, error) {
+func NewModelsAPI(ctx context.Context, db *mongo.Database, syncopt *SyncOptions) (*ModelsAPI, error) {
 	api := &ModelsAPI{
 		ModelRepository:   repository.NewModelsRepository(db),
 		CommentRepository: repository.NewCommentsRepository(db),
 		SourcesRepository: repository.NewSourcesRepository(db),
 		authorization:     auth.NewLocalAuthorization(ctx, db),
+		SyncService:       NewSyncService(syncopt),
 	}
 	if err := api.InitSchemas(ctx); err != nil {
 		return nil, fmt.Errorf("init schemas: %v", err)

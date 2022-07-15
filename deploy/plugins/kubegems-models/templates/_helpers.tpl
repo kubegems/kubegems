@@ -22,6 +22,18 @@
 {{ include "kubegems.images.image" (dict "imageRoot" .Values.store.image "global" .Values.global) }}
 {{- end -}}
 
+{{- define "kubegems.sync.fullname" -}}
+{{- printf "%s-sync" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "kubegems.sync.image" -}}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.sync.image "global" .Values.global) }}
+{{- end -}}
+
+{{- define "kubegems.sync.address" -}}
+{{ printf "http://%s:%.0f" (include "kubegems.sync.fullname" .) (.Values.sync.service.ports.http) }}
+{{- end -}}
+
 {{- /*
 {{ include "kubegems.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
 */ -}}

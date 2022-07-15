@@ -13,7 +13,7 @@ import (
 func (o *ModelsAPI) IfPermission(req *restful.Request, resp *restful.Response, permission string, f func(ctx context.Context) (interface{}, error)) {
 	info, _ := req.Attribute("user").(auth.UserInfo)
 	if !o.authorization.HasPermission(req.Request.Context(), info.Username, permission) {
-		response.ErrorResponse(resp, response.StatusError{
+		response.Error(resp, response.StatusError{
 			Status:  http.StatusForbidden,
 			Message: fmt.Sprintf("user %s does not have permission %s", info.Username, permission),
 		})
@@ -21,7 +21,7 @@ func (o *ModelsAPI) IfPermission(req *restful.Request, resp *restful.Response, p
 	}
 
 	if data, err := f(req.Request.Context()); err != nil {
-		response.ErrorResponse(resp, err)
+		response.Error(resp, err)
 	} else {
 		response.OK(resp, data)
 	}
@@ -33,7 +33,7 @@ func (o *ModelsAPI) AddSourceAdmin(req *restful.Request, resp *restful.Response)
 	permission := fmt.Sprintf("source:*:%s", req.PathParameter("source"))
 
 	if err := o.authorization.AddPermission(req.Request.Context(), username, permission); err != nil {
-		response.ErrorResponse(resp, err)
+		response.Error(resp, err)
 	} else {
 		response.OK(resp, nil)
 	}
@@ -57,7 +57,7 @@ func (o *ModelsAPI) DeleteSourceAdmin(req *restful.Request, resp *restful.Respon
 
 	ctx := req.Request.Context()
 	if err := o.authorization.RemovePermission(ctx, username, permission); err != nil {
-		response.ErrorResponse(resp, err)
+		response.Error(resp, err)
 	} else {
 		response.OK(resp, nil)
 	}

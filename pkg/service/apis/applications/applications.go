@@ -38,7 +38,7 @@ func (m *ApplicationsAPI) NamedRefFunc(req *restful.Request, resp *restful.Respo
 		Name:    req.PathParameter("application"),
 	}
 	if data, err := fun(req.Request.Context(), ref); err != nil {
-		response.ErrorResponse(resp, err)
+		response.Error(resp, err)
 	} else {
 		response.OK(resp, data)
 	}

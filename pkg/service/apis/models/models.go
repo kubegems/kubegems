@@ -17,7 +17,7 @@ func NewModelsAPI(ctx context.Context, mongoopt *mongo.Options) (*ModelsAPI, err
 	if err != nil {
 		return nil, err
 	}
-	modelsapi, err := models.NewModelsAPI(ctx, mongodb)
+	modelsapi, err := models.NewModelsAPI(ctx, mongodb, models.NewDefaultSyncOptions())
 	if err != nil {
 		return nil, err
 	}

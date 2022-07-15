@@ -21,10 +21,11 @@ import (
 )
 
 type StoreOptions struct {
-	Listen string            `json:"listen,omitempty"`
-	Mongo  *mongo.Options    `json:"mongo,omitempty"`
-	Mysql  *database.Options `json:"mysql,omitempty"`
-	Jwt    *jwt.Options      `json:"jwt,omitempty"`
+	Listen string              `json:"listen,omitempty"`
+	Mongo  *mongo.Options      `json:"mongo,omitempty"`
+	Mysql  *database.Options   `json:"mysql,omitempty"`
+	Jwt    *jwt.Options        `json:"jwt,omitempty"`
+	Sync   *models.SyncOptions `json:"sync,omitempty"`
 }
 
 func DefaultOptions() *StoreOptions {
@@ -33,12 +34,12 @@ func DefaultOptions() *StoreOptions {
 		Mongo:  mongo.DefaultOptions(),
 		Mysql:  database.NewDefaultOptions(),
 		Jwt:    jwt.DefaultOptions(),
+		Sync:   models.NewDefaultSyncOptions(),
 	}
 }
 
 func Run(ctx context.Context, options *StoreOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
-
 
 	server := StoreServer{
 		Options: options,
@@ -98,7 +99,7 @@ type APIDependencies struct {
 
 func (s *StoreServer) SetupAPI(ctx context.Context, deps APIDependencies) (http.Handler, error) {
 	// models api
-	modelsapi, err := models.NewModelsAPI(ctx, deps.Mongo)
+	modelsapi, err := models.NewModelsAPI(ctx, deps.Mongo, s.Options.Sync)
 	if err != nil {
 		return nil, fmt.Errorf("setup models api: %v", err)
 	}

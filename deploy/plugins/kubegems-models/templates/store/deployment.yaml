@@ -60,7 +60,7 @@ spec:
       securityContext: {{- omit .Values.store.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       containers:
-        - name: models
+        - name: store
           image: {{ include "kubegems.store.image" . }}
           imagePullPolicy: {{ .Values.store.image.pullPolicy }}
           {{- if .Values.store.containerSecurityContext.enabled }}
@@ -76,6 +76,7 @@ spec:
             - models
             - store
             - --listen=:{{ .Values.store.service.ports.http }}
+            - --sync-addr={{ include "kubegems.sync.address" . }}
             {{- if .Values.store.extraArgs }}
             {{- include "common.tplvalues.render" (dict "value" .Values.store.extraArgs "context" $) | nindent 12 }}
             {{- end }}

@@ -1,0 +1,257 @@
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "kubegems.sync.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: sync
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.sync.replicaCount }}
+  {{- if .Values.sync.updateStrategy }}
+  strategy: {{- toYaml .Values.sync.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sync
+  template:
+    metadata:
+      {{- if .Values.sync.podAnnotations }}
+      annotations: {{- include "common.tplvalues.render" (dict "value" .Values.sync.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: sync
+        {{- if .Values.sync.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.sync.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "kubegems.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.sync.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.sync.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.sync.enableAffinity -}}
+      {{- if .Values.sync.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.sync.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.sync.podAffinityPreset "component" "models" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.sync.podAntiAffinityPreset "component" "models" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.sync.nodeAffinityPreset.type "key" .Values.sync.nodeAffinityPreset.key "values" .Values.sync.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.sync.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.sync.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.sync.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.sync.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.sync.priorityClassName }}
+      priorityClassName: {{ .Values.sync.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.sync.schedulerName }}
+      schedulerName: {{ .Values.sync.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.sync.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.sync.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: flower
+          image: {{ include "kubegems.sync.image" . }}
+          imagePullPolicy: {{ .Values.sync.image.pullPolicy }}
+          {{- if .Values.sync.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.sync.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.sync.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.sync.args "context" $) | nindent 12 }}
+          {{- else }}
+          args:
+            - flower
+            {{- if .Values.sync.extraArgs }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraArgs "context" $) | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.sync.logLevel }}
+            {{- if .Values.sync.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+            - name: MONGO_ADDR
+              value: {{ include "kubegems.mongo.address" . }}
+            - name: MONGO_USERNAME
+              value: root
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kubegems.mongodb.name" .}}
+                  key: mongodb-root-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubegems-redis
+                  key: redis-password
+          envFrom:
+            - secretRef:
+                name: kubegems-config
+            {{- if .Values.sync.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.sync.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.sync.resources }}
+          resources: {{- toYaml .Values.sync.resources | nindent 12 }}
+          {{- end }}
+        - name: worker
+          image: {{ include "kubegems.sync.image" . }}
+          imagePullPolicy: {{ .Values.sync.image.pullPolicy }}
+          {{- if .Values.sync.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.sync.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.sync.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.sync.args "context" $) | nindent 12 }}
+          {{- else }}
+          args:
+            - worker
+            {{- if .Values.sync.extraArgs }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraArgs "context" $) | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.sync.logLevel }}
+            {{- if .Values.sync.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+            - name: MONGO_ADDR
+              value: {{ include "kubegems.mongo.address" . }}
+            - name: MONGO_USERNAME
+              value: root
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kubegems.mongodb.name" .}}
+                  key: mongodb-root-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubegems-redis
+                  key: redis-password
+          envFrom:
+            - secretRef:
+                name: kubegems-config
+            {{- if .Values.sync.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.sync.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.sync.resources }}
+          resources: {{- toYaml .Values.sync.resources | nindent 12 }}
+          {{- end }}
+        - name: web
+          image: {{ include "kubegems.sync.image" . }}
+          imagePullPolicy: {{ .Values.sync.image.pullPolicy }}
+          {{- if .Values.sync.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.sync.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.sync.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.sync.args "context" $) | nindent 12 }}
+          {{- else }}
+          args:
+            - web
+            {{- if .Values.sync.extraArgs }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraArgs "context" $) | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.sync.logLevel }}
+            {{- if .Values.sync.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+            - name: MONGO_ADDR
+              value: {{ include "kubegems.mongo.address" . }}
+            - name: MONGO_USERNAME
+              value: root
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kubegems.mongodb.name" .}}
+                  key: mongodb-root-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubegems-redis
+                  key: redis-password
+          envFrom:
+            - secretRef:
+                name: kubegems-config
+            {{- if .Values.sync.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.sync.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.sync.resources }}
+          resources: {{- toYaml .Values.sync.resources | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.sync.containerPorts.http }}
+          {{- if .Values.sync.livenessProbe.enabled }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.sync.livenessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.sync.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.sync.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.readinessProbe.enabled }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.sync.readinessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.sync.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.sync.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.startupProbe.enabled }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.sync.startupProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.sync.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.sync.customStartupProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.sync.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sync.extraVolumeMounts }}
+          volumeMounts: {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+        {{- if .Values.sync.sidecars }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.sync.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+      {{- if .Values.sync.extraVolumes }}
+      volumes: {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraVolumes "context" $) | nindent 8 }}
+      {{- end }}
