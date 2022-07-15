@@ -10,6 +10,8 @@ spec:
   values:
     controlNamespace: {{ .Release.Namespace }}
     allowClusterResourcesFromAllNamespaces: false
+    tls:
+      enabled: false    
     fluentbit:
       bufferStorage:
         storage.backlog.mem_limit: 5M 
