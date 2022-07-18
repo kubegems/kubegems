@@ -41,7 +41,18 @@ type Options struct {
 	Mysql        *database.Options                 `json:"mysql,omitempty"`
 	Redis        *redis.Options                    `json:"redis,omitempty"`
 	Microservice *microservice.MicroserviceOptions `json:"microservice,omitempty"`
-	Mongo        *mongo.Options             `json:"mongo,omitempty"`
+	Mongo        *mongo.Options                    `json:"mongo,omitempty"`
+	Models       *ModelsOptions                    `json:"models,omitempty"`
+}
+
+type ModelsOptions struct {
+	Addr string `json:"addr,omitempty"`
+}
+
+func NewDefaultModelsOptions() *ModelsOptions {
+	return &ModelsOptions{
+		Addr: "http://kubegems-models-store:8080",
+	}
 }
 
 func DefaultOptions() *Options {
@@ -59,6 +70,7 @@ func DefaultOptions() *Options {
 		System:       system.NewDefaultOptions(),
 		Microservice: microservice.NewDefaultOptions(),
 		Mongo:        mongo.DefaultOptions(),
+		Models:       NewDefaultModelsOptions(),
 	}
 	defaultoptions.System.Listen = ":8020"
 	return defaultoptions

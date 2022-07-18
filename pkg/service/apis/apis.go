@@ -3,8 +3,11 @@ package apis
 import (
 	"context"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 
 	"github.com/emicklei/go-restful/v3"
+	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/model/store/api/modeldeployments"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/service/apis/applications"
@@ -44,4 +47,20 @@ func InitAPI(ctx context.Context, deps Dependencies) (http.Handler, error) {
 		auth.NewAuthMiddleware(deps.Opts.JWT, nil).GoRestfulMiddleware, // authc
 	}
 	return apiutil.NewRestfulAPI("v1", middlewares, modules), nil
+}
+
+type ModelsProxy struct {
+	Proxy http.Handler
+}
+
+func NewModelsProxy(target string) (*ModelsProxy, error) {
+	u, err := url.Parse(target)
+	if err != nil {
+		return nil, err
+	}
+	return &ModelsProxy{Proxy: httputil.NewSingleHostReverseProxy(u)}, nil
+}
+
+func (p *ModelsProxy) Handler(ctx *gin.Context) {
+	p.Proxy.ServeHTTP(ctx.Writer, ctx.Request)
 }
