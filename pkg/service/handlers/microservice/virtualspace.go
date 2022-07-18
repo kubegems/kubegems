@@ -510,13 +510,11 @@ func (h *VirtualSpaceHandler) ListWorkload(c *gin.Context) {
 			}
 		}
 
-		ret := pagination.NewPageDataFromContextReflect(c, list)
-		tmp := ret.List.([]pagination.SortAndSearchAble)
-		sort.Slice(tmp, func(i, j int) bool {
-			return tmp[i].(WorkloadDetails).IstioInjected
-		})
-		ret.List = tmp
-		return ret, nil
+		return handlers.NewPageDataFromContext(c, list, func(i int) bool {
+			return strings.Contains(list[i].Name, c.Query("search"))
+		}, func(i, j int) bool {
+			return list[i].IstioInjected
+		}), nil
 	})
 }
 
