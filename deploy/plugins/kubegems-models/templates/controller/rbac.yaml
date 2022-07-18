@@ -51,6 +51,7 @@ rules:
       - ""
     resources:
       - "configmaps"
+      - "events"
     verbs:
       - "*"
   - apiGroups:

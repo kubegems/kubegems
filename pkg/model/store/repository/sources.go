@@ -11,6 +11,11 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+var InitSources = []any{
+	Source{Name: "huggingface", Desc: "Huggingface", BuiltIn: true, Enabled: true, Images: []string{"kubegems/models-serving"}},
+	Source{Name: "openmmlab", Desc: "OpenMM Lab", BuiltIn: true, Enabled: true, Images: []string{"kubegems/models-serving"}},
+}
+
 type SourcesRepository struct {
 	Collection *mongo.Collection
 }
@@ -22,7 +27,7 @@ func NewSourcesRepository(db *mongo.Database) *SourcesRepository {
 
 func (r *SourcesRepository) InitSchema(ctx context.Context) error {
 	const uniqueNameIndex = "unique_name"
-	_, err := r.Collection.Indexes().CreateOne(ctx, mongo.IndexModel{
+	if _, err := r.Collection.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "name", Value: 1},
 		},
@@ -30,7 +35,20 @@ func (r *SourcesRepository) InitSchema(ctx context.Context) error {
 			Unique: pointer.Bool(true),
 			Name:   pointer.String(uniqueNameIndex),
 		},
-	})
+	}); err != nil {
+		return err
+	}
+
+	counts, err := r.Collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return err
+	}
+	if counts == 0 {
+		_, err := r.Collection.InsertMany(ctx, InitSources)
+		if err != nil {
+			return err
+		}
+	}
 	return err
 }
 
