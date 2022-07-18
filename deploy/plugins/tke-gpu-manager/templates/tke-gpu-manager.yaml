@@ -8,6 +8,6 @@ spec:
   url: https://charts.kubegems.io/kubegems
   version: {{ .Chart.AppVersion }}
   values:
-    rumtime: {{ .Values.global.runtime }}
+    runtime: {{ .Values.global.runtime }}
     image:
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "tkestack/gpu-manager" "context" .) }}
