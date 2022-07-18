@@ -122,6 +122,7 @@ func (r *Router) Run(ctx context.Context) error {
 		Redis:    r.Redis,
 	}); err != nil {
 		log.Errorf("add new restful error: %v", err)
+		return err
 	}
 
 	httpserver := &http.Server{
