@@ -54,6 +54,7 @@ type Model struct {
 	Task      string                 `json:"task"`
 	Likes     int                    `json:"likes"`
 	Raw       map[string]interface{} `json:"raw"`
+	Recomment int                    `json:"recomment"` // number of recomment votes
 	CreateAt  time.Time              `json:"createAt"`
 	UpdateAt  time.Time              `json:"updateAt"`
 }

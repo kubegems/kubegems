@@ -11,6 +11,7 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/kubegems/pkg/utils/route"
 )
 
 type SyncOptions struct {
@@ -129,4 +130,14 @@ func (s *SyncService) do(ctx context.Context, method string, p string, body inte
 		return json.NewDecoder(resp.Body).Decode(respwrapper)
 	}
 	return nil
+}
+
+func (m *ModelsAPI) registerSourceSyncRoute() *route.Group {
+	return route.
+		NewGroup("/sync").Tag("sync models").
+		AddRoutes(
+			route.GET("").To(m.SyncStatus).Doc("sync status").Response(SyncStatus{}),
+			route.POST("").To(m.StartSync).Doc("start sync"),
+			route.DELETE("").To(m.StopSync).Doc("stop sync"),
+		)
 }

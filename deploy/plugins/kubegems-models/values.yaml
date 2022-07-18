@@ -69,9 +69,9 @@ controller:
   ## @param controller.image.debug Enable controller image debug mode
   ##
   image:
-    registry: registry.k8s.fatalc.cn
+    registry: docker.io
     repository: kubegems/kubegems
-    tag: develop
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -411,9 +411,9 @@ store:
   ## @param store.image.debug Enable store image debug mode
   ##
   image:
-    registry: registry.k8s.fatalc.cn
+    registry: docker.io
     repository: kubegems/kubegems
-    tag: develop
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -699,9 +699,9 @@ sync:
   ## @param sync.image.debug Enable sync image debug mode
   ##
   image:
-    registry: harbor.cloudminds.com
-    repository: library/ai-model-sync
-    tag: v1
+    registry: docker.io
+    repository: kubegems/models-sync
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images

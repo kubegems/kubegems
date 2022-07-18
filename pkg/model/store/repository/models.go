@@ -83,7 +83,10 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 			}
 		}
 	} else {
+		// 默认排序以 推荐值 降序，名称升序
+		sort["recomment"] = -1
 		sort["downloads"] = -1
+		sort["name"] = 1
 	}
 
 	if o.Page <= 0 {
@@ -168,6 +171,7 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 					"framework": 1,
 					"likes":     1,
 					"task":      1,
+					"recomment": 1,
 					"downloads": 1,
 					"createat":  bson.M{"$toString": "$create_at"},
 					"updateat":  bson.M{"$toString": "$update_at"},
@@ -204,6 +208,23 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 func (m *ModelsRepository) Create(ctx context.Context, model Model) error {
 	_, err := m.Collection.InsertOne(ctx, model)
 	return err
+}
+
+func (m *ModelsRepository) Update(ctx context.Context, model *Model) error {
+	result := m.Collection.FindOneAndUpdate(ctx,
+		bson.M{"source": model.Source, "name": model.Name},
+		bson.M{
+			"$set": bson.M{
+				"intro":     model.Intro,
+				"recomment": model.Recomment,
+			},
+		},
+	)
+	if err := result.Err(); err != nil {
+		return err
+	}
+	_ = result.Decode(model)
+	return nil
 }
 
 func (m *ModelsRepository) Delete(ctx context.Context, source, name string) error {
