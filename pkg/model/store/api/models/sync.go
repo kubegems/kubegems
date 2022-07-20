@@ -25,10 +25,10 @@ func NewDefaultSyncOptions() *SyncOptions {
 }
 
 type SyncStatus struct {
-	Status     string    `json:"status"`
-	Progress   string    `json:"progress"`
-	StartedAt  time.Time `json:"startedAt"`
-	FinishedAt time.Time `json:"finishedAt"`
+	Status     string     `json:"status"`
+	Progress   string     `json:"progress"`
+	StartedAt  *time.Time `json:"startedAt"`
+	FinishedAt *time.Time `json:"finishedAt"`
 }
 
 func (m *ModelsAPI) SyncStatus(req *restful.Request, resp *restful.Response) {
@@ -39,10 +39,16 @@ func (m *ModelsAPI) SyncStatus(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	status := SyncStatus{
-		Status:     syncstatus.State,
-		Progress:   syncstatus.Progress,
-		StartedAt:  time.Unix(syncstatus.Started, 0),
-		FinishedAt: time.Unix(syncstatus.End, 0),
+		Status:   syncstatus.State,
+		Progress: syncstatus.Progress,
+	}
+	if syncstatus.Started != 0 {
+		start := time.Unix(syncstatus.Started, 0)
+		status.StartedAt = &start
+	}
+	if syncstatus.End != 0 {
+		end := time.Unix(syncstatus.End, 0)
+		status.FinishedAt = &end
 	}
 	response.OK(resp, status)
 }

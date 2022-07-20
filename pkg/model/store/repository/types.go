@@ -38,25 +38,26 @@ type ReplyTo struct {
 // model meta in models store
 // nolint: tagliatelle
 type Model struct {
-	ID        string                 `json:"id,omitempty" bson:"_id,omitempty"`
-	Source    string                 `json:"source"` // source of model (huggingface, ...)
-	Name      string                 `json:"name"`
-	Registry  string                 `json:"registry"`
-	Type      string                 `json:"type"`
-	Tags      []string               `json:"tags"`
-	Author    string                 `json:"author"`
-	License   string                 `json:"license"`
-	Files     []ModelFile            `json:"files"`
-	Framework string                 `json:"framework"`
-	Paper     map[string]string      `json:"paper"`
-	Intro     string                 `json:"intro"`
-	Downloads int                    `json:"downloads"`
-	Task      string                 `json:"task"`
-	Likes     int                    `json:"likes"`
-	Raw       map[string]interface{} `json:"raw"`
-	Recomment int                    `json:"recomment"` // number of recomment votes
-	CreateAt  time.Time              `json:"createAt"`
-	UpdateAt  time.Time              `json:"updateAt"`
+	ID           string                 `json:"id,omitempty" bson:"_id,omitempty"`
+	Source       string                 `json:"source"` // source of model (huggingface, ...)
+	Name         string                 `json:"name"`
+	Registry     string                 `json:"registry"`
+	Type         string                 `json:"type"`
+	Tags         []string               `json:"tags"`
+	Author       string                 `json:"author"`
+	License      string                 `json:"license"`
+	Files        []ModelFile            `json:"files"`
+	Framework    string                 `json:"framework"`
+	Paper        map[string]string      `json:"paper"`
+	Intro        string                 `json:"intro"`
+	Downloads    int                    `json:"downloads"`
+	Task         string                 `json:"task"`
+	Likes        int                    `json:"likes"`
+	Raw          map[string]interface{} `json:"raw"`
+	Recomment    int                    `json:"recomment"` // number of recomment votes
+	CreateAt     *time.Time             `json:"createAt" bson:"create_at"`
+	UpdateAt     *time.Time             `json:"updateAt" bson:"update_at"`
+	LastModified *time.Time             `json:"lastModified" bson:"lastModified"`
 }
 
 type ModelFile struct {
