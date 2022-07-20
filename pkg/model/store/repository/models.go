@@ -69,7 +69,7 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 		cond["task"] = o.Task
 	}
 
-	sort := bson.M{}
+	sort := bson.D{}
 
 	if o.Sort != "" {
 		for _, item := range strings.Split(o.Sort, ",") {
@@ -77,16 +77,16 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 				continue
 			}
 			if item[0] == '-' {
-				sort[item[1:]] = -1
+				sort = append(sort, bson.E{Key: item[1:], Value: -1})
 			} else {
-				sort[item] = 1
+				sort = append(sort, bson.E{Key: item, Value: 1})
 			}
 		}
 	} else {
 		// 默认排序以 推荐值 降序，名称升序
-		sort["recomment"] = -1
-		sort["downloads"] = -1
-		sort["name"] = 1
+		sort = append(sort, bson.E{Key: "recomment", Value: -1})
+		sort = append(sort, bson.E{Key: "downloads", Value: -1})
+		sort = append(sort, bson.E{Key: "name", Value: 1})
 	}
 
 	if o.Page <= 0 {
@@ -128,15 +128,15 @@ func (m *ModelsRepository) Count(ctx context.Context, opts ModelListOptions) (in
 
 // nolint: funlen
 func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]ModelWithAddtional, error) {
-	cond, options := opts.ToConditionAndFindOptions()
+	cond, findoptions := opts.ToConditionAndFindOptions()
 	var err error
 	var cursor *mongo.Cursor
 	if opts.WithRating {
 		aggregate := []bson.M{
 			{"$match": cond},
-			{"$sort": options.Sort},
-			{"$skip": options.Skip},
-			{"$limit": options.Limit},
+			{"$sort": findoptions.Sort},
+			{"$skip": findoptions.Skip},
+			{"$limit": findoptions.Limit},
 			{"$lookup": bson.M{
 				"from": "comments",
 				"let": bson.M{
@@ -178,9 +178,9 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 				},
 			},
 		}
-		cursor, err = m.Collection.Aggregate(ctx, aggregate)
+		cursor, err = m.Collection.Aggregate(ctx, aggregate, options.Aggregate().SetAllowDiskUse(true))
 	} else {
-		cursor, err = m.Collection.Find(ctx, cond, options)
+		cursor, err = m.Collection.Find(ctx, cond, findoptions)
 	}
 
 	if err != nil {
