@@ -245,6 +245,18 @@ func (r *Reconciler) DeployModel(ctx context.Context, md *modelsv1beta1.ModelDep
 						}.ToRawExtension(),
 					},
 					{
+						Type: "json-patch",
+						Properties: models.Properties{
+							"operations": []any{
+								map[string]any{
+									"op":    "add",
+									"path":  "/spec/template/spec/containers/0/resources",
+									"value": md.Spec.Resources,
+								},
+							},
+						}.ToRawExtension(),
+					},
+					{
 						Type: "gateway",
 						Properties: models.Properties{
 							"domain": md.Spec.Host,
