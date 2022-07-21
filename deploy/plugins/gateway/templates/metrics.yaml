@@ -1,33 +1,17 @@
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    name: nginx-ingress-operator
-  name: nginx-ingress-operator-metrics
-  namespace: {{ .Release.Namespace }}
-spec:
-  ports:
-    - name: http-metrics
-      port: 9113
-      protocol: TCP
-      targetPort: 9113
-  selector:
-    name: nginx-ingress-operator
-  type: ClusterIP
----
 apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+kind: PodMonitor
 metadata:
   labels:
-    name: nginx-ingress-operator
-  name: nginx-ingress-operator-metrics
+    name: ingress-nginx-operator
+  name: ingress-nginx-operator-metrics
   namespace: {{ .Release.Namespace }}
 spec:
-  endpoints:
+  podMetricsEndpoints:
     - port: http-metrics
+      path: /metrics
   namespaceSelector:
     matchNames:
       - {{ .Release.Namespace }}
   selector:
     matchLabels:
-      name: nginx-ingress-operator
+      gateway.kubegems.io/type: ingress-nginx
