@@ -135,9 +135,9 @@ More informations refer to https://www.kubegems.io/docs/installation/quick-insta
 
 ## Contributing
 
-We very much welcome you to participate in the contribution and sharing of platform experience, standardized applications, plug-in sharing and other fields in the kubegems community.
+We very much welcome your contribution and sharing in the KubeGems community in the fields of platform experience, standardized application, plugin sharing, etc.
 
-If you are a user who s using KubeGems, and you have a deep understanding of kubegems and agree with the technical route, and there is a great demand within your enterprise, we welcome you to participate in the development of kubegems project.
+If you are a user of KubeGems, have a deep understanding of Kubernetes, agree with the technical route, and have great demand within the enterprise, we welcome you to participate in the development of the KubeGems project
 
 More information refer to [CONTRIBUTING.md](https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md).
 
