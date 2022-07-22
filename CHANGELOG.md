@@ -1,3 +1,12 @@
+## 1.21.1 / 2022-07-22
+### Enhancements 🎈
+* 🐞 fix(log): alert duration in template limit to 10m by @jojotong in https://github.com/kubegems/kubegems/pull/152
+* 🎈 perf(logging): disable tls in logging-operator by @jojotong in https://github.com/kubegems/kubegems/pull/157
+### Bugfixes 🐞
+* bugfix; error handle default image registry; by @pepesi in https://github.com/kubegems/kubegems/pull/153
+* fix(plugin): #155 gpu can't regist device by @LinkMaq in https://github.com/kubegems/kubegems/pull/159
+* 🐞 fix(workload): workload list istio-inject sort error by @jojotong in https://github.com/kubegems/kubegems/pull/161
+
 ## 1.21.0 / 2022-07-08
 
 This release brings new plugin management and observability features live. Now you can use the plugin CRD to enable and uninstall platform plugins. For observability, we provide a series of new functions such as access center, monitoring dashboard, log alert, etc.
