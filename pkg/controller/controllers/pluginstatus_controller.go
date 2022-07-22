@@ -19,9 +19,9 @@ import (
 	"os"
 
 	"github.com/go-logr/logr"
-	nginxv1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	istiooperatorv1alpha1 "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	nginxv1beta1 "kubegems.io/ingress-nginx-operator/api/v1beta1"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -96,8 +96,8 @@ func (r *PluginStatusController) Reconcile(ctx context.Context, req ctrl.Request
 
 func (r *PluginStatusController) OnChange(ctx context.Context, crd *apiextensionsv1.CustomResourceDefinition, exist bool) (ctrl.Result, error) {
 	switch crd.Spec.Group {
-	// 判断nginxingress operator是否被安装 nginxingresscontrollers.k8s.nginx.org
-	case nginxv1alpha1.GroupVersion.Group:
+	// 判断nginxingress operator是否被安装 nginxingresscontrollers.networking.kubegems.io
+	case nginxv1beta1.GroupVersion.Group:
 		PluginStatusInstance.nginxIngressControllerEnabled = exist
 	// 判断istio operator是否被安装 istiooperators.install.istio.io
 	case istiooperatorv1alpha1.SchemeGroupVersion.Group:

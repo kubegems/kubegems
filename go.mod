@@ -41,7 +41,6 @@ require (
 	github.com/kiali/kiali v1.43.0
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/mattbaird/jsonpatch v0.0.0-20200820163806-098863c1fc24
-	github.com/nginxinc/nginx-ingress-operator v0.3.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
 	github.com/opencontainers/distribution-spec v1.0.1
@@ -88,6 +87,7 @@ require (
 	k8s.io/utils v0.0.0-20220127004650-9b3446523e65
 	kubegems.io/bundle-controller v1.0.0-alpha3.0.20220620090423-d9fbaec75395
 	kubegems.io/configer v1.0.5
+	kubegems.io/ingress-nginx-operator v0.1.0
 	sigs.k8s.io/controller-runtime v0.11.0
 	sigs.k8s.io/kustomize/api v0.11.4
 	sigs.k8s.io/yaml v1.3.0

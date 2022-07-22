@@ -85,7 +85,7 @@ spec:
             - --metricsaddr=:{{- .Values.controller.metrics.service.port }}
             {{- end }}
             {{- if .Values.global.imageRegistry }}
-            - --repository={{- .Values.global.imageRegistry -}}/kubegems/nginx-ingress
+            - --repository={{- .Values.global.imageRegistry -}}/kubegems/ingress-nginx-operator
             {{- end }}
             {{- if .Values.controller.extraArgs }}
             {{- include "common.tplvalues.render" (dict "value" .Values.controller.extraArgs "context" $) | nindent 12 }}

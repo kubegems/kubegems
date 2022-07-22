@@ -20,10 +20,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	nginx_v1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	nginxv1beta1 "kubegems.io/ingress-nginx-operator/api/v1beta1"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/networking"
@@ -168,7 +168,7 @@ func CreateDefaultTenantGateway(client client.Client, log logr.Logger) {
 	}
 
 	execute := func() error {
-		nicList := nginx_v1alpha1.NginxIngressControllerList{}
+		nicList := nginxv1beta1.NginxIngressControllerList{}
 		if err := client.List(context.TODO(), &nicList); err != nil {
 			return err
 		}
