@@ -168,22 +168,9 @@ func updateEnviromentAnnotation(env *v1beta1.Environment, serviceAccountName, ta
 	if env.Annotations == nil {
 		env.Annotations = make(map[string]string)
 	}
-
-	if len(env.Annotations) == 0 && isAdd {
-		env.Annotations = map[string]string{
-			imagePullSecretKeyPrefix + serviceAccountName: targetSecretName,
-		}
-		return
-	}
-
-	for k := range env.Annotations {
-		if !strings.HasPrefix(k, imagePullSecretKeyPrefix) {
-			continue
-		}
-		if strings.TrimPrefix(k, imagePullSecretKeyPrefix) != serviceAccountName {
-			continue
-		}
-		secrets := strings.Split(env.Annotations[k], ",")
+	key := imagePullSecretKeyPrefix + serviceAccountName
+	if _, exist := env.Annotations[key]; exist {
+		secrets := strings.Split(env.Annotations[key], ",")
 		if isAdd {
 			if !slice.ContainStr(secrets, targetSecretName) {
 				secrets = append(secrets, targetSecretName)
@@ -191,11 +178,14 @@ func updateEnviromentAnnotation(env *v1beta1.Environment, serviceAccountName, ta
 		} else {
 			secrets = slice.RemoveStrInReplace(secrets, targetSecretName)
 		}
-
 		if len(secrets) == 0 {
-			env.Annotations = nil
+			delete(env.Annotations, key)
 		} else {
-			env.Annotations[k] = strings.Join(secrets, ",")
+			env.Annotations[key] = strings.Join(secrets, ",")
+		}
+	} else {
+		if isAdd {
+			env.Annotations[key] = targetSecretName
 		}
 	}
 }

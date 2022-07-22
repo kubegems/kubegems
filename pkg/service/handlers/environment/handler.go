@@ -843,7 +843,9 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 					addRealtimeAlert(v.AlertLevels)
 				}
 			}
-			alertResourceMap["logging"] = len(logalerts)
+			if len(logalerts) > 0 {
+				alertResourceMap["logging"] = len(logalerts)
+			}
 			for _, v := range logalerts {
 				addRealtimeAlert(v.AlertLevels)
 			}
