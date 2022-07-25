@@ -15,6 +15,8 @@ spec:
     ingress:
       enabled: true
       ingressClassName: default-gateway
+      labels:
+        networking.kubegems.io/ingressClass: default-gateway
       hosts: [grafana.{{ .Values.global.clusterName }}.kubegems.io]
     datasources:
       datasources.yaml:
