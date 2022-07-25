@@ -104,6 +104,8 @@ spec:
       ingress:
         enabled: true
         ingressClassName: default-gateway
+        labels:
+          networking.kubegems.io/ingressClass: default-gateway        
         hosts: [prometheus.{{ .Values.global.clusterName }}.kubegems.io]
     alertmanager:
       # templateFiles:
@@ -140,6 +142,8 @@ spec:
       ingress:
         enabled: true
         ingressClassName: default-gateway
+        labels:
+          networking.kubegems.io/ingressClass: default-gateway
         hosts: [alertmanager.{{ .Values.global.clusterName }}.kubegems.io]
     nodeExporter:
       enabled: false
