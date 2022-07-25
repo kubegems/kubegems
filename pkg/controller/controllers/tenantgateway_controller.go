@@ -19,10 +19,8 @@ package controllers
 import (
 	"context"
 	"reflect"
-	"strings"
 
 	"github.com/go-logr/logr"
-	nginx_v1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -32,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	nginxv1beta1 "kubegems.io/ingress-nginx-operator/api/v1beta1"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/controller/handler"
@@ -51,7 +50,7 @@ type TenantGatewayReconciler struct {
 
 //+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantgateways,verbs=get;list;watch;create;update;patch;delete;deletecollection
 //+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantgateways/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=k8s.nginx.org,resources=nginxingresscontrollers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.kubegems.io,resources=nginxingresscontrollers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingressclasses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -97,7 +96,14 @@ func (r *TenantGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
-	found := &nginx_v1alpha1.NginxIngressController{}
+	if tg.Spec.Service == nil {
+		tg.Spec.Service = &gemsv1beta1.Service{}
+	}
+	if tg.Spec.Workload == nil {
+		tg.Spec.Workload = &gemsv1beta1.Workload{}
+	}
+
+	found := &nginxv1beta1.NginxIngressController{}
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: gemlabels.NamespaceGateway, // gateway资源都在这里
 		Name:      tg.Name,
@@ -173,7 +179,7 @@ func (r *TenantGatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1alpha1.NginxIngressController, tg *gemsv1beta1.TenantGateway) bool {
+func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginxv1beta1.NginxIngressController, tg *gemsv1beta1.TenantGateway) bool {
 	// label
 	if nic.Labels[gemlabels.LabelTenant] != tg.Spec.Tenant {
 		return true
@@ -181,14 +187,6 @@ func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1
 
 	// OwnerReferences
 	if len(nic.OwnerReferences) == 0 || nic.OwnerReferences[0].Name != tg.Name {
-		return true
-	}
-
-	if strings.ToLower(nic.Spec.Type) != "deployment" {
-		return true
-	}
-
-	if nic.Spec.ServiceType != string(tg.Spec.Type) {
 		return true
 	}
 
@@ -202,10 +200,13 @@ func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1
 
 	// service
 	if nic.Spec.Service == nil {
-		nic.Spec.Service = &nginx_v1alpha1.Service{}
+		nic.Spec.Service = &nginxv1beta1.Service{}
 	}
 	if tg.Spec.Service == nil {
 		tg.Spec.Service = &gemsv1beta1.Service{}
+	}
+	if nic.Spec.Service.Type != string(tg.Spec.Type) {
+		return true
 	}
 	if !reflect.DeepEqual(nic.Spec.Service.ExtraLabels, tg.Spec.Service.ExtraLabels) {
 		return true
@@ -218,7 +219,7 @@ func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1
 
 	// workload
 	if nic.Spec.Workload == nil {
-		nic.Spec.Workload = &nginx_v1alpha1.Workload{}
+		nic.Spec.Workload = &nginxv1beta1.Workload{}
 	}
 	if tg.Spec.Workload == nil {
 		tg.Spec.Workload = &gemsv1beta1.Workload{}
@@ -235,8 +236,8 @@ func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginx_v1
 
 var nginxMetricsPort uint16 = 9113
 
-func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gemsv1beta1.TenantGateway) *nginx_v1alpha1.NginxIngressController {
-	return &nginx_v1alpha1.NginxIngressController{
+func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gemsv1beta1.TenantGateway) *nginxv1beta1.NginxIngressController {
+	return &nginxv1beta1.NginxIngressController{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tg.Name,
 			Namespace: gemlabels.NamespaceGateway,
@@ -246,40 +247,42 @@ func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gem
 			},
 			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(tg, gemsv1beta1.SchemeTenantGateway)},
 		},
-		Spec: nginx_v1alpha1.NginxIngressControllerSpec{
-			Type:          "deployment",
-			ServiceType:   string(tg.Spec.Type),
-			Replicas:      tg.Spec.Replicas,
-			IngressClass:  tg.Spec.IngressClass,
-			Service:       (*nginx_v1alpha1.Service)(tg.Spec.Service),
-			Image:         (nginx_v1alpha1.Image)(tg.Spec.Image),
-			Workload:      (*nginx_v1alpha1.Workload)(tg.Spec.Workload),
-			ConfigMapData: tg.Spec.ConfigMapData,
-			Prometheus: &nginx_v1alpha1.Prometheus{
-				Enable: true,
-				Port:   &nginxMetricsPort,
+		Spec: nginxv1beta1.NginxIngressControllerSpec{
+			Service: &nginxv1beta1.Service{
+				Type:        string(tg.Spec.Type),
+				ExtraLabels: tg.Spec.Service.ExtraLabels,
 			},
+			Replicas:     tg.Spec.Replicas,
+			IngressClass: tg.Spec.IngressClass,
+			Image: nginxv1beta1.Image{
+				Repository: tg.Spec.Image.Repository,
+				Tag:        tg.Spec.Image.Tag,
+				PullPolicy: corev1.PullPolicy(tg.Spec.Image.PullPolicy),
+			},
+			Workload:      (*nginxv1beta1.Workload)(tg.Spec.Workload),
+			ConfigMapData: tg.Spec.ConfigMapData,
 		},
 	}
 }
 
-func (r *TenantGatewayReconciler) updateNginxIngressController(nic *nginx_v1alpha1.NginxIngressController, tg *gemsv1beta1.TenantGateway) *nginx_v1alpha1.NginxIngressController {
+func (r *TenantGatewayReconciler) updateNginxIngressController(nic *nginxv1beta1.NginxIngressController, tg *gemsv1beta1.TenantGateway) *nginxv1beta1.NginxIngressController {
 	nic.SetLabels(map[string]string{
 		gemlabels.LabelTenant:      tg.Spec.Tenant,
 		gemlabels.LabelApplication: tg.Name,
 	})
 	nic.SetOwnerReferences([]metav1.OwnerReference{*metav1.NewControllerRef(tg, gemsv1beta1.SchemeTenantGateway)})
-	nic.Spec.Type = "deployment"
-	nic.Spec.ServiceType = string(tg.Spec.Type)
 	nic.Spec.Replicas = tg.Spec.Replicas
 	nic.Spec.IngressClass = tg.Spec.IngressClass
-	nic.Spec.Service = (*nginx_v1alpha1.Service)(tg.Spec.Service)
-	nic.Spec.Image = (nginx_v1alpha1.Image)(tg.Spec.Image)
-	nic.Spec.Workload = (*nginx_v1alpha1.Workload)(tg.Spec.Workload)
-	nic.Spec.ConfigMapData = tg.Spec.ConfigMapData
-	nic.Spec.Prometheus = &nginx_v1alpha1.Prometheus{
-		Enable: true,
-		Port:   &nginxMetricsPort,
+	nic.Spec.Service = &nginxv1beta1.Service{
+		Type:        string(tg.Spec.Type),
+		ExtraLabels: tg.Spec.Service.ExtraLabels,
 	}
+	nic.Spec.Image = nginxv1beta1.Image{
+		Repository: tg.Spec.Image.Repository,
+		Tag:        tg.Spec.Image.Tag,
+		PullPolicy: corev1.PullPolicy(tg.Spec.Image.PullPolicy),
+	}
+	nic.Spec.Workload = (*nginxv1beta1.Workload)(tg.Spec.Workload)
+	nic.Spec.ConfigMapData = tg.Spec.ConfigMapData
 	return nic
 }

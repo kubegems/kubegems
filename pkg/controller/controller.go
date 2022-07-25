@@ -24,13 +24,13 @@ import (
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"github.com/go-logr/logr"
-	nginx_v1alpha1 "github.com/nginxinc/nginx-ingress-operator/api/v1alpha1"
 	istioclinetworkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	nginxv1beta1 "kubegems.io/ingress-nginx-operator/api/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	gemscontroller "kubegems.io/kubegems/pkg/controller/controllers"
@@ -53,7 +53,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(gemsv1beta1.AddToScheme(scheme))
 	utilruntime.Must(loggingv1beta1.AddToScheme(scheme))
-	utilruntime.Must(nginx_v1alpha1.SchemeBuilder.AddToScheme(scheme))
+	utilruntime.Must(nginxv1beta1.SchemeBuilder.AddToScheme(scheme))
 	utilruntime.Must(istioclinetworkingv1beta1.SchemeBuilder.AddToScheme(scheme))
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 
@@ -76,7 +76,7 @@ func NewDefaultOptions() *Options {
 		ProbeAddr:            ":8081",
 		EnableLeaderElection: false,
 		Enablewebhook:        true,
-		Repository:           "docker.io/kubegems/nginx-ingress",
+		Repository:           "docker.io/kubegems/ingress-nginx-operator",
 	}
 }
 

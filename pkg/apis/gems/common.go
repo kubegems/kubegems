@@ -57,6 +57,8 @@ const (
 	LabelPrometheusRuleName = "prometheusrule.kubegems.io/name"
 	LabelPrometheusRuleType = "prometheusrule.kubegems.io/type"
 
+	LabelGatewayType = "gateway.kubegems.io/type" // ingress-nginx
+
 	StatusEnabled  = "enabled"
 	StatusDisabled = "disabled"
 )
