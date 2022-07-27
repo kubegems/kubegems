@@ -305,9 +305,9 @@ webhooks:
     name: mutate.ingress.dev
     rules:
     - apiGroups:
-      - extensions
+      - networking.k8s.io
       apiVersions:
-      - v1beta1
+      - v1
       operations:
       - CREATE
       - UPDATE
