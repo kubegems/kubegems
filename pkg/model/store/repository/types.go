@@ -72,6 +72,7 @@ type Source struct {
 	Desc         string    `json:"desc"`
 	Icon         string    `json:"icon"`
 	BuiltIn      bool      `json:"builtIn"`
+	Online       bool      `json:"online"`
 	Enabled      bool      `json:"enabled"`
 	Images       []string  `json:"images"`
 	CreationTime time.Time `json:"creationTime"`

@@ -131,6 +131,7 @@ func (s *SourcesRepository) Update(ctx context.Context, source *Source) error {
 			{Key: "desc", Value: source.Desc},
 			{Key: "enabled", Value: source.Enabled},
 			{Key: "builtin", Value: source.BuiltIn},
+			{Key: "online", Value: source.Online},
 			{Key: "updationtime", Value: now},
 			{Key: "images", Value: source.Images},
 		}},
