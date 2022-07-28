@@ -44,7 +44,6 @@ require (
 	github.com/kiali/kiali v1.43.0
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/mattbaird/jsonpatch v0.0.0-20200820163806-098863c1fc24
-	github.com/nginxinc/nginx-ingress-operator v0.3.0
 	github.com/oam-dev/kubevela v1.1.8
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
