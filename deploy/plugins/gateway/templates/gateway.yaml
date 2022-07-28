@@ -292,9 +292,9 @@ spec:
         command:
         - /manager
         {{- if .Values.global.imageRegistry }}
-        image: {{ .Values.global.imageRegistry }}/kubegems/ingress-nginx-operator:v0.1.0
+        image: {{ .Values.global.imageRegistry }}/kubegems/ingress-nginx-operator:v0.1.1
         {{- else }}
-        image: kubegems/ingress-nginx-operator:v0.1.0
+        image: kubegems/ingress-nginx-operator:v0.1.1
         {{- end }}        
         livenessProbe:
           httpGet:
