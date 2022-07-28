@@ -173,6 +173,7 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 					"task":         1,
 					"recomment":    1,
 					"downloads":    1,
+					"tags":         1,
 					"create_at":    bson.M{"$toString": "$create_at"},
 					"update_at":    bson.M{"$toString": "$update_at"},
 					"lastModified": bson.M{"$toString": "$lastModified"},

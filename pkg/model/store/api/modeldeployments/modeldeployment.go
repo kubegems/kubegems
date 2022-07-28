@@ -18,14 +18,15 @@ import (
 
 type ModelDeploymentOverview struct {
 	AppRef
-	Name         string `json:"name"`
-	ModelName    string `json:"modelName"`
-	ModelVersion string `json:"modelVersion"`
-	URL          string `json:"url"`
-	Cluster      string `json:"cluster"`
-	Namespace    string `json:"namespace"`
-	Creator      string `json:"creator"`
-	Phase        string `json:"phase"`
+	Name              string      `json:"name"`
+	ModelName         string      `json:"modelName"`
+	ModelVersion      string      `json:"modelVersion"`
+	URL               string      `json:"url"`
+	Cluster           string      `json:"cluster"`
+	Namespace         string      `json:"namespace"`
+	Creator           string      `json:"creator"`
+	Phase             string      `json:"phase"`
+	CreationTimestamp metav1.Time `json:"creationTimestamp"`
 }
 
 func EncodeModelName(modelname string) string {
@@ -60,20 +61,25 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 			appref := &AppRef{}
 			appref.FromJson(md.Annotations[application.AnnotationRef])
 			retlist = append(retlist, ModelDeploymentOverview{
-				Name:         md.Name,
-				ModelName:    md.Spec.Model.Name,
-				ModelVersion: md.Spec.Model.Version,
-				URL:          "http://" + md.Spec.Host,
-				Phase:        string(md.Status.Phase),
-				Cluster:      cluster,
-				Namespace:    md.Namespace,
-				Creator:      appref.Username,
-				AppRef:       *appref,
+				Name:              md.Name,
+				ModelName:         md.Spec.Model.Name,
+				ModelVersion:      md.Spec.Model.Version,
+				URL:               "http://" + md.Spec.Host,
+				Phase:             string(md.Status.Phase),
+				Cluster:           cluster,
+				Namespace:         md.Namespace,
+				Creator:           appref.Username,
+				AppRef:            *appref,
+				CreationTimestamp: md.CreationTimestamp,
 			})
 		}
 	}
+
 	listoptions := request.GetListOptions(req.Request)
-	paged := response.NewPageData(retlist, listoptions.Page, listoptions.Size, nil, nil)
+	// sort by creation timestamp desc
+	paged := response.NewPageData(retlist, listoptions.Page, listoptions.Size, nil, func(i, j int) bool {
+		return retlist[i].CreationTimestamp.After(retlist[j].CreationTimestamp.Time)
+	})
 	response.OK(resp, paged)
 }
 
