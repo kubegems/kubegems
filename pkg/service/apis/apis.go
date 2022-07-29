@@ -7,6 +7,7 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/model/store/api/modeldeployments"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
+	"kubegems.io/kubegems/pkg/service/apis/models"
 	"kubegems.io/kubegems/pkg/service/apis/plugins"
 	"kubegems.io/kubegems/pkg/service/options"
 	"kubegems.io/kubegems/pkg/utils/agents"
@@ -29,10 +30,10 @@ type Dependencies struct {
 }
 
 func InitAPI(ctx context.Context, deps Dependencies) (http.Handler, error) {
-	// modelsapi, err := models.NewModelsAPI(ctx, deps.Opts.Mongo)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	modelsapi, err := models.NewModelsAPI(ctx, deps.Opts.Mongo)
+	if err != nil {
+		return nil, err
+	}
 
 	pluginsapi, err := plugins.NewPluginsAPI()
 	if err != nil {
@@ -41,7 +42,7 @@ func InitAPI(ctx context.Context, deps Dependencies) (http.Handler, error) {
 
 	modules := []apiutil.RestModule{
 		modeldeployments.NewModelDeploymentAPI(deps.Agents, deps.Database),
-		// modelsapi,
+		modelsapi,
 		pluginsapi,
 	}
 	middlewares := []restful.FilterFunction{

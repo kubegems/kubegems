@@ -11,7 +11,6 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
-	"kubegems.io/kubegems/pkg/utils/route"
 )
 
 type SyncOptions struct {
@@ -31,6 +30,22 @@ type SyncStatus struct {
 	FinishedAt *time.Time `json:"finishedAt"`
 }
 
+func SyncStatusFrom(status *SyncServiceSyncStatus) SyncStatus {
+	s := SyncStatus{
+		Status:   status.State,
+		Progress: status.Progress,
+	}
+	if status.Started != 0 {
+		start := time.Unix(status.Started, 0)
+		s.StartedAt = &start
+	}
+	if status.End != 0 {
+		end := time.Unix(status.End, 0)
+		s.FinishedAt = &end
+	}
+	return s
+}
+
 func (m *ModelsAPI) SyncStatus(req *restful.Request, resp *restful.Response) {
 	source := req.PathParameter("source")
 	syncstatus, err := m.SyncService.SyncStatus(req.Request.Context(), source)
@@ -38,19 +53,7 @@ func (m *ModelsAPI) SyncStatus(req *restful.Request, resp *restful.Response) {
 		response.Error(resp, err)
 		return
 	}
-	status := SyncStatus{
-		Status:   syncstatus.State,
-		Progress: syncstatus.Progress,
-	}
-	if syncstatus.Started != 0 {
-		start := time.Unix(syncstatus.Started, 0)
-		status.StartedAt = &start
-	}
-	if syncstatus.End != 0 {
-		end := time.Unix(syncstatus.End, 0)
-		status.FinishedAt = &end
-	}
-	response.OK(resp, status)
+	response.OK(resp, SyncStatusFrom(syncstatus))
 }
 
 func (m *ModelsAPI) StartSync(req *restful.Request, resp *restful.Response) {
@@ -138,14 +141,4 @@ func (s *SyncService) do(ctx context.Context, method string, p string, body inte
 		return json.NewDecoder(resp.Body).Decode(respwrapper)
 	}
 	return nil
-}
-
-func (m *ModelsAPI) registerSourceSyncRoute() *route.Group {
-	return route.
-		NewGroup("/sync").Tag("sync models").
-		AddRoutes(
-			route.GET("").To(m.SyncStatus).Doc("sync status").Response(SyncStatus{}),
-			route.POST("").To(m.StartSync).Doc("start sync"),
-			route.DELETE("").To(m.StopSync).Doc("stop sync"),
-		)
 }

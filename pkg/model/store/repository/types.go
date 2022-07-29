@@ -58,6 +58,7 @@ type Model struct {
 	CreateAt     *time.Time             `json:"createAt" bson:"create_at"`
 	UpdateAt     *time.Time             `json:"updateAt" bson:"update_at"`
 	LastModified *time.Time             `json:"lastModified" bson:"lastModified"`
+	Enabled      bool                   `json:"enabled"`
 }
 
 type ModelFile struct {
@@ -73,8 +74,8 @@ type Source struct {
 	Icon         string    `json:"icon"`
 	BuiltIn      bool      `json:"builtIn"`
 	Online       bool      `json:"online"`
-	Enabled      bool      `json:"enabled"`
 	Images       []string  `json:"images"`
 	CreationTime time.Time `json:"creationTime"`
 	UpdationTime time.Time `json:"updationTime"`
+	Enabled      bool      `json:"enabled"`
 }

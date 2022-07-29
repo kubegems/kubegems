@@ -12,8 +12,8 @@ import (
 )
 
 var InitSources = []any{
-	Source{Name: "huggingface", Desc: "Huggingface", BuiltIn: true, Enabled: true, Images: []string{"kubegems/models-serving"}},
-	Source{Name: "openmmlab", Desc: "OpenMM Lab", BuiltIn: true, Enabled: true, Images: []string{"kubegems/models-serving"}},
+	Source{Name: "huggingface", Desc: "Huggingface", BuiltIn: true, Online: true, Enabled: true, Images: []string{"kubegems/models-serving"}},
+	Source{Name: "openmmlab", Desc: "OpenMM Lab", BuiltIn: true, Online: true, Enabled: true, Images: []string{"kubegems/models-serving"}},
 }
 
 type SourcesRepository struct {
@@ -52,42 +52,114 @@ func (r *SourcesRepository) InitSchema(ctx context.Context) error {
 	return err
 }
 
-func (r *SourcesRepository) Get(ctx context.Context, name string) (*Source, error) {
-	var source Source
-	err := r.Collection.FindOne(ctx, bson.M{"name": name}).Decode(&source)
-	if err != nil {
-		return nil, err
+type GetSourceOptions struct {
+	WithDisabled bool
+	WithCounts   bool
+}
+
+func (r *SourcesRepository) withModelCountsStage() []bson.D {
+	return []bson.D{
+		{{
+			Key: "$lookup", Value: bson.M{
+				"from": "models",
+				"let":  bson.M{"name": "$name"},
+				"pipeline": bson.A{
+					bson.M{"$match": bson.M{"$expr": bson.M{"$eq": bson.A{"$source", "$$name"}}}},
+					bson.M{"$group": bson.M{
+						"_id":   "$source",
+						"total": bson.M{"$sum": 1},
+					}},
+				},
+				"as": "modelsCount",
+			},
+		}},
+		{{
+			Key: "$set", Value: bson.M{
+				"modelsCount": bson.M{
+					"$getField": bson.M{
+						"input": bson.M{
+							"$arrayElemAt": bson.A{"$modelsCount", 0},
+						},
+						"field": "total",
+					},
+				},
+			},
+		}},
 	}
-	return &source, nil
+}
+
+func (r *SourcesRepository) Get(ctx context.Context, name string, opts GetSourceOptions) (*SourceWithAddtional, error) {
+	cond := bson.M{"name": name}
+	if !opts.WithDisabled {
+		cond["enabled"] = true
+	}
+
+	// nolint: nestif
+	if opts.WithCounts {
+		pipline := mongo.Pipeline{
+			{{Key: "$match", Value: cond}},
+		}
+		pipline = append(pipline, r.withModelCountsStage()...)
+		cur, err := r.Collection.Aggregate(ctx, pipline)
+		if err != nil {
+			return nil, err
+		}
+		var list []SourceWithAddtional
+		if err := cur.All(ctx, &list); err != nil {
+			return nil, err
+		}
+		if len(list) > 0 {
+			return &list[0], nil
+		}
+		return nil, mongo.ErrNoDocuments
+	} else {
+		into := &SourceWithAddtional{}
+		if err := r.Collection.FindOne(ctx, cond).Decode(into); err != nil {
+			return nil, err
+		}
+		return into, nil
+	}
 }
 
 type ListSourceOptions struct {
-	CommonListOptions
+	WithDisabled    bool
+	WithModelCounts bool
 }
 
 func (o ListSourceOptions) ToConditionAndFindOptions() (interface{}, *options.FindOptions) {
 	cond := bson.M{}
-	if o.Search != "" {
-		cond["name"] = bson.M{"$regex": o.Search}
+	if !o.WithDisabled {
+		cond["enabled"] = true
 	}
-	if o.Page <= 0 {
-		o.Page = 1
-	}
-	if o.Size <= 0 {
-		o.Size = 10
-	}
-	return cond, options.Find().SetSort(bson.M{"name": 1}).SetLimit(o.Size).SetSkip((o.Page - 1) * o.Size)
+	return cond, options.Find().SetSort(bson.M{"name": 1})
 }
 
-func (r *SourcesRepository) List(ctx context.Context, opts ListSourceOptions) ([]Source, error) {
-	cond, mongoopts := opts.ToConditionAndFindOptions()
-	cursor, err := r.Collection.Find(ctx, cond, mongoopts)
+type SourceWithAddtional struct {
+	Source     `bson:",inline" json:",inline"`
+	ModelCount int64 `bson:"modelsCount" json:"modelsCount"`
+}
+
+func (r *SourcesRepository) List(ctx context.Context, opts ListSourceOptions) ([]SourceWithAddtional, error) {
+	cond, findopts := opts.ToConditionAndFindOptions()
+
+	var cursor *mongo.Cursor
+	var err error
+	if opts.WithModelCounts {
+		pipline := mongo.Pipeline{
+			{{Key: "$match", Value: cond}},
+			{{Key: "$sort", Value: findopts.Sort}},
+		}
+		pipline = append(pipline, r.withModelCountsStage()...)
+		cursor, err = r.Collection.Aggregate(ctx, pipline)
+	} else {
+		cursor, err = r.Collection.Find(ctx, cond, findopts)
+	}
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
 
-	sources := []Source{}
+	sources := []SourceWithAddtional{}
 	if err := cursor.All(ctx, &sources); err != nil {
 		return nil, err
 	}
@@ -129,11 +201,11 @@ func (s *SourcesRepository) Update(ctx context.Context, source *Source) error {
 		bson.M{"$set": bson.D{
 			{Key: "icon", Value: source.Icon},
 			{Key: "desc", Value: source.Desc},
-			{Key: "enabled", Value: source.Enabled},
 			{Key: "builtin", Value: source.BuiltIn},
 			{Key: "online", Value: source.Online},
 			{Key: "updationtime", Value: now},
 			{Key: "images", Value: source.Images},
+			{Key: "enabled", Value: source.Enabled},
 		}},
 	)
 	return err

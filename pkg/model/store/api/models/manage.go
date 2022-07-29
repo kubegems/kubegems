@@ -5,7 +5,6 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
-	"kubegems.io/kubegems/pkg/utils/route"
 )
 
 func (o *ModelsAPI) AddSourceAdmin(req *restful.Request, resp *restful.Response) {
@@ -42,19 +41,4 @@ func (o *ModelsAPI) DeleteSourceAdmin(req *restful.Request, resp *restful.Respon
 	} else {
 		response.OK(resp, nil)
 	}
-}
-
-func (m *ModelsAPI) registerSourceAdminRoute() *route.Group {
-	return route.
-		NewGroup("/admins").
-		Tag("admins").
-		AddRoutes(
-			route.GET("").To(m.ListSourceAdmin).Doc("list admins").Response([]string{}),
-			route.POST("/{username}").To(m.AddSourceAdmin).Doc("add source admin").
-				Parameters(route.PathParameter("username", "Username of admin")).
-				Accept("*/*"),
-			route.DELETE("/{username}").To(m.DeleteSourceAdmin).Doc("delete source admin").Parameters(
-				route.PathParameter("username", "Username of admin"),
-			),
-		)
 }

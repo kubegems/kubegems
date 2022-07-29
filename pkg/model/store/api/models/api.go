@@ -67,32 +67,59 @@ func ParseCommonListOptions(r *restful.Request) repository.CommonListOptions {
 
 func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 	rg.AddSubGroup(
+		// admin
+		m.registerAdminRoute(),
 		// sources
-		m.registerSourcesRoute(),
-		// sources subresources
+		route.
+			NewGroup("/sources").Tag("sources").
+			AddRoutes(
+				route.GET("").To(m.ListSources).Doc("List sources").Response([]repository.Source{}),
+				route.GET("/{source}").To(m.GetSource).Doc("Get source").
+					Parameters(route.PathParameter("source", "Source name")).
+					Response(SourceWithSyncStatus{}),
+				route.GET("/{source}/selectors").To(m.ListSelectors).Doc("List selectors").Response([]repository.Selectors{}),
+			),
 		route.
 			NewGroup("/sources/{source}").Parameters(route.PathParameter("source", "model source name")).
-			AddRoutes(
-				route.GET("/selectors").To(m.ListSelectors).Tag("sources").Doc("list selectors").Response(repository.Selectors{}),
-			).
 			AddSubGroup(
 				// source admin
-				m.registerSourceAdminRoute(),
-				// source sync
-				m.registerSourceSyncRoute(),
-				// models
-				m.registerModelsRoute(),
-				// models subresources
+				route.NewGroup("/admins").Tag("admins").AddRoutes(
+					route.GET("").To(m.ListSourceAdmin).Doc("list admins").Response([]string{}),
+					route.POST("/{username}").To(m.AddSourceAdmin).Doc("add source admin").
+						Parameters(route.PathParameter("username", "Username of admin")).Accept("*/*"),
+					route.DELETE("/{username}").To(m.DeleteSourceAdmin).Doc("delete source admin").Parameters(
+						route.PathParameter("username", "Username of admin"),
+					),
+				),
+				// source models
+				route.
+					NewGroup("/models").Tag("models").
+					AddRoutes(
+						route.GET("").To(m.ListModels).Paged().Doc("list models").
+							Parameters(
+								route.QueryParameter("framework", "framework name").Optional(),
+								route.QueryParameter("license", "license name").Optional(),
+								route.QueryParameter("search", "search name").Optional(),
+								route.QueryParameter("tags", "filter models contains all tags").Optional(),
+								route.QueryParameter("task", "task").Optional(),
+								route.QueryParameter("framework", "framework").Optional(),
+								route.QueryParameter("sort",
+									`sort string, eg: "-name,-creationtime", "name,-creationtime"the '-' prefix means descending,otherwise ascending"`,
+								).Optional(),
+							).
+							Response([]repository.Model{}),
+						route.GET("/{model}").To(m.GetModel).Doc("get model").
+							Parameters(route.PathParameter("model", "model name, base64 encoded name string")).
+							Response(repository.Model{}),
+						// models ratings
+						route.GET("/{model}/rating").To(m.GetRating).Doc("get model rating").
+							Parameters(route.PathParameter("model", "model name, base64 encoded name string")).
+							Response(repository.Rating{}),
+					),
+				// models comments
 				route.
 					NewGroup("/models/{model}").Parameters(route.PathParameter("model", "model name")).
-					AddRoutes(
-						// models ratings
-						route.GET("/rating").To(m.GetRating).Tag("models").Doc("get rating").Response(repository.Rating{}),
-					).
-					AddSubGroup(
-						// models comments
-						m.registerCommentsRoute(),
-					),
+					AddSubGroup(m.registerCommentsRoute()),
 			),
 	)
 }
