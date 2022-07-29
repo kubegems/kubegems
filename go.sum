@@ -3252,8 +3252,8 @@ kubegems.io/bundle-controller v1.0.0-alpha3.0.20220620090423-d9fbaec75395 h1:ReA
 kubegems.io/bundle-controller v1.0.0-alpha3.0.20220620090423-d9fbaec75395/go.mod h1:0WLnJ6qAelr6ktEtJRkzVz98GTp7LKOfzi/xWwFid5g=
 kubegems.io/configer v1.0.5 h1:6ol16Qb/0wDLFgOiMPAQqTxLqI3yL96iQt1tQC5Ntek=
 kubegems.io/configer v1.0.5/go.mod h1:zPVFdQeaTCxsASoLi/MoHMxIMpsLnG2Ol9cF7gWQ7as=
-kubegems.io/ingress-nginx-operator v0.1.1 h1:VA+aQNrGXf37BrJvdSRfjHRZS8PBuvNiAyzVmPwsTTE=
-kubegems.io/ingress-nginx-operator v0.1.1/go.mod h1:gADnzt6HxjlWoRXrOfTeocUY5j/VZwPkXPqsWfIS8Z0=
+kubegems.io/ingress-nginx-operator v0.2.0 h1:mryOvb2LY6nnzvmR2pl9JsCjQZMmXDLfDFqx3DFi1kw=
+kubegems.io/ingress-nginx-operator v0.2.0/go.mod h1:gADnzt6HxjlWoRXrOfTeocUY5j/VZwPkXPqsWfIS8Z0=
 modernc.org/b v1.0.0/go.mod h1:uZWcZfRj1BpYzfN9JTerzlNUnnPsV9O2ZA8JsRcubNg=
 modernc.org/cc v1.0.0/go.mod h1:1Sk4//wdnYJiUIxnW8ddKpaOJCF37yAdqYnkxUpaYxw=
 modernc.org/db v1.0.0/go.mod h1:kYD/cO29L/29RM0hXYl4i3+Q5VojL31kTUVpVJDw0s8=
