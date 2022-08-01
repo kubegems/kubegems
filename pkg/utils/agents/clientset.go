@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -93,6 +94,19 @@ func (h ClientSet) ExecuteInEachCluster(ctx context.Context, f func(ctx context.
 		})
 	}
 	return g.Wait()
+}
+
+func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
+	ret := []string{}
+	cluster := &models.Cluster{Primary: true}
+	if err := h.database.DB().Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
+		return nil, err
+	}
+	if len(ret) == 0 {
+		return nil, errors.New("no manager cluster found")
+	}
+	managerclustername := ret[0]
+	return h.ClientOf(ctx, managerclustername)
 }
 
 func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/apis"
+	"kubegems.io/kubegems/pkg/service/apis/proxy"
 )
 
 func (r *Router) AddRestAPI(ctx context.Context, deps apis.Dependencies) error {
@@ -15,10 +16,19 @@ func (r *Router) AddRestAPI(ctx context.Context, deps apis.Dependencies) error {
 	modelsfun := func(gin *gin.Context) {
 		apis.ServeHTTP(gin.Writer, gin.Request)
 	}
-	r.gin.Any("/v1/docs.json", modelsfun)
+
+	// just hardcode the path for now
+	p, err := proxy.NewProxy(deps.Opts.Models.Addr)
+	if err != nil {
+		return err
+	}
+
 	r.gin.Any("/v1/plugins", modelsfun)
-	r.gin.Any("/v1/admin/*path", modelsfun)
-	r.gin.Any("/v1/sources/*path", modelsfun)
-	r.gin.Any("/v1/sources", modelsfun)
+
+	// models store
+	r.gin.Any("/v1/docs.json", p.Handle)
+	r.gin.Any("/v1/admin/*path", p.Handle)
+	r.gin.Any("/v1/sources/*path", p.Handle)
+	r.gin.Any("/v1/sources", p.Handle)
 	return nil
 }

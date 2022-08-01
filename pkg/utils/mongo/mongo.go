@@ -24,7 +24,21 @@ func DefaultOptions() *Options {
 	}
 }
 
-func NewMongoDB(ctx context.Context, opt *Options) (*mongo.Client, *mongo.Database, error) {
+func New(ctx context.Context, opt *Options) (*mongo.Client, *mongo.Database, error) {
+	mongocli, db, err := NewLazy(ctx, opt)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := mongocli.Connect(ctx); err != nil {
+		return nil, nil, err
+	}
+	if err := mongocli.Ping(ctx, nil); err != nil {
+		return nil, nil, err
+	}
+	return mongocli, db, nil
+}
+
+func NewLazy(ctx context.Context, opt *Options) (*mongo.Client, *mongo.Database, error) {
 	mongoopt := &options.ClientOptions{
 		Hosts: strings.Split(opt.Addr, ","),
 	}
@@ -36,12 +50,6 @@ func NewMongoDB(ctx context.Context, opt *Options) (*mongo.Client, *mongo.Databa
 	}
 	mongocli, err := mongo.NewClient(mongoopt)
 	if err != nil {
-		return nil, nil, err
-	}
-	if err := mongocli.Connect(ctx); err != nil {
-		return nil, nil, err
-	}
-	if err := mongocli.Ping(ctx, nil); err != nil {
 		return nil, nil, err
 	}
 	return mongocli, mongocli.Database(opt.Database), nil

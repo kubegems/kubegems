@@ -2,14 +2,14 @@ package plugins
 
 import (
 	"github.com/emicklei/go-restful/v3"
+	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
-	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/route"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PluginsAPI struct {
-	cli client.Client
+	agents *agents.ClientSet
 }
 
 type PluginsStatus struct {
@@ -17,26 +17,33 @@ type PluginsStatus struct {
 	Enabled bool   `json:"enabled"`
 }
 
-func NewPluginsAPI() (*PluginsAPI, error) {
-	// check 'this' cluster svc kubegems-models-store
-	var cli client.Client
-	if cfg, _ := kube.AutoClientConfig(); cfg != nil {
-		c, err := client.New(cfg, client.Options{})
-		if err != nil {
-			return nil, err
-		}
-		cli = c
-	} else {
-		cli = kube.NoopClient{}
-	}
-	return &PluginsAPI{cli: cli}, nil
+func NewPluginsAPI(cli *agents.ClientSet) (*PluginsAPI, error) {
+	return &PluginsAPI{agents: cli}, nil
 }
 
 func (p *PluginsAPI) List(req *restful.Request, resp *restful.Response) {
 	ret := []PluginsStatus{}
+	ctx := req.Request.Context()
+	cli, err := p.agents.ClientOfManager(ctx)
+	if err != nil {
+		response.Error(resp, err)
+		return
+	}
 
-	// kubegems
-	// TODO: check if plugin is enabled
+	globalval, plugins, err := gemsplugin.ListPlugins(ctx, cli)
+	if err != nil {
+		response.Error(resp, err)
+		return
+	}
+	_ = globalval
+
+	for _, plugin := range plugins {
+		ret = append(ret, PluginsStatus{
+			Name:    plugin.Name,
+			Enabled: plugin.Enabled,
+		})
+	}
+	// TODO: remove it later
 	ret = append(ret, PluginsStatus{Name: "kubegems-models", Enabled: true})
 	response.OK(resp, ret)
 }

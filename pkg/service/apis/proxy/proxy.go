@@ -8,18 +8,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ModelsProxy struct {
+type Proxy struct {
 	Proxy http.Handler
 }
 
-func NewModelsProxy(target string) (*ModelsProxy, error) {
+func NewProxy(target string) (*Proxy, error) {
 	u, err := url.Parse(target)
 	if err != nil {
 		return nil, err
 	}
-	return &ModelsProxy{Proxy: httputil.NewSingleHostReverseProxy(u)}, nil
+	return &Proxy{Proxy: httputil.NewSingleHostReverseProxy(u)}, nil
 }
 
-func (p *ModelsProxy) Handler(ctx *gin.Context) {
+func (p *Proxy) Handle(ctx *gin.Context) {
 	p.Proxy.ServeHTTP(ctx.Writer, ctx.Request)
 }

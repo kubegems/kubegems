@@ -76,11 +76,11 @@ func (opts *Options) ToJWT() *JWT {
 }
 
 // GenerateToken Generate new jwt token
-func (t *JWT) GenerateToken(payload interface{}, expire time.Duration) (token string, expriets int64, err error) {
+func (t *JWT) GenerateToken(payload interface{}, sub string, expire time.Duration) (token string, expriets int64, err error) {
 	tk := jwt.New(jwt.GetSigningMethod("RS256"))
 	now := time.Now()
 	expriets = now.Add(expire).Unix()
-	tk.Claims = wrapClaims(payload, now, expriets)
+	tk.Claims = wrapClaims(payload, sub, now, expriets)
 	token, err = tk.SignedString(t.privateKey)
 	return token, expriets, err
 }
@@ -100,12 +100,13 @@ func (t *JWT) ParseToken(token string) (*JWTClaims, error) {
 	return &claims, err
 }
 
-func wrapClaims(v interface{}, now time.Time, expirets int64) *JWTClaims {
+func wrapClaims(v interface{}, sub string, now time.Time, expirets int64) *JWTClaims {
 	return &JWTClaims{
 		Payload: v,
 		StandardClaims: &jwt.StandardClaims{
 			IssuedAt:  now.Unix(),
 			ExpiresAt: expirets,
+			Subject:   sub,
 		},
 	}
 }

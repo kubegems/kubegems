@@ -16,7 +16,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
-	"kubegems.io/kubegems/pkg/utils/jwt"
 	"kubegems.io/kubegems/pkg/utils/mongo"
 )
 
@@ -24,7 +23,6 @@ type StoreOptions struct {
 	Listen string              `json:"listen,omitempty"`
 	Mongo  *mongo.Options      `json:"mongo,omitempty"`
 	Mysql  *database.Options   `json:"mysql,omitempty"`
-	Jwt    *jwt.Options        `json:"jwt,omitempty"`
 	Sync   *models.SyncOptions `json:"sync,omitempty"`
 }
 
@@ -33,7 +31,6 @@ func DefaultOptions() *StoreOptions {
 		Listen: ":8080",
 		Mongo:  mongo.DefaultOptions(),
 		Mysql:  database.NewDefaultOptions(),
-		Jwt:    jwt.DefaultOptions(),
 		Sync:   models.NewDefaultSyncOptions(),
 	}
 }
@@ -55,7 +52,7 @@ func (s *StoreServer) Run(ctx context.Context) error {
 	log := logr.FromContextOrDiscard(ctx)
 
 	// setup mongodb
-	mongocli, mongodb, err := mongo.NewMongoDB(ctx, s.Options.Mongo)
+	mongocli, mongodb, err := mongo.New(ctx, s.Options.Mongo)
 	if err != nil {
 		return fmt.Errorf("setup mongo: %v", err)
 	}
@@ -73,7 +70,7 @@ func (s *StoreServer) Run(ctx context.Context) error {
 	// setup api
 	handler, err := s.SetupAPI(ctx, APIDependencies{
 		Mongo:    mongodb,
-		Authc:    auth.NewJWTAuthenticationManager(s.Options.Jwt),
+		Authc:    auth.NewUnVerifyJWTAuthenticationManager(),
 		Database: db,
 		Agents:   agents,
 	})

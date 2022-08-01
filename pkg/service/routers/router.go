@@ -149,6 +149,7 @@ func (r *Router) Run(ctx context.Context) error {
 	return eg.Wait()
 }
 
+// nolint: funlen
 func (r *Router) Complete() error {
 	// validator
 	validate.InitValidator(r.Database.DB())
@@ -210,7 +211,7 @@ func (r *Router) Complete() error {
 		router.Use(middleware)
 	}
 
-	router.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "healthy"}) })
+	router.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "healthy"}) })
 	router.GET("/version", func(c *gin.Context) { c.JSON(http.StatusOK, version.Get()) })
 	router.GET("/v1/version", func(c *gin.Context) { handlers.OK(c, version.Get()) })
 

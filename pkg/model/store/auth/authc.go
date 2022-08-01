@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"kubegems.io/kubegems/pkg/utils/jwt"
+	"github.com/golang-jwt/jwt"
 )
 
 type UserInfo struct {
@@ -15,35 +15,22 @@ type AuthenticationManager interface {
 	UserInfo(ctx context.Context, token string) (UserInfo, error)
 }
 
-func NewJWTAuthenticationManager(opt *jwt.Options) *JWTAuthenticationManager {
-	if opt == nil {
-		opt = jwt.DefaultOptions()
-	}
-	return &JWTAuthenticationManager{jwtparser: opt.ToJWT()}
+func NewUnVerifyJWTAuthenticationManager() *UnVerifyJWTAuthenticationManager {
+	return &UnVerifyJWTAuthenticationManager{}
 }
 
-type JWTAuthenticationManager struct {
-	jwtparser *jwt.JWT
-}
+type UnVerifyJWTAuthenticationManager struct{}
 
-func (a *JWTAuthenticationManager) UserInfo(ctx context.Context, token string) (UserInfo, error) {
-	cliams, err := a.jwtparser.ParseToken(token)
+func (a *UnVerifyJWTAuthenticationManager) UserInfo(ctx context.Context, token string) (UserInfo, error) {
+	claims := &jwt.StandardClaims{}
+	// Do not validate signature, because we do not know how to verify it now.
+	_, _, err := (&jwt.Parser{}).ParseUnverified(token, claims)
 	if err != nil {
-		return UserInfo{}, err
+		return UserInfo{}, fmt.Errorf("parse token: %v", err)
 	}
-	username := cliams.Subject
+	username := claims.Subject
 	if username == "" {
-		if payload, ok := cliams.Payload.(map[string]interface{}); ok {
-			for _, key := range []string{"username", "Username", "sub"} {
-				if val, ok := payload[key].(string); ok && val != "" {
-					username = val
-					break
-				}
-			}
-		}
-	}
-	if username == "" {
-		return UserInfo{}, fmt.Errorf("username not found in token")
+		return UserInfo{}, fmt.Errorf("sub not found in token")
 	}
 	return UserInfo{Username: username}, nil
 }
