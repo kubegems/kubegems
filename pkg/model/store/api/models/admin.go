@@ -123,6 +123,25 @@ func (m ModelsAPI) AdminUpdateModel(req *restful.Request, resp *restful.Response
 	response.OK(resp, model)
 }
 
+func (m *ModelsAPI) AdminListSelector(req *restful.Request, resp *restful.Response) {
+	ctx := req.Request.Context()
+	listOptions := repository.ModelListOptions{
+		CommonListOptions: ParseCommonListOptions(req),
+		Tags:              request.Query(req.Request, "tags", []string{}),
+		Framework:         req.QueryParameter("framework"),
+		Source:            req.PathParameter("source"),
+		License:           request.Query(req.Request, "license", ""),
+		Task:              request.Query(req.Request, "task", ""),
+		WithDisabled:      true,
+	}
+	selector, err := m.ModelRepository.ListSelectors(ctx, listOptions)
+	if err != nil {
+		response.BadRequest(resp, err.Error())
+		return
+	}
+	response.OK(resp, selector)
+}
+
 func (m *ModelsAPI) registerAdminRoute() *route.Group {
 	return route.
 		NewGroup("/admin").Tag("admin").
@@ -134,9 +153,8 @@ func (m *ModelsAPI) registerAdminRoute() *route.Group {
 				route.GET("/{source}").To(m.AdminGetSource).Doc("get source").
 					Parameters(route.PathParameter("source", "source name")).
 					Response(repository.SourceWithAddtional{}),
-				route.POST("/{source}").To(m.AdminCreateSource).Doc("add source").
+				route.POST("").To(m.AdminCreateSource).Doc("add source").
 					Parameters(
-						route.PathParameter("source", "source name"),
 						route.BodyParameter("source", repository.Source{}),
 					),
 				route.PUT("/{source}").To(m.AdminUpdateSource).Doc("update source").
@@ -149,6 +167,12 @@ func (m *ModelsAPI) registerAdminRoute() *route.Group {
 					Parameters(route.PathParameter("source", "source name")).
 					Response(repository.Source{}),
 			),
+			// source selector
+			route.NewGroup("/sources/{source}/selector").
+				Parameters(route.PathParameter("source", "source name")).
+				AddRoutes(
+					route.GET("").To(m.AdminListSelector).Doc("list selector"),
+				),
 			// source sync
 			route.NewGroup("/sources/{source}/sync").
 				Parameters(route.PathParameter("source", "source name")).
