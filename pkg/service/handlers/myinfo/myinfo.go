@@ -120,8 +120,6 @@ func (h *MyHandler) ResetPassword(c *gin.Context) {
 	}
 
 	if err := utils.ValidatePassword(form.Origin, cuser.Password); err != nil {
-		fmt.Println(form.Origin)
-		fmt.Println(cuser.Password)
 		handlers.NotOK(c, fmt.Errorf("原始密码错误"))
 		return
 	}
