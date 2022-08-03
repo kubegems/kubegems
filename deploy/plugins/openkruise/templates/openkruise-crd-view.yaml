@@ -1,0 +1,38 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    bundle.kubegems.io/ignore-options: OnUpdate
+  labels:
+    app: kruise-crd-view
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+  name: kruise-crd-view
+rules:
+- apiGroups:
+  - apps.kruise.io
+  resources:
+  - nodeimages
+  - sidecarsets
+  - imagepulljobs
+  - persistentpodstates
+  - uniteddeployments
+  - workloadspreads
+  - advancedcronjobs
+  - broadcastjobs
+  - containerrecreaterequests
+  - clonesets
+  - daemonsets
+  - resourcedistributions
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - policy.kruise.io
+  resources:
+  - podunavailablebudgets
+  verbs:
+  - get
+  - list
+  - watch
