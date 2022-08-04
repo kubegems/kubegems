@@ -1,21 +1,41 @@
+// Copyright 2022 The kubegems.io Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package modeldeployments
 
 import (
+	gomongo "go.mongodb.org/mongo-driver/mongo"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
+	"kubegems.io/kubegems/pkg/model/store/repository"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/route"
 )
 
 type ModelDeploymentAPI struct {
-	Clientset *agents.ClientSet
-	Database  *database.Database
+	Clientset        *agents.ClientSet
+	Database         *database.Database
+	SourceRepository *repository.SourcesRepository
+	ModelRepository  *repository.ModelsRepository
 }
 
-func NewModelDeploymentAPI(clientset *agents.ClientSet, database *database.Database) *ModelDeploymentAPI {
+func NewModelDeploymentAPI(clientset *agents.ClientSet, database *database.Database, mondodb *gomongo.Database) *ModelDeploymentAPI {
 	return &ModelDeploymentAPI{
-		Clientset: clientset,
-		Database:  database,
+		Clientset:        clientset,
+		Database:         database,
+		SourceRepository: repository.NewSourcesRepository(mondodb),
+		ModelRepository:  repository.NewModelsRepository(mondodb),
 	}
 }
 

@@ -1,24 +1,37 @@
+// Copyright 2022 The kubegems.io Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package deployment
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
-	oamcommon "github.com/oam-dev/kubevela/apis/core.oam.dev/common"
 	oamv1beta1 "github.com/oam-dev/kubevela/apis/core.oam.dev/v1beta1"
+	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -28,7 +41,6 @@ import (
 
 const (
 	ControllerConcurrency = 5
-	FinalizerName         = models.GroupName + "/finalizer"
 	DefaultSubdomainLen   = 8
 )
 
@@ -41,6 +53,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(modelsv1beta1.AddToScheme(scheme))
+	machinelearningv1.AddToScheme(scheme)
 	oamv1beta1.AddToScheme(scheme)
 }
 
@@ -101,25 +114,45 @@ func Run(ctx context.Context, options *Options) error {
 
 func OAMAppTrigger() handler.EventHandler {
 	return handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+		// check owner
+		if !IsOwnByModelDeployment(obj) {
+			return nil
+		}
 		return []reconcile.Request{{NamespacedName: client.ObjectKeyFromObject(obj)}}
 	})
+}
+
+func IsOwnByModelDeployment(obj client.Object) bool {
+	for _, ref := range obj.GetOwnerReferences() {
+		if ref.APIVersion == modelsv1beta1.GroupVersion.String() && ref.Kind == "ModelDeployment" {
+			return true
+		}
+	}
+	return false
 }
 
 func Setup(ctx context.Context, mgr ctrl.Manager, options *Options) error {
 	r := &Reconciler{
 		Client:  mgr.GetClient(),
 		Options: options,
+		ModelServes: map[string]ModelServe{
+			// OAMModelServeKind:    &OAMModelServe{Client: mgr.GetClient()},
+			SeldonModelServeKind: &SeldonModelServe{Client: mgr.GetClient()},
+		},
 	}
-	return ctrl.NewControllerManagedBy(mgr).
+	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&modelsv1beta1.ModelDeployment{}).
-		WithOptions(controller.Options{MaxConcurrentReconciles: ControllerConcurrency}).
-		Watches(&source.Kind{Type: &oamv1beta1.Application{}}, OAMAppTrigger()).
-		Complete(r)
+		WithOptions(controller.Options{MaxConcurrentReconciles: ControllerConcurrency})
+	for _, serve := range r.ModelServes {
+		builder.Watches(&source.Kind{Type: serve.Watches()}, OAMAppTrigger())
+	}
+	return builder.Complete(r)
 }
 
 type Reconciler struct {
 	client.Client
-	Options *Options
+	Options     *Options
+	ModelServes map[string]ModelServe
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -140,135 +173,46 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, nil
 	}
 
-	err := r.Sync(ctx, md)
-	if err != nil {
+	origin := md.DeepCopy()
+	if err := r.Default(ctx, md); err != nil {
+		return ctrl.Result{}, err
+	}
+	if !equality.Semantic.DeepEqual(md, origin) {
+		if err := r.Client.Update(ctx, md); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
+
+	if err := r.Sync(ctx, md); err != nil {
 		log.Error(err, "sync model deployment")
 		md.Status.Phase = modelsv1beta1.Failed
 		md.Status.Message = err.Error()
 	}
-	_ = r.Status().Update(ctx, md)
-	return ctrl.Result{}, err
+	if err := r.Status().Update(ctx, md); err != nil {
+		return ctrl.Result{}, err
+	}
+	return reconcile.Result{}, nil
 }
 
 func (r *Reconciler) Sync(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
-	changed, err := r.Fulfill(ctx, md)
-	if err != nil {
+	// apply md
+	serve, ok := r.ModelServes[md.Spec.Backend]
+	if !ok {
+		return fmt.Errorf("unsupported model deployment kind: %s", md.Spec.Backend)
+	}
+	if err := serve.Apply(ctx, md); err != nil {
 		return err
 	}
-	if changed {
-		_ = r.Update(ctx, md)
-		return nil
-	}
-
-	// apply oamapp
-	oamapp := &oamv1beta1.Application{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      md.Name,
-			Namespace: md.Namespace,
-		},
-	}
-
-	onupdatefun := func() error {
-		Mergekvs(md.Annotations, oamapp.Annotations)
-		Mergekvs(md.Labels, oamapp.Labels)
-		_ = controllerutil.SetOwnerReference(md, oamapp, r.Client.Scheme())
-		return r.DeployModel(ctx, md, oamapp)
-	}
-	// oam app update frequently,use patch instead of update
-	if _, err := controllerutil.CreateOrPatch(ctx, r.Client, oamapp, onupdatefun); err != nil {
-		return err
-	}
-
-	// fill phase
-	md.Status.OAMStatus = oamapp.Status
-	md.Status.Message = ""
-	md.Status.Phase = func() modelsv1beta1.Phase {
-		switch oamapp.Status.Phase {
-		case oamcommon.ApplicationRunning:
-			return modelsv1beta1.Running
-		default:
-			return modelsv1beta1.Pending
-		}
-	}()
 	return nil
 }
 
-func (r *Reconciler) Fulfill(ctx context.Context, md *modelsv1beta1.ModelDeployment) (bool, error) {
-	haschange := false
+func (r *Reconciler) Default(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
 	if md.Spec.Host == "" {
 		md.Spec.Host = RandStringRunes(r.Options.RandSubDomainLen) + "." + r.Options.BaseDomain
-		haschange = true
 	}
-	return haschange, nil
-}
-
-func (r *Reconciler) DeployModel(ctx context.Context, md *modelsv1beta1.ModelDeployment, oamapp *oamv1beta1.Application) error {
-	const servingPort = 8080
-	oamapp.Spec = oamv1beta1.ApplicationSpec{
-		Components: []oamcommon.ApplicationComponent{
-			{
-				Name: md.Name,
-				Type: "webservice",
-				Properties: func() *runtime.RawExtension {
-					properties := OAMWebServiceProperties{
-						Labels:      md.Labels,
-						Annotations: md.Annotations,
-						Image:       md.Spec.Model.Image,
-						ENV: []OAMWebServicePropertiesEnv{
-							{
-								Name:  "PKG",
-								Value: md.Spec.Model.Framework,
-							},
-							{
-								Name:  "MODEL",
-								Value: md.Spec.Model.Name,
-							},
-						},
-						Ports: []OAMWebServicePropertiesPort{
-							{Name: "http", Port: servingPort},
-						},
-					}
-					for _, env := range md.Spec.Env {
-						properties.ENV = append(properties.ENV, OAMWebServicePropertiesEnv{
-							Name:      env.Name,
-							Value:     env.Value,
-							ValueFrom: env.ValueFrom,
-						})
-					}
-					return properties.RawExtension()
-				}(),
-				Traits: []oamcommon.ApplicationTrait{
-					{
-						Type: "scaler",
-						Properties: models.Properties{
-							"replicas": pointer.Int32Deref(md.Spec.Replicas, 1),
-						}.ToRawExtension(),
-					},
-					{
-						Type: "json-patch",
-						Properties: models.Properties{
-							"operations": []any{
-								map[string]any{
-									"op":    "add",
-									"path":  "/spec/template/spec/containers/0/resources",
-									"value": md.Spec.Resources,
-								},
-							},
-						}.ToRawExtension(),
-					},
-					{
-						Type: "gateway",
-						Properties: models.Properties{
-							"domain": md.Spec.Host,
-							"http": map[string]interface{}{
-								"/": servingPort,
-							},
-							"classInSpec": true,
-						}.ToRawExtension(),
-					},
-				},
-			},
-		},
+	if md.Spec.Backend == "" {
+		md.Spec.Backend = SeldonModelServeKind
 	}
 	return nil
 }

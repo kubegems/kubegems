@@ -1,7 +1,23 @@
+// Copyright 2022 The kubegems.io Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package modeldeployments
 
 import (
 	"context"
+	"crypto"
+	"encoding/hex"
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
@@ -11,6 +27,7 @@ import (
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
 	storemodels "kubegems.io/kubegems/pkg/model/store/api/models"
+	"kubegems.io/kubegems/pkg/model/store/repository"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,9 +46,10 @@ type ModelDeploymentOverview struct {
 	CreationTimestamp metav1.Time `json:"creationTimestamp"`
 }
 
-func EncodeModelName(modelname string) string {
-	// can't use the model name as label value which contains '/'
-	return strings.Replace(modelname, "/", ".", -1)
+func HashModelName(modelname string) string {
+	sha256 := crypto.SHA256.New()
+	sha256.Write([]byte(modelname))
+	return strings.ToLower(hex.EncodeToString(sha256.Sum(nil)))[:16]
 }
 
 func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp *restful.Response) {
@@ -47,8 +65,8 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 		}
 		list := &modelsv1beta1.ModelDeploymentList{}
 		if err := cli.List(ctx, list, client.MatchingLabels{
-			modelscommon.LabelModelSource: source,
-			modelscommon.LabelModelName:   EncodeModelName(modelname),
+			modelscommon.LabelModelSource:   source,
+			modelscommon.LabelModelNameHash: HashModelName(modelname),
 		}); err != nil {
 			log.Error(err, "failed to list model deployments", "cluster", cluster)
 			continue
@@ -113,25 +131,79 @@ func (o *ModelDeploymentAPI) CreateModelDeployment(req *restful.Request, resp *r
 		if err := req.ReadEntity(md); err != nil {
 			return nil, err
 		}
-		// 因选择模型商店需要展示特定模型的实例，为便于选择，设置模型名称label
-		if md.Labels == nil {
-			md.Labels = make(map[string]string)
+
+		if err := o.completeModelDeployment(ctx, md, ref); err != nil {
+			return nil, err
 		}
 
-		md.Labels[modelscommon.LabelModelName] = EncodeModelName(md.Spec.Model.Name)
-		md.Labels[modelscommon.LabelModelSource] = md.Spec.Model.Source
-		// 为便于示租户项目环境，设置annotations
-		if md.Annotations == nil {
-			md.Annotations = make(map[string]string)
-		}
-		md.Annotations[application.AnnotationRef] = ref.Json()
-		// set the namespace
+		// override the namespace
 		md.Namespace = ref.Namespace
 		if err := cli.Create(ctx, md); err != nil {
 			return nil, err
 		}
 		return md, nil
 	})
+}
+
+func (o *ModelDeploymentAPI) completeModelDeployment(ctx context.Context, md *modelsv1beta1.ModelDeployment, ref AppRef) error {
+	// set labels for selection from model name
+	if md.Labels == nil {
+		md.Labels = make(map[string]string)
+	}
+	md.Labels[modelscommon.LabelModelNameHash] = HashModelName(md.Spec.Model.Name)
+	md.Labels[modelscommon.LabelModelSource] = md.Spec.Model.Source
+	if md.Annotations == nil {
+		md.Annotations = make(map[string]string)
+	}
+	md.Annotations[application.AnnotationRef] = ref.Json()
+
+	// according to the model and source complete the model deployment parameters
+	if err := o.completeMDSpec(ctx, md); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
+	source, modelname := md.Spec.Model.Source, md.Spec.Model.Name
+	if source == "" || modelname == "" {
+		return nil
+	}
+	sourcedetails, err := o.SourceRepository.Get(ctx, source, repository.GetSourceOptions{})
+	if err != nil {
+		return err
+	}
+	modeldetails, err := o.ModelRepository.Get(ctx, source, modelname, false)
+	if err != nil {
+		return err
+	}
+
+	// set first source image if not set
+	if md.Spec.Model.Image == "" {
+		for _, image := range sourcedetails.Images {
+			if image != "" {
+				md.Spec.Model.Image = image
+				break
+			}
+		}
+	}
+
+	// set model parameters if not set
+	addtionalparams := []modelsv1beta1.Parameter{}
+	switch sourcedetails.Kind {
+	case repository.SourceKindHuggingface:
+		addtionalparams = []modelsv1beta1.Parameter{
+			{Name: "task", Value: modeldetails.Task},
+			{Name: "pretrained_model", Value: modelname},
+		}
+	case repository.SourceKindOpenMMLab:
+		addtionalparams = []modelsv1beta1.Parameter{
+			{Name: "pkg", Value: modelname},
+			{Name: "model", Value: modeldetails.Name},
+		}
+	}
+	md.Spec.Model.Prameters = append(md.Spec.Model.Prameters, addtionalparams...)
+	return nil
 }
 
 func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *restful.Response) {

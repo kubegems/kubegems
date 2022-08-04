@@ -1,12 +1,34 @@
+// Copyright 2022 The kubegems.io Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package deployment
 
 import (
+	"context"
 	"encoding/json"
 	"math/rand"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+func ToRawExtension(obj any) *runtime.RawExtension {
+	raw, _ := json.Marshal(obj)
+	return &runtime.RawExtension{Raw: raw}
+}
 
 type OAMWebServiceProperties struct {
 	Labels          map[string]string                   `json:"labels,omitempty"`
@@ -26,11 +48,6 @@ type OAMWebServicePropertiesEnv struct {
 	Name      string               `json:"name"`
 	Value     string               `json:"value"`
 	ValueFrom *corev1.EnvVarSource `json:"valueFrom,omitempty"`
-}
-
-func (o OAMWebServiceProperties) RawExtension() *runtime.RawExtension {
-	raw, _ := json.Marshal(o)
-	return &runtime.RawExtension{Raw: raw}
 }
 
 type OAMWebServicePropertiesPort struct {
@@ -88,4 +105,22 @@ func Mergekvs(kvs map[string]string, into map[string]string) map[string]string {
 		into[k] = v
 	}
 	return into
+}
+
+func ApplyObject(ctx context.Context, cli client.Client, obj client.Object) error {
+	original, _ := obj.DeepCopyObject().(client.Object)
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		// create
+		return cli.Create(ctx, obj)
+	}
+
+	// keep annotations and labels
+	obj.SetAnnotations(Mergekvs(original.GetAnnotations(), obj.GetAnnotations()))
+	obj.SetLabels(Mergekvs(original.GetLabels(), obj.GetLabels()))
+
+	// update
+	return cli.Update(ctx, obj)
 }

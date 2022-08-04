@@ -1,3 +1,17 @@
+// Copyright 2022 The kubegems.io Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package repository
 
 import "time"
@@ -66,16 +80,31 @@ type ModelFile struct {
 	Content  string `json:"content"`
 }
 
+const (
+	SourceKindHuggingface = "huggingface"
+	SourceKindOpenMMLab   = "openmmlab"
+	SourceKindModelx      = "modelx"
+)
+
 type Source struct {
 	// nolint: tagliatelle
 	ID           string    `json:"id,omitempty" bson:"_id,omitempty"`
 	Name         string    `json:"name"`
-	Desc         string    `json:"desc"`
-	Icon         string    `json:"icon"`
 	BuiltIn      bool      `json:"builtIn"`
 	Online       bool      `json:"online"`
 	Images       []string  `json:"images"`
 	CreationTime time.Time `json:"creationTime"`
 	UpdationTime time.Time `json:"updationTime"`
 	Enabled      bool      `json:"enabled"`
+
+	Kind        string            `json:"kind"`    // kind of source (huggingface, openmmlab, modelx...)
+	Address     string            `json:"address"` // address of source
+	Auth        SourceAuth        `json:"auth"`    // auth of source
+	Annotations map[string]string `json:"annotations"`
+}
+
+type SourceAuth struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Token    string `json:"token"`
 }

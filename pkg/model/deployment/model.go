@@ -15,16 +15,13 @@
 package deployment
 
 import (
-	"fmt"
-	"testing"
+	"context"
 
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func TestRandStringRunes(t *testing.T) {
-	randlen := 10
-	for i := 0; i < 20; i++ {
-		got := RandStringRunes(randlen)
-		fmt.Printf("RandStringRunes() = %v\n", got)
-	}
+type ModelServe interface {
+	Watches() client.Object
+	Apply(ctx context.Context, md *modelsv1beta1.ModelDeployment) error
 }
