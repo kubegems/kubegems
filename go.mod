@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1
-	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/alicebob/miniredis/v2 v2.21.0
 	github.com/argoproj/argo-cd/v2 v2.3.4
@@ -16,7 +15,6 @@ require (
 	github.com/emicklei/go-restful-openapi/v2 v2.9.0
 	github.com/emicklei/go-restful/v3 v3.8.0
 	github.com/evanphx/json-patch/v5 v5.6.0
-	github.com/gin-contrib/sse v0.1.0
 	github.com/gin-gonic/gin v1.8.0
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
@@ -72,7 +70,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.0
 	gorm.io/datatypes v1.0.2
 	gorm.io/driver/mysql v1.1.2
-	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.21.15
 	helm.sh/helm/v3 v3.8.2
 	istio.io/api v0.0.0-20220512212136-561ffec82582
@@ -153,6 +150,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
+	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.1 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
