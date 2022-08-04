@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// src中是否存在了dest字符串
+// ContainStr src contains dest
 func ContainStr(src []string, dest string) bool {
 	for i := range src {
 		if src[i] == dest {
@@ -54,4 +54,31 @@ func SliceUniqueKey(s []string) string {
 	tmp := append([]string{}, s...)
 	sort.Strings(tmp)
 	return strings.Join(tmp, "-")
+}
+
+func StringUniqueSlice(s []string) []string {
+	tmp := make(map[string]int)
+	for _, i := range s {
+		tmp[i]++
+	}
+	ret := []string{}
+	for v := range tmp {
+		ret = append(ret, v)
+	}
+	return ret
+}
+
+func StringUniqueSliceRemove(src []string, dest []string) []string {
+	tmp := make(map[string]int)
+	for _, i := range src {
+		tmp[i]++
+	}
+	for _, i := range dest {
+		delete(tmp, i)
+	}
+	ret := []string{}
+	for v := range tmp {
+		ret = append(ret, v)
+	}
+	return ret
 }
