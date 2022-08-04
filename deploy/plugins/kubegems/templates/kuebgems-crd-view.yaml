@@ -1,0 +1,24 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    bundle.kubegems.io/ignore-options: OnUpdate
+  labels:
+    app: kubegems-crd-view
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+  name: kubegems-crd-view
+rules:
+- apiGroups:
+  - argoproj.io
+  resources:
+  - analysisruns
+  - analysistemplates
+  - applications
+  - applicationsets
+  - appprojects
+  - clusteranalysistemplates
+  - experiments
+  verbs:
+  - get
+  - list
+  - watch
