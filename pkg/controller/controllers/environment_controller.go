@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"kubegems.io/kubegems/pkg/apis/application"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/utils/maps"
@@ -37,10 +38,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-)
-
-const (
-	imagePullSecretKeyPrefix = "kubegems.io/imagePullSecrets-"
 )
 
 // EnvironmentReconciler reconciles a Environment object
@@ -293,8 +290,8 @@ func (r *EnvironmentReconciler) handleServiceAccount(env *gemsv1beta1.Environmen
 	}
 
 	for k := range env.Annotations {
-		if strings.HasPrefix(k, imagePullSecretKeyPrefix) {
-			saName := strings.TrimPrefix(k, imagePullSecretKeyPrefix)
+		if strings.HasPrefix(k, application.AnnotationImagePullSecretKeyPrefix) {
+			saName := strings.TrimPrefix(k, application.AnnotationImagePullSecretKeyPrefix)
 			if sa, ok := saMap[saName]; ok {
 				secrets, hasDiff := imagePullSecretHasDiff(sa.ImagePullSecrets, env.Annotations[k])
 				if hasDiff {
