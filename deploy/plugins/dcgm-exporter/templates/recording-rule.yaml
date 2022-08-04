@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheusrule.kubegems.io/name: dcgm-exporter
+  name: dcgm-exporter
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: gpu
+      rules:
+        - record: gems_container_gpu_usage_percent
+          expr: |
+            sum(DCGM_FI_DEV_GPU_UTIL * on(namespace,pod) group_left(node,host_ip,pod_ip) gems_pod_status) 
+            by (container, pod, namespace, device, node, host_ip, pod_ip, modelName)
+        - record: gems_container_gpu_memory_usage_mb
+          expr: |
+            sum(DCGM_FI_DEV_FB_USED * on(namespace,pod) group_left(node,host_ip,pod_ip) gems_pod_status) 
+            by (container, pod, namespace, device, node, host_ip, pod_ip, modelName)
+        - record: gems_container_gpu_temp
+          expr: |
+            sum(DCGM_FI_DEV_GPU_TEMP * on(namespace,pod) group_left(node,host_ip,pod_ip) gems_pod_status) 
+            by (container, pod, namespace, device, node, host_ip, pod_ip, modelName)
+        - record: gems_container_gpu_power_usage_watt
+          expr: |
+            sum(DCGM_FI_DEV_POWER_USAGE * on(namespace,pod) group_left(node,host_ip,pod_ip) gems_pod_status) 
+            by (container, pod, namespace, device, node, host_ip, pod_ip, modelName)
+                 
