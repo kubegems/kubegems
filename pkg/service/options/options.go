@@ -21,6 +21,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/helm"
 	"kubegems.io/kubegems/pkg/utils/jwt"
+	"kubegems.io/kubegems/pkg/utils/mongo"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/redis"
@@ -40,6 +41,18 @@ type Options struct {
 	Mysql        *database.Options                 `json:"mysql,omitempty"`
 	Redis        *redis.Options                    `json:"redis,omitempty"`
 	Microservice *microservice.MicroserviceOptions `json:"microservice,omitempty"`
+	Mongo        *mongo.Options                    `json:"mongo,omitempty"`
+	Models       *ModelsOptions                    `json:"models,omitempty"`
+}
+
+type ModelsOptions struct {
+	Addr string `json:"addr,omitempty"`
+}
+
+func NewDefaultModelsOptions() *ModelsOptions {
+	return &ModelsOptions{
+		Addr: "http://kubegems-models-store:8080",
+	}
 }
 
 func DefaultOptions() *Options {
@@ -56,6 +69,8 @@ func DefaultOptions() *Options {
 		Redis:        redis.NewDefaultOptions(),
 		System:       system.NewDefaultOptions(),
 		Microservice: microservice.NewDefaultOptions(),
+		Mongo:        mongo.DefaultOptions(),
+		Models:       NewDefaultModelsOptions(),
 	}
 	defaultoptions.System.Listen = ":8020"
 	return defaultoptions

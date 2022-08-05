@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/emicklei/go-restful/v3"
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/aaa"
@@ -66,6 +67,29 @@ func (l *AuthMiddleware) FilterFunc(c *gin.Context) {
 		l.uif.SetContextUser(c, user)
 	}
 	c.Next()
+}
+
+func (l *AuthMiddleware) GoRestfulMiddleware(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+	if len(l.getters) > 0 {
+		var (
+			loaded bool
+			user   models.CommonUserIface
+		)
+		for idx := range l.getters {
+			user, loaded = l.getters[idx].GetUser(req.Request)
+			if loaded {
+				break
+			}
+		}
+		if !loaded {
+			resp.WriteErrorString(http.StatusUnauthorized, "")
+			return
+		}
+		// To get username
+		// req.Attribute("username").(string)
+		req.SetAttribute("username", user.GetUsername())
+	}
+	chain.ProcessFilter(req, resp)
 }
 
 // UserGetterIface

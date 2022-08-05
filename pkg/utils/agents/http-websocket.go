@@ -25,7 +25,7 @@ import (
 	"path"
 
 	"github.com/gorilla/websocket"
-	"kubegems.io/kubegems/pkg/utils/httputil"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
 func (c TypedClient) DialWebsocket(ctx context.Context, rpath string, headers http.Header) (*websocket.Conn, *http.Response, error) {
@@ -68,8 +68,8 @@ func HeadersFrom(kvs map[string]string) http.Header {
 	return header
 }
 
-func WrappedResponse(intodata interface{}) *httputil.Response {
-	return &httputil.Response{Data: intodata}
+func WrappedResponse(intodata interface{}) *response.Response {
+	return &response.Response{Data: intodata}
 }
 
 func (c TypedClient) DoRawRequest(ctx context.Context, clientreq Request) (*http.Response, error) {

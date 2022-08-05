@@ -225,6 +225,7 @@ func (c TypedClient) requestAddr(obj runtime.Object, method string, namespace, n
 		return "", err
 	}
 	gvk.Kind = strings.TrimSuffix(gvk.Kind, "List")
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
 
 	sb := &strings.Builder{}
 	// assumes without a suffix '/'

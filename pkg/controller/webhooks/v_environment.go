@@ -129,7 +129,7 @@ func (r *ResourceValidate) tenantResourceIsEnough(trq *gemsv1beta1.TenantResourc
 	allocated := corev1.ResourceList{}
 	if old != nil {
 		oldres := old.Spec.ResourceQuota
-		for _, key := range resourcequota.TenantLimitResources {
+		for key := range resourcequota.GetDefaultTeantResourceQuota() {
 			allocatedv := trq.Status.Allocated[key]
 			oldv, oexist := oldres[key]
 			if oexist {
@@ -140,5 +140,13 @@ func (r *ResourceValidate) tenantResourceIsEnough(trq *gemsv1beta1.TenantResourc
 	} else {
 		allocated = trq.Status.Allocated
 	}
-	return resourcequota.ResourceIsEnough(trq.Spec.Hard, allocated, env.Spec.ResourceQuota, resourcequota.TenantLimitResources)
+	return resourcequota.ResourceIsEnough(trq.Spec.Hard, allocated, env.Spec.ResourceQuota, ResourceKeys(resourcequota.GetDefaultTeantResourceQuota()))
+}
+
+func ResourceKeys(list corev1.ResourceList) []corev1.ResourceName {
+	keys := make([]corev1.ResourceName, 0, len(list))
+	for k := range list {
+		keys = append(keys, k)
+	}
+	return keys
 }

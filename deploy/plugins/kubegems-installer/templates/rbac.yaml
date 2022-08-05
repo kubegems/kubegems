@@ -28,6 +28,7 @@ subjects:
 {{- if not .Values.rbac.useClusterAdmin -}}
 kind: ClusterRole
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
+metadata:
   name: {{ include "kubegems.installer.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}

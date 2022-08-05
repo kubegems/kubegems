@@ -188,7 +188,7 @@ func (h *NodeHandler) Get(c *gin.Context) {
 		FieldSelector: fs,
 	}
 	h.C.List(c.Request.Context(), pods, &opts)
-	totalReq, totalLmt := getPodsTotalRequestsAndLimits(pods)
+	totalReq, totalLmt := NodeTotalRequestsAndLimits(node, pods)
 	cnode := CustomNode{
 		Node:          node,
 		TotalRequests: totalReq,
@@ -197,8 +197,12 @@ func (h *NodeHandler) Get(c *gin.Context) {
 	OK(c, cnode)
 }
 
-func getPodsTotalRequestsAndLimits(podList *corev1.PodList) (reqs map[corev1.ResourceName]resource.Quantity, limits map[corev1.ResourceName]resource.Quantity) {
+func NodeTotalRequestsAndLimits(node *corev1.Node, podList *corev1.PodList) (reqs, limits corev1.ResourceList) {
 	reqs, limits = map[corev1.ResourceName]resource.Quantity{}, map[corev1.ResourceName]resource.Quantity{}
+	for resourceName := range node.Status.Capacity {
+		reqs[resourceName], limits[resourceName] = resource.Quantity{}, resource.Quantity{}
+	}
+
 	for _, pod := range podList.Items {
 		podReqs, podLimits := resourcehelper.PodRequestsAndLimits(&pod)
 		for podReqName, podReqValue := range podReqs {

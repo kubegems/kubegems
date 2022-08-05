@@ -1,0 +1,165 @@
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "kubegems.store.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: store
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.store.replicaCount }}
+  {{- if .Values.store.updateStrategy }}
+  strategy: {{- toYaml .Values.store.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: store
+  template:
+    metadata:
+      {{- if .Values.store.podAnnotations }}
+      annotations: {{- include "common.tplvalues.render" (dict "value" .Values.store.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: store
+        {{- if .Values.store.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.store.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "kubegems.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.store.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.store.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.store.enableAffinity -}}
+      {{- if .Values.store.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.store.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.store.podAffinityPreset "component" "models" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.store.podAntiAffinityPreset "component" "models" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.store.nodeAffinityPreset.type "key" .Values.store.nodeAffinityPreset.key "values" .Values.store.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.store.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.store.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.store.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.store.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.store.priorityClassName }}
+      priorityClassName: {{ .Values.store.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.store.schedulerName }}
+      schedulerName: {{ .Values.store.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.store.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.store.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: store
+          image: {{ include "kubegems.store.image" . }}
+          imagePullPolicy: {{ .Values.store.image.pullPolicy }}
+          {{- if .Values.store.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.store.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.store.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.store.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.store.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.store.args "context" $) | nindent 12 }}
+          {{- else }}
+          args:
+            - models
+            - store
+            - --listen=:{{ .Values.store.service.ports.http }}
+            - --sync-addr={{ include "kubegems.sync.address" . }}
+            {{- if .Values.store.extraArgs }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.store.extraArgs "context" $) | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.store.logLevel }}
+            {{- if .Values.store.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.store.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+            - name: MONGO_ADDR
+              value: {{ include "kubegems.mongo.address" . }}
+            - name: MONGO_USERNAME
+              value: root
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kubegems.mongodb.name" .}}
+                  key: mongodb-root-password
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubegems-mysql
+                  key: mysql-root-password
+          envFrom:
+            - secretRef:
+                name: kubegems-config
+            {{- if .Values.store.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.store.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.store.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.store.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.store.resources }}
+          resources: {{- toYaml .Values.store.resources | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.store.service.ports.http }}
+          {{- if .Values.store.livenessProbe.enabled }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.store.livenessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.store.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.store.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.store.readinessProbe.enabled }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.store.readinessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.store.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.store.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.store.startupProbe.enabled }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.store.startupProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: http
+          {{- else if .Values.store.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.store.customStartupProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.store.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.store.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: jwt-certs
+              mountPath: /app/certs/jwt
+              readOnly: true
+          {{- if .Values.store.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.store.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+        {{- if .Values.store.sidecars }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.store.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: jwt-certs
+          secret:
+            secretName: kubegems-api-jwt
+            defaultMode: 420
+      {{- if .Values.store.extraVolumes }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.store.extraVolumes "context" $) | nindent 8 }}
+      {{- end }}

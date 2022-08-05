@@ -32,6 +32,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/aaa/audit"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/service/aaa/authorization"
+	"kubegems.io/kubegems/pkg/service/apis"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	alerthandler "kubegems.io/kubegems/pkg/service/handlers/alerts"
 	applicationhandler "kubegems.io/kubegems/pkg/service/handlers/application"
@@ -67,9 +68,9 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
-	"kubegems.io/kubegems/pkg/utils/system"
 	"kubegems.io/kubegems/pkg/utils/tracing"
 	"kubegems.io/kubegems/pkg/version"
 )
@@ -95,23 +96,37 @@ func RealClientIPMiddleware() gin.HandlerFunc {
 }
 
 type Router struct {
-	Opts     *options.Options
-	Agents   *agents.ClientSet
-	Database *database.Database
-	Redis    *redis.Client
-	Argo     *argo.Client
-	DyConfig options.DynamicConfigurationProviderIface
-
+	Opts          *options.Options
+	Agents        *agents.ClientSet
+	Database      *database.Database
+	Redis         *redis.Client
+	Argo          *argo.Client
+	DyConfig      options.DynamicConfigurationProviderIface
+	GitProvider   *git.SimpleLocalProvider
 	auditInstance *audit.DefaultAuditInstance
 	gin           *gin.Engine
 }
 
-func (r *Router) Run(ctx context.Context, system *system.Options) error {
+func (r *Router) Run(ctx context.Context) error {
 	if err := r.Complete(); err != nil {
 		return err
 	}
+
+	// inner go-restful router
+	if err := r.AddRestAPI(ctx, apis.Dependencies{
+		Opts:     r.Opts,
+		Agents:   r.Agents,
+		Database: r.Database,
+		Gitp:     r.GitProvider,
+		Argo:     r.Argo,
+		Redis:    r.Redis,
+	}); err != nil {
+		log.Errorf("add new restful error: %v", err)
+		return err
+	}
+
 	httpserver := &http.Server{
-		Addr:    system.Listen,
+		Addr:    r.Opts.System.Listen,
 		Handler: r.gin,
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx // 注入basecontext
@@ -134,6 +149,7 @@ func (r *Router) Run(ctx context.Context, system *system.Options) error {
 	return eg.Wait()
 }
 
+// nolint: funlen
 func (r *Router) Complete() error {
 	// validator
 	validate.InitValidator(r.Database.DB())
@@ -195,7 +211,7 @@ func (r *Router) Complete() error {
 		router.Use(middleware)
 	}
 
-	router.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "healthy"}) })
+	router.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "healthy"}) })
 	router.GET("/version", func(c *gin.Context) { c.JSON(http.StatusOK, version.Get()) })
 	router.GET("/v1/version", func(c *gin.Context) { handlers.OK(c, version.Get()) })
 

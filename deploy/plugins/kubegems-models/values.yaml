@@ -1,0 +1,1000 @@
+## @section Global parameters
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass
+
+## @param global.imageRegistry Global Docker image registry
+## @param global.imagePullSecrets Global Docker registry secret names as an array
+## @param global.storageClass Global StorageClass for Persistent Volume(s)
+##
+global:
+  imageRegistry: ""
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+  storageClass: ""
+
+## @section Common parameters
+
+## @param kubeVersion Override Kubernetes version
+##
+kubeVersion: ""
+## @param nameOverride String to partially override common.names.fullname
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override common.names.fullname
+##
+fullnameOverride: ""
+## @param commonLabels Labels to add to all deployed objects
+##
+commonLabels: {}
+## @param commonAnnotations Annotations to add to all deployed objects
+##
+commonAnnotations: {}
+## @param clusterDomain Kubernetes cluster domain name
+##
+clusterDomain: cluster.local
+## @param extraDeploy Array of extra objects to deploy with the release
+##
+extraDeploy: []
+
+## Enable diagnostic mode in the deployment
+##
+diagnosticMode:
+  ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+  ##
+  enabled: false
+  ## @param diagnosticMode.command Command to override all containers in the deployment
+  ##
+  command:
+    - sleep
+  ## @param diagnosticMode.args Args to override all containers in the deployment
+  ##
+  args:
+    - infinity
+
+## @section controller Parameters
+
+## controller configuration
+##
+controller:
+  ## kubegems controller image
+  ## @param controller.image.registry controller image registry
+  ## @param controller.image.repository controller image repository
+  ## @param controller.image.tag controller image tag (immutable tags are recommended)
+  ## @param controller.image.pullPolicy controller image pull policy
+  ## @param controller.image.pullSecrets controller image pull secrets
+  ## @param controller.image.debug Enable controller image debug mode
+  ##
+  image:
+    registry: docker.io
+    repository: kubegems/kubegems
+    tag: latest
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: Always
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Enable debug mode
+    ##
+    debug: false
+  ## @param controller.replicaCount Number of controller replicas to deploy
+  ##
+  replicaCount: 1
+  ## @param controller.containerPorts.probe controller probe container port
+  ##
+  containerPorts:
+    probe: 8080
+  ## Configure extra options for controller containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param controller.livenessProbe.enabled Enable livenessProbe on controller containers
+  ## @param controller.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param controller.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param controller.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param controller.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param controller.livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param controller.readinessProbe.enabled Enable readinessProbe on controller containers
+  ## @param controller.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param controller.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param controller.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param controller.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param controller.readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param controller.startupProbe.enabled Enable startupProbe on controller containers
+  ## @param controller.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param controller.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param controller.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param controller.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param controller.startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param controller.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## @param controller.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param controller.customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: {}
+  ## controller resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param controller.resources.limits The resources limits for the controller containers
+  ## @param controller.resources.requests The requested resources for the controller containers
+  ##
+  resources:
+    limits: {}
+    requests: {}
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param controller.podSecurityContext.enabled Enabled controller pods' Security Context
+  ## @param controller.podSecurityContext.fsGroup Set controller pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: false
+    fsGroup: 1001
+  ## Configure Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param controller.containerSecurityContext.enabled Enabled controller containers' Security Context
+  ## @param controller.containerSecurityContext.runAsUser Set controller containers' Security Context runAsUser
+  ## @param controller.containerSecurityContext.runAsNonRoot Set controller containers' Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## Configure Leader Election
+  ##
+  ## @param controller.leaderElection.enabled Enable leader election
+  leaderElection:
+    enabled: true
+
+  ## @param controller.baseDomain Models Ingress Base Domain
+  baseDomain: models.kubegems.io
+  ## Configure logging
+  ##
+  ## @param controller.logLevel Log level
+  logLevel: debug
+
+  ## @param controller.existingConfigmap The name of an existing ConfigMap with your custom configuration for controller
+  ##
+  existingConfigmap:
+  ## @param controller.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param controller.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param controller.hostAliases controller pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param controller.podLabels Extra labels for controller pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param controller.podAnnotations Annotations for controller pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param controller.podAffinityPreset Pod affinity preset. Ignored if `controller.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param controller.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `controller.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node controller.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param controller.nodeAffinityPreset.type Node affinity preset type. Ignored if `controller.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param controller.nodeAffinityPreset.key Node label key to match. Ignored if `controller.affinity` is set
+    ##
+    key: ""
+    ## @param controller.nodeAffinityPreset.values Node label values to match. Ignored if `controller.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+
+  ## @param controller.enableAffinity If enabled Affinity for controller pods assignment
+  enableAffinity: false
+
+  ## @param controller.affinity Affinity for controller pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `controller.podAffinityPreset`, `controller.podAntiAffinityPreset`, and `controller.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param controller.nodeSelector Node labels for controller pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param controller.tolerations Tolerations for controller pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param controller.updateStrategy.type controller statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param controller.priorityClassName controller pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param controller.schedulerName Name of the k8s scheduler (other than default) for controller pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param controller.lifecycleHooks for the controller container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param controller.extraEnvVars Array with extra environment variables to add to controller nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param controller.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for controller nodes
+  ##
+  extraEnvVarsCM:
+  ## @param controller.extraEnvVarsSecret Name of existing Secret containing extra env vars for controller nodes
+  ##
+  extraEnvVarsSecret:
+  ## @param controller.extraVolumes Optionally specify extra list of additional volumes for the controller pod(s)
+  ##
+  extraVolumes: []
+  ## @param controller.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the controller container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param controller.sidecars Add additional sidecar containers to the controller pod(s)
+  ## e.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: {}
+  ## @param controller.initContainers Add additional init containers to the controller pod(s)
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## e.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: {}
+
+  ## @section Agent Metrics parameters
+  ##
+  metrics:
+    ## @param controller.metrics.enabled Create a service for accessing the metrics endpoint
+    ##
+    enabled: true
+    ## Metrics service parameters
+    ##
+
+    service:
+      ## @param controller.metrics.service.type controller metrics service type
+      ##
+      type: ClusterIP
+      ## @param controller.metrics.service.port controller metrics service HTTP port
+      ##
+      port: 9100
+      ## Node ports to expose
+      ## @param controller.metrics.service.nodePort Node port for HTTP
+      ## NOTE: choose port between <30000-32767>
+      ##
+      nodePort: ""
+      ## @param controller.metrics.service.clusterIP controller metrics service Cluster IP
+      ## e.g.:
+      ## clusterIP: None
+      ##
+      clusterIP: ""
+      ## @param controller.metrics.service.extraPorts Extra ports to expose (normally used with the `sidecar` value)
+      ##
+      extraPorts: []
+      ## @param controller.metrics.service.loadBalancerIP controller metrics service Load Balancer IP
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+      ##
+      loadBalancerIP: ""
+      ## @param controller.metrics.service.loadBalancerSourceRanges controller metrics service Load Balancer sources
+      ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ##   - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: []
+      ## @param controller.metrics.service.externalTrafficPolicy controller metrics service external traffic policy
+      ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Cluster
+      ## @param controller.metrics.service.annotations [object] Additional custom annotations for controller metrics service
+      ##
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.controller.metrics.service.port }}"
+    serviceMonitor:
+      ## @param controller.metrics.serviceMonitor.enabled Specify if a servicemonitor will be deployed for prometheus-operator
+      ##
+      enabled: true
+      ## @param controller.metrics.serviceMonitor.jobLabel Specify the jobLabel to use for the prometheus-operator
+      ##
+      jobLabel: app.kubernetes.io/name
+      ## @param controller.metrics.serviceMonitor.honorLabels Honor metrics labels
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ##
+      honorLabels: false
+      ## @param controller.metrics.serviceMonitor.selector Prometheus instance selector labels
+      ## ref: https://github.com/bitnami/plugins/tree/master/bitnami/prometheus-operator#prometheus-configuration
+      ## e.g:
+      ## selector:
+      ##   prometheus: my-prometheus
+      ##
+      selector: {}
+      ## @param controller.metrics.serviceMonitor.scrapeTimeout Timeout after which the scrape is ended
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ## e.g:
+      ## scrapeTimeout: 10s
+      ##
+      scrapeTimeout: ""
+      ## @param controller.metrics.serviceMonitor.interval Scrape interval. If not set, the Prometheus default scrape interval is used
+      ##
+      interval: ""
+      ## @param controller.metrics.serviceMonitor.additionalLabels Used to pass Labels that are required by the installed Prometheus Operator
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+      ##
+      additionalLabels: {}
+
+      ## @param controller.metrics.serviceMonitor.metricRelabelings Specify additional relabeling of metrics
+      ## @skip controller.metrics.serviceMonitor.metricRelabelings
+      metricRelabelings: {}
+
+      ## @param controller.metrics.serviceMonitor.relabelings Specify general relabeling
+      ## @skip controller.metrics.serviceMonitor.relabelings
+      relabelings: {}
+
+## store configuration
+##
+store:
+  ## kubegems store image
+  ## @param store.image.registry store image registry
+  ## @param store.image.repository store image repository
+  ## @param store.image.tag store image tag (immutable tags are recommended)
+  ## @param store.image.pullPolicy store image pull policy
+  ## @param store.image.pullSecrets store image pull secrets
+  ## @param store.image.debug Enable store image debug mode
+  ##
+  image:
+    registry: docker.io
+    repository: kubegems/kubegems
+    tag: latest
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: Always
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Enable debug mode
+    ##
+    debug: false
+  ## @param store.replicaCount Number of store replicas to deploy
+  ##
+  replicaCount: 1
+  ## @param store.containerPorts.probe store probe container port
+  ##
+  containerPorts:
+    probe: 8080
+  ## Configure extra options for store containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param store.livenessProbe.enabled Enable livenessProbe on store containers
+  ## @param store.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param store.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param store.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param store.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param store.livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param store.readinessProbe.enabled Enable readinessProbe on store containers
+  ## @param store.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param store.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param store.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param store.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param store.readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param store.startupProbe.enabled Enable startupProbe on store containers
+  ## @param store.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param store.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param store.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param store.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param store.startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param store.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## @param store.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param store.customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: {}
+  ## store resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param store.resources.limits The resources limits for the store containers
+  ## @param store.resources.requests The requested resources for the store containers
+  ##
+  resources:
+    limits: {}
+    requests: {}
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param store.podSecurityContext.enabled Enabled store pods' Security Context
+  ## @param store.podSecurityContext.fsGroup Set store pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: false
+    fsGroup: 1001
+  ## Configure Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param store.containerSecurityContext.enabled Enabled store containers' Security Context
+  ## @param store.containerSecurityContext.runAsUser Set store containers' Security Context runAsUser
+  ## @param store.containerSecurityContext.runAsNonRoot Set store containers' Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## Configure logging
+  ##
+  ## @param store.logLevel Log level
+  logLevel: debug
+
+  ## @param store.existingConfigmap The name of an existing ConfigMap with your custom configuration for store
+  ##
+  existingConfigmap:
+  ## @param store.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param store.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param store.hostAliases store pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param store.podLabels Extra labels for store pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param store.podAnnotations Annotations for store pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param store.podAffinityPreset Pod affinity preset. Ignored if `store.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param store.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `store.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node store.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param store.nodeAffinityPreset.type Node affinity preset type. Ignored if `store.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param store.nodeAffinityPreset.key Node label key to match. Ignored if `store.affinity` is set
+    ##
+    key: ""
+    ## @param store.nodeAffinityPreset.values Node label values to match. Ignored if `store.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+
+  ## @param store.enableAffinity If enabled Affinity for store pods assignment
+  enableAffinity: false
+
+  ## @param store.affinity Affinity for store pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `store.podAffinityPreset`, `store.podAntiAffinityPreset`, and `store.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param store.nodeSelector Node labels for store pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param store.tolerations Tolerations for store pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param store.updateStrategy.type store statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/stores/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param store.priorityClassName store pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param store.schedulerName Name of the k8s scheduler (other than default) for store pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param store.lifecycleHooks for the store container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param store.extraEnvVars Array with extra environment variables to add to store nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param store.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for store nodes
+  ##
+  extraEnvVarsCM:
+  ## @param store.extraEnvVarsSecret Name of existing Secret containing extra env vars for store nodes
+  ##
+  extraEnvVarsSecret:
+  ## @param store.extraVolumes Optionally specify extra list of additional volumes for the store pod(s)
+  ##
+  extraVolumes: []
+  ## @param store.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the store container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param store.sidecars Add additional sidecar containers to the store pod(s)
+  ## e.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: {}
+  ## @param store.initContainers Add additional init containers to the store pod(s)
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## e.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: {}
+
+  ## store service parameters
+  ##
+  service:
+    ## @param store.service.type store service type
+    ##
+    type: ClusterIP
+    ## @param store.service.ports.http store service HTTP port
+    ##
+    ports:
+      http: 8080
+    ## Node ports to expose
+    ## @param store.service.nodePorts.http Node port for HTTP
+    ## NOTE: choose port between <30000-32767>
+    ##
+    nodePorts:
+      http:
+    ## @param store.service.clusterIP store service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIP:
+    ## @param store.service.loadBalancerIP store service Load Balancer IP
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+    ##
+    loadBalancerIP:
+    ## @param store.service.loadBalancerSourceRanges store service Load Balancer sources
+    ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ##   - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: []
+    ## @param store.service.externalTrafficPolicy store service external traffic policy
+    ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Cluster
+    ## @param store.service.annotations Additional custom annotations for store service
+    ##
+    annotations: {}
+    ## @param store.service.extraPorts Extra ports to expose in store service (normally used with the `sidecars` value)
+    ##
+    extraPorts: []
+
+## sync configuration
+##
+sync:
+  ## kubegems sync image
+  ## @param sync.image.registry sync image registry
+  ## @param sync.image.repository sync image repository
+  ## @param sync.image.tag sync image tag (immutable tags are recommended)
+  ## @param sync.image.pullPolicy sync image pull policy
+  ## @param sync.image.pullSecrets sync image pull secrets
+  ## @param sync.image.debug Enable sync image debug mode
+  ##
+  image:
+    registry: docker.io
+    repository: kubegems/models-sync
+    tag: latest
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Enable debug mode
+    ##
+    debug: false
+  ## @param sync.replicaCount Number of sync replicas to deploy
+  ##
+  replicaCount: 1
+  ## @param sync.containerPorts.probe sync probe container port
+  ##
+  containerPorts:
+    http: 8000
+  ## Configure extra options for sync containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param sync.livenessProbe.enabled Enable livenessProbe on sync containers
+  ## @param sync.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param sync.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param sync.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param sync.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param sync.livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param sync.readinessProbe.enabled Enable readinessProbe on sync containers
+  ## @param sync.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param sync.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param sync.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param sync.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param sync.readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param sync.startupProbe.enabled Enable startupProbe on sync containers
+  ## @param sync.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param sync.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param sync.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param sync.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param sync.startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param sync.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## @param sync.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param sync.customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: {}
+  ## sync resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param sync.resources.limits The resources limits for the sync containers
+  ## @param sync.resources.requests The requested resources for the sync containers
+  ##
+  resources:
+    limits: {}
+    requests: {}
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param sync.podSecurityContext.enabled Enabled sync pods' Security Context
+  ## @param sync.podSecurityContext.fsGroup Set sync pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: false
+    fsGroup: 1001
+  ## Configure Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param sync.containerSecurityContext.enabled Enabled sync containers' Security Context
+  ## @param sync.containerSecurityContext.runAsUser Set sync containers' Security Context runAsUser
+  ## @param sync.containerSecurityContext.runAsNonRoot Set sync containers' Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## Configure logging
+  ##
+  ## @param sync.logLevel Log level
+  logLevel: debug
+
+  ## @param sync.existingConfigmap The name of an existing ConfigMap with your custom configuration for sync
+  ##
+  existingConfigmap:
+  ## @param sync.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param sync.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param sync.hostAliases sync pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param sync.podLabels Extra labels for sync pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param sync.podAnnotations Annotations for sync pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param sync.podAffinityPreset Pod affinity preset. Ignored if `sync.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param sync.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `sync.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node sync.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param sync.nodeAffinityPreset.type Node affinity preset type. Ignored if `sync.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param sync.nodeAffinityPreset.key Node label key to match. Ignored if `sync.affinity` is set
+    ##
+    key: ""
+    ## @param sync.nodeAffinityPreset.values Node label values to match. Ignored if `sync.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+
+  ## @param sync.enableAffinity If enabled Affinity for sync pods assignment
+  enableAffinity: false
+
+  ## @param sync.affinity Affinity for sync pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `sync.podAffinityPreset`, `sync.podAntiAffinityPreset`, and `sync.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param sync.nodeSelector Node labels for sync pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param sync.tolerations Tolerations for sync pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param sync.updateStrategy.type sync statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/syncs/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param sync.priorityClassName sync pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param sync.schedulerName Name of the k8s scheduler (other than default) for sync pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param sync.lifecycleHooks for the sync container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param sync.extraEnvVars Array with extra environment variables to add to sync nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param sync.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for sync nodes
+  ##
+  extraEnvVarsCM:
+  ## @param sync.extraEnvVarsSecret Name of existing Secret containing extra env vars for sync nodes
+  ##
+  extraEnvVarsSecret:
+  ## @param sync.extraVolumes Optionally specify extra list of additional volumes for the sync pod(s)
+  ##
+  extraVolumes: []
+  ## @param sync.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the sync container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param sync.sidecars Add additional sidecar containers to the sync pod(s)
+  ## e.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: {}
+  ## @param sync.initContainers Add additional init containers to the sync pod(s)
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## e.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: {}
+
+  ## sync service parameters
+  ##
+  service:
+    ## @param sync.service.type sync service type
+    ##
+    type: ClusterIP
+    ## @param sync.service.ports.http sync service HTTP port
+    ##
+    ports:
+      http: 8080
+    ## Node ports to expose
+    ## @param sync.service.nodePorts.http Node port for HTTP
+    ## NOTE: choose port between <30000-32767>
+    ##
+    nodePorts:
+      http:
+    ## @param sync.service.clusterIP sync service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIP:
+    ## @param sync.service.loadBalancerIP sync service Load Balancer IP
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+    ##
+    loadBalancerIP:
+    ## @param sync.service.loadBalancerSourceRanges sync service Load Balancer sources
+    ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ##   - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: []
+    ## @param sync.service.externalTrafficPolicy sync service external traffic policy
+    ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Cluster
+    ## @param sync.service.annotations Additional custom annotations for sync service
+    ##
+    annotations: {}
+    ## @param sync.service.extraPorts Extra ports to expose in sync service (normally used with the `sidecars` value)
+    ##
+    extraPorts: []
+
+## @section MongoDB parameters
+mongodb:
+  auth: {}
+
+## @section RBAC Parameters
+
+## RBAC configuration
+##
+rbac:
+  ## @param rbac.create Specifies whether RBAC resources should be created
+  ##
+  create: true
+
+## ServiceAccount configuration
+##
+serviceAccount:
+  ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
+  ##
+  create: true
+  ## @param serviceAccount.name The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the common.names.fullname template
+  ##
+  name: ""

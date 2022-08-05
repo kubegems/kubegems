@@ -45,6 +45,14 @@ type PluginStatus struct {
 	category     string `json:"-"`
 }
 
+// core -> category
+type MainCategory map[string]CategoriedPlugins
+
+type SimplePlugin map[string]bool
+
+// category -> plugin
+type CategoriedPlugins map[string][]PluginStatus
+
 // @Tags         Agent.Plugin
 // @Summary      获取Plugin列表数据
 // @Description  获取Plugin列表数据
@@ -52,7 +60,7 @@ type PluginStatus struct {
 // @Produce      json
 // @Param        cluster  path      string                                                            true  "cluster"
 // @Param        simple   query     bool                                                              true  "simple"
-// @Success      200      {object}  handlers.ResponseStruct{Data=map[string]map[string]PluginStatus}  "Plugins"
+// @Success      200      {object}  handlers.ResponseStruct{Data=MainCategory}  "Plugins"
 // @Router       /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
 // @Security     JWT
 func (h *PluginHandler) List(c *gin.Context) {
@@ -82,7 +90,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 		viewplugins = append(viewplugins, viewplugin)
 	}
 	if simple, _ := strconv.ParseBool(c.Query("simple")); simple {
-		ret := map[string]bool{}
+		ret := SimplePlugin{}
 		for _, v := range viewplugins {
 			ret[v.Name] = v.Healthy
 		}
@@ -95,7 +103,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 	categoryfunc := func(t PluginStatus) string {
 		return t.category
 	}
-	categoryPlugins := map[string]map[string][]PluginStatus{}
+	categoryPlugins := MainCategory{}
 	for maincategory, list := range withCategory(viewplugins, mainCategoryFunc) {
 		categorized := withCategory(list, categoryfunc)
 		// sort
@@ -104,7 +112,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 				return list[i].Name < list[j].Name
 			})
 		}
-		categoryPlugins[maincategory] = categorized
+		categoryPlugins[maincategory] = CategoriedPlugins(categorized)
 	}
 	OK(c, categoryPlugins)
 }

@@ -177,7 +177,7 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		SystemRoleID: uinternel.SystemRoleID,
 		Source:       uinternel.Source,
 	}
-	token, _, err := h.JWTOptions.ToJWT().GenerateToken(userpayload, h.JWTOptions.Expire)
+	token, _, err := h.JWTOptions.ToJWT().GenerateToken(userpayload, userpayload.Username, h.JWTOptions.Expire)
 	if err != nil {
 		handlers.Unauthorized(c, err)
 		return

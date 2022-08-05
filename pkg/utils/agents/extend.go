@@ -60,6 +60,7 @@ type ExtendClient struct {
 }
 
 // plugins.kubegems.io/v1alpha1
+// Depracated: use 'gemsplugin.ListPlugins' instead
 func (c *ExtendClient) ListPlugins(ctx context.Context) (map[string]interface{}, error) {
 	ret := make(map[string]interface{})
 	err := c.DoRequest(ctx, Request{
@@ -70,6 +71,7 @@ func (c *ExtendClient) ListPlugins(ctx context.Context) (map[string]interface{},
 	return ret, err
 }
 
+// Depracated: use 'gemsplugin.EnablePlugin' instead
 func (c *ExtendClient) EnablePlugin(ctx context.Context, ptype, name string) error {
 	return c.DoRequest(ctx, Request{
 		Method: http.MethodPut,
@@ -77,6 +79,7 @@ func (c *ExtendClient) EnablePlugin(ctx context.Context, ptype, name string) err
 	})
 }
 
+// Depracated: use 'gemsplugin.EnablePlugin' instead
 func (c *ExtendClient) DisablePlugin(ctx context.Context, ptype, name string) error {
 	return c.DoRequest(ctx, Request{
 		Method: http.MethodPut,

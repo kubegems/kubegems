@@ -100,16 +100,27 @@ const (
 	ListOptionContinue      = "continue"
 )
 
+//nolint: funlen
 func (h *ClientRest) List(c *gin.Context) {
 	list, gvkn := h.listObject(c)
 
 	var fieldSelector fields.Selector
 	if fieldSelectorStr := c.Query(ListOptionFieldSelector); fieldSelectorStr != "" {
-		fieldSelector, _ = fields.ParseSelector(fieldSelectorStr)
+		sel, err := fields.ParseSelector(fieldSelectorStr)
+		if err != nil {
+			NotOK(c, err)
+			return
+		}
+		fieldSelector = sel
 	}
 	var labelSelector labels.Selector
 	if labelSelectorStr := c.Query(ListOptionLabelSelector); labelSelectorStr != "" {
-		labelSelector, _ = labels.Parse(c.Query(ListOptionLabelSelector))
+		sel, err := labels.Parse(c.Query(ListOptionLabelSelector))
+		if err != nil {
+			NotOK(c, err)
+			return
+		}
+		labelSelector = sel
 	}
 	limit, _ := strconv.Atoi(c.Query(ListOptionLimit))
 	listOptions := &client.ListOptions{

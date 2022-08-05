@@ -473,6 +473,16 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				"deleted_at",
 			}),
 		}
+
+		// 如果为第一个添加的集群，则设置为主集群
+		count := int64(0)
+		if err := h.GetDB().Model(&models.Cluster{}).Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			cluster.Primary = true
+		}
+
 		// 控制集群检验
 		if cluster.Primary {
 			var primarysCount int64

@@ -79,12 +79,25 @@ func (t *Tree) addWebService(ws *restful.WebService, meta string, basepath strin
 			t.RouteUpdateFunc(route)
 		}
 
+		if route.Consumes == nil {
+			route.Consumes = []string{restful.MIME_JSON}
+		}
+		if route.Produces == nil {
+			route.Produces = []string{restful.MIME_JSON}
+		}
+
 		rb := ws.
 			Method(route.Method).
 			Path(basepath+route.Path).
+			Consumes(route.Consumes...).
+			Produces(route.Produces...).
 			To(route.Func).
 			Metadata(restfulspec.KeyOpenAPITags, []string{meta}).
 			Doc(route.Summary)
+
+		if route.Tags != nil {
+			rb.Metadata(restfulspec.KeyOpenAPITags, route.Tags)
+		}
 
 		for _, param := range baseparams {
 			rb.Param(param)
@@ -148,6 +161,9 @@ type Route struct {
 	Path       string
 	Method     string
 	Func       Function
+	Tags       []string
+	Consumes   []string
+	Produces   []string
 	Params     []Param
 	Responses  []ResponseMeta
 	Properties map[string]interface{}
@@ -197,6 +213,11 @@ func (n *Route) ShortDesc(summary string) *Route {
 	return n
 }
 
+func (n *Route) Doc(summary string) *Route {
+	n.Summary = summary
+	return n
+}
+
 func (n *Route) Paged() *Route {
 	n.Params = append(n.Params, QueryParameter("page", "page number").Optional())
 	n.Params = append(n.Params, QueryParameter("size", "page size").Optional())
@@ -205,6 +226,18 @@ func (n *Route) Paged() *Route {
 
 func (n *Route) Parameters(params ...Param) *Route {
 	n.Params = append(n.Params, params...)
+	return n
+}
+
+// Accept types of all the responses
+func (n *Route) Accept(mime ...string) *Route {
+	n.Consumes = append(n.Consumes, mime...)
+	return n
+}
+
+// ContentType of all available responses type
+func (n *Route) ContentType(mime ...string) *Route {
+	n.Produces = append(n.Produces, mime...)
 	return n
 }
 
@@ -218,6 +251,11 @@ func (n *Route) SetProperty(k string, v interface{}) *Route {
 		n.Properties = make(map[string]interface{})
 	}
 	n.Properties[k] = v
+	return n
+}
+
+func (n *Route) Tag(tags ...string) *Route {
+	n.Tags = append(n.Tags, tags...)
 	return n
 }
 
@@ -258,6 +296,11 @@ func QueryParameter(name string, description string) Param {
 
 func (p Param) Optional() Param {
 	p.IsOptional = true
+	return p
+}
+
+func (p Param) Desc(desc string) Param {
+	p.Description = desc
 	return p
 }
 
