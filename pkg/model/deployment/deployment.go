@@ -16,7 +16,6 @@ package deployment
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	oamv1beta1 "github.com/oam-dev/kubevela/apis/core.oam.dev/v1beta1"
@@ -24,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -61,8 +61,7 @@ type Options struct {
 	MetricsAddr          string `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
 	EnableLeaderElection bool   `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
 	ProbeAddr            string `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
-	BaseDomain           string `json:"baseDomain,omitempty" description:"The base domain of the servingmodel"`
-	RandSubDomainLen     int    `json:"randSubDomainLen,omitempty" description:"The length of the random sub domain"`
+	IngressAddr          string `json:"ingressAddr,omitempty" description:"The ingress base address show in status"`
 }
 
 func DefaultOptions() *Options {
@@ -70,8 +69,7 @@ func DefaultOptions() *Options {
 		MetricsAddr:          "127.0.0.1:9100", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
-		BaseDomain:           "models.kubegems.io",
-		RandSubDomainLen:     DefaultSubdomainLen,
+		IngressAddr:          "http://models.kubegems.io",
 	}
 }
 
@@ -114,17 +112,16 @@ func Run(ctx context.Context, options *Options) error {
 
 func OAMAppTrigger() handler.EventHandler {
 	return handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-		// check owner
-		if !IsOwnByModelDeployment(obj) {
-			return nil
+		if IsOwnBy(obj, modelsv1beta1.GroupVersion.WithKind("ModelDeployment")) {
+			return []reconcile.Request{{NamespacedName: client.ObjectKeyFromObject(obj)}}
 		}
-		return []reconcile.Request{{NamespacedName: client.ObjectKeyFromObject(obj)}}
+		return nil
 	})
 }
 
-func IsOwnByModelDeployment(obj client.Object) bool {
+func IsOwnBy(obj client.Object, gvk schema.GroupVersionKind) bool {
 	for _, ref := range obj.GetOwnerReferences() {
-		if ref.APIVersion == modelsv1beta1.GroupVersion.String() && ref.Kind == "ModelDeployment" {
+		if ref.APIVersion == gvk.GroupVersion().String() && ref.Kind == gvk.Kind {
 			return true
 		}
 	}
@@ -135,24 +132,23 @@ func Setup(ctx context.Context, mgr ctrl.Manager, options *Options) error {
 	r := &Reconciler{
 		Client:  mgr.GetClient(),
 		Options: options,
-		ModelServes: map[string]ModelServe{
-			// OAMModelServeKind:    &OAMModelServe{Client: mgr.GetClient()},
-			SeldonModelServeKind: &SeldonModelServe{Client: mgr.GetClient()},
+		SeldonBack: &SeldonModelServe{
+			Client:      mgr.GetClient(),
+			IngressHost: options.IngressAddr,
 		},
 	}
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&modelsv1beta1.ModelDeployment{}).
-		WithOptions(controller.Options{MaxConcurrentReconciles: ControllerConcurrency})
-	for _, serve := range r.ModelServes {
-		builder.Watches(&source.Kind{Type: serve.Watches()}, OAMAppTrigger())
-	}
+		WithOptions(controller.Options{MaxConcurrentReconciles: ControllerConcurrency}).
+		Watches(&source.Kind{Type: &machinelearningv1.SeldonDeployment{}}, OAMAppTrigger())
+
 	return builder.Complete(r)
 }
 
 type Reconciler struct {
 	client.Client
-	Options     *Options
-	ModelServes map[string]ModelServe
+	Options    *Options
+	SeldonBack *SeldonModelServe
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -173,15 +169,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, nil
 	}
 
-	origin := md.DeepCopy()
+	// use default on next process,but do not writeback.
 	if err := r.Default(ctx, md); err != nil {
+		log.Error(err, "failed to default model deployment")
 		return ctrl.Result{}, err
-	}
-	if !equality.Semantic.DeepEqual(md, origin) {
-		if err := r.Client.Update(ctx, md); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{}, nil
 	}
 
 	if err := r.Sync(ctx, md); err != nil {
@@ -189,30 +180,29 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		md.Status.Phase = modelsv1beta1.Failed
 		md.Status.Message = err.Error()
 	}
-	if err := r.Status().Update(ctx, md); err != nil {
+
+	if err := r.updateStatus(ctx, md); err != nil {
 		return ctrl.Result{}, err
 	}
 	return reconcile.Result{}, nil
 }
 
-func (r *Reconciler) Sync(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
-	// apply md
-	serve, ok := r.ModelServes[md.Spec.Backend]
-	if !ok {
-		return fmt.Errorf("unsupported model deployment kind: %s", md.Spec.Backend)
-	}
-	if err := serve.Apply(ctx, md); err != nil {
+func (r *Reconciler) updateStatus(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
+	existing := &modelsv1beta1.ModelDeployment{ObjectMeta: md.ObjectMeta}
+	if err := r.Get(ctx, client.ObjectKeyFromObject(existing), existing); err != nil {
 		return err
 	}
-	return nil
+	if equality.Semantic.DeepEqual(md.Status, existing.Status) {
+		return nil
+	}
+	existing.Status = md.Status
+	return r.Status().Update(ctx, existing)
+}
+
+func (r *Reconciler) Sync(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
+	return r.SeldonBack.Apply(ctx, md)
 }
 
 func (r *Reconciler) Default(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
-	if md.Spec.Host == "" {
-		md.Spec.Host = RandStringRunes(r.Options.RandSubDomainLen) + "." + r.Options.BaseDomain
-	}
-	if md.Spec.Backend == "" {
-		md.Spec.Backend = SeldonModelServeKind
-	}
 	return nil
 }

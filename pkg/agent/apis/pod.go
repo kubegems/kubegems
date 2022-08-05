@@ -162,6 +162,8 @@ func (h *PodHandler) getControllerLabel(c *gin.Context) (map[string]string, erro
 		return ds.Spec.Selector.MatchLabels, nil
 	case "TenantGateway":
 		return map[string]string{"app": topname}, nil
+	case "ModelDeployment":
+		return map[string]string{"seldon-deployment-id": topname}, nil
 	}
 	return ret, nil
 }

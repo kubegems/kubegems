@@ -60,4 +60,10 @@ rules:
       - "leases"
     verbs:  
       - "*"
+  - apiGroups:
+      - "machinelearning.seldon.io"
+    resources:
+      - "*"
+    verbs:
+      - "*"
 {{- end }}

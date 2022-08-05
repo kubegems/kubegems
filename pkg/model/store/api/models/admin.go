@@ -48,6 +48,7 @@ func (m ModelsAPI) AdminCheckSource(req *restful.Request, resp *restful.Response
 	}
 	if err := checkSource(req.Request.Context(), source); err != nil {
 		response.BadRequest(resp, err.Error())
+		return
 	}
 	response.OK(resp, source)
 }

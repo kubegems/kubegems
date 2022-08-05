@@ -21,6 +21,8 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
+const PrepackOpenMMLabName = "OPENMMLAB_SERVER"
+
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".spec.model.name",name="MODEL",description="Status of the resource",type=string
@@ -34,17 +36,39 @@ type ModelDeployment struct {
 
 // ModelDeploymentSpec is the spec for a ModelDeployment
 type ModelDeploymentSpec struct {
-	Backend   string                      `json:"backend,omitempty"` // kind of the model deployment
 	Model     ModelSpec                   `json:"model,omitempty"`
+	Server    ServerSpec                  `json:"server,omitempty"`
 	Replicas  *int32                      `json:"replicas,omitempty"`
-	Env       []corev1.EnvVar             `json:"env,omitempty"`
-	Args      []string                    `json:"args,omitempty"`
-	Ports     []corev1.ContainerPort      `json:"ports,omitempty"`
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
-	// Host is the hostname of the model serving endpoint
-	// automatically generated if not specified
-	// +optional
-	Host string `json:"host,omitempty"`
+}
+
+type ModelSpec struct {
+	// +kubebuilder:validation:Required
+	Source string `json:"source"`
+	// +kubebuilder:validation:Required
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	// +kubebuilder:validation:Optional
+	URL string `json:"url"`
+}
+
+type ServerSpec struct {
+	Name string `json:"name"`
+	// +kubebuilder:validation:Optional
+	Protocol string `json:"protocol"`
+	// +kubebuilder:validation:Optional
+	Kind string `json:"kind"`
+	// +kubebuilder:validation:Required
+	Image string `json:"image"`
+	// +kubebuilder:validation:Optional
+	Parameters []Parameter `json:"parameters,omitempty"`
+
+	corev1.Container `json:",inline"`
+}
+
+type Parameter struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type ModelDeploymentStatus struct {
@@ -52,7 +76,7 @@ type ModelDeploymentStatus struct {
 	Phase   Phase  `json:"phase,omitempty"`
 	Message string `json:"message,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
-	RawStatus *runtime.RawExtension `json:"oamStatus,omitempty"`
+	RawStatus *runtime.RawExtension `json:"rawStatus,omitempty"`
 }
 
 type Phase string
@@ -70,27 +94,6 @@ const (
 	// terminated in a failure (exited with a non-zero exit code or was stopped by the system).
 	Failed Phase = "Failed"
 )
-
-type ModelSpec struct {
-	// +kubebuilder:validation:Required
-	Source string `json:"source"`
-	// +kubebuilder:validation:Required
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	URL     string `json:"url"`
-	// +kubebuilder:validation:Optional
-	Prameters  []Parameter `json:"parameters"`
-	ServerType string      `json:"serverType"`
-	// +kubebuilder:validation:Required
-	Image string `json:"image"`
-	// +kubebuilder:validation:Optional
-	ContainerSpecOverrride *corev1.Container `json:"containerSpecOverrride,omitempty"`
-}
-
-type Parameter struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
 
 //+kubebuilder:object:root=true
 type ModelDeploymentList struct {

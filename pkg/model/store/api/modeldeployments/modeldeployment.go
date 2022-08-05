@@ -22,7 +22,10 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/go-logr/logr"
+	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/application"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
@@ -82,7 +85,7 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 				Name:              md.Name,
 				ModelName:         md.Spec.Model.Name,
 				ModelVersion:      md.Spec.Model.Version,
-				URL:               "http://" + md.Spec.Host,
+				URL:               md.Status.URL,
 				Phase:             string(md.Status.Phase),
 				Cluster:           cluster,
 				Namespace:         md.Namespace,
@@ -179,30 +182,30 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 	}
 
 	// set first source image if not set
-	if md.Spec.Model.Image == "" {
-		for _, image := range sourcedetails.Images {
-			if image != "" {
-				md.Spec.Model.Image = image
-				break
-			}
-		}
-	}
-
-	// set model parameters if not set
-	addtionalparams := []modelsv1beta1.Parameter{}
 	switch sourcedetails.Kind {
 	case repository.SourceKindHuggingface:
-		addtionalparams = []modelsv1beta1.Parameter{
-			{Name: "task", Value: modeldetails.Task},
-			{Name: "pretrained_model", Value: modelname},
+		md.Spec.Server.Kind = machinelearningv1.PrepackHuggingFaceName
+		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
+		md.Spec.Server.Name = "transformer"
+		md.Spec.Server.Parameters = append(md.Spec.Server.Parameters,
+			modelsv1beta1.Parameter{Name: "task", Value: modeldetails.Task},
+			modelsv1beta1.Parameter{Name: "pretrained_model", Value: modeldetails.Name},
+		)
+		// nolint: gomnd
+		md.Spec.Server.ReadinessProbe = &v1.Probe{
+			InitialDelaySeconds: 120,
+			FailureThreshold:    5,
 		}
 	case repository.SourceKindOpenMMLab:
-		addtionalparams = []modelsv1beta1.Parameter{
-			{Name: "pkg", Value: modelname},
-			{Name: "model", Value: modeldetails.Name},
-		}
+		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
+		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
+		md.Spec.Server.Name = "model"
+		md.Spec.Server.Parameters = append(md.Spec.Server.Parameters,
+			modelsv1beta1.Parameter{Name: "pkg", Value: modeldetails.Framework},
+			modelsv1beta1.Parameter{Name: "model", Value: modeldetails.Name},
+		)
+		md.Spec.Server.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
 	}
-	md.Spec.Model.Prameters = append(md.Spec.Model.Prameters, addtionalparams...)
 	return nil
 }
 
