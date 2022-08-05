@@ -15,7 +15,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/utils/set"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -130,11 +130,15 @@ func UpdateEnviromentAnnotation(env *v1beta1.Environment, serviceAccountName str
 	key := imagePullSecretKeyPrefix + serviceAccountName
 	if _, exist := env.Annotations[key]; exist {
 		secrets := strings.Split(env.Annotations[key], ",")
+
+		secretSet := set.NewSet[string]()
 		if isAdd {
-			secrets = slice.StringUniqueSlice(append(secrets, newSecrets...))
+			secretSet.Append(secrets...)
+			secretSet.Append(newSecrets...)
 		} else {
-			secrets = slice.StringUniqueSliceRemove(secrets, newSecrets)
+			secretSet.Remove(newSecrets...)
 		}
+		secrets = secretSet.Slice()
 		if len(secrets) == 0 {
 			delete(env.Annotations, key)
 		} else {

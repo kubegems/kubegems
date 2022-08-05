@@ -69,30 +69,3 @@ func SliceUniqueKey(s []string) string {
 	sort.Strings(tmp)
 	return strings.Join(tmp, "-")
 }
-
-func StringUniqueSlice(s []string) []string {
-	tmp := make(map[string]int)
-	for _, i := range s {
-		tmp[i]++
-	}
-	ret := []string{}
-	for v := range tmp {
-		ret = append(ret, v)
-	}
-	return ret
-}
-
-func StringUniqueSliceRemove(src []string, dest []string) []string {
-	tmp := make(map[string]int)
-	for _, i := range src {
-		tmp[i]++
-	}
-	for _, i := range dest {
-		delete(tmp, i)
-	}
-	ret := []string{}
-	for v := range tmp {
-		ret = append(ret, v)
-	}
-	return ret
-}
