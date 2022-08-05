@@ -66,7 +66,7 @@ func (i OpratorInstaller) Apply(ctx context.Context, ns string, values GlobalVal
 	if err != nil {
 		return err
 	}
-	if err = CreateOrPatchInNamespace(ctx, cli, "bundle-controller", installerobjects...); err != nil {
+	if err = CreateOrPatchInNamespace(ctx, cli, ns, installerobjects...); err != nil {
 		return fmt.Errorf("apply installer: %v", err)
 	}
 
