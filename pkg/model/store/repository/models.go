@@ -211,7 +211,7 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 		showfields["versions"] = 1
 	}
 	if opts.WithDisabled {
-		showfields["enanled"] = 1
+		showfields["enabled"] = 1
 	}
 
 	pipline = append(pipline, bson.M{"$project": showfields})

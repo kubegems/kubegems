@@ -100,6 +100,7 @@ func (r *SeldonModelServe) convert(md *modelsv1beta1.ModelDeployment) (*machinel
 				{
 					Name:            md.Spec.Server.Name,
 					EngineResources: md.Spec.Resources,
+					Replicas:        md.Spec.Replicas,
 					Graph: machinelearningv1.PredictiveUnit{
 						Name:           md.Spec.Server.Name,
 						Implementation: implOf(md.Spec.Server.Kind),

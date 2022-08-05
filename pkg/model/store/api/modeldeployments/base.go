@@ -65,7 +65,7 @@ func (o *ModelDeploymentAPI) AppRefFunc(req *restful.Request, resp *restful.Resp
 				},
 			},
 		}
-		if err := o.Database.DB().Preload("Cluster").Take(env).Error; err != nil {
+		if err := o.Database.DB().Preload("Cluster").Where(env).Take(env).Error; err != nil {
 			return nil, err
 		}
 		clustername, namespace := env.Cluster.ClusterName, env.Namespace
