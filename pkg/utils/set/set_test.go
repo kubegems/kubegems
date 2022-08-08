@@ -31,7 +31,7 @@ func TestSlice(t *testing.T) {
 			name:       "string",
 			elems:      []string{"a", "a", "b", "c"},
 			want:       []string{"a", "b", "c"},
-			wantlength: 3,
+			wantlength: 2,
 		},
 	}
 
@@ -41,6 +41,10 @@ func TestSlice(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := set.Slice(); slice.SliceUniqueKey(got) != slice.SliceUniqueKey(tt.want) {
 				t.Errorf("Slice() = %v, want %v", got, tt.want)
+			}
+			set.Remove("c")
+			if set.Has("c") {
+				t.Errorf("Has(\"c\") = true, want false")
 			}
 			if length := set.Len(); length != tt.wantlength {
 				t.Errorf("Len() = %v, want %v", length, tt.wantlength)

@@ -21,7 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// src中是否存在了dest字符串
+// ContainStr src contains dest
 func ContainStr(src []string, dest string) bool {
 	for i := range src {
 		if src[i] == dest {
