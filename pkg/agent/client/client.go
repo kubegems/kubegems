@@ -281,6 +281,7 @@ func (h *ClientRest) Patch(c *gin.Context) {
 			}
 			return nil
 		}(),
+		FieldManager: c.Query("field-manager"),
 	}
 
 	patch := client.RawPatch(types.PatchType(c.Request.Header.Get("Content-Type")), patchdata)

@@ -217,7 +217,8 @@ func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *r
 		}
 		// set the namespace
 		md.Namespace = ref.Namespace
-		if err := cli.Update(ctx, md); err != nil {
+		md.SetManagedFields(nil)
+		if err := cli.Patch(ctx, md, client.Apply, client.FieldOwner("kubegems"), client.ForceOwnership); err != nil {
 			return nil, err
 		}
 		return md, nil
