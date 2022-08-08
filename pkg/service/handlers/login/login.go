@@ -16,12 +16,14 @@ package loginhandler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	auth "kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -63,12 +65,14 @@ func (h *OAuthHandler) LoginHandler(c *gin.Context) {
 func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 	source := c.Query("source")
 	if source == "" {
-		handlers.NotOK(c, fmt.Errorf("source not provide"))
+		msg := i18n.Sprint("login source not provide")
+		handlers.NotOK(c, errors.New(msg))
 		return
 	}
 	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source)
 	if sourceUtil == nil {
-		handlers.NotOK(c, fmt.Errorf("source not exist"))
+		msg := i18n.Sprint("source not exist")
+		handlers.NotOK(c, fmt.Errorf(msg))
 		return
 	}
 	if sourceUtil.GetName() != source {
