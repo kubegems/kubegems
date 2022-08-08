@@ -27,6 +27,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -55,13 +56,15 @@ func init() {
 	utilruntime.Must(modelsv1beta1.AddToScheme(scheme))
 	machinelearningv1.AddToScheme(scheme)
 	oamv1beta1.AddToScheme(scheme)
+	gemsv1beta1.AddToScheme(scheme)
 }
 
 type Options struct {
 	MetricsAddr          string `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
 	EnableLeaderElection bool   `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
 	ProbeAddr            string `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
-	IngressAddr          string `json:"ingressAddr,omitempty" description:"The ingress base address show in status"`
+	IngressHost          string `json:"ingressHost,omitempty" description:"The base host of the ingress."`
+	IngressScheme        string `json:"ingressScheme,omitempty" description:"The scheme of the ingress."`
 }
 
 func DefaultOptions() *Options {
@@ -69,7 +72,8 @@ func DefaultOptions() *Options {
 		MetricsAddr:          "127.0.0.1:9100", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
-		IngressAddr:          "http://models.kubegems.io",
+		IngressHost:          "models.kubegems.io",
+		IngressScheme:        "http",
 	}
 }
 
@@ -133,8 +137,9 @@ func Setup(ctx context.Context, mgr ctrl.Manager, options *Options) error {
 		Client:  mgr.GetClient(),
 		Options: options,
 		SeldonBack: &SeldonModelServe{
-			Client:      mgr.GetClient(),
-			IngressHost: options.IngressAddr,
+			Client:        mgr.GetClient(),
+			IngressHost:   options.IngressHost,
+			IngressScheme: options.IngressScheme,
 		},
 	}
 	builder := ctrl.NewControllerManagedBy(mgr).

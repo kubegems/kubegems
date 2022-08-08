@@ -43,6 +43,17 @@ spec:
           spec:
             description: ModelDeploymentSpec is the spec for a ModelDeployment
             properties:
+              backend:
+                type: string
+              ingress:
+                properties:
+                  className:
+                    type: string
+                  gatewayName:
+                    type: string
+                  host:
+                    type: string
+                type: object
               model:
                 properties:
                   name:
@@ -61,32 +72,6 @@ spec:
               replicas:
                 format: int32
                 type: integer
-              resources:
-                description: ResourceRequirements describes the compute resource requirements.
-                properties:
-                  limits:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Limits describes the maximum amount of compute resources
-                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                  requests:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Requests describes the minimum amount of compute
-                      resources required. If Requests is omitted for a container,
-                      it defaults to Limits if that is explicitly specified, otherwise
-                      to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                type: object
               server:
                 properties:
                   args:
@@ -618,6 +603,8 @@ spec:
                         format: int32
                         type: integer
                     type: object
+                  mountPath:
+                    type: string
                   name:
                     description: Name of the container specified as a DNS_LABEL. Each
                       container in a pod must have a unique name (DNS_LABEL). Cannot

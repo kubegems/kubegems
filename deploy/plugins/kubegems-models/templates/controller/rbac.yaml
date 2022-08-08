@@ -66,4 +66,16 @@ rules:
       - "*"
     verbs:
       - "*"
+  - apiGroups:
+     - gems.kubegems.io
+    resources:
+      - "tenantgateways"
+    verbs:
+      - "*"
+  - apiGroups:
+      - "networking.k8s.io"
+    resources:
+      - "ingresses"
+    verbs:
+      - "*"
 {{- end }}
