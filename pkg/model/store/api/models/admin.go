@@ -74,7 +74,7 @@ func checkModelxConnection(ctx context.Context, addr string, token string) error
 	if resp.StatusCode != http.StatusOK {
 		// nolint: gomnd
 		bosystr, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-		return fmt.Errorf("unexpected status code %d,bosy: %s", resp.StatusCode, string(bosystr))
+		return fmt.Errorf("unexpected status code %d,body: %s", resp.StatusCode, string(bosystr))
 	}
 	return nil
 }

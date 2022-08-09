@@ -154,20 +154,21 @@ func (m *ModelsRepository) Count(ctx context.Context, opts ModelListOptions) (in
 func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]ModelWithAddtional, error) {
 	cond, findoptions := opts.ToConditionAndFindOptions()
 	showfields := bson.M{
-		"_id":          0,
-		"source":       1,
-		"name":         1,
-		"rating":       1,
-		"framework":    1,
-		"likes":        1,
-		"task":         1,
-		"recomment":    1,
-		"downloads":    1,
-		"tags":         1,
-		"created_at":   1,
-		"updated_at":   1,
-		"lastModified": 1,
-		"enabled":      1,
+		"_id":              0,
+		"source":           1,
+		"name":             1,
+		"rating":           1,
+		"framework":        1,
+		"likes":            1,
+		"task":             1,
+		"recomment":        1,
+		"recommentcontent": 1,
+		"downloads":        1,
+		"tags":             1,
+		"created_at":       1,
+		"updated_at":       1,
+		"lastModified":     1,
+		"enabled":          1,
 	}
 
 	pipline := []bson.M{
@@ -236,10 +237,11 @@ func (m *ModelsRepository) Update(ctx context.Context, model *Model) error {
 		bson.M{"source": model.Source, "name": model.Name},
 		bson.M{
 			"$set": bson.M{
-				"intro":     model.Intro,
-				"recomment": model.Recomment,
-				"tags":      model.Tags,
-				"enabled":   model.Enabled,
+				"intro":            model.Intro,
+				"recomment":        model.Recomment,
+				"recommentcontent": model.RecommentContent,
+				"tags":             model.Tags,
+				"enabled":          model.Enabled,
 			},
 		},
 	)
