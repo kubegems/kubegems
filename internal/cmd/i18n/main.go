@@ -104,7 +104,9 @@ func collectRawI18nDatas() error {
 			if !ok {
 				return true
 			}
-			data[str.Value] = str.Value
+			s := strings.TrimPrefix(str.Value, "\"")
+			s = strings.TrimSuffix(s, "\"")
+			data[s] = s
 			return true
 		})
 	}
@@ -147,7 +149,7 @@ import (
 // {{ funcName $k }} will init {{ $k }} support.
 func {{ funcName $k }}(tag language.Tag) {
 	{{- range $k, $v := $v }}
-	_ = message.SetString(tag, {{$k}}, {{$v}})
+	_ = message.SetString(tag, "{{$k}}", "{{$v}}")
 {{- end }}
 }
 {{- end }}
