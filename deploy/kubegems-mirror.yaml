@@ -45,6 +45,6 @@ spec:
         repository: kubegems/chartmuseum
       persistence:
         enabled: true
-        sieze: 5Gi
+        size: 5Gi
     ingress:
       hostname: dashboard.kubegems.io
