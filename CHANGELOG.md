@@ -1,3 +1,10 @@
+## 1.21.2 / 2022-08-09
+### Bugfixes 🐞
+* 🐞 fix(webhook): ingress api version error by @jojotong in https://github.com/kubegems/kubegems/pull/171
+* 🐞 fix(cluster): apiserver version should from k8s, not db by @jojotong in https://github.com/kubegems/kubegems/pull/172
+* 🐞 fix(apiresource): handle apiresource group failed error by @jojotong in https://github.com/kubegems/kubegems/pull/175
+
+ 
 ## 1.21.1 / 2022-07-22
 ### Enhancements 🎈
 * 🐞 fix(log): alert duration in template limit to 10m by @jojotong in https://github.com/kubegems/kubegems/pull/152

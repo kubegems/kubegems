@@ -83,6 +83,20 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	eg := errgroup.Group{}
+	for i := range list {
+		index := i
+		eg.Go(func() error {
+			cli, err := h.GetAgents().ClientOf(c.Request.Context(), list[index].ClusterName)
+			if err != nil {
+				log.Error(err, "unable get agents client", "cluster", list[index].ClusterName)
+				return nil
+			}
+			list[index].Version = cli.APIServerVersion()
+			return nil
+		})
+	}
+	_ = eg.Wait()
 	handlers.OK(c, handlers.Page(total, list, int64(page), int64(size)))
 }
 
@@ -147,6 +161,12 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
+	}
+	cli, err := h.GetAgents().ClientOf(c.Request.Context(), obj.ClusterName)
+	if err != nil {
+		log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
+	} else {
+		obj.Version = cli.APIServerVersion()
 	}
 	handlers.OK(c, obj)
 }
