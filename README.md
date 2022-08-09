@@ -123,7 +123,7 @@ install kubegems with installer operator.
 kubectl create namespace kubegems
 
 export STORAGE_CLASS=local-path  # export your  storageClass
-export KUBEGEMS_VERSION=v1.22.0  # change to specify kubegems version
+export KUBEGEMS_VERSION=v1.21.2  # change to specify kubegems version
 curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml \
 | sed -e "s/local-path/${STORAGE_CLASS}/g" -e "s/latest/${KUBEGEMS_VERSION}/g" \
 > kubegems.yaml
