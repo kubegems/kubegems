@@ -27,26 +27,21 @@ func (r *Router) AddRestAPI(ctx context.Context, deps apis.Dependencies) error {
 	if err != nil {
 		return err
 	}
-	modelsfun := func(gin *gin.Context) {
+	apifun := func(gin *gin.Context) {
 		apis.ServeHTTP(gin.Writer, gin.Request)
 	}
+	r.gin.Any("/v1/plugins", apifun)
+	r.gin.Any("/.well-known/openid-configuration", apifun) // oidc discovery
+	r.gin.Any("/keys", apifun)                             // oidc keys
 
 	// just hardcode the path for now
 	p, err := proxy.NewProxy(deps.Opts.Models.Addr)
 	if err != nil {
 		return err
 	}
-
-	r.gin.Any("/v1/plugins", modelsfun)
-
-	modeldeploymenyfuns := modelsfun
-	if true { // modeldeployment proxy to the models
-		modeldeploymenyfuns = p.Handle
-	}
-	r.gin.Any("/v1/tenants/:tenant/projects/:project/environments/:environment/modeldeployments/*path", modeldeploymenyfuns)
-	r.gin.Any("/v1/tenants/:tenant/projects/:project/environments/:environment/modeldeployments", modeldeploymenyfuns)
-
 	// models store
+	r.gin.Any("/v1/tenants/:tenant/projects/:project/environments/:environment/modeldeployments/*path", p.Handle)
+	r.gin.Any("/v1/tenants/:tenant/projects/:project/environments/:environment/modeldeployments", p.Handle)
 	r.gin.Any("/v1/docs.json", p.Handle)
 	r.gin.Any("/v1/admin/*path", p.Handle)
 	r.gin.Any("/v1/sources/*path", p.Handle)

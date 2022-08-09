@@ -110,20 +110,7 @@ type Router struct {
 }
 
 func (r *Router) Run(ctx context.Context) error {
-	if err := r.Complete(); err != nil {
-		return err
-	}
-
-	// inner go-restful router
-	if err := r.AddRestAPI(ctx, apis.Dependencies{
-		Opts:     r.Opts,
-		Agents:   r.Agents,
-		Database: r.Database,
-		Gitp:     r.GitProvider,
-		Argo:     r.Argo,
-		Redis:    r.Redis,
-	}); err != nil {
-		log.Errorf("add new restful error: %v", err)
+	if err := r.Complete(ctx); err != nil {
 		return err
 	}
 
@@ -152,7 +139,7 @@ func (r *Router) Run(ctx context.Context) error {
 }
 
 // nolint: funlen
-func (r *Router) Complete() error {
+func (r *Router) Complete(ctx context.Context) error {
 	// validator
 	validate.InitValidator(r.Database.DB())
 	// oauth
@@ -217,6 +204,19 @@ func (r *Router) Complete() error {
 	router.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "healthy"}) })
 	router.GET("/version", func(c *gin.Context) { c.JSON(http.StatusOK, version.Get()) })
 	router.GET("/v1/version", func(c *gin.Context) { handlers.OK(c, version.Get()) })
+
+	// inner go-restful router no auth required
+	if err := r.AddRestAPI(ctx, apis.Dependencies{
+		Opts:     r.Opts,
+		Agents:   r.Agents,
+		Database: r.Database,
+		Gitp:     r.GitProvider,
+		Argo:     r.Argo,
+		Redis:    r.Redis,
+	}); err != nil {
+		log.Errorf("add new restful error: %v", err)
+		return err
+	}
 
 	// 登录和认证相关
 	oauth := loginhandler.OAuthHandler{
