@@ -21,6 +21,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
@@ -126,7 +127,8 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 		!(msgType == string(msgbus.Message) ||
 			msgType == string(msgbus.Alert) ||
 			msgType == string(msgbus.Approve)) {
-		handlers.NotOK(c, fmt.Errorf("消息类型不合法"))
+		msg := i18n.Sprintf(c, "message type %s is invalid", msgType)
+		handlers.NotOK(c, fmt.Errorf(msg))
 		return
 	}
 	user, exist := h.GetContextUser(c)

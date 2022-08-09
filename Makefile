@@ -81,12 +81,18 @@ test: generate ## Run tests.
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
+gen-i18n:
+	go run internal/cmd/i18n/main.go gen
+
+collect-i18n:
+	go run internal/cmd/i18n/main.go collect
+
 ##@ Build
 build-binaries: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
-build: build-binaries plugins-cache
+build: gen-i18n build-binaries plugins-cache
 
 plugins-cache: ## Build plugins-cache
 	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download deploy/*.yaml
