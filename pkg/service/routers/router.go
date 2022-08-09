@@ -53,6 +53,7 @@ import (
 	microservice "kubegems.io/kubegems/pkg/service/handlers/microservice"
 	myinfohandler "kubegems.io/kubegems/pkg/service/handlers/myinfo"
 	noproxyhandler "kubegems.io/kubegems/pkg/service/handlers/noproxy"
+	"kubegems.io/kubegems/pkg/service/handlers/oauthserver"
 	"kubegems.io/kubegems/pkg/service/handlers/observability"
 	projecthandler "kubegems.io/kubegems/pkg/service/handlers/project"
 	proxyhandler "kubegems.io/kubegems/pkg/service/handlers/proxy"
@@ -227,6 +228,9 @@ func (r *Router) Complete() error {
 	router.GET("/v1/oauth/addr", oauth.GetOauthAddr)
 	router.GET("/v1/oauth/callback", oauth.GetOauthToken)
 
+	oauthserver.Init(r.Opts.JWT)
+	router.GET("/v1/oauth/validate", oauthserver.Validate)
+
 	authSourceHandler := authsource.AuthSourceHandler{BaseHandler: basehandler}
 	router.GET("/v1/system/authsource", authSourceHandler.ListAuthSourceSimple)
 	router.GET("/v1/system/authsource/predefined", authSourceHandler.GetAuthSourcePredifinedVar)
@@ -243,6 +247,9 @@ func (r *Router) Complete() error {
 	for _, mw := range apiMidwares {
 		rg.Use(mw)
 	}
+
+	rg.POST("/oauth/token", oauthserver.Token)
+
 	// 选项
 	systemHandler := systemhandler.SystemHandler{
 		BaseHandler: basehandler,
