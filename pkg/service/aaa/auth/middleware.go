@@ -112,6 +112,10 @@ func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIfa
 		log.Error(err, "parse jwt token")
 		return nil, false
 	}
+	if claims.Payload == nil {
+		log.Error(err, "token payload is null")
+		return nil, false
+	}
 	bts, _ := json.Marshal(claims.Payload)
 	var user models.User
 	err = json.Unmarshal(bts, &user)
