@@ -18,14 +18,15 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"sync"
 
+	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/database"
@@ -180,6 +181,16 @@ func (h *ClientSet) serverInfoOf(ctx context.Context, cluster *models.Cluster) (
 			authinfo.ClientKey = transportconfig.TLS.KeyData
 		}
 	}
+
+	cs, err := kubernetes.NewForConfig(restconfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "new clientset from restconfig")
+	}
+	version, err := cs.Discovery().ServerVersion()
+	if err != nil {
+		return nil, errors.Wrap(err, "get apiserver version")
+	}
+	serverinfo.Version = version.String()
 	return serverinfo, nil
 }
 
@@ -187,6 +198,7 @@ type ServerInfo struct {
 	Addr     *url.URL `json:"addr,omitempty"` // addr with api path prefix
 	CA       []byte   `json:"ca,omitempty"`
 	AuthInfo AuthInfo `json:"authInfo,omitempty"`
+	Version  string   `json:"version"` // apiserver version
 }
 
 func (s *ServerInfo) TLSConfig() (*tls.Config, error) {
@@ -266,7 +278,7 @@ func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta
 		Name:             name,
 		BaseAddr:         baseaddr,
 		APIServerAddr:    apiserveraddr,
-		APIServerVersion: cluster.Version,
+		APIServerVersion: serverinfo.Version,
 		TLSConfig:        tlsconfig,
 		Proxy:            proxy.Proxy,
 	}

@@ -16,7 +16,9 @@ package apis
 
 import (
 	"github.com/gin-gonic/gin"
+	"k8s.io/client-go/discovery"
 	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 type ClusterHandler struct {
@@ -34,7 +36,14 @@ type ClusterHandler struct {
 func (h *ClusterHandler) APIResources(c *gin.Context) {
 	ret, err := h.cluster.Discovery().ServerPreferredResources()
 	if err != nil {
-		NotOK(c, err)
+		if discovery.IsGroupDiscoveryFailedError(err) {
+			log.Warnf("get api-resources failed: %v", err)
+			OK(c, ret)
+			return
+		} else {
+			NotOK(c, err)
+			return
+		}
 	}
 	OK(c, ret)
 }
