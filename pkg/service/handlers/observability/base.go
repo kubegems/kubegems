@@ -62,10 +62,10 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/history", h.CheckByClusterNamespace, h.AlertHistory)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/repeats", h.CheckByClusterNamespace, h.AlertRepeats)
 
-	rg.GET("/observability/tenant/:tenant_id/alerts/today", h.CheckByClusterNamespace, h.AlertToday)
-	rg.GET("/observability/tenant/:tenant_id/alerts/graph", h.CheckByClusterNamespace, h.AlertGraph)
-	rg.GET("/observability/tenant/:tenant_id/alerts/group", h.CheckByClusterNamespace, h.AlertByGroup)
-	rg.GET("/observability/tenant/:tenant_id/alerts/search", h.CheckByClusterNamespace, h.SearchAlert)
+	rg.GET("/observability/tenant/:tenant_id/alerts/today", h.CheckByTenantID, h.AlertToday)
+	rg.GET("/observability/tenant/:tenant_id/alerts/graph", h.CheckByTenantID, h.AlertGraph)
+	rg.GET("/observability/tenant/:tenant_id/alerts/group", h.CheckByTenantID, h.AlertByGroup)
+	rg.GET("/observability/tenant/:tenant_id/alerts/search", h.CheckByTenantID, h.SearchAlert)
 
 	// metrics
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/metrics/queryrange", h.CheckByClusterNamespace, h.QueryRange)
