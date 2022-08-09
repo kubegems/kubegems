@@ -96,9 +96,9 @@ func collectRawI18nDatas() error {
 
 			var expr ast.Expr
 			if fn.Sel.Name == "Fprintf" {
-				expr = call.Args[1]
+				expr = call.Args[2]
 			} else {
-				expr = call.Args[0]
+				expr = call.Args[1]
 			}
 			str, ok := expr.(*ast.BasicLit)
 			if !ok {

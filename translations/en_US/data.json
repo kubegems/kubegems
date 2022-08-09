@@ -1,5 +1,12 @@
 {
+  "\"auth source not exist\"": "\"auth source not exist\"",
+  "\"auth source not exists or not enabled\"": "\"auth source not exists or not enabled\"",
+  "\"empty code\"": "\"empty code\"",
+  "\"failed to get auth source\"": "\"failed to get auth source\"",
   "\"login source not provide\"": "\"login source not provide\"",
   "\"message type %s is invalid\"": "\"message type %s is invalid\"",
-  "\"source not exist\"": "\"source not exist\""
+  "\"source not exist\"": "\"source not exist\"",
+  "\"source not match\"": "\"source not match\"",
+  "\"state not provide\"": "\"state not provide\"",
+  "\"system error\"": "\"system error\""
 }

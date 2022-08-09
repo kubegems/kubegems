@@ -65,19 +65,19 @@ func (h *OAuthHandler) LoginHandler(c *gin.Context) {
 func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 	source := c.Query("source")
 	if source == "" {
-		msg := i18n.Sprint("login source not provide")
+		msg := i18n.Sprint(c, "login source not provide")
 		handlers.NotOK(c, errors.New(msg))
 		return
 	}
 	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source)
 	if sourceUtil == nil {
-		msg := i18n.Sprint("source not exist")
+		msg := i18n.Sprint(c, "source not exist")
 		handlers.NotOK(c, fmt.Errorf(msg))
 		return
 	}
 	if sourceUtil.GetName() != source {
 		log.Info("mismatch auth source name", "sourceut", sourceUtil.GetName(), "provided", source)
-		handlers.NotOK(c, fmt.Errorf("source not match"))
+		handlers.NotOK(c, i18n.Errorf(c, "source not match"))
 		return
 	}
 	handlers.OK(c, sourceUtil.LoginAddr())
@@ -131,7 +131,7 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 		// GET for oauth
 		cred.Code = c.Query("code")
 		if cred.Code == "" {
-			handlers.NotOK(c, fmt.Errorf("empty code"))
+			handlers.NotOK(c, i18n.Errorf(c, "empty code"))
 			return
 		}
 	}
@@ -139,23 +139,23 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	if cred.Source == "" {
 		state := c.Query("state")
 		if state == "" {
-			handlers.Unauthorized(c, fmt.Errorf("state not provide"))
+			handlers.Unauthorized(c, i18n.Errorf(c, "state not provide"))
 			return
 		}
 		source, err := h.AuthModule.GetNameFromState(state)
 		if err != nil {
-			handlers.Unauthorized(c, fmt.Errorf("failed to get auth source"))
+			handlers.Unauthorized(c, i18n.Errorf(c, "failed to get auth source"))
 			return
 		}
 		cred.Source = source
 	}
 	authenticator := h.AuthModule.GetAuthenticateModule(ctx, cred.Source)
 	if authenticator == nil {
-		handlers.Unauthorized(c, fmt.Errorf("auth source not exist"))
+		handlers.Unauthorized(c, i18n.Errorf(c, "auth source not exist"))
 		return
 	}
 	if cred.Source != authenticator.GetName() {
-		handlers.Unauthorized(c, "auth source not exists or not enabled")
+		handlers.Unauthorized(c, i18n.Error(c, "auth source not exists or not enabled"))
 		return
 	}
 	uinfo, err := authenticator.GetUserInfo(ctx, cred)
@@ -167,7 +167,7 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	uinternel, err := h.getOrCreateUser(ctx, uinfo)
 	if err != nil {
 		log.Error(err, "update user", "username", uinfo.Username)
-		handlers.Unauthorized(c, "system error")
+		handlers.Unauthorized(c, i18n.Error(c, "system error"))
 		return
 	}
 	now := time.Now()

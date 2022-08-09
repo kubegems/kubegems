@@ -127,7 +127,7 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 		!(msgType == string(msgbus.Message) ||
 			msgType == string(msgbus.Alert) ||
 			msgType == string(msgbus.Approve)) {
-		msg := i18n.Sprintf("message type %s is invalid", msgType)
+		msg := i18n.Sprintf(c, "message type %s is invalid", msgType)
 		handlers.NotOK(c, fmt.Errorf(msg))
 		return
 	}
