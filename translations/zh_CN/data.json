@@ -1,5 +1,12 @@
 {
-  "\"login source not provide\"": "\"登录源未提供\"",
-  "\"message type %s is invalid\"": "\"消息类型 %s 无效\"",
-  "\"source not exist\"": "\"源不存在\""
+  "auth source not exist": "身份验证源不存在",
+  "auth source not exists or not enabled": "身份验证源不存在或未启用",
+  "empty code": "空代码",
+  "failed to get auth source": "未能获取身份验证源",
+  "login source not provide": "登录源未提供",
+  "message type %s is invalid": "消息类型 %s 无效",
+  "source not exist": "源不存在",
+  "source not match": "源不匹配",
+  "state not provide": "状态未提供",
+  "system error": "系统错误"
 }
