@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
