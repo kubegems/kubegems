@@ -19,5 +19,5 @@ spec:
             - key: tencent.com/vcuda
               operator: Exists
     serviceMonitor:
-      interval: 30s
+      interval: 15s
       honorLabels: true
