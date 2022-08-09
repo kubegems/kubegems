@@ -74,6 +74,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
 	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a
+	golang.org/x/text v0.3.7
 	google.golang.org/grpc v1.46.0
 	gopkg.in/yaml.v3 v3.0.0
 	gorm.io/datatypes v1.0.2
@@ -309,7 +310,6 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	golang.org/x/tools v0.1.11-0.20220316014157-77aa08bb151a // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
