@@ -1,10 +1,10 @@
 package i18n
 
 import (
+	"context"
 	"errors"
 	"io"
 
-	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
@@ -37,43 +37,42 @@ func InitWithLang(lang language.Tag) {
 	}
 }
 
-func langFromCtx(ctx *gin.Context) language.Tag {
+func langFromCtx(ctx context.Context) language.Tag {
 	var lang language.Tag
 	if ctx == nil {
 		lang = defaultLang
 		return lang
 	}
-	langs, _, err := language.ParseAcceptLanguage(ctx.GetHeader("Accept-Language"))
-	lang, _, _ = supported.Match(langs...)
-	if err != nil {
+	l := ctx.Value(LANG)
+	if l == nil {
 		lang = defaultLang
-	} else {
-		message.MatchLanguage()
+		return lang
 	}
+	lang = l.(language.Tag)
 	return lang
 }
 
-func Fprintf(ctx *gin.Context, w io.Writer, key message.Reference, a ...interface{}) (n int, err error) {
+func Fprintf(ctx context.Context, w io.Writer, key message.Reference, a ...interface{}) (n int, err error) {
 	return p.printers[langFromCtx(ctx)].Fprintf(w, key, a...)
 }
 
-func Printf(ctx *gin.Context, format string, a ...interface{}) {
+func Printf(ctx context.Context, format string, a ...interface{}) {
 	_, _ = p.printers[langFromCtx(ctx)].Printf(format, a...)
 }
 
-func Sprintf(ctx *gin.Context, format string, a ...interface{}) string {
+func Sprintf(ctx context.Context, format string, a ...interface{}) string {
 	return p.printers[langFromCtx(ctx)].Sprintf(format, a...)
 }
 
-func Sprint(ctx *gin.Context, a ...interface{}) string {
+func Sprint(ctx context.Context, a ...interface{}) string {
 	return p.printers[langFromCtx(ctx)].Sprint(a...)
 }
 
-func Error(ctx *gin.Context, a ...interface{}) error {
+func Error(ctx context.Context, a ...interface{}) error {
 	return errors.New(p.printers[langFromCtx(ctx)].Sprint(a...))
 }
 
-func Errorf(ctx *gin.Context, format string, a ...interface{}) error {
+func Errorf(ctx context.Context, format string, a ...interface{}) error {
 	return errors.New(p.printers[langFromCtx(ctx)].Sprintf(format, a...))
 }
 

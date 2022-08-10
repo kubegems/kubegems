@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/go-ldap/ldap/v3"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 )
 
@@ -47,7 +48,7 @@ func (ut *LdapLoginUtils) LoginAddr() string {
 
 func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (ret *UserInfo, err error) {
 	if !ut.ValidateCredential(cred) {
-		return nil, fmt.Errorf("invalid credential")
+		return nil, i18n.Errorf(ctx, "invalid credential")
 	}
 	var ldapConn *ldap.Conn
 	ldap.DefaultTimeout = time.Second * 5
@@ -62,18 +63,19 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 	defer ldapConn.Close()
 	if err != nil {
 		log.Error(err, "connect to ldap server failed")
-		return
+		return nil, i18n.Error(ctx, "failed to connect ldap server")
 	}
 
 	if ut.EnableTLS {
 		if err = ldapConn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-			log.Error(err, "connect to ldap server with tls failed")
-			return
+			log.Error(err, "failed to connect ldap server with tls")
+			return nil, i18n.Error(ctx, "failed to connect ldap server with tls")
 		}
 	}
 
 	if err = ldapConn.Bind(ut.BindUsername, ut.BindPassword); err != nil {
-		log.Error(err, "connect to ldap server with tls failed")
+		log.Error(err, "failed to connect server with tls")
+		return nil, i18n.Error(ctx, "failed to connect ldap server with tls")
 	}
 
 	searchRequest := ldap.NewSearchRequest(
@@ -89,12 +91,12 @@ func (ut *LdapLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (re
 	)
 	result, err := ldapConn.Search(searchRequest)
 	if err != nil {
-		log.Error(err, "search user in ldap failed", "credential", cred)
-		return
+		log.Error(err, "search user in ldap failed")
+		return nil, i18n.Error(ctx, "failed to get userinfo from ldap")
 	}
 	if len(result.Entries) != 1 {
-		log.Error(fmt.Errorf("more than one search result returnd"), "credential", cred)
-		return
+		log.Error(fmt.Errorf("more than one search result returnd"), "username", cred.Username)
+		return nil, i18n.Error(ctx, "failed to get userinfo from ldap, more than one result")
 	}
 	uinfo := UserInfo{}
 	info := result.Entries[0]

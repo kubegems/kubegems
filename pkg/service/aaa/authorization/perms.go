@@ -15,10 +15,10 @@
 package authorization
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/aaa"
 	"kubegems.io/kubegems/pkg/service/aaa/audit"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -185,7 +185,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckByClusterNamespac
 	}
 	hasPerm, objname, _ := defaultPermissionChecker.HasEnvPerm(c, cluster, namespace)
 	if !hasPerm {
-		handlers.Forbidden(c, fmt.Sprintf("当前用户没有环境%s的操作权限", objname))
+		handlers.Forbidden(c, i18n.Sprintf(c, "you have no permission to operate the environment %s", objname))
 		c.Abort()
 		return
 	}
@@ -195,7 +195,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckByEnvironmentID(c
 	envid := utils.ToUint(c.Param("environment_id"))
 	hasPerm, objname, _ := defaultPermissionChecker.HasObjectPerm(c, models.ResEnvironment, envid)
 	if !hasPerm {
-		handlers.Forbidden(c, fmt.Sprintf("当前用户没有环境%s的操作权限", objname))
+		handlers.Forbidden(c, i18n.Sprintf(c, "you have no permission to operate the environment %s", objname))
 		c.Abort()
 		return
 	}
@@ -205,7 +205,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckByProjectID(c *gi
 	projid := utils.ToUint(c.Param("project_id"))
 	hasPerm, objname, _ := defaultPermissionChecker.HasObjectPerm(c, models.ResProject, projid)
 	if !hasPerm {
-		handlers.Forbidden(c, fmt.Sprintf("当前用户没有项目%s的操作权限", objname))
+		handlers.Forbidden(c, i18n.Sprintf(c, "you have no permission to operate the project %s", objname))
 		c.Abort()
 		return
 	}
@@ -219,7 +219,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckByTenantID(c *gin
 	tenantid := utils.ToUint(c.Param("tenant_id"))
 	hasPerm, objname, _ := defaultPermissionChecker.HasObjectPerm(c, models.ResTenant, tenantid)
 	if !hasPerm {
-		handlers.Forbidden(c, fmt.Sprintf("当前用户没有租户%s的操作权限", objname))
+		handlers.Forbidden(c, i18n.Sprintf(c, "you have no permission to operate the tenant %s", objname))
 		c.Abort()
 		return
 	}
@@ -233,7 +233,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckByVirtualSpaceID(
 	virtualspaceID := utils.ToUint(c.Param("virtualspace_id"))
 	hasPerm, objname, _ := defaultPermissionChecker.HasObjectPerm(c, models.ResVirtualSpace, virtualspaceID)
 	if !hasPerm {
-		handlers.Forbidden(c, fmt.Sprintf("当前用户没有虚拟空间%s的操作权限", objname))
+		handlers.Forbidden(c, i18n.Sprintf(c, "you have no permission to operate the virtual space %s", objname))
 		c.Abort()
 		return
 	}
@@ -242,13 +242,13 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckByVirtualSpaceID(
 func (defaultPermissionChecker *DefaultPermissionManager) CheckIsSysADMIN(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, "请登录")
+		handlers.Unauthorized(c, i18n.Sprint(c, "please login first"))
 		c.Abort()
 		return
 	}
 	userAuthoriy := defaultPermissionChecker.Cache.GetUserAuthority(user)
 	if !userAuthoriy.IsSystemAdmin() {
-		handlers.Forbidden(c, "只有系统管理员可以执行当前操作")
+		handlers.Forbidden(c, i18n.Sprint(c, "you have no permission to do this operation"))
 		c.Abort()
 		return
 	}
@@ -257,7 +257,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckIsSysADMIN(c *gin
 func (defaultPermissionChecker *DefaultPermissionManager) CheckIsATenantAdmin(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, "请登录")
+		handlers.Unauthorized(c, i18n.Sprint(c, "please login first"))
 		c.Abort()
 		return
 	}
@@ -273,14 +273,14 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckIsATenantAdmin(c 
 	if userAuthoriy.IsSystemAdmin() {
 		return
 	}
-	handlers.Forbidden(c, "租户管理员才能执行当前操作")
+	handlers.Forbidden(c, i18n.Sprint(c, "you have no permission to do this operation"))
 	c.Abort()
 }
 
 func (defaultPermissionChecker *DefaultPermissionManager) CheckIsVirtualSpaceAdmin(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, "请登录")
+		handlers.Unauthorized(c, i18n.Sprint(c, "please login first"))
 		c.Abort()
 		return
 	}
@@ -293,7 +293,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckIsVirtualSpaceAdm
 			return
 		}
 	}
-	handlers.Forbidden(c, "虚拟空间管理员才能执行当前操作")
+	handlers.Forbidden(c, i18n.Sprint(c, "you have no permission to do this operation, you must be an admin in any virtual space firstly"))
 	c.Abort()
 }
 
@@ -329,7 +329,7 @@ func (defaultPermChecker *DefaultPermissionManager) CheckCanDeployEnvironment(c 
 	parents := defaultPermChecker.Cache.FindParents(models.ResEnvironment, envid)
 	if len(parents) == 0 {
 		c.Abort()
-		handlers.NotOK(c, fmt.Errorf("当前环境数据异常，请联系管理员"))
+		handlers.NotOK(c, i18n.Error(c, "current environment data is abnormal, please contact the administrator"))
 		return
 	}
 
@@ -353,5 +353,5 @@ func (defaultPermChecker *DefaultPermissionManager) CheckCanDeployEnvironment(c 
 		}
 	}
 	c.Abort()
-	handlers.Forbidden(c, "你没有当前环境的部署权限")
+	handlers.Forbidden(c, "you have no permission to deploy in the current environment")
 }

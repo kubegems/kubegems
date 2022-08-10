@@ -23,6 +23,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/oauth2"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils"
 )
@@ -92,18 +93,18 @@ func (ot *OauthLoginUtils) GetUserInfo(ctx context.Context, cred *Credential) (*
 	token, err := ot.OauthConfig.Exchange(ctxinner, cred.Code)
 	if err != nil {
 		log.Debugf("oauth2 exchange token failed: %v", err)
-		return nil, err
+		return nil, i18n.Error(ctx, "exchange oauth2 token failed")
 	}
 	restyClient := resty.NewWithClient(ot.OauthConfig.Client(context.Background(), token))
 	ret := &OauthCommonUserInfo{}
 	if _, err := restyClient.SetHeader("Authorization", "Bearer "+token.AccessToken).R().SetResult(ret).Get(ot.opts.UserInfoURL); err != nil {
 		log.Debugf("oauth2 get userinfo  failed: %v", err, "url", ot.opts.UserInfoURL)
-		return nil, err
+		return nil, i18n.Error(ctx, "failed to get userinfo from oauth provider")
 	}
 
 	if ret.Username == "" {
 		if ret.Name == "" {
-			return nil, fmt.Errorf("failed to get username")
+			return nil, i18n.Error(ctx, "failed to get username from oauth provider")
 		} else {
 			ret.Username = ret.Name
 		}
