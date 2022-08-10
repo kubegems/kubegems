@@ -26,6 +26,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/sync/errgroup"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	msgbus "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/aaa"
@@ -233,6 +234,7 @@ func (r *Router) Complete() error {
 
 	// 注册中间件
 	apiMidwares := []func(*gin.Context){
+		i18n.SetLang,
 		// authc
 		auth.NewAuthMiddleware(r.Opts.JWT, userif).FilterFunc,
 		// audit
