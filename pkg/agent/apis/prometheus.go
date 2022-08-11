@@ -206,25 +206,17 @@ func (p *prometheusHandler) LabelValues(c *gin.Context) {
 	}
 
 	// 避免append
-	tmp := make([]model.LabelValue, len(alllabels))
+	ret := make([]model.LabelValue, len(alllabels))
 	index := -1
 	for _, v := range alllabels {
 		if strings.Contains(string(v), c.Query("search")) {
 			index++
-			tmp[index] = v
+			ret[index] = v
 		}
 	}
 
-	// 限制最多100条
-	var ret []model.LabelValue
-	if index > 99 {
-		ret = tmp[:100]
-	} else {
-		ret = tmp[:index+1]
-	}
-
 	OK(c, map[string]interface{}{
-		"labels": ret,
+		"labels": ret[:index+1],
 		"warns":  warns,
 	})
 }
