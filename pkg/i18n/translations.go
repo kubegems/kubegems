@@ -22,58 +22,47 @@ var supported = language.NewMatcher([]language.Tag{
 	language.AmericanEnglish,
 	language.English,
 	language.SimplifiedChinese,
+	language.TraditionalChinese,
 	language.Chinese,
 })
 
-func InitWithLang(lang language.Tag) {
-	tag, _, _ := supported.Match(lang)
-	switch tag {
-	case language.AmericanEnglish, language.English:
-		initEnUS(lang)
-	case language.SimplifiedChinese, language.Chinese:
-		initZhCN(lang)
-	default:
-		initEnUS(lang)
-	}
-}
-
-func langFromCtx(ctx context.Context) language.Tag {
+func printerFromCtx(ctx context.Context) *message.Printer {
 	var lang language.Tag
 	if ctx == nil {
 		lang = defaultLang
-		return lang
+	} else {
+		l := ctx.Value(LANG)
+		if l == nil {
+			lang = defaultLang
+		} else {
+			lang = l.(language.Tag)
+		}
 	}
-	l := ctx.Value(LANG)
-	if l == nil {
-		lang = defaultLang
-		return lang
+	printer, exist := p.printers[lang]
+	if exist {
+		return printer
 	}
-	lang = l.(language.Tag)
-	return lang
+	return p.printers[defaultLang]
 }
 
 func Fprintf(ctx context.Context, w io.Writer, key message.Reference, a ...interface{}) (n int, err error) {
-	return p.printers[langFromCtx(ctx)].Fprintf(w, key, a...)
+	return printerFromCtx(ctx).Fprintf(w, key, a...)
 }
 
 func Printf(ctx context.Context, format string, a ...interface{}) {
-	_, _ = p.printers[langFromCtx(ctx)].Printf(format, a...)
+	_, _ = printerFromCtx(ctx).Printf(format, a...)
 }
 
 func Sprintf(ctx context.Context, format string, a ...interface{}) string {
-	return p.printers[langFromCtx(ctx)].Sprintf(format, a...)
-}
-
-func Sprint(ctx context.Context, a ...interface{}) string {
-	return p.printers[langFromCtx(ctx)].Sprint(a...)
+	return printerFromCtx(ctx).Sprintf(format, a...)
 }
 
 func Error(ctx context.Context, a ...interface{}) error {
-	return errors.New(p.printers[langFromCtx(ctx)].Sprint(a...))
+	return errors.New(printerFromCtx(ctx).Sprint(a...))
 }
 
 func Errorf(ctx context.Context, format string, a ...interface{}) error {
-	return errors.New(p.printers[langFromCtx(ctx)].Sprintf(format, a...))
+	return errors.New(printerFromCtx(ctx).Sprintf(format, a...))
 }
 
 func init() {
@@ -83,6 +72,7 @@ func init() {
 		language.AmericanEnglish,
 		language.English,
 		language.SimplifiedChinese,
+		language.TraditionalChinese,
 		language.Chinese,
 	}
 	for _, langTag := range langTags {

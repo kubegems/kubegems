@@ -197,6 +197,7 @@ func (r *Router) Complete() error {
 	// }
 
 	globalMiddlewares := []func(*gin.Context){
+		i18n.SetLang,
 		// prometheus request metrics
 		exporter.GetRequestCollector().HandlerFunc(),
 		// logger
@@ -234,7 +235,6 @@ func (r *Router) Complete() error {
 
 	// 注册中间件
 	apiMidwares := []func(*gin.Context){
-		i18n.SetLang,
 		// authc
 		auth.NewAuthMiddleware(r.Opts.JWT, userif).FilterFunc,
 		// audit

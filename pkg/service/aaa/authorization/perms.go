@@ -242,13 +242,13 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckByVirtualSpaceID(
 func (defaultPermissionChecker *DefaultPermissionManager) CheckIsSysADMIN(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, i18n.Sprint(c, "please login first"))
+		handlers.Unauthorized(c, i18n.Sprintf(c, "please login first"))
 		c.Abort()
 		return
 	}
 	userAuthoriy := defaultPermissionChecker.Cache.GetUserAuthority(user)
 	if !userAuthoriy.IsSystemAdmin() {
-		handlers.Forbidden(c, i18n.Sprint(c, "you have no permission to do this operation"))
+		handlers.Forbidden(c, i18n.Sprintf(c, "you have no permission to do this operation"))
 		c.Abort()
 		return
 	}
@@ -257,7 +257,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckIsSysADMIN(c *gin
 func (defaultPermissionChecker *DefaultPermissionManager) CheckIsATenantAdmin(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, i18n.Sprint(c, "please login first"))
+		handlers.Unauthorized(c, i18n.Sprintf(c, "please login first"))
 		c.Abort()
 		return
 	}
@@ -273,14 +273,14 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckIsATenantAdmin(c 
 	if userAuthoriy.IsSystemAdmin() {
 		return
 	}
-	handlers.Forbidden(c, i18n.Sprint(c, "you have no permission to do this operation"))
+	handlers.Forbidden(c, i18n.Sprintf(c, "you have no permission to do this operation"))
 	c.Abort()
 }
 
 func (defaultPermissionChecker *DefaultPermissionManager) CheckIsVirtualSpaceAdmin(c *gin.Context) {
 	user, exist := defaultPermissionChecker.Userif.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, i18n.Sprint(c, "please login first"))
+		handlers.Unauthorized(c, i18n.Sprintf(c, "please login first"))
 		c.Abort()
 		return
 	}
@@ -293,7 +293,7 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckIsVirtualSpaceAdm
 			return
 		}
 	}
-	handlers.Forbidden(c, i18n.Sprint(c, "you have no permission to do this operation, you must be an admin in any virtual space firstly"))
+	handlers.Forbidden(c, i18n.Sprintf(c, "you have no permission to do this operation, you must be an admin in any virtual space firstly"))
 	c.Abort()
 }
 

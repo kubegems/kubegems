@@ -65,13 +65,13 @@ func (h *OAuthHandler) LoginHandler(c *gin.Context) {
 func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 	source := c.Query("source")
 	if source == "" {
-		msg := i18n.Sprint(c, "login source not provide")
+		msg := i18n.Sprintf(c, "login source not provide")
 		handlers.NotOK(c, errors.New(msg))
 		return
 	}
 	sourceUtil := h.AuthModule.GetAuthenticateModule(c.Request.Context(), source)
 	if sourceUtil == nil {
-		msg := i18n.Sprint(c, "source not exist")
+		msg := i18n.Sprintf(c, "source not exist")
 		handlers.NotOK(c, fmt.Errorf(msg))
 		return
 	}
@@ -139,7 +139,7 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	if cred.Source == "" {
 		state := c.Query("state")
 		if state == "" {
-			handlers.Unauthorized(c, i18n.Errorf(c, "state not provide"))
+			handlers.Unauthorized(c, i18n.Sprintf(c, "state not provide"))
 			return
 		}
 		source, err := h.AuthModule.GetNameFromState(state)

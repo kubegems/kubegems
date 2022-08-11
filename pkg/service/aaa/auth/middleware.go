@@ -24,6 +24,7 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/aaa"
 	"kubegems.io/kubegems/pkg/service/aaa/auth/user"
@@ -61,7 +62,7 @@ func (l *AuthMiddleware) FilterFunc(c *gin.Context) {
 			}
 		}
 		if !loaded {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, "")
+			c.AbortWithStatusJSON(http.StatusUnauthorized, i18n.Sprintf(c, "please login first"))
 			return
 		}
 		l.uif.SetContextUser(c, user)
@@ -110,10 +111,6 @@ func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIfa
 	claims, err := l.JWT.ParseToken(token)
 	if err != nil {
 		log.Error(err, "parse jwt token")
-		return nil, false
-	}
-	if claims.Payload == nil {
-		log.Error(err, "token payload is null")
 		return nil, false
 	}
 	bts, _ := json.Marshal(claims.Payload)
