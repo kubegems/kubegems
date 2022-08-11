@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -78,7 +77,6 @@ func (p *prometheusHandler) Vector(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	query, _ = url.QueryUnescape(query)
 	obj, _, err := v1api.Query(ctx, query, time.Now())
 	if err != nil {
 		NotOK(c, err)
@@ -134,7 +132,6 @@ func (p *prometheusHandler) Matrix(c *gin.Context) {
 		r.Step = dynamicTimeStep(r.Start, r.End)
 	}
 
-	query, _ = url.QueryUnescape(query)
 	obj, _, err := v1api.QueryRange(ctx, query, r)
 	if err != nil {
 		handlers.NotOK(c, err)
