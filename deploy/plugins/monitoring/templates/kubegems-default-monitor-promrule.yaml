@@ -21,7 +21,7 @@ spec:
           $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
           }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_node_status_condition{condition=~"Ready", status=~"true"}==0
+      expr: kube_node_status_condition{condition=~"Ready",status=~"true"}==0
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -40,7 +40,7 @@ spec:
           $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
           }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_node_status_condition{condition=~"MemoryPressure", status=~"true"}==1
+      expr: kube_node_status_condition{condition=~"MemoryPressure",status=~"true"}==1
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -59,7 +59,7 @@ spec:
           $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
           }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_node_status_condition{condition=~"DiskPressure", status=~"true"}==1
+      expr: kube_node_status_condition{condition=~"DiskPressure",status=~"true"}==1
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -78,7 +78,7 @@ spec:
           $labels.node }}] [condition:{{"{{"}} $labels.condition }}] [status:{{"{{"}} $labels.status
           }}] 节点状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_node_status_condition{condition=~"OutOfDisk", status=~"true"}==1
+      expr: kube_node_status_condition{condition=~"OutOfDisk",status=~"true"}==1
       for: 5m
       labels:
         gems_alert_from: monitor
@@ -135,8 +135,7 @@ spec:
           }}] [reason:{{"{{"}} $labels.reason }}] 容器终止原因 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f"
           }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: kube_pod_container_status_terminated_reason{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage",
-        reason=~"OOMKilled"}>0
+      expr: kube_pod_container_status_terminated_reason{namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage",reason=~"OOMKilled"}>0
       for: 1m
       labels:
         gems_alert_from: monitor
@@ -357,7 +356,7 @@ spec:
           $labels.namespace }}] [name:{{"{{"}} $labels.name }}] [condition:{{"{{"}} $labels.condition
           }}] 证书状态 触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: certmanager_certificate_ready_status{condition=~"False|Unknown", namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}==1
+      expr: certmanager_certificate_ready_status{condition=~"False|Unknown",namespace=~"kubegems.*|istio-system|observability|kube-system|local-path-storage"}==1
       for: 0m
       labels:
         gems_alert_from: monitor
@@ -393,7 +392,7 @@ spec:
         message: 'ClusterHighMemoryLoad: [集群:{{"{{"}} $externalLabels.cluster }}] 集群内存使用率
           触发告警, 当前值: {{"{{ $value"}} | printf "%.1f" }}%'
         value: '{{"{{ $value"}} | printf "%.1f" }}'
-      expr: (1- sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes))
+      expr: (1 - sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes))
         * 100>90
       for: 1m
       labels:
