@@ -35,18 +35,18 @@ func (a MessageRet) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a MessageRet) Less(i, j int) bool { return a[i].CreatedAt.After(a[j].CreatedAt) }
 
 // ListMessage 获取我的消息列表
-// @Tags         Message
-// @Summary      获取我的消息列表
-// @Description  获取我的消息列表
-// @Accept       json
-// @Produce      json
-// @Param        page          query     int                                                       false  "page"
-// @Param        size          query     int                                                       false  "page"
-// @Param        is_read       query     bool                                                      false  "是否已读，不指定则是所有"
-// @Param        message_type  query     string                                                    false  "消息类型(message、alert、approve)，不指定则是所有"
-// @Success      200           {object}  handlers.ResponseStruct{Data=[]models.UserMessageStatus}  "messages"
-// @Router       /v1/message [get]
-// @Security     JWT
+// @Tags        Message
+// @Summary     获取我的消息列表
+// @Description 获取我的消息列表
+// @Accept      json
+// @Produce     json
+// @Param       page         query    int                                                      false "page"
+// @Param       size         query    int                                                      false "page"
+// @Param       is_read      query    bool                                                     false "是否已读，不指定则是所有"
+// @Param       message_type query    string                                                   false "消息类型(message、alert、approve)，不指定则是所有"
+// @Success     200          {object} handlers.ResponseStruct{Data=[]models.UserMessageStatus} "messages"
+// @Router      /v1/message [get]
+// @Security    JWT
 func (h *MessageHandler) ListMessage(c *gin.Context) {
 	user, exist := h.GetContextUser(c)
 	if !exist {
@@ -110,16 +110,16 @@ func (h *MessageHandler) ListMessage(c *gin.Context) {
 }
 
 // ReadMessage 获取消息详情
-// @Tags         Message
-// @Summary      获取消息详情
-// @Description  获取消息详情,获取之后将自动标记成了已读
-// @Accept       json
-// @Produce      json
-// @Param        message_id    path      uint                                          true  "message_id"
-// @Param        message_type  path      uint                                          true  "消息类型(message/alert)"
-// @Success      200           {object}  handlers.ResponseStruct{Data=models.Message}  "messages"
-// @Router       /v1/message/{message_id} [put]
-// @Security     JWT
+// @Tags        Message
+// @Summary     获取消息详情
+// @Description 获取消息详情,获取之后将自动标记成了已读
+// @Accept      json
+// @Produce     json
+// @Param       message_id   path     uint                                         true "message_id"
+// @Param       message_type path     uint                                         true "消息类型(message/alert)"
+// @Success     200          {object} handlers.ResponseStruct{Data=models.Message} "messages"
+// @Router      /v1/message/{message_id} [put]
+// @Security    JWT
 func (h *MessageHandler) ReadMessage(c *gin.Context) {
 	msgID := c.Param("message_id")
 	msgType := c.Query("message_type")

@@ -35,18 +35,18 @@ type PersistentVolumeClaimRequest struct {
 }
 
 // Create 恢复卷快照到新pvc
-// @Tags         NOPROXY
-// @Summary      从快照恢复PVC
-// @Description  从快照恢复PVC
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                                  true  "dev"
-// @Param        namespace  path      string                                                  true  "default"
-// @Param        body       body      PersistentVolumeClaimRequest                            true  "request body"
-// @Success      200        {object}  handlers.ResponseStruct{Data=v1.PersistentVolumeClaim}  "PersistentVolumeClaim"
-// @Failure      400        {object}  handlers.ResponseStruct{}                               ""
-// @Router       /v1/noproxy/{cluster}/{namespace}/persistentvolumeclaim [post]
-// @Security     JWT
+// @Tags        NOPROXY
+// @Summary     从快照恢复PVC
+// @Description 从快照恢复PVC
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                 true "dev"
+// @Param       namespace path     string                                                 true "default"
+// @Param       body      body     PersistentVolumeClaimRequest                           true "request body"
+// @Success     200       {object} handlers.ResponseStruct{Data=v1.PersistentVolumeClaim} "PersistentVolumeClaim"
+// @Failure     400       {object} handlers.ResponseStruct{}                              ""
+// @Router      /v1/noproxy/{cluster}/{namespace}/persistentvolumeclaim [post]
+// @Security    JWT
 func (h *PersistentVolumeClaimHandler) Create(c *gin.Context) {
 	cluster := c.Params.ByName("cluster")
 	namespace := c.Params.ByName("namespace")

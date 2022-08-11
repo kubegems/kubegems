@@ -31,19 +31,19 @@ type VirtualDomainHandler struct {
 }
 
 // ListVirtualDomain 列表 VirtualDomain
-// @Tags         VirtualDomain
-// @Summary      VirtualDomain列表
-// @Description  VirtualDomain列表
-// @Accept       json
-// @Produce      json
-// @Param        VirtualDomainName  query     string                                                                        false  "VirtualDomainName"
-// @Param        VirtualDomainID    query     string                                                                        false  "VirtualDomainID"
-// @Param        page               query     int                                                                           false  "page"
-// @Param        size               query     int                                                                           false  "page"
-// @Param        search             query     string                                                                        false  "search in (VirtualDomainName)"
-// @Success      200                {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.VirtualDomain}}  "VirtualDomain"
-// @Router       /v1/virtualdomain [get]
-// @Security     JWT
+// @Tags        VirtualDomain
+// @Summary     VirtualDomain列表
+// @Description VirtualDomain列表
+// @Accept      json
+// @Produce     json
+// @Param       VirtualDomainName query    string                                                                       false "VirtualDomainName"
+// @Param       VirtualDomainID   query    string                                                                       false "VirtualDomainID"
+// @Param       page              query    int                                                                          false "page"
+// @Param       size              query    int                                                                          false "page"
+// @Param       search            query    string                                                                       false "search in (VirtualDomainName)"
+// @Success     200               {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.VirtualDomain}} "VirtualDomain"
+// @Router      /v1/virtualdomain [get]
+// @Security    JWT
 func (h *VirtualDomainHandler) ListVirtualDomain(c *gin.Context) {
 	var list []models.VirtualDomain
 	query, err := handlers.GetQuery(c, nil)
@@ -66,15 +66,15 @@ func (h *VirtualDomainHandler) ListVirtualDomain(c *gin.Context) {
 }
 
 // GetVirtualDomain VirtualDomain详情
-// @Tags         VirtualDomain
-// @Summary      VirtualDomain详情
-// @Description  get VirtualDomain详情
-// @Accept       json
-// @Produce      json
-// @Param        virtualdomain_id  path      uint                                                true  "virtualdomain_id"
-// @Success      200               {object}  handlers.ResponseStruct{Data=models.VirtualDomain}  "VirtualDomain"
-// @Router       /v1/virtualdomain/{virtualdomain_id} [get]
-// @Security     JWT
+// @Tags        VirtualDomain
+// @Summary     VirtualDomain详情
+// @Description get VirtualDomain详情
+// @Accept      json
+// @Produce     json
+// @Param       virtualdomain_id path     uint                                               true "virtualdomain_id"
+// @Success     200              {object} handlers.ResponseStruct{Data=models.VirtualDomain} "VirtualDomain"
+// @Router      /v1/virtualdomain/{virtualdomain_id} [get]
+// @Security    JWT
 func (h *VirtualDomainHandler) GetVirtualDomain(c *gin.Context) {
 	// get vd
 	vd := models.VirtualDomain{}
@@ -86,15 +86,15 @@ func (h *VirtualDomainHandler) GetVirtualDomain(c *gin.Context) {
 }
 
 // PostVirtualDomain 创建VirtualDomain
-// @Tags         VirtualDomain
-// @Summary      创建VirtualDomain
-// @Description  创建VirtualDomain
-// @Accept       json
-// @Produce      json
-// @Param        param  body      models.VirtualDomain                                true  "表单"
-// @Success      200    {object}  handlers.ResponseStruct{Data=models.VirtualDomain}  "VirtualDomain"
-// @Router       /v1/virtualdomain [post]
-// @Security     JWT
+// @Tags        VirtualDomain
+// @Summary     创建VirtualDomain
+// @Description 创建VirtualDomain
+// @Accept      json
+// @Produce     json
+// @Param       param body     models.VirtualDomain                               true "表单"
+// @Success     200   {object} handlers.ResponseStruct{Data=models.VirtualDomain} "VirtualDomain"
+// @Router      /v1/virtualdomain [post]
+// @Security    JWT
 func (h *VirtualDomainHandler) PostVirtualDomain(c *gin.Context) {
 	var vd models.VirtualDomain
 	if err := c.BindJSON(&vd); err != nil {
@@ -118,16 +118,16 @@ func (h *VirtualDomainHandler) PostVirtualDomain(c *gin.Context) {
 }
 
 // PutVirtualDomain 更新VirtualDomain
-// @Tags         VirtualDomain
-// @Summary      更新VirtualDomain
-// @Description  更新VirtualDomain
-// @Accept       json
-// @Produce      json
-// @Param        virtualdomain_id  path      uint                                                true  "virtualdomain_id"
-// @Param        param             body      models.VirtualDomain                                true  "表单"
-// @Success      200               {object}  handlers.ResponseStruct{Data=models.VirtualDomain}  "VirtualDomain"
-// @Router       /v1/virtualdomain/{virtualdomain_id} [put]
-// @Security     JWT
+// @Tags        VirtualDomain
+// @Summary     更新VirtualDomain
+// @Description 更新VirtualDomain
+// @Accept      json
+// @Produce     json
+// @Param       virtualdomain_id path     uint                                               true "virtualdomain_id"
+// @Param       param            body     models.VirtualDomain                               true "表单"
+// @Success     200              {object} handlers.ResponseStruct{Data=models.VirtualDomain} "VirtualDomain"
+// @Router      /v1/virtualdomain/{virtualdomain_id} [put]
+// @Security    JWT
 func (h *VirtualDomainHandler) PutVirtualDomain(c *gin.Context) {
 	var obj models.VirtualDomain
 	if err := h.GetDB().First(&obj, c.Param("virtualdomain_id")).Error; err != nil {
@@ -154,15 +154,15 @@ func (h *VirtualDomainHandler) PutVirtualDomain(c *gin.Context) {
 }
 
 // DeleteVirtualDomain 删除 VirtualDomain
-// @Tags         VirtualDomain
-// @Summary      删除 VirtualDomain
-// @Description  删除 VirtualDomain
-// @Accept       json
-// @Produce      json
-// @Param        virtualdomain_id  path      uint                     true  "virtualdomain_id"
-// @Success      200               {object}  handlers.ResponseStruct  "resp"
-// @Router       /v1/virtualdomain/{virtualdomain_id} [delete]
-// @Security     JWT
+// @Tags        VirtualDomain
+// @Summary     删除 VirtualDomain
+// @Description 删除 VirtualDomain
+// @Accept      json
+// @Produce     json
+// @Param       virtualdomain_id path     uint                    true "virtualdomain_id"
+// @Success     200              {object} handlers.ResponseStruct "resp"
+// @Router      /v1/virtualdomain/{virtualdomain_id} [delete]
+// @Security    JWT
 func (h *VirtualDomainHandler) DeleteVirtualDomain(c *gin.Context) {
 	// get vd
 	vd := models.VirtualDomain{}

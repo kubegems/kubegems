@@ -50,14 +50,14 @@ func (a ApprovesList) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ApprovesList) Less(i, j int) bool { return a[i].CreatedAt.After(a[j].CreatedAt) } // 倒序
 
 // ListApproves 获取待处理审批
-// @Tags         Approve
-// @Summary      获取待处理审批
-// @Description  获取待处理审批
-// @Accept       json
-// @Produce      json
-// @Success      200  {object}  handlers.ResponseStruct{Data=ApprovesList}  "ApprovesList"
-// @Router       /v1/approve [get]
-// @Security     JWT
+// @Tags        Approve
+// @Summary     获取待处理审批
+// @Description 获取待处理审批
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} handlers.ResponseStruct{Data=ApprovesList} "ApprovesList"
+// @Router      /v1/approve [get]
+// @Security    JWT
 func (h *ApproveHandler) ListApproves(c *gin.Context) {
 	// 审批中的，查quota
 	var quotas []models.TenantResourceQuota
@@ -97,16 +97,16 @@ func (h *ApproveHandler) ListApproves(c *gin.Context) {
 }
 
 // Approve 审批通过
-// @Tags         Approve
-// @Summary      审批通过
-// @Description  审批通过
-// @Accept       json
-// @Produce      json
-// @Param        id     path      uint                                  true  "tenant resource quota id"
-// @Param        param  body      Approve                               true  "通过的内容"
-// @Success      200    {object}  handlers.ResponseStruct{Data=string}  ""
-// @Router       /v1/approve/{id}/pass [post]
-// @Security     JWT
+// @Tags        Approve
+// @Summary     审批通过
+// @Description 审批通过
+// @Accept      json
+// @Produce     json
+// @Param       id    path     uint                                 true "tenant resource quota id"
+// @Param       param body     Approve                              true "通过的内容"
+// @Success     200   {object} handlers.ResponseStruct{Data=string} ""
+// @Router      /v1/approve/{id}/pass [post]
+// @Security    JWT
 func (h *ApproveHandler) Pass(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	quota := models.TenantResourceQuota{ID: uint(id)}
@@ -169,15 +169,15 @@ func (h *ApproveHandler) Pass(c *gin.Context) {
 }
 
 // Approve 审批拒绝
-// @Tags         Approve
-// @Summary      审批拒绝
-// @Description  审批拒绝
-// @Accept       json
-// @Produce      json
-// @Param        id   path      uint                                  true  "id"
-// @Success      200  {object}  handlers.ResponseStruct{Data=string}  ""
-// @Router       /v1/approve/{id}/reject [post]
-// @Security     JWT
+// @Tags        Approve
+// @Summary     审批拒绝
+// @Description 审批拒绝
+// @Accept      json
+// @Produce     json
+// @Param       id  path     uint                                 true "id"
+// @Success     200 {object} handlers.ResponseStruct{Data=string} ""
+// @Router      /v1/approve/{id}/reject [post]
+// @Security    JWT
 func (h *ApproveHandler) Reject(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

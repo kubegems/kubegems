@@ -25,16 +25,16 @@ import (
 )
 
 // PostProjectRegistry 创建一个属于 Project 的Registry
-// @Tags         Project
-// @Summary      创建一个属于 Project 的Registry
-// @Description  创建一个属于 Project 的Registry
-// @Accept       json
-// @Produce      json
-// @Param        project_id  path      uint                                           true  "project_id"
-// @Param        param       body      models.Registry                                true  "表单"
-// @Success      200         {object}  handlers.ResponseStruct{Data=models.Registry}  "models.Registry"
-// @Router       /v1/project/{project_id}/registry [post]
-// @Security     JWT
+// @Tags        Project
+// @Summary     创建一个属于 Project 的Registry
+// @Description 创建一个属于 Project 的Registry
+// @Accept      json
+// @Produce     json
+// @Param       project_id path     uint                                          true "project_id"
+// @Param       param      body     models.Registry                               true "表单"
+// @Success     200        {object} handlers.ResponseStruct{Data=models.Registry} "models.Registry"
+// @Router      /v1/project/{project_id}/registry [post]
+// @Security    JWT
 func (h *RegistryHandler) PostProjectRegistry(c *gin.Context) {
 	var registry models.Registry
 	if err := c.BindJSON(&registry); err != nil {
@@ -79,19 +79,19 @@ func (h *RegistryHandler) PostProjectRegistry(c *gin.Context) {
 }
 
 // ListProjectRegistry 获取属于Project的 Registry 列表
-// @Tags         Project
-// @Summary      获取属于 Project 的 Registry 列表
-// @Description  获取属于 Project 的 Registry 列表
-// @Accept       json
-// @Produce      json
-// @Param        project_id  path      uint                                                                     true   "project_id"
-// @Param        preload     query     string                                                                   false  "choices Creator,Project"
-// @Param        page        query     int                                                                      false  "page"
-// @Param        size        query     int                                                                      false  "page"
-// @Param        search      query     string                                                                   false  "search in (RegistryName)"
-// @Success      200         {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Registry}}  "models.Registry"
-// @Router       /v1/project/{project_id}/registry [get]
-// @Security     JWT
+// @Tags        Project
+// @Summary     获取属于 Project 的 Registry 列表
+// @Description 获取属于 Project 的 Registry 列表
+// @Accept      json
+// @Produce     json
+// @Param       project_id path     uint                                                                    true  "project_id"
+// @Param       preload    query    string                                                                  false "choices Creator,Project"
+// @Param       page       query    int                                                                     false "page"
+// @Param       size       query    int                                                                     false "page"
+// @Param       search     query    string                                                                  false "search in (RegistryName)"
+// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Registry}} "models.Registry"
+// @Router      /v1/project/{project_id}/registry [get]
+// @Security    JWT
 func (h *RegistryHandler) ListProjectRegistry(c *gin.Context) {
 	var list []models.Registry
 	query, err := handlers.GetQuery(c, nil)
@@ -114,16 +114,16 @@ func (h *RegistryHandler) ListProjectRegistry(c *gin.Context) {
 }
 
 // RetrieveProjectRegistry 获取Project 的一个 Registry详情
-// @Tags         Project
-// @Summary      获取Project 的一个 Registry详情
-// @Description  获取Project 的一个 Registry详情
-// @Accept       json
-// @Produce      json
-// @Param        project_id   path      uint                                           true  "project_id"
-// @Param        registry_id  path      uint                                           true  "registry_id"
-// @Success      200          {object}  handlers.ResponseStruct{Data=models.Registry}  "models.Registry"
-// @Router       /v1/project/{project_id}/registry/{registry_id} [get]
-// @Security     JWT
+// @Tags        Project
+// @Summary     获取Project 的一个 Registry详情
+// @Description 获取Project 的一个 Registry详情
+// @Accept      json
+// @Produce     json
+// @Param       project_id  path     uint                                          true "project_id"
+// @Param       registry_id path     uint                                          true "registry_id"
+// @Success     200         {object} handlers.ResponseStruct{Data=models.Registry} "models.Registry"
+// @Router      /v1/project/{project_id}/registry/{registry_id} [get]
+// @Security    JWT
 func (h *RegistryHandler) RetrieveProjectRegistry(c *gin.Context) {
 	var registry models.Registry
 	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
@@ -134,16 +134,16 @@ func (h *RegistryHandler) RetrieveProjectRegistry(c *gin.Context) {
 }
 
 // PutProjectRegistry 修改 Project 的 Registry
-// @Tags         Project
-// @Summary      修改Project 的 Registry
-// @Description  修改 Project 的 Registry
-// @Accept       json
-// @Produce      json
-// @Param        project_id   path      uint                                           true  "project_id"
-// @Param        registry_id  path      uint                                           true  "registry_id"
-// @Success      200          {object}  handlers.ResponseStruct{Data=models.Registry}  "models.Registry"
-// @Router       /v1/project/{project_id}/registry/{registry_id} [put]
-// @Security     JWT
+// @Tags        Project
+// @Summary     修改Project 的 Registry
+// @Description 修改 Project 的 Registry
+// @Accept      json
+// @Produce     json
+// @Param       project_id  path     uint                                          true "project_id"
+// @Param       registry_id path     uint                                          true "registry_id"
+// @Success     200         {object} handlers.ResponseStruct{Data=models.Registry} "models.Registry"
+// @Router      /v1/project/{project_id}/registry/{registry_id} [put]
+// @Security    JWT
 func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 	var registry models.Registry
 	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
@@ -190,17 +190,17 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 }
 
 // SetDefaultProjectRegistry 设置 Project 的 默认 Registry
-// @Tags         Project
-// @Summary      设置 Project 的 默认 Registry
-// @Description  设置 Project 的 默认 Registry
-// @Accept       json
-// @Produce      json
-// @Param        project_id   path      uint                                           true  "project_id"
-// @Param        registry_id  path      uint                                           true  "registry_id"
-// @Param        is_default   query     bool                                           true  "是否默认镜像仓库"
-// @Success      200          {object}  handlers.ResponseStruct{Data=models.Registry}  "models.Registry"
-// @Router       /v1/project/{project_id}/registry/{registry_id} [patch]
-// @Security     JWT
+// @Tags        Project
+// @Summary     设置 Project 的 默认 Registry
+// @Description 设置 Project 的 默认 Registry
+// @Accept      json
+// @Produce     json
+// @Param       project_id  path     uint                                          true "project_id"
+// @Param       registry_id path     uint                                          true "registry_id"
+// @Param       is_default  query    bool                                          true "是否默认镜像仓库"
+// @Success     200         {object} handlers.ResponseStruct{Data=models.Registry} "models.Registry"
+// @Router      /v1/project/{project_id}/registry/{registry_id} [patch]
+// @Security    JWT
 func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 	var registry models.Registry
 	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
@@ -248,16 +248,16 @@ func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 }
 
 // DeleteProjectRegistry Project 的 Registry
-// @Tags         Project
-// @Summary      删除 Project 的 Registry
-// @Description  删除 Project 的 Registry
-// @Accept       json
-// @Produce      json
-// @Param        project_id   path      uint                                           true  "project_id"
-// @Param        registry_id  path      uint                                           true  "registry_id"
-// @Success      200          {object}  handlers.ResponseStruct{Data=models.Registry}  "models.Registry"
-// @Router       /v1/project/{project_id}/registry/{registry_id} [delete]
-// @Security     JWT
+// @Tags        Project
+// @Summary     删除 Project 的 Registry
+// @Description 删除 Project 的 Registry
+// @Accept      json
+// @Produce     json
+// @Param       project_id  path     uint                                          true "project_id"
+// @Param       registry_id path     uint                                          true "registry_id"
+// @Success     200         {object} handlers.ResponseStruct{Data=models.Registry} "models.Registry"
+// @Router      /v1/project/{project_id}/registry/{registry_id} [delete]
+// @Security    JWT
 func (h *RegistryHandler) DeleteProjectRegistry(c *gin.Context) {
 	var registry models.Registry
 	h.GetDB().First(&registry, c.Param("registry_id"))

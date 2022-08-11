@@ -24,16 +24,16 @@ import (
 	sels 模块处理全局的selsecor数据，只处理ID和名字
 */
 
-// @Tags         Sels
-// @Summary      user sels
-// @Description  user sels
-// @Accept       json
-// @Produce      json
-// @Param        tenant_id  query     string                                                           false  "tenant_id"
-// @Param        all        query     string                                                           false  "all"
-// @Success      200        {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]UserSel}}  "data"
-// @Router       /v1/sels/users [get]
-// @Security     JWT
+// @Tags        Sels
+// @Summary     user sels
+// @Description user sels
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id query    string                                                          false "tenant_id"
+// @Param       all       query    string                                                          false "all"
+// @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]UserSel}} "data"
+// @Router      /v1/sels/users [get]
+// @Security    JWT
 func (h *SelsHandler) UserSels(c *gin.Context) {
 	ret := []UserSel{}
 	tenant_id := c.Query("tenant_id")
@@ -56,15 +56,15 @@ func (h *SelsHandler) UserSels(c *gin.Context) {
 	handlers.OK(c, handlers.Page(int64(len(ret)), ret, 1, 10000))
 }
 
-// @Tags         Sels
-// @Summary      tenant sels
-// @Description  tenant sels
-// @Accept       json
-// @Produce      json
-// @Param        all  query     string                                                             false  "是否全部，默认(false)，只有激活的"
-// @Success      200  {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]TenantSel}}  "data"
-// @Router       /v1/sels/tenants [get]
-// @Security     JWT
+// @Tags        Sels
+// @Summary     tenant sels
+// @Description tenant sels
+// @Accept      json
+// @Produce     json
+// @Param       all query    string                                                            false "是否全部，默认(false)，只有激活的"
+// @Success     200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]TenantSel}} "data"
+// @Router      /v1/sels/tenants [get]
+// @Security    JWT
 func (h *SelsHandler) TenantSels(c *gin.Context) {
 	ret := []TenantSel{}
 	all := c.Query("all")
@@ -90,15 +90,15 @@ func (h *SelsHandler) TenantSels(c *gin.Context) {
 	handlers.OK(c, handlers.Page(int64(len(ret)), ret, 1, 10000))
 }
 
-// @Tags         Sels
-// @Summary      project sels
-// @Description  project sels
-// @Accept       json
-// @Produce      json
-// @Param        tenant_id  query     string                                                              false  "tenant_id"
-// @Success      200        {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]ProjectSel}}  "data"
-// @Router       /v1/sels/projects [get]
-// @Security     JWT
+// @Tags        Sels
+// @Summary     project sels
+// @Description project sels
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id query    string                                                             false "tenant_id"
+// @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]ProjectSel}} "data"
+// @Router      /v1/sels/projects [get]
+// @Security    JWT
 func (h *SelsHandler) ProjectSels(c *gin.Context) {
 	ret := []ProjectSel{}
 	tenant_id := c.Query("tenant_id")
@@ -110,15 +110,15 @@ func (h *SelsHandler) ProjectSels(c *gin.Context) {
 	handlers.OK(c, handlers.Page(int64(len(ret)), ret, 1, 10000))
 }
 
-// @Tags         Sels
-// @Summary      environment sels
-// @Description  environment sels
-// @Accept       json
-// @Produce      json
-// @Param        tenant_id  query     string                                                                  false  "tenant_id"
-// @Success      200        {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]EnvironmentSel}}  "data"
-// @Router       /v1/sels/environments [get]
-// @Security     JWT
+// @Tags        Sels
+// @Summary     environment sels
+// @Description environment sels
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id query    string                                                                 false "tenant_id"
+// @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]EnvironmentSel}} "data"
+// @Router      /v1/sels/environments [get]
+// @Security    JWT
 func (h *SelsHandler) EnvironmentSels(c *gin.Context) {
 	ret := []EnvironmentSel{}
 	tenant_id := c.Query("tenant_id")
@@ -130,15 +130,15 @@ func (h *SelsHandler) EnvironmentSels(c *gin.Context) {
 	handlers.OK(c, handlers.Page(int64(len(ret)), ret, 1, 10000))
 }
 
-// @Tags         Sels
-// @Summary      application sels
-// @Description  application sels
-// @Accept       json
-// @Produce      json
-// @Param        project_id  query     string                                                                  false  "project_id"
-// @Success      200         {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]ApplicationSel}}  "data"
-// @Router       /v1/sels/applications [get]
-// @Security     JWT
+// @Tags        Sels
+// @Summary     application sels
+// @Description application sels
+// @Accept      json
+// @Produce     json
+// @Param       project_id query    string                                                                 false "project_id"
+// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]ApplicationSel}} "data"
+// @Router      /v1/sels/applications [get]
+// @Security    JWT
 func (h *SelsHandler) ApplicationSels(c *gin.Context) {
 	ret := []ApplicationSel{}
 	project_id := c.Query("project_id")

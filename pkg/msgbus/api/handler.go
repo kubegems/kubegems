@@ -40,14 +40,14 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(*http.Request) bool { return true },
 }
 
-// @Tags         MSGBUS
-// @Summary      消息中心(websocket)
-// @Description  消息中心(websocket)
-// @Accept       json
-// @Produce      json
-// @Success      200  {object}  object  "stream"
-// @Router       /realtime/v2/msgbus/notify [get]
-// @Security     JWT
+// @Tags        MSGBUS
+// @Summary     消息中心(websocket)
+// @Description 消息中心(websocket)
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} object "stream"
+// @Router      /realtime/v2/msgbus/notify [get]
+// @Security    JWT
 func (m *MessageHandler) MessageCenter(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -84,15 +84,15 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, ms *switcher.Message
 	}
 }
 
-// @Tags         MSGBUS
-// @Summary      发送消息
-// @Description  发送消息
-// @Accept       json
-// @Produce      json
-// @Param        param  body      msgbus.MessageTarget  true  "消息"
-// @Success      200    {object}  object                "stream"
-// @Router       /realtime/v2/msgbus/send [post]
-// @Security     JWT
+// @Tags        MSGBUS
+// @Summary     发送消息
+// @Description 发送消息
+// @Accept      json
+// @Produce     json
+// @Param       param body     msgbus.MessageTarget true "消息"
+// @Success     200   {object} object               "stream"
+// @Router      /realtime/v2/msgbus/send [post]
+// @Security    JWT
 func (m *MessageHandler) SendMessages(c *gin.Context) {
 	var msgTarget msgbus.MessageTarget
 	if err := c.Bind(&msgTarget); err != nil {

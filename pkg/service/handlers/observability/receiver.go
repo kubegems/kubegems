@@ -32,18 +32,18 @@ func checkScope(scope string) error {
 }
 
 // ListReceiver （日志/监控）告警接收器列表
-// @Tags         Observability
-// @Summary      （日志/监控）告警接收器列表
-// @Description  （日志/监控）告警接收器列表
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                                     true  "cluster"
-// @Param        namespace  path      string                                                     true  "namespace"
-// @Param        scope      query     string                                                     true  "接收器类型(monitor/logging)"
-// @Param        search     query     string                                                     true  "search"
-// @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.ReceiverConfig}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     （日志/监控）告警接收器列表
+// @Description （日志/监控）告警接收器列表
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                    true "cluster"
+// @Param       namespace path     string                                                    true "namespace"
+// @Param       scope     query    string                                                    true "接收器类型(monitor/logging)"
+// @Param       search    query    string                                                    true "search"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]prometheus.ReceiverConfig} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers [get]
+// @Security    JWT
 func (h *ObservabilityHandler) ListReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -65,17 +65,17 @@ func (h *ObservabilityHandler) ListReceiver(c *gin.Context) {
 }
 
 // CreateReceiver 创建（日志/监控）告警接收器
-// @Tags         Observability
-// @Summary      创建（日志/监控）告警接收器
-// @Description  创建（日志/监控）告警接收器
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        form       body      prometheus.ReceiverConfig             true  "body"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers [post]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     创建（日志/监控）告警接收器
+// @Description 创建（日志/监控）告警接收器
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       form      body     prometheus.ReceiverConfig            true "body"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers [post]
+// @Security    JWT
 func (h *ObservabilityHandler) CreateReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -100,18 +100,18 @@ func (h *ObservabilityHandler) CreateReceiver(c *gin.Context) {
 }
 
 // UpdateReceiver 更新（日志/监控）告警接收器
-// @Tags         Observability
-// @Summary      更新（日志/监控）告警接收器
-// @Description  更新（日志/监控）告警接收器
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        name       path      string                                true  "name"
-// @Param        form       body      prometheus.ReceiverConfig             true  "body"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/{name} [put]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     更新（日志/监控）告警接收器
+// @Description 更新（日志/监控）告警接收器
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       name      path     string                               true "name"
+// @Param       form      body     prometheus.ReceiverConfig            true "body"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/{name} [put]
+// @Security    JWT
 func (h *ObservabilityHandler) UpdateReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -136,18 +136,18 @@ func (h *ObservabilityHandler) UpdateReceiver(c *gin.Context) {
 }
 
 // DeleteReceiver 删除（日志/监控）告警接收器
-// @Tags         Observability
-// @Summary      删除（日志/监控）告警接收器
-// @Description  删除（日志/监控）告警接收器
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        source     query     string                                true  "source"
-// @Param        name       path      string                                true  "name"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/{name} [delete]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     删除（日志/监控）告警接收器
+// @Description 删除（日志/监控）告警接收器
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       source    query    string                               true "source"
+// @Param       name      path     string                               true "name"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/{name} [delete]
+// @Security    JWT
 func (h *ObservabilityHandler) DeleteReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -172,17 +172,17 @@ func (h *ObservabilityHandler) DeleteReceiver(c *gin.Context) {
 }
 
 // TestEmail 发送测试邮件
-// @Tags         Observability
-// @Summary      发送测试邮件
-// @Description  发送测试邮件
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        form       body      prometheus.EmailConfig                true  "body"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/_/actions/test [post]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     发送测试邮件
+// @Description 发送测试邮件
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       form      body     prometheus.EmailConfig               true "body"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/_/actions/test [post]
+// @Security    JWT
 func (h *ObservabilityHandler) TestEmail(c *gin.Context) {
 	req := prometheus.EmailConfig{}
 	c.BindJSON(&req)

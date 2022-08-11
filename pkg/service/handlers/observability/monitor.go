@@ -44,17 +44,17 @@ type MonitorCollector struct {
 }
 
 // GetMonitorCollector 监控采集器详情
-// @Tags         Observability
-// @Summary      监控采集器详情
-// @Description  监控采集器详情
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                          true  "cluster"
-// @Param        namespace  path      string                                          true  "namespace"
-// @Param        service    query     string                                          true  "服务名"
-// @Success      200        {object}  handlers.ResponseStruct{Data=MonitorCollector}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     监控采集器详情
+// @Description 监控采集器详情
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                         true "cluster"
+// @Param       namespace path     string                                         true "namespace"
+// @Param       service   query    string                                         true "服务名"
+// @Success     200       {object} handlers.ResponseStruct{Data=MonitorCollector} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [get]
+// @Security    JWT
 func (h *ObservabilityHandler) GetMonitorCollector(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -100,17 +100,17 @@ func (h *ObservabilityHandler) GetMonitorCollector(c *gin.Context) {
 }
 
 // AddOrUpdateMonitorCollector 添加/更新监控采集器
-// @Tags         Observability
-// @Summary      添加/更新监控采集器
-// @Description  添加/更新监控采集器
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                                     true  "cluster"
-// @Param        namespace  path      string                                                     true  "namespace"
-// @Param        form       body      MonitorCollector                      true  "采集器内容"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [post]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     添加/更新监控采集器
+// @Description 添加/更新监控采集器
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       form      body     MonitorCollector                     true "采集器内容"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [post]
+// @Security    JWT
 func (h *ObservabilityHandler) AddOrUpdateMonitorCollector(c *gin.Context) {
 	req := MonitorCollector{}
 	if err := c.BindJSON(&req); err != nil {
@@ -184,17 +184,17 @@ func (h *ObservabilityHandler) AddOrUpdateMonitorCollector(c *gin.Context) {
 }
 
 // DeleteMonitorCollector 删除监控采集器
-// @Tags         Observability
-// @Summary      删除监控采集器
-// @Description  删除监控采集器
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        service    query     string                                true  "服务名"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [delete]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     删除监控采集器
+// @Description 删除监控采集器
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       service   query    string                               true "服务名"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [delete]
+// @Security    JWT
 func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -231,16 +231,16 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 }
 
 // ListMonitorAlertRule 监控告警规则列表
-// @Tags         Observability
-// @Summary      监控告警规则列表
-// @Description  监控告警规则列表
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                                       true  "cluster"
-// @Param        namespace  path      string                                                       true  "namespace"
-// @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.MonitorAlertRule}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     监控告警规则列表
+// @Description 监控告警规则列表
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                      true "cluster"
+// @Param       namespace path     string                                                      true "namespace"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]prometheus.MonitorAlertRule} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [get]
+// @Security    JWT
 func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -260,17 +260,17 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 }
 
 // GetMonitorAlertRule 监控告警规则详情
-// @Tags         Observability
-// @Summary      监控告警规则详情
-// @Description  监控告警规则详情
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        name       path      string                                                     true  "name"
-// @Success      200        {object}  handlers.ResponseStruct{Data=prometheus.MonitorAlertRule}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     监控告警规则详情
+// @Description 监控告警规则详情
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                    true "cluster"
+// @Param       namespace path     string                                                    true "namespace"
+// @Param       name      path     string                                                    true "name"
+// @Success     200       {object} handlers.ResponseStruct{Data=prometheus.MonitorAlertRule} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [get]
+// @Security    JWT
 func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -301,17 +301,17 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 }
 
 // CreateMonitorAlertRule 创建监控告警规则
-// @Tags         Observability
-// @Summary      创建监控告警规则
-// @Description  创建监控告警规则
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        form       body      prometheus.MonitorAlertRule           true  "body"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [post]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     创建监控告警规则
+// @Description 创建监控告警规则
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       form      body     prometheus.MonitorAlertRule          true "body"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [post]
+// @Security    JWT
 func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -381,18 +381,18 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 }
 
 // UpdateMonitorAlertRule 修改监控告警规则
-// @Tags         Observability
-// @Summary      修改监控告警规则
-// @Description  修改监控告警规则
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        name       path      string                                true  "name"
-// @Param        form       body      prometheus.MonitorAlertRule           true  "body"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [put]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     修改监控告警规则
+// @Description 修改监控告警规则
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       name      path     string                               true "name"
+// @Param       form      body     prometheus.MonitorAlertRule          true "body"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [put]
+// @Security    JWT
 func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -433,18 +433,18 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 }
 
 // DeleteMonitorAlertRule 删除AlertRule
-// @Tags         Observability
-// @Summary      修改监控告警规则
-// @Description  修改监控告警规则
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        name       path      string                                true  "name"
-// @Param        source     query     string                                true  "source"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [delete]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     修改监控告警规则
+// @Description 修改监控告警规则
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       name      path     string                               true "name"
+// @Param       source    query    string                               true "source"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [delete]
+// @Security    JWT
 func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -490,15 +490,15 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 const exporterRepo = "kubegems"
 
 // ExporterSchema 获取exporter的schema
-// @Tags         Observability
-// @Summary      获取exporter的schema
-// @Description  获取exporter的schema
-// @Accept       json
-// @Produce      json
-// @Param        name  path      string                                true  "exporter app name"
-// @Success      200   {object}  handlers.ResponseStruct{Data=object}  "resp"
-// @Router       /v1/observability/monitor/exporters/{name}/schema [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     获取exporter的schema
+// @Description 获取exporter的schema
+// @Accept      json
+// @Produce     json
+// @Param       name path     string                               true "exporter app name"
+// @Success     200  {object} handlers.ResponseStruct{Data=object} "resp"
+// @Router      /v1/observability/monitor/exporters/{name}/schema [get]
+// @Security    JWT
 func (h *ObservabilityHandler) ExporterSchema(c *gin.Context) {
 	name := c.Param("name")
 

@@ -67,7 +67,7 @@ generate: helm-readme add-license ## Generate  WebhookConfiguration, ClusterRole
 	go run scripts/generate-system-alert/main.go
 
 swagger:
-	go install github.com/swaggo/swag/cmd/swag@v1.8.3
+	go install github.com/swaggo/swag/cmd/swag@v1.8.4
 	swag f -g cmd/main.go
 	swag i --parseDependency --parseInternal -g cmd/main.go -o docs/swagger
 

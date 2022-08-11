@@ -40,20 +40,20 @@ const (
 )
 
 // ExecContainer 调试容器(websocket)
-// @Tags         Agent.V1
-// @Summary      调试容器(websocket)
-// @Description  调试容器(websocket)
-// @Param        cluster     path      string  true   "cluster"
-// @Param        namespace   path      string  true   "namespace"
-// @Param        name        path      string  true   "pod name"
-// @Param        container   query     string  true   "container"
-// @Param        stream      query     string  true   "must be true"
-// @Param        agentiamge  query     string  false  "agentimage"
-// @Param        debugimage  query     string  false  "debugimage"
-// @Param        forkmode    query     string  false  "forkmode"
-// @Success      200         {object}  object  "ws"
-// @Router       /v1/proxy/cluster/{cluster}/custom/core/v1/{namespace}/pods/{name}/actions/debug [get]
-// @Security     JWT
+// @Tags        Agent.V1
+// @Summary     调试容器(websocket)
+// @Description 调试容器(websocket)
+// @Param       cluster    path     string true  "cluster"
+// @Param       namespace  path     string true  "namespace"
+// @Param       name       path     string true  "pod name"
+// @Param       container  query    string true  "container"
+// @Param       stream     query    string true  "must be true"
+// @Param       agentiamge query    string false "agentimage"
+// @Param       debugimage query    string false "debugimage"
+// @Param       forkmode   query    string false "forkmode"
+// @Success     200        {object} object "ws"
+// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/{namespace}/pods/{name}/actions/debug [get]
+// @Security    JWT
 func (h *PodHandler) DebugPod(c *gin.Context) {
 	conn, err := ws.InitWebsocket(c.Writer, c.Request)
 	if err != nil {
@@ -131,14 +131,14 @@ type KubectlHandler struct {
 }
 
 // ExecKubectl kubectl
-// @Tags         Agent.V1
-// @Summary      kubectl
-// @Description  kubectl
-// @Param        cluster  path      string  true  "cluster"
-// @Param        stream   query     string  true  "stream must be true"
-// @Success      200      {object}  object  "ws"
-// @Router       /v1/proxy/cluster/{cluster}/custom/system/v1/kubectl [get]
-// @Security     JWT
+// @Tags        Agent.V1
+// @Summary     kubectl
+// @Description kubectl
+// @Param       cluster path     string true "cluster"
+// @Param       stream  query    string true "stream must be true"
+// @Success     200     {object} object "ws"
+// @Router      /v1/proxy/cluster/{cluster}/custom/system/v1/kubectl [get]
+// @Security    JWT
 func (h *KubectlHandler) ExecKubectl(c *gin.Context) {
 	conn, err := ws.InitWebsocket(c.Writer, c.Request)
 	if err != nil {

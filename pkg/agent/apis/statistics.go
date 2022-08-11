@@ -29,15 +29,15 @@ type StatisticsHandler struct {
 	C client.Client
 }
 
-// @Tags         Agent.V1
-// @Summary      获取集群内各种workload的统计
-// @Description  获取集群内各种workload的统计
-// @Accept       json
-// @Produce      json
-// @Param        cluster  path      string                                true  "cluster"
-// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "counter"
-// @Router       /v1/proxy/cluster/{cluster}/custom/statistics.system/v1/workloads [get]
-// @Security     JWT
+// @Tags        Agent.V1
+// @Summary     获取集群内各种workload的统计
+// @Description 获取集群内各种workload的统计
+// @Accept      json
+// @Produce     json
+// @Param       cluster path     string                               true "cluster"
+// @Success     200     {object} handlers.ResponseStruct{Data=object} "counter"
+// @Router      /v1/proxy/cluster/{cluster}/custom/statistics.system/v1/workloads [get]
+// @Security    JWT
 func (sth *StatisticsHandler) ClusterWorkloadStatistics(c *gin.Context) {
 	ret := map[string]int{}
 
@@ -93,15 +93,15 @@ func (sth *StatisticsHandler) ClusterWorkloadStatistics(c *gin.Context) {
 }
 
 // ClusterResourceStatistics  获取集群级别资源统计
-// @Tags         Agent.V1
-// @Summary      获取集群级别资源统计
-// @Description  获取集群级别资源统计
-// @Accept       json
-// @Produce      json
-// @Param        cluster  path      string                                true  "cluster"
-// @Success      200      {object}  handlers.ResponseStruct{Data=object}  "counter"
-// @Router       /v1/proxy/cluster/{cluster}/custom/statistics.system/v1/resources [get]
-// @Security     JWT
+// @Tags        Agent.V1
+// @Summary     获取集群级别资源统计
+// @Description 获取集群级别资源统计
+// @Accept      json
+// @Produce     json
+// @Param       cluster path     string                               true "cluster"
+// @Success     200     {object} handlers.ResponseStruct{Data=object} "counter"
+// @Router      /v1/proxy/cluster/{cluster}/custom/statistics.system/v1/resources [get]
+// @Security    JWT
 func (sth *StatisticsHandler) ClusterResourceStatistics(c *gin.Context) {
 	clusterResourceStatistics := statistics.GetClusterResourceStatistics(c, sth.C)
 	OK(c, clusterResourceStatistics)
