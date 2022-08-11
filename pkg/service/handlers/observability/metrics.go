@@ -21,8 +21,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	prommodel "github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/pkg/labels"
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
@@ -39,14 +39,14 @@ type MetricQueryReq struct {
 
 	// 查询目标
 	*prometheus.PromqlGenerator
-	Expr string // 不传则自动生成，目前不支持前端传
+	Expr string // 不传则自动生成
+
+	Query *promql.Query
 
 	// 时间
 	Start string // 开始时间
 	End   string // 结束时间
 	Step  string // 样本间隔, 单位秒
-
-	SeriesSelector string // 用于查标签值: ref. https://prometheus.io/docs/prometheus/latest/querying/basics/#time-series-selectors
 
 	Label string // 要查询的标签值
 }
@@ -111,7 +111,8 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
 		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
 			var err error
-			ret, err = cli.Extend().GetPrometheusLabelValues(ctx, req.SeriesSelector, req.Label, req.Start, req.End)
+			matchs := req.Query.GetVectorSelectorNames()
+			ret, err = cli.Extend().GetPrometheusLabelValues(ctx, matchs, req.Label, req.Start, req.End)
 			return err
 		}); err != nil {
 			return fmt.Errorf("prometheus label values failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
@@ -133,6 +134,8 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 // @Produce      json
 // @Param        cluster    path      string                                  true   "集群名"
 // @Param        namespace  path      string                                  true   "命名空间，所有namespace为_all"
+// @Param        resource    query     string                                  false  "查询资源"
+// @Param        rule        query     string                                  false  "查询规则"
 // @Param        start       query     string                                  false  "开始时间，默认现在-30m"
 // @Param        end         query     string                                  false  "结束时间，默认现在"
 // @Param        expr       query     string                                  true   "promql表达式"
@@ -144,7 +147,8 @@ func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
 		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
 			var err error
-			ret, err = cli.Extend().GetPrometheusLabelNames(ctx, req.SeriesSelector, req.Start, req.End)
+			matchs := req.Query.GetVectorSelectorNames()
+			ret, err = cli.Extend().GetPrometheusLabelNames(ctx, matchs, req.Start, req.End)
 			return err
 		}); err != nil {
 			return fmt.Errorf("prometheus label names failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
@@ -195,14 +199,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		if err := prometheus.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
 			return err
 		}
-
-		q.SeriesSelector = q.Expr
 	} else {
-		q.PromqlGenerator = &prometheus.PromqlGenerator{
-			Resource:   c.Query("resource"),
-			Rule:       c.Query("rule"),
-			LabelPairs: c.QueryMap("labelpairs"),
-		}
 		ruleCtx, err := q.PromqlGenerator.FindRuleContext(monitoropts)
 		if err != nil {
 			return err
@@ -211,20 +208,31 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			return fmt.Errorf("非namespace资源不能过滤项目环境")
 		}
 
-		query := promql.New(ruleCtx.RuleDetail.Expr)
-		if q.Namespace != "" {
-			query.AddSelector(prometheus.PromqlNamespaceKey, promql.LabelEqual, q.Namespace)
-		}
-		for label, value := range q.LabelPairs {
-			query.AddSelector(label, promql.LabelRegex, value)
-		}
-
-		q.SeriesSelector = query.ToPromql() // SeriesSelector 不能有运算符
-		q.Expr = query.
-			Round(0.001). // 默认保留三位小数
-			ToPromql()
-		log.Infof("promql: %s", q.Expr)
+		q.Expr = ruleCtx.RuleDetail.Expr
 	}
+
+	var err error
+	q.Query, err = promql.New(q.Expr)
+	if err != nil {
+		return err
+	}
+	if q.Namespace != "" {
+		q.Query.AddLabelMatchers(&labels.Matcher{
+			Type:  labels.MatchEqual,
+			Name:  prometheus.PromqlNamespaceKey,
+			Value: q.Namespace,
+		})
+	}
+	if q.PromqlGenerator != nil {
+		for label, value := range q.LabelPairs {
+			q.Query.AddLabelMatchers(&labels.Matcher{
+				Type:  labels.MatchRegexp,
+				Name:  label,
+				Value: value,
+			})
+		}
+	}
+	q.Expr = q.Query.String()
 
 	return f(q)
 }
