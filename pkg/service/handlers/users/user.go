@@ -36,19 +36,19 @@ var (
 )
 
 // ListUser 列表 User
-// @Tags         User
-// @Summary      User列表
-// @Description  User列表
-// @Accept       json
-// @Produce      json
-// @Param        Username  query     string                                                               false  "Username"
-// @Param        preload   query     string                                                               false  "choices Tenants,SystemRole"
-// @Param        page      query     int                                                                  false  "page"
-// @Param        size      query     int                                                                  false  "page"
-// @Param        search    query     string                                                               false  "search in (Username,Email)"
-// @Success      200       {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}}  "User"
-// @Router       /v1/user [get]
-// @Security     JWT
+// @Tags        User
+// @Summary     User列表
+// @Description User列表
+// @Accept      json
+// @Produce     json
+// @Param       Username query    string                                                              false "Username"
+// @Param       preload  query    string                                                              false "choices Tenants,SystemRole"
+// @Param       page     query    int                                                                 false "page"
+// @Param       size     query    int                                                                 false "page"
+// @Param       search   query    string                                                              false "search in (Username,Email)"
+// @Success     200      {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}} "User"
+// @Router      /v1/user [get]
+// @Security    JWT
 func (h *UserHandler) ListUser(c *gin.Context) {
 	var list []models.User
 	query, err := handlers.GetQuery(c, nil)
@@ -71,15 +71,15 @@ func (h *UserHandler) ListUser(c *gin.Context) {
 }
 
 // RetrieveUser User详情
-// @Tags         User
-// @Summary      User详情
-// @Description  get User详情
-// @Accept       json
-// @Produce      json
-// @Param        user_id  path      uint                                       true  "user_id"
-// @Success      200      {object}  handlers.ResponseStruct{Data=models.User}  "User"
-// @Router       /v1/user/{user_id} [get]
-// @Security     JWT
+// @Tags        User
+// @Summary     User详情
+// @Description get User详情
+// @Accept      json
+// @Produce     json
+// @Param       user_id path     uint                                      true "user_id"
+// @Success     200     {object} handlers.ResponseStruct{Data=models.User} "User"
+// @Router      /v1/user/{user_id} [get]
+// @Security    JWT
 func (h *UserHandler) RetrieveUser(c *gin.Context) {
 	var obj models.User
 	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -90,15 +90,15 @@ func (h *UserHandler) RetrieveUser(c *gin.Context) {
 }
 
 // PostUser 创建User
-// @Tags         User
-// @Summary      创建User
-// @Description  创建User
-// @Accept       json
-// @Produce      json
-// @Param        param  body      models.UserCreate                                true  "表单"
-// @Success      200    {object}  handlers.ResponseStruct{Data=models.UserCreate}  "User"
-// @Router       /v1/user [post]
-// @Security     JWT
+// @Tags        User
+// @Summary     创建User
+// @Description 创建User
+// @Accept      json
+// @Produce     json
+// @Param       param body     models.UserCreate                               true "表单"
+// @Success     200   {object} handlers.ResponseStruct{Data=models.UserCreate} "User"
+// @Router      /v1/user [post]
+// @Security    JWT
 func (h *UserHandler) PostUser(c *gin.Context) {
 	var obj models.UserCreate
 	if err := c.BindJSON(&obj); err != nil {
@@ -127,16 +127,16 @@ func (h *UserHandler) PostUser(c *gin.Context) {
 }
 
 // PutUser 修改User
-// @Tags         User
-// @Summary      修改User
-// @Description  修改User，目前只能修改Email、Phone
-// @Accept       json
-// @Produce      json
-// @Param        user_id  path      uint                                       true  "user_id"
-// @Param        param    body      models.User                                true  "表单"
-// @Success      200      {object}  handlers.ResponseStruct{Data=models.User}  "User"
-// @Router       /v1/user/{user_id} [put]
-// @Security     JWT
+// @Tags        User
+// @Summary     修改User
+// @Description 修改User，目前只能修改Email、Phone
+// @Accept      json
+// @Produce     json
+// @Param       user_id path     uint                                      true "user_id"
+// @Param       param   body     models.User                               true "表单"
+// @Success     200     {object} handlers.ResponseStruct{Data=models.User} "User"
+// @Router      /v1/user/{user_id} [put]
+// @Security    JWT
 func (h *UserHandler) PutUser(c *gin.Context) {
 	var oldUser, newUser models.User
 	if err := h.GetDB().First(&oldUser, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -167,15 +167,15 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 }
 
 // DeleteUser 删除 User
-// @Tags         User
-// @Summary      删除 User
-// @Description  删除 User
-// @Accept       json
-// @Produce      json
-// @Param        user_id  path      uint                     true  "user_id"
-// @Success      204      {object}  handlers.ResponseStruct  "resp"
-// @Router       /v1/user/{user_id} [delete]
-// @Security     JWT
+// @Tags        User
+// @Summary     删除 User
+// @Description 删除 User
+// @Accept      json
+// @Produce     json
+// @Param       user_id path     uint                    true "user_id"
+// @Success     204     {object} handlers.ResponseStruct "resp"
+// @Router      /v1/user/{user_id} [delete]
+// @Security    JWT
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	var obj models.User
 	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -191,19 +191,19 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 }
 
 // ListUserTenant 获取属于User的 Tenant 列表
-// @Tags         User
-// @Summary      获取属于 User 的 Tenant 列表
-// @Description  获取属于 User 的 Tenant 列表
-// @Accept       json
-// @Produce      json
-// @Param        user_id  path      uint                                                                   true   "user_id"
-// @Param        preload  query     string                                                                 false  "choices ResourceQuotas,Users,Projects"
-// @Param        page     query     int                                                                    false  "page"
-// @Param        size     query     int                                                                    false  "page"
-// @Param        search   query     string                                                                 false  "search in (TenantName,Remark)"
-// @Success      200      {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Tenant}}  "models.Tenant"
-// @Router       /v1/user/{user_id}/tenant [get]
-// @Security     JWT
+// @Tags        User
+// @Summary     获取属于 User 的 Tenant 列表
+// @Description 获取属于 User 的 Tenant 列表
+// @Accept      json
+// @Produce     json
+// @Param       user_id path     uint                                                                  true  "user_id"
+// @Param       preload query    string                                                                false "choices ResourceQuotas,Users,Projects"
+// @Param       page    query    int                                                                   false "page"
+// @Param       size    query    int                                                                   false "page"
+// @Param       search  query    string                                                                false "search in (TenantName,Remark)"
+// @Success     200     {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Tenant}} "models.Tenant"
+// @Router      /v1/user/{user_id}/tenant [get]
+// @Security    JWT
 func (h *UserHandler) ListUserTenant(c *gin.Context) {
 	var list []models.Tenant
 
@@ -233,15 +233,15 @@ type ResetPasswordReq struct {
 }
 
 // ResetUserPassword 重置用户密码
-// @Tags         User
-// @Summary      重置用户密码
-// @Description  重置用户密码
-// @Accept       json
-// @Produce      json
-// @Param        user_id  path      uint                                               true  "user_id"
-// @Success      200      {object}  handlers.ResponseStruct{Data=resetPasswordResult}  "data"
-// @Router       /v1/user/{user_id}/reset_password [post]
-// @Security     JWT
+// @Tags        User
+// @Summary     重置用户密码
+// @Description 重置用户密码
+// @Accept      json
+// @Produce     json
+// @Param       user_id path     uint                                              true "user_id"
+// @Success     200     {object} handlers.ResponseStruct{Data=resetPasswordResult} "data"
+// @Router      /v1/user/{user_id}/reset_password [post]
+// @Security    JWT
 func (h *UserHandler) ResetUserPassword(c *gin.Context) {
 	var user models.User
 	if err := h.GetDB().First(&user, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -274,18 +274,18 @@ func (h *UserHandler) ResetUserPassword(c *gin.Context) {
 }
 
 // ListEnvironmentUser 获取多个环境的用户列表
-// @Tags         User
-// @Summary      获取多个环境的用户列表
-// @Description  获取多个环境的用户列表
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                                                 true   "环境id，中间以逗号隔开"
-// @Param        page            query     int                                                                  false  "page"
-// @Param        size            query     int                                                                  false  "page"
-// @Param        search          query     string                                                               false  "search in (Username,Email)"
-// @Success      200             {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}}  "models.User"
-// @Router       /v1/user/_/environment/{environment_id} [get]
-// @Security     JWT
+// @Tags        User
+// @Summary     获取多个环境的用户列表
+// @Description 获取多个环境的用户列表
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                                                true  "环境id，中间以逗号隔开"
+// @Param       page           query    int                                                                 false "page"
+// @Param       size           query    int                                                                 false "page"
+// @Param       search         query    string                                                              false "search in (Username,Email)"
+// @Success     200            {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}} "models.User"
+// @Router      /v1/user/_/environment/{environment_id} [get]
+// @Security    JWT
 func (h *UserHandler) ListEnvironmentUser(c *gin.Context) {
 	var list []models.User
 	query, err := handlers.GetQuery(c, nil)

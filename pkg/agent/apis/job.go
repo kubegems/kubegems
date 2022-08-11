@@ -29,22 +29,22 @@ type JobHandler struct {
 	cluster cluster.Interface
 }
 
-// @Tags         Agent.V1
-// @Summary      获取Job列表数据
-// @Description  获取Job列表数据
-// @Accept       json
-// @Produce      json
-// @Param        order      query     string                                                            false  "page"
-// @Param        search     query     string                                                            false  "search"
-// @Param        page       query     int                                                               false  "page"
-// @Param        size       query     int                                                               false  "page"
-// @Param        namespace  path      string                                                            true   "namespace"
-// @Param        cluster    path      string                                                            true   "cluster"
-// @Param        topkind    query     string                                                            false  "topkind(cronjob)"
-// @Param        topname    query     string                                                            false  "topname"
-// @Success      200        {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]object}}  "Job"
-// @Router       /v1/proxy/cluster/{cluster}/custom/batch/v1/namespaces/{namespace}/jobs [get]
-// @Security     JWT
+// @Tags        Agent.V1
+// @Summary     获取Job列表数据
+// @Description 获取Job列表数据
+// @Accept      json
+// @Produce     json
+// @Param       order     query    string                                                           false "page"
+// @Param       search    query    string                                                           false "search"
+// @Param       page      query    int                                                              false "page"
+// @Param       size      query    int                                                              false "page"
+// @Param       namespace path     string                                                           true  "namespace"
+// @Param       cluster   path     string                                                           true  "cluster"
+// @Param       topkind   query    string                                                           false "topkind(cronjob)"
+// @Param       topname   query    string                                                           false "topname"
+// @Success     200       {object} handlers.ResponseStruct{Data=pagination.PageData{List=[]object}} "Job"
+// @Router      /v1/proxy/cluster/{cluster}/custom/batch/v1/namespaces/{namespace}/jobs [get]
+// @Security    JWT
 func (h *JobHandler) List(c *gin.Context) {
 	ns := c.Param("namespace")
 	jobList := &v1.JobList{}

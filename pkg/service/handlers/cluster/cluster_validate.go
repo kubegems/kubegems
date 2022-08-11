@@ -44,15 +44,15 @@ type ValidateKubeConfigResp struct {
 }
 
 // ValidateKubeConfig 添加cluster前的kubeconfig检测接口，验证kubeconfig，返回集群信息和可用的storageClass列表
-// @Tags         Cluster
-// @Summary      添加cluster前的kubeconfig检测接口，验证kubeconfig，返回集群信息和可用的storageClass列表
-// @Description  添加cluster前的kubeconfig检测接口，验证kubeconfig，返回集群信息和可用的storageClass列表
-// @Accept       json
-// @Produce      json
-// @Param        param  body      ValidateKubeConfigReq                                 true  "表单"
-// @Success      200    {object}  handlers.ResponseStruct{Data=ValidateKubeConfigResp}  "Cluster"
-// @Router       /v1/cluster/validate-kubeconfig [post]
-// @Security     JWT
+// @Tags        Cluster
+// @Summary     添加cluster前的kubeconfig检测接口，验证kubeconfig，返回集群信息和可用的storageClass列表
+// @Description 添加cluster前的kubeconfig检测接口，验证kubeconfig，返回集群信息和可用的storageClass列表
+// @Accept      json
+// @Produce     json
+// @Param       param body     ValidateKubeConfigReq                                true "表单"
+// @Success     200   {object} handlers.ResponseStruct{Data=ValidateKubeConfigResp} "Cluster"
+// @Router      /v1/cluster/validate-kubeconfig [post]
+// @Security    JWT
 func (h *ClusterHandler) ValidateKubeConfig(c *gin.Context) {
 	resp := ValidateKubeConfigResp{
 		StorageClasses: []string{},

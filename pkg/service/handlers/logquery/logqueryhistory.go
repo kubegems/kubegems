@@ -24,19 +24,19 @@ import (
 )
 
 // ListLogQueryHistory 列表 LogQueryHistory
-// @Tags         LogQueryHistory
-// @Summary      LogQueryHistory列表
-// @Description  LogQueryHistory列表
-// @Accept       json
-// @Produce      json
-// @Param        LogQL    query     string                                                                          false  "LogQL"
-// @Param        preload  query     string                                                                          false  "choices Cluster,Creator"
-// @Param        page     query     int                                                                             false  "page"
-// @Param        size     query     int                                                                             false  "page"
-// @Param        search   query     string                                                                          false  "search in (LogQL)"
-// @Success      200      {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQueryHistory}}  "LogQueryHistory"
-// @Router       /v1/logqueryhistory [get]
-// @Security     JWT
+// @Tags        LogQueryHistory
+// @Summary     LogQueryHistory列表
+// @Description LogQueryHistory列表
+// @Accept      json
+// @Produce     json
+// @Param       LogQL   query    string                                                                         false "LogQL"
+// @Param       preload query    string                                                                         false "choices Cluster,Creator"
+// @Param       page    query    int                                                                            false "page"
+// @Param       size    query    int                                                                            false "page"
+// @Param       search  query    string                                                                         false "search in (LogQL)"
+// @Success     200     {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQueryHistory}} "LogQueryHistory"
+// @Router      /v1/logqueryhistory [get]
+// @Security    JWT
 func (h *LogQueryHistoryHandler) ListLogQueryHistory(c *gin.Context) {
 	var list []models.LogQueryHistory
 	query, err := handlers.GetQuery(c, nil)
@@ -58,15 +58,15 @@ func (h *LogQueryHistoryHandler) ListLogQueryHistory(c *gin.Context) {
 }
 
 // DeleteLogQueryHistory 删除 LogQueryHistory
-// @Tags         LogQueryHistory
-// @Summary      删除 LogQueryHistory
-// @Description  删除 LogQueryHistory
-// @Accept       json
-// @Produce      json
-// @Param        logqueryhistory_id  path      uint                     true  "logqueryhistory_id"
-// @Success      204                 {object}  handlers.ResponseStruct  "resp"
-// @Router       /v1/logqueryhistory/{logqueryhistory_id} [delete]
-// @Security     JWT
+// @Tags        LogQueryHistory
+// @Summary     删除 LogQueryHistory
+// @Description 删除 LogQueryHistory
+// @Accept      json
+// @Produce     json
+// @Param       logqueryhistory_id path     uint                    true "logqueryhistory_id"
+// @Success     204                {object} handlers.ResponseStruct "resp"
+// @Router      /v1/logqueryhistory/{logqueryhistory_id} [delete]
+// @Security    JWT
 func (h *LogQueryHistoryHandler) DeleteLogQueryHistory(c *gin.Context) {
 	h.SetAuditData(c, "删除", "日志查询历史", "")
 	lid, err := strconv.ParseUint(c.Param("logqueryhistory_id"), 10, 64)
@@ -83,15 +83,15 @@ func (h *LogQueryHistoryHandler) DeleteLogQueryHistory(c *gin.Context) {
 }
 
 // DeleteLogQueryHistory 批量删除 LogQueryHistory
-// @Tags         LogQueryHistory
-// @Summary      批量删除 LogQueryHistory
-// @Description  批量删除 LogQueryHistory
-// @Accept       json
-// @Produce      json
-// @Param        logqueryhistory_id  query     uint                     true  "lid"
-// @Success      204                 {object}  handlers.ResponseStruct  "resp"
-// @Router       /v1/logqueryhistory [delete]
-// @Security     JWT
+// @Tags        LogQueryHistory
+// @Summary     批量删除 LogQueryHistory
+// @Description 批量删除 LogQueryHistory
+// @Accept      json
+// @Produce     json
+// @Param       logqueryhistory_id query    uint                    true "lid"
+// @Success     204                {object} handlers.ResponseStruct "resp"
+// @Router      /v1/logqueryhistory [delete]
+// @Security    JWT
 func (h *LogQueryHistoryHandler) BatchDeleteLogQueryHistory(c *gin.Context) {
 	h.SetAuditData(c, "批量删除", "日志查询历史", "")
 	ids := c.QueryArray("lid")
@@ -119,15 +119,15 @@ func (h *LogQueryHistoryHandler) BatchDeleteLogQueryHistory(c *gin.Context) {
 }
 
 // PostLogQueryHistory 创建LogQueryHistory
-// @Tags         LogQueryHistory
-// @Summary      创建LogQueryHistory
-// @Description  创建LogQueryHistory
-// @Accept       json
-// @Produce      json
-// @Param        param  body      models.LogQueryHistory                                true  "表单"
-// @Success      200    {object}  handlers.ResponseStruct{Data=models.LogQueryHistory}  "LogQueryHistory"
-// @Router       /v1/logqueryhistory [post]
-// @Security     JWT
+// @Tags        LogQueryHistory
+// @Summary     创建LogQueryHistory
+// @Description 创建LogQueryHistory
+// @Accept      json
+// @Produce     json
+// @Param       param body     models.LogQueryHistory                               true "表单"
+// @Success     200   {object} handlers.ResponseStruct{Data=models.LogQueryHistory} "LogQueryHistory"
+// @Router      /v1/logqueryhistory [post]
+// @Security    JWT
 func (h *LogQueryHistoryHandler) PostLogQueryHistory(c *gin.Context) {
 	var obj models.LogQueryHistory
 	if err := c.BindJSON(&obj); err != nil {

@@ -61,19 +61,19 @@ var (
 )
 
 // ListEnvironment 列表 Environment
-// @Tags         Environment
-// @Summary      Environment列表
-// @Description  Environment列表
-// @Accept       json
-// @Produce      json
-// @Param        EnvironmentName  query     string                                                                      false  "EnvironmentName"
-// @Param        preload          query     string                                                                      false  "choices Creator,Cluster,Project,Applications,Users"
-// @Param        page             query     int                                                                         false  "page"
-// @Param        size             query     int                                                                         false  "page"
-// @Param        search           query     string                                                                      false  "search in (EnvironmentName)"
-// @Success      200              {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}}  "Environment"
-// @Router       /v1/environment [get]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     Environment列表
+// @Description Environment列表
+// @Accept      json
+// @Produce     json
+// @Param       EnvironmentName query    string                                                                     false "EnvironmentName"
+// @Param       preload         query    string                                                                     false "choices Creator,Cluster,Project,Applications,Users"
+// @Param       page            query    int                                                                        false "page"
+// @Param       size            query    int                                                                        false "page"
+// @Param       search          query    string                                                                     false "search in (EnvironmentName)"
+// @Success     200             {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}} "Environment"
+// @Router      /v1/environment [get]
+// @Security    JWT
 func (h *EnvironmentHandler) ListEnvironment(c *gin.Context) {
 	var list []models.Environment
 	query, err := handlers.GetQuery(c, nil)
@@ -96,15 +96,15 @@ func (h *EnvironmentHandler) ListEnvironment(c *gin.Context) {
 }
 
 // RetrieveEnvironment Environment详情
-// @Tags         Environment
-// @Summary      Environment详情
-// @Description  get Environment详情
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                              true  "environment_id"
-// @Success      200             {object}  handlers.ResponseStruct{Data=models.Environment}  "Environment"
-// @Router       /v1/environment/{environment_id} [get]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     Environment详情
+// @Description get Environment详情
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                             true "environment_id"
+// @Success     200            {object} handlers.ResponseStruct{Data=models.Environment} "Environment"
+// @Router      /v1/environment/{environment_id} [get]
+// @Security    JWT
 func (h *EnvironmentHandler) RetrieveEnvironment(c *gin.Context) {
 	var (
 		users []*models.User
@@ -127,16 +127,16 @@ func (h *EnvironmentHandler) RetrieveEnvironment(c *gin.Context) {
 }
 
 // PutEnvironment 修改Environment
-// @Tags         Environment
-// @Summary      修改Environment
-// @Description  修改Environment
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                              true  "environment_id"
-// @Param        param           body      models.Environment                                true  "表单"
-// @Success      200             {object}  handlers.ResponseStruct{Data=models.Environment}  "Environment"
-// @Router       /v1/environment/{environment_id} [put]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     修改Environment
+// @Description 修改Environment
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                             true "environment_id"
+// @Param       param          body     models.Environment                               true "表单"
+// @Success     200            {object} handlers.ResponseStruct{Data=models.Environment} "Environment"
+// @Router      /v1/environment/{environment_id} [put]
+// @Security    JWT
 func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 	var obj models.Environment
 	if err := h.GetDB().Preload("Cluster").First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -282,15 +282,15 @@ func createOrUpdateEnvironment(ctx context.Context, h base.BaseHandler, clustern
 }
 
 // DeleteEnvironment 删除 Environment
-// @Tags         Environment
-// @Summary      删除 Environment
-// @Description  删除 Environment
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                     true  "environment_id"
-// @Success      204             {object}  handlers.ResponseStruct  "resp"
-// @Router       /v1/environment/{environment_id} [delete]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     删除 Environment
+// @Description 删除 Environment
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                    true "environment_id"
+// @Success     204            {object} handlers.ResponseStruct "resp"
+// @Router      /v1/environment/{environment_id} [delete]
+// @Security    JWT
 func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 	var obj models.Environment
 	if err := h.GetDB().Preload(
@@ -350,19 +350,19 @@ func (h *EnvironmentHandler) afterEnvironmentDelete(ctx context.Context, tx *gor
 }
 
 // ListEnvironmentUser 获取属于Environment的 User 列表
-// @Tags         Environment
-// @Summary      获取属于 Environment 的 User 列表
-// @Description  获取属于 Environment 的 User 列表
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                                                 true   "environment_id"
-// @Param        preload         query     string                                                               false  "choices Tenants,SystemRole"
-// @Param        page            query     int                                                                  false  "page"
-// @Param        size            query     int                                                                  false  "page"
-// @Param        search          query     string                                                               false  "search in (Username,Email)"
-// @Success      200             {object}  handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}}  "models.User"
-// @Router       /v1/environment/{environment_id}/user [get]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     获取属于 Environment 的 User 列表
+// @Description 获取属于 Environment 的 User 列表
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                                                true  "environment_id"
+// @Param       preload        query    string                                                              false "choices Tenants,SystemRole"
+// @Param       page           query    int                                                                 false "page"
+// @Param       size           query    int                                                                 false "page"
+// @Param       search         query    string                                                              false "search in (Username,Email)"
+// @Success     200            {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}} "models.User"
+// @Router      /v1/environment/{environment_id}/user [get]
+// @Security    JWT
 func (h *EnvironmentHandler) ListEnvironmentUser(c *gin.Context) {
 	var list []models.User
 	query, err := handlers.GetQuery(c, nil)
@@ -388,16 +388,16 @@ func (h *EnvironmentHandler) ListEnvironmentUser(c *gin.Context) {
 }
 
 // RetrieveEnvironmentUser 获取Environment 的一个 User详情
-// @Tags         Environment
-// @Summary      获取Environment 的一个 User详情
-// @Description  获取Environment 的一个 User详情
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                       true  "environment_id"
-// @Param        user_id         path      uint                                       true  "user_id"
-// @Success      200             {object}  handlers.ResponseStruct{Data=models.User}  "models.User"
-// @Router       /v1/environment/{environment_id}/user/{user_id} [get]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     获取Environment 的一个 User详情
+// @Description 获取Environment 的一个 User详情
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                      true "environment_id"
+// @Param       user_id        path     uint                                      true "user_id"
+// @Success     200            {object} handlers.ResponseStruct{Data=models.User} "models.User"
+// @Router      /v1/environment/{environment_id}/user/{user_id} [get]
+// @Security    JWT
 func (h *EnvironmentHandler) RetrieveEnvironmentUser(c *gin.Context) {
 	var user models.User
 	if err := h.GetDB().Joins(
@@ -414,16 +414,16 @@ func (h *EnvironmentHandler) RetrieveEnvironmentUser(c *gin.Context) {
 }
 
 // PostEnvironmentUser 在User和Environment间添加关联关系
-// @Tags         Environment
-// @Summary      在User和Environment间添加关联关系
-// @Description  在User和Environment间添加关联关系
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                                      true  "environment_id"
-// @Param        param           body      models.EnvironmentUserRels                                true  "表单"`
-// @Success      200             {object}  handlers.ResponseStruct{Data=models.EnvironmentUserRels}  "models.User"
-// @Router       /v1/environment/{environment_id}/user [post]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     在User和Environment间添加关联关系
+// @Description 在User和Environment间添加关联关系
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                                     true "environment_id"
+// @Param       param          body     models.EnvironmentUserRels                               true "表单"`
+// @Success     200            {object} handlers.ResponseStruct{Data=models.EnvironmentUserRels} "models.User"
+// @Router      /v1/environment/{environment_id}/user [post]
+// @Security    JWT
 func (h *EnvironmentHandler) PostEnvironmentUser(c *gin.Context) {
 	var rel models.EnvironmentUserRels
 	if err := c.BindJSON(&rel); err != nil {
@@ -457,17 +457,17 @@ func (h *EnvironmentHandler) PostEnvironmentUser(c *gin.Context) {
 }
 
 // PutEnvironmentUser 修改 User 和 Environment 的关联关系
-// @Tags         Environment
-// @Summary      修改 User 和 Environment 的关联关系
-// @Description  修改 User 和 Environment 的关联关系
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                                      true  "environment_id"
-// @Param        user_id         path      uint                                                      true  "user_id"
-// @Param        param           body      models.EnvironmentUserRels                                true  "表单"`
-// @Success      200             {object}  handlers.ResponseStruct{Data=models.EnvironmentUserRels}  "models.User"
-// @Router       /v1/environment/{environment_id}/user/{user_id} [put]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     修改 User 和 Environment 的关联关系
+// @Description 修改 User 和 Environment 的关联关系
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                                     true "environment_id"
+// @Param       user_id        path     uint                                                     true "user_id"
+// @Param       param          body     models.EnvironmentUserRels                               true "表单"`
+// @Success     200            {object} handlers.ResponseStruct{Data=models.EnvironmentUserRels} "models.User"
+// @Router      /v1/environment/{environment_id}/user/{user_id} [put]
+// @Security    JWT
 func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 	var rel models.EnvironmentUserRels
 	if err := h.GetDB().First(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
@@ -503,16 +503,16 @@ func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 }
 
 // DeleteEnvironmentUser 删除 User 和 Environment 的关系
-// @Tags         Environment
-// @Summary      删除 User 和 Environment 的关系
-// @Description  删除 User 和 Environment 的关系
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                       true  "environment_id"
-// @Param        user_id         path      uint                                       true  "user_id"
-// @Success      200             {object}  handlers.ResponseStruct{Data=models.User}  "models.User"
-// @Router       /v1/environment/{environment_id}/user/{user_id} [delete]
-// @Security     JWT
+// @Tags        Environment
+// @Summary     删除 User 和 Environment 的关系
+// @Description 删除 User 和 Environment 的关系
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                      true "environment_id"
+// @Param       user_id        path     uint                                      true "user_id"
+// @Success     200            {object} handlers.ResponseStruct{Data=models.User} "models.User"
+// @Router      /v1/environment/{environment_id}/user/{user_id} [delete]
+// @Security    JWT
 func (h *EnvironmentHandler) DeleteEnvironmentUser(c *gin.Context) {
 	var rel models.EnvironmentUserRels
 	if err := h.GetDB().First(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
@@ -545,16 +545,16 @@ func (h *EnvironmentHandler) DeleteEnvironmentUser(c *gin.Context) {
 }
 
 // GetEnvironmentResource 获取环境资源清单
-// @Tags         ResourceList
-// @Summary      获取环境资源清单
-// @Description  获取环境资源清单
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                                        true   "environment_id"
-// @Param        date            query     string                                                      false  "date"
-// @Success      200             {object}  handlers.ResponseStruct{Data=[]models.EnvironmentResource}  "EnvironmentResource"
-// @Router       /v1/environment/{environment_id}/resources [get]
-// @Security     JWT
+// @Tags        ResourceList
+// @Summary     获取环境资源清单
+// @Description 获取环境资源清单
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                                       true  "environment_id"
+// @Param       date           query    string                                                     false "date"
+// @Success     200            {object} handlers.ResponseStruct{Data=[]models.EnvironmentResource} "EnvironmentResource"
+// @Router      /v1/environment/{environment_id}/resources [get]
+// @Security    JWT
 func (h *EnvironmentHandler) GetEnvironmentResource(c *gin.Context) {
 	dateTime, err := time.Parse(time.RFC3339, c.Query("date"))
 	if err != nil {
@@ -583,16 +583,16 @@ func (h *EnvironmentHandler) GetEnvironmentResource(c *gin.Context) {
 	handlers.OK(c, envREs)
 }
 
-// @Tags         NetworkIsolated
-// @Summary      环境网络隔离开关
-// @Description  环境网络隔离开关
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                                       true   "environment_id"
-// @Param        param           body      handlers.IsolatedSwitch                                true  "表单"
-// @Success      200             {object}  handlers.ResponseStruct{Data=handlers.IsolatedSwitch}  "object"
-// @Router       /v1/environment/{environment_id}/action/networkisolate [post]
-// @Security     JWT
+// @Tags        NetworkIsolated
+// @Summary     环境网络隔离开关
+// @Description 环境网络隔离开关
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                                  true "environment_id"
+// @Param       param          body     handlers.IsolatedSwitch                               true "表单"
+// @Success     200            {object} handlers.ResponseStruct{Data=handlers.IsolatedSwitch} "object"
+// @Router      /v1/environment/{environment_id}/action/networkisolate [post]
+// @Security    JWT
 func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 	form := handlers.IsolatedSwitch{}
 	if err := c.BindJSON(&form); err != nil {
@@ -671,16 +671,16 @@ type EnvironmentObservabilityRet struct {
 	Warning string `json:"warning"`
 }
 
-// @Tags         EnvironmentObservabilityDetails
-// @Summary      环境可观测性概览
-// @Description  环境可观测性概览
-// @Accept       json
-// @Produce      json
-// @Param        environment_id  path      uint                                                   true  "environment_id"
-// @Param        duration        query     string                                                     false  "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
-// @Success      200             {object}  handlers.ResponseStruct{Data=EnvironmentObservabilityRet}  "object"
-// @Router       /v1/environment/{environment_id}/observability [get]
-// @Security     JWT
+// @Tags        EnvironmentObservabilityDetails
+// @Summary     环境可观测性概览
+// @Description 环境可观测性概览
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     uint                                                      true  "environment_id"
+// @Param       duration       query    string                                                    false "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
+// @Success     200            {object} handlers.ResponseStruct{Data=EnvironmentObservabilityRet} "object"
+// @Router      /v1/environment/{environment_id}/observability [get]
+// @Security    JWT
 func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	env := models.Environment{}
 	if err := h.GetDB().Preload("Cluster").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {

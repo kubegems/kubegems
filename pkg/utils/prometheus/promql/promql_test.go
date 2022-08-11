@@ -14,44 +14,134 @@
 
 package promql
 
-import "testing"
+import (
+	"reflect"
+	"testing"
 
-func TestQuery_ToPromql(t *testing.T) {
+	"github.com/prometheus/prometheus/pkg/labels"
+	"github.com/prometheus/prometheus/promql/parser"
+)
+
+func TestQuery_AddLabelMatchers(t *testing.T) {
 	type fields struct {
-		metric    string
-		selectors []string
-		sumBy     []string
-		op        ComparisonOperator
-		value     string
+		Expr  parser.Expr
+		round float64
+	}
+	type args struct {
+		matchers []*labels.Matcher
 	}
 	tests := []struct {
 		name   string
 		fields fields
+		args   args
 		want   string
 	}{
 		{
-			name: "1",
+			name: "basic promql",
 			fields: fields{
-				metric:    "gems_container_cpu_usage_cores",
-				selectors: []string{`namespace="gemcloud-gateway-system"`, `node=~"k8s-master2-122"`},
-				sumBy:     []string{"pod"},
-				op:        GreaterOrEqual,
-				value:     "0",
+				Expr: parseExpr("gems_container_cpu_usage_cores"),
 			},
-			want: `sum(gems_container_cpu_usage_cores{namespace="gemcloud-gateway-system", node=~"k8s-master2-122"})by(pod) >= 0`,
+			args: args{
+				matchers: []*labels.Matcher{
+					{
+						Name:  "pod",
+						Value: "mypod",
+					},
+					{
+						Name:  "container",
+						Type:  labels.MatchRegexp,
+						Value: "c1",
+					},
+				},
+			},
+			want: `gems_container_cpu_usage_cores{container=~"c1",pod="mypod"}`,
+		},
+		{
+			name: "function call",
+			fields: fields{
+				Expr: parseExpr("time()"),
+			},
+			args: args{
+				matchers: []*labels.Matcher{
+					{
+						Name:  "pod",
+						Value: "mypod",
+					},
+				},
+			},
+			want: `time()`,
+		},
+		{
+			name: "complext promql",
+			fields: fields{
+				Expr: parseExpr(`sum(irate(aaa{pod="pod1"}[5m]) * bbb{container="c1"}) by (container) / ccc{pod="pod2"}`),
+			},
+			args: args{
+				matchers: []*labels.Matcher{
+					{
+						Name:  "pod",
+						Value: "mypod",
+					},
+				},
+			},
+			want: `sum by(container) (irate(aaa{pod="mypod"}[5m]) * bbb{container="c1",pod="mypod"}) / ccc{pod="mypod"}`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			q := &Query{
-				metric:       tt.fields.metric,
-				selectors:    tt.fields.selectors,
-				sumBy:        tt.fields.sumBy,
-				compare:      tt.fields.op,
-				compareValue: tt.fields.value,
+				Expr: tt.fields.Expr,
 			}
-			if got := q.ToPromql(); got != tt.want {
-				t.Errorf("Query.String() = %v, want %v", got, tt.want)
+			if got := q.AddLabelMatchers(tt.args.matchers...).String(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Query.AddLabelMatchers() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func parseExpr(promql string) parser.Expr {
+	ret, _ := parser.ParseExpr(promql)
+	return ret
+}
+
+func TestQuery_GetVectorSelectorNames(t *testing.T) {
+	type fields struct {
+		Expr parser.Expr
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []string
+	}{
+		{
+			name: "basic promql",
+			fields: fields{
+				Expr: parseExpr("gems_container_cpu_usage_cores"),
+			},
+			want: []string{"gems_container_cpu_usage_cores"},
+		},
+		{
+			name: "function call",
+			fields: fields{
+				Expr: parseExpr("time()"),
+			},
+			want: nil,
+		},
+		{
+			name: "complext promql",
+			fields: fields{
+				Expr: parseExpr(`sum(irate(aaa{pod="pod1"}[5m]) * bbb{container="c1"}) by (container) / ccc{pod="pod2"}`),
+			},
+			want: []string{"aaa", "bbb", "ccc"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			q := &Query{
+				Expr: tt.fields.Expr,
+			}
+			if got := q.GetVectorSelectorNames(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Query.GetVectorSelectorNames() = %v, want %v", got, tt.want)
 			}
 		})
 	}

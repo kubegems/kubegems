@@ -21,8 +21,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	prommodel "github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/pkg/labels"
 	v1 "k8s.io/api/core/v1"
-	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
@@ -39,37 +39,37 @@ type MetricQueryReq struct {
 
 	// 查询目标
 	*prometheus.PromqlGenerator
-	Expr string // 不传则自动生成，目前不支持前端传
+	Expr string // 不传则自动生成
+
+	Query *promql.Query
 
 	// 时间
 	Start string // 开始时间
 	End   string // 结束时间
 	Step  string // 样本间隔, 单位秒
 
-	SeriesSelector string // 用于查标签值: ref. https://prometheus.io/docs/prometheus/latest/querying/basics/#time-series-selectors
-
 	Label string // 要查询的标签值
 }
 
 // Query 监控指标查询
-// @Tags         Observability
-// @Summary      监控指标查询
-// @Description  监控指标查询
-// @Accept       json
-// @Produce      json
-// @Param        cluster     path      string                                true   "集群名"
-// @Param        namespace   path      string                                true   "命名空间，所有namespace为_all"
-// @Param        resource    query     string                                false  "查询资源"
-// @Param        rule        query     string                                false  "查询规则"
-// @Param        unit        query     string                                false  "单位"
-// @Param        labelpairs  query     string                                false  "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
-// @Param        expr        query     string                                false  "promql表达式"
-// @Param        start       query     string                                false  "开始时间，默认现在-30m"
-// @Param        end         query     string                                false  "结束时间，默认现在"
-// @Param        step        query     int                                   false  "step, 单位秒，默认0"
-// @Success      200         {object}  handlers.ResponseStruct{Data=object}  "Metrics配置"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/queryrange [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     监控指标查询
+// @Description 监控指标查询
+// @Accept      json
+// @Produce     json
+// @Param       cluster    path     string                               true  "集群名"
+// @Param       namespace  path     string                               true  "命名空间，所有namespace为_all"
+// @Param       resource   query    string                               false "查询资源"
+// @Param       rule       query    string                               false "查询规则"
+// @Param       unit       query    string                               false "单位"
+// @Param       labelpairs query    string                               false "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
+// @Param       expr       query    string                               false "promql表达式"
+// @Param       start      query    string                               false "开始时间，默认现在-30m"
+// @Param       end        query    string                               false "结束时间，默认现在"
+// @Param       step       query    int                                  false "step, 单位秒，默认0"
+// @Success     200        {object} handlers.ResponseStruct{Data=object} "Metrics配置"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/queryrange [get]
+// @Security    JWT
 func (h *ObservabilityHandler) QueryRange(c *gin.Context) {
 	ret := prommodel.Matrix{}
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
@@ -87,31 +87,32 @@ func (h *ObservabilityHandler) QueryRange(c *gin.Context) {
 }
 
 // Query 监控标签值
-// @Tags         Observability
-// @Summary      监控标签值
-// @Description  查询label对应的标签值
-// @Accept       json
-// @Produce      json
-// @Param        label       query     string                                  true   "要查询的标签"
-// @Param        cluster     path      string                                  true   "集群名"
-// @Param        namespace   path      string                                  true   "命名空间，所有namespace为_all"
-// @Param        resource    query     string                                  false  "查询资源"
-// @Param        rule        query     string                                  false  "查询规则"
-// @Param        unit        query     string                                  false  "单位"
-// @Param        labelpairs  query     string                                  false  "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
-// @Param        expr        query     string                                  false  "promql表达式"
-// @Param        start      query     string                                  false  "开始时间，默认现在-30m"
-// @Param        end        query     string                                  false  "结束时间，默认现在"
-// @Param        step        query     int                                     false  "step, 单位秒，默认0"
-// @Success      200         {object}  handlers.ResponseStruct{Data=[]string}  "Metrics配置"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelvalues [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     监控标签值
+// @Description 查询label对应的标签值
+// @Accept      json
+// @Produce     json
+// @Param       label      query    string                                 true  "要查询的标签"
+// @Param       cluster    path     string                                 true  "集群名"
+// @Param       namespace  path     string                                 true  "命名空间，所有namespace为_all"
+// @Param       resource   query    string                                 false "查询资源"
+// @Param       rule       query    string                                 false "查询规则"
+// @Param       unit       query    string                                 false "单位"
+// @Param       labelpairs query    string                                 false "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
+// @Param       expr       query    string                                 false "promql表达式"
+// @Param       start      query    string                                 false "开始时间，默认现在-30m"
+// @Param       end        query    string                                 false "结束时间，默认现在"
+// @Param       step       query    int                                    false "step, 单位秒，默认0"
+// @Success     200        {object} handlers.ResponseStruct{Data=[]string} "Metrics配置"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelvalues [get]
+// @Security    JWT
 func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 	ret := []string{}
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
 		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
 			var err error
-			ret, err = cli.Extend().GetPrometheusLabelValues(ctx, req.SeriesSelector, req.Label, req.Start, req.End)
+			matchs := req.Query.GetVectorSelectorNames()
+			ret, err = cli.Extend().GetPrometheusLabelValues(ctx, matchs, req.Label, req.Start, req.End)
 			return err
 		}); err != nil {
 			return fmt.Errorf("prometheus label values failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
@@ -126,25 +127,28 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 }
 
 // LabelNames 查群prometheus label names
-// @Tags         Observability
-// @Summary      查群prometheus label names
-// @Description  查群prometheus label names
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                  true   "集群名"
-// @Param        namespace  path      string                                  true   "命名空间，所有namespace为_all"
-// @Param        start       query     string                                  false  "开始时间，默认现在-30m"
-// @Param        end         query     string                                  false  "结束时间，默认现在"
-// @Param        expr       query     string                                  true   "promql表达式"
-// @Success      200        {object}  handlers.ResponseStruct{Data=[]string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelnames [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     查群prometheus label names
+// @Description 查群prometheus label names
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                 true  "集群名"
+// @Param       namespace path     string                                 true  "命名空间，所有namespace为_all"
+// @Param       resource  query    string                                 false "查询资源"
+// @Param       rule      query    string                                 false "查询规则"
+// @Param       start     query    string                                 false "开始时间，默认现在-30m"
+// @Param       end       query    string                                 false "结束时间，默认现在"
+// @Param       expr      query    string                                 true  "promql表达式"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelnames [get]
+// @Security    JWT
 func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 	ret := []string{}
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
 		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
 			var err error
-			ret, err = cli.Extend().GetPrometheusLabelNames(ctx, req.SeriesSelector, req.Start, req.End)
+			matchs := req.Query.GetVectorSelectorNames()
+			ret, err = cli.Extend().GetPrometheusLabelNames(ctx, matchs, req.Start, req.End)
 			return err
 		}); err != nil {
 			return fmt.Errorf("prometheus label names failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
@@ -195,14 +199,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		if err := prometheus.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
 			return err
 		}
-
-		q.SeriesSelector = q.Expr
 	} else {
-		q.PromqlGenerator = &prometheus.PromqlGenerator{
-			Resource:   c.Query("resource"),
-			Rule:       c.Query("rule"),
-			LabelPairs: c.QueryMap("labelpairs"),
-		}
 		ruleCtx, err := q.PromqlGenerator.FindRuleContext(monitoropts)
 		if err != nil {
 			return err
@@ -211,35 +208,46 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			return fmt.Errorf("非namespace资源不能过滤项目环境")
 		}
 
-		query := promql.New(ruleCtx.RuleDetail.Expr)
-		if q.Namespace != "" {
-			query.AddSelector(prometheus.PromqlNamespaceKey, promql.LabelEqual, q.Namespace)
-		}
-		for label, value := range q.LabelPairs {
-			query.AddSelector(label, promql.LabelRegex, value)
-		}
-
-		q.SeriesSelector = query.ToPromql() // SeriesSelector 不能有运算符
-		q.Expr = query.
-			Round(0.001). // 默认保留三位小数
-			ToPromql()
-		log.Infof("promql: %s", q.Expr)
+		q.Expr = ruleCtx.RuleDetail.Expr
 	}
+
+	var err error
+	q.Query, err = promql.New(q.Expr)
+	if err != nil {
+		return err
+	}
+	if q.Namespace != "" {
+		q.Query.AddLabelMatchers(&labels.Matcher{
+			Type:  labels.MatchEqual,
+			Name:  prometheus.PromqlNamespaceKey,
+			Value: q.Namespace,
+		})
+	}
+	if q.PromqlGenerator != nil {
+		for label, value := range q.LabelPairs {
+			q.Query.AddLabelMatchers(&labels.Matcher{
+				Type:  labels.MatchRegexp,
+				Name:  label,
+				Value: value,
+			})
+		}
+	}
+	q.Expr = q.Query.String()
 
 	return f(q)
 }
 
 // GetMetricTemplate 获取prometheu查询模板
-// @Tags         Observability
-// @Summary      获取prometheu查询模板
-// @Description  获取prometheu查询模板
-// @Accept       json
-// @Produce      json
-// @Param        resource_name  path      string                                               true  "resource"
-// @Param        rule_name      path      string                                               true  "rule"
-// @Success      200            {object}  handlers.ResponseStruct{Data=prometheus.RuleDetail}  "resp"
-// @Router       /v1/observability/template/resources/{resource_name}/rules/{rule_name} [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     获取prometheu查询模板
+// @Description 获取prometheu查询模板
+// @Accept      json
+// @Produce     json
+// @Param       resource_name path     string                                              true "resource"
+// @Param       rule_name     path     string                                              true "rule"
+// @Success     200           {object} handlers.ResponseStruct{Data=prometheus.RuleDetail} "resp"
+// @Router      /v1/observability/template/resources/{resource_name}/rules/{rule_name} [get]
+// @Security    JWT
 func (h *ObservabilityHandler) GetMetricTemplate(c *gin.Context) {
 	resName := c.Param("resource_name")
 	ruleName := c.Param("rule_name")
@@ -261,17 +269,17 @@ func (h *ObservabilityHandler) GetMetricTemplate(c *gin.Context) {
 }
 
 // AddOrUpdateMetricTemplate 添加/更新prometheu查询模板
-// @Tags         Observability
-// @Summary      添加prometheu查询模板
-// @Description  添加prometheu查询模板
-// @Accept       json
-// @Produce      json
-// @Param        resource_name  path      string                                true  "resource"
-// @Param        rule_name      path      string                                true  "rule"
-// @Param        from           body      prometheus.RuleDetail                 true  "查询模板配置"
-// @Success      200            {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/template/resources/{resource_name}/rules/{rule_name} [post]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     添加prometheu查询模板
+// @Description 添加prometheu查询模板
+// @Accept      json
+// @Produce     json
+// @Param       resource_name path     string                               true "resource"
+// @Param       rule_name     path     string                               true "rule"
+// @Param       from          body     prometheus.RuleDetail                true "查询模板配置"
+// @Success     200           {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/template/resources/{resource_name}/rules/{rule_name} [post]
+// @Security    JWT
 func (h *ObservabilityHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 	resName := c.Param("resource_name")
 	ruleName := c.Param("rule_name")
@@ -299,16 +307,16 @@ func (h *ObservabilityHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
 }
 
 // DeleteMetricTemplate 删除prometheu查询模板
-// @Tags         Observability
-// @Summary      删除prometheu查询模板
-// @Description  删除prometheu查询模板
-// @Accept       json
-// @Produce      json
-// @Param        resource_name  path      string                                true  "resource"
-// @Param        rule_name      path      string                                true  "rule"
-// @Success      200            {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/template/resources/{resource_name}/rules/{rule_name} [delete]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     删除prometheu查询模板
+// @Description 删除prometheu查询模板
+// @Accept      json
+// @Produce     json
+// @Param       resource_name path     string                               true "resource"
+// @Param       rule_name     path     string                               true "rule"
+// @Success     200           {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/template/resources/{resource_name}/rules/{rule_name} [delete]
+// @Security    JWT
 func (h *ObservabilityHandler) DeleteMetricTemplate(c *gin.Context) {
 	resName := c.Param("resource_name")
 	ruleName := c.Param("rule_name")
@@ -356,14 +364,14 @@ func (h *ObservabilityHandler) DeleteMetricTemplate(c *gin.Context) {
 }
 
 // ListDashboardTemplates 监控面板模板列表
-// @Tags         Observability
-// @Summary      监控面板模板列表
-// @Description  监控面板模板列表
-// @Accept       json
-// @Produce      json
-// @Success      200  {object}  handlers.ResponseStruct{Data=[]models.MonitorDashboard}  "resp"
-// @Router       /v1/observability/template/dashboard [delete]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     监控面板模板列表
+// @Description 监控面板模板列表
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} handlers.ResponseStruct{Data=[]models.MonitorDashboard} "resp"
+// @Router      /v1/observability/template/dashboard [delete]
+// @Security    JWT
 func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
 	tpls := []models.MonitorDashboard{}
 	if err := yaml.Unmarshal(alltemplates, &tpls); err != nil {

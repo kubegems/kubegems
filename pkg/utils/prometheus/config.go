@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 	"sigs.k8s.io/yaml"
 )
 
@@ -40,6 +41,10 @@ func (opts *MonitorOptions) Validate() error {
 		for _, rule := range res.Rules {
 			if _, err := ParseUnit(rule.Unit); err != nil {
 				return errors.Wrapf(err, "res: %s, rule: %s unit not valid", res.ShowName, rule.ShowName)
+			}
+			_, err := promql.New(rule.Expr)
+			if err != nil {
+				return errors.Wrapf(err, "res: %s, rule: %s", res.ShowName, rule.ShowName)
 			}
 		}
 	}
@@ -312,7 +317,6 @@ resources:
       restartTimesLast5m:
         expr: gems_container_restart_times_last_5m
         showName: "过去5m重启次数"
-        units: [times]
         labels: [namespace, pod, container]
       statusTerminatedReason:
         expr: kube_pod_container_status_terminated_reason
@@ -392,6 +396,400 @@ resources:
         expr: gems_loki_error_logs_count_last_1m
         showName: "过去一分钟错误日志行数"
         labels: [namespace, pod, container]
+  mysql:
+    namespaced: true
+    showName: mysql
+    rules:
+      mysqlQPS:
+        expr: rate(mysql_global_status_queries[5m])
+        unit: short
+        labels:
+          - service
+        showName: MySQL实时QPS
+      mysqlTPS:
+        expr:
+          "sum(rate(mysql_global_status_commands_total{command=~\"insert|update|delete\"}[5m]))
+          without (command)\t"
+        unit: short
+        labels:
+          - service
+        showName: MySQL实时TPS
+      mysqlState:
+        expr: mysql_up
+        unit: short
+        labels:
+          - service
+        showName: MySQL状态
+      mysqlThreads:
+        expr: mysql_info_schema_threads
+        unit: short
+        labels:
+          - service
+          - state
+        showName: MySQL线程数(by state)
+      mysqlOpenFiles:
+        expr: mysql_global_status_innodb_num_open_files
+        unit: short
+        labels:
+          - service
+        showName: MySQL打开文件数
+      mysqlQuestions:
+        expr: rate(mysql_global_status_questions[5m])
+        unit: short
+        labels:
+          - service
+        showName: MySQL查询速率(questions/s)
+      mysqlSentBytes:
+        expr: " irate(mysql_global_status_bytes_sent[5m])"
+        unit: bytes/sec-B/s
+        labels:
+          - service
+        showName: MySQL出口流量(bytes/s)
+      mysqlSlowQuery:
+        expr: idelta(mysql_global_status_slow_queries[5m])
+        unit: short
+        labels:
+          - service
+        showName: MySQL慢查询(slow_queries/s)
+      mysqlTableSize:
+        expr: sum by (schema) (mysql_info_schema_table_size)
+        unit: bytes-B
+        labels:
+          - service
+        showName: MySQL容量(bytes)
+      mysqlTmpTables:
+        expr: sum(rate(mysql_global_status_created_tmp_tables[5m]))
+        unit: short
+        labels:
+          - service
+        showName: MySQL创建临时表速率(tables/s)
+      mysqlTotalRows:
+        expr: sum(mysql_info_schema_table_rows)
+        unit: short
+        labels:
+          - service
+        showName: MySQL总数据(rows)
+      mysqlConnections:
+        expr: mysql_global_status_max_used_connections
+        unit: short
+        labels:
+          - service
+        showName: MySQL连接数
+      mysqlCommandTop10:
+        expr: topk(10, rate(mysql_global_status_commands_total[5m])>0)
+        unit: short
+        labels:
+          - service
+          - command
+        showName: MySQL Top10命令
+      mysqlReceivedBytes:
+        expr: irate(mysql_global_status_bytes_received[5m])
+        unit: bytes/sec-B/s
+        labels:
+          - service
+        showName: MySQL入口流量(bytes/s)
+      mysqlTabelLockWaited:
+        expr: sum(increase(mysql_global_status_table_locks_waited[5m]))
+        unit: short
+        labels:
+          - service
+        showName: MySQL锁表等待(5m)
+      mysqlInnodbBufferSize:
+        expr: mysql_global_variables_innodb_buffer_pool_size
+        unit: bytes-B
+        labels:
+          - service
+        showName: MySQL Innodb缓冲区(Bytes)
+      mysqlTableOpenCacheHitRatio:
+        expr:
+          rate(mysql_global_status_table_open_cache_hits[5m]) / ( rate(mysql_global_status_table_open_cache_hits[5m])
+          + rate(mysql_global_status_table_open_cache_misses[5m]) )
+        unit: percent-0.0-1.0
+        labels:
+          - service
+        showName: MySQL表缓存命中率(%)
+  redis:
+    namespaced: true
+    showName: redis
+    rules:
+      redisOPS:
+        expr: irate(redis_commands_processed_total[5m])
+        unit: short
+        labels:
+          - service
+        showName: Redis每秒操作(op/s)
+      redisKeys:
+        expr: sum (redis_db_keys) by (db)
+        unit: short
+        labels:
+          - service
+          - db
+        showName: Redis Keys(by dbs)
+      redisState:
+        expr: redis_up
+        unit: short
+        labels:
+          - service
+        showName: Redis 状态
+      redisClients:
+        expr: redis_connected_clients
+        unit: short
+        labels:
+          - service
+        showName: Redis 客户端
+      redisCpuUsage:
+        expr: "irate(redis_cpu_user_seconds_total[5m]) + irate(redis_cpu_sys_seconds_total[5m])\t"
+        unit: short
+        labels:
+          - service
+        showName: Redis CPU使用量(1000m=1Core)
+      redisKeysHits:
+        expr: redis_keyspace_hits_total
+        unit: short
+        labels:
+          - service
+        showName: Redis Keys总命中
+      redisSentBytes:
+        expr: irate(redis_net_output_bytes_total[5m])
+        unit: bytes/sec-B/s
+        labels:
+          - service
+        showName: Redis出口流量(bytes/s)
+      redisKeysMissed:
+        expr: redis_keyspace_misses_total
+        unit: short
+        labels:
+          - service
+        showName: Redis Keys总未命中
+      redisKeysEvicted:
+        expr: redis_evicted_keys_total
+        unit: short
+        labels:
+          - service
+        showName: Redis Evicted Keys
+      redisKeysHitRate:
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total+ redis_keyspace_misses_total)
+        unit: percent-0-100
+        labels:
+          - service
+        showName: Redis命中率(%)
+      redisCommandsTop5:
+        expr: topk(5, irate(redis_commands_total[1m]))
+        unit: short
+        labels:
+          - service
+          - cmd
+        showName: Redis命令Top5
+      redisKeysExpiring:
+        expr: redis_db_keys_expiring
+        unit: short
+        labels:
+          - service
+        showName: Redis Expireing Keys
+      redisReceivedByted:
+        expr: irate(redis_net_input_bytes_total[5m])
+        unit: bytes/sec-B/s
+        labels:
+          - service
+        showName: Redis入口流量(bytes/s)
+      redisMemoryUsedBytes:
+        expr: redis_memory_used_bytes
+        unit: bytes-B
+        labels:
+          - service
+        showName: Redis内存占用(bytes)
+      redisNoExpiringKeyRate:
+        expr: 1 - sum(redis_db_keys_expiring) / sum(redis_db_keys)
+        unit: percent-0.0-1.0
+        labels:
+          - service
+        showName: Redis永久Key比例(%)
+      redisRejectedConnectionsTotal:
+        expr: redis_rejected_connections_total
+        unit: short
+        labels:
+          - service
+        showName: Redis拒绝连接总数
+  mongodb:
+    namespaced: true
+    showName: mongodb
+    rules:
+      mongodbQPS:
+        expr: "sum(rate(mongodb_op_counters_total{type=~\"query|getmore\"}[5m]))\t"
+        unit: short
+        labels:
+          - service
+        showName: MongoDB QPS
+      mongodbTPS:
+        expr: sum(rate(mongodb_op_counters_total{type=~"insert|update|delete"}[5m]))
+        unit: short
+        labels:
+          - service
+        showName: MongoDB TPS
+      mongdbState:
+        expr: mongodb_up
+        unit: short
+        labels:
+          - service
+        showName: MongoDB状态
+      mongodbCursor:
+        expr: mongodb_mongod_metrics_cursor_open
+        unit: short
+        labels:
+          - service
+          - state
+        showName: MongoDB游标数量
+      mongodbMemory:
+        expr: mongodb_memory
+        unit: bytes-MB
+        labels:
+          - service
+          - type
+        showName: MongoDB内存使用量(M Bytes)
+      mongodbAsserts:
+        expr: rate(mongodb_asserts_total[5m])
+        unit: short
+        labels:
+          - service
+          - type
+        showName: MongoDB断言错误次数
+      mongodbObjects:
+        expr: mongodb_mongod_db_objects_total
+        unit: short
+        labels:
+          - service
+          - db
+        showName: MongoDB对象数
+      mongodbDataSize:
+        expr: mongodb_mongod_db_data_size_bytes
+        unit: bytes-B
+        labels:
+          - service
+          - db
+        showName: MongoDB数据容量(bytes)
+      mongodbDocument:
+        expr: mongodb_mongod_metrics_document_total
+        unit: short
+        labels:
+          - service
+          - state
+        showName: MongoDB文档操作数(op/s)
+      mongodbIndexSize:
+        expr: mongodb_mongod_db_index_size_bytes
+        unit: bytes-B
+        labels:
+          - service
+          - db
+        showName: MongoDB索引容量(bytes)
+      mongodbLockQueue:
+        expr: mongodb_mongod_global_lock_current_queue
+        unit: short
+        labels:
+          - service
+          - type
+        showName: MongoDB等待获取锁操作数量
+      mongodbOplogSize:
+        expr: mongodb_mongod_replset_oplog_size_bytes
+        unit: bytes-B
+        labels:
+          - service
+          - type
+        showName: MongoDB Oplog容量(bytes)
+      mongodbSentBytes:
+        expr: mongodb_network_bytes_total{state="out_bytes"}
+        unit: bytes/sec-B/s
+        labels:
+          - service
+        showName: MongoDB出口流量(bytes/s)
+      mongodbCacheBytes:
+        expr: mongodb_mongod_wiredtiger_cache_bytes
+        unit: bytes-B
+        labels:
+          - service
+          - type
+        showName: MongoDB缓存容量(Bytes)
+      mongodbGlobalLock:
+        expr: mongodb_mongod_global_lock_total
+        unit: short
+        labels:
+          - service
+        showName: MongoDB全局锁
+      mongodbPageFaults:
+        expr: mongodb_extra_info_page_faults_total
+        unit: short
+        labels:
+          - service
+        showName: MongoDB页缺失中断次数
+      mongdoResponseTime:
+        expr: "rate(mongodb_mongod_op_latencies_latency_total[5m]) / rate(mongodb_mongod_op_latencies_ops_total[5m]) "
+        unit: duration-ms
+        labels:
+          - service
+          - type
+        showName: MongoDB操作详情耗时(ms)
+      mongodbConnections:
+        expr: mongodb_connections
+        unit: short
+        labels:
+          - service
+          - state
+        showName: MongoDB 连接数
+      mongodbReceivedBytes:
+        expr: mongodb_network_bytes_total{state="in_bytes"}
+        unit: bytes/sec-B/s
+        labels:
+          - service
+        showName: MongoDB入口流量(bytes/s)
+      mongodbWiredtigerCacheRate:
+        expr: sum(mongodb_mongod_wiredtiger_cache_bytes{type="total"}) / sum(mongodb_mongod_wiredtiger_cache_bytes_total)
+        unit: percent-0-100
+        labels:
+          - service
+        showName: MongoDB缓存使用率(%)
+  kafka:
+    namespaced: true
+    showName: kafka
+    rules:
+      kafkaTopics:
+        expr: count(count by (topic) (kafka_topic_partitions))
+        unit: short
+        labels:
+          - service
+        showName: Kafka Topics
+      kafkaBrokers:
+        expr: kafka_brokers
+        unit: short
+        labels:
+          - service
+        showName: Kafka Brokers
+      kafkaPartitions:
+        expr: sum(kafka_topic_partitions)
+        unit: short
+        labels:
+          - service
+        showName: Kafka Partitions
+      kafkaConsumerLatency:
+        expr: sum by (consumergroup,topic) (kafka_consumergroup_lag)
+        unit: short
+        labels:
+          - service
+          - " consumergroup"
+          - topic
+        showName: Kafka消息延迟
+      kafkaMessageConsumer:
+        expr: sum(rate(kafka_consumergroup_current_offset[1m])) by (topic)
+        unit: short
+        labels:
+          - service
+          - topic
+        showName: Kafka消息消费(by topic)
+      kafkaMessagesProduced:
+        expr: sum(rate(kafka_topic_partition_current_offset[1m])) by (topic)
+        unit: short
+        labels:
+          - service
+          - topic
+        showName: Kafka消息生产(by Topic)            
 `)
 	opts := &MonitorOptions{}
 	if err := yaml.Unmarshal(bts, opts); err != nil {

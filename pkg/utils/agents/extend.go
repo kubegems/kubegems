@@ -250,13 +250,15 @@ func (c *ExtendClient) GetLokiAlertRules(ctx context.Context) (map[string]promet
 	return ret, nil
 }
 
-func (c *ExtendClient) GetPrometheusLabelNames(ctx context.Context, match, start, end string) ([]string, error) {
+func (c *ExtendClient) GetPrometheusLabelNames(ctx context.Context, matchs []string, start, end string) ([]string, error) {
 	resp := struct {
 		Labels []string    `json:"labels,omitempty"`
 		Warns  interface{} `json:"warns,omitempty"`
 	}{}
 	values := url.Values{}
-	values.Add("match", match)
+	for _, v := range matchs {
+		values.Add("match", v)
+	}
 	values.Add("start", start)
 	values.Add("end", end)
 	if err := c.DoRequest(ctx, Request{
@@ -264,19 +266,21 @@ func (c *ExtendClient) GetPrometheusLabelNames(ctx context.Context, match, start
 		Query: values,
 		Into:  WrappedResponse(&resp),
 	}); err != nil {
-		return nil, fmt.Errorf("prometheus label names failed, cluster: %s, promql: %s, %v", c.Name, match, err)
+		return nil, fmt.Errorf("prometheus label names failed, cluster: %s, matchs: %v, %v", c.Name, matchs, err)
 	}
 
 	return resp.Labels, nil
 }
 
-func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, match, label, start, end string) ([]string, error) {
+func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, matchs []string, label, start, end string) ([]string, error) {
 	resp := struct {
 		Labels []string    `json:"labels,omitempty"`
 		Warns  interface{} `json:"warns,omitempty"`
 	}{}
 	values := url.Values{}
-	values.Add("match", match)
+	for _, v := range matchs {
+		values.Add("match", v)
+	}
 	values.Add("label", label)
 	values.Add("start", start)
 	values.Add("end", end)
@@ -285,7 +289,7 @@ func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, match, labe
 		Query: values,
 		Into:  WrappedResponse(&resp),
 	}); err != nil {
-		return nil, fmt.Errorf("prometheus label values failed, cluster: %s, promql: %s, label: %s, %v", c.Name, match, label, err)
+		return nil, fmt.Errorf("prometheus label values failed, cluster: %s, matchs: %v, label: %s, %v", c.Name, matchs, label, err)
 	}
 
 	return resp.Labels, nil

@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 	"kubegems.io/kubegems/pkg/utils/slice"
@@ -92,15 +93,26 @@ func (g *PromqlGenerator) ToPromql(namespace string, opts *MonitorOptions) (stri
 	if err != nil {
 		return "", fmt.Errorf("constructPromql params: %v, err: %w", g, err)
 	}
-	query := promql.New(ruleCtx.RuleDetail.Expr)
+	query, err := promql.New(ruleCtx.RuleDetail.Expr)
+	if err != nil {
+		return "", err
+	}
 	if namespace != GlobalAlertNamespace && namespace != "" {
-		query.AddSelector(PromqlNamespaceKey, promql.LabelEqual, namespace)
+		query.AddLabelMatchers(&labels.Matcher{
+			Type:  labels.MatchEqual,
+			Name:  PromqlNamespaceKey,
+			Value: namespace,
+		})
 	}
 
 	for label, value := range g.LabelPairs {
-		query.AddSelector(label, promql.LabelRegex, value)
+		query.AddLabelMatchers(&labels.Matcher{
+			Type:  labels.MatchRegexp,
+			Name:  label,
+			Value: value,
+		})
 	}
-	return query.ToPromql(), nil
+	return query.String(), nil
 }
 
 var _ AlertRule = MonitorAlertRule{}

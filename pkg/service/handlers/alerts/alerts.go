@@ -33,18 +33,18 @@ var (
 )
 
 // AlertHistory 告警黑名单
-// @Tags         Alert
-// @Summary      告警黑名单
-// @Description  告警黑名单
-// @Accept       json
-// @Produce      json
-// @Param        cluster    query     string                                                                      false  "集群, 默认所有"
-// @Param        namespace  query     string                                                                      false  "命名空间, 默认所有"
-// @Param        page       query     int                                                                         false  "page"
-// @Param        size       query     int                                                                         false  "size"
-// @Success      200        {object}  handlers.ResponseStruct{Data=pagination.PageData{List=[]models.AlertInfo}}  "resp"
-// @Router       /v1/alerts/blacklist [get]
-// @Security     JWT
+// @Tags        Alert
+// @Summary     告警黑名单
+// @Description 告警黑名单
+// @Accept      json
+// @Produce     json
+// @Param       cluster   query    string                                                                     false "集群, 默认所有"
+// @Param       namespace query    string                                                                     false "命名空间, 默认所有"
+// @Param       page      query    int                                                                        false "page"
+// @Param       size      query    int                                                                        false "size"
+// @Success     200       {object} handlers.ResponseStruct{Data=pagination.PageData{List=[]models.AlertInfo}} "resp"
+// @Router      /v1/alerts/blacklist [get]
+// @Security    JWT
 func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 	cluster := c.Query("cluster")
 	namespace := c.Query("namespace")
@@ -99,15 +99,15 @@ func (h *AlertsHandler) formatBlackListSummary(labels map[string]string, opts *p
 }
 
 // AlertHistory 加入/更新告警黑名单
-// @Tags         Alert
-// @Summary      加入/更新告警黑名单
-// @Description  加入/更新告警黑名单
-// @Accept       json
-// @Produce      json
-// @Param        form  body      models.AlertInfo                      true  "黑名单详情，必传AlertInfo.Fingerprint"
-// @Success      200   {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/alerts/blacklist [post]
-// @Security     JWT
+// @Tags        Alert
+// @Summary     加入/更新告警黑名单
+// @Description 加入/更新告警黑名单
+// @Accept      json
+// @Produce     json
+// @Param       form body     models.AlertInfo                     true "黑名单详情，必传AlertInfo.Fingerprint"
+// @Success     200  {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/alerts/blacklist [post]
+// @Security    JWT
 func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 	if err := h.withBlackListReq(c, func(req models.AlertInfo) error {
 		return h.GetDB().Transaction(func(tx *gorm.DB) error {
@@ -129,15 +129,15 @@ func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 }
 
 // AlertHistory 移除告警黑名单
-// @Tags         Alert
-// @Summary      移除告警黑名单
-// @Description  移除告警黑名单
-// @Accept       json
-// @Produce      json
-// @Param        fingerprint  path      string                                true  "告警指纹"
-// @Success      200          {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/alerts/blacklist/{fingerprint} [delete]
-// @Security     JWT
+// @Tags        Alert
+// @Summary     移除告警黑名单
+// @Description 移除告警黑名单
+// @Accept      json
+// @Produce     json
+// @Param       fingerprint path     string                               true "告警指纹"
+// @Success     200         {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/alerts/blacklist/{fingerprint} [delete]
+// @Security    JWT
 func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 	req := models.AlertInfo{
 		Fingerprint: c.Param("fingerprint"),

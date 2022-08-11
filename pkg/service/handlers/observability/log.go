@@ -93,17 +93,17 @@ var (
 )
 
 // NamespaceLogCollector namespace级日志采集器
-// @Tags         Observability
-// @Summary      namespace级日志采集器
-// @Description  namespace级日志采集器
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                                       true  "cluster"
-// @Param        namespace  path      string                                                       true  "namespace"
-// @Param        enable     query     bool                                  true  "是否启用日志采集"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging [put]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     namespace级日志采集器
+// @Description namespace级日志采集器
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       enable    query    bool                                 true "是否启用日志采集"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging [put]
+// @Security    JWT
 func (h *ObservabilityHandler) NamespaceLogCollector(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -157,16 +157,16 @@ type AppInfo struct {
 }
 
 // ListLogApps 获取支持日志采集的应用及标签
-// @Tags         Observability
-// @Summary      获取支持日志采集的应用及标签
-// @Description  获取支持日志采集的应用及标签
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                            true  "cluster"
-// @Param        namespace  path      string                                            true  "namespace"
-// @Success      200        {object}  handlers.ResponseStruct{Data=map[string]AppInfo}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     获取支持日志采集的应用及标签
+// @Description 获取支持日志采集的应用及标签
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                           true "cluster"
+// @Param       namespace path     string                                           true "namespace"
+// @Success     200       {object} handlers.ResponseStruct{Data=map[string]AppInfo} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps [get]
+// @Security    JWT
 func (h *ObservabilityHandler) ListLogApps(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -199,17 +199,17 @@ type PluginConfig struct {
 }
 
 // AddAppLogCollector 应用级日志采集器
-// @Tags         Observability
-// @Summary      应用级日志采集器
-// @Description  应用级日志采集器
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                                     true  "cluster"
-// @Param        namespace  path      string                                                     true  "namespace"
-// @Param        form       body      LogCollector                          true  "采集器内容"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps [post]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     应用级日志采集器
+// @Description 应用级日志采集器
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       form      body     LogCollector                         true "采集器内容"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/apps [post]
+// @Security    JWT
 func (h *ObservabilityHandler) AddAppLogCollector(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -324,16 +324,16 @@ func getAppsLogStatus(podList corev1.PodList, flowList v1beta1.FlowList) map[str
 }
 
 // ListLoggingAlertRule 日志告警规则列表
-// @Tags         Observability
-// @Summary      日志告警规则列表
-// @Description  日志告警规则列表
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Success      200        {object}  handlers.ResponseStruct{Data=[]prometheus.LoggingAlertRule}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     日志告警规则列表
+// @Description 日志告警规则列表
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                      true "cluster"
+// @Param       namespace path     string                                                      true "namespace"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]prometheus.LoggingAlertRule} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [get]
+// @Security    JWT
 func (h *ObservabilityHandler) ListLoggingAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -351,17 +351,17 @@ func (h *ObservabilityHandler) ListLoggingAlertRule(c *gin.Context) {
 }
 
 // GetLoggingAlertRule 日志告警规则详情
-// @Tags         Observability
-// @Summary      日志告警规则详情
-// @Description  日志告警规则详情
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        name       path      string                                                     true  "name"
-// @Success      200        {object}  handlers.ResponseStruct{Data=prometheus.LoggingAlertRule}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [get]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     日志告警规则详情
+// @Description 日志告警规则详情
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                    true "cluster"
+// @Param       namespace path     string                                                    true "namespace"
+// @Param       name      path     string                                                    true "name"
+// @Success     200       {object} handlers.ResponseStruct{Data=prometheus.LoggingAlertRule} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [get]
+// @Security    JWT
 func (h *ObservabilityHandler) GetLoggingAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -390,17 +390,17 @@ func (h *ObservabilityHandler) GetLoggingAlertRule(c *gin.Context) {
 }
 
 // CreateLoggingAlertRule 创建日志告警规则
-// @Tags         Observability
-// @Summary      创建日志告警规则
-// @Description  创建日志告警规则
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        form       body      prometheus.LoggingAlertRule           true  "body"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [post]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     创建日志告警规则
+// @Description 创建日志告警规则
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       form      body     prometheus.LoggingAlertRule          true "body"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [post]
+// @Security    JWT
 func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -451,17 +451,17 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 }
 
 // CreateLoggingAlertRule 更新日志告警规则
-// @Tags         Observability
-// @Summary      更新日志告警规则
-// @Description  更新日志告警规则
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        form       body      prometheus.LoggingAlertRule           true  "body"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [put]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     更新日志告警规则
+// @Description 更新日志告警规则
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       form      body     prometheus.LoggingAlertRule          true "body"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [put]
+// @Security    JWT
 func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -499,17 +499,17 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 }
 
 // DeleteLoggingAlertRule 删除日志告警规则
-// @Tags         Observability
-// @Summary      删除日志告警规则
-// @Description  删除日志告警规则
-// @Accept       json
-// @Produce      json
-// @Param        cluster    path      string                                true  "cluster"
-// @Param        namespace  path      string                                true  "namespace"
-// @Param        name       path      string                                true  "name"
-// @Success      200        {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [delete]
-// @Security     JWT
+// @Tags        Observability
+// @Summary     删除日志告警规则
+// @Description 删除日志告警规则
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       name      path     string                               true "name"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [delete]
+// @Security    JWT
 func (h *ObservabilityHandler) DeleteLoggingAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")

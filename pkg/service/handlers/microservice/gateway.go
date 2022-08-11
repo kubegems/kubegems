@@ -62,16 +62,16 @@ type IstioGatewayHandler struct {
 	base.BaseHandler
 }
 
-// @Tags         Istio
-// @Summary      istio网关实例列表
-// @Description  istio网关实例列表
-// @Accept       json
-// @Produce      json
-// @Param        virtualspace_id  path      string                                                true  "virtualspace_id"
-// @Param        cluster_id       path      string                                                true  "cluster_id"
-// @Success      200              {object}  handlers.ResponseStruct{Data=[]IstioGatewayInstance}  "IstioOperator"
-// @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [get]
-// @Security     JWT
+// @Tags        Istio
+// @Summary     istio网关实例列表
+// @Description istio网关实例列表
+// @Accept      json
+// @Produce     json
+// @Param       virtualspace_id path     string                                               true "virtualspace_id"
+// @Param       cluster_id      path     string                                               true "cluster_id"
+// @Success     200             {object} handlers.ResponseStruct{Data=[]IstioGatewayInstance} "IstioOperator"
+// @Router      /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [get]
+// @Security    JWT
 // nolint: funlen
 func (h *IstioGatewayHandler) ListGateway(c *gin.Context) {
 	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
@@ -146,17 +146,17 @@ func (h *IstioGatewayHandler) ListGateway(c *gin.Context) {
 	handlers.OK(c, ret)
 }
 
-// @Tags         Istio
-// @Summary      istio网关实例列表
-// @Description  istio网关实例列表
-// @Accept       json
-// @Produce      json
-// @Param        virtualspace_id  path      string                                              true  "virtualspace_id"
-// @Param        cluster_id       path      string                                              true  "cluster_id"
-// @Param        name             path      string                                              true  "网关名"
-// @Success      200              {object}  handlers.ResponseStruct{Data=IstioGatewayInstance}  "IstioOperator"
-// @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways/{name} [get]
-// @Security     JWT
+// @Tags        Istio
+// @Summary     istio网关实例列表
+// @Description istio网关实例列表
+// @Accept      json
+// @Produce     json
+// @Param       virtualspace_id path     string                                             true "virtualspace_id"
+// @Param       cluster_id      path     string                                             true "cluster_id"
+// @Param       name            path     string                                             true "网关名"
+// @Success     200             {object} handlers.ResponseStruct{Data=IstioGatewayInstance} "IstioOperator"
+// @Router      /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways/{name} [get]
+// @Security    JWT
 // nolint: funlen,gocognit
 func (h *IstioGatewayHandler) GetGateway(c *gin.Context) {
 	istioGatewayNamespace := h.MicroserviceOptions.GatewayNamespace
@@ -275,17 +275,17 @@ func (h *IstioGatewayHandler) GetGateway(c *gin.Context) {
 	handlers.OK(c, ret)
 }
 
-// @Tags         Istio
-// @Summary      创建istio网关实例`
-// @Description  创建istio网关实例
-// @Accept       json
-// @Produce      json
-// @Param        virtualspace_id  path      string                                              true  "virtualspace_id"
-// @Param        cluster_id       path      string                                              true  "cluster_id"
-// @Param        param            body      IstioGatewayInstance                                true  "网关内容"
-// @Success      200              {object}  handlers.ResponseStruct{Data=IstioGatewayInstance}  "网关内容"
-// @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [post]
-// @Security     JWT
+// @Tags        Istio
+// @Summary     创建istio网关实例`
+// @Description 创建istio网关实例
+// @Accept      json
+// @Produce     json
+// @Param       virtualspace_id path     string                                             true "virtualspace_id"
+// @Param       cluster_id      path     string                                             true "cluster_id"
+// @Param       param           body     IstioGatewayInstance                               true "网关内容"
+// @Success     200             {object} handlers.ResponseStruct{Data=IstioGatewayInstance} "网关内容"
+// @Router      /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [post]
+// @Security    JWT
 // nolint: funlen
 func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
@@ -359,17 +359,17 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 	handlers.OK(c, gw)
 }
 
-// @Tags         Istio
-// @Summary      更新istio网关实例
-// @Description  更新istio网关实例
-// @Accept       json
-// @Produce      json
-// @Param        cluster_id       path      string                                              true  "cluster_id"
-// @Param        virtualspace_id  path      string                                              true  "virtualspace_id"
-// @Param        param            body      IstioGatewayInstance                                true  "网关内容"
-// @Success      200              {object}  handlers.ResponseStruct{Data=IstioGatewayInstance}  "网关内容"
-// @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [put]
-// @Security     JWT
+// @Tags        Istio
+// @Summary     更新istio网关实例
+// @Description 更新istio网关实例
+// @Accept      json
+// @Produce     json
+// @Param       cluster_id      path     string                                             true "cluster_id"
+// @Param       virtualspace_id path     string                                             true "virtualspace_id"
+// @Param       param           body     IstioGatewayInstance                               true "网关内容"
+// @Success     200             {object} handlers.ResponseStruct{Data=IstioGatewayInstance} "网关内容"
+// @Router      /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways [put]
+// @Security    JWT
 func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
 	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
 	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
@@ -460,16 +460,16 @@ func istioGateway(vsName, ns, name string, enabled bool) *v1alpha1.GatewaySpec {
 	}
 }
 
-// @Tags         Istio
-// @Summary      删除istio网关实例
-// @Description  删除istio网关实例
-// @Accept       json
-// @Produce      json
-// @Param        virtualspace_id  path      string                                true  "virtualspace_id"
-// @Param        cluster_id       path      string                                true  "cluster_id"
-// @Success      200              {object}  handlers.ResponseStruct{Data=string}  "resp"
-// @Router       /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways/{name} [delete]
-// @Security     JWT
+// @Tags        Istio
+// @Summary     删除istio网关实例
+// @Description 删除istio网关实例
+// @Accept      json
+// @Produce     json
+// @Param       virtualspace_id path     string                               true "virtualspace_id"
+// @Param       cluster_id      path     string                               true "cluster_id"
+// @Success     200             {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/virtualspace/{virtualspace_id}/cluster/{cluster_id}/istiogateways/{name} [delete]
+// @Security    JWT
 func (h *IstioGatewayHandler) DeleteGateway(c *gin.Context) {
 	istioOperatorNamespace := h.MicroserviceOptions.IstioNamespace
 	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
