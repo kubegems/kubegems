@@ -83,31 +83,25 @@ func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 	rg.AddSubGroup(
 		// admin
 		m.registerAdminRoute(),
-		// sources
-		route.
-			NewGroup("/sources").Tag("sources").
+		route.NewGroup("/sources").Tag("sources").
 			AddRoutes(
 				route.GET("").To(m.ListSources).Doc("List sources").Response([]repository.Source{}),
 				route.GET("/{source}").To(m.GetSource).Doc("Get source").
-					Parameters(route.PathParameter("source", "Source name")).
-					Response(SourceWithSyncStatus{}),
+					Parameters(route.PathParameter("source", "Source name")).Response(SourceWithSyncStatus{}),
 				route.GET("/{source}/selectors").To(m.ListSelectors).Doc("List selectors").Response([]repository.Selectors{}),
 			),
-		route.
-			NewGroup("/sources/{source}").Parameters(route.PathParameter("source", "model source name")).
+		route.NewGroup("/sources/{source}").Parameters(route.PathParameter("source", "model source name")).
 			AddSubGroup(
-				// source admin
+				// source admin users
 				route.NewGroup("/admins").Tag("admins").AddRoutes(
 					route.GET("").To(m.ListSourceAdmin).Doc("list admins").Response([]string{}),
 					route.POST("/{username}").To(m.AddSourceAdmin).Doc("add source admin").
 						Parameters(route.PathParameter("username", "Username of admin")).Accept("*/*"),
-					route.DELETE("/{username}").To(m.DeleteSourceAdmin).Doc("delete source admin").Parameters(
-						route.PathParameter("username", "Username of admin"),
-					),
+					route.DELETE("/{username}").To(m.DeleteSourceAdmin).Doc("delete source admin").
+						Parameters(route.PathParameter("username", "Username of admin")),
 				),
 				// source models
-				route.
-					NewGroup("/models").Tag("models").
+				route.NewGroup("/models").Tag("models").
 					AddRoutes(
 						route.GET("").To(m.ListModels).Paged().Doc("list models").
 							Parameters(
@@ -129,11 +123,16 @@ func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 						route.GET("/{model}/rating").To(m.GetRating).Doc("get model rating").
 							Parameters(route.PathParameter("model", "model name, base64 encoded name string")).
 							Response(repository.Rating{}),
+					).
+					AddSubGroup(route.
+						NewGroup("/{model}").Parameters(route.PathParameter("model", "model name, base64 encoded name string")).
+						AddRoutes(
+							route.GET("/versions").To(m.ListVersions).Doc("list versions").Response([]repository.ModelVersion{}),
+							route.GET("/versions/{version}").To(m.GetVersion).Doc("get version").Response(repository.ModelVersion{}),
+						).
+						// models comments
+						AddSubGroup(m.registerCommentsRoute()),
 					),
-				// models comments
-				route.
-					NewGroup("/models/{model}").Parameters(route.PathParameter("model", "model name")).
-					AddSubGroup(m.registerCommentsRoute()),
 			),
 	)
 }

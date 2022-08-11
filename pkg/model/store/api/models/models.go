@@ -90,3 +90,24 @@ func (m *ModelsAPI) DeleteModel(req *restful.Request, resp *restful.Response) {
 	}
 	response.OK(resp, nil)
 }
+
+func (m *ModelsAPI) ListVersions(req *restful.Request, resp *restful.Response) {
+	source, name := DecodeSourceModelName(req)
+	versions, err := m.ModelRepository.ListVersions(req.Request.Context(), source, name)
+	if err != nil {
+		response.BadRequest(resp, err.Error())
+		return
+	}
+	response.OK(resp, versions)
+}
+
+func (m *ModelsAPI) GetVersion(req *restful.Request, resp *restful.Response) {
+	source, name := DecodeSourceModelName(req)
+	version := req.PathParameter("version")
+	model, err := m.ModelRepository.GetVersion(req.Request.Context(), source, name, version)
+	if err != nil {
+		response.BadRequest(resp, err.Error())
+		return
+	}
+	response.OK(resp, model)
+}

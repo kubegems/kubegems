@@ -120,9 +120,8 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 }
 
 type ModelWithAddtional struct {
-	Model    `bson:",inline" json:",inline"`
-	Versions []string `bson:"versions" json:"versions"`
-	Rating   *Rating  `bson:"rating" json:"rating"`
+	Model  `bson:",inline" json:",inline"`
+	Rating *Rating `bson:"rating" json:"rating"`
 }
 
 func (m *ModelsRepository) Get(ctx context.Context, source, name string, includedisabled bool) (ModelWithAddtional, error) {
@@ -137,10 +136,6 @@ func (m *ModelsRepository) Get(ctx context.Context, source, name string, include
 			return ret, response.NewError(http.StatusNotFound, fmt.Sprintf("model %s not found", name))
 		}
 		return ModelWithAddtional{}, err
-	}
-	// set default version
-	if len(ret.Versions) == 0 {
-		ret.Versions = []string{"latest"}
 	}
 	return ret, nil
 }
@@ -237,7 +232,6 @@ func (m *ModelsRepository) Update(ctx context.Context, model *Model) error {
 		bson.M{"source": model.Source, "name": model.Name},
 		bson.M{
 			"$set": bson.M{
-				"intro":            model.Intro,
 				"recomment":        model.Recomment,
 				"recommentcontent": model.RecommentContent,
 				"tags":             model.Tags,
@@ -287,4 +281,36 @@ func (m *ModelsRepository) ListSelectors(ctx context.Context, listopts ModelList
 		Tasks:      tostrings(distincttasks),
 	}
 	return selectors, nil
+}
+
+func (r *ModelsRepository) ListVersions(ctx context.Context, source, model string) ([]ModelVersion, error) {
+	cond := bson.M{
+		"source": source,
+		"name":   model,
+	}
+	opts := &options.FindOneOptions{
+		Projection: bson.M{"versions": 1}, // only return versions
+
+	}
+	modelWithVersion := &Model{}
+	if err := r.Collection.FindOne(ctx, cond, opts).Decode(modelWithVersion); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("model %s/%s not found", source, model)
+		}
+		return nil, err
+	}
+	return modelWithVersion.Versions, nil
+}
+
+func (r *ModelsRepository) GetVersion(ctx context.Context, source, model, version string) (ModelVersion, error) {
+	versions, err := r.ListVersions(ctx, source, model)
+	if err != nil {
+		return ModelVersion{}, err
+	}
+	for _, v := range versions {
+		if v.Name == version {
+			return v, nil
+		}
+	}
+	return ModelVersion{}, fmt.Errorf("version %s not found", version)
 }
