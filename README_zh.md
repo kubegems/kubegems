@@ -134,14 +134,16 @@ kubectl apply -f kubegems.yaml
 
 ## 参与贡献
 
-我们非常欢迎您参与到 KubeGems 社区的平台经验、标准化应用、插件共享等领域的贡献和分享中来。
-如果您是正在使用 KubeGems 的用户，对 Kubernetes 有深刻的理解，认同技术路线，并且在企业内部有很大的需求，我们欢迎您参与到 KubeGems 项目的开发。
+如果您认为这个项目有用，请帮助我们：
+
+- 支持这个项目的开发并star这个repo ⭐
+- 如果您在生产环境中使用KubeGems，请将自己添加到[adopters](./ADOPTERS.md)列表中 👌
+- 帮助新用户解决他们可能遇到的问题 🙋
+- 发送带有新功能和错误修复的拉取请求 🚀
+
+我们非常欢迎您在KubeGems社区在平台体验、标准化应用程序、插件共享等领域的贡献和分享。
 
 更多信息，请访问 https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md
-
-## 告诉我们您的用例
-
-您可以在在此仓库中提交 issues 告诉我们您的 KubeGems 使用案例。
 
 ## License
 
