@@ -208,6 +208,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			return fmt.Errorf("非namespace资源不能过滤项目环境")
 		}
 
+		q.PromqlGenerator.RuleContext = ruleCtx
 		q.Expr = ruleCtx.RuleDetail.Expr
 	}
 
@@ -231,6 +232,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 				Value: value,
 			})
 		}
+		q.Query.Sumby(q.RuleContext.RuleDetail.Labels...)
 	}
 	q.Expr = q.Query.String()
 

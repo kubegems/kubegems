@@ -15,6 +15,9 @@
 package promql
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"kubegems.io/kubegems/pkg/log"
@@ -27,6 +30,8 @@ const (
 
 type Query struct {
 	parser.Expr
+
+	sumby []string
 }
 
 func New(promql string) (*Query, error) {
@@ -64,6 +69,11 @@ func (q *Query) AddLabelMatchers(matchers ...*labels.Matcher) *Query {
 	return q
 }
 
+func (q *Query) Sumby(labels ...string) *Query {
+	q.sumby = append(q.sumby, labels...)
+	return q
+}
+
 func (q *Query) GetVectorSelectorNames() []string {
 	ret := set.NewSet[string]()
 	parser.Inspect(q.Expr, func(node parser.Node, _ []parser.Node) error {
@@ -77,7 +87,12 @@ func (q *Query) GetVectorSelectorNames() []string {
 }
 
 func (q *Query) String() string {
-	ret := q.Expr.String()
-	log.Info("query", "promql", ret)
+	var ret string
+	if len(q.sumby) == 0 {
+		ret = q.Expr.String()
+	} else {
+		ret = fmt.Sprintf("sum(%s)by(%s)", q.Expr.String(), strings.Join(q.sumby, ","))
+	}
+	log.Debugf("promql: %s", ret)
 	return ret
 }
