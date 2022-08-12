@@ -135,15 +135,16 @@ More informations refer to https://www.kubegems.io/docs/installation/quick-insta
 
 ## Contributing
 
+If you find this project useful, help us:
+
+- Support the development of this project and star this repo! ⭐
+- If you use the KubeGems in a production environment, add yourself to the list of production [adopters](./ADOPTERS.md) 👌
+- Help new users with issues they may encounter 🙋
+- Send a pull request with your new features and bug fixes 🚀
+
 We very much welcome your contribution and sharing in the KubeGems community in the fields of platform experience, standardized application, plugin sharing, etc.
 
-If you are a user of KubeGems, have a deep understanding of Kubernetes, agree with the technical route, and have great demand within the enterprise, we welcome you to participate in the development of the KubeGems project
-
 More information refer to [CONTRIBUTING.md](https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md).
-
-## Let us know who is using KubeGems
-
-You can submit issues to tell us about your case.
 
 ## License
 
