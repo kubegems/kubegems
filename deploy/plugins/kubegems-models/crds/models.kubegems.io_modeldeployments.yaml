@@ -1190,6 +1190,8 @@ spec:
                       is restarted. If this flag is false, a container processes that
                       reads from stdin will never receive an EOF. Default is false
                     type: boolean
+                  storageInitializerImage:
+                    type: string
                   terminationMessagePath:
                     description: 'Optional: Path at which the file to which the container''s
                       termination message will be written is mounted into the container''s

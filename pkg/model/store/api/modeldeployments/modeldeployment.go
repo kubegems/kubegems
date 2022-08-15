@@ -205,6 +205,10 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "model", Value: modeldetails.Name},
 		)
 		md.Spec.Server.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
+	case repository.SourceKindModelx:
+		if md.Spec.Server.StorageInitializerImage == "" {
+			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
+		}
 	}
 	return nil
 }

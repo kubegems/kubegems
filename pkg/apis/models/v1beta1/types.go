@@ -64,6 +64,9 @@ type ServerSpec struct {
 	// +kubebuilder:validation:Optional
 	Kind string `json:"kind"`
 
+	// +kubebuilder:validation:Optional
+	StorageInitializerImage string `json:"storageInitializerImage"`
+
 	// +kubebuilder:validation:Required
 	Image string `json:"image"`
 
@@ -114,7 +117,7 @@ const (
 	Failed Phase = "Failed"
 )
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 type ModelDeploymentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

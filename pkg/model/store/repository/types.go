@@ -73,19 +73,19 @@ const (
 
 type Source struct {
 	// nolint: tagliatelle
-	ID           string    `json:"id,omitempty" bson:"_id,omitempty"`
-	Name         string    `json:"name"`
-	BuiltIn      bool      `json:"builtIn"`
-	Online       bool      `json:"online"`
-	Images       []string  `json:"images"`
-	CreationTime time.Time `json:"creationTime"`
-	UpdationTime time.Time `json:"updationTime"`
-	Enabled      bool      `json:"enabled"`
-
-	Kind        string            `json:"kind"`    // kind of source (huggingface, openmmlab, modelx...)
-	Address     string            `json:"address"` // address of source
-	Auth        SourceAuth        `json:"auth"`    // auth of source
-	Annotations map[string]string `json:"annotations"`
+	ID           string            `json:"id,omitempty" bson:"_id,omitempty"`
+	Name         string            `json:"name"`
+	BuiltIn      bool              `json:"builtIn"`
+	Online       bool              `json:"online"`
+	Images       []string          `json:"images"`
+	CreationTime time.Time         `json:"creationTime"`
+	UpdationTime time.Time         `json:"updationTime"`
+	Enabled      bool              `json:"enabled"`
+	InitImage    string            `json:"initImage"` // storage initialize image
+	Kind         string            `json:"kind"`      // kind of source (huggingface, openmmlab, modelx...)
+	Address      string            `json:"address"`   // address of source
+	Auth         SourceAuth        `json:"auth"`      // auth of source
+	Annotations  map[string]string `json:"annotations"`
 }
 
 type SourceAuth struct {

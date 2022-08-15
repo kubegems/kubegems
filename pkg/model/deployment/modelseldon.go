@@ -140,9 +140,11 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 					EngineResources: md.Spec.Server.Resources,
 					Replicas:        md.Spec.Replicas,
 					Graph: machinelearningv1.PredictiveUnit{
-						Name:           md.Spec.Server.Name,
-						Implementation: implOf(md.Spec.Server.Kind),
-						Parameters:     paramsOf(md.Spec.Server.Parameters),
+						Name:                    md.Spec.Server.Name,
+						Implementation:          implOf(md.Spec.Server.Kind),
+						Parameters:              paramsOf(md.Spec.Server.Parameters),
+						ModelURI:                md.Spec.Model.URL,
+						StorageInitializerImage: md.Spec.Server.StorageInitializerImage,
 					},
 					ComponentSpecs: []*machinelearningv1.SeldonPodSpec{
 						{
