@@ -397,7 +397,7 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
 		alerts, err := cli.Extend().ListMonitorAlertRules(ctx, v1.NamespaceAll, false)
 		if err != nil {
-			return errors.Wrapf(err, "list alert in cluster %s failed: %v", cli.Name())
+			return errors.Wrapf(err, "list alert in cluster %s failed", cli.Name())
 		}
 		allalerts = append(allalerts, alerts...)
 		return nil

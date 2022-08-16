@@ -41,7 +41,11 @@ func Test_newDefaultSamplePair(t *testing.T) {
 			},
 			want: []model.SamplePair{
 				{
-					Timestamp: model.Time(utils.DayStartTime(time.Now()).Unix()),
+					Timestamp: model.Time(utils.DayStartTime(time.Now()).UnixMilli()),
+					Value:     0,
+				},
+				{
+					Timestamp: model.Time(utils.NextDayStartTime(time.Now()).UnixMilli()),
 					Value:     0,
 				},
 			},

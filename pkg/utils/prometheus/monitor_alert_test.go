@@ -99,6 +99,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 										},
 										Annotations: map[string]string{
 											exprJsonAnnotationKey: `{
+												"scope": "system",
 												"resource": "node",
 												"rule": "statusCondition",
 												"unit": "",
@@ -136,6 +137,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				},
 
 				PromqlGenerator: &PromqlGenerator{
+					Scope:    "system",
 					Resource: "node",
 					Rule:     "statusCondition",
 					LabelPairs: map[string]string{
@@ -162,9 +164,6 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RawAlertResource.ToAlerts() error = %v, wantErr %v", err, tt.wantErr)
 				return
-			}
-			for i := range got {
-				got[i].PromqlGenerator.Tpl = &PromqlTpl{}
 			}
 			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Errorf("RawAlertResource.ToAlerts() = %v, want %v", got, tt.want)
