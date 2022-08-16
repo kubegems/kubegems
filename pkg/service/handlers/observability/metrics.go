@@ -340,6 +340,7 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	h.SetAuditData(c, "创建", "监控查询模板", req.Name)
 	if err := h.GetDB().Create(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -365,6 +366,7 @@ func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	h.SetAuditData(c, "更新", "监控查询模板", req.Name)
 	if err := h.GetDB().Save(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -389,9 +391,14 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if c.Param("tenant_id") != "_all" && rule.TenantID == nil {
-		handlers.NotOK(c, fmt.Errorf("你不能删除系统预置模板"))
-		return
+	h.SetAuditData(c, "删除", "监控查询模板", rule.Name)
+	if rule.TenantID == nil {
+		if c.Param("tenant_id") != "_all" {
+			handlers.NotOK(c, fmt.Errorf("你不能删除系统预置模板"))
+			return
+		}
+	} else {
+		h.SetExtraAuditData(c, models.ResTenant, *rule.TenantID)
 	}
 	allalerts := []prometheus.MonitorAlertRule{}
 	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
@@ -436,6 +443,7 @@ func (h *ObservabilityHandler) getRuleReq(c *gin.Context) (*models.PromqlTplRule
 			return nil, fmt.Errorf("tenant id not valid")
 		}
 		tmp := uint(t)
+		h.SetExtraAuditData(c, models.ResTenant, tmp)
 		req.TenantID = &tmp
 	}
 
