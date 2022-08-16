@@ -75,13 +75,15 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 		return
 	}
 
+	// 使用map避免循环查询数据库
+	tplGetter := h.GetDataBase().NewPromqlTplMapper().FindPromqlTpl
 	for i := range ret {
 		if ret[i].SilenceEndsAt.Equal(forever) {
 			ret[i].SilenceEndsAt = nil
 		}
 		ret[i].LabelMap = make(map[string]string)
 		_ = json.Unmarshal(ret[i].Labels, &ret[i].LabelMap)
-		ret[i].Summary = formatBlackListSummary(ret[i].LabelMap, h.GetDataBase().FindPromqlTpl)
+		ret[i].Summary = formatBlackListSummary(ret[i].LabelMap, tplGetter)
 	}
 	handlers.OK(c, handlers.Page(total, ret, int64(page), int64(size)))
 }
