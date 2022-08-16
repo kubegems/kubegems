@@ -3852,13 +3852,12 @@ definitions:
       resource:
         description: 告警资源, eg. node、pod
         type: string
-      resourceDetail:
-        $ref: '#/definitions/prometheus.ResourceDetail'
       rule:
         description: 告警规则名, eg. cpuUsage、memoryUsagePercent
         type: string
-      ruleDetail:
-        $ref: '#/definitions/prometheus.RuleDetail'
+      scope:
+        description: scope
+        type: string
       unit:
         type: string
     type: object
@@ -3982,6 +3981,85 @@ definitions:
     - projectID
     - role
     - userID
+    type: object
+  models.PromqlTplResource:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      rules:
+        items:
+          $ref: '#/definitions/models.PromqlTplRule'
+        type: array
+      scope:
+        $ref: '#/definitions/models.PromqlTplScope'
+      scopeID:
+        type: integer
+      showName:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - name
+    type: object
+  models.PromqlTplRule:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      expr:
+        description: promql expr
+        type: string
+      id:
+        type: integer
+      labels:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      resource:
+        $ref: '#/definitions/models.PromqlTplResource'
+      resourceID:
+        type: integer
+      showName:
+        type: string
+      tenant:
+        $ref: '#/definitions/models.Tenant'
+      tenantID:
+        description: 若为null，则表示系统预置
+        type: integer
+      unit:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - name
+    type: object
+  models.PromqlTplScope:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      namespaced:
+        type: boolean
+      resources:
+        items:
+          $ref: '#/definitions/models.PromqlTplResource'
+        type: array
+      showName:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - name
     type: object
   models.Registry:
     properties:
@@ -4748,13 +4826,12 @@ definitions:
       resource:
         description: 告警资源, eg. node、pod
         type: string
-      resourceDetail:
-        $ref: '#/definitions/prometheus.ResourceDetail'
       rule:
         description: 告警规则名, eg. cpuUsage、memoryUsagePercent
         type: string
-      ruleDetail:
-        $ref: '#/definitions/prometheus.RuleDetail'
+      scope:
+        description: scope
+        type: string
       unit:
         description: 单位
         type: string
@@ -4797,35 +4874,6 @@ definitions:
         items:
           $ref: '#/definitions/prometheus.WebhookConfig'
         type: array
-    type: object
-  prometheus.ResourceDetail:
-    properties:
-      namespaced:
-        description: 是否带有namespace
-        type: boolean
-      rules:
-        additionalProperties:
-          $ref: '#/definitions/prometheus.RuleDetail'
-        type: object
-      showName:
-        type: string
-    type: object
-  prometheus.RuleDetail:
-    properties:
-      expr:
-        description: 原生表达式
-        type: string
-      labels:
-        description: 支持的标签
-        items:
-          type: string
-        type: array
-      showName:
-        description: 前端展示
-        type: string
-      unit:
-        description: 使用的单位
-        type: string
     type: object
   prometheus.WebhookConfig:
     properties:
@@ -21485,109 +21533,6 @@ paths:
       summary: 监控面板模板列表
       tags:
       - Observability
-  /v1/observability/template/resources/{resource_name}/rules/{rule_name}:
-    delete:
-      consumes:
-      - application/json
-      description: 删除prometheu查询模板
-      parameters:
-      - description: resource
-        in: path
-        name: resource_name
-        required: true
-        type: string
-      - description: rule
-        in: path
-        name: rule_name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 删除prometheu查询模板
-      tags:
-      - Observability
-    get:
-      consumes:
-      - application/json
-      description: 获取prometheu查询模板
-      parameters:
-      - description: resource
-        in: path
-        name: resource_name
-        required: true
-        type: string
-      - description: rule
-        in: path
-        name: rule_name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  $ref: '#/definitions/prometheus.RuleDetail'
-              type: object
-      security:
-      - JWT: []
-      summary: 获取prometheu查询模板
-      tags:
-      - Observability
-    post:
-      consumes:
-      - application/json
-      description: 添加prometheu查询模板
-      parameters:
-      - description: resource
-        in: path
-        name: resource_name
-        required: true
-        type: string
-      - description: rule
-        in: path
-        name: rule_name
-        required: true
-        type: string
-      - description: 查询模板配置
-        in: body
-        name: from
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.RuleDetail'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 添加prometheu查询模板
-      tags:
-      - Observability
   /v1/observability/tenant/{tenant_id}/alerts/graph:
     get:
       consumes:
@@ -21704,13 +21649,9 @@ paths:
         in: query
         name: search
         type: string
-      - description: 告警资源，默认所有
+      - description: 告警模板，默认所有, scope.resource.rule
         in: query
-        name: resource
-        type: string
-      - description: 告警指标，默认所有
-        in: query
-        name: rule
+        name: tpl
         type: string
       - description: 标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1
         in: query
@@ -21790,6 +21731,249 @@ paths:
       security:
       - JWT: []
       summary: 今日告警数量统计
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/template/resources{resource_id}/rules:
+    get:
+      consumes:
+      - application/json
+      description: 获取promql模板三级目录rule
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: resource id
+        in: path
+        name: resource_id
+        required: true
+        type: string
+      - description: Resource, Resource.Scope
+        in: query
+        name: preload
+        type: string
+      - description: search string
+        in: query
+        name: search
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/models.PromqlTplScope'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 获取promql模板三级目录rule
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/template/rules:
+    post:
+      consumes:
+      - application/json
+      description: 添加promql模板三级目录rule
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: rule
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/models.PromqlTplRule'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/models.PromqlTplScope'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 添加promql模板三级目录rule
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/template/rules/{rule_id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除promql模板三级目录rule
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: rule ID
+        in: path
+        name: rule_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/models.PromqlTplScope'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 删除promql模板三级目录rule
+      tags:
+      - Observability
+    put:
+      consumes:
+      - application/json
+      description: 更新promql模板三级目录rule
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: rule ID
+        in: path
+        name: rule_id
+        required: true
+        type: string
+      - description: rule
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/models.PromqlTplRule'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/models.PromqlTplScope'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 更新promql模板三级目录rule
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/template/scopes:
+    get:
+      consumes:
+      - application/json
+      description: 获取promql模板一级目录scope
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/models.PromqlTplScope'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 获取promql模板一级目录scope
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/template/scopes/{scope_id}/resources:
+    get:
+      consumes:
+      - application/json
+      description: 获取promql模板二级目录resource
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: integer
+      - description: scope id
+        in: path
+        name: scope_id
+        required: true
+        type: integer
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/models.PromqlTplScope'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 获取promql模板二级目录resource
       tags:
       - Observability
   /v1/project:
