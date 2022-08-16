@@ -111,7 +111,7 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
 		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
 			var err error
-			matchs := req.Query.GetVectorSelectorNames()
+			matchs := req.Query.GetVectorSelectors()
 			ret, err = cli.Extend().GetPrometheusLabelValues(ctx, matchs, req.Label, req.Start, req.End)
 			return err
 		}); err != nil {
@@ -147,7 +147,7 @@ func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
 		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
 			var err error
-			matchs := req.Query.GetVectorSelectorNames()
+			matchs := req.Query.GetVectorSelectors()
 			ret, err = cli.Extend().GetPrometheusLabelNames(ctx, matchs, req.Start, req.End)
 			return err
 		}); err != nil {

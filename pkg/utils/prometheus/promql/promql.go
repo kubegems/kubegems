@@ -74,12 +74,12 @@ func (q *Query) Sumby(labels ...string) *Query {
 	return q
 }
 
-func (q *Query) GetVectorSelectorNames() []string {
+func (q *Query) GetVectorSelectors() []string {
 	ret := set.NewSet[string]()
 	parser.Inspect(q.Expr, func(node parser.Node, _ []parser.Node) error {
 		vs, ok := node.(*parser.VectorSelector)
 		if ok {
-			ret.Append(vs.Name)
+			ret.Append(vs.String())
 		}
 		return nil
 	})

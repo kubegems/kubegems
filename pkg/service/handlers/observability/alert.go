@@ -767,9 +767,3 @@ func newDefaultSamplePair(start, end time.Time) []model.SamplePair {
 	}
 	return ret
 }
-
-var (
-	silenceCommentPrefix = "fingerprint-"
-
-	forever = time.Date(9893, time.December, 26, 0, 0, 0, 0, time.UTC) // 伟人8000年诞辰
-)
