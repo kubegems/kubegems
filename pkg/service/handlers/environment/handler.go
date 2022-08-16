@@ -690,8 +690,6 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 	dur := c.DefaultQuery("duration", "1h")
 	ctx := c.Request.Context()
-	monitoropts := prometheus.MonitorOptions{}
-	h.DynamicConfig.Get(ctx, &monitoropts)
 	ret := EnvironmentObservabilityRet{
 		EnvironmentName: env.EnvironmentName,
 		ClusterName:     env.Cluster.ClusterName,
@@ -806,7 +804,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// alert rules
 		eg.Go(func() error {
-			monitoralerts, err := cli.Extend().ListMonitorAlertRules(ctx, env.Namespace, &monitoropts, false)
+			monitoralerts, err := cli.Extend().ListMonitorAlertRules(ctx, env.Namespace, false)
 			if err != nil {
 				return err
 			}
@@ -828,7 +826,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 			alertResourceMap := make(map[string]int)
 			for _, v := range monitoralerts {
 				var key string
-				if v.PromqlGenerator.IsEmpty() {
+				if v.PromqlGenerator.Notpl() {
 					key = "raw promql"
 				} else {
 					key = v.PromqlGenerator.Resource

@@ -70,13 +70,13 @@ func (g *LogqlGenerator) IsEmpty() bool {
 	return g == nil || g.Match == ""
 }
 
-func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
+func (r *LoggingAlertRule) CheckAndModify() error {
 	if r.LogqlGenerator.IsEmpty() {
 		if r.BaseAlertRule.Expr == "" {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
 		if r.Message == "" {
-			r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, valueAnnotationExpr)
+			r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, ValueAnnotationExpr)
 		}
 	} else {
 		dur, err := model.ParseDuration(r.LogqlGenerator.Duration)
@@ -99,10 +99,10 @@ func (r *LoggingAlertRule) CheckAndModify(opts *MonitorOptions) error {
 			for label := range r.LogqlGenerator.LabelPairs {
 				r.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 			}
-			r.Message += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", r.LogqlGenerator.Duration, r.LogqlGenerator.Match, valueAnnotationExpr)
+			r.Message += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", r.LogqlGenerator.Duration, r.LogqlGenerator.Match, ValueAnnotationExpr)
 		}
 	}
-	return r.BaseAlertRule.checkAndModify(opts)
+	return r.BaseAlertRule.CheckAndModify()
 }
 
 var logqlReg = regexp.MustCompile("(.*)(<|<=|==|!=|>|>=)(.*)")
@@ -205,7 +205,7 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 			},
 			Annotations: map[string]string{
 				messageAnnotationsKey: r.Message,
-				valueAnnotationKey:    valueAnnotationExpr,
+				valueAnnotationKey:    ValueAnnotationExpr,
 			},
 		}
 		if !r.LogqlGenerator.IsEmpty() {

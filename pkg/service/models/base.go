@@ -18,12 +18,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/VividCortex/mysqlerr"
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"sigs.k8s.io/yaml"
 )
 
 func createDatabaseIfNotExists(dsn, dbname string) error {
@@ -88,15 +90,15 @@ func initBaseData(db *gorm.DB) error {
 		return e
 	}
 
-	// init default online configs
-	monitorCfg := OnlineConfig{
-		Name:    prometheus.DefaultMonitorOptions().Name(),
-		Content: prometheus.DefaultMonitorOptions().JSON(),
+	tpls, err := getPromqlTpls()
+	if err != nil {
+		return err
 	}
-	if e := db.FirstOrCreate(&monitorCfg).Error; e != nil {
-		return e
+	for i := range tpls {
+		if err := db.FirstOrCreate(&tpls[i]).Error; err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -162,6 +164,8 @@ func migrateModels(db *gorm.DB) error {
 		&OnlineConfig{},
 		// 登陆源
 		&AuthSource{},
+		// promql templates
+		&PromqlTplScope{}, &PromqlTplResource{}, &PromqlTplRule{},
 	)
 }
 
@@ -188,4 +192,74 @@ func GetErrMessage(err error) string {
 	default:
 		return fmt.Sprintf("系统错误(code=%v, message=%v)!", me.Number, me.Message)
 	}
+}
+
+func GetTplFromFile(scope, resource, rule string) (*prometheus.PromqlTpl, error) {
+	bts, err := os.ReadFile("config/promql_tpl.yaml")
+	if err != nil {
+		return nil, err
+	}
+	scopes := []*PromqlTplScope{}
+	if err := yaml.Unmarshal(bts, &scopes); err != nil {
+		return nil, err
+	}
+	for _, s := range scopes {
+		if s.Name == scope {
+			for _, res := range s.Resources {
+				if res.Name == resource {
+					for _, r := range res.Rules {
+						if r.Name == rule {
+							return &prometheus.PromqlTpl{
+								ScopeName:        s.Name,
+								ScopeShowName:    s.ShowName,
+								ResourceName:     res.Name,
+								ResourceShowName: res.ShowName,
+								RuleName:         r.Name,
+								RuleShowName:     r.ShowName,
+								Namespaced:       s.Namespaced,
+								Expr:             r.Expr,
+								Unit:             r.Unit,
+								Labels:           r.Labels,
+							}, nil
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("scope: %s, resource %s, rule: %s not found", scope, resource, rule)
+}
+
+func getPromqlTpls() ([]*PromqlTplRule, error) {
+	bts, err := os.ReadFile("config/promql_tpl.yaml")
+	if err != nil {
+		return nil, err
+	}
+	scopes := []PromqlTplScope{}
+	if err := yaml.Unmarshal(bts, &scopes); err != nil {
+		return nil, err
+	}
+
+	ret := []*PromqlTplRule{}
+	for _, scope := range scopes {
+		for _, res := range scope.Resources {
+			for _, rule := range res.Rules {
+				rule.Resource = &PromqlTplResource{
+					ID:       res.ID,
+					ScopeID:  &scope.ID,
+					Name:     res.Name,
+					ShowName: res.ShowName,
+					Scope: &PromqlTplScope{
+						ID:         scope.ID,
+						Name:       scope.Name,
+						ShowName:   scope.ShowName,
+						Namespaced: scope.Namespaced,
+					},
+				}
+				ret = append(ret, rule)
+			}
+		}
+	}
+
+	return ret, err
 }

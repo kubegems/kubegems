@@ -157,7 +157,6 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 					Silences: tt.fields.Silences,
 				},
 				PrometheusRule: tt.fields.PrometheusRule,
-				MonitorOptions: DefaultMonitorOptions(),
 			}
 			got, err := raw.ToAlerts(tt.args.containOrigin)
 			if (err != nil) != tt.wantErr {
@@ -165,7 +164,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				return
 			}
 			for i := range got {
-				got[i].PromqlGenerator.RuleContext = RuleContext{}
+				got[i].PromqlGenerator.Tpl = &PromqlTpl{}
 			}
 			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Errorf("RawAlertResource.ToAlerts() = %v, want %v", got, tt.want)

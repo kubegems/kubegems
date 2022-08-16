@@ -635,8 +635,7 @@ end)`)
 // @Param       namespace   query    string                                                                      false "命名空间，默认所有"
 // @Param       alertname   query    string                                                                      false "告警名，默认所有"
 // @Param       search      query    string                                                                      false "告警消息内容和标签，中间以空格隔开，eg. pod=mypod container=mycontainer alertcontent"
-// @Param       resource    query    string                                                                      false "告警资源，默认所有"
-// @Param       rule        query    string                                                                      false "告警指标，默认所有"
+// @Param       tpl         query    string                                                                      false "告警模板，默认所有, scope.resource.rule"
 // @Param       labelpairs  query    string                                                                      false "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
 // @Param       start       query    string                                                                      false "开始时间"
 // @Param       end         query    string                                                                      false "结束时间"
@@ -656,8 +655,7 @@ func (h *ObservabilityHandler) SearchAlert(c *gin.Context) {
 	namespace := c.Query("namespace")
 	search := c.Query("search")
 	alertName := c.Query("alertname")
-	resoure := c.Query("resource")
-	rule := c.Query("rule")
+	tpl := c.Query("tpl")
 	labelpairs := c.QueryMap("labelpairs")
 	start := c.Query("start")
 	end := c.Query("end")
@@ -700,11 +698,8 @@ func (h *ObservabilityHandler) SearchAlert(c *gin.Context) {
 			}
 		}
 	}
-	if resoure != "" {
-		query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, prometheus.AlertResourceLabel), resoure)
-	}
-	if rule != "" {
-		query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, prometheus.AlertRuleLabel), rule)
+	if tpl != "" {
+		query.Where(fmt.Sprintf(`labels -> '$."%s"' = ?`, prometheus.AlertPromqlTpl), tpl)
 	}
 	for k, v := range labelpairs {
 		query.Where(fmt.Sprintf(`labels -> '$.%s' = ?`, k), v)

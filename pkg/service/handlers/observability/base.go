@@ -74,10 +74,13 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/metrics/labelnames", h.CheckByClusterNamespace, h.LabelNames)
 
 	// template
-	rg.GET("/observability/template/resources/:resource_name/rules/:rule_name", h.CheckIsSysADMIN, h.GetMetricTemplate)
-	rg.POST("/observability/template/resources/:resource_name/rules/:rule_name", h.CheckIsSysADMIN, h.AddOrUpdateMetricTemplate)
-	rg.DELETE("/observability/template/resources/:resource_name/rules/:rule_name", h.
-		CheckIsSysADMIN, h.DeleteMetricTemplate)
+	rg.GET("/observability/tenant/:tenant_id/template/scopes", h.CheckByTenantID, h.ListScopes)
+	rg.GET("/observability/tenant/:tenant_id/template/scopes/:scope_id/resources", h.CheckByTenantID, h.ListResources)
+	rg.GET("/observability/tenant/:tenant_id/template/resources/:resource_id/rules", h.CheckByTenantID, h.ListRules)
+	rg.POST("/observability/tenant/:tenant_id/template/rules", h.CheckByTenantID, h.AddRules)
+	rg.PUT("/observability/tenant/:tenant_id/template/rules/:rule_id", h.CheckByTenantID, h.UpdateRules)
+	rg.DELETE("/observability/tenant/:tenant_id/template/rules/:rule_id", h.CheckByTenantID, h.DeleteRules)
+
 	rg.GET("/observability/template/dashboard", h.ListDashboardTemplates)
 
 	// dashboard

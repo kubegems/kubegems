@@ -347,7 +347,7 @@ func (c *ExtendClient) PrometheusTargets(ctx context.Context) (*promv1.TargetsRe
 	return &ret, nil
 }
 
-func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace string, opts *prometheus.MonitorOptions, hasDetail bool) ([]prometheus.MonitorAlertRule, error) {
+func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace string, hasDetail bool) ([]prometheus.MonitorAlertRule, error) {
 	if namespace == allNamespace {
 		namespace = v1.NamespaceAll
 	}
@@ -419,7 +419,6 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 				Silences: silenceNamespaceMap[rule.Namespace],
 			},
 			PrometheusRule: rule,
-			MonitorOptions: opts,
 		}
 
 		alerts, err := raw.ToAlerts(hasDetail)
@@ -582,7 +581,7 @@ func (c *ExtendClient) getBaseAlertResource(ctx context.Context, namespace, amco
 }
 
 // GetRawMonitorAlertResource get specified namespace's alert
-func (c *ExtendClient) GetRawMonitorAlertResource(ctx context.Context, namespace, name string, opts *prometheus.MonitorOptions) (*prometheus.RawMonitorAlertResource, error) {
+func (c *ExtendClient) GetRawMonitorAlertResource(ctx context.Context, namespace, name string) (*prometheus.RawMonitorAlertResource, error) {
 	base, err := c.getBaseAlertResource(ctx, namespace, name)
 	if err != nil {
 		return nil, err
@@ -595,7 +594,6 @@ func (c *ExtendClient) GetRawMonitorAlertResource(ctx context.Context, namespace
 	return &prometheus.RawMonitorAlertResource{
 		Base:           base,
 		PrometheusRule: promerule,
-		MonitorOptions: opts,
 	}, nil
 }
 
