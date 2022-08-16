@@ -1,0 +1,1283 @@
+---
+severity:
+  error: 错误
+  critical: 严重
+operators:
+- "=="
+- "!="
+- ">"
+- "<"
+- ">="
+- "<="
+resources:
+  log:
+    rules:
+      logCount:
+        expr: gems_loki_logs_count_last_1m
+        unit: ''
+        labels:
+        - namespace
+        - pod
+        showName: Logs Last 1 Minute (lines)
+      errorLogCount:
+        expr: gems_loki_error_logs_count_last_1m
+        unit: ''
+        labels:
+        - namespace
+        - pod
+        showName: Error logs Last 1 Minutes (lines)
+    showName: 日志
+    namespaced: true
+  pvc:
+    rules:
+      volumeTotal:
+        expr: gems_pvc_total_bytes
+        unit: bytes-B
+        labels:
+        - node
+        - namespace
+        - persistentvolumeclaim
+        showName: PersistentVolume Total Size (bytes)
+      volumeUsage:
+        expr: gems_pvc_usage_bytes
+        unit: bytes-B
+        labels:
+        - node
+        - namespace
+        - persistentvolumeclaim
+        showName: PersistentVolume Usage Size (bytes)
+      volumeUsagePercent:
+        expr: gems_pvc_usage_percent
+        unit: percent-0-100
+        labels:
+        - node
+        - namespace
+        - persistentvolumeclaim
+        showName: PersistentVolume Usage Ratio (%)
+    showName: 存储卷
+    namespaced: true
+  cert:
+    rules:
+      status:
+        expr: certmanager_certificate_ready_status
+        unit: ''
+        labels:
+        - namespace
+        - name
+        - condition
+        showName: Certs Ready
+      expirationRemainTime:
+        expr: gems_cert_expiration_remain_seconds
+        unit: duration-s
+        labels:
+        - namespace
+        - name
+        showName: Expiration Time (second)
+    showName: 证书
+    namespaced: true
+  node:
+    rules:
+      load1:
+        expr: gems_node_load1
+        unit: ''
+        labels:
+        - node
+        showName: Host Load 1
+      load5:
+        expr: gems_node_load5
+        unit: ''
+        labels:
+        - node
+        showName: Host Load 5
+      load15:
+        expr: gems_node_load15
+        unit: ''
+        labels:
+        - node
+        showName: Host Load 15
+      cpuTotal:
+        expr: gems_node_cpu_total_cores
+        unit: short
+        labels:
+        - node
+        showName: CPU Total (1000m=1Core)
+      cpuUsage:
+        expr: gems_node_cpu_usage_cores
+        unit: short
+        labels:
+        - node
+        showName: CPU Total Usage (1000m=1Core)
+      diskTotal:
+        expr: gems_node_disk_total_bytes
+        unit: bytes-B
+        labels:
+        - node
+        - device
+        showName: Host Disk Total Size (bytes)
+      diskUsage:
+        expr: gems_node_disk_usage_bytes
+        unit: bytes-B
+        labels:
+        - node
+        - device
+        showName: Host Disk Usage  (bytes)
+      diskReadBPS:
+        expr: gems_node_disk_read_bps
+        unit: bytes/sec-B/s
+        labels:
+        - node
+        showName: Host Disk Read (bytes/s)
+      memoryTotal:
+        expr: gems_node_memory_total_bytes
+        unit: bytes-B
+        labels:
+        - node
+        showName: Host Memory Total Size (bytes)
+      memoryUsage:
+        expr: gems_node_memory_usage_bytes
+        unit: bytes-B
+        labels:
+        - node
+        showName: Host Memory Usage (bytes)
+      diskReadIOPS:
+        expr: gems_node_disk_read_iops
+        unit: ''
+        labels:
+        - node
+        showName: Host Disk Read OPS
+      diskWriteBPS:
+        expr: gems_node_disk_write_bps
+        unit: bytes/sec-B/s
+        labels:
+        - node
+        showName: Host Disk Write (bytes/s)
+      networkInBPS:
+        expr: gems_node_network_receive_bps
+        unit: bytes/sec-B/s
+        labels:
+        - node
+        showName: Host Network Received (bytes/s)
+      diskWriteIOPS:
+        expr: gems_node_disk_write_iops
+        unit: ''
+        labels:
+        - node
+        showName: Host Disk Write OPS
+      networkOutBPS:
+        expr: gems_node_network_send_bps
+        unit: bytes/sec-B/s
+        labels:
+        - node
+        showName: Host Network Sent (bytes/s)
+      cpuUsagePercent:
+        expr: gems_node_cpu_usage_percent
+        unit: percent-0-100
+        labels:
+        - node
+        showName: Host CPU Usage Ratio (%)
+      runningPodCount:
+        expr: gems_node_running_pod_count
+        unit: ''
+        labels:
+        - node
+        showName: Host Running Pods
+      statusCondition:
+        expr: kube_node_status_condition
+        unit: ''
+        labels:
+        - node
+        - condition
+        - status
+        showName: Host Kubelet Status Condition
+      diskUsagePercent:
+        expr: gems_node_disk_usage_percent
+        unit: percent-0-100
+        labels:
+        - node
+        - device
+        showName: Host Disk Usage Ratio (%)
+      runningPodPercent:
+        expr: gems_node_running_pod_percent
+        unit: percent-0-100
+        labels:
+        - node
+        showName: Host Running Pod Usage Ratio (%)
+      memoryUsagePercent:
+        expr: gems_node_memory_usage_percent
+        unit: percent-0-100
+        labels:
+        - node
+        showName: Host Memory Usage Ratio (%)
+      networkInErrPercent:
+        expr: gems_node_network_receive_errs_percent
+        unit: percent-0-100
+        labels:
+        - node
+        - instance
+        - device
+        showName: Host Network Receive ErrorPack Ratio (%)
+      networkOutErrPercent:
+        expr: gems_node_network_send_errs_percent
+        unit: percent-0-100
+        labels:
+        - node
+        - instance
+        - device
+        showName: Host Network Sent ErrorPack Ratio (%)
+    showName: 节点
+    namespaced: false
+  kafka:
+    rules:
+      kafkaTopics:
+        expr: count(count by (topic,service,namespace) (kafka_topic_partitions))
+        unit: ''
+        labels:
+        - service
+        - topic
+        - namespace
+        showName: Topics
+      kafkaBrokers:
+        expr: kafka_brokers
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Brokers
+      kafkaPartitions:
+        expr: sum(kafka_topic_partitions) by (namespace,service)
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Partitions
+      kafkaConsumerLatency:
+        expr: sum by (consumergroup,topic,namespace,service) (kafka_consumergroup_lag)
+          != 0
+        unit: ''
+        labels:
+        - service
+        - topic
+        - namespace
+        - consumergroup
+        showName: Consumer Latency
+      kafkaMessageConsumer:
+        expr: sum(rate(kafka_consumergroup_current_offset[1m])) by (topic,namespace,service)
+          > 0
+        unit: ''
+        labels:
+        - service
+        - topic
+        - namespace
+        showName: Message Consumer Rate (messages/s)
+      kafkaMessagesProduced:
+        expr: sum(rate(kafka_topic_partition_current_offset{topic!~"__.*"}[1m])) by
+          (topic,namespace,service) > 0
+        unit: ''
+        labels:
+        - service
+        - topic
+        - namespace
+        showName: Message Producer Rate (messages/s)
+    showName: kafka
+    namespaced: true
+  mysql:
+    rules:
+      mysqlQPS:
+        expr: rate(mysql_global_status_queries[5m])
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: QPS
+      mysqlTPS:
+        expr: 'sum(rate(mysql_global_status_commands_total{command=~"insert|update|delete"}[5m]))
+          without (command) '
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: TPS
+      mysqlState:
+        expr: mysql_up
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Up
+      mysqlThreads:
+        expr: mysql_info_schema_threads
+        unit: ''
+        labels:
+        - service
+        - state
+        - namespace
+        showName: Threads (by state)
+      mysqlOpenFiles:
+        expr: mysql_global_status_innodb_num_open_files
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Open Files
+      mysqlQuestions:
+        expr: rate(mysql_global_status_questions[5m])
+        unit: ''
+        labels:
+        - service
+        showName: " Questions Rate (questions/s)"
+      mysqlSentBytes:
+        expr: " irate(mysql_global_status_bytes_sent[5m])"
+        unit: bytes/sec-B/s
+        labels:
+        - service
+        - namespace
+        showName: Network Sent (bytes/s)
+      mysqlSlowQuery:
+        expr: idelta(mysql_global_status_slow_queries[1m])
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Slow Queries Rate (queries/min)
+      mysqlTableSize:
+        expr: sum by (schema,service,namespace) (mysql_info_schema_table_size)
+        unit: bytes-B
+        labels:
+        - service
+        - namespace
+        showName: Table Size (bytes)
+      mysqlTmpTables:
+        expr: sum(rate(mysql_global_status_created_tmp_tables[5m])) by (namespace,service)
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Tmp Table Created Rate (tables/s)
+      mysqlTotalRows:
+        expr: sum(mysql_info_schema_table_rows) by (namespace,service)
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Table Rows
+      mysqlConnections:
+        expr: mysql_global_status_max_used_connections
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Connections
+      mysqlCommandTop10:
+        expr: topk(10, rate(mysql_global_status_commands_total[5m])>0)
+        unit: ''
+        labels:
+        - service
+        - command
+        - namespace
+        showName: Command Top10
+      mysqlReceivedBytes:
+        expr: irate(mysql_global_status_bytes_received[5m])
+        unit: bytes/sec-B/s
+        labels:
+        - service
+        - namespace
+        showName: " Network Received (bytes/s)"
+      mysqlTabelLockWaited:
+        expr: sum(increase(mysql_global_status_table_locks_waited[5m])) by (namespace,service)
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Table Locks Waited 5 Minutes
+      mysqlInnodbBufferSize:
+        expr: mysql_global_variables_innodb_buffer_pool_size
+        unit: bytes-B
+        labels:
+        - service
+        - namespace
+        showName: InnoDB Buffer Pool (bytes)
+      mysqlSlowQueryEnabled:
+        expr: mysql_global_variables_slow_query_log
+        unit: short
+        labels:
+        - service
+        - namespace
+        showName: MySQL Slow Query Enabled
+      mysqlTableOpenCacheHitRatio:
+        expr: rate(mysql_global_status_table_open_cache_hits[5m]) / ( rate(mysql_global_status_table_open_cache_hits[5m])
+          + rate(mysql_global_status_table_open_cache_misses[5m]) )
+        unit: percent-0.0-1.0
+        labels:
+        - service
+        - namespace
+        showName: Table Open Cache Hit Ratio (%)
+    showName: mysql
+    namespaced: true
+  redis:
+    rules:
+      redisOPS:
+        expr: irate(redis_commands_processed_total[5m])
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Commands Processed (op/s)
+      redisKeys:
+        expr: sum (redis_db_keys) by (db,namespace,service)
+        unit: ''
+        labels:
+        - service
+        - db
+        - namespace
+        showName: DB Keys
+      redisState:
+        expr: redis_up
+        unit: ''
+        labels:
+        - service
+        - namespaces
+        showName: Up
+      redisClients:
+        expr: redis_connected_clients
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Connected Clients
+      redisCpuUsage:
+        expr: 'irate(redis_cpu_user_seconds_total[5m]) + irate(redis_cpu_sys_seconds_total[5m]) '
+        unit: short
+        labels:
+        - service
+        - namespace
+        showName: CPU Usage (1000m=1Core)
+      redisKeysHits:
+        expr: redis_keyspace_hits_total
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Keys Hits Total
+      redisSentBytes:
+        expr: irate(redis_net_output_bytes_total[5m])
+        unit: bytes/sec-B/s
+        labels:
+        - service
+        - namesapce
+        showName: Network Sent (bytes/s)
+      redisKeysMissed:
+        expr: redis_keyspace_misses_total
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Key Misses Total
+      redisKeysEvicted:
+        expr: redis_evicted_keys_total
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Evicted Keys Total
+      redisKeysHitRate:
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total+ redis_keyspace_misses_total)
+        unit: percent-0.0-1.0
+        labels:
+        - service
+        - namespace
+        showName: Keys Hit Ratio (%)
+      redisCommandsTop5:
+        expr: topk(5, irate(redis_commands_total[1m]))
+        unit: ''
+        labels:
+        - service
+        - cmd
+        - namespace
+        showName: Commands Top5
+      redisKeysExpiring:
+        expr: redis_db_keys_expiring
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Expireing Keys
+      redisReceivedByted:
+        expr: irate(redis_net_input_bytes_total[5m])
+        unit: bytes/sec-B/s
+        labels:
+        - service
+        - namespace
+        showName: Network Received (bytes/s)
+      redisMemoryUsedBytes:
+        expr: redis_memory_used_bytes
+        unit: bytes-B
+        labels:
+        - service
+        - namespace
+        showName: Memory Used (bytes)
+      redisNoExpiringKeyRate:
+        expr: 1 - sum(redis_db_keys_expiring) / sum(redis_db_keys)
+        unit: percent-0.0-1.0
+        labels:
+        - service
+        - namespace
+        showName: Not-Expiring Keys Ratio (%)
+      redisRejectedConnectionsTotal:
+        expr: redis_rejected_connections_total
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Rejected Connections Total
+    showName: redis
+    namespaced: true
+  plugin:
+    rules:
+      status:
+        expr: gems_server_plugin_status
+        unit: ''
+        labels:
+        - type
+        - namespace
+        - plugin
+        - version
+        - enabled
+        showName: KubeGems Plugins Status
+    showName: 插件
+    namespaced: false
+  cluster:
+    rules:
+      cpuUsagePercent:
+        expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100
+        unit: percent-0-100
+        labels: []
+        showName: Cluster CPU Usage Ratio (%)
+      memoryUsagePercent:
+        expr: "(1- sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes))
+          * 100"
+        unit: percent-0-100
+        labels: []
+        showName: Cluster Memory Usage Ratio (%)
+      certExpirationRemainTime:
+        expr: gems_agent_cluster_component_cert_expiration_remain_seconds
+        unit: duration-s
+        labels:
+        - component
+        showName: Cluster Certs Expiration Time (second)
+    showName: 集群
+    namespaced: false
+  consule:
+    rules:
+      consulState:
+        expr: consul_up
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Up
+      consulService:
+        expr: consul_catalog_services
+        unit: ''
+        labels:
+        - namespace
+        - service
+        showName: Consule Catalog Services
+      consulRaftPeers:
+        expr: consul_raft_peers
+        unit: ''
+        labels:
+        - namespace
+        - service
+        showName: Consul Raft Peers
+      consulLanMembers:
+        expr: consul_serf_lan_members
+        unit: ''
+        labels:
+        - namespace
+        - service
+        showName: Consul Cluster Members
+      consulRaftLeader:
+        expr: consul_raft_leader
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Consul Raft Leader
+      consulServiceTag:
+        expr: consul_service_tag
+        unit: ''
+        labels:
+        - service
+        - namespace
+        - service_id
+        - tag
+        showName: 'Consul Service Tag '
+      consulServiceHealthy:
+        expr: consul_catalog_service_node_healthy
+        unit: ''
+        labels:
+        - service
+        - namespace
+        - service_name
+        - service_id
+        showName: Consul Catalog Service Healthy
+    showName: consul
+    namespaced: true
+  mongodb:
+    rules:
+      mongodbQPS:
+        expr: sum(rate(mongodb_op_counters_total{type=~"query|getmore"}[5m]))  by
+          (namespace,service)
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: QPS
+      mongodbTPS:
+        expr: sum(rate(mongodb_op_counters_total{type=~"insert|update|delete"}[5m]))
+          by (namespace,service)
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: TPS
+      mongdbState:
+        expr: mongodb_up
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Up
+      mongodbCursor:
+        expr: mongodb_mongod_metrics_cursor_open
+        unit: ''
+        labels:
+        - service
+        - state
+        - namespace
+        showName: Cursor Open
+      mongodbMemory:
+        expr: mongodb_memory
+        unit: bytes-MB
+        labels:
+        - service
+        - type
+        - namespace
+        showName: Memory Usage (M bytes)
+      mongodbAsserts:
+        expr: rate(mongodb_asserts_total[5m])
+        unit: ''
+        labels:
+        - service
+        - type
+        - namespace
+        showName: Asserts Total
+      mongodbObjects:
+        expr: mongodb_mongod_db_objects_total
+        unit: ''
+        labels:
+        - service
+        - db
+        - namespace
+        showName: Objects Total
+      mongodbDataSize:
+        expr: mongodb_mongod_db_data_size_bytes
+        unit: bytes-B
+        labels:
+        - service
+        - db
+        - namespace
+        showName: DB Size (bytes)
+      mongodbDocument:
+        expr: irate(mongodb_mongod_metrics_document_total[5m])
+        unit: ''
+        labels:
+        - service
+        - state
+        - namespace
+        showName: Document Operations (op/s)
+      mongodbIndexSize:
+        expr: mongodb_mongod_db_index_size_bytes
+        unit: bytes-B
+        labels:
+        - service
+        - db
+        - namespace
+        showName: Index Size (bytes)
+      mongodbLockQueue:
+        expr: mongodb_mongod_global_lock_current_queue
+        unit: ''
+        labels:
+        - service
+        - type
+        - namespace
+        showName: Lock Queue
+      mongodbOplogSize:
+        expr: mongodb_mongod_replset_oplog_size_bytes
+        unit: bytes-B
+        labels:
+        - service
+        - type
+        - namespace
+        showName: Oplog Size (bytes)
+      mongodbSentBytes:
+        expr: irate(mongodb_network_bytes_total{state="out_bytes"}[5m])
+        unit: bytes/sec-B/s
+        labels:
+        - service
+        - namespace
+        showName: Network Sent (bytes/s)
+      mongodbCacheBytes:
+        expr: mongodb_mongod_wiredtiger_cache_bytes
+        unit: bytes-B
+        labels:
+        - service
+        - type
+        - namespace
+        showName: Wiredtiger Cache Size (bytes)
+      mongodbGlobalLock:
+        expr: mongodb_mongod_global_lock_total
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Global Locks
+      mongodbPageFaults:
+        expr: mongodb_extra_info_page_faults_total
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Page Faults Total
+      mongdoResponseTime:
+        expr: 'rate(mongodb_mongod_op_latencies_latency_total[5m]) / rate(mongodb_mongod_op_latencies_ops_total[5m]) '
+        unit: duration-ms
+        labels:
+        - service
+        - type
+        - namespace
+        showName: Response Time (ms)
+      mongodbConnections:
+        expr: mongodb_connections
+        unit: ''
+        labels:
+        - service
+        - state
+        - namespace
+        showName: Connections
+      mongodbReceivedBytes:
+        expr: irate(mongodb_network_bytes_total{state="in_bytes"}[5m])
+        unit: bytes/sec-B/s
+        labels:
+        - service
+        - namespace
+        showName: Network Received (bytes/s)
+      mongodbWiredtigerCacheRate:
+        expr: sum by (namespace,service) (mongodb_mongod_wiredtiger_cache_bytes{type="total"})
+          / sum by (namespace,service)(mongodb_mongod_wiredtiger_cache_bytes_total)
+        unit: percent-0.0-1.0
+        labels:
+        - service
+        - namespace
+        showName: Wiredtiger Cache Ratio (%)
+    showName: mongodb
+    namespaced: true
+  exporter:
+    rules:
+      status:
+        expr: up
+        unit: ''
+        labels:
+        - instance
+        - job
+        showName: 状态
+    showName: 采集器
+    namespaced: false
+  postgres:
+    rules:
+      pgState:
+        expr: pg_static
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Up
+      pgSyncTime:
+        expr: irate(pg_stat_bgwriter_checkpoint_sync_time{}[5m])
+        unit: duration-s
+        labels:
+        - namespace
+        - service
+        showName: Checkpoint Sync Time (second)
+      pgTmpBytes:
+        expr: irate(pg_stat_database_temp_bytes[5m])
+        unit: bytes-B
+        labels:
+        - namespace
+        - service
+        - datname
+        showName: Temp File (bytes)
+      pgConflicts:
+        expr: pg_stat_database_conflicts
+        unit: ''
+        labels:
+        - namespace
+        - datname
+        - service
+        showName: Conflicts
+      pgDeadlocks:
+        expr: pg_stat_database_deadlocks
+        unit: ''
+        labels:
+        - namespace
+        - service
+        - datname
+        showName: Deadlocks
+      pgFetchData:
+        expr: irate(pg_stat_database_tup_fetched[5m])
+        unit: ''
+        labels:
+        - namespace
+        - service
+        - datname
+        showName: QPS
+      pgLockCount:
+        expr: pg_locks_count != 0
+        unit: ''
+        labels:
+        - namespace
+        - datname
+        - mode
+        showName: Lock Tables
+      pgWriteTime:
+        expr: irate(pg_stat_bgwriter_checkpoint_write_time{}[5m])
+        unit: duration-s
+        labels:
+        - service
+        - namespace
+        showName: Checkpoint Write Time (second)
+      pgDeleteData:
+        expr: irate(pg_stat_database_tup_deleted[5m])
+        unit: bytes-B
+        labels:
+        - namespace
+        - datname
+        - service
+        showName: Delete Rows Rate
+      pgReturnData:
+        expr: irate(pg_stat_database_tup_returned[5m])
+        unit: ''
+        labels:
+        - namespace
+        - datname
+        - service
+        showName: Return Rows Rate
+      pgXactCommit:
+        expr: irate(pg_stat_database_xact_commit[5m])
+        unit: ''
+        labels:
+        - datname
+        - service
+        - datname
+        showName: TPS
+      pgUpdatedData:
+        expr: irate(pg_stat_database_tup_updated[5m])
+        unit: ''
+        labels:
+        - namespace
+        - service
+        - datname
+        showName: Update Rows Rate
+      pdXactRollback:
+        expr: irate(pg_stat_database_xact_rollback[5m])
+        unit: ''
+        labels:
+        - datname
+        - namespace
+        - service
+        showName: Xact Rollback
+      pgCacheHitRate:
+        expr: pg_stat_database_blks_hit{} / (pg_stat_database_blks_read{} + pg_stat_database_blks_hit{})
+          <= 1
+        unit: percent-0.0-1.0
+        labels:
+        - datname
+        - service
+        - namespace
+        showName: Cache Hit Ratio (%)
+      pgIdleSessions:
+        expr: pg_stat_activity_count{state=~"idle|idle in transaction|idle in transaction
+          (aborted)"}
+        unit: ''
+        labels:
+        - namespace
+        - datname
+        - service
+        - state
+        showName: Idle Sessions
+      pgInsertedDate:
+        expr: irate(pg_stat_database_tup_inserted[5m])
+        unit: ''
+        labels:
+        - namespace
+        - service
+        - datname
+        showName: Insert Rows Rate
+      pgActivifyCount:
+        expr: pg_stat_activity_count{state="active"} !=0
+        unit: ''
+        labels:
+        - namespace
+        - service
+        - datname
+        showName: Active Sessions
+      pgMaxConnections:
+        expr: pg_settings_max_connections
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Max Connections
+      pgSharedBuffersBytes:
+        expr: pg_settings_shared_buffers_bytes
+        unit: bytes-B
+        labels:
+        - namespace
+        - service
+        showName: Shared Buffers (bytes)
+      pgEffectiveCacheSizeBytes:
+        expr: pg_settings_effective_cache_size_bytes
+        unit: bytes-B
+        labels:
+        - namespace
+        - service
+        showName: Effective Cache (bytes)
+    showName: postgres
+    namespaced: true
+  container:
+    rules:
+      cpuTotal:
+        expr: gems_container_cpu_limit_cores
+        unit: short
+        labels:
+        - node
+        - namespace
+        - pod
+        - container
+        - owner_kind
+        - workload
+        showName: Pod CPU Limits (1000m=1Core)
+      cpuUsage:
+        expr: gems_container_cpu_usage_cores
+        unit: short
+        labels:
+        - node
+        - namespace
+        - pod
+        - container
+        - owner_kind
+        - workload
+        showName: Pod CPU Usage (1000m=1Core)
+      memoryTotal:
+        expr: gems_container_memory_limit_bytes
+        unit: bytes-B
+        labels:
+        - node
+        - namespace
+        - pod
+        - container
+        - owner_kind
+        - workload
+        showName: Pod Memory Limits (bytes)
+      memoryUsage:
+        expr: gems_container_memory_usage_bytes
+        unit: bytes-B
+        labels:
+        - node
+        - namespace
+        - pod
+        - container
+        - owner_kind
+        - workload
+        showName: Pod Memory Usage (bytes)
+      networkInBPS:
+        expr: gems_container_network_receive_bps
+        unit: bytes/sec-B/s
+        labels:
+        - node
+        - namespace
+        - pod
+        - container
+        - owner_kind
+        - workload
+        showName: Pod Network Received (bytes/s)
+      networkOutBPS:
+        expr: gems_container_network_send_bps
+        unit: bytes/sec-B/s
+        labels:
+        - node
+        - namespace
+        - pod
+        - container
+        - owner_kind
+        - workload
+        showName: Pod Network Sent (bytes/s)
+      cpuUsagePercent:
+        expr: gems_container_cpu_usage_percent
+        unit: percent-0-100
+        labels:
+        - node
+        - namespace
+        - pod
+        - container
+        - owner_kind
+        - workload
+        showName: Pod CPU Usage Ratio (%)
+      memoryUsagePercent:
+        expr: gems_container_memory_usage_percent
+        unit: percent-0-100
+        labels:
+        - node
+        - namespace
+        - pod
+        - container
+        - owner_kind
+        - workload
+        showName: Pod Memory Usage Ratio (%)
+      restartTimesLast5m:
+        expr: gems_container_restart_times_last_5m
+        unit: ''
+        labels:
+        - namespace
+        - pod
+        - container
+        showName: Pod Restart Reason Last 5 minutes
+      statusTerminatedReason:
+        expr: kube_pod_container_status_terminated_reason
+        unit: ''
+        labels:
+        - namespace
+        - pod
+        - container
+        - reason
+        showName: Pod Terminated Reason
+    showName: 容器
+    namespaced: true
+  environment:
+    rules:
+      cpuUsage:
+        expr: gems_namespace_cpu_usage_cores
+        unit: short
+        labels:
+        - tenant
+        - project
+        - environment
+        - namespace
+        showName: Environment CPU Usage (1000m=1Core)
+      memoryUsage:
+        expr: gems_namespace_memory_usage_bytes
+        unit: bytes-B
+        labels:
+        - tenant
+        - project
+        - environment
+        - namespace
+        showName: Environment Memory Usage (bytes)
+      volumeUsage:
+        expr: gems_namespace_pvc_usage_bytes
+        unit: bytes-B
+        labels:
+        - tenant
+        - project
+        - environment
+        - namespace
+        showName: Environment PersistentVolume Usage (bytes)
+      networkInBPS:
+        expr: gems_namespace_network_receive_bps
+        unit: bytes/sec-B/s
+        labels:
+        - tenant
+        - project
+        - environment
+        - namespace
+        showName: Environment Network Received (bytes/s)
+      networkOutBPS:
+        expr: gems_namespace_network_send_bps
+        unit: bytes/sec-B/s
+        labels:
+        - tenant
+        - project
+        - environment
+        - namespace
+        showName: Environment Network Sent (bytes/s)
+    showName: 环境
+    namespaced: true
+  elasticsearch:
+    rules:
+      esGcCount:
+        expr: irate(elasticsearch_jvm_gc_collection_seconds_count[5m])
+        unit: ''
+        labels:
+        - host
+        - service
+        - gc
+        - namespace
+        showName: JVM GC Count
+      esOsLoad1:
+        expr: elasticsearch_os_load1
+        unit: ''
+        labels:
+        - service
+        - host
+        - namespace
+        showName: OS Load 1
+      esGcSeconds:
+        expr: irate(elasticsearch_jvm_gc_collection_seconds_sum[5m])
+        unit: duration-s
+        labels:
+        - service
+        - host
+        - gc
+        - namespace
+        showName: JVM GC Time (s)
+      esOpenfiles:
+        expr: elasticsearch_process_open_files_count
+        unit: ''
+        labels:
+        - service
+        - host
+        - namespace
+        showName: Open Files
+      esSentBytes:
+        expr: irate(elasticsearch_transport_tx_size_bytes_total[5m])
+        unit: bytes/sec-B/s
+        labels:
+        - service
+        - host
+        - namespace
+        showName: Network Sent (bytes/s)
+      esCPUPercent:
+        expr: elasticsearch_process_cpu_percent
+        unit: percent-0-100
+        labels:
+        - service
+        - host
+        - namespace
+        showName: CPU Usage Ratio (%)
+      esPendingTask:
+        expr: elasticsearch_cluster_health_number_of_pending_tasks
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Pending Tasks
+      esActiveShards:
+        expr: elasticsearch_cluster_health_active_shards
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Active Shards
+      esQueryDuration:
+        expr: irate(elasticsearch_indices_search_query_time_seconds[5m])
+        unit: duration-s
+        labels:
+        - service
+        - host
+        - namespace
+        showName: Query Duration (s)
+      esReceivedBytes:
+        expr: irate(elasticsearch_transport_rx_size_bytes_total[5m])
+        unit: bytes/sec-B/s
+        labels:
+        - service
+        - host
+        - namespace
+        showName: Network Received (bytes/s)
+      esIndicesPerNode:
+        expr: elasticsearch_indices_docs
+        unit: short
+        labels:
+        - service
+        - host
+        - namespace
+        showName: Indices Docs Per Node
+      esBreakersTripped:
+        expr: elasticsearch_breakers_tripped
+        unit: ''
+        labels:
+        - service
+        - host
+        - breaker
+        - namespace
+        showName: Breakers Tripped
+      esQueryCacheBytes:
+        expr: elasticsearch_indices_query_cache_memory_size_bytes
+        unit: bytes-B
+        labels:
+        - service
+        - host
+        - namespace
+        showName: Query Cache_Size (bytes)
+      esUnassignedShards:
+        expr: elasticsearch_cluster_health_unassigned_shards
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Unassigned Shards
+      esRelocatingsShards:
+        expr: elasticsearch_cluster_health_relocating_shards
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Relocating Shards
+      esInitializingShards:
+        expr: elasticsearch_cluster_health_initializing_shards
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Initializing Shards
+      esActivePrimaryShards:
+        expr: elasticsearch_cluster_health_active_primary_shards
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Active Primary Shards
+      esJVMMemoryUsageBytes:
+        expr: elasticsearch_jvm_memory_used_bytes
+        unit: bytes-B
+        labels:
+        - area
+        - service
+        - namespace
+        showName: JVM Memory Usage (bytes)
+      esJVMMemoryUsagePersent:
+        expr: elasticsearch_jvm_memory_used_bytes/elasticsearch_jvm_memory_max_bytes
+        unit: percent-0.0-1.0
+        labels:
+        - service
+        - host
+        showName: JVM Memory Usage Rate (%)
+      esDelayedUnassignedShards:
+        expr: elasticsearch_cluster_health_delayed_unassigned_shards
+        unit: ''
+        labels:
+        - service
+        - namespace
+        showName: Delayed Unassigned Shards
+      esFilesystemAvailableBytes:
+        expr: elasticsearch_filesystem_data_available_bytes
+        unit: bytes-B
+        labels:
+        - service
+        - host
+        - path
+        - " mount"
+        - namespace
+        showName: Filesystem Available (bytes)
+    showName: elasticsearch
+    namespaced: true
