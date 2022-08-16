@@ -104,7 +104,7 @@ func parseExpr(promql string) parser.Expr {
 	return ret
 }
 
-func TestQuery_GetVectorSelectorNames(t *testing.T) {
+func TestQuery_GetVectorSelectors(t *testing.T) {
 	type fields struct {
 		Expr parser.Expr
 	}
@@ -132,7 +132,7 @@ func TestQuery_GetVectorSelectorNames(t *testing.T) {
 			fields: fields{
 				Expr: parseExpr(`sum(irate(aaa{pod="pod1"}[5m]) * bbb{container="c1"}) by (container) / ccc{pod="pod2"}`),
 			},
-			want: []string{"aaa", "bbb", "ccc"},
+			want: []string{`aaa{pod="pod1"}`, `bbb{container="c1"}`, `ccc{pod="pod2"}`},
 		},
 	}
 	for _, tt := range tests {
@@ -140,7 +140,7 @@ func TestQuery_GetVectorSelectorNames(t *testing.T) {
 			q := &Query{
 				Expr: tt.fields.Expr,
 			}
-			if got := q.GetVectorSelectorNames(); !reflect.DeepEqual(got, tt.want) {
+			if got := q.GetVectorSelectors(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Query.GetVectorSelectorNames() = %v, want %v", got, tt.want)
 			}
 		})
