@@ -28,6 +28,7 @@ import (
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
+	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 	"golang.org/x/sync/errgroup"
@@ -332,6 +333,18 @@ func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prom
 		return nil, fmt.Errorf("prometheus vector failed, cluster: %s, promql: %s, %v", c.Name, query, err)
 	}
 	return ret, nil
+}
+
+func (c *ExtendClient) PrometheusTargets(ctx context.Context) (*promv1.TargetsResult, error) {
+	ret := promv1.TargetsResult{}
+	if err := c.DoRequest(ctx, Request{
+		Path:  "/custom/prometheus/v1/targets",
+		Query: nil,
+		Into:  WrappedResponse(&ret),
+	}); err != nil {
+		return nil, errors.Wrapf(err, "get prometheus targets from cluster: %s", c.Name)
+	}
+	return &ret, nil
 }
 
 func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace string, opts *prometheus.MonitorOptions, hasDetail bool) ([]prometheus.MonitorAlertRule, error) {

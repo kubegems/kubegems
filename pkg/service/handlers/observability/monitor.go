@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/go-version"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -49,9 +50,9 @@ type MonitorCollector struct {
 // @Description 监控采集器详情
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                         true "cluster"
-// @Param       namespace path     string                                         true "namespace"
-// @Param       service   query    string                                         true "服务名"
+// @Param       cluster   path     string                                            true "cluster"
+// @Param       namespace path     string                                            true "namespace"
+// @Param       service   query    string                                            true "服务名"
 // @Success     200       {object} handlers.ResponseStruct{Data=MonitorCollector} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor [get]
 // @Security    JWT
@@ -91,6 +92,41 @@ func (h *ObservabilityHandler) GetMonitorCollector(c *gin.Context) {
 		ret.Port = sm.Spec.Endpoints[0].Port
 		ret.Path = sm.Spec.Endpoints[0].Path
 		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	handlers.OK(c, ret)
+}
+
+// MonitorCollectorStatus 监控采集器状态
+// @Tags        Observability
+// @Summary     监控采集器状态
+// @Description 监控采集器状态
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                         true "cluster"
+// @Param       namespace path     string                                         true "namespace"
+// @Param       service   query    string                                         true "服务名"
+// @Success     200       {object} handlers.ResponseStruct{Data=promv1.ActiveTarget} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/status [get]
+// @Security    JWT
+func (h *ObservabilityHandler) MonitorCollectorStatus(c *gin.Context) {
+	scrapTarget := fmt.Sprintf("serviceMonitor/%s/%s/0", c.Param("namespace"), c.Query("service"))
+	var ret promv1.ActiveTarget
+	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
+		targets, err := cli.Extend().PrometheusTargets(ctx)
+		if err != nil {
+			return err
+		}
+		for _, v := range targets.Active {
+			if v.ScrapePool == scrapTarget {
+				ret = v
+				return nil
+			}
+		}
+		return fmt.Errorf("scrap target %s not found", scrapTarget)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

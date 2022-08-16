@@ -5240,6 +5240,29 @@ definitions:
           More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore
         type: string
     type: object
+  v1.ActiveTarget:
+    properties:
+      discoveredLabels:
+        additionalProperties:
+          type: string
+        type: object
+      globalUrl:
+        type: string
+      health:
+        type: string
+      labels:
+        $ref: '#/definitions/model.LabelSet'
+      lastError:
+        type: string
+      lastScrape:
+        type: string
+      lastScrapeDuration:
+        type: number
+      scrapePool:
+        type: string
+      scrapeUrl:
+        type: string
+    type: object
   v1.Affinity:
     properties:
       nodeAffinity:
@@ -20956,6 +20979,44 @@ paths:
       summary: 监控指标查询
       tags:
       - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/status:
+    get:
+      consumes:
+      - application/json
+      description: 监控采集器状态
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 服务名
+        in: query
+        name: service
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/v1.ActiveTarget'
+              type: object
+      security:
+      - JWT: []
+      summary: 监控采集器状态
+      tags:
+      - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers:
     get:
       consumes:
@@ -24975,6 +25036,34 @@ paths:
       security:
       - JWT: []
       summary: Prometheus Matrix
+      tags:
+      - Agent.V1
+  /v1/proxy/cluster/{cluster}/custom/prometheus/v1/targets:
+    get:
+      consumes:
+      - application/json
+      description: Prometheus Targets
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: labels
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: object
+              type: object
+      security:
+      - JWT: []
+      summary: Prometheus Targets
       tags:
       - Agent.V1
   /v1/proxy/cluster/{cluster}/custom/prometheus/v1/vector:

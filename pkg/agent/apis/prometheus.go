@@ -64,7 +64,7 @@ var stateMap = map[string]int{
 // @Description Prometheus Vector
 // @Accept      json
 // @Produce     json
-// @Param       cluster path     string                               true  "cluster"
+// @Param       cluster path     string                               true "cluster"
 // @Param       query   query    string                               false "query"
 // @Param       notnull query    bool                                 false "notnull"
 // @Success     200     {object} handlers.ResponseStruct{Data=object} "vector"
@@ -219,6 +219,25 @@ func (p *prometheusHandler) LabelValues(c *gin.Context) {
 		"labels": ret[:index+1],
 		"warns":  warns,
 	})
+}
+
+// @Tags        Agent.V1
+// @Summary     Prometheus Targets
+// @Description Prometheus Targets
+// @Accept      json
+// @Produce     json
+// @Param       cluster path     string                               true  "cluster"
+// @Success     200     {object} handlers.ResponseStruct{Data=object} "labels"
+// @Router      /v1/proxy/cluster/{cluster}/custom/prometheus/v1/targets [get]
+// @Security    JWT
+func (p *prometheusHandler) Targets(c *gin.Context) {
+	v1api := v1.NewAPI(p.client)
+	targets, err := v1api.Targets(c.Request.Context())
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	OK(c, targets)
 }
 
 // @Tags        Agent.V1

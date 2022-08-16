@@ -189,6 +189,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.register("prometheus", "v1", "matrix", ActionList, prometheusHandler.Matrix)
 	routes.register("prometheus", "v1", "labelvalues", ActionList, prometheusHandler.LabelValues)
 	routes.register("prometheus", "v1", "labelnames", ActionList, prometheusHandler.LabelNames)
+	routes.register("prometheus", "v1", "targets", ActionList, prometheusHandler.Targets)
 	routes.register("prometheus", "v1", "alertrule", ActionList, prometheusHandler.AlertRule)
 	routes.register("prometheus", "v1", "certinfos", ActionGet, prometheusHandler.CertInfo)
 
