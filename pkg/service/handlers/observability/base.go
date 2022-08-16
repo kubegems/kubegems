@@ -32,6 +32,7 @@ type ObservabilityHandler struct {
 func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	h.ChartmuseumClient = helm.MustNewChartMuseumClient(&helm.RepositoryConfig{URL: h.AppStoreOpt.Addr})
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.GetMonitorCollector)
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/status", h.CheckByClusterNamespace, h.MonitorCollectorStatus)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.AddOrUpdateMonitorCollector)
 	rg.DELETE("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.DeleteMonitorCollector)
 

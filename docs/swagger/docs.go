@@ -6263,6 +6263,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/status": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "监控采集器状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "监控采集器状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "服务名",
+                        "name": "service",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/v1.ActiveTarget"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers": {
             "get": {
                 "security": [
@@ -11719,6 +11782,55 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "matrix",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/custom/prometheus/v1/targets": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Prometheus Targets",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.V1"
+                ],
+                "summary": "Prometheus Targets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "labels",
                         "schema": {
                             "allOf": [
                                 {
@@ -28667,6 +28779,41 @@ const docTemplate = `{
                 },
                 "volumeID": {
                     "description": "Unique ID of the persistent disk resource in AWS (Amazon EBS volume).\nMore info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore",
+                    "type": "string"
+                }
+            }
+        },
+        "v1.ActiveTarget": {
+            "type": "object",
+            "properties": {
+                "discoveredLabels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "globalUrl": {
+                    "type": "string"
+                },
+                "health": {
+                    "type": "string"
+                },
+                "labels": {
+                    "$ref": "#/definitions/model.LabelSet"
+                },
+                "lastError": {
+                    "type": "string"
+                },
+                "lastScrape": {
+                    "type": "string"
+                },
+                "lastScrapeDuration": {
+                    "type": "number"
+                },
+                "scrapePool": {
+                    "type": "string"
+                },
+                "scrapeUrl": {
                     "type": "string"
                 }
             }
