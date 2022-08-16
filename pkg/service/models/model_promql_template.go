@@ -29,8 +29,8 @@ type PromqlTplScope struct {
 
 	Resources []*PromqlTplResource `json:"resources,omitempty" gorm:"foreignKey:ScopeID"`
 
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	CreatedAt *time.Time `json:"-"`
+	UpdatedAt *time.Time `json:"-"`
 }
 
 // PromqlTplScope
@@ -44,8 +44,8 @@ type PromqlTplResource struct {
 
 	Rules []*PromqlTplRule `json:"rules,omitempty" gorm:"foreignKey:ResourceID"`
 
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	CreatedAt *time.Time `json:"-"`
+	UpdatedAt *time.Time `json:"-"`
 }
 
 // PromqlTplScope
@@ -64,6 +64,6 @@ type PromqlTplRule struct {
 	TenantID *uint   `json:"tenantID"` // 若为null，则表示系统预置
 	Tenant   *Tenant `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;" json:"tenant,omitempty"`
 
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	CreatedAt *time.Time `json:"-"`
+	UpdatedAt *time.Time `json:"-"`
 }

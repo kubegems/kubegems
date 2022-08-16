@@ -389,6 +389,10 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	if c.Param("tenant_id") != "_all" && rule.TenantID == nil {
+		handlers.NotOK(c, fmt.Errorf("你不能删除系统预置模板"))
+		return
+	}
 	allalerts := []prometheus.MonitorAlertRule{}
 	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
 		alerts, err := cli.Extend().ListMonitorAlertRules(ctx, v1.NamespaceAll, false)
