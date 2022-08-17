@@ -54,10 +54,6 @@ type ModelSpec struct {
 }
 
 type ServerSpec struct {
-	// +kubebuilder:validation:Required
-	// part of the server deployment name
-	Name string `json:"name"`
-
 	// +kubebuilder:validation:Optional
 	Protocol string `json:"protocol"`
 
@@ -66,9 +62,6 @@ type ServerSpec struct {
 
 	// +kubebuilder:validation:Optional
 	StorageInitializerImage string `json:"storageInitializerImage"`
-
-	// +kubebuilder:validation:Required
-	Image string `json:"image"`
 
 	// +kubebuilder:validation:Optional
 	MountPath string `json:"mountPath"` // path to the model in the container

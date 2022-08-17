@@ -139,6 +139,15 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 					Name:            md.Spec.Server.Name,
 					EngineResources: md.Spec.Server.Resources,
 					Replicas:        md.Spec.Replicas,
+					Annotations: map[string]string{
+						// nolint: nosnakecase
+						machinelearningv1.ANNOTATION_NO_ENGINE: func() string {
+							if md.Spec.Server.Kind == "" {
+								return "true"
+							}
+							return "false"
+						}(),
+					},
 					Graph: machinelearningv1.PredictiveUnit{
 						Name:                    md.Spec.Server.Name,
 						Implementation:          implOf(md.Spec.Server.Kind),
@@ -150,14 +159,7 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 						{
 							Spec: v1.PodSpec{
 								Containers: []v1.Container{
-									{
-										Name:            md.Spec.Server.Name,
-										Image:           md.Spec.Server.Image,
-										ReadinessProbe:  md.Spec.Server.ReadinessProbe,
-										LivenessProbe:   md.Spec.Server.LivenessProbe,
-										SecurityContext: md.Spec.Server.SecurityContext,
-										Resources:       md.Spec.Server.Resources,
-									},
+									md.Spec.Server.Container,
 								},
 							},
 						},

@@ -1281,7 +1281,6 @@ spec:
                       configured in the container image. Cannot be updated.
                     type: string
                 required:
-                - image
                 - name
                 type: object
             type: object
