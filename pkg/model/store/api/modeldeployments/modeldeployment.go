@@ -168,6 +168,14 @@ func (o *ModelDeploymentAPI) completeModelDeployment(ctx context.Context, md *mo
 }
 
 func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
+	// set default gateway
+	if md.Spec.Ingress.GatewayName == "" {
+		md.Spec.Ingress.GatewayName = "default-gateway"
+	}
+	if md.Spec.Ingress.Host == "" {
+		md.Spec.Ingress.Host = "api.models.kubegems.io"
+	}
+
 	source, modelname := md.Spec.Model.Source, md.Spec.Model.Name
 	if source == "" || modelname == "" {
 		return nil
