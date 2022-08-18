@@ -15,6 +15,8 @@
 package models
 
 import (
+	"time"
+
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
@@ -44,4 +46,5 @@ type Cluster struct {
 	TenantResourceQuotas []*TenantResourceQuota
 	ClusterResourceQuota datatypes.JSON
 	DeletedAt            gorm.DeletedAt // soft delete
+	ClientCertExpireAt   *time.Time     `gorm:"-"` // 证书过期时间
 }
