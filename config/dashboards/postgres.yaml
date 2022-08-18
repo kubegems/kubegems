@@ -1,0 +1,95 @@
+name: Postgres
+description: Postgres 监控模板
+step: 30s
+refresh: 30s
+start: now-30m
+end: now
+graphs:
+  - name: Current QPS
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgFetchData
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Current TPS
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgXactCommit
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Cache Hit Ratio
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgCacheHitRate
+      unit: percent-0.0-1.0
+    expr: ""
+    unit: percent-0.0-1.0
+  - name: Insert Rows
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgInsertedDate
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Idle Sessions
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgIdleSessions
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Sync Durations
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgSyncTime
+      unit: duration-s
+    expr: ""
+    unit: duration-s
+  - name: Write Durations
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgWriteTime
+      unit: duration-s
+    expr: ""
+    unit: duration-s
+  - name: Temp Files
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgTmpBytes
+      unit: bytes-B
+    expr: ""
+    unit: bytes-B
+  - name: Confilicts
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgConflicts
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Active Sessions
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgActivifyCount
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Shard Buffers
+    promqlGenerator:
+      scope: middlewires
+      resource: postgres
+      rule: pgSharedBuffersBytes
+      unit: bytes-B
+    expr: ""
+    unit: bytes-B

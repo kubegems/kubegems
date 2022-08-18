@@ -1,0 +1,71 @@
+name: Container
+description: 容器监控模板
+step: 30s
+refresh: 30s
+start: now-30m
+end: now
+graphs:
+  - name: Container CPU Total
+    promqlGenerator:
+      scope: containers
+      resource: container
+      rule: cpuTotal
+      unit: short
+    expr: ""
+    unit: short
+  - name: Container CPU Usage
+    promqlGenerator:
+      scope: containers
+      resource: container
+      rule: cpuUsage
+      unit: short
+    expr: ""
+    unit: short
+  - name: Container CPU Use Percent
+    promqlGenerator:
+      scope: containers
+      resource: container
+      rule: cpuUsagePercent
+      unit: percent-0-100
+    expr: ""
+    unit: percent-0-100
+  - name: Container Memory Total
+    promqlGenerator:
+      scope: containers
+      resource: container
+      rule: memoryTotal
+      unit: bytes-B
+    expr: ""
+    unit: bytes-B
+  - name: Container Memory Usage
+    promqlGenerator:
+      scope: containers
+      resource: container
+      rule: memoryUsage
+      unit: bytes-B
+    expr: ""
+    unit: bytes-B
+  - name: Container Memory Use Total
+    promqlGenerator:
+      scope: containers
+      resource: container
+      rule: memoryUsagePercent
+      unit: percent-0-100
+    expr: ""
+    unit: percent-0-100
+  - name: Container Network Receive BPS
+    promqlGenerator:
+      scope: containers
+      resource: container
+      rule: networkInBPS
+      unit: bytes/sec-B/s
+    expr: ""
+    unit: bytes/sec-B/s
+  - name: Container Network Send BPS
+    promqlGenerator:
+      scope: containers
+      resource: container
+      rule: networkOutBPS
+      unit: bytes/sec-B/s
+    expr: ""
+    unit: bytes/sec-B/s

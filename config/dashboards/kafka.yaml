@@ -1,0 +1,55 @@
+name: Kafka
+description: Kafka 监控模板
+step: 30s
+refresh: 30s
+start: now-30m
+end: now
+graphs:
+  - name: Kafka Brokers
+    promqlGenerator:
+      scope: middlewires
+      resource: kafka
+      rule: kafkaBrokers
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Topics
+    promqlGenerator:
+      scope: middlewires
+      resource: kafka
+      rule: kafkaTopics
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Partitions
+    promqlGenerator:
+      scope: middlewires
+      resource: kafka
+      rule: kafkaPartitions
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Consumer Latency
+    promqlGenerator:
+      scope: middlewires
+      resource: kafka
+      rule: kafkaConsumerLatency
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Producer Rate
+    promqlGenerator:
+      scope: middlewires
+      resource: kafka
+      rule: kafkaMessagesProduced
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Consumer Rate
+    promqlGenerator:
+      scope: middlewires
+      resource: kafka
+      rule: kafkaMessageConsumer
+      unit: ""
+    expr: ""
+    unit: ""
