@@ -20,8 +20,6 @@ import (
 
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/utils/prometheus"
-	"sigs.k8s.io/yaml"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -149,28 +147,105 @@ func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 	handlers.OK(c, "ok")
 }
 
+// ListDashboardTemplates 监控面板模板列表
+// @Tags        Observability
+// @Summary     监控面板模板列表
+// @Description 监控面板模板列表
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} handlers.ResponseStruct{Data=[]models.MonitorDashboardTpl} "resp"
+// @Router      /v1/observability/template/dashboard [get]
+// @Security    JWT
+func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
+	tpls := []models.MonitorDashboardTpl{}
+	if err := h.GetDB().Find(&tpls).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, tpls)
+}
+
+// GetDashboardTemplate 监控面板模板详情
+// @Tags        Observability
+// @Summary     监控面板模板详情
+// @Description 监控面板模板详情
+// @Accept      json
+// @Produce     json
+// @Param       name path     string                                                   true "模板名"
+// @Success     200  {object} handlers.ResponseStruct{Data=models.MonitorDashboardTpl} "resp"
+// @Router      /v1/observability/template/dashboard/{name} [get]
+// @Security    JWT
+func (h *ObservabilityHandler) GetDashboardTemplate(c *gin.Context) {
+	tpl := models.MonitorDashboardTpl{Name: c.Param("name")}
+	if err := h.GetDB().First(&tpl).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, tpl)
+}
+
+// AddDashboardTemplates 导入监控面板模板
+// @Tags        Observability
+// @Summary     导入监控面板模板
+// @Description 导入监控面板模板
+// @Accept      json
+// @Produce     json
+// @Param       form body     models.MonitorDashboardTpl           true "模板内容"
+// @Success     200  {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/template/dashboard [post]
+// @Security    JWT
+func (h *ObservabilityHandler) AddDashboardTemplates(c *gin.Context) {
+	tpl := models.MonitorDashboardTpl{}
+	if err := c.BindJSON(&tpl); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	h.SetAuditData(c, "导入", "监控面板模板", tpl.Name)
+	tplGetter := h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl
+	if err := models.CheckGraphs(tpl.Graphs, "", tplGetter); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if err := h.GetDB().Create(&tpl).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
+// DeleteDashboardTemplate 删除监控面板模板
+// @Tags        Observability
+// @Summary     删除监控面板模板
+// @Description 删除监控面板模板
+// @Accept      json
+// @Produce     json
+// @Param       name path     string                                                   true "模板名"
+// @Success     200  {object} handlers.ResponseStruct{Data=models.MonitorDashboardTpl} "resp"
+// @Router      /v1/observability/template/dashboard/{name} [delete]
+// @Security    JWT
+func (h *ObservabilityHandler) DeleteDashboardTemplate(c *gin.Context) {
+	tpl := models.MonitorDashboardTpl{Name: c.Param("name")}
+	if err := h.GetDB().Delete(&tpl).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
 func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorDashboard, error) {
 	req := models.MonitorDashboard{}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, err
 	}
 	if req.Template != "" {
-		tpls := []models.MonitorDashboard{}
-		if err := yaml.Unmarshal(alltemplates, &tpls); err != nil {
-			return nil, err
+		tpl := models.MonitorDashboardTpl{Name: req.Template}
+		if err := h.GetDB().First(&tpl).Error; err != nil {
+			return nil, errors.Wrapf(err, "get template: %s failed", req.Template)
 		}
-		found := false
-		for _, v := range tpls {
-			if v.Name == req.Template {
-				v.Name = req.Name
-				req = v
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, fmt.Errorf("template %s not found", req.Template)
-		}
+		req.Start = tpl.Start
+		req.End = tpl.End
+		req.Refresh = tpl.Refresh
+		req.Graphs = tpl.Graphs
 	}
 
 	envid, err := strconv.Atoi(c.Param("environment_id"))
@@ -186,7 +261,7 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 	req.Creator = u.GetUsername()
 
 	env := models.Environment{}
-	if err := h.GetDB().Preload("Cluster").First(&env, "id = ?", req.EnvironmentID).Error; err != nil {
+	if err := h.GetDB().First(&env, "id = ?", req.EnvironmentID).Error; err != nil {
 		return nil, err
 	}
 
@@ -202,33 +277,9 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 		req.Step = "30s"
 	}
 
-	// 逐个校验graph
-	for i, v := range req.Graphs {
-		if v.Name == "" {
-			return nil, fmt.Errorf("图表名不能为空")
-		}
-
-		if v.PromqlGenerator.Notpl() {
-			if v.Expr == "" {
-				return nil, fmt.Errorf("模板与原生promql不能同时为空")
-			}
-			if err := prometheus.CheckQueryExprNamespace(v.Expr, env.Namespace); err != nil {
-				return nil, err
-			}
-			if v.Unit != "" {
-				if _, err := prometheus.ParseUnit(v.Unit); err != nil {
-					return nil, err
-				}
-			}
-		} else {
-			if err := v.PromqlGenerator.SetTpl(h.GetDataBase().FindPromqlTpl); err != nil {
-				return nil, err
-			}
-			if v.Tpl.Namespaced == false {
-				return nil, fmt.Errorf("图表: %s 错误！不能查询集群范围资源", v.Name)
-			}
-			req.Graphs[i].Unit = v.PromqlGenerator.Unit
-		}
+	tplGetter := h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl
+	if err := models.CheckGraphs(req.Graphs, env.Namespace, tplGetter); err != nil {
+		return nil, err
 	}
 	return &req, nil
 }
@@ -242,42 +293,42 @@ var alltemplates = []byte(`
   graphs:
     - name: 容器CPU总量
       promqlGenerator:
-	  	scope: containers
+        scope: containers
         resource: container
         rule: cpuTotal
     - name: 容器CPU使用量
       promqlGenerator:
-	  	scope: containers
+        scope: containers
         resource: container
         rule: cpuUsage
     - name: 容器CPU使用率
       promqlGenerator:
-	  	scope: containers
+        scope: containers
         resource: container
         rule: cpuUsagePercent
     - name: 容器内存总量
       promqlGenerator:
-	  	scope: containers
+        scope: containers
         resource: container
         rule: memoryTotal
     - name: 容器内存使用量
       promqlGenerator:
-	  	scope: containers
+        scope: containers
         resource: container
         rule: memoryUsage
     - name: 容器内存使用率
       promqlGenerator:
-	  	scope: containers
+        scope: containers
         resource: container
         rule: memoryUsagePercent
     - name: 容器网络接收速率
       promqlGenerator:
-	  	scope: containers
+        scope: containers
         resource: container
         rule: networkInBPS
     - name: 容器网络发送速率
       promqlGenerator:
-	  	scope: containers
+        scope: containers
         resource: container
         rule: networkOutBPS
 - name: 存储卷监控
@@ -288,17 +339,17 @@ var alltemplates = []byte(`
   graphs:
     - name: 存储卷总量
       promqlGenerator:
-	  	scope: others
+        scope: others
         resource: pvc
         rule: volumeTotal
     - name: 存储卷总量
       promqlGenerator:
-	  	scope: others
+        scope: others
         resource: pvc
         rule: volumeUsage
     - name: 存储卷总量
       promqlGenerator:
-	  	scope: others
+        scope: others
         resource: pvc
         rule: volumeUsagePercent
 `)

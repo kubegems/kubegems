@@ -31,7 +31,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
-	"sigs.k8s.io/yaml"
 )
 
 type MetricQueryReq struct {
@@ -289,7 +288,7 @@ func (h *ObservabilityHandler) ListResources(c *gin.Context) {
 // @Produce     json
 // @Param       tenant_id   path     string                                                true  "租户ID"
 // @Param       resource_id path     string                                                true  "resource id, 可以是_all"
-// @Param       preload     query    string                                                false "Resource, Resource.Scope"
+// @Param       preload   query    string                                              false "Resource, Resource.Scope"
 // @Param       search      query    string                                                false "search string"
 // @Param       page      query    int                                                   false "page"
 // @Param       size      query    int                                                   false "size"
@@ -323,6 +322,59 @@ func (h *ObservabilityHandler) ListRules(c *gin.Context) {
 	handlers.OK(c, handlers.NewPageDataFromContext(c, rules, nil, nil))
 }
 
+// GetRule 获取promql模板三级目录rule
+// @Tags        Observability
+// @Summary     获取promql模板三级目录rule
+// @Description 获取promql模板三级目录rule
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id path     string                               true "租户ID"
+// @Param       rule_id   path     string                                              true  "rule ID"
+// @Param       preload     query    string                                                false "Resource, Resource.Scope"
+// @Success     200       {object} handlers.ResponseStruct{Data=models.PromqlTplScope} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [get]
+// @Security    JWT
+func (h *ObservabilityHandler) GetRule(c *gin.Context) {
+	rule := models.PromqlTplRule{}
+	tenantID := c.Param("tenant_id")
+	preload := c.Query("preload")
+
+	query := h.GetDB().Model(&models.PromqlTplRule{})
+	if preload == "Resource" || preload == "Resource.Scope" {
+		query.Preload(preload)
+	}
+	if tenantID != "_all" {
+		query.Where("tenant_id is null or tenant_id = ?", tenantID)
+	}
+	if err := query.First(&rule, c.Param("rule_id")).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, rule)
+}
+
+// SearchTpl 由scope,resource,rule name获取tpl
+// @Tags        Observability
+// @Summary     由scope,resource,rule name获取tpl
+// @Description 由scope,resource,rule name获取tpl
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id path     string                                              true  "租户ID"
+// @Param       scope     query    string                               true "scope"
+// @Param       resource  query    string                               true "scope"
+// @Param       rule      query    string                               true "scope"
+// @Success     200       {object} handlers.ResponseStruct{Data=object} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/template/search [get]
+// @Security    JWT
+func (h *ObservabilityHandler) SearchTpl(c *gin.Context) {
+	tpl, err := h.GetDataBase().FindPromqlTpl(c.Query("scope"), c.Query("resource"), c.Query("rule"))
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, tpl)
+}
+
 // AddRules 添加promql模板三级目录rule
 // @Tags        Observability
 // @Summary     添加promql模板三级目录rule
@@ -338,6 +390,18 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 	req, err := h.getRuleReq(c)
 	if err != nil {
 		handlers.NotOK(c, err)
+		return
+	}
+
+	var count int64
+	if err := h.GetDB().Model(&models.PromqlTplRule{}).
+		Where("resource_id = ? and name = ?", req.ResourceID, req.Name).
+		Count(&count).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if count > 0 {
+		handlers.NotOK(c, fmt.Errorf("resource: %d 中已存在rule: %s", *req.ResourceID, req.Name))
 		return
 	}
 	h.SetAuditData(c, "创建", "监控查询模板", req.Name)
@@ -448,22 +512,4 @@ func (h *ObservabilityHandler) getRuleReq(c *gin.Context) (*models.PromqlTplRule
 	}
 
 	return &req, nil
-}
-
-// ListDashboardTemplates 监控面板模板列表
-// @Tags        Observability
-// @Summary     监控面板模板列表
-// @Description 监控面板模板列表
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=[]models.MonitorDashboard} "resp"
-// @Router      /v1/observability/template/dashboard [delete]
-// @Security    JWT
-func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
-	tpls := []models.MonitorDashboard{}
-	if err := yaml.Unmarshal(alltemplates, &tpls); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, tpls)
 }

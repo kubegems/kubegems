@@ -26,6 +26,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
 )
 
 var (
@@ -76,7 +77,7 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 	}
 
 	// 使用map避免循环查询数据库
-	tplGetter := h.GetDataBase().NewPromqlTplMapper().FindPromqlTpl
+	tplGetter := h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl
 	for i := range ret {
 		if ret[i].SilenceEndsAt.Equal(forever) {
 			ret[i].SilenceEndsAt = nil
@@ -88,7 +89,7 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 	handlers.OK(c, handlers.Page(total, ret, int64(page), int64(size)))
 }
 
-func formatBlackListSummary(labels map[string]string, f prometheus.TplGetter) string {
+func formatBlackListSummary(labels map[string]string, f templates.TplGetter) string {
 	tplname := labels[prometheus.AlertPromqlTpl]
 	var subStr string
 	tmp := strings.Split(tplname, ".")

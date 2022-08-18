@@ -18,13 +18,17 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/VividCortex/mysqlerr"
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/database"
-	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
 	"sigs.k8s.io/yaml"
 )
 
@@ -99,6 +103,17 @@ func initBaseData(db *gorm.DB) error {
 			return err
 		}
 	}
+
+	dashboardTpls, err := getDashboardTpls()
+	if err != nil {
+		log.Error(err, "get dashboard templates")
+		return err
+	}
+	for i := range dashboardTpls {
+		if err := db.FirstOrCreate(&dashboardTpls[i]).Error; err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -159,7 +174,7 @@ func migrateModels(db *gorm.DB) error {
 		// 告警消息表
 		&AlertMessage{},
 		// 监控面板表
-		&MonitorDashboard{},
+		&MonitorDashboard{}, &MonitorDashboardTpl{},
 		// 配置
 		&OnlineConfig{},
 		// 登陆源
@@ -194,40 +209,64 @@ func GetErrMessage(err error) string {
 	}
 }
 
-func GetTplFromFile(scope, resource, rule string) (*prometheus.PromqlTpl, error) {
+func NewPromqlTplMapperFromFile() *templates.PromqlTplMapper {
 	bts, err := os.ReadFile("config/promql_tpl.yaml")
 	if err != nil {
-		return nil, err
+		return &templates.PromqlTplMapper{Err: err}
 	}
 	scopes := []*PromqlTplScope{}
 	if err := yaml.Unmarshal(bts, &scopes); err != nil {
-		return nil, err
+		return &templates.PromqlTplMapper{Err: err}
 	}
+	ret := &templates.PromqlTplMapper{M: make(map[string]*templates.PromqlTpl)}
 	for _, s := range scopes {
-		if s.Name == scope {
-			for _, res := range s.Resources {
-				if res.Name == resource {
-					for _, r := range res.Rules {
-						if r.Name == rule {
-							return &prometheus.PromqlTpl{
-								ScopeName:        s.Name,
-								ScopeShowName:    s.ShowName,
-								ResourceName:     res.Name,
-								ResourceShowName: res.ShowName,
-								RuleName:         r.Name,
-								RuleShowName:     r.ShowName,
-								Namespaced:       s.Namespaced,
-								Expr:             r.Expr,
-								Unit:             r.Unit,
-								Labels:           r.Labels,
-							}, nil
-						}
-					}
+		for _, res := range s.Resources {
+			for _, r := range res.Rules {
+				ret.M[fmt.Sprintf("%s.%s.%s", s.Name, res.Name, r.Name)] = &templates.PromqlTpl{
+					ScopeName:        s.Name,
+					ScopeShowName:    s.ShowName,
+					ResourceName:     res.Name,
+					ResourceShowName: res.ShowName,
+					RuleName:         r.Name,
+					RuleShowName:     r.ShowName,
+					Namespaced:       s.Namespaced,
+					Expr:             r.Expr,
+					Unit:             r.Unit,
+					Labels:           r.Labels,
 				}
 			}
 		}
 	}
-	return nil, fmt.Errorf("scope: %s, resource %s, rule: %s not found", scope, resource, rule)
+	return ret
+}
+
+func getDashboardTpls() ([]*MonitorDashboardTpl, error) {
+	ret := []*MonitorDashboardTpl{}
+	if err := filepath.Walk("config/dashboards", func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+		}
+		if info.IsDir() || !strings.HasSuffix(info.Name(), ".yaml") {
+			return nil
+		}
+		bts, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		tpl := MonitorDashboardTpl{}
+		if err := yaml.Unmarshal(bts, &tpl); err != nil {
+			return err
+		}
+		tplGetter := NewPromqlTplMapperFromFile().FindPromqlTpl
+		if err := CheckGraphs(tpl.Graphs, "", tplGetter); err != nil {
+			return fmt.Errorf("tpl: %s, %v", tpl.Name, err)
+		}
+		ret = append(ret, &tpl)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
 
 func getPromqlTpls() ([]*PromqlTplRule, error) {

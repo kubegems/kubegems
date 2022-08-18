@@ -77,11 +77,11 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/tenant/:tenant_id/template/scopes", h.CheckByTenantID, h.ListScopes)
 	rg.GET("/observability/tenant/:tenant_id/template/scopes/:scope_id/resources", h.CheckByTenantID, h.ListResources)
 	rg.GET("/observability/tenant/:tenant_id/template/resources/:resource_id/rules", h.CheckByTenantID, h.ListRules)
+	rg.GET("/observability/tenant/:tenant_id/template/rules/:rule_id", h.CheckByTenantID, h.GetRule)
 	rg.POST("/observability/tenant/:tenant_id/template/rules", h.CheckByTenantID, h.AddRules)
 	rg.PUT("/observability/tenant/:tenant_id/template/rules/:rule_id", h.CheckByTenantID, h.UpdateRules)
 	rg.DELETE("/observability/tenant/:tenant_id/template/rules/:rule_id", h.CheckByTenantID, h.DeleteRules)
-
-	rg.GET("/observability/template/dashboard", h.ListDashboardTemplates)
+	rg.GET("/observability/tenant/:tenant_id/template/search", h.CheckByTenantID, h.SearchTpl)
 
 	// dashboard
 	rg.GET("/observability/environment/:environment_id/monitor/dashboard", h.CheckByEnvironmentID, h.ListDashboard)
@@ -89,6 +89,11 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/observability/environment/:environment_id/monitor/dashboard", h.CheckByEnvironmentID, h.CreateDashboard)
 	rg.PUT("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.UpdateDashboard)
 	rg.DELETE("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.DeleteDashboard)
+
+	rg.GET("/observability/template/dashboard", h.ListDashboardTemplates)
+	rg.GET("/observability/template/dashboard/:name", h.GetDashboardTemplate)
+	rg.POST("/observability/template/dashboard", h.CheckIsSysADMIN, h.AddDashboardTemplates)
+	rg.DELETE("/observability/template/dashboard/:name", h.CheckIsSysADMIN, h.DeleteDashboardTemplate)
 
 	// exporter
 	rg.GET("/observability/monitor/exporters/:name/schema", h.ExporterSchema)
