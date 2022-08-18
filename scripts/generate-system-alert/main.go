@@ -55,9 +55,10 @@ func main() {
 		PrometheusRule: prometheus.GetBasePrometheusRule(gems.NamespaceMonitor, prometheus.MonitorAlertCRDName),
 	}
 
+	tplGetter := models.NewPromqlTplMapperFromFile().FindPromqlTpl
 	for i := range alerts {
 		alerts[i].Source = prometheus.MonitorAlertCRDName
-		if err := prometheus.MutateMonitorAlert(&alerts[i], models.GetTplFromFile); err != nil {
+		if err := prometheus.MutateMonitorAlert(&alerts[i], tplGetter); err != nil {
 			panic(err)
 		}
 		if err := alerts[i].CheckAndModify(); err != nil {

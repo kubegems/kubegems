@@ -1,0 +1,47 @@
+name: Consul
+description: Consul 监控模板
+step: 30s
+refresh: 30s
+start: now-30m
+end: now
+graphs:
+  - name: Consul Raft Leader
+    promqlGenerator:
+      scope: middlewires
+      resource: consule
+      rule: consulRaftLeader
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Consul Cluster Members
+    promqlGenerator:
+      scope: middlewires
+      resource: consule
+      rule: consulLanMembers
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Consul Raft Peers
+    promqlGenerator:
+      scope: middlewires
+      resource: consule
+      rule: consulRaftPeers
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Consul Service Healthy
+    promqlGenerator:
+      scope: middlewires
+      resource: consule
+      rule: consulServiceHealthy
+      unit: ""
+    expr: ""
+    unit: ""
+  - name: Service Count
+    promqlGenerator:
+      scope: middlewires
+      resource: consule
+      rule: consulService
+      unit: ""
+    expr: ""
+    unit: ""

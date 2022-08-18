@@ -24,8 +24,8 @@ import (
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
-	"kubegems.io/kubegems/pkg/utils/gormdatatypes"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
+	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
 	"kubegems.io/kubegems/pkg/utils/slice"
 	"sigs.k8s.io/yaml"
 
@@ -45,20 +45,6 @@ type MonitorAlertRule struct {
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
 	Origin         string          `json:"origin,omitempty"`         // 原始的prometheusrule
 	Source         string          `json:"source"`                   // 来自哪个prometheusrule
-}
-
-type PromqlTpl struct {
-	ScopeName        string `json:"scopeName"`
-	ScopeShowName    string `json:"scopeShowName"`
-	ResourceName     string `json:"resourceName"`
-	ResourceShowName string `json:"resourceShowName"`
-	RuleName         string `json:"ruleName"`
-	RuleShowName     string `json:"ruleShowName"`
-
-	Namespaced bool                    `json:"namespaced"`
-	Expr       string                  `json:"expr"`
-	Unit       string                  `json:"unit"`
-	Labels     gormdatatypes.JSONSlice `json:"labels"`
 }
 
 var reg = regexp.MustCompile(`^\w+$`)
@@ -85,7 +71,7 @@ type PromqlGenerator struct {
 
 	UnitValue UnitValue `json:"-"`
 
-	Tpl *PromqlTpl `json:"-"`
+	Tpl *templates.PromqlTpl `json:"-"`
 }
 
 func (g *PromqlGenerator) Notpl() bool {
@@ -96,9 +82,7 @@ func (g *PromqlGenerator) TplString() string {
 	return fmt.Sprintf("%s.%s.%s", g.Scope, g.Resource, g.Rule)
 }
 
-type TplGetter func(scope, resource, rule string) (*PromqlTpl, error)
-
-func (g *PromqlGenerator) SetTpl(f TplGetter) error {
+func (g *PromqlGenerator) SetTpl(f templates.TplGetter) error {
 	if err := IsValidPromqlTplName(g.Scope, g.Resource, g.Rule); err != nil {
 		return err
 	}
@@ -127,14 +111,6 @@ func (g *PromqlGenerator) SetTpl(f TplGetter) error {
 	return nil
 }
 
-func (tpl *PromqlTpl) ShowNameString() string {
-	return fmt.Sprintf("%s%s", tpl.ResourceShowName, tpl.RuleShowName)
-}
-
-func (tpl *PromqlTpl) String() string {
-	return fmt.Sprintf("%s.%s.%s", tpl.ScopeName, tpl.ResourceName, tpl.RuleName)
-}
-
 func (g *PromqlGenerator) ToPromql(namespace string) (string, error) {
 	query, err := promql.New(g.Tpl.Expr)
 	if err != nil {
@@ -160,7 +136,7 @@ func (g *PromqlGenerator) ToPromql(namespace string) (string, error) {
 
 var _ AlertRule = MonitorAlertRule{}
 
-func MutateMonitorAlert(req *MonitorAlertRule, f TplGetter) error {
+func MutateMonitorAlert(req *MonitorAlertRule, f templates.TplGetter) error {
 	if req.Source == "" {
 		return fmt.Errorf("source不能为空")
 	}
@@ -169,7 +145,7 @@ func MutateMonitorAlert(req *MonitorAlertRule, f TplGetter) error {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
 		if req.Message == "" {
-			req.Message = fmt.Sprintf("%s: [集群:{{ $externalLabels.%s }}] 触发告警, 当前值: %s", req.Name, AlertClusterKey, ValueAnnotationExpr)
+			req.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] trigger alert, value: %s", req.Name, AlertClusterKey, ValueAnnotationExpr)
 		}
 	} else {
 		// check resource
@@ -179,12 +155,12 @@ func MutateMonitorAlert(req *MonitorAlertRule, f TplGetter) error {
 
 		// format message
 		if req.BaseAlertRule.Message == "" {
-			req.Message = fmt.Sprintf("%s: [集群:{{ $externalLabels.%s }}] ", req.Name, AlertClusterKey)
+			req.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] ", req.Name, AlertClusterKey)
 			for _, label := range req.PromqlGenerator.Tpl.Labels {
 				req.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 			}
 
-			req.Message += fmt.Sprintf("%s 触发告警, 当前值: %s%s", req.PromqlGenerator.Tpl.ShowNameString(), ValueAnnotationExpr, req.PromqlGenerator.UnitValue.Show)
+			req.Message += fmt.Sprintf("%s trigger alert, value: %s%s", req.PromqlGenerator.Tpl.RuleShowName, ValueAnnotationExpr, req.PromqlGenerator.UnitValue.Show)
 		}
 
 		// 优先采用模板

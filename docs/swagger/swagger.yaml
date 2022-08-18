@@ -3522,6 +3522,9 @@ definitions:
       apiserver:
         description: APIServer地址 根据kubeconfig添加后，自动填充
         type: string
+      clientCertExpireAt:
+        description: 证书过期时间
+        type: string
       clusterName:
         type: string
       clusterResourceQuota:
@@ -3900,6 +3903,30 @@ definitions:
     required:
     - name
     type: object
+  models.MonitorDashboardTpl:
+    properties:
+      description:
+        type: string
+      end:
+        description: 结束时间
+        type: string
+      graphs:
+        description: 图表
+        items:
+          $ref: '#/definitions/models.MetricGraph'
+        type: array
+      name:
+        type: string
+      refresh:
+        description: 刷新间隔，eg. 30s, 1m
+        type: string
+      start:
+        description: 开始时间，eg. 2022-04-24 06:00:45.241, now, now-30m
+        type: string
+      step:
+        description: 样本间隔，单位秒
+        type: string
+    type: object
   models.OnlineConfig:
     properties:
       content:
@@ -3984,8 +4011,6 @@ definitions:
     type: object
   models.PromqlTplResource:
     properties:
-      createdAt:
-        type: string
       id:
         type: integer
       name:
@@ -4000,15 +4025,11 @@ definitions:
         type: integer
       showName:
         type: string
-      updatedAt:
-        type: string
     required:
     - name
     type: object
   models.PromqlTplRule:
     properties:
-      createdAt:
-        type: string
       description:
         type: string
       expr:
@@ -4035,15 +4056,11 @@ definitions:
         type: integer
       unit:
         type: string
-      updatedAt:
-        type: string
     required:
     - name
     type: object
   models.PromqlTplScope:
     properties:
-      createdAt:
-        type: string
       id:
         type: integer
       name:
@@ -4055,8 +4072,6 @@ definitions:
           $ref: '#/definitions/models.PromqlTplResource'
         type: array
       showName:
-        type: string
-      updatedAt:
         type: string
     required:
     - name
@@ -20061,7 +20076,12 @@ paths:
         "200":
           description: resp
           schema:
-            type: object
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: object
+              type: object
       security:
       - JWT: []
       summary: 签发oauth jwt token
@@ -21510,7 +21530,7 @@ paths:
       tags:
       - Observability
   /v1/observability/template/dashboard:
-    delete:
+    get:
       consumes:
       - application/json
       description: 监控面板模板列表
@@ -21525,12 +21545,95 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/models.MonitorDashboard'
+                    $ref: '#/definitions/models.MonitorDashboardTpl'
                   type: array
               type: object
       security:
       - JWT: []
       summary: 监控面板模板列表
+      tags:
+      - Observability
+    post:
+      consumes:
+      - application/json
+      description: 导入监控面板模板
+      parameters:
+      - description: 模板内容
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/models.MonitorDashboardTpl'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 导入监控面板模板
+      tags:
+      - Observability
+  /v1/observability/template/dashboard/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除监控面板模板
+      parameters:
+      - description: 模板名
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/models.MonitorDashboardTpl'
+              type: object
+      security:
+      - JWT: []
+      summary: 删除监控面板模板
+      tags:
+      - Observability
+    get:
+      consumes:
+      - application/json
+      description: 监控面板模板详情
+      parameters:
+      - description: 模板名
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/models.MonitorDashboardTpl'
+              type: object
+      security:
+      - JWT: []
+      summary: 监控面板模板详情
       tags:
       - Observability
   /v1/observability/tenant/{tenant_id}/alerts/graph:
@@ -21744,7 +21847,7 @@ paths:
         name: tenant_id
         required: true
         type: string
-      - description: resource id
+      - description: resource id, 可以是_all
         in: path
         name: resource_id
         required: true
@@ -21853,6 +21956,42 @@ paths:
       security:
       - JWT: []
       summary: 删除promql模板三级目录rule
+      tags:
+      - Observability
+    get:
+      consumes:
+      - application/json
+      description: 获取promql模板三级目录rule
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: rule ID
+        in: path
+        name: rule_id
+        required: true
+        type: string
+      - description: Resource, Resource.Scope
+        in: query
+        name: preload
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/models.PromqlTplScope'
+              type: object
+      security:
+      - JWT: []
+      summary: 获取promql模板三级目录rule
       tags:
       - Observability
     put:
@@ -21974,6 +22113,49 @@ paths:
       security:
       - JWT: []
       summary: 获取promql模板二级目录resource
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/template/search:
+    get:
+      consumes:
+      - application/json
+      description: 由scope,resource,rule name获取tpl
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: scope
+        in: query
+        name: scope
+        required: true
+        type: string
+      - description: scope
+        in: query
+        name: resource
+        required: true
+        type: string
+      - description: scope
+        in: query
+        name: rule
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 由scope,resource,rule name获取tpl
       tags:
       - Observability
   /v1/project:
