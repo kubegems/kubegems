@@ -17,11 +17,13 @@ package agents
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -42,6 +44,7 @@ type Client interface {
 	BaseAddr() url.URL
 	APIServerAddr() url.URL
 	APIServerVersion() string
+	ClientCertExpireAt() *time.Time
 	// Deprecated: remove
 	Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error
 }
@@ -81,6 +84,21 @@ func (c *DelegateClient) APIServerAddr() url.URL {
 
 func (c *DelegateClient) APIServerVersion() string {
 	return c.ClientMeta.APIServerVersion
+}
+
+func (c DelegateClient) ClientCertExpireAt() *time.Time {
+	if trans, ok := c.TypedClient.http.Transport.(*http.Transport); ok {
+		certs := trans.TLSClientConfig.Certificates
+		if len(certs) > 0 && len(certs[0].Certificate) > 0 {
+			cert, err := x509.ParseCertificate(certs[0].Certificate[0])
+			if err != nil {
+				log.Error(err, "parse agentclient tls cert")
+				return nil
+			}
+			return &cert.NotAfter
+		}
+	}
+	return nil
 }
 
 func newClient(meta ClientMeta) Client {

@@ -93,6 +93,7 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 				return nil
 			}
 			list[index].Version = cli.APIServerVersion()
+			list[index].ClientCertExpireAt = cli.ClientCertExpireAt()
 			return nil
 		})
 	}
