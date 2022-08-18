@@ -106,10 +106,10 @@ func Validate(c *gin.Context) {
 // @Description 签发oauth jwt token
 // @Accept      json
 // @Produce     json
-// @Param       grant_type query    string true "授权方式，目前只支持client_credentials"
-// @Param       scope      query    string true "授权范围，目前只支持validate"
-// @Param       expire     query    int    true "授权时长，单位秒"
-// @Success     200        {object} object "resp"
+// @Param       grant_type query    string                               true "授权方式，目前只支持client_credentials"
+// @Param       scope      query    string                               true "授权范围，目前只支持validate"
+// @Param       expire     query    int                                  true "授权时长，单位秒"
+// @Success     200        {object} handlers.ResponseStruct{Data=object} "resp"
 // @Router      /v1/oauth/token [post]
 // @Security    JWT
 func Token(c *gin.Context) {
@@ -130,9 +130,21 @@ func Token(c *gin.Context) {
 		})
 	}
 
-	if err := srv.HandleTokenRequest(c.Writer, c.Request); err != nil {
+	// if err := srv.HandleTokenRequest(c.Writer, c.Request); err != nil {
+	// 	handlers.NotOK(c, err)
+	// 	return
+	// }
+	gt, tgr, err := srv.ValidationTokenRequest(c.Request)
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	return
+
+	ti, err := srv.GetAccessToken(c.Request.Context(), gt, tgr)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	handlers.OK(c, srv.GetTokenData(ti))
 }
