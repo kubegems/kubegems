@@ -4682,7 +4682,19 @@ const docTemplate = `{
                     "200": {
                         "description": "resp",
                         "schema": {
-                            "type": "object"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -7063,7 +7075,7 @@ const docTemplate = `{
             }
         },
         "/v1/observability/template/dashboard": {
-            "delete": {
+            "get": {
                 "security": [
                     {
                         "JWT": []
@@ -7094,8 +7106,153 @@ const docTemplate = `{
                                         "Data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/models.MonitorDashboard"
+                                                "$ref": "#/definitions/models.MonitorDashboardTpl"
                                             }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "导入监控面板模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "导入监控面板模板",
+                "parameters": [
+                    {
+                        "description": "模板内容",
+                        "name": "form",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.MonitorDashboardTpl"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/template/dashboard/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "监控面板模板详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "监控面板模板详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "模板名",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/models.MonitorDashboardTpl"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "删除监控面板模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "删除监控面板模板",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "模板名",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/models.MonitorDashboardTpl"
                                         }
                                     }
                                 }
@@ -7465,7 +7622,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "resource id",
+                        "description": "resource id, 可以是_all",
                         "name": "resource_id",
                         "in": "path",
                         "required": true
@@ -7582,6 +7739,66 @@ const docTemplate = `{
             }
         },
         "/v1/observability/tenant/{tenant_id}/template/rules/{rule_id}": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "获取promql模板三级目录rule",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "获取promql模板三级目录rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "rule ID",
+                        "name": "rule_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource, Resource.Scope",
+                        "name": "preload",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/models.PromqlTplScope"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -7832,6 +8049,76 @@ const docTemplate = `{
                                             "items": {
                                                 "$ref": "#/definitions/models.PromqlTplScope"
                                             }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/tenant/{tenant_id}/template/search": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "由scope,resource,rule name获取tpl",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "由scope,resource,rule name获取tpl",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "scope",
+                        "name": "scope",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "scope",
+                        "name": "resource",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "scope",
+                        "name": "rule",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "object"
                                         }
                                     }
                                 }
@@ -26713,6 +27000,10 @@ const docTemplate = `{
                     "description": "APIServer地址 根据kubeconfig添加后，自动填充",
                     "type": "string"
                 },
+                "clientCertExpireAt": {
+                    "description": "证书过期时间",
+                    "type": "string"
+                },
                 "clusterName": {
                     "type": "string"
                 },
@@ -27245,6 +27536,40 @@ const docTemplate = `{
                 }
             }
         },
+        "models.MonitorDashboardTpl": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "end": {
+                    "description": "结束时间",
+                    "type": "string"
+                },
+                "graphs": {
+                    "description": "图表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.MetricGraph"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refresh": {
+                    "description": "刷新间隔，eg. 30s, 1m",
+                    "type": "string"
+                },
+                "start": {
+                    "description": "开始时间，eg. 2022-04-24 06:00:45.241, now, now-30m",
+                    "type": "string"
+                },
+                "step": {
+                    "description": "样本间隔，单位秒",
+                    "type": "string"
+                }
+            }
+        },
         "models.OnlineConfig": {
             "type": "object",
             "required": [
@@ -27369,9 +27694,6 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "integer"
                 },
@@ -27392,9 +27714,6 @@ const docTemplate = `{
                 },
                 "showName": {
                     "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
                 }
             }
         },
@@ -27404,9 +27723,6 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
                 "description": {
                     "type": "string"
                 },
@@ -27444,9 +27760,6 @@ const docTemplate = `{
                 },
                 "unit": {
                     "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
                 }
             }
         },
@@ -27456,9 +27769,6 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "integer"
                 },
@@ -27475,9 +27785,6 @@ const docTemplate = `{
                     }
                 },
                 "showName": {
-                    "type": "string"
-                },
-                "updatedAt": {
                     "type": "string"
                 }
             }
