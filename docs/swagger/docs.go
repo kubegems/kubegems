@@ -4637,6 +4637,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/oauth/token": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "签发oauth jwt token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Oauth"
+                ],
+                "summary": "签发oauth jwt token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "授权方式，目前只支持client_credentials",
+                        "name": "grant_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "授权范围，目前只支持validate",
+                        "name": "scope",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "授权时长，单位秒",
+                        "name": "expire",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/oauth/validate": {
+            "get": {
+                "description": "检验oauth jwt token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Oauth"
+                ],
+                "summary": "检验oauth jwt token",
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/disable": {
             "post": {
                 "security": [
