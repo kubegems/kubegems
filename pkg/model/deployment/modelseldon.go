@@ -233,6 +233,10 @@ func modelURIWithLicense(uri, license string) string {
 const ModelInitializerVolumeSuffix = "provision-location"
 
 func containerWithMountPath(c corev1.Container, mountpath string) corev1.Container {
+	if mountpath == "" {
+		return c
+	}
+
 	modelInitializerVolumeName := nameWithSuffix(c.Name, ModelInitializerVolumeSuffix)
 	mountFound := false
 	for _, v := range c.VolumeMounts {
