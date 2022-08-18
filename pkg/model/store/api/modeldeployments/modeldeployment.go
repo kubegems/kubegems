@@ -212,6 +212,7 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		md.Spec.Server.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
 	case repository.SourceKindModelx:
 		md.Spec.Server.Name = "modelx"
+		md.Spec.Server.StorageInitializerImage = "docker.io/kubeges/modelx-dl:latest"
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
 		}
