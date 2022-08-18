@@ -417,9 +417,7 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		monitoropts := new(prometheus.MonitorOptions)
-		h.DynamicConfig.Get(ctx, monitoropts)
-		if err := req.CheckAndModify(monitoropts); err != nil {
+		if err := req.CheckAndModify(); err != nil {
 			return err
 		}
 		raw, err := cli.Extend().GetRawLoggingAlertResource(ctx, namespace)
@@ -478,9 +476,7 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		monitoropts := new(prometheus.MonitorOptions)
-		h.DynamicConfig.Get(ctx, monitoropts)
-		if err := req.CheckAndModify(monitoropts); err != nil {
+		if err := req.CheckAndModify(); err != nil {
 			return err
 		}
 		raw, err := cli.Extend().GetRawLoggingAlertResource(ctx, namespace)

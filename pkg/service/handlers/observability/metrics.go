@@ -17,11 +17,14 @@ package observability
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/labels"
+	"github.com/prometheus/prometheus/promql/parser"
 	v1 "k8s.io/api/core/v1"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -173,6 +176,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		Label:     c.Query("label"),
 
 		PromqlGenerator: &prometheus.PromqlGenerator{
+			Scope:      c.Query("scope"),
 			Resource:   c.Query("resource"),
 			Rule:       c.Query("rule"),
 			LabelPairs: c.QueryMap("labelpairs"),
@@ -189,10 +193,8 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		q.End = now.Format(time.RFC3339)
 	}
 
-	monitoropts := new(prometheus.MonitorOptions)
-	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	// 优先选用原生promql
-	if q.PromqlGenerator.IsEmpty() {
+	if q.PromqlGenerator.Notpl() {
 		if q.Expr == "" {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
@@ -200,16 +202,13 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			return err
 		}
 	} else {
-		ruleCtx, err := q.PromqlGenerator.FindRuleContext(monitoropts)
-		if err != nil {
+		if err := q.PromqlGenerator.SetTpl(h.GetDataBase().FindPromqlTpl); err != nil {
 			return err
 		}
-		if !ruleCtx.ResourceDetail.Namespaced && q.Namespace != "" {
+		if !q.PromqlGenerator.Tpl.Namespaced && q.Namespace != "" {
 			return fmt.Errorf("非namespace资源不能过滤项目环境")
 		}
-
-		q.PromqlGenerator.RuleContext = ruleCtx
-		q.Expr = ruleCtx.RuleDetail.Expr
+		q.Expr = q.PromqlGenerator.Tpl.Expr
 	}
 
 	var err error
@@ -217,14 +216,14 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 	if err != nil {
 		return err
 	}
-	if q.Namespace != "" {
-		q.Query.AddLabelMatchers(&labels.Matcher{
-			Type:  labels.MatchEqual,
-			Name:  prometheus.PromqlNamespaceKey,
-			Value: q.Namespace,
-		})
-	}
 	if q.PromqlGenerator != nil {
+		if q.Namespace != "" {
+			q.Query.AddLabelMatchers(&labels.Matcher{
+				Type:  labels.MatchEqual,
+				Name:  prometheus.PromqlNamespaceKey,
+				Value: q.Namespace,
+			})
+		}
 		for label, value := range q.LabelPairs {
 			q.Query.AddLabelMatchers(&labels.Matcher{
 				Type:  labels.MatchRegexp,
@@ -232,117 +231,180 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 				Value: value,
 			})
 		}
-		q.Query.Sumby(q.RuleContext.RuleDetail.Labels...)
+		q.Query.Sumby(q.Tpl.Labels...)
 	}
 	q.Expr = q.Query.String()
 
 	return f(q)
 }
 
-// GetMetricTemplate 获取prometheu查询模板
+// ListScopes 获取promql模板一级目录scope
 // @Tags        Observability
-// @Summary     获取prometheu查询模板
-// @Description 获取prometheu查询模板
+// @Summary     获取promql模板一级目录scope
+// @Description 获取promql模板一级目录scope
 // @Accept      json
 // @Produce     json
-// @Param       resource_name path     string                                              true "resource"
-// @Param       rule_name     path     string                                              true "rule"
-// @Success     200           {object} handlers.ResponseStruct{Data=prometheus.RuleDetail} "resp"
-// @Router      /v1/observability/template/resources/{resource_name}/rules/{rule_name} [get]
+// @Param       tenant_id path     string                                                true "租户ID"
+// @Param       page        query    int                                                   false "page"
+// @Param       size        query    int                                                   false "size"
+// @Success     200         {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/template/scopes [get]
 // @Security    JWT
-func (h *ObservabilityHandler) GetMetricTemplate(c *gin.Context) {
-	resName := c.Param("resource_name")
-	ruleName := c.Param("rule_name")
-
-	monitoropts := new(prometheus.MonitorOptions)
-	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
-	resDetail, ok := monitoropts.Resources[resName]
-	if !ok {
-		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
-		return
-	}
-	ruleDetail, ok := resDetail.Rules[ruleName]
-	if !ok {
-		handlers.NotOK(c, fmt.Errorf("rule %s not found", ruleName))
-		return
-	}
-
-	handlers.OK(c, ruleDetail)
-}
-
-// AddOrUpdateMetricTemplate 添加/更新prometheu查询模板
-// @Tags        Observability
-// @Summary     添加prometheu查询模板
-// @Description 添加prometheu查询模板
-// @Accept      json
-// @Produce     json
-// @Param       resource_name path     string                               true "resource"
-// @Param       rule_name     path     string                               true "rule"
-// @Param       from          body     prometheus.RuleDetail                true "查询模板配置"
-// @Success     200           {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/template/resources/{resource_name}/rules/{rule_name} [post]
-// @Security    JWT
-func (h *ObservabilityHandler) AddOrUpdateMetricTemplate(c *gin.Context) {
-	resName := c.Param("resource_name")
-	ruleName := c.Param("rule_name")
-	rule := prometheus.RuleDetail{}
-	if err := c.BindJSON(&rule); err != nil {
+func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
+	scopes := []models.PromqlTplScope{}
+	if err := h.GetDB().Order("name").Find(&scopes).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "更新", "Prometheus模板", resName+"."+ruleName)
+	handlers.OK(c, handlers.NewPageDataFromContext(c, scopes, nil, nil))
+}
 
-	monitoropts := new(prometheus.MonitorOptions)
-	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
-	resDetail, ok := monitoropts.Resources[resName]
-	if !ok {
-		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
+// ListResources 获取promql模板二级目录resource
+// @Tags        Observability
+// @Summary     获取promql模板二级目录resource
+// @Description 获取promql模板二级目录resource
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id path     int                                                   true  "租户ID"
+// @Param       scope_id  path     int                                                   true  "scope id"
+// @Param       page      query    int                                                   false "page"
+// @Param       size      query    int                                                   false "size"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/template/scopes/{scope_id}/resources [get]
+// @Security    JWT
+func (h *ObservabilityHandler) ListResources(c *gin.Context) {
+	resources := []models.PromqlTplResource{}
+	if err := h.GetDB().Where("scope_id = ?", c.Param("scope_id")).Order("name").Find(&resources).Error; err != nil {
+		handlers.NotOK(c, err)
 		return
 	}
+	handlers.OK(c, handlers.NewPageDataFromContext(c, resources, nil, nil))
+}
 
-	resDetail.Rules[ruleName] = rule
-	if err := h.DynamicConfig.Set(c.Request.Context(), monitoropts); err != nil {
+// ListRules 获取promql模板三级目录rule
+// @Tags        Observability
+// @Summary     获取promql模板三级目录rule
+// @Description 获取promql模板三级目录rule
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id   path     string                                                true  "租户ID"
+// @Param       resource_id path     string                                                true  "resource id, 可以是_all"
+// @Param       preload     query    string                                                false "Resource, Resource.Scope"
+// @Param       search      query    string                                                false "search string"
+// @Param       page      query    int                                                   false "page"
+// @Param       size      query    int                                                   false "size"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/template/resources{resource_id}/rules [get]
+// @Security    JWT
+func (h *ObservabilityHandler) ListRules(c *gin.Context) {
+	rules := []models.PromqlTplRule{}
+	tenantID := c.Param("tenant_id")
+	resourceID := c.Param("resource_id")
+	preload := c.Query("preload")
+	search := c.Query("search")
+
+	query := h.GetDB().Model(&models.PromqlTplRule{})
+	if resourceID != "_all" {
+		query.Where("resource_id = ?", resourceID)
+	}
+	if preload == "Resource" || preload == "Resource.Scope" {
+		query.Preload(preload)
+	}
+	if search != "" {
+		query.Where("name like ? or show_name like ?", fmt.Sprintf("%%%s%%", search), fmt.Sprintf("%%%s%%", search))
+	}
+	if tenantID != "_all" {
+		query.Where("tenant_id is null or tenant_id = ?", tenantID)
+	}
+	if err := query.Order("name").Find(&rules).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, handlers.NewPageDataFromContext(c, rules, nil, nil))
+}
+
+// AddRules 添加promql模板三级目录rule
+// @Tags        Observability
+// @Summary     添加promql模板三级目录rule
+// @Description 添加promql模板三级目录rule
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id path     string                                                true "租户ID"
+// @Param       param     body     models.PromqlTplRule                                  true "rule"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/template/rules [post]
+// @Security    JWT
+func (h *ObservabilityHandler) AddRules(c *gin.Context) {
+	req, err := h.getRuleReq(c)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	h.SetAuditData(c, "创建", "监控查询模板", req.Name)
+	if err := h.GetDB().Create(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	handlers.OK(c, "ok")
 }
 
-// DeleteMetricTemplate 删除prometheu查询模板
+// UpdateRules 更新promql模板三级目录rule
 // @Tags        Observability
-// @Summary     删除prometheu查询模板
-// @Description 删除prometheu查询模板
+// @Summary     更新promql模板三级目录rule
+// @Description 更新promql模板三级目录rule
 // @Accept      json
 // @Produce     json
-// @Param       resource_name path     string                               true "resource"
-// @Param       rule_name     path     string                               true "rule"
-// @Success     200           {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/template/resources/{resource_name}/rules/{rule_name} [delete]
+// @Param       tenant_id path     string                                                true "租户ID"
+// @Param       rule_id   path     string                                                true "rule ID"
+// @Param       param     body     models.PromqlTplRule                                  true "rule"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [put]
 // @Security    JWT
-func (h *ObservabilityHandler) DeleteMetricTemplate(c *gin.Context) {
-	resName := c.Param("resource_name")
-	ruleName := c.Param("rule_name")
-
-	h.SetAuditData(c, "删除", "Prometheus模板", resName+"."+ruleName)
-
-	monitoropts := new(prometheus.MonitorOptions)
-	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
-	resDetail, ok := monitoropts.Resources[resName]
-	if !ok {
-		handlers.NotOK(c, fmt.Errorf("resource %s not found", resName))
+func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
+	req, err := h.getRuleReq(c)
+	if err != nil {
+		handlers.NotOK(c, err)
 		return
 	}
-	_, ok = resDetail.Rules[ruleName]
-	if !ok {
-		handlers.NotOK(c, fmt.Errorf("rule %s not found", ruleName))
+	h.SetAuditData(c, "更新", "监控查询模板", req.Name)
+	if err := h.GetDB().Save(&req).Error; err != nil {
+		handlers.NotOK(c, err)
 		return
 	}
+	handlers.OK(c, "ok")
+}
 
+// DeleteRules 删除promql模板三级目录rule
+// @Tags        Observability
+// @Summary     删除promql模板三级目录rule
+// @Description 删除promql模板三级目录rule
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id path     string                                                true  "租户ID"
+// @Param       rule_id   path     string                                                true "rule ID"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [delete]
+// @Security    JWT
+func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
+	rule := &models.PromqlTplRule{}
+	if err := h.GetDB().Preload("Resource.Scope").First(rule, "id = ?", c.Param("rule_id")).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	h.SetAuditData(c, "删除", "监控查询模板", rule.Name)
+	if rule.TenantID == nil {
+		if c.Param("tenant_id") != "_all" {
+			handlers.NotOK(c, fmt.Errorf("你不能删除系统预置模板"))
+			return
+		}
+	} else {
+		h.SetExtraAuditData(c, models.ResTenant, *rule.TenantID)
+	}
 	allalerts := []prometheus.MonitorAlertRule{}
 	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
-		alerts, err := cli.Extend().ListMonitorAlertRules(ctx, v1.NamespaceAll, monitoropts, false)
+		alerts, err := cli.Extend().ListMonitorAlertRules(ctx, v1.NamespaceAll, false)
 		if err != nil {
-			return fmt.Errorf("list alert in cluster %s failed: %v", cli.Name(), err)
+			return errors.Wrapf(err, "list alert in cluster %s failed", cli.Name())
 		}
 		allalerts = append(allalerts, alerts...)
 		return nil
@@ -351,18 +413,41 @@ func (h *ObservabilityHandler) DeleteMetricTemplate(c *gin.Context) {
 		return
 	}
 	for _, v := range allalerts {
-		if !v.PromqlGenerator.IsEmpty() && v.PromqlGenerator.Resource == resName && v.PromqlGenerator.Rule == ruleName {
-			handlers.NotOK(c, fmt.Errorf("prometheus 模板 %s.%s 正在被告警规则%s使用", resName, ruleName, v.Name))
+		if !v.PromqlGenerator.Notpl() &&
+			v.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
+			v.PromqlGenerator.Resource == rule.Resource.Name &&
+			v.PromqlGenerator.Rule == rule.Name {
+			handlers.NotOK(c, fmt.Errorf("prometheus 模板 %s.%s.%s 正在被告警规则%s使用", v.PromqlGenerator.Scope, v.PromqlGenerator.Resource, v.PromqlGenerator.Rule, v.Name))
 			return
 		}
 	}
-
-	delete(resDetail.Rules, ruleName)
-	if err := h.DynamicConfig.Set(c.Request.Context(), monitoropts); err != nil {
+	if err := h.GetDB().Delete(rule).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	handlers.OK(c, "ok")
+}
+
+func (h *ObservabilityHandler) getRuleReq(c *gin.Context) (*models.PromqlTplRule, error) {
+	req := models.PromqlTplRule{}
+	if err := c.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	if _, err := parser.ParseExpr(req.Expr); err != nil {
+		return nil, errors.Wrap(err, "promql语法错误")
+	}
+	tenantID := c.Param("tenant_id")
+	if tenantID != "_all" {
+		t, _ := strconv.Atoi(tenantID)
+		if t == 0 {
+			return nil, fmt.Errorf("tenant id not valid")
+		}
+		tmp := uint(t)
+		h.SetExtraAuditData(c, models.ResTenant, tmp)
+		req.TenantID = &tmp
+	}
+
+	return &req, nil
 }
 
 // ListDashboardTemplates 监控面板模板列表

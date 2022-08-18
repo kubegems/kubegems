@@ -30,9 +30,8 @@ const (
 	AlertNamespaceLabel = "gems_namespace"
 	AlertNameLabel      = "gems_alertname"
 	// 用于从告警中获取告警资源
-	AlertResourceLabel = "gems_alert_resource"
-	AlertRuleLabel     = "gems_alert_rule"
-	AlertFromLabel     = "gems_alert_from" // 告警来自哪里，logging/monitor
+	AlertFromLabel = "gems_alert_from" // 告警来自哪里，logging/monitor
+	AlertPromqlTpl = "gems_alert_tpl"  // eg. platform.cluster.cpuUsageTotal
 
 	AlertTypeMonitor = "monitor"
 	AlertTypeLogging = "logging"
@@ -44,7 +43,7 @@ const (
 	exprJsonAnnotationKey = "gems_expr_json"
 	messageAnnotationsKey = "message"
 	valueAnnotationKey    = "value"
-	valueAnnotationExpr   = `{{ $value | printf "%.1f" }}`
+	ValueAnnotationExpr   = `{{ $value | printf "%.1f" }}`
 
 	alertRuleKeyFormat = "gems-%s-%s"
 	AlertClusterKey    = "cluster"
@@ -95,7 +94,7 @@ func CheckQueryExprNamespace(expr, namespace string) error {
 	return nil
 }
 
-func (r *BaseAlertRule) checkAndModify(opts *MonitorOptions) error {
+func (r *BaseAlertRule) CheckAndModify() error {
 	_, _, _, hasOp := SplitQueryExpr(r.Expr)
 	if hasOp {
 		return fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
@@ -132,12 +131,6 @@ func (r *BaseAlertRule) checkAndModify(opts *MonitorOptions) error {
 		if severitySet.Has(v.Severity) {
 			return fmt.Errorf("有重复的告警级别")
 		} else {
-			if !slice.ContainStr(opts.Operators, v.CompareOp) {
-				return fmt.Errorf("invalid operator: %s", v.CompareOp)
-			}
-			if _, ok := opts.Severity[v.Severity]; !ok {
-				return fmt.Errorf("invalid severity: %s", v.Severity)
-			}
 			severitySet.Append(v.Severity)
 		}
 	}

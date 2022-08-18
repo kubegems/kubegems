@@ -283,10 +283,8 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 
 	ret := []prometheus.MonitorAlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		monitoropts := new(prometheus.MonitorOptions)
-		h.DynamicConfig.Get(ctx, monitoropts)
 		var err error
-		ret, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, monitoropts, false)
+		ret, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, false)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -314,10 +312,8 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 
 	var alerts []prometheus.MonitorAlertRule
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		monitoropts := new(prometheus.MonitorOptions)
-		h.DynamicConfig.Get(ctx, monitoropts)
 		var err error
-		alerts, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, monitoropts, true)
+		alerts, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, true)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -336,6 +332,23 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 	handlers.OK(c, alerts[index])
 }
 
+func (h *ObservabilityHandler) withAlertruleReq(c *gin.Context, f func(req prometheus.MonitorAlertRule) error) error {
+	req := prometheus.MonitorAlertRule{}
+	if err := c.BindJSON(&req); err != nil {
+		return err
+	}
+	req.Namespace = c.Param("namespace")
+
+	if err := prometheus.MutateMonitorAlert(&req, h.GetDataBase().FindPromqlTpl); err != nil {
+		return err
+	}
+
+	if err := req.BaseAlertRule.CheckAndModify(); err != nil {
+		return err
+	}
+	return f(req)
+}
+
 // CreateMonitorAlertRule 创建监控告警规则
 // @Tags        Observability
 // @Summary     创建监控告警规则
@@ -351,50 +364,42 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
-	req := prometheus.MonitorAlertRule{}
-	if err := c.BindJSON(&req); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	req.Namespace = namespace
-	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "创建", "监控告警规则", req.Name)
 
 	h.m.Lock()
 	defer h.m.Unlock()
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		monitoropts := new(prometheus.MonitorOptions)
-		h.DynamicConfig.Get(ctx, monitoropts)
-		if err := req.CheckAndModify(monitoropts); err != nil {
-			return err
-		}
+	if err := h.withAlertruleReq(c, func(req prometheus.MonitorAlertRule) error {
+		h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+		h.SetAuditData(c, "创建", "监控告警规则", req.Name)
 
-		// get、update、commit
-		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source, monitoropts)
-		if err != nil {
-			return err
-		}
+		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+			// get、update、commit
+			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source)
+			if err != nil {
+				return err
+			}
 
-		// check name duplicated
-		amconfigList := v1alpha1.AlertmanagerConfigList{}
-		if err := cli.List(ctx, &amconfigList, client.InNamespace(namespace), client.HasLabels([]string{
-			gems.LabelAlertmanagerConfigType,
-		})); err != nil {
-			return err
-		}
-		if err := checkAlertName(req.Name, amconfigList.Items); err != nil {
-			return err
-		}
+			// check name duplicated
+			amconfigList := v1alpha1.AlertmanagerConfigList{}
+			if err := cli.List(ctx, &amconfigList, client.InNamespace(namespace), client.HasLabels([]string{
+				gems.LabelAlertmanagerConfigType,
+			})); err != nil {
+				return err
+			}
+			if err := checkAlertName(req.Name, amconfigList.Items); err != nil {
+				return err
+			}
 
-		if err := raw.ModifyAlertRule(req, prometheus.Add); err != nil {
-			return err
-		}
+			if err := raw.ModifyAlertRule(req, prometheus.Add); err != nil {
+				return err
+			}
 
-		return cli.Extend().CommitRawMonitorAlertResource(ctx, raw)
+			return cli.Extend().CommitRawMonitorAlertResource(ctx, raw)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+
 	handlers.OK(c, "ok")
 }
 
@@ -432,39 +437,30 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
-	req := prometheus.MonitorAlertRule{}
-	if err := c.BindJSON(&req); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	req.Namespace = namespace
-	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "更新", "监控告警规则", req.Name)
-
 	h.m.Lock()
 	defer h.m.Unlock()
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		monitoropts := new(prometheus.MonitorOptions)
-		h.DynamicConfig.Get(ctx, monitoropts)
-		if err := req.CheckAndModify(monitoropts); err != nil {
-			return err
-		}
+	if err := h.withAlertruleReq(c, func(req prometheus.MonitorAlertRule) error {
+		h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
+		h.SetAuditData(c, "更新", "监控告警规则", req.Name)
 
-		// get、update、commit
-		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source, monitoropts)
-		if err != nil {
-			return err
-		}
+		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+			// get、update、commit
+			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source)
+			if err != nil {
+				return err
+			}
 
-		if err := raw.ModifyAlertRule(req, prometheus.Update); err != nil {
-			return err
-		}
+			if err := raw.ModifyAlertRule(req, prometheus.Update); err != nil {
+				return err
+			}
 
-		return cli.Extend().CommitRawMonitorAlertResource(ctx, raw)
+			return cli.Extend().CommitRawMonitorAlertResource(ctx, raw)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+
 	handlers.OK(c, "ok")
 }
 
@@ -499,9 +495,7 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		// get、update、commit
-		monitoropts := new(prometheus.MonitorOptions)
-		h.DynamicConfig.Get(ctx, monitoropts)
-		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, source, monitoropts)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, source)
 		if err != nil {
 			return err
 		}

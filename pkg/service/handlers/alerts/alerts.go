@@ -17,10 +17,12 @@ package alerthandler
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
@@ -73,29 +75,37 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 		return
 	}
 
-	monitoropts := new(prometheus.MonitorOptions)
-	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
+	// 使用map避免循环查询数据库
+	tplGetter := h.GetDataBase().NewPromqlTplMapper().FindPromqlTpl
 	for i := range ret {
 		if ret[i].SilenceEndsAt.Equal(forever) {
 			ret[i].SilenceEndsAt = nil
 		}
 		ret[i].LabelMap = make(map[string]string)
 		_ = json.Unmarshal(ret[i].Labels, &ret[i].LabelMap)
-		ret[i].Summary = h.formatBlackListSummary(ret[i].LabelMap, monitoropts)
+		ret[i].Summary = formatBlackListSummary(ret[i].LabelMap, tplGetter)
 	}
 	handlers.OK(c, handlers.Page(total, ret, int64(page), int64(size)))
 }
 
-func (h *AlertsHandler) formatBlackListSummary(labels map[string]string, opts *prometheus.MonitorOptions) string {
-	resKey := labels[prometheus.AlertResourceLabel]
-	ruleKey := labels[prometheus.AlertRuleLabel]
-	res := opts.Resources[resKey]
-	rule := res.Rules[ruleKey]
-	labelStr := fmt.Sprintf("%s: [集群:%s] ", labels[prometheus.AlertNameLabel], labels[prometheus.AlertClusterKey])
-	for _, l := range rule.Labels {
-		labelStr += fmt.Sprintf("[%s:%s] ", l, labels[l])
+func formatBlackListSummary(labels map[string]string, f prometheus.TplGetter) string {
+	tplname := labels[prometheus.AlertPromqlTpl]
+	var subStr string
+	tmp := strings.Split(tplname, ".")
+	if len(tmp) == 3 {
+		tpl, err := f(tmp[0], tmp[1], tmp[2])
+		if err == nil {
+			for _, l := range tpl.Labels {
+				subStr += fmt.Sprintf("[%s:%s] ", l, labels[l])
+			}
+		} else {
+			log.Warnf("tpl: %s not found", tplname)
+		}
 	}
-	return fmt.Sprintf("%s%s%s告警", labelStr, res.ShowName, rule.ShowName)
+
+	header := fmt.Sprintf("%s: [集群:%s] ", labels[prometheus.AlertNameLabel], labels[prometheus.AlertClusterKey])
+
+	return fmt.Sprintf("%s%s告警", header, subStr)
 }
 
 // AlertHistory 加入/更新告警黑名单

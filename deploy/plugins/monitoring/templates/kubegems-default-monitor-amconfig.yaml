@@ -58,7 +58,7 @@ spec:
           ca: {}
           cert: {}
           insecureSkipVerify: true
-      url: '{{ index .Values "kubegems-local" "alert" "address" }}'
+      url: {{ index .Values "kubegems-local" "alert" "address" }}
   route:
     groupBy:
     - gems_namespace

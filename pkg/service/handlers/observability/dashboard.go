@@ -202,15 +202,13 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 		req.Step = "30s"
 	}
 
-	monitoropts := new(prometheus.MonitorOptions)
-	h.DynamicConfig.Get(c.Request.Context(), monitoropts)
 	// 逐个校验graph
 	for i, v := range req.Graphs {
 		if v.Name == "" {
 			return nil, fmt.Errorf("图表名不能为空")
 		}
 
-		if v.PromqlGenerator.IsEmpty() {
+		if v.PromqlGenerator.Notpl() {
 			if v.Expr == "" {
 				return nil, fmt.Errorf("模板与原生promql不能同时为空")
 			}
@@ -223,15 +221,13 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 				}
 			}
 		} else {
-			rulectx, err := v.PromqlGenerator.FindRuleContext(monitoropts)
-			if err != nil {
+			if err := v.PromqlGenerator.SetTpl(h.GetDataBase().FindPromqlTpl); err != nil {
 				return nil, err
 			}
-			if rulectx.ResourceDetail.Namespaced == false {
+			if v.Tpl.Namespaced == false {
 				return nil, fmt.Errorf("图表: %s 错误！不能查询集群范围资源", v.Name)
 			}
-			req.Graphs[i].Unit = rulectx.RuleDetail.Unit
-			req.Graphs[i].PromqlGenerator.Unit = rulectx.RuleDetail.Unit
+			req.Graphs[i].Unit = v.PromqlGenerator.Unit
 		}
 	}
 	return &req, nil
@@ -246,34 +242,42 @@ var alltemplates = []byte(`
   graphs:
     - name: 容器CPU总量
       promqlGenerator:
+	  	scope: containers
         resource: container
         rule: cpuTotal
     - name: 容器CPU使用量
       promqlGenerator:
+	  	scope: containers
         resource: container
         rule: cpuUsage
     - name: 容器CPU使用率
       promqlGenerator:
+	  	scope: containers
         resource: container
         rule: cpuUsagePercent
     - name: 容器内存总量
       promqlGenerator:
+	  	scope: containers
         resource: container
         rule: memoryTotal
     - name: 容器内存使用量
       promqlGenerator:
+	  	scope: containers
         resource: container
         rule: memoryUsage
     - name: 容器内存使用率
       promqlGenerator:
+	  	scope: containers
         resource: container
         rule: memoryUsagePercent
     - name: 容器网络接收速率
       promqlGenerator:
+	  	scope: containers
         resource: container
         rule: networkInBPS
     - name: 容器网络发送速率
       promqlGenerator:
+	  	scope: containers
         resource: container
         rule: networkOutBPS
 - name: 存储卷监控
@@ -284,14 +288,17 @@ var alltemplates = []byte(`
   graphs:
     - name: 存储卷总量
       promqlGenerator:
+	  	scope: others
         resource: pvc
         rule: volumeTotal
     - name: 存储卷总量
       promqlGenerator:
+	  	scope: others
         resource: pvc
         rule: volumeUsage
     - name: 存储卷总量
       promqlGenerator:
+	  	scope: others
         resource: pvc
         rule: volumeUsagePercent
 `)

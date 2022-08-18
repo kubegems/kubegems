@@ -178,3 +178,65 @@ func (h *DatabaseHelper) ClusterNS2EnvMap() (map[string]EnvInfo, error) {
 
 	return ret, nil
 }
+
+func (h *DatabaseHelper) FindPromqlTpl(scope, resource, rule string) (*prometheus.PromqlTpl, error) {
+	sql := `select promql_tpl_scopes.name as scope_name,
+	promql_tpl_scopes.show_name as scope_show_name,
+	promql_tpl_resources.name as resource_name,
+	promql_tpl_resources.show_name as resource_show_name,
+	promql_tpl_rules.name as rule_name,
+	promql_tpl_rules.show_name as rule_show_name,
+	namespaced, expr, unit, labels
+	from promql_tpl_rules left join promql_tpl_resources on promql_tpl_rules.resource_id = promql_tpl_resources.id
+		left join promql_tpl_scopes on promql_tpl_resources.scope_id = promql_tpl_scopes.id
+	where promql_tpl_scopes.name = ? and promql_tpl_resources.name = ? and promql_tpl_rules.name = ?`
+	ret := prometheus.PromqlTpl{}
+	res := h.DB.Raw(sql, scope, resource, rule).Scan(&ret)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, errors.New("no promql template found")
+	}
+	return &ret, nil
+}
+
+type PromqlTplMapper struct {
+	m   map[string]*prometheus.PromqlTpl
+	err error
+}
+
+func (h *DatabaseHelper) NewPromqlTplMapper() *PromqlTplMapper {
+	sql := `select promql_tpl_scopes.name as scope_name,
+	promql_tpl_scopes.show_name as scope_show_name,
+	promql_tpl_resources.name as resource_name,
+	promql_tpl_resources.show_name as resource_show_name,
+	promql_tpl_rules.name as rule_name,
+	promql_tpl_rules.show_name as rule_show_name,
+	namespaced, expr, unit, labels
+	from promql_tpl_rules left join promql_tpl_resources on promql_tpl_rules.resource_id = promql_tpl_resources.id
+		left join promql_tpl_scopes on promql_tpl_resources.scope_id = promql_tpl_scopes.id`
+	tpls := []*prometheus.PromqlTpl{}
+	if err := h.DB.Raw(sql).Scan(&tpls).Error; err != nil {
+		return &PromqlTplMapper{err: err}
+	}
+	ret := &PromqlTplMapper{
+		m: make(map[string]*prometheus.PromqlTpl),
+	}
+	for _, v := range tpls {
+		ret.m[v.String()] = v
+	}
+	return ret
+}
+
+func (m *PromqlTplMapper) FindPromqlTpl(scope, resource, rule string) (*prometheus.PromqlTpl, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	key := fmt.Sprintf("%s.%s.%s", scope, resource, rule)
+	ret, ok := m.m[key]
+	if !ok {
+		return nil, fmt.Errorf("promql tpl: %s not found", key)
+	}
+	return ret, nil
+}
