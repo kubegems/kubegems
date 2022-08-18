@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
-	"github.com/seldonio/seldon-core/operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -231,8 +230,10 @@ func modelURIWithLicense(uri, license string) string {
 	return u.String()
 }
 
+const ModelInitializerVolumeSuffix = "provision-location"
+
 func containerWithMountPath(c corev1.Container, mountpath string) corev1.Container {
-	modelInitializerVolumeName := nameWithSuffix(c.Name, controllers.ModelInitializerVolumeSuffix)
+	modelInitializerVolumeName := nameWithSuffix(c.Name, ModelInitializerVolumeSuffix)
 	mountFound := false
 	for _, v := range c.VolumeMounts {
 		if v.Name == modelInitializerVolumeName {

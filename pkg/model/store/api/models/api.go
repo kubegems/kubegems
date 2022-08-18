@@ -127,6 +127,9 @@ func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 					AddSubGroup(route.
 						NewGroup("/{model}").Parameters(route.PathParameter("model", "model name, base64 encoded name string")).
 						AddRoutes(
+							// model sync
+							route.POST("/sync").To(m.SyncModel).Doc("sync model"),
+							// model versions
 							route.GET("/versions").To(m.ListVersions).Doc("list versions").Response([]repository.ModelVersion{}),
 							route.GET("/versions/{version}").To(m.GetVersion).Doc("get version").Response(repository.ModelVersion{}),
 						).

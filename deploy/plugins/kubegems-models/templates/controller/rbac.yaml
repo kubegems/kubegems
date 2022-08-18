@@ -52,6 +52,7 @@ rules:
     resources:
       - "configmaps"
       - "events"
+      - "namespaces"
     verbs:
       - "*"
   - apiGroups:
