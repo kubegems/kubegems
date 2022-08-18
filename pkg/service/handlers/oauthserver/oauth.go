@@ -80,6 +80,13 @@ func Init(opts *kjwt.Options) {
 	})
 }
 
+// @Tags        Oauth
+// @Summary     检验oauth jwt token
+// @Description 检验oauth jwt token
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} object "resp"
+// @Router      /v1/oauth/validate [get]
 func Validate(c *gin.Context) {
 	token, err := srv.ValidationBearerToken(c.Request)
 	if err != nil {
@@ -94,6 +101,17 @@ func Validate(c *gin.Context) {
 	handlers.OK(c, data)
 }
 
+// @Tags        Oauth
+// @Summary     签发oauth jwt token
+// @Description 签发oauth jwt token
+// @Accept      json
+// @Produce     json
+// @Param       grant_type query    string true "授权方式，目前只支持client_credentials"
+// @Param       scope      query    string true "授权范围，目前只支持validate"
+// @Param       expire     query    int    true "授权时长，单位秒"
+// @Success     200        {object} object "resp"
+// @Router      /v1/oauth/token [post]
+// @Security    JWT
 func Token(c *gin.Context) {
 	u, _ := c.Get("current_user")
 	user := u.(*kmodels.User)
