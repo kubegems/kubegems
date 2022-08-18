@@ -112,9 +112,11 @@ func (o *ModelDeploymentAPI) ListModelDeployments(req *restful.Request, resp *re
 			return nil, err
 		}
 		listopt := request.GetListOptions(req.Request)
-		paged := response.NewPageData(list.Items, listopt.Page, listopt.Size, func(i int) bool {
-			return strings.Contains(list.Items[i].Name, listopt.Search)
-		}, nil)
+		paged := response.NewTypedPage(list.Items, listopt.Page, listopt.Size, func(a modelsv1beta1.ModelDeployment) bool {
+			return strings.Contains(a.Name, listopt.Search)
+		}, func(a, b modelsv1beta1.ModelDeployment) bool {
+			return a.CreationTimestamp.After(b.CreationTimestamp.Time)
+		})
 		return paged, nil
 	})
 }
@@ -212,7 +214,7 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		md.Spec.Server.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
 	case repository.SourceKindModelx:
 		md.Spec.Server.Name = "modelx"
-		md.Spec.Server.StorageInitializerImage = "docker.io/kubeges/modelx-dl:latest"
+		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
 		}

@@ -29,13 +29,6 @@ type Response struct {
 	Error   interface{} `json:"error,omitempty"`
 }
 
-type Page struct {
-	List  interface{} `json:"list"`
-	Total int64       `json:"total"`
-	Page  int64       `json:"page,omitempty"`
-	Size  int64       `json:"size,omitempty"`
-}
-
 type PageFilterFunc func(i int) bool
 
 type PageSortFunc func(i, j int) bool
