@@ -51,6 +51,8 @@ type ModelSpec struct {
 	Version string `json:"version"`
 	// +kubebuilder:validation:Optional
 	URL string `json:"url"`
+	// +kubebuilder:validation:Optional
+	License string `json:"license"`
 }
 
 type ServerSpec struct {
