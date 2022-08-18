@@ -151,7 +151,7 @@
       tenantID: null
       unit: ""
     scopeID: 1
-    showName: 容器
+    showName: container
   showName: 容器资源
 - id: 2
   name: middlewires
@@ -1478,7 +1478,7 @@
       tenantID: null
       unit: ""
     scopeID: 3
-    showName: 证书
+    showName: certificates
   - id: 10
     name: exporter
     rules:
@@ -1490,11 +1490,11 @@
       - job
       name: status
       resourceID: 10
-      showName: 状态
+      showName: Plugins State
       tenantID: null
       unit: ""
     scopeID: 3
-    showName: 采集器
+    showName: collector
   - id: 11
     name: log
     rules:
@@ -1521,7 +1521,7 @@
       tenantID: null
       unit: ""
     scopeID: 3
-    showName: 日志
+    showName: log
   - id: 12
     name: plugin
     rules:
@@ -1540,7 +1540,7 @@
       tenantID: null
       unit: ""
     scopeID: 3
-    showName: 插件
+    showName: plugin
   - id: 13
     name: pvc
     rules:
@@ -1581,7 +1581,7 @@
       tenantID: null
       unit: percent-0-100
     scopeID: 3
-    showName: 存储卷
+    showName: volume
   showName: 其他
 - id: 4
   name: system
@@ -1620,7 +1620,7 @@
       tenantID: null
       unit: percent-0-100
     scopeID: 4
-    showName: 集群
+    showName: cluster
   - id: 15
     name: environment
     rules:
@@ -1690,7 +1690,7 @@
       tenantID: null
       unit: bytes-B
     scopeID: 4
-    showName: 环境
+    showName: environment
   - id: 16
     name: node
     rules:
@@ -1934,5 +1934,5 @@
       tenantID: null
       unit: ""
     scopeID: 4
-    showName: 节点
+    showName: host
   showName: 系统资源

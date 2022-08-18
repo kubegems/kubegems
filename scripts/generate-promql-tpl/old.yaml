@@ -26,7 +26,7 @@ resources:
         - namespace
         - pod
         showName: Error logs Last 1 Minutes (lines)
-    showName: 日志
+    showName: log
     namespaced: true
   pvc:
     rules:
@@ -54,7 +54,7 @@ resources:
         - namespace
         - persistentvolumeclaim
         showName: PersistentVolume Usage Ratio (%)
-    showName: 存储卷
+    showName: volume
     namespaced: true
   cert:
     rules:
@@ -73,7 +73,7 @@ resources:
         - namespace
         - name
         showName: Expiration Time (second)
-    showName: 证书
+    showName: certificates
     namespaced: true
   node:
     rules:
@@ -224,7 +224,7 @@ resources:
         - instance
         - device
         showName: Host Network Sent ErrorPack Ratio (%)
-    showName: 节点
+    showName: host
     namespaced: false
   kafka:
     rules:
@@ -543,7 +543,7 @@ resources:
         - version
         - enabled
         showName: KubeGems Plugins Status
-    showName: 插件
+    showName: plugin
     namespaced: false
   cluster:
     rules:
@@ -564,7 +564,7 @@ resources:
         labels:
         - component
         showName: Cluster Certs Expiration Time (second)
-    showName: 集群
+    showName: cluster
     namespaced: false
   consule:
     rules:
@@ -790,8 +790,8 @@ resources:
         labels:
         - instance
         - job
-        showName: 状态
-    showName: 采集器
+        showName: Plugins State
+    showName: collector
     namespaced: false
   postgres:
     rules:
@@ -1061,7 +1061,7 @@ resources:
         - container
         - reason
         showName: Pod Terminated Reason
-    showName: 容器
+    showName: container
     namespaced: true
   environment:
     rules:
@@ -1110,7 +1110,7 @@ resources:
         - environment
         - namespace
         showName: Environment Network Sent (bytes/s)
-    showName: 环境
+    showName: environment
     namespaced: true
   elasticsearch:
     rules:
