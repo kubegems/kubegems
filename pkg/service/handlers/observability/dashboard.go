@@ -153,6 +153,8 @@ func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 // @Description 监控面板模板列表
 // @Accept      json
 // @Produce     json
+// @Param       page query     int                               false "page"
+// @Param       size query     int                               false "size"
 // @Success     200 {object} handlers.ResponseStruct{Data=[]models.MonitorDashboardTpl} "resp"
 // @Router      /v1/observability/template/dashboard [get]
 // @Security    JWT
@@ -162,7 +164,7 @@ func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, tpls)
+	handlers.OK(c, handlers.NewPageDataFromContext(c, tpls, nil, nil))
 }
 
 // GetDashboardTemplate 监控面板模板详情
@@ -283,73 +285,3 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 	}
 	return &req, nil
 }
-
-var alltemplates = []byte(`
-- name: 容器基础指标监控
-  step: 30s
-  refresh: 30s
-  start: now-30m
-  end: now
-  graphs:
-    - name: 容器CPU总量
-      promqlGenerator:
-        scope: containers
-        resource: container
-        rule: cpuTotal
-    - name: 容器CPU使用量
-      promqlGenerator:
-        scope: containers
-        resource: container
-        rule: cpuUsage
-    - name: 容器CPU使用率
-      promqlGenerator:
-        scope: containers
-        resource: container
-        rule: cpuUsagePercent
-    - name: 容器内存总量
-      promqlGenerator:
-        scope: containers
-        resource: container
-        rule: memoryTotal
-    - name: 容器内存使用量
-      promqlGenerator:
-        scope: containers
-        resource: container
-        rule: memoryUsage
-    - name: 容器内存使用率
-      promqlGenerator:
-        scope: containers
-        resource: container
-        rule: memoryUsagePercent
-    - name: 容器网络接收速率
-      promqlGenerator:
-        scope: containers
-        resource: container
-        rule: networkInBPS
-    - name: 容器网络发送速率
-      promqlGenerator:
-        scope: containers
-        resource: container
-        rule: networkOutBPS
-- name: 存储卷监控
-  step: 30s
-  refresh: 30s
-  start: now-30m
-  end: now
-  graphs:
-    - name: 存储卷总量
-      promqlGenerator:
-        scope: others
-        resource: pvc
-        rule: volumeTotal
-    - name: 存储卷总量
-      promqlGenerator:
-        scope: others
-        resource: pvc
-        rule: volumeUsage
-    - name: 存储卷总量
-      promqlGenerator:
-        scope: others
-        resource: pvc
-        rule: volumeUsagePercent
-`)
