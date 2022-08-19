@@ -72,13 +72,14 @@ require (
 	go.mongodb.org/mongo-driver v1.9.1
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
-	golang.org/x/net v0.0.0-20220516155154-20f960328961
-	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
-	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
-	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
+	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 	golang.org/x/text v0.3.7
-	google.golang.org/grpc v1.46.0
-	gopkg.in/yaml.v3 v3.0.0
+	google.golang.org/grpc v1.47.0
+	gopkg.in/square/go-jose.v2 v2.6.0
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.0.2
 	gorm.io/driver/mysql v1.1.2
 	gorm.io/gorm v1.21.15
