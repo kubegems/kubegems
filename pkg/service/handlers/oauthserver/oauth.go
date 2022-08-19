@@ -139,9 +139,7 @@ func (s *OauthServer) ListToken(c *gin.Context) {
 // @Description 删除用户token
 // @Accept      json
 // @Produce     json
-// @Param       token_id path     int    true  "page"
-// @Param       page     query    int    false "page"
-// @Param       size     query    int    false "size"
+// @Param       token_id path     int    true "token id"
 // @Success     200      {object} string "resp"
 // @Router      /v1/oauth/token/{token_id} [delete]
 // @Security    JWT

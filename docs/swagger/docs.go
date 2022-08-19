@@ -4788,22 +4788,10 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "page",
+                        "description": "token id",
                         "name": "token_id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "size",
-                        "name": "size",
-                        "in": "query"
                     }
                 ],
                 "responses": {

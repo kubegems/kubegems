@@ -20155,18 +20155,10 @@ paths:
       - application/json
       description: 删除用户token
       parameters:
-      - description: page
+      - description: token id
         in: path
         name: token_id
         required: true
-        type: integer
-      - description: page
-        in: query
-        name: page
-        type: integer
-      - description: size
-        in: query
-        name: size
         type: integer
       produces:
       - application/json
