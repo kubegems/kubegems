@@ -37,6 +37,7 @@ func main() {
 
 	tpl := []*models.PromqlTplScope{
 		{
+			ID:         1,
 			Name:       "system",
 			ShowName:   "系统资源",
 			Namespaced: false,
@@ -53,6 +54,7 @@ func main() {
 			},
 		},
 		{
+			ID:         2,
 			Name:       "containers",
 			ShowName:   "容器资源",
 			Namespaced: true,
@@ -60,9 +62,16 @@ func main() {
 				{
 					Name: "container",
 				},
+				{
+					Name: "pvc",
+				},
+				{
+					Name: "log",
+				},
 			},
 		},
 		{
+			ID:         3,
 			Name:       "middlewires",
 			ShowName:   "中间件",
 			Namespaced: true,
@@ -91,16 +100,11 @@ func main() {
 			},
 		},
 		{
+			ID:         4,
 			Name:       "others",
 			ShowName:   "其他",
 			Namespaced: true,
 			Resources: []*models.PromqlTplResource{
-				{
-					Name: "pvc",
-				},
-				{
-					Name: "log",
-				},
 				{
 					Name: "cert",
 				},
@@ -144,10 +148,8 @@ func main() {
 		return tpl[i].Name < tpl[j].Name
 	})
 
-	var scopeCount, resCount, ruleCount uint
+	var resCount, ruleCount uint
 	for _, scope := range tpl {
-		scopeCount += 1
-		scope.ID = scopeCount
 		for _, res := range scope.Resources {
 			resCount += 1
 			res.ID = resCount

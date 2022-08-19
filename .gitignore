@@ -5,7 +5,7 @@ tmp/
 bin/
 vendor/
 certs/
-config/*.yaml
+config/config.yaml
 _.yaml
 *.sqlite3
 *.bak
