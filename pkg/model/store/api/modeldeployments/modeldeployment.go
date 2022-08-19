@@ -188,10 +188,12 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		return err
 	}
 
+	if md.Spec.Server.Name == "" {
+		md.Spec.Server.Name = md.Name
+	}
 	// set first source image if not set
 	switch sourcedetails.Kind {
 	case repository.SourceKindHuggingface:
-		md.Spec.Server.Name = "transformer"
 		md.Spec.Server.Kind = machinelearningv1.PrepackHuggingFaceName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
 		md.Spec.Server.Parameters = append(md.Spec.Server.Parameters,
@@ -204,7 +206,6 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			FailureThreshold:    5,
 		}
 	case repository.SourceKindOpenMMLab:
-		md.Spec.Server.Name = "model"
 		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
 		md.Spec.Server.Parameters = append(md.Spec.Server.Parameters,
@@ -213,7 +214,6 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		)
 		md.Spec.Server.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
 	case repository.SourceKindModelx:
-		md.Spec.Server.Name = "modelx"
 		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage

@@ -136,7 +136,7 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 			Annotations: md.Annotations,
 			Predictors: []machinelearningv1.PredictorSpec{
 				{
-					Name:            md.Spec.Server.Name,
+					Name:            "predictor",
 					EngineResources: md.Spec.Server.Resources,
 					Replicas:        md.Spec.Replicas,
 					Annotations: map[string]string{
