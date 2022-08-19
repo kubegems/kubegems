@@ -52,6 +52,7 @@ rules:
     resources:
       - "configmaps"
       - "events"
+      - "namespaces"
     verbs:
       - "*"
   - apiGroups:
@@ -64,6 +65,18 @@ rules:
       - "machinelearning.seldon.io"
     resources:
       - "*"
+    verbs:
+      - "*"
+  - apiGroups:
+     - gems.kubegems.io
+    resources:
+      - "tenantgateways"
+    verbs:
+      - "*"
+  - apiGroups:
+      - "networking.k8s.io"
+    resources:
+      - "ingresses"
     verbs:
       - "*"
 {{- end }}

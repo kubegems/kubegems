@@ -16,18 +16,6 @@ package repository
 
 import "time"
 
-/*
-post:										<--- post id
-
-[post content]
-
-comments:
-
-- [user a] at 00:12 : nice job!				<--- comment(id)
-- [user b] at 00:15 : where is the cat?		<--- comment's content
-- [user c] at 00:35 : > where is the cat?	<--- reply to a comment(id)
-					  in the dark!
-*/
 type Comment struct {
 	// nolint: tagliatelle
 	ID           string    `json:"id,omitempty" bson:"_id,omitempty"` // id
@@ -52,27 +40,24 @@ type ReplyTo struct {
 // model meta in models store
 // nolint: tagliatelle
 type Model struct {
-	ID           string                 `json:"id,omitempty" bson:"_id,omitempty"`
-	Source       string                 `json:"source"` // source of model (huggingface, ...)
-	Name         string                 `json:"name"`
-	Registry     string                 `json:"registry"`
-	Type         string                 `json:"type"`
-	Tags         []string               `json:"tags"`
-	Author       string                 `json:"author"`
-	License      string                 `json:"license"`
-	Files        []ModelFile            `json:"files"`
-	Framework    string                 `json:"framework"`
-	Paper        map[string]string      `json:"paper"`
-	Intro        string                 `json:"intro"`
-	Downloads    int                    `json:"downloads"`
-	Task         string                 `json:"task"`
-	Likes        int                    `json:"likes"`
-	Raw          map[string]interface{} `json:"raw"`
-	Recomment    int                    `json:"recomment"` // number of recomment votes
-	CreateAt     *time.Time             `json:"createAt" bson:"create_at"`
-	UpdateAt     *time.Time             `json:"updateAt" bson:"update_at"`
-	LastModified *time.Time             `json:"lastModified" bson:"lastModified"`
-	Enabled      bool                   `json:"enabled"`
+	ID               string            `json:"id,omitempty" bson:"_id,omitempty"`
+	Source           string            `json:"source"` // source of model (huggingface, ...)
+	Name             string            `json:"name"`
+	Tags             []string          `json:"tags"`
+	Author           string            `json:"author"`
+	License          string            `json:"license"`
+	Framework        string            `json:"framework"`
+	Paper            map[string]string `json:"paper"`
+	Downloads        int               `json:"downloads"`
+	Task             string            `json:"task"`
+	Likes            int               `json:"likes"`
+	Versions         []ModelVersion    `json:"versions"`                         // versions of model
+	Recomment        int               `json:"recomment"`                        // number of recomment votes
+	RecommentContent string            `json:"recommentContent"`                 // content of recomment
+	CreateAt         *time.Time        `json:"createAt" bson:"create_at"`        // original creation time
+	UpdateAt         *time.Time        `json:"updateAt" bson:"update_at"`        // original updattion time
+	LastModified     *time.Time        `json:"lastModified" bson:"lastModified"` // last time the model synced
+	Enabled          bool              `json:"enabled"`                          // is model published
 }
 
 type ModelFile struct {
@@ -88,23 +73,31 @@ const (
 
 type Source struct {
 	// nolint: tagliatelle
-	ID           string    `json:"id,omitempty" bson:"_id,omitempty"`
-	Name         string    `json:"name"`
-	BuiltIn      bool      `json:"builtIn"`
-	Online       bool      `json:"online"`
-	Images       []string  `json:"images"`
-	CreationTime time.Time `json:"creationTime"`
-	UpdationTime time.Time `json:"updationTime"`
-	Enabled      bool      `json:"enabled"`
-
-	Kind        string            `json:"kind"`    // kind of source (huggingface, openmmlab, modelx...)
-	Address     string            `json:"address"` // address of source
-	Auth        SourceAuth        `json:"auth"`    // auth of source
-	Annotations map[string]string `json:"annotations"`
+	ID           string            `json:"id,omitempty" bson:"_id,omitempty"`
+	Name         string            `json:"name"`
+	BuiltIn      bool              `json:"builtIn"`
+	Online       bool              `json:"online"`
+	Images       []string          `json:"images"`
+	CreationTime time.Time         `json:"creationTime"`
+	UpdationTime time.Time         `json:"updationTime"`
+	Enabled      bool              `json:"enabled"`
+	InitImage    string            `json:"initImage"` // storage initialize image
+	Kind         string            `json:"kind"`      // kind of source (huggingface, openmmlab, modelx...)
+	Address      string            `json:"address"`   // address of source
+	Auth         SourceAuth        `json:"auth"`      // auth of source
+	Annotations  map[string]string `json:"annotations"`
 }
 
 type SourceAuth struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Token    string `json:"token"`
+}
+
+type ModelVersion struct {
+	Name         string      `json:"name"`
+	Files        []ModelFile `json:"files"`
+	Intro        string      `json:"intro"`
+	CreationTime time.Time   `json:"creationTime"` // original creation time
+	UpdationTime time.Time   `json:"updationTime"` // original updattion time
 }

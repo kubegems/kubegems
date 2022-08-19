@@ -74,7 +74,7 @@ func checkModelxConnection(ctx context.Context, addr string, token string) error
 	if resp.StatusCode != http.StatusOK {
 		// nolint: gomnd
 		bosystr, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-		return fmt.Errorf("unexpected status code %d,bosy: %s", resp.StatusCode, string(bosystr))
+		return fmt.Errorf("unexpected status code %d,body: %s", resp.StatusCode, string(bosystr))
 	}
 	return nil
 }
@@ -247,7 +247,9 @@ func (m *ModelsAPI) registerAdminRoute() *route.Group {
 				Parameters(route.PathParameter("source", "source name")).
 				AddRoutes(
 					route.GET("").To(m.SyncStatus).Doc("sync status").Response(SyncStatus{}),
-					route.POST("").To(m.StartSync).Doc("start sync"),
+					route.POST("").To(m.StartSync).Doc("start sync").Parameters(
+						route.QueryParameter("model", "model name to sync"),
+					),
 					route.DELETE("").To(m.StopSync).Doc("stop sync"),
 				),
 			// source model

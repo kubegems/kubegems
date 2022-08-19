@@ -16,11 +16,18 @@ package deployment
 
 import (
 	"context"
+	"fmt"
 	"net/url"
+	"strconv"
+	"strings"
 
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
+	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -29,8 +36,9 @@ import (
 const SeldonModelServeKind = "seldon"
 
 type SeldonModelServe struct {
-	Client      client.Client
-	IngressHost string
+	Client        client.Client
+	IngressHost   string
+	IngressScheme string
 }
 
 func (r *SeldonModelServe) Watches() client.Object {
@@ -38,7 +46,7 @@ func (r *SeldonModelServe) Watches() client.Object {
 }
 
 func (r *SeldonModelServe) Apply(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
-	sd, err := r.convert(md)
+	sd, err := r.convert(ctx, md)
 	if err != nil {
 		return err
 	}
@@ -46,25 +54,18 @@ func (r *SeldonModelServe) Apply(ctx context.Context, md *modelsv1beta1.ModelDep
 		return err
 	}
 	coopy := sd.DeepCopy()
-	controllerutil.CreateOrUpdate(ctx, r.Client, sd, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, sd, func() error {
 		sd.Annotations = Mergekvs(coopy.Annotations, sd.Annotations)
 		sd.Labels = Mergekvs(coopy.Labels, sd.Labels)
 		sd.Spec = coopy.Spec
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
-	// nolint: nestif
-	if ingresshost := r.IngressHost; ingresshost != "" {
-		md.Status.URL = ingresshost + getIngressPath(md)
-		if address := sd.Status.Address; address != nil {
-			if u, err := url.Parse(address.URL); err == nil {
-				md.Status.URL += u.Path
-			}
-		}
-	} else {
-		if address := sd.Status.Address; address != nil {
-			md.Status.URL = address.URL
-		}
+	if err := r.completeStatusURL(ctx, md, sd); err != nil {
+		return err
 	}
 
 	md.Status.RawStatus = ToRawExtension(sd.Status)
@@ -81,11 +82,48 @@ func (r *SeldonModelServe) Apply(ctx context.Context, md *modelsv1beta1.ModelDep
 	return nil
 }
 
-func getIngressPath(md *modelsv1beta1.ModelDeployment) string {
-	return "/seldon/" + md.Namespace + "/" + md.Name
+func (r *SeldonModelServe) completeStatusURL(ctx context.Context, md *modelsv1beta1.ModelDeployment, sd *machinelearningv1.SeldonDeployment) error {
+	// find same name ingress
+	ingress := &networkingv1.Ingress{}
+	// ignore error
+
+	u := &url.URL{
+		Scheme: r.IngressScheme,
+		Host:   r.IngressHost,
+		Path:   getIngressPath(ctx, r.Client, md),
+	}
+
+	_ = r.Client.Get(ctx, client.ObjectKey{Name: md.Name, Namespace: md.Namespace}, ingress)
+	for _, rule := range ingress.Spec.Rules {
+		if host := rule.Host; host != "" {
+			u.Host = host
+			break
+		}
+	}
+	if gatewayName := md.Spec.Ingress.GatewayName; gatewayName != "" {
+		gateway := &gemsv1beta1.TenantGateway{}
+		if err := r.Client.Get(ctx, client.ObjectKey{Name: gatewayName}, gateway); err != nil {
+			return err
+		}
+		for _, gatewayport := range gateway.Status.Ports {
+			if gatewayport.Name == u.Scheme {
+				u.Host += ":" + strconv.Itoa(int(gatewayport.NodePort))
+				break
+			}
+		}
+	}
+	if address := sd.Status.Address; address != nil {
+		if sdurl, err := url.Parse(address.URL); err == nil {
+			u.Path += sdurl.Path
+		}
+	}
+
+	md.Status.URL = u.String()
+	return nil
 }
 
-func (r *SeldonModelServe) convert(md *modelsv1beta1.ModelDeployment) (*machinelearningv1.SeldonDeployment, error) {
+// nolint: funlen
+func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelDeployment) (*machinelearningv1.SeldonDeployment, error) {
 	sd := &machinelearningv1.SeldonDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        md.Name,
@@ -99,24 +137,24 @@ func (r *SeldonModelServe) convert(md *modelsv1beta1.ModelDeployment) (*machinel
 			Predictors: []machinelearningv1.PredictorSpec{
 				{
 					Name:            md.Spec.Server.Name,
-					EngineResources: md.Spec.Resources,
+					EngineResources: md.Spec.Server.Resources,
+					Replicas:        md.Spec.Replicas,
+					Annotations: map[string]string{
+						// nolint: nosnakecase
+						machinelearningv1.ANNOTATION_NO_ENGINE: isNoEngineKind(md.Spec.Server.Kind),
+					},
 					Graph: machinelearningv1.PredictiveUnit{
-						Name:           md.Spec.Server.Name,
-						Implementation: implOf(md.Spec.Server.Kind),
-						Parameters:     paramsOf(md.Spec.Server.Parameters),
+						Name:                    md.Spec.Server.Name,
+						Implementation:          implOf(md.Spec.Server.Kind),
+						Parameters:              paramsOf(md.Spec.Server.Parameters),
+						ModelURI:                modelURIWithLicense(md.Spec.Model.URL, md.Spec.Model.License),
+						StorageInitializerImage: md.Spec.Server.StorageInitializerImage,
 					},
 					ComponentSpecs: []*machinelearningv1.SeldonPodSpec{
 						{
 							Spec: v1.PodSpec{
 								Containers: []v1.Container{
-									{
-										Name:            md.Spec.Server.Name,
-										Image:           md.Spec.Server.Image,
-										ReadinessProbe:  md.Spec.Server.ReadinessProbe,
-										LivenessProbe:   md.Spec.Server.LivenessProbe,
-										SecurityContext: md.Spec.Server.SecurityContext,
-										Resources:       md.Spec.Resources,
-									},
+									containerWithMountPath(md.Spec.Server.Container, md.Spec.Server.MountPath),
 								},
 							},
 						},
@@ -125,13 +163,44 @@ func (r *SeldonModelServe) convert(md *modelsv1beta1.ModelDeployment) (*machinel
 			},
 		},
 	}
-	sd.Spec.Annotations["seldon.io/ingress-path"] = getIngressPath(md) + "/(.*)"
+
+	ingressclass, err := r.getIngressClass(ctx, md)
+	if err != nil {
+		return nil, err
+	}
+	sd.Spec.Annotations["seldon.io/ingress-class-name"] = ingressclass
+	sd.Spec.Annotations["seldon.io/ingress-host"] = md.Spec.Ingress.Host
+	sd.Spec.Annotations["seldon.io/ingress-path"] = getIngressPath(ctx, r.Client, md) + "/(.*)"
 	sd.Spec.Annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
 	return sd, nil
 }
 
+func getIngressPath(ctx context.Context, cli client.Client, md *modelsv1beta1.ModelDeployment) string {
+	ns := &corev1.Namespace{}
+	_ = cli.Get(ctx, client.ObjectKey{Name: md.Namespace}, ns)
+	if env := ns.Labels[gemlabels.LabelEnvironment]; env != "" {
+		return "/" + env + "/" + md.Name
+	}
+	return "/" + md.Namespace + "/" + md.Name
+}
+
+func (r *SeldonModelServe) getIngressClass(ctx context.Context, md *modelsv1beta1.ModelDeployment) (string, error) {
+	if md.Spec.Ingress.ClassName != "" {
+		return md.Spec.Ingress.ClassName, nil
+	}
+	if getewayname := md.Spec.Ingress.GatewayName; getewayname != "" {
+		gateway := &gemsv1beta1.TenantGateway{}
+		if err := r.Client.Get(ctx, client.ObjectKey{Name: getewayname}, gateway); err != nil {
+			return "", err
+		}
+		return gateway.Spec.IngressClass, nil
+	}
+	return "", nil
+}
+
 func implOf(name string) *machinelearningv1.PredictiveUnitImplementation {
-	impl := machinelearningv1.PredictiveUnitImplementation(name)
+	implName := strings.ToUpper(strings.Replace(name, "-", "_", -1))
+	impl := machinelearningv1.PredictiveUnitImplementation(implName)
 	return &impl
 }
 
@@ -141,4 +210,56 @@ func paramsOf(params []modelsv1beta1.Parameter) []machinelearningv1.Parameter {
 		p = append(p, machinelearningv1.Parameter{Name: item.Name, Value: item.Value, Type: "STRING"})
 	}
 	return p
+}
+
+func isNoEngineKind(impl string) string {
+	return strconv.FormatBool(impl == "")
+}
+
+func modelURIWithLicense(uri, license string) string {
+	if license == "" {
+		return uri
+	}
+	u, err := url.Parse(uri)
+	if err != nil {
+		return fmt.Sprintf("%s?license=%s", uri, license)
+	}
+	q := u.Query()
+	q.Set("license", license)
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+const ModelInitializerVolumeSuffix = "provision-location"
+
+func containerWithMountPath(c corev1.Container, mountpath string) corev1.Container {
+	if mountpath == "" {
+		return c
+	}
+
+	modelInitializerVolumeName := nameWithSuffix(c.Name, ModelInitializerVolumeSuffix)
+	mountFound := false
+	for _, v := range c.VolumeMounts {
+		if v.Name == modelInitializerVolumeName {
+			mountFound = true
+			break
+		}
+	}
+	if !mountFound {
+		c.VolumeMounts = append(c.VolumeMounts, v1.VolumeMount{
+			Name:      modelInitializerVolumeName,
+			MountPath: mountpath,
+		})
+	}
+	return c
+}
+
+func nameWithSuffix(name string, suffix string) string {
+	volumeName := name + "-" + suffix
+	// kubernetes names limited to 63
+	if len(volumeName) > 63 {
+		volumeName = volumeName[0:63]
+		volumeName = strings.TrimSuffix(volumeName, "-")
+	}
+	return volumeName
 }

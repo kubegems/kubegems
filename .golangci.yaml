@@ -21,9 +21,10 @@ linters:
     # 不检查 fmt.Printf()
     - forbidigo
     - gci
-    - golint # is deprecated (since v1.41.0) 
+    - golint # is deprecated (since v1.41.0)
     - maligned # is deprecated (since v1.38.0)
     - interfacer # is deprecated (since v1.38.0)
+    - nolintlint
   presets:
     - bugs
     - comment
@@ -61,12 +62,12 @@ linters-settings:
     # The numbers should be written as string.
     # Values always ignored: "1", "1.0", "0" and "0.0"
     ignored-numbers:
-      - '0666'
-      - '0755'
+      - "0666"
+      - "0755"
     # List of file patterns to exclude from analysis.
     # Values always ignored: `.+_test.go`
     ignored-files:
-      - '.+generate.go'
+      - ".+generate.go"
     # List of function patterns to exclude from analysis.
     # Values always ignored: `time.Time`
     ignored-functions:

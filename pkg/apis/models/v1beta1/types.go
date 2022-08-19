@@ -36,10 +36,11 @@ type ModelDeployment struct {
 
 // ModelDeploymentSpec is the spec for a ModelDeployment
 type ModelDeploymentSpec struct {
-	Model     ModelSpec                   `json:"model,omitempty"`
-	Server    ServerSpec                  `json:"server,omitempty"`
-	Replicas  *int32                      `json:"replicas,omitempty"`
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	Model    ModelSpec   `json:"model,omitempty"`
+	Server   ServerSpec  `json:"server,omitempty"`
+	Ingress  IngressSpec `json:"ingress,omitempty"`
+	Backend  string      `json:"backend,omitempty"`
+	Replicas *int32      `json:"replicas,omitempty"`
 }
 
 type ModelSpec struct {
@@ -50,16 +51,23 @@ type ModelSpec struct {
 	Version string `json:"version"`
 	// +kubebuilder:validation:Optional
 	URL string `json:"url"`
+	// +kubebuilder:validation:Optional
+	License string `json:"license"`
 }
 
 type ServerSpec struct {
-	Name string `json:"name"`
 	// +kubebuilder:validation:Optional
 	Protocol string `json:"protocol"`
+
 	// +kubebuilder:validation:Optional
 	Kind string `json:"kind"`
-	// +kubebuilder:validation:Required
-	Image string `json:"image"`
+
+	// +kubebuilder:validation:Optional
+	StorageInitializerImage string `json:"storageInitializerImage"`
+
+	// +kubebuilder:validation:Optional
+	MountPath string `json:"mountPath"` // path to the model in the container
+
 	// +kubebuilder:validation:Optional
 	Parameters []Parameter `json:"parameters,omitempty"`
 
@@ -69,6 +77,15 @@ type ServerSpec struct {
 type Parameter struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type IngressSpec struct {
+	// +kubebuilder:validation:Optional
+	Host string `json:"host"`
+	// +kubebuilder:validation:Optional
+	ClassName string `json:"className"`
+	// +kubebuilder:validation:Optional
+	GatewayName string `json:"gatewayName"`
 }
 
 type ModelDeploymentStatus struct {
@@ -95,7 +112,7 @@ const (
 	Failed Phase = "Failed"
 )
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 type ModelDeploymentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

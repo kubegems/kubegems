@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
@@ -60,6 +61,15 @@ func SyncStatusFrom(status *SyncServiceSyncStatus) SyncStatus {
 	return s
 }
 
+func (m *ModelsAPI) SyncModel(req *restful.Request, resp *restful.Response) {
+	source, name := DecodeSourceModelName(req)
+	if msg, err := m.SyncService.SyncOne(req.Request.Context(), source, name); err != nil {
+		response.Error(resp, err)
+	} else {
+		response.OK(resp, msg)
+	}
+}
+
 func (m *ModelsAPI) SyncStatus(req *restful.Request, resp *restful.Response) {
 	source := req.PathParameter("source")
 	syncstatus, err := m.SyncService.SyncStatus(req.Request.Context(), source)
@@ -72,7 +82,7 @@ func (m *ModelsAPI) SyncStatus(req *restful.Request, resp *restful.Response) {
 
 func (m *ModelsAPI) StartSync(req *restful.Request, resp *restful.Response) {
 	source := req.PathParameter("source")
-	if err := m.SyncService.StartStop(req.Request.Context(), source, true); err != nil {
+	if err := m.SyncService.Sync(req.Request.Context(), source, req.Request.URL.Query()); err != nil {
 		response.Error(resp, err)
 		return
 	}
@@ -81,7 +91,7 @@ func (m *ModelsAPI) StartSync(req *restful.Request, resp *restful.Response) {
 
 func (m *ModelsAPI) StopSync(req *restful.Request, resp *restful.Response) {
 	source := req.PathParameter("source")
-	if err := m.SyncService.StartStop(req.Request.Context(), source, false); err != nil {
+	if err := m.SyncService.Stop(req.Request.Context(), source, req.Request.URL.Query()); err != nil {
 		response.Error(resp, err)
 		return
 	}
@@ -111,12 +121,25 @@ func (s *SyncService) SyncStatus(ctx context.Context, source string) (*SyncServi
 	return status, nil
 }
 
-func (s *SyncService) StartStop(ctx context.Context, source string, start bool) error {
-	if start {
-		return s.do(ctx, http.MethodPost, fmt.Sprintf("/tasks/start/%s", source), nil, nil)
-	} else {
-		return s.do(ctx, http.MethodPost, fmt.Sprintf("/tasks/stop/%s", source), nil, nil)
+func (s *SyncService) Sync(ctx context.Context, source string, query url.Values) error {
+	return s.do(ctx, http.MethodPost, fmt.Sprintf("/tasks/start/%s?%s", source, query.Encode()), nil, nil)
+}
+
+func (s *SyncService) SyncOne(ctx context.Context, source string, name string) (any, error) {
+	msg := &map[string]any{}
+
+	query := url.Values{}
+	query.Set("name", name)
+	query.Set("source", source)
+
+	if err := s.do(ctx, http.MethodPost, fmt.Sprintf("/sync-one?%s", query.Encode()), nil, msg); err != nil {
+		return "", err
 	}
+	return msg, nil
+}
+
+func (s *SyncService) Stop(ctx context.Context, source string, query url.Values) error {
+	return s.do(ctx, http.MethodPost, fmt.Sprintf("/tasks/stop/%s?%s", source, query.Encode()), nil, nil)
 }
 
 func (s *SyncService) do(ctx context.Context, method string, p string, body interface{}, into interface{}) error {

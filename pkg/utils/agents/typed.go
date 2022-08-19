@@ -136,7 +136,7 @@ func (c TypedClient) Patch(ctx context.Context, obj client.Object, patch client.
 	if options.Force != nil {
 		queries["force"] = strconv.FormatBool(*options.Force)
 	}
-
+	queries["field-manager"] = options.FieldManager
 	patchcontent, err := patch.Data(obj)
 	if err != nil {
 		return err

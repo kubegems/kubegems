@@ -235,8 +235,10 @@ func (s *SourcesRepository) Update(ctx context.Context, source *Source) error {
 			{Key: "images", Value: source.Images},
 			{Key: "enabled", Value: source.Enabled},
 			{Key: "address", Value: source.Address},
+			{Key: "auth", Value: source.Auth},
 			{Key: "kind", Value: source.Kind},
 			{Key: "annotations", Value: source.Annotations},
+			{Key: "initimage", Value: source.InitImage},
 		}},
 	)
 	return err

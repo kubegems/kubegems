@@ -66,6 +66,6 @@ func (p *PluginsAPI) RegisterRoute(rg *route.Group) {
 	rg.
 		Tag("plugins").
 		AddRoutes(
-			route.GET("/plugins").To(p.List).Doc("List plugins").Response([]PluginsStatus{}),
+			route.GET("/v1/plugins").To(p.List).Doc("List plugins").Response([]PluginsStatus{}),
 		)
 }

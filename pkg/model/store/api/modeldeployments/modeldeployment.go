@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto"
 	"encoding/hex"
+	"fmt"
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
@@ -111,9 +112,11 @@ func (o *ModelDeploymentAPI) ListModelDeployments(req *restful.Request, resp *re
 			return nil, err
 		}
 		listopt := request.GetListOptions(req.Request)
-		paged := response.NewPageData(list.Items, listopt.Page, listopt.Size, func(i int) bool {
-			return strings.Contains(list.Items[i].Name, listopt.Search)
-		}, nil)
+		paged := response.NewTypedPage(list.Items, listopt.Page, listopt.Size, func(a modelsv1beta1.ModelDeployment) bool {
+			return strings.Contains(a.Name, listopt.Search)
+		}, func(a, b modelsv1beta1.ModelDeployment) bool {
+			return a.CreationTimestamp.After(b.CreationTimestamp.Time)
+		})
 		return paged, nil
 	})
 }
@@ -168,6 +171,10 @@ func (o *ModelDeploymentAPI) completeModelDeployment(ctx context.Context, md *mo
 }
 
 func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
+	// set default gateway
+	if md.Spec.Ingress.GatewayName == "" {
+		md.Spec.Ingress.GatewayName = "default-gateway"
+	}
 	source, modelname := md.Spec.Model.Source, md.Spec.Model.Name
 	if source == "" || modelname == "" {
 		return nil
@@ -184,9 +191,9 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 	// set first source image if not set
 	switch sourcedetails.Kind {
 	case repository.SourceKindHuggingface:
+		md.Spec.Server.Name = "transformer"
 		md.Spec.Server.Kind = machinelearningv1.PrepackHuggingFaceName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
-		md.Spec.Server.Name = "transformer"
 		md.Spec.Server.Parameters = append(md.Spec.Server.Parameters,
 			modelsv1beta1.Parameter{Name: "task", Value: modeldetails.Task},
 			modelsv1beta1.Parameter{Name: "pretrained_model", Value: modeldetails.Name},
@@ -197,14 +204,23 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			FailureThreshold:    5,
 		}
 	case repository.SourceKindOpenMMLab:
+		md.Spec.Server.Name = "model"
 		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
-		md.Spec.Server.Name = "model"
 		md.Spec.Server.Parameters = append(md.Spec.Server.Parameters,
 			modelsv1beta1.Parameter{Name: "pkg", Value: modeldetails.Framework},
 			modelsv1beta1.Parameter{Name: "model", Value: modeldetails.Name},
 		)
 		md.Spec.Server.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
+	case repository.SourceKindModelx:
+		md.Spec.Server.Name = "modelx"
+		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
+		if md.Spec.Server.StorageInitializerImage == "" {
+			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
+		}
+		if md.Spec.Model.URL == "" {
+			md.Spec.Model.URL = fmt.Sprintf("%s/%s@%s", sourcedetails.Address, modelname, md.Spec.Model.Version)
+		}
 	}
 	return nil
 }
@@ -217,7 +233,8 @@ func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *r
 		}
 		// set the namespace
 		md.Namespace = ref.Namespace
-		if err := cli.Update(ctx, md); err != nil {
+		md.SetManagedFields(nil)
+		if err := cli.Patch(ctx, md, client.Apply, client.FieldOwner("kubegems"), client.ForceOwnership); err != nil {
 			return nil, err
 		}
 		return md, nil

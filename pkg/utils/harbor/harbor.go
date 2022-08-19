@@ -266,7 +266,7 @@ func (c *Client) AddArtifactLabelFromKey(ctx context.Context, image string, key,
 	}
 	// impossible
 	// 可能是创建后无法查询到，稍后再试
-	return errors.New("unknow err,plaese try again")
+	return errors.New("unknown err,plaese try again")
 }
 
 func (c *Client) DeleteArtifactLabelFromKey(ctx context.Context, image string, key string) error {
@@ -279,7 +279,7 @@ func (c *Client) DeleteArtifactLabelFromKey(ctx context.Context, image string, k
 			return c.DeleteArtifactLabel(ctx, image, label.ID)
 		}
 	}
-	return errors.New("unknow err,plaese try again")
+	return errors.New("unknown err,plaese try again")
 }
 
 // POST https://{host}/api/v2.0/projects/{project_name}/repositories/{repository_name}/artifacts/{reference}/labels

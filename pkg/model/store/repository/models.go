@@ -120,9 +120,8 @@ func (o *ModelListOptions) ToConditionAndFindOptions() (interface{}, *options.Fi
 }
 
 type ModelWithAddtional struct {
-	Model    `bson:",inline" json:",inline"`
-	Versions []string `bson:"versions" json:"versions"`
-	Rating   *Rating  `bson:"rating" json:"rating"`
+	Model  `bson:",inline" json:",inline"`
+	Rating *Rating `bson:"rating" json:"rating"`
 }
 
 func (m *ModelsRepository) Get(ctx context.Context, source, name string, includedisabled bool) (ModelWithAddtional, error) {
@@ -138,10 +137,6 @@ func (m *ModelsRepository) Get(ctx context.Context, source, name string, include
 		}
 		return ModelWithAddtional{}, err
 	}
-	// set default version
-	if len(ret.Versions) == 0 {
-		ret.Versions = []string{"latest"}
-	}
 	return ret, nil
 }
 
@@ -154,20 +149,21 @@ func (m *ModelsRepository) Count(ctx context.Context, opts ModelListOptions) (in
 func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]ModelWithAddtional, error) {
 	cond, findoptions := opts.ToConditionAndFindOptions()
 	showfields := bson.M{
-		"_id":          0,
-		"source":       1,
-		"name":         1,
-		"rating":       1,
-		"framework":    1,
-		"likes":        1,
-		"task":         1,
-		"recomment":    1,
-		"downloads":    1,
-		"tags":         1,
-		"created_at":   1,
-		"updated_at":   1,
-		"lastModified": 1,
-		"enabled":      1,
+		"_id":              0,
+		"source":           1,
+		"name":             1,
+		"rating":           1,
+		"framework":        1,
+		"likes":            1,
+		"task":             1,
+		"recomment":        1,
+		"recommentcontent": 1,
+		"downloads":        1,
+		"tags":             1,
+		"created_at":       1,
+		"updated_at":       1,
+		"lastModified":     1,
+		"enabled":          1,
 	}
 
 	pipline := []bson.M{
@@ -211,7 +207,7 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 		showfields["versions"] = 1
 	}
 	if opts.WithDisabled {
-		showfields["enanled"] = 1
+		showfields["enabled"] = 1
 	}
 
 	pipline = append(pipline, bson.M{"$project": showfields})
@@ -236,10 +232,10 @@ func (m *ModelsRepository) Update(ctx context.Context, model *Model) error {
 		bson.M{"source": model.Source, "name": model.Name},
 		bson.M{
 			"$set": bson.M{
-				"intro":     model.Intro,
-				"recomment": model.Recomment,
-				"tags":      model.Tags,
-				"enabled":   model.Enabled,
+				"recomment":        model.Recomment,
+				"recommentcontent": model.RecommentContent,
+				"tags":             model.Tags,
+				"enabled":          model.Enabled,
 			},
 		},
 	)
@@ -285,4 +281,36 @@ func (m *ModelsRepository) ListSelectors(ctx context.Context, listopts ModelList
 		Tasks:      tostrings(distincttasks),
 	}
 	return selectors, nil
+}
+
+func (r *ModelsRepository) ListVersions(ctx context.Context, source, model string) ([]ModelVersion, error) {
+	cond := bson.M{
+		"source": source,
+		"name":   model,
+	}
+	opts := &options.FindOneOptions{
+		Projection: bson.M{"versions": 1}, // only return versions
+
+	}
+	modelWithVersion := &Model{}
+	if err := r.Collection.FindOne(ctx, cond, opts).Decode(modelWithVersion); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("model %s/%s not found", source, model)
+		}
+		return nil, err
+	}
+	return modelWithVersion.Versions, nil
+}
+
+func (r *ModelsRepository) GetVersion(ctx context.Context, source, model, version string) (ModelVersion, error) {
+	versions, err := r.ListVersions(ctx, source, model)
+	if err != nil {
+		return ModelVersion{}, err
+	}
+	for _, v := range versions {
+		if v.Name == version {
+			return v, nil
+		}
+	}
+	return ModelVersion{}, fmt.Errorf("version %s not found", version)
 }
