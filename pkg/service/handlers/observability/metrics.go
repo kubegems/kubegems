@@ -250,10 +250,14 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 // @Router      /v1/observability/tenant/{tenant_id}/template/scopes [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
-	scopes := []models.PromqlTplScope{}
-	if err := h.GetDB().Order("name").Find(&scopes).Error; err != nil {
+	scopes := []*models.PromqlTplScope{}
+	if err := h.GetDB().Preload("Resources").Find(&scopes).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
+	}
+	for _, v := range scopes {
+		v.ResourceCount = len(v.Resources)
+		v.Resources = nil
 	}
 	handlers.OK(c, handlers.NewPageDataFromContext(c, scopes, nil, nil))
 }
@@ -272,10 +276,14 @@ func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
 // @Router      /v1/observability/tenant/{tenant_id}/template/scopes/{scope_id}/resources [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListResources(c *gin.Context) {
-	resources := []models.PromqlTplResource{}
-	if err := h.GetDB().Where("scope_id = ?", c.Param("scope_id")).Order("name").Find(&resources).Error; err != nil {
+	resources := []*models.PromqlTplResource{}
+	if err := h.GetDB().Preload("Rules").Where("scope_id = ?", c.Param("scope_id")).Order("name").Find(&resources).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
+	}
+	for _, v := range resources {
+		v.RuleCount = len(v.Rules)
+		v.Rules = nil
 	}
 	handlers.OK(c, handlers.NewPageDataFromContext(c, resources, nil, nil))
 }
