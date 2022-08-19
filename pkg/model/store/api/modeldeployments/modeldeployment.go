@@ -24,6 +24,7 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"github.com/go-logr/logr"
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/application"
@@ -197,11 +198,15 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "task", Value: modeldetails.Task},
 			modelsv1beta1.Parameter{Name: "pretrained_model", Value: modeldetails.Name},
 		)
-		// nolint: gomnd
-		deployment.GetOrAddMainContainer(md).ReadinessProbe = &v1.Probe{
-			InitialDelaySeconds: 120,
-			FailureThreshold:    5,
+
+		if md.Spec.Server.PodSpec == nil {
+			md.Spec.Server.PodSpec = &corev1.PodSpec{}
 		}
+		// nolint: gomnd
+		updatedpodspec := deployment.CreateOrUpdateContainer(*md.Spec.Server.PodSpec, md.Name, func(c *v1.Container) {
+			c.ReadinessProbe = &v1.Probe{InitialDelaySeconds: 120, FailureThreshold: 5}
+		})
+		md.Spec.Server.PodSpec = &updatedpodspec
 	case repository.SourceKindOpenMMLab:
 		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)

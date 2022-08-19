@@ -113,12 +113,14 @@ func (r *SeldonModelServe) completeStatusURL(ctx context.Context, md *modelsv1be
 			}
 		}
 	}
-	if address := sd.Status.Address; address != nil {
-		if sdurl, err := url.Parse(address.URL); err == nil {
-			u.Path += sdurl.Path
+
+	if md.Spec.Server.Protocol != "" {
+		if address := sd.Status.Address; address != nil {
+			if sdurl, err := url.Parse(address.URL); err == nil {
+				u.Path += sdurl.Path
+			}
 		}
 	}
-
 	md.Status.URL = u.String()
 	return nil
 }
@@ -153,21 +155,7 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 					},
 					ComponentSpecs: []*machinelearningv1.SeldonPodSpec{
 						{
-							Spec: func() corev1.PodSpec {
-								// main container
-								mainContainer := GetOrAddMainContainer(md)
-								// update mount path
-								updateMountPath(mainContainer, md.Spec.Server.MountPath)
-								// update image
-								if md.Spec.Server.Image != "" {
-									mainContainer.Image = md.Spec.Server.Image
-								}
-								// set privileged
-								if md.Spec.Server.Privileged {
-									mainContainer.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
-								}
-								return md.Spec.Server.PodSpec
-							}(),
+							Spec: completePod(md),
 						},
 					},
 				},
@@ -186,25 +174,84 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 	return sd, nil
 }
 
-func GetOrAddMainContainer(md *modelsv1beta1.ModelDeployment) *corev1.Container {
-	var mainContainer *corev1.Container
+// nolint: funlen,gocognit
+func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
+	podspec := corev1.PodSpec{}
+	if val := md.Spec.Server.PodSpec; val != nil {
+		podspec = *val
+	}
+	return CreateOrUpdateContainer(podspec, md.Name, func(c *v1.Container) {
+		// add mounts
+		for i, mount := range md.Spec.Server.Mounts {
+			if mount.Kind == modelsv1beta1.SimpleVolumeMountKindModel {
+				modelInitializerVolumeName := nameWithSuffix(c.Name, ModelInitializerVolumeSuffix)
+				createOrUpdateMountPath(c, modelInitializerVolumeName, mount.MountPath)
+				continue
+			}
+			otherMountName := "mount-" + strconv.Itoa(i)
+			createOrUpdateMountPath(c, otherMountName, mount.MountPath)
+			createOrUpdateVolume(&podspec, otherMountName, func() corev1.VolumeSource {
+				switch mount.Kind {
+				case modelsv1beta1.SimpleVolumeMountKindConfigMap:
+					return corev1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: mount.Source}}}
+				case modelsv1beta1.SimpleVolumeMountKindSecret:
+					return corev1.VolumeSource{Secret: &v1.SecretVolumeSource{SecretName: mount.Source}}
+				case modelsv1beta1.SimpleVolumeMountKindEmptyDir:
+					return corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}
+				case modelsv1beta1.SimpleVolumeMountKindHostPath:
+					return corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: mount.Source}}
+				case modelsv1beta1.SimpleVolumeMountKindPVC:
+					return corev1.VolumeSource{PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{ClaimName: mount.Source}}
+				default:
+					return corev1.VolumeSource{PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{ClaimName: mount.Source}}
+				}
+			}())
+		}
 
-	pod := md.Spec.Server.PodSpec
-	conname := md.Name
+		if c.Resources.Limits == nil {
+			c.Resources.Limits = md.Spec.Server.Resources.Limits
+		}
+		if c.Resources.Requests == nil {
+			c.Resources.Requests = md.Spec.Server.Resources.Requests
+		}
+		if c.Args == nil {
+			c.Args = md.Spec.Server.Args
+		}
+		if c.Image == "" {
+			c.Image = md.Spec.Server.Image
+		}
+		if c.Args == nil {
+			c.Args = md.Spec.Server.Args
+		}
+		if c.Ports == nil {
+			c.Ports = md.Spec.Server.Ports
+		}
+		if c.Command == nil {
+			c.Command = md.Spec.Server.Command
+		}
+		if c.Env == nil {
+			c.Env = md.Spec.Server.Env
+		}
+		if md.Spec.Server.Privileged {
+			if c.SecurityContext == nil {
+				c.SecurityContext = &v1.SecurityContext{}
+			}
+			c.SecurityContext.Privileged = pointer.Bool(true)
+		}
+	})
+}
 
+func CreateOrUpdateContainer(pod corev1.PodSpec, conname string, oncontainer func(c *corev1.Container)) corev1.PodSpec {
 	for i := range pod.Containers {
 		if pod.Containers[i].Name == conname {
-			mainContainer = &md.Spec.Server.PodSpec.Containers[i]
-			break
+			oncontainer(&pod.Containers[i])
+			return pod
 		}
 	}
-	if mainContainer == nil {
-		pod.Containers = append(pod.Containers, v1.Container{Name: conname})
-		mainContainer = &pod.Containers[len(pod.Containers)-1]
-	}
-
-	md.Spec.Server.PodSpec = pod
-	return mainContainer
+	mainContainer := corev1.Container{Name: conname}
+	oncontainer(&mainContainer)
+	pod.Containers = append(pod.Containers, mainContainer)
+	return pod
 }
 
 func getIngressPath(ctx context.Context, cli client.Client, md *modelsv1beta1.ModelDeployment) string {
@@ -264,25 +311,30 @@ func modelURIWithLicense(uri, license string) string {
 
 const ModelInitializerVolumeSuffix = "provision-location"
 
-func updateMountPath(c *corev1.Container, mountpath string) {
-	if mountpath == "" {
+func createOrUpdateMountPath(c *corev1.Container, name, mountpath string) {
+	if mountpath == "" || name == "" {
 		return
 	}
-
-	modelInitializerVolumeName := nameWithSuffix(c.Name, ModelInitializerVolumeSuffix)
-	mountFound := false
-	for _, v := range c.VolumeMounts {
-		if v.Name == modelInitializerVolumeName {
-			mountFound = true
-			break
+	for i, v := range c.VolumeMounts {
+		if v.Name == name {
+			c.VolumeMounts[i].MountPath = mountpath
+			return
 		}
 	}
-	if !mountFound {
-		c.VolumeMounts = append(c.VolumeMounts, v1.VolumeMount{
-			Name:      modelInitializerVolumeName,
-			MountPath: mountpath,
-		})
+	c.VolumeMounts = append(c.VolumeMounts, v1.VolumeMount{Name: name, MountPath: mountpath})
+}
+
+func createOrUpdateVolume(podspec *corev1.PodSpec, name string, vs corev1.VolumeSource) {
+	if name == "" {
+		return
 	}
+	for i, v := range podspec.Volumes {
+		if v.Name == name {
+			podspec.Volumes[i].VolumeSource = vs
+			return
+		}
+	}
+	podspec.Volumes = append(podspec.Volumes, v1.Volume{Name: name, VolumeSource: vs})
 }
 
 func nameWithSuffix(name string, suffix string) string {
