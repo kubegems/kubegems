@@ -50,6 +50,20 @@ type User struct {
 	Role string `sql:"-" json:",omitempty"`
 }
 
+type UserToken struct {
+	ID        uint       `gorm:"primarykey" json:"id"`
+	Token     string     `json:"token"`
+	GrantType string     `gorm:"type:varchar(50)" json:"grantType"`
+	Scope     string     `gorm:"type:varchar(50)" json:"scope"`
+	ExpireAt  *time.Time `json:"expireAt"`
+
+	UserID    *uint      `json:"userID"`
+	User      *User      `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"user,omitempty"`
+	CreatedAt *time.Time `json:"createdAt"`
+
+	Expired bool `gorm:"-" json:"expired"`
+}
+
 type UserSel struct {
 	ID       uint
 	Username string

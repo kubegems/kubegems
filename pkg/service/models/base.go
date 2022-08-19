@@ -122,7 +122,7 @@ func migrateModels(db *gorm.DB) error {
 		// 审计表
 		&AuditLog{},
 		// 用户表
-		&User{},
+		&User{}, &UserToken{},
 		// 系统角色表
 		&SystemRole{},
 		// 租户表

@@ -228,7 +228,7 @@ func (r *Router) Complete(ctx context.Context) error {
 	router.GET("/v1/oauth/addr", oauth.GetOauthAddr)
 	router.GET("/v1/oauth/callback", oauth.GetOauthToken)
 
-	oauthserver.Init(r.Opts.JWT)
+	oauthserver := oauthserver.NewOauthServer(r.Opts.JWT, basehandler)
 	router.GET("/v1/oauth/validate", oauthserver.Validate)
 
 	authSourceHandler := authsource.AuthSourceHandler{BaseHandler: basehandler}
@@ -248,7 +248,7 @@ func (r *Router) Complete(ctx context.Context) error {
 		rg.Use(mw)
 	}
 
-	rg.POST("/oauth/token", oauthserver.Token)
+	oauthserver.RegistRouter(rg)
 
 	// 选项
 	systemHandler := systemhandler.SystemHandler{
