@@ -153,9 +153,9 @@ func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 // @Description 监控面板模板列表
 // @Accept      json
 // @Produce     json
-// @Param       page query     int                               false "page"
-// @Param       size query     int                               false "size"
-// @Success     200 {object} handlers.ResponseStruct{Data=[]models.MonitorDashboardTpl} "resp"
+// @Param       page query    int                                                        false "page"
+// @Param       size query    int                                                        false "size"
+// @Success     200  {object} handlers.ResponseStruct{Data=[]models.MonitorDashboardTpl} "resp"
 // @Router      /v1/observability/template/dashboard [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {

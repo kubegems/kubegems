@@ -31,39 +31,46 @@ import (
 	"github.com/golang-jwt/jwt"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/handlers/base"
 	kmodels "kubegems.io/kubegems/pkg/service/models"
 
 	"github.com/gin-gonic/gin"
 	kjwt "kubegems.io/kubegems/pkg/utils/jwt"
 )
 
-var (
+var ()
+
+type OauthServer struct {
+	base.BaseHandler
 	manager     *manage.Manager
 	srv         *server.Server
 	clientStore *store.ClientStore
 	m           sync.Mutex
-)
+}
 
-func Init(opts *kjwt.Options) {
-	manager = manage.NewDefaultManager()
-	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+func NewOauthServer(opts *kjwt.Options, base base.BaseHandler) *OauthServer {
+	s := &OauthServer{
+		BaseHandler: base,
+		manager:     manage.NewDefaultManager(),
+		clientStore: store.NewClientStore(),
+	}
+	s.manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 
 	// token store
-	manager.MustTokenStorage(store.NewMemoryTokenStore())
+	s.manager.MustTokenStorage(store.NewMemoryTokenStore())
 
 	jwtkey, err := ioutil.ReadFile(opts.Key)
 	if err != nil {
 		panic(err)
 	}
 	// generate jwt access token
-	manager.MapAccessGenerate(generates.NewJWTAccessGenerate("kubegems", jwtkey, jwt.SigningMethodRS256))
+	s.manager.MapAccessGenerate(generates.NewJWTAccessGenerate("kubegems", jwtkey, jwt.SigningMethodRS256))
 	// manager.MapAccessGenerate(generates.NewAccessGenerate())
 
-	clientStore = store.NewClientStore()
-	manager.MapClientStorage(clientStore)
+	s.manager.MapClientStorage(s.clientStore)
 
-	srv = server.NewServer(server.NewConfig(), manager)
-	srv.SetClientInfoHandler(func(r *http.Request) (clientID string, clientSecret string, err error) {
+	s.srv = server.NewServer(server.NewConfig(), s.manager)
+	s.srv.SetClientInfoHandler(func(r *http.Request) (clientID string, clientSecret string, err error) {
 		loader := auth.BearerTokenUserLoader{JWT: opts.ToJWT()}
 		user, exist := loader.GetUser(r)
 		if !exist {
@@ -72,12 +79,13 @@ func Init(opts *kjwt.Options) {
 		}
 		return user.GetUsername(), "", nil
 	})
-	srv.SetClientScopeHandler(func(tgr *oauth2.TokenGenerateRequest) (allowed bool, err error) {
+	s.srv.SetClientScopeHandler(func(tgr *oauth2.TokenGenerateRequest) (allowed bool, err error) {
 		if tgr.Scope != "validate" {
 			return false, fmt.Errorf("scope now only support 'validate' to validate token")
 		}
 		return true, nil
 	})
+	return s
 }
 
 // @Tags        Oauth
@@ -87,8 +95,8 @@ func Init(opts *kjwt.Options) {
 // @Produce     json
 // @Success     200 {object} object "resp"
 // @Router      /v1/oauth/validate [get]
-func Validate(c *gin.Context) {
-	token, err := srv.ValidationBearerToken(c.Request)
+func (s *OauthServer) Validate(c *gin.Context) {
+	token, err := s.srv.ValidationBearerToken(c.Request)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -102,6 +110,53 @@ func Validate(c *gin.Context) {
 }
 
 // @Tags        Oauth
+// @Summary     用户token列表
+// @Description 用户token列表
+// @Accept      json
+// @Produce     json
+// @Param       page query    int                                                                       false "page"
+// @Param       size query    int                                                                       false "size"
+// @Success     200  {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]kmodels.UserToken}} "resp"
+// @Router      /v1/oauth/token [get]
+// @Security    JWT
+func (s *OauthServer) ListToken(c *gin.Context) {
+	u, _ := c.Get("current_user")
+	user := u.(*kmodels.User)
+	ret := []*kmodels.UserToken{}
+	if err := s.GetDB().Find(&ret, "user_id = ?", user.ID).Order("created_at").Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	now := time.Now()
+	for _, v := range ret {
+		v.Expired = now.After(*v.ExpireAt)
+	}
+	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, nil))
+}
+
+// @Tags        Oauth
+// @Summary     删除用户token
+// @Description 删除用户token
+// @Accept      json
+// @Produce     json
+// @Param       token_id path     int    true  "page"
+// @Param       page     query    int    false "page"
+// @Param       size     query    int    false "size"
+// @Success     200      {object} string "resp"
+// @Router      /v1/oauth/token/{token_id} [delete]
+// @Security    JWT
+func (s *OauthServer) DeleteToken(c *gin.Context) {
+	u, _ := c.Get("current_user")
+	user := u.(*kmodels.User)
+	t := kmodels.UserToken{}
+	if err := s.GetDB().Delete(&t, "user_id = ? and id = ?", user.ID, c.Param("token_id")).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "OK")
+}
+
+// @Tags        Oauth
 // @Summary     签发oauth jwt token
 // @Description 签发oauth jwt token
 // @Accept      json
@@ -112,10 +167,10 @@ func Validate(c *gin.Context) {
 // @Success     200        {object} handlers.ResponseStruct{Data=object} "resp"
 // @Router      /v1/oauth/token [post]
 // @Security    JWT
-func Token(c *gin.Context) {
+func (s *OauthServer) Token(c *gin.Context) {
 	u, _ := c.Get("current_user")
 	user := u.(*kmodels.User)
-	clientStore.Set(user.Username, &models.Client{
+	s.clientStore.Set(user.Username, &models.Client{
 		ID:     user.Username,
 		Secret: "",
 	})
@@ -123,9 +178,9 @@ func Token(c *gin.Context) {
 	expireSeconds, _ := strconv.Atoi(c.Query("expire"))
 	// default 2 hours
 	if expireSeconds != 0 {
-		m.Lock()
-		defer m.Unlock()
-		manager.SetClientTokenCfg(&manage.Config{
+		s.m.Lock()
+		defer s.m.Unlock()
+		s.manager.SetClientTokenCfg(&manage.Config{
 			AccessTokenExp: time.Duration(expireSeconds) * time.Second,
 		})
 	}
@@ -134,17 +189,38 @@ func Token(c *gin.Context) {
 	// 	handlers.NotOK(c, err)
 	// 	return
 	// }
-	gt, tgr, err := srv.ValidationTokenRequest(c.Request)
+	gt, tgr, err := s.srv.ValidationTokenRequest(c.Request)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	ti, err := srv.GetAccessToken(c.Request.Context(), gt, tgr)
+	ti, err := s.srv.GetAccessToken(c.Request.Context(), gt, tgr)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	handlers.OK(c, srv.GetTokenData(ti))
+	createdAt := ti.GetAccessCreateAt()
+	exp := createdAt.Add(ti.GetAccessExpiresIn())
+	t := kmodels.UserToken{
+		Token:     ti.GetAccess(),
+		GrantType: gt.String(),
+		Scope:     tgr.Scope,
+		ExpireAt:  &exp,
+		UserID:    &user.ID,
+		CreatedAt: &createdAt,
+	}
+	if err := s.GetDB().Create(&t).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	handlers.OK(c, s.srv.GetTokenData(ti))
+}
+
+func (s *OauthServer) RegistRouter(rg *gin.RouterGroup) {
+	rg.GET("/oauth/token", s.ListToken)
+	rg.POST("/oauth/token", s.Token)
+	rg.DELETE("/oauth/token/:token_id", s.DeleteToken)
 }

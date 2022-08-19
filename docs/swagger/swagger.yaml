@@ -4015,6 +4015,8 @@ definitions:
         type: integer
       name:
         type: string
+      ruleCount:
+        type: integer
       rules:
         items:
           $ref: '#/definitions/models.PromqlTplRule'
@@ -4067,6 +4069,8 @@ definitions:
         type: string
       namespaced:
         type: boolean
+      resourceCount:
+        type: integer
       resources:
         items:
           $ref: '#/definitions/models.PromqlTplResource'
@@ -4291,6 +4295,27 @@ definitions:
         $ref: '#/definitions/models.Message'
       messageID:
         type: integer
+      user:
+        $ref: '#/definitions/models.User'
+      userID:
+        type: integer
+    type: object
+  models.UserToken:
+    properties:
+      createdAt:
+        type: string
+      expireAt:
+        type: string
+      expired:
+        type: boolean
+      grantType:
+        type: string
+      id:
+        type: integer
+      scope:
+        type: string
+      token:
+        type: string
       user:
         $ref: '#/definitions/models.User'
       userID:
@@ -20050,6 +20075,43 @@ paths:
       tags:
       - AAAAA
   /v1/oauth/token:
+    get:
+      consumes:
+      - application/json
+      description: 用户token列表
+      parameters:
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  allOf:
+                  - $ref: '#/definitions/handlers.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/models.UserToken'
+                        type: array
+                    type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 用户token列表
+      tags:
+      - Oauth
     post:
       consumes:
       - application/json
@@ -20085,6 +20147,37 @@ paths:
       security:
       - JWT: []
       summary: 签发oauth jwt token
+      tags:
+      - Oauth
+  /v1/oauth/token/{token_id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除用户token
+      parameters:
+      - description: page
+        in: path
+        name: token_id
+        required: true
+        type: integer
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            type: string
+      security:
+      - JWT: []
+      summary: 删除用户token
       tags:
       - Oauth
   /v1/oauth/validate:
@@ -21534,6 +21627,15 @@ paths:
       consumes:
       - application/json
       description: 监控面板模板列表
+      parameters:
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
       produces:
       - application/json
       responses:
