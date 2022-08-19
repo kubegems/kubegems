@@ -26,6 +26,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
@@ -144,7 +145,7 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 						machinelearningv1.ANNOTATION_NO_ENGINE: isNoEngineKind(md.Spec.Server.Kind),
 					},
 					Graph: machinelearningv1.PredictiveUnit{
-						Name:                    md.Spec.Server.Name,
+						Name:                    md.Name,
 						Implementation:          implOf(md.Spec.Server.Kind),
 						Parameters:              paramsOf(md.Spec.Server.Parameters),
 						ModelURI:                modelURIWithLicense(md.Spec.Model.URL, md.Spec.Model.License),
@@ -152,11 +153,21 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 					},
 					ComponentSpecs: []*machinelearningv1.SeldonPodSpec{
 						{
-							Spec: v1.PodSpec{
-								Containers: []v1.Container{
-									containerWithMountPath(md.Spec.Server.Container, md.Spec.Server.MountPath),
-								},
-							},
+							Spec: func() corev1.PodSpec {
+								// main container
+								mainContainer := GetOrAddMainContainer(md)
+								// update mount path
+								updateMountPath(mainContainer, md.Spec.Server.MountPath)
+								// update image
+								if md.Spec.Server.Image != "" {
+									mainContainer.Image = md.Spec.Server.Image
+								}
+								// set privileged
+								if md.Spec.Server.Privileged {
+									mainContainer.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
+								}
+								return md.Spec.Server.PodSpec
+							}(),
 						},
 					},
 				},
@@ -173,6 +184,27 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 	sd.Spec.Annotations["seldon.io/ingress-path"] = getIngressPath(ctx, r.Client, md) + "/(.*)"
 	sd.Spec.Annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
 	return sd, nil
+}
+
+func GetOrAddMainContainer(md *modelsv1beta1.ModelDeployment) *corev1.Container {
+	var mainContainer *corev1.Container
+
+	pod := md.Spec.Server.PodSpec
+	conname := md.Name
+
+	for i := range pod.Containers {
+		if pod.Containers[i].Name == conname {
+			mainContainer = &md.Spec.Server.PodSpec.Containers[i]
+			break
+		}
+	}
+	if mainContainer == nil {
+		pod.Containers = append(pod.Containers, v1.Container{Name: conname})
+		mainContainer = &pod.Containers[len(pod.Containers)-1]
+	}
+
+	md.Spec.Server.PodSpec = pod
+	return mainContainer
 }
 
 func getIngressPath(ctx context.Context, cli client.Client, md *modelsv1beta1.ModelDeployment) string {
@@ -232,9 +264,9 @@ func modelURIWithLicense(uri, license string) string {
 
 const ModelInitializerVolumeSuffix = "provision-location"
 
-func containerWithMountPath(c corev1.Container, mountpath string) corev1.Container {
+func updateMountPath(c *corev1.Container, mountpath string) {
 	if mountpath == "" {
-		return c
+		return
 	}
 
 	modelInitializerVolumeName := nameWithSuffix(c.Name, ModelInitializerVolumeSuffix)
@@ -251,7 +283,6 @@ func containerWithMountPath(c corev1.Container, mountpath string) corev1.Contain
 			MountPath: mountpath,
 		})
 	}
-	return c
 }
 
 func nameWithSuffix(name string, suffix string) string {

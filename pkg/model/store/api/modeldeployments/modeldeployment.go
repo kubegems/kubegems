@@ -26,10 +26,10 @@ import (
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/application"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
+	"kubegems.io/kubegems/pkg/model/deployment"
 	storemodels "kubegems.io/kubegems/pkg/model/store/api/models"
 	"kubegems.io/kubegems/pkg/model/store/repository"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
@@ -188,9 +188,6 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		return err
 	}
 
-	if md.Spec.Server.Name == "" {
-		md.Spec.Server.Name = md.Name
-	}
 	// set first source image if not set
 	switch sourcedetails.Kind {
 	case repository.SourceKindHuggingface:
@@ -201,7 +198,7 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "pretrained_model", Value: modeldetails.Name},
 		)
 		// nolint: gomnd
-		md.Spec.Server.ReadinessProbe = &v1.Probe{
+		deployment.GetOrAddMainContainer(md).ReadinessProbe = &v1.Probe{
 			InitialDelaySeconds: 120,
 			FailureThreshold:    5,
 		}
@@ -212,7 +209,8 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "pkg", Value: modeldetails.Framework},
 			modelsv1beta1.Parameter{Name: "model", Value: modeldetails.Name},
 		)
-		md.Spec.Server.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
+
+		md.Spec.Server.Privileged = true
 	case repository.SourceKindModelx:
 		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
 		if md.Spec.Server.StorageInitializerImage == "" {

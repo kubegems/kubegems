@@ -60,6 +60,9 @@ type ServerSpec struct {
 	Protocol string `json:"protocol"`
 
 	// +kubebuilder:validation:Optional
+	Image string `json:"image"`
+
+	// +kubebuilder:validation:Optional
 	Kind string `json:"kind"`
 
 	// +kubebuilder:validation:Optional
@@ -71,7 +74,13 @@ type ServerSpec struct {
 	// +kubebuilder:validation:Optional
 	Parameters []Parameter `json:"parameters,omitempty"`
 
-	corev1.Container `json:",inline"`
+	// +kubebuilder:validation:Optional
+	Privileged bool `json:"privileged"`
+
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	PodSpec corev1.PodSpec `json:"podSpec,omitempty"`
 }
 
 type Parameter struct {
