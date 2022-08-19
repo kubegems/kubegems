@@ -128,7 +128,11 @@ func (s *SyncService) Sync(ctx context.Context, source string, query url.Values)
 func (s *SyncService) SyncOne(ctx context.Context, source string, name string) (any, error) {
 	msg := &map[string]any{}
 
-	if err := s.do(ctx, http.MethodPost, fmt.Sprintf("/sync-one/%s/%s", source, name), nil, msg); err != nil {
+	query := url.Values{}
+	query.Set("name", name)
+	query.Set("source", source)
+
+	if err := s.do(ctx, http.MethodPost, fmt.Sprintf("/sync-one?%s", query.Encode()), nil, msg); err != nil {
 		return "", err
 	}
 	return msg, nil
