@@ -119,7 +119,7 @@
 - name: KubegemsPvcUsageTooHigh
   namespace: kubegems-monitoring
   promqlGenerator:
-    scope: others
+    scope: containers
     resource: pvc
     rule: volumeUsagePercent
     labelpairs:

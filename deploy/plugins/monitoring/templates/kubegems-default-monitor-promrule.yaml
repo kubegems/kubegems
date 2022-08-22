@@ -148,7 +148,7 @@ spec:
     rules:
     - alert: KubegemsPvcUsageTooHigh
       annotations:
-        gems_expr_json: '{"scope":"others","resource":"pvc","rule":"volumeUsagePercent","unit":"percent-0-100","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
+        gems_expr_json: '{"scope":"containers","resource":"pvc","rule":"volumeUsagePercent","unit":"percent-0-100","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
         message: 'KubegemsPvcUsageTooHigh: [cluster:{{"{{"}} $externalLabels.cluster }}]
           [node:{{"{{"}} $labels.node }}] [namespace:{{"{{"}} $labels.namespace }}] [persistentvolumeclaim:{{"{{"}}
           $labels.persistentvolumeclaim }}] PersistentVolume Usage Ratio (%) trigger
@@ -159,13 +159,13 @@ spec:
       labels:
         gems_alert_from: monitor
         gems_alert_scope: system-admin
-        gems_alert_tpl: others.pvc.volumeUsagePercent
+        gems_alert_tpl: containers.pvc.volumeUsagePercent
         gems_alertname: KubegemsPvcUsageTooHigh
         gems_namespace: {{ .Release.Namespace }}
         severity: error
     - alert: KubegemsPvcUsageTooHigh
       annotations:
-        gems_expr_json: '{"scope":"others","resource":"pvc","rule":"volumeUsagePercent","unit":"percent-0-100","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
+        gems_expr_json: '{"scope":"containers","resource":"pvc","rule":"volumeUsagePercent","unit":"percent-0-100","labelpairs":{"namespace":"kubegems.*|istio-system|observability|kube-system|local-path-storage"}}'
         message: 'KubegemsPvcUsageTooHigh: [cluster:{{"{{"}} $externalLabels.cluster }}]
           [node:{{"{{"}} $labels.node }}] [namespace:{{"{{"}} $labels.namespace }}] [persistentvolumeclaim:{{"{{"}}
           $labels.persistentvolumeclaim }}] PersistentVolume Usage Ratio (%) trigger
@@ -176,7 +176,7 @@ spec:
       labels:
         gems_alert_from: monitor
         gems_alert_scope: system-admin
-        gems_alert_tpl: others.pvc.volumeUsagePercent
+        gems_alert_tpl: containers.pvc.volumeUsagePercent
         gems_alertname: KubegemsPvcUsageTooHigh
         gems_namespace: {{ .Release.Namespace }}
         severity: critical
