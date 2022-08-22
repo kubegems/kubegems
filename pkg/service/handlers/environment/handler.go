@@ -23,9 +23,9 @@ import (
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
+	"kubegems.io/kubegems/pkg/service/handlers/registry/synchronizer"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
-	ut "kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
@@ -211,7 +211,7 @@ func AfterEnvironmentSave(ctx context.Context, h base.BaseHandler, tx *gorm.DB, 
 		limitRange    []corev1.LimitRangeItem
 		resourceQuota corev1.ResourceList
 	)
-	if e := tx.Preload("Tenant").First(&project, "id = ?", env.ProjectID).Error; e != nil {
+	if e := tx.Preload("Tenant").Preload("Registries").First(&project, "id = ?", env.ProjectID).Error; e != nil {
 		return e
 	}
 	if e := tx.First(&cluster, "id = ?", env.ClusterID).Error; e != nil {
@@ -249,7 +249,9 @@ func AfterEnvironmentSave(ctx context.Context, h base.BaseHandler, tx *gorm.DB, 
 	if e := createOrUpdateEnvironment(ctx, h, cluster.ClusterName, env.EnvironmentName, spec); e != nil {
 		return e
 	}
-	return nil
+	env.Cluster = &cluster
+	syncer := synchronizer.SynchronizerFor(h)
+	return syncer.SyncRegistries(ctx, []*models.Environment{env}, project.Registries, synchronizer.SyncKindUpsert)
 }
 
 func createOrUpdateEnvironment(ctx context.Context, h base.BaseHandler, clustername, environment string, spec v1beta1.EnvironmentSpec) error {
@@ -546,7 +548,7 @@ func (h *EnvironmentHandler) GetEnvironmentResource(c *gin.Context) {
 		dateTime = time.Now().Add(-24 * time.Hour)
 	}
 	// 第二天的0点
-	dayTime := ut.NextDayStartTime(dateTime)
+	dayTime := utils.NextDayStartTime(dateTime)
 
 	env := models.Environment{}
 	if err := h.GetDB().Preload("Project.Tenant").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
