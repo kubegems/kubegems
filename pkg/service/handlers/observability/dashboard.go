@@ -16,6 +16,7 @@ package observability
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -239,7 +240,7 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 	if err := c.BindJSON(&req); err != nil {
 		return nil, err
 	}
-	if req.Template != "" {
+	if c.Request.Method == http.MethodPost && req.Template != "" {
 		tpl := models.MonitorDashboardTpl{Name: req.Template}
 		if err := h.GetDB().First(&tpl).Error; err != nil {
 			return nil, errors.Wrapf(err, "get template: %s failed", req.Template)
