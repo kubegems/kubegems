@@ -246,20 +246,29 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 // @Param       tenant_id path     string                                                true "租户ID"
 // @Param       page        query    int                                                   false "page"
 // @Param       size        query    int                                                   false "size"
+// @Param       search    query    string                                                false "search in (name)"
+// @Param       preload   query    string                                                false "choices (Resources)"
 // @Success     200         {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
 // @Router      /v1/observability/tenant/{tenant_id}/template/scopes [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
-	scopes := []*models.PromqlTplScope{}
-	if err := h.GetDB().Preload("Resources").Find(&scopes).Error; err != nil {
+	list := []*models.PromqlTplScope{}
+	query, err := handlers.GetQuery(c, nil)
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	for _, v := range scopes {
-		v.ResourceCount = len(v.Resources)
-		v.Resources = nil
+	cond := &handlers.PageQueryCond{
+		Model:         "PromqlTplScope",
+		SearchFields:  []string{"name"},
+		PreloadFields: []string{"Resources", "Resources.Rules"},
 	}
-	handlers.OK(c, handlers.NewPageDataFromContext(c, scopes, nil, nil))
+	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, handlers.Page(total, list, page, size))
 }
 
 // ListResources 获取promql模板二级目录resource
@@ -270,22 +279,33 @@ func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
 // @Produce     json
 // @Param       tenant_id path     int                                                   true  "租户ID"
 // @Param       scope_id  path     int                                                   true  "scope id"
+// @Param       preload   query    string                                                false "choices (Scope, Rules)"
+// @Param       search    query    string                                                false "search in (name)"
 // @Param       page      query    int                                                   false "page"
 // @Param       size      query    int                                                   false "size"
 // @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
 // @Router      /v1/observability/tenant/{tenant_id}/template/scopes/{scope_id}/resources [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListResources(c *gin.Context) {
-	resources := []*models.PromqlTplResource{}
-	if err := h.GetDB().Preload("Rules").Where("scope_id = ?", c.Param("scope_id")).Order("name").Find(&resources).Error; err != nil {
+	list := []*models.PromqlTplResource{}
+	query, err := handlers.GetQuery(c, nil)
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	for _, v := range resources {
-		v.RuleCount = len(v.Rules)
-		v.Rules = nil
+	cond := &handlers.PageQueryCond{
+		Model:         "PromqlTplResource",
+		SearchFields:  []string{"name"},
+		PreloadFields: []string{"Scope", "Rules"},
+		Where:         []*handlers.QArgs{handlers.Args("scope_id = ?", c.Param("scope_id"))},
 	}
-	handlers.OK(c, handlers.NewPageDataFromContext(c, resources, nil, nil))
+	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, handlers.Page(total, list, page, size))
+
 }
 
 // ListRules 获取promql模板三级目录rule
@@ -295,39 +315,40 @@ func (h *ObservabilityHandler) ListResources(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       tenant_id   path     string                                                true  "租户ID"
-// @Param       resource_id path     string                                                true  "resource id, 可以是_all"
-// @Param       preload   query    string                                              false "Resource, Resource.Scope"
-// @Param       search      query    string                                                false "search string"
+// @Param       resource_id path     string                                                true  "resource id"
+// @Param       preload     query    string                                                false "choices (Resource, Resource.Scope)"
+// @Param       search      query    string                                                false "search in (name, show_name)"
 // @Param       page      query    int                                                   false "page"
 // @Param       size      query    int                                                   false "size"
 // @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
 // @Router      /v1/observability/tenant/{tenant_id}/template/resources{resource_id}/rules [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListRules(c *gin.Context) {
-	rules := []models.PromqlTplRule{}
-	tenantID := c.Param("tenant_id")
-	resourceID := c.Param("resource_id")
-	preload := c.Query("preload")
-	search := c.Query("search")
-
-	query := h.GetDB().Model(&models.PromqlTplRule{})
-	if resourceID != "_all" {
-		query.Where("resource_id = ?", resourceID)
-	}
-	if preload == "Resource" || preload == "Resource.Scope" {
-		query.Preload(preload)
-	}
-	if search != "" {
-		query.Where("name like ? or show_name like ?", fmt.Sprintf("%%%s%%", search), fmt.Sprintf("%%%s%%", search))
-	}
-	if tenantID != "_all" {
-		query.Where("tenant_id is null or tenant_id = ?", tenantID)
-	}
-	if err := query.Order("name").Find(&rules).Error; err != nil {
+	list := []*models.PromqlTplRule{}
+	query, err := handlers.GetQuery(c, nil)
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, handlers.NewPageDataFromContext(c, rules, nil, nil))
+	cond := &handlers.PageQueryCond{
+		Model:         "PromqlTplRule",
+		SearchFields:  []string{"name", "show_name"},
+		PreloadFields: []string{"Resource", "Resource.Scope"},
+		Where: []*handlers.QArgs{
+			handlers.Args("resource_id = ?", c.Param("resource_id")),
+		},
+	}
+	tenantID := c.Param("tenant_id")
+	if tenantID != "_all" {
+		cond.Where = append(cond.Where, handlers.Args("tenant_id is null or tenant_id = ?", tenantID))
+	}
+
+	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, handlers.Page(total, list, page, size))
 }
 
 // GetRule 获取promql模板三级目录rule
@@ -338,7 +359,7 @@ func (h *ObservabilityHandler) ListRules(c *gin.Context) {
 // @Produce     json
 // @Param       tenant_id path     string                               true "租户ID"
 // @Param       rule_id   path     string                                              true  "rule ID"
-// @Param       preload     query    string                                                false "Resource, Resource.Scope"
+// @Param       preload   query    string                                              false "Resource, Resource.Scope"
 // @Success     200       {object} handlers.ResponseStruct{Data=models.PromqlTplScope} "resp"
 // @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [get]
 // @Security    JWT

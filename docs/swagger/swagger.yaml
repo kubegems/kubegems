@@ -21941,16 +21941,16 @@ paths:
         name: tenant_id
         required: true
         type: string
-      - description: resource id, 可以是_all
+      - description: resource id
         in: path
         name: resource_id
         required: true
         type: string
-      - description: Resource, Resource.Scope
+      - description: choices (Resource, Resource.Scope)
         in: query
         name: preload
         type: string
-      - description: search string
+      - description: search in (name, show_name)
         in: query
         name: search
         type: string
@@ -22147,6 +22147,14 @@ paths:
         in: query
         name: size
         type: integer
+      - description: search in (name)
+        in: query
+        name: search
+        type: string
+      - description: choices (Resources)
+        in: query
+        name: preload
+        type: string
       produces:
       - application/json
       responses:
@@ -22182,6 +22190,14 @@ paths:
         name: scope_id
         required: true
         type: integer
+      - description: choices (Scope, Rules)
+        in: query
+        name: preload
+        type: string
+      - description: search in (name)
+        in: query
+        name: search
+        type: string
       - description: page
         in: query
         name: page

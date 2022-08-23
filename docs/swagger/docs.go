@@ -7740,20 +7740,20 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "resource id, 可以是_all",
+                        "description": "resource id",
                         "name": "resource_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Resource, Resource.Scope",
+                        "description": "choices (Resource, Resource.Scope)",
                         "name": "preload",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "search string",
+                        "description": "search in (name, show_name)",
                         "name": "search",
                         "in": "query"
                     },
@@ -8078,6 +8078,18 @@ const docTemplate = `{
                         "description": "size",
                         "name": "size",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search in (name)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "choices (Resources)",
+                        "name": "preload",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -8137,6 +8149,18 @@ const docTemplate = `{
                         "name": "scope_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "choices (Scope, Rules)",
+                        "name": "preload",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search in (name)",
+                        "name": "search",
+                        "in": "query"
                     },
                     {
                         "type": "integer",

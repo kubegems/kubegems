@@ -32,8 +32,7 @@ type PromqlTplScope struct {
 	ShowName   string `gorm:"type:varchar(50)" json:"showName"`
 	Namespaced bool   `json:"namespaced"`
 
-	Resources     []*PromqlTplResource `json:"resources,omitempty" gorm:"foreignKey:ScopeID"`
-	ResourceCount int                  `gorm:"-" json:"resourceCount"`
+	Resources []*PromqlTplResource `json:"resources,omitempty" gorm:"foreignKey:ScopeID"`
 
 	CreatedAt *time.Time `json:"-"`
 	UpdatedAt *time.Time `json:"-"`
@@ -48,8 +47,7 @@ type PromqlTplResource struct {
 	ScopeID *uint           `json:"scopeID"`
 	Scope   *PromqlTplScope `gorm:"foreignKey:ScopeID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"scope,omitempty"`
 
-	Rules     []*PromqlTplRule `json:"rules,omitempty" gorm:"foreignKey:ResourceID"`
-	RuleCount int              `gorm:"-" json:"ruleCount"`
+	Rules []*PromqlTplRule `json:"rules,omitempty" gorm:"foreignKey:ResourceID"`
 
 	CreatedAt *time.Time `json:"-"`
 	UpdatedAt *time.Time `json:"-"`
