@@ -128,8 +128,10 @@ func (h *ObservabilityHandler) MonitorCollectorStatus(c *gin.Context) {
 		}
 		return fmt.Errorf("scrap target %s not found", scrapTarget)
 	}); err != nil {
-		handlers.NotOK(c, err)
-		return
+		log.Error(err, "get scrap target status")
+		ret.Health = promv1.HealthUnknown
+		ret.LastError = err.Error()
+		ret.ScrapePool = scrapTarget
 	}
 
 	handlers.OK(c, ret)
