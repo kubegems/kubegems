@@ -36,6 +36,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/apis"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	alerthandler "kubegems.io/kubegems/pkg/service/handlers/alerts"
+	announcement "kubegems.io/kubegems/pkg/service/handlers/announcement"
 	applicationhandler "kubegems.io/kubegems/pkg/service/handlers/application"
 	approveHandler "kubegems.io/kubegems/pkg/service/handlers/approve"
 	appstorehandler "kubegems.io/kubegems/pkg/service/handlers/appstore"
@@ -366,6 +367,8 @@ func (r *Router) Complete(ctx context.Context) error {
 
 	// observability handler
 	(&observability.ObservabilityHandler{BaseHandler: basehandler, AppStoreOpt: r.Opts.Appstore}).RegistRouter(rg)
+
+	(&announcement.AnnouncementHandler{BaseHandler: basehandler}).RegistRouter(rg)
 
 	// workload 的反向代理
 	proxyHandler := proxyhandler.ProxyHandler{BaseHandler: basehandler}
