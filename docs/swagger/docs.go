@@ -392,7 +392,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "发布公告",
+                "description": "公告列表",
                 "consumes": [
                     "application/json"
                 ],
@@ -402,7 +402,7 @@ const docTemplate = `{
                 "tags": [
                     "Announcement"
                 ],
-                "summary": "发布公告",
+                "summary": "公告列表",
                 "parameters": [
                     {
                         "type": "boolean",

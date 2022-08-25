@@ -37,8 +37,8 @@ var (
 
 // ListAnnouncement 公告列表
 // @Tags        Announcement
-// @Summary     发布公告
-// @Description 发布公告
+// @Summary     公告列表
+// @Description 公告列表
 // @Accept      json
 // @Produce     json
 // @Param       active query    bool                                                                        true "是否为活跃中的公告"

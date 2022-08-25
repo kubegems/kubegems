@@ -17584,7 +17584,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 发布公告
+      description: 公告列表
       parameters:
       - description: 是否为活跃中的公告
         in: query
@@ -17612,7 +17612,7 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: 发布公告
+      summary: 公告列表
       tags:
       - Announcement
     post:
