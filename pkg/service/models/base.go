@@ -181,6 +181,8 @@ func migrateModels(db *gorm.DB) error {
 		&AuthSource{},
 		// promql templates
 		&PromqlTplScope{}, &PromqlTplResource{}, &PromqlTplRule{},
+		// 公告
+		&Announcement{},
 	)
 }
 
