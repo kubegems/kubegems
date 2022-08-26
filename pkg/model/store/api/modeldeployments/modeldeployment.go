@@ -26,6 +26,7 @@ import (
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/application"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
@@ -217,6 +218,7 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 
 		md.Spec.Server.Privileged = true
 	case repository.SourceKindModelx:
+		md.Spec.Server.Privileged = true
 		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
@@ -224,6 +226,16 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		if md.Spec.Model.URL == "" {
 			md.Spec.Model.URL = fmt.Sprintf("%s/%s@%s", sourcedetails.Address, modelname, md.Spec.Model.Version)
 		}
+	}
+
+	// resource request
+	if len(md.Spec.Server.Resources.Requests) == 0 {
+		requests := md.Spec.Server.Resources.Limits.DeepCopy()
+
+		requests[corev1.ResourceCPU] = resource.MustParse("100m")
+		requests[corev1.ResourceMemory] = resource.MustParse("100Mi")
+
+		md.Spec.Server.Resources.Requests = requests
 	}
 	return nil
 }
@@ -234,10 +246,17 @@ func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *r
 		if err := req.ReadEntity(md); err != nil {
 			return nil, err
 		}
-		// set the namespace
-		md.Namespace = ref.Namespace
-		md.SetManagedFields(nil)
-		if err := cli.Patch(ctx, md, client.Apply, client.FieldOwner("kubegems"), client.ForceOwnership); err != nil {
+		exist := &modelsv1beta1.ModelDeployment{}
+		if err := cli.Get(ctx, client.ObjectKey{Namespace: ref.Namespace, Name: ref.Name}, exist); err != nil {
+			return nil, err
+		}
+		// update fileds
+		exist.Spec = md.Spec
+		exist.Annotations = md.Annotations
+		exist.Labels = md.Labels
+		exist.OwnerReferences = md.OwnerReferences
+
+		if err := cli.Update(ctx, exist); err != nil {
 			return nil, err
 		}
 		return md, nil

@@ -125,6 +125,8 @@ func (r *SeldonModelServe) completeStatusURL(ctx context.Context, md *modelsv1be
 	return nil
 }
 
+const modelContainerName = "model"
+
 // nolint: funlen
 func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelDeployment) (*machinelearningv1.SeldonDeployment, error) {
 	sd := &machinelearningv1.SeldonDeployment{
@@ -147,7 +149,7 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 						machinelearningv1.ANNOTATION_NO_ENGINE: isNoEngineKind(md.Spec.Server.Kind),
 					},
 					Graph: machinelearningv1.PredictiveUnit{
-						Name:                    md.Name,
+						Name:                    modelContainerName,
 						Implementation:          implOf(md.Spec.Server.Kind),
 						Parameters:              paramsOf(md.Spec.Server.Parameters),
 						ModelURI:                modelURIWithLicense(md.Spec.Model.URL, md.Spec.Model.License),
@@ -180,7 +182,7 @@ func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
 	if val := md.Spec.Server.PodSpec; val != nil {
 		podspec = *val
 	}
-	return CreateOrUpdateContainer(podspec, md.Name, func(c *v1.Container) {
+	return CreateOrUpdateContainer(podspec, modelContainerName, func(c *v1.Container) {
 		// add mounts
 		for i, mount := range md.Spec.Server.Mounts {
 			if mount.Kind == modelsv1beta1.SimpleVolumeMountKindModel {
