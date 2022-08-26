@@ -190,6 +190,9 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		return err
 	}
 
+	// set task
+	md.Spec.Model.Task = modeldetails.Task
+
 	// set first source image if not set
 	switch sourcedetails.Kind {
 	case repository.SourceKindHuggingface:
@@ -204,7 +207,7 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			md.Spec.Server.PodSpec = &corev1.PodSpec{}
 		}
 		// nolint: gomnd
-		updatedpodspec := deployment.CreateOrUpdateContainer(*md.Spec.Server.PodSpec, md.Name, func(c *v1.Container) {
+		updatedpodspec := deployment.CreateOrUpdateContainer(*md.Spec.Server.PodSpec, "model", func(c *v1.Container) {
 			c.ReadinessProbe = &v1.Probe{InitialDelaySeconds: 120, FailureThreshold: 5}
 		})
 		md.Spec.Server.PodSpec = &updatedpodspec

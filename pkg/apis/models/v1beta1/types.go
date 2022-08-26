@@ -53,6 +53,8 @@ type ModelSpec struct {
 	URL string `json:"url"`
 	// +kubebuilder:validation:Optional
 	License string `json:"license"`
+	// +kubebuilder:validation:Optional
+	Task string `json:"task"`
 }
 
 type ServerSpec struct {
