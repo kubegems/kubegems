@@ -19,6 +19,8 @@ spec:
         routes:
           - match:
               - receiver: "dump"
+            drop:
+              - kind: "Lease"
       receivers:
         - name: "dump"
           file:
