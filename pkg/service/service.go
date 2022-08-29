@@ -35,13 +35,12 @@ import (
 )
 
 type Dependencies struct {
-	Options          *options.Options
-	Redis            *redis.Client
-	Databse          *database.Database
-	Argocli          *argo.Client
-	Git              *git.SimpleLocalProvider
-	Agentscli        *agents.ClientSet
-	DyConfigProvider options.DynamicConfigurationProviderIface
+	Options   *options.Options
+	Redis     *redis.Client
+	Databse   *database.Database
+	Argocli   *argo.Client
+	Git       *git.SimpleLocalProvider
+	Agentscli *agents.ClientSet
 }
 
 func prepareDependencies(ctx context.Context, opts *options.Options) (*Dependencies, error) {
@@ -88,15 +87,12 @@ func prepareDependencies(ctx context.Context, opts *options.Options) (*Dependenc
 		return nil, err
 	}
 
-	dyConfigProvider := options.NewDatabaseDynamicConfigurationProvider(db.DB())
-
 	deps := &Dependencies{
-		Redis:            rediscli,
-		Databse:          db,
-		Argocli:          argocli,
-		Git:              gitprovider,
-		Agentscli:        agentclientset,
-		DyConfigProvider: dyConfigProvider,
+		Redis:     rediscli,
+		Databse:   db,
+		Argocli:   argocli,
+		Git:       gitprovider,
+		Agentscli: agentclientset,
 	}
 	return deps, nil
 }
@@ -121,7 +117,6 @@ func Run(ctx context.Context, opts *options.Options) error {
 		Argo:        deps.Argocli,
 		Database:    deps.Databse,
 		Redis:       deps.Redis,
-		DyConfig:    deps.DyConfigProvider,
 	}
 
 	exporterHandler := exporter.NewHandler("gems_server", map[string]exporter.Collectorfunc{

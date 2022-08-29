@@ -60,7 +60,6 @@ import (
 	proxyhandler "kubegems.io/kubegems/pkg/service/handlers/proxy"
 	registryhandler "kubegems.io/kubegems/pkg/service/handlers/registry"
 	sel "kubegems.io/kubegems/pkg/service/handlers/sels"
-	systemhandler "kubegems.io/kubegems/pkg/service/handlers/system"
 	systemrolehandler "kubegems.io/kubegems/pkg/service/handlers/systemrole"
 	tenanthandler "kubegems.io/kubegems/pkg/service/handlers/tenant"
 	userhandler "kubegems.io/kubegems/pkg/service/handlers/users"
@@ -104,7 +103,6 @@ type Router struct {
 	Database      *database.Database
 	Redis         *redis.Client
 	Argo          *argo.Client
-	DyConfig      options.DynamicConfigurationProviderIface
 	GitProvider   *git.SimpleLocalProvider
 	auditInstance *audit.DefaultAuditInstance
 	gin           *gin.Engine
@@ -160,7 +158,6 @@ func (r *Router) Complete(ctx context.Context) error {
 		r.auditInstance,
 		&authorization.DefaultPermissionManager{Cache: cache, Userif: userif},
 		userif,
-		r.DyConfig,
 		r.Agents,
 		r.Database,
 		r.Redis,
@@ -250,12 +247,6 @@ func (r *Router) Complete(ctx context.Context) error {
 	}
 
 	oauthserver.RegistRouter(rg)
-
-	// 选项
-	systemHandler := systemhandler.SystemHandler{
-		BaseHandler: basehandler,
-	}
-	systemHandler.RegistRouter(rg)
 
 	// 用户
 	userHandler := &userhandler.UserHandler{BaseHandler: basehandler}

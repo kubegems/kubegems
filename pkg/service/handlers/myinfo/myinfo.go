@@ -136,25 +136,6 @@ func (h *MyHandler) ResetPassword(c *gin.Context) {
 	handlers.OK(c, nil)
 }
 
-// GetMyConfig 获取用户配置
-// @Tags        System
-// @Summary     获取用户配置
-// @Description 获取用户配置
-// @Accept      json
-// @Produce     json
-// @Param       name path     string                                            true "配置名"
-// @Success     200  {object} handlers.ResponseStruct{Data=models.OnlineConfig} "resp"
-// @Router      /v1/my/config/{name} [get]
-// @Security    JWT
-func (h *MyHandler) GetMyConfig(c *gin.Context) {
-	cfg := models.OnlineConfig{}
-	if err := h.GetDB().First(&cfg, "name = ?", c.Param("name")).Error; err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, cfg)
-}
-
 type resetPasswordForm struct {
 	Origin string `json:"origin"`
 	New1   string `json:"new1"`

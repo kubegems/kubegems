@@ -28,6 +28,4 @@ func (h *MyHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/my/auth", h.MyAuthority)
 	rg.GET("/my/tenants", h.MyTenants)
 	rg.POST("/my/reset_password", h.ResetPassword)
-
-	rg.GET("/my/config/:name", h.GetMyConfig)
 }

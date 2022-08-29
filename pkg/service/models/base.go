@@ -175,8 +175,6 @@ func migrateModels(db *gorm.DB) error {
 		&AlertMessage{},
 		// 监控面板表
 		&MonitorDashboard{}, &MonitorDashboardTpl{},
-		// 配置
-		&OnlineConfig{},
 		// 登陆源
 		&AuthSource{},
 		// promql templates

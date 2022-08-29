@@ -27,7 +27,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/models/cache"
-	"kubegems.io/kubegems/pkg/service/options"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
@@ -39,7 +38,6 @@ import (
 type BaseHandler struct {
 	audit.AuditInterface
 	authorization.PermissionManager
-	DynamicConfig options.DynamicConfigurationProviderIface
 	aaa.ContextUserOperator
 	agents     *agents.ClientSet
 	database   *database.Database
@@ -51,7 +49,6 @@ type BaseHandler struct {
 func NewHandler(auditi audit.AuditInterface,
 	permManager authorization.PermissionManager,
 	userif aaa.ContextUserOperator,
-	dynamicConfig options.DynamicConfigurationProviderIface,
 	agents *agents.ClientSet,
 	database *database.Database,
 	redis *redis.Client,
@@ -60,7 +57,6 @@ func NewHandler(auditi audit.AuditInterface,
 ) BaseHandler {
 	return BaseHandler{
 		AuditInterface:      auditi,
-		DynamicConfig:       dynamicConfig,
 		PermissionManager:   permManager,
 		ContextUserOperator: userif,
 		agents:              agents,
