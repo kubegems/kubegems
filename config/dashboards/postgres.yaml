@@ -52,7 +52,7 @@ graphs:
       scope: middlewires
       resource: postgres
       rule: pgSyncTime
-      unit: duration-s
+      unit: duration-ms
     expr: ""
     unit: duration-s
   - name: Write Durations
@@ -60,7 +60,7 @@ graphs:
       scope: middlewires
       resource: postgres
       rule: pgWriteTime
-      unit: duration-s
+      unit: duration-ms
     expr: ""
     unit: duration-s
   - name: Temp Files
