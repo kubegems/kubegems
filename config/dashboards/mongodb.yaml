@@ -68,7 +68,7 @@ graphs:
       scope: middlewires
       resource: mongodb
       rule: mongdoResponseTime
-      unit: duration-ms
+      unit: duration-us
     expr: ""
     unit: duration-ms
   - name: Database Size

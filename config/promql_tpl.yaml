@@ -1012,10 +1012,10 @@
           tenantID:
         - id: 51
           name: mongdoResponseTime
-          showName: Response Time (ms)
+          showName: Response Time (us)
           description: ""
           expr: "rate(mongodb_mongod_op_latencies_latency_total[5m]) / rate(mongodb_mongod_op_latencies_ops_total[5m]) "
-          unit: duration-ms
+          unit: duration-us
           labels:
             - service
             - type
