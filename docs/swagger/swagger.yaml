@@ -952,6 +952,10 @@ definitions:
         description: Valid is true if Time is not NULL
         type: boolean
     type: object
+  gormdatatypes.JSONMap:
+    additionalProperties:
+      type: string
+    type: object
   handlers.ClusterIsolatedSwitch:
     properties:
       cluster_id:
@@ -3919,6 +3923,9 @@ definitions:
       template:
         description: 模板名
         type: string
+      variables:
+        $ref: '#/definitions/gormdatatypes.JSONMap'
+        description: 变量
     required:
     - name
     type: object
@@ -3945,23 +3952,9 @@ definitions:
       step:
         description: 样本间隔，单位秒
         type: string
-    type: object
-  models.OnlineConfig:
-    properties:
-      content:
-        description: 环境下的limitrage
-        items:
-          type: integer
-        type: array
-      createdAt:
-        type: string
-      name:
-        description: 配置名
-        type: string
-      updatedAt:
-        type: string
-    required:
-    - name
+      variables:
+        $ref: '#/definitions/gormdatatypes.JSONMap'
+        description: 变量
     type: object
   models.Project:
     properties:
@@ -19939,34 +19932,6 @@ paths:
       summary: 获取当前用户权限列表
       tags:
       - User
-  /v1/my/config/{name}:
-    get:
-      consumes:
-      - application/json
-      description: 获取用户配置
-      parameters:
-      - description: 配置名
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  $ref: '#/definitions/models.OnlineConfig'
-              type: object
-      security:
-      - JWT: []
-      summary: 获取用户配置
-      tags:
-      - System
   /v1/my/info:
     get:
       consumes:
@@ -26325,91 +26290,6 @@ paths:
       summary: AuthSource 预定义的源默认值
       tags:
       - AuthSource
-  /v1/system/config:
-    get:
-      consumes:
-      - application/json
-      description: 列出所有系统配置
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/models.OnlineConfig'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: 列出所有系统配置
-      tags:
-      - System
-  /v1/system/config/{name}:
-    get:
-      consumes:
-      - application/json
-      description: 获取系统配置
-      parameters:
-      - description: 配置名
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  $ref: '#/definitions/models.OnlineConfig'
-              type: object
-      security:
-      - JWT: []
-      summary: 获取系统配置
-      tags:
-      - System
-    put:
-      consumes:
-      - application/json
-      description: 修改系统配置
-      parameters:
-      - description: 配置名
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: 配置内容
-        in: body
-        name: from
-        required: true
-        schema:
-          $ref: '#/definitions/models.OnlineConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 修改系统配置
-      tags:
-      - System
   /v1/systemrole:
     get:
       consumes:
