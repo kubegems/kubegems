@@ -4406,55 +4406,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/my/config/{name}": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "获取用户配置",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "System"
-                ],
-                "summary": "获取用户配置",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "配置名",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "$ref": "#/definitions/models.OnlineConfig"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/my/info": {
             "get": {
                 "security": [
@@ -15011,154 +14962,6 @@ const docTemplate = `{
                                     "properties": {
                                         "Data": {
                                             "$ref": "#/definitions/authsource.vendorData"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/system/config": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "列出所有系统配置",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "System"
-                ],
-                "summary": "列出所有系统配置",
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/models.OnlineConfig"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/system/config/{name}": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "获取系统配置",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "System"
-                ],
-                "summary": "获取系统配置",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "配置名",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "$ref": "#/definitions/models.OnlineConfig"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "修改系统配置",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "System"
-                ],
-                "summary": "修改系统配置",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "配置名",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "配置内容",
-                        "name": "from",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.OnlineConfig"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
                                         }
                                     }
                                 }
@@ -25727,6 +25530,12 @@ const docTemplate = `{
                 }
             }
         },
+        "gormdatatypes.JSONMap": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
         "handlers.ClusterIsolatedSwitch": {
             "type": "object",
             "required": [
@@ -27968,6 +27777,10 @@ const docTemplate = `{
                 "template": {
                     "description": "模板名",
                     "type": "string"
+                },
+                "variables": {
+                    "description": "变量",
+                    "$ref": "#/definitions/gormdatatypes.JSONMap"
                 }
             }
         },
@@ -28002,31 +27815,10 @@ const docTemplate = `{
                 "step": {
                     "description": "样本间隔，单位秒",
                     "type": "string"
-                }
-            }
-        },
-        "models.OnlineConfig": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "content": {
-                    "description": "环境下的limitrage",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
                 },
-                "createdAt": {
-                    "type": "string"
-                },
-                "name": {
-                    "description": "配置名",
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
+                "variables": {
+                    "description": "变量",
+                    "$ref": "#/definitions/gormdatatypes.JSONMap"
                 }
             }
         },

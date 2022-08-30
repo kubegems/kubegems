@@ -215,7 +215,9 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 	if err != nil {
 		return err
 	}
-	if q.PromqlGenerator != nil {
+
+	// from tpl
+	if !q.PromqlGenerator.Notpl() {
 		if q.Namespace != "" {
 			q.Query.AddLabelMatchers(&labels.Matcher{
 				Type:  labels.MatchEqual,
@@ -223,14 +225,15 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 				Value: q.Namespace,
 			})
 		}
-		for label, value := range q.LabelPairs {
-			q.Query.AddLabelMatchers(&labels.Matcher{
-				Type:  labels.MatchRegexp,
-				Name:  label,
-				Value: value,
-			})
-		}
 		q.Query.Sumby(q.Tpl.Labels...)
+	}
+
+	for label, value := range q.LabelPairs {
+		q.Query.AddLabelMatchers(&labels.Matcher{
+			Type:  labels.MatchRegexp,
+			Name:  label,
+			Value: value,
+		})
 	}
 	q.Expr = q.Query.String()
 

@@ -4,6 +4,8 @@ step: 30s
 refresh: 30s
 start: now-30m
 end: now
+variables:
+  service: ""
 graphs:
   - name: Consul Raft Leader
     promqlGenerator:
