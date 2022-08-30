@@ -337,15 +337,15 @@ func (h *ObservabilityHandler) ListRules(c *gin.Context) {
 		Model:         "PromqlTplRule",
 		SearchFields:  []string{"name", "show_name"},
 		PreloadFields: []string{"Resource", "Resource.Scope"},
-		Where: []*handlers.QArgs{
-			handlers.Args("resource_id = ?", c.Param("resource_id")),
-		},
 	}
 	tenantID := c.Param("tenant_id")
 	if tenantID != "_all" {
 		cond.Where = append(cond.Where, handlers.Args("tenant_id is null or tenant_id = ?", tenantID))
 	}
-
+	resourceID := c.Param("resource_id")
+	if resourceID != "_all" {
+		cond.Where = append(cond.Where, handlers.Args("resource_id = ?", resourceID))
+	}
 	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
