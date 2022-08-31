@@ -26,6 +26,8 @@ spec:
         query:
           # image: jaegertracing/jaeger-query
           {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.io" "repository" "jaegertracing/jaeger-query" "tag" $version "context" .) }}
+          metricsStorage:
+            type: prometheus
         ingester:
           # image: jaegertracing/jaeger-ingester
           {{ include "common.images.repository" ( dict "key" "image" "registry" "docker.io" "repository" "jaegertracing/jaeger-ingester" "tag" $version "context" .) }}
@@ -38,6 +40,7 @@ spec:
           options:
             collector.zipkin.host-port: "9411"
         storage:
+          secretName: jaeger-spm
           dependencies:
             enabled: false
           type: elasticsearch
@@ -51,6 +54,16 @@ spec:
               {{- else }}
               server-urls: http://elasticsearch-master.observability:9200
               {{- end }}
+
+---
+apiVersion: v1
+data:
+  PROMETHEUS_SERVER_URL: "{{ .Values.monitoring.prometheus.address  | b64enc }}"
+kind: Secret
+metadata:
+  name: jaeger-spm
+  namespace: {{ .Release.Namespace }}
+type: Opaque
 ---
 kind: Service
 apiVersion: v1

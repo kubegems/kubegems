@@ -13,6 +13,14 @@ spec:
       processors:
         k8sattributes:
           passthrough: true
+        spanmetrics:
+          metrics_exporter: prometheusremotewrite
+          latency_histogram_buckets: [1ms, 10ms, 100ms, 500ms, 1s, 10s]
+          dimensions_cache_size: 2000
+          dimensions:
+            - name: k8s.namespace.name
+            - name: k8s.pod.name
+            - name: http.status_code
       exporters:
         jaeger:
           endpoint: {{ .Values.tracing.jaeger.proto.address }}
@@ -24,13 +32,17 @@ spec:
           #  directory: /wal
           external_labels:
             source: opentelemetry
+            instance: ${MY_POD_IP}
           resource_to_telemetry_conversion:
             enabled: true
       service:
         pipelines:
           traces:
             processors:
+              - batch
+              - memory_limiter
               - k8sattributes
+              - spanmetrics
             exporters:
               - jaeger
           metrics:
@@ -40,12 +52,12 @@ spec:
       {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "otel/opentelemetry-collector-contrib" "context" .) }}
     mode: deployment
     replicaCount: 2
-    #extraConfigMapMounts:
+    #extraVolumeMounts:
     #- name: wal
     #  mountPath: /wal
     #extraVolumes:
     #- name: wal
-    #  emtyDir: 
+    #  emptyDir: {}
     ports:
       metrics:
         enabled: true
