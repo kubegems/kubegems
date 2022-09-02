@@ -344,7 +344,7 @@
     resource: exporter
     rule: status
     labelpairs:
-      job: "alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"
+      job: "alertmanager|cert-manager|kubegems-local-agent|kube-state-metrics|kubelet|apiserver"
   for: 1m
   alertLevels:
     - compareOp: "=="

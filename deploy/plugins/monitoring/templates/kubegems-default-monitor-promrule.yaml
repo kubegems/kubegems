@@ -439,12 +439,12 @@ spec:
     rules:
     - alert: ExporterDown
       annotations:
-        gems_expr_json: '{"scope":"others","resource":"exporter","rule":"status","unit":"","labelpairs":{"job":"alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"}}'
+        gems_expr_json: '{"scope":"others","resource":"exporter","rule":"status","unit":"","labelpairs":{"job":"alertmanager|cert-manager|kubegems-local-agent|kube-state-metrics|kubelet|apiserver"}}'
         message: 'ExporterDown: [cluster:{{"{{"}} $externalLabels.cluster }}] [instance:{{"{{"}}
           $labels.instance }}] [job:{{"{{"}} $labels.job }}] Plugins State trigger alert,
           value: {{"{{"}} $value | printf "%.1f" }}'
         value: '{{"{{"}} $value | printf "%.1f" }}'
-      expr: up{job=~"alertmanager|cert-manager|gems-agent|kube-state-metrics|node-exporter|nginx-ingress-operator-metrics"}==0
+      expr: up{job=~"alertmanager|cert-manager|kubegems-local-agent|kube-state-metrics|kubelet|apiserver"}==0
       for: 1m
       labels:
         gems_alert_from: monitor
