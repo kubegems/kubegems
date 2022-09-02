@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,7 @@ import (
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	v1 "k8s.io/api/core/v1"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
@@ -134,12 +136,12 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 // @Description 查群prometheus label names
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                 true  "集群名"
-// @Param       namespace path     string                                 true  "命名空间，所有namespace为_all"
+// @Param       cluster   path     string                               true  "集群名"
+// @Param       namespace path     string                               true  "命名空间，所有namespace为_all"
 // @Param       resource  query    string                                 false "查询资源"
 // @Param       rule      query    string                                 false "查询规则"
-// @Param       start     query    string                                 false "开始时间，默认现在-30m"
-// @Param       end       query    string                                 false "结束时间，默认现在"
+// @Param       start     query    string                               false "开始时间，默认现在-30m"
+// @Param       end       query    string                               false "结束时间，默认现在"
 // @Param       expr      query    string                                 true  "promql表达式"
 // @Success     200       {object} handlers.ResponseStruct{Data=[]string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelnames [get]
@@ -161,6 +163,119 @@ func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 		return
 	}
 
+	handlers.OK(c, ret)
+}
+
+// OtelMetricsGraphs OtelMetricsGraphs
+// @Tags        Observability
+// @Summary     OtelMetricsGraphs
+// @Description OtelMetricsGraphs
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                 true  "集群名"
+// @Param       namespace path     string                                 true  "命名空间，所有namespace为_all"
+// @Param       service   query    string                               false "jaeger service"
+// @Param       start     query    string                                 false "开始时间，默认现在-30m"
+// @Param       end       query    string                                 false "结束时间，默认现在"
+// @Success     200       {object} handlers.ResponseStruct{Data=object} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs [get]
+// @Security    JWT
+func (h *ObservabilityHandler) OtelMetricsGraphs(c *gin.Context) {
+	ns := c.Param("namespace")
+	svc := c.Query("service")
+	start := c.Param("start")
+	end := c.Param("end")
+	now := time.Now().UTC()
+	if start == "" || end == "" {
+		start = now.Add(-30 * time.Minute).Format(time.RFC3339)
+		end = now.Format(time.RFC3339)
+	}
+
+	ret := gin.H{}
+	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
+		wg := sync.WaitGroup{}
+		wg.Add(8)
+		go func() {
+			q := fmt.Sprintf(`histogram_quantile(0.95, sum(rate(gems_otel_latency_bucket{namespace="%s", service="%s"}[5m])) by (le,namespace,service))`, ns, svc)
+			latencyP95, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+			if err != nil {
+				log.Error(err, "query latencyP95")
+			}
+			ret["latencyP95"] = latencyP95
+			wg.Done()
+		}()
+		go func() {
+			q := fmt.Sprintf(`histogram_quantile(0.75, sum(rate(gems_otel_latency_bucket{namespace="%s", service="%s"}[5m])) by (le,namespace,service))`, ns, svc)
+			latencyP75, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+			if err != nil {
+				log.Error(err, "query latencyP75")
+			}
+			ret["latencyP75"] = latencyP75
+			wg.Done()
+		}()
+		go func() {
+			q := fmt.Sprintf(`histogram_quantile(0.50, sum(rate(gems_otel_latency_bucket{namespace="%s", service="%s"}[5m])) by (le,namespace,service))`, ns, svc)
+			latencyP50, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+			if err != nil {
+				log.Error(err, "query latencyP50")
+			}
+			ret["latencyP50"] = latencyP50
+			wg.Done()
+		}()
+		go func() {
+			q := fmt.Sprintf(`sum(irate(gems_otel_calls_total{namespace="%[1]s", service="%[2]s", status_code="STATUS_CODE_ERROR"}[5m]))by(namespace, service) /
+			sum(irate(gems_otel_calls_total{namespace="%[1]s", service="%[2]s"}[5m]))by(namespace, service)`, ns, svc)
+			errorRate, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+			if err != nil {
+				log.Error(err, "query errRate")
+			}
+			ret["errorRate"] = errorRate
+			wg.Done()
+		}()
+		go func() {
+			q := fmt.Sprintf(`sum(irate(gems_otel_calls_total{namespace="%s", service="%s"}[5m]))by(namespace, service)`, ns, svc)
+			requestRate, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+			if err != nil {
+				log.Error(err, "query requestRate")
+			}
+			ret["requestRate"] = requestRate
+			wg.Done()
+		}()
+
+		go func() {
+			q := fmt.Sprintf(`histogram_quantile(0.95, sum(rate(gems_otel_latency_bucket{namespace="%s", service="%s"}[5m])) by (le,namespace,service,operation))`, ns, svc)
+			operationlatencyP95, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+			if err != nil {
+				log.Error(err, "query operationlatencyP95")
+			}
+			ret["operationlatencyP95"] = operationlatencyP95
+			wg.Done()
+		}()
+		go func() {
+			q := fmt.Sprintf(`sum(irate(gems_otel_calls_total{namespace="%s", service="%s"}[5m]))by(namespace, service, operation)`, ns, svc)
+			operationRequestRate, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+			if err != nil {
+				log.Error(err, "query operationRequestRate")
+			}
+			ret["operationRequestRate"] = operationRequestRate
+			wg.Done()
+		}()
+		go func() {
+			q := fmt.Sprintf(`sum(irate(gems_otel_calls_total{namespace="%[1]s", service="%[2]s", status_code="STATUS_CODE_ERROR"}[5m]))by(namespace, service, operation) /
+			sum(irate(gems_otel_calls_total{namespace="%[1]s", service="%[2]s"}[5m]))by(namespace, service, operation)`, ns, svc)
+			operationErrorRate, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+			if err != nil {
+				log.Error(err, "query operationErrorRate")
+			}
+			ret["operationErrorRate"] = operationErrorRate
+			wg.Done()
+		}()
+		wg.Wait()
+		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
 	handlers.OK(c, ret)
 }
 

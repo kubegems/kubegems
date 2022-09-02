@@ -72,6 +72,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/metrics/queryrange", h.CheckByClusterNamespace, h.QueryRange)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/metrics/labelvalues", h.CheckByClusterNamespace, h.LabelValues)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/metrics/labelnames", h.CheckByClusterNamespace, h.LabelNames)
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/otel/metrics/graphs", h.CheckByClusterNamespace, h.OtelMetricsGraphs)
 
 	// template
 	rg.GET("/observability/tenant/:tenant_id/template/scopes", h.CheckByTenantID, h.ListScopes)

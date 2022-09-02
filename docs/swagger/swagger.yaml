@@ -21349,6 +21349,51 @@ paths:
       summary: 监控采集器状态
       tags:
       - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs:
+    get:
+      consumes:
+      - application/json
+      description: OtelMetricsGraphs
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间，所有namespace为_all
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: jaeger service
+        in: query
+        name: service
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: object
+              type: object
+      security:
+      - JWT: []
+      summary: OtelMetricsGraphs
+      tags:
+      - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers:
     get:
       consumes:
