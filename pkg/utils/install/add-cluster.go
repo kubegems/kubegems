@@ -25,9 +25,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
-	bundlev1 "kubegems.io/bundle-controller/pkg/apis/bundle/v1beta1"
-	"kubegems.io/bundle-controller/pkg/utils"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
+	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
+	"kubegems.io/kubegems/pkg/installer/utils"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -91,7 +91,7 @@ func (i OpratorInstaller) Remove(ctx context.Context, ns string) error {
 	}
 	// remove all bundles in ns
 	log.FromContextOrDiscard(ctx).Info("removing kubegems plugins", "namespace", ns)
-	return cli.DeleteAllOf(ctx, &bundlev1.Bundle{}, client.InNamespace(ns))
+	return cli.DeleteAllOf(ctx, &pluginv1beta1.Plugin{}, client.InNamespace(ns))
 	// remove kubegems-installer by hand
 }
 

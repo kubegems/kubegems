@@ -24,7 +24,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	bundlev1 "kubegems.io/bundle-controller/pkg/apis/bundle/v1beta1"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -98,7 +97,7 @@ func ListPlugins(ctx context.Context, cli client.Client, options ...ListPluginOp
 			state.Version = state.AppVersion
 		}
 		// health check
-		if bundle.Status.Phase != bundlev1.PhaseInstalled {
+		if bundle.Status.Phase != pluginsv1beta1.PhaseInstalled {
 			state.Healthy = false
 			state.Message = bundle.Status.Message
 		} else if opt.WithHealthy {

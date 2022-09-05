@@ -21,10 +21,9 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	bundlev1 "kubegems.io/bundle-controller/pkg/apis/bundle/v1beta1"
-	"kubegems.io/bundle-controller/pkg/utils"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
+	"kubegems.io/kubegems/pkg/installer/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -76,7 +75,7 @@ func ParsePluginsFrom(path string, values GlobalValues) ([]client.Object, error)
 }
 
 func injectGlobalValues(plugin *pluginsv1beta1.Plugin) {
-	globalref := bundlev1.ValuesFrom{
+	globalref := pluginsv1beta1.ValuesFrom{
 		Name: GlobalValuesConfigMapName,
 		Kind: "ConfigMap",
 	}
@@ -86,7 +85,7 @@ func injectGlobalValues(plugin *pluginsv1beta1.Plugin) {
 		}
 	}
 	// inject prepend
-	plugin.Spec.ValuesFrom = append([]bundlev1.ValuesFrom{globalref}, plugin.Spec.ValuesFrom...)
+	plugin.Spec.ValuesFrom = append([]pluginsv1beta1.ValuesFrom{globalref}, plugin.Spec.ValuesFrom...)
 }
 
 func forDir(root string, f func(path string)) error {

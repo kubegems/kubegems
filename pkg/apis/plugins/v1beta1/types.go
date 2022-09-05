@@ -16,7 +16,6 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	bundlev1 "kubegems.io/bundle-controller/pkg/apis/bundle/v1beta1"
 )
 
 // +kubebuilder:object:root=true
@@ -33,11 +32,11 @@ type Plugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   bundlev1.BundleSpec   `json:"spec,omitempty"`
-	Status bundlev1.BundleStatus `json:"status,omitempty"`
+	Spec   PluginSpec   `json:"spec,omitempty"`
+	Status PluginStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 type PluginList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

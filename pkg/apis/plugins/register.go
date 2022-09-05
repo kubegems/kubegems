@@ -18,19 +18,3 @@ package plugins
 
 // GroupName is the group name used in this package
 const GroupName = "plugins.kubegems.io"
-
-const (
-	AnnotationDescription      = "plugins.kubegems.io/description"
-	AnnotationAppVersion       = "plugins.kubegems.io/appVersion"
-	AnnotationCategory         = "plugins.kubegems.io/category"
-	AnnotationMainCategory     = "plugins.kubegems.io/main-category"
-	AnnotationIcon             = "plugins.kubegems.io/icon"
-	AnnotationHealthCheck      = "plugins.kubegems.io/health-check"
-	AnnotationRequired         = "plugins.kubegems.io/required"
-	AnnotationIgnoreOnDisabled = "plugins.kubegems.io/ignore-on-disabled"
-)
-
-const (
-	KubeGemsLocalPluginsNamespace     = "kubegems-local"
-	KubeGemsGlobalValuesConfigMapName = "kubegems-global-values"
-)
