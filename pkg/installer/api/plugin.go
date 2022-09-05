@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -191,6 +192,7 @@ type PluginVersion struct {
 	Message    string                `json:"message,omitempty"`
 	Values     pluginsv1beta1.Values `json:"values,omitempty"`
 	Schema     string                `json:"schema,omitempty"`
+	ValuesFrom []string              `json:"valuesFrom,omitempty"`
 }
 
 func (m *pluginManager) List(ctx context.Context) ([]Plugin, error) {
@@ -382,27 +384,13 @@ func PluginVersionFrom(plugin *pluginsv1beta1.Plugin) PluginVersion {
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
-	version := plugin.Spec.Version
-	if version == "" {
-		version = plugin.Status.Version
+	pv := PluginVersion{}
+	_ = json.Unmarshal([]byte(annotations[pluginscommon.AnnotationPluginInfo]), &pv)
+	pv.Message = plugin.Status.Message
+	if pv.Version == "" {
+		pv.Version = plugin.Status.Version
 	}
-	if version == "" {
-		version = "unknow"
-	}
-	return PluginVersion{
-		Name:         plugin.Name,
-		Namespace:    plugin.Spec.InstallNamespace,
-		Kind:         plugin.Spec.Kind,
-		URL:          plugin.Spec.URL,
-		Version:      version,
-		Message:      plugin.Status.Message,
-		Values:       plugin.Spec.Values,
-		Description:  annotations[pluginscommon.AnnotationDescription],
-		MainCategory: annotations[pluginscommon.AnnotationMainCategory],
-		Category:     annotations[pluginscommon.AnnotationCategory],
-		Schema:       annotations[pluginscommon.AnnotationSchema],
-		Healthy:      true,
-	}
+	return pv
 }
 
 func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) PluginVersion {
@@ -428,19 +416,26 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		MainCategory: annotations[pluginscommon.AnnotationMainCategory],
 		Category:     annotations[pluginscommon.AnnotationCategory],
 		Schema:       annotations[pluginscommon.AnnotationSchema],
-		Required:     required,
-		Healthy:      true,
+		ValuesFrom: func() []string {
+			vals := []string{}
+			for _, val := range strings.Split(annotations[pluginscommon.AnnotationValuesFrom], ",") {
+				if val == "" {
+					continue
+				}
+				vals = append(vals, val)
+			}
+			return vals
+		}(),
+		Required: required,
+		Healthy:  true,
 	}
 }
 
 func PluginVersionTo(pluginversion PluginVersion) *pluginsv1beta1.Plugin {
+	plugininfo, _ := json.Marshal(pluginversion)
 	annotations := map[string]string{
-		pluginscommon.AnnotationDescription:  pluginversion.Description,
-		pluginscommon.AnnotationCategory:     pluginversion.Category,
-		pluginscommon.AnnotationMainCategory: pluginversion.MainCategory,
-		pluginscommon.AnnotationSchema:       pluginversion.Schema,
+		pluginscommon.AnnotationPluginInfo: string(plugininfo),
 	}
-
 	return &pluginsv1beta1.Plugin{
 		ObjectMeta: v1.ObjectMeta{
 			Name:        pluginversion.Name,
@@ -452,7 +447,21 @@ func PluginVersionTo(pluginversion PluginVersion) *pluginsv1beta1.Plugin {
 			InstallNamespace: pluginversion.Namespace,
 			Version:          pluginversion.Version,
 			Values:           pluginversion.Values,
-			ValuesFrom:       []pluginsv1beta1.ValuesFrom{}, // todo
+			ValuesFrom: func() []pluginsv1beta1.ValuesFrom {
+				valsfrom := []pluginsv1beta1.ValuesFrom{}
+				for _, from := range pluginversion.ValuesFrom {
+					if from == "" {
+						continue
+					}
+					valsfrom = append(valsfrom, pluginsv1beta1.ValuesFrom{
+						Kind:     "ConfigMap",
+						Name:     from,
+						Prefix:   from + ".",
+						Optional: true,
+					})
+				}
+				return valsfrom
+			}(),
 		},
 	}
 }

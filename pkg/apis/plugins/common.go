@@ -18,6 +18,8 @@ const (
 	AnnotationSchema           = "plugins.kubegems.io/schema"
 	AnnotationUseTemplate      = "plugins.kubegems.io/use-template"
 	AnnotationInstallNamespace = "plugins.kubegems.io/install-namespace"
+	AnnotationValuesFrom       = "plugins.kubegems.io/values-from"
+	AnnotationPluginInfo       = "plugins.kubegems.io/plugin-info"
 )
 
 const (
