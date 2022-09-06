@@ -92,7 +92,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 	if simple, _ := strconv.ParseBool(c.Query("simple")); simple {
 		ret := SimplePlugin{}
 		for _, v := range viewplugins {
-			ret[v.Name] = v.Healthy
+			ret[v.Name] = v.Enabled
 		}
 		OK(c, ret)
 		return
