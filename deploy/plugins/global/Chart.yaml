@@ -1,0 +1,9 @@
+apiVersion: v2
+name: global
+version: 1.0.0
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+appVersion: 1.0.0
+description: 全局变量配置
