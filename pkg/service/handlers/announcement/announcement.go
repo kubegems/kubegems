@@ -15,7 +15,6 @@
 package announcement
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -47,12 +46,6 @@ var (
 // @Security    JWT
 func (h *AnnouncementHandler) ListAnnouncement(c *gin.Context) {
 	active, _ := strconv.ParseBool(c.Query("active"))
-	u, _ := h.GetContextUser(c)
-	if !active && u.GetSystemRoleID() != 1 {
-		handlers.Forbidden(c, fmt.Errorf("非管理员用户不能获取所有公告"))
-		return
-	}
-
 	list := []models.Announcement{}
 	query, err := handlers.GetQuery(c, nil)
 	if err != nil {
