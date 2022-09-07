@@ -385,13 +385,17 @@ func (h *REST) Patch(c *gin.Context) {
 			in this case ,user passed in a full document,and 'patch' to the full document.
 			Actually,it is not a sense of patch, it is a update.
 			It may use patch to avoid  conflict(reversion changed) on update during user get-edit-post's long workflow,
-			In order to achieve it, just remove reversion before update.
 		*/
 		if err := json.NewDecoder(c.Request.Body).Decode(obj); err != nil {
 			NotOK(c, err)
 			return
 		}
-		obj.SetResourceVersion("")
+		exist, _ := obj.DeepCopyObject().(client.Object)
+		if err := h.client.Get(ctx, client.ObjectKeyFromObject(exist), exist); err != nil {
+			NotOK(c, err)
+			return
+		}
+		obj.SetResourceVersion(exist.GetResourceVersion())
 		if err := h.client.Update(ctx, obj); err != nil {
 			NotOK(c, err)
 			return
@@ -501,10 +505,11 @@ func (r *REST) parseGVKN(c *gin.Context) (GVKN, error) {
 
 // parse map to labelselector
 // eg:
-//     label1__in: a,b,c
-//     label2__notin: a,b,c
-//     label3__exist: any
-//     label4__notexist: any
+//
+//	label1__in: a,b,c
+//	label2__notin: a,b,c
+//	label3__exist: any
+//	label4__notexist: any
 func parseSels(mapSelector map[string]string, selector string) labels.Selector {
 	var sel labels.Selector
 	if len(selector) > 0 {
