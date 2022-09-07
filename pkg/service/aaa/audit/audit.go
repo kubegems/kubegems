@@ -52,7 +52,6 @@ type AuditInterface interface {
 	AuditProxyFunc(c *gin.Context, p *ProxyObject)
 	WebsocketAuditFunc(username string, parents []cache.CommonResourceIface, ip string, proxyobj *ProxyObject) func(cmd string)
 
-	// 重构版本新加的方法
 	SetAuditData(c *gin.Context, action, mod, name string)
 	SetExtraAuditData(c *gin.Context, kind string, uid uint)
 	SetExtraAuditDataByClusterNamespace(c *gin.Context, cluster, namesapce string)

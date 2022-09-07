@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"kubegems.io/kubegems/pkg/apis/gems"
-	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -56,7 +55,7 @@ var forbiddenBindNamespaces = []string{
 func (h *NamespaceHandler) List(c *gin.Context) {
 	nsList := &corev1.NamespaceList{}
 	sel := labels.NewSelector()
-	req, _ := labels.NewRequirement(gemlabels.LabelEnvironment, selection.DoesNotExist, []string{})
+	req, _ := labels.NewRequirement(gems.LabelEnvironment, selection.DoesNotExist, []string{})
 	listOptions := &client.ListOptions{
 		LabelSelector: sel.Add(*req),
 	}
