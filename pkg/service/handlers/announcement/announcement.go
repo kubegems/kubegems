@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"time"
 
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -104,13 +105,10 @@ func (h *AnnouncementHandler) PostAnnouncement(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	now := time.Now()
-	if req.StartAt == nil {
-		req.StartAt = &now
-	}
-	end := now.Add(24 * time.Hour)
-	if req.EndAt == nil {
-		req.EndAt = &end
+	h.setAnnounceDuration(&req)
+	if req.EndAt.Before(*req.StartAt) {
+		handlers.NotOK(c, i18n.Errorf(c, "site announcement period is invalid, the end time is earlier than the start time"))
+		return
 	}
 	if err := h.GetDB().Create(&req).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -136,13 +134,10 @@ func (h *AnnouncementHandler) PutAnnouncement(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	now := time.Now()
-	if req.StartAt == nil {
-		req.StartAt = &now
-	}
-	end := now.Add(24 * time.Hour)
-	if req.EndAt == nil {
-		req.EndAt = &end
+	h.setAnnounceDuration(&req)
+	if req.EndAt.Before(*req.StartAt) {
+		handlers.NotOK(c, i18n.Errorf(c, "site announcement period is invalid, the end time is earlier than the start time"))
+		return
 	}
 	if err := h.GetDB().Updates(&req).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -168,6 +163,24 @@ func (h *AnnouncementHandler) DeleteAnnouncement(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, "ok")
+}
+
+func (h *AnnouncementHandler) setAnnounceDuration(announce *models.Announcement) {
+	timedelta := time.Hour * 24
+	if announce.StartAt == nil && announce.EndAt == nil {
+		startTime := time.Now()
+		endTime := startTime.Add(timedelta)
+		announce.StartAt = &startTime
+		announce.EndAt = &endTime
+	}
+	if announce.StartAt == nil && announce.EndAt != nil {
+		startTime := announce.EndAt.Add(-timedelta)
+		announce.StartAt = &startTime
+	}
+	if announce.StartAt != nil && announce.EndAt == nil {
+		endTime := announce.StartAt.Add(timedelta)
+		announce.EndAt = &endTime
+	}
 }
 
 type AnnouncementHandler struct {
