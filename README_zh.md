@@ -122,7 +122,7 @@ kubectl apply -f https://github.com/kubegems/kubegems/raw/main/deploy/installer.
 kubectl create namespace kubegems
 
 export STORAGE_CLASS=local-path  # 声明storageclass
-export KUBEGEMS_VERSION=v1.22.0  #  安装 kubegems 的版本
+export KUBEGEMS_VERSION=v1.21.4  #  安装 kubegems 的版本
 curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml \
 | sed -e "s/local-path/${STORAGE_CLASS}/g" -e "s/latest/${KUBEGEMS_VERSION}/g" \
 > kubegems.yaml

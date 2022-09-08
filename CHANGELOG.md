@@ -1,4 +1,12 @@
-## 1.21.2 / 2022-08-09
+## What's Changed
+### Enhancements 🎈
+* fix agent update,add api-resources cache by @cnfatal in https://github.com/kubegems/kubegems/pull/223
+* add api-resources filter by @cnfatal in https://github.com/kubegems/kubegems/pull/224
+### Bugfixes 🐞
+* fix(#222): nacos install default namespace by @LinkMaq in https://github.com/kubegems/kubegems/pull/228
+
+
+## 1.21.4 / 2022-08-09
 ### Bugfixes 🐞
 * 🐞 fix(webhook): ingress api version error by @jojotong in https://github.com/kubegems/kubegems/pull/171
 * 🐞 fix(cluster): apiserver version should from k8s, not db by @jojotong in https://github.com/kubegems/kubegems/pull/172

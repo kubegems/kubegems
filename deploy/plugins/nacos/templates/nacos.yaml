@@ -9,18 +9,25 @@ spec:
   path: helm
   version: master
   values:
+    namespace: {{ .Release.Namespace }}
+    global:
+      mode: cluster
     service:
       type: ClusterIP
     nacos:
+      replicaCount: 1
       image:
         # repository: nacos/nacos-server
         {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "nacos/nacos-server" "context" .) }}
         tag: v{{ .Chart.AppVersion }}
       plugin:
-        image:
+        image: 
           # repository: nacos/nacos-peer-finder-plugin
           {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "nacos/nacos-peer-finder-plugin" "context" .) }}
     persistence:
       enabled: true
       data:
         storageClassName: {{ .Values.global.storageClass }}
+      resources:
+        requests:
+          storage: 5Gi

@@ -12,7 +12,7 @@ Maintaining the release branches for older minor releases happens on a best effo
 
 ## Prepare your release
 
-For a new major or minor release, work from the `main` branch. For a patch release, work in the branch of the minor release you want to patch (e.g. `release-1.21` if you're releasing `v1.21.2`).
+For a new major or minor release, work from the `main` branch. For a patch release, work in the branch of the minor release you want to patch (e.g. `release-1.21` if you're releasing `v1.21.4`).
 
 Bump the version in the `VERSION` file in the root of the repository.
 
