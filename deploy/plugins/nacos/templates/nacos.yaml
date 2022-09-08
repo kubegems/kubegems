@@ -9,9 +9,13 @@ spec:
   path: helm
   version: master
   values:
+    global:
+      mode: cluster
+    namespace: "{{ .Release.Namespace }}"
     service:
       type: ClusterIP
     nacos:
+      replicaCount: 1
       image:
         # repository: nacos/nacos-server
         {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "nacos/nacos-server" "context" .) }}
