@@ -7,6 +7,12 @@ global:
 loki:
   version: 2.11.1
   address: "" # set to override default
+  storage:
+    aws:
+      enabled: false
+      s3: # S3 or S3-compatible endpoint URL with escaped Key and Secret encoded.
+      insecure: true
+      s3forcepathstyle: true
 monitoring:
   enabled: false
   alertmanager:

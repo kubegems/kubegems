@@ -89,7 +89,11 @@ spec:
           index:
             period: 24h
             prefix: index_
+          {{- if .Values.loki.storage.aws.enabled }}
+          object_store: aws
+          {{- else }}
           object_store: filesystem
+          {{- end }}
           schema: v11
           store: boltdb-shipper
       storage_config:
@@ -97,9 +101,20 @@ spec:
           active_index_directory: /data/loki/boltdb-shipper-active
           cache_location: /data/loki/boltdb-shipper-cache
           cache_ttl: 24h
+          {{- if .Values.loki.storage.aws.enabled }}
+          shared_store: aws
+          {{- else }}
           shared_store: filesystem
+          {{- end }}
+        {{- if .Values.loki.storage.aws.enabled }}
+        aws:
+          insecure: {{ .Values.loki.storage.aws.insecure }}
+          s3: {{ .Values.loki.storage.aws.s3 }}
+          s3forcepathstyle: {{ .Values.loki.storage.aws.s3forcepathstyle }}
+        {{- else }}
         filesystem:
           directory: /data/loki/chunks
+        {{- end }}
         index_queries_cache_config:
           redis:
             endpoint: loki-redis-headless:6379
