@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/sync/errgroup"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -53,7 +52,7 @@ var (
 // @Router       /v1/cluster [get]
 // @Security     JWT
 func (h *ClusterHandler) ListCluster(c *gin.Context) {
-	var list []models.Cluster
+	var list []*models.Cluster
 	query, err := handlers.GetQuery(c, nil)
 	if err != nil {
 		handlers.NotOK(c, err)
@@ -69,22 +68,9 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	/*
-		eg := errgroup.Group{}
-		for i := range list {
-			index := i
-			eg.Go(func() error {
-				cli, err := h.GetAgents().ClientOf(c.Request.Context(), list[index].ClusterName)
-				if err != nil {
-					log.Error(err, "unable get agents client", "cluster", list[index].ClusterName)
-					return nil
-				}
-				list[index].Version = cli.APIServerVersion()
-				return nil
-			})
-		}
-		_ = eg.Wait()
-	*/
+	h.batchWithTimeout(c, list, time.Duration(time.Second*3), func(idx int, name string, cli agents.Client) {
+		list[idx].Version = cli.APIServerVersion()
+	})
 	handlers.OK(c, handlers.Page(total, list, int64(page), int64(size)))
 }
 
@@ -104,32 +90,22 @@ func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
-
 	ret := map[string]bool{}
-
-	eg := &errgroup.Group{}
-	mu := sync.Mutex{}
 	for _, cluster := range clusters {
-		name := cluster.ClusterName
-		eg.Go(func() error {
-			cli, err := h.GetAgents().ClientOf(ctx, name)
-			if err != nil {
-				log.Error(err, "unable get agents client", "cluster", name)
-				return nil
-			}
-			if err := cli.Extend().Healthy(ctx); err != nil {
-				log.Error(err, "cluster unhealthy", "cluster", name)
-				return nil
-			}
-
-			mu.Lock()
-			defer mu.Unlock()
-			ret[name] = true
-			return nil
-		})
+		ret[cluster.ClusterName] = false
 	}
-	_ = eg.Wait()
+	mu := sync.Mutex{}
+	innerCtx, cancel := context.WithCancel(c)
+	defer cancel()
+	h.batchWithTimeout(c, clusters, time.Duration(time.Second*3), func(idx int, name string, cli agents.Client) {
+		if err := cli.Extend().Healthy(innerCtx); err != nil {
+			log.Error(err, "cluster unhealthy", "cluster", name)
+			return
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		ret[name] = true
+	})
 
 	handlers.OK(c, ret)
 }
@@ -625,4 +601,37 @@ func withClusterAndK8sClient(
 		}
 	}
 	return f(ctx, clientSet, restconfig)
+}
+
+func (h *ClusterHandler) batchWithTimeout(ctx *gin.Context, clusters []*models.Cluster, timeout time.Duration, f func(idx int, name string, cli agents.Client)) {
+	wg := sync.WaitGroup{}
+	for idx, cluster := range clusters {
+		wg.Add(1)
+		go func(idx int, name string) error {
+			cli, err := h.GetAgents().ClientOf(ctx, name)
+			if err != nil {
+				log.Error(err, "unable get agents client", "cluster", name)
+				wg.Done()
+				return nil
+			}
+			f(idx, name, cli)
+			wg.Done()
+			return nil
+		}(idx, cluster.ClusterName)
+	}
+	waitTimeout(&wg, timeout)
+}
+
+func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return false
+	case <-time.After(timeout):
+		return true
+	}
 }
