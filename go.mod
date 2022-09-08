@@ -95,7 +95,7 @@ require (
 	k8s.io/metrics v0.23.6
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 	kubegems.io/bundle-controller v1.0.0-alpha3.0.20220620090423-d9fbaec75395
-	kubegems.io/configer v1.0.5
+	kubegems.io/configer v1.0.6
 	kubegems.io/ingress-nginx-operator v0.2.1
 	sigs.k8s.io/controller-runtime v0.11.2
 	sigs.k8s.io/kustomize/api v0.11.4
