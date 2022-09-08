@@ -15,6 +15,33 @@ kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheu
 # backup
 dir="backup/$(kubectl config current-context)"
 mkdir -p $dir
+
+kubectl delete servicemonitors.monitoring.coreos.com -n gemcloud-monitoring-system --all
+kubectl delete podmonitors.monitoring.coreos.com -n cert-manager cert-manager
+
+# prometheus
+kubectl get prometheus -n gemcloud-monitoring-system gemcloud -oyaml > $dir/prometheus.yaml
+kubectl delete -f $dir/prometheus.yaml
+
+kubectl get alertmanager -n gemcloud-monitoring-system gemcloud -oyaml > $dir/alertmanager.yaml
+kubectl delete -f $dir/alertmanager.yaml
+
+kubectl get grafana -n gemcloud-monitoring-system -oyaml > $dir/grafana.yaml
+kubectl delete -f $dir/grafana.yaml
+
+kubectl get ds -n gemcloud-monitoring-system node-exporter -oyaml > $dir/node.yaml
+kubectl delete -f $dir/node.yaml
+
+kubectl get deployments.apps -n gemcloud-monitoring-system kube-state-metrics -oyaml > $dir/state.yaml
+kubectl delete -f $dir/state.yaml
+
+kubectl get deployments.apps -n gemcloud-monitoring-system grafana-operator -oyaml > $dir/grafana-operator.yaml
+kubectl delete -f $dir/grafana-operator.yaml
+
+kubectl get deployments.apps -n gemcloud-monitoring-system prometheus-operator -oyaml > $dir/prometheus-operator.yaml
+kubectl delete -f $dir/prometheus-operator.yaml
+
+
 kubectl get alertmanagerconfigs.monitoring.coreos.com -A -l alertmanagerConfig=gemcloud -oyaml > $dir/amconfigs.yaml
 kubectl get prometheusrules.monitoring.coreos.com -A -l prometheusRule=gemcloud -oyaml > $dir/promrules.yaml
 kubectl get flows -A -oyaml > $dir/flows.yaml
