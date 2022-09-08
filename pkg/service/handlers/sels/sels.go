@@ -77,7 +77,9 @@ func (h *SelsHandler) TenantSels(c *gin.Context) {
 	h.GetDB().Model(&models.TenantResourceQuota{}).Preload("Cluster").Find(&quotas)
 	tmap := map[uint][]string{}
 	for _, quota := range quotas {
-		tmap[quota.TenantID] = append(tmap[quota.TenantID], quota.Cluster.ClusterName)
+		if quota.Cluster != nil {
+			tmap[quota.TenantID] = append(tmap[quota.TenantID], quota.Cluster.ClusterName)
+		}
 	}
 	for idx := range ret {
 		v, exist := tmap[ret[idx].ID]

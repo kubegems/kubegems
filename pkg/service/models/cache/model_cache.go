@@ -102,6 +102,9 @@ func (t *ModelCache) BuildCacheIfNotExist() error {
 		return err
 	}
 	for _, env := range envs {
+		if env.Cluster == nil {
+			continue
+		}
 		n := &Entity{
 			Name:      env.EnvironmentName,
 			Kind:      models.ResEnvironment,

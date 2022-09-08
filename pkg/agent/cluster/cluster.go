@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -36,14 +37,14 @@ type Interface interface {
 	cluster.Cluster
 	Config() *rest.Config
 	Kubernetes() kubernetes.Interface
-	Discovery() discovery.DiscoveryInterface
+	Discovery() discovery.CachedDiscoveryInterface
 	Watch(ctx context.Context, list client.ObjectList, callback func(watch.Event) error, opts ...client.ListOption) error
 }
 
 type Cluster struct {
 	cluster.Cluster
 	config     *rest.Config
-	discovery  discovery.DiscoveryInterface
+	discovery  discovery.CachedDiscoveryInterface
 	kubernetes kubernetes.Interface
 }
 
@@ -111,7 +112,7 @@ func NewCluster(config *rest.Config, options ...cluster.Option) (*Cluster, error
 		Cluster:    c,
 		kubernetes: kubernetesClientSet,
 		config:     config,
-		discovery:  discovery,
+		discovery:  memory.NewMemCacheClient(discovery),
 	}, nil
 }
 
@@ -123,7 +124,7 @@ func (c *Cluster) Config() *rest.Config {
 	return c.config
 }
 
-func (c *Cluster) Discovery() discovery.DiscoveryInterface {
+func (c *Cluster) Discovery() discovery.CachedDiscoveryInterface {
 	return c.discovery
 }
 
