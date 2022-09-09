@@ -60,6 +60,8 @@ func Run(ctx context.Context, rediscli *redis.Client,
 		NewTaskArchiverTasker(db, rediscli),
 		// chart-sync 同步helmchart
 		&HelmSyncTasker{DB: db, ChartRepoUrl: helmOptions.Addr},
+		// cluster
+		&ClusterSyncTasker{DB: db, cs: agents},
 	}
 	if err := p.RegisterTasker(taskers...); err != nil {
 		return err
