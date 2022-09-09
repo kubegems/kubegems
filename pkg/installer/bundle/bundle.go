@@ -69,12 +69,15 @@ func (b *BundleApplier) Template(ctx context.Context, bundle *pluginsv1beta1.Plu
 }
 
 func (b *BundleApplier) Download(ctx context.Context, bundle *pluginsv1beta1.Plugin) (string, error) {
+	name := bundle.Name
+	if chart := bundle.Spec.Chart; chart != "" {
+		name = chart
+	}
 	return Download(ctx,
 		bundle.Spec.URL,
-		bundle.Name,
+		name,
 		bundle.Spec.Version,
 		bundle.Spec.Path,
-		bundle.Spec.Chart,
 		b.Options.CacheDir,
 	)
 }

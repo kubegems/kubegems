@@ -54,7 +54,7 @@ type DownloadMeta struct {
 
 // we cache "bundle" in a directory with name
 // "{repo host}/{name}-{version} or {repo host}/{name}-{version}.tgz" under cache directory
-func Download(ctx context.Context, repo, name, version, path, chart string, cacheDir string) (string, error) {
+func Download(ctx context.Context, repo, name, version, path, cacheDir string) (string, error) {
 	log := logr.FromContextOrDiscard(ctx)
 	if name == "" {
 		return "", errors.New("empty name")
@@ -92,10 +92,6 @@ func Download(ctx context.Context, repo, name, version, path, chart string, cach
 
 	cacheIn := filepath.Join(perRepoCacheDir, basename)
 	log.Info("downloading...", "cache", cacheIn)
-	// is helm ?
-	if chart != "" {
-		return DownloadHelm(ctx, repo, chart, version, cacheIn)
-	}
 	// is file://
 	if strings.HasPrefix(repo, "file://") {
 		return cacheIn, DownloadFile(ctx, repo, path, cacheIn)
@@ -112,7 +108,8 @@ func Download(ctx context.Context, repo, name, version, path, chart string, cach
 	if strings.HasSuffix(repo, ".tar.gz") || strings.HasSuffix(repo, ".tgz") {
 		return cacheIn, DownloadTgz(ctx, repo, path, cacheIn)
 	}
-	return "", fmt.Errorf("unknown download source")
+	// is helm ? default helm
+	return DownloadHelm(ctx, repo, name, version, cacheIn)
 }
 
 func DownloadZip(ctx context.Context, uri, subpath, into string) error {
