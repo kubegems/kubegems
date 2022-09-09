@@ -1,3 +1,17 @@
+// Copyright 2022 The kubegems.io Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package gemsplugin
 
 import (
@@ -35,6 +49,9 @@ func (pv PluginVersion) ToPlugin() *pluginsv1beta1.Plugin {
 	plugininfo, _ := json.Marshal(pv)
 	annotations := map[string]string{
 		pluginscommon.AnnotationPluginInfo: string(plugininfo),
+	}
+	if pv.Kind == "" {
+		pv.Kind = pluginsv1beta1.BundleKindTemplate // prefer use template with plugin
 	}
 	return &pluginsv1beta1.Plugin{
 		ObjectMeta: v1.ObjectMeta{
@@ -86,11 +103,6 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 
 	required, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationRequired])
 
-	kind := pluginsv1beta1.BundleKindHelm
-	if use, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationUseTemplate]); use {
-		kind = pluginsv1beta1.BundleKindTemplate
-	}
-
 	maincate, cate := "other", "unknow"
 	categories := strings.Split(annotations[pluginscommon.AnnotationCategory], "/")
 	if len(categories) == 1 {
@@ -99,9 +111,17 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		maincate, cate = categories[0], categories[1]
 	}
 
-	valsFrom := []pluginsv1beta1.ValuesFrom{}
+	valsFrom := []pluginsv1beta1.ValuesFrom{
+		// always inject the global values reference in plugin
+		{
+			Kind:     pluginsv1beta1.ValuesFromKindConfigmap,
+			Name:     pluginscommon.KubegemsChartGlobal,
+			Prefix:   pluginscommon.KubegemsChartGlobal + ".",
+			Optional: true,
+		},
+	}
 	for _, val := range strings.Split(annotations[pluginscommon.AnnotationValuesFrom], ",") {
-		if val == "" {
+		if val == "" || val == pluginscommon.KubegemsChartGlobal {
 			continue
 		}
 		namespace, name := "", val
@@ -119,7 +139,7 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 
 	return PluginVersion{
 		Name:             cv.Name,
-		Kind:             kind,
+		Kind:             pluginsv1beta1.BundleKindTemplate,
 		Repository:       repo,
 		InstallNamespace: annotations[pluginscommon.AnnotationInstallNamespace],
 		Version:          cv.Version,

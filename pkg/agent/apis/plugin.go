@@ -15,14 +15,13 @@
 package apis
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/installer/api"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/gemsplugin"
+	"kubegems.io/kubegems/pkg/utils/httputil/request"
 )
 
 type PluginHandler struct {
@@ -108,16 +107,16 @@ func (h *PluginHandler) Get(c *gin.Context) {
 // @Security    JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	name, version := c.Param("name"), c.Query("version")
-	if name == "" {
-		handlers.NotOK(c, fmt.Errorf("empty plugin name"))
-		return
-	}
-	if err := h.PM.Install(c.Request.Context(), name, version, nil); err != nil {
+
+	values := map[string]any{}
+	request.Body(c.Request, &values)
+
+	if err := h.PM.Install(c.Request.Context(), name, version, values); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
-		handlers.NotOK(c, err)
+		NotOK(c, err)
 		return
 	}
-	handlers.OK(c, "ok")
+	OK(c, "ok")
 }
 
 // @Tags        Agent.Plugin
@@ -133,14 +132,35 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Security    JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
 	name := c.Param("name")
-	if name == "" {
-		handlers.NotOK(c, fmt.Errorf("empty plugin name"))
-		return
-	}
+
 	if err := h.PM.UnInstall(c.Request.Context(), name); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
-		handlers.NotOK(c, err)
+		NotOK(c, err)
 		return
 	}
-	handlers.OK(c, "ok")
+	OK(c, "ok")
+}
+
+// @Tags        Agent.Plugin
+// @Summary     更新源
+// @Description 更新源
+// @Accept      json
+// @Produce     json
+// @Param       cluster path     string                               true "cluster"
+// @Param       name    path     string                               true "repo name"
+// @Param       type    body     gemsplugin.Repository                true "repo object"
+// @Success     200     {object} handlers.ResponseStruct{Data=string} "ok"
+// @Router      /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/repos/{name}/actions/update [post]
+func (h *PluginHandler) UpdateRepo(c *gin.Context) {
+	repo := gemsplugin.Repository{}
+	if err := request.Body(c.Request, &repo); err != nil {
+		NotOK(c, err)
+		return
+	}
+	repo.Name = c.Param("name")
+	if err := h.PM.UpdateRepo(c.Request.Context(), repo); err != nil {
+		NotOK(c, err)
+		return
+	}
+	OK(c, "ok")
 }

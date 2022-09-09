@@ -157,7 +157,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// check the object is being deleted then remove the finalizer
 	if plugin.DeletionTimestamp != nil && controllerutil.ContainsFinalizer(plugin, FinalizerName) {
-		if plugin.Status.Phase == pluginsv1beta1.PhaseFailed || plugin.Status.Phase == pluginsv1beta1.PhaseDisabled {
+		if plugin.Status.Phase == pluginsv1beta1.PhaseDisabled {
 			controllerutil.RemoveFinalizer(plugin, FinalizerName)
 			if err := r.Update(ctx, plugin); err != nil {
 				return ctrl.Result{}, err
@@ -333,6 +333,7 @@ func (r *Reconciler) resolveValuesRef(ctx context.Context, bundle *pluginsv1beta
 	return nil
 }
 
+// b override in a
 func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
 	out := make(map[string]interface{}, len(a))
 	for k, v := range a {

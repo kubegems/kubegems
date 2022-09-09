@@ -62,6 +62,8 @@ func CategoriedPlugins(plugins map[string]gemsplugin.Plugin) map[string]map[stri
 		if installed := plugin.Installed; installed != nil {
 			ps.InstalledVersion = installed.Version
 			ps.Healthy = installed.Healthy
+			ps.Namespace = installed.InstallNamespace
+			ps.Enabled = true
 		}
 		if upgradble := plugin.Upgradeable; upgradble != nil {
 			ps.UpgradeableVersion = upgradble.Version

@@ -34,9 +34,6 @@ const (
 
 	AnnotationRequired = "plugins.kubegems.io/required"
 
-	// use template apply instead of helm apply.
-	AnnotationUseTemplate = "plugins.kubegems.io/use-template"
-
 	// where the 'plugin' should install to
 	AnnotationInstallNamespace = "plugins.kubegems.io/install-namespace"
 

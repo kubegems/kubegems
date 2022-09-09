@@ -60,7 +60,7 @@ type PluginSpec struct {
 }
 
 const (
-	ValuesFromKindConfigmap = "Configmap"
+	ValuesFromKindConfigmap = "ConfigMap"
 	ValuesFromKindSecret    = "Secret"
 )
 

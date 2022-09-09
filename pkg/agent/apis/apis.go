@@ -228,8 +228,10 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 
 	pluginHandler := PluginHandler{PM: &gemsplugin.PluginManager{Client: cluster.GetClient()}}
 	routes.register(plugins.GroupName, "v1beta1", "installers", ActionList, pluginHandler.List)
+	routes.register(plugins.GroupName, "v1beta1", "installers", ActionGet, pluginHandler.Get)
 	routes.register(plugins.GroupName, "v1beta1", "installers", ActionEnable, pluginHandler.Enable)
 	routes.register(plugins.GroupName, "v1beta1", "installers", ActionDisable, pluginHandler.Disable)
+	routes.register(plugins.GroupName, "v1beta1", "repos", ActionUpdate, pluginHandler.UpdateRepo)
 
 	argoRolloutHandler := &ArgoRolloutHandler{cluster: cluster}
 	routes.register("argoproj.io", "v1alpha1", "rollouts", "info", argoRolloutHandler.GetRolloutInfo)

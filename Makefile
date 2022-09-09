@@ -34,9 +34,10 @@ ldflags+=-X '${GOPACKAGE}/pkg/version.buildDate=${BUILD_DATE}'
 
 
 # HELM BUILD
-HELM_USER?=kubegems
-HELM_PASSWORD?=
-HELM_ADDR?=https://charts.kubegems.io/kubegems
+CHARTS_DIR?=deploy/plugins
+HELM_REPO_USERNAME?=kubegems
+HELM_REPO_PASSWORD?=
+CHARTMUSEUM_ADDR?=https://${HELM_REPO_USERNAME}:${HELM_REPO_PASSWORD}@charts.kubegems.io/kubegems
 
 ##@ All
 
@@ -106,13 +107,10 @@ plugins-cache: ## Build plugins-cache
 
 CHARTS = kubegems kubegems-local
 helm-readme: readme-generator
-	$(foreach var,$(CHARTS),readme-generator -v deploy/plugins/$(var)/values.yaml -r deploy/plugins/$(var)/README.md;)
-
-helm-package: ## Build helm chart
-	$(foreach var,$(CHARTS),helm package -d bin/plugins --version=${VERSION} --app-version=${VERSION} deploy/plugins/$(var);)
+	@$(foreach var, $(wildcard $(CHARTS_DIR)/*), readme-generator -v deploy/plugins/$(var)/values.yaml -r deploy/plugins/$(var)/README.md;)
 
 helm-push:
-	$(foreach var,$(CHARTS),curl -u ${HELM_USER}:${HELM_PASSWORD} --data-binary "@bin/plugins/$(var)-${VERSION}.tgz" ${HELM_ADDR};)
+	@$(foreach file, $(wildcard $(CHARTS_DIR)/*), helm cm-push -d -f -v ${SEMVER_VERSION}  $(file) ${CHARTMUSEUM_ADDR};)
 
 container: ## Build container image.
 ifneq (, $(shell which docker))
@@ -161,6 +159,10 @@ ifeq (, $(shell which readme-generator))
 else
 	echo 'readme-generator-for-helm is already installed'
 endif
+
+helm-plugin:
+# there is a bug on: https://github.com/chartmuseum/helm-push/pull/163 , use fork repository before pr merged temporarily.
+	helm plugin install https://github.com/cnfatal/helm-push 
 
 .PHONY: add-license
 add-license:

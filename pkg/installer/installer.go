@@ -18,7 +18,6 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/installer/api"
 	"kubegems.io/kubegems/pkg/installer/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -40,13 +39,5 @@ func NewDefaultOptions() *Options {
 
 func Run(ctx context.Context, options *Options) error {
 	ctx = logr.NewContext(ctx, zap.New(zap.UseDevMode(true)))
-
-	eg, ctx := errgroup.WithContext(ctx)
-	eg.Go(func() error {
-		return controller.Run(ctx, options.Controller, options.PluginsDir)
-	})
-	eg.Go(func() error {
-		return api.Run(ctx, options.API, options.PluginsDir)
-	})
-	return eg.Wait()
+	return controller.Run(ctx, options.Controller, options.PluginsDir)
 }

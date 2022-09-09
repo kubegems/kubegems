@@ -40,6 +40,9 @@ type Repository struct {
 }
 
 func (r Repository) GetPluginVersions(name string) []PluginVersion {
+	if r.Index == nil {
+		return nil
+	}
 	for chartname, chartversions := range r.Index.Entries {
 		if chartname != name {
 			continue
@@ -57,6 +60,9 @@ func (r Repository) GetPluginVersions(name string) []PluginVersion {
 }
 
 func (r Repository) ListPluginVersions() map[string][]PluginVersion {
+	if r.Index == nil {
+		return nil
+	}
 	ret := map[string][]PluginVersion{}
 	for name, chartversions := range r.Index.Entries {
 		pvs := make([]PluginVersion, 0, len(chartversions))
@@ -83,7 +89,7 @@ func (repository *Repository) RefreshRepoIndex(ctx context.Context) error {
 	return nil
 }
 
-func (m *PluginManager) SetRepo(ctx context.Context, repository Repository) error {
+func (m *PluginManager) UpdateRepo(ctx context.Context, repository Repository) error {
 	if err := repository.RefreshRepoIndex(ctx); err != nil {
 		return err
 	}
@@ -149,6 +155,7 @@ func (m *PluginManager) onSecret(ctx context.Context, fun func(kvs map[string]Re
 		}
 		// add init repo
 		initrepo := Repository{Name: "kubegems", Address: KubegemsChartsRepoURL}
+		initrepo.RefreshRepoIndex(ctx)
 		initrepobytes, _ := json.Marshal(initrepo)
 		secret.Data = map[string][]byte{initrepo.Name: initrepobytes}
 		if err := m.Client.Create(ctx, secret); err != nil {

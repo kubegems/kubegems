@@ -4,11 +4,14 @@ metadata:
   name: global
   namespace: kubegems-installer
 spec:
-  kind: helm
+  kind: template
   url: https://charts.kubegems.io/kubegems
   chart: global
+  version: "1.0.0"
   values:
     kubegemsVersion: latest
+    imageRegistry: "docker.io"
+    imageRepository: "kubegems"
     clusterName: "manager-cluster"
     storageClass: local-path # change me to use a different storage class
 ---
@@ -18,11 +21,10 @@ metadata:
   name: kubegems
   namespace: kubegems-installer
 spec:
-  kind: helm
+  kind: template
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
-  version: ""
-  chart: kubegems
+  version: "1.12.6"
   valuesFrom:
     - kind: ConfigMap
       name: "kubegems-global-values"

@@ -21,7 +21,6 @@ import (
 	"golang.org/x/exp/slices"
 	"golang.org/x/mod/semver"
 	"golang.org/x/sync/errgroup"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
@@ -91,25 +90,6 @@ func (m *PluginManager) UnInstall(ctx context.Context, name string) error {
 			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
 		},
 	})
-}
-
-func (m *PluginManager) GetGlobalValues(ctx context.Context) (map[string]string, error) {
-	globalplugin := &pluginsv1beta1.Plugin{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      pluginscommon.KubegemsChartGlobal,
-			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
-		},
-	}
-	if err := m.Client.Get(ctx, client.ObjectKeyFromObject(globalplugin), globalplugin); err != nil {
-		return nil, err
-	}
-	ret := map[string]string{}
-	for k, v := range globalplugin.Spec.Values.Object {
-		if val, ok := v.(string); ok {
-			ret[k] = val
-		}
-	}
-	return ret, nil
 }
 
 func (m *PluginManager) Get(ctx context.Context, name string) (*Plugin, error) {

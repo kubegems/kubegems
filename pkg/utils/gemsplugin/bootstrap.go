@@ -16,6 +16,7 @@ package gemsplugin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -26,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
+	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/utils"
 	"kubegems.io/kubegems/pkg/log"
@@ -52,6 +54,27 @@ type GlobalValues struct {
 	Runtime         string `json:"runtime"`
 }
 
+func (m *PluginManager) GetGlobalValues(ctx context.Context) (*GlobalValues, error) {
+	globalplugin := &pluginsv1beta1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pluginscommon.KubegemsChartGlobal,
+			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+		},
+	}
+	if err := m.Client.Get(ctx, client.ObjectKeyFromObject(globalplugin), globalplugin); err != nil {
+		return nil, err
+	}
+	ret := map[string]string{}
+	for k, v := range globalplugin.Spec.Values.Object {
+		if val, ok := v.(string); ok {
+			ret[k] = val
+		}
+	}
+	globalVals := &GlobalValues{}
+	json.Unmarshal(globalplugin.Spec.Values.Raw, globalVals)
+	return globalVals, nil
+}
+
 func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 	ns := i.Namespace
 	if ns == "" {
@@ -67,36 +90,43 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 	if err != nil {
 		return err
 	}
-	if err = CreateOrPatchInNamespace(ctx, cli, ns, installerobjects...); err != nil {
+	if err = ApplyInNamespace(ctx, cli, ns, installerobjects...); err != nil {
 		return fmt.Errorf("apply installer: %v", err)
 	}
 
 	// apply plugins
 	plugins := InitPlugins(values)
-	if err = CreateOrPatchInNamespace(ctx, cli, ns, plugins...); err != nil {
+	if err = ApplyInNamespace(ctx, cli, ns, plugins...); err != nil {
 		return fmt.Errorf("apply plugins: %v", err)
 	}
 	return nil
 }
 
+// nolint: funlen
 func InitPlugins(values GlobalValues) []client.Object {
-	version := values.KubegemsVersion
+	// v1.21.X -> 1.21.X , cause helm chart version follow pure semver.
+	version := strings.TrimSpace(strings.TrimPrefix(values.KubegemsVersion, "v"))
+
 	globalValuesFrom := pluginv1beta1.ValuesFrom{
 		Kind:     pluginv1beta1.ValuesFromKindConfigmap,
 		Name:     pluginscommon.KubeGemsGlobalValuesConfigMapName,
 		Prefix:   "global.",
 		Optional: true,
 	}
+	typemeta := metav1.TypeMeta{
+		Kind:       "Plugin",
+		APIVersion: pluginsv1beta1.GroupVersion.String(),
+	}
 	return []client.Object{
 		// global
 		&pluginv1beta1.Plugin{
+			TypeMeta: typemeta,
 			ObjectMeta: metav1.ObjectMeta{
 				Name: pluginscommon.KubegemsChartGlobal,
 			},
 			Spec: pluginv1beta1.PluginSpec{
 				Kind:    pluginv1beta1.BundleKindTemplate,
 				URL:     KubegemsChartsRepoURL,
-				Chart:   pluginscommon.KubegemsChartInstaller,
 				Version: version,
 				Values: pluginv1beta1.Values{
 					Object: map[string]interface{}{
@@ -112,25 +142,25 @@ func InitPlugins(values GlobalValues) []client.Object {
 		},
 		// kubegems-installer
 		&pluginv1beta1.Plugin{
+			TypeMeta: typemeta,
 			ObjectMeta: metav1.ObjectMeta{
 				Name: pluginscommon.KubegemsChartInstaller,
 			},
 			Spec: pluginv1beta1.PluginSpec{
 				Kind:       pluginv1beta1.BundleKindTemplate,
 				URL:        KubegemsChartsRepoURL,
-				Chart:      pluginscommon.KubegemsChartInstaller,
 				Version:    version,
 				ValuesFrom: []pluginv1beta1.ValuesFrom{globalValuesFrom},
 			},
 		},
 		// kubegems-local
 		&pluginv1beta1.Plugin{
+			TypeMeta: typemeta,
 			ObjectMeta: metav1.ObjectMeta{
 				Name: pluginscommon.KubegemsChartLocal,
 			},
 			Spec: pluginv1beta1.PluginSpec{
 				Kind:             pluginv1beta1.BundleKindTemplate,
-				Chart:            pluginscommon.KubegemsChartLocal,
 				URL:              KubegemsChartsRepoURL,
 				Version:          version,
 				InstallNamespace: pluginscommon.KubeGemsNamespaceLocal,
@@ -178,7 +208,7 @@ func ParseInstallerObjects(path string, values GlobalValues) ([]client.Object, e
 	return objects, nil
 }
 
-func CreateOrPatchInNamespace(ctx context.Context, cli client.Client, ns string, objects ...client.Object) error {
+func ApplyInNamespace(ctx context.Context, cli client.Client, ns string, objects ...client.Object) error {
 	log := log.FromContextOrDiscard(ctx)
 	// check if namespace exists
 	if err := cli.Get(ctx, client.ObjectKey{Name: ns}, &corev1.Namespace{}); err != nil {

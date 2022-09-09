@@ -16,6 +16,7 @@ package clusterhandler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -435,6 +436,10 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	cluster := &models.Cluster{}
 	if err := c.BindJSON(cluster); err != nil {
 		handlers.NotOK(c, err)
+		return
+	}
+	if cluster.ClusterName == "" {
+		handlers.NotOK(c, errors.New("empty cluster name"))
 		return
 	}
 
