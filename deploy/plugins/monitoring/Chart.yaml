@@ -1,9 +1,0 @@
-apiVersion: v2
-name: monitoring
-version: 1.0.0
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-appVersion: 35.2.0 # monitoring operator version
-description: KubeGems平台监控&告警控制器,包含Prometheus和AlertManager服务

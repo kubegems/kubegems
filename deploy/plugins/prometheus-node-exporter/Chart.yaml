@@ -1,9 +1,0 @@
-apiVersion: v2
-name: prometheus-node-exporter
-version: 1.0.0
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-appVersion: 3.3.0
-description: Prometheus 下的一个可用于收集主机指标数据(包括CPU、内存和磁盘)的服务

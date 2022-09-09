@@ -1,9 +1,0 @@
-apiVersion: v2
-name: node-local-dns
-version: 1.0.0
-appVersion: 0.1.1
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-description: Kubernetes 集群下的DNS缓存代理服务，用户提高集群下DNS性能(IPVS模式)

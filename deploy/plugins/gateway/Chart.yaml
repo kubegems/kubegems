@@ -1,5 +1,0 @@
-apiVersion: v2
-name: gateway
-version: 1.0.0
-appVersion: 0.3.2
-description: KubeGems 租户网关，基于 Nginx ingress

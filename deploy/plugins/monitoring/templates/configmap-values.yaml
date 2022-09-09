@@ -1,6 +1,0 @@
-{{ include "common.component.configmap" . }}
-data:
-  enabled: "true"
-  prometheus.address: {{ include "prometheus.address" . }}
-  alertmanager.address: {{ include "alertmanager.address" . }}
-  prometheus.rwrite.address: {{ include "prometheus.rwrite.address" . }}

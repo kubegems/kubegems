@@ -2,7 +2,7 @@ apiVersion: v2
 appVersion: 1.21.0
 dependencies:
   - name: common
-    repository: file://../common
+    repository: https://charts.kubegems.io/kubegems
     version: 1.x.x
 description: KubeGems cluster agent components
 home: kubegems.io

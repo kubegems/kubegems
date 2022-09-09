@@ -1,4 +1,0 @@
-{{ include "common.component.configmap" . }}
-data:
-  enabled: "true"
-{{ .Values.global | toYaml | indent 2 }}

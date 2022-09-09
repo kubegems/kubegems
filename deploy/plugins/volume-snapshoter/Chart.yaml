@@ -1,5 +1,0 @@
-apiVersion: v2
-name: volume-snapshoter
-version: 1.0.0
-appVersion: 5.0.1
-description: KubeGems平台存储卷快照CRD

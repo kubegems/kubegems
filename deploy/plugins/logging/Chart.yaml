@@ -1,9 +1,0 @@
-apiVersion: v2
-name: logging
-version: 1.0.0
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-appVersion: 3.17.6 # logging-operator version
-description: KubeGems平台管理容器日志框架,包含控制器、Loki Stack等服务

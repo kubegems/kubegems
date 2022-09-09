@@ -1,4 +1,0 @@
-{{ include "common.component.configmap" . }}
-data:
-  enabled: "true"
-  loki.address: {{ include "loki.address" . }}

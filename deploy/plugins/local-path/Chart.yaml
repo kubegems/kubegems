@@ -1,9 +1,0 @@
-apiVersion: v2
-name: local-path
-version: 1.0.0
-appVersion: 0.0.22
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-description: Rancher 开源的一款采用主机本地文件系统的Kubernetes存储控制器

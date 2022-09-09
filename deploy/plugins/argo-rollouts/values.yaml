@@ -1,9 +1,0 @@
-global:
-  imageRegistry: ""
-  imageRepository: ""
-  clusterName: ""
-  storageClass: ""
-  runtime: ""
-monitoring:
-  prometheus:
-    address: ""

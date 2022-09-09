@@ -1,6 +1,0 @@
-sum(irate(
-    istio_requests_total{reporter="source",destination_service_name=~"{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code!~"5.*"}[5m]
-)) /
-sum(irate(
-    istio_requests_total{reporter="source",destination_service_name=~"{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[5m]
-)) > 0 or vector(1)

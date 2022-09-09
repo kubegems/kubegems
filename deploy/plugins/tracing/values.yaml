@@ -1,9 +1,0 @@
-global:
-  imageRegistry: ""
-  imageRepository: ""
-chartVersion: 2.34.0
-elasticsearch:
-  address: "" # override the default address
-monitoring:
-  prometheus:
-    address: ""

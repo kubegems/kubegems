@@ -1908,6 +1908,8 @@ persistence:
 mysql:
   enabled: true
   architecture: standalone
+  image:
+    repository: kubegems/mysql
   auth:
     rootPassword: "" # root password must be set in order upgradeable
     username: ""
@@ -1945,10 +1947,14 @@ externalDatabase:
 redis:
   enabled: true
   architecture: standalone
+  image:
+    repository: kubegems/redis
   auth:
     password: ""
   volumePermissions:
     enabled: true
+    image:
+      repository: kubegems/bitnami-shell
 ## @section External RedisCache configuration
 ##
 ## @param externalRedis.enabled  Enable external redis
@@ -1981,6 +1987,8 @@ externalRedis:
 ## @skip argo-cd.repoServer.extraEnvVars
 argo-cd:
   enabled: true
+  image:
+    repository: kubegems/argo-cd
   config:
     secret:
       argocdServerAdminPassword: ""
@@ -2041,6 +2049,8 @@ externalArgoCD:
 ## @skip gitea.gitea.admin
 gitea:
   enabled: true
+  image:
+    repository: kubegems/gitea
   memcached:
     enabled: false
   postgresql:
@@ -2076,6 +2086,8 @@ externalGit:
 ## @skip chartmuseum.env
 chartmuseum:
   enabled: true
+  image:
+    repository: kubegems/chartmuseum
   env:
     open:
       DEPTH: 1

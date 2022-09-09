@@ -1,9 +1,0 @@
-apiVersion: v2
-name: metallb
-version: 1.0.0
-appVersion: 0.12.1
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-description: MetalLB 是为 Kubernetes 集群实现的网络负载均衡器(ARP 或 BGP 模式)
