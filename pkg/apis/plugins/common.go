@@ -57,5 +57,4 @@ const (
 
 	KubeGemsNamespaceInstaller = "kubegems-installer"
 	KubeGemsNamespaceLocal     = "kubegems-local"
-	KubegemsChartsRepoURL      = "https://charts.kubegems.io/kubegems"
 )

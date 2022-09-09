@@ -147,6 +147,10 @@ func (m *PluginManager) onSecret(ctx context.Context, fun func(kvs map[string]Re
 		if !errors.IsNotFound(err) {
 			return err
 		}
+		// add init repo
+		initrepo := Repository{Name: "kubegems", Address: KubegemsChartsRepoURL}
+		initrepobytes, _ := json.Marshal(initrepo)
+		secret.Data = map[string][]byte{initrepo.Name: initrepobytes}
 		if err := m.Client.Create(ctx, secret); err != nil {
 			return err
 		}

@@ -33,7 +33,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const KubeGemPluginsPath = "plugins"
+const (
+	KubegemsChartsRepoURL = "https://charts.kubegems.io/kubegems"
+	KubeGemPluginsPath    = "plugins"
+)
 
 type Bootstrap struct {
 	Config    *rest.Config // target cluster config
@@ -92,7 +95,7 @@ func InitPlugins(values GlobalValues) []client.Object {
 			},
 			Spec: pluginv1beta1.PluginSpec{
 				Kind:    pluginv1beta1.BundleKindTemplate,
-				URL:     pluginscommon.KubegemsChartsRepoURL,
+				URL:     KubegemsChartsRepoURL,
 				Chart:   pluginscommon.KubegemsChartInstaller,
 				Version: version,
 				Values: pluginv1beta1.Values{
@@ -114,7 +117,7 @@ func InitPlugins(values GlobalValues) []client.Object {
 			},
 			Spec: pluginv1beta1.PluginSpec{
 				Kind:       pluginv1beta1.BundleKindTemplate,
-				URL:        pluginscommon.KubegemsChartsRepoURL,
+				URL:        KubegemsChartsRepoURL,
 				Chart:      pluginscommon.KubegemsChartInstaller,
 				Version:    version,
 				ValuesFrom: []pluginv1beta1.ValuesFrom{globalValuesFrom},
@@ -128,7 +131,7 @@ func InitPlugins(values GlobalValues) []client.Object {
 			Spec: pluginv1beta1.PluginSpec{
 				Kind:             pluginv1beta1.BundleKindTemplate,
 				Chart:            pluginscommon.KubegemsChartLocal,
-				URL:              pluginscommon.KubegemsChartsRepoURL,
+				URL:              KubegemsChartsRepoURL,
 				Version:          version,
 				InstallNamespace: pluginscommon.KubeGemsNamespaceLocal,
 				ValuesFrom:       []pluginv1beta1.ValuesFrom{globalValuesFrom},
