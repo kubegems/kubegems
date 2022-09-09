@@ -119,6 +119,10 @@ spec:
               operator: Exists
         alertmanagerConfiguration:
           name: kubegems-default-monitor-alert-rule
+          templates:
+          - configMap:
+              key: kubegems-email.tmpl
+              name: kubegems-email-template
         retention: 240h
         storage:
           volumeClaimTemplate:
