@@ -37,7 +37,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/install"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/statistics"
@@ -234,7 +234,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
 				}
-				return install.OpratorInstaller{Config: config}.Remove(ctx, cluster.InstallNamespace)
+				return gemsplugin.Bootstrap{Config: config}.Remove(ctx)
 			})
 		}); err != nil {
 			handlers.NotOK(c, err)
@@ -505,7 +505,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				splits = append(splits, "")
 			}
 			registry, repository := splits[0], splits[1]
-			return install.OpratorInstaller{Config: config}.Apply(ctx, cluster.InstallNamespace, install.GlobalValues{
+			return gemsplugin.Bootstrap{Config: config}.Install(ctx, gemsplugin.GlobalValues{
 				ImageRegistry:   registry,
 				ImageRepository: repository,
 				ClusterName:     cluster.ClusterName,

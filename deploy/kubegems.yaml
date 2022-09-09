@@ -1,14 +1,29 @@
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
-  name: kubegems
-  namespace: kubegems
+  name: global
+  namespace: kubegems-installer
 spec:
   kind: helm
   url: https://charts.kubegems.io/kubegems
+  chart: global
   values:
-    global:
-      kubegemsVersion: latest
-      storageClass: local-path # change me to use a different storage class
-    ingress:
-      hostname: dashboard.kubegems.io # change me to use a production hostname
+    kubegemsVersion: latest
+    clusterName: "manager-cluster"
+    storageClass: local-path # change me to use a different storage class
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems
+  namespace: kubegems-installer
+spec:
+  kind: helm
+  url: https://charts.kubegems.io/kubegems
+  installNamespace: kubegems
+  version: ""
+  chart: kubegems
+  valuesFrom:
+    - kind: ConfigMap
+      name: "kubegems-global-values"
+      prefix: "global."

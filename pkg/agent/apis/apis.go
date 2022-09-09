@@ -29,6 +29,7 @@ import (
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/apis/plugins"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/route"
 	"kubegems.io/kubegems/pkg/utils/system"
@@ -225,7 +226,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	secretHandler := SecretHandler{C: cluster.GetClient(), cluster: cluster}
 	routes.register("core", "v1", "secrets", ActionList, secretHandler.List)
 
-	pluginHandler := PluginHandler{cluster: cluster}
+	pluginHandler := PluginHandler{PM: &gemsplugin.PluginManager{Client: cluster.GetClient()}}
 	routes.register(plugins.GroupName, "v1beta1", "installers", ActionList, pluginHandler.List)
 	routes.register(plugins.GroupName, "v1beta1", "installers", ActionEnable, pluginHandler.Enable)
 	routes.register(plugins.GroupName, "v1beta1", "installers", ActionDisable, pluginHandler.Disable)

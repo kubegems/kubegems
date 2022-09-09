@@ -36,22 +36,18 @@ func New(config *rest.Config) *Apply {
 	return &Apply{Config: config}
 }
 
-func (r *Apply) Template(ctx context.Context, bundle *pluginsv1beta1.Plugin, into string) ([]byte, error) {
+func (r *Apply) Template(ctx context.Context, bundle *pluginsv1beta1.Plugin, dir string) ([]byte, error) {
 	rls := r.getPreRelease(bundle)
-	applyedRelease, err := r.ApplyChart(ctx, rls.Name, rls.Namespace, into, rls.Config, ApplyOptions{DryRun: true})
-	if err != nil {
-		return nil, err
-	}
-	return []byte(applyedRelease.Manifest), nil
+	return TemplateChart(ctx, rls.Name, rls.Namespace, dir, nil)
 }
 
 func (r *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into string) error {
 	rls := r.getPreRelease(bundle)
-	applyedRelease, err := r.ApplyChart(ctx, rls.Name, rls.Namespace, into, rls.Config, ApplyOptions{})
+	applyedRelease, err := ApplyChart(ctx, r.Config, rls.Name, rls.Namespace, into, rls.Config)
 	if err != nil {
 		return err
 	}
-	bundle.Status.Resources = parseResource([]byte(applyedRelease.Manifest))
+	bundle.Status.Resources = ParseResourceReferences([]byte(applyedRelease.Manifest))
 	if applyedRelease.Info.Status != release.StatusDeployed {
 		return fmt.Errorf("apply not finished:%s", applyedRelease.Info.Description)
 	}
@@ -66,6 +62,26 @@ func (r *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into s
 	return nil
 }
 
+func ParseResourceReferences(resources []byte) []corev1.ObjectReference {
+	ress, _ := utils.SplitYAML(resources)
+	managedResources := make([]corev1.ObjectReference, len(ress))
+	for i, res := range ress {
+		managedResources[i] = utils.GetReference(res)
+	}
+	return managedResources
+}
+
+// https://github.com/golang/go/issues/19502
+// metav1.Time and time.Time are not comparable directly
+func convtime(t time.Time) metav1.Time {
+	t, _ = time.Parse(time.RFC3339, t.Format(time.RFC3339))
+	return metav1.Time{Time: t}
+}
+
+type RemoveOptions struct {
+	DryRun bool
+}
+
 func (r *Apply) Remove(ctx context.Context, bundle *pluginsv1beta1.Plugin) error {
 	log := logr.FromContextOrDiscard(ctx)
 	if bundle.Status.Phase == pluginsv1beta1.PhaseDisabled {
@@ -74,7 +90,7 @@ func (r *Apply) Remove(ctx context.Context, bundle *pluginsv1beta1.Plugin) error
 	}
 	rls := r.getPreRelease(bundle)
 	// uninstall
-	removedRelease, err := r.RemoveChart(ctx, rls.Name, rls.Namespace, RemoveOptions{})
+	removedRelease, err := RemoveChart(ctx, r.Config, rls.Name, rls.Namespace)
 	if err != nil {
 		return err
 	}
@@ -95,20 +111,4 @@ func (r Apply) getPreRelease(bundle *pluginsv1beta1.Plugin) *release.Release {
 		releaseNamespace = bundle.Namespace
 	}
 	return &release.Release{Name: bundle.Name, Namespace: releaseNamespace, Config: bundle.Spec.Values.Object}
-}
-
-// https://github.com/golang/go/issues/19502
-// metav1.Time and time.Time are not comparable directly
-func convtime(t time.Time) metav1.Time {
-	t, _ = time.Parse(time.RFC3339, t.Format(time.RFC3339))
-	return metav1.Time{Time: t}
-}
-
-func parseResource(resources []byte) []corev1.ObjectReference {
-	ress, _ := utils.SplitYAML(resources)
-	managedResources := make([]corev1.ObjectReference, len(ress))
-	for i, res := range ress {
-		managedResources[i] = utils.GetReference(res)
-	}
-	return managedResources
 }

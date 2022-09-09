@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package install
+package gemsplugin
 
 import (
 	"context"
@@ -33,14 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	KubeGemPluginsPath            = "plugins"
-	GlobalValuesConfigMapName     = pluginscommon.KubeGemsGlobalValuesConfigMapName
-	KubeGemsLocalPluginsNamespace = pluginscommon.KubeGemsLocalPluginsNamespace
-)
+const KubeGemPluginsPath = "plugins"
 
-type OpratorInstaller struct {
-	Config *rest.Config // target cluster config
+type Bootstrap struct {
+	Config    *rest.Config // target cluster config
+	Namespace string       // installer namespace
 }
 
 type GlobalValues struct {
@@ -52,17 +49,18 @@ type GlobalValues struct {
 	Runtime         string `json:"runtime"`
 }
 
-func (i OpratorInstaller) Apply(ctx context.Context, ns string, values GlobalValues) error {
+func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
+	ns := i.Namespace
 	if ns == "" {
-		ns = KubeGemsLocalPluginsNamespace
+		ns = pluginscommon.KubeGemsNamespaceInstaller
 	}
 	cli, err := kube.NewClient(i.Config)
 	if err != nil {
 		return err
 	}
 
-	// apply installer.yaml
-	installerobjects, err := ParseInstallerFrom(KubeGemPluginsPath, values)
+	// apply installer
+	installerobjects, err := ParseInstallerObjects(KubeGemPluginsPath, values)
 	if err != nil {
 		return err
 	}
@@ -70,20 +68,79 @@ func (i OpratorInstaller) Apply(ctx context.Context, ns string, values GlobalVal
 		return fmt.Errorf("apply installer: %v", err)
 	}
 
-	// apply local plugins.yaml
-	plugins, err := ParsePluginsFrom(KubeGemPluginsPath, values)
-	if err != nil {
-		return err
-	}
+	// apply plugins
+	plugins := InitPlugins(values)
 	if err = CreateOrPatchInNamespace(ctx, cli, ns, plugins...); err != nil {
-		return fmt.Errorf("apply local plugins: %v", err)
+		return fmt.Errorf("apply plugins: %v", err)
 	}
 	return nil
 }
 
-func (i OpratorInstaller) Remove(ctx context.Context, ns string) error {
+func InitPlugins(values GlobalValues) []client.Object {
+	version := values.KubegemsVersion
+	globalValuesFrom := pluginv1beta1.ValuesFrom{
+		Kind:     pluginv1beta1.ValuesFromKindConfigmap,
+		Name:     pluginscommon.KubeGemsGlobalValuesConfigMapName,
+		Prefix:   "global.",
+		Optional: true,
+	}
+	return []client.Object{
+		// global
+		&pluginv1beta1.Plugin{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: pluginscommon.KubegemsChartGlobal,
+			},
+			Spec: pluginv1beta1.PluginSpec{
+				Kind:    pluginv1beta1.BundleKindTemplate,
+				URL:     pluginscommon.KubegemsChartsRepoURL,
+				Chart:   pluginscommon.KubegemsChartInstaller,
+				Version: version,
+				Values: pluginv1beta1.Values{
+					Object: map[string]interface{}{
+						"imageRegistry":   values.ImageRegistry,
+						"imageRepository": values.ImageRepository,
+						"clusterName":     values.ClusterName,
+						"storageClass":    values.StorageClass,
+						"kubegemsVersion": values.KubegemsVersion,
+						"runtime":         values.Runtime,
+					},
+				},
+			},
+		},
+		// kubegems-installer
+		&pluginv1beta1.Plugin{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: pluginscommon.KubegemsChartInstaller,
+			},
+			Spec: pluginv1beta1.PluginSpec{
+				Kind:       pluginv1beta1.BundleKindTemplate,
+				URL:        pluginscommon.KubegemsChartsRepoURL,
+				Chart:      pluginscommon.KubegemsChartInstaller,
+				Version:    version,
+				ValuesFrom: []pluginv1beta1.ValuesFrom{globalValuesFrom},
+			},
+		},
+		// kubegems-local
+		&pluginv1beta1.Plugin{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: pluginscommon.KubegemsChartLocal,
+			},
+			Spec: pluginv1beta1.PluginSpec{
+				Kind:             pluginv1beta1.BundleKindTemplate,
+				Chart:            pluginscommon.KubegemsChartLocal,
+				URL:              pluginscommon.KubegemsChartsRepoURL,
+				Version:          version,
+				InstallNamespace: pluginscommon.KubeGemsNamespaceLocal,
+				ValuesFrom:       []pluginv1beta1.ValuesFrom{globalValuesFrom},
+			},
+		},
+	}
+}
+
+func (i Bootstrap) Remove(ctx context.Context) error {
+	ns := i.Namespace
 	if ns == "" {
-		ns = KubeGemsLocalPluginsNamespace
+		ns = pluginscommon.KubeGemsNamespaceInstaller
 	}
 	cli, err := kube.NewClient(i.Config)
 	if err != nil {
@@ -95,7 +152,7 @@ func (i OpratorInstaller) Remove(ctx context.Context, ns string) error {
 	// remove kubegems-installer by hand
 }
 
-func ParseInstallerFrom(path string, values GlobalValues) ([]client.Object, error) {
+func ParseInstallerObjects(path string, values GlobalValues) ([]client.Object, error) {
 	objects, err := utils.ReadObjectsFromFile[client.Object](filepath.Join(path, "installer.yaml"))
 	if err != nil {
 		return nil, err

@@ -38,14 +38,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
 )
 
 const (
-	PluginsControllerConcurrency = 5
+	PluginsControllerConcurrency = 1
 	FinalizerName                = "plugins.kubegems.io/finalizer"
 )
 
@@ -64,7 +63,6 @@ type Options struct {
 	MetricsAddr          string `json:"metricsAddr,omitempty" description:"The address the metric endpoint binds to."`
 	EnableLeaderElection bool   `json:"enableLeaderElection,omitempty" description:"Enable leader election for controller manager."`
 	ProbeAddr            string `json:"probeAddr,omitempty" description:"The address the probe endpoint binds to."`
-	PluginsDir           string `json:"pluginsDir,omitempty" description:"The directory that contains the plugins."`
 }
 
 func NewDefaultOptions() *Options {
@@ -72,12 +70,11 @@ func NewDefaultOptions() *Options {
 		MetricsAddr:          "127.0.0.1:9100", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
-		PluginsDir:           "plugins",
 	}
 }
 
-func Run(ctx context.Context, options *Options) error {
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+func Run(ctx context.Context, options *Options, cachedir string) error {
+	ctrl.SetLogger(logr.FromContextOrDiscard(ctx))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -92,7 +89,7 @@ func Run(ctx context.Context, options *Options) error {
 	}
 
 	bundleoptions := bundle.NewDefaultOptions()
-	bundleoptions.SearchDirs = append(bundleoptions.SearchDirs, strings.Split(options.PluginsDir, ",")...)
+	bundleoptions.CacheDir = cachedir
 	if err := Setup(ctx, mgr, bundleoptions); err != nil {
 		setupLog.Error(err, "unable to create plugin controller", "controller", "plugin")
 		return err
@@ -197,11 +194,14 @@ func ConfigMapOrSecretTrigger(ctx context.Context, cli client.Client) handler.Ev
 		}
 
 		plugins := pluginsv1beta1.PluginList{}
-		_ = cli.List(ctx, &plugins, client.InNamespace(obj.GetNamespace()))
+		_ = cli.List(ctx, &plugins)
 		var requests []reconcile.Request
 		for _, item := range plugins.Items {
 			for _, ref := range item.Spec.ValuesFrom {
-				if ref.Kind == kind && ref.Name == obj.GetName() {
+				if ref.Namespace == "" {
+					ref.Namespace = item.Namespace
+				}
+				if ref.Kind == kind && ref.Name == obj.GetName() && ref.Namespace == obj.GetNamespace() {
 					log.Info("triggering reconciliation", "plugin", item.Name, "kind", kind, "name", obj.GetName(), "namespace", item.GetNamespace())
 					requests = append(requests, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&item)})
 				}

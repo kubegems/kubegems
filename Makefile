@@ -102,10 +102,7 @@ build-binaries: ## Build binaries.
 build: gen-i18n build-binaries plugins-cache
 
 plugins-cache: ## Build plugins-cache
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download deploy/*.yaml
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download deploy/plugins/*
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins template deploy/plugins/* | \
-		${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download -
+	go run scripts/offline-plugins/main.go 
 
 CHARTS = kubegems kubegems-local
 helm-readme: readme-generator

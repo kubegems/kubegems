@@ -51,7 +51,6 @@ func NewBundleControllerCmd() *cobra.Command {
 		NewTemplateCmd(globalOptions),
 	)
 	cmd.PersistentFlags().StringVarP(&globalOptions.CacheDir, "cache-dir", "c", globalOptions.CacheDir, "cache directory")
-	cmd.PersistentFlags().StringSliceVarP(&globalOptions.SearchDirs, "search-dir", "s", globalOptions.SearchDirs, "search bundles in directory")
 	return cmd
 }
 

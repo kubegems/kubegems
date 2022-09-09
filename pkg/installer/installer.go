@@ -17,33 +17,36 @@ package installer
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/installer/api"
 	"kubegems.io/kubegems/pkg/installer/controller"
-	"kubegems.io/kubegems/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 type Options struct {
 	Controller *controller.Options `json:",inline"`
 	API        *api.Options        `json:",inline"`
+	PluginsDir string              `json:"pluginsDir" description:"where plugins cached in"`
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
 		Controller: controller.NewDefaultOptions(),
 		API:        api.DefaultOptions(),
+		PluginsDir: "plugins",
 	}
 }
 
 func Run(ctx context.Context, options *Options) error {
-	ctx = log.NewContext(ctx, log.LogrLogger)
+	ctx = logr.NewContext(ctx, zap.New(zap.UseDevMode(true)))
 
 	eg, ctx := errgroup.WithContext(ctx)
-	// eg.Go(func() error {
-	// 	return controller.Run(ctx, options.Controller)
-	// })
 	eg.Go(func() error {
-		return api.Run(ctx, options.API, options.Controller.PluginsDir)
+		return controller.Run(ctx, options.Controller, options.PluginsDir)
+	})
+	eg.Go(func() error {
+		return api.Run(ctx, options.API, options.PluginsDir)
 	})
 	return eg.Wait()
 }

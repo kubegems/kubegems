@@ -17,8 +17,6 @@ package bundle
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
@@ -41,15 +39,11 @@ type BundleApplier struct {
 }
 
 type Options struct {
-	CacheDir   string
-	SearchDirs []string
+	CacheDir string
 }
 
 func NewDefaultOptions() *Options {
-	home, _ := os.UserHomeDir()
-	return &Options{
-		CacheDir: filepath.Join(home, ".cache", "kubegems", "bundles"),
-	}
+	return &Options{CacheDir: "plugins"}
 }
 
 func NewDefaultApply(cfg *rest.Config, cli client.Client, options *Options) *BundleApplier {
@@ -75,20 +69,14 @@ func (b *BundleApplier) Template(ctx context.Context, bundle *pluginsv1beta1.Plu
 }
 
 func (b *BundleApplier) Download(ctx context.Context, bundle *pluginsv1beta1.Plugin) (string, error) {
-	meta := DownloadMeta{
-		Name: func() string {
-			chart := bundle.Spec.Chart
-			if chart == "" {
-				chart = bundle.Name
-			}
-			return chart
-		}(),
-		Kind:    bundle.Spec.Kind,
-		URL:     bundle.Spec.URL,
-		Path:    bundle.Spec.Path,
-		Version: bundle.Spec.Version,
-	}
-	return Download(ctx, meta, b.Options.CacheDir, b.Options.SearchDirs...)
+	return Download(ctx,
+		bundle.Spec.URL,
+		bundle.Name,
+		bundle.Spec.Version,
+		bundle.Spec.Path,
+		bundle.Spec.Chart,
+		b.Options.CacheDir,
+	)
 }
 
 func (b *BundleApplier) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin) error {

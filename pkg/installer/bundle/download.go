@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -35,8 +36,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/go-logr/logr"
-	"helm.sh/helm/v3/pkg/chart"
-	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/bundle/helm"
 )
 
@@ -46,88 +45,72 @@ const (
 )
 
 type DownloadMeta struct {
-	Kind    pluginsv1beta1.BundleKind
 	Name    string
 	URL     string
 	Path    string
+	Chart   string
 	Version string
 }
 
-// we cache "bundle" in a directory with name "{name}-{version}" under cache directory
-func Download(ctx context.Context, bundle DownloadMeta, cachedir string, searchdirs ...string) (string, error) {
+// we cache "bundle" in a directory with name
+// "{repo host}/{name}-{version} or {repo host}/{name}-{version}.tgz" under cache directory
+func Download(ctx context.Context, repo, name, version, path, chart string, cacheDir string) (string, error) {
 	log := logr.FromContextOrDiscard(ctx)
-	if cachedir == "" {
-		home, _ := os.UserHomeDir()
-		cachedir = filepath.Join(home, ".cache", "kubegems", "bundles")
+	if name == "" {
+		return "", errors.New("empty name")
 	}
 
-	name, version := bundle.Name, bundle.Version
-
-	var searchname string
-	if version != "" {
-		searchname = fmt.Sprintf("%s-%s", name, version)
-	} else {
-		searchname = name
-	}
-	// from searchdirs
-	for _, dir := range searchdirs {
-		if foundpath := findAt(filepath.Join(dir, searchname)); foundpath != "" {
-			log.Info("found in search path", "path", foundpath)
-			if bundle.Kind == pluginsv1beta1.BundleKindHelm || bundle.Kind == pluginsv1beta1.BundleKindTemplate {
-				if _, _, err := helm.LoadChart(ctx, foundpath, "", ""); err != nil {
-					return "", err
-				}
-			}
-			return foundpath, nil
-		}
-	}
-
-	// from cache
-	if version == "" {
-		return "", fmt.Errorf("not found in search pathes and no version specified")
-	}
-	versionedPath := fmt.Sprintf("%s-%s", name, version)
-	fullVersionedPath := filepath.Join(cachedir, versionedPath)
-	if foundpath := findAt(fullVersionedPath); foundpath != "" {
-		log.Info("found in cache path", "path", foundpath)
-		return foundpath, nil
-	}
-
-	repo := bundle.URL
 	if repo == "" {
-		// use path as local file path
-		if path, ok := isNotEmpty(bundle.Path); ok {
-			return path, nil
-		}
-		return "", fmt.Errorf("[%s] not find in search pathes and no url specified", name)
+		return "", fmt.Errorf("no url specified for %s", name)
+	}
+	if cacheDir == "" {
+		home, _ := os.UserHomeDir()
+		cacheDir = filepath.Join(home, ".cache", "kubegems", "bundles")
+	}
+	// from cache
+	repou, err := url.Parse(repo)
+	if err != nil {
+		return "", fmt.Errorf("invalid repo: %w", err)
+	}
+	perRepoCacheDir := filepath.Join(cacheDir, repou.Hostname())
+
+	basename := name
+	if version != "" {
+		basename = name + "-" + version
 	}
 
-	into := fullVersionedPath
-	log.Info("downloading...", "cache", into)
+	cacheInFile := filepath.Join(perRepoCacheDir, basename+".tgz")
+	if _, err := os.Stat(cacheInFile); err == nil {
+		log.Info("found in cache", "file", cacheInFile)
+		return cacheInFile, nil
+	}
+	cacheInDir := filepath.Join(perRepoCacheDir, basename)
+	if entries, err := os.ReadDir(cacheInDir); err == nil && len(entries) >= 0 {
+		log.Info("found in cache", "directory", cacheInDir)
+		return cacheInDir, nil
+	}
 
+	cacheIn := filepath.Join(perRepoCacheDir, basename)
+	log.Info("downloading...", "cache", cacheIn)
+	// is helm ?
+	if chart != "" {
+		return DownloadHelm(ctx, repo, chart, version, cacheIn)
+	}
 	// is file://
 	if strings.HasPrefix(repo, "file://") {
-		return into, DownloadFile(ctx, repo, bundle.Path, into)
+		return cacheIn, DownloadFile(ctx, repo, path, cacheIn)
 	}
 	// is git ?
 	if strings.HasSuffix(repo, ".git") {
-		return into, DownloadGit(ctx, repo, bundle.Version, bundle.Path, into)
+		return cacheIn, DownloadGit(ctx, repo, version, path, cacheIn)
 	}
 	// is zip ?
 	if strings.HasSuffix(repo, ".zip") {
-		return into, DownloadZip(ctx, repo, bundle.Path, into)
+		return cacheIn, DownloadZip(ctx, repo, path, cacheIn)
 	}
 	// is tar.gz ?
 	if strings.HasSuffix(repo, ".tar.gz") || strings.HasSuffix(repo, ".tgz") {
-		return into, DownloadTgz(ctx, repo, bundle.Path, into)
-	}
-	// is helm repo?
-	if bundle.Kind == pluginsv1beta1.BundleKindHelm {
-		path, _, err := DownloadHelmChart(ctx, repo, name, version, into)
-		if err != nil {
-			return "", err
-		}
-		return path, nil
+		return cacheIn, DownloadTgz(ctx, repo, path, cacheIn)
 	}
 	return "", fmt.Errorf("unknown download source")
 }
@@ -315,17 +298,15 @@ func DownloadGit(ctx context.Context, cloneurl string, rev string, subpath, into
 	})
 }
 
-func DownloadHelmChart(ctx context.Context, repo, name, version, intodir string) (string, *chart.Chart, error) {
-	log := logr.FromContextOrDiscard(ctx)
-	chartPath, chart, err := helm.LoadChart(ctx, name, repo, version)
+func DownloadHelm(ctx context.Context, repo, name, version, intodir string) (string, error) {
+	chartPath, _, err := helm.LoadAndUpdateChart(ctx, repo, name, version)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	intofile := filepath.Join(filepath.Dir(intodir), fmt.Sprintf("%s.tgz", filepath.Base(intodir)))
+	ext := filepath.Ext(chartPath)
+	intofile := intodir + ext
 	os.MkdirAll(filepath.Dir(intofile), defaultDirMode)
-	log.Info("downloaded chart", "dir", intofile)
-	// just move the chart.tgz into intodir
-	return intofile, chart, os.Rename(chartPath, intofile)
+	return intofile, os.Rename(chartPath, intofile)
 }
 
 func UnTarGz(r io.Reader, subpath, into string) error {
@@ -374,12 +355,15 @@ func UnTarGz(r io.Reader, subpath, into string) error {
 	return nil
 }
 
-func findAt(path string) string {
-	if tgzfile, ok := hasTgz(path); ok {
+func cachePath(path string, name, version string) string {
+	basename := name + "-" + version
+	tgzfile := filepath.Join(path, basename+".tgz")
+	if _, err := os.Stat(tgzfile); err == nil {
 		return tgzfile
 	}
-	if cachedir, ok := isNotEmpty(path); ok {
-		return cachedir
+	cacheDir := filepath.Join(path, basename)
+	if entries, err := os.ReadDir(cacheDir); err == nil && len(entries) >= 0 {
+		return cacheDir
 	}
 	return ""
 }

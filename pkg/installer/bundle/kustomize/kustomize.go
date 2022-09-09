@@ -18,8 +18,8 @@ import (
 	"context"
 
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
-	"sigs.k8s.io/kustomize/api/filesys"
 	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
 )
 
 func KustomizeBuildFunc(ctx context.Context, bundle *pluginsv1beta1.Plugin, dir string) ([]byte, error) {

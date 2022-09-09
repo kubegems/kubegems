@@ -48,7 +48,7 @@ type Templater struct {
 
 // TemplatesTemplate using helm template engine to render,but allow apply to different namespaces
 func (t Templater) Template(ctx context.Context, plugin *pluginsv1beta1.Plugin, dir string) ([]byte, error) {
-	chart, err := Load(plugin.Name, plugin.Spec.Version, dir)
+	chart, err := loader.Load(dir)
 	if err != nil {
 		return nil, err
 	}

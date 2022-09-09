@@ -27,9 +27,11 @@ type PluginSpec struct {
 	Kind BundleKind `json:"kind,omitempty"`
 
 	// URL is the URL of helm repository, git clone url, tarball url, s3 url, etc.
+	// +kubebuilder:validation:Required
 	URL string `json:"url,omitempty"`
 
 	// Version is the version of helm chart, git revision, etc.
+	// +kubebuilder:validation:Required
 	Version string `json:"version,omitempty"`
 
 	// Chart is the name of the chart to install.
@@ -57,16 +59,23 @@ type PluginSpec struct {
 	ValuesFrom []ValuesFrom `json:"valuesFrom,omitempty"`
 }
 
+const (
+	ValuesFromKindConfigmap = "Configmap"
+	ValuesFromKindSecret    = "Secret"
+)
+
 type ValuesFrom struct {
 	// Kind is the type of resource being referenced
 	// +kubebuilder:validation:Enum=ConfigMap;Secret
 	Kind string `json:"kind"`
 	// Name is the name of resource being referenced
 	Name string `json:"name"`
+	// +kubebuilder:validation:Optional
+	Namespace string `json:"namespace,omitempty"`
 	// An optional identifier to prepend to each key in the ConfigMap. Must be a C_IDENTIFIER.
 	// +kubebuilder:validation:Optional
 	Prefix string `json:"prefix,omitempty"`
-	// Optional set to true to ignore referense not found error
+	// Optional set to true to ignore references not found error
 	Optional bool `json:"optional,omitempty"`
 }
 
@@ -75,7 +84,7 @@ type PluginStatus struct {
 	Phase Phase `json:"phase,omitempty"`
 
 	// Message is the message associated with the status
-	// In helm, it's the notes contens.
+	// In helm, it's the notes contents.
 	Message string `json:"message,omitempty"`
 
 	// Values is a nested map of final helm values.

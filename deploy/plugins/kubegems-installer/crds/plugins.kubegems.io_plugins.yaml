@@ -169,8 +169,10 @@ spec:
                     name:
                       description: Name is the name of resource being referenced
                       type: string
+                    namespace:
+                      type: string
                     optional:
-                      description: Optional set to true to ignore referense not found
+                      description: Optional set to true to ignore references not found
                         error
                       type: boolean
                     prefix:
@@ -198,7 +200,7 @@ spec:
                 type: string
               message:
                 description: Message is the message associated with the status In
-                  helm, it's the notes contens.
+                  helm, it's the notes contents.
                 type: string
               namespace:
                 description: Namespace is the namespace where the bundle is installed.
