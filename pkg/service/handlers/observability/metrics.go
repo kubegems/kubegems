@@ -27,6 +27,7 @@ import (
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	v1 "k8s.io/api/core/v1"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -119,7 +120,7 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 			ret, err = cli.Extend().GetPrometheusLabelValues(ctx, matchs, req.Label, req.Start, req.End)
 			return err
 		}); err != nil {
-			return fmt.Errorf("prometheus label values failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
+			return i18n.Errorf(c, "get prometheus label values failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
 		}
 		return nil
 	}); err != nil {
@@ -155,7 +156,7 @@ func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 			ret, err = cli.Extend().GetPrometheusLabelNames(ctx, matchs, req.Start, req.End)
 			return err
 		}); err != nil {
-			return fmt.Errorf("prometheus label names failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
+			return i18n.Errorf(c, "get prometheus label names failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
 		}
 		return nil
 	}); err != nil {
@@ -310,7 +311,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 	// 优先选用原生promql
 	if q.PromqlGenerator.Notpl() {
 		if q.Expr == "" {
-			return fmt.Errorf("模板与原生promql不能同时为空")
+			return i18n.Errorf(c, "Template and native promql cannot be empty at the same time")
 		}
 		if err := prometheus.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
 			return err
@@ -320,7 +321,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			return err
 		}
 		if !q.PromqlGenerator.Tpl.Namespaced && q.Namespace != "" {
-			return fmt.Errorf("非namespace资源不能过滤项目环境")
+			return i18n.Errorf(c, "Non namespace resources cannot filter the project environment")
 		}
 		q.Expr = q.PromqlGenerator.Tpl.Expr
 	}
@@ -548,10 +549,12 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 		return
 	}
 	if count > 0 {
-		handlers.NotOK(c, fmt.Errorf("resource: %d 中已存在rule: %s", *req.ResourceID, req.Name))
+		handlers.NotOK(c, i18n.Errorf(c, "rule %s already exist", req.Name))
 		return
 	}
-	h.SetAuditData(c, "创建", "监控查询模板", req.Name)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "monitoring query template")
+	h.SetAuditData(c, action, module, req.Name)
 	if err := h.GetDB().Create(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -577,7 +580,9 @@ func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "更新", "监控查询模板", req.Name)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "monitoring query template")
+	h.SetAuditData(c, action, module, req.Name)
 	if err := h.GetDB().Save(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -602,10 +607,12 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "删除", "监控查询模板", rule.Name)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "monitoring query template")
+	h.SetAuditData(c, action, module, rule.Name)
 	if rule.TenantID == nil {
 		if c.Param("tenant_id") != "_all" {
-			handlers.NotOK(c, fmt.Errorf("你不能删除系统预置模板"))
+			handlers.NotOK(c, i18n.Errorf(c, "prefabricated template cannot be deleted"))
 			return
 		}
 	} else {
@@ -628,7 +635,7 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 			v.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
 			v.PromqlGenerator.Resource == rule.Resource.Name &&
 			v.PromqlGenerator.Rule == rule.Name {
-			handlers.NotOK(c, fmt.Errorf("prometheus 模板 %s.%s.%s 正在被告警规则%s使用", v.PromqlGenerator.Scope, v.PromqlGenerator.Resource, v.PromqlGenerator.Rule, v.Name))
+			handlers.NotOK(c, i18n.Errorf(c, "prometheus template %s.%s.%s %s is used by rule %s now", v.PromqlGenerator.Scope, v.PromqlGenerator.Resource, v.PromqlGenerator.Rule, v.Name))
 			return
 		}
 	}
@@ -645,13 +652,13 @@ func (h *ObservabilityHandler) getRuleReq(c *gin.Context) (*models.PromqlTplRule
 		return nil, err
 	}
 	if _, err := parser.ParseExpr(req.Expr); err != nil {
-		return nil, errors.Wrap(err, "promql语法错误")
+		return nil, errors.Wrap(err, "promql syntax error")
 	}
 	tenantID := c.Param("tenant_id")
 	if tenantID != "_all" {
 		t, _ := strconv.Atoi(tenantID)
 		if t == 0 {
-			return nil, fmt.Errorf("tenant id not valid")
+			return nil, i18n.Errorf(c, "tenant id not valid")
 		}
 		tmp := uint(t)
 		h.SetExtraAuditData(c, models.ResTenant, tmp)

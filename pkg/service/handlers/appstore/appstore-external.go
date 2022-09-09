@@ -17,12 +17,12 @@ package appstore
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -30,8 +30,8 @@ import (
 )
 
 // @Tags        Appstore
-// @Summary     APP 获取外部chart仓库
-// @Description 获取外部chart仓库
+// @Summary     列出所有的外部应用的charts仓库
+// @Description 列出所有的外部应用的charts仓库
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.ChartRepo}} "repos"
@@ -47,8 +47,8 @@ func (h *AppstoreHandler) ListExternalRepo(c *gin.Context) {
 }
 
 // @Tags        Appstore
-// @Summary     APP 创建外部chart仓库
-// @Description 创建外部chart仓库
+// @Summary     创建应用商店外部charts仓库
+// @Description 创建应用商店外部charts仓库
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} handlers.ResponseStruct{Data=[]models.ChartRepo} "repo"
@@ -68,11 +68,13 @@ func (h *AppstoreHandler) PutExternalRepo(c *gin.Context) {
 	}
 	// validate repo
 	if _, err := repository.GetIndex(c.Request.Context()); err != nil {
-		handlers.NotOK(c, fmt.Errorf("invalid repo index: %w", err))
+		handlers.NotOK(c, i18n.Errorf(c, "helm chart repo index URL is invalid: %w", err))
 		return
 	}
 
-	h.SetAuditData(c, "创建", "外部charts库", repo.ChartRepoName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "external helm chart repo")
+	h.SetAuditData(c, action, module, repo.ChartRepoName)
 	if err := h.GetDB().Save(repo).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -96,7 +98,9 @@ func (h *AppstoreHandler) PutExternalRepo(c *gin.Context) {
 // @Router      /v1/appstore/repo/{name} [delete]
 // @Security    JWT
 func (h *AppstoreHandler) DeleteExternalRepo(c *gin.Context) {
-	h.SetAuditData(c, "删除", "外部charts库", c.Param("name"))
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "external helm chart repo")
+	h.SetAuditData(c, action, module, c.Param("name"))
 	repo := &models.ChartRepo{ChartRepoName: c.Param("name")}
 	if err := h.GetDB().Where(repo).Delete(repo).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -118,7 +122,9 @@ func (h *AppstoreHandler) DeleteExternalRepo(c *gin.Context) {
 // @Security    JWT
 func (h *AppstoreHandler) SyncExternalRepo(c *gin.Context) {
 	reponame := c.Param("name")
-	h.SetAuditData(c, "同步", "外部charts库", c.Param("name"))
+	action := i18n.Sprintf(context.TODO(), "sync")
+	module := i18n.Sprintf(context.TODO(), "external helm chart repo")
+	h.SetAuditData(c, action, module, reponame)
 
 	if reponame == "" {
 		handlers.NotOK(c, errors.New("name required"))
@@ -133,7 +139,7 @@ func (h *AppstoreHandler) SyncExternalRepo(c *gin.Context) {
 	go func() {
 		SyncCharts(context.Background(), repo, helm.RepositoryConfig{URL: h.AppStoreOpt.Addr}, h.GetDB())
 	}()
-	handlers.OK(c, fmt.Sprintf("repo %s started sync on background", reponame))
+	handlers.OK(c, i18n.Sprintf(c, "repo %s started syncing on background", reponame))
 }
 
 func SyncCharts(ctx context.Context, repo *models.ChartRepo, localChartMuseum helm.RepositoryConfig, db *gorm.DB) {
@@ -145,7 +151,7 @@ func SyncCharts(ctx context.Context, repo *models.ChartRepo, localChartMuseum he
 			db.Save(repo)
 		})
 		if e.Error != nil {
-			log.Errorf("sync chart %s:%s, error: %s", e.Chart.Name, e.Chart.Version, e.Error.Error())
+			log.Errorf("sync chart repo %s:%s, error: %s", e.Chart.Name, e.Chart.Version, e.Error.Error())
 		}
 	}
 
@@ -157,13 +163,13 @@ func SyncCharts(ctx context.Context, repo *models.ChartRepo, localChartMuseum he
 		if errors.Is(err, helm.ErrSynchronizing) {
 			return
 		}
-		log.Errorf("sync repo %s charts failed: %v", repo.ChartRepoName, err)
+		log.Errorf("sync chart repo %s failed: %v", repo.ChartRepoName, err)
 		repo.SyncStatus = models.SyncStatusError
 		repo.SyncMessage = err.Error()
 	} else {
 		repo.SyncStatus = models.SyncStatusSuccess
 	}
-	log.Infof("sync repo %s charts finished", repo.ChartRepoName)
+	log.Infof("sync chart repo %s finished", repo.ChartRepoName)
 	now := time.Now()
 	repo.LastSync = &now
 	db.Save(repo)

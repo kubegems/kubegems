@@ -16,7 +16,6 @@ package projecthandler
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -28,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/i18n"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -134,11 +134,13 @@ func (h *ProjectHandler) PutProject(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "项目", obj.ProjectName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "project")
+	h.SetAuditData(c, action, module, obj.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, obj.ID)
 
 	if c.Param(PrimaryKeyName) != strconv.Itoa(int(obj.ID)) {
-		handlers.NotOK(c, fmt.Errorf("请求体参数和URL参数ID不一致"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	if err := h.GetDB().Save(&obj).Error; err != nil {
@@ -168,7 +170,9 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 
 	projUsers := h.GetDataBase().ProjectUsers(obj.ID)
 	tenantAdmins := h.GetDataBase().TenantAdmins(obj.TenantID)
-	h.SetAuditData(c, "删除", "项目", obj.ProjectName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "porject")
+	h.SetAuditData(c, action, module, obj.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, obj.ID)
 
 	ctx := c.Request.Context()
@@ -189,7 +193,7 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 		msg.EventKind = msgbus.Delete
 		msg.ResourceType = msgbus.Project
 		msg.ResourceID = obj.ID
-		msg.Detail = fmt.Sprintf("删除了租户%s中的项目%s", obj.Tenant.TenantName, obj.ProjectName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "delete project %s belong to tenant %s", obj.ProjectName, obj.Tenant.TenantName)
 		msg.ToUsers.Append(tenantAdmins...).Append(projUsers...)
 		msg.AffectedUsers.Append(projUsers...) // 项目用户需刷新权限
 	})
@@ -309,14 +313,16 @@ func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 
 	h.GetDB().Preload("Project.Tenant").First(&rel, rel.ID)
 
-	h.SetAuditData(c, "添加", "项目成员", fmt.Sprintf("项目[%v]/成员[%v]", rel.Project.ProjectName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "add")
+	module := i18n.Sprintf(context.TODO(), "project member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "project %s / user %s / role %s", rel.Project.ProjectName, user.Username, rel.Role))
 	h.SetExtraAuditData(c, models.ResProject, rel.ProjectID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Add
 		msg.ResourceType = msgbus.Project
 		msg.ResourceID = rel.ProjectID
-		msg.Detail = fmt.Sprintf("向租户%s/项目%s中添加了用户%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username)
+		msg.Detail = i18n.Sprintf(context.TODO(), "add user %s to project %s members as role %s", user.Username, rel.Project.ProjectName, rel.Role)
 		msg.ToUsers.
 			Append(rel.UserID). // 自己
 			Append(func() []uint {
@@ -349,7 +355,7 @@ func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
 		return
 	}
 	if err := h.GetDB().First(&rel, "project_id = ? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("不可以修改不存在的 \"项目-用户\" 关系"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't modify project member role, the user is not a member of the project"))
 		return
 	}
 	if err := h.GetDB().Save(&rel).Error; err != nil {
@@ -361,14 +367,16 @@ func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
 	h.ModelCache().FlushUserAuthority(&user)
 
 	h.GetDB().Preload("Project.Tenant").First(&rel, rel.ID)
-	h.SetAuditData(c, "修改", "项目成员", fmt.Sprintf("项目[%v]/成员[%v]", rel.Project.ProjectName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "project member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "project %s / user %s / role %s", rel.Project.ProjectName, user.Username, rel.Role))
 	h.SetExtraAuditData(c, models.ResProject, rel.ProjectID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Update
 		msg.ResourceType = msgbus.Project
 		msg.ResourceID = rel.ProjectID
-		msg.Detail = fmt.Sprintf("将租户%s/项目%s中的用户%s设置为了%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username, rel.Role)
+		msg.Detail = i18n.Sprintf(context.TODO(), "update user %s to project %s members as role %s", user.Username, rel.Project.ProjectName, rel.Role)
 		msg.ToUsers.
 			Append(rel.UserID). // 自己
 			Append(func() []uint {
@@ -422,14 +430,16 @@ func (h *ProjectHandler) DeleteProjectUser(c *gin.Context) {
 	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.SetAuditData(c, "删除", "项目成员", fmt.Sprintf("项目[%v]/成员[%v]", rel.Project.ProjectName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "project member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "project %s / user %s / role %s", rel.Project.ProjectName, user.Username, rel.Role))
 	h.SetExtraAuditData(c, models.ResProject, rel.ProjectID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Delete
 		msg.ResourceType = msgbus.Project
 		msg.ResourceID = rel.ProjectID
-		msg.Detail = fmt.Sprintf("删除了租户%s/项目%s中的用户%s", rel.Project.Tenant.TenantName, rel.Project.ProjectName, user.Username)
+		msg.Detail = i18n.Sprintf(context.TODO(), "delete user %s from project %s members", user.Username, rel.Project.ProjectName)
 		msg.ToUsers.
 			Append(rel.UserID). // 自己
 			Append(func() []uint {

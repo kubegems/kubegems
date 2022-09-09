@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/agents"
@@ -126,7 +127,7 @@ func (h *ObservabilityHandler) MonitorCollectorStatus(c *gin.Context) {
 				return nil
 			}
 		}
-		return fmt.Errorf("scrap target %s not found", scrapTarget)
+		return i18n.Errorf(c, "scrap target %s not found", scrapTarget)
 	}); err != nil {
 		log.Error(err, "get scrap target status")
 		ret.Health = promv1.HealthUnknown
@@ -159,7 +160,9 @@ func (h *ObservabilityHandler) AddOrUpdateMonitorCollector(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 
-	h.SetAuditData(c, "创建", "监控采集器", req.Service)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "monitoring collector")
+	h.SetAuditData(c, action, module, req.Service)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
@@ -179,7 +182,7 @@ func (h *ObservabilityHandler) AddOrUpdateMonitorCollector(c *gin.Context) {
 			}
 		}
 		if !found {
-			return fmt.Errorf("port %s not found in service %s", req.Port, svc.Name)
+			return i18n.Errorf(c, "port %s not found in Service %s", req.Port, svc.Name)
 		}
 
 		sm := v1.ServiceMonitor{
@@ -238,7 +241,9 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 	namespace := c.Param("namespace")
 	svcname := c.Query("service")
 
-	h.SetAuditData(c, "删除", "监控采集器", svcname)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "monitoring collector")
+	h.SetAuditData(c, action, module, svcname)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
@@ -329,7 +334,7 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 		}
 	}
 	if index == -1 {
-		handlers.NotOK(c, fmt.Errorf("alert %s not found", name))
+		handlers.NotOK(c, i18n.Errorf(c, "alert rule %s not found", name))
 	}
 	handlers.OK(c, alerts[index])
 }
@@ -371,7 +376,9 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 	defer h.m.Unlock()
 	if err := h.withAlertruleReq(c, func(req prometheus.MonitorAlertRule) error {
 		h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-		h.SetAuditData(c, "创建", "监控告警规则", req.Name)
+		action := i18n.Sprintf(context.TODO(), "create")
+		module := i18n.Sprintf(context.TODO(), "monitoring alert rule")
+		h.SetAuditData(c, action, module, req.Name)
 
 		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 			// get、update、commit
@@ -414,7 +421,7 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 		for _, v := range routes {
 			for _, m := range v.Matchers {
 				if m.Name == prometheus.AlertNameLabel && m.Value == name {
-					return fmt.Errorf("duplicated name in: %s", name)
+					return i18n.Errorf(context.TODO(), "duplicated name in: %s", name)
 				}
 			}
 		}
@@ -443,7 +450,9 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 	defer h.m.Unlock()
 	if err := h.withAlertruleReq(c, func(req prometheus.MonitorAlertRule) error {
 		h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-		h.SetAuditData(c, "更新", "监控告警规则", req.Name)
+		action := i18n.Sprintf(context.TODO(), "update")
+		module := i18n.Sprintf(context.TODO(), "monitoring alert rule")
+		h.SetAuditData(c, action, module, req.Name)
 
 		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 			// get、update、commit
@@ -491,7 +500,9 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 		},
 	}
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "删除", "监控告警规则", req.Name)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "monitoring alert rule")
+	h.SetAuditData(c, action, module, req.Name)
 
 	h.m.Lock()
 	defer h.m.Unlock()

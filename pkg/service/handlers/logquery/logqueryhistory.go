@@ -15,8 +15,10 @@
 package logqueryhandler
 
 import (
+	"context"
 	"strconv"
 
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 
@@ -68,7 +70,9 @@ func (h *LogQueryHistoryHandler) ListLogQueryHistory(c *gin.Context) {
 // @Router      /v1/logqueryhistory/{logqueryhistory_id} [delete]
 // @Security    JWT
 func (h *LogQueryHistoryHandler) DeleteLogQueryHistory(c *gin.Context) {
-	h.SetAuditData(c, "删除", "日志查询历史", "")
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "logquery history")
+	h.SetAuditData(c, action, module, "")
 	lid, err := strconv.ParseUint(c.Param("logqueryhistory_id"), 10, 64)
 	obj := models.LogQueryHistory{ID: uint(lid)}
 	if err != nil {
@@ -93,7 +97,9 @@ func (h *LogQueryHistoryHandler) DeleteLogQueryHistory(c *gin.Context) {
 // @Router      /v1/logqueryhistory [delete]
 // @Security    JWT
 func (h *LogQueryHistoryHandler) BatchDeleteLogQueryHistory(c *gin.Context) {
-	h.SetAuditData(c, "批量删除", "日志查询历史", "")
+	action := i18n.Sprintf(context.TODO(), "batch delete")
+	module := i18n.Sprintf(context.TODO(), "logquery history")
+	h.SetAuditData(c, action, module, "")
 	ids := c.QueryArray("lid")
 	if len(ids) == 0 {
 		handlers.NoContent(c, nil)
@@ -134,7 +140,9 @@ func (h *LogQueryHistoryHandler) PostLogQueryHistory(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "创建", "日志查询历史", "")
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "logquery history")
+	h.SetAuditData(c, action, module, "")
 
 	if err := h.GetDB().Create(&obj).Error; err != nil {
 		handlers.NotOK(c, err)

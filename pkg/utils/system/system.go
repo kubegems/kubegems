@@ -22,6 +22,7 @@ import (
 
 type Options struct {
 	Listen   string `json:"listen,omitempty" description:"listen address"`
+	Locale   string `json:"locale,omitempty" description:"default locale for site"`
 	CAFile   string `json:"caFile,omitempty" description:"ca file path"`
 	CertFile string `json:"certFile,omitempty" description:"cert file path"`
 	KeyFile  string `json:"keyFile,omitempty" description:"key file path"`
@@ -30,6 +31,7 @@ type Options struct {
 func NewDefaultOptions() *Options {
 	return &Options{
 		Listen:   ":8080",
+		Locale:   "",
 		CAFile:   "",
 		CertFile: "",
 		KeyFile:  "",

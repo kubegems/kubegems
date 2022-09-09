@@ -15,8 +15,9 @@
 package systemrolehandler
 
 import (
-	"fmt"
+	"context"
 
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
@@ -106,7 +107,9 @@ func (h *SystemRoleHandler) PostSystemRole(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "创建", "系统角色", obj.RoleName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "system role")
+	h.SetAuditData(c, action, module, obj.RoleName)
 	handlers.Created(c, obj)
 }
 
@@ -130,7 +133,9 @@ func (h *SystemRoleHandler) DeleteSystemRole(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "删除", "系统角色", obj.RoleName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "system role")
+	h.SetAuditData(c, action, module, obj.RoleName)
 	handlers.NoContent(c, nil)
 }
 
@@ -207,13 +212,15 @@ func (h *SystemRoleHandler) PutSystemRoleUser(c *gin.Context) {
 	}
 
 	h.ModelCache().FlushUserAuthority(&user)
-	h.SetAuditData(c, "授权", "用户系统角色", fmt.Sprintf("角色[%v]/用户[%v]", role.RoleName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "grant")
+	module := i18n.Sprintf(context.TODO(), "system role")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "user %s / role %s", user.Username, role.RoleName))
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Update
 		msg.ResourceType = msgbus.User
 		msg.ResourceID = user.ID
-		msg.Detail = fmt.Sprintf("将用户%s的系统角色设置为了%s", user.Username, role.RoleName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "Set the system role of user %s to %s ", user.Username, role.RoleName)
 		msg.ToUsers.
 			Append(user.ID). // 自己
 			Append(func() []uint {
@@ -256,7 +263,9 @@ func (h *SystemRoleHandler) DeleteSystemRoleUser(c *gin.Context) {
 	}
 
 	h.ModelCache().FlushUserAuthority(&user)
-	h.SetAuditData(c, "取消授权", "用户系统角色", fmt.Sprintf("角色[%v]/用户[%v]", role.RoleName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "cancel")
+	module := i18n.Sprintf(context.TODO(), "system role")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "user %s / role %s", user.Username, role.RoleName))
 
 	if err := h.GetDB().Model(&role).Association("Users").Delete(&user); err != nil {
 		handlers.NotOK(c, err)

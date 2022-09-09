@@ -16,10 +16,10 @@ package registryhandler
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers/registry/synchronizer"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/harbor"
@@ -32,14 +32,14 @@ func (h *RegistryHandler) onChange(ctx context.Context, tx *gorm.DB, v *models.R
 	}
 	// sync
 	if e := h.syncRegistry(ctx, v, tx, synchronizer.SyncKindUpsert); e != nil {
-		return fmt.Errorf("同步镜像仓库信息到集群下失败 %w", e)
+		return i18n.Errorf(ctx, "Failed to synchronize the image registry information to the cluster: %w", e)
 	}
 	return nil
 }
 
 func (h *RegistryHandler) onDelete(ctx context.Context, tx *gorm.DB, v *models.Registry) error {
 	if e := h.syncRegistry(ctx, v, tx, synchronizer.SyncKindDelete); e != nil {
-		return fmt.Errorf("同步镜像仓库信息到集群下失败 %w", e)
+		return i18n.Errorf(ctx, "Failed to synchronize the image registry information to the cluster: %w", e)
 	}
 	return nil
 }
@@ -61,12 +61,12 @@ func (h *RegistryHandler) validate(ctx context.Context, v *models.Registry) erro
 			return err
 		}
 		if systeminfo.HarborVersion == "" {
-			return fmt.Errorf("can't get harbor version")
+			return i18n.Errorf(ctx, "failed to get Harbor version")
 		}
 	}
 	// validate username/password
 	if err := harbor.TryLogin(ctx, v.RegistryAddress, v.Username, v.Password); err != nil {
-		return fmt.Errorf("try login registry: %w", err)
+		return i18n.Errorf(ctx, "validate username and password to the registry faild: %w", err)
 	}
 	return nil
 }

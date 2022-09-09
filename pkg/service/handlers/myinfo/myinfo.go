@@ -15,9 +15,8 @@
 package myinfohandler
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
@@ -35,12 +34,12 @@ import (
 func (h *MyHandler) Myinfo(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, fmt.Errorf("请登录"))
+		handlers.Unauthorized(c, i18n.Errorf(c, "unauthorized, please login first"))
 		return
 	}
 	var user models.User
 	if e := h.GetDB().Preload("SystemRole").Preload("Tenants").First(&user, "id = ?", u.GetID()).Error; e != nil {
-		handlers.Forbidden(c, fmt.Errorf("请重新登录"))
+		handlers.Forbidden(c, i18n.Errorf(c, "forbidden, please login"))
 		return
 	}
 	handlers.OK(c, user)
@@ -58,7 +57,7 @@ func (h *MyHandler) Myinfo(c *gin.Context) {
 func (h *MyHandler) MyAuthority(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, fmt.Errorf("请登录"))
+		handlers.Unauthorized(c, i18n.Errorf(c, "unauthorized, please login first"))
 		return
 	}
 
@@ -78,7 +77,7 @@ func (h *MyHandler) MyAuthority(c *gin.Context) {
 func (h *MyHandler) MyTenants(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, fmt.Errorf("请登录"))
+		handlers.Unauthorized(c, i18n.Errorf(c, "unauthorized, please login first"))
 		return
 	}
 	tenants := []models.Tenant{}
@@ -101,7 +100,7 @@ func (h *MyHandler) MyTenants(c *gin.Context) {
 func (h *MyHandler) ResetPassword(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, fmt.Errorf("请登录"))
+		handlers.Unauthorized(c, i18n.Errorf(c, "unauthorized, please login first"))
 		return
 	}
 	cuser := models.User{}
@@ -110,7 +109,7 @@ func (h *MyHandler) ResetPassword(c *gin.Context) {
 	c.BindJSON(form)
 
 	if form.New1 != form.New2 {
-		handlers.NotOK(c, fmt.Errorf("两次输入密码不一致"))
+		handlers.NotOK(c, i18n.Errorf(c, "the passwords entered twice are inconsistent"))
 		return
 	}
 
@@ -120,7 +119,7 @@ func (h *MyHandler) ResetPassword(c *gin.Context) {
 	}
 
 	if err := utils.ValidatePassword(form.Origin, cuser.Password); err != nil {
-		handlers.NotOK(c, fmt.Errorf("原始密码错误"))
+		handlers.NotOK(c, i18n.Errorf(c, "origin password error"))
 		return
 	}
 

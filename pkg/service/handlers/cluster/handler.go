@@ -30,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -163,13 +164,15 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "更新", "集群", obj.ClusterName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "cluster")
+	h.SetAuditData(c, action, module, obj.ClusterName)
 	if err := c.BindJSON(&obj); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	if c.Param(PrimaryKeyName) != strconv.Itoa(int(obj.ID)) {
-		handlers.NotOK(c, fmt.Errorf("ID不匹配"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	if err := h.GetDataBase().DB().Save(&obj).Error; err != nil {
@@ -197,24 +200,26 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		handlers.NoContent(c, err)
 		return
 	}
-	h.SetAuditData(c, "删除", "集群", cluster.ClusterName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "cluster")
+	h.SetAuditData(c, action, module, cluster.ClusterName)
 
 	if cluster.Primary {
-		handlers.NotOK(c, fmt.Errorf("不允许删除控制集群"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't delete this cluster, it's the primary cluster which the api server run"))
 		return
 	}
 
 	trqs := []models.TenantResourceQuota{}
 	h.GetDataBase().DB().Where("cluster_id = ?", cluster.ID).Find(&trqs)
 	if len(trqs) != 0 {
-		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的租户资源，删除失败", cluster.ClusterName))
+		handlers.NotOK(c, i18n.Errorf(c, "can't delete the cluster %s, some tenants has resources on it", cluster.ClusterName))
 		return
 	}
 
 	envs := []models.Environment{}
 	h.GetDataBase().DB().Where("cluster_id = ?", cluster.ID).Find(&envs)
 	if len(envs) != 0 {
-		handlers.NotOK(c, fmt.Errorf("集群%s中还有关联的环境，删除失败", cluster.ClusterName))
+		handlers.NotOK(c, i18n.Errorf(c, "can't delete the cluster %s, some environments has resources on it", cluster.ClusterName))
 		return
 	}
 	recordOnly := c.DefaultQuery("record_only", "true") == "true"
@@ -241,7 +246,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 		msg.EventKind = msgbus.Delete
 		msg.ResourceType = msgbus.Cluster
 		msg.ResourceID = cluster.ID
-		msg.Detail = fmt.Sprintf("删除了集群%s", cluster.ClusterName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "deleted the cluster %s", cluster.ClusterName)
 		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
 	})
 	handlers.NoContent(c, nil)
@@ -311,7 +316,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 	}
 	clusterid := utils.ToUint(c.Param(PrimaryKeyName))
 	if err := h.GetDB().First(&cluster, clusterid).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("cluster not exist"))
+		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are querying doesn't exist"))
 		return
 	}
 	cond := &handlers.PageQueryCond{
@@ -436,7 +441,8 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	// nolint: dogsled
 	apiserver, _, _, _, err := kube.GetKubeconfigInfos(cluster.KubeConfig)
 	if err != nil {
-		handlers.NotOK(c, fmt.Errorf("kubeconfig 格式错误"))
+		log.Error(err, "failed to validate kubeconfg, may format error")
+		handlers.NotOK(c, i18n.Errorf(c, "failed to validate kubeconfg, may format error"))
 		return
 	}
 	var existCount int64
@@ -445,15 +451,17 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	).Where(
 		"cluster_name = ? or api_server = ?", cluster.ClusterName, apiserver,
 	).Count(&existCount).Error; err != nil {
-		log.Error(err, "failed check exsit cluster")
-		handlers.NotOK(c, fmt.Errorf("检测集群状态错误"))
+		log.Error(err, "failed to detect the cluster is existed %v", err)
+		handlers.NotOK(c, i18n.Errorf(c, "failed to detect the cluster is existed"))
 		return
 	}
 	if existCount > 0 {
-		handlers.NotOK(c, fmt.Errorf("已经存在相同名字 或 相同apiServer 的集群, 不允许重复添加"))
+		handlers.NotOK(c, i18n.Errorf(c, "the cluster with name %s existed, can't add the same one"))
 		return
 	}
-	h.SetAuditData(c, "创建", "集群", cluster.ClusterName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "cluster")
+	h.SetAuditData(c, action, module, cluster.ClusterName)
 
 	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 		txClause := clause.OnConflict{
@@ -485,7 +493,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				return err
 			}
 			if primarysCount > 0 {
-				return fmt.Errorf("控制集群只能有一个")
+				return i18n.Errorf(c, "the primary cluster existed already, more than one primary cluster is not allowed")
 			}
 		}
 		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
@@ -506,7 +514,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				Runtime:         cluster.Runtime,
 			})
 		}); err != nil {
-			log.Error(err, "create cluster")
+			log.Error(err, "create cluster failed")
 			return err
 		}
 
@@ -514,7 +522,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			msg.EventKind = msgbus.Add
 			msg.ResourceType = msgbus.Cluster
 			msg.ResourceID = cluster.ID
-			msg.Detail = fmt.Sprintf("添加了集群%s", cluster.ClusterName)
+			msg.Detail = i18n.Sprintf(context.TODO(), "add a new cluster %s into kubegems", cluster.ClusterName)
 			msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
 		})
 
@@ -598,16 +606,16 @@ func withClusterAndK8sClient(
 	// 获取clientSet
 	restconfig, clientSet, err := kube.GetKubeClient(cluster.KubeConfig)
 	if err != nil {
-		return fmt.Errorf("通过kubeconfig 获取restclient失败, %v", err)
+		return i18n.Errorf(c, "failed to build client via kubeconfig: %w", err)
 	}
 	serverSersion, err := clientSet.ServerVersion()
 	if err != nil {
-		return fmt.Errorf("获取serverInfo失败, %v", err)
+		return fmt.Errorf("failed to get the cluster APIServerInfo: %w", err)
 	}
 	ctx := c.Request.Context()
 	nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return fmt.Errorf("list node failed: %w", err)
+		return fmt.Errorf("failed to list cluster's nodes: %w", err)
 	}
 	cluster.APIServer = restconfig.Host
 	cluster.Version = serverSersion.String()

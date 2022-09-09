@@ -29,6 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
@@ -252,7 +253,7 @@ func (h *ObservabilityHandler) AddAppLogCollector(c *gin.Context) {
 				})
 			}
 			if len(req.Apps) == 0 {
-				return fmt.Errorf("must specify at least one app")
+				return i18n.Errorf(c, "can't add log collector, must specify at least one app")
 			}
 
 			podList := corev1.PodList{}
@@ -268,11 +269,11 @@ func (h *ObservabilityHandler) AddAppLogCollector(c *gin.Context) {
 			appnames := []string{}
 			for appname, applabel := range req.Apps {
 				if !slice.ContainStr(applables, applabel) {
-					return fmt.Errorf("app label %s is not valid, must be one of %v", applabel, applables)
+					return i18n.Errorf(c, "app label %s is not valid, must be one of %v", applabel, applables)
 				}
 				if status, ok := logstatus[appname]; ok {
 					if status.CollectedBy != "" {
-						return fmt.Errorf("app %s has been collected by flow %s", appname, status.CollectedBy)
+						return i18n.Errorf(c, "app %s has been collected by flow %s", appname, status.CollectedBy)
 					}
 				}
 				defaultFlow.Spec.Match = append(defaultFlow.Spec.Match, v1beta1.Match{
@@ -384,7 +385,7 @@ func (h *ObservabilityHandler) GetLoggingAlertRule(c *gin.Context) {
 		}
 	}
 	if index == -1 {
-		handlers.NotOK(c, fmt.Errorf("alert %s not found", name))
+		handlers.NotOK(c, i18n.Errorf(c, "alert rule %s not found", name))
 	}
 	handlers.OK(c, alertrules[index])
 }
@@ -412,7 +413,9 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 	}
 	req.Namespace = namespace
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "创建", "日志告警规则", req.Name)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	h.SetAuditData(c, action, module, req.Name)
 
 	h.m.Lock()
 	defer h.m.Unlock()
@@ -471,7 +474,9 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 	}
 	req.Namespace = namespace
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "更新", "日志告警规则", req.Name)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	h.SetAuditData(c, action, module, req.Name)
 
 	h.m.Lock()
 	defer h.m.Unlock()
@@ -512,7 +517,9 @@ func (h *ObservabilityHandler) DeleteLoggingAlertRule(c *gin.Context) {
 	name := c.Param("name")
 
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "删除", "日志告警规则", name)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	h.SetAuditData(c, action, module, name)
 	req := prometheus.LoggingAlertRule{
 		BaseAlertRule: prometheus.BaseAlertRule{
 			Namespace: namespace,

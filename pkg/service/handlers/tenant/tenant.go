@@ -37,6 +37,7 @@ import (
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/networking"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -205,14 +206,16 @@ func (h *TenantHandler) PostTenant(c *gin.Context) {
 	}
 	h.ModelCache().UpsertTenant(obj.ID, obj.TenantName)
 
-	h.SetAuditData(c, "创建", "租户", obj.TenantName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "tenant")
+	h.SetAuditData(c, action, module, obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Add
 		msg.ResourceType = msgbus.Tenant
 		msg.ResourceID = obj.ID
-		msg.Detail = fmt.Sprintf("创建了租户%s", obj.TenantName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "created tenant %s", obj.TenantName)
 		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
 	})
 
@@ -237,7 +240,9 @@ func (h *TenantHandler) PutTenant(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "租户", obj.TenantName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "tenant")
+	h.SetAuditData(c, action, module, obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
 	if err := c.BindJSON(&obj); err != nil {
@@ -245,7 +250,7 @@ func (h *TenantHandler) PutTenant(c *gin.Context) {
 		return
 	}
 	if strconv.Itoa(int(obj.ID)) != c.Param(PrimaryKeyName) {
-		handlers.NotOK(c, fmt.Errorf("数据ID错误"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	if err := h.GetDB().Save(&obj).Error; err != nil {
@@ -285,7 +290,9 @@ func (h *TenantHandler) DeleteTenant(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "删除", "租户", obj.TenantName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "tenant")
+	h.SetAuditData(c, action, module, obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
 	h.ModelCache().DelTenant(obj.ID)
@@ -387,7 +394,7 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 		user   models.User
 	)
 	if err := h.GetDB().Preload("ResourceQuotas").First(&tenant, c.Param(PrimaryKeyName)).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("tenant not exists"))
+		handlers.NotOK(c, i18n.Errorf(c, "the tenant does not exist"))
 		return
 	}
 	if err := c.BindJSON(&rel); err != nil {
@@ -395,11 +402,11 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 		return
 	}
 	if c.Param(PrimaryKeyName) != strconv.Itoa(int(rel.TenantID)) {
-		handlers.NotOK(c, fmt.Errorf("数据ID不匹配"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	if err := h.GetDB().Preload("SystemRole").First(&user, rel.UserID).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("用户错误"))
+		handlers.NotOK(c, i18n.Errorf(c, "the user to add is not found"))
 		return
 	}
 	if err := h.GetDB().Save(&rel).Error; err != nil {
@@ -407,14 +414,16 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 		return
 	}
 	h.ModelCache().FlushUserAuthority(&user)
-	h.SetAuditData(c, "添加", "租户成员", fmt.Sprintf("租户[%v]/用户[%v]", tenant.TenantName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "add")
+	module := i18n.Sprintf(context.TODO(), "tenant member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "tenant %s / user %s", tenant.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Add
 		msg.ResourceType = msgbus.Tenant
 		msg.ResourceID = rel.TenantID
-		msg.Detail = fmt.Sprintf("向租户%s中添加了用户%s", tenant.TenantName, user.Username)
+		msg.Detail = i18n.Sprintf(context.TODO(), "add user %s to tenant %s members as role %s", user.Username, tenant.TenantName, rel.Role)
 		msg.ToUsers.Append(rel.UserID)
 		msg.AffectedUsers.Append(rel.UserID)
 	})
@@ -440,7 +449,7 @@ func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 		user models.User
 	)
 	if err := h.GetDB().Preload("Tenant").First(&rel, "user_id = ? and tenant_id = ?", c.Param("user_id"), c.Param(PrimaryKeyName)).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("不可以修改不存在得\"用户-租户\"关系"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't modify tenant member role, the user is not a member of the tenant"))
 		return
 	}
 	if err := c.BindJSON(&rel); err != nil {
@@ -448,7 +457,7 @@ func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 		return
 	}
 	if strconv.Itoa(int(rel.UserID)) != c.Param("user_id") || strconv.Itoa(int(rel.TenantID)) != c.Param(PrimaryKeyName) {
-		handlers.NotOK(c, fmt.Errorf("请求体参数和url参数不匹配"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	if err := h.GetDB().Save(&rel).Error; err != nil {
@@ -461,14 +470,16 @@ func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 
 	h.GetDB().Preload("Tenant").First(&rel, rel.ID)
 
-	h.SetAuditData(c, "修改", "租户成员", fmt.Sprintf("租户[%v]/用户[%v]", rel.Tenant.TenantName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "modify")
+	module := i18n.Sprintf(context.TODO(), "tenant member role")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "tenant %s / user %s", rel.Tenant.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, rel.TenantID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Update
 		msg.ResourceType = msgbus.Tenant
 		msg.ResourceID = rel.TenantID
-		msg.Detail = fmt.Sprintf("将租户%s中的用户%s设置为了%s", rel.Tenant.TenantName, user.Username, rel.Role)
+		msg.Detail = i18n.Sprintf(context.TODO(), "set user %s to tenant %s members as role %s", user.Username, rel.Tenant.TenantName, rel.Role)
 		msg.ToUsers.Append(rel.UserID)
 		msg.AffectedUsers.Append(rel.UserID)
 	})
@@ -527,14 +538,16 @@ func (h *TenantHandler) DeleteTenantUser(c *gin.Context) {
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.SetAuditData(c, "删除", "租户成员", fmt.Sprintf("租户[%v]/用户[%v]", obj.TenantName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "tenant member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "tenant %s / user %s", rel.Tenant.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, rel.TenantID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Delete
 		msg.ResourceType = msgbus.Tenant
 		msg.ResourceID = rel.TenantID
-		msg.Detail = fmt.Sprintf("删除了租户%s中的用户%s", obj.TenantName, user.Username)
+		msg.Detail = i18n.Sprintf(context.TODO(), "delete user %s from tenant %s members", user.Username, rel.Tenant.TenantName)
 		msg.ToUsers.Append(rel.UserID)
 		msg.AffectedUsers.Append(rel.UserID)
 	})
@@ -641,14 +654,16 @@ func (h *TenantHandler) PostTenantProject(c *gin.Context) {
 
 	_ = h.ModelCache().UpsertProject(tenant.ID, project.ID, project.ProjectName)
 
-	h.SetAuditData(c, "创建", "项目", project.ProjectName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "project")
+	h.SetAuditData(c, action, module, project.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, project.ID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Add
 		msg.ResourceType = msgbus.Project
 		msg.ResourceID = project.ID
-		msg.Detail = fmt.Sprintf("在租户%s中创建了项目%s", tenant.TenantName, project.ProjectName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "created project %s in tenant %s", project.ProjectName, tenant.TenantName)
 		msg.ToUsers.Append(h.GetDataBase().TenantAdmins(tenant.ID)...)
 	})
 	handlers.OK(c, project)
@@ -730,7 +745,9 @@ func (h *TenantHandler) EnableTenant(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "启用", "租户", obj.TenantName)
+	action := i18n.Sprintf(context.TODO(), "enable")
+	module := i18n.Sprintf(context.TODO(), "tenant")
+	h.SetAuditData(c, action, module, obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
 	// 所有租户成员
@@ -739,7 +756,7 @@ func (h *TenantHandler) EnableTenant(c *gin.Context) {
 		msg.EventKind = msgbus.Update
 		msg.ResourceType = msgbus.Tenant
 		msg.ResourceID = obj.ID
-		msg.Detail = fmt.Sprintf("激活了租户%s", obj.TenantName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "enabled tenant %s", obj.TenantName)
 		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...).Append(tenantUsers...)
 		msg.AffectedUsers.Append(tenantUsers...)
 	})
@@ -769,7 +786,9 @@ func (h *TenantHandler) DisableTenant(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "禁用", "租户", obj.TenantName)
+	action := i18n.Sprintf(context.TODO(), "disable")
+	module := i18n.Sprintf(context.TODO(), "tenant")
+	h.SetAuditData(c, action, module, obj.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
 	// 所有租户成员
@@ -778,7 +797,7 @@ func (h *TenantHandler) DisableTenant(c *gin.Context) {
 		msg.EventKind = msgbus.Update
 		msg.ResourceType = msgbus.Tenant
 		msg.ResourceID = obj.ID
-		msg.Detail = fmt.Sprintf("禁用了租户%s", obj.TenantName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "disabled tenant %s", obj.TenantName)
 		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...).Append(tenantUsers...)
 		msg.AffectedUsers.Append(tenantUsers...)
 	})
@@ -803,7 +822,7 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 		return
 	}
 	if c.Param(PrimaryKeyName) != strconv.Itoa(int(obj.TenantID)) {
-		handlers.NotOK(c, fmt.Errorf("请求体的租户ID和路由中的租户ID不匹配"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	ctx := c.Request.Context()
@@ -820,7 +839,9 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 
 	h.GetDB().Preload("Tenant").Preload("Cluster", func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name") }).First(&obj, obj.ID)
 
-	h.SetAuditData(c, "创建", "租户集群资源限制", fmt.Sprintf("租户[%v]/集群[%v]", obj.Tenant.TenantName, obj.Cluster.ClusterName))
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "cluster resource quota")
+	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", obj.Tenant.TenantName, obj.Cluster.ClusterName))
 	h.SetExtraAuditData(c, models.ResTenant, obj.TenantID)
 
 	handlers.Created(c, obj)
@@ -934,7 +955,9 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 	// update
 	trq.Content = newreq.Content
 
-	h.SetAuditData(c, "更新", "集群租户资源限制", fmt.Sprintf("集群[%v]/租户[%v]", trq.Cluster.ClusterName, trq.Tenant.TenantName))
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "cluster resource quota")
+	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", trq.Tenant.TenantName, trq.Cluster.ClusterName))
 	h.SetExtraAuditData(c, models.ResTenant, trq.TenantID)
 
 	if e := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -981,7 +1004,9 @@ func (h *TenantHandler) DeleteTenantResourceQuota(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "删除", "集群租户资源限制", fmt.Sprintf("集群[%v]/租户[%v]", trq.Cluster.ClusterName, trq.Tenant.TenantName))
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "cluster resource quota")
+	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", trq.Tenant.TenantName, trq.Cluster.ClusterName))
 	h.SetExtraAuditData(c, models.ResTenant, trq.TenantID)
 
 	handlers.NoContent(c, nil)
@@ -1161,7 +1186,7 @@ func (h *TenantHandler) TenantStatistics(c *gin.Context) {
 		podCount          int64
 	)
 	if err := h.GetDB().Preload("ResourceQuotas.Cluster").Preload("Projects").First(&tenant, "id = ?", c.Param("tenant_id")).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("租户id %v 对应的租户不存在", c.Param("tenant_id")))
+		handlers.NotOK(c, i18n.Errorf(c, "tenant is not found"))
 		return
 	}
 
@@ -1272,7 +1297,9 @@ func (h *TenantHandler) TenantSwitch(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "租户网络隔离", tenant.TenantName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "tenant network isolation")
+	h.SetAuditData(c, action, module, tenant.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 
 	ctx := c.Request.Context()
@@ -1319,7 +1346,7 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 		"Cluster",
 		func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name, oversold_config") },
 	).Preload("TenantResourceQuotaApply").First(&quota, "tenant_id = ? and cluster_id = ?", tenantID, c.Param("cluster_id")).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("租户在当前集群不存在可以使用资源"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't create resource approval, current tenant has no resource quota on the cluster"))
 		return
 	}
 
@@ -1352,7 +1379,9 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "创建", "集群租户资源限制", fmt.Sprintf("集群[%v]/租户[%v]", quota.Cluster.ClusterName, quota.Tenant.TenantName))
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "cluster resource quota")
+	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", quota.Tenant.TenantName, quota.Cluster.ClusterName))
 	h.SetExtraAuditData(c, models.ResTenant, quota.TenantID)
 
 	// 申请消息给系统管理员和当前用户
@@ -1361,7 +1390,7 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 		msg.EventKind = msgbus.Update
 		msg.ResourceType = msgbus.TenantResourceQuota
 		msg.ResourceID = quota.ID
-		msg.Detail = fmt.Sprintf("申请调整租户%s在集群%s的资源", quota.Tenant.TenantName, quota.Cluster.ClusterName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "Apply to adjust the resources of tenant %s in cluster %s", quota.Tenant.TenantName, quota.Cluster.ClusterName)
 		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...).Append(u.GetID())
 	})
 
@@ -1430,7 +1459,7 @@ func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 	clusterid := c.Param("cluster_id")
 	cluster := models.Cluster{}
 	if err := h.GetDB().First(&cluster, clusterid).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("集群%s不存在", clusterid))
+		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are quering on is not found"))
 		return
 	}
 	ctx := c.Request.Context()
@@ -1441,7 +1470,7 @@ func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 		tenantid, _ := strconv.Atoi(tenantidStr)
 		tenant := models.Tenant{ID: uint(tenantid)}
 		if err := h.GetDB().First(&tenant).Error; err != nil {
-			handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
+			handlers.NotOK(c, i18n.Errorf(c, "the tenant you are quering in is not found"))
 			return
 		}
 		r, _ := labels.NewRequirement(gemlabels.LabelTenant, selection.In, []string{tenant.TenantName, defaultGatewayTenant})
@@ -1483,7 +1512,7 @@ func (h *TenantHandler) createGateway(ctx context.Context, cluster string, gatew
 		}, &dep)
 		// 避免与istio网关同名
 		if err == nil {
-			return fmt.Errorf("网关%s已存在", gateway.Name)
+			return i18n.Errorf(ctx, "can't create gateway %s which is already exist", gateway.Name)
 		}
 		if !kerrors.IsNotFound(err) {
 			return err
@@ -1524,7 +1553,7 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
 	cluster := models.Cluster{ID: uint(clusterid)}
 	if err := h.GetDB().First(&cluster).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
+		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are quering on is not found"))
 		return
 	}
 
@@ -1540,7 +1569,7 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 		}
 		tmp := tglist
 		if len(tmp) == 0 {
-			handlers.NotOK(c, fmt.Errorf("can't find gateway by ingressClass %s", ingressClass))
+			handlers.NotOK(c, i18n.Errorf(c, "can't find gateway by IngressClass %s", ingressClass))
 			return
 		}
 
@@ -1573,11 +1602,11 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 	tenant := models.Tenant{ID: uint(tenantid)}
 	cluster := models.Cluster{ID: uint(clusterid)}
 	if err := h.GetDB().First(&tenant).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
+		handlers.NotOK(c, i18n.Errorf(c, "the tenant you are quering in is not found"))
 		return
 	}
 	if err := h.GetDB().First(&cluster).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
+		handlers.NotOK(c, i18n.Errorf(c, "the tenant you are quering on is not found"))
 		return
 	}
 
@@ -1587,7 +1616,9 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "创建", "集群租户网关", fmt.Sprintf("集群[%v]/租户[%v]", cluster.ClusterName, tenant.TenantName))
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "cluster tenant gateway")
+	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", tenant.TenantName, cluster.ClusterName))
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 	ctx := c.Request.Context()
 
@@ -1613,7 +1644,7 @@ func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
 	cluster := models.Cluster{ID: uint(clusterid)}
 	if err := h.GetDB().First(&cluster).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
+		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are quering in is not found"))
 		return
 	}
 	tg := v1beta1.TenantGateway{}
@@ -1628,16 +1659,18 @@ func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 	auth := h.ModelCache().GetUserAuthority(u)
 	// 非管理员不能编辑默认网关
 	if tg.Name == defaultGatewayName && !auth.IsSystemAdmin() {
-		handlers.NotOK(c, fmt.Errorf("只有系统管理员能修改默认网关"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't modify the tenant gateway, it's the default tenant gateway, only system admin can modify it"))
 		return
 	}
 
-	h.SetAuditData(c, "更新", "集群租户网关", fmt.Sprintf("集群[%v]/租户[%v]", cluster.ClusterName, tg.Spec.Tenant))
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "cluster tenant gateway")
+	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", tg.Spec.Tenant, cluster.ClusterName))
 	if tg.Name != defaultGatewayName {
 		tenantid, _ := strconv.Atoi(c.Param("tenant_id"))
 		tenant := models.Tenant{ID: uint(tenantid)}
 		if err := h.GetDB().First(&tenant).Error; err != nil {
-			handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
+			handlers.NotOK(c, i18n.Errorf(c, "the tenant you are action is not found"))
 			return
 		}
 		h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
@@ -1669,20 +1702,22 @@ func (h *TenantHandler) DeleteTenantGateway(c *gin.Context) {
 	tenant := models.Tenant{ID: uint(tenantid)}
 	cluster := models.Cluster{ID: uint(clusterid)}
 	if err := h.GetDB().First(&tenant).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("租户%v不存在", tenantid))
+		handlers.NotOK(c, i18n.Errorf(c, "the tenant you are action is not found"))
 		return
 	}
 	if err := h.GetDB().First(&cluster).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("集群%v不存在", clusterid))
+		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are action is not found"))
 		return
 	}
 
 	if name == defaultGatewayName {
-		handlers.NotOK(c, fmt.Errorf("不允许删除默认网关"))
+		handlers.NotOK(c, i18n.Errorf(c, "the gateway you are deleting is a default gateway, can't delete it"))
 		return
 	}
 
-	h.SetAuditData(c, "删除", "集群租户网关", fmt.Sprintf("集群[%v]/租户[%v]", cluster.ClusterName, tenant.TenantName))
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "cluster tenant gateway")
+	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", tenant.TenantName, cluster.ClusterName))
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 
 	err := h.deleteGateway(c.Request.Context(), cluster.ClusterName, name)

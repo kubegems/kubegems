@@ -21,6 +21,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/utils/statistics"
 )
 
@@ -38,11 +39,11 @@ func (h *TenantHandler) ValidateTenantResourceQuota(ctx context.Context, cluster
 	}
 	statistics := &statistics.ClusterResourceStatistics{}
 	if err := cli.Extend().ClusterResourceStatistics(ctx, statistics); err != nil {
-		return fmt.Errorf("验证资源获取资源失败 %w", err)
+		return i18n.Errorf(ctx, "validate tenant resoure quota failed, can't get cluster resource statistics: %w", err)
 	}
 	oversoldrates := ParseOversoldConfig(clusterOversold)
 	if err := CheckOverSold(*statistics, oversoldrates, originlist, newlist); err != nil {
-		return fmt.Errorf("验证资源错误 %w", err)
+		return i18n.Errorf(ctx, "validate tenant resoure quota failed: %w", err)
 	}
 	return nil
 }

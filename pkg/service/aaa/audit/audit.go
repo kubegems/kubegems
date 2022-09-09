@@ -23,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/aaa"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -37,10 +38,10 @@ var normalActions = []string{
 }
 
 var methodMap = map[string]string{
-	http.MethodDelete: "删除",
-	http.MethodPatch:  "patch修改",
-	http.MethodPut:    "put修改",
-	http.MethodPost:   "创建",
+	http.MethodDelete: i18n.Sprintf(context.TODO(), "delete"),
+	http.MethodPatch:  i18n.Sprintf(context.TODO(), "patch"),
+	http.MethodPut:    i18n.Sprintf(context.TODO(), "put"),
+	http.MethodPost:   i18n.Sprintf(context.TODO(), "create"),
 }
 
 const (
@@ -113,19 +114,19 @@ func (audit *DefaultAuditInstance) WebsocketAuditFunc(username string, parents [
 		switch p.GetKind() {
 		case models.ResTenant:
 			tenant = p.GetName()
-			tags["租户"] = p.GetName()
+			tags["tenant"] = p.GetName()
 		case models.ResProject:
-			tags["项目"] = p.GetName()
+			tags["project"] = p.GetName()
 		case models.ResEnvironment:
-			tags["环境"] = p.GetName()
-			tags["集群"] = p.GetCluster()
+			tags["environment"] = p.GetName()
+			tags["cluster"] = p.GetCluster()
 			tags["namespace"] = p.GetNamespace()
 		}
 	}
 	module := proxyobj.Name
 	operation := proxyobj.Action
 	return func(cmd string) {
-		audit.Log(username, "执行命令", tenant, operation, module, tags, cmd, true, ip)
+		audit.Log(username, i18n.Sprintf(context.TODO(), "execute command"), tenant, operation, module, tags, cmd, true, ip)
 	}
 }
 

@@ -15,6 +15,7 @@
 package approveHandler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -23,7 +24,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	tenanthandler "kubegems.io/kubegems/pkg/service/handlers/tenant"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -79,7 +80,7 @@ func (h *ApproveHandler) ListApproves(c *gin.Context) {
 				ret = append(ret, Approve{
 					ResourceType: msgbus.TenantResourceQuota,
 					ID:           v.ID,
-					Title:        fmt.Sprintf("用户%s申请调整租户%s在集群%s的资源", v.TenantResourceQuotaApply.Username, v.Tenant.TenantName, v.Cluster.ClusterName),
+					Title:        i18n.Sprintf(c, "user %s applied to adjust the ResourceQuota of tenant %s in cluster %s", v.TenantResourceQuotaApply.Username, v.Tenant.TenantName, v.Cluster.ClusterName),
 					Content:      v.TenantResourceQuotaApply.Content,
 					TenantID:     v.TenantID,
 					TenantName:   v.Tenant.TenantName,
@@ -96,10 +97,10 @@ func (h *ApproveHandler) ListApproves(c *gin.Context) {
 	handlers.OK(c, ret)
 }
 
-// Approve 审批通过
+// Approve 批准集群资源配额申请
 // @Tags        Approve
-// @Summary     审批通过
-// @Description 审批通过
+// @Summary     批准集群资源配额申请
+// @Description 批准集群资源配额申请
 // @Accept      json
 // @Produce     json
 // @Param       id    path     uint                                 true "tenant resource quota id"
@@ -111,12 +112,12 @@ func (h *ApproveHandler) Pass(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	quota := models.TenantResourceQuota{ID: uint(id)}
 	if err := h.GetDB().Preload("TenantResourceQuotaApply").Preload("Tenant").Preload("Cluster").First(&quota).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("租户在当前集群不存在可以使用资源"))
+		handlers.NotOK(c, i18n.Errorf(c, "the tenant has no enough resources in the current cluster"))
 		return
 	}
 
 	if quota.TenantResourceQuotaApply == nil {
-		handlers.NotOK(c, fmt.Errorf("租户在当前集群没有资源申请审批"))
+		handlers.NotOK(c, i18n.Errorf(c, "the tenant has no resource application approval in the current cluster"))
 		return
 	}
 
@@ -154,24 +155,17 @@ func (h *ApproveHandler) Pass(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "通过", "集群资源申请", quota.Tenant.TenantName+"/"+quota.Cluster.ClusterName)
-
-	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
-		msg.MessageType = msgbus.Approve
-		msg.EventKind = msgbus.Update
-		msg.ResourceType = msgbus.TenantResourceQuota
-		msg.ResourceID = quota.ID
-		msg.Detail = fmt.Sprintf("通过了用户%s在租户%s中发起对集群%s的资源调整审批", targetUser.Username, quota.Tenant.TenantName, quota.Cluster.ClusterName)
-		msg.ToUsers.Append(h.GetDataBase().TenantAdmins(quota.TenantID)...).Append(targetUser.ID)
-	})
+	action := i18n.Sprintf(context.TODO(), "passed")
+	module := i18n.Sprintf(context.TODO(), "cluster resource quota adjustment application")
+	h.SetAuditData(c, action, module, quota.Tenant.TenantName+"/"+quota.Cluster.ClusterName)
 
 	handlers.OK(c, quota)
 }
 
-// Approve 审批拒绝
+// Approve 拒绝集群资源配额申请审批拒绝
 // @Tags        Approve
-// @Summary     审批拒绝
-// @Description 审批拒绝
+// @Summary     拒绝集群资源配额申请审批拒绝
+// @Description 拒绝集群资源配额申请审批拒绝
 // @Accept      json
 // @Produce     json
 // @Param       id  path     uint                                 true "id"
@@ -181,21 +175,20 @@ func (h *ApproveHandler) Pass(c *gin.Context) {
 func (h *ApproveHandler) Reject(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		handlers.NotOK(c, fmt.Errorf("申请不存在"))
+		handlers.NotOK(c, i18n.Errorf(c, "there is no cluster resource quota adjustment approval"))
 		return
 	}
 	quota := models.TenantResourceQuota{ID: uint(id)}
 	if err := h.GetDB().Preload("TenantResourceQuotaApply").Preload("Tenant").Preload("Cluster").First(&quota).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("租户在当前集群不存在可以使用资源"))
+		handlers.NotOK(c, fmt.Errorf("the tenant has no resource quota available in the current cluster"))
 		return
 	}
 
 	if quota.TenantResourceQuotaApply == nil {
-		handlers.NotOK(c, fmt.Errorf("租户在当前集群没有资源申请审批"))
+		handlers.NotOK(c, fmt.Errorf("the tenant has no resource quota approval in the current cluster"))
 		return
 	}
 
-	// 外键是SET NULL，直接删除记录即可
 	if err := h.GetDB().Delete(quota.TenantResourceQuotaApply).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -204,16 +197,9 @@ func (h *ApproveHandler) Reject(c *gin.Context) {
 	targetUser := models.User{}
 	h.GetDB().Where("username = ?", quota.TenantResourceQuotaApply.Username).First(&targetUser)
 
-	h.SetAuditData(c, "拒绝", "集群资源申请", quota.Tenant.TenantName+"/"+quota.Cluster.ClusterName)
-
-	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
-		msg.MessageType = msgbus.Approve
-		msg.EventKind = msgbus.Update
-		msg.ResourceType = msgbus.TenantResourceQuota
-		msg.ResourceID = quota.ID
-		msg.Detail = fmt.Sprintf("拒绝了用户%s在租户%s中发起对集群%s的资源调整审批", targetUser.Username, quota.Tenant.TenantName, quota.Cluster.ClusterName)
-		msg.ToUsers.Append(h.GetDataBase().TenantAdmins(quota.TenantID)...).Append(targetUser.ID)
-	})
+	action := i18n.Sprintf(context.TODO(), "rejected")
+	module := i18n.Sprintf(context.TODO(), "cluster resource quota adjustment application")
+	h.SetAuditData(c, action, module, quota.Tenant.TenantName+"/"+quota.Cluster.ClusterName)
 
 	handlers.OK(c, quota)
 }

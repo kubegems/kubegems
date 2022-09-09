@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/networking"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -149,7 +150,9 @@ func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "创建", "虚拟空间", vs.VirtualSpaceName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "virtual space")
+	h.SetAuditData(c, action, module, vs.VirtualSpaceName)
 	h.SetExtraAuditData(c, models.ResVirtualSpace, vs.ID)
 
 	u, _ := h.GetContextUser(c)
@@ -167,7 +170,7 @@ func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 		msg.EventKind = msgbus.Add
 		msg.ResourceType = msgbus.VirtualSpace
 		msg.ResourceID = vs.ID
-		msg.Detail = fmt.Sprintf("创建了虚拟空间%s", vs.VirtualSpaceName)
+		msg.Detail = i18n.Sprintf(c, "created virtual space %s", vs.VirtualSpaceName)
 		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
 	})
 
@@ -192,7 +195,9 @@ func (h *VirtualSpaceHandler) PutVirtualSpace(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "虚拟空间", obj.VirtualSpaceName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "virtual space")
+	h.SetAuditData(c, action, module, obj.VirtualSpaceName)
 	h.SetExtraAuditData(c, models.ResVirtualSpace, obj.ID)
 
 	if err := c.BindJSON(&obj); err != nil {
@@ -200,7 +205,7 @@ func (h *VirtualSpaceHandler) PutVirtualSpace(c *gin.Context) {
 		return
 	}
 	if strconv.Itoa(int(obj.ID)) != c.Param(PrimaryKeyName) {
-		handlers.NotOK(c, fmt.Errorf("数据ID错误"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	if err := h.GetDB().Save(&obj).Error; err != nil {
@@ -230,11 +235,14 @@ func (h *VirtualSpaceHandler) EnableOrDisableVirtualSpace(c *gin.Context) {
 	}
 
 	enable, _ := strconv.ParseBool(c.Query("enable"))
+	module := i18n.Sprintf(context.TODO(), "virtual space")
+	action := ""
 	if enable {
-		h.SetAuditData(c, "激活", "虚拟空间", obj.VirtualSpaceName)
+		action = i18n.Sprintf(context.TODO(), "enable")
 	} else {
-		h.SetAuditData(c, "禁用", "虚拟空间", obj.VirtualSpaceName)
+		action = i18n.Sprintf(context.TODO(), "disable")
 	}
+	h.SetAuditData(c, action, module, obj.VirtualSpaceName)
 	h.SetExtraAuditData(c, models.ResVirtualSpace, obj.ID)
 
 	obj.IsActive = enable
@@ -263,13 +271,19 @@ func (h *VirtualSpaceHandler) DeleteVirtualSpace(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "删除", "虚拟空间", vs.VirtualSpaceName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "virtual space")
+	h.SetAuditData(c, action, module, vs.VirtualSpaceName)
 	h.SetExtraAuditData(c, models.ResVirtualSpace, vs.ID)
 
 	// 环境外键ONDELETE: SET NULL
 	// 用户外键为级联删除，不需要校验
 	if len(vs.Environments) > 0 {
-		handlers.NotOK(c, fmt.Errorf("虚拟空间%s还有关联的环境", vs.VirtualSpaceName))
+		handlers.NotOK(c, i18n.Errorf(
+			c,
+			"can't delete virtual space %s due to there are environments related to this virtual space, may need to disassociate them first",
+			vs.VirtualSpaceName,
+		))
 		return
 	}
 	if err := h.GetDB().Delete(&vs).Error; err != nil {
@@ -283,7 +297,7 @@ func (h *VirtualSpaceHandler) DeleteVirtualSpace(c *gin.Context) {
 		msg.EventKind = msgbus.Delete
 		msg.ResourceType = msgbus.VirtualSpace
 		msg.ResourceID = vs.ID
-		msg.Detail = fmt.Sprintf("删除了虚拟空间%s", vs.VirtualSpaceName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "deleted virtual space %s", vs.VirtualSpaceName)
 		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
 	})
 
@@ -349,7 +363,11 @@ func (h *VirtualSpaceHandler) AddEnvironment(c *gin.Context) {
 		return
 	}
 	if env.VirtualSpaceID != nil {
-		handlers.NotOK(c, fmt.Errorf("环境%s已加入其他虚拟空间", env.EnvironmentName))
+		handlers.NotOK(c, i18n.Errorf(
+			c,
+			"can't relate environment %s to this virtual space, the environment has related to another virtual space. an environment can only be related to a single virtual space",
+			env.EnvironmentName,
+		))
 		return
 	}
 
@@ -657,7 +675,10 @@ func (h *VirtualSpaceHandler) PostVirtualSpaceUser(c *gin.Context) {
 	h.ModelCache().FlushUserAuthority(&user)
 
 	h.GetDB().Preload("VirtualSpace").First(&rel, rel.ID)
-	h.SetAuditData(c, "添加", "虚拟空间成员", fmt.Sprintf("虚拟空间[%v]/成员[%v]", rel.VirtualSpace.VirtualSpaceName, user.Username))
+
+	action := i18n.Sprintf(context.TODO(), "add")
+	module := i18n.Sprintf(context.TODO(), "virtual space member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "virtual space %s / user %s", rel.VirtualSpace.VirtualSpaceName, user.Username))
 	h.SetExtraAuditData(c, models.ResVirtualSpace, rel.VirtualSpaceID)
 	handlers.OK(c, rel)
 }
@@ -688,7 +709,9 @@ func (h *VirtualSpaceHandler) DeleteVirtualSpaceUser(c *gin.Context) {
 	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.SetAuditData(c, "删除", "虚拟空间成员", fmt.Sprintf("虚拟空间[%v]/成员[%v]", rel.VirtualSpace.VirtualSpaceName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "virtual space member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "virtual space %s / user %s", rel.VirtualSpace.VirtualSpaceName, user.Username))
 	h.SetExtraAuditData(c, models.ResVirtualSpace, rel.VirtualSpaceID)
 
 	handlers.OK(c, nil)
@@ -785,7 +808,7 @@ func (h *VirtualSpaceHandler) ensureEnvirment(ctx context.Context, env *models.E
 	remove := !exist
 	// 将环境添加至虚拟空间时，需要将同个集群下相同虚拟空间的空间设置sidecar连通
 	if env.Cluster == nil {
-		return errors.New("invalid environment, no cluster found")
+		return i18n.Errorf(ctx, "invalid environment %s, in which a related cluster does not exist, may the related cluster was deleted", env.EnvironmentName)
 	}
 
 	cluster := env.Cluster.ClusterName
@@ -857,13 +880,6 @@ var virtualdomainInjectTemplateAnnotationPatchTemplate = string(`[
     }
 ]`)
 
-var virtualdomainUninjectTemplateAnnotationPatch = []byte(`[
-    {
-        "op": "remove",
-        "path": "/metadata/annotations/networking.kubegems.io~1virtualdomain"
-    }
-]`)
-
 // InjectIstioSidecar 注入虚拟域名
 // @Tags        VirtualSpace
 // @Summary     设置虚拟域名
@@ -894,7 +910,7 @@ func (h *VirtualSpaceHandler) InjectVirtualDomain(c *gin.Context) {
 		)
 		if err := cli.Patch(ctx, svc, patch); err != nil {
 			if apierrors.IsNotFound(err) {
-				return nil, fmt.Errorf("负载没有设置service: %w", err)
+				return nil, i18n.Errorf(ctx, "workload has no K8S Service: %w", err)
 			}
 			return nil, err
 		}
@@ -920,7 +936,7 @@ func (h *VirtualSpaceHandler) environmentProcess(c *gin.Context, decodebody inte
 		return
 	}
 	if env.VirtualSpaceID == nil || strconv.Itoa(int(*env.VirtualSpaceID)) != c.Param("virtualspace_id") {
-		handlers.NotOK(c, fmt.Errorf("环境%s不是该虚拟空间成员", env.EnvironmentName))
+		handlers.NotOK(c, i18n.Errorf(c, "invalid data, the environment %s related virtual space is mismatched with the virtual space you are action", env.EnvironmentName))
 		return
 	}
 

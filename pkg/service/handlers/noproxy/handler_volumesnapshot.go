@@ -17,7 +17,6 @@ package noproxy
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/storage"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -70,7 +70,9 @@ func (vh *VolumeSnapshotHandler) Snapshot(c *gin.Context) {
 	}
 
 	vh.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	vh.SetAuditData(c, "创建", "持久卷快照", req.Name)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "volume snapshot")
+	vh.SetAuditData(c, action, module, req.Name)
 
 	err := vh.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
 		pvc := &corev1.PersistentVolumeClaim{
@@ -104,7 +106,7 @@ func (vh *VolumeSnapshotHandler) Snapshot(c *gin.Context) {
 			}
 		}
 		if volumeSnapshotClassName == nil {
-			return fmt.Errorf("unable to find VolumeSnapshotClass of pvc %s Provisioner=%s", pvc.GetName(), storageclass.Provisioner)
+			return i18n.Errorf(c, "unable to find VolumeSnapshotClass of pvc %s Provisioner=%s", pvc.GetName(), storageclass.Provisioner)
 		}
 
 		pvcbytes, err := json.Marshal(pvc)

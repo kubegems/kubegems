@@ -15,6 +15,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -30,6 +31,7 @@ import (
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/models/validate"
 )
@@ -129,7 +131,7 @@ func NotOK(c *gin.Context, err error) {
 	}
 
 	if models.IsNotFound(err) {
-		msg := "没有找到该对象 或者 该对象的上级关联对象(404)"
+		msg := i18n.Sprintf(context.TODO(), "the object or the parent object is not found")
 		c.AbortWithStatusJSON(http.StatusNotFound, errResponse(msg))
 		return
 	}
@@ -264,11 +266,11 @@ func (q *URLQuery) convert() error {
 	var err error
 	q.page, err = strconv.ParseInt(q.Page, 10, 64)
 	if err != nil {
-		return fmt.Errorf("页错误")
+		return i18n.Errorf(context.TODO(), "invalid page number query parameter")
 	}
 	q.size, err = strconv.ParseInt(q.Size, 10, 64)
 	if err != nil {
-		return fmt.Errorf("页size错误")
+		return i18n.Errorf(context.TODO(), "invalid page size query parameter")
 	}
 	if q.page <= 0 {
 		q.page = 1

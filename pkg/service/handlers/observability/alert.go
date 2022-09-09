@@ -16,7 +16,6 @@ package observability
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -29,6 +28,7 @@ import (
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"gorm.io/datatypes"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
@@ -52,7 +52,9 @@ func (h *ObservabilityHandler) DisableAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	name := c.Param("name")
-	h.SetAuditData(c, "禁用", "日志告警规则", name)
+	action := i18n.Sprintf(context.TODO(), "disable")
+	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	h.SetAuditData(c, action, module, name)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
@@ -80,7 +82,9 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	name := c.Param("name")
-	h.SetAuditData(c, "启用", "日志告警规则", name)
+	action := i18n.Sprintf(context.TODO(), "enable")
+	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	h.SetAuditData(c, action, module, name)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
@@ -137,7 +141,7 @@ func getSilence(ctx context.Context, namespace, alertName string, cli agents.Cli
 		return nil, nil
 	}
 	if len(actives) > 1 {
-		return nil, errors.New("too many silences")
+		return nil, i18n.Errorf(ctx, "some error happend, more than one silence rule founded, please contact admin")
 	}
 
 	return actives[0], nil
@@ -244,12 +248,12 @@ func (h *ObservabilityHandler) AlertHistory(c *gin.Context) {
 	// select max(status) from alert_messages
 	// output: resolved
 	tmpQuery := h.GetDB().Table("alert_messages").
-		Select(`alert_messages.fingerprint, 
+		Select(`alert_messages.fingerprint,
 			starts_at,
-			max(ends_at) as ends_at, 
-			max(value) as value, 
-			max(message) as message, 
-			max(created_at) as created_at, 
+			max(ends_at) as ends_at,
+			max(value) as value,
+			max(message) as message,
+			max(created_at) as created_at,
 			max(status) as status,
 			max(labels) as labels,
 			count(created_at) as count`).
