@@ -44,7 +44,7 @@ type PluginVersion struct {
 	Requirements     string                      `json:"requirements,omitempty"` // dependecies requirements
 	Message          string                      `json:"message,omitempty"`
 	Values           pluginsv1beta1.Values       `json:"values,omitempty"`
-	Schema           string                      `json:"schema,omitempty"`
+	Schema           string                      `json:"schema"`
 	ValuesFrom       []pluginsv1beta1.ValuesFrom `json:"valuesFrom,omitempty"`
 }
 
@@ -165,15 +165,6 @@ func IsPluginChart(cv *repo.ChartVersion) bool {
 	return b
 }
 
-func FindUpgradeable(availables []PluginVersion, installed map[string]PluginVersion) *PluginVersion {
-	for _, available := range availables {
-		if CheckDependecies(available.Requirements, installed) == nil {
-			return &available
-		}
-	}
-	return nil
-}
-
 type ErrorList []error
 
 func (list ErrorList) Error() string {
@@ -256,4 +247,16 @@ func ParseRequirements(str string) map[string]*semver.Constraints {
 		}
 	}
 	return requirements
+}
+
+func SemVersionBiggerThan(a, b string) bool {
+	aver, err := semver.NewVersion(a)
+	if err != nil {
+		return false
+	}
+	bver, err := semver.NewVersion(a)
+	if err != nil {
+		return false
+	}
+	return aver.GreaterThan(bver)
 }

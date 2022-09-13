@@ -323,7 +323,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  address: ZmlsZTovLy9hcHAvcGx1Z2lucw==
+  address: ZmlsZTovLy9hcHAvcGx1Z2lucy9jaGFydHMua3ViZWdlbXMuaW8=
 kind: Secret
 metadata:
   annotations:

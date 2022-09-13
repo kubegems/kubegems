@@ -20,10 +20,16 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path"
+	"path/filepath"
 
 	"helm.sh/helm/v3/pkg/repo"
 	"sigs.k8s.io/yaml"
 )
+
+const IndexFileName = "index.yaml"
+
+const FileProtocolSchema = "file"
 
 func LoadIndex(ctx context.Context, uri string) (*repo.IndexFile, error) {
 	u, err := url.ParseRequestURI(uri)
@@ -33,8 +39,8 @@ func LoadIndex(ctx context.Context, uri string) (*repo.IndexFile, error) {
 	switch u.Scheme {
 	case "http", "https":
 		return LoadRemoteIndex(ctx, uri)
-	case "file":
-		return LoadLocalIndex(uri)
+	case FileProtocolSchema:
+		return LoadLocalIndex(filepath.Join(u.Path, IndexFileName))
 	default:
 		return nil, fmt.Errorf("unsupported uri %s", uri)
 	}
@@ -49,7 +55,14 @@ func LoadLocalIndex(path string) (*repo.IndexFile, error) {
 }
 
 func LoadRemoteIndex(ctx context.Context, repo string) (*repo.IndexFile, error) {
-	resp, err := HTTPGet(ctx, repo+"/index.yaml")
+	repou, err := url.Parse(repo)
+	if err != nil {
+		return nil, err
+	}
+	repou.Path = path.Join(repou.Path, IndexFileName)
+	repou.RawPath = ""
+
+	resp, err := HTTPGet(ctx, repou.String())
 	if err != nil {
 		return nil, err
 	}

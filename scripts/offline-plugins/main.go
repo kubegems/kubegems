@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -43,6 +44,11 @@ func main() {
 var _ = pluginv1beta1.AddToScheme(scheme.Scheme)
 
 func DownloadLatestCharts(ctx context.Context, repoaddr string, into string, kubegemsVersion string) error {
+	repourl, err := url.Parse(repoaddr)
+	if err != nil {
+		return err
+	}
+
 	applier := bundle.NewDefaultApply(nil, nil, &bundle.Options{CacheDir: into})
 
 	pluginrepo := gemsplugin.Repository{Address: repoaddr}
@@ -109,11 +115,13 @@ func DownloadLatestCharts(ctx context.Context, repoaddr string, into string, kub
 		}
 	}
 	// build index
-	i, err := repo.IndexDirectory(into, "file://"+into)
+	// plugin cache helms in {hostname}/{charts}
+	indexpath := filepath.Join(into, repourl.Host)
+	log.Printf("generating helm repo index.yaml under %s", indexpath)
+	i, err := repo.IndexDirectory(indexpath, "")
 	if err != nil {
 		return err
 	}
 	i.SortEntries()
-	out := filepath.Join(into, "index.yaml")
-	return i.WriteFile(out, helm.DefaultFileMode)
+	return i.WriteFile(filepath.Join(indexpath, "index.yaml"), helm.DefaultFileMode)
 }

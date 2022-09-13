@@ -107,7 +107,8 @@ func ApplyChart(ctx context.Context, cfg *rest.Config, rlsname, namespace string
 	client.ResetValues = true
 	// client.MaxHistory = 5  // there is a bug,do not use it.
 
-	removeHistories(ctx, helmcfg.Releases, rlsname, 2)
+	const historiesLimit = 2
+	removeHistories(ctx, helmcfg.Releases, rlsname, historiesLimit)
 
 	return client.RunWithContext(ctx, rlsname, chart, values)
 }

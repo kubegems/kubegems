@@ -68,11 +68,7 @@ func Download(ctx context.Context, repo, name, version, path, cacheDir string) (
 		cacheDir = filepath.Join(home, ".cache", "kubegems", "bundles")
 	}
 	// from cache
-	repou, err := url.Parse(repo)
-	if err != nil {
-		return "", fmt.Errorf("invalid repo: %w", err)
-	}
-	perRepoCacheDir := filepath.Join(cacheDir, repou.Hostname())
+	perRepoCacheDir := PerRepoCacheDir(repo, cacheDir)
 
 	basename := name
 	if version != "" {
@@ -109,7 +105,23 @@ func Download(ctx context.Context, repo, name, version, path, cacheDir string) (
 		return cacheIn, DownloadTgz(ctx, repo, path, cacheIn)
 	}
 	// is helm ? default helm
-	return DownloadHelm(ctx, repo, name, version, cacheIn)
+	chartpath, _, err := helm.Download(ctx, repo, name, version, filepath.Dir(cacheIn))
+	if err != nil {
+		return chartpath, err
+	}
+	return chartpath, err
+}
+
+func PerRepoCacheDir(repo string, basedir string) string {
+	repou, err := url.Parse(repo)
+	if err != nil {
+		return basedir
+	}
+	if repou.Scheme == "file" {
+		return filepath.Join(basedir, filepath.Base(repou.Path))
+	} else {
+		return filepath.Join(basedir, repou.Hostname())
+	}
 }
 
 func DownloadZip(ctx context.Context, uri, subpath, into string) error {
@@ -293,17 +305,6 @@ func DownloadGit(ctx context.Context, cloneurl string, rev string, subpath, into
 		}
 		return os.WriteFile(filename, []byte(raw), fmode)
 	})
-}
-
-func DownloadHelm(ctx context.Context, repo, name, version, intodir string) (string, error) {
-	chartPath, _, err := helm.LoadAndUpdateChart(ctx, repo, name, version)
-	if err != nil {
-		return "", err
-	}
-	ext := filepath.Ext(chartPath)
-	intofile := intodir + ext
-	os.MkdirAll(filepath.Dir(intofile), defaultDirMode)
-	return intofile, os.Rename(chartPath, intofile)
 }
 
 func UnTarGz(r io.Reader, subpath, into string) error {

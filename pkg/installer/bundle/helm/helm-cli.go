@@ -16,9 +16,12 @@ package helm
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -34,14 +37,38 @@ type ApplyOptions struct {
 	Version string
 }
 
+// Download helm chart into cachedir saved as {name}-{version}.tgz file.
+func Download(ctx context.Context, repo, name, version, cachedir string) (string, *chart.Chart, error) {
+	// check exists
+	filename := filepath.Join(cachedir, name+"-"+version+".tgz")
+	if _, err := os.Stat(filename); err == nil {
+		chart, err := loader.Load(filename)
+		if err != nil {
+			return filename, nil, err
+		}
+		return filename, chart, nil
+	}
+	chartPath, chart, err := LoadAndUpdateChart(ctx, repo, name, version)
+	if err != nil {
+		return "", nil, err
+	}
+	intofile, err := filepath.Abs(filepath.Join(cachedir, filepath.Base(chartPath)))
+	if err != nil {
+		return "", nil, err
+	}
+	if chartPath == intofile {
+		return chartPath, chart, nil
+	}
+	os.MkdirAll(filepath.Dir(intofile), DefaultDirectoryMode)
+	return chartPath, chart, os.Rename(chartPath, intofile)
+}
+
 // name is the name of the chart
 // repo is the url of the chart repository,eg: http://charts.example.com
 // if repopath is not empty,download it from repo and set chartNameOrPath to repo/repopath.
 // LoadChart loads the chart from the repository
 func LoadAndUpdateChart(ctx context.Context, repo, nameOrPath, version string) (string, *chart.Chart, error) {
-	chartPathOptions := action.ChartPathOptions{RepoURL: repo, Version: version}
-	settings := cli.New()
-	chartPath, err := chartPathOptions.LocateChart(nameOrPath, settings)
+	chartPath, err := LocateChartSuper(ctx, repo, nameOrPath, version)
 	if err != nil {
 		return "", nil, err
 	}
@@ -51,10 +78,10 @@ func LoadAndUpdateChart(ctx context.Context, repo, nameOrPath, version string) (
 	}
 	// dependencies update
 	if err := action.CheckDependencies(chart, chart.Metadata.Dependencies); err != nil {
+		settings := cli.New()
 		man := &downloader.Manager{
 			Out:              log.Default().Writer(),
 			ChartPath:        chartPath,
-			Keyring:          chartPathOptions.Keyring,
 			SkipUpdate:       false,
 			Getters:          getter.All(settings),
 			RepositoryConfig: settings.RepositoryConfig,
@@ -72,17 +99,34 @@ func LoadAndUpdateChart(ctx context.Context, repo, nameOrPath, version string) (
 	return chartPath, chart, nil
 }
 
-func Download(ctx context.Context, repo, name, version, cachedir string) (*chart.Chart, error) {
-	// check exists
-	filename := filepath.Join(cachedir, name+"-"+version+".tgz")
-	if _, err := os.Stat(filename); err == nil {
-		return loader.Load(filename)
-	}
-	chartPath, chart, err := LoadAndUpdateChart(ctx, repo, name, version)
+func LocateChartSuper(ctx context.Context, repoURL, name, version string) (string, error) {
+	repou, err := url.Parse(repoURL)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	os.MkdirAll(cachedir, DefaultDirectoryMode)
-	intofile := filepath.Join(cachedir, filepath.Base(chartPath))
-	return chart, os.Rename(chartPath, intofile)
+	if repou.Scheme != FileProtocolSchema {
+		return (&action.ChartPathOptions{RepoURL: repoURL, Version: version}).LocateChart(name, cli.New())
+	}
+	// handle file:// schema
+	index, err := LoadIndex(ctx, repoURL)
+	if err != nil {
+		return "", err
+	}
+	cv, err := index.Get(name, version)
+	if err != nil {
+		return "", err
+	}
+	if len(cv.URLs) == 0 {
+		return "", fmt.Errorf("%v has no downloadable URLs", cv)
+	}
+
+	downloadu, err := url.Parse(cv.URLs[0])
+	if err != nil {
+		return "", fmt.Errorf("parse chart download url: %w", err)
+	}
+
+	if !strings.HasSuffix(repou.Path, "/") {
+		repou.Path += "/"
+	}
+	return repou.ResolveReference(downloadu).Path, nil
 }

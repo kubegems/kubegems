@@ -18,12 +18,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"golang.org/x/exp/slices"
 	"golang.org/x/mod/semver"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
+	"kubegems.io/kubegems/pkg/installer/bundle"
 	"kubegems.io/kubegems/pkg/installer/bundle/helm"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -142,7 +144,9 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 		if version == "" || pv.Version == version {
 			// find schema
 			if withSchema {
-				m.fillSchema(ctx, &pv)
+				if err := m.fillSchema(ctx, &pv); err != nil {
+					logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", pv.Name, "version", pv.Version)
+				}
 			}
 			return &pv, nil
 		}
@@ -150,15 +154,18 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 	return nil, fmt.Errorf("plugin %s version %s not found", name, version)
 }
 
-func (m *PluginManager) fillSchema(ctx context.Context, pv *PluginVersion) {
+func (m *PluginManager) fillSchema(ctx context.Context, pv *PluginVersion) error {
 	if m.CacheDir == "" {
 		m.CacheDir = DefaultPluginsDir
 	}
-	chart, err := helm.Download(ctx, pv.Repository, pv.Name, pv.Version, m.CacheDir)
+	// we cache in a dir same with plugins use.
+	cachedir := bundle.PerRepoCacheDir(pv.Repository, m.CacheDir)
+	_, chart, err := helm.Download(ctx, pv.Repository, pv.Name, pv.Version, cachedir)
 	if err != nil {
-		// return nil, err
+		return err
 	} else {
 		pv.Schema = string(chart.Schema)
+		return nil
 	}
 }
 
@@ -195,7 +202,7 @@ func (m *PluginManager) ListPlugins(ctx context.Context) (map[string]Plugin, err
 			p.Installed = &installed
 			// remove from map we added it to plugin.
 			delete(installversions, name)
-			p.Upgradeable = FindUpgradeable(available, installversions) // check upgrade
+			p.Upgradeable = FindUpgradeable(available, installed, installversions) // check upgrade
 			fillmaindesc(&p, installed)
 		} else {
 			fillmaindesc(&p, available[0])
@@ -213,6 +220,19 @@ func (m *PluginManager) ListPlugins(ctx context.Context) (map[string]Plugin, err
 		plugins[name] = p
 	}
 	return plugins, nil
+}
+
+func FindUpgradeable(availables []PluginVersion, installed PluginVersion, allinstall map[string]PluginVersion) *PluginVersion {
+	for _, available := range availables {
+		if !SemVersionBiggerThan(available.Version, installed.Version) {
+			continue
+		}
+		// meet all requirements
+		if CheckDependecies(available.Requirements, allinstall) == nil {
+			return &available
+		}
+	}
+	return nil
 }
 
 func (m *PluginManager) GetInstalled(ctx context.Context, name string) (*PluginVersion, error) {

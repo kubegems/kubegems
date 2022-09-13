@@ -429,4 +429,4 @@ repositories:
   - name: kubegems
     address: https://charts.kubegems.io/kubegems
   - name: local
-    address: file:///app/plugins
+    address: file:///app/plugins/charts.kubegems.io
