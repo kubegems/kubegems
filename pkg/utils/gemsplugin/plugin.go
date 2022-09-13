@@ -174,6 +174,14 @@ func (m *PluginManager) ListPlugins(ctx context.Context) (map[string]Plugin, err
 		return nil, err
 	}
 
+	fillmaindesc := func(p *Plugin, pv PluginVersion) {
+		p.Description = pv.Description
+		p.MainCategory = pv.MainCategory
+		p.Category = pv.Category
+		p.Required = pv.Required
+		p.Namespace = pv.Namespace
+	}
+
 	plugins := map[string]Plugin{}
 	for name, available := range avaliableversions {
 		if len(available) == 0 {
@@ -183,34 +191,26 @@ func (m *PluginManager) ListPlugins(ctx context.Context) (map[string]Plugin, err
 			Name:      name,
 			Available: available,
 		}
-		latestversion := available[0]
 		if installed, ok := installversions[name]; ok {
 			p.Installed = &installed
 			// remove from map we added it to plugin.
 			delete(installversions, name)
-			// check upgrade
-			if semver.Compare(installed.Version, latestversion.Version) < -1 {
-				p.Upgradeable = &latestversion
-			}
+			p.Upgradeable = FindUpgradeable(available, installversions) // check upgrade
+			fillmaindesc(&p, installed)
+		} else {
+			fillmaindesc(&p, available[0])
 		}
-		p.Description = latestversion.Description
-		p.MainCategory = latestversion.MainCategory
-		p.Category = latestversion.Category
-		p.Required = latestversion.Required
-		p.Namespace = latestversion.Namespace
 		plugins[name] = p
 	}
-
 	// installed but not in remotes
 	for name, val := range installversions {
 		installed := val
-		plugins[name] = Plugin{
-			Name:         name,
-			Installed:    &installed,
-			MainCategory: installed.MainCategory,
-			Category:     installed.Category,
-			Description:  installed.Description,
+		p := Plugin{
+			Name:      name,
+			Installed: &installed,
 		}
+		fillmaindesc(&p, installed)
+		plugins[name] = p
 	}
 	return plugins, nil
 }

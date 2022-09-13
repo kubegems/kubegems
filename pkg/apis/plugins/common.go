@@ -43,6 +43,10 @@ const (
 
 	// json format string to store plugin infos
 	AnnotationPluginInfo = "plugins.kubegems.io/plugin-info"
+
+	// required dependecies
+	// example: foo > 1.0.0,bar = 1.2.0,kubegems ^ 1.20.0
+	AnnotationRequirements = "plugins.kubegems.io/requirements"
 )
 
 const (

@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/Xuanwo/go-locale v1.1.0
 	github.com/alicebob/miniredis/v2 v2.21.0
@@ -123,7 +124,6 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect

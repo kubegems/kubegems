@@ -16,9 +16,11 @@ package gemsplugin
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"helm.sh/helm/v3/pkg/repo"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
@@ -39,6 +41,7 @@ type PluginVersion struct {
 	Version          string                      `json:"version,omitempty"`
 	Healthy          bool                        `json:"healthy,omitempty"`
 	Required         bool                        `json:"required,omitempty"`
+	Requirements     string                      `json:"requirements,omitempty"` // dependecies requirements
 	Message          string                      `json:"message,omitempty"`
 	Values           pluginsv1beta1.Values       `json:"values,omitempty"`
 	Schema           string                      `json:"schema,omitempty"`
@@ -148,6 +151,7 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		Category:         cate,
 		ValuesFrom:       valsFrom,
 		Required:         required,
+		Requirements:     annotations[pluginscommon.AnnotationRequirements],
 		HelathCheck:      annotations[pluginscommon.AnnotationHealthCheck],
 	}
 }
@@ -159,4 +163,76 @@ func IsPluginChart(cv *repo.ChartVersion) bool {
 	}
 	b, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationIsPlugin])
 	return b
+}
+
+func FindUpgradeable(availables []PluginVersion, installed map[string]PluginVersion) *PluginVersion {
+	for _, available := range availables {
+		if CheckDependecies(available.Requirements, installed) == nil {
+			return &available
+		}
+	}
+	return nil
+}
+
+type ErrorList []error
+
+func (list ErrorList) Error() string {
+	msg := ""
+	for _, item := range list {
+		msg += item.Error() + ";"
+	}
+	return msg
+}
+
+func CheckDependecies(requirements string, installs map[string]PluginVersion) error {
+	reqs := ParseRequirements(requirements)
+	var errs ErrorList
+	for _, req := range reqs {
+		constraint, err := semver.NewConstraint(req.Constraint)
+		if err != nil {
+			continue
+		}
+		installed, ok := installs[req.Name]
+		if !ok {
+			errs = append(errs, fmt.Errorf("%s not installed,require: %s", req.Name, req.Constraint))
+			continue
+		}
+		ver, err := semver.NewVersion(installed.Version)
+		if err != nil {
+			continue
+		}
+		if !constraint.Check(ver) {
+			errs = append(errs, fmt.Errorf("%s not meet,require: %s", req.Name, req.Constraint))
+		}
+	}
+	if len(errs) != 0 {
+		return errs
+	}
+	return nil
+}
+
+type Requirement struct {
+	Name       string
+	Constraint string
+}
+
+// ParseRequirements
+func ParseRequirements(str string) []Requirement {
+	requirements := []Requirement{}
+	// nolint: gomnd
+	for _, req := range strings.Split(str, ",") {
+		if req == "" {
+			continue
+		}
+		splites := strings.SplitN(req, " ", 2)
+		switch len(splites) {
+		case 1:
+			requirements = append(requirements, Requirement{Name: splites[0]})
+		case 2:
+			requirements = append(requirements, Requirement{Name: splites[0], Constraint: splites[1]})
+		default:
+			continue
+		}
+	}
+	return requirements
 }
