@@ -184,17 +184,30 @@ func (list ErrorList) Error() string {
 	return msg
 }
 
+func CheckDependecy(requirements string, exist PluginVersion) error {
+	reqs := ParseRequirements(requirements)
+	if req, ok := reqs[exist.Name]; ok {
+		existver, err := semver.NewVersion(exist.Version)
+		if err != nil {
+			// we cant check version so adopt any.
+			return nil
+		}
+		if !req.Check(existver) {
+			return fmt.Errorf("version not matched: %s", exist.Version)
+		}
+		return nil
+	}
+	// not required
+	return nil
+}
+
 func CheckDependecies(requirements string, installs map[string]PluginVersion) error {
 	reqs := ParseRequirements(requirements)
 	var errs ErrorList
-	for _, req := range reqs {
-		constraint, err := semver.NewConstraint(req.Constraint)
-		if err != nil {
-			continue
-		}
-		installed, ok := installs[req.Name]
+	for name, constraint := range reqs {
+		installed, ok := installs[name]
 		if !ok {
-			errs = append(errs, fmt.Errorf("%s not installed,require: %s", req.Name, req.Constraint))
+			errs = append(errs, fmt.Errorf("%s not installed,require: %s", name, constraint))
 			continue
 		}
 		ver, err := semver.NewVersion(installed.Version)
@@ -202,7 +215,7 @@ func CheckDependecies(requirements string, installs map[string]PluginVersion) er
 			continue
 		}
 		if !constraint.Check(ver) {
-			errs = append(errs, fmt.Errorf("%s not meet,require: %s", req.Name, req.Constraint))
+			errs = append(errs, fmt.Errorf("%s not meet,require: %s", name, constraint))
 		}
 	}
 	if len(errs) != 0 {
@@ -217,8 +230,8 @@ type Requirement struct {
 }
 
 // ParseRequirements
-func ParseRequirements(str string) []Requirement {
-	requirements := []Requirement{}
+func ParseRequirements(str string) map[string]*semver.Constraints {
+	requirements := map[string]*semver.Constraints{}
 	// nolint: gomnd
 	for _, req := range strings.Split(str, ",") {
 		if req == "" {
@@ -227,9 +240,17 @@ func ParseRequirements(str string) []Requirement {
 		splites := strings.SplitN(req, " ", 2)
 		switch len(splites) {
 		case 1:
-			requirements = append(requirements, Requirement{Name: splites[0]})
+			constraint, err := semver.NewConstraint("")
+			if err != nil {
+				continue
+			}
+			requirements[splites[0]] = constraint
 		case 2:
-			requirements = append(requirements, Requirement{Name: splites[0], Constraint: splites[1]})
+			constraint, err := semver.NewConstraint(splites[1])
+			if err != nil {
+				continue
+			}
+			requirements[splites[0]] = constraint
 		default:
 			continue
 		}

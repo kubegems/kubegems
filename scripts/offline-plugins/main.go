@@ -19,10 +19,14 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
+	"strings"
 
+	"helm.sh/helm/v3/pkg/repo"
 	"k8s.io/client-go/kubernetes/scheme"
 	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/bundle"
+	"kubegems.io/kubegems/pkg/installer/bundle/helm"
 	"kubegems.io/kubegems/pkg/installer/utils"
 	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 )
@@ -31,25 +35,57 @@ func main() {
 	kubegemsrepo := "https://charts.kubegems.io/kubegems"
 	ctx := context.Background()
 	// download latest charts
-	if err := DownloadLatestCharts(ctx, kubegemsrepo, "bin/plugins"); err != nil {
+	if err := DownloadLatestCharts(ctx, kubegemsrepo, "bin/plugins", "latest"); err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 	}
 }
 
 var _ = pluginv1beta1.AddToScheme(scheme.Scheme)
 
-func DownloadLatestCharts(ctx context.Context, repo string, into string) error {
+func DownloadLatestCharts(ctx context.Context, repoaddr string, into string, kubegemsVersion string) error {
 	applier := bundle.NewDefaultApply(nil, nil, &bundle.Options{CacheDir: into})
 
-	pluginrepo := gemsplugin.Repository{Address: repo}
+	pluginrepo := gemsplugin.Repository{Address: repoaddr}
 	if err := pluginrepo.RefreshRepoIndex(ctx); err != nil {
 		return err
 	}
 
-	for _, versions := range pluginrepo.Plugins {
-		version := versions[0]
-		log.Printf("download %s-%s from %s", version.Name, version.Version, repo)
-		manifest, err := applier.Template(ctx, version.ToPlugin())
+	kubegemsExample := gemsplugin.PluginVersion{Name: "kubegems", Version: kubegemsVersion}
+
+	for name, versions := range pluginrepo.Plugins {
+		var cacheVersion *gemsplugin.PluginVersion
+		if strings.HasPrefix(name, "kubegems") {
+			// cache kubegems version
+			for _, item := range versions {
+				if item.Version != kubegemsVersion {
+					continue
+				} else {
+					cacheVersion = &item
+					break
+				}
+			}
+			if cacheVersion == nil {
+				cacheVersion = &versions[0]
+				// cacheVersion.Kind = pluginv1beta1.BundleKindHelm
+				log.Printf("kubegems plugin %s version %s not found,use %s instead", name, kubegemsVersion, cacheVersion.Version)
+			}
+		} else {
+			// find latest version match kubegems
+			for _, item := range versions {
+				if err := gemsplugin.CheckDependecy(item.Requirements, kubegemsExample); err != nil {
+					continue
+				} else {
+					cacheVersion = &item
+					break
+				}
+			}
+		}
+		if cacheVersion == nil {
+			log.Printf("no matched version to cache on plugin %s", name)
+			continue
+		}
+		log.Printf("download %s-%s from %s", cacheVersion.Name, cacheVersion.Version, repoaddr)
+		manifest, err := applier.Template(ctx, cacheVersion.ToPlugin())
 		if err != nil {
 			log.Printf("on template: %v", err)
 			return err
@@ -72,5 +108,12 @@ func DownloadLatestCharts(ctx context.Context, repo string, into string) error {
 			}
 		}
 	}
-	return nil
+	// build index
+	i, err := repo.IndexDirectory(into, "file://"+into)
+	if err != nil {
+		return err
+	}
+	i.SortEntries()
+	out := filepath.Join(into, "index.yaml")
+	return i.WriteFile(out, helm.DefaultFileMode)
 }

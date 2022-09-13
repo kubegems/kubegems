@@ -52,9 +52,7 @@ func (t Templater) Template(ctx context.Context, plugin *pluginsv1beta1.Plugin, 
 	if err != nil {
 		return nil, err
 	}
-	// update bundle status
-	plugin.Spec.Version = chart.Metadata.Version
-
+	vals := plugin.Spec.Values.Object
 	options := chartutil.ReleaseOptions{
 		Name: plugin.Name,
 		Namespace: func() string {
@@ -93,7 +91,10 @@ func (t Templater) Template(ctx context.Context, plugin *pluginsv1beta1.Plugin, 
 		}
 	}
 
-	valuesToRender, err := chartutil.ToRenderValues(chart, plugin.Spec.Values.Object, options, caps)
+	if err := chartutil.ProcessDependencies(chart, vals); err != nil {
+		return nil, err
+	}
+	valuesToRender, err := chartutil.ToRenderValues(chart, vals, options, caps)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +111,13 @@ func (t Templater) Template(ctx context.Context, plugin *pluginsv1beta1.Plugin, 
 			return nil, err
 		}
 	}
+
+	for k := range renderdFiles {
+		if strings.HasSuffix(k, "NOTES.txt") {
+			delete(renderdFiles, k)
+		}
+	}
+
 	_, manifests, err := releaseutil.SortManifests(renderdFiles, caps.APIVersions, releaseutil.InstallOrder)
 	if err != nil {
 		out := os.Stderr
