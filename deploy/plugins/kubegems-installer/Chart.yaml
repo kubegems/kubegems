@@ -17,3 +17,7 @@ name: kubegems-installer
 sources:
   - https://kubegems.io
 version: 1.22.0-beta.1
+annotations:
+  plugins.kubegems.io/is-plugin: "true"
+  plugins.kubegems.io/category: core/KubeGems
+  plugins.kubegems.io/install-namespace: "kubegems-installer"

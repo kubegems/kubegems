@@ -51,8 +51,8 @@ type MainCategory map[string]map[string][]api.PluginStatus
 // @Produce     json
 // @Param       cluster path     string                                     true "cluster"
 // @Param       simple  query    bool                                       true "simple"
-// @Success     200     {object} handlers.ResponseStruct{Data=MainCategory} "Plugins"
-// @Router      /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers [get]
+// @Success     200     {object} handlers.ResponseStruct{Data=map[string]map[string][]api.PluginStatus} "Plugins"
+// @Router      /v1/proxy/cluster/{cluster}/plugins [get]
 // @Security    JWT
 func (h *PluginHandler) List(c *gin.Context) {
 	plugins, err := h.PM.ListPlugins(c.Request.Context())
@@ -81,8 +81,8 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Param       cluster path     string                               true "cluster"
 // @Param       name    path     string                               true "name"
 // @Param       type    query    string                               true "type"
-// @Success     200     {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router      /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name} [put]
+// @Success     200     {object} handlers.ResponseStruct{Data=api.PluginVersion} "Plugins"
+// @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [get]
 // @Security    JWT
 func (h *PluginHandler) Get(c *gin.Context) {
 	name, version := c.Param("name"), c.Query("version")
@@ -103,7 +103,7 @@ func (h *PluginHandler) Get(c *gin.Context) {
 // @Param       name    path     string                               true "name"
 // @Param       type    query    string                               true "type"
 // @Success     200     {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router      /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable [put]
+// @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [post]
 // @Security    JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	name, version := c.Param("name"), c.Query("version")
@@ -128,7 +128,7 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Param       name    path     string                               true "name"
 // @Param       type    query    string                               true "type"
 // @Success     200     {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router      /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable [put]
+// @Router      /v1/proxy/cluster/{cluster}/plugins [delete]
 // @Security    JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
 	name := c.Param("name")
@@ -149,18 +149,19 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 // @Param       cluster path     string                               true "cluster"
 // @Param       name    path     string                               true "repo name"
 // @Param       type    body     gemsplugin.Repository                true "repo object"
-// @Success     200     {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router      /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/repos/{name}/actions/update [post]
-func (h *PluginHandler) UpdateRepo(c *gin.Context) {
-	repo := gemsplugin.Repository{}
-	if err := request.Body(c.Request, &repo); err != nil {
+// @Success     200     {object} handlers.ResponseStruct{Data=[]api.PluginStatus} "ok"
+// @Router      /v1/proxy/cluster/{cluster}/custom/plugins:check-update [post]
+func (h *PluginHandler) CheckUpdate(c *gin.Context) {
+	upgradeable, err := h.PM.CheckUpdate(c.Request.Context())
+	if err != nil {
 		NotOK(c, err)
 		return
 	}
-	repo.Name = c.Param("name")
-	if err := h.PM.UpdateRepo(c.Request.Context(), repo); err != nil {
-		NotOK(c, err)
-		return
+
+	upgradeableStatus := []api.PluginStatus{}
+	for _, item := range upgradeable {
+		upgradeableStatus = append(upgradeableStatus, api.ToViewPlugin(item))
 	}
-	OK(c, "ok")
+	api.SortPluginStatusByName(upgradeableStatus)
+	OK(c, upgradeableStatus)
 }

@@ -16,11 +16,37 @@ package helm
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"net/url"
+	"os"
 
 	"helm.sh/helm/v3/pkg/repo"
 	"sigs.k8s.io/yaml"
 )
+
+func LoadIndex(ctx context.Context, uri string) (*repo.IndexFile, error) {
+	u, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return nil, err
+	}
+	switch u.Scheme {
+	case "http", "https":
+		return LoadRemoteIndex(ctx, uri)
+	case "file":
+		return LoadLocalIndex(uri)
+	default:
+		return nil, fmt.Errorf("unsupported uri %s", uri)
+	}
+}
+
+func LoadLocalIndex(path string) (*repo.IndexFile, error) {
+	indexcontent, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return LoadIndexData(indexcontent)
+}
 
 func LoadRemoteIndex(ctx context.Context, repo string) (*repo.IndexFile, error) {
 	resp, err := HTTPGet(ctx, repo+"/index.yaml")
@@ -33,7 +59,7 @@ func LoadRemoteIndex(ctx context.Context, repo string) (*repo.IndexFile, error) 
 	if err != nil {
 		return nil, err
 	}
-	indexFile, err := LoadIndex(index)
+	indexFile, err := LoadIndexData(index)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +68,7 @@ func LoadRemoteIndex(ctx context.Context, repo string) (*repo.IndexFile, error) 
 
 // The source parameter is only used for logging.
 // This will fail if API Version is not set (ErrNoAPIVersion) or if the unmarshal fails.
-func LoadIndex(data []byte) (*repo.IndexFile, error) {
+func LoadIndexData(data []byte) (*repo.IndexFile, error) {
 	i := &repo.IndexFile{}
 	if len(data) == 0 {
 		return i, repo.ErrEmptyIndexYaml

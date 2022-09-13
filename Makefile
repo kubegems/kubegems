@@ -72,7 +72,7 @@ generate: helm-readme add-license ## Generate  WebhookConfiguration, ClusterRole
 	helm template --namespace kubegems-installer --set installer.image.tag=v$(LATEST_RELEASE_VERSION) --include-crds  kubegems-installer deploy/plugins/kubegems-installer \
 	| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
-	go run scripts/generate-system-alert/main.go
+	# go run scripts/generate-system-alert/main.go
 
 swagger:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.4
@@ -107,10 +107,10 @@ plugins-cache: ## Build plugins-cache
 
 CHARTS = kubegems kubegems-local
 helm-readme: readme-generator
-	@$(foreach var, $(wildcard $(CHARTS_DIR)/*), readme-generator -v deploy/plugins/$(var)/values.yaml -r deploy/plugins/$(var)/README.md;)
+	$(foreach var, $(wildcard $(CHARTS_DIR)/*/), readme-generator -v $(var)values.yaml -r $(var)README.md;)
 
 helm-push:
-	@$(foreach file, $(wildcard $(CHARTS_DIR)/*), helm cm-push -d -f -v ${SEMVER_VERSION}  $(file) ${CHARTMUSEUM_ADDR};)
+	@$(foreach file, $(wildcard $(CHARTS_DIR)/*/), helm cm-push -d -f -v ${SEMVER_VERSION}  $(file) ${CHARTMUSEUM_ADDR};)
 
 container: ## Build container image.
 ifneq (, $(shell which docker))

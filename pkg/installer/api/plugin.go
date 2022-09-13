@@ -47,35 +47,44 @@ func (o *PluginsAPI) ListPlugins(req *restful.Request, resp *restful.Response) {
 	response.OK(resp, CategoriedPlugins(plugins))
 }
 
+func SortPluginStatusByName(list []PluginStatus) {
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Name < list[j].Name
+	})
+}
+
+func ToViewPlugin(plugin gemsplugin.Plugin) PluginStatus {
+	ps := PluginStatus{
+		Name:        plugin.Name,
+		Namespace:   plugin.Namespace,
+		Description: plugin.Description,
+		Required:    plugin.Required,
+		maincate:    plugin.MainCategory,
+		cate:        plugin.Category,
+	}
+	if installed := plugin.Installed; installed != nil {
+		ps.InstalledVersion = installed.Version
+		ps.Healthy = installed.Healthy
+		ps.Namespace = installed.InstallNamespace
+		ps.Enabled = true
+	}
+	if upgradble := plugin.Upgradeable; upgradble != nil {
+		ps.UpgradeableVersion = upgradble.Version
+	}
+
+	availableVersion := []string{}
+	for _, item := range plugin.Available {
+		availableVersion = append(availableVersion, item.Version)
+	}
+	ps.AvailableVersions = availableVersion
+	return ps
+}
+
 func CategoriedPlugins(plugins map[string]gemsplugin.Plugin) map[string]map[string][]PluginStatus {
 	pluginstatus := []PluginStatus{}
 
 	for _, plugin := range plugins {
-		ps := PluginStatus{
-			Name:        plugin.Name,
-			Namespace:   plugin.Namespace,
-			Description: plugin.Description,
-			Required:    plugin.Required,
-			maincate:    plugin.MainCategory,
-			cate:        plugin.Category,
-		}
-		if installed := plugin.Installed; installed != nil {
-			ps.InstalledVersion = installed.Version
-			ps.Healthy = installed.Healthy
-			ps.Namespace = installed.InstallNamespace
-			ps.Enabled = true
-		}
-		if upgradble := plugin.Upgradeable; upgradble != nil {
-			ps.UpgradeableVersion = upgradble.Version
-		}
-
-		availableVersion := []string{}
-		for _, item := range plugin.Available {
-			availableVersion = append(availableVersion, item.Version)
-		}
-		ps.AvailableVersions = availableVersion
-
-		pluginstatus = append(pluginstatus, ps)
+		pluginstatus = append(pluginstatus, ToViewPlugin(plugin))
 	}
 
 	mainCategoryFunc := func(t PluginStatus) string {
@@ -90,9 +99,7 @@ func CategoriedPlugins(plugins map[string]gemsplugin.Plugin) map[string]map[stri
 		categorized := withCategory(list, categoryfunc)
 		// sort
 		for _, list := range categorized {
-			sort.Slice(list, func(i, j int) bool {
-				return list[i].Name < list[j].Name
-			})
+			SortPluginStatusByName(list)
 		}
 		categoryPlugins[maincategory] = categorized
 	}

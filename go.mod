@@ -25,7 +25,6 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-ldap/ldap/v3 v3.2.4
 	github.com/go-logr/logr v1.2.3
-	github.com/go-logr/stdr v1.2.2
 	github.com/go-logr/zapr v1.2.0
 	github.com/go-oauth2/oauth2/v4 v4.5.1
 	github.com/go-openapi/spec v0.20.6

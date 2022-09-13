@@ -1905,6 +1905,7 @@ persistence:
 ## @param mysql.auth.username  The nonroot username of the MySQL.
 ## @param mysql.auth.password  The nonroot password of the MySQL.
 ## @param mysql.auth.database  Create database of the MySQL.
+## @param mysql.image.repository mysql repository override
 mysql:
   enabled: true
   architecture: standalone
@@ -1944,6 +1945,8 @@ externalDatabase:
 ## @param redis.architecture  architecture.
 ## @param redis.auth.password  The password for the redis,keep emty to use default.
 ## @param redis.volumePermissions.enabled  Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup`
+## @param redis.volumePermissions.image.repository  Repository override
+## @param redis.image.repository redis repository override
 redis:
   enabled: true
   architecture: standalone
@@ -1982,6 +1985,7 @@ externalRedis:
 ## @param argo-cd.redis.enabled Disable Argo CD redis to use kubegems redis
 ## @param argo-cd.externalRedis.host Kubegems Redis host
 ## @param argo-cd.externalRedis.existingSecret Kubegems Redis secret
+## @param argo-cd.image.repository argo-cd repository override
 ## @skip argo-cd.controller.extraEnvVars
 ## @skip argo-cd.server.extraEnvVars
 ## @skip argo-cd.repoServer.extraEnvVars
@@ -2046,6 +2050,7 @@ externalArgoCD:
 ## @param gitea.memcached.enabled  Disable Gitea memcached by default
 ## @param gitea.postgresql.enabled  Disable Gitea postgresql by default,use built in sqlite3 instead.
 ## @param gitea.gitea.config.database.DB_TYPE  Use sqlite3 by default
+## @param gitea.image.repository gitea repository override
 ## @skip gitea.gitea.admin
 gitea:
   enabled: true
@@ -2082,6 +2087,7 @@ externalGit:
 
 ## @section Chartmuseum configuration
 ## @param chartmuseum.enabled  Enable Chartmuseum
+## @param chartmuseum.image.repository chartmuseum repository override
 ## @param chartmuseum.env  Chartmuseum environment variables
 ## @skip chartmuseum.env
 chartmuseum:

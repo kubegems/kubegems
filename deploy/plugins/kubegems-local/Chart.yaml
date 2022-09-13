@@ -15,3 +15,8 @@ name: kubegems-local
 sources:
   - https://kubegems.io
 version: 0.0.0
+annotations:
+  plugins.kubegems.io/is-plugin: "true"
+  plugins.kubegems.io/install-namespace: "kubegems-local"
+  plugins.kubegems.io/values-from: "monitoring,tracing,logging"
+  plugins.kubegems.io/category: core/KubeGems

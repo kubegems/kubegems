@@ -46,6 +46,10 @@ const (
 )
 
 const (
+	LabelIsPluginRepo = "plugins.kubegems.io/is-plugin-repo"
+)
+
+const (
 	KubeGemsGlobalValuesConfigMapName = "kubegems-global-values"
 
 	KubegemsChartInstaller = "kubegems-installer"

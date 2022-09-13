@@ -27,7 +27,7 @@ const PluginRepositoriesName = "plugin-repositories"
 
 func (o *PluginsAPI) RepoUpdate(req *restful.Request, resp *restful.Response) {
 	reponame := req.PathParameter("name")
-	if repo, err := o.PM.GetRepo(req.Request.Context(), reponame, true); err != nil {
+	if repo, err := o.PM.GetRepo(req.Request.Context(), reponame); err != nil {
 		response.Error(resp, err)
 	} else {
 		response.OK(resp, repo)
@@ -35,20 +35,18 @@ func (o *PluginsAPI) RepoUpdate(req *restful.Request, resp *restful.Response) {
 }
 
 func (o *PluginsAPI) RepoList(req *restful.Request, resp *restful.Response) {
-	repos, err := o.PM.ListRepo(req.Request.Context())
+	repos, err := o.PM.ListRepos(req.Request.Context())
 	if err != nil {
 		response.Error(resp, err)
 		return
 	}
-	for i := range repos {
-		repos[i].Index = nil
-	}
+
 	response.OK(resp, repos)
 }
 
 func (o *PluginsAPI) RepoGet(req *restful.Request, resp *restful.Response) {
 	reponame := req.PathParameter("name")
-	repos, err := o.PM.ListRepo(req.Request.Context())
+	repos, err := o.PM.ListRepos(req.Request.Context())
 	if err != nil {
 		response.Error(resp, err)
 		return
@@ -68,7 +66,7 @@ func (o *PluginsAPI) RepoAdd(req *restful.Request, resp *restful.Response) {
 		response.Error(resp, err)
 		return
 	}
-	if err := o.PM.UpdateRepo(req.Request.Context(), *repo); err != nil {
+	if err := o.PM.SetRepo(req.Request.Context(), repo, true); err != nil {
 		response.Error(resp, err)
 		return
 	}

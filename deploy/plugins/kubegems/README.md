@@ -596,14 +596,15 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Database configuration
 
-| Name                      | Description                           | Value        |
-| ------------------------- | ------------------------------------- | ------------ |
-| `mysql.enabled`           | Enable MySQL                          | `true`       |
-| `mysql.architecture`      | architecture.                         | `standalone` |
-| `mysql.auth.rootPassword` | The password for the MySQL root user. | `""`         |
-| `mysql.auth.username`     | The nonroot username of the MySQL.    | `""`         |
-| `mysql.auth.password`     | The nonroot password of the MySQL.    | `""`         |
-| `mysql.auth.database`     | Create database of the MySQL.         | `""`         |
+| Name                      | Description                           | Value            |
+| ------------------------- | ------------------------------------- | ---------------- |
+| `mysql.enabled`           | Enable MySQL                          | `true`           |
+| `mysql.architecture`      | architecture.                         | `standalone`     |
+| `mysql.auth.rootPassword` | The password for the MySQL root user. | `""`             |
+| `mysql.auth.username`     | The nonroot username of the MySQL.    | `""`             |
+| `mysql.auth.password`     | The nonroot password of the MySQL.    | `""`             |
+| `mysql.auth.database`     | Create database of the MySQL.         | `""`             |
+| `mysql.image.repository`  | mysql repository override             | `kubegems/mysql` |
 
 
 ### External Database configuration
@@ -622,12 +623,14 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### RedisCache configuration
 
-| Name                              | Description                                                                                     | Value        |
-| --------------------------------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| `redis.enabled`                   | Enable redis                                                                                    | `true`       |
-| `redis.architecture`              | architecture.                                                                                   | `standalone` |
-| `redis.auth.password`             | The password for the redis,keep emty to use default.                                            | `""`         |
-| `redis.volumePermissions.enabled` | Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup` | `true`       |
+| Name                                       | Description                                                                                     | Value                    |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------ |
+| `redis.enabled`                            | Enable redis                                                                                    | `true`                   |
+| `redis.architecture`                       | architecture.                                                                                   | `standalone`             |
+| `redis.auth.password`                      | The password for the redis,keep emty to use default.                                            | `""`                     |
+| `redis.volumePermissions.enabled`          | Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup` | `true`                   |
+| `redis.volumePermissions.image.repository` | Repository override                                                                             | `kubegems/bitnami-shell` |
+| `redis.image.repository`                   | redis repository override                                                                       | `kubegems/redis`         |
 
 
 ### External RedisCache configuration
@@ -655,6 +658,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `argo-cd.redis.enabled`                           | Disable Argo CD redis to use kubegems redis                                | `false`                   |
 | `argo-cd.externalRedis.host`                      | Kubegems Redis host                                                        | `kubegems-redis-headless` |
 | `argo-cd.externalRedis.existingSecret`            | Kubegems Redis secret                                                      | `kubegems-redis`          |
+| `argo-cd.image.repository`                        | argo-cd repository override                                                | `kubegems/argo-cd`        |
 
 
 ### External ArgoCD configuration
@@ -671,12 +675,13 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Gitea configuration
 
-| Name                                  | Description                                                       | Value     |
-| ------------------------------------- | ----------------------------------------------------------------- | --------- |
-| `gitea.enabled`                       | Enable Gitea                                                      | `true`    |
-| `gitea.memcached.enabled`             | Disable Gitea memcached by default                                | `false`   |
-| `gitea.postgresql.enabled`            | Disable Gitea postgresql by default,use built in sqlite3 instead. | `false`   |
-| `gitea.gitea.config.database.DB_TYPE` | Use sqlite3 by default                                            | `sqlite3` |
+| Name                                  | Description                                                       | Value            |
+| ------------------------------------- | ----------------------------------------------------------------- | ---------------- |
+| `gitea.enabled`                       | Enable Gitea                                                      | `true`           |
+| `gitea.memcached.enabled`             | Disable Gitea memcached by default                                | `false`          |
+| `gitea.postgresql.enabled`            | Disable Gitea postgresql by default,use built in sqlite3 instead. | `false`          |
+| `gitea.gitea.config.database.DB_TYPE` | Use sqlite3 by default                                            | `sqlite3`        |
+| `gitea.image.repository`              | gitea repository override                                         | `kubegems/gitea` |
 
 
 ### External Git configuration
@@ -693,10 +698,11 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Chartmuseum configuration
 
-| Name                  | Description                       | Value  |
-| --------------------- | --------------------------------- | ------ |
-| `chartmuseum.enabled` | Enable Chartmuseum                | `true` |
-| `chartmuseum.env`     | Chartmuseum environment variables | `1`    |
+| Name                           | Description                       | Value                  |
+| ------------------------------ | --------------------------------- | ---------------------- |
+| `chartmuseum.enabled`          | Enable Chartmuseum                | `true`                 |
+| `chartmuseum.image.repository` | chartmuseum repository override   | `kubegems/chartmuseum` |
+| `chartmuseum.env`              | Chartmuseum environment variables | `1`                    |
 
 
 ### External Chartmuseum configuration

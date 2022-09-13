@@ -37,3 +37,7 @@ name: kubegems
 sources:
   - https://kubegems.io
 version: 1.21.0
+annotations:
+  plugins.kubegems.io/is-plugin: "true"
+  plugins.kubegems.io/install-namespace: "kubegems"
+  plugins.kubegems.io/category: core/KubeGems

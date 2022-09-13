@@ -420,3 +420,13 @@ serviceAccount:
   ## If not set and create is true, a name is generated using the common.names.fullname template
   ##
   name: ""
+
+## Repositories configuration
+#
+## @param repositories Prebuilt repositories
+## @skip repositories
+repositories:
+  - name: kubegems
+    address: https://charts.kubegems.io/kubegems
+  - name: local
+    address: file:///app/plugins

@@ -17,179 +17,149 @@ package gemsplugin
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strings"
 	"time"
 
-	"helm.sh/helm/v3/pkg/repo"
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	"kubegems.io/kubegems/pkg/installer/bundle/helm"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const PluginRepositoriesName = "plugin-repositories"
+const PluginRepositoriesNamePrefix = "plugin-repository-"
 
 type Repository struct {
-	Name     string          `json:"name,omitempty"`
-	Address  string          `json:"address,omitempty"`
-	Index    *repo.IndexFile `json:"index,omitempty"`
-	LastSync time.Time       `json:"lastSync,omitempty"`
+	Name     string                     `json:"name,omitempty"`
+	Address  string                     `json:"address,omitempty"`
+	Plugins  map[string][]PluginVersion `json:"plugins,omitempty"`
+	LastSync time.Time                  `json:"lastSync,omitempty"`
 }
 
-func (r Repository) GetPluginVersions(name string) []PluginVersion {
-	if r.Index == nil {
-		return nil
+func (repository *Repository) RefreshRepoIndex(ctx context.Context) error {
+	indexFile, err := helm.LoadIndex(ctx, repository.Address)
+	if err != nil {
+		return err
 	}
-	for chartname, chartversions := range r.Index.Entries {
-		if chartname != name {
-			continue
-		}
-		var pvs []PluginVersion
-		for _, cv := range chartversions {
-			if !IsPluginChart(cv) {
-				continue
-			}
-			pvs = append(pvs, PluginVersionFromRepoChartVersion(r.Address, cv))
-		}
-		return pvs
-	}
-	return nil
-}
-
-func (r Repository) ListPluginVersions() map[string][]PluginVersion {
-	if r.Index == nil {
-		return nil
-	}
-	ret := map[string][]PluginVersion{}
-	for name, chartversions := range r.Index.Entries {
+	pluginversions := map[string][]PluginVersion{}
+	for name, chartversions := range indexFile.Entries {
 		pvs := make([]PluginVersion, 0, len(chartversions))
 		for _, cv := range chartversions {
 			if !IsPluginChart(cv) {
 				continue
 			}
-			pvs = append(pvs, PluginVersionFromRepoChartVersion(r.Address, cv))
+			pvs = append(pvs, PluginVersionFromRepoChartVersion(repository.Address, cv))
 		}
 		if len(pvs) != 0 {
-			ret[name] = pvs
+			pluginversions[name] = pvs
 		}
 	}
-	return ret
-}
-
-func (repository *Repository) RefreshRepoIndex(ctx context.Context) error {
-	indexFile, err := helm.LoadRemoteIndex(ctx, repository.Address)
-	if err != nil {
-		return err
-	}
-	repository.Index = indexFile
+	repository.Plugins = pluginversions
 	repository.LastSync = time.Now()
 	return nil
 }
 
-func (m *PluginManager) UpdateRepo(ctx context.Context, repository Repository) error {
-	if err := repository.RefreshRepoIndex(ctx); err != nil {
-		return err
-	}
-	return m.onSecret(ctx, func(kvs map[string]Repository) error {
-		kvs[repository.Name] = repository
-		return nil
-	})
-}
-
-func (m *PluginManager) GetRepo(ctx context.Context, name string, refresh bool) (*Repository, error) {
-	var ret *Repository
-	if err := m.onSecret(ctx, func(kvs map[string]Repository) error {
-		if repo, ok := kvs[name]; ok {
-			if refresh {
-				repo.RefreshRepoIndex(ctx)
-				kvs[name] = repo
-			}
-			ret = &repo
-			return nil
-		} else {
-			return fmt.Errorf("repo %s not found", name)
-		}
-	}); err != nil {
-		return nil, err
-	}
-	return ret, nil
-}
-
-func (m *PluginManager) ListRepo(ctx context.Context) ([]Repository, error) {
-	ret := []Repository{}
-	if err := m.onSecret(ctx, func(kvs map[string]Repository) error {
-		for _, v := range kvs {
-			ret = append(ret, v)
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return ret, nil
-}
-
-func (m *PluginManager) DeleteRepo(ctx context.Context, name string) error {
-	return m.onSecret(ctx, func(kvs map[string]Repository) error {
-		for k := range kvs {
-			if k == name {
-				delete(kvs, k)
-			}
-		}
-		return nil
-	})
-}
-
-func (m *PluginManager) onSecret(ctx context.Context, fun func(kvs map[string]Repository) error) error {
+func (p *PluginManager) DeleteRepo(ctx context.Context, name string) error {
 	secret := &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      PluginRepositoriesName,
+			Name:      PluginRepositoriesNamePrefix + name,
 			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
 		},
 	}
-	if err := m.Client.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
-		if !errors.IsNotFound(err) {
-			return err
+	if err := p.Client.Delete(ctx, secret); err != nil {
+		if errors.IsNotFound(err) {
+			return nil
 		}
-		// add init repo
-		initrepo := Repository{Name: "kubegems", Address: KubegemsChartsRepoURL}
-		initrepo.RefreshRepoIndex(ctx)
-		initrepobytes, _ := json.Marshal(initrepo)
-		secret.Data = map[string][]byte{initrepo.Name: initrepobytes}
-		if err := m.Client.Create(ctx, secret); err != nil {
+		return err
+	}
+	return nil
+}
+
+var isPluginSecretLabel = map[string]string{
+	pluginscommon.LabelIsPluginRepo: "true",
+}
+
+func (p *PluginManager) GetRepo(ctx context.Context, name string) (*Repository, error) {
+	secret := &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      PluginRepositoriesNamePrefix + name,
+			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+		},
+	}
+	if err := p.Client.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
+		return nil, err
+	}
+	repo := repoFromSecret(*secret)
+	return &repo, nil
+}
+
+func (p *PluginManager) ListRepos(ctx context.Context) (map[string]Repository, error) {
+	secretlist := &corev1.SecretList{}
+	err := p.Client.List(ctx, secretlist, client.InNamespace(pluginscommon.KubeGemsNamespaceInstaller), client.MatchingLabels(isPluginSecretLabel))
+	if err != nil {
+		return nil, err
+	}
+	repos := map[string]Repository{}
+	for _, secret := range secretlist.Items {
+		repo := repoFromSecret(secret)
+		repos[repo.Name] = repo
+	}
+
+	return repos, nil
+}
+
+func (p *PluginManager) UpdateReposCache(ctx context.Context) error {
+	repos, err := p.ListRepos(ctx)
+	if err != nil {
+		return err
+	}
+	eg := errgroup.Group{}
+	for _, repo := range repos {
+		repo := repo
+		eg.Go(func() error {
+			return p.SetRepo(ctx, &repo, true)
+		})
+	}
+	return eg.Wait()
+}
+
+func repoFromSecret(secret corev1.Secret) Repository {
+	plugins := map[string][]PluginVersion{}
+	_ = json.Unmarshal(secret.Data["plugins"], &plugins)
+	lastsync, _ := time.Parse(time.RFC3339, string(secret.Data["lastSync"]))
+	return Repository{
+		Name:     strings.TrimPrefix(secret.GetName(), PluginRepositoriesNamePrefix),
+		Address:  string(secret.Data["address"]),
+		Plugins:  plugins,
+		LastSync: lastsync,
+	}
+}
+
+func (p *PluginManager) SetRepo(ctx context.Context, repo *Repository, withRefresh bool) error {
+	if withRefresh {
+		if err := repo.RefreshRepoIndex(ctx); err != nil {
 			return err
 		}
 	}
-	updated := secret.DeepCopy()
-
-	{
-		repositories := map[string]Repository{}
-		for _, v := range updated.Data {
-			repo := &Repository{}
-			if err := json.Unmarshal(v, repo); err != nil {
-				continue
-			}
-			repositories[repo.Name] = *repo
-		}
-		if err := fun(repositories); err != nil {
+	reposecret := &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      PluginRepositoriesNamePrefix + repo.Name,
+			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+			Labels:    isPluginSecretLabel,
+		},
+	}
+	_, err := controllerutil.CreateOrUpdate(ctx, p.Client, reposecret, func() error {
+		pluginsraw, err := json.Marshal(repo.Plugins)
+		if err != nil {
 			return err
 		}
-
-		kvs := map[string][]byte{}
-		for k, repo := range repositories {
-			rawbytes, err := json.Marshal(repo)
-			if err != nil {
-				continue
-			}
-			kvs[k] = rawbytes
-		}
-		updated.Data = kvs
-	}
-
-	if equality.Semantic.DeepEqual(secret, updated) {
+		reposecret.Data["plugins"] = pluginsraw
+		reposecret.Data["address"] = []byte(repo.Address)
+		reposecret.Data["lastSync"] = []byte(repo.LastSync.String())
 		return nil
-	}
-	return m.Client.Patch(ctx, updated, client.MergeFrom(secret))
+	})
+	return err
 }

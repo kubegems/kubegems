@@ -1,0 +1,13 @@
+{{ $ns := .Release.Namespace }}
+{{- range .Values.repositories }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: plugin-repository-{{ .name }}
+  namespace: {{ $ns | quote }}
+  labels:
+    "plugins.kubegems.io/is-plugin-repo": "true"
+data:
+  address: {{ .address | b64enc }}
+{{- end }}

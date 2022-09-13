@@ -721,7 +721,7 @@ sync:
   ## @param sync.replicaCount Number of sync replicas to deploy
   ##
   replicaCount: 1
-  ## @param sync.containerPorts.probe sync probe container port
+  ## @param sync.containerPorts.http http container port
   ##
   containerPorts:
     http: 8000
@@ -976,6 +976,8 @@ sync:
     extraPorts: []
 
 ## @section MongoDB parameters
+#
+## @param mongodb.auth auth of mongo
 mongodb:
   auth: {}
 

@@ -46,7 +46,7 @@ func DownloadLatestCharts(ctx context.Context, repo string, into string) error {
 		return err
 	}
 
-	for _, versions := range pluginrepo.ListPluginVersions() {
+	for _, versions := range pluginrepo.Plugins {
 		version := versions[0]
 		log.Printf("download %s-%s from %s", version.Name, version.Version, repo)
 		manifest, err := applier.Template(ctx, version.ToPlugin())

@@ -308,6 +308,32 @@ metadata:
   name: kubegems-installer
   namespace: kubegems-installer
 ---
+apiVersion: v1
+data:
+  address: aHR0cHM6Ly9jaGFydHMua3ViZWdlbXMuaW8va3ViZWdlbXM=
+kind: Secret
+metadata:
+  annotations:
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
+  labels:
+    plugins.kubegems.io/is-plugin-repo: "true"
+  name: plugin-repository-kubegems
+  namespace: kubegems-installer
+---
+apiVersion: v1
+data:
+  address: ZmlsZTovLy9hcHAvcGx1Z2lucw==
+kind: Secret
+metadata:
+  annotations:
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
+  labels:
+    plugins.kubegems.io/is-plugin-repo: "true"
+  name: plugin-repository-local
+  namespace: kubegems-installer
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
