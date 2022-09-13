@@ -68,9 +68,6 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.batchWithTimeout(c, list, time.Duration(time.Second*3), func(idx int, name string, cli agents.Client) {
-		list[idx].Version = cli.APIServerVersion()
-	})
 	handlers.OK(c, handlers.Page(total, list, int64(page), int64(size)))
 }
 
