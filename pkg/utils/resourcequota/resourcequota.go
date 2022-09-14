@@ -16,8 +16,10 @@ package resourcequota
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -235,4 +237,16 @@ func SubResource(oldres, newres corev1.ResourceList) corev1.ResourceList {
 		}
 	}
 	return retres
+}
+
+// set request same as limit if not set
+func SetSameRequestWithLimit(list corev1.ResourceList) {
+	for k, v := range list {
+		if index := strings.Index(string(k), "limits."); index != -1 {
+			requestsResourceName := "requests." + string(k[index+7:])
+			if val, ok := list[v1.ResourceName(requestsResourceName)]; !ok || val.IsZero() {
+				list[v1.ResourceName(requestsResourceName)] = v.DeepCopy()
+			}
+		}
+	}
 }

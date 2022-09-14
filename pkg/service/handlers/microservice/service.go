@@ -17,6 +17,7 @@ package microservice
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -32,9 +33,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/istio"
 	"kubegems.io/kubegems/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -109,11 +110,24 @@ func (h *VirtualSpaceHandler) ListServices(c *gin.Context) {
 		}
 		sl := istio.BuildKubernetesServiceList(kialimodels.Namespace{Name: env.Namespace}, svcList.Items, podList.Items, deploymentsList.Items, istioConfigList)
 		sl.Validations = istio.GetServiceValidations(svcList.Items, deploymentsList.Items, podList.Items)
-		ret := handlers.NewPageDataFromContext(c, sl.Services, func(i int) bool {
-			return strings.Contains(strings.ToLower(sl.Services[i].Name), strings.ToLower(c.Query("search")))
-		}, func(i, j int) bool {
-			return strings.ToLower(sl.Services[i].Name) < strings.ToLower(sl.Services[j].Name)
+
+		page, _ := strconv.Atoi(c.Query("page"))
+		size, _ := strconv.Atoi(c.Query("size"))
+		search := c.Query("search")
+
+		ret := response.NewTypedPage(sl.Services, page, size, func(i kialimodels.ServiceOverview) bool {
+			return strings.Contains(i.Name, search)
+		}, func(a, b kialimodels.ServiceOverview) bool {
+			switch {
+			case a.IstioSidecar && !b.IstioSidecar:
+				return true
+			case !a.IstioSidecar && b.IstioSidecar:
+				return false
+			default:
+				return strings.Compare(a.Name, b.Name) == -1
+			}
 		})
+
 		return gin.H{
 			"pagedata":    ret,
 			"validations": sl.Validations,

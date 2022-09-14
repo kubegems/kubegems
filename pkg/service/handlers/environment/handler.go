@@ -44,6 +44,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/resourcequota"
 	"kubegems.io/kubegems/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -243,6 +244,7 @@ func AfterEnvironmentSave(ctx context.Context, h base.BaseHandler, tx *gorm.DB, 
 		if e != nil {
 			return e
 		}
+		resourcequota.SetSameRequestWithLimit(resourceQuota)
 	}
 
 	for key, v := range tmpLimitRange {

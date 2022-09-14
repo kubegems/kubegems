@@ -24,12 +24,14 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"github.com/go-logr/logr"
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/application"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
+	"kubegems.io/kubegems/pkg/model/deployment"
 	storemodels "kubegems.io/kubegems/pkg/model/store/api/models"
 	"kubegems.io/kubegems/pkg/model/store/repository"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
@@ -188,32 +190,38 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		return err
 	}
 
+	// set task
+	md.Spec.Model.Task = modeldetails.Task
+
 	// set first source image if not set
 	switch sourcedetails.Kind {
 	case repository.SourceKindHuggingface:
-		md.Spec.Server.Name = "transformer"
 		md.Spec.Server.Kind = machinelearningv1.PrepackHuggingFaceName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
 		md.Spec.Server.Parameters = append(md.Spec.Server.Parameters,
 			modelsv1beta1.Parameter{Name: "task", Value: modeldetails.Task},
 			modelsv1beta1.Parameter{Name: "pretrained_model", Value: modeldetails.Name},
 		)
-		// nolint: gomnd
-		md.Spec.Server.ReadinessProbe = &v1.Probe{
-			InitialDelaySeconds: 120,
-			FailureThreshold:    5,
+
+		if md.Spec.Server.PodSpec == nil {
+			md.Spec.Server.PodSpec = &corev1.PodSpec{}
 		}
+		// nolint: gomnd
+		updatedpodspec := deployment.CreateOrUpdateContainer(*md.Spec.Server.PodSpec, "model", func(c *v1.Container) {
+			c.ReadinessProbe = &v1.Probe{InitialDelaySeconds: 120, FailureThreshold: 5}
+		})
+		md.Spec.Server.PodSpec = &updatedpodspec
 	case repository.SourceKindOpenMMLab:
-		md.Spec.Server.Name = "model"
 		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
 		md.Spec.Server.Parameters = append(md.Spec.Server.Parameters,
 			modelsv1beta1.Parameter{Name: "pkg", Value: modeldetails.Framework},
 			modelsv1beta1.Parameter{Name: "model", Value: modeldetails.Name},
 		)
-		md.Spec.Server.SecurityContext = &v1.SecurityContext{Privileged: pointer.Bool(true)}
+
+		md.Spec.Server.Privileged = true
 	case repository.SourceKindModelx:
-		md.Spec.Server.Name = "modelx"
+		md.Spec.Server.Privileged = true
 		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
@@ -221,6 +229,16 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		if md.Spec.Model.URL == "" {
 			md.Spec.Model.URL = fmt.Sprintf("%s/%s@%s", sourcedetails.Address, modelname, md.Spec.Model.Version)
 		}
+	}
+
+	// resource request
+	if len(md.Spec.Server.Resources.Requests) == 0 {
+		requests := md.Spec.Server.Resources.Limits.DeepCopy()
+
+		requests[corev1.ResourceCPU] = resource.MustParse("100m")
+		requests[corev1.ResourceMemory] = resource.MustParse("100Mi")
+
+		md.Spec.Server.Resources.Requests = requests
 	}
 	return nil
 }
@@ -231,10 +249,17 @@ func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *r
 		if err := req.ReadEntity(md); err != nil {
 			return nil, err
 		}
-		// set the namespace
-		md.Namespace = ref.Namespace
-		md.SetManagedFields(nil)
-		if err := cli.Patch(ctx, md, client.Apply, client.FieldOwner("kubegems"), client.ForceOwnership); err != nil {
+		exist := &modelsv1beta1.ModelDeployment{}
+		if err := cli.Get(ctx, client.ObjectKey{Namespace: ref.Namespace, Name: ref.Name}, exist); err != nil {
+			return nil, err
+		}
+		// update fileds
+		exist.Spec = md.Spec
+		exist.Annotations = md.Annotations
+		exist.Labels = md.Labels
+		exist.OwnerReferences = md.OwnerReferences
+
+		if err := cli.Update(ctx, exist); err != nil {
 			return nil, err
 		}
 		return md, nil

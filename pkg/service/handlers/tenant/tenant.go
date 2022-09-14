@@ -45,6 +45,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/utils/resourcequota"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -293,7 +294,7 @@ func (h *TenantHandler) DeleteTenant(c *gin.Context) {
 }
 
 /*
-	删除租户后，需要删除这个租户在各个集群下占用的资源
+删除租户后，需要删除这个租户在各个集群下占用的资源
 */
 func (h *TenantHandler) afterTenantDelete(ctx context.Context, tx *gorm.DB, t *models.Tenant) error {
 	for _, quota := range t.ResourceQuotas {
@@ -880,6 +881,8 @@ func CreateOrUpdateTenantResourceQuota(ctx context.Context, h base.BaseHandler, 
 		return err
 	}
 
+	resourcequota.SetSameRequestWithLimit(hard)
+
 	return h.Execute(ctx, clustername, func(ctx context.Context, cli agents.Client) error {
 		tquota := &v1beta1.TenantResourceQuota{
 			ObjectMeta: metav1.ObjectMeta{Name: tenantname},
@@ -985,7 +988,7 @@ func (h *TenantHandler) DeleteTenantResourceQuota(c *gin.Context) {
 }
 
 /*
-	同步删除对应集群的资源
+同步删除对应集群的资源
 */
 func (h *TenantHandler) afterTenantResourceQuotaDelete(ctx context.Context, tx *gorm.DB, trq *models.TenantResourceQuota) error {
 	return h.Execute(ctx, trq.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {

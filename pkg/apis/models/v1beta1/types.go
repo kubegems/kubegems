@@ -53,11 +53,16 @@ type ModelSpec struct {
 	URL string `json:"url"`
 	// +kubebuilder:validation:Optional
 	License string `json:"license"`
+	// +kubebuilder:validation:Optional
+	Task string `json:"task"`
 }
 
 type ServerSpec struct {
 	// +kubebuilder:validation:Optional
 	Protocol string `json:"protocol"`
+
+	// +kubebuilder:validation:Optional
+	Image string `json:"image"`
 
 	// +kubebuilder:validation:Optional
 	Kind string `json:"kind"`
@@ -66,12 +71,53 @@ type ServerSpec struct {
 	StorageInitializerImage string `json:"storageInitializerImage"`
 
 	// +kubebuilder:validation:Optional
-	MountPath string `json:"mountPath"` // path to the model in the container
+	Mounts []SimpleVolumeMount `json:"mounts"`
 
 	// +kubebuilder:validation:Optional
 	Parameters []Parameter `json:"parameters,omitempty"`
 
-	corev1.Container `json:",inline"`
+	// +kubebuilder:validation:Optional
+	Privileged bool `json:"privileged"`
+
+	// +kubebuilder:validation:Optional
+	Ports []corev1.ContainerPort `json:"ports"`
+
+	// +kubebuilder:validation:Optional
+	Command []string `json:"command,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Args []string `json:"args,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Env []corev1.EnvVar `json:"env,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	PodSpec *corev1.PodSpec `json:"podSpec,omitempty"`
+}
+
+type SimpleVolumeMountKind string
+
+const (
+	SimpleVolumeMountKindEmptyDir  SimpleVolumeMountKind = "EmptyDir"
+	SimpleVolumeMountKindHostPath  SimpleVolumeMountKind = "HostPath"
+	SimpleVolumeMountKindPVC       SimpleVolumeMountKind = "PVC"
+	SimpleVolumeMountKindSecret    SimpleVolumeMountKind = "Secret"
+	SimpleVolumeMountKindConfigMap SimpleVolumeMountKind = "ConfigMap"
+	SimpleVolumeMountKindModel     SimpleVolumeMountKind = "Model"
+)
+
+type SimpleVolumeMount struct {
+	// +kubebuilder:validation:Enum=HostPath;EmptyDir;Secret;ConfigMap;PVC;Model
+	Kind SimpleVolumeMountKind `json:"kind"`
+
+	// +kubebuilder:validation:Optional
+	Source string `json:"source"`
+
+	// +kubebuilder:validation:Required
+	MountPath string `json:"mountPath"`
 }
 
 type Parameter struct {
