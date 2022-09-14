@@ -49,8 +49,8 @@ type MainCategory map[string]map[string][]api.PluginStatus
 // @Description 获取Plugin列表数据
 // @Accept      json
 // @Produce     json
-// @Param       cluster path     string                                     true "cluster"
-// @Param       simple  query    bool                                       true "simple"
+// @Param       cluster path     string                                                                 true "cluster"
+// @Param       simple  query    bool                                                                   true "simple"
 // @Success     200     {object} handlers.ResponseStruct{Data=map[string]map[string][]api.PluginStatus} "Plugins"
 // @Router      /v1/proxy/cluster/{cluster}/plugins [get]
 // @Security    JWT
@@ -78,10 +78,10 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Description 插件详情
 // @Accept      json
 // @Produce     json
-// @Param       cluster path     string                               true "cluster"
-// @Param       name    path     string                               true "name"
-// @Param       type    query    string                               true "type"
-// @Success     200     {object} handlers.ResponseStruct{Data=api.PluginVersion} "Plugins"
+// @Param       cluster path     string                                                 true "cluster"
+// @Param       name    path     string                                                 true "name"
+// @Param       type    query    string                                                 true "type"
+// @Success     200     {object} handlers.ResponseStruct{Data=gemsplugin.PluginVersion} "Plugins"
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [get]
 // @Security    JWT
 func (h *PluginHandler) Get(c *gin.Context) {
@@ -142,13 +142,13 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 }
 
 // @Tags        Agent.Plugin
-// @Summary     更新源
-// @Description 更新源
+// @Summary     检查更新
+// @Description 检查更新
 // @Accept      json
 // @Produce     json
-// @Param       cluster path     string                               true "cluster"
-// @Param       name    path     string                               true "repo name"
-// @Param       type    body     gemsplugin.Repository                true "repo object"
+// @Param       cluster path     string                                           true "cluster"
+// @Param       name    path     string                                           true "repo name"
+// @Param       type    body     gemsplugin.Repository                            true "repo object"
 // @Success     200     {object} handlers.ResponseStruct{Data=[]api.PluginStatus} "ok"
 // @Router      /v1/proxy/cluster/{cluster}/custom/plugins:check-update [post]
 func (h *PluginHandler) CheckUpdate(c *gin.Context) {
