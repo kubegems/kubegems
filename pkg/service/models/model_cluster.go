@@ -46,5 +46,5 @@ type Cluster struct {
 	TenantResourceQuotas []*TenantResourceQuota
 	ClusterResourceQuota datatypes.JSON
 	DeletedAt            gorm.DeletedAt // soft delete
-	ClientCertExpireAt   *time.Time     `gorm:"-"` // 证书过期时间
+	ClientCertExpireAt   *time.Time     // 证书过期时间
 }

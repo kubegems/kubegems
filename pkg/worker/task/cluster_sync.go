@@ -28,26 +28,30 @@ type ClusterSyncTasker struct {
 	cs *agents.ClientSet
 }
 
-func (t *ClusterSyncTasker) SyncVersion(ctx context.Context) error {
+func (t *ClusterSyncTasker) Sync(ctx context.Context) error {
 	return t.cs.ExecuteInEachCluster(context.TODO(), func(ctx context.Context, cli agents.Client) error {
-		return t.DB.DB().Model(&models.Cluster{}).Where("cluster_name = ?", cli.Name()).Update("version", cli.APIServerVersion()).Error
+		return t.DB.DB().Model(&models.Cluster{}).Where("cluster_name = ?", cli.Name()).
+			Updates(map[string]interface{}{
+				"version":               cli.APIServerVersion(),
+				"client_cert_expire_at": cli.ClientCertExpireAt(),
+			}).Error
 	})
 }
 
-const TaskFunction_ClusterSyncVersion = "cluster-sync-version"
+const TaskFunction_ClusterSync = "cluster-sync"
 
 func (t *ClusterSyncTasker) ProvideFuntions() map[string]interface{} {
 	return map[string]interface{}{
-		TaskFunction_ClusterSyncVersion: t.SyncVersion,
+		TaskFunction_ClusterSync: t.Sync,
 	}
 }
 
 func (s *ClusterSyncTasker) Crontasks() map[string]Task {
 	return map[string]Task{
 		"@every 5m": {
-			Name:  "cluster-version-sync",
+			Name:  "cluster-sync",
 			Group: "cluster",
-			Steps: []workflow.Step{{Function: TaskFunction_ClusterSyncVersion}},
+			Steps: []workflow.Step{{Function: TaskFunction_ClusterSync}},
 		},
 	}
 }
