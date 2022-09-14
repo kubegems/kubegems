@@ -23,7 +23,6 @@ import (
 	v1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/networking"
@@ -78,26 +77,6 @@ func (r *ResourceValidate) ValidateTenantGateway(ctx context.Context, req admiss
 			return admission.Denied(err.Error())
 		}
 
-		return admission.Allowed("pass")
-	case v1.Delete:
-		tg := &gemsv1beta1.TenantGateway{}
-		err := r.Client.Get(ctx, types.NamespacedName{
-			Namespace: req.Namespace,
-			Name:      req.Name,
-		}, tg)
-		if err != nil {
-			return admission.Denied(err.Error())
-		}
-
-		ingressList := networkingv1.IngressList{}
-		if err := r.Client.List(ctx, &ingressList, client.MatchingLabels(map[string]string{
-			networking.LabelIngressClass: tg.Labels[networking.LabelIngressClass],
-		})); err != nil {
-			return admission.Denied(err.Error())
-		}
-		if len(ingressList.Items) > 0 {
-			return admission.Denied(fmt.Sprintf("网关: %s 还有关联的路由", tg.Name))
-		}
 		return admission.Allowed("pass")
 	default:
 		return admission.Allowed("pass")
