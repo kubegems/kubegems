@@ -5,6 +5,7 @@ go 1.18
 require (
 	code.gitea.io/sdk/gitea v0.15.1
 	github.com/VividCortex/mysqlerr v1.0.0
+	github.com/Xuanwo/go-locale v1.1.0
 	github.com/alicebob/miniredis/v2 v2.21.0
 	github.com/argoproj/argo-cd/v2 v2.3.4
 	github.com/argoproj/argo-rollouts v1.2.1
