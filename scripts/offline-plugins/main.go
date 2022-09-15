@@ -57,33 +57,19 @@ func DownloadLatestCharts(ctx context.Context, repoaddr string, into string, kub
 	}
 
 	kubegemsExample := gemsplugin.PluginVersion{Name: "kubegems", Version: kubegemsVersion}
-
 	for name, versions := range pluginrepo.Plugins {
-		var cacheVersion *gemsplugin.PluginVersion
+		// do not download kubegems charts,it exists locally.
 		if strings.HasPrefix(name, "kubegems") {
-			// cache kubegems version
-			for _, item := range versions {
-				if item.Version != kubegemsVersion {
-					continue
-				} else {
-					cacheVersion = &item
-					break
-				}
-			}
-			if cacheVersion == nil {
-				cacheVersion = &versions[0]
-				// cacheVersion.Kind = pluginv1beta1.BundleKindHelm
-				log.Printf("kubegems plugin %s version %s not found,use %s instead", name, kubegemsVersion, cacheVersion.Version)
-			}
-		} else {
-			// find latest version match kubegems
-			for _, item := range versions {
-				if err := gemsplugin.CheckDependecy(item.Requirements, kubegemsExample); err != nil {
-					continue
-				} else {
-					cacheVersion = &item
-					break
-				}
+			continue
+		}
+		var cacheVersion *gemsplugin.PluginVersion
+		// find latest version match kubegems
+		for _, item := range versions {
+			if err := gemsplugin.CheckDependecy(item.Requirements, kubegemsExample); err != nil {
+				continue
+			} else {
+				cacheVersion = &item
+				break
 			}
 		}
 		if cacheVersion == nil {

@@ -20,11 +20,13 @@ kind: Plugin
 metadata:
   name: kubegems
   namespace: kubegems-installer
+  annotations:
+    plugins.kubegems.io/category: core/KubeGems
 spec:
-  kind: template
+  kind: helm
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
-  version: "1.12.6"
+  version: "1.21.6"
   valuesFrom:
     - kind: ConfigMap
       name: "kubegems-global-values"

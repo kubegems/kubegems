@@ -128,12 +128,10 @@ func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOpti
 	}
 	// remove
 	for _, item := range diff.Removes {
-
 		if IsSkipedOn(item, plugins.AnnotationIgnoreOptionOnDelete) {
 			log.Info("ignoring delete", "resource", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
 			continue
 		}
-
 		partial := item
 		log.Info("deleting resource", "resource", partial.GetObjectKind().GroupVersionKind().String(), "name", partial.GetName(), "namespace", partial.GetNamespace())
 		if err := a.Client.Delete(ctx, partial, &client.DeleteOptions{}); err != nil {
@@ -196,7 +194,7 @@ func ApplyResource(ctx context.Context, cli client.Client, obj client.Object, op
 			client.ForceOwnership,
 		)
 	} else {
-		patch = client.MergeFrom(exists)
+		patch = client.StrategicMergeFrom(exists)
 	}
 
 	// patch

@@ -63,12 +63,13 @@ func (pv PluginVersion) ToPlugin() *pluginsv1beta1.Plugin {
 			Annotations: annotations,
 		},
 		Spec: pluginsv1beta1.PluginSpec{
-			Kind:       pv.Kind,
-			URL:        pv.Repository,
-			Chart:      pv.Name,
-			Version:    pv.Version,
-			Values:     pv.Values,
-			ValuesFrom: pv.ValuesFrom,
+			Kind:             pv.Kind,
+			URL:              pv.Repository,
+			InstallNamespace: pv.InstallNamespace,
+			Chart:            pv.Name,
+			Version:          pv.Version,
+			Values:           pv.Values,
+			ValuesFrom:       pv.ValuesFrom,
 		},
 	}
 }
@@ -95,6 +96,8 @@ func PluginVersionFrom(plugin *pluginsv1beta1.Plugin) PluginVersion {
 	if plugin.Status.Phase == pluginsv1beta1.PhaseInstalled {
 		pv.Healthy = true
 	}
+
+	fillCategory(&pv, annotations[pluginscommon.AnnotationCategory])
 	return pv
 }
 
@@ -102,16 +105,6 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 	annotations := cv.Annotations
 	if annotations == nil {
 		annotations = map[string]string{}
-	}
-
-	required, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationRequired])
-
-	maincate, cate := "other", "unknow"
-	categories := strings.Split(annotations[pluginscommon.AnnotationCategory], "/")
-	if len(categories) == 1 {
-		cate = categories[0]
-	} else if len(categories) > 1 {
-		maincate, cate = categories[0], categories[1]
 	}
 
 	valsFrom := []pluginsv1beta1.ValuesFrom{
@@ -140,20 +133,49 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		})
 	}
 
-	return PluginVersion{
-		Name:             cv.Name,
-		Kind:             pluginsv1beta1.BundleKindTemplate,
-		Repository:       repo,
-		InstallNamespace: annotations[pluginscommon.AnnotationInstallNamespace],
-		Version:          cv.Version,
-		Description:      cv.Description,
-		MainCategory:     maincate,
-		Category:         cate,
-		ValuesFrom:       valsFrom,
-		Required:         required,
-		Requirements:     annotations[pluginscommon.AnnotationRequirements],
-		HelathCheck:      annotations[pluginscommon.AnnotationHealthCheck],
+	pv := PluginVersion{
+		Name:        cv.Name,
+		Repository:  repo,
+		Version:     cv.Version,
+		Description: cv.Description,
+		ValuesFrom:  valsFrom,
 	}
+	fillFromAnnotations(&pv, annotations)
+	return pv
+}
+
+func fillFromAnnotations(pv *PluginVersion, annotations map[string]string) {
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+
+	pv.InstallNamespace = annotations[pluginscommon.AnnotationInstallNamespace]
+	pv.Requirements = annotations[pluginscommon.AnnotationRequirements]
+	pv.HelathCheck = annotations[pluginscommon.AnnotationHealthCheck]
+
+	required, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationRequired])
+	pv.Required = required
+
+	renderkind := pluginsv1beta1.BundleKindTemplate
+	if kind := annotations[pluginscommon.AnnotationRenderBy]; kind != "" {
+		renderkind = pluginsv1beta1.BundleKind(kind)
+	}
+	pv.Kind = renderkind
+	fillCategory(pv, annotations[pluginscommon.AnnotationCategory])
+}
+
+func fillCategory(pv *PluginVersion, full string) {
+	if full == "" {
+		return
+	}
+	maincate, cate := "other", "unknow"
+	categories := strings.Split(full, "/")
+	if len(categories) == 1 {
+		cate = categories[0]
+	} else if len(categories) > 1 {
+		maincate, cate = categories[0], categories[1]
+	}
+	pv.MainCategory, pv.Category = maincate, cate
 }
 
 func IsPluginChart(cv *repo.ChartVersion) bool {

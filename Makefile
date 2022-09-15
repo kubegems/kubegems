@@ -100,7 +100,7 @@ build-binaries: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
-build: gen-i18n build-binaries plugins-cache
+build: gen-i18n build-binaries helm-package plugins-cache
 
 plugins-cache: ## Build plugins-cache
 	go run scripts/offline-plugins/main.go 
@@ -109,8 +109,13 @@ CHARTS = kubegems kubegems-local
 helm-readme: readme-generator
 	$(foreach var, $(wildcard $(CHARTS_DIR)/*/), readme-generator -v $(var)values.yaml -r $(var)README.md;)
 
+KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
+helm-package:
+	$(foreach file, $(wildcard $(CHARTS_DIR)/*/), helm package -d ${KUBEGEM_CHARTS_DIR} --version ${SEMVER_VERSION}  $(file);)
+
+.PHONY: helm-push
 helm-push:
-	@$(foreach file, $(wildcard $(CHARTS_DIR)/*/), helm cm-push -d -f -v ${SEMVER_VERSION}  $(file) ${CHARTMUSEUM_ADDR};)
+	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(SEMVER_VERSION).tgz), helm cm-push -f $(file) ${CHARTMUSEUM_ADDR};)
 
 container: ## Build container image.
 ifneq (, $(shell which docker))
@@ -161,8 +166,7 @@ else
 endif
 
 helm-plugin:
-# there is a bug on: https://github.com/chartmuseum/helm-push/pull/163 , use fork repository before pr merged temporarily.
-	helm plugin install https://github.com/cnfatal/helm-push 
+	helm plugin install https://github.com/chartmuseum/helm-push 
 
 .PHONY: add-license
 add-license:

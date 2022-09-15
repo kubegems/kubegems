@@ -17,6 +17,7 @@ package gemsplugin
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"golang.org/x/exp/slices"
@@ -330,4 +331,21 @@ func (m *PluginManager) CheckUpdate(ctx context.Context) (map[string]Plugin, err
 		}
 	}
 	return upgradable, nil
+}
+
+func (m *PluginManager) UpdateLocalRepoCache(ctx context.Context) error {
+	repos, err := m.ListRepos(ctx)
+	if err != nil {
+		return err
+	}
+	for _, repo := range repos {
+		if !strings.HasPrefix(repo.Address, "file://") {
+			continue
+		}
+		// with refresh
+		if err := m.SetRepo(ctx, &repo, true); err != nil {
+			return err
+		}
+	}
+	return nil
 }

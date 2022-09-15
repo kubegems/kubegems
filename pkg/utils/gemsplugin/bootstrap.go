@@ -95,79 +95,34 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 	}
 
 	// apply plugins
-	plugins := InitPlugins(values)
-	if err = ApplyInNamespace(ctx, cli, ns, plugins...); err != nil {
-		return fmt.Errorf("apply plugins: %v", err)
-	}
-	return nil
-}
-
-// nolint: funlen
-func InitPlugins(values GlobalValues) []client.Object {
 	// v1.21.X -> 1.21.X , cause helm chart version follow pure semver.
 	version := strings.TrimSpace(strings.TrimPrefix(values.KubegemsVersion, "v"))
 
-	globalValuesFrom := pluginv1beta1.ValuesFrom{
-		Kind:     pluginv1beta1.ValuesFromKindConfigmap,
-		Name:     pluginscommon.KubeGemsGlobalValuesConfigMapName,
-		Prefix:   "global.",
-		Optional: true,
+	// we have preset repos
+	pm := &PluginManager{Client: cli}
+	// we can check update after repo cache exists.
+	if err := pm.UpdateLocalRepoCache(ctx); err != nil {
+		return err
 	}
-	typemeta := metav1.TypeMeta{
-		Kind:       "Plugin",
-		APIVersion: pluginsv1beta1.GroupVersion.String(),
+
+	globalvals := map[string]interface{}{
+		"imageRegistry":   values.ImageRegistry,
+		"imageRepository": values.ImageRepository,
+		"clusterName":     values.ClusterName,
+		"storageClass":    values.StorageClass,
+		"kubegemsVersion": values.KubegemsVersion,
+		"runtime":         values.Runtime,
 	}
-	return []client.Object{
-		// global
-		&pluginv1beta1.Plugin{
-			TypeMeta: typemeta,
-			ObjectMeta: metav1.ObjectMeta{
-				Name: pluginscommon.KubegemsChartGlobal,
-			},
-			Spec: pluginv1beta1.PluginSpec{
-				Kind:    pluginv1beta1.BundleKindTemplate,
-				URL:     KubegemsChartsRepoURL,
-				Version: version,
-				Values: pluginv1beta1.Values{
-					Object: map[string]interface{}{
-						"imageRegistry":   values.ImageRegistry,
-						"imageRepository": values.ImageRepository,
-						"clusterName":     values.ClusterName,
-						"storageClass":    values.StorageClass,
-						"kubegemsVersion": values.KubegemsVersion,
-						"runtime":         values.Runtime,
-					},
-				},
-			},
-		},
-		// kubegems-installer
-		&pluginv1beta1.Plugin{
-			TypeMeta: typemeta,
-			ObjectMeta: metav1.ObjectMeta{
-				Name: pluginscommon.KubegemsChartInstaller,
-			},
-			Spec: pluginv1beta1.PluginSpec{
-				Kind:       pluginv1beta1.BundleKindTemplate,
-				URL:        KubegemsChartsRepoURL,
-				Version:    version,
-				ValuesFrom: []pluginv1beta1.ValuesFrom{globalValuesFrom},
-			},
-		},
-		// kubegems-local
-		&pluginv1beta1.Plugin{
-			TypeMeta: typemeta,
-			ObjectMeta: metav1.ObjectMeta{
-				Name: pluginscommon.KubegemsChartLocal,
-			},
-			Spec: pluginv1beta1.PluginSpec{
-				Kind:             pluginv1beta1.BundleKindTemplate,
-				URL:              KubegemsChartsRepoURL,
-				Version:          version,
-				InstallNamespace: pluginscommon.KubeGemsNamespaceLocal,
-				ValuesFrom:       []pluginv1beta1.ValuesFrom{globalValuesFrom},
-			},
-		},
+	if err := pm.Install(ctx, pluginscommon.KubegemsChartGlobal, "", globalvals); err != nil {
+		return err
 	}
+	if err := pm.Install(ctx, pluginscommon.KubegemsChartInstaller, version, nil); err != nil {
+		return err
+	}
+	if err := pm.Install(ctx, pluginscommon.KubegemsChartLocal, version, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (i Bootstrap) Remove(ctx context.Context) error {

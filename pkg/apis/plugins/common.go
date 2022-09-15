@@ -47,6 +47,9 @@ const (
 	// required dependecies
 	// example: foo > 1.0.0,bar = 1.2.0,kubegems ^ 1.20.0
 	AnnotationRequirements = "plugins.kubegems.io/requirements"
+
+	// specified which engine to render this plugin
+	AnnotationRenderBy = "plugins.kubegems.io/render-by"
 )
 
 const (
