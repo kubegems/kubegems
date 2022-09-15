@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -25,7 +26,7 @@ import (
 
 var (
 	p           *i18nPrinter
-	defaultLang = language.English
+	defaultLang language.Tag
 )
 
 type i18nPrinter struct {
@@ -43,14 +44,13 @@ var supported = language.NewMatcher([]language.Tag{
 func printerFromCtx(ctx context.Context) *message.Printer {
 	var lang language.Tag
 	if ctx == nil {
+		return p.printers[defaultLang]
+	}
+	l := ctx.Value(LANG)
+	if l == nil {
 		lang = defaultLang
 	} else {
-		l := ctx.Value(LANG)
-		if l == nil {
-			lang = defaultLang
-		} else {
-			lang = l.(language.Tag)
-		}
+		lang = l.(language.Tag)
 	}
 	printer, exist := p.printers[lang]
 	if exist {
@@ -80,11 +80,25 @@ func Errorf(ctx context.Context, format string, a ...interface{}) error {
 }
 
 func init() {
+	locale := os.Getenv("KUBEGEMS_LOCALE")
+	switch locale {
+	case "ZH":
+		defaultLang = language.Chinese
+	case "EN":
+		defaultLang = language.English
+	case "JP":
+		defaultLang = language.Japanese
+	case "ZHT":
+		defaultLang = language.TraditionalChinese
+	default:
+		defaultLang = language.English
+	}
 	p = &i18nPrinter{}
 	m := make(map[language.Tag]*message.Printer)
 	langTags := []language.Tag{
 		language.AmericanEnglish,
 		language.English,
+		language.Japanese,
 		language.SimplifiedChinese,
 		language.TraditionalChinese,
 		language.Chinese,
@@ -95,6 +109,10 @@ func init() {
 			initEnUS(langTag)
 		case language.SimplifiedChinese, language.Chinese:
 			initZhCN(langTag)
+		case language.Japanese:
+			initJaJP(langTag)
+		case language.TraditionalChinese:
+			initZhTW(langTag)
 		}
 		m[langTag] = message.NewPrinter(langTag)
 	}
