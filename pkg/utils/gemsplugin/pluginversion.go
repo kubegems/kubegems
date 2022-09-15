@@ -111,7 +111,7 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		// always inject the global values reference in plugin
 		{
 			Kind:     pluginsv1beta1.ValuesFromKindConfigmap,
-			Name:     pluginscommon.KubegemsChartGlobal,
+			Name:     pluginscommon.KubeGemsGlobalValuesConfigMapName,
 			Prefix:   pluginscommon.KubegemsChartGlobal + ".",
 			Optional: true,
 		},
@@ -126,7 +126,7 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		}
 		valsFrom = append(valsFrom, pluginsv1beta1.ValuesFrom{
 			Kind:      pluginsv1beta1.ValuesFromKindConfigmap,
-			Name:      name,
+			Name:      fmt.Sprintf("kubegems-%s-values", name),
 			Namespace: namespace,
 			Prefix:    name + ".",
 			Optional:  true,

@@ -67,31 +67,29 @@ func Download(ctx context.Context, repo, name, version, path, cacheDir string) (
 		home, _ := os.UserHomeDir()
 		cacheDir = filepath.Join(home, ".cache", "kubegems", "bundles")
 	}
-	// from cache
-	perRepoCacheDir := PerRepoCacheDir(repo, cacheDir)
 
 	basename := name
 	if version != "" {
 		basename = name + "-" + version
 	}
-
-	cacheInFile := filepath.Join(perRepoCacheDir, basename+".tgz")
-	if _, err := os.Stat(cacheInFile); err == nil {
-		log.Info("found in cache", "file", cacheInFile)
-		return cacheInFile, nil
+	// from cache
+	perRepoCacheDir := PerRepoCacheDir(repo, cacheDir)
+	if cachepath := foundInCache(ctx, perRepoCacheDir, basename); cachepath != "" {
+		log.Info("found in cache", "path", cachepath)
+		return cachepath, nil
 	}
-	cacheInDir := filepath.Join(perRepoCacheDir, basename)
-	if entries, err := os.ReadDir(cacheInDir); err == nil && len(entries) >= 0 {
-		log.Info("found in cache", "directory", cacheInDir)
-		return cacheInDir, nil
+
+	// is file://
+	if strings.HasPrefix(repo, "file://") {
+		if cachepath := foundInCache(ctx, strings.TrimPrefix(repo, "file://"), basename); cachepath != "" {
+			log.Info("found in file protocol", "path", cachepath)
+			return cachepath, nil
+		}
 	}
 
 	cacheIn := filepath.Join(perRepoCacheDir, basename)
 	log.Info("downloading...", "cache", cacheIn)
-	// is file://
-	if strings.HasPrefix(repo, "file://") {
-		return cacheIn, DownloadFile(ctx, repo, path, cacheIn)
-	}
+
 	// is git ?
 	if strings.HasSuffix(repo, ".git") {
 		return cacheIn, DownloadGit(ctx, repo, version, path, cacheIn)
@@ -110,6 +108,18 @@ func Download(ctx context.Context, repo, name, version, path, cacheDir string) (
 		return chartpath, err
 	}
 	return chartpath, err
+}
+
+func foundInCache(ctx context.Context, cachedir, basename string) string {
+	cacheInFile := filepath.Join(cachedir, basename+".tgz")
+	if _, err := os.Stat(cacheInFile); err == nil {
+		return cacheInFile
+	}
+	cacheInDir := filepath.Join(cachedir, basename)
+	if entries, err := os.ReadDir(cacheInDir); err == nil && len(entries) >= 0 {
+		return cacheInDir
+	}
+	return ""
 }
 
 func PerRepoCacheDir(repo string, basedir string) string {

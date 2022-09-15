@@ -9,7 +9,7 @@ spec:
   chart: global
   version: "1.0.0"
   values:
-    kubegemsVersion: latest
+    kubegemsVersion: "1.21.6"
     imageRegistry: "docker.io"
     imageRepository: "kubegems"
     clusterName: "manager-cluster"

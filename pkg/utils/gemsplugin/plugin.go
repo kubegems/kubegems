@@ -283,7 +283,7 @@ func (m *PluginManager) GetRemote(ctx context.Context, name string) ([]PluginVer
 		ret = append(ret, repo.Plugins[name]...)
 	}
 	slices.SortFunc(ret, func(a, b PluginVersion) bool {
-		return semver.Compare(a.Version, b.Version) > -1
+		return semver.Compare(a.Version, b.Version) > 1
 	})
 	return ret, nil
 }

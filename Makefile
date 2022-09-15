@@ -41,7 +41,7 @@ CHARTMUSEUM_ADDR?=https://${HELM_REPO_USERNAME}:${HELM_REPO_PASSWORD}@charts.kub
 
 ##@ All
 
-all: build container ## build all
+all: generate build container push helm-push## build all
 
 ##@ General
 
@@ -110,11 +110,11 @@ helm-readme: readme-generator
 	$(foreach var, $(wildcard $(CHARTS_DIR)/*/), readme-generator -v $(var)values.yaml -r $(var)README.md;)
 
 KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
-helm-package:
-	$(foreach file, $(wildcard $(CHARTS_DIR)/*/), helm package -d ${KUBEGEM_CHARTS_DIR} --version ${SEMVER_VERSION}  $(file);)
+helm-package: helm-readme
+	$(foreach file, $(wildcard $(CHARTS_DIR)/*/), helm package -d ${KUBEGEM_CHARTS_DIR} --version ${SEMVER_VERSION} --app-version  ${SEMVER_VERSION} $(file);)
 
 .PHONY: helm-push
-helm-push:
+helm-push: helm-package
 	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(SEMVER_VERSION).tgz), helm cm-push -f $(file) ${CHARTMUSEUM_ADDR};)
 
 container: ## Build container image.
