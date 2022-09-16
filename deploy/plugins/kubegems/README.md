@@ -659,6 +659,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `argo-cd.externalRedis.host`                      | Kubegems Redis host                                                        | `kubegems-redis-headless` |
 | `argo-cd.externalRedis.existingSecret`            | Kubegems Redis secret                                                      | `kubegems-redis`          |
 | `argo-cd.image.repository`                        | argo-cd repository override                                                | `kubegems/argo-cd`        |
+| `argo-cd.redis.image.repository`                  | argocd redis image                                                         | `kubegems/redis`          |
 
 
 ### External ArgoCD configuration

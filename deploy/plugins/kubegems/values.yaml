@@ -1989,6 +1989,7 @@ externalRedis:
 ## @skip argo-cd.controller.extraEnvVars
 ## @skip argo-cd.server.extraEnvVars
 ## @skip argo-cd.repoServer.extraEnvVars
+## @param argo-cd.redis.image.repository argocd redis image
 argo-cd:
   enabled: true
   image:
@@ -2024,6 +2025,8 @@ argo-cd:
             key: '{{ include "argocd.redis.secretPasswordKey" . }}' # rederd by inner "common.tplvalues.render"
   redis:
     enabled: false
+    image:
+      repository: kubegems/redis
   externalRedis:
     host: kubegems-redis-headless
     existingSecret: kubegems-redis

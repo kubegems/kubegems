@@ -28,7 +28,6 @@ import (
 	"k8s.io/client-go/rest"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
-	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/utils"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
@@ -130,14 +129,9 @@ func (i Bootstrap) Remove(ctx context.Context) error {
 	if ns == "" {
 		ns = pluginscommon.KubeGemsNamespaceInstaller
 	}
-	cli, err := kube.NewClient(i.Config)
-	if err != nil {
-		return err
-	}
-	// remove all bundles in ns
-	log.FromContextOrDiscard(ctx).Info("removing kubegems plugins", "namespace", ns)
-	return cli.DeleteAllOf(ctx, &pluginv1beta1.Plugin{}, client.InNamespace(ns))
-	// remove kubegems-installer by hand
+	_ = ns
+	// do nothing
+	return nil
 }
 
 func ParseInstallerObjects(path string, values GlobalValues) ([]client.Object, error) {

@@ -75,7 +75,7 @@ func (m *PluginManager) Install(ctx context.Context, name string, version string
 	apiplugin.Namespace = pluginscommon.KubeGemsNamespaceInstaller
 
 	exists := apiplugin.DeepCopy()
-	_, err = controllerutil.CreateOrUpdate(ctx, m.Client, apiplugin, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, m.Client, exists, func() error {
 		exists.Annotations = apiplugin.Annotations
 		exists.Spec = apiplugin.Spec
 		return nil
