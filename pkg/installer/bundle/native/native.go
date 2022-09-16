@@ -16,7 +16,6 @@ package native
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -50,11 +49,11 @@ func (p *Apply) Template(ctx context.Context, bundle *pluginsv1beta1.Plugin, int
 func (p *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into string) error {
 	log := logr.FromContextOrDiscard(ctx)
 
-	renderd, err := p.Template(ctx, bundle, into)
+	rendered, err := p.Template(ctx, bundle, into)
 	if err != nil {
 		return err
 	}
-	resources, err := utils.SplitYAML(renderd)
+	resources, err := utils.SplitYAML(rendered)
 	if err != nil {
 		return err
 	}
@@ -64,7 +63,7 @@ func (p *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into s
 		ns = bundle.Namespace
 	}
 	// override namespace
-	SetNamespaceIfNotSet(ns, p.Cli.Client, resources)
+	p.CorrectNamespaces(ctx, ns, p.Cli.Client, resources)
 
 	diffresult := utils.Diff(bundle.Status.Resources, resources)
 	if bundle.Status.Phase == pluginsv1beta1.PhaseInstalled &&
@@ -103,31 +102,33 @@ func (p *Apply) Remove(ctx context.Context, bundle *pluginsv1beta1.Plugin) error
 	return nil
 }
 
-func SetNamespaceIfNotSet(ns string, cli client.Client, list []*unstructured.Unstructured) {
+func (p *Apply) CorrectNamespaces(ctx context.Context, ns string, cli client.Client, list []*unstructured.Unstructured) {
+	log := logr.FromContextOrDiscard(ctx)
 	for _, item := range list {
-		if item.GetNamespace() != "" {
+		scopeName, err := p.IsNamespacedScope(cli, item)
+		if err != nil {
+			log.Error(err, "get scope name", "kind", item.GetKind())
 			continue
 		}
-		if ok, _ := IsNamespacedScope(cli, item); ok {
+		switch {
+		case scopeName == apimeta.RESTScopeNameNamespace && item.GetNamespace() == "":
 			item.SetNamespace(ns)
+		case scopeName == apimeta.RESTScopeNameRoot && item.GetNamespace() != "":
+			item.SetNamespace("")
 		}
 	}
 }
 
-func IsNamespacedScope(cli client.Client, obj client.Object) (bool, error) {
+func (p *Apply) IsNamespacedScope(cli client.Client, obj client.Object) (apimeta.RESTScopeName, error) {
 	restmapper := cli.RESTMapper()
 	scheme := cli.Scheme()
 	gvk, err := apiutil.GVKForObject(obj, scheme)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	restmapping, err := restmapper.RESTMapping(gvk.GroupKind())
 	if err != nil {
-		return false, fmt.Errorf("failed to get restmapping: %w", err)
+		return "", fmt.Errorf("failed to get restmapping: %w", err)
 	}
-	scope := restmapping.Scope.Name()
-	if scope == "" {
-		return false, errors.New("scope cannot be identified, empty scope returned")
-	}
-	return scope != apimeta.RESTScopeNameRoot, nil
+	return restmapping.Scope.Name(), nil
 }
