@@ -236,8 +236,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `store.service.annotations`                           | Additional custom annotations for store service                                                 | `{}`                     |
 | `store.service.extraPorts`                            | Extra ports to expose in store service (normally used with the `sidecars` value)                | `[]`                     |
 | `sync.image.registry`                                 | sync image registry                                                                             | `docker.io`              |
-| `sync.image.repository`                               | sync image repository                                                                           | `kubegems/models-sync`   |
-| `sync.image.tag`                                      | sync image tag (immutable tags are recommended)                                                 | `latest`                 |
+| `sync.image.repository`                               | sync image repository                                                                           | `kubegems/ai-model-sync` |
+| `sync.image.tag`                                      | sync image tag (immutable tags are recommended)                                                 | `v1.16`                  |
 | `sync.image.pullPolicy`                               | sync image pull policy                                                                          | `IfNotPresent`           |
 | `sync.image.pullSecrets`                              | sync image pull secrets                                                                         | `[]`                     |
 | `sync.image.debug`                                    | Enable sync image debug mode                                                                    | `false`                  |
@@ -311,9 +311,10 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### MongoDB parameters
 
-| Name           | Description   | Value |
-| -------------- | ------------- | ----- |
-| `mongodb.auth` | auth of mongo | `{}`  |
+| Name                       | Description               | Value              |
+| -------------------------- | ------------------------- | ------------------ |
+| `mongodb.auth`             | auth of mongo             | `{}`               |
+| `mongodb.image.repository` | mongo db image repository | `kubegems/mongodb` |
 
 
 ### RBAC Parameters

@@ -700,8 +700,8 @@ sync:
   ##
   image:
     registry: docker.io
-    repository: kubegems/models-sync
-    tag: latest
+    repository: kubegems/ai-model-sync
+    tag: v1.16
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -978,7 +978,10 @@ sync:
 ## @section MongoDB parameters
 #
 ## @param mongodb.auth auth of mongo
+## @param mongodb.image.repository mongo db image repository
 mongodb:
+  image:
+    repository: kubegems/mongodb
   auth: {}
 
 ## @section RBAC Parameters
