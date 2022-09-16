@@ -75,6 +75,7 @@ func NewDefaultSyncOptions() *SyncOptions {
 type SyncOptions struct {
 	ServerSideApply bool
 	CreateNamespace bool
+	CleanCRD        bool
 }
 
 type Apply struct {
@@ -128,6 +129,9 @@ func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOpti
 	}
 	// remove
 	for _, item := range diff.Removes {
+		if IsCRD(item) && !options.CleanCRD {
+			continue
+		}
 		if IsSkipedOn(item, plugins.AnnotationIgnoreOptionOnDelete) {
 			log.Info("ignoring delete", "resource", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
 			continue
@@ -213,4 +217,11 @@ func IsSkipedOn(obj client.Object, key string) bool {
 		}
 	}
 	return false
+}
+
+func IsCRD(obj client.Object) bool {
+	// apiVersion: apiextensions.k8s.io/v1
+	// kind: CustomResourceDefinition
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	return gvk.Group == "apiextensions.k8s.io" && gvk.Kind == "CustomResourceDefinition"
 }
