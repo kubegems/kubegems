@@ -271,14 +271,14 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule) (monitoringv1.RuleGroup, 
 				SeverityLabel:       level.Severity,
 			},
 			Annotations: map[string]string{
-				messageAnnotationsKey: alertRule.Message,
+				MessageAnnotationsKey: alertRule.Message,
 				valueAnnotationKey:    ValueAnnotationExpr,
 			},
 		}
 		if !alertRule.PromqlGenerator.Notpl() {
 			rule.Labels[AlertPromqlTpl] = alertRule.PromqlGenerator.TplString()
 			bts, _ := json.Marshal(alertRule.PromqlGenerator)
-			rule.Annotations[exprJsonAnnotationKey] = string(bts)
+			rule.Annotations[ExprJsonAnnotationKey] = string(bts)
 		}
 		ret.Rules = append(ret.Rules, rule)
 	}
@@ -295,7 +295,7 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup) (Moni
 			Namespace: namespace,
 			Name:      group.Name,
 			For:       group.Rules[0].For,
-			Message:   group.Rules[0].Annotations[messageAnnotationsKey],
+			Message:   group.Rules[0].Annotations[MessageAnnotationsKey],
 		},
 	}
 	for _, rule := range group.Rules {
@@ -309,7 +309,7 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup) (Moni
 			return ret, fmt.Errorf("rule %s expr %s not valid", group.Name, rule.Expr.String())
 		}
 
-		exprJson, ok := rule.Annotations[exprJsonAnnotationKey]
+		exprJson, ok := rule.Annotations[ExprJsonAnnotationKey]
 		if ok {
 			// from template
 			generator := PromqlGenerator{}
