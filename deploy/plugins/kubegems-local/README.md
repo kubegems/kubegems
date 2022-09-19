@@ -114,7 +114,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `agent.httpSignature.enabled`                 | Enable agent HTTP Signature validation                                                          | `true`              |
 | `agent.httpSignature.token`                   | HTTP Signature encode token override                                                            | `""`                |
 | `agent.logLevel`                              | Set log level                                                                                   | `info`              |
-| `agent.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for agent                      | `nil`               |
+| `agent.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for agent                      | `""`                |
 | `agent.command`                               | Override default container command (useful when using custom images)                            | `[]`                |
 | `agent.args`                                  | Override default container args (useful when using custom images)                               | `[]`                |
 | `agent.hostAliases`                           | agent pods host aliases                                                                         | `[]`                |
@@ -133,8 +133,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `agent.schedulerName`                         | Name of the k8s scheduler (other than default) for agent pods                                   | `""`                |
 | `agent.lifecycleHooks`                        | for the agent container(s) to automate configuration before or after startup                    | `{}`                |
 | `agent.extraEnvVars`                          | Array with extra environment variables to add to agent nodes                                    | `[]`                |
-| `agent.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for agent nodes                            | `nil`               |
-| `agent.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for agent nodes                               | `nil`               |
+| `agent.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for agent nodes                            | `{}`                |
+| `agent.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for agent nodes                               | `{}`                |
 | `agent.extraVolumes`                          | Optionally specify extra list of additional volumes for the agent pod(s)                        | `[]`                |
 | `agent.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the agent container(s)             | `[]`                |
 | `agent.sidecars`                              | Add additional sidecar containers to the agent pod(s)                                           | `{}`                |
@@ -151,9 +151,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | `agent.serviceAccount.name`              | The name of the ServiceAccount to use.                                           | `""`        |
 | `agent.service.type`                     | agent service type                                                               | `ClusterIP` |
 | `agent.service.ports.http`               | agent service HTTP port                                                          | `8041`      |
-| `agent.service.nodePorts.http`           | Node port for HTTP                                                               | `nil`       |
-| `agent.service.clusterIP`                | agent service Cluster IP                                                         | `nil`       |
-| `agent.service.loadBalancerIP`           | agent service Load Balancer IP                                                   | `nil`       |
+| `agent.service.nodePorts.http`           | Node port for HTTP                                                               | `0`         |
+| `agent.service.clusterIP`                | agent service Cluster IP                                                         | `""`        |
+| `agent.service.loadBalancerIP`           | agent service Load Balancer IP                                                   | `""`        |
 | `agent.service.loadBalancerSourceRanges` | agent service Load Balancer sources                                              | `[]`        |
 | `agent.service.externalTrafficPolicy`    | agent service external traffic policy                                            | `Cluster`   |
 | `agent.service.annotations`              | Additional custom annotations for agent service                                  | `{}`        |
@@ -197,7 +197,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `kubectl.containerSecurityContext.enabled`       | Enabled kubectl containers' Security Context                                                      | `true`                                     |
 | `kubectl.containerSecurityContext.runAsUser`     | Set kubectl containers' Security Context runAsUser                                                | `1001`                                     |
 | `kubectl.containerSecurityContext.runAsNonRoot`  | Set kubectl containers' Security Context runAsNonRoot                                             | `true`                                     |
-| `kubectl.existingConfigmap`                      | The name of an existing ConfigMap with your custom configuration for kubectl                      | `nil`                                      |
+| `kubectl.existingConfigmap`                      | The name of an existing ConfigMap with your custom configuration for kubectl                      | `""`                                       |
 | `kubectl.command`                                | Override default container command (useful when using custom images)                              | `[]`                                       |
 | `kubectl.args`                                   | Override default container args (useful when using custom images)                                 | `[]`                                       |
 | `kubectl.hostAliases`                            | kubectl pods host aliases                                                                         | `[]`                                       |
@@ -260,7 +260,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `controller.containerSecurityContext.runAsNonRoot` | Set controller containers' Security Context runAsNonRoot                                             | `true`              |
 | `controller.leaderElection.enabled`                | Enable leader election for controller                                                                | `true`              |
 | `controller.logLevel`                              | Log level for controller                                                                             | `info`              |
-| `controller.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for controller                      | `nil`               |
+| `controller.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for controller                      | `""`                |
 | `controller.command`                               | Override default container command (useful when using custom images)                                 | `[]`                |
 | `controller.args`                                  | Override default container args (useful when using custom images)                                    | `[]`                |
 | `controller.hostAliases`                           | controller pods host aliases                                                                         | `[]`                |
@@ -279,8 +279,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `controller.schedulerName`                         | Name of the k8s scheduler (other than default) for controller pods                                   | `""`                |
 | `controller.lifecycleHooks`                        | for the controller container(s) to automate configuration before or after startup                    | `{}`                |
 | `controller.extraEnvVars`                          | Array with extra environment variables to add to controller nodes                                    | `[]`                |
-| `controller.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for controller nodes                            | `nil`               |
-| `controller.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for controller nodes                               | `nil`               |
+| `controller.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for controller nodes                            | `{}`                |
+| `controller.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for controller nodes                               | `{}`                |
 | `controller.extraVolumes`                          | Optionally specify extra list of additional volumes for the controller pod(s)                        | `[]`                |
 | `controller.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the controller container(s)             | `[]`                |
 | `controller.sidecars`                              | Add additional sidecar containers to the controller pod(s)                                           | `{}`                |
@@ -306,9 +306,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | `controller.webhook.secretName`                       | tls secret name for webhook                                                      | `""`        |
 | `controller.webhook.service.type`                     | agent service type                                                               | `ClusterIP` |
 | `controller.webhook.service.ports.http`               | webhook service HTTP port                                                        | `443`       |
-| `controller.webhook.service.nodePorts.http`           | Node port for HTTP                                                               | `nil`       |
-| `controller.webhook.service.clusterIP`                | agent service Cluster IP                                                         | `nil`       |
-| `controller.webhook.service.loadBalancerIP`           | agent service Load Balancer IP                                                   | `nil`       |
+| `controller.webhook.service.nodePorts.http`           | Node port for HTTP                                                               | `0`         |
+| `controller.webhook.service.clusterIP`                | agent service Cluster IP                                                         | `""`        |
+| `controller.webhook.service.loadBalancerIP`           | agent service Load Balancer IP                                                   | `""`        |
 | `controller.webhook.service.loadBalancerSourceRanges` | agent service Load Balancer sources                                              | `[]`        |
 | `controller.webhook.service.externalTrafficPolicy`    | agent service external traffic policy                                            | `Cluster`   |
 | `controller.webhook.service.annotations`              | Additional custom annotations for agent service                                  | `{}`        |
@@ -346,7 +346,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `ingress.enabled`     | Enable ingress record generation for agent                                                                                       | `false`                  |
 | `ingress.pathType`    | Ingress path type                                                                                                                | `ImplementationSpecific` |
-| `ingress.apiVersion`  | Force Ingress API version (automatically detected if not set)                                                                    | `nil`                    |
+| `ingress.apiVersion`  | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
 | `ingress.hostname`    | Default host for the ingress record                                                                                              | `kubegems-local.local`   |
 | `ingress.path`        | Default path for the ingress record                                                                                              | `/`                      |
 | `ingress.annotations` | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations. | `{}`                     |

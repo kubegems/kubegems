@@ -402,7 +402,6 @@ metadata:
     app.kubernetes.io/name: kubegems-installer
     helm.sh/chart: kubegems-installer-1.22.0-beta.1
   name: kubegems-installer
-  namespace: kubegems-installer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

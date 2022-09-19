@@ -112,7 +112,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `controller.leaderElection.enabled`                | Enable leader election                                                                               | `true`               |
 | `controller.baseDomain`                            | Models Ingress Base Domain                                                                           | `models.kubegems.io` |
 | `controller.logLevel`                              | Log level                                                                                            | `debug`              |
-| `controller.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for controller                      | `nil`                |
+| `controller.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for controller                      | `""`                 |
 | `controller.command`                               | Override default container command (useful when using custom images)                                 | `[]`                 |
 | `controller.args`                                  | Override default container args (useful when using custom images)                                    | `[]`                 |
 | `controller.hostAliases`                           | controller pods host aliases                                                                         | `[]`                 |
@@ -132,8 +132,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `controller.schedulerName`                         | Name of the k8s scheduler (other than default) for controller pods                                   | `""`                 |
 | `controller.lifecycleHooks`                        | for the controller container(s) to automate configuration before or after startup                    | `{}`                 |
 | `controller.extraEnvVars`                          | Array with extra environment variables to add to controller nodes                                    | `[]`                 |
-| `controller.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for controller nodes                            | `nil`                |
-| `controller.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for controller nodes                               | `nil`                |
+| `controller.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for controller nodes                            | `{}`                 |
+| `controller.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for controller nodes                               | `{}`                 |
 | `controller.extraVolumes`                          | Optionally specify extra list of additional volumes for the controller pod(s)                        | `[]`                 |
 | `controller.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the controller container(s)             | `[]`                 |
 | `controller.sidecars`                              | Add additional sidecar containers to the controller pod(s)                                           | `{}`                 |
@@ -163,6 +163,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `controller.metrics.serviceMonitor.additionalLabels`  | Used to pass Labels that are required by the installed Prometheus Operator                      | `{}`                     |
 | `controller.metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                        | `{}`                     |
 | `controller.metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                                      | `{}`                     |
+| `store.enabled`                                       | enabled model store api                                                                         | `false`                  |
 | `store.image.registry`                                | store image registry                                                                            | `docker.io`              |
 | `store.image.repository`                              | store image repository                                                                          | `kubegems/kubegems`      |
 | `store.image.tag`                                     | store image tag (immutable tags are recommended)                                                | `latest`                 |
@@ -200,7 +201,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `store.containerSecurityContext.runAsUser`            | Set store containers' Security Context runAsUser                                                | `1001`                   |
 | `store.containerSecurityContext.runAsNonRoot`         | Set store containers' Security Context runAsNonRoot                                             | `true`                   |
 | `store.logLevel`                                      | Log level                                                                                       | `debug`                  |
-| `store.existingConfigmap`                             | The name of an existing ConfigMap with your custom configuration for store                      | `nil`                    |
+| `store.existingConfigmap`                             | The name of an existing ConfigMap with your custom configuration for store                      | `""`                     |
 | `store.command`                                       | Override default container command (useful when using custom images)                            | `[]`                     |
 | `store.args`                                          | Override default container args (useful when using custom images)                               | `[]`                     |
 | `store.hostAliases`                                   | store pods host aliases                                                                         | `[]`                     |
@@ -220,21 +221,22 @@ The command removes all the Kubernetes components associated with the chart and 
 | `store.schedulerName`                                 | Name of the k8s scheduler (other than default) for store pods                                   | `""`                     |
 | `store.lifecycleHooks`                                | for the store container(s) to automate configuration before or after startup                    | `{}`                     |
 | `store.extraEnvVars`                                  | Array with extra environment variables to add to store nodes                                    | `[]`                     |
-| `store.extraEnvVarsCM`                                | Name of existing ConfigMap containing extra env vars for store nodes                            | `nil`                    |
-| `store.extraEnvVarsSecret`                            | Name of existing Secret containing extra env vars for store nodes                               | `nil`                    |
+| `store.extraEnvVarsCM`                                | Name of existing ConfigMap containing extra env vars for store nodes                            | `{}`                     |
+| `store.extraEnvVarsSecret`                            | Name of existing Secret containing extra env vars for store nodes                               | `{}`                     |
 | `store.extraVolumes`                                  | Optionally specify extra list of additional volumes for the store pod(s)                        | `[]`                     |
 | `store.extraVolumeMounts`                             | Optionally specify extra list of additional volumeMounts for the store container(s)             | `[]`                     |
 | `store.sidecars`                                      | Add additional sidecar containers to the store pod(s)                                           | `{}`                     |
 | `store.initContainers`                                | Add additional init containers to the store pod(s)                                              | `{}`                     |
 | `store.service.type`                                  | store service type                                                                              | `ClusterIP`              |
 | `store.service.ports.http`                            | store service HTTP port                                                                         | `8080`                   |
-| `store.service.nodePorts.http`                        | Node port for HTTP                                                                              | `nil`                    |
-| `store.service.clusterIP`                             | store service Cluster IP                                                                        | `nil`                    |
-| `store.service.loadBalancerIP`                        | store service Load Balancer IP                                                                  | `nil`                    |
+| `store.service.nodePorts.http`                        | Node port for HTTP                                                                              | `0`                      |
+| `store.service.clusterIP`                             | store service Cluster IP                                                                        | `""`                     |
+| `store.service.loadBalancerIP`                        | store service Load Balancer IP                                                                  | `""`                     |
 | `store.service.loadBalancerSourceRanges`              | store service Load Balancer sources                                                             | `[]`                     |
 | `store.service.externalTrafficPolicy`                 | store service external traffic policy                                                           | `Cluster`                |
 | `store.service.annotations`                           | Additional custom annotations for store service                                                 | `{}`                     |
 | `store.service.extraPorts`                            | Extra ports to expose in store service (normally used with the `sidecars` value)                | `[]`                     |
+| `sync.enabled`                                        | enabled model sync                                                                              | `false`                  |
 | `sync.image.registry`                                 | sync image registry                                                                             | `docker.io`              |
 | `sync.image.repository`                               | sync image repository                                                                           | `kubegems/ai-model-sync` |
 | `sync.image.tag`                                      | sync image tag (immutable tags are recommended)                                                 | `v1.16`                  |
@@ -272,7 +274,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `sync.containerSecurityContext.runAsUser`             | Set sync containers' Security Context runAsUser                                                 | `1001`                   |
 | `sync.containerSecurityContext.runAsNonRoot`          | Set sync containers' Security Context runAsNonRoot                                              | `true`                   |
 | `sync.logLevel`                                       | Log level                                                                                       | `debug`                  |
-| `sync.existingConfigmap`                              | The name of an existing ConfigMap with your custom configuration for sync                       | `nil`                    |
+| `sync.existingConfigmap`                              | The name of an existing ConfigMap with your custom configuration for sync                       | `""`                     |
 | `sync.command`                                        | Override default container command (useful when using custom images)                            | `[]`                     |
 | `sync.args`                                           | Override default container args (useful when using custom images)                               | `[]`                     |
 | `sync.hostAliases`                                    | sync pods host aliases                                                                          | `[]`                     |
@@ -292,17 +294,17 @@ The command removes all the Kubernetes components associated with the chart and 
 | `sync.schedulerName`                                  | Name of the k8s scheduler (other than default) for sync pods                                    | `""`                     |
 | `sync.lifecycleHooks`                                 | for the sync container(s) to automate configuration before or after startup                     | `{}`                     |
 | `sync.extraEnvVars`                                   | Array with extra environment variables to add to sync nodes                                     | `[]`                     |
-| `sync.extraEnvVarsCM`                                 | Name of existing ConfigMap containing extra env vars for sync nodes                             | `nil`                    |
-| `sync.extraEnvVarsSecret`                             | Name of existing Secret containing extra env vars for sync nodes                                | `nil`                    |
+| `sync.extraEnvVarsCM`                                 | Name of existing ConfigMap containing extra env vars for sync nodes                             | `{}`                     |
+| `sync.extraEnvVarsSecret`                             | Name of existing Secret containing extra env vars for sync nodes                                | `{}`                     |
 | `sync.extraVolumes`                                   | Optionally specify extra list of additional volumes for the sync pod(s)                         | `[]`                     |
 | `sync.extraVolumeMounts`                              | Optionally specify extra list of additional volumeMounts for the sync container(s)              | `[]`                     |
 | `sync.sidecars`                                       | Add additional sidecar containers to the sync pod(s)                                            | `{}`                     |
 | `sync.initContainers`                                 | Add additional init containers to the sync pod(s)                                               | `{}`                     |
 | `sync.service.type`                                   | sync service type                                                                               | `ClusterIP`              |
 | `sync.service.ports.http`                             | sync service HTTP port                                                                          | `8080`                   |
-| `sync.service.nodePorts.http`                         | Node port for HTTP                                                                              | `nil`                    |
-| `sync.service.clusterIP`                              | sync service Cluster IP                                                                         | `nil`                    |
-| `sync.service.loadBalancerIP`                         | sync service Load Balancer IP                                                                   | `nil`                    |
+| `sync.service.nodePorts.http`                         | Node port for HTTP                                                                              | `0`                      |
+| `sync.service.clusterIP`                              | sync service Cluster IP                                                                         | `""`                     |
+| `sync.service.loadBalancerIP`                         | sync service Load Balancer IP                                                                   | `""`                     |
 | `sync.service.loadBalancerSourceRanges`               | sync service Load Balancer sources                                                              | `[]`                     |
 | `sync.service.externalTrafficPolicy`                  | sync service external traffic policy                                                            | `Cluster`                |
 | `sync.service.annotations`                            | Additional custom annotations for sync service                                                  | `{}`                     |

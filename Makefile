@@ -59,7 +59,7 @@ all: generate build container push helm-push## build all
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-generate: helm-readme add-license ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: helm-generate add-license ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/plugins/kubegems-local/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
@@ -106,16 +106,18 @@ plugins-cache: ## Build plugins-cache
 	go run scripts/offline-plugins/main.go 
 
 CHARTS = kubegems kubegems-local
-helm-readme: readme-generator
+helm-generate: readme-generator
 	$(foreach var, $(wildcard $(CHARTS_DIR)/*/), readme-generator -v $(var)values.yaml -r $(var)README.md;)
 
 KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
-helm-package: helm-readme
+helm-package: helm-generate
 	$(foreach file, $(wildcard $(CHARTS_DIR)/*/), helm package -d ${KUBEGEM_CHARTS_DIR} --version ${SEMVER_VERSION} --app-version  ${SEMVER_VERSION} $(file);)
 
 .PHONY: helm-push
 helm-push: helm-package
-	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(SEMVER_VERSION).tgz), helm cm-push -f $(file) ${CHARTMUSEUM_ADDR};)
+	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(SEMVER_VERSION).tgz), \
+	curl --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
+	;)
 
 container: ## Build container image.
 ifneq (, $(shell which docker))
@@ -164,9 +166,6 @@ ifeq (, $(shell which readme-generator))
 else
 	echo 'readme-generator-for-helm is already installed'
 endif
-
-helm-plugin:
-	helm plugin install https://github.com/chartmuseum/helm-push 
 
 .PHONY: add-license
 add-license:

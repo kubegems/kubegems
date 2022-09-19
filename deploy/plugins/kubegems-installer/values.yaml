@@ -190,7 +190,7 @@ installer:
 
   ## @param installer.existingConfigmap The name of an existing ConfigMap with your custom configuration for installer
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param installer.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -278,10 +278,10 @@ installer:
   extraEnvVars: []
   ## @param installer.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for installer nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param installer.extraEnvVarsSecret Name of existing Secret containing extra env vars for installer nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param installer.extraVolumes Optionally specify extra list of additional volumes for the installer pod(s)
   ##
   extraVolumes: []
