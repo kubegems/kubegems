@@ -402,6 +402,8 @@ controller:
 ## store configuration
 ##
 store:
+  ## @param store.enabled enabled model store api
+  enabled: false
   ## kubegems store image
   ## @param store.image.registry store image registry
   ## @param store.image.repository store image repository
@@ -690,6 +692,8 @@ store:
 ## sync configuration
 ##
 sync:
+  ## @param sync.enabled enabled model sync
+  enabled: false
   ## kubegems sync image
   ## @param sync.image.registry sync image registry
   ## @param sync.image.repository sync image repository

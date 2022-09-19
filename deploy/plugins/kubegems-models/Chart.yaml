@@ -9,6 +9,7 @@ dependencies:
   - name: mongodb
     repository: https://charts.bitnami.com/bitnami
     version: 12.1.23
+    condition: store.enabled
 description: KubeGems 模型商店.
 home: kubegems.io
 keywords:
