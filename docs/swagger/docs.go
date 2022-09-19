@@ -12308,69 +12308,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/proxy/cluster/{cluster}/custom/plugins:check-update": {
-            "post": {
-                "description": "检查更新",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Agent.Plugin"
-                ],
-                "summary": "检查更新",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "repo name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "repo object",
-                        "name": "type",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/gemsplugin.Repository"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/api.PluginStatus"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/proxy/cluster/{cluster}/custom/prometheus/v1/alertrule": {
             "get": {
                 "security": [
@@ -13041,13 +12978,6 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "type",
-                        "name": "type",
-                        "in": "query",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -13107,8 +13037,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "type",
-                        "name": "type",
+                        "description": "version",
+                        "name": "version",
                         "in": "query",
                         "required": true
                     }
@@ -13167,16 +13097,18 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "type",
-                        "name": "type",
-                        "in": "query",
-                        "required": true
+                        "description": "pluginVersion",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/gemsplugin.PluginVersion"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Plugins",
+                        "description": "ok",
                         "schema": {
                             "allOf": [
                                 {
@@ -13187,6 +13119,53 @@ const docTemplate = `{
                                     "properties": {
                                         "Data": {
                                             "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/plugins:check-update": {
+            "post": {
+                "description": "检查更新",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.Plugin"
+                ],
+                "summary": "检查更新",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/api.PluginStatus"
+                                            }
                                         }
                                     }
                                 }
@@ -24509,6 +24488,11 @@ const docTemplate = `{
                 },
                 "upgradeableVersion": {
                     "type": "string"
+                },
+                "values": {
+                    "description": "current installed version values",
+                    "type": "object",
+                    "additionalProperties": {}
                 }
             }
         },
@@ -25800,29 +25784,6 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "string"
-                }
-            }
-        },
-        "gemsplugin.Repository": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "lastSync": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "plugins": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/gemsplugin.PluginVersion"
-                        }
-                    }
                 }
             }
         },

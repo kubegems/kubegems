@@ -80,7 +80,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Produce     json
 // @Param       cluster path     string                                                 true "cluster"
 // @Param       name    path     string                                                 true "name"
-// @Param       type    query    string                                                 true "type"
+// @Param       version query    string                                                 true "version"
 // @Success     200     {object} handlers.ResponseStruct{Data=gemsplugin.PluginVersion} "Plugins"
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [get]
 // @Security    JWT
@@ -101,22 +101,25 @@ func (h *PluginHandler) Get(c *gin.Context) {
 // @Produce     json
 // @Param       cluster path     string                               true "cluster"
 // @Param       name    path     string                               true "name"
-// @Param       type    query    string                               true "type"
-// @Success     200     {object} handlers.ResponseStruct{Data=string} "Plugins"
+// @Param       body    body     gemsplugin.PluginVersion             true "pluginVersion"
+// @Success     200     {object} handlers.ResponseStruct{Data=string} "ok"
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [post]
 // @Security    JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
-	name, version := c.Param("name"), c.Query("version")
+	name := c.Param("name")
 
-	values := map[string]any{}
-	request.Body(c.Request, &values)
+	pv := gemsplugin.PluginVersion{}
+	if err := request.Body(c.Request, &pv); err != nil {
+		NotOK(c, err)
+		return
+	}
 
-	if err := h.PM.Install(c.Request.Context(), name, version, values); err != nil {
+	if err := h.PM.Install(c.Request.Context(), name, pv.Version, pv.Values.Object); err != nil {
 		log.Error(err, "update plugin", "plugin", c.Param("name"))
 		NotOK(c, err)
 		return
 	}
-	OK(c, "ok")
+	OK(c, pv)
 }
 
 // @Tags        Agent.Plugin
@@ -126,7 +129,6 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Produce     json
 // @Param       cluster path     string                               true "cluster"
 // @Param       name    path     string                               true "name"
-// @Param       type    query    string                               true "type"
 // @Success     200     {object} handlers.ResponseStruct{Data=string} "Plugins"
 // @Router      /v1/proxy/cluster/{cluster}/plugins [delete]
 // @Security    JWT
@@ -147,10 +149,8 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       cluster path     string                                           true "cluster"
-// @Param       name    path     string                                           true "repo name"
-// @Param       type    body     gemsplugin.Repository                            true "repo object"
 // @Success     200     {object} handlers.ResponseStruct{Data=[]api.PluginStatus} "ok"
-// @Router      /v1/proxy/cluster/{cluster}/custom/plugins:check-update [post]
+// @Router      /v1/proxy/cluster/{cluster}/plugins:check-update [post]
 func (h *PluginHandler) CheckUpdate(c *gin.Context) {
 	upgradeable, err := h.PM.CheckUpdate(c.Request.Context())
 	if err != nil {

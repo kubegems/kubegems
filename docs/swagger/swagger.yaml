@@ -24,6 +24,10 @@ definitions:
         type: boolean
       upgradeableVersion:
         type: string
+      values:
+        additionalProperties: {}
+        description: current installed version values
+        type: object
     type: object
   apis.CustomNode:
     properties:
@@ -996,21 +1000,6 @@ definitions:
         type: array
       version:
         type: string
-    type: object
-  gemsplugin.Repository:
-    properties:
-      address:
-        type: string
-      lastSync:
-        type: string
-      name:
-        type: string
-      plugins:
-        additionalProperties:
-          items:
-            $ref: '#/definitions/gemsplugin.PluginVersion'
-          type: array
-        type: object
     type: object
   gorm.DeletedAt:
     properties:
@@ -25525,45 +25514,6 @@ paths:
       summary: Loki LabelValues
       tags:
       - Agent.V1
-  /v1/proxy/cluster/{cluster}/custom/plugins:check-update:
-    post:
-      consumes:
-      - application/json
-      description: 检查更新
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: repo name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: repo object
-        in: body
-        name: type
-        required: true
-        schema:
-          $ref: '#/definitions/gemsplugin.Repository'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ok
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/api.PluginStatus'
-                  type: array
-              type: object
-      summary: 检查更新
-      tags:
-      - Agent.Plugin
   /v1/proxy/cluster/{cluster}/custom/prometheus/v1/alertrule:
     get:
       consumes:
@@ -25920,11 +25870,6 @@ paths:
         name: name
         required: true
         type: string
-      - description: type
-        in: query
-        name: type
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -25996,9 +25941,9 @@ paths:
         name: name
         required: true
         type: string
-      - description: type
+      - description: version
         in: query
-        name: type
+        name: version
         required: true
         type: string
       produces:
@@ -26033,16 +25978,17 @@ paths:
         name: name
         required: true
         type: string
-      - description: type
-        in: query
-        name: type
+      - description: pluginVersion
+        in: body
+        name: body
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/gemsplugin.PluginVersion'
       produces:
       - application/json
       responses:
         "200":
-          description: Plugins
+          description: ok
           schema:
             allOf:
             - $ref: '#/definitions/handlers.ResponseStruct'
@@ -26053,6 +25999,34 @@ paths:
       security:
       - JWT: []
       summary: 启用插件
+      tags:
+      - Agent.Plugin
+  /v1/proxy/cluster/{cluster}/plugins:check-update:
+    post:
+      consumes:
+      - application/json
+      description: 检查更新
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/api.PluginStatus'
+                  type: array
+              type: object
+      summary: 检查更新
       tags:
       - Agent.Plugin
   /v1/registry:

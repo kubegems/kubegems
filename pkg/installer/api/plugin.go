@@ -24,16 +24,17 @@ import (
 )
 
 type PluginStatus struct {
-	Name               string   `json:"name"`
-	Namespace          string   `json:"namespace"`
-	Description        string   `json:"description"`
-	InstalledVersion   string   `json:"installedVersion"`
-	UpgradeableVersion string   `json:"upgradeableVersion"`
-	AvailableVersions  []string `json:"availableVersions"`
-	Required           bool     `json:"required"`
-	Enabled            bool     `json:"enabled"`
-	Healthy            bool     `json:"healthy"`
-	Message            string   `json:"message"`
+	Name               string         `json:"name"`
+	Namespace          string         `json:"namespace"`
+	Description        string         `json:"description"`
+	InstalledVersion   string         `json:"installedVersion"`
+	UpgradeableVersion string         `json:"upgradeableVersion"`
+	AvailableVersions  []string       `json:"availableVersions"`
+	Required           bool           `json:"required"`
+	Enabled            bool           `json:"enabled"`
+	Healthy            bool           `json:"healthy"`
+	Message            string         `json:"message"`
+	Values             map[string]any `json:"values"` // current installed version values
 	maincate           string
 	cate               string
 }
@@ -67,6 +68,7 @@ func ToViewPlugin(plugin gemsplugin.Plugin) PluginStatus {
 		ps.Healthy = installed.Healthy
 		ps.Namespace = installed.InstallNamespace
 		ps.Enabled = true
+		ps.Values = installed.Values.Object
 	}
 	if upgradble := plugin.Upgradeable; upgradble != nil {
 		ps.UpgradeableVersion = upgradble.Version

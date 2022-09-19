@@ -96,6 +96,7 @@ func PluginVersionFrom(plugin *pluginsv1beta1.Plugin) PluginVersion {
 	if plugin.Status.Phase == pluginsv1beta1.PhaseInstalled {
 		pv.Healthy = true
 	}
+	pv.Values = plugin.Spec.Values
 
 	fillCategory(&pv, annotations[pluginscommon.AnnotationCategory])
 	return pv
@@ -276,7 +277,7 @@ func SemVersionBiggerThan(a, b string) bool {
 	if err != nil {
 		return false
 	}
-	bver, err := semver.NewVersion(a)
+	bver, err := semver.NewVersion(b)
 	if err != nil {
 		return false
 	}
