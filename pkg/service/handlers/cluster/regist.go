@@ -38,6 +38,4 @@ func (h *ClusterHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/cluster/:cluster_id/logqueryhistoryv2", h.ListClusterLogQueryHistoryv2)
 	rg.GET("/cluster/:cluster_id/logquerysnapshot", h.ListClusterLogQuerySnapshot)
 	rg.GET("/cluster/:cluster_id/quota", h.ListClusterQuota)
-
-	rg.GET("/cluster/:cluster_id/plugins", h.CheckIsSysADMIN, h.ListPligins)
 }

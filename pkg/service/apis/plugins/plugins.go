@@ -17,6 +17,7 @@ package plugins
 import (
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/route"
 )
@@ -35,17 +36,25 @@ func NewPluginsAPI(cli *agents.ClientSet) (*PluginsAPI, error) {
 }
 
 func (p *PluginsAPI) List(req *restful.Request, resp *restful.Response) {
-	ret := []PluginsStatus{}
 	ctx := req.Request.Context()
 	cli, err := p.agents.ClientOfManager(ctx)
 	if err != nil {
 		response.Error(resp, err)
 		return
 	}
-	_ = cli
 
-	// TODO: remove it later
-	ret = append(ret, PluginsStatus{Name: "kubegems-models", Enabled: true})
+	installed, err := (&gemsplugin.PluginManager{Client: cli}).ListInstalled(ctx, false)
+	if err != nil {
+		response.Error(resp, err)
+		return
+	}
+	ret := []PluginsStatus{}
+	for name, val := range installed {
+		ret = append(ret, PluginsStatus{
+			Name:    name,
+			Enabled: val.Enabled,
+		})
+	}
 	response.OK(resp, ret)
 }
 

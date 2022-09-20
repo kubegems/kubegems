@@ -17833,7 +17833,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 审批通过
+      description: 批准集群资源配额申请
       parameters:
       - description: tenant resource quota id
         in: path
@@ -17860,14 +17860,14 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: 审批通过
+      summary: 批准集群资源配额申请
       tags:
       - Approve
   /v1/approve/{id}/reject:
     post:
       consumes:
       - application/json
-      description: 审批拒绝
+      description: 拒绝集群资源配额申请审批拒绝
       parameters:
       - description: id
         in: path
@@ -17888,7 +17888,7 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: 审批拒绝
+      summary: 拒绝集群资源配额申请审批拒绝
       tags:
       - Approve
   /v1/appstore/app:
@@ -18008,7 +18008,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取外部chart仓库
+      description: 列出所有的外部应用的charts仓库
       produces:
       - application/json
       responses:
@@ -18030,13 +18030,13 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: APP 获取外部chart仓库
+      summary: 列出所有的外部应用的charts仓库
       tags:
       - Appstore
     post:
       consumes:
       - application/json
-      description: 创建外部chart仓库
+      description: 创建应用商店外部charts仓库
       produces:
       - application/json
       responses:
@@ -18053,7 +18053,7 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: APP 创建外部chart仓库
+      summary: 创建应用商店外部charts仓库
       tags:
       - Appstore
   /v1/appstore/repo/{name}:
@@ -18700,35 +18700,6 @@ paths:
       summary: 获取属于 Cluster 的 LogQuerySnapshot 列表
       tags:
       - Cluster
-  /v1/cluster/{cluster_id}/plugins:
-    get:
-      consumes:
-      - application/json
-      description: 获取Plugin列表数据
-      parameters:
-      - description: cluster_id
-        in: path
-        name: cluster_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Plugins
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  additionalProperties: true
-                  type: object
-              type: object
-      security:
-      - JWT: []
-      summary: 获取Plugin列表数据
-      tags:
-      - Agent.Plugin
   /v1/cluster/{cluster_id}/quota:
     get:
       consumes:

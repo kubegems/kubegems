@@ -700,7 +700,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "审批通过",
+                "description": "批准集群资源配额申请",
                 "consumes": [
                     "application/json"
                 ],
@@ -710,7 +710,7 @@ const docTemplate = `{
                 "tags": [
                     "Approve"
                 ],
-                "summary": "审批通过",
+                "summary": "批准集群资源配额申请",
                 "parameters": [
                     {
                         "type": "integer",
@@ -758,7 +758,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "审批拒绝",
+                "description": "拒绝集群资源配额申请审批拒绝",
                 "consumes": [
                     "application/json"
                 ],
@@ -768,7 +768,7 @@ const docTemplate = `{
                 "tags": [
                     "Approve"
                 ],
-                "summary": "审批拒绝",
+                "summary": "拒绝集群资源配额申请审批拒绝",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1002,7 +1002,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "获取外部chart仓库",
+                "description": "列出所有的外部应用的charts仓库",
                 "consumes": [
                     "application/json"
                 ],
@@ -1012,7 +1012,7 @@ const docTemplate = `{
                 "tags": [
                     "Appstore"
                 ],
-                "summary": "APP 获取外部chart仓库",
+                "summary": "列出所有的外部应用的charts仓库",
                 "responses": {
                     "200": {
                         "description": "repos",
@@ -1055,7 +1055,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "创建外部chart仓库",
+                "description": "创建应用商店外部charts仓库",
                 "consumes": [
                     "application/json"
                 ],
@@ -1065,7 +1065,7 @@ const docTemplate = `{
                 "tags": [
                     "Appstore"
                 ],
-                "summary": "APP 创建外部chart仓库",
+                "summary": "创建应用商店外部charts仓库",
                 "responses": {
                     "200": {
                         "description": "repo",
@@ -2246,56 +2246,6 @@ const docTemplate = `{
                                                     }
                                                 }
                                             ]
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/cluster/{cluster_id}/plugins": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "获取Plugin列表数据",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Agent.Plugin"
-                ],
-                "summary": "获取Plugin列表数据",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "cluster_id",
-                        "name": "cluster_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Plugins",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "object",
-                                            "additionalProperties": true
                                         }
                                     }
                                 }

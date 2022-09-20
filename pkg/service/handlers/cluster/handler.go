@@ -576,21 +576,6 @@ func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 	})
 }
 
-// @Tags        Agent.Plugin
-// @Summary     获取Plugin列表数据
-// @Description 获取Plugin列表数据
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     int                                                  true "cluster_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=map[string]interface{}} "Plugins"
-// @Router      /v1/cluster/{cluster_id}/plugins [get]
-// @Security    JWT
-func (h *ClusterHandler) ListPligins(c *gin.Context) {
-	h.cluster(c, func(ctx context.Context, _ models.Cluster, cli agents.Client) (interface{}, error) {
-		return cli.Extend().ListPlugins(ctx)
-	})
-}
-
 func (h *ClusterHandler) cluster(c *gin.Context, fun func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error)) {
 	var cluster models.Cluster
 	if err := h.GetDataBase().DB().First(&cluster, c.Param(PrimaryKeyName)).Error; err != nil {
