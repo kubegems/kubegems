@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/networking"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
@@ -235,7 +236,7 @@ func (h *IstioGatewayHandler) GetGateway(c *gin.Context) {
 		}
 	}
 	if gw == nil {
-		handlers.NotOK(c, fmt.Errorf("未找到网关%s", name))
+		handlers.NotOK(c, i18n.Errorf(c, "gateway %s is not found", name))
 		return
 	}
 
@@ -320,7 +321,7 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 		}, &dep)
 		// 避免与租户网关同名
 		if err == nil {
-			return fmt.Errorf("网关%s已存在", gw.Name)
+			return i18n.Errorf(c, "gateway %s already exist", gw.Name)
 		}
 		if !kerrors.IsNotFound(err) {
 			return err
@@ -344,7 +345,7 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 			}
 		}
 		if found {
-			return fmt.Errorf("网关%s已存在", gw.Name)
+			return i18n.Errorf(c, "gateway %s already exist", gw.Name)
 		}
 
 		op.Spec.Components.IngressGateways = append(op.Spec.Components.IngressGateways,
@@ -416,7 +417,7 @@ func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
 			}
 		}
 		if !found {
-			return fmt.Errorf("网关%s不存在", gw.Name)
+			return fmt.Errorf("gateway %s is not exist", gw.Name)
 		}
 
 		op.Spec.Components.IngressGateways[index] = istioGateway(vs.VirtualSpaceName, istioGatewayNamespace, gw.Name, gw.Enabled)
@@ -513,7 +514,7 @@ func (h *IstioGatewayHandler) DeleteGateway(c *gin.Context) {
 			}
 		}
 		if !found {
-			return fmt.Errorf("gateway %s not found", gwName)
+			return i18n.Errorf(c, "gateway %s is not found", gwName)
 		}
 
 		op.Spec.Components.IngressGateways = append(op.Spec.Components.IngressGateways[:index],
@@ -527,41 +528,6 @@ func (h *IstioGatewayHandler) DeleteGateway(c *gin.Context) {
 	}
 	handlers.OK(c, "ok")
 }
-
-// func getOrCreateIstioOperator(cluster string) (*pkgv1alpha1.IstioOperator, error) {
-// 	ope, err := kubeclient.GetClient().GetIstioOperator(cluster, istioOperatorNamespace, istioOperatorName, nil)
-// 	if err != nil {
-// 		if kerrors.IsNotFound(err) {
-// 			op, err := kubeclient.GetClient().CreateIstioOperator(cluster, istioOperatorNamespace, istioOperatorName, &pkgv1alpha1.IstioOperator{
-// 				ObjectMeta: v1.ObjectMeta{
-// 					Name:      istioOperatorName,
-// 					Namespace: istioOperatorNamespace,
-// 				},
-// 				Spec: &v1alpha1.IstioOperatorSpec{
-// 					Profile: "empty",
-// 					Hub:     istioOperatorImageHub,
-// 					Values: map[string]interface{}{
-// 						"global": map[string]interface{}{
-// 							"meshID": "mesh-default",
-// 							"multiCluster": map[string]string{
-// 								"clusterName": cluster,
-// 							},
-// 							"network": "network-" + cluster,
-// 						},
-// 					},
-// 				},
-// 			})
-// 			if err != nil {
-// 				return nil, err
-// 			} else {
-// 				return op, nil
-// 			}
-// 		} else {
-// 			return nil, err
-// 		}
-// 	}
-// 	return ope, nil
-// }
 
 func (h *IstioGatewayHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/virtualspace/:virtualspace_id/cluster/:cluster_id/istiogateways", h.ListGateway)

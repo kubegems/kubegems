@@ -31,7 +31,7 @@ func SetLang(c *gin.Context) {
 	if err != nil {
 		lang = defaultLang
 	} else {
-		lang, _, _ = supported.Match(langs...)
+		lang, _, _ = matcher.Match(langs...)
 	}
 	lang = lang.Parent()
 	ctx := context.WithValue(c.Request.Context(), LANG, lang)

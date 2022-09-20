@@ -15,10 +15,11 @@
 package microservice
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	microservice "kubegems.io/kubegems/pkg/service/handlers/microservice/options"
@@ -102,7 +103,9 @@ func (h *VirtualDomainHandler) PostVirtualDomain(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "创建", "虚拟域名", vd.VirtualDomainName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "virtual domain")
+	h.SetAuditData(c, action, module, vd.VirtualDomainName)
 	h.SetExtraAuditData(c, models.ResVirtualDomain, vd.ID)
 
 	u, _ := h.GetContextUser(c)
@@ -135,7 +138,9 @@ func (h *VirtualDomainHandler) PutVirtualDomain(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "虚拟域名", obj.VirtualDomainName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "virtual domain")
+	h.SetAuditData(c, action, module, obj.VirtualDomainName)
 	h.SetExtraAuditData(c, models.ResTenant, obj.ID)
 
 	if err := c.BindJSON(&obj); err != nil {
@@ -143,7 +148,7 @@ func (h *VirtualDomainHandler) PutVirtualDomain(c *gin.Context) {
 		return
 	}
 	if strconv.Itoa(int(obj.ID)) != c.Param("virtualdomain_id") {
-		handlers.NotOK(c, fmt.Errorf("数据ID错误"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	if err := h.GetDB().Save(&obj).Error; err != nil {
@@ -171,7 +176,9 @@ func (h *VirtualDomainHandler) DeleteVirtualDomain(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "删除", "虚拟域名", vd.VirtualDomainName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "virtual domain")
+	h.SetAuditData(c, action, module, vd.VirtualDomainName)
 	h.SetExtraAuditData(c, models.ResVirtualDomain, vd.ID)
 
 	if err := h.GetDB().Delete(&vd).Error; err != nil {
@@ -182,10 +189,12 @@ func (h *VirtualDomainHandler) DeleteVirtualDomain(c *gin.Context) {
 	handlers.OK(c, "")
 }
 
-// 为 service 设置 serviceentry
+// InjectVirtualDomain 为 service 设置 serviceentry
+// TODO:
 func (h *VirtualDomainHandler) InjectVirtualDomain(c *gin.Context) {}
 
-// 为 service 取消设置 serviceentry
+// UnInjectVirtualDomain 为 service 取消设置 serviceentry
+// TODO:
 func (h *VirtualDomainHandler) UnInjectVirtualDomain(c *gin.Context) {}
 
 func (h *VirtualDomainHandler) RegistRouter(rg *gin.RouterGroup) {

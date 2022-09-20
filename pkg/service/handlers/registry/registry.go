@@ -15,11 +15,12 @@
 package registryhandler
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 )
@@ -103,14 +104,16 @@ func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "修改", "镜像仓库", obj.RegistryName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "image registry")
+	h.SetAuditData(c, action, module, obj.RegistryName)
 	h.SetExtraAuditData(c, models.ResProject, obj.ProjectID)
 	if err := c.BindJSON(&obj); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	if strconv.Itoa(int(obj.ID)) != c.Param(ProjectKeyName) {
-		handlers.NotOK(c, fmt.Errorf("请求体参数和URL参数ID不匹配"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 
@@ -122,7 +125,7 @@ func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 		return
 	}
 	if len(defaultRegistries) > 0 && obj.IsDefault {
-		handlers.NotOK(c, fmt.Errorf("默认仓库只能有一个"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't add image registry, there must be only one default image registry"))
 		return
 	}
 
@@ -163,7 +166,9 @@ func (h *RegistryHandler) DeleteRegistry(c *gin.Context) {
 		handlers.NoContent(c, err)
 		return
 	}
-	h.SetAuditData(c, "删除", "镜像仓库", obj.RegistryName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "image registry")
+	h.SetAuditData(c, action, module, obj.RegistryName)
 	h.SetExtraAuditData(c, models.ResProject, obj.ProjectID)
 
 	ctx := c.Request.Context()

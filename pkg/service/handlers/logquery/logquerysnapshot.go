@@ -15,6 +15,9 @@
 package logqueryhandler
 
 import (
+	"context"
+
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 
@@ -90,7 +93,9 @@ func (h *LogQuerySnapshotHandler) DeleteLogQuerySnapshot(c *gin.Context) {
 		handlers.NoContent(c, err)
 		return
 	}
-	h.SetAuditData(c, "删除", "日志快照", obj.SnapshotName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "log snapshot")
+	h.SetAuditData(c, action, module, obj.SnapshotName)
 	if err := h.GetDB().Delete(&obj, c.Param("logquerysnapshot_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -114,7 +119,9 @@ func (h *LogQuerySnapshotHandler) PostLogQuerySnapshot(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "创建", "日志快照", obj.SnapshotName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "log snapshot")
+	h.SetAuditData(c, action, module, obj.SnapshotName)
 	if err := h.GetDB().Create(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return

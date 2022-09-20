@@ -16,7 +16,6 @@ package lokilog
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -27,6 +26,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/loki"
@@ -71,7 +71,7 @@ func (l *LogHandler) QueryRange(c *gin.Context) {
 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "500"))
 	if limit > 50000 {
-		handlers.NotOK(c, errors.New("最大支持50000条日志输出"))
+		handlers.NotOK(c, i18n.Errorf(c, "exceeding the maximum limit of 50000"))
 		return
 	}
 
@@ -324,7 +324,7 @@ func (l *LogHandler) Export(c *gin.Context) {
 		resultType := queryData.ResultType
 		if resultType == loki.ResultTypeMatrix {
 			// 暂不支持matrix
-			handlers.NotOK(c, errors.New("不支持matrix类型导出"))
+			handlers.NotOK(c, i18n.Errorf(c, "Matrix type export is not supported"))
 			return
 		}
 
@@ -396,7 +396,7 @@ func (l *LogHandler) Context(c *gin.Context) {
 	queryResults := []interface{}{}
 	resultType := queryData.ResultType
 	if resultType == "matrix" {
-		handlers.NotOK(c, errors.New("暂不支持matrix类型查询"))
+		handlers.NotOK(c, i18n.Errorf(c, "Matrix type query is not supported"))
 		return
 	}
 

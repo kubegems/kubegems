@@ -23,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
@@ -140,7 +141,7 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 	}
 	user, exist := h.GetContextUser(c)
 	if !exist {
-		handlers.Unauthorized(c, "请登录")
+		handlers.Unauthorized(c, i18n.Errorf(c, "unauthorized, please login first"))
 		return
 	}
 	var auditFunc func(string)

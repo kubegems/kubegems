@@ -28,7 +28,7 @@ const (
 	AuditExtraDataKey = "audit_extra_datas"
 )
 
-// SetAuditData 设置上下文的审计数据
+// SetAuditData  set audit data in context
 func (audit *DefaultAuditInstance) SetAuditData(c *gin.Context, action, module, name string) {
 	subject := map[string]string{
 		"action": action,
@@ -38,7 +38,7 @@ func (audit *DefaultAuditInstance) SetAuditData(c *gin.Context, action, module, 
 	c.Set(AuditSubjectKey, subject)
 }
 
-// SetExtraAuditData 设置上下文的审计数据 的系统环境信息（租户，项目，环境）
+// SetExtraAuditData set audit extra data in context
 func (audit *DefaultAuditInstance) SetExtraAuditData(c *gin.Context, kind string, uid uint) {
 	var ctxdata map[string]string
 	contextDatas := audit.cache.FindParents(kind, uid)
@@ -64,7 +64,7 @@ func (audit *DefaultAuditInstance) SetExtraAuditData(c *gin.Context, kind string
 
 }
 
-// SetExtraAuditDataByClusterNamespace 根据集群namesapce设置上下文的审计数据 的系统环境信息（租户，项目，环境）
+// SetExtraAuditDataByClusterNamespace  set context audit info via namespapce
 func (audit *DefaultAuditInstance) SetExtraAuditDataByClusterNamespace(c *gin.Context, cluster, namespace string) {
 	env := audit.cache.FindEnvironment(cluster, namespace)
 	if env == nil {
@@ -115,14 +115,13 @@ func GetAuditData(c *gin.Context) map[string]string {
 }
 
 func (audit *DefaultAuditInstance) SaveAuditLog(c *gin.Context) {
-	// 所有GET请求不审计
+	// ingore GET methods, not audit
 	if c.Request.Method == http.MethodGet {
 		return
 	}
 	bodyWriter := &responseBodyWriter{responseBody: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 	c.Writer = bodyWriter
 
-	// 拷贝一份request 到reqBuf
 	reqBuf := bytes.NewBufferString("")
 	newBody := &requestBodyReader{c.Request.Body, reqBuf}
 	c.Request.Body = newBody

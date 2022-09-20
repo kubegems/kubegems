@@ -19,38 +19,40 @@ import (
 	"errors"
 	"io"
 
+	"github.com/Xuanwo/go-locale"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
 
 var (
-	p           *i18nPrinter
-	defaultLang = language.English
+	p             *i18nPrinter
+	defaultLang   language.Tag
+	supportedTags = []language.Tag{
+		language.AmericanEnglish,
+		language.English,
+		language.Japanese,
+		language.SimplifiedChinese,
+		language.TraditionalChinese,
+		language.Chinese,
+	}
 )
+
+var matcher = language.NewMatcher(supportedTags)
 
 type i18nPrinter struct {
 	printers map[language.Tag]*message.Printer
 }
 
-var supported = language.NewMatcher([]language.Tag{
-	language.AmericanEnglish,
-	language.English,
-	language.SimplifiedChinese,
-	language.TraditionalChinese,
-	language.Chinese,
-})
-
 func printerFromCtx(ctx context.Context) *message.Printer {
 	var lang language.Tag
 	if ctx == nil {
+		return p.printers[defaultLang]
+	}
+	l := ctx.Value(LANG)
+	if l == nil {
 		lang = defaultLang
 	} else {
-		l := ctx.Value(LANG)
-		if l == nil {
-			lang = defaultLang
-		} else {
-			lang = l.(language.Tag)
-		}
+		lang = l.(language.Tag)
 	}
 	printer, exist := p.printers[lang]
 	if exist {
@@ -80,21 +82,24 @@ func Errorf(ctx context.Context, format string, a ...interface{}) error {
 }
 
 func init() {
+	tag, err := locale.Detect()
+	if err != nil {
+		panic(err)
+	}
+	matchedLang, _, _ := matcher.Match(tag)
+	defaultLang = matchedLang.Parent()
 	p = &i18nPrinter{}
 	m := make(map[language.Tag]*message.Printer)
-	langTags := []language.Tag{
-		language.AmericanEnglish,
-		language.English,
-		language.SimplifiedChinese,
-		language.TraditionalChinese,
-		language.Chinese,
-	}
-	for _, langTag := range langTags {
+	for _, langTag := range supportedTags {
 		switch langTag {
 		case language.AmericanEnglish, language.English:
 			initEnUS(langTag)
 		case language.SimplifiedChinese, language.Chinese:
 			initZhCN(langTag)
+		case language.Japanese:
+			initJaJP(langTag)
+		case language.TraditionalChinese:
+			initZhTW(langTag)
 		}
 		m[langTag] = message.NewPrinter(langTag)
 	}

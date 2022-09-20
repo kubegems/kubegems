@@ -15,10 +15,10 @@
 package eventhandler
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/loki"
 )
@@ -48,7 +48,7 @@ func (l *EventHandler) Event(c *gin.Context) {
 	query.Direction = "backward"
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "5000"))
 	if limit > 5000 {
-		handlers.NotOK(c, errors.New("超过5000条限制"))
+		handlers.NotOK(c, i18n.Errorf(c, "max limitation is 5000"))
 		return
 	}
 

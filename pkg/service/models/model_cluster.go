@@ -23,10 +23,11 @@ import (
 
 // Cluster 集群表
 type Cluster struct {
-	ID          uint           `gorm:"primarykey"`
-	ClusterName string         `gorm:"type:varchar(50);uniqueIndex" binding:"required"`
-	APIServer   string         `gorm:"type:varchar(250);uniqueIndex"` // APIServer地址 根据kubeconfig添加后，自动填充
-	KubeConfig  datatypes.JSON `binding:"required"`
+	ID          uint   `gorm:"primarykey"`
+	ClusterName string `gorm:"type:varchar(50);uniqueIndex" binding:"required"`
+	// APIServer地址 根据kubeconfig添加后，自动填充
+	APIServer  string         `gorm:"type:varchar(250);uniqueIndex"`
+	KubeConfig datatypes.JSON `binding:"required"`
 	// Vendor 集群提供商(gke tke ack selfhosted)
 	Vendor string `gorm:"type:varchar(50);default:selfhosted" binding:"required,oneof=selfhosted gke ack tke"`
 	// ImageRepo 安装kubegems核心组件时使用的镜像仓库

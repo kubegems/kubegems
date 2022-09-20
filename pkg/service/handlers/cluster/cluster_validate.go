@@ -15,12 +15,10 @@
 package clusterhandler
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kversion "k8s.io/apimachinery/pkg/version"
-	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/kube"
@@ -61,21 +59,19 @@ func (h *ClusterHandler) ValidateKubeConfig(c *gin.Context) {
 	ctx := c.Request.Context()
 	cfg := &ValidateKubeConfigReq{}
 	if err := c.BindJSON(cfg); err != nil {
-		log.Debugf("validate kubeconfig bind error: %s", err.Error())
-		resp.Message = err.Error()
+		resp.Message = i18n.Sprintf(c, "invalid kubeconfig format: %v", err)
 		handlers.OK(c, resp)
 		return
 	}
 	restconfig, clientSet, err := kube.GetKubeClient([]byte(cfg.KubeConfig))
 	if err != nil {
-		log.Debugf("validate kubeconfig get clientset error: %s", err.Error())
-		resp.Message = err.Error()
+		resp.Message = i18n.Sprintf(c, "invalid kubeconfig: %v", err)
 		handlers.OK(c, resp)
 		return
 	}
 	serverInfo, err := clientSet.ServerVersion()
 	if err != nil {
-		resp.Message = err.Error()
+		resp.Message = i18n.Sprintf(c, "failed to get api-server info: %v", err)
 		handlers.OK(c, resp)
 		return
 	}
@@ -83,7 +79,7 @@ func (h *ClusterHandler) ValidateKubeConfig(c *gin.Context) {
 	resp.Connectable = true
 	scList, err := clientSet.StorageV1().StorageClasses().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		resp.Message = fmt.Sprintf("get storageclass failed %v", err)
+		resp.Message = i18n.Sprintf(c, "failed to list StorageClass: %v", err)
 		handlers.OK(c, resp)
 		return
 	}
@@ -93,7 +89,7 @@ func (h *ClusterHandler) ValidateKubeConfig(c *gin.Context) {
 
 	cli, err := client.New(restconfig, client.Options{})
 	if err != nil {
-		resp.Message = fmt.Sprintf("get client failed %v", err)
+		resp.Message = i18n.Sprintf(c, "failed to init k8s client: %v", err)
 		handlers.OK(c, resp)
 		return
 	}

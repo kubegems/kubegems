@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
@@ -85,7 +86,9 @@ func (h *ObservabilityHandler) CreateReceiver(c *gin.Context) {
 		return
 	}
 	req.Namespace = namespace
-	h.SetAuditData(c, "创建", "告警接收器", req.Name)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "alert receiver")
+	h.SetAuditData(c, action, module, req.Name)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	h.m.Lock()
@@ -121,7 +124,9 @@ func (h *ObservabilityHandler) UpdateReceiver(c *gin.Context) {
 		return
 	}
 	req.Namespace = namespace
-	h.SetAuditData(c, "更新", "告警接收器", req.Name)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "alert receiver")
+	h.SetAuditData(c, action, module, req.Name)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	h.m.Lock()
@@ -154,7 +159,9 @@ func (h *ObservabilityHandler) DeleteReceiver(c *gin.Context) {
 	name := c.Param("name")
 	source := c.Query("source")
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "删除", "监控告警接收器", name)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "alert receiver")
+	h.SetAuditData(c, action, module, name)
 
 	h.m.Lock()
 	defer h.m.Unlock()
@@ -187,7 +194,9 @@ func (h *ObservabilityHandler) TestEmail(c *gin.Context) {
 	req := prometheus.EmailConfig{}
 	c.BindJSON(&req)
 	h.SetExtraAuditDataByClusterNamespace(c, c.Param("cluster"), c.Param("namespace"))
-	h.SetAuditData(c, "测试", "告警接收器", "")
+	action := i18n.Sprintf(context.TODO(), "test")
+	module := i18n.Sprintf(context.TODO(), "alert receiver")
+	h.SetAuditData(c, action, module, "")
 
 	if err := prometheus.TestEmail(req, c.Param("cluster"), c.Param("namespace")); err != nil {
 		handlers.NotOK(c, err)

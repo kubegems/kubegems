@@ -25,8 +25,6 @@ type ApproveHandler struct {
 
 func (h *ApproveHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/approve", h.ListApproves)
-	rg.POST("/approve/:id/pass",
-		h.CheckIsSysADMIN, h.Pass)
-	rg.POST("/approve/:id/reject",
-		h.CheckIsSysADMIN, h.Reject)
+	rg.POST("/approve/:id/pass", h.CheckIsSysADMIN, h.Pass)
+	rg.POST("/approve/:id/reject", h.CheckIsSysADMIN, h.Reject)
 }

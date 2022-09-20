@@ -16,7 +16,6 @@ package appstore
 
 import (
 	"encoding/base64"
-	"fmt"
 	"strings"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/repo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/pagination"
 )
@@ -140,16 +140,15 @@ type AppFilesResponse struct {
 func (h *AppstoreHandler) AppFiles(c *gin.Context) {
 	name := c.DefaultQuery("name", "")
 	version := c.DefaultQuery("version", "")
+	reponame := c.Query("reponame")
 	if name == "" || version == "" {
-		handlers.NotOK(c, fmt.Errorf("name:%s, version:%s, get name or version failed", name, version))
+		handlers.NotOK(c, i18n.Errorf(c, "invalid parameters: name=%s, version=%s", name, version))
 		return
 	}
 
-	reponame := c.Query("reponame")
 	if reponame == "" {
 		reponame = InternalChartRepoName
 	}
-
 	ctx := c.Request.Context()
 	chartfiles, err := h.ChartmuseumClient.GetChartBufferedFiles(ctx, reponame, name, version)
 	if err != nil {

@@ -17,13 +17,13 @@ package noproxy
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	snapv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/storage"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,7 +56,9 @@ func (h *PersistentVolumeClaimHandler) Create(c *gin.Context) {
 		return
 	}
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "恢复", "快照到持久卷", req.Name)
+	action := i18n.Sprintf(context.TODO(), "recover")
+	module := i18n.Sprintf(context.TODO(), "volume snapshot to PVC")
+	h.SetAuditData(c, action, module, req.Name)
 
 	volumeSnapshotName := req.VolumeSnapshotName
 
@@ -74,7 +76,7 @@ func (h *PersistentVolumeClaimHandler) Create(c *gin.Context) {
 			return err
 		}
 		if volumesnapshot.Status.ReadyToUse != nil && !*volumesnapshot.Status.ReadyToUse {
-			return fmt.Errorf("volumesnapshot %v status is %v", volumeSnapshotName, volumesnapshot.Status.ReadyToUse)
+			return i18n.Errorf(c, "failed to recover volume snapshot to PVC %s because the PVC status is not ready to use", volumeSnapshotName)
 		}
 
 		pvcbytes := volumesnapshot.Annotations[storage.AnnotationVolumeSnapshotAnnotationKeyPersistentVolumeClaim]

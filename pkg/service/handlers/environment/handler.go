@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -144,7 +145,9 @@ func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "更新", "环境", obj.EnvironmentName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "environment")
+	h.SetAuditData(c, action, module, obj.EnvironmentName)
 	h.SetExtraAuditData(c, models.ResEnvironment, obj.ID)
 	if err := c.BindJSON(&obj); err != nil {
 		handlers.NotOK(c, err)
@@ -152,7 +155,7 @@ func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 	}
 	obj.LimitRange = models.FillDefaultLimigrange(&obj)
 	if strconv.Itoa(int(obj.ID)) != c.Param(PrimaryKeyName) {
-		handlers.NotOK(c, fmt.Errorf("请求体参数和URL参数中ID不同"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 	ctx := c.Request.Context()
@@ -188,7 +191,7 @@ func ValidateEnvironmentNamespace(ctx context.Context, h base.BaseHandler, tx *g
 		"local-path-storage",
 	}
 	if slice.ContainStr(forbiddenBindNamespaces, namespace) {
-		return fmt.Errorf("namespace  %s is now allowed, it's a system retain namespace", namespace)
+		return i18n.Errorf(ctx, "namespace  %s is not allowed, it's a system retain namespace", namespace)
 	}
 	agent, err := h.GetAgents().ClientOf(ctx, clustername)
 	if err != nil {
@@ -208,7 +211,7 @@ func ValidateEnvironmentNamespace(ctx context.Context, h base.BaseHandler, tx *g
 	}
 	if bindedEnv, exist := ns.Labels[gems.LabelEnvironment]; exist {
 		if bindedEnv != envname {
-			return fmt.Errorf("namespace %s is binded with other environment", namespace)
+			return i18n.Errorf(ctx, "namespace %s was bonded with another environment", namespace)
 		}
 	}
 	return nil
@@ -303,7 +306,9 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 	).First(&obj, c.Param("environment_id")).Error; err != nil {
 		handlers.NoContent(c, nil)
 	}
-	h.SetAuditData(c, "删除", "环境", obj.EnvironmentName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "environment")
+	h.SetAuditData(c, action, module, obj.EnvironmentName)
 	h.SetExtraAuditData(c, models.ResEnvironment, obj.ID)
 
 	envUsers := h.GetDataBase().EnvUsers(obj.ID)
@@ -327,7 +332,7 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 		msg.EventKind = msgbus.Delete
 		msg.ResourceType = msgbus.Environment
 		msg.ResourceID = obj.ID
-		msg.Detail = fmt.Sprintf("删除了租户%s/项目%s中的环境%s", obj.Project.Tenant.TenantName, obj.Project.ProjectName, obj.EnvironmentName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "deleted the environment %s in the project %s", obj.EnvironmentName, obj.Project.ProjectName)
 		msg.ToUsers.Append(projAdmins...).Append(envUsers...)
 		msg.AffectedUsers.Append(envUsers...) // 环境所有用户刷新权限
 	})
@@ -439,20 +444,21 @@ func (h *EnvironmentHandler) PostEnvironmentUser(c *gin.Context) {
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
+	h.GetDB().Preload("Environment").First(&rel, rel.ID)
 
-	h.GetDB().Preload("Environment.Project.Tenant").First(&rel, rel.ID)
-
-	h.SetAuditData(c, "添加", "环境成员", fmt.Sprintf("环境[%v]/用户[%v]", rel.Environment.EnvironmentName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "add")
+	module := i18n.Sprintf(context.TODO(), "environment member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "environment %s / user %s / role %s", rel.Environment.EnvironmentName, user.Username, rel.Role))
 	h.SetExtraAuditData(c, models.ResEnvironment, rel.EnvironmentID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Add
 		msg.ResourceType = msgbus.Environment
 		msg.ResourceID = rel.EnvironmentID
-		msg.Detail = fmt.Sprintf("向租户%s/项目%s/环境%s中添加了用户%s",
-			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username)
+		msg.Detail = i18n.Sprintf(context.TODO(), "add user %s to environment %s member as role %s",
+			user.Username, rel.Environment.EnvironmentName, rel.Role)
 		msg.ToUsers.Append(rel.UserID)
-		msg.AffectedUsers.Append(rel.UserID) // 自己
+		msg.AffectedUsers.Append(rel.UserID)
 	})
 
 	handlers.OK(c, rel)
@@ -473,7 +479,7 @@ func (h *EnvironmentHandler) PostEnvironmentUser(c *gin.Context) {
 func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 	var rel models.EnvironmentUserRels
 	if err := h.GetDB().First(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
-		handlers.NotOK(c, fmt.Errorf("不存在 \"环境-用户\" 关系"))
+		handlers.NotOK(c, i18n.Errorf(c, "the environment member role you are modifying is not exist"))
 		return
 	}
 	if err := c.BindJSON(&rel); err != nil {
@@ -487,17 +493,19 @@ func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 	user := models.User{}
 	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
+	h.GetDB().Preload("Environment").First(&rel, rel.ID)
 
-	h.GetDB().Preload("Environment.Project.Tenant").First(&rel, rel.ID)
-	h.SetAuditData(c, "更新", "环境成员", fmt.Sprintf("环境[%v]/用户[%v]", rel.Environment.EnvironmentName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "environment member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "environment %s / user %s / role %s", rel.Environment.EnvironmentName, user.Username, rel.Role))
 	h.SetExtraAuditData(c, models.ResEnvironment, rel.EnvironmentID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Update
 		msg.ResourceType = msgbus.Environment
 		msg.ResourceID = rel.EnvironmentID
-		msg.Detail = fmt.Sprintf("将租户%s/项目%s/环境%s中的用户%s设置为了%s",
-			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username, rel.Role)
+		msg.Detail = i18n.Sprintf(context.TODO(), "set user %s to environment %s member as role %s",
+			user.Username, rel.Environment.EnvironmentName, rel.Role)
 		msg.ToUsers.Append(rel.UserID)
 		msg.AffectedUsers.Append(rel.UserID) // 自己
 	})
@@ -530,15 +538,17 @@ func (h *EnvironmentHandler) DeleteEnvironmentUser(c *gin.Context) {
 	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.SetAuditData(c, "删除", "环境成员", fmt.Sprintf("环境[%v]/用户[%v]", rel.Environment.EnvironmentName, user.Username))
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "environment member")
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "environment %s / user %s / role %s", rel.Environment.EnvironmentName, user.Username, rel.Role))
 	h.SetExtraAuditData(c, models.ResEnvironment, rel.EnvironmentID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Delete
 		msg.ResourceType = msgbus.Environment
 		msg.ResourceID = rel.EnvironmentID
-		msg.Detail = fmt.Sprintf("删除了租户%s/项目%s/环境%s中的用户%s",
-			rel.Environment.Project.Tenant.TenantName, rel.Environment.Project.ProjectName, rel.Environment.EnvironmentName, user.Username)
+		msg.Detail = i18n.Sprintf(context.TODO(), "delete user %s from environment %s member",
+			user.Username, rel.Environment.EnvironmentName)
 		msg.ToUsers.Append(rel.UserID)
 		msg.AffectedUsers.Append(rel.UserID) // 自己
 	})
@@ -606,7 +616,10 @@ func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 		handlers.NotOK(c, e)
 		return
 	}
-	h.SetAuditData(c, "开启", "环境网络隔离", env.EnvironmentName)
+
+	action := i18n.Sprintf(context.TODO(), "enable")
+	module := i18n.Sprintf(context.TODO(), "environment network isolation")
+	h.SetAuditData(c, action, module, env.EnvironmentName)
 
 	ctx := c.Request.Context()
 
@@ -698,24 +711,6 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 		Namespace:       env.Namespace,
 	}
 	h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
-		// _, plugins, err := gemsplugin.ListPlugins(ctx, cli)
-		// if err != nil {
-		// 	return err
-		// }
-		// var monitoring, logging, istio bool
-		// for _, v := range plugins {
-		// 	switch v.Name {
-		// 	case "monitoring":
-		// 		monitoring = v.Enabled
-		// 		ret.Warning = "插件monitoring未启用"
-		// 	case "logging":
-		// 		logging = v.Enabled
-		// 		ret.Warning = "插件logging未启用"
-		// 	case "istio":
-		// 		istio = v.Enabled
-		// 		ret.Warning = "插件istio未启用"
-		// 	}
-		// }
 
 		eg := errgroup.Group{}
 

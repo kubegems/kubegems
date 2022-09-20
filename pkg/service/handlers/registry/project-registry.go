@@ -15,11 +15,12 @@
 package registryhandler
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 )
@@ -43,7 +44,7 @@ func (h *RegistryHandler) PostProjectRegistry(c *gin.Context) {
 	}
 
 	if strconv.Itoa(int(registry.ProjectID)) != c.Param("project_id") {
-		handlers.NotOK(c, fmt.Errorf("项目id不一致"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 
@@ -55,7 +56,7 @@ func (h *RegistryHandler) PostProjectRegistry(c *gin.Context) {
 		return
 	}
 	if len(defaultRegistries) > 0 && registry.IsDefault {
-		handlers.NotOK(c, fmt.Errorf("默认仓库只能有一个"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't add image registry, there must be only one default image registry"))
 		return
 	}
 
@@ -72,7 +73,9 @@ func (h *RegistryHandler) PostProjectRegistry(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "创建", "镜像仓库", registry.RegistryName)
+	action := i18n.Sprintf(context.TODO(), "add")
+	module := i18n.Sprintf(context.TODO(), "image registry")
+	h.SetAuditData(c, action, module, registry.RegistryName)
 	h.SetExtraAuditData(c, models.ResProject, registry.ProjectID)
 
 	handlers.Created(c, registry)
@@ -155,7 +158,7 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 		return
 	}
 	if strconv.Itoa(int(registry.ProjectID)) != c.Param(ProjectKeyName) || strconv.Itoa(int(registry.ID)) != c.Param("registry_id") {
-		handlers.NotOK(c, fmt.Errorf("请求体参数和URL参数不匹配"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 
@@ -167,7 +170,7 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 		return
 	}
 	if len(defaultRegistries) > 0 && registry.IsDefault {
-		handlers.NotOK(c, fmt.Errorf("默认仓库只能有一个"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't update image registry, the default image registry can only exist one"))
 		return
 	}
 
@@ -183,7 +186,9 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "镜像仓库", registry.RegistryName)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "image registry")
+	h.SetAuditData(c, action, module, registry.RegistryName)
 	h.SetExtraAuditData(c, models.ResProject, registry.ProjectID)
 
 	handlers.OK(c, registry)
@@ -211,11 +216,14 @@ func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 
 	registry.IsDefault = isDefault
 
+	action := ""
+	module := i18n.Sprintf(context.TODO(), "the project's default image registry ")
 	if isDefault {
-		h.SetAuditData(c, "设置默认", "镜像仓库", registry.RegistryName)
+		action = i18n.Sprintf(context.TODO(), "set")
 	} else {
-		h.SetAuditData(c, "取消默认", "镜像仓库", registry.RegistryName)
+		action = i18n.Sprintf(context.TODO(), "unset")
 	}
+	h.SetAuditData(c, action, module, registry.RegistryName)
 	h.SetExtraAuditData(c, models.ResProject, registry.ProjectID)
 
 	// 检查默认仓库
@@ -226,7 +234,7 @@ func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 		return
 	}
 	if len(defaultRegistries) > 0 && registry.IsDefault {
-		handlers.NotOK(c, fmt.Errorf("默认仓库只能有一个"))
+		handlers.NotOK(c, i18n.Errorf(c, "can't set image registry, the project's default image registry can only exist one"))
 		return
 	}
 
@@ -270,10 +278,12 @@ func (h *RegistryHandler) DeleteProjectRegistry(c *gin.Context) {
 		return h.onDelete(ctx, tx, &registry)
 	})
 	if err != nil {
-		handlers.NotOK(c, fmt.Errorf("删除仓库错误 %v", err))
+		handlers.NotOK(c, i18n.Errorf(c, "failed to delete the image registry: %v", err))
 	}
 
-	h.SetAuditData(c, "删除", "镜像仓库", registry.RegistryName)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "image registry")
+	h.SetAuditData(c, action, module, registry.RegistryName)
 	h.SetExtraAuditData(c, models.ResProject, registry.ProjectID)
 
 	handlers.NoContent(c, nil)

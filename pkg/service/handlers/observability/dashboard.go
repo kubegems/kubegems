@@ -15,10 +15,12 @@
 package observability
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 
@@ -83,7 +85,9 @@ func (h *ObservabilityHandler) CreateDashboard(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "创建", "监控面板", req.Name)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "monitor dashboard")
+	h.SetAuditData(c, action, module, req.Name)
 	h.SetExtraAuditData(c, models.ResEnvironment, *req.EnvironmentID)
 
 	if err := h.GetDB().Save(req).Error; err != nil {
@@ -111,7 +115,9 @@ func (h *ObservabilityHandler) UpdateDashboard(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "更新", "监控面板", req.Name)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "monitor dashboard")
+	h.SetAuditData(c, action, module, req.Name)
 	h.SetExtraAuditData(c, models.ResEnvironment, *req.EnvironmentID)
 
 	if err := h.GetDB().Save(req).Error; err != nil {
@@ -138,7 +144,9 @@ func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "删除", "监控面板", d.Name)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "monitor dashboard")
+	h.SetAuditData(c, action, module, d.Name)
 	h.SetExtraAuditData(c, models.ResEnvironment, *d.EnvironmentID)
 
 	if err := h.GetDB().Delete(&d).Error; err != nil {
@@ -203,7 +211,9 @@ func (h *ObservabilityHandler) AddDashboardTemplates(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "导入", "监控面板模板", tpl.Name)
+	action := i18n.Sprintf(context.TODO(), "import")
+	module := i18n.Sprintf(context.TODO(), "monitor dashboard template")
+	h.SetAuditData(c, action, module, tpl.Name)
 	tplGetter := h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl
 	if err := models.CheckGraphs(tpl.Graphs, "", tplGetter); err != nil {
 		handlers.NotOK(c, err)

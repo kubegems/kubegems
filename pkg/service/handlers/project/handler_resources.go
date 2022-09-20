@@ -37,7 +37,6 @@ package projecthandler
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"sync"
 
@@ -48,6 +47,7 @@ import (
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
+	"kubegems.io/kubegems/pkg/i18n"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/environment"
@@ -699,14 +699,16 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 
 	h.ModelCache().UpsertEnvironment(obj.ID, env.ID, env.EnvironmentName, cluster.ClusterName, env.Namespace)
 
-	h.SetAuditData(c, "创建", "环境", env.EnvironmentName)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "environment")
+	h.SetAuditData(c, action, module, env.EnvironmentName)
 	h.SetExtraAuditData(c, models.ResEnvironment, env.ID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
 		msg.EventKind = msgbus.Add
 		msg.ResourceType = msgbus.Environment
 		msg.ResourceID = env.ID
-		msg.Detail = fmt.Sprintf("在租户%s/项目%s中创建了环境%s", obj.Tenant.TenantName, obj.ProjectName, env.EnvironmentName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "created environment %s in project %s", env.EnvironmentName, obj.ProjectName)
 		msg.ToUsers.Append(h.GetDataBase().ProjectAdmins(obj.ID)...)
 	})
 	handlers.OK(c, env)
@@ -805,8 +807,9 @@ func (h *ProjectHandler) ProjectSwitch(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "项目网络隔离", proj.ProjectName)
-	h.SetExtraAuditData(c, models.ResProject, proj.ID)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "project network isolation")
+	h.SetAuditData(c, action, module, proj.ProjectName)
 
 	ctx := c.Request.Context()
 

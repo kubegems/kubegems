@@ -15,10 +15,11 @@
 package userhandler
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 	"strings"
 
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
@@ -122,7 +123,9 @@ func (h *UserHandler) PostUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "创建", "系统用户", user.Username)
+	action := i18n.Sprintf(context.TODO(), "create")
+	module := i18n.Sprintf(context.TODO(), "account")
+	h.SetAuditData(c, action, module, user.Username)
 	handlers.Created(c, user)
 }
 
@@ -149,7 +152,7 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 		return
 	}
 	if strconv.Itoa(int(newUser.ID)) != c.Param(PrimaryKeyName) {
-		handlers.NotOK(c, fmt.Errorf("请求体参数ID和URL参数ID不一致"))
+		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
 
@@ -161,7 +164,9 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "系统用户", oldUser.Username)
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "account")
+	h.SetAuditData(c, action, module, oldUser.Username)
 
 	handlers.OK(c, oldUser)
 }
@@ -186,7 +191,9 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.SetAuditData(c, "删除", "系统用户", obj.Username)
+	action := i18n.Sprintf(context.TODO(), "delete")
+	module := i18n.Sprintf(context.TODO(), "account")
+	h.SetAuditData(c, action, module, obj.Username)
 	handlers.NoContent(c, nil)
 }
 

@@ -25,6 +25,7 @@ import (
 	v2beta1 "k8s.io/api/autoscaling/v2beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -72,11 +73,13 @@ func (h *HpaHandler) SetObjectHpa(c *gin.Context) {
 		return
 	}
 	if form.Cpu == 0 && form.Memory == 0 {
-		handlers.NotOK(c, fmt.Errorf("内存和CPU不可以同时为空"))
+		handlers.NotOK(c, i18n.Errorf(c, "CPU or Memory can't be empty at the same time, please provide one at least"))
 		return
 	}
 
-	h.SetAuditData(c, "配置", "HPA", fmt.Sprintf("%v/%v", form.Namespace, form.Name))
+	action := i18n.Sprintf(context.TODO(), "set")
+	module := i18n.Sprintf(context.TODO(), "HPA")
+	h.SetAuditData(c, action, module, fmt.Sprintf("%s/%s", form.Namespace, form.Name))
 	h.SetExtraAuditDataByClusterNamespace(c, form.Cluster, form.Namespace)
 	hpa, err := h.createOrUpdateHPA(c.Request.Context(), form)
 	if err != nil {
@@ -150,7 +153,7 @@ func (h *HpaHandler) getRealResource(ctx context.Context, cluster, namespace, na
 	case "Deployment":
 		obj = &appsv1.Deployment{}
 	default:
-		err = fmt.Errorf("不支持的kind")
+		err = i18n.Errorf(ctx, "unsuppored kind %s to set/get HPA, StatefulSet and Deployment supported", kind)
 		return
 	}
 	err = h.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {

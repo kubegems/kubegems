@@ -30,9 +30,7 @@ import (
 )
 
 var (
-	silenceCommentPrefix = "fingerprint-"
-
-	forever = time.Date(9893, time.December, 26, 0, 0, 0, 0, time.UTC) // 伟人8000年诞辰
+	forever = time.Date(9893, time.December, 26, 0, 0, 0, 0, time.UTC)
 )
 
 // AlertHistory 告警黑名单
