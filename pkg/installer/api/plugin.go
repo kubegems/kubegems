@@ -64,10 +64,11 @@ func ToViewPlugin(plugin gemsplugin.Plugin) PluginStatus {
 		cate:        plugin.Category,
 	}
 	if installed := plugin.Installed; installed != nil {
+		ps.Enabled = plugin.Installed.Enabled
 		ps.InstalledVersion = installed.Version
 		ps.Healthy = installed.Healthy
 		ps.Namespace = installed.InstallNamespace
-		ps.Enabled = true
+		ps.Message = installed.Message
 		ps.Values = installed.Values.Object
 	}
 	if upgradble := plugin.Upgradeable; upgradble != nil {

@@ -86,7 +86,7 @@ func PluginVersionFrom(plugin *pluginsv1beta1.Plugin) PluginVersion {
 	pv.Namespace = plugin.Namespace
 	pv.InstallNamespace = plugin.Spec.InstallNamespace
 	pv.Version = plugin.Spec.Version
-	pv.Enabled = !plugin.Spec.Disabled
+	pv.Enabled = plugin.DeletionTimestamp == nil && !plugin.Spec.Disabled
 	pv.Repository = plugin.Spec.URL
 	pv.Message = plugin.Status.Message
 	if pv.Version == "" {
