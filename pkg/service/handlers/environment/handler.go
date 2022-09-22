@@ -806,7 +806,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// alert rules
 		eg.Go(func() error {
-			monitoralerts, err := cli.Extend().ListMonitorAlertRules(ctx, env.Namespace, false)
+			monitoralerts, err := cli.Extend().ListMonitorAlertRules(ctx, env.Namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
 				return err
 			}

@@ -24,6 +24,7 @@ import (
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
 	"kubegems.io/kubegems/pkg/utils/slice"
@@ -36,6 +37,7 @@ import (
 type RawMonitorAlertResource struct {
 	Base *BaseAlertResource
 	*monitoringv1.PrometheusRule
+	TplGetter templates.TplGetter
 }
 
 type MonitorAlertRule struct {
@@ -45,6 +47,7 @@ type MonitorAlertRule struct {
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
 	Origin         string          `json:"origin,omitempty"`         // 原始的prometheusrule
 	Source         string          `json:"source"`                   // 来自哪个prometheusrule
+	TplLost        bool            `json:"tplLost"`                  // 监控模板是否丢失
 }
 
 var reg = regexp.MustCompile(`^\w+$`)
@@ -209,6 +212,14 @@ func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[Moni
 			alertrule.Origin = string(bts)
 		}
 		alertrule.Source = raw.PrometheusRule.Name
+
+		if alertrule.PromqlGenerator != nil {
+			_, err = raw.TplGetter(alertrule.PromqlGenerator.Scope, alertrule.PromqlGenerator.Resource, alertrule.PromqlGenerator.Rule)
+			if err != nil {
+				log.Warnf("get promql tpl: %v", err)
+				alertrule.TplLost = true
+			}
+		}
 		ret = append(ret, alertrule)
 	}
 
