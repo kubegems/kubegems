@@ -286,7 +286,7 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 	ret := []prometheus.MonitorAlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		var err error
-		ret, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, false)
+		ret, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -315,7 +315,7 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 	var alerts []prometheus.MonitorAlertRule
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		var err error
-		alerts, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, true)
+		alerts, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, true, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -375,7 +375,7 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 
 		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 			// get、update、commit
-			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source)
+			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
 				return err
 			}
@@ -447,7 +447,7 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 
 		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 			// get、update、commit
-			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source)
+			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
 				return err
 			}
@@ -497,7 +497,7 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		// get、update、commit
-		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, source)
+		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		if err != nil {
 			return err
 		}
