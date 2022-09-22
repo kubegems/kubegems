@@ -27,7 +27,7 @@ import (
 type MonitorDashboard struct {
 	ID uint `gorm:"primarykey" json:"id"`
 	// 面板名
-	Name      string                `gorm:"type:varchar(50);uniqueIndex" binding:"required" json:"name"`
+	Name      string                `gorm:"type:varchar(50)" binding:"required" json:"name"`
 	Step      string                `gorm:"type:varchar(50)" json:"step"`    // 样本间隔，单位秒
 	Refresh   string                `gorm:"type:varchar(50)" json:"refresh"` // 刷新间隔，eg. 30s, 1m
 	Start     string                `gorm:"type:varchar(50)" json:"start"`   // 开始时间，eg. 2022-04-24 06:00:45.241, now, now-30m
