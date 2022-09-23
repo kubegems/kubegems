@@ -204,13 +204,13 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 				SeverityLabel:       level.Severity,
 			},
 			Annotations: map[string]string{
-				messageAnnotationsKey: r.Message,
+				MessageAnnotationsKey: r.Message,
 				valueAnnotationKey:    ValueAnnotationExpr,
 			},
 		}
 		if !r.LogqlGenerator.IsEmpty() {
 			bts, _ := json.Marshal(r.LogqlGenerator)
-			rule.Annotations[exprJsonAnnotationKey] = string(bts)
+			rule.Annotations[ExprJsonAnnotationKey] = string(bts)
 		}
 		ret.Rules = append(ret.Rules, rule)
 	}
@@ -226,7 +226,7 @@ func rawToLoggingAlertRule(namespace string, group rulefmt.RuleGroup) (LoggingAl
 			Namespace: namespace,
 			Name:      group.Name,
 			For:       group.Rules[0].For.String(),
-			Message:   group.Rules[0].Annotations[messageAnnotationsKey],
+			Message:   group.Rules[0].Annotations[MessageAnnotationsKey],
 		},
 	}
 
@@ -240,7 +240,7 @@ func rawToLoggingAlertRule(namespace string, group rulefmt.RuleGroup) (LoggingAl
 			return ret, fmt.Errorf("rule %s expr %s not valid", group.Name, rule.Expr.Value)
 		}
 
-		exprJson, ok := rule.Annotations[exprJsonAnnotationKey]
+		exprJson, ok := rule.Annotations[ExprJsonAnnotationKey]
 		if ok {
 			// from template
 			generator := LogqlGenerator{}

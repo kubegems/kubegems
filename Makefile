@@ -10,6 +10,8 @@ GIT_COMMIT?=$(shell git rev-parse HEAD 2>/dev/null)
 GIT_BRANCH?=$(shell git symbolic-ref --short HEAD 2>/dev/null)
 # semver version
 VERSION?=$(shell echo "${GIT_VERSION}" | sed -e 's/^v//')
+# latest release version defined in VERSION file
+LATEST_RELEASE_VERSION = $(shell cat VERSION)
 BIN_DIR = ${PWD}/bin
 
 IMAGE_REGISTRY?=docker.io
@@ -61,7 +63,12 @@ generate: helm-readme add-license ## Generate  WebhookConfiguration, ClusterRole
 	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/plugins/kubegems-local/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"
-	helm template --namespace kubegems-installer --include-crds  kubegems-installer deploy/plugins/kubegems-installer \
+
+	sed -i 's/^version:.*/version: $(LATEST_RELEASE_VERSION)/g' deploy/plugins/kubegems-installer/Chart.yaml
+	sed -i 's/^appVersion:.*/appVersion: $(LATEST_RELEASE_VERSION)/g' deploy/plugins/kubegems-installer/Chart.yaml
+	sed -i 's/kubegemsVersion:.*/kubegemsVersion: v$(LATEST_RELEASE_VERSION)/g' deploy/kubegems.yaml
+	sed -i 's/export KUBEGEMS_VERSION.*#/export KUBEGEMS_VERSION=v$(LATEST_RELEASE_VERSION)  #/g' README.md README_zh.md
+	helm template --namespace kubegems-installer --set installer.image.tag=v$(LATEST_RELEASE_VERSION) --include-crds  kubegems-installer deploy/plugins/kubegems-installer \
 	| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
 	go run scripts/generate-system-alert/main.go

@@ -26,7 +26,7 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
-	v1 "k8s.io/api/core/v1"
+	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -618,28 +618,37 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 	} else {
 		h.SetExtraAuditData(c, models.ResTenant, *rule.TenantID)
 	}
-	allalerts := []prometheus.MonitorAlertRule{}
-	if err := h.GetAgents().ExecuteInEachCluster(c.Request.Context(), func(ctx context.Context, cli agents.Client) error {
-		alerts, err := cli.Extend().ListMonitorAlertRules(ctx, v1.NamespaceAll, false)
-		if err != nil {
-			return errors.Wrapf(err, "list alert in cluster %s failed", cli.Name())
+
+	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		dashborads := []models.MonitorDashboard{}
+		if err := tx.Preload("Environment").Find(&dashborads).Error; err != nil {
+			return err
 		}
-		allalerts = append(allalerts, alerts...)
-		return nil
+		for _, dash := range dashborads {
+			for _, v := range dash.Graphs {
+				if v.Scope == rule.Resource.Scope.Name &&
+					v.Resource == rule.Resource.Name &&
+					v.Rule == rule.Name {
+					return fmt.Errorf("此模板正在被环境: %s 中的监控大盘: %s 使用", dash.Environment.EnvironmentName, dash.Name)
+				}
+			}
+		}
+
+		tpls := []models.MonitorDashboardTpl{}
+		if err := tx.Find(&tpls).Error; err != nil {
+			return err
+		}
+		for _, tpl := range tpls {
+			for _, v := range tpl.Graphs {
+				if v.Scope == rule.Resource.Scope.Name &&
+					v.Resource == rule.Resource.Name &&
+					v.Rule == rule.Name {
+					return fmt.Errorf("此模板正在被监控大盘模板: %s 使用", tpl.Name)
+				}
+			}
+		}
+		return tx.Delete(rule).Error
 	}); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	for _, v := range allalerts {
-		if !v.PromqlGenerator.Notpl() &&
-			v.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
-			v.PromqlGenerator.Resource == rule.Resource.Name &&
-			v.PromqlGenerator.Rule == rule.Name {
-			handlers.NotOK(c, i18n.Errorf(c, "prometheus template %s.%s.%s %s is used by rule %s now", v.PromqlGenerator.Scope, v.PromqlGenerator.Resource, v.PromqlGenerator.Rule, v.Name))
-			return
-		}
-	}
-	if err := h.GetDB().Delete(rule).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

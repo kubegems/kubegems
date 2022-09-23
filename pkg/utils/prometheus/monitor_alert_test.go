@@ -98,7 +98,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 											SeverityLabel:       SeverityError,
 										},
 										Annotations: map[string]string{
-											exprJsonAnnotationKey: `{
+											ExprJsonAnnotationKey: `{
 												"scope": "system",
 												"resource": "node",
 												"rule": "statusCondition",

@@ -40,8 +40,8 @@ const (
 	SeverityError    = "error"    // 错误
 	SeverityCritical = "critical" // 严重
 
-	exprJsonAnnotationKey = "gems_expr_json"
-	messageAnnotationsKey = "message"
+	ExprJsonAnnotationKey = "gems_expr_json"
+	MessageAnnotationsKey = "message"
 	valueAnnotationKey    = "value"
 	ValueAnnotationExpr   = `{{ $value | printf "%.1f" }}`
 
