@@ -5,7 +5,7 @@ refresh: 30s
 start: now-30m
 end: now
 variables:
-  pod: ""
+  workload: ""
 graphs:
   - name: Container CPU Total
     promqlGenerator:

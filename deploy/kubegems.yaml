@@ -8,7 +8,7 @@ spec:
   url: https://charts.kubegems.io/kubegems
   values:
     global:
-      kubegemsVersion: latest
+      kubegemsVersion: v1.22.0-beta.1
       storageClass: local-path # change me to use a different storage class
     ingress:
       hostname: dashboard.kubegems.io # change me to use a production hostname

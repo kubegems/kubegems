@@ -16,6 +16,7 @@ package templates
 
 import (
 	"fmt"
+	"strings"
 
 	"kubegems.io/kubegems/pkg/utils/gormdatatypes"
 )
@@ -60,4 +61,22 @@ func (m *PromqlTplMapper) FindPromqlTpl(scope, resource, rule string) (*PromqlTp
 		return nil, fmt.Errorf("promql tpl: %s not found", key)
 	}
 	return ret, nil
+}
+
+func (m *PromqlTplMapper) FindPromqlTplWithoutScope(resource, rule string) (*PromqlTpl, error) {
+	if m.Err != nil {
+		return nil, m.Err
+	}
+	suffix := fmt.Sprintf("%s.%s", resource, rule)
+
+	var tpl *PromqlTpl
+	for k, v := range m.M {
+		if strings.HasSuffix(k, suffix) {
+			tpl = v
+		}
+	}
+	if tpl == nil {
+		return nil, fmt.Errorf("promql tpl: %s not found", suffix)
+	}
+	return tpl, nil
 }
