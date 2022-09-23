@@ -642,6 +642,9 @@ func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 }
 
 type EnvironmentObservabilityRet struct {
+	ProjectID       uint   `json:"projectID"`
+	ProjectName     string `json:"projectName"`
+	EnvironmentID   uint   `json:"environmentID"`
 	EnvironmentName string `json:"environmentName"`
 	ClusterName     string `json:"clusterName"`
 	Namespace       string `json:"namespace"`
@@ -685,7 +688,7 @@ type EnvironmentObservabilityRet struct {
 // @Security    JWT
 func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	env := models.Environment{}
-	if err := h.GetDB().Preload("Cluster").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
+	if err := h.GetDB().Preload("Cluster").Preload("Project").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -693,7 +696,10 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	dur := c.DefaultQuery("duration", "1h")
 	ctx := c.Request.Context()
 	ret := EnvironmentObservabilityRet{
+		EnvironmentID:   env.ID,
 		EnvironmentName: env.EnvironmentName,
+		ProjectID:       env.ProjectID,
+		ProjectName:     env.Project.ProjectName,
 		ClusterName:     env.Cluster.ClusterName,
 		Namespace:       env.Namespace,
 	}
