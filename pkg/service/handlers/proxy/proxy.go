@@ -123,6 +123,9 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 		}
 	}
 
+	// NOTICE:
+	// why add query to headers? due the issue below, proxy params can't pass via api-server proxy
+	// https://github.com/kubernetes/kubernetes/issues/89360
 	headers := http.Header{}
 	for key, values := range c.Request.URL.Query() {
 		headers.Add(key, strings.Join(values, ","))

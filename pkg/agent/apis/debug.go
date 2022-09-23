@@ -25,7 +25,6 @@ import (
 	"github.com/gorilla/websocket"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/ws"
@@ -84,16 +83,13 @@ func (h *PodHandler) DebugPod(c *gin.Context) {
 }
 
 func (h *PodHandler) getDebug(c *gin.Context) (remotecommand.Executor, error) {
-	namespace := c.Param("namespace")
-	pod := c.Param("name")
-
-	debugImage := getDefaultHeader(c, "debugimage", h.debugoptions.Image)
+	debugImage := paramFromHeaderOrQuery(c, "debugimage", h.debugoptions.Image)
 	command := []string{
 		"kubectl",
 		"-n",
-		namespace,
+		c.Param("namespace"),
 		"debug",
-		pod,
+		c.Param("name"),
 		"--image",
 		debugImage,
 		"--image-pull-policy=IfNotPresent",
@@ -105,24 +101,13 @@ func (h *PodHandler) getDebug(c *gin.Context) (remotecommand.Executor, error) {
 	if err != nil {
 		return nil, err
 	}
-	req := h.cluster.Kubernetes().
-		CoreV1().
-		RESTClient().
-		Post().
-		Resource("pods").
-		Namespace(h.debugoptions.Namespace).
-		Name(poname).
-		SubResource("exec").
-		VersionedParams(&v1.PodExecOptions{
-			Container: h.debugoptions.Container,
-			Command:   command,
-			Stdin:     true,
-			Stdout:    true,
-			Stderr:    true,
-			TTY:       true,
-		}, scheme.ParameterCodec)
-	ex, err := remotecommand.NewSPDYExecutor(h.cluster.Config(), "POST", req.URL())
-	return ex, err
+	pe := PodCmdExecutor{
+		Cluster:   h.cluster,
+		Namespace: h.debugoptions.Namespace,
+		Pod:       poname,
+		Container: h.debugoptions.Container,
+	}
+	return pe.executor(command)
 }
 
 type KubectlHandler struct {
@@ -178,23 +163,13 @@ func (h *KubectlHandler) getKubectl(c *gin.Context) (remotecommand.Executor, err
 	if err != nil {
 		return nil, err
 	}
-	req := h.cluster.Kubernetes().
-		CoreV1().
-		RESTClient().
-		Post().
-		Resource("pods").
-		Namespace(h.debugoptions.Namespace).
-		Name(poname).
-		SubResource("exec").
-		VersionedParams(&v1.PodExecOptions{
-			// 若不设置使用默认container
-			Command: command,
-			Stdin:   true,
-			Stdout:  true,
-			Stderr:  true,
-			TTY:     true,
-		}, scheme.ParameterCodec)
-	return remotecommand.NewSPDYExecutor(h.cluster.Config(), "POST", req.URL())
+	pe := PodCmdExecutor{
+		Cluster:   h.cluster,
+		Namespace: h.debugoptions.Namespace,
+		Pod:       poname,
+		Container: "",
+	}
+	return pe.executor(command)
 }
 
 func getKubectlContainer(ctx context.Context, ctl client.Client, debug *DebugOptions) (string, error) {

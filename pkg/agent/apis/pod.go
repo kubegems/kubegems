@@ -15,7 +15,12 @@
 package apis
 
 import (
+	"encoding/base64"
+	"errors"
 	"io"
+	"mime"
+	"os"
+	"path"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -183,21 +188,6 @@ func filterByNodename(c *gin.Context, pods []v1.Pod) []v1.Pod {
 	return ret
 }
 
-func filterByContainerState(phase string, pods []v1.Pod) []v1.Pod {
-	var ret []v1.Pod
-	for _, pod := range pods {
-		for _, container := range pod.Status.ContainerStatuses {
-			switch {
-			case phase == "Running" && container.State.Running != nil:
-				ret = append(ret, pod)
-			case phase == "NotRunning" && container.State.Waiting != nil:
-				ret = append(ret, pod)
-			}
-		}
-	}
-	return ret
-}
-
 // ExecContainer 进入容器交互执行命令
 // @Tags        Agent.V1
 // @Summary     进入容器交互执行命令(websocket)
@@ -243,7 +233,6 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 // @Description 实时获取日志STDOUT输出(websocket)
 // @Param       cluster   path     string true  "cluster"
 // @Param       namespace path     string true  "namespace"
-// @Param       namespace path     string true  "namespace"
 // @Param       pod       path     string true  "pod"
 // @Param       container query    string true  "container"
 // @Param       stream    query    string true  "stream must be true"
@@ -253,10 +242,6 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 // @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/logs [get]
 // @Security    JWT
 func (h *PodHandler) GetContainerLogs(c *gin.Context) {
-	namespace := c.Param("namespace")
-	pod := c.Param("name")
-	container := getDefaultHeader(c, "container", "")
-
 	ws, err := ws.Upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Infof("Upgrade Websocket Faield: %s", err.Error())
@@ -264,15 +249,14 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 		return
 	}
 
-	tailInt, _ := strconv.Atoi(getDefaultHeader(c, "tail", "1000"))
-	follow := getDefaultHeader(c, "follow", "true")
+	tailInt, _ := strconv.Atoi(paramFromHeaderOrQuery(c, "tail", "1000"))
 	tail := int64(tailInt)
 	logopt := &v1.PodLogOptions{
-		Container: container,
-		Follow:    follow == "true",
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+		Follow:    paramFromHeaderOrQuery(c, "follow", "true") == "true",
 		TailLines: &tail,
 	}
-	req := h.cluster.Kubernetes().CoreV1().Pods(namespace).GetLogs(pod, logopt)
+	req := h.cluster.Kubernetes().CoreV1().Pods(c.Param("namespace")).GetLogs(c.Param("name"), logopt)
 	out, err := req.Stream(c.Request.Context())
 	if err != nil {
 		_ = ws.WriteMessage(websocket.TextMessage, []byte("init websocket stream error"))
@@ -283,6 +267,37 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 		conn: ws,
 	}
 	_, _ = io.Copy(&writer, out)
+}
+
+// DownloadFileFromPod 从容器下载文件
+// @Tags        Agent.V1
+// @Summary     从容器下载文件
+// @Description 从容器下载文件
+// @Param       cluster   path     string true  "cluster"
+// @Param       namespace path     string true  "namespace"
+// @Param       pod       path     string true  "pod"
+// @Param       container query    string true  "container"
+// @Param       filename  query    string true  "filename"
+// @Success     200       {object} object "ws"
+// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file [get]
+// @Security    JWT
+func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
+	filename := paramFromHeaderOrQuery(c, "filename", "")
+	if filename == "" {
+		NotOK(c, errors.New("filename must provide"))
+		return
+	}
+	fd := FileDownloader{
+		Cluster:   h.cluster,
+		Namespace: c.Param("namespace"),
+		Pod:       c.Param("name"),
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+		Filename:  filename,
+	}
+	if err := fd.Start(c); err != nil {
+		NotOK(c, err)
+		return
+	}
 }
 
 type wsWriter struct {
@@ -298,23 +313,74 @@ func (w *wsWriter) Write(data []byte) (int, error) {
 }
 
 func (h *PodHandler) getExec(c *gin.Context) (remotecommand.Executor, error) {
-	namespace := c.Param("namespace")
-	pod := c.Param("name")
-	container := getDefaultHeader(c, "container", "")
+	pe := &PodCmdExecutor{
+		Cluster:   h.cluster,
+		Namespace: c.Param("namespace"),
+		Pod:       c.Param("name"),
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+	}
 	command := []string{
 		"/bin/sh",
 		"-c",
 		"export LINES=20; export COLUMNS=100; export LANG=C.UTF-8; export TERM=xterm-256color; [ -x /bin/bash ] && exec /bin/bash || exec /bin/sh",
 	}
+	return pe.executor(command)
+}
 
-	log.Infof("exec pod in contaler %v, raw URL %v", container, c.Request.URL)
-	req := h.cluster.Kubernetes().CoreV1().RESTClient().Post().Resource("pods").Namespace(namespace).Name(pod).SubResource("exec").VersionedParams(&v1.PodExecOptions{
-		Container: container,
-		Command:   command,
+type PodCmdExecutor struct {
+	Cluster   cluster.Interface
+	Namespace string
+	Pod       string
+	Container string
+}
+
+func (pe *PodCmdExecutor) executor(cmd []string) (remotecommand.Executor, error) {
+	req := pe.Cluster.Kubernetes().CoreV1().RESTClient().Post().Resource("pods").Namespace(pe.Namespace).Name(pe.Pod).SubResource("exec").VersionedParams(&v1.PodExecOptions{
+		Container: pe.Container,
+		Command:   cmd,
 		Stdin:     true,
 		Stdout:    true,
 		Stderr:    true,
 		TTY:       true,
 	}, scheme.ParameterCodec)
-	return remotecommand.NewSPDYExecutor(h.cluster.Config(), "POST", req.URL())
+	return remotecommand.NewSPDYExecutor(pe.Cluster.Config(), "POST", req.URL())
+}
+
+type FileDownloader struct {
+	Cluster   cluster.Interface
+	Namespace string
+	Pod       string
+	Container string
+	Filename  string
+}
+
+func (fd *FileDownloader) Start(c *gin.Context) error {
+	pe := PodCmdExecutor{
+		Cluster:   fd.Cluster,
+		Namespace: fd.Namespace,
+		Pod:       fd.Pod,
+		Container: fd.Container,
+	}
+	command := []string{"base64", "-w", "0", fd.Filename}
+	exec, err := pe.executor(command)
+	if err != nil {
+		return err
+	}
+	c.Header(
+		"Content-Disposition",
+		mime.FormatMediaType("attachment", map[string]string{
+			"filename": path.Base(fd.Filename) + ".tgz",
+		}),
+	)
+	pipereader, pipewriter := io.Pipe()
+	decoder := base64.NewDecoder(base64.StdEncoding, pipereader)
+	go func() {
+		io.Copy(c.Writer, decoder)
+	}()
+	return exec.Stream(remotecommand.StreamOptions{
+		Stdin:  os.Stdin,
+		Stdout: pipewriter,
+		Stderr: os.Stderr,
+		Tty:    true,
+	})
 }
