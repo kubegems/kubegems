@@ -15,6 +15,7 @@
 package apis
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"io"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"golang.org/x/time/rate"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -375,7 +377,12 @@ func (fd *FileDownloader) Start(c *gin.Context) error {
 	pipereader, pipewriter := io.Pipe()
 	decoder := base64.NewDecoder(base64.StdEncoding, pipereader)
 	go func() {
-		io.Copy(c.Writer, decoder)
+		// should limit the download speed here?
+		rd := RateLimitReader(c, decoder)
+		r, e := io.Copy(c.Writer, rd)
+		if e != nil {
+			log.Error(e, "copy file failed", "written", r)
+		}
 	}()
 	return exec.Stream(remotecommand.StreamOptions{
 		Stdin:  os.Stdin,
@@ -383,4 +390,29 @@ func (fd *FileDownloader) Start(c *gin.Context) error {
 		Stderr: os.Stderr,
 		Tty:    true,
 	})
+}
+
+type rateLimitReader struct {
+	ctx context.Context
+	rl  *rate.Limiter
+	r   io.Reader
+	tmp []byte
+}
+
+// RateLimitReader limit 512kb/s when download
+func RateLimitReader(ctx context.Context, r io.Reader) *rateLimitReader {
+	rl := rate.NewLimiter(rate.Limit(512*1024), 1024*1024)
+	return &rateLimitReader{
+		ctx: ctx,
+		rl:  rl,
+		r:   r,
+		tmp: make([]byte, 1024*1024),
+	}
+}
+
+func (rlw *rateLimitReader) Read(p []byte) (int, error) {
+	n, err := rlw.r.Read(rlw.tmp)
+	rlw.rl.WaitN(rlw.ctx, n)
+	copy(p, rlw.tmp)
+	return n, err
 }
