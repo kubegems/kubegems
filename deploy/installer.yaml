@@ -414,7 +414,7 @@ spec:
         app.kubernetes.io/instance: kubegems-installer
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: kubegems-installer
-        helm.sh/chart: kubegems-installer-1.22.0-beta.1
+        helm.sh/chart: kubegems-installer-1.21.4
     spec:
       containers:
       - args:
@@ -425,7 +425,7 @@ spec:
         env:
         - name: LOG_LEVEL
           value: debug
-        image: docker.io/kubegems/kubegems:v1.22.0-beta.1
+        image: docker.io/kubegems/kubegems:v1.21.4
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 6
