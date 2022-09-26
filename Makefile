@@ -100,24 +100,26 @@ build-binaries: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
-build: gen-i18n build-binaries helm-package plugins-cache
+build: gen-i18n build-binaries plugins-cache
 
 plugins-cache: ## Build plugins-cache
 	go run scripts/offline-plugins/main.go 
 
 CHARTS = kubegems kubegems-local
 helm-generate: readme-generator
-	$(foreach var, $(wildcard $(CHARTS_DIR)/*/), readme-generator -v $(var)values.yaml -r $(var)README.md;)
+	$(foreach file,$(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
+	readme-generator -v $(file)values.yaml -r $(file)README.md \
+	;)
 
 KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
 helm-package:
-	$(foreach file, $(wildcard $(CHARTS_DIR)/*/), \
-	helm package -d ${KUBEGEM_CHARTS_DIR} --version ${SEMVER_VERSION} --app-version  ${SEMVER_VERSION} $(file) \
+	$(foreach file, $(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
+	helm package -d ${KUBEGEM_CHARTS_DIR} --version ${VERSION} --app-version  ${VERSION} $(file) \
 	;)
 
 .PHONY: helm-push
 helm-push: helm-package
-	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(SEMVER_VERSION).tgz), \
+	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(VERSION).tgz), \
 	curl --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
 	;)
 

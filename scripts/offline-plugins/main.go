@@ -94,8 +94,8 @@ func DownloadLatestCharts(ctx context.Context, repoaddr string, into string, kub
 				name = plugin.Name
 			}
 			log.Printf("download %s-%s from %s", name, plugin.Spec.Version, plugin.Spec.URL)
-			if _, err := applier.Template(ctx, plugin); err != nil {
-				log.Printf("on template: %v", err)
+			if _, err := applier.Download(ctx, plugin); err != nil {
+				log.Printf("on download: %v", err)
 				return err
 			}
 		}
