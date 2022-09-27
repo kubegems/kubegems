@@ -383,7 +383,7 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 			// check name duplicated
 			amconfigList := v1alpha1.AlertmanagerConfigList{}
 			if err := cli.List(ctx, &amconfigList, client.InNamespace(namespace), client.HasLabels([]string{
-				gems.LabelAlertmanagerConfigType,
+				gems.LabelAlertmanagerConfigName,
 			})); err != nil {
 				return err
 			}
@@ -411,10 +411,10 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 		if err != nil {
 			return err
 		}
-		for _, v := range routes {
-			for _, m := range v.Matchers {
+		for _, route := range routes {
+			for _, m := range route.Matchers {
 				if m.Name == prometheus.AlertNameLabel && m.Value == name {
-					return fmt.Errorf("duplicated name in: %s", name)
+					return fmt.Errorf("duplicated alert name: %s in prometheusrule: %s", name, v.Name)
 				}
 			}
 		}
