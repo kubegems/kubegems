@@ -72,10 +72,10 @@ require (
 	go.mongodb.org/mongo-driver v1.9.1
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
-	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
+	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	golang.org/x/text v0.3.7
 	google.golang.org/grpc v1.47.0
 	gopkg.in/square/go-jose.v2 v2.6.0
@@ -94,7 +94,7 @@ require (
 	k8s.io/kubectl v0.23.5
 	k8s.io/metrics v0.23.6
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
-	kubegems.io/bundle-controller v1.0.0-alpha3.0.20220620090423-d9fbaec75395
+	kubegems.io/bundle-controller v1.0.0-alpha3.0.20220927065436-63421ac26d9d
 	kubegems.io/configer v1.0.6
 	kubegems.io/ingress-nginx-operator v0.2.1
 	sigs.k8s.io/controller-runtime v0.11.2
@@ -324,10 +324,10 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/goleak v1.1.12 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
-	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75 // indirect
+	golang.org/x/exp v0.0.0-20220921164117-439092de6870 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
-	golang.org/x/tools v0.1.11-0.20220316014157-77aa08bb151a // indirect
+	golang.org/x/tools v0.1.12 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/api v0.84.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
