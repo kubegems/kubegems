@@ -908,6 +908,8 @@ definitions:
         type: string
       criticalAlertCount:
         type: integer
+      environmentID:
+        type: integer
       environmentName:
         type: string
       errorAlertCount:
@@ -937,6 +939,10 @@ definitions:
         description: 是否启用监控
         type: boolean
       namespace:
+        type: string
+      projectID:
+        type: integer
+      projectName:
         type: string
       serviceMesh:
         description: 是否启用服务网格
@@ -4863,6 +4869,9 @@ definitions:
       state:
         description: 状态
         type: string
+      tplLost:
+        description: 监控模板是否丢失
+        type: boolean
     type: object
   prometheus.PromqlGenerator:
     properties:
@@ -4914,9 +4923,6 @@ definitions:
       name:
         type: string
       namespace:
-        type: string
-      source:
-        description: 来自哪个alertmanagerconfig
         type: string
       webhookConfigs:
         items:
@@ -21408,11 +21414,6 @@ paths:
       - description: namespace
         in: path
         name: namespace
-        required: true
-        type: string
-      - description: 接收器类型(monitor/logging)
-        in: query
-        name: scope
         required: true
         type: string
       - description: search
