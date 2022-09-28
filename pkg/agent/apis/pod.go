@@ -15,14 +15,16 @@
 package apis
 
 import (
+	"archive/tar"
 	"context"
-	"encoding/base64"
-	"errors"
+	"fmt"
 	"io"
 	"mime"
-	"os"
+	"mime/multipart"
 	"path"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -285,21 +287,63 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 // @Security    JWT
 func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
 	filename := paramFromHeaderOrQuery(c, "filename", "")
-	if filename == "" {
-		NotOK(c, errors.New("filename must provide"))
+	if e := validateFilename(filename); e != nil {
+		NotOK(c, e)
 		return
 	}
-	fd := FileDownloader{
+	fd := FileTransfer{
 		Cluster:   h.cluster,
 		Namespace: c.Param("namespace"),
 		Pod:       c.Param("name"),
 		Container: paramFromHeaderOrQuery(c, "container", ""),
 		Filename:  filename,
 	}
-	if err := fd.Start(c); err != nil {
+	if err := fd.Download(c); err != nil {
 		NotOK(c, err)
 		return
 	}
+}
+
+// UploadFileToContainer upload files to container
+// @Tags        Agent.V1
+// @Summary     upload files to container
+// @Description upload files to container
+// @Param       cluster   path     string true  "cluster"
+// @Param       namespace path     string true  "namespace"
+// @Param       pod       path     string true  "pod"
+// @Param       container query    string true  "container"
+// @Param       filename  query    string true  "filename"
+// @Success     200       {object} object "ws"
+// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile [post]
+// @Security    JWT
+func (h *PodHandler) UploadFileToContainer(c *gin.Context) {
+	fd := FileTransfer{
+		Cluster:   h.cluster,
+		Namespace: c.Param("namespace"),
+		Pod:       c.Param("name"),
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+	}
+	if err := fd.Upload(c); err != nil {
+		NotOK(c, err)
+		return
+	}
+	OK(c, "ok")
+}
+
+func validateFilename(fname string) error {
+	if fname == "" || fname == "/" || fname == "." {
+		return fmt.Errorf("filename is invalid")
+	}
+	if !strings.HasPrefix(fname, "/") {
+		return fmt.Errorf("filename is invalid, plese use absolute path")
+	}
+	fsesp := strings.Split(fname, "/")
+	for _, sep := range fsesp {
+		if strings.Contains(sep, "..") {
+			return fmt.Errorf("filename is invalid, plese use absolute path")
+		}
+	}
+	return nil
 }
 
 type wsWriter struct {
@@ -320,6 +364,10 @@ func (h *PodHandler) getExec(c *gin.Context) (remotecommand.Executor, error) {
 		Namespace: c.Param("namespace"),
 		Pod:       c.Param("name"),
 		Container: paramFromHeaderOrQuery(c, "container", ""),
+		Stdin:     true,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       true,
 	}
 	command := []string{
 		"/bin/sh",
@@ -334,21 +382,25 @@ type PodCmdExecutor struct {
 	Namespace string
 	Pod       string
 	Container string
+	Stdin     bool
+	Stdout    bool
+	Stderr    bool
+	TTY       bool
 }
 
 func (pe *PodCmdExecutor) executor(cmd []string) (remotecommand.Executor, error) {
 	req := pe.Cluster.Kubernetes().CoreV1().RESTClient().Post().Resource("pods").Namespace(pe.Namespace).Name(pe.Pod).SubResource("exec").VersionedParams(&v1.PodExecOptions{
 		Container: pe.Container,
 		Command:   cmd,
-		Stdin:     true,
-		Stdout:    true,
-		Stderr:    true,
-		TTY:       true,
+		Stdin:     pe.Stdin,
+		Stdout:    pe.Stdout,
+		Stderr:    pe.Stderr,
+		TTY:       pe.TTY,
 	}, scheme.ParameterCodec)
 	return remotecommand.NewSPDYExecutor(pe.Cluster.Config(), "POST", req.URL())
 }
 
-type FileDownloader struct {
+type FileTransfer struct {
 	Cluster   cluster.Interface
 	Namespace string
 	Pod       string
@@ -356,14 +408,16 @@ type FileDownloader struct {
 	Filename  string
 }
 
-func (fd *FileDownloader) Start(c *gin.Context) error {
+func (fd *FileTransfer) Download(c *gin.Context) error {
 	pe := PodCmdExecutor{
 		Cluster:   fd.Cluster,
 		Namespace: fd.Namespace,
 		Pod:       fd.Pod,
 		Container: fd.Container,
+		Stdout:    true,
+		Stderr:    true,
 	}
-	command := []string{"base64", "-w", "0", fd.Filename}
+	command := []string{"tar", "cf", "-", fd.Filename}
 	exec, err := pe.executor(command)
 	if err != nil {
 		return err
@@ -374,45 +428,122 @@ func (fd *FileDownloader) Start(c *gin.Context) error {
 			"filename": path.Base(fd.Filename) + ".tgz",
 		}),
 	)
-	pipereader, pipewriter := io.Pipe()
-	decoder := base64.NewDecoder(base64.StdEncoding, pipereader)
-	go func() {
-		// should limit the download speed here?
-		rd := RateLimitReader(c, decoder)
-		r, e := io.Copy(c.Writer, rd)
-		if e != nil {
-			log.Error(e, "copy file failed", "written", r)
-		}
-	}()
+	e := exec.Stream(remotecommand.StreamOptions{
+		Stdout: RateLimitWriter(context.TODO(), c.Writer, 1024*1024),
+		Stderr: &fakeStdoutWriter{},
+	})
+	return e
+}
+
+func (fd *FileTransfer) Upload(c *gin.Context) error {
+	uploadFormData := &uploadForm{}
+	if err := c.Bind(uploadFormData); err != nil {
+		return err
+	}
+	r, w := io.Pipe()
+	go uploadFormData.convertTar(w)
+	pe := PodCmdExecutor{
+		Cluster:   fd.Cluster,
+		Namespace: fd.Namespace,
+		Pod:       fd.Pod,
+		Container: fd.Container,
+		Stdin:     true,
+		Stdout:    true,
+		Stderr:    true,
+	}
+	command := []string{"tar", "xf", "-", "-C", uploadFormData.Dest}
+	exec, err := pe.executor(command)
+	if err != nil {
+		return err
+	}
 	return exec.Stream(remotecommand.StreamOptions{
-		Stdin:  os.Stdin,
-		Stdout: pipewriter,
-		Stderr: os.Stderr,
-		Tty:    true,
+		Stdin:  r,
+		Stdout: &fakeStdoutWriter{},
+		Stderr: &fakeStdoutWriter{},
 	})
 }
 
-type rateLimitReader struct {
-	ctx context.Context
-	rl  *rate.Limiter
-	r   io.Reader
-	tmp []byte
+type uploadForm struct {
+	Dest  string                  `form:"dest" binding:"required"`
+	Files []*multipart.FileHeader `form:"files[]" binding:"required"`
 }
 
-// RateLimitReader limit 512kb/s when download
-func RateLimitReader(ctx context.Context, r io.Reader) *rateLimitReader {
-	rl := rate.NewLimiter(rate.Limit(512*1024), 1024*1024)
-	return &rateLimitReader{
-		ctx: ctx,
-		rl:  rl,
-		r:   r,
-		tmp: make([]byte, 1024*1024),
+func (uf *uploadForm) convertTar(w io.WriteCloser) (err error) {
+	tw := tar.NewWriter(w)
+	for _, file := range uf.Files {
+		tw.WriteHeader(&tar.Header{
+			Name:    file.Filename,
+			Size:    file.Size,
+			ModTime: time.Now(),
+			Mode:    0644,
+		})
+		fd, err := file.Open()
+		if err != nil {
+			return err
+		}
+		io.Copy(tw, fd)
+		fd.Close()
+	}
+	if e := tw.Close(); e != nil {
+		log.Error(e, "x")
+		return e
+	}
+	return w.Close()
+}
+
+type fakeStdoutWriter struct{}
+
+func (fw *fakeStdoutWriter) Write(p []byte) (int, error) {
+	// TODO: handle stderror to response info
+	log.Info("file transfer stderr: ", "content", p)
+	return len(p), nil
+}
+
+type rateLimitwriter struct {
+	ctx          context.Context
+	originWriter io.Writer
+	ratelimitor  *rate.Limiter
+}
+
+func (rw *rateLimitwriter) waitUtilCanDo(n int) {
+	if !rw.ratelimitor.AllowN(time.Now(), n) {
+		rw.ratelimitor.WaitN(rw.ctx, n)
 	}
 }
 
-func (rlw *rateLimitReader) Read(p []byte) (int, error) {
-	n, err := rlw.r.Read(rlw.tmp)
-	rlw.rl.WaitN(rlw.ctx, n)
-	copy(p, rlw.tmp)
-	return n, err
+func (rw *rateLimitwriter) Write(p []byte) (int, error) {
+	max := rw.ratelimitor.Burst()
+	pl := len(p)
+	if pl > max {
+		writed := 0
+		page := pl / max
+		last := pl % max
+		for idx := 0; idx < page; idx++ {
+			rw.waitUtilCanDo(max)
+			tmpn, err := rw.originWriter.Write(p[idx*max : idx*max+max])
+			writed += tmpn
+			if err != nil {
+				return writed, err
+			}
+		}
+		if last != 0 {
+			rw.waitUtilCanDo(last)
+			tmpn, err := rw.originWriter.Write(p[page*max : pl])
+			writed += tmpn
+			return writed, err
+		}
+		return writed, nil
+	} else {
+		rw.waitUtilCanDo(pl)
+		return rw.originWriter.Write(p)
+	}
+}
+
+func RateLimitWriter(ctx context.Context, w io.Writer, speed int) io.Writer {
+	l := rate.NewLimiter(rate.Limit(speed), speed*2)
+	return &rateLimitwriter{
+		ctx:          ctx,
+		originWriter: w,
+		ratelimitor:  l,
+	}
 }

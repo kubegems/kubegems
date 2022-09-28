@@ -170,6 +170,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.register("core", "v1", "pods", "debug", podHandler.DebugPod)
 	routes.register("core", "v1", "pods", "logs", podHandler.GetContainerLogs)
 	routes.register("core", "v1", "pods", "file", podHandler.DownloadFileFromPod)
+	routes.register("core", "v1", "pods", "upfile", podHandler.UploadFileToContainer)
 
 	rolloutHandler := &RolloutHandler{cluster: cluster}
 	routes.register("apps", "v1", "daemonsets", "rollouthistory", rolloutHandler.DaemonSetHistory)

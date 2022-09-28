@@ -106,6 +106,10 @@ func (h *PodHandler) getDebug(c *gin.Context) (remotecommand.Executor, error) {
 		Namespace: h.debugoptions.Namespace,
 		Pod:       poname,
 		Container: h.debugoptions.Container,
+		Stdin:     true,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       true,
 	}
 	return pe.executor(command)
 }
@@ -168,6 +172,10 @@ func (h *KubectlHandler) getKubectl(c *gin.Context) (remotecommand.Executor, err
 		Namespace: h.debugoptions.Namespace,
 		Pod:       poname,
 		Container: "",
+		Stdin:     true,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       true,
 	}
 	return pe.executor(command)
 }
