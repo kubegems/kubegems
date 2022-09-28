@@ -108,15 +108,18 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		annotations = map[string]string{}
 	}
 
-	valsFrom := []pluginsv1beta1.ValuesFrom{
-		// always inject the global values reference in plugin
-		{
+	valsFrom := []pluginsv1beta1.ValuesFrom{}
+
+	if cv.Name != pluginscommon.KubegemsChartGlobal {
+		// always inject the global values reference in other plugin
+		valsFrom = append(valsFrom, pluginsv1beta1.ValuesFrom{
 			Kind:     pluginsv1beta1.ValuesFromKindConfigmap,
 			Name:     pluginscommon.KubeGemsGlobalValuesConfigMapName,
 			Prefix:   pluginscommon.KubegemsChartGlobal + ".",
 			Optional: true,
-		},
+		})
 	}
+
 	for _, val := range strings.Split(annotations[pluginscommon.AnnotationValuesFrom], ",") {
 		if val == "" || val == pluginscommon.KubegemsChartGlobal {
 			continue
