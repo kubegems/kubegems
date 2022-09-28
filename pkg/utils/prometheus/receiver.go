@@ -72,7 +72,6 @@ type ReceiverConfig struct {
 	Namespace      string          `json:"namespace"`
 	EmailConfigs   []EmailConfig   `json:"emailConfigs"`
 	WebhookConfigs []WebhookConfig `json:"webhookConfigs"`
-	Source         string          `json:"source"` // 来自哪个alertmanagerconfig
 }
 
 func (rec *ReceiverConfig) Precheck() error {
@@ -83,9 +82,6 @@ func (rec *ReceiverConfig) Precheck() error {
 	}
 	if rec.Name == DefaultReceiverName {
 		return fmt.Errorf("不能修改默认接收器")
-	}
-	if rec.Source == "" {
-		return fmt.Errorf("receiver source cant't be null")
 	}
 	return nil
 }
@@ -131,9 +127,6 @@ func ModifyReceiver(ctx context.Context, aconfig *v1alpha1.AlertmanagerConfig, r
 	case Delete:
 		if receiver.Name == DefaultReceiverName {
 			return fmt.Errorf("不能删除默认接收器")
-		}
-		if isReceiverInUse(aconfig.Spec.Route, *receiver) {
-			return fmt.Errorf("%s is being used, can't delete", receiver.Name)
 		}
 		if index == -1 {
 			return fmt.Errorf("receiver %s not exist", receiver.Name)
@@ -187,7 +180,6 @@ func ToGemsReceiver(rec v1alpha1.Receiver, namespace, source string, sec *corev1
 	ret := ReceiverConfig{
 		Name:      rec.Name,
 		Namespace: namespace,
-		Source:    source,
 	}
 
 	if sec != nil {
@@ -239,7 +231,7 @@ func ToAlertmanagerReceiver(rec ReceiverConfig) v1alpha1.Receiver {
 	return ret
 }
 
-func isReceiverInUse(route *v1alpha1.Route, receiver v1alpha1.Receiver) bool {
+func IsReceiverInUse(route *v1alpha1.Route, receiver v1alpha1.Receiver) bool {
 	if route.Receiver == receiver.Name {
 		return true
 	}
@@ -248,7 +240,7 @@ func isReceiverInUse(route *v1alpha1.Route, receiver v1alpha1.Receiver) bool {
 		return false
 	}
 	for _, r := range children {
-		if isReceiverInUse(&r, receiver) {
+		if IsReceiverInUse(&r, receiver) {
 			return true
 		}
 	}

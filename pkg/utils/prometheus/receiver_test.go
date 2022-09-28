@@ -134,7 +134,7 @@ func Test_isReceiverInUse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isReceiverInUse(tt.args.route, tt.args.receiver); got != tt.want {
+			if got := IsReceiverInUse(tt.args.route, tt.args.receiver); got != tt.want {
 				t.Errorf("isReceiverInUse() = %v, want %v", got, tt.want)
 			}
 		})

@@ -60,7 +60,7 @@ func updateAMConfig(cli client.Client) {
 	ctx := context.TODO()
 	amCfgs := v1alpha1.AlertmanagerConfigList{}
 	if err := cli.List(ctx, &amCfgs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{
-		gems.LabelAlertmanagerConfigName: prometheus.MonitorAlertCRDName,
+		gems.LabelAlertmanagerConfigName: prometheus.DefaultAlertCRDName,
 	})); err != nil {
 		panic(err)
 	}

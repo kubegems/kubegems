@@ -6841,13 +6841,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "接收器类型(monitor/logging)",
-                        "name": "scope",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "search",
                         "name": "search",
                         "in": "query",
@@ -25540,6 +25533,9 @@ const docTemplate = `{
                 "criticalAlertCount": {
                     "type": "integer"
                 },
+                "environmentID": {
+                    "type": "integer"
+                },
                 "environmentName": {
                     "type": "string"
                 },
@@ -25581,6 +25577,12 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "namespace": {
+                    "type": "string"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "projectName": {
                     "type": "string"
                 },
                 "serviceMesh": {
@@ -29162,6 +29164,10 @@ const docTemplate = `{
                 "state": {
                     "description": "状态",
                     "type": "string"
+                },
+                "tplLost": {
+                    "description": "监控模板是否丢失",
+                    "type": "boolean"
                 }
             }
         },
@@ -29225,10 +29231,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "namespace": {
-                    "type": "string"
-                },
-                "source": {
-                    "description": "来自哪个alertmanagerconfig",
                     "type": "string"
                 },
                 "webhookConfigs": {
