@@ -16,6 +16,7 @@ package clusterhandler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -37,7 +38,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/install"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/statistics"
@@ -234,7 +235,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
 				}
-				return install.OpratorInstaller{Config: config}.Remove(ctx, cluster.InstallNamespace)
+				return gemsplugin.Bootstrap{Config: config}.Remove(ctx)
 			})
 		}); err != nil {
 			handlers.NotOK(c, err)
@@ -437,6 +438,10 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	if cluster.ClusterName == "" {
+		handlers.NotOK(c, errors.New("empty cluster name"))
+		return
+	}
 
 	// nolint: dogsled
 	apiserver, _, _, _, err := kube.GetKubeconfigInfos(cluster.KubeConfig)
@@ -505,7 +510,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				splits = append(splits, "")
 			}
 			registry, repository := splits[0], splits[1]
-			return install.OpratorInstaller{Config: config}.Apply(ctx, cluster.InstallNamespace, install.GlobalValues{
+			return gemsplugin.Bootstrap{Config: config}.Install(ctx, gemsplugin.GlobalValues{
 				ImageRegistry:   registry,
 				ImageRepository: repository,
 				ClusterName:     cluster.ClusterName,
@@ -568,21 +573,6 @@ func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 			OversoldConfig: cluster.OversoldConfig,
 			Workloads:      workloads,
 		}, nil
-	})
-}
-
-// @Tags        Agent.Plugin
-// @Summary     获取Plugin列表数据
-// @Description 获取Plugin列表数据
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     int                                                  true "cluster_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=map[string]interface{}} "Plugins"
-// @Router      /v1/cluster/{cluster_id}/plugins [get]
-// @Security    JWT
-func (h *ClusterHandler) ListPligins(c *gin.Context) {
-	h.cluster(c, func(ctx context.Context, _ models.Cluster, cli agents.Client) (interface{}, error) {
-		return cli.Extend().ListPlugins(ctx)
 	})
 }
 

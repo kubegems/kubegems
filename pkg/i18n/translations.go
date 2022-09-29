@@ -84,7 +84,7 @@ func Errorf(ctx context.Context, format string, a ...interface{}) error {
 func init() {
 	tag, err := locale.Detect()
 	if err != nil {
-		panic(err)
+		tag = language.SimplifiedChinese
 	}
 	matchedLang, _, _ := matcher.Match(tag)
 	defaultLang = matchedLang.Parent()

@@ -34,11 +34,11 @@ type ValidateKubeConfigResp struct {
 	StorageClasses []string       `json:"storageClasses,omitempty"`
 
 	// 判断是否存在installer，若存在即可加为控制集群
-	ExistInstaller bool   `json:"existInstaller"`
-	ClusterName    string `json:"clusterName"`
-
-	Connectable bool   `json:"connectable,omitempty"`
-	Message     string `json:"message,omitempty"`
+	ExistInstaller bool                    `json:"existInstaller"`
+	GlobalValues   gemsplugin.GlobalValues `json:"globalValues"`
+	ClusterName    string                  `json:"clusterName"`
+	Connectable    bool                    `json:"connectable,omitempty"`
+	Message        string                  `json:"message,omitempty"`
 }
 
 // ValidateKubeConfig 添加cluster前的kubeconfig检测接口，验证kubeconfig，返回集群信息和可用的storageClass列表
@@ -93,11 +93,10 @@ func (h *ClusterHandler) ValidateKubeConfig(c *gin.Context) {
 		handlers.OK(c, resp)
 		return
 	}
-	if globalvals, plugins, err := gemsplugin.ListPlugins(ctx, cli); err == nil && len(plugins) > 0 {
-		if name, ok := globalvals["global.clusterName"]; ok {
-			resp.ClusterName = name
-		}
+	if vals, err := (&gemsplugin.PluginManager{Client: cli}).GetGlobalValues(ctx); err == nil {
 		resp.ExistInstaller = true
+		resp.ClusterName = vals.ClusterName
+		resp.GlobalValues = *vals
 	}
 	handlers.OK(c, resp)
 }

@@ -1,6 +1,6 @@
 dependencies:
 - name: common
-  repository: file://../common
+  repository: https://charts.kubegems.io/kubegems
   version: 1.0.0
-digest: sha256:c68e472825af446bb3561dc92bb4659f388e197d7742c12a3e4f93a81506ac41
-generated: "2022-05-31T19:05:35.132534085+08:00"
+digest: sha256:c6170500a07df56bf0d6bea4282cf328cabfb7c6200e54d82ce94c06ae56682b
+generated: "2022-09-09T19:32:29.983511986+08:00"

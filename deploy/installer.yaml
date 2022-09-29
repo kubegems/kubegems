@@ -170,8 +170,10 @@ spec:
                     name:
                       description: Name is the name of resource being referenced
                       type: string
+                    namespace:
+                      type: string
                     optional:
-                      description: Optional set to true to ignore referense not found
+                      description: Optional set to true to ignore references not found
                         error
                       type: boolean
                     prefix:
@@ -199,7 +201,7 @@ spec:
                 type: string
               message:
                 description: Message is the message associated with the status In
-                  helm, it's the notes contens.
+                  helm, it's the notes contents.
                 type: string
               namespace:
                 description: Namespace is the namespace where the bundle is installed.
@@ -306,6 +308,32 @@ metadata:
   name: kubegems-installer
   namespace: kubegems-installer
 ---
+apiVersion: v1
+data:
+  address: aHR0cHM6Ly9jaGFydHMua3ViZWdlbXMuaW8va3ViZWdlbXM=
+kind: Secret
+metadata:
+  annotations:
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
+  labels:
+    plugins.kubegems.io/is-plugin-repo: "true"
+  name: plugin-repository-kubegems
+  namespace: kubegems-installer
+---
+apiVersion: v1
+data:
+  address: ZmlsZTovLy9hcHAvcGx1Z2lucy9jaGFydHMua3ViZWdlbXMuaW8=
+kind: Secret
+metadata:
+  annotations:
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
+  labels:
+    plugins.kubegems.io/is-plugin-repo: "true"
+  name: plugin-repository-local
+  namespace: kubegems-installer
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -374,7 +402,6 @@ metadata:
     app.kubernetes.io/name: kubegems-installer
     helm.sh/chart: kubegems-installer-1.22.0-beta.1
   name: kubegems-installer
-  namespace: kubegems-installer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

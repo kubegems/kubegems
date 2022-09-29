@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/Xuanwo/go-locale v1.1.0
 	github.com/alicebob/miniredis/v2 v2.21.0
@@ -73,6 +74,8 @@ require (
 	go.mongodb.org/mongo-driver v1.9.1
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
+	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
+	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
@@ -91,15 +94,16 @@ require (
 	k8s.io/api v0.23.6
 	k8s.io/apiextensions-apiserver v0.23.6
 	k8s.io/apimachinery v0.23.6
+	k8s.io/cli-runtime v0.23.6
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kubectl v0.23.5
 	k8s.io/metrics v0.23.6
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
-	kubegems.io/bundle-controller v1.0.0-alpha3.0.20220620090423-d9fbaec75395
-	kubegems.io/configer v1.0.6
+	kubegems.io/configer v1.0.5
 	kubegems.io/ingress-nginx-operator v0.2.1
 	sigs.k8s.io/controller-runtime v0.11.2
 	sigs.k8s.io/kustomize/api v0.11.4
+	sigs.k8s.io/kustomize/kyaml v0.13.6
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -120,7 +124,6 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
@@ -233,7 +236,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kedacore/keda/v2 v2.7.1 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
-	github.com/klauspost/compress v1.15.0 // indirect
+	github.com/klauspost/compress v1.15.5 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -325,7 +328,6 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/goleak v1.1.12 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
-	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	golang.org/x/tools v0.1.11-0.20220316014157-77aa08bb151a // indirect
@@ -343,7 +345,6 @@ require (
 	istio.io/gogo-genproto v0.0.0-20220413184606-e76735307e2d // indirect
 	istio.io/pkg v0.0.0-20220413180906-765b7512325f // indirect
 	k8s.io/apiserver v0.23.6 // indirect
-	k8s.io/cli-runtime v0.23.6 // indirect
 	k8s.io/component-base v0.23.6 // indirect
 	k8s.io/component-helpers v0.23.6 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
@@ -353,7 +354,6 @@ require (
 	knative.dev/pkg v0.0.0-20220502225657-4fced0164c9a // indirect
 	oras.land/oras-go v1.1.1 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
 

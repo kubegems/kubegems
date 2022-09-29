@@ -1,8 +1,0 @@
-global:
-  imageRegistry: ""
-  imageRepository: ""
-metallb:
-  speaker:
-    frr:
-      enabled: true
-

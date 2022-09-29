@@ -36,7 +36,6 @@ func NewPluginsAPI(cli *agents.ClientSet) (*PluginsAPI, error) {
 }
 
 func (p *PluginsAPI) List(req *restful.Request, resp *restful.Response) {
-	ret := []PluginsStatus{}
 	ctx := req.Request.Context()
 	cli, err := p.agents.ClientOfManager(ctx)
 	if err != nil {
@@ -44,21 +43,18 @@ func (p *PluginsAPI) List(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	globalval, plugins, err := gemsplugin.ListPlugins(ctx, cli)
+	installed, err := (&gemsplugin.PluginManager{Client: cli}).ListInstalled(ctx, false)
 	if err != nil {
 		response.Error(resp, err)
 		return
 	}
-	_ = globalval
-
-	for _, plugin := range plugins {
+	ret := []PluginsStatus{}
+	for name, val := range installed {
 		ret = append(ret, PluginsStatus{
-			Name:    plugin.Name,
-			Enabled: plugin.Enabled,
+			Name:    name,
+			Enabled: val.Enabled,
 		})
 	}
-	// TODO: remove it later
-	ret = append(ret, PluginsStatus{Name: "kubegems-models", Enabled: true})
 	response.OK(resp, ret)
 }
 

@@ -51,6 +51,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `global.imageRegistry`    | Global Docker image registry                    | `""`  |
 | `global.imagePullSecrets` | Global Docker registry secret names as an array | `[]`  |
 | `global.storageClass`     | Global StorageClass for Persistent Volume(s)    | `""`  |
+| `global.kubegemsVersion`  | Global kubegems version                         | `""`  |
 
 
 ### Common parameters
@@ -111,7 +112,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `installer.containerSecurityContext.runAsNonRoot` | Set installer containers' Security Context runAsNonRoot                                             | `true`              |
 | `installer.leaderElection.enabled`                | Enable leader election                                                                              | `true`              |
 | `installer.logLevel`                              | Log level                                                                                           | `debug`             |
-| `installer.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for installer                      | `nil`               |
+| `installer.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for installer                      | `""`                |
 | `installer.command`                               | Override default container command (useful when using custom images)                                | `[]`                |
 | `installer.args`                                  | Override default container args (useful when using custom images)                                   | `[]`                |
 | `installer.hostAliases`                           | installer pods host aliases                                                                         | `[]`                |
@@ -131,8 +132,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `installer.schedulerName`                         | Name of the k8s scheduler (other than default) for installer pods                                   | `""`                |
 | `installer.lifecycleHooks`                        | for the installer container(s) to automate configuration before or after startup                    | `{}`                |
 | `installer.extraEnvVars`                          | Array with extra environment variables to add to installer nodes                                    | `[]`                |
-| `installer.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for installer nodes                            | `nil`               |
-| `installer.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for installer nodes                               | `nil`               |
+| `installer.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for installer nodes                            | `{}`                |
+| `installer.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for installer nodes                               | `{}`                |
 | `installer.extraVolumes`                          | Optionally specify extra list of additional volumes for the installer pod(s)                        | `[]`                |
 | `installer.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the installer container(s)             | `[]`                |
 | `installer.sidecars`                              | Add additional sidecar containers to the installer pod(s)                                           | `{}`                |
@@ -166,12 +167,14 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### RBAC Parameters
 
-| Name                    | Description                                                   | Value  |
-| ----------------------- | ------------------------------------------------------------- | ------ |
-| `rbac.create`           | Specifies whether RBAC resources should be created            | `true` |
-| `rbac.useClusterAdmin`  | clusterrolbinding to cluster-admin instead create clusterrole | `true` |
-| `serviceAccount.create` | Specifies whether a ServiceAccount should be created          | `true` |
-| `serviceAccount.name`   | The name of the ServiceAccount to use.                        | `""`   |
+| Name                               | Description                                                   | Value      |
+| ---------------------------------- | ------------------------------------------------------------- | ---------- |
+| `rbac.create`                      | Specifies whether RBAC resources should be created            | `true`     |
+| `rbac.useClusterAdmin`             | clusterrolbinding to cluster-admin instead create clusterrole | `true`     |
+| `rbac.createAggregateClusterRoles` | create clusterrole to binding view, edit, admin clusterrole   | `true`     |
+| `serviceAccount.create`            | Specifies whether a ServiceAccount should be created          | `true`     |
+| `serviceAccount.name`              | The name of the ServiceAccount to use.                        | `""`       |
+| `repositories`                     | Prebuilt repositories                                         | `kubegems` |
 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,

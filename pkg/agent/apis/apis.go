@@ -27,8 +27,8 @@ import (
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/middleware"
 	"kubegems.io/kubegems/pkg/apis/gems"
-	"kubegems.io/kubegems/pkg/apis/plugins"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/route"
 	"kubegems.io/kubegems/pkg/utils/system"
@@ -225,10 +225,12 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	secretHandler := SecretHandler{C: cluster.GetClient(), cluster: cluster}
 	routes.register("core", "v1", "secrets", ActionList, secretHandler.List)
 
-	pluginHandler := PluginHandler{cluster: cluster}
-	routes.register(plugins.GroupName, "v1beta1", "installers", ActionList, pluginHandler.List)
-	routes.register(plugins.GroupName, "v1beta1", "installers", ActionEnable, pluginHandler.Enable)
-	routes.register(plugins.GroupName, "v1beta1", "installers", ActionDisable, pluginHandler.Disable)
+	pluginHandler := PluginHandler{PM: &gemsplugin.PluginManager{Client: cluster.GetClient()}}
+	routes.r.GET("/v1/plugins", pluginHandler.List)
+	routes.r.GET("/v1/plugins/{name}", pluginHandler.Get)
+	routes.r.POST("/v1/plugins/{name}", pluginHandler.Enable)
+	routes.r.DELETE("/v1/plugins/{name}", pluginHandler.Disable)
+	routes.r.POST("/v1/plugins:check-update", pluginHandler.CheckUpdate)
 
 	argoRolloutHandler := &ArgoRolloutHandler{cluster: cluster}
 	routes.register("argoproj.io", "v1alpha1", "rollouts", "info", argoRolloutHandler.GetRolloutInfo)

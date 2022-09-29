@@ -700,7 +700,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "审批通过",
+                "description": "批准集群资源配额申请",
                 "consumes": [
                     "application/json"
                 ],
@@ -710,7 +710,7 @@ const docTemplate = `{
                 "tags": [
                     "Approve"
                 ],
-                "summary": "审批通过",
+                "summary": "批准集群资源配额申请",
                 "parameters": [
                     {
                         "type": "integer",
@@ -758,7 +758,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "审批拒绝",
+                "description": "拒绝集群资源配额申请审批拒绝",
                 "consumes": [
                     "application/json"
                 ],
@@ -768,7 +768,7 @@ const docTemplate = `{
                 "tags": [
                     "Approve"
                 ],
-                "summary": "审批拒绝",
+                "summary": "拒绝集群资源配额申请审批拒绝",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1002,7 +1002,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "获取外部chart仓库",
+                "description": "列出所有的外部应用的charts仓库",
                 "consumes": [
                     "application/json"
                 ],
@@ -1012,7 +1012,7 @@ const docTemplate = `{
                 "tags": [
                     "Appstore"
                 ],
-                "summary": "APP 获取外部chart仓库",
+                "summary": "列出所有的外部应用的charts仓库",
                 "responses": {
                     "200": {
                         "description": "repos",
@@ -1055,7 +1055,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "创建外部chart仓库",
+                "description": "创建应用商店外部charts仓库",
                 "consumes": [
                     "application/json"
                 ],
@@ -1065,7 +1065,7 @@ const docTemplate = `{
                 "tags": [
                     "Appstore"
                 ],
-                "summary": "APP 创建外部chart仓库",
+                "summary": "创建应用商店外部charts仓库",
                 "responses": {
                     "200": {
                         "description": "repo",
@@ -2246,56 +2246,6 @@ const docTemplate = `{
                                                     }
                                                 }
                                             ]
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/cluster/{cluster_id}/plugins": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "获取Plugin列表数据",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Agent.Plugin"
-                ],
-                "summary": "获取Plugin列表数据",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "cluster_id",
-                        "name": "cluster_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Plugins",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "object",
-                                            "additionalProperties": true
                                         }
                                     }
                                 }
@@ -12308,188 +12258,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "获取Plugin列表数据",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Agent.Plugin"
-                ],
-                "summary": "获取Plugin列表数据",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "simple",
-                        "name": "simple",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Plugins",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "$ref": "#/definitions/apis.MainCategory"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable": {
-            "put": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "禁用插件",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Agent.Plugin"
-                ],
-                "summary": "禁用插件",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "type",
-                        "name": "type",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Plugins",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable": {
-            "put": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "启用插件",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Agent.Plugin"
-                ],
-                "summary": "启用插件",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "type",
-                        "name": "type",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Plugins",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/proxy/cluster/{cluster}/custom/prometheus/v1/alertrule": {
             "get": {
                 "security": [
@@ -13060,6 +12828,298 @@ const docTemplate = `{
                         "description": "ws",
                         "schema": {
                             "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/plugins": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "获取Plugin列表数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.Plugin"
+                ],
+                "summary": "获取Plugin列表数据",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "simple",
+                        "name": "simple",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plugins",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/definitions/api.PluginStatus"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "禁用插件",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.Plugin"
+                ],
+                "summary": "禁用插件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plugins",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/plugins/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "插件详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.Plugin"
+                ],
+                "summary": "插件详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "version",
+                        "name": "version",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plugins",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/gemsplugin.PluginVersion"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "启用插件",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.Plugin"
+                ],
+                "summary": "启用插件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "pluginVersion",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/gemsplugin.PluginVersion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/plugins:check-update": {
+            "post": {
+                "description": "检查更新",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.Plugin"
+                ],
+                "summary": "检查更新",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/api.PluginStatus"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -24343,12 +24403,46 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "apis.CategoriedPlugins": {
+        "api.PluginStatus": {
             "type": "object",
-            "additionalProperties": {
-                "type": "array",
-                "items": {
-                    "$ref": "#/definitions/apis.PluginStatus"
+            "properties": {
+                "availableVersions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "healthy": {
+                    "type": "boolean"
+                },
+                "installedVersion": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "upgradeableVersion": {
+                    "type": "string"
+                },
+                "values": {
+                    "description": "current installed version values",
+                    "type": "object",
+                    "additionalProperties": {}
                 }
             }
         },
@@ -24369,44 +24463,6 @@ const docTemplate = `{
                     "additionalProperties": {
                         "$ref": "#/definitions/resource.Quantity"
                     }
-                }
-            }
-        },
-        "apis.MainCategory": {
-            "type": "object",
-            "additionalProperties": {
-                "$ref": "#/definitions/apis.CategoriedPlugins"
-            }
-        },
-        "apis.PluginStatus": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "enabled": {
-                    "type": "boolean"
-                },
-                "healthy": {
-                    "type": "boolean"
-                },
-                "icon": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "required": {
-                    "type": "boolean"
-                },
-                "version": {
-                    "type": "string"
                 }
             }
         },
@@ -25500,6 +25556,9 @@ const docTemplate = `{
                     "description": "判断是否存在installer，若存在即可加为控制集群",
                     "type": "boolean"
                 },
+                "globalValues": {
+                    "$ref": "#/definitions/gemsplugin.GlobalValues"
+                },
                 "message": {
                     "type": "string"
                 },
@@ -25588,6 +25647,92 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "warning": {
+                    "type": "string"
+                }
+            }
+        },
+        "gemsplugin.GlobalValues": {
+            "type": "object",
+            "properties": {
+                "clusterName": {
+                    "type": "string"
+                },
+                "imageRegistry": {
+                    "type": "string"
+                },
+                "imageRepository": {
+                    "type": "string"
+                },
+                "kubegemsVersion": {
+                    "type": "string"
+                },
+                "runtime": {
+                    "type": "string"
+                },
+                "storageClass": {
+                    "type": "string"
+                }
+            }
+        },
+        "gemsplugin.PluginVersion": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "healthy": {
+                    "type": "boolean"
+                },
+                "helathCheck": {
+                    "type": "string"
+                },
+                "installNamespace": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "mainCategory": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "repository": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "requirements": {
+                    "description": "dependecies requirements",
+                    "type": "string"
+                },
+                "schema": {
+                    "type": "string"
+                },
+                "values": {
+                    "$ref": "#/definitions/v1beta1.Values"
+                },
+                "valuesFrom": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1beta1.ValuesFrom"
+                    }
+                },
+                "version": {
                     "type": "string"
                 }
             }
@@ -38179,6 +38324,34 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/v1.ServicePort"
                     }
+                }
+            }
+        },
+        "v1beta1.Values": {
+            "type": "object"
+        },
+        "v1beta1.ValuesFrom": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "description": "Kind is the type of resource being referenced\n+kubebuilder:validation:Enum=ConfigMap;Secret",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name is the name of resource being referenced",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "+kubebuilder:validation:Optional",
+                    "type": "string"
+                },
+                "optional": {
+                    "description": "Optional set to true to ignore references not found error",
+                    "type": "boolean"
+                },
+                "prefix": {
+                    "description": "An optional identifier to prepend to each key in the ConfigMap. Must be a C_IDENTIFIER.\n+kubebuilder:validation:Optional",
+                    "type": "string"
                 }
             }
         },

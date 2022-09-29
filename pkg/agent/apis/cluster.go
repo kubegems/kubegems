@@ -39,14 +39,14 @@ var groups = set.NewSet[string]().Append(
 	"metrics.k8s.io/v1beta1",
 )
 
-// @Tags         Agent.V1
-// @Summary      获取k8s api-resources
-// @Description  获取k8s api-resources
-// @Accept       json
-// @Produce      json
-// @Param        cluster  path      string                                  true  "cluster"
-// @Success      200      {object}  handlers.ResponseStruct{Data=[]object}  "resp"
-// @Router       /v1/proxy/cluster/{cluster}/api-resources [get]
+// @Tags        Agent.V1
+// @Summary     获取k8s api-resources
+// @Description 获取k8s api-resources
+// @Accept      json
+// @Produce     json
+// @Param       cluster path     string                                 true "cluster"
+// @Success     200     {object} handlers.ResponseStruct{Data=[]object} "resp"
+// @Router      /v1/proxy/cluster/{cluster}/api-resources [get]
 func (h *ClusterHandler) APIResources(c *gin.Context) {
 	resources, err := h.cluster.Discovery().ServerPreferredResources()
 	if err != nil {

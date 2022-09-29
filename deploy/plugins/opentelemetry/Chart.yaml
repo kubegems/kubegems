@@ -1,9 +1,0 @@
-apiVersion: v2
-name: opentelemetry
-version: 1.0.0
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-appVersion: 0.28.0
-description: OpenTelemetry是一个API和SDK的集合工具, 您可用它来检测、生成、收集和输出遥测数据（指标、日志和跟踪），以帮助分析软件的性能和行为

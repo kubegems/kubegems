@@ -38,7 +38,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/gems"
-	"kubegems.io/kubegems/pkg/apis/plugins"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/loki"
@@ -59,34 +58,6 @@ var (
 
 type ExtendClient struct {
 	*TypedClient
-}
-
-// plugins.kubegems.io/v1alpha1
-// Depracated: use 'gemsplugin.ListPlugins' instead
-func (c *ExtendClient) ListPlugins(ctx context.Context) (map[string]interface{}, error) {
-	ret := make(map[string]interface{})
-	err := c.DoRequest(ctx, Request{
-		Method: http.MethodGet,
-		Path:   "/custom/" + plugins.GroupName + "/v1beta1/installers",
-		Into:   WrappedResponse(&ret),
-	})
-	return ret, err
-}
-
-// Depracated: use 'gemsplugin.EnablePlugin' instead
-func (c *ExtendClient) EnablePlugin(ctx context.Context, ptype, name string) error {
-	return c.DoRequest(ctx, Request{
-		Method: http.MethodPut,
-		Path:   fmt.Sprintf("/custom/%s/v1beta1/installers/%s/actions/enable?type=%s", plugins.GroupName, name, ptype),
-	})
-}
-
-// Depracated: use 'gemsplugin.EnablePlugin' instead
-func (c *ExtendClient) DisablePlugin(ctx context.Context, ptype, name string) error {
-	return c.DoRequest(ctx, Request{
-		Method: http.MethodPut,
-		Path:   fmt.Sprintf("/custom/%s/v1beta1/installers/%s/actions/disable?type=%s", plugins.GroupName, name, ptype),
-	})
 }
 
 // statistics.system/v1

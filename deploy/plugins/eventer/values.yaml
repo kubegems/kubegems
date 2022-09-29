@@ -1,6 +1,0 @@
-global:
-  imageRegistry: ""
-logging:
-  enabled: false
-healthCheck:
-  - deployments.apps/*

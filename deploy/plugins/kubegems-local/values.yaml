@@ -198,7 +198,7 @@ agent:
 
   ## @param agent.existingConfigmap The name of an existing ConfigMap with your custom configuration for agent
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param agent.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -282,10 +282,10 @@ agent:
   extraEnvVars: []
   ## @param agent.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for agent nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param agent.extraEnvVarsSecret Name of existing Secret containing extra env vars for agent nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param agent.extraVolumes Optionally specify extra list of additional volumes for the agent pod(s)
   ##
   extraVolumes: []
@@ -349,20 +349,20 @@ agent:
     ports:
       http: 8041
     ## Node ports to expose
-    ## @param agent.service.nodePorts.http Node port for HTTP
+    ## @param agent.service.nodePorts.http [number,nullable] Node port for HTTP
     ## NOTE: choose port between <30000-32767>
     ##
     nodePorts:
-      http:
+      http: 0
     ## @param agent.service.clusterIP agent service Cluster IP
     ## e.g.:
     ## clusterIP: None
     ##
-    clusterIP:
+    clusterIP: ""
     ## @param agent.service.loadBalancerIP agent service Load Balancer IP
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
     ##
-    loadBalancerIP:
+    loadBalancerIP: ""
     ## @param agent.service.loadBalancerSourceRanges agent service Load Balancer sources
     ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
     ## e.g:
@@ -539,7 +539,7 @@ kubectl:
 
   ## @param kubectl.existingConfigmap The name of an existing ConfigMap with your custom configuration for kubectl
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param kubectl.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -747,7 +747,7 @@ controller:
 
   ## @param controller.existingConfigmap The name of an existing ConfigMap with your custom configuration for controller
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param controller.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -831,10 +831,10 @@ controller:
   extraEnvVars: []
   ## @param controller.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for controller nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param controller.extraEnvVarsSecret Name of existing Secret containing extra env vars for controller nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param controller.extraVolumes Optionally specify extra list of additional volumes for the controller pod(s)
   ##
   extraVolumes: []
@@ -905,20 +905,20 @@ controller:
       ports:
         http: 443
       ## Node ports to expose
-      ## @param controller.webhook.service.nodePorts.http Node port for HTTP
+      ## @param controller.webhook.service.nodePorts.http [number] Node port for HTTP
       ## NOTE: choose port between <30000-32767>
       ##
       nodePorts:
-        http:
+        http: 0
       ## @param controller.webhook.service.clusterIP agent service Cluster IP
       ## e.g.:
       ## clusterIP: None
       ##
-      clusterIP:
+      clusterIP: ""
       ## @param controller.webhook.service.loadBalancerIP agent service Load Balancer IP
       ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
       ##
-      loadBalancerIP:
+      loadBalancerIP: ""
       ## @param controller.webhook.service.loadBalancerSourceRanges agent service Load Balancer sources
       ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
       ## e.g:
@@ -1037,7 +1037,7 @@ ingress:
   pathType: ImplementationSpecific
   ## @param ingress.apiVersion Force Ingress API version (automatically detected if not set)
   ##
-  apiVersion:
+  apiVersion: ""
   ## @param ingress.hostname Default host for the ingress record
   ##
   hostname: kubegems-local.local

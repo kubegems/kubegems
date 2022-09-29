@@ -110,7 +110,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `dashboard.containerSecurityContext.enabled`      | Enabled dashboard containers' Security Context                                                      | `false`              |
 | `dashboard.containerSecurityContext.runAsUser`    | Set dashboard containers' Security Context runAsUser                                                | `1001`               |
 | `dashboard.containerSecurityContext.runAsNonRoot` | Set dashboard containers' Security Context runAsNonRoot                                             | `true`               |
-| `dashboard.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for dashboard                      | `nil`                |
+| `dashboard.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for dashboard                      | `""`                 |
 | `dashboard.command`                               | Override default container command (useful when using custom images)                                | `[]`                 |
 | `dashboard.args`                                  | Override default container args (useful when using custom images)                                   | `[]`                 |
 | `dashboard.hostAliases`                           | dashboard pods host aliases                                                                         | `[]`                 |
@@ -129,8 +129,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `dashboard.schedulerName`                         | Name of the k8s scheduler (other than default) for dashboard pods                                   | `""`                 |
 | `dashboard.lifecycleHooks`                        | for the dashboard container(s) to automate configuration before or after startup                    | `{}`                 |
 | `dashboard.extraEnvVars`                          | Array with extra environment variables to add to dashboard nodes                                    | `[]`                 |
-| `dashboard.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for dashboard nodes                            | `nil`                |
-| `dashboard.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for dashboard nodes                               | `nil`                |
+| `dashboard.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for dashboard nodes                            | `{}`                 |
+| `dashboard.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for dashboard nodes                               | `{}`                 |
 | `dashboard.extraVolumes`                          | Optionally specify extra list of additional volumes for the dashboard pod(s)                        | `[]`                 |
 | `dashboard.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the dashboard container(s)             | `[]`                 |
 | `dashboard.sidecars`                              | Add additional sidecar containers to the dashboard pod(s)                                           | `{}`                 |
@@ -143,9 +143,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | -------------------------------------------- | ------------------------------------------------------------------------------------ | ----------- |
 | `dashboard.service.type`                     | dashboard service type                                                               | `ClusterIP` |
 | `dashboard.service.ports.http`               | dashboard service HTTP port                                                          | `80`        |
-| `dashboard.service.nodePorts.http`           | Node port for HTTP                                                                   | `nil`       |
-| `dashboard.service.clusterIP`                | dashboard service Cluster IP                                                         | `nil`       |
-| `dashboard.service.loadBalancerIP`           | dashboard service Load Balancer IP                                                   | `nil`       |
+| `dashboard.service.nodePorts.http`           | Node port for HTTP                                                                   | `""`        |
+| `dashboard.service.clusterIP`                | dashboard service Cluster IP                                                         | `""`        |
+| `dashboard.service.loadBalancerIP`           | dashboard service Load Balancer IP                                                   | `""`        |
 | `dashboard.service.loadBalancerSourceRanges` | dashboard service Load Balancer sources                                              | `[]`        |
 | `dashboard.service.externalTrafficPolicy`    | dashboard service external traffic policy                                            | `Cluster`   |
 | `dashboard.service.annotations`              | Additional custom annotations for dashboard service                                  | `{}`        |
@@ -198,7 +198,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `init.image.pullSecrets`                     | API image pull secrets                                                                         | `[]`                       |
 | `init.image.debug`                           | Enable API image debug mode                                                                    | `false`                    |
 | `init.replicaCount`                          | Number of API replicas to deploy                                                               | `1`                        |
-| `init.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for API                       | `nil`                      |
+| `init.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for API                       | `""`                       |
 | `init.restartPolicy`                         | The restart policy for job,valid values: "OnFailure", "Never"                                  | `OnFailure`                |
 | `init.command`                               | Override default container command (useful when using custom images)                           | `[]`                       |
 | `init.args`                                  | Override default container args (useful when using custom images)                              | `[]`                       |
@@ -218,8 +218,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `init.schedulerName`                         | Name of the k8s scheduler (other than default) for API pods                                    | `""`                       |
 | `init.lifecycleHooks`                        | for the API container(s) to automate configuration before or after startup                     | `{}`                       |
 | `init.extraEnvVars`                          | Array with extra environment variables to add to API nodes                                     | `[]`                       |
-| `init.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for API nodes                             | `nil`                      |
-| `init.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for API nodes                                | `nil`                      |
+| `init.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for API nodes                             | `{}`                       |
+| `init.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for API nodes                                | `{}`                       |
 | `init.resources.limits`                      | The resources limits for the API containers                                                    | `{}`                       |
 | `init.resources.requests`                    | The requested resources for the API containers                                                 | `{}`                       |
 | `init.podSecurityContext.enabled`            | Enabled API pods' Security Context                                                             | `false`                    |
@@ -272,7 +272,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `api.jwt.enabled`                           | Enable jwt authentication                                                                     | `true`              |
 | `api.jwt.useCertManager`                    | using cert-manager for jwt secret generation                                                  | `false`             |
 | `api.jwt.secretName`                        | secret name alternative                                                                       | `""`                |
-| `api.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for API                      | `nil`               |
+| `api.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for API                      | `""`                |
 | `api.command`                               | Override default container command (useful when using custom images)                          | `[]`                |
 | `api.args`                                  | Override default container args (useful when using custom images)                             | `[]`                |
 | `api.hostAliases`                           | API pods host aliases                                                                         | `[]`                |
@@ -291,8 +291,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `api.schedulerName`                         | Name of the k8s scheduler (other than default) for API pods                                   | `""`                |
 | `api.lifecycleHooks`                        | for the API container(s) to automate configuration before or after startup                    | `{}`                |
 | `api.extraEnvVars`                          | Array with extra environment variables to add to API nodes                                    | `[]`                |
-| `api.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for API nodes                            | `nil`               |
-| `api.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for API nodes                               | `nil`               |
+| `api.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for API nodes                            | `{}`                |
+| `api.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for API nodes                               | `{}`                |
 | `api.extraVolumes`                          | Optionally specify extra list of additional volumes for the API pod(s)                        | `[]`                |
 | `api.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the API container(s)             | `[]`                |
 | `api.sidecars`                              | Add additional sidecar containers to the API pod(s)                                           | `{}`                |
@@ -305,9 +305,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | -------------------------------------- | ------------------------------------------------------------------------------ | ----------- |
 | `api.service.type`                     | API service type                                                               | `ClusterIP` |
 | `api.service.ports.http`               | API service HTTP port                                                          | `80`        |
-| `api.service.nodePorts.http`           | Node port for HTTP                                                             | `nil`       |
-| `api.service.clusterIP`                | API service Cluster IP                                                         | `nil`       |
-| `api.service.loadBalancerIP`           | API service Load Balancer IP                                                   | `nil`       |
+| `api.service.nodePorts.http`           | Node port for HTTP                                                             | `0`         |
+| `api.service.clusterIP`                | API service Cluster IP                                                         | `""`        |
+| `api.service.loadBalancerIP`           | API service Load Balancer IP                                                   | `""`        |
 | `api.service.loadBalancerSourceRanges` | API service Load Balancer sources                                              | `[]`        |
 | `api.service.externalTrafficPolicy`    | API service external traffic policy                                            | `Cluster`   |
 | `api.service.annotations`              | Additional custom annotations for API service                                  | `{}`        |
@@ -379,7 +379,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `msgbus.containerSecurityContext.enabled`      | Enabled msgbus containers' Security Context                                                      | `false`             |
 | `msgbus.containerSecurityContext.runAsUser`    | Set msgbus containers' Security Context runAsUser                                                | `1001`              |
 | `msgbus.containerSecurityContext.runAsNonRoot` | Set msgbus containers' Security Context runAsNonRoot                                             | `true`              |
-| `msgbus.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for msgbus                      | `nil`               |
+| `msgbus.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for msgbus                      | `""`                |
 | `msgbus.command`                               | Override default container command (useful when using custom images)                             | `[]`                |
 | `msgbus.args`                                  | Override default container args (useful when using custom images)                                | `[]`                |
 | `msgbus.hostAliases`                           | msgbus pods host aliases                                                                         | `[]`                |
@@ -398,8 +398,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `msgbus.schedulerName`                         | Name of the k8s scheduler (other than default) for msgbus pods                                   | `""`                |
 | `msgbus.lifecycleHooks`                        | for the msgbus container(s) to automate configuration before or after startup                    | `{}`                |
 | `msgbus.extraEnvVars`                          | Array with extra environment variables to add to msgbus nodes                                    | `[]`                |
-| `msgbus.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for msgbus nodes                            | `nil`               |
-| `msgbus.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for msgbus nodes                               | `nil`               |
+| `msgbus.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for msgbus nodes                            | `{}`                |
+| `msgbus.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for msgbus nodes                               | `{}`                |
 | `msgbus.extraVolumes`                          | Optionally specify extra list of additional volumes for the msgbus pod(s)                        | `[]`                |
 | `msgbus.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the msgbus container(s)             | `[]`                |
 | `msgbus.sidecars`                              | Add additional sidecar containers to the msgbus pod(s)                                           | `{}`                |
@@ -412,9 +412,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | ----------------------------------------- | --------------------------------------------------------------------------------- | ----------- |
 | `msgbus.service.type`                     | msgbus service type                                                               | `ClusterIP` |
 | `msgbus.service.ports.http`               | msgbus service HTTP port                                                          | `80`        |
-| `msgbus.service.nodePorts.http`           | Node port for HTTP                                                                | `nil`       |
-| `msgbus.service.clusterIP`                | msgbus service Cluster IP                                                         | `nil`       |
-| `msgbus.service.loadBalancerIP`           | msgbus service Load Balancer IP                                                   | `nil`       |
+| `msgbus.service.nodePorts.http`           | Node port for HTTP                                                                | `""`        |
+| `msgbus.service.clusterIP`                | msgbus service Cluster IP                                                         | `""`        |
+| `msgbus.service.loadBalancerIP`           | msgbus service Load Balancer IP                                                   | `""`        |
 | `msgbus.service.loadBalancerSourceRanges` | msgbus service Load Balancer sources                                              | `[]`        |
 | `msgbus.service.externalTrafficPolicy`    | msgbus service external traffic policy                                            | `Cluster`   |
 | `msgbus.service.annotations`              | Additional custom annotations for msgbus service                                  | `{}`        |
@@ -486,7 +486,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `worker.containerSecurityContext.enabled`      | Enabled worker containers' Security Context                                                      | `false`             |
 | `worker.containerSecurityContext.runAsUser`    | Set worker containers' Security Context runAsUser                                                | `1001`              |
 | `worker.containerSecurityContext.runAsNonRoot` | Set worker containers' Security Context runAsNonRoot                                             | `true`              |
-| `worker.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for worker                      | `nil`               |
+| `worker.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for worker                      | `""`                |
 | `worker.command`                               | Override default container command (useful when using custom images)                             | `[]`                |
 | `worker.args`                                  | Override default container args (useful when using custom images)                                | `[]`                |
 | `worker.hostAliases`                           | worker pods host aliases                                                                         | `[]`                |
@@ -505,8 +505,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `worker.schedulerName`                         | Name of the k8s scheduler (other than default) for worker pods                                   | `""`                |
 | `worker.lifecycleHooks`                        | for the worker container(s) to automate configuration before or after startup                    | `{}`                |
 | `worker.extraEnvVars`                          | Array with extra environment variables to add to worker nodes                                    | `[]`                |
-| `worker.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for worker nodes                            | `nil`               |
-| `worker.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for worker nodes                               | `nil`               |
+| `worker.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for worker nodes                            | `{}`                |
+| `worker.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for worker nodes                               | `{}`                |
 | `worker.extraVolumes`                          | Optionally specify extra list of additional volumes for the worker pod(s)                        | `[]`                |
 | `worker.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the worker container(s)             | `[]`                |
 | `worker.sidecars`                              | Add additional sidecar containers to the worker pod(s)                                           | `{}`                |
@@ -519,9 +519,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | ----------------------------------------- | --------------------------------------------------------------------------------- | ----------- |
 | `worker.service.type`                     | worker service type                                                               | `ClusterIP` |
 | `worker.service.ports.http`               | worker service HTTP port                                                          | `80`        |
-| `worker.service.nodePorts.http`           | Node port for HTTP                                                                | `nil`       |
-| `worker.service.clusterIP`                | worker service Cluster IP                                                         | `nil`       |
-| `worker.service.loadBalancerIP`           | worker service Load Balancer IP                                                   | `nil`       |
+| `worker.service.nodePorts.http`           | Node port for HTTP                                                                | `""`        |
+| `worker.service.clusterIP`                | worker service Cluster IP                                                         | `""`        |
+| `worker.service.loadBalancerIP`           | worker service Load Balancer IP                                                   | `""`        |
 | `worker.service.loadBalancerSourceRanges` | worker service Load Balancer sources                                              | `[]`        |
 | `worker.service.externalTrafficPolicy`    | worker service external traffic policy                                            | `Cluster`   |
 | `worker.service.annotations`              | Additional custom annotations for worker service                                  | `{}`        |
@@ -553,7 +553,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `worker.metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                                                                       | `[]`                     |
 | `ingress.enabled`                                 | Enable ingress record generation for API                                                                                         | `true`                   |
 | `ingress.pathType`                                | Ingress path type                                                                                                                | `ImplementationSpecific` |
-| `ingress.apiVersion`                              | Force Ingress API version (automatically detected if not set)                                                                    | `nil`                    |
+| `ingress.apiVersion`                              | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
 | `ingress.hostname`                                | Default host for the ingress record                                                                                              | `dashboard.kubegems.io`  |
 | `ingress.ingressClassName`                        | Ingress class name                                                                                                               | `default-gateway`        |
 | `ingress.path`                                    | Default path for the ingress record                                                                                              | `/`                      |
@@ -596,14 +596,15 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Database configuration
 
-| Name                      | Description                           | Value        |
-| ------------------------- | ------------------------------------- | ------------ |
-| `mysql.enabled`           | Enable MySQL                          | `true`       |
-| `mysql.architecture`      | architecture.                         | `standalone` |
-| `mysql.auth.rootPassword` | The password for the MySQL root user. | `""`         |
-| `mysql.auth.username`     | The nonroot username of the MySQL.    | `""`         |
-| `mysql.auth.password`     | The nonroot password of the MySQL.    | `""`         |
-| `mysql.auth.database`     | Create database of the MySQL.         | `""`         |
+| Name                      | Description                           | Value            |
+| ------------------------- | ------------------------------------- | ---------------- |
+| `mysql.enabled`           | Enable MySQL                          | `true`           |
+| `mysql.architecture`      | architecture.                         | `standalone`     |
+| `mysql.auth.rootPassword` | The password for the MySQL root user. | `""`             |
+| `mysql.auth.username`     | The nonroot username of the MySQL.    | `""`             |
+| `mysql.auth.password`     | The nonroot password of the MySQL.    | `""`             |
+| `mysql.auth.database`     | Create database of the MySQL.         | `""`             |
+| `mysql.image.repository`  | mysql repository override             | `kubegems/mysql` |
 
 
 ### External Database configuration
@@ -622,12 +623,14 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### RedisCache configuration
 
-| Name                              | Description                                                                                     | Value        |
-| --------------------------------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| `redis.enabled`                   | Enable redis                                                                                    | `true`       |
-| `redis.architecture`              | architecture.                                                                                   | `standalone` |
-| `redis.auth.password`             | The password for the redis,keep emty to use default.                                            | `""`         |
-| `redis.volumePermissions.enabled` | Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup` | `true`       |
+| Name                                       | Description                                                                                     | Value                    |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------ |
+| `redis.enabled`                            | Enable redis                                                                                    | `true`                   |
+| `redis.architecture`                       | architecture.                                                                                   | `standalone`             |
+| `redis.auth.password`                      | The password for the redis,keep emty to use default.                                            | `""`                     |
+| `redis.volumePermissions.enabled`          | Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup` | `true`                   |
+| `redis.volumePermissions.image.repository` | Repository override                                                                             | `kubegems/bitnami-shell` |
+| `redis.image.repository`                   | redis repository override                                                                       | `kubegems/redis`         |
 
 
 ### External RedisCache configuration
@@ -650,11 +653,12 @@ The command removes all the Kubernetes components associated with the chart and 
 | `argo-cd.config.secret.argocdServerAdminPassword` | The password for the ArgoCD server admin user,keep empty to auto-generate. | `""`                      |
 | `argo-cd.controller.extraArgs`                    | Extra ArgoCD controller args                                               | `["--redisdb","1"]`       |
 | `argo-cd.server.extraArgs`                        | Extra ArgoCD server args                                                   | `["--redisdb","1"]`       |
-| `argo-cd.server.config.users.session.duration`    | user session duration                                                      | `undefined`               |
 | `argo-cd.repoServer.extraArgs`                    | Extra ArgoCD repo server args                                              | `["--redisdb","1"]`       |
 | `argo-cd.redis.enabled`                           | Disable Argo CD redis to use kubegems redis                                | `false`                   |
 | `argo-cd.externalRedis.host`                      | Kubegems Redis host                                                        | `kubegems-redis-headless` |
 | `argo-cd.externalRedis.existingSecret`            | Kubegems Redis secret                                                      | `kubegems-redis`          |
+| `argo-cd.image.repository`                        | argo-cd repository override                                                | `kubegems/argo-cd`        |
+| `argo-cd.redis.image.repository`                  | argocd redis image                                                         | `kubegems/redis`          |
 
 
 ### External ArgoCD configuration
@@ -671,12 +675,13 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Gitea configuration
 
-| Name                                  | Description                                                       | Value     |
-| ------------------------------------- | ----------------------------------------------------------------- | --------- |
-| `gitea.enabled`                       | Enable Gitea                                                      | `true`    |
-| `gitea.memcached.enabled`             | Disable Gitea memcached by default                                | `false`   |
-| `gitea.postgresql.enabled`            | Disable Gitea postgresql by default,use built in sqlite3 instead. | `false`   |
-| `gitea.gitea.config.database.DB_TYPE` | Use sqlite3 by default                                            | `sqlite3` |
+| Name                                  | Description                                                       | Value            |
+| ------------------------------------- | ----------------------------------------------------------------- | ---------------- |
+| `gitea.enabled`                       | Enable Gitea                                                      | `true`           |
+| `gitea.memcached.enabled`             | Disable Gitea memcached by default                                | `false`          |
+| `gitea.postgresql.enabled`            | Disable Gitea postgresql by default,use built in sqlite3 instead. | `false`          |
+| `gitea.gitea.config.database.DB_TYPE` | Use sqlite3 by default                                            | `sqlite3`        |
+| `gitea.image.repository`              | gitea repository override                                         | `kubegems/gitea` |
 
 
 ### External Git configuration
@@ -693,10 +698,11 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Chartmuseum configuration
 
-| Name                  | Description                       | Value  |
-| --------------------- | --------------------------------- | ------ |
-| `chartmuseum.enabled` | Enable Chartmuseum                | `true` |
-| `chartmuseum.env`     | Chartmuseum environment variables | `1`    |
+| Name                           | Description                       | Value                  |
+| ------------------------------ | --------------------------------- | ---------------------- |
+| `chartmuseum.enabled`          | Enable Chartmuseum                | `true`                 |
+| `chartmuseum.image.repository` | chartmuseum repository override   | `kubegems/chartmuseum` |
+| `chartmuseum.env`              | Chartmuseum environment variables | `1`                    |
 
 
 ### External Chartmuseum configuration

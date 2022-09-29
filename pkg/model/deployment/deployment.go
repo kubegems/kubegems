@@ -175,9 +175,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// use default on next process,but do not writeback.
-	if err := r.Default(ctx, md); err != nil {
+	todefault := md.DeepCopy()
+	if err := r.Default(ctx, todefault); err != nil {
 		log.Error(err, "failed to default model deployment")
 		return ctrl.Result{}, err
+	}
+	// update
+	if !equality.Semantic.DeepEqual(md, todefault) {
+		return reconcile.Result{}, r.Update(ctx, todefault)
 	}
 
 	if err := r.Sync(ctx, md); err != nil {
@@ -209,5 +214,17 @@ func (r *Reconciler) Sync(ctx context.Context, md *modelsv1beta1.ModelDeployment
 }
 
 func (r *Reconciler) Default(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
+	if md.Spec.Ingress.Host == "" {
+		// use default host from gateway
+		if gatewayName := md.Spec.Ingress.GatewayName; gatewayName != "" {
+			gateway := &gemsv1beta1.TenantGateway{}
+			if err := r.Client.Get(ctx, client.ObjectKey{Name: gatewayName}, gateway); err != nil {
+				return err
+			}
+			md.Spec.Ingress.Host = gateway.Spec.BaseDomain
+		} else {
+			md.Spec.Ingress.Host = r.Options.IngressHost
+		}
+	}
 	return nil
 }

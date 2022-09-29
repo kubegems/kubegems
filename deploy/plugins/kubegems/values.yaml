@@ -182,7 +182,7 @@ dashboard:
 
   ## @param dashboard.existingConfigmap The name of an existing ConfigMap with your custom configuration for dashboard
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param dashboard.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -266,10 +266,10 @@ dashboard:
   extraEnvVars: []
   ## @param dashboard.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for dashboard nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param dashboard.extraEnvVarsSecret Name of existing Secret containing extra env vars for dashboard nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param dashboard.extraVolumes Optionally specify extra list of additional volumes for the dashboard pod(s)
   ##
   extraVolumes: []
@@ -311,20 +311,20 @@ dashboard:
     ports:
       http: 80
     ## Node ports to expose
-    ## @param dashboard.service.nodePorts.http Node port for HTTP
+    ## @param dashboard.service.nodePorts.http [number] Node port for HTTP
     ## NOTE: choose port between <30000-32767>
     ##
     nodePorts:
-      http:
+      http: ""
     ## @param dashboard.service.clusterIP dashboard service Cluster IP
     ## e.g.:
     ## clusterIP: None
     ##
-    clusterIP:
+    clusterIP: ""
     ## @param dashboard.service.loadBalancerIP dashboard service Load Balancer IP
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
     ##
-    loadBalancerIP:
+    loadBalancerIP: ""
     ## @param dashboard.service.loadBalancerSourceRanges dashboard service Load Balancer sources
     ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
     ## e.g:
@@ -504,7 +504,7 @@ init:
   replicaCount: 1
   ## @param init.existingConfigmap The name of an existing ConfigMap with your custom configuration for API
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param init.restartPolicy The restart policy for job,valid values: "OnFailure", "Never"
   ##
   restartPolicy: OnFailure
@@ -591,10 +591,10 @@ init:
   extraEnvVars: []
   ## @param init.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for API nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param init.extraEnvVarsSecret Name of existing Secret containing extra env vars for API nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ## @param init.resources.limits The resources limits for the API containers
@@ -751,7 +751,7 @@ api:
 
   ## @param api.existingConfigmap The name of an existing ConfigMap with your custom configuration for API
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param api.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -835,10 +835,10 @@ api:
   extraEnvVars: []
   ## @param api.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for API nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param api.extraEnvVarsSecret Name of existing Secret containing extra env vars for API nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param api.extraVolumes Optionally specify extra list of additional volumes for the API pod(s)
   ##
   extraVolumes: []
@@ -884,16 +884,16 @@ api:
     ## NOTE: choose port between <30000-32767>
     ##
     nodePorts:
-      http:
+      http: 0
     ## @param api.service.clusterIP API service Cluster IP
     ## e.g.:
     ## clusterIP: None
     ##
-    clusterIP:
+    clusterIP: ""
     ## @param api.service.loadBalancerIP API service Load Balancer IP
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
     ##
-    loadBalancerIP:
+    loadBalancerIP: ""
     ## @param api.service.loadBalancerSourceRanges API service Load Balancer sources
     ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
     ## e.g:
@@ -1119,7 +1119,7 @@ msgbus:
 
   ## @param msgbus.existingConfigmap The name of an existing ConfigMap with your custom configuration for msgbus
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param msgbus.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -1203,10 +1203,10 @@ msgbus:
   extraEnvVars: []
   ## @param msgbus.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for msgbus nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param msgbus.extraEnvVarsSecret Name of existing Secret containing extra env vars for msgbus nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param msgbus.extraVolumes Optionally specify extra list of additional volumes for the msgbus pod(s)
   ##
   extraVolumes: []
@@ -1248,20 +1248,20 @@ msgbus:
     ports:
       http: 80
     ## Node ports to expose
-    ## @param msgbus.service.nodePorts.http Node port for HTTP
+    ## @param msgbus.service.nodePorts.http [number] Node port for HTTP
     ## NOTE: choose port between <30000-32767>
     ##
     nodePorts:
-      http:
+      http: ""
     ## @param msgbus.service.clusterIP msgbus service Cluster IP
     ## e.g.:
     ## clusterIP: None
     ##
-    clusterIP:
+    clusterIP: ""
     ## @param msgbus.service.loadBalancerIP msgbus service Load Balancer IP
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
     ##
-    loadBalancerIP:
+    loadBalancerIP: ""
     ## @param msgbus.service.loadBalancerSourceRanges msgbus service Load Balancer sources
     ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
     ## e.g:
@@ -1489,7 +1489,7 @@ worker:
 
   ## @param worker.existingConfigmap The name of an existing ConfigMap with your custom configuration for worker
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param worker.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -1573,10 +1573,10 @@ worker:
   extraEnvVars: []
   ## @param worker.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for worker nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param worker.extraEnvVarsSecret Name of existing Secret containing extra env vars for worker nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param worker.extraVolumes Optionally specify extra list of additional volumes for the worker pod(s)
   ##
   extraVolumes: []
@@ -1618,20 +1618,20 @@ worker:
     ports:
       http: 80
     ## Node ports to expose
-    ## @param worker.service.nodePorts.http Node port for HTTP
+    ## @param worker.service.nodePorts.http [number] Node port for HTTP
     ## NOTE: choose port between <30000-32767>
     ##
     nodePorts:
-      http:
+      http: ""
     ## @param worker.service.clusterIP worker service Cluster IP
     ## e.g.:
     ## clusterIP: None
     ##
-    clusterIP:
+    clusterIP: ""
     ## @param worker.service.loadBalancerIP worker service Load Balancer IP
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
     ##
-    loadBalancerIP:
+    loadBalancerIP: ""
     ## @param worker.service.loadBalancerSourceRanges worker service Load Balancer sources
     ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
     ## e.g:
@@ -1748,7 +1748,7 @@ ingress:
   pathType: ImplementationSpecific
   ## @param ingress.apiVersion Force Ingress API version (automatically detected if not set)
   ##
-  apiVersion:
+  apiVersion: ""
   ## @param ingress.hostname Default host for the ingress record
   ##
   hostname: dashboard.kubegems.io
@@ -1905,9 +1905,12 @@ persistence:
 ## @param mysql.auth.username  The nonroot username of the MySQL.
 ## @param mysql.auth.password  The nonroot password of the MySQL.
 ## @param mysql.auth.database  Create database of the MySQL.
+## @param mysql.image.repository mysql repository override
 mysql:
   enabled: true
   architecture: standalone
+  image:
+    repository: kubegems/mysql
   auth:
     rootPassword: "" # root password must be set in order upgradeable
     username: ""
@@ -1942,13 +1945,19 @@ externalDatabase:
 ## @param redis.architecture  architecture.
 ## @param redis.auth.password  The password for the redis,keep emty to use default.
 ## @param redis.volumePermissions.enabled  Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup`
+## @param redis.volumePermissions.image.repository  Repository override
+## @param redis.image.repository redis repository override
 redis:
   enabled: true
   architecture: standalone
+  image:
+    repository: kubegems/redis
   auth:
     password: ""
   volumePermissions:
     enabled: true
+    image:
+      repository: kubegems/bitnami-shell
 ## @section External RedisCache configuration
 ##
 ## @param externalRedis.enabled  Enable external redis
@@ -1971,16 +1980,20 @@ externalRedis:
 ## @param argo-cd.config.secret.argocdServerAdminPassword The password for the ArgoCD server admin user,keep empty to auto-generate.
 ## @param argo-cd.controller.extraArgs Extra ArgoCD controller args
 ## @param argo-cd.server.extraArgs Extra ArgoCD server args
-## @param argo-cd.server.config.users.session.duration user session duration
 ## @param argo-cd.repoServer.extraArgs Extra ArgoCD repo server args
 ## @param argo-cd.redis.enabled Disable Argo CD redis to use kubegems redis
 ## @param argo-cd.externalRedis.host Kubegems Redis host
 ## @param argo-cd.externalRedis.existingSecret Kubegems Redis secret
+## @param argo-cd.image.repository argo-cd repository override
 ## @skip argo-cd.controller.extraEnvVars
 ## @skip argo-cd.server.extraEnvVars
 ## @skip argo-cd.repoServer.extraEnvVars
+## @skip argo-cd.server.config
+## @param argo-cd.redis.image.repository argocd redis image
 argo-cd:
   enabled: true
+  image:
+    repository: kubegems/argo-cd
   config:
     secret:
       argocdServerAdminPassword: ""
@@ -2012,6 +2025,8 @@ argo-cd:
             key: '{{ include "argocd.redis.secretPasswordKey" . }}' # rederd by inner "common.tplvalues.render"
   redis:
     enabled: false
+    image:
+      repository: kubegems/redis
   externalRedis:
     host: kubegems-redis-headless
     existingSecret: kubegems-redis
@@ -2038,9 +2053,12 @@ externalArgoCD:
 ## @param gitea.memcached.enabled  Disable Gitea memcached by default
 ## @param gitea.postgresql.enabled  Disable Gitea postgresql by default,use built in sqlite3 instead.
 ## @param gitea.gitea.config.database.DB_TYPE  Use sqlite3 by default
+## @param gitea.image.repository gitea repository override
 ## @skip gitea.gitea.admin
 gitea:
   enabled: true
+  image:
+    repository: kubegems/gitea
   memcached:
     enabled: false
   postgresql:
@@ -2072,10 +2090,13 @@ externalGit:
 
 ## @section Chartmuseum configuration
 ## @param chartmuseum.enabled  Enable Chartmuseum
+## @param chartmuseum.image.repository chartmuseum repository override
 ## @param chartmuseum.env  Chartmuseum environment variables
 ## @skip chartmuseum.env
 chartmuseum:
   enabled: true
+  image:
+    repository: kubegems/chartmuseum
   env:
     open:
       DEPTH: 1

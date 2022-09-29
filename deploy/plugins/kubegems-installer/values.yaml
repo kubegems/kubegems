@@ -6,6 +6,7 @@
 ## @param global.imageRegistry Global Docker image registry
 ## @param global.imagePullSecrets Global Docker registry secret names as an array
 ## @param global.storageClass Global StorageClass for Persistent Volume(s)
+## @param global.kubegemsVersion Global kubegems version
 ##
 global:
   imageRegistry: ""
@@ -15,6 +16,7 @@ global:
   ##
   imagePullSecrets: []
   storageClass: ""
+  kubegemsVersion: ""
 
 ## @section Common parameters
 
@@ -188,7 +190,7 @@ installer:
 
   ## @param installer.existingConfigmap The name of an existing ConfigMap with your custom configuration for installer
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param installer.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -276,10 +278,10 @@ installer:
   extraEnvVars: []
   ## @param installer.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for installer nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param installer.extraEnvVarsSecret Name of existing Secret containing extra env vars for installer nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param installer.extraVolumes Optionally specify extra list of additional volumes for the installer pod(s)
   ##
   extraVolumes: []
@@ -420,3 +422,13 @@ serviceAccount:
   ## If not set and create is true, a name is generated using the common.names.fullname template
   ##
   name: ""
+
+## Repositories configuration
+#
+## @param repositories Prebuilt repositories
+## @skip repositories
+repositories:
+  - name: kubegems
+    address: https://charts.kubegems.io/kubegems
+  - name: local
+    address: file:///app/plugins/charts.kubegems.io

@@ -1,10 +1,33 @@
 basePath: /
 definitions:
-  apis.CategoriedPlugins:
-    additionalProperties:
-      items:
-        $ref: '#/definitions/apis.PluginStatus'
-      type: array
+  api.PluginStatus:
+    properties:
+      availableVersions:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      enabled:
+        type: boolean
+      healthy:
+        type: boolean
+      installedVersion:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      required:
+        type: boolean
+      upgradeableVersion:
+        type: string
+      values:
+        additionalProperties: {}
+        description: current installed version values
+        type: object
     type: object
   apis.CustomNode:
     properties:
@@ -18,31 +41,6 @@ definitions:
         additionalProperties:
           $ref: '#/definitions/resource.Quantity'
         type: object
-    type: object
-  apis.MainCategory:
-    additionalProperties:
-      $ref: '#/definitions/apis.CategoriedPlugins'
-    type: object
-  apis.PluginStatus:
-    properties:
-      description:
-        type: string
-      enabled:
-        type: boolean
-      healthy:
-        type: boolean
-      icon:
-        type: string
-      message:
-        type: string
-      name:
-        type: string
-      namespace:
-        type: string
-      required:
-        type: boolean
-      version:
-        type: string
     type: object
   apis.SecretWithCertsInfo:
     properties:
@@ -881,6 +879,8 @@ definitions:
       existInstaller:
         description: 判断是否存在installer，若存在即可加为控制集群
         type: boolean
+      globalValues:
+        $ref: '#/definitions/gemsplugin.GlobalValues'
       message:
         type: string
       serverInfo:
@@ -942,6 +942,63 @@ definitions:
         description: 是否启用服务网格
         type: boolean
       warning:
+        type: string
+    type: object
+  gemsplugin.GlobalValues:
+    properties:
+      clusterName:
+        type: string
+      imageRegistry:
+        type: string
+      imageRepository:
+        type: string
+      kubegemsVersion:
+        type: string
+      runtime:
+        type: string
+      storageClass:
+        type: string
+    type: object
+  gemsplugin.PluginVersion:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      enabled:
+        type: boolean
+      healthy:
+        type: boolean
+      helathCheck:
+        type: string
+      installNamespace:
+        type: string
+      kind:
+        type: string
+      mainCategory:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      repository:
+        type: string
+      required:
+        type: boolean
+      requirements:
+        description: dependecies requirements
+        type: string
+      schema:
+        type: string
+      values:
+        $ref: '#/definitions/v1beta1.Values'
+      valuesFrom:
+        items:
+          $ref: '#/definitions/v1beta1.ValuesFrom'
+        type: array
+      version:
         type: string
     type: object
   gorm.DeletedAt:
@@ -17150,6 +17207,30 @@ definitions:
           $ref: '#/definitions/v1.ServicePort'
         type: array
     type: object
+  v1beta1.Values:
+    type: object
+  v1beta1.ValuesFrom:
+    properties:
+      kind:
+        description: |-
+          Kind is the type of resource being referenced
+          +kubebuilder:validation:Enum=ConfigMap;Secret
+        type: string
+      name:
+        description: Name is the name of resource being referenced
+        type: string
+      namespace:
+        description: +kubebuilder:validation:Optional
+        type: string
+      optional:
+        description: Optional set to true to ignore references not found error
+        type: boolean
+      prefix:
+        description: |-
+          An optional identifier to prepend to each key in the ConfigMap. Must be a C_IDENTIFIER.
+          +kubebuilder:validation:Optional
+        type: string
+    type: object
   v1beta1.Workload:
     properties:
       extraLabels:
@@ -17752,7 +17833,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 审批通过
+      description: 批准集群资源配额申请
       parameters:
       - description: tenant resource quota id
         in: path
@@ -17779,14 +17860,14 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: 审批通过
+      summary: 批准集群资源配额申请
       tags:
       - Approve
   /v1/approve/{id}/reject:
     post:
       consumes:
       - application/json
-      description: 审批拒绝
+      description: 拒绝集群资源配额申请审批拒绝
       parameters:
       - description: id
         in: path
@@ -17807,7 +17888,7 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: 审批拒绝
+      summary: 拒绝集群资源配额申请审批拒绝
       tags:
       - Approve
   /v1/appstore/app:
@@ -17927,7 +18008,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取外部chart仓库
+      description: 列出所有的外部应用的charts仓库
       produces:
       - application/json
       responses:
@@ -17949,13 +18030,13 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: APP 获取外部chart仓库
+      summary: 列出所有的外部应用的charts仓库
       tags:
       - Appstore
     post:
       consumes:
       - application/json
-      description: 创建外部chart仓库
+      description: 创建应用商店外部charts仓库
       produces:
       - application/json
       responses:
@@ -17972,7 +18053,7 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: APP 创建外部chart仓库
+      summary: 创建应用商店外部charts仓库
       tags:
       - Appstore
   /v1/appstore/repo/{name}:
@@ -18619,35 +18700,6 @@ paths:
       summary: 获取属于 Cluster 的 LogQuerySnapshot 列表
       tags:
       - Cluster
-  /v1/cluster/{cluster_id}/plugins:
-    get:
-      consumes:
-      - application/json
-      description: 获取Plugin列表数据
-      parameters:
-      - description: cluster_id
-        in: path
-        name: cluster_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Plugins
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  additionalProperties: true
-                  type: object
-              type: object
-      security:
-      - JWT: []
-      summary: 获取Plugin列表数据
-      tags:
-      - Agent.Plugin
   /v1/cluster/{cluster_id}/quota:
     get:
       consumes:
@@ -25433,115 +25485,6 @@ paths:
       summary: Loki LabelValues
       tags:
       - Agent.V1
-  /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers:
-    get:
-      consumes:
-      - application/json
-      description: 获取Plugin列表数据
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: simple
-        in: query
-        name: simple
-        required: true
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Plugins
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  $ref: '#/definitions/apis.MainCategory'
-              type: object
-      security:
-      - JWT: []
-      summary: 获取Plugin列表数据
-      tags:
-      - Agent.Plugin
-  /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/disable:
-    put:
-      consumes:
-      - application/json
-      description: 禁用插件
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: type
-        in: query
-        name: type
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Plugins
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 禁用插件
-      tags:
-      - Agent.Plugin
-  /v1/proxy/cluster/{cluster}/custom/plugins.kubegems.io/v1beta1/installers/{name}/actions/enable:
-    put:
-      consumes:
-      - application/json
-      description: 启用插件
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: type
-        in: query
-        name: type
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Plugins
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 启用插件
-      tags:
-      - Agent.Plugin
   /v1/proxy/cluster/{cluster}/custom/prometheus/v1/alertrule:
     get:
       consumes:
@@ -25882,6 +25825,181 @@ paths:
       summary: kubectl
       tags:
       - Agent.V1
+  /v1/proxy/cluster/{cluster}/plugins:
+    delete:
+      consumes:
+      - application/json
+      description: 禁用插件
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Plugins
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 禁用插件
+      tags:
+      - Agent.Plugin
+    get:
+      consumes:
+      - application/json
+      description: 获取Plugin列表数据
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: simple
+        in: query
+        name: simple
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Plugins
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  additionalProperties:
+                    additionalProperties:
+                      items:
+                        $ref: '#/definitions/api.PluginStatus'
+                      type: array
+                    type: object
+                  type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 获取Plugin列表数据
+      tags:
+      - Agent.Plugin
+  /v1/proxy/cluster/{cluster}/plugins/{name}:
+    get:
+      consumes:
+      - application/json
+      description: 插件详情
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: version
+        in: query
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Plugins
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/gemsplugin.PluginVersion'
+              type: object
+      security:
+      - JWT: []
+      summary: 插件详情
+      tags:
+      - Agent.Plugin
+    post:
+      consumes:
+      - application/json
+      description: 启用插件
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: pluginVersion
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/gemsplugin.PluginVersion'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 启用插件
+      tags:
+      - Agent.Plugin
+  /v1/proxy/cluster/{cluster}/plugins:check-update:
+    post:
+      consumes:
+      - application/json
+      description: 检查更新
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/api.PluginStatus'
+                  type: array
+              type: object
+      summary: 检查更新
+      tags:
+      - Agent.Plugin
   /v1/registry:
     get:
       consumes:

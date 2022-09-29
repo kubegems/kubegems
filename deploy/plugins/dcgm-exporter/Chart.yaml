@@ -1,9 +1,0 @@
-apiVersion: v2
-name: dcgm-exporter
-version: 1.0.0
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-appVersion: 2.6.9
-description: 用于采集Nvidia gpu设备监控指标的prometheus exporter

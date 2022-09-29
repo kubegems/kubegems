@@ -1,9 +1,0 @@
-apiVersion: v2
-name: cert-manager
-version: 1.0.0
-appVersion: 1.8.0
-description: cert-manager 是一个 Kubernetes 自动化管理和签发 TLS 证书的插件
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x

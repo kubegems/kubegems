@@ -34,13 +34,14 @@ ldflags+=-X '${GOPACKAGE}/pkg/version.buildDate=${BUILD_DATE}'
 
 
 # HELM BUILD
-HELM_USER?=kubegems
-HELM_PASSWORD?=
-HELM_ADDR?=https://charts.kubegems.io/kubegems
+CHARTS_DIR?=deploy/plugins
+HELM_REPO_USERNAME?=kubegems
+HELM_REPO_PASSWORD?=
+CHARTMUSEUM_ADDR?=https://${HELM_REPO_USERNAME}:${HELM_REPO_PASSWORD}@charts.kubegems.io/kubegems
 
 ##@ All
 
-all: build container ## build all
+all: generate build container push helm-push## build all
 
 ##@ General
 
@@ -58,7 +59,7 @@ all: build container ## build all
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-generate: helm-readme add-license ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: add-license ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/plugins/kubegems-local/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
@@ -71,7 +72,7 @@ generate: helm-readme add-license ## Generate  WebhookConfiguration, ClusterRole
 	helm template --namespace kubegems-installer --set installer.image.tag=v$(LATEST_RELEASE_VERSION) --include-crds  kubegems-installer deploy/plugins/kubegems-installer \
 	| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
-	go run scripts/generate-system-alert/main.go
+	# go run scripts/generate-system-alert/main.go
 
 swagger:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.4
@@ -102,20 +103,25 @@ build-binaries: ## Build binaries.
 build: gen-i18n build-binaries plugins-cache
 
 plugins-cache: ## Build plugins-cache
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download deploy/*.yaml
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download deploy/plugins/*
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins template deploy/plugins/* | \
-		${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download -
+	go run scripts/offline-plugins/main.go 
 
 CHARTS = kubegems kubegems-local
-helm-readme: readme-generator
-	$(foreach var,$(CHARTS),readme-generator -v deploy/plugins/$(var)/values.yaml -r deploy/plugins/$(var)/README.md;)
+helm-generate: readme-generator
+	$(foreach file,$(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
+	readme-generator -v $(file)values.yaml -r $(file)README.md \
+	;)
 
-helm-package: ## Build helm chart
-	$(foreach var,$(CHARTS),helm package -d bin/plugins --version=${VERSION} --app-version=${VERSION} deploy/plugins/$(var);)
+KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
+helm-package:
+	$(foreach file, $(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
+	helm package -d ${KUBEGEM_CHARTS_DIR} --version ${VERSION} --app-version  ${VERSION} $(file) \
+	;)
 
-helm-push:
-	$(foreach var,$(CHARTS),curl -u ${HELM_USER}:${HELM_PASSWORD} --data-binary "@bin/plugins/$(var)-${VERSION}.tgz" ${HELM_ADDR};)
+.PHONY: helm-push
+helm-push: helm-package
+	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(VERSION).tgz), \
+	curl --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
+	;)
 
 container: ## Build container image.
 ifneq (, $(shell which docker))

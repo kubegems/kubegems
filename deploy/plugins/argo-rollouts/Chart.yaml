@@ -1,9 +1,0 @@
-apiVersion: v2
-name: argo-rollouts
-version: 1.0.0
-description: KubeGems中应用策略部署引擎,开启后支持蓝绿、金丝雀发布等高级策略
-dependencies:
-  - name: common
-    repository: file://../common
-    version: 1.x.x
-appVersion: 2.14.0

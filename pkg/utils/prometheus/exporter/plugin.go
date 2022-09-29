@@ -22,7 +22,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/kubegems/pkg/agent/cluster"
-	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 )
@@ -59,7 +58,8 @@ func (c *PluginCollector) Update(ch chan<- prometheus.Metric) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	_, allPlugins, err := gemsplugin.ListPlugins(ctx, c.clus.GetClient(), gemsplugin.WithHealthy(true))
+	pm := gemsplugin.PluginManager{Client: c.clus.GetClient()}
+	allPlugins, err := pm.ListInstalled(ctx, true)
 	if err != nil {
 		log.Error(err, "get plugins failed")
 		return err
@@ -72,7 +72,7 @@ func (c *PluginCollector) Update(ch chan<- prometheus.Metric) error {
 				}
 				return 0
 			}(),
-			p.Annotations[pluginscommon.AnnotationMainCategory], p.Name, p.Namespace, strconv.FormatBool(p.Enabled), p.Version,
+			p.MainCategory, p.Name, p.Namespace, strconv.FormatBool(p.Enabled), p.Version,
 		)
 	}
 	return nil
