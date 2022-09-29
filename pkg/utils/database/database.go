@@ -24,18 +24,20 @@ import (
 )
 
 type Options struct {
-	Addr     string `json:"addr" description:"mysql host addr"`
-	Username string `json:"username" description:"mysql username"`
-	Password string `json:"password" description:"mysql password"`
-	Database string `json:"database" description:"database to use"`
+	Addr      string `json:"addr" description:"mysql host addr"`
+	Username  string `json:"username" description:"mysql username"`
+	Password  string `json:"password" description:"mysql password"`
+	Database  string `json:"database" description:"database to use"`
+	Collation string `json:"collation" description:"collation to use"`
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		Addr:     "kubegems-mysql:3306",
-		Username: "root",
-		Password: "",
-		Database: "kubegems",
+		Addr:      "kubegems-mysql:3306",
+		Username:  "root",
+		Password:  "",
+		Database:  "kubegems",
+		Collation: "utf8mb4_unicode_ci",
 	}
 }
 
@@ -87,7 +89,7 @@ func (opts *Options) ToDriverConfig() *driver.Config {
 		Addr:                 opts.Addr,
 		DBName:               opts.Database,
 		ParseTime:            true,
-		Collation:            "utf8_general_ci",
+		Collation:            opts.Collation,
 		Loc:                  time.Local,
 		AllowNativePasswords: true,
 	}
