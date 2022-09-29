@@ -38,7 +38,7 @@ func createDatabaseIfNotExists(dsn, dbname string) error {
 		return err
 	}
 	defer tmpdb.Close()
-	sqlStr := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4;", dbname)
+	sqlStr := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;", dbname)
 	if _, err := tmpdb.Exec(sqlStr); err != nil {
 		return err
 	}
