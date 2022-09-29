@@ -101,27 +101,3 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      # Re-tag kubectl image
-      - name: Re-tag kubectl image for registry ${{ env.REGISTRY }}
-        uses: tinact/docker.image-retag@1.0.3
-        if: github.event_name != 'pull_request'
-        with:
-          image_name: kubegems/gems-kubectl
-          image_old_tag: latest
-          image_new_tag: ${{ github.ref_name }}
-          registry: ${{ secrets.REGISTRY }}
-          registry_username: ${{ secrets.REGISTRY_USERNAME }}
-          registry_password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      # Re-tag kubectl image for another registry
-      - name: Re-tag kubectl image registry ${{ env.SECONDARY_REGISTRY }}
-        uses: tinact/docker.image-retag@1.0.3
-        if: github.event_name != 'pull_request'
-        with:
-          image_name: kubegems/gems-kubectl
-          image_old_tag: latest
-          image_new_tag: ${{ github.ref_name }}
-          registry: ${{ secrets.SECONDARY_REGISTRY }}
-          registry_username: ${{ secrets.SECONDARY_REGISTRY_USERNAME }}
-          registry_password: ${{ secrets.SECONDARY_REGISTRY_PASSWORD }}
