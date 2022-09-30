@@ -47,7 +47,7 @@ const csrfTokenHeader = "X-Harbor-CSRF-Token"
  * 重新定义  AdditionLink  Tag  Label 等结构体的原因为如果从 harbor 引入这些类型，会引入 beego 一大堆东西
  */
 
-//nolint: tagliatelle
+// nolint: tagliatelle
 type Artifact struct {
 	artifact.Artifact
 	Tags          []Tag                               `json:"tags"`
@@ -63,7 +63,7 @@ type AdditionLink struct {
 }
 
 // Tag is the overall view of tag
-//nolint: tagliatelle
+// nolint: tagliatelle
 type Tag struct {
 	ID           int64     `json:"id"`
 	RepositoryID int64     `json:"repository_id"`
@@ -76,7 +76,7 @@ type Tag struct {
 }
 
 // Label holds information used for a label
-//nolint: tagliatelle
+// nolint: tagliatelle
 type Label struct {
 	ID           int64     `json:"id"`
 	Name         string    `json:"name"`
@@ -158,7 +158,7 @@ func (c *Client) ListArtifact(ctx context.Context, image string, options GetArti
 	queries.Set("with_signature", strconv.FormatBool(options.WithSignature))
 	queries.Set("with_immutable_status", strconv.FormatBool(options.WithImmutableStatus))
 	rawquery := queries.Encode()
-	path := fmt.Sprintf("/projects/%s/repositories/%s/artifacts?%s", project, repository, rawquery)
+	path := fmt.Sprintf("/projects/%s/repositories/%s/artifacts?%s", project, url.PathEscape(repository), rawquery)
 	ret := []Artifact{}
 	if err := c.doRequest(ctx, http.MethodGet, path, nil, &ret); err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (c *Client) ScanArtifact(ctx context.Context, image string) error {
 	return c.doRequest(ctx, http.MethodPost, path, nil, nil)
 }
 
-//nolint: tagliatelle
+// nolint: tagliatelle
 type SystemInfo struct {
 	WithNotary                  bool   `json:"with_notary"`
 	AuthMode                    string `json:"auth_mode"`
@@ -429,13 +429,12 @@ func ParseImag(image string) (domain, path, name, tag string, err error) {
 
 	fullpath := dockerreference.Path(named)
 	const two = 2
-	splits := strings.SplitN(fullpath, "/", two)
-	if len(splits) > 1 {
-		path = splits[0]
-		name = splits[1]
+
+	i := strings.Index(fullpath, "/")
+	if i != -1 {
+		path, name = fullpath[:i], fullpath[i+1:]
 	} else {
-		path = "library"
-		name = splits[0]
+		path, name = "library", fullpath
 	}
 
 	if tagged, ok := named.(dockerreference.Tagged); ok {
