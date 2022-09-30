@@ -1,7 +1,7 @@
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
-  name: kubegems-model
+  name: kubegems-models
   annotations:
     plugins.kubegems.io/category: KubeGems
     plugins.kubegems.io/main-category: core
