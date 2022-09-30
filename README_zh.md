@@ -14,16 +14,23 @@
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubegems)](https://artifacthub.io/packages/search?repo=kubegems)
 ![license](https://img.shields.io/github/license/kubegems/kubegems)
 
-[官方文档](https://kubegems.io) • [在线演示环境](https://demo.kubegems.io)
+<h2>
+  <a href="https://kubegems.io/">Website</a>
+  <span> • </span>
+  <a href="https://https://www.kubegems.io/docs/concepts/what-is-kubegems">Docs</a>
+  <span> • </span>
+  <a href="https://demo.kubegems.io/">Demo</a>
+  <span> • </span>
+  <a href="https://github.com/kubegems/.github/blob/master/static/image/wechat.jpg?raw=true">Wechat</a>
+</h2>
+
+ 🇨🇳 简体中文  🇭🇰 繁体中文  🇺🇸 英文  🇯🇵 日语
 
 ## 介绍
 
 > 中文 | [English](README.md)
 
 [KubeGems](https://kubegems.io) 是一款以围绕 Kubernetes 通过自研和集成云原生项目而构建的通用性开源 PaaS 云管理平台。经过我们内部近一年的持续迭代，当前 KubeGems 的核心功能已经初步具备多云多租户场景下的统一管理。并通过插件化的方式，在用户界面中灵活控制包括 监控系统、日志系统、微服务治理 等众多插件的启用和关闭。
-<p align="center">
-<img src="https://github.com/kubegems/.github/blob/master/static/image/cluster.drawio.png?raw=true">
-</p>
 
 ## 功能
 
@@ -66,27 +73,27 @@ Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的
 <br/>
 <table>
     <tr>
-      <td width="50%" align="center"><b>租户首页</b></td>
-      <td width="50%" align="center"><b>工作空间</b></td>
-    </tr>
-    <tr>
-        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/tenant.jpg?raw=true"></td>
-        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/workspace.jpg?raw=true"></td>
-    </tr>
-    <tr>
       <td width="50%" align="center"><b>集群管理</b></td>
-      <td width="50%" align="center"><b>插件管理</b></td>
+      <td width="50%" align="center"><b>租户工作台</b></td>
     </tr>
-        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/cluster.jpg?raw=true"></td>
-        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/plugins.jpg?raw=true"></td>
     <tr>
+        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/cluster_en.jpg?raw=true"></td>
+        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/tenant.jpg?raw=true"></td>
     </tr>
     <tr>
       <td width="50%" align="center"><b>应用商店</b></td>
-      <td width="50%" align="center"><b>可观测性</b></td>
+      <td width="50%" align="center"><b>AI 算法商店</b></td>
     </tr>
         <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/appstore.jpg?raw=true"></td>
-        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/observability.jpg?raw=true"></td>
+        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/model_store_en.jpg?raw=true"></td>
+    <tr>
+    </tr>
+    <tr>
+      <td width="50%" align="center"><b>微服务治理</b></td>
+      <td width="50%" align="center"><b>可观测性</b></td>
+    </tr>
+        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/istio_en.jpg?raw=true"></td>
+        <td width="50%" align="center"><img src="https://github.com/kubegems/.github/blob/master/static/image/appdash.jpg?raw=true"></td>
     <tr>
     </tr>
 </table>
@@ -145,8 +152,19 @@ kubectl apply -f kubegems.yaml
 
 更多信息，请访问 https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md
 
-## License
+### 感谢以下贡献者 !
 
-KubeGems 项目采用 Apache License 2.0 开源协议，如果您修改了代码，请在被修改的文件中说明。
+[//]: contributor-faces
+<a href="https://github.com/pepesi"><img src="https://avatars.githubusercontent.com/u/12043478?v=4" title="pepesi" width="80" height="80"></a>
+<a href="https://github.com/chenshunliang"><img src="https://avatars.githubusercontent.com/u/6768455?v=4" title="chenshunliang" width="80" height="80"></a>
+<a href="https://github.com/cnfatal"><img src="https://avatars.githubusercontent.com/u/15731850?v=4" title="cnfatal" width="80" height="80"></a>
+<a href="https://github.com/LinkMaq"><img src="https://avatars.githubusercontent.com/u/2688646?v=4" title="LinkMaq" width="80" height="80"></a>
+<a href="https://github.com/jojotong"><img src="https://avatars.githubusercontent.com/u/100849526?v=4" title="jojotong" width="80" height="80"></a>
+<a href="https://github.com/sunlintong"><img src="https://avatars.githubusercontent.com/u/32826013?v=4" title="sunlintong" width="80" height="80"></a>
+<a href="https://github.com/zhanghe9702"><img src="https://avatars.githubusercontent.com/u/16931323?v=4" title="zhanghe9702" width="80" height="80"></a>
+<a href="https://github.com/Jianwen-Li"><img src="https://avatars.githubusercontent.com/u/29349603?v=4" title="Jianwen-Li" width="80" height="80"></a>
+<a href="https://github.com/KinglyWayne"><img src="https://avatars.githubusercontent.com/u/3232817?v=4" title="KinglyWayne" width="80" height="80"></a>
+<a href="https://github.com/itxx00"><img src="https://avatars.githubusercontent.com/u/1866789?v=4" title="itxx00" width="80" height="80"></a>
+<a href="https://github.com/VioZhang"><img src="https://avatars.githubusercontent.com/u/41519383?v=4" title="VioZhang" width="80" height="80"></a>
+<a href="https://github.com/liutao-east"><img src="https://avatars.githubusercontent.com/u/20122705?v=4" title="liutao-east" width="80" height="80"></a>
 
-Apache License 2.0, see [LICENSE](https://github.com/kubegems/kubegems/blob/main/LICENSE).
