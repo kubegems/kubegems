@@ -9,6 +9,7 @@ dependencies:
   - name: mongodb
     repository: https://charts.bitnami.com/bitnami
     version: 12.1.23
+    condition: store.enabled
 description: KubeGems 模型商店.
 home: kubegems.io
 keywords:
@@ -20,3 +21,7 @@ name: kubegems-models
 sources:
   - https://kubegems.io
 version: 1.21.0
+annotations:
+  plugins.kubegems.io/is-plugin: "true"
+  plugins.kubegems.io/install-namespace: "kubegems"
+  plugins.kubegems.io/category: core/KubeGems

@@ -190,7 +190,7 @@ controller:
 
   ## @param controller.existingConfigmap The name of an existing ConfigMap with your custom configuration for controller
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param controller.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -278,10 +278,10 @@ controller:
   extraEnvVars: []
   ## @param controller.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for controller nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param controller.extraEnvVarsSecret Name of existing Secret containing extra env vars for controller nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param controller.extraVolumes Optionally specify extra list of additional volumes for the controller pod(s)
   ##
   extraVolumes: []
@@ -402,6 +402,8 @@ controller:
 ## store configuration
 ##
 store:
+  ## @param store.enabled enabled model store api
+  enabled: false
   ## kubegems store image
   ## @param store.image.registry store image registry
   ## @param store.image.repository store image repository
@@ -524,7 +526,7 @@ store:
 
   ## @param store.existingConfigmap The name of an existing ConfigMap with your custom configuration for store
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param store.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -612,10 +614,10 @@ store:
   extraEnvVars: []
   ## @param store.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for store nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param store.extraEnvVarsSecret Name of existing Secret containing extra env vars for store nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param store.extraVolumes Optionally specify extra list of additional volumes for the store pod(s)
   ##
   extraVolumes: []
@@ -659,16 +661,16 @@ store:
     ## NOTE: choose port between <30000-32767>
     ##
     nodePorts:
-      http:
+      http: 0
     ## @param store.service.clusterIP store service Cluster IP
     ## e.g.:
     ## clusterIP: None
     ##
-    clusterIP:
+    clusterIP: ""
     ## @param store.service.loadBalancerIP store service Load Balancer IP
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
     ##
-    loadBalancerIP:
+    loadBalancerIP: ""
     ## @param store.service.loadBalancerSourceRanges store service Load Balancer sources
     ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
     ## e.g:
@@ -690,6 +692,8 @@ store:
 ## sync configuration
 ##
 sync:
+  ## @param sync.enabled enabled model sync
+  enabled: false
   ## kubegems sync image
   ## @param sync.image.registry sync image registry
   ## @param sync.image.repository sync image repository
@@ -700,8 +704,8 @@ sync:
   ##
   image:
     registry: docker.io
-    repository: kubegems/models-sync
-    tag: latest
+    repository: kubegems/ai-model-sync
+    tag: v1.16
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -721,7 +725,7 @@ sync:
   ## @param sync.replicaCount Number of sync replicas to deploy
   ##
   replicaCount: 1
-  ## @param sync.containerPorts.probe sync probe container port
+  ## @param sync.containerPorts.http http container port
   ##
   containerPorts:
     http: 8000
@@ -812,7 +816,7 @@ sync:
 
   ## @param sync.existingConfigmap The name of an existing ConfigMap with your custom configuration for sync
   ##
-  existingConfigmap:
+  existingConfigmap: ""
   ## @param sync.command Override default container command (useful when using custom images)
   ##
   command: []
@@ -900,10 +904,10 @@ sync:
   extraEnvVars: []
   ## @param sync.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for sync nodes
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: {}
   ## @param sync.extraEnvVarsSecret Name of existing Secret containing extra env vars for sync nodes
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: {}
   ## @param sync.extraVolumes Optionally specify extra list of additional volumes for the sync pod(s)
   ##
   extraVolumes: []
@@ -947,16 +951,16 @@ sync:
     ## NOTE: choose port between <30000-32767>
     ##
     nodePorts:
-      http:
+      http: 0
     ## @param sync.service.clusterIP sync service Cluster IP
     ## e.g.:
     ## clusterIP: None
     ##
-    clusterIP:
+    clusterIP: ""
     ## @param sync.service.loadBalancerIP sync service Load Balancer IP
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
     ##
-    loadBalancerIP:
+    loadBalancerIP: ""
     ## @param sync.service.loadBalancerSourceRanges sync service Load Balancer sources
     ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
     ## e.g:
@@ -976,7 +980,12 @@ sync:
     extraPorts: []
 
 ## @section MongoDB parameters
+#
+## @param mongodb.auth auth of mongo
+## @param mongodb.image.repository mongo db image repository
 mongodb:
+  image:
+    repository: kubegems/mongodb
   auth: {}
 
 ## @section RBAC Parameters

@@ -1,3 +1,5 @@
+{{- if .Values.store.enabled }}
+
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
@@ -255,3 +257,5 @@ spec:
       {{- if .Values.sync.extraVolumes }}
       volumes: {{- include "common.tplvalues.render" (dict "value" .Values.sync.extraVolumes "context" $) | nindent 8 }}
       {{- end }}
+
+{{- end }}

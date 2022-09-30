@@ -27,7 +27,7 @@
 {{- end -}}
 
 {{- define "kubegems.sync.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.sync.image "global" .Values.global) }}
+{{ include "common.images.image" (dict "imageRoot" .Values.sync.image "global" .Values.global) }}
 {{- end -}}
 
 {{- define "kubegems.sync.address" -}}
