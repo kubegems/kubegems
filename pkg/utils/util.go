@@ -25,6 +25,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -279,4 +280,18 @@ func ConvertBytes(bytes float64) string {
 	result := strconv.FormatFloat(value, 'f', 2, 64)
 	result = strings.TrimSuffix(result, ".00")
 	return result + unit
+}
+
+func WaitGroupWithTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return false
+	case <-time.After(timeout):
+		return true
+	}
 }
