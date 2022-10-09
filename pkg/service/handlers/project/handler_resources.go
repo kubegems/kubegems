@@ -40,6 +40,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -52,6 +53,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/environment"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -530,8 +532,8 @@ type res struct {
 	Resoruce map[string]interface{} `json:"resource"`
 }
 
-func (h *ProjectHandler) getProjectNoAggretateQuota(ctx context.Context, projectId int) (map[string]res, error) {
-	ret := map[string]res{}
+func (h *ProjectHandler) getProjectNoAggretateQuota(ctx context.Context, projectId int) (map[string]*res, error) {
+	ret := map[string]*res{}
 	var proj models.Project
 	if err := h.GetDB().Preload("Tenant").Preload("Environments.Cluster").First(&proj, "id = ?", projectId).Error; err != nil {
 		return nil, err
@@ -554,24 +556,25 @@ func (h *ProjectHandler) getProjectNoAggretateQuota(ctx context.Context, project
 	}
 
 	for _, env := range proj.Environments {
-		quota, err := h.getDefaultResourceQuota(ctx, env.Cluster.ClusterName, env.Namespace)
-		if err != nil {
-			ret[env.EnvironmentName] = res{
-				Quota: nil,
-				Resoruce: map[string]interface{}{
-					"appliaction": countMap[env.ID],
-				},
-			}
-		} else {
-			ret[env.EnvironmentName] = res{
-				Quota: quota,
-				Resoruce: map[string]interface{}{
-					"appliaction": countMap[env.ID],
-				},
-			}
+		ret[env.EnvironmentName] = &res{
+			Quota: nil,
+			Resoruce: map[string]interface{}{
+				"appliaction": countMap[env.ID],
+			},
 		}
 	}
-
+	wg := sync.WaitGroup{}
+	for _, env := range proj.Environments {
+		wg.Add(1)
+		go func(clusterName, namespace, envName string) {
+			defer wg.Done()
+			quota, err := h.getDefaultResourceQuota(ctx, clusterName, namespace)
+			if err == nil {
+				ret[envName].Quota = quota
+			}
+		}(env.Cluster.ClusterName, env.Namespace, env.EnvironmentName)
+	}
+	utils.WaitGroupWithTimeout(&wg, time.Duration(2*time.Second))
 	return ret, nil
 }
 

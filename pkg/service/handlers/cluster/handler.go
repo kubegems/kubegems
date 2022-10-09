@@ -640,19 +640,5 @@ func (h *ClusterHandler) batchWithTimeout(ctx *gin.Context, clusters []*models.C
 			return nil
 		}(idx, cluster.ClusterName)
 	}
-	waitTimeout(&wg, timeout)
-}
-
-func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
-	c := make(chan struct{})
-	go func() {
-		defer close(c)
-		wg.Wait()
-	}()
-	select {
-	case <-c:
-		return false
-	case <-time.After(timeout):
-		return true
-	}
+	utils.WaitGroupWithTimeout(&wg, timeout)
 }
