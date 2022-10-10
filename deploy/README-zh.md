@@ -75,11 +75,19 @@ KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://raw.githubusercon
 
 ## 部署 KubeGems
 
+确定部署版本:
+
+您可以前往 [Kubegems Release](https://github.com/kubegems/kubegems/tags) 查询到最新的版本号.
+
+```sh
+export KUBEGEMS_VERSION=<kubegems version>  # change to kubegems version
+```
+
 安装 kubegems installer:
 
 ```sh
 kubectl create namespace kubegems-installer
-kubectl apply -f https://github.com/kubegems/kubegems/raw/main/deploy/installer.yaml
+kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml
 ```
 
 等待安装程序准备就绪。
@@ -90,32 +98,31 @@ kubectl --namespace bundle-controller get pods
 
 可选项:
 
-1. 如果没有CSI插件，可以安装 local-path-provisioner:
+如果没有CSI插件，可以安装 local-path-provisioner:
 
   ```sh
   kubectl create namespace local-path-storage
-  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-local-path-provisioner.yaml
+  kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/addon-local-path-provisioner.yaml
   ```
 
 部署 kubegems 核心组件：
 
 ```sh
 kubectl create namespace kubegems
-kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml
+kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/kubegems.yaml
 ```
 
 如果您的网络在获取 docker.io quay.io gcr.io 上的镜像时较为缓慢，可以使用我们在阿里云上的镜像：
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems-mirror.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/kubegems-mirror.yaml
 ```
 
-注意：如果您想自定义 kubegems 版本或使用不同的 storageClass，您必须在 apply 前下载并编辑 `kubegems.yaml` 文件。
+注意：在没有默认存储类(StorageClass)情况下，你需要手动指定一个用于持久化 kubegems 数据，您必须在 apply 前下载并手动编辑 `kubegems.yaml` 文件：
 
 ```sh
-export STORAGE_CLASS=standard   # change to your storageClass
-export KUBEGEMS_VERSION=latest  # change to specify kubegems version
-curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml | sed -e "s/local-path/${STORAGE_CLASS}/g" -e "s/main/${KUBEGEMS_VERSION}/g" > kubegems.yaml
+export STORAGE_CLASS=<storageClassName>   # change to your storageClass
+curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml | sed -e "s/local-path/${STORAGE_CLASS}/g" > kubegems.yaml
 kubectl apply -f kubegems.yaml
 ```
 
