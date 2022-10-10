@@ -75,11 +75,17 @@ KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://raw.githubusercon
 
 ## Deploy KubeGems
 
+Choose a kubegems version from [Kubegems Release](https://github.com/kubegems/kubegems/tags):
+
+```sh
+export KUBEGEMS_VERSION=<kubegems version>  # change to kubegems version
+```
+
 Install kubegems installer:
 
 ```sh
 kubectl create namespace kubegems-installer
-kubectl apply -f https://github.com/kubegems/kubegems/raw/main/deploy/installer.yaml
+kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml
 ```
 
 Wait until ready.
@@ -94,22 +100,21 @@ Optional:
 
   ```sh
   kubectl create namespace local-path-storage
-  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/addon-local-path-provisioner.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/addon-local-path-provisioner.yaml
   ```
 
 Deploy kubegems core components:
 
 ```sh
 kubectl create namespace kubegems
-kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/kubegems.yaml
 ```
 
-Note: if you want to customize kubegems version or use a different storageClass,you must download and edit the `kubegems.yaml` file before apply.
+Note: To use a different storageClass,you must download and edit the `kubegems.yaml` file before apply.
 
 ```sh
 export STORAGE_CLASS=standard   # change to your storageClass
-export KUBEGEMS_VERSION=latest  # change to specify kubegems version
-curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml | sed -e "s/local-path/${STORAGE_CLASS}/g" -e "s/main/${KUBEGEMS_VERSION}/g" > kubegems.yaml
+curl -sL https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/kubegems.yaml | sed -e "s/local-path/${STORAGE_CLASS}/g" > kubegems.yaml
 kubectl apply -f kubegems.yaml
 ```
 

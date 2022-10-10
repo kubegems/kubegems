@@ -10,15 +10,12 @@ GIT_COMMIT?=$(shell git rev-parse HEAD 2>/dev/null)
 GIT_BRANCH?=$(shell git symbolic-ref --short HEAD 2>/dev/null)
 # semver version
 VERSION?=$(shell echo "${GIT_VERSION}" | sed -e 's/^v//')
-# latest release version defined in VERSION file
-LATEST_RELEASE_VERSION = $(shell cat VERSION)
-BIN_DIR = ${PWD}/bin
+
+BIN_DIR = bin
 
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
-ifeq (${IMAGE_TAG},main)
-   IMAGE_TAG = latest
-endif
+
 # Image URL to use all building/pushing image targets
 IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
 
@@ -58,20 +55,24 @@ all: build container ## build all
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-generate: helm-readme add-license ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: add-license gen-i18n generate-installer ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/plugins/kubegems-local/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"
 
-	sed -i 's/^version:.*/version: $(LATEST_RELEASE_VERSION)/g' deploy/plugins/kubegems-installer/Chart.yaml
-	sed -i 's/^appVersion:.*/appVersion: $(LATEST_RELEASE_VERSION)/g' deploy/plugins/kubegems-installer/Chart.yaml
-	sed -i 's/kubegemsVersion:.*/kubegemsVersion: v$(LATEST_RELEASE_VERSION)/g' deploy/kubegems.yaml
-	sed -i 's/export KUBEGEMS_VERSION.*#/export KUBEGEMS_VERSION=v$(LATEST_RELEASE_VERSION)  #/g' README.md README_zh.md
-	helm template --namespace kubegems-installer --set installer.image.tag=v$(LATEST_RELEASE_VERSION) --include-crds  kubegems-installer deploy/plugins/kubegems-installer \
-	| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
-	> deploy/installer.yaml
+	sed -i 's/kubegemsVersion:.*/kubegemsVersion: $(GIT_VERSION)/g' deploy/kubegems.yaml
+	sed -i 's/export KUBEGEMS_VERSION.*#/export KUBEGEMS_VERSION=$(GIT_VERSION)  #/g' README.md README_zh.md
+
 	go run scripts/generate-system-alert/main.go
+
+generate-installer: helm-package
+	helm template --namespace kubegems-installer --include-crds \
+	--set global.kubegemsVersion=$(GIT_VERSION) \
+	kubegems-installer ${BIN_DIR}/plugins/kubegems-installer-${VERSION}.tgz \
+	| kubectl annotate -f -  --local  -oyaml \
+	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
+	> deploy/installer.yaml
 
 swagger:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.4
@@ -80,7 +81,6 @@ swagger:
 
 check: linter ## Static code check.
 	${LINTER} run ./...
-
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: generate ## Run tests.
@@ -99,7 +99,7 @@ build-binaries: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
 	CGO_ENABLED=0 go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
-build: gen-i18n build-binaries plugins-cache
+build: build-binaries plugins-cache
 
 plugins-cache: ## Build plugins-cache
 	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download deploy/*.yaml
@@ -107,29 +107,21 @@ plugins-cache: ## Build plugins-cache
 	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins template deploy/plugins/* | \
 		${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download -
 
-CHARTS = kubegems kubegems-local
+CHARTS = kubegems kubegems-local kubegems-installer kubegems-models
 helm-readme: readme-generator
 	$(foreach var,$(CHARTS),readme-generator -v deploy/plugins/$(var)/values.yaml -r deploy/plugins/$(var)/README.md;)
 
 helm-package: ## Build helm chart
-	$(foreach var,$(CHARTS),helm package -d bin/plugins --version=${VERSION} --app-version=${VERSION} deploy/plugins/$(var);)
+	$(foreach var,$(CHARTS),helm package -u -d ${BIN_DIR}/plugins --version=${VERSION} --app-version=${VERSION} deploy/plugins/$(var);)
 
 helm-push:
-	$(foreach var,$(CHARTS),curl -u ${HELM_USER}:${HELM_PASSWORD} --data-binary "@bin/plugins/$(var)-${VERSION}.tgz" ${HELM_ADDR};)
+	$(foreach var,$(CHARTS),curl -u ${HELM_USER}:${HELM_PASSWORD} --data-binary "@${BIN_DIR}/plugins/$(var)-${VERSION}.tgz" ${HELM_ADDR};)
 
 container: ## Build container image.
-ifneq (, $(shell which docker))
-	docker build -t ${IMG} .
-else
-	buildah bud -t ${IMG} .
-endif
+	docker buildx build -t ${IMG} .
 
 push: ## Push docker image with the manager.
-ifneq (, $(shell which docker))
 	docker push ${IMG}
-else
-	buildah push ${IMG}
-endif
 
 clean:
 	- rm -rf ${BIN_DIR}

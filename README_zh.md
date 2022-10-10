@@ -96,6 +96,7 @@ Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的
 您可以访问 KubeGems 的[在线环境](https://demo.kubegems.io)
 
 > 用户名：`admin`   密码： `demo!@#admin`
+
 ## 快速开始
 
 ### 安装 Kubernetes 集群
@@ -107,30 +108,37 @@ Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的
 3. [kubekey](https://github.com/kubesphere/kubekey)
 4. 其他方式
 
-### 安装 KubeGems 
+### 安装 KubeGems
+
+确定部署版本:
+
+您可以前往 [Kubegems Release](https://github.com/kubegems/kubegems/tags) 查询到最新的版本号.
+
+```sh
+export KUBEGEMS_VERSION=<kubegems version> #  安装 kubegems 的版本
+```
 
 当你的 Kubernetes 集群状态 Ready 后，执行下述命令安装 KuebGems Installer Operator。
 
-```
+```sh
 kubectl create namespace kubegems-installer
-kubectl apply -f https://github.com/kubegems/kubegems/raw/main/deploy/installer.yaml
+kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml
 ```
 
 通过 operator 安装 KuebGems 核心服务
 
-```
+```sh
 kubectl create namespace kubegems
 
 export STORAGE_CLASS=local-path  # 声明storageclass
-export KUBEGEMS_VERSION=v1.22.0-beta.1  #  安装 kubegems 的版本
-curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml \
-| sed -e "s/local-path/${STORAGE_CLASS}/g" -e "s/latest/${KUBEGEMS_VERSION}/g" \
+curl -sL https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/kubegems.yaml \
+| sed -e "s/local-path/${STORAGE_CLASS}/g" \
 > kubegems.yaml
 
 kubectl apply -f kubegems.yaml
 ```
 
-更多信息，请访问 https://www.kubegems.io/docs/installation/quick-install
+更多信息，请访问 <https://www.kubegems.io/docs/installation/quick-install>
 
 ## 参与贡献
 
@@ -143,7 +151,7 @@ kubectl apply -f kubegems.yaml
 
 我们非常欢迎您在KubeGems社区在平台体验、标准化应用程序、插件共享等领域的贡献和分享。
 
-更多信息，请访问 https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md
+更多信息，请访问 <https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md>
 
 ## License
 

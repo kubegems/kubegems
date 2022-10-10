@@ -21,13 +21,16 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 	_ "kubegems.io/kubegems/docs/swagger"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/options"
 	"kubegems.io/kubegems/pkg/utils/config"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/debug"
+	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/version"
 )
 
@@ -72,21 +75,48 @@ func newGenServiceCfgCmd() *cobra.Command {
 
 type MigratOptions struct {
 	Mysql    *database.Options `json:"mysql,omitempty"`
+	Redis    *redis.Options    `json:"redis,omitempty"`
 	InitData bool              `json:"initData,omitempty" description:"insert init data into database"`
+	Wait     bool              `json:"wait,omitempty"  description:"wait util database server ready"`
 }
 
 func newServiceMigrateCmd() *cobra.Command {
 	options := &MigratOptions{
 		Mysql:    database.NewDefaultOptions(),
-		InitData: false,
+		Redis:    redis.NewDefaultOptions(),
+		InitData: true,
+		Wait:     true,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "execute migrate, init datbases and base data (use server config)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			config.Parse(cmd.Flags())
-			return models.MigrateDatabaseAndInitData(options.Mysql, options.InitData)
+			if err := config.Parse(cmd.Flags()); err != nil {
+				return err
+			}
+
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer cancel()
+
+			ctx = log.NewContext(ctx, log.LogrLogger)
+
+			eg := errgroup.Group{}
+			eg.Go(func() error {
+				if options.Wait {
+					if err := models.WaitDatabaseServer(ctx, options.Mysql); err != nil {
+						return err
+					}
+				}
+				return models.MigrateDatabaseAndInitData(ctx, options.Mysql, options.InitData)
+			})
+			eg.Go(func() error {
+				if options.Wait {
+					return models.WaitRedis(ctx, *options.Redis)
+				}
+				return nil
+			})
+			return eg.Wait()
 		},
 	}
 	config.AutoRegisterFlags(cmd.Flags(), "", options)

@@ -1,3 +1,22 @@
+{{- define "kubegems.images.image" -}}
+{{- $registryName := .imageRoot.registry -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $tag := .imageRoot.tag | toString -}}
+{{- if .global }}
+    {{- if .global.imageRegistry }}
+     {{- $registryName = .global.imageRegistry -}}
+    {{- end -}}
+    {{- if not (empty .global.kubegemsVersion) }} 
+    {{- $tag = .global.kubegemsVersion -}}
+    {{- end -}}
+{{- end -}}
+{{- if $registryName }}
+{{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+{{- else -}}
+{{- printf "%s:%s" $repositoryName $tag -}}
+{{- end -}}
+{{- end -}}
+
  {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
@@ -11,7 +30,7 @@ If release name contains chart name it will be used as a full name.
 Return the proper installer image name
 */}}
 {{- define "kubegems.installer.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.installer.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.installer.image "global" .Values.global) }}
 {{- end -}}
 
 
