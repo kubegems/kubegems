@@ -57,8 +57,8 @@ func TestParseImag(t *testing.T) {
 				image: "project/foo/artifact:tag",
 			},
 			wantDomain:   "docker.io",
-			wantProject:  "project",
-			wantArtifact: "foo/artifact",
+			wantProject:  "project/foo",
+			wantArtifact: "artifact",
 			wantTag:      "tag",
 		},
 		{
@@ -90,6 +90,16 @@ func TestParseImag(t *testing.T) {
 			wantProject:  "library",
 			wantArtifact: "foo",
 			wantTag:      "latest",
+		},
+		{
+			name: "subproject",
+			args: args{
+				image: "harbor.foo.com/project/subproject/artifact:tag",
+			},
+			wantDomain:   "harbor.foo.com",
+			wantProject:  "project/subproject",
+			wantArtifact: "artifact",
+			wantTag:      "tag",
 		},
 	}
 	for _, tt := range tests {

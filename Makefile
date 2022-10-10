@@ -114,7 +114,7 @@ helm-generate: readme-generator
 KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
 helm-package:
 	$(foreach file, $(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
-	helm package -d ${KUBEGEM_CHARTS_DIR} --version ${VERSION} --app-version  ${VERSION} $(file) \
+	helm package -u -d ${KUBEGEM_CHARTS_DIR} --version ${VERSION} --app-version  ${VERSION} $(file) \
 	;)
 
 .PHONY: helm-push

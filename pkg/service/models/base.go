@@ -15,6 +15,7 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -22,36 +23,64 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/go-logr/logr"
+	"github.com/go-sql-driver/mysql"
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
+	"kubegems.io/kubegems/pkg/utils/redis"
 	"sigs.k8s.io/yaml"
 )
 
-func createDatabaseIfNotExists(dsn, dbname string) error {
-	tmpdb, err := sql.Open("mysql", dsn)
+func createDatabaseIfNotExists(ctx context.Context, opts *database.Options) (exists bool, err error) {
+	log := logr.FromContextOrDiscard(ctx)
+
+	cfg := opts.ToDriverConfig()
+	dbname := cfg.DBName
+	cfg.DBName = ""
+
+	connector, err := mysql.NewConnector(cfg)
+	if err != nil {
+		return false, err
+	}
+
+	tmpdb := sql.OpenDB(connector)
+	defer tmpdb.Close()
+
+	showdb := fmt.Sprintf("SELECT count(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '%s'", dbname)
+	count := 0
+	if err := tmpdb.QueryRowContext(ctx, showdb).Scan(&count); err != nil {
+		return false, err
+	}
+	if count > 0 {
+		return true, nil
+	}
+
+	sqlStr := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4 COLLATE `%s`;", dbname, opts.Collation)
+	log.Info("create database", "sql", sqlStr)
+	if _, err := tmpdb.Exec(sqlStr); err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
+func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, initData bool) error {
+	log := logr.FromContextOrDiscard(ctx)
+	// init database schema
+	exists, err := createDatabaseIfNotExists(ctx, opts)
 	if err != nil {
 		return err
 	}
-	defer tmpdb.Close()
-	sqlStr := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4;", dbname)
-	if _, err := tmpdb.Exec(sqlStr); err != nil {
-		return err
-	}
-	if _, err := tmpdb.Exec(sqlStr); err != nil {
-		return err
-	}
-	return nil
-}
 
-func MigrateDatabaseAndInitData(opts *database.Options, initData bool) error {
-	// init database schema
-	if err := createDatabaseIfNotExists(opts.ToDsnWithOutDB()); err != nil {
-		return err
+	if exists {
+		log.Info("database already exists,skip migration stage")
+		return nil
 	}
 
 	db, err := database.NewDatabase(opts)
@@ -301,4 +330,43 @@ func getPromqlTpls() ([]*PromqlTplRule, error) {
 	}
 
 	return ret, err
+}
+
+const WaitPerid = 5 * time.Second
+
+func WaitDatabaseServer(ctx context.Context, opts *database.Options) error {
+	log := logr.FromContextOrDiscard(ctx)
+	cfg := opts.ToDriverConfig()
+	cfg.DBName = ""
+	connector, err := mysql.NewConnector(cfg)
+	if err != nil {
+		return err
+	}
+	sqldb := sql.OpenDB(connector)
+	return wait.PollImmediateInfiniteWithContext(ctx, WaitPerid, func(ctx context.Context) (done bool, err error) {
+		if err := sqldb.PingContext(ctx); err != nil {
+			log.Error(err, "wait database")
+			return false, nil
+		}
+		log.Info("database server ready")
+		return true, nil
+	})
+}
+
+func WaitRedis(ctx context.Context, redisopts redis.Options) error {
+	log := logr.FromContextOrDiscard(ctx)
+
+	cli, err := redis.NewClient(&redisopts)
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediateInfiniteWithContext(ctx, WaitPerid, func(ctx context.Context) (done bool, err error) {
+		if err := cli.Client.Ping(ctx).Err(); err != nil {
+			log.Error(err, "wait redis")
+			return false, nil
+		}
+		log.Info("redis ready")
+		return true, nil
+	})
 }

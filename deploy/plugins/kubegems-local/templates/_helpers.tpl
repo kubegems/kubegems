@@ -62,7 +62,7 @@ Return the proper agent serviceAccount name
 Return the proper kubegems-local.kubectl image name
 */}}
 {{- define "kubegems-local.kubectl.image" -}}
-{{ include "kubegems-local.images.image" (dict "imageRoot" .Values.kubectl.image "global" .Values.global) }}
+{{ include "common.images.image" (dict "imageRoot" .Values.kubectl.image "global" .Values.global) }}
 {{- end -}}
 
 {{- define "kubegems-local.kubectl.fullname" -}}

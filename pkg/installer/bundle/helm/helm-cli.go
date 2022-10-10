@@ -29,6 +29,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/repo"
 )
 
 type ApplyOptions struct {
@@ -105,7 +106,7 @@ func LocateChartSuper(ctx context.Context, repoURL, name, version string) (strin
 		return "", err
 	}
 	if repou.Scheme != FileProtocolSchema {
-		return (&action.ChartPathOptions{RepoURL: repoURL, Version: version}).LocateChart(name, cli.New())
+		return downloadChart(ctx, repoURL, name, version)
 	}
 	// handle file:// schema
 	index, err := LoadIndex(ctx, repoURL)
@@ -129,4 +130,29 @@ func LocateChartSuper(ctx context.Context, repoURL, name, version string) (strin
 		repou.Path += "/"
 	}
 	return repou.ResolveReference(downloadu).Path, nil
+}
+
+func downloadChart(ctx context.Context, repourl, name, version string) (string, error) {
+	settings := cli.New()
+	dl := downloader.ChartDownloader{
+		Out:              os.Stdout,
+		Getters:          getter.All(settings),
+		RepositoryConfig: settings.RepositoryConfig,
+		RepositoryCache:  settings.RepositoryCache,
+	}
+	if repourl != "" {
+		chartURL, err := repo.FindChartInRepoURL(repourl, name, version, "", "", "", dl.Getters)
+		if err != nil {
+			return "", err
+		}
+		name = chartURL
+	}
+	if err := os.MkdirAll(settings.RepositoryCache, DefaultDirectoryMode); err != nil {
+		return "", err
+	}
+	filename, _, err := dl.DownloadTo(name, version, settings.RepositoryCache)
+	if err != nil {
+		return filename, fmt.Errorf("failed to download %s: %w", name, err)
+	}
+	return filename, nil
 }

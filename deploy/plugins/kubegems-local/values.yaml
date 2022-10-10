@@ -488,13 +488,13 @@ kubectl:
   ##
   image:
     registry: docker.io
-    repository: kubegems/gems-kubectl
+    repository: kubegems/kubectl
     tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
@@ -524,7 +524,7 @@ kubectl:
   ## @param kubectl.podSecurityContext.fsGroup Set kubectl pod's Security Context fsGroup
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     fsGroup: 1001
   ## Configure Container Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -533,9 +533,9 @@ kubectl:
   ## @param kubectl.containerSecurityContext.runAsNonRoot Set kubectl containers' Security Context runAsNonRoot
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     runAsUser: 1001
-    runAsNonRoot: true
+    runAsNonRoot: false
 
   ## @param kubectl.existingConfigmap The name of an existing ConfigMap with your custom configuration for kubectl
   ##
