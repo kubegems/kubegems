@@ -7,7 +7,7 @@ metadata:
     plugins.kubegems.io/main-category: core
     plugins.kubegems.io/required: "true"
 spec:
-  disabled: false
+  disabled: true
   kind: helm
   installNamespace: kubegems
   values:
