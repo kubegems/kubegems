@@ -4916,6 +4916,9 @@ definitions:
     type: object
   prometheus.ReceiverConfig:
     properties:
+      alertProxyConfigs:
+        items: {}
+        type: array
       emailConfigs:
         items:
           $ref: '#/definitions/prometheus.EmailConfig'
@@ -17366,7 +17369,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 检查alertmanagerconfig
+      description: kubegems default alert webhook
       produces:
       - application/json
       responses:
@@ -17381,7 +17384,7 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: 检查alertmanagerconfig
+      summary: kubegems default alert webhook
       tags:
       - Agent.V1
   /realtime/v2/msgbus/notify:
@@ -24701,11 +24704,6 @@ paths:
         name: namespace
         required: true
         type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
       - description: pod
         in: path
         name: pod
@@ -24786,6 +24784,84 @@ paths:
       security:
       - JWT: []
       summary: 进入容器交互执行命令(websocket)
+      tags:
+      - Agent.V1
+  /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file:
+    get:
+      description: 从容器下载文件
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: pod
+        in: path
+        name: pod
+        required: true
+        type: string
+      - description: container
+        in: query
+        name: container
+        required: true
+        type: string
+      - description: filename
+        in: query
+        name: filename
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ws
+          schema:
+            type: object
+      security:
+      - JWT: []
+      summary: 从容器下载文件
+      tags:
+      - Agent.V1
+  /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile:
+    post:
+      description: upload files to container
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: pod
+        in: path
+        name: pod
+        required: true
+        type: string
+      - description: container
+        in: query
+        name: container
+        required: true
+        type: string
+      - description: filename
+        in: query
+        name: filename
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ws
+          schema:
+            type: object
+      security:
+      - JWT: []
+      summary: upload files to container
       tags:
       - Agent.V1
   /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pvcs:

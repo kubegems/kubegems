@@ -23,7 +23,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "检查alertmanagerconfig",
+                "description": "kubegems default alert webhook",
                 "consumes": [
                     "application/json"
                 ],
@@ -33,7 +33,7 @@ const docTemplate = `{
                 "tags": [
                     "Agent.V1"
                 ],
-                "summary": "检查alertmanagerconfig",
+                "summary": "kubegems default alert webhook",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -11036,13 +11036,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "pod",
                         "name": "pod",
                         "in": "path",
@@ -11146,6 +11139,124 @@ const docTemplate = `{
                         "description": "default sh, choice(bash,ash,zsh)",
                         "name": "shell",
                         "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ws",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "从容器下载文件",
+                "tags": [
+                    "Agent.V1"
+                ],
+                "summary": "从容器下载文件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "pod",
+                        "name": "pod",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "container",
+                        "name": "container",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "filename",
+                        "name": "filename",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ws",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "upload files to container",
+                "tags": [
+                    "Agent.V1"
+                ],
+                "summary": "upload files to container",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "pod",
+                        "name": "pod",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "container",
+                        "name": "container",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "filename",
+                        "name": "filename",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -29221,6 +29332,10 @@ const docTemplate = `{
         "prometheus.ReceiverConfig": {
             "type": "object",
             "properties": {
+                "alertProxyConfigs": {
+                    "type": "array",
+                    "items": {}
+                },
                 "emailConfigs": {
                     "type": "array",
                     "items": {
