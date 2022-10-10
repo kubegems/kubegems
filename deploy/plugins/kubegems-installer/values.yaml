@@ -15,6 +15,7 @@ global:
   ##
   imagePullSecrets: []
   storageClass: ""
+  kubegemsVersion: ""
 
 ## @section Common parameters
 

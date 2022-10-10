@@ -6,7 +6,6 @@ metadata:
     plugins.kubegems.io/category: KubeGems
     plugins.kubegems.io/main-category: core
     plugins.kubegems.io/required: "true"
-    plugins.kubegems.io/health-check: "deployments.apps/*"
 spec:
   disabled: false
   kind: helm
@@ -14,3 +13,7 @@ spec:
   values:
     controller:
       baseDomain: models.kubegems.io
+    store:
+      enabled: true
+    sync:
+      enabled: true
