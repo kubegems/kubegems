@@ -49,7 +49,7 @@ func InitAPI(ctx context.Context, deps Dependencies) (http.Handler, error) {
 		return nil, err
 	}
 	op, err := oidc.NewProvider(ctx, &oidc.OIDCOptions{
-		Issuer:   "http://kubegems-api.kubegems", // TODO: split oidc to separate service
+		Issuer:   deps.Opts.JWT.IssuerAddr,
 		CertFile: deps.Opts.JWT.Cert,
 		KeyFile:  deps.Opts.JWT.Key,
 	})
