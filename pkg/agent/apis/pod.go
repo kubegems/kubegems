@@ -196,10 +196,10 @@ func filterByNodename(c *gin.Context, pods []v1.Pod) []v1.Pod {
 // @Tags        Agent.V1
 // @Summary     进入容器交互执行命令(websocket)
 // @Description 进入容器交互执行命令(websocket)
-// @Param       cluster   path     string true  "cluster"
-// @Param       namespace path     string true  "namespace"
-// @Param       pod       path     string true  "pod"
-// @Param       container query    string true  "container"
+// @Param       cluster   path     string true "cluster"
+// @Param       namespace path     string true "namespace"
+// @Param       pod       path     string true "pod"
+// @Param       container query    string true "container"
 // @Param       stream    query    string true  "stream must be true"
 // @Param       token     query    string true  "token"
 // @Param       shell     query    string false "default sh, choice(bash,ash,zsh)"
@@ -235,10 +235,10 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 // @Tags        Agent.V1
 // @Summary     实时获取日志STDOUT输出(websocket)
 // @Description 实时获取日志STDOUT输出(websocket)
-// @Param       cluster   path     string true  "cluster"
-// @Param       namespace path     string true  "namespace"
-// @Param       pod       path     string true  "pod"
-// @Param       container query    string true  "container"
+// @Param       cluster   path     string true "cluster"
+// @Param       namespace path     string true "namespace"
+// @Param       pod       path     string true "pod"
+// @Param       container query    string true "container"
 // @Param       stream    query    string true  "stream must be true"
 // @Param       follow    query    string true  "follow"
 // @Param       tail      query    int    false "tail line (default 1000)"
@@ -281,7 +281,7 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 // @Param       namespace path     string true  "namespace"
 // @Param       pod       path     string true  "pod"
 // @Param       container query    string true  "container"
-// @Param       filename  query    string true  "filename"
+// @Param       filename  query    string true "filename"
 // @Success     200       {object} object "ws"
 // @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file [get]
 // @Security    JWT
@@ -312,7 +312,7 @@ func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
 // @Param       namespace path     string true  "namespace"
 // @Param       pod       path     string true  "pod"
 // @Param       container query    string true  "container"
-// @Param       filename  query    string true  "filename"
+// @Param       filename  query    string true "filename"
 // @Success     200       {object} object "ws"
 // @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile [post]
 // @Security    JWT
