@@ -1,0 +1,73 @@
+listen: ":9094"
+proxyTemplates:
+  - type: feishu
+    template: |
+      {
+        "msg_type": "interactive",
+        "card": {
+          "config": {
+            "wide_screen_mode": true
+          },
+          "elements": [
+            {
+              "fields": [
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**开始时间**: {{ $.StartsAt }}",
+                    "tag": "lark_md"
+                  }
+                },
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**状态**: {{ $.Status }}\n",
+                    "tag": "lark_md"
+                  }
+                },
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**集群**: {{ .Labels.cluster }}",
+                    "tag": "lark_md"
+                  }
+                },
+                {
+                  "is_short": true,
+                  "text": {
+                    "content": "**命名空间**: {{ $.Labels.gems_namespace }}",
+                    "tag": "lark_md"
+                  }
+                }                
+              ],
+              "tag": "div"
+            },
+            {
+              "tag": "div",
+              "text": {
+                "content": "{{ $.Annotations.message }}",
+                "tag": "lark_md"
+              }
+            },
+            {
+              "tag": "hr"
+            },
+            {
+              "elements": [
+                {
+                  "content": "[来自Kubegems](https://kubegems.io)",
+                  "tag": "lark_md"
+                }
+              ],
+              "tag": "note"
+            }
+          ],
+          "header": {
+            "template": "red",
+            "title": {
+              "content": "【告警】{{ $.Labels.gems_alertname }}",
+              "tag": "plain_text"
+            }
+          }
+        }
+      }

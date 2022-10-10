@@ -7,3 +7,7 @@ alertmanager:
 kubegems-local:
   alert:
     address: ""
+alertproxy:
+  image:
+    repository: kubegems/alertproxy
+    tag: v0.1.0

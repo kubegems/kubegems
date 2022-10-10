@@ -48,7 +48,7 @@ var (
 		},
 	}
 
-	AlertProxyReceiverHost = fmt.Sprintf("https://alertproxy.%s:9094", gems.NamespaceMonitor)
+	AlertProxyReceiverHost = fmt.Sprintf("alertproxy.%s:9094", gems.NamespaceMonitor)
 
 	NullReceiverName = "null"
 	NullReceiver     = v1alpha1.Receiver{Name: NullReceiverName}
@@ -123,7 +123,7 @@ type ProxyConfig interface {
 type FeishuRobot struct {
 	Type string `json:"type"`
 	URL  string `json:"url"` // feishu robot webhook url
-	At   string `json:"at"`  // 要@的用户名, eg: tom, 所有人
+	At   string `json:"at"`  // 要@的用户id，所有人则是 all
 }
 
 func (f *FeishuRobot) ProxyURL() *string {
