@@ -125,7 +125,7 @@ func (r *SeldonModelServe) completeStatusURL(ctx context.Context, md *modelsv1be
 	return nil
 }
 
-const modelContainerName = "model"
+const ModelContainerName = "model"
 
 // nolint: funlen
 func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelDeployment) (*machinelearningv1.SeldonDeployment, error) {
@@ -149,7 +149,7 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 						machinelearningv1.ANNOTATION_NO_ENGINE: isNoEngineKind(md.Spec.Server.Kind),
 					},
 					Graph: machinelearningv1.PredictiveUnit{
-						Name:                    modelContainerName,
+						Name:                    ModelContainerName,
 						Implementation:          implOf(md.Spec.Server.Kind),
 						Parameters:              paramsOf(md.Spec.Server.Parameters),
 						ModelURI:                modelURIWithLicense(md.Spec.Model.URL, md.Spec.Model.License),
@@ -182,7 +182,7 @@ func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
 	if val := md.Spec.Server.PodSpec; val != nil {
 		podspec = *val
 	}
-	return CreateOrUpdateContainer(podspec, modelContainerName, func(c *v1.Container) {
+	CreateOrUpdateContainer(&podspec, ModelContainerName, func(c *v1.Container) {
 		// add mounts
 		for i, mount := range md.Spec.Server.Mounts {
 			if mount.Kind == modelsv1beta1.SimpleVolumeMountKindModel {
@@ -236,24 +236,28 @@ func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
 		}
 		if md.Spec.Server.Privileged {
 			if c.SecurityContext == nil {
-				c.SecurityContext = &v1.SecurityContext{}
+				c.SecurityContext = &v1.SecurityContext{
+					RunAsUser:  pointer.Int64(0),
+					RunAsGroup: pointer.Int64(0),
+				}
 			}
 			c.SecurityContext.Privileged = pointer.Bool(true)
 		}
 	})
+
+	return podspec
 }
 
-func CreateOrUpdateContainer(pod corev1.PodSpec, conname string, oncontainer func(c *corev1.Container)) corev1.PodSpec {
+func CreateOrUpdateContainer(pod *corev1.PodSpec, conname string, oncontainer func(c *corev1.Container)) {
 	for i := range pod.Containers {
 		if pod.Containers[i].Name == conname {
 			oncontainer(&pod.Containers[i])
-			return pod
+			return
 		}
 	}
 	mainContainer := corev1.Container{Name: conname}
 	oncontainer(&mainContainer)
 	pod.Containers = append(pod.Containers, mainContainer)
-	return pod
 }
 
 func getIngressPath(ctx context.Context, cli client.Client, md *modelsv1beta1.ModelDeployment) string {

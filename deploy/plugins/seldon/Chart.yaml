@@ -1,0 +1,13 @@
+apiVersion: v2
+name: seldon
+version: 1.0.0
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 1.x.x
+appVersion: 1.15.0-dev # seldon chart version
+description: An open source platform to deploy your machine learning models on Kubernetes at massive scale.
+annotations:
+  plugins.kubegems.io/is-plugin: "true"
+  plugins.kubegems.io/install-namespace: seldon-system
+  plugins.kubegems.io/category: kubernetes/模型管理
