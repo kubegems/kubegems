@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/banzaicloud/operator-tools/pkg/utils"
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -121,9 +122,10 @@ type ProxyConfig interface {
 
 // feishu robot
 type FeishuRobot struct {
-	Type string `json:"type"`
-	URL  string `json:"url"` // feishu robot webhook url
-	At   string `json:"at"`  // 要@的用户id，所有人则是 all
+	Type       string `json:"type"`
+	URL        string `json:"url"`        // feishu robot webhook url
+	At         string `json:"at"`         // 要@的用户id，所有人则是 all
+	SignSecret string `json:"signSecret"` // 签名校验key
 }
 
 func (f *FeishuRobot) ProxyURL() *string {
@@ -131,6 +133,7 @@ func (f *FeishuRobot) ProxyURL() *string {
 	u.Add("type", alertProxyFeishu)
 	u.Add("url", f.URL)
 	u.Add("at", f.At)
+	u.Add("signSecret", f.SignSecret)
 	ret := fmt.Sprintf("http://%s?%s", AlertProxyReceiverHost, u.Encode())
 	return &ret
 }
@@ -331,7 +334,8 @@ func ToAlertmanagerReceiver(rec ReceiverConfig) v1alpha1.Receiver {
 	}
 	for _, v := range rec.AlertProxyConfigs {
 		ret.WebhookConfigs = append(ret.WebhookConfigs, v1alpha1.WebhookConfig{
-			URL: v.ProxyURL(),
+			URL:          v.ProxyURL(),
+			SendResolved: utils.BoolPointer(false), // do not send resolved
 		})
 	}
 	return ret
