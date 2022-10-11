@@ -1,0 +1,11 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: seldon
+  annotations:
+    plugins.kubegems.io/category: 机器学习
+    plugins.kubegems.io/main-category: core
+    plugins.kubegems.io/health-check: "deployments.apps/*"
+spec:
+  disabled: true
+  kind: template

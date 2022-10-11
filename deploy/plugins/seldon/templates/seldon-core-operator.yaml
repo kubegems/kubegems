@@ -1,0 +1,42 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: seldon-core-operator
+  namespace: seldon-system
+spec:
+  kind: helm
+  url: https://charts.kubegems.io/kubegems
+  chart: seldon-core-operator
+  version: {{ .Chart.AppVersion }}
+  values:
+    image:
+      registry: {{ .Values.global.imageRegistry }}
+      repository: kubegems/seldon-core-operator
+      tag: {{ .Chart.AppVersion }}
+    kubernetesIngress:
+      enabled: true
+    executor:
+      image:
+        registry: {{ .Values.global.imageRegistry }}
+        # repository: seldonio/seldon-core-executor
+        {{ include "common.images.repository" ( dict "repository" "seldonio/seldon-core-executor" "context" .) }}
+        tag: 1.14.1
+    predictor_servers:
+      HUGGINGFACE_SERVER:
+        protocols:
+          v2:
+            defaultImageVersion: "v1.2.0.dev3-huggingface-custom1"
+            {{- if.Values.global.imageRegistry }}
+            image: {{ .Values.global.imageRegistry }}/kubegems/mlserver
+            {{- else }}
+            image: kubegems/mlserver
+            {{- end }}
+      OPENMMLAB_SERVER:
+        protocols:
+          v2:
+            defaultImageVersion: "1.0.0-openmmlab"
+            {{- if.Values.global.imageRegistry }}
+            image: {{ .Values.global.imageRegistry }}/kubegems/mlserver
+            {{- else }}
+            image: kubegems/mlserver
+            {{- end }}
