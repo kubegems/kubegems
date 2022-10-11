@@ -58,6 +58,7 @@ type Model struct {
 	UpdateAt         *time.Time        `json:"updateAt" bson:"update_at"`        // original updattion time
 	LastModified     *time.Time        `json:"lastModified" bson:"lastModified"` // last time the model synced
 	Enabled          bool              `json:"enabled"`                          // is model published
+	Annotations      map[string]string `json:"annotations"`                      // additional infomations
 }
 
 type ModelFile struct {

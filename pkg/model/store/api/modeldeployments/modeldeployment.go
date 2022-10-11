@@ -224,14 +224,17 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			md.Spec.Model.URL = fmt.Sprintf("%s/%s@%s", sourcedetails.Address, modelname, md.Spec.Model.Version)
 		}
 	}
-	deployment.CreateOrUpdateContainer(md.Spec.Server.PodSpec, deployment.ModelContainerName, func(c *v1.Container) {
-		// nolint: gomnd
-		c.ReadinessProbe = &v1.Probe{
-			InitialDelaySeconds: 180, // 3min
-			PeriodSeconds:       30,  // 0.5 * 20 =10min
-			FailureThreshold:    20,
-		}
-	})
+	md.Spec.Server.PodSpec = deployment.CreateOrUpdateContainer(
+		md.Spec.Server.PodSpec,
+		deployment.ModelContainerName,
+		func(c *v1.Container, _ *v1.PodSpec) {
+			// nolint: gomnd
+			c.ReadinessProbe = &v1.Probe{
+				InitialDelaySeconds: 180, // 3min
+				PeriodSeconds:       30,  // 0.5 * 20 =10min
+				FailureThreshold:    20,
+			}
+		})
 
 	// resource request
 	if len(md.Spec.Server.Resources.Requests) == 0 {

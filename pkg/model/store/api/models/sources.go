@@ -15,7 +15,10 @@
 package models
 
 import (
+	"errors"
+
 	"github.com/emicklei/go-restful/v3"
+	"go.mongodb.org/mongo-driver/mongo"
 	"kubegems.io/kubegems/pkg/model/store/repository"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
@@ -48,7 +51,11 @@ func (m *ModelsAPI) GetSource(req *restful.Request, resp *restful.Response) {
 	name := req.PathParameter("source")
 	source, err := m.SourcesRepository.Get(req.Request.Context(), name, getsourceopt)
 	if err != nil {
-		response.BadRequest(resp, err.Error())
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			response.NotFound(resp, err.Error())
+		} else {
+			response.BadRequest(resp, err.Error())
+		}
 		return
 	}
 	// with sync status
