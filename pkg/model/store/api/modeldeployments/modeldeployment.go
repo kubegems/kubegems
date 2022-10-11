@@ -206,10 +206,6 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		if md.Spec.Server.PodSpec == nil {
 			md.Spec.Server.PodSpec = &corev1.PodSpec{}
 		}
-		// nolint: gomnd
-		deployment.CreateOrUpdateContainer(md.Spec.Server.PodSpec, "model", func(c *v1.Container) {
-			c.ReadinessProbe = &v1.Probe{InitialDelaySeconds: 120, FailureThreshold: 5}
-		})
 	case repository.SourceKindOpenMMLab:
 		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
@@ -217,7 +213,6 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "pkg", Value: modeldetails.Framework},
 			modelsv1beta1.Parameter{Name: "model", Value: modeldetails.Name},
 		)
-
 		md.Spec.Server.Privileged = true
 	case repository.SourceKindModelx:
 		md.Spec.Server.Privileged = true
@@ -229,6 +224,14 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			md.Spec.Model.URL = fmt.Sprintf("%s/%s@%s", sourcedetails.Address, modelname, md.Spec.Model.Version)
 		}
 	}
+	deployment.CreateOrUpdateContainer(md.Spec.Server.PodSpec, deployment.ModelContainerName, func(c *v1.Container) {
+		// nolint: gomnd
+		c.ReadinessProbe = &v1.Probe{
+			InitialDelaySeconds: 180, // 3min
+			PeriodSeconds:       30,  // 0.5 * 20 =10min
+			FailureThreshold:    20,
+		}
+	})
 
 	// resource request
 	if len(md.Spec.Server.Resources.Requests) == 0 {
@@ -239,7 +242,17 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 
 		md.Spec.Server.Resources.Requests = requests
 	}
+	removeEmptyResource(md.Spec.Server.Resources.Requests)
+	removeEmptyResource(md.Spec.Server.Resources.Limits)
 	return nil
+}
+
+func removeEmptyResource(list corev1.ResourceList) {
+	for k, v := range list {
+		if v.IsZero() {
+			delete(list, k)
+		}
+	}
 }
 
 func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *restful.Response) {
