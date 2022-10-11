@@ -28,6 +28,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/kubegems/pkg/apis/application"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
@@ -224,17 +225,8 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			md.Spec.Model.URL = fmt.Sprintf("%s/%s@%s", sourcedetails.Address, modelname, md.Spec.Model.Version)
 		}
 	}
-	md.Spec.Server.PodSpec = deployment.CreateOrUpdateContainer(
-		md.Spec.Server.PodSpec,
-		deployment.ModelContainerName,
-		func(c *v1.Container, _ *v1.PodSpec) {
-			// nolint: gomnd
-			c.ReadinessProbe = &v1.Probe{
-				InitialDelaySeconds: 180, // 3min
-				PeriodSeconds:       30,  // 0.5 * 20 =10min
-				FailureThreshold:    20,
-			}
-		})
+
+	completeProbes(md)
 
 	// resource request
 	if len(md.Spec.Server.Resources.Requests) == 0 {
@@ -256,6 +248,41 @@ func removeEmptyResource(list corev1.ResourceList) {
 			delete(list, k)
 		}
 	}
+}
+
+func completeProbes(md *modelsv1beta1.ModelDeployment) {
+	if len(md.Spec.Server.Ports) == 0 {
+		return
+	}
+	md.Spec.Server.PodSpec = deployment.CreateOrUpdateContainer(md.Spec.Server.PodSpec,
+		deployment.ModelContainerName,
+		func(c *v1.Container, _ *v1.PodSpec) {
+			probehandler := v1.ProbeHandler{
+				TCPSocket: &v1.TCPSocketAction{
+					Port: detectMainPort(append(md.Spec.Server.Ports, c.Ports...)),
+				},
+			}
+			if c.ReadinessProbe == nil {
+				// nolint: gomnd
+				c.ReadinessProbe = &v1.Probe{
+					ProbeHandler:        probehandler,
+					InitialDelaySeconds: 180, // 3min
+					PeriodSeconds:       30,  // 0.5 * 20 =10min
+					FailureThreshold:    20,
+				}
+			}
+			if c.LivenessProbe == nil {
+				c.LivenessProbe = &v1.Probe{ProbeHandler: probehandler}
+			}
+		})
+}
+
+func detectMainPort(ports []v1.ContainerPort) intstr.IntOrString {
+	port := ports[0]
+	if port.Name != "" {
+		return intstr.FromString(port.Name)
+	}
+	return intstr.FromInt(int(port.ContainerPort))
 }
 
 func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *restful.Response) {
