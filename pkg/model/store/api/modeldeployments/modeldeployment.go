@@ -207,10 +207,9 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			md.Spec.Server.PodSpec = &corev1.PodSpec{}
 		}
 		// nolint: gomnd
-		updatedpodspec := deployment.CreateOrUpdateContainer(*md.Spec.Server.PodSpec, "model", func(c *v1.Container) {
+		deployment.CreateOrUpdateContainer(md.Spec.Server.PodSpec, "model", func(c *v1.Container) {
 			c.ReadinessProbe = &v1.Probe{InitialDelaySeconds: 120, FailureThreshold: 5}
 		})
-		md.Spec.Server.PodSpec = &updatedpodspec
 	case repository.SourceKindOpenMMLab:
 		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)

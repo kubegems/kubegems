@@ -182,7 +182,7 @@ func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
 	if val := md.Spec.Server.PodSpec; val != nil {
 		podspec = *val
 	}
-	return CreateOrUpdateContainer(podspec, modelContainerName, func(c *v1.Container) {
+	CreateOrUpdateContainer(&podspec, modelContainerName, func(c *v1.Container) {
 		// add mounts
 		for i, mount := range md.Spec.Server.Mounts {
 			if mount.Kind == modelsv1beta1.SimpleVolumeMountKindModel {
@@ -236,24 +236,28 @@ func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
 		}
 		if md.Spec.Server.Privileged {
 			if c.SecurityContext == nil {
-				c.SecurityContext = &v1.SecurityContext{}
+				c.SecurityContext = &v1.SecurityContext{
+					RunAsUser:  pointer.Int64(0),
+					RunAsGroup: pointer.Int64(0),
+				}
 			}
 			c.SecurityContext.Privileged = pointer.Bool(true)
 		}
 	})
+
+	return podspec
 }
 
-func CreateOrUpdateContainer(pod corev1.PodSpec, conname string, oncontainer func(c *corev1.Container)) corev1.PodSpec {
+func CreateOrUpdateContainer(pod *corev1.PodSpec, conname string, oncontainer func(c *corev1.Container)) {
 	for i := range pod.Containers {
 		if pod.Containers[i].Name == conname {
 			oncontainer(&pod.Containers[i])
-			return pod
+			return
 		}
 	}
 	mainContainer := corev1.Container{Name: conname}
 	oncontainer(&mainContainer)
 	pod.Containers = append(pod.Containers, mainContainer)
-	return pod
 }
 
 func getIngressPath(ctx context.Context, cli client.Client, md *modelsv1beta1.ModelDeployment) string {
