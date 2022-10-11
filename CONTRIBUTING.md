@@ -2,10 +2,9 @@
 
 Kubegems uses GitHub to manage reviews of pull requests.
 
-* If you don't known kubegems components, see [Components](#Components)
+- If you don't known kubegems components, see [Components](#Components)
 
-* If you want to know how to run and develop in local, see [Development](#Development)
-
+- If you want to know how to run and develop in local, see [Development](#Development)
 
 ## Components
 
@@ -24,27 +23,9 @@ Run `make build-binaries`
 
 Then you can run `./bin/kubegems -h` to see how to run each of these components.
 
-### Run local
+### Debug locally
 
-By example, if you want to run `service`, you can:
-
-1. `./bin/kubegems service gencfg > config/config.yaml`
-2. Modify `config/config.yaml` yourself, for different component, config.yaml is different, you can also use args or enironment variables.
-3. `./bin/kubegems service`
-
-### Debug by vscode
-
-```json
-{
-  "name": "service",
-  "type": "go",
-  "request": "launch",
-  "mode": "debug",
-  "program": "${workspaceFolder}/cmd",
-  "cwd": "${workspaceFolder}", 
-  "args": ["service"] // may also be msgbus, worker, agent, controller, installer
-}
-```
+See [local-development.md](docs/local-development.md)
 
 ## Pull Request Checklist
 
