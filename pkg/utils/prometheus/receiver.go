@@ -105,9 +105,10 @@ func (rec *ReceiverConfig) UnmarshalJSON(b []byte) error {
 		switch proxytype {
 		case alertProxyFeishu:
 			rec.AlertProxyConfigs = append(rec.AlertProxyConfigs, &FeishuRobot{
-				Type: alertProxyFeishu,
-				URL:  cfg["url"],
-				At:   cfg["at"],
+				Type:       alertProxyFeishu,
+				URL:        cfg["url"],
+				At:         cfg["at"],
+				SignSecret: cfg["signSecret"],
 			})
 		default:
 			return fmt.Errorf("alert proxy type: %s not valid", proxytype)
@@ -290,9 +291,10 @@ func ToGemsReceiver(rec v1alpha1.Receiver, namespace, source string, sec *corev1
 			switch ptype {
 			case alertProxyFeishu:
 				ret.AlertProxyConfigs = append(ret.AlertProxyConfigs, &FeishuRobot{
-					Type: alertProxyFeishu,
-					URL:  query.Get("url"),
-					At:   query.Get("at"),
+					Type:       alertProxyFeishu,
+					URL:        query.Get("url"),
+					At:         query.Get("at"),
+					SignSecret: query.Get("signSecret"),
 				})
 			default:
 				log.Error(fmt.Errorf("alert proxy type: %s not valid", ptype), "")
