@@ -48,14 +48,15 @@ func main() {
 		panic(err)
 	}
 
+	tplGetter := models.NewPromqlTplMapperFromFile().FindPromqlTpl
 	raw := &prometheus.RawMonitorAlertResource{
 		Base: &prometheus.BaseAlertResource{
 			AMConfig: prometheus.GetBaseAlertmanagerConfig(gems.NamespaceMonitor, prometheus.DefaultAlertCRDName),
 		},
 		PrometheusRule: prometheus.GetBasePrometheusRule(gems.NamespaceMonitor, prometheus.DefaultAlertCRDName),
+		TplGetter:      tplGetter,
 	}
 
-	tplGetter := models.NewPromqlTplMapperFromFile().FindPromqlTpl
 	for i := range alerts {
 		alerts[i].Source = prometheus.DefaultAlertCRDName
 		if err := prometheus.MutateMonitorAlert(&alerts[i], tplGetter); err != nil {
