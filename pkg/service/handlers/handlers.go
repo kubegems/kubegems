@@ -46,8 +46,6 @@ const (
 	MessageError        = "err"
 	MessageForbidden    = "forbidden"
 	MessageUnauthorized = "unauthorized"
-
-	MethodList = "LIST"
 )
 
 type ResponseStruct struct {
