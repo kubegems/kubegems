@@ -8,7 +8,7 @@ spec:
   url: https://charts.kubegems.io/kubegems
   values:
     global:
-      kubegemsVersion: v1.22.0-beta.1
+      kubegemsVersion: v1.22.0-beta.2
       # choose 'registry.cn-beijing.aliyuncs.com' or 'docker.io'
       imageRegistry: docker.io
       storageClass: local-path # change me to use a different storage class
