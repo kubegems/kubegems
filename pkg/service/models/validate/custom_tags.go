@@ -36,7 +36,7 @@ func translateFn(trans ut.Translator, fe validator.FieldError) string {
 	return msg
 }
 
-func (v *Validator) registCustomTags() error {
+func (v *Validator) registCustomTranslation() error {
 	if e := v.Validator.RegisterTranslation("dbuniq", v.Translator, registerTranslator("dbuniq", "{0} 为 {1} 的 {2} 已经存在了"), translateFn); e != nil {
 		return e
 	}
@@ -50,6 +50,9 @@ func (v *Validator) registCustomTags() error {
 		return e
 	}
 	if e := v.Validator.RegisterTranslation("password", v.Translator, registerTranslator("password", "密码长度至少8位,包含大小写字母和数字以及特殊字符(.!@#$%~)"), translateFn); e != nil {
+		return e
+	}
+	if e := v.Validator.RegisterTranslation("fqdn_item", v.Translator, registerTranslator("fqdn_item", "{0} 格式不合法，仅允许小写字母开头包含小写字母和数字以及减号且长度小于33个字符的字符串"), translateFn); e != nil {
 		return e
 	}
 	return nil

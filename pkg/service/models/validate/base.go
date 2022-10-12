@@ -61,10 +61,14 @@ func NewValidator(db *gorm.DB) (*Validator, error) {
 		db:         db,
 		Translator: trans,
 	}
-	if err := v.registCustomTags(); err != nil {
+	if err := v.registCustomValidator(); err != nil {
+		return nil, err
+	}
+	if err := v.registCustomTranslation(); err != nil {
 		return nil, err
 	}
 	v.registStructValidates()
+
 	return v, nil
 }
 
@@ -76,4 +80,11 @@ func (v *Validator) registStructValidates() {
 	v.Validator.RegisterStructValidation(v.TenantUserRelStructLevelValidation, models.TenantUserRels{})
 	v.Validator.RegisterStructValidation(v.EnvironmentUserRelStructLevelValidation, models.EnvironmentUserRels{})
 	v.Validator.RegisterStructValidation(v.UserCreateStructLevelValidation, models.UserCreate{})
+}
+
+func (v *Validator) registCustomValidator() error {
+	if e := v.Validator.RegisterValidation("fqdn_item", fqdn_item); e != nil {
+		return e
+	}
+	return nil
 }
