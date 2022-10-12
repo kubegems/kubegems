@@ -16,6 +16,7 @@ package statistics
 
 import (
 	"context"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -23,19 +24,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const ResourceLimitsPrefix = "limits."
+
 type ClusterResourceStatistics struct {
 	// 集群资源的总容量，即物理资源总量
 	Capacity corev1.ResourceList `json:"capacity"`
 	// 集群资源的真实使用量
 	Used corev1.ResourceList `json:"used"`
-	// 集群资源的真实剩余量
-	Free corev1.ResourceList `json:"free"`
-	// 集群下的资源分配总量
-	Allocated corev1.ResourceList `json:"allocated"`
 	// 集群下的租户资源分配总量
 	TenantAllocated corev1.ResourceList `json:"tenantAllocated"`
-	// pod资源统计
-	PodResourceStats ClusterPodResourceStatistics `json:"podResourceStats"`
 }
 
 type ClusterWorkloadStatistics map[string]int
@@ -55,30 +52,42 @@ func GetClusterResourceStatistics(ctx context.Context, cli client.Client) Cluste
 	allused := allcapacity.DeepCopy()
 	SubResourceList(allused, allfree)
 
-	allTenantAllocated, _ := GetClusterTenantResourceQuota(ctx, cli)
+	allTenantAllocated, _ := GetClusterTenantResourceQuotaLimits(ctx, cli)
+	allTenantAllocated = FilterResourceName(allTenantAllocated, func(name corev1.ResourceName) bool {
+		return strings.HasPrefix(string(name), ResourceLimitsPrefix)
+	})
 
-	//  pos statistics
-	podresourceStatiistics, _ := GetAllPodResourceStatistics(ctx, cli)
-	podresourceStatiisticsMerged := corev1.ResourceList{}
-	for resourceName, quantity := range podresourceStatiistics.Limit {
-		podresourceStatiisticsMerged["limit."+resourceName] = quantity
-	}
-	for resourceName, quantity := range podresourceStatiistics.Request {
-		podresourceStatiisticsMerged["request."+resourceName] = quantity
-	}
+	// tenaut allocated has resource name with limit. prefix
+	// we add limit. prefix for capacity and used
+	allcapacity = AppendResourceNamePrefix(ResourceLimitsPrefix, allcapacity)
+	allused = AppendResourceNamePrefix(ResourceLimitsPrefix, allused)
 
-	statistics := ClusterResourceStatistics{
-		Capacity:         allcapacity,
-		Used:             allused,
-		Free:             allfree,
-		Allocated:        allTenantAllocated,
-		TenantAllocated:  allTenantAllocated,
-		PodResourceStats: podresourceStatiistics,
+	return ClusterResourceStatistics{
+		Capacity:        allcapacity,
+		Used:            allused,
+		TenantAllocated: allTenantAllocated,
 	}
-	return statistics
 }
 
-func GetClusterTenantResourceQuota(ctx context.Context, cli client.Client) (corev1.ResourceList, error) {
+func FilterResourceName(list corev1.ResourceList, keep func(name corev1.ResourceName) bool) corev1.ResourceList {
+	ret := corev1.ResourceList{}
+	for k, v := range list {
+		if keep(k) {
+			ret[k] = v.DeepCopy()
+		}
+	}
+	return ret
+}
+
+func AppendResourceNamePrefix(prefix string, list corev1.ResourceList) corev1.ResourceList {
+	ret := corev1.ResourceList{}
+	for k, v := range list {
+		ret[corev1.ResourceName(prefix)+k] = v.DeepCopy()
+	}
+	return ret
+}
+
+func GetClusterTenantResourceQuotaLimits(ctx context.Context, cli client.Client) (corev1.ResourceList, error) {
 	tenantResourceQuotaList := &gemsv1beta1.TenantResourceQuotaList{}
 	if err := cli.List(ctx, tenantResourceQuotaList); err != nil {
 		return nil, err
