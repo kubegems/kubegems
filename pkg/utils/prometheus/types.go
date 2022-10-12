@@ -67,7 +67,6 @@ func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerCon
 			Namespace: namespace,
 			Labels: map[string]string{
 				gems.LabelAlertmanagerConfigName: name,
-				gems.LabelAlertmanagerConfigType: AlertTypeMonitor,
 			},
 		},
 		Spec: v1alpha1.AlertmanagerConfigSpec{
