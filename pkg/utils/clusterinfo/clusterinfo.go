@@ -23,11 +23,12 @@ import (
 )
 
 const (
-	APIServerURL    = "https://kubernetes.default:443"
-	APIServerCertCN = "apiserver"
+	APIServerURL       = "https://kubernetes.default:443"
+	K8sAPIServerCertCN = "apiserver"
+	K3sAPIServerCertCN = "k3s"
 )
 
-func GetServerCertExpiredTime(serverURL string, cn string) (*time.Time, error) {
+func GetServerCertExpiredTime(serverURL string) (*time.Time, error) {
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
 	}
@@ -44,7 +45,8 @@ func GetServerCertExpiredTime(serverURL string, cn string) (*time.Time, error) {
 
 	invalidCNs := []string{}
 	for _, cert := range conn.ConnectionState().PeerCertificates {
-		if strings.Contains(cert.Subject.CommonName, cn) {
+		if strings.Contains(cert.Subject.CommonName, K8sAPIServerCertCN) ||
+			strings.Contains(cert.Subject.CommonName, K3sAPIServerCertCN) {
 			return &cert.NotAfter, nil
 		}
 		invalidCNs = append(invalidCNs, cert.Subject.CommonName)
