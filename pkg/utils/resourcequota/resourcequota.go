@@ -226,9 +226,10 @@ func SetSameRequestWithLimit(list corev1.ResourceList) {
 	for k, v := range list {
 		if index := strings.Index(string(k), "limits."); index != -1 {
 			requestsResourceName := "requests." + string(k[index+7:])
-			if val, ok := list[v1.ResourceName(requestsResourceName)]; !ok || val.IsZero() {
-				list[v1.ResourceName(requestsResourceName)] = v.DeepCopy()
-			}
+
+			// if val, ok := list[v1.ResourceName(requestsResourceName)]; !ok || val.IsZero() {
+			list[v1.ResourceName(requestsResourceName)] = v.DeepCopy()
+			// }
 		}
 	}
 }

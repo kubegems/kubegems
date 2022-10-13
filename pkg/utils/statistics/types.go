@@ -53,6 +53,12 @@ func GetClusterResourceStatistics(ctx context.Context, cli client.Client) Cluste
 	SubResourceList(allused, allfree)
 
 	allTenantAllocated, _ := GetClusterTenantResourceQuotaLimits(ctx, cli)
+
+	// back compat
+	if val, ok := allTenantAllocated["requests.storage"]; ok {
+		allTenantAllocated["limits.storage"] = val.DeepCopy()
+	}
+
 	allTenantAllocated = FilterResourceName(allTenantAllocated, func(name corev1.ResourceName) bool {
 		return strings.HasPrefix(string(name), ResourceLimitsPrefix)
 	})
