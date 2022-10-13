@@ -73,6 +73,9 @@ func (r *TenantResourceQuotaReconciler) Reconcile(ctx context.Context, req ctrl.
 		statistics.AddResourceList(used, item.Status.Used)
 		statistics.AddResourceList(hard, item.Status.Hard)
 	}
+	// limits.storage is invalid in resourcequota,so it dosen't appear in .status.used
+	// just set limits.storage same with requests.storage in oder have same behavior with other resources
+	hard, used = fixInvalidResourceName(hard), fixInvalidResourceName(used)
 
 	if !equality.Semantic.DeepEqual(rq.Status.Used, used) || !equality.Semantic.DeepEqual(rq.Status.Allocated, hard) {
 		log.Info("updateing status")
@@ -86,6 +89,13 @@ func (r *TenantResourceQuotaReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 	}
 	return ctrl.Result{}, nil
+}
+
+func fixInvalidResourceName(list corev1.ResourceList) corev1.ResourceList {
+	if v, ok := list["requests.storage"]; ok {
+		list["limits.storage"] = v.DeepCopy()
+	}
+	return list
 }
 
 func (r *TenantResourceQuotaReconciler) SetupWithManager(mgr ctrl.Manager) error {

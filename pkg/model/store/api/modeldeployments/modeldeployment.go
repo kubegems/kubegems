@@ -203,10 +203,6 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "task", Value: modeldetails.Task},
 			modelsv1beta1.Parameter{Name: "pretrained_model", Value: modeldetails.Name},
 		)
-
-		if md.Spec.Server.PodSpec == nil {
-			md.Spec.Server.PodSpec = &corev1.PodSpec{}
-		}
 	case repository.SourceKindOpenMMLab:
 		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
