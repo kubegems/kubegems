@@ -316,10 +316,7 @@ func (r *EnvironmentReconciler) handleDelete(env *gemsv1beta1.Environment, todel
 }
 
 func RemoveInvalidResourceName(list corev1.ResourceList) corev1.ResourceList {
-	for k := range list {
-		if k == "limits.storage" {
-			delete(list, k)
-		}
-	}
-	return list
+	ret := list.DeepCopy()
+	delete(ret, corev1.ResourceName("limits.storage"))
+	return ret
 }
