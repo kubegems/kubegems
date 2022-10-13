@@ -61,6 +61,9 @@ generate: add-license gen-i18n generate-installer ## Generate  WebhookConfigurat
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"
 
+	sed -i 's/^version:.*/version: $(GIT_VERSION)/g' deploy/plugins/kubegems-installer/Chart.yaml deploy/plugins/kubegems-models/Chart.yaml
+	sed -i 's/^appVersion:.*/appVersion: $(GIT_VERSION)/g' deploy/plugins/kubegems-installer/Chart.yaml deploy/plugins/kubegems-models/Chart.yaml
+
 	sed -i 's/kubegemsVersion:.*/kubegemsVersion: $(GIT_VERSION)/g' deploy/kubegems.yaml
 	sed -i 's/export KUBEGEMS_VERSION.*#/export KUBEGEMS_VERSION=$(GIT_VERSION)  #/g' README.md README_zh.md
 

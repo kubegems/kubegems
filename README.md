@@ -114,7 +114,7 @@ You can Install your k8s cluster using any of the following methods, supported k
 Choose a kubegems version from [Kubegems Release](https://github.com/kubegems/kubegems/tags):
 
 ```sh
-export KUBEGEMS_VERSION=<kubegems version>  # change to kubegems version
+export KUBEGEMS_VERSION=v1.22.0-beta.2  # change to kubegems version
 ```
 
 When your k8s cluster is ready, next you can install kubegems insatller operator on your cluster.
