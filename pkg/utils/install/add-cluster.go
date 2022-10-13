@@ -37,6 +37,7 @@ const (
 	KubeGemPluginsPath            = "plugins"
 	GlobalValuesConfigMapName     = pluginscommon.KubeGemsGlobalValuesConfigMapName
 	KubeGemsLocalPluginsNamespace = pluginscommon.KubeGemsLocalPluginsNamespace
+	KubeGemsInstallerNamespace    = "kubegems-installer"
 )
 
 type OpratorInstaller struct {
@@ -66,7 +67,7 @@ func (i OpratorInstaller) Apply(ctx context.Context, ns string, values GlobalVal
 	if err != nil {
 		return err
 	}
-	if err = CreateOrPatchInNamespace(ctx, cli, ns, installerobjects...); err != nil {
+	if err = CreateOrPatchInNamespace(ctx, cli, KubeGemsInstallerNamespace, installerobjects...); err != nil {
 		return fmt.Errorf("apply installer: %v", err)
 	}
 
