@@ -19,12 +19,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/go-logr/logr"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/application"
 	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/log"
@@ -68,10 +70,6 @@ func (h *ImageRegistrySynchronizer) SyncRegistries(ctx context.Context, environm
 			if err != nil {
 				return err
 			}
-			environment := &v1beta1.Environment{}
-			if err := cli.Get(ctx, client.ObjectKey{Name: env.EnvironmentName}, environment); err != nil {
-				return err
-			}
 			secrets := []string{}
 			// TODO: Is it necessary to update/delete secrets concurrenctly ??
 			for _, reg := range registries {
@@ -100,11 +98,17 @@ func (h *ImageRegistrySynchronizer) SyncRegistries(ctx context.Context, environm
 					secrets = append(secrets, secretName)
 				}
 			}
-
+			environment := &v1beta1.Environment{}
+			if err := cli.Get(ctx, client.ObjectKey{Name: env.EnvironmentName}, environment); err != nil {
+				return err
+			}
 			UpdateEnviromentAnnotation(environment, defaultServiceAccountName, secrets, kind == SyncKindUpsert)
-
 			// use patch
-			if err = cli.Patch(ctx, environment, client.Merge); err != nil {
+			annotationsjson, _ := json.Marshal(environment.Annotations)
+			mergecontent := fmt.Sprintf(`{"metadata":{"annotations":%s}}`, annotationsjson)
+			patch := client.RawPatch(types.MergePatchType, []byte(mergecontent))
+
+			if err = cli.Patch(ctx, environment, patch); err != nil {
 				logr.FromContextOrDiscard(ctx).Error(err, "apply environment annotations", "name", environment.Name)
 				return err
 			}
