@@ -38,8 +38,6 @@ import (
 	kjwt "kubegems.io/kubegems/pkg/utils/jwt"
 )
 
-var ()
-
 type OauthServer struct {
 	base.BaseHandler
 	manager     *manage.Manager
@@ -64,7 +62,7 @@ func NewOauthServer(opts *kjwt.Options, base base.BaseHandler) *OauthServer {
 		panic(err)
 	}
 	// generate jwt access token
-	s.manager.MapAccessGenerate(generates.NewJWTAccessGenerate("kubegems", jwtkey, jwt.SigningMethodRS256))
+	s.manager.MapAccessGenerate(generates.NewJWTAccessGenerate("", jwtkey, jwt.SigningMethodRS256))
 	// manager.MapAccessGenerate(generates.NewAccessGenerate())
 
 	s.manager.MapClientStorage(s.clientStore)
