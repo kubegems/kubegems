@@ -3,6 +3,10 @@ proxyTemplates:
   - type: feishu
     template: |
       {
+        {{ if ne .Sign "" }}
+        "timestamp": "{{ .Timestamp }}",
+        "sign": "{{ .Sign }}",
+        {{ end }}
         "msg_type": "interactive",
         "card": {
           "config": {
