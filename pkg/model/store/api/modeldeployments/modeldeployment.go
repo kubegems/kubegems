@@ -65,10 +65,6 @@ func HashModelName(modelname string) string {
 func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 
-	// nolint: gomnd
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
-
 	log := logr.FromContextOrDiscard(ctx).WithValues("method", "ListAllModelDeployments")
 	source, modelname := storemodels.DecodeSourceModelName(req)
 
@@ -83,6 +79,10 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 				return err
 			}
 			list := &modelsv1beta1.ModelDeploymentList{}
+
+			// nolint: gomnd
+			ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+			defer cancel()
 
 			if err := cli.List(ctx, list, client.MatchingLabels{
 				modelscommon.LabelModelSource:   source,
