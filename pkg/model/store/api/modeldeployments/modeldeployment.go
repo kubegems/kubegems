@@ -20,10 +20,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/go-logr/logr"
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -61,43 +64,62 @@ func HashModelName(modelname string) string {
 
 func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
+
+	// nolint: gomnd
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
 	log := logr.FromContextOrDiscard(ctx).WithValues("method", "ListAllModelDeployments")
 	source, modelname := storemodels.DecodeSourceModelName(req)
-	retlist := []ModelDeploymentOverview{}
+
+	retlist, listmu := []ModelDeploymentOverview{}, &sync.Mutex{}
+	eg := errgroup.Group{}
 	for _, cluster := range o.Clientset.Clusters() {
-		cli, err := o.Clientset.ClientOf(ctx, cluster)
-		if err != nil {
-			log.Error(err, "failed to get client for cluster", "cluster", cluster)
-			continue
-		}
-		list := &modelsv1beta1.ModelDeploymentList{}
-		if err := cli.List(ctx, list, client.MatchingLabels{
-			modelscommon.LabelModelSource:   source,
-			modelscommon.LabelModelNameHash: HashModelName(modelname),
-		}); err != nil {
-			log.Error(err, "failed to list model deployments", "cluster", cluster)
-			continue
-		}
-		for _, md := range list.Items {
-			if md.Annotations == nil {
-				md.Annotations = make(map[string]string)
+		cluster := cluster
+		eg.Go(func() error {
+			cli, err := o.Clientset.ClientOf(ctx, cluster)
+			if err != nil {
+				log.Error(err, "failed to get client for cluster", "cluster", cluster)
+				return err
+			}
+			list := &modelsv1beta1.ModelDeploymentList{}
+
+			if err := cli.List(ctx, list, client.MatchingLabels{
+				modelscommon.LabelModelSource:   source,
+				modelscommon.LabelModelNameHash: HashModelName(modelname),
+			}); err != nil {
+				log.Error(err, "failed to list model deployments", "cluster", cluster)
+				return err
 			}
 
-			appref := &AppRef{}
-			appref.FromJson(md.Annotations[application.AnnotationRef])
-			retlist = append(retlist, ModelDeploymentOverview{
-				Name:              md.Name,
-				ModelName:         md.Spec.Model.Name,
-				ModelVersion:      md.Spec.Model.Version,
-				URL:               md.Status.URL,
-				Phase:             string(md.Status.Phase),
-				Cluster:           cluster,
-				Namespace:         md.Namespace,
-				Creator:           appref.Username,
-				AppRef:            *appref,
-				CreationTimestamp: md.CreationTimestamp,
-			})
-		}
+			listmu.Lock()
+			defer listmu.Unlock()
+
+			for _, md := range list.Items {
+				if md.Annotations == nil {
+					md.Annotations = make(map[string]string)
+				}
+				appref := &AppRef{}
+				appref.FromJson(md.Annotations[application.AnnotationRef])
+				retlist = append(retlist, ModelDeploymentOverview{
+					Name:              md.Name,
+					ModelName:         md.Spec.Model.Name,
+					ModelVersion:      md.Spec.Model.Version,
+					URL:               md.Status.URL,
+					Phase:             string(md.Status.Phase),
+					Cluster:           cluster,
+					Namespace:         md.Namespace,
+					Creator:           appref.Username,
+					AppRef:            *appref,
+					CreationTimestamp: md.CreationTimestamp,
+				})
+			}
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		log.Error(err, "wait list model deployments")
 	}
 
 	listoptions := request.GetListOptions(req.Request)
