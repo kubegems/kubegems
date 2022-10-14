@@ -21,6 +21,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/go-logr/logr"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,7 +54,6 @@ func SynchronizerFor(h base.BaseHandler) *ImageRegistrySynchronizer {
 }
 
 func (h *ImageRegistrySynchronizer) SyncRegistries(ctx context.Context, environments []*models.Environment, registries []*models.Registry, kind string) error {
-
 	for _, env := range environments {
 		if env.Cluster == nil {
 			return errors.New("failed to SyncRegistries, required environments with cluster property")
@@ -101,11 +101,14 @@ func (h *ImageRegistrySynchronizer) SyncRegistries(ctx context.Context, environm
 				}
 			}
 
-			_, err = controllerutil.CreateOrUpdate(ctx, cli, environment, func() error {
-				UpdateEnviromentAnnotation(environment, defaultServiceAccountName, secrets, kind == SyncKindUpsert)
-				return nil
-			})
-			return err
+			UpdateEnviromentAnnotation(environment, defaultServiceAccountName, secrets, kind == SyncKindUpsert)
+
+			// use patch
+			if err = cli.Patch(ctx, environment, client.Merge); err != nil {
+				logr.FromContextOrDiscard(ctx).Error(err, "apply environment annotations", "name", environment.Name)
+				return err
+			}
+			return nil
 		})
 	}
 

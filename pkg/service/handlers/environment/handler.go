@@ -23,6 +23,7 @@ import (
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"github.com/gin-gonic/gin"
+	"github.com/go-logr/logr"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
@@ -279,7 +280,11 @@ func createOrUpdateEnvironment(ctx context.Context, h base.BaseHandler, clustern
 			env.Spec = spec
 			return nil
 		})
-		return err
+		if err != nil {
+			logr.FromContextOrDiscard(ctx).Error(err, "apply environment cr", "name", env.Name)
+			return err
+		}
+		return nil
 	})
 }
 
