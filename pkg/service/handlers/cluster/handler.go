@@ -137,12 +137,16 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	cli, err := h.GetAgents().ClientOf(c.Request.Context(), obj.ClusterName)
-	if err != nil {
-		log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
-	} else {
-		obj.Version = cli.APIServerVersion()
+
+	if obj.Version == "" {
+		cli, err := h.GetAgents().ClientOf(c.Request.Context(), obj.ClusterName)
+		if err != nil {
+			log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
+		} else {
+			obj.Version = cli.APIServerVersion()
+		}
 	}
+
 	handlers.OK(c, obj)
 }
 

@@ -27,6 +27,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/database"
@@ -122,14 +123,17 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	cli := newClient(*meta)
-
+	clientset, err := kubernetes.NewForConfig(meta.ServerInfo.RestConfig)
+	if err != nil {
+		return nil, err
+	}
+	cli := newClient(*meta, clientset)
 	h.clients.Store(name, cli)
 	return cli, nil
 }
 
-func (h *ClientSet) serverInfoOf(ctx context.Context, cluster *models.Cluster) (*ServerInfo, error) {
-	serverinfo := &ServerInfo{}
+func (h *ClientSet) serverInfoOf(ctx context.Context, cluster *models.Cluster) (*serverInfo, error) {
+	serverinfo := &serverInfo{}
 
 	// from origin
 	if len(cluster.KubeConfig) == 0 || cluster.AgentAddr != "" {
@@ -163,6 +167,7 @@ func (h *ClientSet) serverInfoOf(ctx context.Context, cluster *models.Cluster) (
 	}
 	serverinfo.Addr = baseaddr
 	serverinfo.CA = restconfig.TLSClientConfig.CAData
+	serverinfo.RestConfig = restconfig
 
 	// complete auth info
 	if authinfo := &serverinfo.AuthInfo; authinfo.IsEmpty() {
@@ -181,27 +186,17 @@ func (h *ClientSet) serverInfoOf(ctx context.Context, cluster *models.Cluster) (
 			authinfo.ClientKey = transportconfig.TLS.KeyData
 		}
 	}
-
-	cs, err := kubernetes.NewForConfig(restconfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "new clientset from restconfig")
-	}
-	version, err := cs.Discovery().ServerVersion()
-	if err != nil {
-		return nil, errors.Wrap(err, "get apiserver version")
-	}
-	serverinfo.Version = version.String()
 	return serverinfo, nil
 }
 
-type ServerInfo struct {
-	Addr     *url.URL `json:"addr,omitempty"` // addr with api path prefix
-	CA       []byte   `json:"ca,omitempty"`
-	AuthInfo AuthInfo `json:"authInfo,omitempty"`
-	Version  string   `json:"version"` // apiserver version
+type serverInfo struct {
+	Addr       *url.URL
+	CA         []byte
+	AuthInfo   AuthInfo
+	RestConfig *rest.Config
 }
 
-func (s *ServerInfo) TLSConfig() (*tls.Config, error) {
+func (s *serverInfo) TLSConfig() (*tls.Config, error) {
 	caCertPool, err := x509.SystemCertPool()
 	if err != nil {
 		caCertPool = x509.NewCertPool()
@@ -275,12 +270,12 @@ func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta
 	}
 
 	climeta := &ClientMeta{
-		Name:             name,
-		BaseAddr:         baseaddr,
-		APIServerAddr:    apiserveraddr,
-		APIServerVersion: serverinfo.Version,
-		TLSConfig:        tlsconfig,
-		Proxy:            proxy.Proxy,
+		Name:          name,
+		BaseAddr:      baseaddr,
+		APIServerAddr: apiserveraddr,
+		TLSConfig:     tlsconfig,
+		ServerInfo:    *serverinfo,
+		Proxy:         proxy.Proxy,
 	}
 	return climeta, nil
 }

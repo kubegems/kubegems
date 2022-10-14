@@ -23,6 +23,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
+	"k8s.io/client-go/kubernetes"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -53,7 +56,9 @@ var _ Client = &DelegateClient{}
 
 type DelegateClient struct {
 	*TypedClient
-	extend *ExtendClient
+	extend     *ExtendClient
+	kubernetes kubernetes.Interface
+	discovery  discovery.DiscoveryInterface
 }
 
 type ClientMeta struct {
@@ -62,8 +67,8 @@ type ClientMeta struct {
 	TLSConfig *tls.Config
 	Proxy     func(req *http.Request) (*url.URL, error)
 
-	APIServerAddr    *url.URL
-	APIServerVersion string
+	ServerInfo    serverInfo
+	APIServerAddr *url.URL
 }
 
 func (c *DelegateClient) Extend() *ExtendClient {
@@ -83,7 +88,11 @@ func (c *DelegateClient) APIServerAddr() url.URL {
 }
 
 func (c *DelegateClient) APIServerVersion() string {
-	return c.ClientMeta.APIServerVersion
+	version, err := c.discovery.ServerVersion()
+	if err != nil {
+		return ""
+	}
+	return version.String()
 }
 
 func (c DelegateClient) ClientCertExpireAt() *time.Time {
@@ -101,7 +110,7 @@ func (c DelegateClient) ClientCertExpireAt() *time.Time {
 	return nil
 }
 
-func newClient(meta ClientMeta) Client {
+func newClient(meta ClientMeta, kubernetes kubernetes.Interface) Client {
 	typed := &TypedClient{
 		ClientMeta: meta,
 		http: &http.Client{
@@ -123,5 +132,7 @@ func newClient(meta ClientMeta) Client {
 		extend: &ExtendClient{
 			TypedClient: typed,
 		},
+		kubernetes: kubernetes,
+		discovery:  memory.NewMemCacheClient(kubernetes.Discovery()),
 	}
 }
