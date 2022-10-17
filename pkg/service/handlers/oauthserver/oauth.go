@@ -33,6 +33,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	kmodels "kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	kjwt "kubegems.io/kubegems/pkg/utils/jwt"
@@ -128,6 +129,9 @@ func (s *OauthServer) ListToken(c *gin.Context) {
 	now := time.Now()
 	for _, v := range ret {
 		v.Expired = now.After(*v.ExpireAt)
+		if v.ExpireAt.Sub(*v.CreatedAt) == utils.MaxDuration {
+			v.ExpireAt = nil
+		}
 	}
 	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, nil))
 }
@@ -171,16 +175,6 @@ func (s *OauthServer) Token(c *gin.Context) {
 		Secret: "",
 	})
 
-	expireSeconds, _ := strconv.Atoi(c.Query("expire"))
-	// default 2 hours
-	if expireSeconds != 0 {
-		s.m.Lock()
-		defer s.m.Unlock()
-		s.manager.SetClientTokenCfg(&manage.Config{
-			AccessTokenExp: time.Duration(expireSeconds) * time.Second,
-		})
-	}
-
 	// if err := srv.HandleTokenRequest(c.Writer, c.Request); err != nil {
 	// 	handlers.NotOK(c, err)
 	// 	return
@@ -189,6 +183,12 @@ func (s *OauthServer) Token(c *gin.Context) {
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
+	}
+	expireSeconds, _ := strconv.ParseInt(c.Query("expire"), 10, 64)
+	if expireSeconds == 0 {
+		tgr.AccessTokenExp = utils.MaxDuration
+	} else {
+		tgr.AccessTokenExp = time.Duration(expireSeconds) * time.Second
 	}
 
 	ti, err := s.srv.GetAccessToken(c.Request.Context(), gt, tgr)

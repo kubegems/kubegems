@@ -38,6 +38,11 @@ var (
 	reg_chs = regexp.MustCompile(`[!\.@#$%~]+`)
 )
 
+var (
+	TimeForever               = time.Date(9893, time.December, 26, 0, 0, 0, 0, time.UTC) // 伟人8000年诞辰
+	MaxDuration time.Duration = 1<<63 - 1
+)
+
 func StrOrDef(s string, def string) string {
 	if s == "" {
 		return def
