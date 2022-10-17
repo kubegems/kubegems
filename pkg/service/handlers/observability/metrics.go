@@ -183,8 +183,8 @@ func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 func (h *ObservabilityHandler) OtelMetricsGraphs(c *gin.Context) {
 	ns := c.Param("namespace")
 	svc := c.Query("service")
-	start := c.Param("start")
-	end := c.Param("end")
+	start := c.Query("start")
+	end := c.Query("end")
 	now := time.Now().UTC()
 	if start == "" || end == "" {
 		start = now.Add(-30 * time.Minute).Format(time.RFC3339)
