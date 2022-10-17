@@ -21,6 +21,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -68,7 +69,12 @@ func (r *TenantResourceQuotaReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	used, hard := corev1.ResourceList{}, corev1.ResourceList{}
+	emptyResouces := corev1.ResourceList{}
+	for name := range rq.Spec.Hard {
+		emptyResouces[name] = resource.MustParse("0")
+	}
+
+	used, hard := emptyResouces.DeepCopy(), emptyResouces.DeepCopy()
 	for _, item := range resourceQuotaList.Items {
 		statistics.AddResourceList(used, item.Status.Used)
 		statistics.AddResourceList(hard, item.Status.Hard)
