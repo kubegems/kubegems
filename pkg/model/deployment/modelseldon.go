@@ -16,7 +16,6 @@ package deployment
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -150,9 +149,9 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 					},
 					Graph: machinelearningv1.PredictiveUnit{
 						Name:                    ModelContainerName,
-						Implementation:          implOf(md.Spec.Server.Kind),
+						Implementation:          implOfKind(md.Spec.Server.Kind),
 						Parameters:              paramsOf(md.Spec.Server.Parameters),
-						ModelURI:                modelURIWithToken(md.Spec.Model.URL, md.Spec.Model.Token),
+						ModelURI:                modelURIWithToken(md),
 						StorageInitializerImage: md.Spec.Server.StorageInitializerImage,
 					},
 					ComponentSpecs: []*machinelearningv1.SeldonPodSpec{
@@ -284,7 +283,10 @@ func (r *SeldonModelServe) getIngressClass(ctx context.Context, md *modelsv1beta
 	return "", nil
 }
 
-func implOf(name string) *machinelearningv1.PredictiveUnitImplementation {
+func implOfKind(name string) *machinelearningv1.PredictiveUnitImplementation {
+	if name == modelsv1beta1.ServerKindModelx {
+		return nil
+	}
 	implName := strings.ToUpper(strings.Replace(name, "-", "_", -1))
 	impl := machinelearningv1.PredictiveUnitImplementation(implName)
 	return &impl
@@ -299,21 +301,18 @@ func paramsOf(params []modelsv1beta1.Parameter) []machinelearningv1.Parameter {
 }
 
 func isNoEngineKind(impl string) string {
-	return strconv.FormatBool(impl == "")
+	return strconv.FormatBool(impl == "" || impl == modelsv1beta1.ServerKindModelx)
 }
 
-func modelURIWithToken(uri, token string) string {
-	if token == "" {
-		return uri
+func modelURIWithToken(md *modelsv1beta1.ModelDeployment) string {
+	if md.Spec.Server.Kind == modelsv1beta1.ServerKindModelx {
+		url := md.Spec.Model.URL + "/" + md.Spec.Model.Name + "@" + md.Spec.Model.Version
+		if token := md.Spec.Model.Token; token != "" {
+			url += "?token=" + token
+		}
+		return url
 	}
-	u, err := url.Parse(uri)
-	if err != nil {
-		return fmt.Sprintf("%s?token=%s", uri, token)
-	}
-	q := u.Query()
-	q.Set("token", token)
-	u.RawQuery = q.Encode()
-	return u.String()
+	return md.Spec.Model.URL
 }
 
 const ModelInitializerVolumeSuffix = "provision-location"

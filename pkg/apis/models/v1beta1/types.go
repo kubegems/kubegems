@@ -57,6 +57,8 @@ type ModelSpec struct {
 	Task string `json:"task"`
 }
 
+const ServerKindModelx = "MODELX_SERVER"
+
 type ServerSpec struct {
 	// +kubebuilder:validation:Optional
 	Protocol string `json:"protocol"`

@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto"
 	"encoding/hex"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -234,13 +233,12 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		)
 		md.Spec.Server.Privileged = true
 	case repository.SourceKindModelx:
+		md.Spec.Server.Kind = modelsv1beta1.ServerKindModelx
+		md.Spec.Model.URL = sourcedetails.Address
 		md.Spec.Server.Privileged = true
 		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
-		}
-		if md.Spec.Model.URL == "" {
-			md.Spec.Model.URL = fmt.Sprintf("%s/%s@%s", sourcedetails.Address, modelname, md.Spec.Model.Version)
 		}
 	}
 
