@@ -7607,6 +7607,55 @@
                     }
                 }
             },
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "更新监控面板模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "更新监控面板模板",
+                "parameters": [
+                    {
+                        "description": "模板内容",
+                        "name": "form",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.MonitorDashboardTpl"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
@@ -29685,35 +29734,12 @@
                 }
             }
         },
-        "statistics.ClusterPodResourceStatistics": {
-            "type": "object",
-            "properties": {
-                "limit": {
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
-                "request": {
-                    "$ref": "#/definitions/v1.ResourceList"
-                }
-            }
-        },
         "statistics.ClusterResourceStatistics": {
             "type": "object",
             "properties": {
-                "allocated": {
-                    "description": "集群下的资源分配总量",
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
                 "capacity": {
                     "description": "集群资源的总容量，即物理资源总量",
                     "$ref": "#/definitions/v1.ResourceList"
-                },
-                "free": {
-                    "description": "集群资源的真实剩余量",
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
-                "podResourceStats": {
-                    "description": "pod资源统计",
-                    "$ref": "#/definitions/statistics.ClusterPodResourceStatistics"
                 },
                 "tenantAllocated": {
                     "description": "集群下的租户资源分配总量",

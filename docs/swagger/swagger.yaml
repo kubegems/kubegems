@@ -5152,27 +5152,11 @@ definitions:
       username:
         type: string
     type: object
-  statistics.ClusterPodResourceStatistics:
-    properties:
-      limit:
-        $ref: '#/definitions/v1.ResourceList'
-      request:
-        $ref: '#/definitions/v1.ResourceList'
-    type: object
   statistics.ClusterResourceStatistics:
     properties:
-      allocated:
-        $ref: '#/definitions/v1.ResourceList'
-        description: 集群下的资源分配总量
       capacity:
         $ref: '#/definitions/v1.ResourceList'
         description: 集群资源的总容量，即物理资源总量
-      free:
-        $ref: '#/definitions/v1.ResourceList'
-        description: 集群资源的真实剩余量
-      podResourceStats:
-        $ref: '#/definitions/statistics.ClusterPodResourceStatistics'
-        description: pod资源统计
       tenantAllocated:
         $ref: '#/definitions/v1.ResourceList'
         description: 集群下的租户资源分配总量
@@ -21908,6 +21892,34 @@ paths:
       security:
       - JWT: []
       summary: 监控面板模板详情
+      tags:
+      - Observability
+    put:
+      consumes:
+      - application/json
+      description: 更新监控面板模板
+      parameters:
+      - description: 模板内容
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/models.MonitorDashboardTpl'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 更新监控面板模板
       tags:
       - Observability
   /v1/observability/tenant/{tenant_id}/alerts/graph:

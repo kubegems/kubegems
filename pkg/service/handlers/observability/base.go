@@ -94,6 +94,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/template/dashboard", h.ListDashboardTemplates)
 	rg.GET("/observability/template/dashboard/:name", h.GetDashboardTemplate)
 	rg.POST("/observability/template/dashboard", h.CheckIsSysADMIN, h.AddDashboardTemplates)
+	rg.PUT("/observability/template/dashboard/:name", h.CheckIsSysADMIN, h.UpdateDashboardTemplates)
 	rg.DELETE("/observability/template/dashboard/:name", h.CheckIsSysADMIN, h.DeleteDashboardTemplate)
 
 	// exporter
