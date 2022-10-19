@@ -13,8 +13,7 @@ VERSION?=$(shell echo "${GIT_VERSION}" | sed -e 's/^v//')
 
 OS?=linux
 ARCH?=amd64
-
-BIN_DIR = bin
+BIN_DIR?=bin
 
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
@@ -106,13 +105,18 @@ build-binaries: ## Build binaries.
 	echo "build for ${OS}/${ARCH}"
 	CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
-build: build-binaries plugins-cache
+build: build-binaries build-files
 
-plugins-cache: ## Build plugins-cache
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download deploy/*.yaml
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download deploy/plugins/*
-	${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins template deploy/plugins/* | \
-		${BIN_DIR}/kubegems plugins -c bin/plugins -s deploy/plugins download -
+build-files: ## Build around files
+	${BIN_DIR}/kubegems plugins -c ${BIN_DIR}/plugins -s deploy/plugins download deploy/plugins/common
+	${BIN_DIR}/kubegems plugins -c ${BIN_DIR}/plugins -s deploy/plugins download deploy/plugins/*
+	${BIN_DIR}/kubegems plugins -c ${BIN_DIR}/plugins -s deploy/plugins template deploy/plugins/* | \
+		${BIN_DIR}/kubegems plugins -c ${BIN_DIR}/plugins -s deploy/plugins download -
+	cp -rf deploy/plugins ${BIN_DIR}/
+	cp -rf deploy/*.yaml ${BIN_DIR}/plugins/
+	mkdir -p ${BIN_DIR}/config
+	cp -rf config/promql_tpl.yaml ${BIN_DIR}/config/
+	cp -rf config/dashboards/ ${BIN_DIR}/config/dashboards/
 
 CHARTS = kubegems kubegems-local kubegems-installer kubegems-models
 helm-readme: readme-generator
