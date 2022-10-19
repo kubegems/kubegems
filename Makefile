@@ -11,6 +11,9 @@ GIT_BRANCH?=$(shell git symbolic-ref --short HEAD 2>/dev/null)
 # semver version
 VERSION?=$(shell echo "${GIT_VERSION}" | sed -e 's/^v//')
 
+OS?=linux
+ARCH?=amd64
+
 BIN_DIR = bin
 
 IMAGE_REGISTRY?=docker.io
@@ -100,7 +103,8 @@ collect-i18n:
 ##@ Build
 build-binaries: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
-	CGO_ENABLED=0 go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
+	echo "build for ${OS}/${ARCH}"
+	CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
 
 build: build-binaries plugins-cache
 
@@ -120,12 +124,9 @@ helm-package: ## Build helm chart
 helm-push:
 	$(foreach var,$(CHARTS),curl -u ${HELM_USER}:${HELM_PASSWORD} --data-binary "@${BIN_DIR}/plugins/$(var)-${VERSION}.tgz" ${HELM_ADDR};)
 
-container: ## Build container image.
-	docker buildx build -t ${IMG} .
-
-push: ## Push docker image with the manager.
-	docker push ${IMG}
-
+docker: ## Build container image.
+	docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${IMG}  .
+ 
 clean:
 	- rm -rf ${BIN_DIR}
 
