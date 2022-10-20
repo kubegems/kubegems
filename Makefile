@@ -21,9 +21,7 @@ IMAGE_TAG=${GIT_VERSION}
 # Image URL to use all building/pushing image targets
 IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
 
-ifdef BUILD_TAGS
-	TAGS = -tags ${BUILD_TAGS}
-endif
+
 
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
@@ -99,15 +97,25 @@ gen-i18n:
 collect-i18n:
 	go run internal/cmd/i18n/main.go collect
 
+define go-build
+	@echo "Building ${1}/${2}"
+	@CGO_ENABLED=0 GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-$(1)-$(2) cmd/main.go
+endef
+
 ##@ Build
-build-binaries: ## Build binaries.
+build: build-files build-binaries-all
+
+build-binaries-all: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
-	echo "build for ${OS}/${ARCH}"
-	CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build ${TAGS} -o ${BIN_DIR}/kubegems -gcflags=all="-N -l" -ldflags="${ldflags}" cmd/main.go
+	$(call go-build,linux,amd64)
+	$(call go-build,linux,arm64)
 
-build: build-binaries build-files
+build-binaries:
+	$(call go-build,${OS},${ARCH})
+	- mkdir -p ${BIN_DIR}
+	@cp ${BIN_DIR}/kubegems-${OS}-${ARCH} ${BIN_DIR}/kubegems
 
-build-files: ## Build around files
+build-files: build-binaries ## Build around files
 	${BIN_DIR}/kubegems plugins -c ${BIN_DIR}/plugins -s deploy/plugins download deploy/plugins/common
 	${BIN_DIR}/kubegems plugins -c ${BIN_DIR}/plugins -s deploy/plugins download deploy/plugins/*
 	${BIN_DIR}/kubegems plugins -c ${BIN_DIR}/plugins -s deploy/plugins template deploy/plugins/* | \
