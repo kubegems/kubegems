@@ -16,6 +16,7 @@ package argo
 
 import (
 	"context"
+	"sync"
 
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient"
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/application"
@@ -23,11 +24,14 @@ import (
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/project"
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/repository"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/utils/pointer"
 )
 
 type Client struct {
+	lock      sync.Mutex
 	Ctx       context.Context
 	Options   *Options
 	ArgoCDcli apiclient.Client
@@ -44,7 +48,7 @@ func NewClient(ctx context.Context, options *Options) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{Ctx: ctx, ArgoCDcli: *apiclient, Options: options}, nil
+	return &Client{Ctx: ctx, ArgoCDcli: apiclient, Options: options}, nil
 }
 
 func (c *Client) ListArgoApp(ctx context.Context, selector labels.Selector) (*v1alpha1.ApplicationList, error) {
@@ -55,6 +59,7 @@ func (c *Client) ListArgoApp(ctx context.Context, selector labels.Selector) (*v1
 
 	list, err := cli.List(ctx, &application.ApplicationQuery{Selector: selector.String()})
 	if err != nil {
+		c.invalidCacheOnUnAuth(err)
 		return nil, err
 	}
 	return list, nil
@@ -331,4 +336,23 @@ func (c *Client) getprojectcli(ctx context.Context) (project.ProjectServiceClien
 	}()
 	c.project = projectcli
 	return projectcli, nil
+}
+
+func (c *Client) invalidCacheOnUnAuth(err error) {
+	if status.Code(err) != codes.Unauthenticated {
+		return
+	}
+	// flush cache and retry
+	apiclient, err := NewArgoCDCli(c.Options)
+	if err != nil {
+		return
+	}
+
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.ArgoCDcli = apiclient
+	c.app = nil
+	c.cluster = nil
+	c.project = nil
+	c.repo = nil
 }
