@@ -180,7 +180,8 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
+	// invalidate agent config
+	h.GetAgents().Invalidate(c, obj.ClusterName)
 	handlers.OK(c, obj)
 }
 

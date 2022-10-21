@@ -111,6 +111,11 @@ func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
 	return h.ClientOf(ctx, managerclustername)
 }
 
+// Invalidate a client of name cluster and recreate after.
+func (h *ClientSet) Invalidate(ctx context.Context, name string) {
+	h.clients.Delete(name)
+}
+
 func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 	if v, ok := h.clients.Load(name); ok {
 		if cli, ok := v.(Client); ok {
