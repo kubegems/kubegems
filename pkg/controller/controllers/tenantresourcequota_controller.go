@@ -21,6 +21,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -68,11 +69,19 @@ func (r *TenantResourceQuotaReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	used, hard := corev1.ResourceList{}, corev1.ResourceList{}
+	emptyResouces := corev1.ResourceList{}
+	for name := range rq.Spec.Hard {
+		emptyResouces[name] = resource.MustParse("0")
+	}
+
+	used, hard := emptyResouces.DeepCopy(), emptyResouces.DeepCopy()
 	for _, item := range resourceQuotaList.Items {
 		statistics.AddResourceList(used, item.Status.Used)
 		statistics.AddResourceList(hard, item.Status.Hard)
 	}
+	// limits.storage is invalid in resourcequota,so it dosen't appear in .status.used
+	// just set limits.storage same with requests.storage in oder have same behavior with other resources
+	hard, used = fixInvalidResourceName(hard), fixInvalidResourceName(used)
 
 	if !equality.Semantic.DeepEqual(rq.Status.Used, used) || !equality.Semantic.DeepEqual(rq.Status.Allocated, hard) {
 		log.Info("updateing status")
@@ -86,6 +95,13 @@ func (r *TenantResourceQuotaReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 	}
 	return ctrl.Result{}, nil
+}
+
+func fixInvalidResourceName(list corev1.ResourceList) corev1.ResourceList {
+	if v, ok := list["requests.storage"]; ok {
+		list["limits.storage"] = v.DeepCopy()
+	}
+	return list
 }
 
 func (r *TenantResourceQuotaReconciler) SetupWithManager(mgr ctrl.Manager) error {

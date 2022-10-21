@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: 1.22.0-beta.1
+appVersion: v1.22.0-beta.2
 dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami
@@ -16,8 +16,8 @@ maintainers:
 name: kubegems-installer
 sources:
   - https://kubegems.io
-version: 1.22.0-beta.1
 annotations:
   plugins.kubegems.io/is-plugin: "true"
   plugins.kubegems.io/category: core/KubeGems
   plugins.kubegems.io/install-namespace: "kubegems-installer"
+version: 0.0.0

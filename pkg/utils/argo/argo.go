@@ -27,7 +27,7 @@ import (
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 )
 
-func NewArgoCDCli(options *Options) (*argocdcli.Client, error) {
+func NewArgoCDCli(options *Options) (argocdcli.Client, error) {
 	parsedurl, err := url.Parse(options.Addr)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func NewArgoCDCli(options *Options) (*argocdcli.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &cli, nil
+	return cli, nil
 }
 
 func GetTokenFromUserPassword(addr string, username, password string) (string, error) {

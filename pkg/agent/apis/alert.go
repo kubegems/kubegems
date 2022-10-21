@@ -30,8 +30,8 @@ type AlertHandler struct {
 }
 
 // @Tags        Agent.V1
-// @Summary     检查alertmanagerconfig
-// @Description 检查alertmanagerconfig
+// @Summary     kubegems default alert webhook
+// @Description kubegems default alert webhook
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} handlers.ResponseStruct{Data=string} ""

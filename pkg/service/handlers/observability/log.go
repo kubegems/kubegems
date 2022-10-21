@@ -431,9 +431,10 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 		// check name duplicated in log alert
 		// check name duplicated
 		amconfigList := v1alpha1.AlertmanagerConfigList{}
-		if err := cli.List(ctx, &amconfigList, client.InNamespace(namespace), client.HasLabels([]string{
-			gems.LabelAlertmanagerConfigType,
-		})); err != nil {
+		if err := cli.List(ctx, &amconfigList,
+			client.InNamespace(namespace),
+			client.HasLabels([]string{gems.LabelAlertmanagerConfigName}),
+		); err != nil {
 			return err
 		}
 		if err := checkAlertName(req.Name, amconfigList.Items); err != nil {

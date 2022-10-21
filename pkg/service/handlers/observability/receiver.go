@@ -16,7 +16,6 @@ package observability
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/i18n"
@@ -24,13 +23,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
-
-func checkScope(scope string) error {
-	if scope != prometheus.AlertTypeMonitor && scope != prometheus.AlertTypeLogging {
-		return fmt.Errorf("scope must be one of logging/monitor")
-	}
-	return nil
-}
 
 // ListReceiver （日志/监控）告警接收器列表
 // @Tags        Observability
@@ -40,7 +32,6 @@ func checkScope(scope string) error {
 // @Produce     json
 // @Param       cluster   path     string                                                    true "cluster"
 // @Param       namespace path     string                                                    true "namespace"
-// @Param       scope     query    string                                                    true "接收器类型(monitor/logging)"
 // @Param       search    query    string                                                    true "search"
 // @Success     200       {object} handlers.ResponseStruct{Data=[]prometheus.ReceiverConfig} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers [get]
@@ -49,14 +40,10 @@ func (h *ObservabilityHandler) ListReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	search := c.Query("search")
-	scope := c.Query("scope")
 	ret := []prometheus.ReceiverConfig{}
+	var err error
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		err := checkScope(scope)
-		if err != nil {
-			return err
-		}
-		ret, err = cli.Extend().ListReceivers(ctx, namespace, scope, search)
+		ret, err = cli.Extend().ListReceivers(ctx, namespace, search)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -157,7 +144,6 @@ func (h *ObservabilityHandler) DeleteReceiver(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	name := c.Param("name")
-	source := c.Query("source")
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 	action := i18n.Sprintf(context.TODO(), "delete")
 	module := i18n.Sprintf(context.TODO(), "alert receiver")
@@ -169,7 +155,6 @@ func (h *ObservabilityHandler) DeleteReceiver(c *gin.Context) {
 		return cli.Extend().DeleteReceiver(ctx, prometheus.ReceiverConfig{
 			Name:      name,
 			Namespace: namespace,
-			Source:    source,
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)

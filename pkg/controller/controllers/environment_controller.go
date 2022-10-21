@@ -23,7 +23,6 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -190,90 +189,55 @@ func (r *EnvironmentReconciler) handleNamespace(env *gemsv1beta1.Environment, nl
 }
 
 func (r *EnvironmentReconciler) handleResourceQuota(env *gemsv1beta1.Environment, nlabels map[string]string, ctx context.Context, log logr.Logger) {
-	var nsrq corev1.ResourceQuota
-	nsrqkey := types.NamespacedName{
-		Namespace: env.Spec.Namespace,
-		Name:      env.Spec.ResourceQuotaName,
+	rq := &corev1.ResourceQuota{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: env.Spec.Namespace,
+			Name:      env.Spec.ResourceQuotaName,
+		},
 	}
-	if err := r.Get(ctx, nsrqkey, &nsrq); err != nil {
-		if errors.IsNotFound(err) {
-			nsrq.Name = env.Spec.ResourceQuotaName
-			nsrq.Namespace = env.Spec.Namespace
-			nsrq.Spec.Hard = env.Spec.ResourceQuota
-			controllerutil.SetControllerReference(env, &nsrq, r.Scheme)
-			nsrq.Labels = labels.Merge(nsrq.Labels, nlabels)
-			if err := r.Create(ctx, &nsrq); err != nil {
-				r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to create ResourceQuota %s: %v", env.Spec.ResourceQuotaName, err)
-				log.Info("Error create resourceQuota")
-				return
-			}
-			r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated, "Successfully create ResourceQuota %s", env.Spec.ResourceQuotaName)
-		} else {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonUnknowError, "Failed relate ResourceQuota %s to Environment %s: %v", env.Spec.ResourceQuotaName, env.Name, err)
-			log.Error(err, "Error get resourceQuota")
-			return
-		}
+	result, err := controllerutil.CreateOrUpdate(ctx, r.Client, rq, func() error {
+		controllerutil.SetControllerReference(env, rq, r.Scheme)
+		rq.Labels = labels.Merge(rq.Labels, nlabels)
+		rq.Spec.Hard = RemoveInvalidResourceName(env.Spec.ResourceQuota)
+		return nil
+	})
+	if err != nil {
+		log.Error(err, "apply resourcequota")
+		r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonUnknowError,
+			"Failed relate ResourceQuota %s to Environment %s: %v", rq.Name, env.Name, err)
+		return
 	}
-
-	var changed bool
-	if !equality.Semantic.DeepEqual(nsrq.Spec.Hard, env.Spec.ResourceQuota) {
-		nsrq.Spec.Hard = env.Spec.ResourceQuota
-		nsrq.Labels = labels.Merge(nsrq.Labels, nlabels)
-		changed = true
-	}
-	if metav1.GetControllerOf(&nsrq) == nil {
-		controllerutil.SetControllerReference(env, &nsrq, r.Scheme)
-		changed = true
-	}
-	if changed {
-		if err := r.Update(ctx, &nsrq); err != nil {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, "Failed to update ResourceQuota %s belong to Environment %s: %v", env.Spec.ResourceQuotaName, env.Name, err)
-			log.Info("Error update resourceQuota")
-		}
-		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated, "Successfully updated ResourceQuota %s to Environment %s", env.Spec.ResourceQuotaName, env.Name)
+	if result == controllerutil.OperationResultCreated {
+		log.Info("created resourcequota", "name", env.Spec.ResourceQuotaName)
+		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated,
+			"Successfully create resourcequota %s", rq.Name)
 	}
 }
 
 func (r *EnvironmentReconciler) handleLimitRange(env *gemsv1beta1.Environment, nlabels map[string]string, ctx context.Context, log logr.Logger) {
-	var lr corev1.LimitRange
-	lrkey := types.NamespacedName{
-		Namespace: env.Spec.Namespace,
-		Name:      env.Spec.LimitRageName,
+	lr := &corev1.LimitRange{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: env.Spec.Namespace,
+			Name:      env.Spec.LimitRageName,
+		},
 	}
-	if err := r.Get(ctx, lrkey, &lr); err != nil {
-		if errors.IsNotFound(err) {
-			lr.Name = env.Spec.LimitRageName
-			lr.Namespace = env.Spec.Namespace
-			lr.Labels = labels.Merge(lr.Labels, nlabels)
-			lr.Spec.Limits = env.Spec.LimitRage
-			if err := r.Create(ctx, &lr); err != nil {
-				r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to create LimitRange %s: %v", env.Spec.LimitRageName, err)
-				log.Info("Error create limitrange " + err.Error())
-				return
-			}
-			r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated, "Successfully create LimitRange %s", env.Spec.LimitRageName)
-		} else {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonUnknowError, "Failed relate LimitRange %s to Environment %s: %v", env.Spec.LimitRageName, env.Name, err)
-			log.Error(err, "Error get limitrange")
-			return
-		}
-	}
-	var changed bool
-	if !equality.Semantic.DeepEqual(lr.Spec.Limits, env.Spec.LimitRage) {
-		lr.Spec.Limits = env.Spec.LimitRage
+
+	result, err := controllerutil.CreateOrUpdate(ctx, r.Client, lr, func() error {
+		controllerutil.SetControllerReference(env, lr, r.Scheme)
 		lr.Labels = labels.Merge(lr.Labels, nlabels)
-		changed = true
+		lr.Spec.Limits = env.Spec.LimitRage
+		return nil
+	})
+	if err != nil {
+		log.Error(err, "apply limitrange")
+		r.Recorder.Eventf(env, corev1.EventTypeWarning,
+			ReasonUnknowError, "Failed relate LimitRange %s to Environment %s: %v", lr.Name, env.Name, err)
+		return
 	}
-	if metav1.GetControllerOf(&lr) == nil {
-		controllerutil.SetControllerReference(env, &lr, r.Scheme)
-		changed = true
-	}
-	if changed {
-		if err := r.Update(ctx, &lr); err != nil {
-			r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, "Failed to update LimitRange %s belong to Environment %s", env.Spec.LimitRageName, env.Name)
-			log.Info("Error update limigrange")
-		}
-		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonUpdated, "Successfully update LimitRange %s belong to Environment %s", env.Spec.LimitRageName, env.Name)
+
+	if result == controllerutil.OperationResultCreated {
+		log.Info("created limitRange", "name", env.Spec.ResourceQuotaName)
+		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonCreated, "Successfully create LimitRange %s", env.Spec.LimitRageName)
 	}
 }
 
@@ -290,19 +254,19 @@ func (r *EnvironmentReconciler) handleServiceAccount(env *gemsv1beta1.Environmen
 	}
 
 	for k := range env.Annotations {
-		if strings.HasPrefix(k, application.AnnotationImagePullSecretKeyPrefix) {
-			saName := strings.TrimPrefix(k, application.AnnotationImagePullSecretKeyPrefix)
-			if sa, ok := saMap[saName]; ok {
-				secrets, hasDiff := imagePullSecretHasDiff(sa.ImagePullSecrets, env.Annotations[k])
-				if hasDiff {
-					sa.ImagePullSecrets = secrets
-					if err := r.Client.Update(ctx, &sa); err != nil {
-						msg := fmt.Sprintf("failed to update serviceaccount %v", sa)
-						r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, msg)
-						r.Log.Error(err, msg)
-					}
-					r.Log.Info(fmt.Sprintf("success to update serviceaccount %s in namespace %s", sa.Name, sa.Namespace))
+		if !strings.HasPrefix(k, application.AnnotationImagePullSecretKeyPrefix) {
+			continue
+		}
+		if sa, ok := saMap[strings.TrimPrefix(k, application.AnnotationImagePullSecretKeyPrefix)]; ok {
+			secrets, hasDiff := imagePullSecretHasDiff(sa.ImagePullSecrets, env.Annotations[k])
+			if hasDiff {
+				sa.ImagePullSecrets = secrets
+				if err := r.Client.Update(ctx, &sa); err != nil {
+					msg := fmt.Sprintf("failed to update serviceaccount %v", sa)
+					r.Recorder.Eventf(env, corev1.EventTypeWarning, ReasonFailedUpdate, msg)
+					r.Log.Error(err, msg)
 				}
+				r.Log.Info(fmt.Sprintf("success to update serviceaccount %s in namespace %s", sa.Name, sa.Namespace))
 			}
 		}
 	}
@@ -349,4 +313,10 @@ func (r *EnvironmentReconciler) handleDelete(env *gemsv1beta1.Environment, todel
 		r.Recorder.Eventf(env, corev1.EventTypeNormal, ReasonDeleted, "Successfully to delete environment labels for namespace %s", env.Spec.Namespace)
 	}
 	return nil
+}
+
+func RemoveInvalidResourceName(list corev1.ResourceList) corev1.ResourceList {
+	ret := list.DeepCopy()
+	delete(ret, corev1.ResourceName("limits.storage"))
+	return ret
 }

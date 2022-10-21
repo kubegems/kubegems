@@ -35,16 +35,18 @@ type JWTClaims struct {
 }
 
 type Options struct {
-	Expire time.Duration `yaml:"expire" default:"24h0m0s" help:"jwt expire time"`
-	Cert   string        `yaml:"cert" default:"certs/jwt/tls.crt" help:"jwt cert file"`
-	Key    string        `yaml:"key" default:"certs/jwt/tls.key" help:"jwt key file"`
+	Expire     time.Duration `yaml:"expire" default:"24h0m0s" help:"jwt expire time"`
+	Cert       string        `yaml:"cert" default:"certs/jwt/tls.crt" help:"jwt cert file"`
+	Key        string        `yaml:"key" default:"certs/jwt/tls.key" help:"jwt key file"`
+	IssuerAddr string        `json:"issuerAddr" description:"oidc provider issuer address"`
 }
 
 func DefaultOptions() *Options {
 	return &Options{
-		Expire: time.Duration(time.Hour * 24),
-		Cert:   "certs/jwt/tls.crt",
-		Key:    "certs/jwt/tls.key",
+		Expire:     time.Duration(time.Hour * 24),
+		Cert:       "certs/jwt/tls.crt",
+		Key:        "certs/jwt/tls.key",
+		IssuerAddr: "http://kubegems-api.kubegems",
 	}
 }
 

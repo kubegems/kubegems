@@ -12,31 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package deployment
+package validate
 
 import (
-	"testing"
+	"regexp"
+
+	"github.com/go-playground/validator/v10"
 )
 
-func Test_implOf(t *testing.T) {
-	tests := []struct {
-		name    string
-		wantStr string
-	}{
-		{
-			name:    "unknown-implementation",
-			wantStr: "UNKNOWN_IMPLEMENTATION",
-		},
-		{
-			name:    "huggingface-server",
-			wantStr: "HUGGINGFACE_SERVER",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := implOfKind(tt.name); string(*got) != tt.wantStr {
-				t.Errorf("implOf() = %v, want %v", *got, tt.wantStr)
-			}
-		})
-	}
+var fqdn_item_reg = regexp.MustCompile("^[a-z][-a-z0-9]{0,32}$")
+
+var fqdn_item validator.Func = func(fl validator.FieldLevel) bool {
+	v := fl.Field().String()
+	return fqdn_item_reg.MatchString(v)
 }

@@ -908,6 +908,8 @@ definitions:
         type: string
       criticalAlertCount:
         type: integer
+      environmentID:
+        type: integer
       environmentName:
         type: string
       errorAlertCount:
@@ -937,6 +939,10 @@ definitions:
         description: 是否启用监控
         type: boolean
       namespace:
+        type: string
+      projectID:
+        type: integer
+      projectName:
         type: string
       serviceMesh:
         description: 是否启用服务网格
@@ -4920,6 +4926,9 @@ definitions:
       state:
         description: 状态
         type: string
+      tplLost:
+        description: 监控模板是否丢失
+        type: boolean
     type: object
   prometheus.PromqlGenerator:
     properties:
@@ -4964,6 +4973,9 @@ definitions:
     type: object
   prometheus.ReceiverConfig:
     properties:
+      alertProxyConfigs:
+        items: {}
+        type: array
       emailConfigs:
         items:
           $ref: '#/definitions/prometheus.EmailConfig'
@@ -4971,9 +4983,6 @@ definitions:
       name:
         type: string
       namespace:
-        type: string
-      source:
-        description: 来自哪个alertmanagerconfig
         type: string
       webhookConfigs:
         items:
@@ -5200,27 +5209,11 @@ definitions:
       username:
         type: string
     type: object
-  statistics.ClusterPodResourceStatistics:
-    properties:
-      limit:
-        $ref: '#/definitions/v1.ResourceList'
-      request:
-        $ref: '#/definitions/v1.ResourceList'
-    type: object
   statistics.ClusterResourceStatistics:
     properties:
-      allocated:
-        $ref: '#/definitions/v1.ResourceList'
-        description: 集群下的资源分配总量
       capacity:
         $ref: '#/definitions/v1.ResourceList'
         description: 集群资源的总容量，即物理资源总量
-      free:
-        $ref: '#/definitions/v1.ResourceList'
-        description: 集群资源的真实剩余量
-      podResourceStats:
-        $ref: '#/definitions/statistics.ClusterPodResourceStatistics'
-        description: pod资源统计
       tenantAllocated:
         $ref: '#/definitions/v1.ResourceList'
         description: 集群下的租户资源分配总量
@@ -17441,7 +17434,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 检查alertmanagerconfig
+      description: kubegems default alert webhook
       produces:
       - application/json
       responses:
@@ -17456,7 +17449,7 @@ paths:
               type: object
       security:
       - JWT: []
-      summary: 检查alertmanagerconfig
+      summary: kubegems default alert webhook
       tags:
       - Agent.V1
   /realtime/v2/msgbus/notify:
@@ -21462,11 +21455,6 @@ paths:
         name: namespace
         required: true
         type: string
-      - description: 接收器类型(monitor/logging)
-        in: query
-        name: scope
-        required: true
-        type: string
       - description: search
         in: query
         name: search
@@ -21956,6 +21944,34 @@ paths:
       security:
       - JWT: []
       summary: 监控面板模板详情
+      tags:
+      - Observability
+    put:
+      consumes:
+      - application/json
+      description: 更新监控面板模板
+      parameters:
+      - description: 模板内容
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/models.MonitorDashboardTpl'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 更新监控面板模板
       tags:
       - Observability
   /v1/observability/tenant/{tenant_id}/alerts/graph:
@@ -24752,11 +24768,6 @@ paths:
         name: namespace
         required: true
         type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
       - description: pod
         in: path
         name: pod
@@ -24837,6 +24848,84 @@ paths:
       security:
       - JWT: []
       summary: 进入容器交互执行命令(websocket)
+      tags:
+      - Agent.V1
+  /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file:
+    get:
+      description: 从容器下载文件
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: pod
+        in: path
+        name: pod
+        required: true
+        type: string
+      - description: container
+        in: query
+        name: container
+        required: true
+        type: string
+      - description: filename
+        in: query
+        name: filename
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ws
+          schema:
+            type: object
+      security:
+      - JWT: []
+      summary: 从容器下载文件
+      tags:
+      - Agent.V1
+  /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile:
+    post:
+      description: upload files to container
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: pod
+        in: path
+        name: pod
+        required: true
+        type: string
+      - description: container
+        in: query
+        name: container
+        required: true
+        type: string
+      - description: filename
+        in: query
+        name: filename
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ws
+          schema:
+            type: object
+      security:
+      - JWT: []
+      summary: upload files to container
       tags:
       - Agent.V1
   /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pvcs:

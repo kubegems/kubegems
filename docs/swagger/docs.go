@@ -23,7 +23,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "检查alertmanagerconfig",
+                "description": "kubegems default alert webhook",
                 "consumes": [
                     "application/json"
                 ],
@@ -33,7 +33,7 @@ const docTemplate = `{
                 "tags": [
                     "Agent.V1"
                 ],
-                "summary": "检查alertmanagerconfig",
+                "summary": "kubegems default alert webhook",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -6791,13 +6791,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "接收器类型(monitor/logging)",
-                        "name": "scope",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "search",
                         "name": "search",
                         "in": "query",
@@ -7564,6 +7557,55 @@ const docTemplate = `{
                                     "properties": {
                                         "Data": {
                                             "$ref": "#/definitions/models.MonitorDashboardTpl"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "更新监控面板模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "更新监控面板模板",
+                "parameters": [
+                    {
+                        "description": "模板内容",
+                        "name": "form",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.MonitorDashboardTpl"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
                                         }
                                     }
                                 }
@@ -10993,13 +11035,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "pod",
                         "name": "pod",
                         "in": "path",
@@ -11103,6 +11138,124 @@ const docTemplate = `{
                         "description": "default sh, choice(bash,ash,zsh)",
                         "name": "shell",
                         "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ws",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "从容器下载文件",
+                "tags": [
+                    "Agent.V1"
+                ],
+                "summary": "从容器下载文件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "pod",
+                        "name": "pod",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "container",
+                        "name": "container",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "filename",
+                        "name": "filename",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ws",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "upload files to container",
+                "tags": [
+                    "Agent.V1"
+                ],
+                "summary": "upload files to container",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "pod",
+                        "name": "pod",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "container",
+                        "name": "container",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "filename",
+                        "name": "filename",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -25599,6 +25752,9 @@ const docTemplate = `{
                 "criticalAlertCount": {
                     "type": "integer"
                 },
+                "environmentID": {
+                    "type": "integer"
+                },
                 "environmentName": {
                     "type": "string"
                 },
@@ -25640,6 +25796,12 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "namespace": {
+                    "type": "string"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "projectName": {
                     "type": "string"
                 },
                 "serviceMesh": {
@@ -29307,6 +29469,10 @@ const docTemplate = `{
                 "state": {
                     "description": "状态",
                     "type": "string"
+                },
+                "tplLost": {
+                    "description": "监控模板是否丢失",
+                    "type": "boolean"
                 }
             }
         },
@@ -29360,6 +29526,10 @@ const docTemplate = `{
         "prometheus.ReceiverConfig": {
             "type": "object",
             "properties": {
+                "alertProxyConfigs": {
+                    "type": "array",
+                    "items": {}
+                },
                 "emailConfigs": {
                     "type": "array",
                     "items": {
@@ -29370,10 +29540,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "namespace": {
-                    "type": "string"
-                },
-                "source": {
-                    "description": "来自哪个alertmanagerconfig",
                     "type": "string"
                 },
                 "webhookConfigs": {
@@ -29721,35 +29887,12 @@ const docTemplate = `{
                 }
             }
         },
-        "statistics.ClusterPodResourceStatistics": {
-            "type": "object",
-            "properties": {
-                "limit": {
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
-                "request": {
-                    "$ref": "#/definitions/v1.ResourceList"
-                }
-            }
-        },
         "statistics.ClusterResourceStatistics": {
             "type": "object",
             "properties": {
-                "allocated": {
-                    "description": "集群下的资源分配总量",
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
                 "capacity": {
                     "description": "集群资源的总容量，即物理资源总量",
                     "$ref": "#/definitions/v1.ResourceList"
-                },
-                "free": {
-                    "description": "集群资源的真实剩余量",
-                    "$ref": "#/definitions/v1.ResourceList"
-                },
-                "podResourceStats": {
-                    "description": "pod资源统计",
-                    "$ref": "#/definitions/statistics.ClusterPodResourceStatistics"
                 },
                 "tenantAllocated": {
                     "description": "集群下的租户资源分配总量",

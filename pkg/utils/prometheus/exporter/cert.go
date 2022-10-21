@@ -50,7 +50,7 @@ func (c *CertCollector) Update(ch chan<- prometheus.Metric) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	expiredAt, err := clusterinfo.GetServerCertExpiredTime(clusterinfo.APIServerURL, clusterinfo.APIServerCertCN)
+	expiredAt, err := clusterinfo.GetServerCertExpiredTime(clusterinfo.APIServerURL)
 	if err != nil {
 		return err
 	}

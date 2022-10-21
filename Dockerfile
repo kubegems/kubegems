@@ -1,7 +1,7 @@
-FROM alpine
-COPY bin/ /app/
-COPY deploy/*.yaml /app/plugins/
-COPY config/promql_tpl.yaml /app/config/
-COPY config/dashboards/ /app/config/dashboards/
+FROM --platform=${BUILDPLATFORM} alpine
+# TARGETOS TARGETARCH already set by '--platform'
+COPY bin /app
+ARG TARGETOS TARGETARCH 
+RUN ln -sf /app/kubegems-${TARGETOS}-${TARGETARCH} /app/kubegems
 WORKDIR /app
 ENTRYPOINT ["/app/kubegems"]

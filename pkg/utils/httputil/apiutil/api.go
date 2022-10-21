@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful/v3"
+	"github.com/go-logr/logr"
 	"github.com/go-openapi/spec"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
@@ -61,6 +62,9 @@ func NewRestfulAPI(prefix string, filters []restful.FilterFunction, modules []Re
 }
 
 func LogFilter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+	log := log.LogrLogger
+	req.Request = req.Request.WithContext(logr.NewContext(req.Request.Context(), log))
+
 	start := time.Now()
 	chain.ProcessFilter(req, resp)
 	duration := time.Since(start)

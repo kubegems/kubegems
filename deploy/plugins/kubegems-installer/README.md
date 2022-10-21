@@ -167,14 +167,13 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### RBAC Parameters
 
-| Name                               | Description                                                   | Value      |
-| ---------------------------------- | ------------------------------------------------------------- | ---------- |
-| `rbac.create`                      | Specifies whether RBAC resources should be created            | `true`     |
-| `rbac.useClusterAdmin`             | clusterrolbinding to cluster-admin instead create clusterrole | `true`     |
-| `rbac.createAggregateClusterRoles` | create clusterrole to binding view, edit, admin clusterrole   | `true`     |
-| `serviceAccount.create`            | Specifies whether a ServiceAccount should be created          | `true`     |
-| `serviceAccount.name`              | The name of the ServiceAccount to use.                        | `""`       |
-| `repositories`                     | Prebuilt repositories                                         | `kubegems` |
+| Name                               | Description                                                   | Value  |
+| ---------------------------------- | ------------------------------------------------------------- | ------ |
+| `rbac.create`                      | Specifies whether RBAC resources should be created            | `true` |
+| `rbac.useClusterAdmin`             | clusterrolbinding to cluster-admin instead create clusterrole | `true` |
+| `rbac.createAggregateClusterRoles` | create clusterrole to binding view, edit, admin clusterrole   | `true` |
+| `serviceAccount.create`            | Specifies whether a ServiceAccount should be created          | `true` |
+| `serviceAccount.name`              | The name of the ServiceAccount to use.                        | `""`   |
 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,

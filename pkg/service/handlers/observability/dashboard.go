@@ -226,6 +226,35 @@ func (h *ObservabilityHandler) AddDashboardTemplates(c *gin.Context) {
 	handlers.OK(c, "ok")
 }
 
+// UpdateDashboardTemplates 更新监控面板模板
+// @Tags        Observability
+// @Summary     更新监控面板模板
+// @Description 更新监控面板模板
+// @Accept      json
+// @Produce     json
+// @Param       form body     models.MonitorDashboardTpl           true "模板内容"
+// @Success     200  {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/template/dashboard/{name} [put]
+// @Security    JWT
+func (h *ObservabilityHandler) UpdateDashboardTemplates(c *gin.Context) {
+	tpl := models.MonitorDashboardTpl{}
+	if err := c.BindJSON(&tpl); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	h.SetAuditData(c, "更新", "监控面板模板", tpl.Name)
+	tplGetter := h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl
+	if err := models.CheckGraphs(tpl.Graphs, "", tplGetter); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if err := h.GetDB().Save(&tpl).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
 // DeleteDashboardTemplate 删除监控面板模板
 // @Tags        Observability
 // @Summary     删除监控面板模板

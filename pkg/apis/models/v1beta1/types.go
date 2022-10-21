@@ -52,10 +52,12 @@ type ModelSpec struct {
 	// +kubebuilder:validation:Optional
 	URL string `json:"url"`
 	// +kubebuilder:validation:Optional
-	License string `json:"license"`
+	Token string `json:"token"`
 	// +kubebuilder:validation:Optional
 	Task string `json:"task"`
 }
+
+const ServerKindModelx = "MODELX_SERVER"
 
 type ServerSpec struct {
 	// +kubebuilder:validation:Optional

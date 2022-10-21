@@ -56,13 +56,13 @@ spec:
                 type: object
               model:
                 properties:
-                  license:
-                    type: string
                   name:
                     type: string
                   source:
                     type: string
                   task:
+                    type: string
+                  token:
                     type: string
                   url:
                     type: string

@@ -18,7 +18,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	"kubegems.io/kubegems/pkg/utils/pagination"
 )
 
@@ -32,12 +31,17 @@ func getLabelSelector(c *gin.Context) labels.Selector {
 	return sel
 }
 
-func getDefaultHeader(c *gin.Context, key, defaultV string) string {
-	value := c.Request.Header.Get(key)
-	if len(value) == 0 {
-		return defaultV
+// paramFromHeaderOrQuery behind the api-server proxy, some query would set in headers, so get them from headers firstly;
+func paramFromHeaderOrQuery(c *gin.Context, key, defaultV string) string {
+	hv := c.Request.Header.Get(key)
+	if hv != "" {
+		return hv
 	}
-	return value
+	qv := c.Query(key)
+	if qv != "" {
+		return qv
+	}
+	return defaultV
 }
 
 var NewPageDataFromContext = pagination.NewPageDataFromContext
@@ -54,18 +58,4 @@ func getFieldSelector(c *gin.Context) (fields.Selector, bool) {
 		return nil, false
 	}
 	return sel, true
-}
-
-func getFieldSelectorMatch(c *gin.Context) (map[string]string, bool) {
-	ret := map[string]string{}
-	sel, exist := getFieldSelector(c)
-	if !exist {
-		return ret, false
-	}
-	for _, req := range sel.Requirements() {
-		if req.Operator == selection.Equals {
-			ret[req.Field] = req.Value
-		}
-	}
-	return ret, len(ret) > 0
 }
