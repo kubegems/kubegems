@@ -65,7 +65,7 @@ generate: add-license gen-i18n generate-installer ## Generate  WebhookConfigurat
 generate-installer: helm-package
 	helm template --namespace kubegems-installer --include-crds \
 	--set global.kubegemsVersion=$(GIT_VERSION) \
-	kubegems-installer ${BIN_DIR}/plugins/kubegems-installer-${VERSION}.tgz \
+	kubegems-installer ${BIN_DIR}/plugins/charts.kubegems.io/kubegems-installer-${VERSION}.tgz \
 	| kubectl annotate -f -  --local  -oyaml \
 	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
@@ -110,7 +110,6 @@ build-binaries:
 
 build-files: build-binaries ## Build around files
 	go run scripts/offline-plugins/main.go
-	cp -rf deploy/plugins ${BIN_DIR}/
 	cp -rf deploy/*.yaml ${BIN_DIR}/plugins/
 	mkdir -p ${BIN_DIR}/config
 	cp -rf config/promql_tpl.yaml ${BIN_DIR}/config/
