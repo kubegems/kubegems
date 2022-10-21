@@ -50,7 +50,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/receivers", h.CheckByClusterNamespace, h.CreateReceiver)
 	rg.PUT("/observability/cluster/:cluster/namespaces/:namespace/receivers/:name", h.CheckByClusterNamespace, h.UpdateReceiver)
 	rg.DELETE("/observability/cluster/:cluster/namespaces/:namespace/receivers/:name", h.CheckByClusterNamespace, h.DeleteReceiver)
-	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/receivers/:name/actions/test", h.CheckByClusterNamespace, h.TestEmail)
+	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/receivers/:name/actions/test", h.TestEmail)
 
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts", h.CheckByClusterNamespace, h.ListLoggingAlertRule)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts/:name", h.CheckByClusterNamespace, h.GetLoggingAlertRule)
@@ -94,6 +94,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/template/dashboard", h.ListDashboardTemplates)
 	rg.GET("/observability/template/dashboard/:name", h.GetDashboardTemplate)
 	rg.POST("/observability/template/dashboard", h.CheckIsSysADMIN, h.AddDashboardTemplates)
+	rg.PUT("/observability/template/dashboard/:name", h.CheckIsSysADMIN, h.UpdateDashboardTemplates)
 	rg.DELETE("/observability/template/dashboard/:name", h.CheckIsSysADMIN, h.DeleteDashboardTemplate)
 
 	// exporter

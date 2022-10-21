@@ -28,6 +28,8 @@ import (
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
+const AnnotationRequieToken = "modelx.kubegems.io/token-required"
+
 type ModelsRepository struct {
 	Collection *mongo.Collection
 }
@@ -164,6 +166,7 @@ func (m *ModelsRepository) List(ctx context.Context, opts ModelListOptions) ([]M
 		"updated_at":       1,
 		"lastModified":     1,
 		"enabled":          1,
+		"annotations":      1,
 	}
 
 	pipline := []bson.M{
@@ -236,6 +239,7 @@ func (m *ModelsRepository) Update(ctx context.Context, model *Model) error {
 				"recommentcontent": model.RecommentContent,
 				"tags":             model.Tags,
 				"enabled":          model.Enabled,
+				"annotations":      model.Annotations,
 			},
 		},
 	)

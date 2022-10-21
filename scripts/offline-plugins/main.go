@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -38,6 +39,7 @@ func main() {
 	// download latest charts
 	if err := DownloadLatestCharts(ctx, kubegemsrepo, "bin/plugins", "latest"); err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
 	}
 }
 

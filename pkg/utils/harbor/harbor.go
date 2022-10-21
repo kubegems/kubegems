@@ -158,7 +158,7 @@ func (c *Client) ListArtifact(ctx context.Context, image string, options GetArti
 	queries.Set("with_signature", strconv.FormatBool(options.WithSignature))
 	queries.Set("with_immutable_status", strconv.FormatBool(options.WithImmutableStatus))
 	rawquery := queries.Encode()
-	path := fmt.Sprintf("/projects/%s/repositories/%s/artifacts?%s", project, repository, rawquery)
+	path := fmt.Sprintf("/projects/%s/repositories/%s/artifacts?%s", project, url.PathEscape(repository), rawquery)
 	ret := []Artifact{}
 	if err := c.doRequest(ctx, http.MethodGet, path, nil, &ret); err != nil {
 		return nil, err
@@ -430,7 +430,7 @@ func ParseImag(image string) (domain, path, name, tag string, err error) {
 	fullpath := dockerreference.Path(named)
 	const two = 2
 
-	i := strings.LastIndex(fullpath, "/")
+	i := strings.Index(fullpath, "/")
 	if i != -1 {
 		path, name = fullpath[:i], fullpath[i+1:]
 	} else {

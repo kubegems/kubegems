@@ -18,16 +18,19 @@ import (
 	"context"
 	"crypto"
 	"encoding/hex"
-	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/go-logr/logr"
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/kubegems/pkg/apis/application"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
@@ -60,43 +63,62 @@ func HashModelName(modelname string) string {
 
 func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
+
 	log := logr.FromContextOrDiscard(ctx).WithValues("method", "ListAllModelDeployments")
 	source, modelname := storemodels.DecodeSourceModelName(req)
-	retlist := []ModelDeploymentOverview{}
+
+	retlist, listmu := []ModelDeploymentOverview{}, &sync.Mutex{}
+	eg := errgroup.Group{}
 	for _, cluster := range o.Clientset.Clusters() {
-		cli, err := o.Clientset.ClientOf(ctx, cluster)
-		if err != nil {
-			log.Error(err, "failed to get client for cluster", "cluster", cluster)
-			continue
-		}
-		list := &modelsv1beta1.ModelDeploymentList{}
-		if err := cli.List(ctx, list, client.MatchingLabels{
-			modelscommon.LabelModelSource:   source,
-			modelscommon.LabelModelNameHash: HashModelName(modelname),
-		}); err != nil {
-			log.Error(err, "failed to list model deployments", "cluster", cluster)
-			continue
-		}
-		for _, md := range list.Items {
-			if md.Annotations == nil {
-				md.Annotations = make(map[string]string)
+		cluster := cluster
+		eg.Go(func() error {
+			cli, err := o.Clientset.ClientOf(ctx, cluster)
+			if err != nil {
+				log.Error(err, "failed to get client for cluster", "cluster", cluster)
+				return err
+			}
+			list := &modelsv1beta1.ModelDeploymentList{}
+
+			// nolint: gomnd
+			ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+			defer cancel()
+
+			if err := cli.List(ctx, list, client.MatchingLabels{
+				modelscommon.LabelModelSource:   source,
+				modelscommon.LabelModelNameHash: HashModelName(modelname),
+			}); err != nil {
+				log.Error(err, "failed to list model deployments", "cluster", cluster)
+				return err
 			}
 
-			appref := &AppRef{}
-			appref.FromJson(md.Annotations[application.AnnotationRef])
-			retlist = append(retlist, ModelDeploymentOverview{
-				Name:              md.Name,
-				ModelName:         md.Spec.Model.Name,
-				ModelVersion:      md.Spec.Model.Version,
-				URL:               md.Status.URL,
-				Phase:             string(md.Status.Phase),
-				Cluster:           cluster,
-				Namespace:         md.Namespace,
-				Creator:           appref.Username,
-				AppRef:            *appref,
-				CreationTimestamp: md.CreationTimestamp,
-			})
-		}
+			listmu.Lock()
+			defer listmu.Unlock()
+
+			for _, md := range list.Items {
+				if md.Annotations == nil {
+					md.Annotations = make(map[string]string)
+				}
+				appref := &AppRef{}
+				appref.FromJson(md.Annotations[application.AnnotationRef])
+				retlist = append(retlist, ModelDeploymentOverview{
+					Name:              md.Name,
+					ModelName:         md.Spec.Model.Name,
+					ModelVersion:      md.Spec.Model.Version,
+					URL:               md.Status.URL,
+					Phase:             string(md.Status.Phase),
+					Cluster:           cluster,
+					Namespace:         md.Namespace,
+					Creator:           appref.Username,
+					AppRef:            *appref,
+					CreationTimestamp: md.CreationTimestamp,
+				})
+			}
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		log.Error(err, "wait list model deployments")
 	}
 
 	listoptions := request.GetListOptions(req.Request)
@@ -202,15 +224,6 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "task", Value: modeldetails.Task},
 			modelsv1beta1.Parameter{Name: "pretrained_model", Value: modeldetails.Name},
 		)
-
-		if md.Spec.Server.PodSpec == nil {
-			md.Spec.Server.PodSpec = &corev1.PodSpec{}
-		}
-		// nolint: gomnd
-		updatedpodspec := deployment.CreateOrUpdateContainer(*md.Spec.Server.PodSpec, "model", func(c *v1.Container) {
-			c.ReadinessProbe = &v1.Probe{InitialDelaySeconds: 120, FailureThreshold: 5}
-		})
-		md.Spec.Server.PodSpec = &updatedpodspec
 	case repository.SourceKindOpenMMLab:
 		md.Spec.Server.Kind = modelsv1beta1.PrepackOpenMMLabName
 		md.Spec.Server.Protocol = string(machinelearningv1.ProtocolV2)
@@ -218,18 +231,18 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "pkg", Value: modeldetails.Framework},
 			modelsv1beta1.Parameter{Name: "model", Value: modeldetails.Name},
 		)
-
 		md.Spec.Server.Privileged = true
 	case repository.SourceKindModelx:
+		md.Spec.Server.Kind = modelsv1beta1.ServerKindModelx
+		md.Spec.Model.URL = sourcedetails.Address
 		md.Spec.Server.Privileged = true
 		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
 		}
-		if md.Spec.Model.URL == "" {
-			md.Spec.Model.URL = fmt.Sprintf("%s/%s@%s", sourcedetails.Address, modelname, md.Spec.Model.Version)
-		}
 	}
+
+	completeProbes(md)
 
 	// resource request
 	if len(md.Spec.Server.Resources.Requests) == 0 {
@@ -240,7 +253,52 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 
 		md.Spec.Server.Resources.Requests = requests
 	}
+	removeEmptyResource(md.Spec.Server.Resources.Requests)
+	removeEmptyResource(md.Spec.Server.Resources.Limits)
 	return nil
+}
+
+func removeEmptyResource(list corev1.ResourceList) {
+	for k, v := range list {
+		if v.IsZero() {
+			delete(list, k)
+		}
+	}
+}
+
+func completeProbes(md *modelsv1beta1.ModelDeployment) {
+	if len(md.Spec.Server.Ports) == 0 {
+		return
+	}
+	md.Spec.Server.PodSpec = deployment.CreateOrUpdateContainer(md.Spec.Server.PodSpec,
+		deployment.ModelContainerName,
+		func(c *v1.Container, _ *v1.PodSpec) {
+			probehandler := v1.ProbeHandler{
+				TCPSocket: &v1.TCPSocketAction{
+					Port: detectMainPort(append(md.Spec.Server.Ports, c.Ports...)),
+				},
+			}
+			if c.ReadinessProbe == nil {
+				// nolint: gomnd
+				c.ReadinessProbe = &v1.Probe{
+					ProbeHandler:        probehandler,
+					InitialDelaySeconds: 180, // 3min
+					PeriodSeconds:       30,  // 0.5 * 20 =10min
+					FailureThreshold:    20,
+				}
+			}
+			if c.LivenessProbe == nil {
+				c.LivenessProbe = &v1.Probe{ProbeHandler: probehandler}
+			}
+		})
+}
+
+func detectMainPort(ports []v1.ContainerPort) intstr.IntOrString {
+	port := ports[0]
+	if port.Name != "" {
+		return intstr.FromString(port.Name)
+	}
+	return intstr.FromInt(int(port.ContainerPort))
 }
 
 func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *restful.Response) {

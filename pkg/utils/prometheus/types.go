@@ -32,8 +32,7 @@ const (
 
 const (
 	// prometheusrule and alertmanagerconfigname
-	MonitorAlertCRDName = "kubegems-default-monitor-alert-rule"
-	LoggingAlertCRDName = "kubegems-default-logging-alert-rule"
+	DefaultAlertCRDName = "kubegems-default-monitor-alert-rule"
 )
 
 type RealTimeAlertRule struct {
@@ -68,13 +67,7 @@ func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerCon
 			Namespace: namespace,
 			Labels: map[string]string{
 				gems.LabelAlertmanagerConfigName: name,
-				gems.LabelAlertmanagerConfigType: func() string {
-					if name == LoggingAlertCRDName {
-						return AlertTypeLogging
-					} else {
-						return AlertTypeMonitor
-					}
-				}(),
+				gems.LabelAlertmanagerConfigType: AlertTypeMonitor,
 			},
 		},
 		Spec: v1alpha1.AlertmanagerConfigSpec{

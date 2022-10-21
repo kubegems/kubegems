@@ -25,12 +25,13 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
 )
 
 var (
-	forever = time.Date(9893, time.December, 26, 0, 0, 0, 0, time.UTC)
+	silenceCommentPrefix = "fingerprint-"
 )
 
 // AlertHistory 告警黑名单
@@ -77,7 +78,7 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 	// 使用map避免循环查询数据库
 	tplGetter := h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl
 	for i := range ret {
-		if ret[i].SilenceEndsAt.Equal(forever) {
+		if ret[i].SilenceEndsAt.Equal(utils.TimeForever) {
 			ret[i].SilenceEndsAt = nil
 		}
 		ret[i].LabelMap = make(map[string]string)
@@ -204,7 +205,7 @@ func (h *AlertsHandler) withBlackListReq(c *gin.Context, f func(req models.Alert
 		req.SilenceStartsAt = &now
 	}
 	if req.SilenceEndsAt == nil {
-		req.SilenceEndsAt = &forever
+		req.SilenceEndsAt = &utils.TimeForever
 	}
 	return f(req)
 }

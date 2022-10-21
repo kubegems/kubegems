@@ -26,13 +26,11 @@ import (
 )
 
 var Upgrader = websocket.Upgrader{
-	// 允许所有CORS跨域请求
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
 }
 
-// websocket消息
 type WsMessage struct {
 	MessageType int
 	Data        []byte

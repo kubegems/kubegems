@@ -16,17 +16,20 @@ package prometheus
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/banzaicloud/operator-tools/pkg/utils"
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/log"
 )
 
 var (
@@ -45,6 +48,8 @@ var (
 			},
 		},
 	}
+
+	AlertProxyReceiverHost = fmt.Sprintf("alertproxy.%s:9094", gems.NamespaceMonitor)
 
 	NullReceiverName = "null"
 	NullReceiver     = v1alpha1.Receiver{Name: NullReceiverName}
@@ -68,11 +73,90 @@ type WebhookConfig struct {
 }
 
 type ReceiverConfig struct {
-	Name           string          `json:"name"`
-	Namespace      string          `json:"namespace"`
-	EmailConfigs   []EmailConfig   `json:"emailConfigs"`
-	WebhookConfigs []WebhookConfig `json:"webhookConfigs"`
-	Source         string          `json:"source"` // 来自哪个alertmanagerconfig
+	Name              string          `json:"name"`
+	Namespace         string          `json:"namespace"`
+	EmailConfigs      []EmailConfig   `json:"emailConfigs"`
+	WebhookConfigs    []WebhookConfig `json:"webhookConfigs"`
+	AlertProxyConfigs []ProxyConfig   `json:"alertProxyConfigs"`
+}
+
+const (
+	alertProxyFeishu = "feishu"
+)
+
+func (rec *ReceiverConfig) UnmarshalJSON(b []byte) error {
+	tmp := struct {
+		Name              string              `json:"name"`
+		Namespace         string              `json:"namespace"`
+		EmailConfigs      []EmailConfig       `json:"emailConfigs"`
+		WebhookConfigs    []WebhookConfig     `json:"webhookConfigs"`
+		AlertProxyConfigs []map[string]string `json:"alertProxyConfigs"`
+	}{}
+	if err := json.Unmarshal(b, &tmp); err != nil {
+		return err
+	}
+
+	rec.Name = tmp.Name
+	rec.Namespace = tmp.Namespace
+	rec.EmailConfigs = tmp.EmailConfigs
+	rec.WebhookConfigs = tmp.WebhookConfigs
+	for _, cfg := range tmp.AlertProxyConfigs {
+		proxytype := cfg["type"]
+		switch proxytype {
+		case alertProxyFeishu:
+			rec.AlertProxyConfigs = append(rec.AlertProxyConfigs, &FeishuRobot{
+				Type:       alertProxyFeishu,
+				URL:        cfg["url"],
+				At:         cfg["at"],
+				SignSecret: cfg["signSecret"],
+			})
+		default:
+			return fmt.Errorf("alert proxy type: %s not valid", proxytype)
+		}
+	}
+	return nil
+}
+
+type ProxyConfig interface {
+	ProxyURL() *string
+}
+
+// feishu robot
+type FeishuRobot struct {
+	Type       string `json:"type"`
+	URL        string `json:"url"`        // feishu robot webhook url
+	At         string `json:"at"`         // 要@的用户id，所有人则是 all
+	SignSecret string `json:"signSecret"` // 签名校验key
+}
+
+func (f *FeishuRobot) ProxyURL() *string {
+	u := url.Values{}
+	u.Add("type", alertProxyFeishu)
+	u.Add("url", f.URL)
+	u.Add("at", f.At)
+	u.Add("signSecret", f.SignSecret)
+	ret := fmt.Sprintf("http://%s?%s", AlertProxyReceiverHost, u.Encode())
+	return &ret
+}
+
+// aliyun phone
+type AliyunPhoneProxyConfig struct {
+	Type             string `json:"type"`
+	AccessKey        string `json:"accessKey"`
+	AccessSecret     string `json:"accessSecret"`
+	CalledShowNumber string `json:"calledShowNumber"`
+	TtsCode          string `json:"ttsCode"`
+	Phone            string `json:"phone"`
+}
+
+// aliyun message
+type AliyunMessageProxyConfig struct {
+	Type             string `json:"type"`
+	AccessKey        string `json:"accessKey"`
+	AccessSecret     string `json:"accessSecret"`
+	CalledShowNumber string `json:"calledShowNumber"`
+	TtsCode          string `json:"ttsCode"`
+	Phone            string `json:"phone"`
 }
 
 func (rec *ReceiverConfig) Precheck() error {
@@ -83,9 +167,6 @@ func (rec *ReceiverConfig) Precheck() error {
 	}
 	if rec.Name == DefaultReceiverName {
 		return fmt.Errorf("不能修改默认接收器")
-	}
-	if rec.Source == "" {
-		return fmt.Errorf("receiver source cant't be null")
 	}
 	return nil
 }
@@ -131,9 +212,6 @@ func ModifyReceiver(ctx context.Context, aconfig *v1alpha1.AlertmanagerConfig, r
 	case Delete:
 		if receiver.Name == DefaultReceiverName {
 			return fmt.Errorf("不能删除默认接收器")
-		}
-		if isReceiverInUse(aconfig.Spec.Route, *receiver) {
-			return fmt.Errorf("%s is being used, can't delete", receiver.Name)
 		}
 		if index == -1 {
 			return fmt.Errorf("receiver %s not exist", receiver.Name)
@@ -187,7 +265,6 @@ func ToGemsReceiver(rec v1alpha1.Receiver, namespace, source string, sec *corev1
 	ret := ReceiverConfig{
 		Name:      rec.Name,
 		Namespace: namespace,
-		Source:    source,
 	}
 
 	if sec != nil {
@@ -203,9 +280,30 @@ func ToGemsReceiver(rec v1alpha1.Receiver, namespace, source string, sec *corev1
 	}
 
 	for _, v := range rec.WebhookConfigs {
-		ret.WebhookConfigs = append(ret.WebhookConfigs, WebhookConfig{
-			URL: *v.URL,
-		})
+		u, err := url.Parse(*v.URL)
+		if err != nil {
+			log.Error(err, "webhook receiver not valid", "url", *v.URL)
+			continue
+		}
+		if u.Host == AlertProxyReceiverHost {
+			query := u.Query()
+			ptype := query.Get("type")
+			switch ptype {
+			case alertProxyFeishu:
+				ret.AlertProxyConfigs = append(ret.AlertProxyConfigs, &FeishuRobot{
+					Type:       alertProxyFeishu,
+					URL:        query.Get("url"),
+					At:         query.Get("at"),
+					SignSecret: query.Get("signSecret"),
+				})
+			default:
+				log.Error(fmt.Errorf("alert proxy type: %s not valid", ptype), "")
+			}
+		} else {
+			ret.WebhookConfigs = append(ret.WebhookConfigs, WebhookConfig{
+				URL: *v.URL,
+			})
+		}
 	}
 	return ret
 }
@@ -236,10 +334,16 @@ func ToAlertmanagerReceiver(rec ReceiverConfig) v1alpha1.Receiver {
 			URL: &rec.WebhookConfigs[i].URL,
 		})
 	}
+	for _, v := range rec.AlertProxyConfigs {
+		ret.WebhookConfigs = append(ret.WebhookConfigs, v1alpha1.WebhookConfig{
+			URL:          v.ProxyURL(),
+			SendResolved: utils.BoolPointer(false), // do not send resolved
+		})
+	}
 	return ret
 }
 
-func isReceiverInUse(route *v1alpha1.Route, receiver v1alpha1.Receiver) bool {
+func IsReceiverInUse(route *v1alpha1.Route, receiver v1alpha1.Receiver) bool {
 	if route.Receiver == receiver.Name {
 		return true
 	}
@@ -248,7 +352,7 @@ func isReceiverInUse(route *v1alpha1.Route, receiver v1alpha1.Receiver) bool {
 		return false
 	}
 	for _, r := range children {
-		if isReceiverInUse(&r, receiver) {
+		if IsReceiverInUse(&r, receiver) {
 			return true
 		}
 	}

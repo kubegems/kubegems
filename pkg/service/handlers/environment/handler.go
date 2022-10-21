@@ -23,6 +23,7 @@ import (
 
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"github.com/gin-gonic/gin"
+	"github.com/go-logr/logr"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
@@ -282,7 +283,11 @@ func createOrUpdateEnvironment(ctx context.Context, h base.BaseHandler, clustern
 			env.Spec = spec
 			return nil
 		})
-		return err
+		if err != nil {
+			logr.FromContextOrDiscard(ctx).Error(err, "apply environment cr", "name", env.Name)
+			return err
+		}
+		return nil
 	})
 }
 
@@ -655,6 +660,9 @@ func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 }
 
 type EnvironmentObservabilityRet struct {
+	ProjectID       uint   `json:"projectID"`
+	ProjectName     string `json:"projectName"`
+	EnvironmentID   uint   `json:"environmentID"`
 	EnvironmentName string `json:"environmentName"`
 	ClusterName     string `json:"clusterName"`
 	Namespace       string `json:"namespace"`
@@ -698,7 +706,7 @@ type EnvironmentObservabilityRet struct {
 // @Security    JWT
 func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	env := models.Environment{}
-	if err := h.GetDB().Preload("Cluster").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
+	if err := h.GetDB().Preload("Cluster").Preload("Project").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -706,7 +714,10 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	dur := c.DefaultQuery("duration", "1h")
 	ctx := c.Request.Context()
 	ret := EnvironmentObservabilityRet{
+		EnvironmentID:   env.ID,
 		EnvironmentName: env.EnvironmentName,
+		ProjectID:       env.ProjectID,
+		ProjectName:     env.Project.ProjectName,
 		ClusterName:     env.Cluster.ClusterName,
 		Namespace:       env.Namespace,
 	}

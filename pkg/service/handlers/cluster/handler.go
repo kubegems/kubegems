@@ -139,12 +139,16 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	cli, err := h.GetAgents().ClientOf(c.Request.Context(), obj.ClusterName)
-	if err != nil {
-		log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
-	} else {
-		obj.Version = cli.APIServerVersion()
+
+	if obj.Version == "" {
+		cli, err := h.GetAgents().ClientOf(c.Request.Context(), obj.ClusterName)
+		if err != nil {
+			log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
+		} else {
+			obj.Version = cli.APIServerVersion()
+		}
 	}
+
 	handlers.OK(c, obj)
 }
 
@@ -180,7 +184,8 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
+	// invalidate agent config
+	h.GetAgents().Invalidate(c, obj.ClusterName)
 	handlers.OK(c, obj)
 }
 
@@ -638,19 +643,5 @@ func (h *ClusterHandler) batchWithTimeout(ctx *gin.Context, clusters []*models.C
 			return nil
 		}(idx, cluster.ClusterName)
 	}
-	waitTimeout(&wg, timeout)
-}
-
-func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
-	c := make(chan struct{})
-	go func() {
-		defer close(c)
-		wg.Wait()
-	}()
-	select {
-	case <-c:
-		return false
-	case <-time.After(timeout):
-		return true
-	}
+	utils.WaitGroupWithTimeout(&wg, timeout)
 }

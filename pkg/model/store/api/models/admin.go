@@ -206,6 +206,15 @@ func (m *ModelsAPI) AdminListSelector(req *restful.Request, resp *restful.Respon
 	response.OK(resp, selector)
 }
 
+func (m *ModelsAPI) AdminDeleteModel(req *restful.Request, resp *restful.Response) {
+	source, name := DecodeSourceModelName(req)
+	if err := m.ModelRepository.Delete(req.Request.Context(), source, name); err != nil {
+		response.BadRequest(resp, err.Error())
+		return
+	}
+	response.OK(resp, "ok")
+}
+
 // nolint: funlen
 func (m *ModelsAPI) registerAdminRoute() *route.Group {
 	return route.
@@ -269,6 +278,9 @@ func (m *ModelsAPI) registerAdminRoute() *route.Group {
 					route.PUT("/{model}").To(m.AdminUpdateModel).Doc("update model").Parameters(
 						route.PathParameter("model", "model name"),
 						route.BodyParameter("body", SimpleModel{}),
+					),
+					route.DELETE("/{model}").To(m.AdminDeleteModel).Doc("delete model").Parameters(
+						route.PathParameter("model", "model name"),
 					),
 				),
 		)

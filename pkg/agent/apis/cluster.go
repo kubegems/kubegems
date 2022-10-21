@@ -55,7 +55,7 @@ func (h *ClusterHandler) APIResources(c *gin.Context) {
 			OK(c, resources)
 			return
 		} else {
-			NotOK(c, err)
+			OK(c, err)
 			return
 		}
 	}

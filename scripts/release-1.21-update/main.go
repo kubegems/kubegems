@@ -80,9 +80,8 @@ func updateAMConfig(cli client.Client) {
 			},
 		}
 
-		v.Name = prometheus.MonitorAlertCRDName
+		v.Name = prometheus.DefaultAlertCRDName
 		v.Labels = map[string]string{
-			gems.LabelAlertmanagerConfigType: "monitor",
 			gems.LabelAlertmanagerConfigName: v.Name,
 		}
 
@@ -126,7 +125,7 @@ func updatepromrules(cli client.Client) {
 				Name:      v.Name,
 			},
 		}
-		v.Name = prometheus.MonitorAlertCRDName
+		v.Name = prometheus.DefaultAlertCRDName
 		v.Labels = map[string]string{
 			gems.LabelPrometheusRuleType: "monitor",
 			gems.LabelPrometheusRuleName: v.Name,

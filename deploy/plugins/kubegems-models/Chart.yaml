@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: 1.21.0
+appVersion: v1.22.0-beta.2
 dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami
@@ -9,6 +9,7 @@ dependencies:
   - name: mongodb
     repository: https://charts.bitnami.com/bitnami
     version: 12.1.23
+    condition: store.enabled
     condition: store.enabled
 description: KubeGems 模型商店.
 home: kubegems.io
@@ -20,7 +21,7 @@ maintainers:
 name: kubegems-models
 sources:
   - https://kubegems.io
-version: 1.21.0
+version: 0.0.0
 annotations:
   plugins.kubegems.io/is-plugin: "true"
   plugins.kubegems.io/install-namespace: "kubegems"

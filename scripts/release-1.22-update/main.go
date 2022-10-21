@@ -18,11 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
 
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
+
 	mv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -57,6 +61,7 @@ var (
 	nginxAnnos     = make(map[string]NginxAnno)
 	nginxAnnosPath = "scripts/release-1.22-update/nginx-anno.yaml"
 	tgsPath        = "scripts/release-1.22-update/tg.yaml"
+	logAmcfgPath   = "scripts/release-1.22-update/log-amcfg.yaml"
 )
 
 func main() {
@@ -92,9 +97,10 @@ func main() {
 		panic(err)
 	}
 	// getAnno(cli)
-	updateAnno(cli)
-	updatePromrule(cli)
-	updateGateway(cli)
+	// updateAnno(cli)
+	// updatePromrule(cli)
+	// updateGateway(cli)
+	mergeLogMonitorReceiver(cli)
 }
 
 // alert manager config's default receiver
@@ -237,4 +243,59 @@ func updateGateway(cli client.Client) {
 			panic(err)
 		}
 	}
+}
+
+func mergeLogMonitorReceiver(cli client.Client) {
+	ctx := context.TODO()
+	amConfigs := v1alpha1.AlertmanagerConfigList{}
+	if err := cli.List(ctx, &amConfigs, client.InNamespace(v1.NamespaceAll), client.MatchingLabels(map[string]string{
+		gems.LabelAlertmanagerConfigName: "kubegems-default-logging-alert-rule",
+	})); err != nil {
+		panic(err)
+	}
+
+	for _, v := range amConfigs.Items {
+		monitorAMCfg, err := getOrCreateAlertmanagerConfig(cli, ctx, v.Namespace, prometheus.DefaultAlertCRDName)
+		if err != nil {
+			panic(err)
+		}
+		monRecMap := map[string]v1alpha1.Receiver{}
+		for _, v := range monitorAMCfg.Spec.Receivers {
+			monRecMap[v.Name] = v
+		}
+		for _, logRec := range v.Spec.Receivers {
+			if _, ok := monRecMap[logRec.Name]; !ok {
+				monitorAMCfg.Spec.Receivers = append(monitorAMCfg.Spec.Receivers, logRec)
+				log.Printf("namespace %s append receiver %s", v.Namespace, logRec.Name)
+			}
+		}
+		for _, route := range v.Spec.Route.Routes {
+			monitorAMCfg.Spec.Route.Routes = append(monitorAMCfg.Spec.Route.Routes, route)
+			log.Printf("namespace %s append route %s", v.Namespace, string(route.String()))
+		}
+
+		if err := cli.Update(ctx, monitorAMCfg); err != nil {
+			panic(err)
+		}
+		log.Printf("namespace %s merge finished", v.Namespace)
+		if err := cli.Delete(ctx, v); err != nil {
+			panic(err)
+		}
+	}
+	bts, _ := yaml.Marshal(amConfigs)
+	os.WriteFile(logAmcfgPath, bts, os.ModeAppend)
+}
+
+func getOrCreateAlertmanagerConfig(cli client.Client, ctx context.Context, namespace, name string) (*v1alpha1.AlertmanagerConfig, error) {
+	aconfig := &v1alpha1.AlertmanagerConfig{}
+	err := cli.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, aconfig)
+	if kerrors.IsNotFound(err) {
+		// 初始化
+		aconfig = prometheus.GetBaseAlertmanagerConfig(namespace, name)
+		if err := cli.Create(ctx, aconfig); err != nil {
+			return nil, err
+		}
+		return aconfig, nil
+	}
+	return aconfig, err
 }

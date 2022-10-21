@@ -33,7 +33,7 @@
 
 > English | [中文](README_zh.md)
 
-[KubeGems](https://kubegems.io) is an open source, enterprise-class multi-tenant container cloud platform. Built around a cloud-native community, and kubegems provides access to multiple kubernetes clusters with rich component management and resource cost analysis capabilities to help enterprises quickly build and build a localized, powerful and low-cost cloud management platform. 
+[KubeGems](https://kubegems.io) is an open source, enterprise-class multi-tenant container cloud platform. Built around a cloud-native community, and kubegems provides access to multiple kubernetes clusters with rich component management and resource cost analysis capabilities to help enterprises quickly build and build a localized, powerful and low-cost cloud management platform.
 
 
 ## Highlights
@@ -113,6 +113,7 @@ You can visit our [KubeGems Online Demo](https://demo.kubegems.io)
 ### Install Kubernetes cluster
 
 You can Install your k8s cluster using any of the following methods, supported k8s version is v1.20 +
+
 1. [kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)
 2. [kind](https://kind.sigs.k8s.io/)
 3. [kubekey](https://github.com/kubesphere/kubekey)
@@ -120,28 +121,32 @@ You can Install your k8s cluster using any of the following methods, supported k
 
 ### Installation
 
+Choose a kubegems version from [Kubegems Release](https://github.com/kubegems/kubegems/tags):
+
+```sh
+export KUBEGEMS_VERSION=v1.22.0-beta.2  # change to kubegems version
+```
+
 When your k8s cluster is ready, next you can install kubegems insatller operator on your cluster.
 
-```
+```sh
 kubectl create namespace kubegems-installer
-kubectl apply -f https://github.com/kubegems/kubegems/raw/main/deploy/installer.yaml
+kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml
 ```
 
-install kubegems with installer operator.
+Install kubegems with installer operator.
 
-```
+```sh
 kubectl create namespace kubegems
 
-export STORAGE_CLASS=local-path  # export your  storageClass
-export KUBEGEMS_VERSION=v1.22.0-beta.1  # change to specify kubegems version
-curl -sL https://raw.githubusercontent.com/kubegems/kubegems/main/deploy/kubegems.yaml \
-| sed -e "s/local-path/${STORAGE_CLASS}/g" -e "s/latest/${KUBEGEMS_VERSION}/g" \
-> kubegems.yaml
+export STORAGE_CLASS=local-path  # set to your storageClass
+curl -sL https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/kubegems.yaml \
+| sed -e "s/local-path/${STORAGE_CLASS}/g" > kubegems.yaml
 
 kubectl apply -f kubegems.yaml
 ```
 
-More informations refer to https://www.kubegems.io/docs/installation/quick-install
+More informations refer to <https://www.kubegems.io/docs/installation/quick-install>
 
 ## Contributing
 

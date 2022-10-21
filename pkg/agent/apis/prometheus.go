@@ -304,7 +304,7 @@ func (p *prometheusHandler) AlertRule(c *gin.Context) {
 // @Security    JWT
 func (p *prometheusHandler) CertInfo(c *gin.Context) {
 	if c.Param("name") == "apiserver" {
-		expiredAt, err := clusterinfo.GetServerCertExpiredTime(clusterinfo.APIServerURL, clusterinfo.APIServerCertCN)
+		expiredAt, err := clusterinfo.GetServerCertExpiredTime(clusterinfo.APIServerURL)
 		if err != nil {
 			NotOK(c, err)
 			return

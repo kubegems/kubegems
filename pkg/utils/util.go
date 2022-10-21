@@ -25,6 +25,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -35,6 +36,11 @@ var (
 	rega_z  = regexp.MustCompile("[a-z]+")
 	reg0_9  = regexp.MustCompile("[0-9]+")
 	reg_chs = regexp.MustCompile(`[!\.@#$%~]+`)
+)
+
+var (
+	TimeForever               = time.Date(9893, time.December, 26, 0, 0, 0, 0, time.UTC) // 伟人8000年诞辰
+	MaxDuration time.Duration = 1<<63 - 1
 )
 
 func StrOrDef(s string, def string) string {
@@ -279,4 +285,18 @@ func ConvertBytes(bytes float64) string {
 	result := strconv.FormatFloat(value, 'f', 2, 64)
 	result = strings.TrimSuffix(result, ".00")
 	return result + unit
+}
+
+func WaitGroupWithTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return false
+	case <-time.After(timeout):
+		return true
+	}
 }

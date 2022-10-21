@@ -15,11 +15,20 @@
 package apis
 
 import (
+	"archive/tar"
+	"context"
+	"fmt"
 	"io"
+	"mime"
+	"mime/multipart"
+	"path"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"golang.org/x/time/rate"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -183,29 +192,14 @@ func filterByNodename(c *gin.Context, pods []v1.Pod) []v1.Pod {
 	return ret
 }
 
-func filterByContainerState(phase string, pods []v1.Pod) []v1.Pod {
-	var ret []v1.Pod
-	for _, pod := range pods {
-		for _, container := range pod.Status.ContainerStatuses {
-			switch {
-			case phase == "Running" && container.State.Running != nil:
-				ret = append(ret, pod)
-			case phase == "NotRunning" && container.State.Waiting != nil:
-				ret = append(ret, pod)
-			}
-		}
-	}
-	return ret
-}
-
 // ExecContainer 进入容器交互执行命令
 // @Tags        Agent.V1
 // @Summary     进入容器交互执行命令(websocket)
 // @Description 进入容器交互执行命令(websocket)
-// @Param       cluster   path     string true  "cluster"
-// @Param       namespace path     string true  "namespace"
-// @Param       pod       path     string true  "pod"
-// @Param       container query    string true  "container"
+// @Param       cluster   path     string true "cluster"
+// @Param       namespace path     string true "namespace"
+// @Param       pod       path     string true "pod"
+// @Param       container query    string true "container"
 // @Param       stream    query    string true  "stream must be true"
 // @Param       token     query    string true  "token"
 // @Param       shell     query    string false "default sh, choice(bash,ash,zsh)"
@@ -241,11 +235,10 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 // @Tags        Agent.V1
 // @Summary     实时获取日志STDOUT输出(websocket)
 // @Description 实时获取日志STDOUT输出(websocket)
-// @Param       cluster   path     string true  "cluster"
-// @Param       namespace path     string true  "namespace"
-// @Param       namespace path     string true  "namespace"
-// @Param       pod       path     string true  "pod"
-// @Param       container query    string true  "container"
+// @Param       cluster   path     string true "cluster"
+// @Param       namespace path     string true "namespace"
+// @Param       pod       path     string true "pod"
+// @Param       container query    string true "container"
 // @Param       stream    query    string true  "stream must be true"
 // @Param       follow    query    string true  "follow"
 // @Param       tail      query    int    false "tail line (default 1000)"
@@ -253,10 +246,6 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 // @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/logs [get]
 // @Security    JWT
 func (h *PodHandler) GetContainerLogs(c *gin.Context) {
-	namespace := c.Param("namespace")
-	pod := c.Param("name")
-	container := getDefaultHeader(c, "container", "")
-
 	ws, err := ws.Upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Infof("Upgrade Websocket Faield: %s", err.Error())
@@ -264,15 +253,14 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 		return
 	}
 
-	tailInt, _ := strconv.Atoi(getDefaultHeader(c, "tail", "1000"))
-	follow := getDefaultHeader(c, "follow", "true")
+	tailInt, _ := strconv.Atoi(paramFromHeaderOrQuery(c, "tail", "1000"))
 	tail := int64(tailInt)
 	logopt := &v1.PodLogOptions{
-		Container: container,
-		Follow:    follow == "true",
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+		Follow:    paramFromHeaderOrQuery(c, "follow", "true") == "true",
 		TailLines: &tail,
 	}
-	req := h.cluster.Kubernetes().CoreV1().Pods(namespace).GetLogs(pod, logopt)
+	req := h.cluster.Kubernetes().CoreV1().Pods(c.Param("namespace")).GetLogs(c.Param("name"), logopt)
 	out, err := req.Stream(c.Request.Context())
 	if err != nil {
 		_ = ws.WriteMessage(websocket.TextMessage, []byte("init websocket stream error"))
@@ -283,6 +271,79 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 		conn: ws,
 	}
 	_, _ = io.Copy(&writer, out)
+}
+
+// DownloadFileFromPod 从容器下载文件
+// @Tags        Agent.V1
+// @Summary     从容器下载文件
+// @Description 从容器下载文件
+// @Param       cluster   path     string true  "cluster"
+// @Param       namespace path     string true  "namespace"
+// @Param       pod       path     string true  "pod"
+// @Param       container query    string true  "container"
+// @Param       filename  query    string true "filename"
+// @Success     200       {object} object "ws"
+// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file [get]
+// @Security    JWT
+func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
+	filename := paramFromHeaderOrQuery(c, "filename", "")
+	if e := validateFilename(filename); e != nil {
+		NotOK(c, e)
+		return
+	}
+	fd := FileTransfer{
+		Cluster:   h.cluster,
+		Namespace: c.Param("namespace"),
+		Pod:       c.Param("name"),
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+		Filename:  filename,
+	}
+	if err := fd.Download(c); err != nil {
+		NotOK(c, err)
+		return
+	}
+}
+
+// UploadFileToContainer upload files to container
+// @Tags        Agent.V1
+// @Summary     upload files to container
+// @Description upload files to container
+// @Param       cluster   path     string true  "cluster"
+// @Param       namespace path     string true  "namespace"
+// @Param       pod       path     string true  "pod"
+// @Param       container query    string true  "container"
+// @Param       filename  query    string true "filename"
+// @Success     200       {object} object "ws"
+// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile [post]
+// @Security    JWT
+func (h *PodHandler) UploadFileToContainer(c *gin.Context) {
+	fd := FileTransfer{
+		Cluster:   h.cluster,
+		Namespace: c.Param("namespace"),
+		Pod:       c.Param("name"),
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+	}
+	if err := fd.Upload(c); err != nil {
+		NotOK(c, err)
+		return
+	}
+	OK(c, "ok")
+}
+
+func validateFilename(fname string) error {
+	if fname == "" || fname == "/" || fname == "." {
+		return fmt.Errorf("filename is invalid")
+	}
+	if !strings.HasPrefix(fname, "/") {
+		return fmt.Errorf("filename is invalid, plese use absolute path")
+	}
+	fsesp := strings.Split(fname, "/")
+	for _, sep := range fsesp {
+		if strings.Contains(sep, "..") {
+			return fmt.Errorf("filename is invalid, plese use absolute path")
+		}
+	}
+	return nil
 }
 
 type wsWriter struct {
@@ -298,23 +359,191 @@ func (w *wsWriter) Write(data []byte) (int, error) {
 }
 
 func (h *PodHandler) getExec(c *gin.Context) (remotecommand.Executor, error) {
-	namespace := c.Param("namespace")
-	pod := c.Param("name")
-	container := getDefaultHeader(c, "container", "")
+	pe := &PodCmdExecutor{
+		Cluster:   h.cluster,
+		Namespace: c.Param("namespace"),
+		Pod:       c.Param("name"),
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+		Stdin:     true,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       true,
+	}
 	command := []string{
 		"/bin/sh",
 		"-c",
 		"export LINES=20; export COLUMNS=100; export LANG=C.UTF-8; export TERM=xterm-256color; [ -x /bin/bash ] && exec /bin/bash || exec /bin/sh",
 	}
+	return pe.executor(command)
+}
 
-	log.Infof("exec pod in contaler %v, raw URL %v", container, c.Request.URL)
-	req := h.cluster.Kubernetes().CoreV1().RESTClient().Post().Resource("pods").Namespace(namespace).Name(pod).SubResource("exec").VersionedParams(&v1.PodExecOptions{
-		Container: container,
-		Command:   command,
+type PodCmdExecutor struct {
+	Cluster   cluster.Interface
+	Namespace string
+	Pod       string
+	Container string
+	Stdin     bool
+	Stdout    bool
+	Stderr    bool
+	TTY       bool
+}
+
+func (pe *PodCmdExecutor) executor(cmd []string) (remotecommand.Executor, error) {
+	req := pe.Cluster.Kubernetes().CoreV1().RESTClient().Post().Resource("pods").Namespace(pe.Namespace).Name(pe.Pod).SubResource("exec").VersionedParams(&v1.PodExecOptions{
+		Container: pe.Container,
+		Command:   cmd,
+		Stdin:     pe.Stdin,
+		Stdout:    pe.Stdout,
+		Stderr:    pe.Stderr,
+		TTY:       pe.TTY,
+	}, scheme.ParameterCodec)
+	return remotecommand.NewSPDYExecutor(pe.Cluster.Config(), "POST", req.URL())
+}
+
+type FileTransfer struct {
+	Cluster   cluster.Interface
+	Namespace string
+	Pod       string
+	Container string
+	Filename  string
+}
+
+func (fd *FileTransfer) Download(c *gin.Context) error {
+	pe := PodCmdExecutor{
+		Cluster:   fd.Cluster,
+		Namespace: fd.Namespace,
+		Pod:       fd.Pod,
+		Container: fd.Container,
+		Stdout:    true,
+		Stderr:    true,
+	}
+	command := []string{"tar", "cf", "-", fd.Filename}
+	exec, err := pe.executor(command)
+	if err != nil {
+		return err
+	}
+	c.Header(
+		"Content-Disposition",
+		mime.FormatMediaType("attachment", map[string]string{
+			"filename": path.Base(fd.Filename) + ".tgz",
+		}),
+	)
+	e := exec.Stream(remotecommand.StreamOptions{
+		Stdout: RateLimitWriter(context.TODO(), c.Writer, 1024*1024),
+		Stderr: &fakeStdoutWriter{},
+	})
+	return e
+}
+
+func (fd *FileTransfer) Upload(c *gin.Context) error {
+	uploadFormData := &uploadForm{}
+	if err := c.Bind(uploadFormData); err != nil {
+		return err
+	}
+	r, w := io.Pipe()
+	go uploadFormData.convertTar(w)
+	pe := PodCmdExecutor{
+		Cluster:   fd.Cluster,
+		Namespace: fd.Namespace,
+		Pod:       fd.Pod,
+		Container: fd.Container,
 		Stdin:     true,
 		Stdout:    true,
 		Stderr:    true,
-		TTY:       true,
-	}, scheme.ParameterCodec)
-	return remotecommand.NewSPDYExecutor(h.cluster.Config(), "POST", req.URL())
+	}
+	command := []string{"tar", "xf", "-", "-C", uploadFormData.Dest}
+	exec, err := pe.executor(command)
+	if err != nil {
+		return err
+	}
+	return exec.Stream(remotecommand.StreamOptions{
+		Stdin:  r,
+		Stdout: &fakeStdoutWriter{},
+		Stderr: &fakeStdoutWriter{},
+	})
+}
+
+type uploadForm struct {
+	Dest  string                  `form:"dest" binding:"required"`
+	Files []*multipart.FileHeader `form:"files[]" binding:"required"`
+}
+
+func (uf *uploadForm) convertTar(w io.WriteCloser) (err error) {
+	tw := tar.NewWriter(w)
+	for _, file := range uf.Files {
+		tw.WriteHeader(&tar.Header{
+			Name:    file.Filename,
+			Size:    file.Size,
+			ModTime: time.Now(),
+			Mode:    0644,
+		})
+		fd, err := file.Open()
+		if err != nil {
+			return err
+		}
+		io.Copy(tw, fd)
+		fd.Close()
+	}
+	if e := tw.Close(); e != nil {
+		log.Error(e, "x")
+		return e
+	}
+	return w.Close()
+}
+
+type fakeStdoutWriter struct{}
+
+func (fw *fakeStdoutWriter) Write(p []byte) (int, error) {
+	// TODO: handle stderror to response info
+	log.Info("file transfer stderr: ", "content", p)
+	return len(p), nil
+}
+
+type rateLimitwriter struct {
+	ctx          context.Context
+	originWriter io.Writer
+	ratelimitor  *rate.Limiter
+}
+
+func (rw *rateLimitwriter) waitUtilCanDo(n int) {
+	if !rw.ratelimitor.AllowN(time.Now(), n) {
+		rw.ratelimitor.WaitN(rw.ctx, n)
+	}
+}
+
+func (rw *rateLimitwriter) Write(p []byte) (int, error) {
+	max := rw.ratelimitor.Burst()
+	pl := len(p)
+	if pl > max {
+		writed := 0
+		page := pl / max
+		last := pl % max
+		for idx := 0; idx < page; idx++ {
+			rw.waitUtilCanDo(max)
+			tmpn, err := rw.originWriter.Write(p[idx*max : idx*max+max])
+			writed += tmpn
+			if err != nil {
+				return writed, err
+			}
+		}
+		if last != 0 {
+			rw.waitUtilCanDo(last)
+			tmpn, err := rw.originWriter.Write(p[page*max : pl])
+			writed += tmpn
+			return writed, err
+		}
+		return writed, nil
+	} else {
+		rw.waitUtilCanDo(pl)
+		return rw.originWriter.Write(p)
+	}
+}
+
+func RateLimitWriter(ctx context.Context, w io.Writer, speed int) io.Writer {
+	l := rate.NewLimiter(rate.Limit(speed), speed*2)
+	return &rateLimitwriter{
+		ctx:          ctx,
+		originWriter: w,
+		ratelimitor:  l,
+	}
 }

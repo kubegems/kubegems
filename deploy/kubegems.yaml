@@ -9,10 +9,11 @@ spec:
   chart: global
   version: "1.0.0"
   values:
-    kubegemsVersion: "1.21.6"
-    imageRegistry: "docker.io"
-    imageRepository: "kubegems"
     clusterName: "manager-cluster"
+    kubegemsVersion: v1.22.0-beta.2
+    # choose 'registry.cn-beijing.aliyuncs.com' or 'docker.io'
+    imageRegistry: docker.io
+    imageRepository: "kubegems"
     storageClass: local-path # change me to use a different storage class
 ---
 apiVersion: plugins.kubegems.io/v1beta1
@@ -26,8 +27,11 @@ spec:
   kind: helm
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
-  version: "1.21.6"
+  version: "1.22.0-beta.2"
   valuesFrom:
     - kind: ConfigMap
       name: "kubegems-global-values"
       prefix: "global."
+  values:
+    ingress:
+      hostname: dashboard.kubegems.io # change me to use a production hostname

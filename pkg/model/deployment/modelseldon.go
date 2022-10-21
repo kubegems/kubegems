@@ -16,7 +16,6 @@ package deployment
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -125,7 +124,7 @@ func (r *SeldonModelServe) completeStatusURL(ctx context.Context, md *modelsv1be
 	return nil
 }
 
-const modelContainerName = "model"
+const ModelContainerName = "model"
 
 // nolint: funlen
 func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelDeployment) (*machinelearningv1.SeldonDeployment, error) {
@@ -149,10 +148,10 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 						machinelearningv1.ANNOTATION_NO_ENGINE: isNoEngineKind(md.Spec.Server.Kind),
 					},
 					Graph: machinelearningv1.PredictiveUnit{
-						Name:                    modelContainerName,
-						Implementation:          implOf(md.Spec.Server.Kind),
+						Name:                    ModelContainerName,
+						Implementation:          implOfKind(md.Spec.Server.Kind),
 						Parameters:              paramsOf(md.Spec.Server.Parameters),
-						ModelURI:                modelURIWithLicense(md.Spec.Model.URL, md.Spec.Model.License),
+						ModelURI:                modelURIWithToken(md),
 						StorageInitializerImage: md.Spec.Server.StorageInitializerImage,
 					},
 					ComponentSpecs: []*machinelearningv1.SeldonPodSpec{
@@ -178,11 +177,7 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 
 // nolint: funlen,gocognit
 func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
-	podspec := corev1.PodSpec{}
-	if val := md.Spec.Server.PodSpec; val != nil {
-		podspec = *val
-	}
-	return CreateOrUpdateContainer(podspec, modelContainerName, func(c *v1.Container) {
+	return *CreateOrUpdateContainer(md.Spec.Server.PodSpec, ModelContainerName, func(c *v1.Container, p *v1.PodSpec) {
 		// add mounts
 		for i, mount := range md.Spec.Server.Mounts {
 			if mount.Kind == modelsv1beta1.SimpleVolumeMountKindModel {
@@ -192,7 +187,7 @@ func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
 			}
 			otherMountName := "mount-" + strconv.Itoa(i)
 			createOrUpdateMountPath(c, otherMountName, mount.MountPath)
-			createOrUpdateVolume(&podspec, otherMountName, func() corev1.VolumeSource {
+			createOrUpdateVolume(p, otherMountName, func() corev1.VolumeSource {
 				switch mount.Kind {
 				case modelsv1beta1.SimpleVolumeMountKindConfigMap:
 					return corev1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: mount.Source}}}
@@ -236,24 +231,33 @@ func completePod(md *modelsv1beta1.ModelDeployment) corev1.PodSpec {
 		}
 		if md.Spec.Server.Privileged {
 			if c.SecurityContext == nil {
-				c.SecurityContext = &v1.SecurityContext{}
+				c.SecurityContext = &v1.SecurityContext{
+					RunAsUser:  pointer.Int64(0),
+					RunAsGroup: pointer.Int64(0),
+				}
 			}
 			c.SecurityContext.Privileged = pointer.Bool(true)
 		}
 	})
 }
 
-func CreateOrUpdateContainer(pod corev1.PodSpec, conname string, oncontainer func(c *corev1.Container)) corev1.PodSpec {
-	for i := range pod.Containers {
-		if pod.Containers[i].Name == conname {
-			oncontainer(&pod.Containers[i])
-			return pod
+func CreateOrUpdateContainer(inpod *corev1.PodSpec, conname string, oncontainer func(c *corev1.Container, pod *v1.PodSpec)) *corev1.PodSpec {
+	if inpod == nil {
+		inpod = &v1.PodSpec{}
+	} else {
+		inpod = inpod.DeepCopy()
+	}
+
+	for i := range inpod.Containers {
+		if inpod.Containers[i].Name == conname {
+			oncontainer(&inpod.Containers[i], inpod)
+			return inpod
 		}
 	}
 	mainContainer := corev1.Container{Name: conname}
-	oncontainer(&mainContainer)
-	pod.Containers = append(pod.Containers, mainContainer)
-	return pod
+	oncontainer(&mainContainer, inpod)
+	inpod.Containers = append(inpod.Containers, mainContainer)
+	return inpod
 }
 
 func getIngressPath(ctx context.Context, cli client.Client, md *modelsv1beta1.ModelDeployment) string {
@@ -279,7 +283,10 @@ func (r *SeldonModelServe) getIngressClass(ctx context.Context, md *modelsv1beta
 	return "", nil
 }
 
-func implOf(name string) *machinelearningv1.PredictiveUnitImplementation {
+func implOfKind(name string) *machinelearningv1.PredictiveUnitImplementation {
+	if name == modelsv1beta1.ServerKindModelx {
+		return nil
+	}
 	implName := strings.ToUpper(strings.Replace(name, "-", "_", -1))
 	impl := machinelearningv1.PredictiveUnitImplementation(implName)
 	return &impl
@@ -294,21 +301,18 @@ func paramsOf(params []modelsv1beta1.Parameter) []machinelearningv1.Parameter {
 }
 
 func isNoEngineKind(impl string) string {
-	return strconv.FormatBool(impl == "")
+	return strconv.FormatBool(impl == "" || impl == modelsv1beta1.ServerKindModelx)
 }
 
-func modelURIWithLicense(uri, license string) string {
-	if license == "" {
-		return uri
+func modelURIWithToken(md *modelsv1beta1.ModelDeployment) string {
+	if md.Spec.Server.Kind == modelsv1beta1.ServerKindModelx {
+		url := md.Spec.Model.URL + "/" + md.Spec.Model.Name + "@" + md.Spec.Model.Version
+		if token := md.Spec.Model.Token; token != "" {
+			url += "?token=" + token
+		}
+		return url
 	}
-	u, err := url.Parse(uri)
-	if err != nil {
-		return fmt.Sprintf("%s?license=%s", uri, license)
-	}
-	q := u.Query()
-	q.Set("license", license)
-	u.RawQuery = q.Encode()
-	return u.String()
+	return md.Spec.Model.URL
 }
 
 const ModelInitializerVolumeSuffix = "provision-location"

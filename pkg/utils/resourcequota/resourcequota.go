@@ -46,12 +46,6 @@ var (
 )
 
 const (
-	ResourceNvidiaGPU      = "nvidia.com/gpu"
-	ResourceTKEVCudeCore   = "tencent.com/vcuda-core"
-	ResourceTKEVCudeMemory = "tencent.com/vcuda-memory"
-)
-
-const (
 	DefaultResourceQuotaName = "default"
 	DefaultLimitRangeName    = "default"
 )
@@ -62,10 +56,6 @@ func GetDefaultTeantResourceQuota() corev1.ResourceList {
 		corev1.ResourceLimitsCPU:       resource.MustParse("0"),
 		corev1.ResourceLimitsMemory:    resource.MustParse("0Gi"),
 		corev1.ResourceRequestsStorage: resource.MustParse("0Gi"),
-
-		"limits." + ResourceNvidiaGPU:      resource.MustParse("0"),
-		"limits." + ResourceTKEVCudeCore:   resource.MustParse("0"),
-		"limits." + ResourceTKEVCudeMemory: resource.MustParse("0Gi"),
 	}
 }
 
@@ -90,14 +80,6 @@ func GetDefaultEnvironmentResourceQuota() corev1.ResourceList {
 		ResourceConfigMaps:             resource.MustParse("512"),
 		ResourceServices:               resource.MustParse("512"),
 		ResourcePersistentVolumeClaims: resource.MustParse("512"),
-
-		"limits." + ResourceNvidiaGPU:      resource.MustParse("0"),
-		"limits." + ResourceTKEVCudeCore:   resource.MustParse("0"),
-		"limits." + ResourceTKEVCudeMemory: resource.MustParse("0Gi"),
-
-		"requests." + ResourceNvidiaGPU:      resource.MustParse("0"),
-		"requests." + ResourceTKEVCudeCore:   resource.MustParse("0"),
-		"requests." + ResourceTKEVCudeMemory: resource.MustParse("0Gi"),
 	}
 }
 
@@ -244,9 +226,10 @@ func SetSameRequestWithLimit(list corev1.ResourceList) {
 	for k, v := range list {
 		if index := strings.Index(string(k), "limits."); index != -1 {
 			requestsResourceName := "requests." + string(k[index+7:])
-			if val, ok := list[v1.ResourceName(requestsResourceName)]; !ok || val.IsZero() {
-				list[v1.ResourceName(requestsResourceName)] = v.DeepCopy()
-			}
+
+			// if val, ok := list[v1.ResourceName(requestsResourceName)]; !ok || val.IsZero() {
+			list[v1.ResourceName(requestsResourceName)] = v.DeepCopy()
+			// }
 		}
 	}
 }

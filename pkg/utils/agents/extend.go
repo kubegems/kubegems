@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
@@ -332,9 +333,10 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 	eg := errgroup.Group{}
 	eg.Go(func() error {
 		promeRuleList := monitoringv1.PrometheusRuleList{}
-		if err := c.List(ctx, &promeRuleList, client.InNamespace(namespace), client.MatchingLabels(map[string]string{
-			gems.LabelPrometheusRuleType: prometheus.AlertTypeMonitor,
-		})); err != nil {
+		if err := c.List(ctx, &promeRuleList,
+			client.InNamespace(namespace),
+			client.HasLabels([]string{gems.LabelPrometheusRuleName}),
+		); err != nil {
 			return err
 		}
 		for _, v := range promeRuleList.Items {
@@ -344,9 +346,10 @@ func (c *ExtendClient) ListMonitorAlertRules(ctx context.Context, namespace stri
 	})
 	eg.Go(func() error {
 		amConfigList := monitoringv1alpha1.AlertmanagerConfigList{}
-		if err := c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(map[string]string{
-			gems.LabelAlertmanagerConfigType: prometheus.AlertTypeMonitor,
-		})); err != nil {
+		if err := c.List(ctx, &amConfigList,
+			client.InNamespace(namespace),
+			client.MatchingLabels(map[string]string{gems.LabelAlertmanagerConfigType: prometheus.AlertTypeMonitor}),
+		); err != nil {
 			return nil
 		}
 		for _, v := range amConfigList.Items {
@@ -443,7 +446,7 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	})
 	eg.Go(func() error {
 		return c.List(ctx, &amConfigList, client.InNamespace(namespace), client.MatchingLabels(map[string]string{
-			gems.LabelAlertmanagerConfigName: prometheus.LoggingAlertCRDName,
+			gems.LabelAlertmanagerConfigName: prometheus.DefaultAlertCRDName,
 		}))
 	})
 	eg.Go(func() error {
@@ -536,8 +539,8 @@ func (c *ExtendClient) ListLoggingAlertRules(ctx context.Context, namespace stri
 	return ret, nil
 }
 
-func (c *ExtendClient) getBaseAlertResource(ctx context.Context, namespace, amconfigName string) (*prometheus.BaseAlertResource, error) {
-	loggingAMConfig, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, amconfigName)
+func (c *ExtendClient) getBaseAlertResource(ctx context.Context, namespace, name string) (*prometheus.BaseAlertResource, error) {
+	loggingAMConfig, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, name)
 	if err != nil {
 		return nil, err
 	}
@@ -559,6 +562,14 @@ func (c *ExtendClient) GetRawMonitorAlertResource(ctx context.Context, namespace
 	if err != nil {
 		return nil, err
 	}
+	// copy receivers if created by appstore exporter
+	if name != prometheus.DefaultAlertCRDName {
+		defaultAmcfg, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, prometheus.DefaultAlertCRDName)
+		if err != nil {
+			return nil, errors.Wrap(err, "get default amcfg")
+		}
+		base.AMConfig.Spec.Receivers = defaultAmcfg.Spec.Receivers
+	}
 	promerule, err := c.GetOrCreatePrometheusRule(ctx, namespace, name)
 	if err != nil {
 		return nil, err
@@ -572,7 +583,7 @@ func (c *ExtendClient) GetRawMonitorAlertResource(ctx context.Context, namespace
 }
 
 func (c *ExtendClient) GetRawLoggingAlertResource(ctx context.Context, namespace string) (*prometheus.RawLoggingAlertRule, error) {
-	base, err := c.getBaseAlertResource(ctx, namespace, prometheus.LoggingAlertCRDName)
+	base, err := c.getBaseAlertResource(ctx, namespace, prometheus.DefaultAlertCRDName)
 	if err != nil {
 		return nil, err
 	}
@@ -618,7 +629,7 @@ func (c *ExtendClient) CommitRawLoggingAlertResource(ctx context.Context, raw *p
 	return c.Update(ctx, raw.Base.AMConfig)
 }
 
-func (c *ExtendClient) GetOrCreateAlertmanagerConfig(ctx context.Context, namespace string, name string) (*monitoringv1alpha1.AlertmanagerConfig, error) {
+func (c *ExtendClient) GetOrCreateAlertmanagerConfig(ctx context.Context, namespace, name string) (*monitoringv1alpha1.AlertmanagerConfig, error) {
 	aconfig := &monitoringv1alpha1.AlertmanagerConfig{}
 	err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, aconfig)
 	if kerrors.IsNotFound(err) {
@@ -713,17 +724,11 @@ func (c *ExtendClient) DeleteAlertEmailSecret(ctx context.Context, namespace str
 	return c.Update(ctx, sec)
 }
 
-func (c *ExtendClient) ListReceivers(ctx context.Context, namespace, scope, search string) ([]prometheus.ReceiverConfig, error) {
+func (c *ExtendClient) ListReceivers(ctx context.Context, namespace, search string) ([]prometheus.ReceiverConfig, error) {
 	if namespace == allNamespace {
 		namespace = v1.NamespaceAll
 	} else {
-		var amname string
-		if scope == prometheus.AlertTypeMonitor {
-			amname = prometheus.MonitorAlertCRDName
-		} else {
-			amname = prometheus.LoggingAlertCRDName
-		}
-		_, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, amname)
+		_, err := c.GetOrCreateAlertmanagerConfig(ctx, namespace, prometheus.DefaultAlertCRDName)
 		if err != nil {
 			return nil, err
 		}
@@ -731,7 +736,8 @@ func (c *ExtendClient) ListReceivers(ctx context.Context, namespace, scope, sear
 
 	configlist := &monitoringv1alpha1.AlertmanagerConfigList{}
 	if err := c.List(ctx, configlist, client.MatchingLabels(map[string]string{
-		gems.LabelAlertmanagerConfigType: scope,
+		// only list default amcfg
+		gems.LabelAlertmanagerConfigName: prometheus.DefaultAlertCRDName,
 	}), client.InNamespace(namespace)); err != nil {
 		return nil, err
 	}
@@ -751,11 +757,6 @@ func (c *ExtendClient) ListReceivers(ctx context.Context, namespace, scope, sear
 	for _, config := range configlist.Items {
 		for _, rec := range config.Spec.Receivers {
 			if rec.Name != prometheus.NullReceiverName {
-				// 隐藏介入中心创建的默认接收器
-				if (config.Name != prometheus.MonitorAlertCRDName && config.Name != prometheus.LoggingAlertCRDName) &&
-					rec.Name == prometheus.DefaultReceiverName {
-					continue
-				}
 				if search == "" || (search != "" && strings.Contains(rec.Name, search)) {
 					ret = append(ret, prometheus.ToGemsReceiver(rec, config.Namespace, config.Name, secretNamespaceMap[config.Namespace]))
 				}
@@ -773,7 +774,7 @@ func (c *ExtendClient) CreateReceiver(ctx context.Context, rec prometheus.Receiv
 	if err := rec.Precheck(); err != nil {
 		return err
 	}
-	aconfig, err := c.GetOrCreateAlertmanagerConfig(ctx, rec.Namespace, rec.Source)
+	aconfig, err := c.GetOrCreateAlertmanagerConfig(ctx, rec.Namespace, prometheus.DefaultAlertCRDName)
 	if err != nil {
 		return err
 	}
@@ -792,7 +793,7 @@ func (c *ExtendClient) UpdateReceiver(ctx context.Context, rec prometheus.Receiv
 	if err := rec.Precheck(); err != nil {
 		return err
 	}
-	aconfig, err := c.GetOrCreateAlertmanagerConfig(ctx, rec.Namespace, rec.Source)
+	defaultAmcfg, err := c.GetOrCreateAlertmanagerConfig(ctx, rec.Namespace, prometheus.DefaultAlertCRDName)
 	if err != nil {
 		return err
 	}
@@ -801,10 +802,25 @@ func (c *ExtendClient) UpdateReceiver(ctx context.Context, rec prometheus.Receiv
 	}
 
 	receiver := prometheus.ToAlertmanagerReceiver(rec)
-	if err := prometheus.ModifyReceiver(ctx, aconfig, &receiver, prometheus.Update); err != nil {
+	if err := prometheus.ModifyReceiver(ctx, defaultAmcfg, &receiver, prometheus.Update); err != nil {
 		return err
 	}
-	return c.Update(ctx, aconfig)
+
+	// update all amcfg
+	amcfgList := v1alpha1.AlertmanagerConfigList{}
+	if err := c.List(ctx, &amcfgList,
+		client.InNamespace(rec.Namespace),
+		client.HasLabels([]string{gems.LabelAlertmanagerConfigName}),
+	); err != nil {
+		return err
+	}
+	for _, v := range amcfgList.Items {
+		v.Spec.Receivers = defaultAmcfg.Spec.Receivers
+		if err := c.Update(ctx, v); err != nil {
+			return errors.Wrapf(err, "update amcfg: %s", v.Name)
+		}
+	}
+	return nil
 }
 
 func (c *ExtendClient) DeleteReceiver(ctx context.Context, rec prometheus.ReceiverConfig) error {
@@ -812,15 +828,36 @@ func (c *ExtendClient) DeleteReceiver(ctx context.Context, rec prometheus.Receiv
 		return err
 	}
 	rawRec := monitoringv1alpha1.Receiver{Name: rec.Name}
-	aconfig, err := c.GetOrCreateAlertmanagerConfig(ctx, rec.Namespace, rec.Source)
+	// update all amcfg
+	amcfgList := v1alpha1.AlertmanagerConfigList{}
+	if err := c.List(ctx, &amcfgList,
+		client.InNamespace(rec.Namespace),
+		client.HasLabels([]string{gems.LabelAlertmanagerConfigName}),
+	); err != nil {
+		return err
+	}
+	for _, v := range amcfgList.Items {
+		if prometheus.IsReceiverInUse(v.Spec.Route, rawRec) {
+			return fmt.Errorf("receiver %s is using by %s, can't delete", rec.Name, v.Name)
+		}
+	}
+
+	defaultAmcfg, err := c.GetOrCreateAlertmanagerConfig(ctx, rec.Namespace, prometheus.DefaultAlertCRDName)
 	if err != nil {
 		return err
 	}
-	if err := prometheus.ModifyReceiver(ctx, aconfig, &rawRec, prometheus.Delete); err != nil {
+	if err := prometheus.ModifyReceiver(ctx, defaultAmcfg, &rawRec, prometheus.Delete); err != nil {
 		return err
 	}
 	if err := c.DeleteAlertEmailSecret(ctx, rec.Namespace, rawRec); err != nil {
 		return err
 	}
-	return c.Update(ctx, aconfig)
+
+	for _, v := range amcfgList.Items {
+		v.Spec.Receivers = defaultAmcfg.Spec.Receivers
+		if err := c.Update(ctx, v); err != nil {
+			return errors.Wrapf(err, "update amcfg: %s", v.Name)
+		}
+	}
+	return nil
 }
