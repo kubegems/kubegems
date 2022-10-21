@@ -139,6 +139,10 @@ helm-push:
 docker: ## Build container image.
 	docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${IMG}  .
  
+KUBECTL_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubectl:latest
+kubectl-image:
+	docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl .
+
 clean:
 	- rm -rf ${BIN_DIR}
 

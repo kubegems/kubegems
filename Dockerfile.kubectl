@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+# Ref: https://www.docker.com/blog/how-to-rapidly-build-multi-architecture-images-with-buildx/
 FROM alpine
 RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories 
 RUN apk update && apk add tini bash bash-completion kubectl curl
