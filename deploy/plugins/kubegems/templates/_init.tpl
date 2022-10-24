@@ -5,6 +5,12 @@
   args:
   - service
   - migrate
+  {{- if .Values.init.migrateModels }}
+  - --migratemodels
+  {{- end }}
+  {{- if .Values.init.initData }}
+  - --initdata
+  {{- end }}
   env:
   {{- include "kubegems.common.env" . | indent 2 }}
   envFrom:

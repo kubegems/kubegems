@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package prometheus
+package observe
 
 import (
 	"encoding/json"
@@ -29,6 +29,7 @@ import (
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/slice"
 )
 
@@ -70,58 +71,43 @@ func (g *LogqlGenerator) IsEmpty() bool {
 	return g == nil || g.Match == ""
 }
 
-func (r *LoggingAlertRule) CheckAndModify() error {
-	if r.LogqlGenerator.IsEmpty() {
-		if r.BaseAlertRule.Expr == "" {
+func MutateLoggingAlert(req *LoggingAlertRule) error {
+	if req.LogqlGenerator.IsEmpty() {
+		if req.BaseAlertRule.Expr == "" {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
-		if r.Message == "" {
-			r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", r.Name, AlertClusterKey, ValueAnnotationExpr)
+		if req.Message == "" {
+			req.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] 触发告警, 当前值: %s", req.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
 		}
 	} else {
-		dur, err := model.ParseDuration(r.LogqlGenerator.Duration)
+		dur, err := model.ParseDuration(req.LogqlGenerator.Duration)
 		if err != nil {
-			return errors.Wrapf(err, "duration %s not valid", r.LogqlGenerator.Duration)
+			return errors.Wrapf(err, "duration %s not valid", req.LogqlGenerator.Duration)
 		}
 		if time.Duration(dur).Minutes() > 10 {
 			return errors.New("日志模板时长不能超过10m")
 		}
-		if _, err := regexp.Compile(r.LogqlGenerator.Match); err != nil {
-			return errors.Wrapf(err, "match %s not valid", r.LogqlGenerator.Match)
+		if _, err := regexp.Compile(req.LogqlGenerator.Match); err != nil {
+			return errors.Wrapf(err, "match %s not valid", req.LogqlGenerator.Match)
 		}
-		if len(r.LogqlGenerator.LabelPairs) == 0 {
+		if len(req.LogqlGenerator.LabelPairs) == 0 {
 			return fmt.Errorf("labelpairs can't be null")
 		}
 
-		r.BaseAlertRule.Expr = r.LogqlGenerator.ToLogql(r.BaseAlertRule.Namespace)
-		if r.Message == "" {
-			r.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] [namespace: {{ $labels.namespace }}] ", r.Name, AlertClusterKey)
-			for label := range r.LogqlGenerator.LabelPairs {
-				r.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
+		req.BaseAlertRule.Expr = req.LogqlGenerator.ToLogql(req.BaseAlertRule.Namespace)
+		if req.Message == "" {
+			req.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] [namespace: {{ $labels.namespace }}] ", req.Name, prometheus.AlertClusterKey)
+			for label := range req.LogqlGenerator.LabelPairs {
+				req.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 			}
-			r.Message += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", r.LogqlGenerator.Duration, r.LogqlGenerator.Match, ValueAnnotationExpr)
+			req.Message += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", req.LogqlGenerator.Duration, req.LogqlGenerator.Match, prometheus.ValueAnnotationExpr)
 		}
 	}
-	return r.BaseAlertRule.CheckAndModify()
-}
-
-var logqlReg = regexp.MustCompile("(.*)(<|<=|==|!=|>|>=)(.*)")
-
-func SplitQueryExpr(logql string) (query, op, value string, hasOp bool) {
-	substrs := logqlReg.FindStringSubmatch(logql)
-	if len(substrs) == 4 {
-		query = substrs[1]
-		op = substrs[2]
-		value = substrs[3]
-		hasOp = true
-	} else {
-		query = logql
-	}
-	return
+	return req.BaseAlertRule.CheckAndModify()
 }
 
 func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingAlertRule], error) {
-	receiverMap, err := raw.Base.GetReceiverMap()
+	receiverMap, err := raw.Base.GetReceiverMap(hasDetail)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +130,7 @@ func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingA
 		alertrule.IsOpen = isOpen
 		// inhibit rule
 		inhitbitRule := inhibitRuleMap[group.Name]
-		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, AlertNamespaceLabel), AlertNameLabel)
+		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, prometheus.AlertNamespaceLabel), prometheus.AlertNameLabel)
 		if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
 			return ret, fmt.Errorf("alert rule %v inhibit label can't be null", alertrule)
 		}
@@ -177,12 +163,8 @@ func (raw *RawLoggingAlertRule) ModifyLoggingAlertRule(r LoggingAlertRule, act A
 		}
 	}
 	raw.RuleGroups.Groups = groups
-	// update AlertmanagerConfig routes
-	raw.Base.UpdateRoutes(alertRules.ToAlertRuleList())
-	// add null receivers
-	raw.Base.AddNullReceivers()
-	// update AlertmanagerConfig inhibit rules
-	return raw.Base.UpdateInhibitRules(alertRules.ToAlertRuleList())
+	raw.Base.Update(alertRules.ToAlertRuleList())
+	return nil
 }
 
 func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
@@ -197,20 +179,20 @@ func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {
 			Expr:  yaml.Node{Kind: yaml.ScalarNode, Value: fmt.Sprintf("%s%s%s", r.Expr, level.CompareOp, level.CompareValue)},
 			For:   dur,
 			Labels: map[string]string{
-				AlertNamespaceLabel: r.Namespace,
-				AlertNameLabel:      r.Name,
-				AlertFromLabel:      AlertTypeLogging,
-				AlertScopeLabel:     getAlertScope(r.Namespace),
-				SeverityLabel:       level.Severity,
+				prometheus.AlertNamespaceLabel: r.Namespace,
+				prometheus.AlertNameLabel:      r.Name,
+				prometheus.AlertFromLabel:      prometheus.AlertTypeLogging,
+				prometheus.AlertScopeLabel:     getAlertScope(r.Namespace),
+				prometheus.SeverityLabel:       level.Severity,
 			},
 			Annotations: map[string]string{
-				MessageAnnotationsKey: r.Message,
-				valueAnnotationKey:    ValueAnnotationExpr,
+				prometheus.MessageAnnotationsKey: r.Message,
+				prometheus.ValueAnnotationKey:    prometheus.ValueAnnotationExpr,
 			},
 		}
 		if !r.LogqlGenerator.IsEmpty() {
 			bts, _ := json.Marshal(r.LogqlGenerator)
-			rule.Annotations[ExprJsonAnnotationKey] = string(bts)
+			rule.Annotations[prometheus.ExprJsonAnnotationKey] = string(bts)
 		}
 		ret.Rules = append(ret.Rules, rule)
 	}
@@ -226,21 +208,21 @@ func rawToLoggingAlertRule(namespace string, group rulefmt.RuleGroup) (LoggingAl
 			Namespace: namespace,
 			Name:      group.Name,
 			For:       group.Rules[0].For.String(),
-			Message:   group.Rules[0].Annotations[MessageAnnotationsKey],
+			Message:   group.Rules[0].Annotations[prometheus.MessageAnnotationsKey],
 		},
 	}
 
 	for _, rule := range group.Rules {
-		if rule.Labels[AlertNamespaceLabel] != namespace ||
-			rule.Labels[AlertNameLabel] == "" {
+		if rule.Labels[prometheus.AlertNamespaceLabel] != namespace ||
+			rule.Labels[prometheus.AlertNameLabel] == "" {
 			return ret, fmt.Errorf("rule %s label not valid: %v", group.Name, rule.Labels)
 		}
-		query, op, value, hasOp := SplitQueryExpr(rule.Expr.Value)
+		query, op, value, hasOp := prometheus.SplitQueryExpr(rule.Expr.Value)
 		if !hasOp {
 			return ret, fmt.Errorf("rule %s expr %s not valid", group.Name, rule.Expr.Value)
 		}
 
-		exprJson, ok := rule.Annotations[ExprJsonAnnotationKey]
+		exprJson, ok := rule.Annotations[prometheus.ExprJsonAnnotationKey]
 		if ok {
 			// from template
 			generator := LogqlGenerator{}
@@ -252,7 +234,7 @@ func rawToLoggingAlertRule(namespace string, group rulefmt.RuleGroup) (LoggingAl
 		ret.AlertLevels = append(ret.AlertLevels, AlertLevel{
 			CompareOp:    op,
 			CompareValue: value,
-			Severity:     rule.Labels[SeverityLabel],
+			Severity:     rule.Labels[prometheus.SeverityLabel],
 		})
 		ret.BaseAlertRule.Expr = query
 	}

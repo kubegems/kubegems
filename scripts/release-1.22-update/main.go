@@ -36,6 +36,7 @@ import (
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -291,7 +292,7 @@ func getOrCreateAlertmanagerConfig(cli client.Client, ctx context.Context, names
 	err := cli.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, aconfig)
 	if kerrors.IsNotFound(err) {
 		// 初始化
-		aconfig = prometheus.GetBaseAlertmanagerConfig(namespace, name)
+		aconfig = observe.GetBaseAlertmanagerConfig(namespace, name)
 		if err := cli.Create(ctx, aconfig); err != nil {
 			return nil, err
 		}

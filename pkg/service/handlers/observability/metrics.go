@@ -30,6 +30,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
@@ -262,7 +263,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		if q.Expr == "" {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
-		if err := prometheus.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
+		if err := observe.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
 			return err
 		}
 	} else {

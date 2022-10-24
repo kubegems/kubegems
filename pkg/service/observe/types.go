@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package prometheus
+package observe
 
 import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type Action int
@@ -29,32 +30,6 @@ const (
 	Update
 	Delete
 )
-
-const (
-	// prometheusrule and alertmanagerconfigname
-	DefaultAlertCRDName = "kubegems-default-monitor-alert-rule"
-)
-
-type RealTimeAlertRule struct {
-	Name string `json:"name"`
-	// Query          string         `json:"query"`
-	// Duration       float64        `json:"duration"`
-	// Labels         model.LabelSet `json:"labels"`
-	// Annotations    model.LabelSet `json:"annotations"`
-	Alerts []*v1.Alert `json:"alerts"`
-	// Health         v1.RuleHealth  `json:"health"`
-	// LastError      string         `json:"lastError,omitempty"`
-	// EvaluationTime float64        `json:"evaluationTime"`
-	// LastEvaluation time.Time      `json:"lastEvaluation"`
-	State string `json:"state"`
-	// Type           v1.RuleType    `json:"type"`
-}
-
-func (r *RealTimeAlertRule) Len() int      { return len(r.Alerts) }
-func (r *RealTimeAlertRule) Swap(i, j int) { r.Alerts[i], r.Alerts[j] = r.Alerts[j], r.Alerts[i] }
-func (r *RealTimeAlertRule) Less(i, j int) bool {
-	return r.Alerts[i].ActiveAt.After(r.Alerts[j].ActiveAt)
-} // 倒排
 
 func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerConfig {
 	return &v1alpha1.AlertmanagerConfig{
@@ -67,18 +42,18 @@ func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerCon
 			Namespace: namespace,
 			Labels: map[string]string{
 				gems.LabelAlertmanagerConfigName: name,
-				gems.LabelAlertmanagerConfigType: AlertTypeMonitor,
+				gems.LabelAlertmanagerConfigType: prometheus.AlertTypeMonitor,
 			},
 		},
 		Spec: v1alpha1.AlertmanagerConfigSpec{
 			Route: &v1alpha1.Route{
-				GroupBy:       []string{AlertNamespaceLabel, AlertNameLabel},
+				GroupBy:       []string{prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel},
 				GroupWait:     "30s",
 				GroupInterval: "30s",
 				Continue:      false,
-				Receiver:      NullReceiverName, // 默认发给空接收器，避免defaultReceiver收到不该收到的alert
+				Receiver:      prometheus.NullReceiverName, // 默认发给空接收器，避免defaultReceiver收到不该收到的alert
 			},
-			Receivers:    []v1alpha1.Receiver{NullReceiver, DefaultReceiver},
+			Receivers:    []v1alpha1.Receiver{prometheus.NullReceiver, models.DefaultChannel.ToReceiver()},
 			InhibitRules: []v1alpha1.InhibitRule{},
 		},
 	}
@@ -95,7 +70,7 @@ func GetBasePrometheusRule(namespace, name string) *monitoringv1.PrometheusRule 
 			Namespace: namespace,
 			Labels: map[string]string{
 				gems.LabelPrometheusRuleName: name,
-				gems.LabelPrometheusRuleType: AlertTypeMonitor,
+				gems.LabelPrometheusRuleType: prometheus.AlertTypeMonitor,
 			},
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{},

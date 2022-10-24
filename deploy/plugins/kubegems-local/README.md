@@ -184,19 +184,19 @@ The command removes all the Kubernetes components associated with the chart and 
 | `agent.metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                          | `instance`                                 |
 | `agent.metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                                        | `endpoint|service|container|pod|namespace` |
 | `kubectl.image.registry`                         | kubectl image registry                                                                            | `docker.io`                                |
-| `kubectl.image.repository`                       | kubectl image repository                                                                          | `kubegems/gems-kubectl`                    |
+| `kubectl.image.repository`                       | kubectl image repository                                                                          | `kubegems/kubectl`                         |
 | `kubectl.image.tag`                              | kubectl image tag (immutable tags are recommended)                                                | `latest`                                   |
-| `kubectl.image.pullPolicy`                       | kubectl image pull policy                                                                         | `IfNotPresent`                             |
+| `kubectl.image.pullPolicy`                       | kubectl image pull policy                                                                         | `Always`                                   |
 | `kubectl.image.pullSecrets`                      | kubectl image pull secrets                                                                        | `[]`                                       |
 | `kubectl.image.debug`                            | Enable kubectl image debug mode                                                                   | `false`                                    |
 | `kubectl.replicaCount`                           | Number of kubectl replicas to deploy                                                              | `1`                                        |
 | `kubectl.resources.limits`                       | The resources limits for the kubectl containers                                                   | `{}`                                       |
 | `kubectl.resources.requests`                     | The requested resources for the kubectl containers                                                | `{}`                                       |
-| `kubectl.podSecurityContext.enabled`             | Enabled kubectl pods' Security Context                                                            | `true`                                     |
+| `kubectl.podSecurityContext.enabled`             | Enabled kubectl pods' Security Context                                                            | `false`                                    |
 | `kubectl.podSecurityContext.fsGroup`             | Set kubectl pod's Security Context fsGroup                                                        | `1001`                                     |
-| `kubectl.containerSecurityContext.enabled`       | Enabled kubectl containers' Security Context                                                      | `true`                                     |
+| `kubectl.containerSecurityContext.enabled`       | Enabled kubectl containers' Security Context                                                      | `false`                                    |
 | `kubectl.containerSecurityContext.runAsUser`     | Set kubectl containers' Security Context runAsUser                                                | `1001`                                     |
-| `kubectl.containerSecurityContext.runAsNonRoot`  | Set kubectl containers' Security Context runAsNonRoot                                             | `true`                                     |
+| `kubectl.containerSecurityContext.runAsNonRoot`  | Set kubectl containers' Security Context runAsNonRoot                                             | `false`                                    |
 | `kubectl.existingConfigmap`                      | The name of an existing ConfigMap with your custom configuration for kubectl                      | `nil`                                      |
 | `kubectl.command`                                | Override default container command (useful when using custom images)                              | `[]`                                       |
 | `kubectl.args`                                   | Override default container args (useful when using custom images)                                 | `[]`                                       |

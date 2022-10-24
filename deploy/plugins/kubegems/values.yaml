@@ -499,6 +499,10 @@ init:
     ## Enable debug mode
     ##
     debug: false
+  ## @param init.migrateModels migrate database models or not
+  migrateModels: true
+  ## @param init.initData init database data or not
+  initData: true
   ## @param init.replicaCount Number of API replicas to deploy
   ##
   replicaCount: 1

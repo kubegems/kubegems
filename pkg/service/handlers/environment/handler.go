@@ -40,6 +40,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/service/handlers/registry/synchronizer"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/loki"
@@ -817,16 +818,17 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// alert rules
 		eg.Go(func() error {
-			monitoralerts, err := cli.Extend().ListMonitorAlertRules(ctx, env.Namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
+			obervecli := observe.NewClient(cli)
+			monitoralerts, err := obervecli.ListMonitorAlertRules(ctx, env.Namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
 				return err
 			}
-			logalerts, err := cli.Extend().ListLoggingAlertRules(ctx, env.Namespace, false)
+			logalerts, err := obervecli.ListLoggingAlertRules(ctx, env.Namespace, false)
 			if err != nil {
 				return err
 			}
 
-			addRealtimeAlert := func(levels []prometheus.AlertLevel) {
+			addRealtimeAlert := func(levels []observe.AlertLevel) {
 				for _, level := range levels {
 					if level.Severity == prometheus.SeverityError {
 						ret.ErrorAlertCount++

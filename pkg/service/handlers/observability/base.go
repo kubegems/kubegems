@@ -46,11 +46,11 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/apps", h.CheckByClusterNamespace, h.ListLogApps)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/logging/apps", h.CheckByClusterNamespace, h.AddAppLogCollector)
 
-	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/receivers", h.CheckByClusterNamespace, h.ListReceiver)
-	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/receivers", h.CheckByClusterNamespace, h.CreateReceiver)
-	rg.PUT("/observability/cluster/:cluster/namespaces/:namespace/receivers/:name", h.CheckByClusterNamespace, h.UpdateReceiver)
-	rg.DELETE("/observability/cluster/:cluster/namespaces/:namespace/receivers/:name", h.CheckByClusterNamespace, h.DeleteReceiver)
-	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/receivers/:name/actions/test", h.TestEmail)
+	rg.GET("/observability/tenant/:tenant_id/channels", h.CheckByTenantID, h.ListChannels)
+	rg.GET("/observability/tenant/:tenant_id/channels/:channel_id", h.CheckByTenantID, h.GetChannel)
+	rg.POST("/observability/tenant/:tenant_id/channels", h.CheckByTenantID, h.CreateChannel)
+	rg.PUT("/observability/tenant/:tenant_id/channels/:channel_id", h.CheckByTenantID, h.UpdateChannel)
+	rg.DELETE("/observability/tenant/:tenant_id/channels/:channel_id", h.CheckByTenantID, h.DeleteChannel)
 
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts", h.CheckByClusterNamespace, h.ListLoggingAlertRule)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts/:name", h.CheckByClusterNamespace, h.GetLoggingAlertRule)
