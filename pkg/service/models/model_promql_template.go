@@ -73,7 +73,7 @@ type PromqlTplRule struct {
 	UpdatedAt *time.Time `json:"-"`
 }
 
-func CheckGraphs(graphs []MetricGraph, namespace string, tplGetter templates.TplGetter) error {
+func CheckGraphs(graphs []prometheus.MetricGraph, namespace string, tplGetter templates.TplGetter) error {
 	// 逐个校验graph
 	for i, v := range graphs {
 		if v.Name == "" {

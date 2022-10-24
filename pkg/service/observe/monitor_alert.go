@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package prometheus
+package observe
 
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 
 	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
 	"kubegems.io/kubegems/pkg/utils/slice"
 	"sigs.k8s.io/yaml"
@@ -41,100 +39,13 @@ type RawMonitorAlertResource struct {
 }
 
 type MonitorAlertRule struct {
-	PromqlGenerator *PromqlGenerator `json:"promqlGenerator"`
+	PromqlGenerator *prometheus.PromqlGenerator `json:"promqlGenerator"`
 
 	BaseAlertRule  `json:",inline"`
 	RealTimeAlerts []*promv1.Alert `json:"realTimeAlerts,omitempty"` // 实时告警
 	Origin         string          `json:"origin,omitempty"`         // 原始的prometheusrule
 	Source         string          `json:"source"`                   // 来自哪个prometheusrule
 	TplLost        bool            `json:"tplLost"`                  // 监控模板是否丢失
-}
-
-var reg = regexp.MustCompile(`^\w+$`)
-
-func IsValidPromqlTplName(scope, resource, rule string) error {
-	if !reg.MatchString(scope) {
-		return fmt.Errorf("scope not valid, must match regex: %s", reg.String())
-	}
-	if !reg.MatchString(resource) {
-		return fmt.Errorf("resource not valid, must match regex: %s", reg.String())
-	}
-	if !reg.MatchString(rule) {
-		return fmt.Errorf("rule not valid, must match regex: %s", reg.String())
-	}
-	return nil
-}
-
-type PromqlGenerator struct {
-	Scope      string            `json:"scope"`                // scope
-	Resource   string            `json:"resource"`             // 告警资源, eg. node、pod
-	Rule       string            `json:"rule"`                 // 告警规则名, eg. cpuUsage、memoryUsagePercent
-	Unit       string            `json:"unit"`                 // 单位
-	LabelPairs map[string]string `json:"labelpairs,omitempty"` // 标签键值对
-
-	UnitValue UnitValue `json:"-"`
-
-	Tpl *templates.PromqlTpl `json:"-"`
-}
-
-func (g *PromqlGenerator) Notpl() bool {
-	return g == nil || g.Resource == ""
-}
-
-func (g *PromqlGenerator) TplString() string {
-	return fmt.Sprintf("%s.%s.%s", g.Scope, g.Resource, g.Rule)
-}
-
-func (g *PromqlGenerator) SetTpl(f templates.TplGetter) error {
-	if err := IsValidPromqlTplName(g.Scope, g.Resource, g.Rule); err != nil {
-		return err
-	}
-	tpl, err := f(g.Scope, g.Resource, g.Rule)
-	if err != nil {
-		return err
-	}
-	for label := range g.LabelPairs {
-		if !slice.ContainStr(tpl.Labels, label) {
-			return fmt.Errorf("label: %s not in tpl: %v", label, tpl.String())
-		}
-	}
-	if g.Unit == "" {
-		g.Unit = tpl.Unit
-	} else if g.Unit != tpl.Unit {
-		return fmt.Errorf("unit: %s not euqal with unit in template: %s", g.Unit, tpl.Unit)
-	}
-
-	unitValue, err := ParseUnit(g.Unit)
-	if err != nil {
-		return err
-	}
-
-	g.UnitValue = unitValue
-	g.Tpl = tpl
-	return nil
-}
-
-func (g *PromqlGenerator) ToPromql(namespace string) (string, error) {
-	query, err := promql.New(g.Tpl.Expr)
-	if err != nil {
-		return "", err
-	}
-	if namespace != GlobalAlertNamespace && namespace != "" {
-		query.AddLabelMatchers(&labels.Matcher{
-			Type:  labels.MatchEqual,
-			Name:  PromqlNamespaceKey,
-			Value: namespace,
-		})
-	}
-
-	for label, value := range g.LabelPairs {
-		query.AddLabelMatchers(&labels.Matcher{
-			Type:  labels.MatchRegexp,
-			Name:  label,
-			Value: value,
-		})
-	}
-	return query.String(), nil
 }
 
 var _ AlertRule = MonitorAlertRule{}
@@ -148,7 +59,7 @@ func MutateMonitorAlert(req *MonitorAlertRule, f templates.TplGetter) error {
 			return fmt.Errorf("模板与原生promql不能同时为空")
 		}
 		if req.Message == "" {
-			req.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] trigger alert, value: %s", req.Name, AlertClusterKey, ValueAnnotationExpr)
+			req.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] trigger alert, value: %s", req.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
 		}
 	} else {
 		// check resource
@@ -158,12 +69,12 @@ func MutateMonitorAlert(req *MonitorAlertRule, f templates.TplGetter) error {
 
 		// format message
 		if req.BaseAlertRule.Message == "" {
-			req.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] ", req.Name, AlertClusterKey)
+			req.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] ", req.Name, prometheus.AlertClusterKey)
 			for _, label := range req.PromqlGenerator.Tpl.Labels {
 				req.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 			}
 
-			req.Message += fmt.Sprintf("%s trigger alert, value: %s%s", req.PromqlGenerator.Tpl.RuleShowName, ValueAnnotationExpr, req.PromqlGenerator.UnitValue.Show)
+			req.Message += fmt.Sprintf("%s trigger alert, value: %s%s", req.PromqlGenerator.Tpl.RuleShowName, prometheus.ValueAnnotationExpr, req.PromqlGenerator.UnitValue.Show)
 		}
 
 		// 优先采用模板
@@ -173,12 +84,12 @@ func MutateMonitorAlert(req *MonitorAlertRule, f templates.TplGetter) error {
 		}
 		req.BaseAlertRule.Expr = promql
 	}
-	return nil
+	return req.BaseAlertRule.CheckAndModify()
 }
 
 // 默认认为namespace全部一致
 func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[MonitorAlertRule], error) {
-	receiverMap, err := raw.Base.GetReceiverMap()
+	receiverMap, err := raw.Base.GetReceiverMap(hasDetail)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +113,7 @@ func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[Moni
 		alertrule.IsOpen = isOpen
 		// inhibit rule
 		inhitbitRule := inhibitRuleMap[group.Name]
-		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, AlertNamespaceLabel), AlertNameLabel)
+		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, prometheus.AlertNamespaceLabel), prometheus.AlertNameLabel)
 		if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
 			return ret, fmt.Errorf("alert rule %v inhibit label can't be null", alertrule)
 		}
@@ -248,16 +159,12 @@ func (raw *RawMonitorAlertResource) ModifyAlertRule(newAlertRule MonitorAlertRul
 
 	// update PrometheusRule
 	raw.PrometheusRule.Spec.Groups = groups
-	// update AlertmanagerConfig routes
-	raw.Base.UpdateRoutes(alertRules.ToAlertRuleList())
-	// add null receivers
-	raw.Base.AddNullReceivers()
-	// update AlertmanagerConfig inhibit rules
-	return raw.Base.UpdateInhibitRules(alertRules.ToAlertRuleList())
+	raw.Base.Update(alertRules.ToAlertRuleList())
+	return nil
 }
 
 func alertNamespace(ns string) string {
-	if ns == GlobalAlertNamespace {
+	if ns == prometheus.GlobalAlertNamespace {
 		return ""
 	}
 	return ns
@@ -275,21 +182,21 @@ func monitorAlertRuleToRaw(alertRule MonitorAlertRule) (monitoringv1.RuleGroup, 
 			Expr:  intstr.FromString(fmt.Sprintf("%s%s%s", alertRule.Expr, level.CompareOp, level.CompareValue)),
 			For:   alertRule.For,
 			Labels: map[string]string{
-				AlertNamespaceLabel: alertRule.Namespace,
-				AlertNameLabel:      alertRule.Name,
-				AlertFromLabel:      AlertTypeMonitor,
-				AlertScopeLabel:     getAlertScope(alertRule.Namespace),
-				SeverityLabel:       level.Severity,
+				prometheus.AlertNamespaceLabel: alertRule.Namespace,
+				prometheus.AlertNameLabel:      alertRule.Name,
+				prometheus.AlertFromLabel:      prometheus.AlertTypeMonitor,
+				prometheus.AlertScopeLabel:     getAlertScope(alertRule.Namespace),
+				prometheus.SeverityLabel:       level.Severity,
 			},
 			Annotations: map[string]string{
-				MessageAnnotationsKey: alertRule.Message,
-				valueAnnotationKey:    ValueAnnotationExpr,
+				prometheus.MessageAnnotationsKey: alertRule.Message,
+				prometheus.ValueAnnotationKey:    prometheus.ValueAnnotationExpr,
 			},
 		}
 		if !alertRule.PromqlGenerator.Notpl() {
-			rule.Labels[AlertPromqlTpl] = alertRule.PromqlGenerator.TplString()
+			rule.Labels[prometheus.AlertPromqlTpl] = alertRule.PromqlGenerator.TplString()
 			bts, _ := json.Marshal(alertRule.PromqlGenerator)
-			rule.Annotations[ExprJsonAnnotationKey] = string(bts)
+			rule.Annotations[prometheus.ExprJsonAnnotationKey] = string(bts)
 		}
 		ret.Rules = append(ret.Rules, rule)
 	}
@@ -306,24 +213,24 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup) (Moni
 			Namespace: namespace,
 			Name:      group.Name,
 			For:       group.Rules[0].For,
-			Message:   group.Rules[0].Annotations[MessageAnnotationsKey],
+			Message:   group.Rules[0].Annotations[prometheus.MessageAnnotationsKey],
 		},
 	}
 	for _, rule := range group.Rules {
-		if rule.Labels[AlertNamespaceLabel] != namespace ||
-			rule.Labels[AlertNameLabel] == "" {
+		if rule.Labels[prometheus.AlertNamespaceLabel] != namespace ||
+			rule.Labels[prometheus.AlertNameLabel] == "" {
 			return ret, fmt.Errorf("rule %s label not valid: %v", group.Name, rule.Labels)
 		}
 		// from promql
-		query, op, value, hasOp := SplitQueryExpr(rule.Expr.String())
+		query, op, value, hasOp := prometheus.SplitQueryExpr(rule.Expr.String())
 		if !hasOp {
 			return ret, fmt.Errorf("rule %s expr %s not valid", group.Name, rule.Expr.String())
 		}
 
-		exprJson, ok := rule.Annotations[ExprJsonAnnotationKey]
+		exprJson, ok := rule.Annotations[prometheus.ExprJsonAnnotationKey]
 		if ok {
 			// from template
-			generator := PromqlGenerator{}
+			generator := prometheus.PromqlGenerator{}
 			if err := json.Unmarshal([]byte(exprJson), &generator); err != nil {
 				return ret, err
 			}
@@ -332,14 +239,10 @@ func rawToMonitorAlertRule(namespace string, group monitoringv1.RuleGroup) (Moni
 		ret.BaseAlertRule.AlertLevels = append(ret.BaseAlertRule.AlertLevels, AlertLevel{
 			CompareOp:    op,
 			CompareValue: value,
-			Severity:     rule.Labels[SeverityLabel],
+			Severity:     rule.Labels[prometheus.SeverityLabel],
 		})
 		ret.BaseAlertRule.Expr = query
 	}
 
 	return ret, nil
-}
-
-func RealTimeAlertKey(namespace, name string) string {
-	return fmt.Sprintf(alertRuleKeyFormat, namespace, name)
 }

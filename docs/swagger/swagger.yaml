@@ -816,6 +816,10 @@ definitions:
       street_address:
         type: string
     type: object
+  channels.ChannelConfig:
+    properties:
+      ChannelIf: {}
+    type: object
   chart.Maintainer:
     properties:
       email:
@@ -3276,6 +3280,22 @@ definitions:
       value:
         type: string
     type: object
+  models.AlertChannel:
+    properties:
+      channelConfig:
+        $ref: '#/definitions/channels.ChannelConfig'
+      id:
+        type: integer
+      name:
+        type: string
+      tenant:
+        $ref: '#/definitions/models.Tenant'
+      tenantID:
+        description: 若为null，则表示系统预置
+        type: integer
+    required:
+    - name
+    type: object
   models.AlertInfo:
     properties:
       clusterName:
@@ -3869,30 +3889,6 @@ definitions:
       title:
         type: string
     type: object
-  models.MetricGraph:
-    properties:
-      expr:
-        type: string
-      labelpairs:
-        additionalProperties:
-          type: string
-        description: 标签键值对
-        type: object
-      name:
-        description: graph名
-        type: string
-      resource:
-        description: 告警资源, eg. node、pod
-        type: string
-      rule:
-        description: 告警规则名, eg. cpuUsage、memoryUsagePercent
-        type: string
-      scope:
-        description: scope
-        type: string
-      unit:
-        type: string
-    type: object
   models.MonitorDashboard:
     properties:
       createdAt:
@@ -3910,7 +3906,7 @@ definitions:
       graphs:
         description: 图表
         items:
-          $ref: '#/definitions/models.MetricGraph'
+          $ref: '#/definitions/prometheus.MetricGraph'
         type: array
       id:
         type: integer
@@ -3945,7 +3941,7 @@ definitions:
       graphs:
         description: 图表
         items:
-          $ref: '#/definitions/models.MetricGraph'
+          $ref: '#/definitions/prometheus.MetricGraph'
         type: array
       name:
         type: string
@@ -4709,25 +4705,7 @@ definitions:
       groupValue:
         type: string
     type: object
-  pagination.PageData:
-    properties:
-      currentPage:
-        type: integer
-      currentSize:
-        type: integer
-      list: {}
-      total:
-        type: integer
-    type: object
-  pkix.AttributeTypeAndValue:
-    properties:
-      type:
-        items:
-          type: integer
-        type: array
-      value: {}
-    type: object
-  prometheus.AlertLevel:
+  observe.AlertLevel:
     properties:
       compareOp:
         type: string
@@ -4738,33 +4716,20 @@ definitions:
         description: error, critical
         type: string
     type: object
-  prometheus.AlertReceiver:
+  observe.AlertReceiver:
     properties:
+      alertChannel:
+        $ref: '#/definitions/models.AlertChannel'
       interval:
         description: 分组间隔
         type: string
-      name:
-        type: string
     type: object
-  prometheus.EmailConfig:
-    properties:
-      authPassword:
-        type: string
-      from:
-        type: string
-      requireTLS:
-        type: boolean
-      smtpServer:
-        type: string
-      to:
-        type: string
-    type: object
-  prometheus.LoggingAlertRule:
+  observe.LoggingAlertRule:
     properties:
       alertLevels:
         description: 告警级别
         items:
-          $ref: '#/definitions/prometheus.AlertLevel'
+          $ref: '#/definitions/observe.AlertLevel'
         type: array
       expr:
         description: promql/logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
@@ -4781,7 +4746,7 @@ definitions:
         description: 是否启用
         type: boolean
       logqlGenerator:
-        $ref: '#/definitions/prometheus.LogqlGenerator'
+        $ref: '#/definitions/observe.LogqlGenerator'
       message:
         description: 告警消息，若为空后端自动填充
         type: string
@@ -4800,13 +4765,13 @@ definitions:
       receivers:
         description: 接收器
         items:
-          $ref: '#/definitions/prometheus.AlertReceiver'
+          $ref: '#/definitions/observe.AlertReceiver'
         type: array
       state:
         description: 状态
         type: string
     type: object
-  prometheus.LogqlGenerator:
+  observe.LogqlGenerator:
     properties:
       duration:
         description: 时间范围
@@ -4820,12 +4785,12 @@ definitions:
         description: 正则匹配的字符串
         type: string
     type: object
-  prometheus.MonitorAlertRule:
+  observe.MonitorAlertRule:
     properties:
       alertLevels:
         description: 告警级别
         items:
-          $ref: '#/definitions/prometheus.AlertLevel'
+          $ref: '#/definitions/observe.AlertLevel'
         type: array
       expr:
         description: promql/logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
@@ -4861,7 +4826,7 @@ definitions:
       receivers:
         description: 接收器
         items:
-          $ref: '#/definitions/prometheus.AlertReceiver'
+          $ref: '#/definitions/observe.AlertReceiver'
         type: array
       source:
         description: 来自哪个prometheusrule
@@ -4872,6 +4837,48 @@ definitions:
       tplLost:
         description: 监控模板是否丢失
         type: boolean
+    type: object
+  pagination.PageData:
+    properties:
+      currentPage:
+        type: integer
+      currentSize:
+        type: integer
+      list: {}
+      total:
+        type: integer
+    type: object
+  pkix.AttributeTypeAndValue:
+    properties:
+      type:
+        items:
+          type: integer
+        type: array
+      value: {}
+    type: object
+  prometheus.MetricGraph:
+    properties:
+      expr:
+        type: string
+      labelpairs:
+        additionalProperties:
+          type: string
+        description: 标签键值对
+        type: object
+      name:
+        description: graph名
+        type: string
+      resource:
+        description: 告警资源, eg. node、pod
+        type: string
+      rule:
+        description: 告警规则名, eg. cpuUsage、memoryUsagePercent
+        type: string
+      scope:
+        description: scope
+        type: string
+      unit:
+        type: string
     type: object
   prometheus.PromqlGenerator:
     properties:
@@ -4912,29 +4919,6 @@ definitions:
           LastError      string         `json:"lastError,omitempty"`
           EvaluationTime float64        `json:"evaluationTime"`
           LastEvaluation time.Time      `json:"lastEvaluation"`
-        type: string
-    type: object
-  prometheus.ReceiverConfig:
-    properties:
-      alertProxyConfigs:
-        items: {}
-        type: array
-      emailConfigs:
-        items:
-          $ref: '#/definitions/prometheus.EmailConfig'
-        type: array
-      name:
-        type: string
-      namespace:
-        type: string
-      webhookConfigs:
-        items:
-          $ref: '#/definitions/prometheus.WebhookConfig'
-        type: array
-    type: object
-  prometheus.WebhookConfig:
-    properties:
-      url:
         type: string
     type: object
   resource.Quantity:
@@ -20570,7 +20554,7 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/prometheus.LoggingAlertRule'
+                    $ref: '#/definitions/observe.LoggingAlertRule'
                   type: array
               type: object
       security:
@@ -20598,7 +20582,7 @@ paths:
         name: form
         required: true
         schema:
-          $ref: '#/definitions/prometheus.LoggingAlertRule'
+          $ref: '#/definitions/observe.LoggingAlertRule'
       produces:
       - application/json
       responses:
@@ -20684,7 +20668,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/prometheus.LoggingAlertRule'
+                  $ref: '#/definitions/observe.LoggingAlertRule'
               type: object
       security:
       - JWT: []
@@ -20711,7 +20695,7 @@ paths:
         name: form
         required: true
         schema:
-          $ref: '#/definitions/prometheus.LoggingAlertRule'
+          $ref: '#/definitions/observe.LoggingAlertRule'
       produces:
       - application/json
       responses:
@@ -20942,7 +20926,7 @@ paths:
             - properties:
                 Data:
                   items:
-                    $ref: '#/definitions/prometheus.MonitorAlertRule'
+                    $ref: '#/definitions/observe.MonitorAlertRule'
                   type: array
               type: object
       security:
@@ -20970,7 +20954,7 @@ paths:
         name: form
         required: true
         schema:
-          $ref: '#/definitions/prometheus.MonitorAlertRule'
+          $ref: '#/definitions/observe.MonitorAlertRule'
       produces:
       - application/json
       responses:
@@ -21061,7 +21045,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/prometheus.MonitorAlertRule'
+                  $ref: '#/definitions/observe.MonitorAlertRule'
               type: object
       security:
       - JWT: []
@@ -21093,7 +21077,7 @@ paths:
         name: form
         required: true
         schema:
-          $ref: '#/definitions/prometheus.MonitorAlertRule'
+          $ref: '#/definitions/observe.MonitorAlertRule'
       produces:
       - application/json
       responses:
@@ -21385,209 +21369,6 @@ paths:
       security:
       - JWT: []
       summary: OtelMetricsGraphs
-      tags:
-      - Observability
-  /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers:
-    get:
-      consumes:
-      - application/json
-      description: （日志/监控）告警接收器列表
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: search
-        in: query
-        name: search
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/prometheus.ReceiverConfig'
-                  type: array
-              type: object
-      security:
-      - JWT: []
-      summary: （日志/监控）告警接收器列表
-      tags:
-      - Observability
-    post:
-      consumes:
-      - application/json
-      description: 创建（日志/监控）告警接收器
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.ReceiverConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 创建（日志/监控）告警接收器
-      tags:
-      - Observability
-  /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/_/actions/test:
-    post:
-      consumes:
-      - application/json
-      description: 发送测试邮件
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.EmailConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 发送测试邮件
-      tags:
-      - Observability
-  /v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/{name}:
-    delete:
-      consumes:
-      - application/json
-      description: 删除（日志/监控）告警接收器
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: source
-        in: query
-        name: source
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 删除（日志/监控）告警接收器
-      tags:
-      - Observability
-    put:
-      consumes:
-      - application/json
-      description: 更新（日志/监控）告警接收器
-      parameters:
-      - description: cluster
-        in: path
-        name: cluster
-        required: true
-        type: string
-      - description: namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: form
-        required: true
-        schema:
-          $ref: '#/definitions/prometheus.ReceiverConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: resp
-          schema:
-            allOf:
-            - $ref: '#/definitions/handlers.ResponseStruct'
-            - properties:
-                Data:
-                  type: string
-              type: object
-      security:
-      - JWT: []
-      summary: 更新（日志/监控）告警接收器
       tags:
       - Observability
   /v1/observability/environment/{environment_id}/monitor/dashboard:
@@ -22120,6 +21901,190 @@ paths:
       security:
       - JWT: []
       summary: 今日告警数量统计
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/channels:
+    get:
+      consumes:
+      - application/json
+      description: 告警渠道列表
+      parameters:
+      - description: 租户id, 所有租户为_all
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: search in (name)
+        in: query
+        name: search
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/models.AlertChannel'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 告警渠道列表
+      tags:
+      - Observability
+    post:
+      consumes:
+      - application/json
+      description: 创建告警渠道
+      parameters:
+      - description: 租户id, 所有租户为_all
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/models.AlertChannel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 创建告警渠道
+      tags:
+      - Observability
+  /v1/observability/tenant/{tenant_id}/channels/{channel_id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除告警渠道
+      parameters:
+      - description: 租户id, 所有租户为_all
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: 告警渠道id
+        in: path
+        name: channel_id
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/models.AlertChannel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 删除告警渠道
+      tags:
+      - Observability
+    get:
+      consumes:
+      - application/json
+      description: 渠道列表详情
+      parameters:
+      - description: 租户id, 所有租户为_all
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: 告警渠道id
+        in: path
+        name: channel_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/models.AlertChannel'
+              type: object
+      security:
+      - JWT: []
+      summary: 渠道列表详情
+      tags:
+      - Observability
+    put:
+      consumes:
+      - application/json
+      description: 更新告警渠道
+      parameters:
+      - description: 租户id, 所有租户为_all
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: 告警渠道id
+        in: path
+        name: channel_id
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/models.AlertChannel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 更新告警渠道
       tags:
       - Observability
   /v1/observability/tenant/{tenant_id}/template/resources{resource_id}/rules:
