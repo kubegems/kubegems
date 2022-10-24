@@ -97,6 +97,9 @@ type ServerSpec struct {
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// +kubebuilder:validation:Optional
+	UpgradeStrategy string `json:"upgradeStrategy,omitempty"`
+
+	// +kubebuilder:validation:Optional
 	PodSpec *corev1.PodSpec `json:"podSpec,omitempty"`
 }
 

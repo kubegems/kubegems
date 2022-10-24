@@ -9,6 +9,8 @@ spec:
   chart: seldon-core-operator
   version: {{ .Chart.AppVersion }}
   values:
+    ambassador:
+      enabled: false
     image:
       registry: {{ .Values.global.imageRegistry }}
       repository: kubegems/seldon-core-operator
