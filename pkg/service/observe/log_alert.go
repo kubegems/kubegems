@@ -30,7 +30,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
-	"kubegems.io/kubegems/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/utils/set"
 )
 
 const (
@@ -107,7 +107,7 @@ func MutateLoggingAlert(req *LoggingAlertRule) error {
 }
 
 func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingAlertRule], error) {
-	receiverMap, err := raw.Base.GetReceiverMap(hasDetail)
+	receiverMap, err := raw.Base.GetAlertReceiverMap()
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +122,7 @@ func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingA
 		}
 		// 接收器
 		alertrule.Receivers = receiverMap[group.Name]
+		delete(receiverMap, group.Name)
 		// 是否启用
 		isOpen := true
 		if _, ok := silenceMap[group.Name]; ok {
@@ -130,7 +131,11 @@ func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingA
 		alertrule.IsOpen = isOpen
 		// inhibit rule
 		inhitbitRule := inhibitRuleMap[group.Name]
-		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, prometheus.AlertNamespaceLabel), prometheus.AlertNameLabel)
+		alertrule.InhibitLabels = set.NewSet[string]().
+			Append(inhitbitRule.Equal...).
+			Remove(prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel).
+			Slice()
+
 		if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
 			return ret, fmt.Errorf("alert rule %v inhibit label can't be null", alertrule)
 		}
@@ -141,6 +146,20 @@ func (raw *RawLoggingAlertRule) ToAlerts(hasDetail bool) (AlertRuleList[LoggingA
 		}
 
 		ret = append(ret, alertrule)
+	}
+
+	for k, v := range receiverMap {
+		ret = append(ret, LoggingAlertRule{
+			BaseAlertRule: BaseAlertRule{
+				Namespace: raw.Base.AMConfig.Namespace,
+				Name:      k,
+				Receivers: v,
+				InhibitLabels: set.NewSet[string]().
+					Append(inhibitRuleMap[k].Equal...).
+					Remove(prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel).
+					Slice(),
+			},
+		})
 	}
 	return ret, nil
 }
@@ -155,16 +174,19 @@ func (raw *RawLoggingAlertRule) ModifyLoggingAlertRule(r LoggingAlertRule, act A
 		return err
 	}
 
-	groups := make([]rulefmt.RuleGroup, len(alertRules))
-	for i, alertrule := range alertRules {
-		groups[i], err = loggingAlertRuleToRaw(alertrule)
+	groups := []rulefmt.RuleGroup{}
+	for _, alertrule := range alertRules {
+		if alertrule.IsExtraAlert() {
+			continue
+		}
+		group, err := loggingAlertRuleToRaw(alertrule)
 		if err != nil {
 			return errors.Wrap(err, "loggingAlertRuleToRaw")
 		}
+		groups = append(groups, group)
 	}
 	raw.RuleGroups.Groups = groups
-	raw.Base.Update(alertRules.ToAlertRuleList())
-	return nil
+	return raw.Base.Update(alertRules.ToAlertRuleList())
 }
 
 func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {

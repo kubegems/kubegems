@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
 )
@@ -37,6 +37,7 @@ var (
 			},
 		},
 	}
+	DefaultReceiver = DefaultChannel.ChannelConfig.ChannelIf.ToReceiver(DefaultChannel.ReceiverName())
 )
 
 // AlertChannel
@@ -50,10 +51,6 @@ type AlertChannel struct {
 
 	CreatedAt *time.Time `json:"-"`
 	UpdatedAt *time.Time `json:"-"`
-}
-
-func (c *AlertChannel) ToReceiver() v1alpha1.Receiver {
-	return c.ChannelConfig.ToReceiver(c.ReceiverName())
 }
 
 func (c *AlertChannel) ReceiverName() string {
@@ -74,4 +71,18 @@ func ChannelIDNameByReceiverName(recName string) (string, uint) {
 	}
 	log.Errorf("receiver name %s not valid", recName)
 	return "", 0
+}
+
+func NewChannnelMappler(db *gorm.DB) *channels.ChannelMapper {
+	allch := []AlertChannel{}
+	if err := db.Find(&allch).Error; err != nil {
+		return &channels.ChannelMapper{Err: err}
+	}
+	ret := &channels.ChannelMapper{
+		M: make(map[uint]channels.ChannelIf),
+	}
+	for _, v := range allch {
+		ret.M[v.ID] = v.ChannelConfig.ChannelIf
+	}
+	return ret
 }

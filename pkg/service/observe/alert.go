@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -54,6 +55,12 @@ type BaseAlertRule struct {
 
 	IsOpen bool   `json:"isOpen"` // 是否启用
 	State  string `json:"state"`  // 状态
+}
+
+// IsExtraAlert 用于记录额外信息
+// 如在生成监控的amcfg时，避免忽视日志的route
+func (r *BaseAlertRule) IsExtraAlert() bool {
+	return len(r.AlertLevels) == 0
 }
 
 func CheckQueryExprNamespace(expr, namespace string) error {
@@ -183,9 +190,10 @@ func (r BaseAlertRule) GetReceivers() []AlertReceiver {
 type BaseAlertResource struct {
 	AMConfig *v1alpha1.AlertmanagerConfig
 	Silences []alertmanagertypes.Silence
+	channels.ChannelGetter
 }
 
-func (base *BaseAlertResource) GetReceiverMap(hasDetail bool) (map[string][]AlertReceiver, error) {
+func (base *BaseAlertResource) GetAlertReceiverMap() (map[string][]AlertReceiver, error) {
 	routes, err := base.AMConfig.Spec.Route.ChildRoutes()
 	if err != nil {
 		return nil, err
@@ -237,30 +245,34 @@ func (base *BaseAlertResource) GetInhibitRuleMap() map[string]v1alpha1.InhibitRu
 	return ret
 }
 
-func (base *BaseAlertResource) Update(alertrules AlertRuleList[AlertRule]) {
-	// update AlertmanagerConfig receivers
-	base.UpdateReceivers(alertrules)
+func (base *BaseAlertResource) Update(alertrules AlertRuleList[AlertRule]) error {
 	// update AlertmanagerConfig routes
 	base.UpdateRoutes(alertrules)
 	// update AlertmanagerConfig inhibit rules
 	base.UpdateInhibitRules(alertrules)
+	// update AlertmanagerConfig receivers
+	return base.UpdateReceivers(alertrules)
 }
 
-func (base *BaseAlertResource) UpdateReceivers(alertrules AlertRuleList[AlertRule]) {
+func (base *BaseAlertResource) UpdateReceivers(alertrules AlertRuleList[AlertRule]) error {
 	base.AMConfig.Spec.Receivers = []v1alpha1.Receiver{
 		prometheus.NullReceiver,
-		models.DefaultChannel.ToReceiver(),
+		models.DefaultReceiver,
 	}
-	recSet := set.NewSet[string]().Append(prometheus.NullReceiverName, models.DefaultChannel.ReceiverName())
+	recSet := set.NewSet[uint]().Append(models.DefaultChannel.ID)
 	for _, alertrule := range alertrules {
 		for _, rec := range alertrule.GetReceivers() {
-			recName := rec.AlertChannel.ReceiverName()
-			if !recSet.Has(recName) {
-				base.AMConfig.Spec.Receivers = append(base.AMConfig.Spec.Receivers, rec.AlertChannel.ToReceiver())
-				recSet.Append(recName)
+			if !recSet.Has(rec.AlertChannel.ID) {
+				ch, err := base.ChannelGetter(rec.AlertChannel.ID)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get channel by receiver: %v", rec)
+				}
+				base.AMConfig.Spec.Receivers = append(base.AMConfig.Spec.Receivers, ch.ToReceiver(rec.AlertChannel.ReceiverName()))
+				recSet.Append(rec.AlertChannel.ID)
 			}
 		}
 	}
+	return nil
 }
 
 func (base *BaseAlertResource) UpdateRoutes(alertrules AlertRuleList[AlertRule]) {
@@ -298,8 +310,8 @@ func (base *BaseAlertResource) UpdateInhibitRules(alertrules AlertRuleList[Alert
 	for _, alertrule := range alertrules {
 		// 更新AlertmanagerConfig inhibitRules
 		// 先用map为同一label的去重
-		if len(alertrule.GetAlertLevels()) > 1 {
-			inhibitRuleMap[slice.SliceUniqueKey(alertrule.GetInhibitLabels())] = v1alpha1.InhibitRule{
+		if len(alertrule.GetInhibitLabels()) > 0 {
+			inhibitRuleMap[slice.SliceUniqueKey(append(alertrule.GetInhibitLabels(), alertrule.GetNamespace(), alertrule.GetName()))] = v1alpha1.InhibitRule{
 				SourceMatch: []v1alpha1.Matcher{
 					{
 						Name:  prometheus.AlertNamespaceLabel,

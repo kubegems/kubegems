@@ -30,6 +30,7 @@ import (
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
+	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,10 +57,11 @@ var (
 
 type ObserveClient struct {
 	agents.Client
+	*gorm.DB
 }
 
-func NewClient(cli agents.Client) *ObserveClient {
-	return &ObserveClient{Client: cli}
+func NewClient(cli agents.Client, db *gorm.DB) *ObserveClient {
+	return &ObserveClient{Client: cli, DB: db}
 }
 
 func (c *ObserveClient) ListMonitorAlertRules(ctx context.Context, namespace string, hasDetail bool, tplGetter templates.TplGetter) ([]MonitorAlertRule, error) {
@@ -132,8 +134,9 @@ func (c *ObserveClient) ListMonitorAlertRules(ctx context.Context, namespace str
 		}
 		raw := &RawMonitorAlertResource{
 			Base: &BaseAlertResource{
-				AMConfig: amconfig,
-				Silences: silenceNamespaceMap[rule.Namespace],
+				AMConfig:      amconfig,
+				Silences:      silenceNamespaceMap[rule.Namespace],
+				ChannelGetter: models.NewChannnelMappler(c.DB).FindChannel,
 			},
 			PrometheusRule: rule,
 			TplGetter:      tplGetter,
@@ -143,7 +146,11 @@ func (c *ObserveClient) ListMonitorAlertRules(ctx context.Context, namespace str
 		if err != nil {
 			return nil, err
 		}
-		ret = append(ret, alerts...)
+		for _, v := range alerts {
+			if !v.IsExtraAlert() {
+				ret = append(ret, v)
+			}
+		}
 	}
 
 	// realtime alert rules 按照namespace+name 分组
@@ -247,8 +254,9 @@ func (c *ObserveClient) ListLoggingAlertRules(ctx context.Context, namespace str
 		}
 		raw := &RawLoggingAlertRule{
 			Base: &BaseAlertResource{
-				AMConfig: amconfig,
-				Silences: silenceNamespaceMap[thisNamesapce],
+				AMConfig:      amconfig,
+				Silences:      silenceNamespaceMap[thisNamesapce],
+				ChannelGetter: models.NewChannnelMappler(c.DB).FindChannel,
 			},
 			ConfigMap:  &cm,
 			RuleGroups: rulegroups,
@@ -258,7 +266,11 @@ func (c *ObserveClient) ListLoggingAlertRules(ctx context.Context, namespace str
 		if err != nil {
 			return nil, err
 		}
-		ret = append(ret, alerts...)
+		for _, v := range alerts {
+			if !v.IsExtraAlert() {
+				ret = append(ret, v)
+			}
+		}
 	}
 
 	for i := range ret {
@@ -293,8 +305,9 @@ func (c *ObserveClient) getBaseAlertResource(ctx context.Context, namespace, nam
 		return nil, err
 	}
 	return &BaseAlertResource{
-		AMConfig: loggingAMConfig,
-		Silences: silence,
+		AMConfig:      loggingAMConfig,
+		Silences:      silence,
+		ChannelGetter: models.NewChannnelMappler(c.DB).FindChannel,
 	}, nil
 }
 
@@ -420,7 +433,7 @@ func (c *ObserveClient) CreateOrUpdateAlertEmailSecret(ctx context.Context, name
 	for _, rec := range receivers {
 		switch v := rec.AlertChannel.ChannelConfig.ChannelIf.(type) {
 		case *channels.Email:
-			emails[rec.AlertChannel.Name] = v
+			emails[rec.AlertChannel.ReceiverName()] = v
 		}
 	}
 
@@ -436,29 +449,13 @@ func (c *ObserveClient) CreateOrUpdateAlertEmailSecret(ctx context.Context, name
 		if sec.Data == nil {
 			sec.Data = make(map[string][]byte)
 		}
-		for channelName, v := range emails {
-			sec.Data[channels.EmailSecretKey(channelName, v.From)] = []byte(v.AuthPassword) // 不需要encode
+		for recName, v := range emails {
+			sec.Data[channels.EmailSecretKey(recName, v.From)] = []byte(v.AuthPassword) // 不需要encode
 		}
 		return nil
 	})
 
 	return err
-}
-
-func (c *ObserveClient) DeleteAlertEmailSecret(ctx context.Context, namespace string, rec monitoringv1alpha1.Receiver) error {
-	sec := &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      channels.EmailSecretName,
-			Namespace: namespace,
-		},
-	}
-	if err := c.Client.Get(ctx, client.ObjectKeyFromObject(sec), sec); err != nil {
-		return err
-	}
-	for _, v := range rec.EmailConfigs {
-		delete(sec.Data, channels.EmailSecretKey(rec.Name, v.From))
-	}
-	return c.Client.Update(ctx, sec)
 }
 
 func (c *ObserveClient) ListSilences(ctx context.Context, labels map[string]string, commentPrefix string) ([]alertmanagertypes.Silence, error) {

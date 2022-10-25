@@ -49,6 +49,24 @@ type ChannelConfig struct {
 	ChannelIf
 }
 
+type ChannelGetter func(id uint) (ChannelIf, error)
+
+type ChannelMapper struct {
+	M   map[uint]ChannelIf
+	Err error
+}
+
+func (m *ChannelMapper) FindChannel(id uint) (ChannelIf, error) {
+	if m.Err != nil {
+		return nil, m.Err
+	}
+	ret, ok := m.M[id]
+	if !ok {
+		return nil, fmt.Errorf("channel: %d not found", id)
+	}
+	return ret, nil
+}
+
 // Value return json value, implement driver.Valuer interface
 func (m ChannelConfig) Value() (driver.Value, error) {
 	bts, err := m.MarshalJSON()

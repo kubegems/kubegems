@@ -70,13 +70,13 @@ func updateAMConfig(cli client.Client) {
 	for _, v := range amCfgs.Items {
 		for i := range v.Spec.Receivers {
 			if v.Spec.Receivers[i].Name == channels.DefaultChannelName {
-				v.Spec.Receivers[i] = models.DefaultChannel.ToReceiver()
+				v.Spec.Receivers[i] = models.DefaultReceiver
 				goto Update
 			}
 		}
 		// not found
 		log.Infof("default receiver not found in: %s %s\n", v.Namespace, v.Name)
-		v.Spec.Receivers = append(v.Spec.Receivers, models.DefaultChannel.ToReceiver())
+		v.Spec.Receivers = append(v.Spec.Receivers, models.DefaultReceiver)
 	Update:
 		if err := cli.Update(ctx, v); err != nil {
 			panic(err)

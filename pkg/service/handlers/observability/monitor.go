@@ -287,7 +287,7 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 	ret := []observe.MonitorAlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		var err error
-		observecli := observe.NewClient(cli)
+		observecli := observe.NewClient(cli, h.GetDB())
 		ret, err = observecli.ListMonitorAlertRules(ctx, namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		return err
 	}); err != nil {
@@ -316,7 +316,7 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 
 	var alerts []observe.MonitorAlertRule
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli)
+		observecli := observe.NewClient(cli, h.GetDB())
 		var err error
 		alerts, err = observecli.ListMonitorAlertRules(ctx, namespace, true, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		return err
@@ -378,7 +378,7 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 		h.SetAuditData(c, "创建", "监控告警规则", req.Name)
 
 		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-			observecli := observe.NewClient(cli)
+			observecli := observe.NewClient(cli, h.GetDB())
 			// get、update、commit
 			raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
@@ -452,7 +452,7 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 		h.SetAuditData(c, "更新", "监控告警规则", req.Name)
 
 		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-			observecli := observe.NewClient(cli)
+			observecli := observe.NewClient(cli, h.GetDB())
 			// get、update、commit
 			raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
@@ -505,7 +505,7 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli)
+		observecli := observe.NewClient(cli, h.GetDB())
 		// get、update、commit
 		raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		if err != nil {

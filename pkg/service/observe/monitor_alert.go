@@ -25,7 +25,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
-	"kubegems.io/kubegems/pkg/utils/slice"
+	"kubegems.io/kubegems/pkg/utils/set"
 	"sigs.k8s.io/yaml"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -89,7 +89,7 @@ func MutateMonitorAlert(req *MonitorAlertRule, f templates.TplGetter) error {
 
 // 默认认为namespace全部一致
 func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[MonitorAlertRule], error) {
-	receiverMap, err := raw.Base.GetReceiverMap(hasDetail)
+	receiverMap, err := raw.Base.GetAlertReceiverMap()
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +104,7 @@ func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[Moni
 		}
 		// 接收器
 		alertrule.Receivers = receiverMap[group.Name]
+		delete(receiverMap, group.Name)
 
 		// 是否启用
 		isOpen := true
@@ -113,7 +114,10 @@ func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[Moni
 		alertrule.IsOpen = isOpen
 		// inhibit rule
 		inhitbitRule := inhibitRuleMap[group.Name]
-		alertrule.InhibitLabels = slice.RemoveStr(slice.RemoveStr(inhitbitRule.Equal, prometheus.AlertNamespaceLabel), prometheus.AlertNameLabel)
+		alertrule.InhibitLabels = set.NewSet[string]().
+			Append(inhitbitRule.Equal...).
+			Remove(prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel).
+			Slice()
 		if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
 			return ret, fmt.Errorf("alert rule %v inhibit label can't be null", alertrule)
 		}
@@ -134,6 +138,20 @@ func (raw *RawMonitorAlertResource) ToAlerts(hasDetail bool) (AlertRuleList[Moni
 		ret = append(ret, alertrule)
 	}
 
+	for k, v := range receiverMap {
+		ret = append(ret, MonitorAlertRule{
+			BaseAlertRule: BaseAlertRule{
+				Namespace: raw.Base.AMConfig.Namespace,
+				Name:      k,
+				Receivers: v,
+				InhibitLabels: set.NewSet[string]().
+					Append(inhibitRuleMap[k].Equal...).
+					Remove(prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel).
+					Slice(),
+			},
+		})
+	}
+
 	return ret, nil
 }
 
@@ -149,18 +167,21 @@ func (raw *RawMonitorAlertResource) ModifyAlertRule(newAlertRule MonitorAlertRul
 		return err
 	}
 
-	groups := make([]monitoringv1.RuleGroup, len(alertRules))
-	for i, alertRule := range alertRules {
-		groups[i], err = monitorAlertRuleToRaw(alertRule)
+	groups := []monitoringv1.RuleGroup{}
+	for _, alertRule := range alertRules {
+		if alertRule.BaseAlertRule.IsExtraAlert() {
+			continue
+		}
+		group, err := monitorAlertRuleToRaw(alertRule)
 		if err != nil {
 			return errors.Wrap(err, "monitorAlertRuleToRaw")
 		}
+		groups = append(groups, group)
 	}
 
 	// update PrometheusRule
 	raw.PrometheusRule.Spec.Groups = groups
-	raw.Base.Update(alertRules.ToAlertRuleList())
-	return nil
+	return raw.Base.Update(alertRules.ToAlertRuleList())
 }
 
 func alertNamespace(ns string) string {

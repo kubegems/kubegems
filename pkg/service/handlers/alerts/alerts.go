@@ -130,7 +130,7 @@ func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 			if err != nil {
 				return err
 			}
-			return observe.NewClient(cli).CreateOrUpdateSilenceIfNotExist(c.Request.Context(), req)
+			return observe.NewClient(cli, h.GetDB()).CreateOrUpdateSilenceIfNotExist(c.Request.Context(), req)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -173,7 +173,7 @@ func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		return observe.NewClient(cli).DeleteSilenceIfExist(ctx, req)
+		return observe.NewClient(cli, h.GetDB()).DeleteSilenceIfExist(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

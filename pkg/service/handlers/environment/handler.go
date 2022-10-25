@@ -818,7 +818,7 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// alert rules
 		eg.Go(func() error {
-			obervecli := observe.NewClient(cli)
+			obervecli := observe.NewClient(cli, h.GetDB())
 			monitoralerts, err := obervecli.ListMonitorAlertRules(ctx, env.Namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
 				return err

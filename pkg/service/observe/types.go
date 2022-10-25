@@ -53,7 +53,7 @@ func GetBaseAlertmanagerConfig(namespace, name string) *v1alpha1.AlertmanagerCon
 				Continue:      false,
 				Receiver:      prometheus.NullReceiverName, // 默认发给空接收器，避免defaultReceiver收到不该收到的alert
 			},
-			Receivers:    []v1alpha1.Receiver{prometheus.NullReceiver, models.DefaultChannel.ToReceiver()},
+			Receivers:    []v1alpha1.Receiver{prometheus.NullReceiver, models.DefaultReceiver},
 			InhibitRules: []v1alpha1.InhibitRule{},
 		},
 	}

@@ -341,7 +341,7 @@ func (h *ObservabilityHandler) ListLoggingAlertRule(c *gin.Context) {
 	ret := []observe.LoggingAlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		var err error
-		ret, err = observe.NewClient(cli).ListLoggingAlertRules(ctx, namespace, false)
+		ret, err = observe.NewClient(cli, h.GetDB()).ListLoggingAlertRules(ctx, namespace, false)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -370,7 +370,7 @@ func (h *ObservabilityHandler) GetLoggingAlertRule(c *gin.Context) {
 	alertrules := []observe.LoggingAlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		var err error
-		alertrules, err = observe.NewClient(cli).ListLoggingAlertRules(ctx, namespace, true)
+		alertrules, err = observe.NewClient(cli, h.GetDB()).ListLoggingAlertRules(ctx, namespace, true)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -433,7 +433,7 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli)
+		observecli := observe.NewClient(cli, h.GetDB())
 		raw, err := observecli.GetRawLoggingAlertResource(ctx, namespace)
 		if err != nil {
 			return err
@@ -493,7 +493,7 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli)
+		observecli := observe.NewClient(cli, h.GetDB())
 		raw, err := observecli.GetRawLoggingAlertResource(ctx, namespace)
 		if err != nil {
 			return err
@@ -540,7 +540,7 @@ func (h *ObservabilityHandler) DeleteLoggingAlertRule(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli)
+		observecli := observe.NewClient(cli, h.GetDB())
 		raw, err := observecli.GetRawLoggingAlertResource(ctx, namespace)
 		if err != nil {
 			return err
