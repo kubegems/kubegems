@@ -94,6 +94,10 @@ func (m ChannelConfig) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON to deserialize []byte
 func (m *ChannelConfig) UnmarshalJSON(b []byte) error {
+	if string(b) == "null" {
+		m.ChannelIf = nil
+		return nil
+	}
 	tmp := struct {
 		ChannelType `json:"channelType"`
 	}{}
