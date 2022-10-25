@@ -121,7 +121,7 @@ When your k8s cluster is ready, next you can install kubegems insatller operator
 
 ```sh
 kubectl create namespace kubegems-installer
-kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml
+kubectl apply -f "https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml"
 ```
 
 Install kubegems with installer operator.
@@ -130,7 +130,7 @@ Install kubegems with installer operator.
 kubectl create namespace kubegems
 
 export STORAGE_CLASS=local-path  # set to your storageClass
-curl -sL https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/kubegems.yaml \
+curl -sL "https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/kubegems.yaml" \
 | sed -e "s/local-path/${STORAGE_CLASS}/g" > kubegems.yaml
 
 kubectl apply -f kubegems.yaml

@@ -122,7 +122,7 @@ export KUBEGEMS_VERSION=v1.22.0-beta.2  #  安装 kubegems 的版本
 
 ```sh
 kubectl create namespace kubegems-installer
-kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml
+kubectl apply -f "https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml"
 ```
 
 通过 operator 安装 KuebGems 核心服务
@@ -131,7 +131,7 @@ kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/de
 kubectl create namespace kubegems
 
 export STORAGE_CLASS=local-path  # 声明storageclass
-curl -sL https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/kubegems.yaml \
+curl -sL "https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/kubegems.yaml" \
 | sed -e "s/local-path/${STORAGE_CLASS}/g" \
 > kubegems.yaml
 
