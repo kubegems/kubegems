@@ -7331,6 +7331,8 @@ spec:
                     type: object
                   storageInitializerImage:
                     type: string
+                  upgradeStrategy:
+                    type: string
                 type: object
             type: object
           status:

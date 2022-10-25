@@ -172,6 +172,9 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 	sd.Spec.Annotations["seldon.io/ingress-host"] = md.Spec.Ingress.Host
 	sd.Spec.Annotations["seldon.io/ingress-path"] = getIngressPath(ctx, r.Client, md) + "/(.*)"
 	sd.Spec.Annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
+	if strategy := md.Spec.Server.UpgradeStrategy; strategy != "" {
+		sd.Spec.Annotations["seldon.io/upgrade-strategy"] = strategy
+	}
 	return sd, nil
 }
 
