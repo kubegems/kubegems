@@ -15,13 +15,15 @@
 package channels
 
 import (
+	"bytes"
+	"encoding/json"
 	"strings"
-	"time"
 
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type Email struct {
@@ -70,12 +72,17 @@ func (e *Email) Check() error {
 	return nil
 }
 
-func (e *Email) Test() error {
+func (e *Email) Test(alert prometheus.WebhookAlert) error {
 	auth := sasl.NewPlainClient("", e.From, e.AuthPassword)
 	receivers := strings.Split(e.To, ",")
-	msg := strings.NewReader("To: " + e.To + "\r\n" +
+	buf := bytes.NewBufferString("To: " + e.To + "\r\n" +
 		"Subject: Kubegems test email" + "\r\n" +
-		"\r\n" +
-		" at " + time.Now().Format("2006-01-02 15:04:05"))
-	return smtp.SendMail(e.SMTPServer, auth, e.From, receivers, msg)
+		"\r\n")
+
+	encoder := json.NewEncoder(buf)
+	encoder.SetIndent("", "    ")
+	if err := encoder.Encode(alert); err != nil {
+		return err
+	}
+	return smtp.SendMail(e.SMTPServer, auth, e.From, receivers, buf)
 }

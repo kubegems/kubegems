@@ -17,10 +17,12 @@ package observability
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 func (h *ObservabilityHandler) getChannelReq(c *gin.Context) (*models.AlertChannel, error) {
@@ -114,7 +116,7 @@ func (h *ObservabilityHandler) GetChannel(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       tenant_id path     string                               true "租户id, 所有租户为_all"
-// @Param       form       body     models.AlertChannel                  true "body"
+// @Param       form      body     models.AlertChannel                  true "body"
 // @Success     200        {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/tenant/{tenant_id}/channels [post]
 // @Security    JWT
@@ -170,8 +172,8 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 // @Produce     json
 // @Param       tenant_id  path     string                               true "租户id, 所有租户为_all"
 // @Param       channel_id path     string                               true "告警渠道id"
-// @Param       form      body     models.AlertChannel                  true "body"
-// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Param       form       body     models.AlertChannel                  true "body"
+// @Success     200        {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id} [delete]
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
@@ -192,6 +194,53 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 	}
 
 	if err := h.GetDB().Delete(ch).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	handlers.OK(c, "ok")
+}
+
+// TestChannel 测试告警渠道
+// @Tags        Observability
+// @Summary     测试告警渠道
+// @Description 测试告警渠道
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id  path     string                               true "租户id, 所有租户为_all"
+// @Param       channel_id path     string                               true "告警渠道id"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id}/test [get]
+// @Security    JWT
+func (h *ObservabilityHandler) TestChannel(c *gin.Context) {
+	ch := &models.AlertChannel{}
+	if err := h.GetDB().First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	now := time.Now()
+	alertObj := prometheus.WebhookAlert{
+		Receiver: ch.ReceiverName(),
+		Status:   "firing",
+		Alerts: []prometheus.Alert{
+			{
+				Status: "firing",
+				Labels: map[string]string{
+					prometheus.AlertNameLabel:      "kubegems-test-alert",
+					prometheus.SeverityLabel:       prometheus.SeverityError,
+					prometheus.AlertClusterKey:     "kubegems",
+					prometheus.AlertNamespaceLabel: "kubegems-test-namespace",
+				},
+				Annotations: map[string]string{
+					prometheus.MessageAnnotationsKey: "kubegems test alert message",
+					prometheus.ValueAnnotationKey:    "0",
+				},
+				StartsAt: &now,
+			},
+		},
+	}
+	if err := ch.ChannelConfig.ChannelIf.Test(alertObj); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

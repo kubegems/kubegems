@@ -17,6 +17,7 @@ package prometheus
 import (
 	"fmt"
 	"regexp"
+	"time"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"kubegems.io/kubegems/pkg/apis/gems"
@@ -99,4 +100,42 @@ func SplitQueryExpr(ql string) (query, op, value string, hasOp bool) {
 		query = ql
 	}
 	return
+}
+
+type WebhookAlert struct {
+	Receiver          string            `json:"receiver"`
+	Status            string            `json:"status"`
+	Alerts            []Alert           `json:"alerts"`
+	GroupLabels       map[string]string `json:"groupLabels"`
+	CommonLabels      map[string]string `json:"commonLabels"`
+	CommonAnnotations map[string]string `json:"commonAnnotations"`
+	ExternalURL       string            `json:"externalURL"`
+	Version           string            `json:"version"`
+	GroupKey          string            `json:"groupKey"`
+	TruncatedAlerts   int64             `json:"truncatedAlerts"`
+}
+
+func (w *WebhookAlert) FingerprintMap() map[string][]Alert {
+	ret := map[string][]Alert{}
+	for _, v := range w.Alerts {
+		alerts, ok := ret[v.Fingerprint]
+		if ok {
+			alerts = append(alerts, v)
+		} else {
+			alerts = []Alert{v}
+		}
+		ret[v.Fingerprint] = alerts
+	}
+
+	return ret
+}
+
+type Alert struct {
+	Status       string            `json:"status"`
+	Labels       map[string]string `json:"labels"`
+	Annotations  map[string]string `json:"annotations"`
+	StartsAt     *time.Time        `json:"startsAt"`
+	EndsAt       *time.Time        `json:"endsAt"`
+	GeneratorURL string            `json:"generatorURL"`
+	Fingerprint  string            `json:"fingerprint"`
 }
