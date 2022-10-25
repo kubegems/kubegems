@@ -15,11 +15,17 @@
 package channels
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http"
 	"net/url"
 
 	"github.com/pkg/errors"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type Webhook struct {
@@ -52,6 +58,16 @@ func (w *Webhook) Check() error {
 	return nil
 }
 
-func (w *Webhook) Test() error {
+func (w *Webhook) Test(alert prometheus.WebhookAlert) error {
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(alert); err != nil {
+		return err
+	}
+	resp, err := http.Post(w.URL, "application/json", buf)
+	if err != nil {
+		return err
+	}
+	bts, _ := io.ReadAll(resp.Body)
+	log.Info("test webhook success", "url", w.URL, "resp", string(bts))
 	return nil
 }

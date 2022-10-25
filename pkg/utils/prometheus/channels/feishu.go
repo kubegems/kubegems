@@ -15,12 +15,18 @@
 package channels
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 var (
@@ -35,13 +41,17 @@ type Feishu struct {
 	SignSecret  string `json:"signSecret"` // 签名校验key
 }
 
-func (f *Feishu) ToReceiver(name string) v1alpha1.Receiver {
+func (f *Feishu) formatURL() string {
 	q := url.Values{}
 	q.Add("type", string(TypeFeishu))
 	q.Add("url", f.URL)
 	q.Add("at", f.At)
 	q.Add("signSecret", f.SignSecret)
-	u := fmt.Sprintf("http://%s?%s", alertProxyReceiverHost, q.Encode())
+	return fmt.Sprintf("http://%s?%s", alertProxyReceiverHost, q.Encode())
+}
+
+func (f *Feishu) ToReceiver(name string) v1alpha1.Receiver {
+	u := f.formatURL()
 	return v1alpha1.Receiver{
 		Name: name,
 		WebhookConfigs: []v1alpha1.WebhookConfig{
@@ -59,6 +69,16 @@ func (f *Feishu) Check() error {
 	return nil
 }
 
-func (f *Feishu) Test() error {
+func (f *Feishu) Test(alert prometheus.WebhookAlert) error {
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(alert); err != nil {
+		return err
+	}
+	resp, err := http.Post(f.formatURL(), "application/json", buf)
+	if err != nil {
+		return err
+	}
+	bts, _ := io.ReadAll(resp.Body)
+	log.Info("test webhook success", "url", f.formatURL(), "resp", string(bts))
 	return nil
 }

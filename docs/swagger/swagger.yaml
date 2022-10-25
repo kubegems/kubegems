@@ -22087,6 +22087,39 @@ paths:
       summary: 更新告警渠道
       tags:
       - Observability
+  /v1/observability/tenant/{tenant_id}/channels/{channel_id}/test:
+    get:
+      consumes:
+      - application/json
+      description: 测试告警渠道
+      parameters:
+      - description: 租户id, 所有租户为_all
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: 告警渠道id
+        in: path
+        name: channel_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 测试告警渠道
+      tags:
+      - Observability
   /v1/observability/tenant/{tenant_id}/template/resources{resource_id}/rules:
     get:
       consumes:

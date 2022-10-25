@@ -24,6 +24,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type ChannelType string
@@ -42,7 +43,7 @@ var (
 type ChannelIf interface {
 	ToReceiver(name string) v1alpha1.Receiver
 	Check() error
-	Test() error
+	Test(alert prometheus.WebhookAlert) error
 }
 
 type ChannelConfig struct {
