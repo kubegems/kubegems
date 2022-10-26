@@ -28,6 +28,7 @@ import (
 	"kubegems.io/kubegems/pkg/agent/indexer"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
@@ -87,7 +88,7 @@ func updateAMConfig(cli client.Client) {
 		}
 
 		for i := range v.Spec.Receivers {
-			if v.Spec.Receivers[i].Name == channels.DefaultChannelName {
+			if v.Spec.Receivers[i].Name == models.DefaultReceiver.Name {
 				for j, w := range v.Spec.Receivers[i].WebhookConfigs {
 					if *w.URL == "https://gems-agent.gemcloud-system:8041/alert" {
 						v.Spec.Receivers[i].WebhookConfigs[j].URL = &channels.KubegemsWebhookURL

@@ -26,9 +26,11 @@ import (
 )
 
 var (
+	defaultChannelName = "kubegems-default-webhook"
+
 	DefaultChannel = &AlertChannel{
 		ID:   1,
-		Name: channels.DefaultChannelName,
+		Name: defaultChannelName,
 		ChannelConfig: channels.ChannelConfig{
 			ChannelIf: &channels.Webhook{
 				ChannelType:        channels.TypeWebhook,

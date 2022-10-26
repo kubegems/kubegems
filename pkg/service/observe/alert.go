@@ -94,7 +94,7 @@ func (r *BaseAlertRule) CheckAndModify() error {
 			receverSet.Append(rec.AlertChannel.ReceiverName())
 		}
 	}
-	if !receverSet.Has(channels.DefaultChannelName) {
+	if !receverSet.Has(models.DefaultReceiver.Name) {
 		r.Receivers = append(r.Receivers, AlertReceiver{
 			AlertChannel: models.DefaultChannel,
 			Interval:     r.Receivers[0].Interval,

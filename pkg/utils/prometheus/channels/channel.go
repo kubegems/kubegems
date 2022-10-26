@@ -36,7 +36,6 @@ const (
 )
 
 var (
-	DefaultChannelName = "kubegems-default-webhook"
 	KubegemsWebhookURL = fmt.Sprintf("https://kubegems-local-agent.%s:8041/alert", gems.NamespaceLocal)
 )
 

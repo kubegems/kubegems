@@ -29,7 +29,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
-	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -69,7 +68,7 @@ func updateAMConfig(cli client.Client) {
 
 	for _, v := range amCfgs.Items {
 		for i := range v.Spec.Receivers {
-			if v.Spec.Receivers[i].Name == channels.DefaultChannelName {
+			if v.Spec.Receivers[i].Name == models.DefaultReceiver.Name {
 				v.Spec.Receivers[i] = models.DefaultReceiver
 				goto Update
 			}
