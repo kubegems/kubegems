@@ -210,7 +210,7 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 // @Param       tenant_id  path     string                               true "租户id, 所有租户为_all"
 // @Param       channel_id path     string                               true "告警渠道id"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id}/test [get]
+// @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id}/test [post]
 // @Security    JWT
 func (h *ObservabilityHandler) TestChannel(c *gin.Context) {
 	ch := &models.AlertChannel{}

@@ -51,7 +51,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/observability/tenant/:tenant_id/channels", h.CheckByTenantID, h.CreateChannel)
 	rg.PUT("/observability/tenant/:tenant_id/channels/:channel_id", h.CheckByTenantID, h.UpdateChannel)
 	rg.DELETE("/observability/tenant/:tenant_id/channels/:channel_id", h.CheckByTenantID, h.DeleteChannel)
-	rg.GET("/observability/tenant/:tenant_id/channels/:channel_id/test", h.CheckByTenantID, h.TestChannel)
+	rg.POST("/observability/tenant/:tenant_id/channels/:channel_id/test", h.TestChannel)
 
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts", h.CheckByClusterNamespace, h.ListLoggingAlertRule)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts/:name", h.CheckByClusterNamespace, h.GetLoggingAlertRule)

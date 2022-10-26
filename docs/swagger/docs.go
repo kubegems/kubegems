@@ -8019,7 +8019,7 @@ const docTemplate = `{
             }
         },
         "/v1/observability/tenant/{tenant_id}/channels/{channel_id}/test": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "JWT": []

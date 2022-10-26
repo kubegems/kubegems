@@ -22088,7 +22088,7 @@ paths:
       tags:
       - Observability
   /v1/observability/tenant/{tenant_id}/channels/{channel_id}/test:
-    get:
+    post:
       consumes:
       - application/json
       description: 测试告警渠道
