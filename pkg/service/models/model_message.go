@@ -28,7 +28,7 @@ type UserMessageStatus struct {
 	User      *User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	MessageID *uint
 	Message   *Message `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	IsRead    bool     `gorm:"index"`
+	IsRead    bool
 
 	AlertMessageID *uint
 	AlertMessage   *AlertMessage `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
@@ -39,10 +39,10 @@ type Message struct {
 	MessageType string `gorm:"type:varchar(50);"`
 	Title       string `gorm:"type:varchar(255);"`
 	Content     datatypes.JSON
-	CreatedAt   time.Time         `gorm:"index" sql:"DEFAULT:'current_timestamp'"`
-	ToUsers     map[uint]struct{} `gorm:"-" json:"-"`
+	CreatedAt   time.Time `gorm:"index" sql:"DEFAULT:'current_timestamp'"`
 
-	IsRead bool `gorm:"-"` // 给前端用，不入库
+	ToUsers map[uint]struct{} `gorm:"-" json:"-"`
+	IsRead  bool              `gorm:"-"` // 给前端用，不入库
 }
 
 func (status *UserMessageStatus) ColumnSlice() []string {

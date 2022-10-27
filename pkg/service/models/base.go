@@ -28,7 +28,6 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-logr/logr"
 	"github.com/go-sql-driver/mysql"
-	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"kubegems.io/kubegems/pkg/log"
@@ -219,7 +218,7 @@ func IsNotFound(err error) bool {
 }
 
 func GetErrMessage(err error) string {
-	me := &driver.MySQLError{}
+	me := &mysql.MySQLError{}
 	if !errors.As(err, &me) {
 		return err.Error()
 	}
@@ -274,7 +273,7 @@ func getDashboardTpls() ([]*MonitorDashboardTpl, error) {
 	ret := []*MonitorDashboardTpl{}
 	if err := filepath.Walk("config/dashboards", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return fmt.Errorf("prevent panic by handling failure accessing a path %q: %v", path, err)
 		}
 		if info.IsDir() || !strings.HasSuffix(info.Name(), ".yaml") {
 			return nil

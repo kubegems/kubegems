@@ -30,10 +30,10 @@ type Registry struct {
 	// 密码
 	Password string `gorm:"type:varchar(512)"`
 	// 创建者
-	Creator *User
+	Creator *User `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:SET NULL;"`
 	// 更新时间
 	UpdateTime time.Time
-	CreatorID  uint
+	CreatorID  uint     `gorm:"default:null"`
 	Project    *Project `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 	// 项目ID
 	ProjectID     uint `grom:"uniqueIndex:uniq_idx_project_registry;"`
