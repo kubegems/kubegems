@@ -28,7 +28,6 @@ func (h *UserHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/user", h.CheckIsSysADMIN, h.PostUser)
 	rg.GET("/user/:user_id", h.CheckIsSysADMIN, h.RetrieveUser)
 	rg.PUT("/user/:user_id", h.CheckIsSysADMIN, h.PutUser)
-	rg.PUT("/user", h.SelfUpdateInfo)
 	rg.DELETE("/user/:user_id", h.CheckIsSysADMIN, h.DeleteUser)
 	rg.GET("/user/:user_id/tenant", h.ListUserTenant)
 	rg.POST("/user/:user_id/reset_password", h.CheckIsSysADMIN, h.ResetUserPassword)
