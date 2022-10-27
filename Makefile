@@ -13,7 +13,8 @@ VERSION?=$(shell echo "${GIT_VERSION}" | sed -e 's/^v//')
 
 OS?=linux
 ARCH?=amd64
-BIN_DIR?=bin
+BIN_DIR?=$(shell pwd)/bin
+PLATFORM?=linux/amd64,linux/arm64
 
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
@@ -37,7 +38,7 @@ HELM_ADDR?=https://charts.kubegems.io/kubegems
 
 ##@ All
 
-all: build container ## build all
+all: generate build docker helm-push## build all
 
 ##@ General
 
@@ -137,11 +138,11 @@ helm-push:
 	$(foreach var,$(CHARTS),curl -u ${HELM_USER}:${HELM_PASSWORD} --data-binary "@${BIN_DIR}/plugins/$(var)-${VERSION}.tgz" ${HELM_ADDR};)
 
 docker: ## Build container image.
-	docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${IMG}  .
- 
+	docker buildx build --platform=${PLATFORM} --push -t ${IMG}  .
+
 KUBECTL_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubectl:latest
 kubectl-image:
-	docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl .
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl .
 
 clean:
 	- rm -rf ${BIN_DIR}
