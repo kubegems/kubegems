@@ -16,6 +16,7 @@ package userhandler
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"kubegems.io/kubegems/pkg/i18n"
@@ -128,20 +129,6 @@ func (h *UserHandler) PostUser(c *gin.Context) {
 	handlers.Created(c, user)
 }
 
-// UpdateSelfInfo  update user self infomation
-// @Tags        User
-// @Summary     self update information
-// @Description self update
-// @Accept      json
-// @Produce     json
-// @Param       param   body     models.User                               true "表单"
-// @Success     200     {object} handlers.ResponseStruct{Data=models.User} "User"
-// @Router      /v1/user [put]
-// @Security    JWT
-func (h *UserHandler) SelfUpdateInfo(c *gin.Context) {
-	h.PutUser(c)
-}
-
 // PutUser 修改User
 // @Tags        User
 // @Summary     修改User
@@ -154,22 +141,8 @@ func (h *UserHandler) SelfUpdateInfo(c *gin.Context) {
 // @Router      /v1/user/{user_id} [put]
 // @Security    JWT
 func (h *UserHandler) PutUser(c *gin.Context) {
-	var (
-		selfupdate bool
-		userId     uint
-	)
-	userId = utils.ToUint(c.Param(PrimaryKeyName))
-	if userId == 0 {
-		selfupdate = true
-		user, exist := h.GetContextUser(c)
-		if !exist {
-			handlers.NotOK(c, i18n.Error(c, "can't modify current user's infomation"))
-			return
-		}
-		userId = user.GetID()
-	}
 	var oldUser, newUser models.User
-	if err := h.GetDB().First(&oldUser, userId).Error; err != nil {
+	if err := h.GetDB().First(&oldUser, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -178,7 +151,7 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if !selfupdate && newUser.ID != userId {
+	if strconv.Itoa(int(newUser.ID)) != c.Param(PrimaryKeyName) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
@@ -191,11 +164,9 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 		return
 	}
 
-	if !selfupdate {
-		action := i18n.Sprintf(context.TODO(), "update")
-		module := i18n.Sprintf(context.TODO(), "account")
-		h.SetAuditData(c, action, module, oldUser.Username)
-	}
+	action := i18n.Sprintf(context.TODO(), "update")
+	module := i18n.Sprintf(context.TODO(), "account")
+	h.SetAuditData(c, action, module, oldUser.Username)
 
 	handlers.OK(c, oldUser)
 }
