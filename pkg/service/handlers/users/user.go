@@ -15,12 +15,7 @@
 package userhandler
 
 import (
-<<<<<<< HEAD
-	"fmt"
-	"strconv"
-=======
 	"context"
->>>>>>> e8d523d... add a new api to self update information
 	"strings"
 
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -180,13 +175,8 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-<<<<<<< HEAD
-	if strconv.Itoa(int(newUser.ID)) != c.Param(PrimaryKeyName) {
-		handlers.NotOK(c, fmt.Errorf("请求体参数ID和URL参数ID不一致"))
-=======
 	if !selfupdate && newUser.ID != userId {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
->>>>>>> e8d523d... add a new api to self update information
 		return
 	}
 
@@ -198,15 +188,11 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 		return
 	}
 
-<<<<<<< HEAD
-	h.SetAuditData(c, "更新", "系统用户", oldUser.Username)
-=======
 	if !selfupdate {
 		action := i18n.Sprintf(context.TODO(), "update")
 		module := i18n.Sprintf(context.TODO(), "account")
 		h.SetAuditData(c, action, module, oldUser.Username)
 	}
->>>>>>> e8d523d... add a new api to self update information
 
 	handlers.OK(c, oldUser)
 }
