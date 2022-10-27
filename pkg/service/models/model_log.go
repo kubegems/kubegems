@@ -41,7 +41,7 @@ type LogQueryHistory struct {
 	// 创建时间
 	CreateAt time.Time `sql:"DEFAULT:'current_timestamp'"`
 	// 创建者
-	Creator   *User `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
+	Creator   *User
 	CreatorID uint
 }
 
@@ -78,7 +78,7 @@ type LogQuerySnapshot struct {
 	// 创建时间
 	CreateAt time.Time `sql:"DEFAULT:'current_timestamp'"`
 	// 创建者
-	Creator   *User `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
+	Creator   *User
 	CreatorID uint
 }
 
