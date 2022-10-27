@@ -45,7 +45,7 @@ type Environment struct {
 	DeletePolicy string `sql:"DEFAULT:'delNamespace'"`
 
 	// 创建者
-	Creator *User
+	Creator *User `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:SET NULL;"`
 	// 关联的集群
 	Cluster *Cluster `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 	// 所属项目
@@ -59,7 +59,7 @@ type Environment struct {
 	// 所属集群ID
 	ClusterID uint
 	// 创建人ID
-	CreatorID uint
+	CreatorID uint `gorm:"default:NULL"`
 	// 关联的应用
 	Applications []*Application `gorm:"many2many:application_environment_rels;"`
 	// 关联的用户
