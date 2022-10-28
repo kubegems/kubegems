@@ -63,6 +63,13 @@ func (e *Email) ToReceiver(name string) v1alpha1.Receiver {
 					},
 					Key: EmailSecretKey(name, e.From),
 				},
+				HTML: `{{ template "email.common.html" . }}`,
+				Headers: []v1alpha1.KeyValue{
+					{
+						Key:   "subject",
+						Value: `Kubegems alert [{{ .CommonLabels.gems_alertname }}:{{ .Alerts.Firing | len }}] in [cluster:{{ .CommonLabels.cluster }}] [namespace:{{ .CommonLabels.gems_namespace }}]`,
+					},
+				},
 			},
 		},
 	}
