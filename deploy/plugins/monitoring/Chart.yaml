@@ -5,5 +5,5 @@ dependencies:
   - name: common
     repository: file://../common
     version: 1.x.x
-appVersion: 35.2.0 # monitoring operator version
+appVersion: 41.3.2 # monitoring operator version
 description: KubeGems平台监控&告警控制器,包含Prometheus和AlertManager服务
