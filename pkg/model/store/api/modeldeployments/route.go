@@ -24,18 +24,20 @@ import (
 )
 
 type ModelDeploymentAPI struct {
-	Clientset        *agents.ClientSet
-	Database         *database.Database
-	SourceRepository *repository.SourcesRepository
-	ModelRepository  *repository.ModelsRepository
+	Clientset               *agents.ClientSet
+	Database                *database.Database
+	SourceRepository        *repository.SourcesRepository
+	ModelRepository         *repository.ModelsRepository
+	ModelxStorageInitalizer string
 }
 
-func NewModelDeploymentAPI(clientset *agents.ClientSet, database *database.Database, mondodb *gomongo.Database) *ModelDeploymentAPI {
+func NewModelDeploymentAPI(clientset *agents.ClientSet, database *database.Database, mondodb *gomongo.Database, modelxInitImage string) *ModelDeploymentAPI {
 	return &ModelDeploymentAPI{
-		Clientset:        clientset,
-		Database:         database,
-		SourceRepository: repository.NewSourcesRepository(mondodb),
-		ModelRepository:  repository.NewModelsRepository(mondodb),
+		Clientset:               clientset,
+		Database:                database,
+		SourceRepository:        repository.NewSourcesRepository(mondodb),
+		ModelRepository:         repository.NewModelsRepository(mondodb),
+		ModelxStorageInitalizer: modelxInitImage,
 	}
 }
 
