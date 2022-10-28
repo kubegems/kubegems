@@ -50,7 +50,7 @@ type MonitorAlertRule struct {
 
 var _ AlertRule = MonitorAlertRule{}
 
-func MutateMonitorAlert(req *MonitorAlertRule, f templates.TplGetter) error {
+func MutateMonitorAlert(req *MonitorAlertRule, tplGetter templates.TplGetter) error {
 	if req.Source == "" {
 		return fmt.Errorf("source不能为空")
 	}
@@ -63,7 +63,7 @@ func MutateMonitorAlert(req *MonitorAlertRule, f templates.TplGetter) error {
 		}
 	} else {
 		// check resource
-		if err := req.PromqlGenerator.SetTpl(f); err != nil {
+		if err := req.PromqlGenerator.SetTpl(tplGetter); err != nil {
 			return errors.Wrap(err, "set promql template")
 		}
 

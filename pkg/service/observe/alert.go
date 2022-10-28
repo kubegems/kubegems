@@ -188,9 +188,9 @@ func (r BaseAlertRule) GetReceivers() []AlertReceiver {
 }
 
 type BaseAlertResource struct {
-	AMConfig *v1alpha1.AlertmanagerConfig
-	Silences []alertmanagertypes.Silence
-	channels.ChannelGetter
+	AMConfig      *v1alpha1.AlertmanagerConfig
+	Silences      []alertmanagertypes.Silence
+	ChannelGetter channels.ChannelGetter
 }
 
 func (base *BaseAlertResource) GetAlertReceiverMap() (map[string][]AlertReceiver, error) {

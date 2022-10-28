@@ -16,6 +16,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
@@ -54,6 +55,12 @@ func main() {
 	raw := &observe.RawMonitorAlertResource{
 		Base: &observe.BaseAlertResource{
 			AMConfig: observe.GetBaseAlertmanagerConfig(gems.NamespaceMonitor, prometheus.DefaultAlertCRDName),
+			ChannelGetter: func(id uint) (channels.ChannelIf, error) {
+				if id == 1 {
+					return models.DefaultChannel.ChannelConfig.ChannelIf, nil
+				}
+				return nil, fmt.Errorf("channel %d not found", id)
+			},
 		},
 		PrometheusRule: observe.GetBasePrometheusRule(gems.NamespaceMonitor, prometheus.DefaultAlertCRDName),
 		TplGetter:      tplGetter,
@@ -61,10 +68,8 @@ func main() {
 
 	for i := range alerts {
 		alerts[i].Source = prometheus.DefaultAlertCRDName
+		alerts[i].Receivers[0].AlertChannel = models.DefaultChannel
 		if err := observe.MutateMonitorAlert(&alerts[i], tplGetter); err != nil {
-			panic(err)
-		}
-		if err := alerts[i].CheckAndModify(); err != nil {
 			panic(err)
 		}
 		if err := raw.ModifyAlertRule(alerts[i], observe.Add); err != nil {

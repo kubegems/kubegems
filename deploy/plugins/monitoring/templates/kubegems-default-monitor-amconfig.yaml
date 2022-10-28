@@ -51,7 +51,7 @@ spec:
       value: error
   receivers:
   - name: "null"
-  - name: gemcloud-default-webhook
+  - name: kubegems-default-webhook-id-1
     webhookConfigs:
     - httpConfig:
         tlsConfig:
@@ -73,7 +73,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: KubernetesNodeNotReady
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -81,7 +81,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: KubernetesMemoryPressure
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 1h
     - continue: true
       matchers:
@@ -89,7 +89,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: KubernetesDiskPressure
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 1h
     - continue: true
       matchers:
@@ -97,7 +97,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: KubernetesOutOfDisk
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 1h
     - continue: true
       matchers:
@@ -105,7 +105,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: KubernetesPodNumberTooHigh
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 1h
     - continue: true
       matchers:
@@ -113,7 +113,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: KubernetesPodCrashLooping
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -121,7 +121,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: KubernetesPodOOMKilling
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -129,7 +129,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: KubegemsPvcUsageTooHigh
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -137,7 +137,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: HostHighCpuLoad
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -145,7 +145,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: HostHighMemoryLoad
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -153,7 +153,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: HostUnusualDiskReadRate
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -161,7 +161,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: HostUnusualDiskWriteRate
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -169,7 +169,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: HostNetworkReceiveErrors
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -177,7 +177,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: HostNetworkTransmitErrors
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -185,7 +185,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: HostHighLoad5
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -193,7 +193,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: CertManagerCertExpirySoon
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 12h
     - continue: true
       matchers:
@@ -201,7 +201,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: CertManagerCertNotReady
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -209,7 +209,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: ClusterHighCpuLoad
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -217,7 +217,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: ClusterHighMemoryLoad
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -225,7 +225,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: ClusterComponentCertExpirySoon
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -233,7 +233,7 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: GemsPluginFailed
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m
     - continue: true
       matchers:
@@ -241,5 +241,5 @@ spec:
         value: {{ .Release.Namespace }}
       - name: gems_alertname
         value: ExporterDown
-      receiver: gemcloud-default-webhook
+      receiver: kubegems-default-webhook-id-1
       repeatInterval: 10m

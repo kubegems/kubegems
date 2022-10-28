@@ -15,15 +15,10 @@
 package prometheus
 
 import (
-	"fmt"
-
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
-	"kubegems.io/kubegems/pkg/apis/gems"
 )
 
 var (
-	AlertProxyReceiverHost = fmt.Sprintf("alertproxy.%s:9094", gems.NamespaceMonitor)
-
 	NullReceiverName = "null"
 	NullReceiver     = v1alpha1.Receiver{Name: NullReceiverName}
 )
