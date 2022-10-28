@@ -573,7 +573,7 @@
   namespaced: true
   resources:
     - id: 4
-      name: consule
+      name: consul
       showName: consul
       scopeID: 3
       rules:
@@ -932,9 +932,7 @@
           name: kafkaConsumerLatency
           showName: Consumer Latency
           description: ""
-          expr:
-            sum by (consumergroup,topic,namespace,service) (kafka_consumergroup_lag)
-            != 0
+          expr: "sum by (consumergroup,topic,namespace,service) (kafka_consumergroup_lag) "
           unit: ""
           labels:
             - service
@@ -947,9 +945,7 @@
           name: kafkaMessageConsumer
           showName: Message Consumer Rate (messages/s)
           description: ""
-          expr:
-            sum(rate(kafka_consumergroup_current_offset[1m])) by (topic,namespace,service)
-            > 0
+          expr: "sum(rate(kafka_consumergroup_current_offset[5m])) by (topic,namespace,service) "
           unit: ""
           labels:
             - service
@@ -962,8 +958,8 @@
           showName: Message Producer Rate (messages/s)
           description: ""
           expr:
-            sum(rate(kafka_topic_partition_current_offset{topic!~"__.*"}[1m])) by
-            (topic,namespace,service) > 0
+            'sum(rate(kafka_topic_partition_current_offset{topic!~"__.*"}[5m]))
+            by (topic,namespace,service) '
           unit: ""
           labels:
             - service
@@ -1180,7 +1176,9 @@
           name: mongodbQPS
           showName: QPS
           description: ""
-          expr: sum(rate(mongodb_op_counters_total{type=~"query|getmore"}[5m]))  by (namespace,service)
+          expr:
+            sum(rate(mongodb_op_counters_total{type=~"query|getmore"}[5m]))  by
+            (namespace,service)
           unit: ""
           labels:
             - service
@@ -1630,8 +1628,8 @@
           name: mysqlSelectRange
           showName: Select Range Rate
           description:
-            how many queries used a range scan, which means MySQL scanned all
-            rows in a given range.
+            how many queries used a range scan, which means MySQL scanned
+            all rows in a given range.
           expr: sum(rate(mysql_global_status_select_range[5m])) by (namespace,service)
           unit: ""
           labels:
@@ -1657,8 +1655,8 @@
           showName: Buffer Pool Pages Ratio (%)
           description: Innodb buffer pool page Ratios
           expr:
-            (sum by (namespace,service)(mysql_global_status_buffer_pool_pages) - sum
-            by (namespace,service)(mysql_global_status_buffer_pool_pages{state="free"}))
+            (sum by (namespace,service)(mysql_global_status_buffer_pool_pages) -
+            sum by (namespace,service)(mysql_global_status_buffer_pool_pages{state="free"}))
             / sum(mysql_global_status_buffer_pool_pages) by (namespace,service)
           unit: percent-0.0-1.0
           labels:
@@ -2306,6 +2304,157 @@
             - namespace
             - service
           resourceID: 17
+          tenantID:
+    - id: 18
+      name: apisix
+      showName: apisix
+      scopeID: 3
+      rules:
+        - id: 199
+          name: apisixHttpStatusRate
+          showName: HTTP QPS
+          description: HTTP status codes per service in APISIX
+          expr: sum by (job,matched_host, namespace) (irate(apisix_http_status[5m]))
+          unit: ""
+          labels:
+            - job
+            - matched_host
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 200
+          name: apisixConnections
+          showName: Connections Rate
+          description: Number of HTTP connections
+          expr: sum by (job,state,namespace) (irate(apisix_nginx_http_current_connections[5m]))
+          unit: ""
+          labels:
+            - job
+            - state
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 201
+          name: apisixEtcdIndexKeys
+          showName: Keys index modifed by Etcd
+          description: Etcd modify index for APISIX keys
+          expr: sum by (job,key,namespace) (apisix_etcd_modify_indexes)
+          unit: ""
+          labels:
+            - job
+            - key
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 202
+          name: apisixHttp4xx
+          showName: HTTP 4xx Ratio (%)
+          description: HTTP1/2  Status 4xx
+          expr:
+            sum by (job,matched_host,namespace)(apisix_http_status{code=~"[4].*",matched_host!~""})
+            /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
+          unit: percent-0.0-1.0
+          labels:
+            - matched_host
+            - job
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 203
+          name: apisixHttp5xx
+          showName: HTTP 5xx Ratio (%)
+          description: HTTP1/2 Status 5xx
+          expr:
+            sum by (job,matched_host,namespace)(apisix_http_status{code=~"[5].*",matched_host!~""})
+            /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
+          unit: percent-0.0-1.0
+          labels:
+            - job
+            - matched_host
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 204
+          name: apisixHttpSucess
+          showName: HTTP Successfully Rate (%)
+          description: HTTP1/2  Successfully Rate
+          expr:
+            sum by (job,matched_host, namespace)(apisix_http_status{code!~"[4-5].*",matched_host!~""})
+            /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
+          unit: percent-0.0-1.0
+          labels:
+            - job
+            - matched_host
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 205
+          name: apisixEtcdReady
+          showName: Etcd Ready
+          description: ""
+          expr: apisix_etcd_reachable
+          unit: ""
+          labels:
+            - job
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 206
+          name: apisixBandwidth
+          showName: Network Traffic
+          description: Total bandwidth in bytes consumed per service in APISIX
+          expr: sum by(type,job,namespace) (irate(apisix_bandwidth[5m]))
+          unit: bytes/sec-B/s
+          labels:
+            - type
+            - job
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 207
+          name: apisixP95
+          showName: Latency P95 by Route (ms)
+          description: APISIX P95
+          expr:
+            histogram_quantile(0.95, sum(rate(apisix_http_latency_bucket{}[5m]))
+            by (le,route,type,job,namespace))
+          unit: duration-ms
+          labels:
+            - route
+            - type
+            - job
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 208
+          name: apisixP90
+          showName: Latency P90 by Route (ms)
+          description: ""
+          expr:
+            histogram_quantile(0.90, sum(rate(apisix_http_latency_bucket{}[5m]))
+            by (le,route,type,job,namespace))
+          unit: duration-ms
+          labels:
+            - route
+            - type
+            - job
+            - namespace
+          resourceID: 18
+          tenantID:
+        - id: 209
+          name: apisixP50
+          showName: Latency P50 by Route (ms)
+          description: ""
+          expr:
+            histogram_quantile(0.50, sum(rate(apisix_http_latency_bucket{}[5m]))
+            by (le,route,type,job,namespace))
+          unit: duration-ms
+          labels:
+            - route
+            - type
+            - namespace
+            - job
+          resourceID: 18
           tenantID:
 - id: 4
   name: others
