@@ -16,6 +16,7 @@ package channels
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -63,7 +64,19 @@ func (w *Webhook) Test(alert prometheus.WebhookAlert) error {
 	if err := json.NewEncoder(buf).Encode(alert); err != nil {
 		return err
 	}
-	resp, err := http.Post(w.URL, "application/json", buf)
+	req, err := http.NewRequest(http.MethodPost, w.URL, buf)
+	if err != nil {
+		return err
+	}
+	testCli := &http.Client{}
+	if w.InsecureSkipVerify {
+		testCli.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+	}
+	resp, err := testCli.Do(req)
 	if err != nil {
 		return err
 	}
