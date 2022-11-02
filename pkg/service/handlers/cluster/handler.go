@@ -352,6 +352,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 	rawsql := `select log_ql,
 		max(id) as id,
 		GROUP_CONCAT(id SEPARATOR ',') as ids,
+		GROUP_CONCAT(DISTINCT(time_range) SEPARATOR ',') as time_ranges,
 		any_value(cluster_id) as cluster_id,
 		max(create_at) as create_at,
 		any_value(filter_json) as filter_json,
