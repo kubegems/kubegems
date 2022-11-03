@@ -10,7 +10,7 @@ graphs:
   - name: Consul Raft Leader
     promqlGenerator:
       scope: middlewires
-      resource: consule
+      resource: consul
       rule: consulRaftLeader
       unit: ""
     expr: ""
@@ -18,7 +18,7 @@ graphs:
   - name: Consul Cluster Members
     promqlGenerator:
       scope: middlewires
-      resource: consule
+      resource: consul
       rule: consulLanMembers
       unit: ""
     expr: ""
@@ -26,7 +26,7 @@ graphs:
   - name: Consul Raft Peers
     promqlGenerator:
       scope: middlewires
-      resource: consule
+      resource: consul
       rule: consulRaftPeers
       unit: ""
     expr: ""
@@ -34,7 +34,7 @@ graphs:
   - name: Consul Service Healthy
     promqlGenerator:
       scope: middlewires
-      resource: consule
+      resource: consul
       rule: consulServiceHealthy
       unit: ""
     expr: ""
@@ -42,7 +42,7 @@ graphs:
   - name: Service Count
     promqlGenerator:
       scope: middlewires
-      resource: consule
+      resource: consul
       rule: consulService
       unit: ""
     expr: ""
