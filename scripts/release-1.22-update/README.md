@@ -23,3 +23,20 @@ kubectl apply --server-side  -f deploy/plugins/monitoring/templates/kubegems-ema
 ```
 kubectl delete pod -n kubegems-monitoring -l app.kubernetes.io/name=alertmanager
 ```
+
+7. update monitor_dashboards and monitor_dashboard_tpls of consul
+```sql
+use kubegems;
+SET SQL_SAFE_UPDATES=0;
+update monitor_dashboards set graphs = json_replace(graphs, "$[0].promqlGenerator.resource", "consul") where template = "Consul";
+update monitor_dashboards set graphs = json_replace(graphs, "$[1].promqlGenerator.resource", "consul") where template = "Consul";
+update monitor_dashboards set graphs = json_replace(graphs, "$[2].promqlGenerator.resource", "consul") where template = "Consul";
+update monitor_dashboards set graphs = json_replace(graphs, "$[3].promqlGenerator.resource", "consul") where template = "Consul";
+update monitor_dashboards set graphs = json_replace(graphs, "$[4].promqlGenerator.resource", "consul") where template = "Consul";
+
+update monitor_dashboard_tpls set graphs = json_replace(graphs, "$[0].promqlGenerator.resource", "consul") where name = "Consul";
+update monitor_dashboard_tpls set graphs = json_replace(graphs, "$[1].promqlGenerator.resource", "consul") where name = "Consul";
+update monitor_dashboard_tpls set graphs = json_replace(graphs, "$[2].promqlGenerator.resource", "consul") where name = "Consul";
+update monitor_dashboard_tpls set graphs = json_replace(graphs, "$[3].promqlGenerator.resource", "consul") where name = "Consul";
+update monitor_dashboard_tpls set graphs = json_replace(graphs, "$[4].promqlGenerator.resource", "consul") where name = "Consul";
+```
