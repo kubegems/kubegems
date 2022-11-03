@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   kubegems-email.tmpl: |
-    {{ define "email.common.html" }}
+    {{"{{"}} define "email.common.html" }}
     <!--
     Style and HTML derived from https://github.com/mailgun/transactional-email-templates
     -->
@@ -14,7 +14,7 @@ data:
       <head>
         <meta name="viewport" content="width=device-width" />
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>{{ template "__subject" . }}</title>
+        <title>{{"{{"}} template "__subject" . }}</title>
         <style>
           /* -------------------------------------
               GLOBAL
@@ -646,34 +646,34 @@ data:
                     </tr>
                   </thead>
                   <tbody>
-                    {{ range .Alerts.Firing }}
+                    {{"{{"}} range .Alerts.Firing }}
                     <tr class="month-item active">
                       <td>
-                        {{ range .Labels.SortedPairs }} {{ if eq .Name "alertname"
+                        {{"{{"}} range .Labels.SortedPairs }} {{"{{"}} if eq .Name "alertname"
                         }}
-                        <h4 class="font-weight-light">{{.Value}}</h4>
-                        {{ end }}{{ end }}
+                        <h4 class="font-weight-light">{{"{{"}}.Value}}</h4>
+                        {{"{{"}} end }}{{"{{"}} end }}
                       </td>
                       <td>
-                        {{ range .Annotations.SortedPairs }} {{ if eq .Name
+                        {{"{{"}} range .Annotations.SortedPairs }} {{"{{"}} if eq .Name
                         "message" }}
-                        <h4 class="font-weight-light">{{.Value}}</h4>
-                        {{ end }}{{ end }}
+                        <h4 class="font-weight-light">{{"{{"}}.Value}}</h4>
+                        {{"{{"}} end }}{{"{{"}} end }}
                       </td>
                       <td>
                         <h4 class="font-weight-light">
-                          {{(.StartsAt.Add 28800e9).Format "2006-01-02 15:04:05"}}
+                          {{"{{"}}(.StartsAt.Add 28800e9).Format "2006-01-02 15:04:05"}}
                         </h4>
                       </td>
                       <td>
-                        {{ range .Annotations.SortedPairs }} {{ if eq .Name "value"
+                        {{"{{"}} range .Annotations.SortedPairs }} {{"{{"}} if eq .Name "value"
                         }}
-                        <h4 class="font-weight-light">{{.Value}}</h4>
-                        {{ end }}{{ end }}
+                        <h4 class="font-weight-light">{{"{{"}}.Value}}</h4>
+                        {{"{{"}} end }}{{"{{"}} end }}
                       </td>
                       <td>
-                        {{ range .Labels.SortedPairs }} {{ if eq .Name "severity"
-                        }}{{ if eq .Value "critical" }}
+                        {{"{{"}} range .Labels.SortedPairs }} {{"{{"}} if eq .Name "severity"
+                        }}{{"{{"}} if eq .Value "critical" }}
                         <span
                           class="
                             ma-2
@@ -683,7 +683,7 @@ data:
                             critical-label
                           "
                           ><span class="v-chip__content">紧急</span></span
-                        >{{ else if eq .Value "error" }}<span
+                        >{{"{{"}} else if eq .Value "error" }}<span
                           class="
                             ma-2
                             v-chip v-chip--label v-chip--no-color
@@ -692,7 +692,7 @@ data:
                             error-label
                           "
                           ><span class="v-chip__content">重要</span></span
-                        >{{ else }}<span
+                        >{{"{{"}} else }}<span
                           class="
                             ma-2
                             v-chip v-chip--label v-chip--no-color
@@ -701,23 +701,23 @@ data:
                             info-label
                           "
                           ><span class="v-chip__content">普通</span></span
-                        >{{ end }}{{ end }}{{ end }}
+                        >{{"{{"}} end }}{{"{{"}} end }}{{"{{"}} end }}
                       </td>
                       <td>
                         <span>显示更多</span>
                         <input type="checkbox" />
                         <div class="content">
                           <span class="hidden">
-                            {{ range .Labels.SortedPairs }}
+                            {{"{{"}} range .Labels.SortedPairs }}
                             <h4 class="font-weight-light">
-                              {{ .Name }}={{ .Value }}
+                              {{"{{"}} .Name }}={{"{{"}} .Value }}
                             </h4>
-                            {{ end }}
+                            {{"{{"}} end }}
                           </span>
                         </div>
                       </td>
                     </tr>
-                    {{ end }}
+                    {{"{{"}} end }}
                   </tbody>
                 </table>
               </div>
@@ -727,4 +727,4 @@ data:
       </body>
     </html>
 
-    {{ end }}
+    {{"{{"}} end }}
