@@ -372,6 +372,7 @@
             - node
             - namespace
             - pod
+            - container
             - owner_kind
             - workload
           resourceID: 1
@@ -386,6 +387,7 @@
             - node
             - namespace
             - pod
+            - container
             - owner_kind
             - workload
           resourceID: 1
@@ -400,6 +402,7 @@
             - node
             - namespace
             - pod
+            - container
             - owner_kind
             - workload
           resourceID: 1
@@ -414,6 +417,7 @@
             - node
             - namespace
             - pod
+            - container
             - owner_kind
             - workload
           resourceID: 1
@@ -428,6 +432,7 @@
             - node
             - namespace
             - pod
+            - container
             - owner_kind
             - workload
           resourceID: 1
@@ -442,6 +447,7 @@
             - node
             - namespace
             - pod
+            - container
             - owner_kind
             - workload
           resourceID: 1
