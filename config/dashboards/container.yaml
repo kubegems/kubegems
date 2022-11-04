@@ -47,7 +47,7 @@ graphs:
       unit: bytes-B
     expr: ""
     unit: bytes-B
-  - name: Container Memory Use Total
+  - name: Container Memory Use Percent
     promqlGenerator:
       scope: containers
       resource: container
