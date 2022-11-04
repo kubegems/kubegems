@@ -40,3 +40,5 @@ update monitor_dashboard_tpls set graphs = json_replace(graphs, "$[2].promqlGene
 update monitor_dashboard_tpls set graphs = json_replace(graphs, "$[3].promqlGenerator.resource", "consul") where name = "Consul";
 update monitor_dashboard_tpls set graphs = json_replace(graphs, "$[4].promqlGenerator.resource", "consul") where name = "Consul";
 ```
+
+8. dashboard tpl `Container Memory Use Percent`
