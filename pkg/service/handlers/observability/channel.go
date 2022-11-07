@@ -41,7 +41,10 @@ func (h *ObservabilityHandler) getChannelReq(c *gin.Context) (*models.AlertChann
 		req.TenantID = &tmp
 	}
 	if req.ChannelConfig.ChannelIf == nil {
-		handlers.NotOK(c, fmt.Errorf("channel config can't be null"))
+		return nil, fmt.Errorf("channel config can't be null")
+	}
+	if err := req.ChannelConfig.ChannelIf.Check(); err != nil {
+		return nil, err
 	}
 	return &req, nil
 }
