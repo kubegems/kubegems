@@ -15,28 +15,35 @@
 package channels
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type ChannelType string
 
 const (
-	TypeWebhook ChannelType = "webhook"
-	TypeEmail   ChannelType = "email"
-	TypeFeishu  ChannelType = "feishu"
+	TypeWebhook     ChannelType = "webhook"
+	TypeEmail       ChannelType = "email"
+	TypeFeishu      ChannelType = "feishu"
+	TypeAliyunMsg   ChannelType = "aliyunMsg"
+	TypeAliyunVoice ChannelType = "aliyunVoice"
 )
 
 var (
-	KubegemsWebhookURL = fmt.Sprintf("https://kubegems-local-agent.%s:8041/alert", gems.NamespaceLocal)
+	KubegemsWebhookURL     = fmt.Sprintf("https://kubegems-local-agent.%s:8041/alert", gems.NamespaceLocal)
+	alertProxyReceiverHost = fmt.Sprintf("alertproxy.%s:9094", gems.NamespaceMonitor)
 )
 
 type ChannelIf interface {
@@ -123,6 +130,19 @@ func (m *ChannelConfig) UnmarshalJSON(b []byte) error {
 			return errors.Wrap(err, "unmarshal feishu channel")
 		}
 		m.ChannelIf = &feishu
+	case TypeAliyunMsg:
+		aliyunMsg := AliyunMsg{}
+		if err := json.Unmarshal(b, &aliyunMsg); err != nil {
+			return errors.Wrap(err, "unmarshal aliyunMsg channel")
+		}
+		m.ChannelIf = &aliyunMsg
+	case TypeAliyunVoice:
+		aliyunVoice := AliyunVoice{}
+		if err := json.Unmarshal(b, &aliyunVoice); err != nil {
+			return errors.Wrap(err, "unmarshal aliyunVoice channel")
+		}
+		m.ChannelIf = &aliyunVoice
+
 	default:
 		return fmt.Errorf("unknown channel type: %s", tmp.ChannelType)
 	}
@@ -145,4 +165,19 @@ func (ChannelConfig) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 		return "JSONB"
 	}
 	return ""
+}
+
+// test for alertproxy
+func testAlertproxy(u string, alert prometheus.WebhookAlert) error {
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(alert); err != nil {
+		return err
+	}
+	resp, err := http.Post(u, "application/json", buf)
+	if err != nil {
+		return err
+	}
+	bts, _ := io.ReadAll(resp.Body)
+	log.Info("test alertproxy success", "url", u, "resp", string(bts))
+	return nil
 }

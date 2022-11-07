@@ -28,11 +28,11 @@ import (
 
 type Email struct {
 	ChannelType  `json:"channelType"`
-	SMTPServer   string `json:"smtpServer"`
+	SMTPServer   string `json:"smtpServer" binding:"required"`
 	RequireTLS   bool   `json:"requireTLS"`
-	From         string `json:"from"`
-	To           string `json:"to"`
-	AuthPassword string `json:"authPassword"`
+	From         string `json:"from" binding:"required"`
+	To           string `json:"to" binding:"required"`
+	AuthPassword string `json:"authPassword" binding:"required"`
 }
 
 var (

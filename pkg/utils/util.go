@@ -20,8 +20,10 @@ import (
 	"crypto/des"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"math"
 	"math/rand"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -299,4 +301,35 @@ func WaitGroupWithTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 	case <-time.After(timeout):
 		return true
 	}
+}
+
+// CheckStructFieldsEmpty check all struct fileds not empty.
+// Now only check string and int.
+func CheckStructFieldsEmpty(obj any) error {
+	value := reflect.ValueOf(obj)
+	t := reflect.TypeOf(obj)
+	if value.Kind() == reflect.Ptr {
+		value = value.Elem()
+		t = t.Elem()
+	}
+
+	emptyFieldName := ""
+	for i := 0; i < value.NumField(); i++ {
+		field := value.Field(i)
+		switch field.Kind() {
+		case reflect.String:
+			if field.String() == "" {
+				emptyFieldName = t.Field(i).Name
+				break
+			}
+		case reflect.Int:
+			if field.Int() == 0 {
+				emptyFieldName = t.Field(i).Name
+			}
+		}
+	}
+	if emptyFieldName != "" {
+		return fmt.Errorf("field %s is tmpty", emptyFieldName)
+	}
+	return nil
 }

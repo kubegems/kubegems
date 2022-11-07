@@ -17,30 +17,34 @@ package channels
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
-type Feishu struct {
-	ChannelType `json:"channelType"`
-	URL         string `json:"url" binding:"required"` // feishu robot webhook url
-	At          string `json:"at"`                     // 要@的用户id，所有人则是 all
-	SignSecret  string `json:"signSecret"`             // 签名校验key
+// AliyunVoice 阿里云语音
+type AliyunVoice struct {
+	ChannelType     `json:"channelType"`
+	AccessKeyId     string `json:"accessKeyId" binding:"required"`
+	AccessKeySecret string `json:"accessKeySecret" binding:"required"`
+	CallNumber      string `json:"callNumber" binding:"required"` // 电话号码，只支持单个
+	TtsCode         string `json:"ttsCode" binding:"required"`    // 模板
 }
 
-func (f *Feishu) formatURL() string {
+func (v *AliyunVoice) formatURL() string {
 	q := url.Values{}
-	q.Add("type", string(TypeFeishu))
-	q.Add("url", f.URL)
-	q.Add("at", f.At)
-	q.Add("signSecret", f.SignSecret)
+	q.Add("type", string(TypeAliyunVoice))
+	q.Add("accessKeyId", v.AccessKeyId)
+	q.Add("accessKeySecret", v.AccessKeySecret)
+	q.Add("callNumber", v.CallNumber)
+	q.Add("ttsCode", v.TtsCode)
+
 	return fmt.Sprintf("http://%s?%s", alertProxyReceiverHost, q.Encode())
 }
 
-func (f *Feishu) ToReceiver(name string) v1alpha1.Receiver {
-	u := f.formatURL()
+func (v *AliyunVoice) ToReceiver(name string) v1alpha1.Receiver {
+	u := v.formatURL()
 	return v1alpha1.Receiver{
 		Name: name,
 		WebhookConfigs: []v1alpha1.WebhookConfig{
@@ -51,13 +55,10 @@ func (f *Feishu) ToReceiver(name string) v1alpha1.Receiver {
 	}
 }
 
-func (f *Feishu) Check() error {
-	if !strings.Contains(f.URL, "open.feishu.cn") {
-		return fmt.Errorf("feishu robot url not valid")
-	}
-	return nil
+func (v *AliyunVoice) Check() error {
+	return utils.CheckStructFieldsEmpty(v)
 }
 
-func (f *Feishu) Test(alert prometheus.WebhookAlert) error {
-	return testAlertproxy(f.formatURL(), alert)
+func (v *AliyunVoice) Test(alert prometheus.WebhookAlert) error {
+	return testAlertproxy(v.formatURL(), alert)
 }

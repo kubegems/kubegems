@@ -31,7 +31,7 @@ import (
 
 type Webhook struct {
 	ChannelType        `json:"channelType"`
-	URL                string `json:"url"`
+	URL                string `json:"url" binding:"required"`
 	InsecureSkipVerify bool   `json:"insecureSkipVerify"`
 }
 
