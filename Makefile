@@ -56,27 +56,32 @@ all: generate build docker helm-push## build all
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-generate: add-license gen-i18n generate-installer ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: add-license gen-i18n ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/plugins/kubegems-local/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"
 
-	sed -i 's/^version:.*/version: $(GIT_VERSION)/g' deploy/plugins/kubegems-installer/Chart.yaml deploy/plugins/kubegems-models/Chart.yaml
-	sed -i 's/^appVersion:.*/appVersion: $(GIT_VERSION)/g' deploy/plugins/kubegems-installer/Chart.yaml deploy/plugins/kubegems-models/Chart.yaml
+	sed -i 's/^version:.*/version: $(VERSION)/g' \
+		deploy/plugins/kubegems-installer/Chart.yaml \
+		deploy/plugins/kubegems-models/Chart.yaml \
+		deploy/plugins/kubegems-local/Chart.yaml
+	sed -i 's/^appVersion:.*/appVersion: $(VERSION)/g' \
+		deploy/plugins/kubegems-installer/Chart.yaml \
+		deploy/plugins/kubegems-models/Chart.yaml \
+		deploy/plugins/kubegems-local/Chart.yaml
 
 	sed -i 's/kubegemsVersion:.*/kubegemsVersion: $(GIT_VERSION)/g' deploy/kubegems.yaml
 	sed -i 's/export KUBEGEMS_VERSION.*#/export KUBEGEMS_VERSION=$(GIT_VERSION)  #/g' README.md README_zh.md
 
-	go run scripts/generate-system-alert/main.go
-
-generate-installer: helm-package
 	helm template --namespace kubegems-installer --include-crds \
 	--set global.kubegemsVersion=$(GIT_VERSION) \
-	kubegems-installer ${BIN_DIR}/plugins/kubegems-installer-${VERSION}.tgz \
+	kubegems-installer deploy/plugins/kubegems-installer \
 	| kubectl annotate -f -  --local  -oyaml \
 	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
+
+	# go run scripts/generate-system-alert/main.go
 
 swagger:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.4
