@@ -22,8 +22,6 @@ IMAGE_TAG=${GIT_VERSION}
 # Image URL to use all building/pushing image targets
 IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
 
-
-
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
 ldflags+=-X '${GOPACKAGE}/pkg/version.gitVersion=${GIT_VERSION}'
@@ -62,11 +60,11 @@ generate: add-license gen-i18n ## Generate  WebhookConfiguration, ClusterRole, C
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"
 
-	sed -i 's/^version:.*/version: $(VERSION)/g' \
+	sed -i 's/^version:.*/version: $(GIT_VERSION)/g' \
 		deploy/plugins/kubegems-installer/Chart.yaml \
 		deploy/plugins/kubegems-models/Chart.yaml \
 		deploy/plugins/kubegems-local/Chart.yaml
-	sed -i 's/^appVersion:.*/appVersion: $(VERSION)/g' \
+	sed -i 's/^appVersion:.*/appVersion: $(GIT_VERSION)/g' \
 		deploy/plugins/kubegems-installer/Chart.yaml \
 		deploy/plugins/kubegems-models/Chart.yaml \
 		deploy/plugins/kubegems-local/Chart.yaml
