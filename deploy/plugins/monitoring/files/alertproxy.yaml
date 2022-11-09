@@ -74,3 +74,17 @@ proxyTemplates:
           }
         }
       }
+  - type: aliyunMsg
+    template: |
+      {
+        "alert": "{{ .Alert.Labels.gems_alertname }}",
+        "time": "{{ .Alert.StartsAt.Format "2006-01-02 15:04:05" }}",
+        "number": "1",
+        "detail": "{{ .Alert.Annotations.message }}"
+      }
+  - type: aliyunVoice
+    template: |
+      {
+        "alert": "{{ .Alert.Labels.gems_alertname }}",
+        "time": "{{ .Alert.StartsAt.Format "2006-01-02 15:04:05" }}"
+      }
