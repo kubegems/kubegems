@@ -64,7 +64,7 @@ func (g *LogqlGenerator) ToLogql(namespace string) string {
 	}
 	sort.Strings(labelvalues)
 	labelvalues = append(labelvalues, fmt.Sprintf(`namespace="%s"`, namespace))
-	return fmt.Sprintf(`sum(count_over_time({%s} |~ "%s" [%s]))without(fluentd_thread)`, strings.Join(labelvalues, ", "), g.Match, g.Duration)
+	return fmt.Sprintf("sum(count_over_time({%s} |~ `%s` [%s]))without(fluentd_thread)", strings.Join(labelvalues, ", "), g.Match, g.Duration)
 }
 
 func (g *LogqlGenerator) IsEmpty() bool {
