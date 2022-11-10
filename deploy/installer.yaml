@@ -304,7 +304,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-v1.22.0
+    helm.sh/chart: kubegems-installer-1.22.0
   name: kubegems-installer
   namespace: kubegems-installer
 ---
@@ -345,7 +345,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-v1.22.0
+    helm.sh/chart: kubegems-installer-1.22.0
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-view: "true"
@@ -371,7 +371,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-v1.22.0
+    helm.sh/chart: kubegems-installer-1.22.0
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
   name: kubegems-installer-edit
@@ -400,9 +400,8 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-v1.22.0
+    helm.sh/chart: kubegems-installer-1.22.0
   name: kubegems-installer
-  namespace: kubegems-installer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -423,7 +422,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-v1.22.0
+    helm.sh/chart: kubegems-installer-1.22.0
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -442,7 +441,7 @@ spec:
         app.kubernetes.io/instance: kubegems-installer
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: kubegems-installer
-        helm.sh/chart: kubegems-installer-v1.22.0
+        helm.sh/chart: kubegems-installer-1.22.0
     spec:
       containers:
       - args:

@@ -10,7 +10,7 @@ spec:
   version: "1.0.0"
   values:
     clusterName: "manager-cluster"
-    kubegemsVersion: v1.22.0-beta.2
+    kubegemsVersion: v1.22.0
     # choose 'registry.cn-beijing.aliyuncs.com' or 'docker.io'
     imageRegistry: docker.io
     imageRepository: "kubegems"
@@ -27,7 +27,7 @@ spec:
   kind: helm
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
-  version: "1.22.0-beta.2"
+  version: 1.22.0
   valuesFrom:
     - kind: ConfigMap
       name: "kubegems-global-values"
