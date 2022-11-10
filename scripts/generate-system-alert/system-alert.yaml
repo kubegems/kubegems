@@ -14,7 +14,8 @@
       compareValue: "0"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: KubernetesMemoryPressure
   namespace: kubegems-monitoring
@@ -31,7 +32,8 @@
       compareValue: "1"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 1h
 - name: KubernetesDiskPressure
   namespace: kubegems-monitoring
@@ -48,7 +50,8 @@
       compareValue: "1"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 1h
 - name: KubernetesOutOfDisk
   namespace: kubegems-monitoring
@@ -65,7 +68,8 @@
       compareValue: "1"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 1h
 - name: KubernetesPodNumberTooHigh
   namespace: kubegems-monitoring
@@ -79,7 +83,8 @@
       compareValue: "90"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 1h
 
 # 系统namepace pod
@@ -97,7 +102,8 @@
       compareValue: "2"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: KubernetesPodOOMKilling
   namespace: kubegems-monitoring
@@ -114,7 +120,8 @@
       compareValue: "0"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: KubegemsPvcUsageTooHigh
   namespace: kubegems-monitoring
@@ -134,7 +141,8 @@
       severity: critical
   inhibitLabels: ["namespace", "persistentvolumeclaim"]
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 
 # 节点 host
@@ -150,7 +158,8 @@
       compareValue: "80"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: HostHighMemoryLoad
   namespace: kubegems-monitoring
@@ -164,7 +173,8 @@
       compareValue: "90"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: HostUnusualDiskReadRate
   namespace: kubegems-monitoring
@@ -178,7 +188,8 @@
       compareValue: "50 * 1024 * 1024"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: HostUnusualDiskWriteRate
   namespace: kubegems-monitoring
@@ -192,7 +203,8 @@
       compareValue: "50 * 1024 * 1024"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: HostNetworkReceiveErrors
   namespace: kubegems-monitoring
@@ -206,7 +218,8 @@
       compareValue: "1"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: HostNetworkTransmitErrors
   namespace: kubegems-monitoring
@@ -220,7 +233,8 @@
       compareValue: "1"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: HostHighLoad5
   namespace: kubegems-monitoring
@@ -238,7 +252,8 @@
       severity: critical
   inhibitLabels: ["node"]
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 # 证书
 - name: CertManagerCertExpirySoon
@@ -255,7 +270,8 @@
       compareValue: "7 * 24 * 60 * 60"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 12h
 - name: CertManagerCertNotReady
   namespace: kubegems-monitoring
@@ -272,7 +288,8 @@
       compareValue: "1"
       severity: error
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 # cluster
 - name: ClusterHighCpuLoad
@@ -287,7 +304,8 @@
       compareValue: "80"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: ClusterHighMemoryLoad
   namespace: kubegems-monitoring
@@ -301,7 +319,8 @@
       compareValue: "90"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 - name: ClusterComponentCertExpirySoon
   namespace: kubegems-monitoring
@@ -317,7 +336,8 @@
       compareValue: "7 * 24 * 60 * 60"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 # plugin
 - name: GemsPluginFailed
@@ -334,7 +354,8 @@
       compareValue: "0"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m
 # exporter
 - name: ExporterDown
@@ -351,5 +372,6 @@
       compareValue: "0"
       severity: critical
   receivers:
-    - name: gemcloud-default-webhook
+    - alertChannel:
+        id: 1
       interval: 10m

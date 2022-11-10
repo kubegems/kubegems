@@ -74,18 +74,20 @@ func newGenServiceCfgCmd() *cobra.Command {
 }
 
 type MigratOptions struct {
-	Mysql    *database.Options `json:"mysql,omitempty"`
-	Redis    *redis.Options    `json:"redis,omitempty"`
-	InitData bool              `json:"initData,omitempty" description:"insert init data into database"`
-	Wait     bool              `json:"wait,omitempty"  description:"wait util database server ready"`
+	Mysql         *database.Options `json:"mysql,omitempty"`
+	Redis         *redis.Options    `json:"redis,omitempty"`
+	MigrateModels bool              `json:"migrateModels,omitempty" description:"migrate models"`
+	InitData      bool              `json:"initData,omitempty" description:"insert init data into database"`
+	Wait          bool              `json:"wait,omitempty" description:"wait util database server ready"`
 }
 
 func newServiceMigrateCmd() *cobra.Command {
 	options := &MigratOptions{
-		Mysql:    database.NewDefaultOptions(),
-		Redis:    redis.NewDefaultOptions(),
-		InitData: true,
-		Wait:     true,
+		Mysql:         database.NewDefaultOptions(),
+		Redis:         redis.NewDefaultOptions(),
+		MigrateModels: false,
+		InitData:      false,
+		Wait:          true,
 	}
 
 	cmd := &cobra.Command{
@@ -108,7 +110,7 @@ func newServiceMigrateCmd() *cobra.Command {
 						return err
 					}
 				}
-				return models.MigrateDatabaseAndInitData(ctx, options.Mysql, options.InitData)
+				return models.MigrateDatabaseAndInitData(ctx, options.Mysql, options.MigrateModels, options.InitData)
 			})
 			eg.Go(func() error {
 				if options.Wait {

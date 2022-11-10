@@ -122,14 +122,14 @@ Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的
 您可以前往 [Kubegems Release](https://github.com/kubegems/kubegems/tags) 查询到最新的版本号.
 
 ```sh
-export KUBEGEMS_VERSION=v1.22.0-beta.2  #  安装 kubegems 的版本
+export KUBEGEMS_VERSION=v1.22.0  #  安装 kubegems 的版本
 ```
 
 当你的 Kubernetes 集群状态 Ready 后，执行下述命令安装 KuebGems Installer Operator。
 
 ```sh
 kubectl create namespace kubegems-installer
-kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml
+kubectl apply -f "https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/installer.yaml"
 ```
 
 通过 operator 安装 KuebGems 核心服务
@@ -138,7 +138,7 @@ kubectl apply -f https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/de
 kubectl create namespace kubegems
 
 export STORAGE_CLASS=local-path  # 声明storageclass
-curl -sL https://raw.githubusercontent.com/kubegems/kubegems/${KUBEGEMS_VERSION}/deploy/kubegems.yaml \
+curl -sL "https://github.com/kubegems/kubegems/raw/${KUBEGEMS_VERSION}/deploy/kubegems.yaml" \
 | sed -e "s/local-path/${STORAGE_CLASS}/g" \
 > kubegems.yaml
 

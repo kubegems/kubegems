@@ -31,6 +31,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
@@ -263,7 +264,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		if q.Expr == "" {
 			return i18n.Errorf(c, "Template and native promql cannot be empty at the same time")
 		}
-		if err := prometheus.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
+		if err := observe.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
 			return err
 		}
 	} else {

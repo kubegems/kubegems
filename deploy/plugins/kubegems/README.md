@@ -197,6 +197,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | `init.image.pullPolicy`                      | API image pull policy                                                                          | `IfNotPresent`             |
 | `init.image.pullSecrets`                     | API image pull secrets                                                                         | `[]`                       |
 | `init.image.debug`                           | Enable API image debug mode                                                                    | `false`                    |
+| `init.migrateModels`                         | migrate database models or not                                                                 | `true`                     |
+| `init.initData`                              | init database data or not                                                                      | `true`                     |
 | `init.replicaCount`                          | Number of API replicas to deploy                                                               | `1`                        |
 | `init.existingConfigmap`                     | The name of an existing ConfigMap with your custom configuration for API                       | `""`                       |
 | `init.restartPolicy`                         | The restart policy for job,valid values: "OnFailure", "Never"                                  | `OnFailure`                |

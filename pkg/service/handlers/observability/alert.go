@@ -386,27 +386,17 @@ func (h *ObservabilityHandler) AlertToday(c *gin.Context) {
 	yesterdayBegin := todayBedin.Add(-24 * time.Hour)
 	todayEnd := todayBedin.Add(24 * time.Hour)
 	tenantID := c.Param("tenant_id")
-
-	yesterdaySubQuery := h.GetDB().Table("alert_messages").
-		Select("fingerprint, max(created_at) as max_created_at").
-		Where("starts_at >= ?", yesterdayBegin).
-		Where("starts_at < ?", todayBedin).
-		Group("fingerprint")
-	yesterdayQuery := h.GetDB().Table("(?) as tmp", yesterdaySubQuery).
+	yesterdayQuery := h.GetDB().Table("alert_messages").
 		Select("status, count(alert_infos.fingerprint) as count").
-		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
-		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint").
+		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
+		Where("created_at >= ?", yesterdayBegin).
+		Where("created_at < ?", todayBedin).
 		Group("status")
-
-	todaySubQuery := h.GetDB().Table("alert_messages").
-		Select("fingerprint, max(created_at) as max_created_at").
-		Where("starts_at >= ?", todayBedin).
-		Where("starts_at < ?", todayEnd).
-		Group("fingerprint")
-	todayQuery := h.GetDB().Table("(?) as tmp", todaySubQuery).
+	todayQuery := h.GetDB().Table("alert_messages").
 		Select("status, count(alert_infos.fingerprint) as count").
-		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
-		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint").
+		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
+		Where("created_at >= ?", todayBedin).
+		Where("created_at < ?", todayEnd).
 		Group("status")
 
 	if tenantID != "_all" {
@@ -493,16 +483,12 @@ func (h *ObservabilityHandler) AlertGraph(c *gin.Context) {
 		end = utils.NextDayStartTime(time.Now())
 	}
 
-	subQuery := h.GetDB().Table("alert_messages").
-		Select("fingerprint, max(created_at) as max_created_at").
-		Where("starts_at >= ?", start).
-		Where("starts_at < ?", end).
-		Group("fingerprint")
-	query := h.GetDB().Table("(?) as tmp", subQuery).
-		Select(`project_name, DATE_FORMAT(starts_at, "%Y-%m-%d") as date, count(alert_messages.fingerprint) as count`).
-		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
-		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint").
-		Group("project_name").Group(`DATE_FORMAT(starts_at, "%Y-%m-%d")`)
+	query := h.GetDB().Table("alert_messages").
+		Select(`project_name, DATE_FORMAT(created_at, "%Y-%m-%d") as date, count(alert_messages.fingerprint) as count`).
+		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
+		Where("created_at >= ?", start).
+		Where("created_at < ?", end).
+		Group("project_name").Group(`DATE_FORMAT(created_at, "%Y-%m-%d")`)
 
 	tenantID := c.Param("tenant_id")
 	if c.Param("tenant_id") != "_all" {
@@ -580,14 +566,10 @@ func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 		end = utils.NextDayStartTime(time.Now())
 	}
 
-	subQuery := h.GetDB().Table("alert_messages").
-		Select("fingerprint, max(created_at) as max_created_at").
-		Where("starts_at >= ?", start).
-		Where("starts_at < ?", end).
-		Group("fingerprint")
-	query := h.GetDB().Table("(?) as tmp", subQuery).
-		Joins("join alert_messages on tmp.fingerprint = alert_messages.fingerprint and tmp.max_created_at = alert_messages.created_at").
-		Joins("join alert_infos on tmp.fingerprint = alert_infos.fingerprint")
+	query := h.GetDB().Table("alert_messages").
+		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
+		Where("created_at >= ?", start).
+		Where("created_at < ?", end)
 
 	tenantID := c.Param("tenant_id")
 	if c.Param("tenant_id") != "_all" {
@@ -599,16 +581,8 @@ func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 	switch c.Query("groupby") {
 	case "alert_type":
 		// logging, raw promql and from template
-		query.Select(`(case
-	when alert_infos.labels ->> '$.gems_alert_from' = 'logging' then 'logging'
-	when alert_infos.labels ->> '$.gems_alert_from' = 'monitor' && alert_infos.labels ->> '$.gems_alert_resource' is null then 'raw promql'
-	else concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule')
-end) as group_value, count(alert_infos.fingerprint) as count`).
-			Group(`(case
-	when alert_infos.labels ->> '$.gems_alert_from' = 'logging' then 'logging'
-	when alert_infos.labels ->> '$.gems_alert_from' = 'monitor' && alert_infos.labels ->> '$.gems_alert_resource' is null then 'raw promql'
-	else concat(alert_infos.labels ->> '$.gems_alert_resource', '.', alert_infos.labels ->> '$.gems_alert_rule')
-end)`)
+		query.Select(`alert_infos.labels ->> '$.gems_alertname' as group_value, count(alert_infos.fingerprint) as count`).
+			Group(`alert_infos.labels ->> '$.gems_alertname'`)
 	case "project_name":
 		query.Select("alert_infos.project_name as group_value, count(alert_infos.fingerprint) as count").
 			Group("alert_infos.project_name")

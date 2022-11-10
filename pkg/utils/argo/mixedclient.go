@@ -52,170 +52,87 @@ func NewClient(ctx context.Context, options *Options) (*Client, error) {
 }
 
 func (c *Client) ListArgoApp(ctx context.Context, selector labels.Selector) (*v1alpha1.ApplicationList, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	list, err := cli.List(ctx, &application.ApplicationQuery{Selector: selector.String()})
-	if err != nil {
-		c.invalidCacheOnUnAuth(err)
-		return nil, err
-	}
-	return list, nil
+	return appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*v1alpha1.ApplicationList, error) {
+		return cli.List(ctx, &application.ApplicationQuery{Selector: selector.String()})
+	})
 }
 
 func (c *Client) WatchArgoApp(ctx context.Context, name string) (application.ApplicationService_WatchClient, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return cli.Watch(ctx, &application.ApplicationQuery{Name: &name})
+	return appfunc(c, ctx, func(cli application.ApplicationServiceClient) (application.ApplicationService_WatchClient, error) {
+		return cli.Watch(ctx, &application.ApplicationQuery{Name: &name})
+	})
 }
 
 func (c *Client) GetArgoApp(ctx context.Context, name string) (*v1alpha1.Application, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	app, err := cli.Get(ctx, &application.ApplicationQuery{Name: &name})
-	if err != nil {
-		return nil, err
-	}
-	return app, nil
+	return appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*v1alpha1.Application, error) {
+		return cli.Get(ctx, &application.ApplicationQuery{Name: &name})
+	})
 }
 
 func (c *Client) UpdateApp(ctx context.Context, app *v1alpha1.Application) (*v1alpha1.Application, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	updated, err := cli.Update(ctx, &application.ApplicationUpdateRequest{Application: app})
-	if err != nil {
-		return nil, err
-	}
-	return updated, nil
+	return appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*v1alpha1.Application, error) {
+		return cli.Update(ctx, &application.ApplicationUpdateRequest{Application: app})
+	})
 }
 
 func (c *Client) RemoveArgoApp(ctx context.Context, name string) error {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return err
-	}
-	_, err = cli.Delete(ctx, &application.ApplicationDeleteRequest{
-		Name:    &name,
-		Cascade: pointer.Bool(true),
+	_, err := appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*application.ApplicationResponse, error) {
+		return cli.Delete(ctx, &application.ApplicationDeleteRequest{
+			Name:    &name,
+			Cascade: pointer.Bool(true),
+		})
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (c *Client) CreateArgoApp(ctx context.Context, app *v1alpha1.Application) (*v1alpha1.Application, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return cli.Create(ctx, &application.ApplicationCreateRequest{Application: *app, Validate: pointer.Bool(false)})
+	return appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*v1alpha1.Application, error) {
+		return cli.Create(ctx, &application.ApplicationCreateRequest{Application: *app, Validate: pointer.Bool(false)})
+	})
 }
 
 func (c *Client) EnsureArgoApp(ctx context.Context, app *v1alpha1.Application) (*v1alpha1.Application, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return cli.Create(ctx, &application.ApplicationCreateRequest{
-		Application: *app,
-		Upsert:      pointer.Bool(true),
-		Validate:    pointer.Bool(false),
+	return appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*v1alpha1.Application, error) {
+		return cli.Create(ctx, &application.ApplicationCreateRequest{
+			Application: *app,
+			Upsert:      pointer.Bool(true),
+			Validate:    pointer.Bool(false),
+		})
 	})
 }
 
 func (c *Client) Sync(ctx context.Context, name string, resources []v1alpha1.SyncOperationResource) error {
-	appcli, err := c.getAppcli(ctx)
-	if err != nil {
-		return err
-	}
-	_, err = appcli.Sync(ctx, &application.ApplicationSyncRequest{
-		Name:      &name,
-		Resources: resources,
-		Strategy:  &v1alpha1.SyncStrategy{Apply: &v1alpha1.SyncStrategyApply{Force: true}},
-		Prune:     true,
+	_, err := appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*v1alpha1.Application, error) {
+		return cli.Sync(ctx, &application.ApplicationSyncRequest{
+			Name:      &name,
+			Resources: resources,
+			Strategy:  &v1alpha1.SyncStrategy{Apply: &v1alpha1.SyncStrategyApply{Force: true}},
+			Prune:     true,
+		})
 	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Client) RevMeta(ctx context.Context, appname string, rev string) (*v1alpha1.RevisionMetadata, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return cli.RevisionMetadata(ctx, &application.RevisionMetadataQuery{Name: &appname, Revision: &rev})
-}
-
-func (c *Client) EnsureCluster(ctx context.Context, in *v1alpha1.Cluster) (*v1alpha1.Cluster, error) {
-	cli, err := c.getclustercli(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return cli.Create(ctx, &cluster.ClusterCreateRequest{
-		Cluster: in,
-		Upsert:  true,
-	})
-}
-
-func (c *Client) EnsureArgoProject(ctx context.Context, in *v1alpha1.AppProject) (*v1alpha1.AppProject, error) {
-	cli, err := c.getprojectcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return cli.Create(ctx, &project.ProjectCreateRequest{
-		Project: in,
-		Upsert:  true,
-	})
-}
-
-func (c *Client) EnsureRepository(ctx context.Context, repo *v1alpha1.Repository) (*v1alpha1.Repository, error) {
-	cli, err := c.getRepocli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return cli.Create(ctx, &repository.RepoCreateRequest{Repo: repo, Upsert: true}) // create
+	return err
 }
 
 func (c *Client) ResourceTree(ctx context.Context, name string) (*v1alpha1.ApplicationTree, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return cli.ResourceTree(ctx, &application.ResourcesQuery{ApplicationName: &name})
+	return appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*v1alpha1.ApplicationTree, error) {
+		return cli.ResourceTree(ctx, &application.ResourcesQuery{ApplicationName: &name})
+	})
 }
 
 func (c *Client) WatchResourceTree(ctx context.Context, name string) (application.ApplicationService_WatchResourceTreeClient, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return cli.WatchResourceTree(ctx, &application.ResourcesQuery{ApplicationName: &name})
+	return appfunc(c, ctx, func(cli application.ApplicationServiceClient) (application.ApplicationService_WatchResourceTreeClient, error) {
+		return cli.WatchResourceTree(ctx, &application.ResourcesQuery{ApplicationName: &name})
+	})
 }
 
 func (c *Client) DiffResources(ctx context.Context, q *application.ResourcesQuery) ([]*v1alpha1.ResourceDiff, error) {
-	cli, err := c.getAppcli(ctx)
+	ret, err := appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*application.ManagedResourcesResponse, error) {
+		return cli.ManagedResources(ctx, q)
+	})
 	if err != nil {
 		return nil, err
 	}
-	data, err := cli.ManagedResources(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	return data.Items, nil
+	return ret.Items, nil
 }
 
 type ResourceRequest struct {
@@ -228,18 +145,15 @@ type ResourceRequest struct {
 }
 
 func (c *Client) GetResource(ctx context.Context, q ResourceRequest) (string, error) {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	manifest, err := cli.GetResource(ctx, &application.ApplicationResourceRequest{
-		Name:         q.Name,
-		Namespace:    q.Namespace,
-		ResourceName: q.ResourceName,
-		Version:      q.Version,
-		Group:        q.Group,
-		Kind:         q.Kind,
+	manifest, err := appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*application.ApplicationResourceResponse, error) {
+		return cli.GetResource(ctx, &application.ApplicationResourceRequest{
+			Name:         q.Name,
+			Namespace:    q.Namespace,
+			ResourceName: q.ResourceName,
+			Version:      q.Version,
+			Group:        q.Group,
+			Kind:         q.Kind,
+		})
 	})
 	if err != nil {
 		return "", err
@@ -248,40 +162,62 @@ func (c *Client) GetResource(ctx context.Context, q ResourceRequest) (string, er
 }
 
 func (c *Client) RemoveResource(ctx context.Context, q ResourceRequest) error {
-	cli, err := c.getAppcli(ctx)
-	if err != nil {
-		return err
-	}
-
-	if _, err := cli.DeleteResource(ctx, &application.ApplicationResourceDeleteRequest{
-		Name:         q.Name,
-		Namespace:    q.Namespace,
-		ResourceName: q.ResourceName,
-		Version:      q.Version,
-		Group:        q.Group,
-		Kind:         q.Kind,
-	}); err != nil {
-		return err
-	}
-	return nil
+	_, err := appfunc(c, ctx, func(cli application.ApplicationServiceClient) (*application.ApplicationResponse, error) {
+		return cli.DeleteResource(ctx, &application.ApplicationResourceDeleteRequest{
+			Name:         q.Name,
+			Namespace:    q.Namespace,
+			ResourceName: q.ResourceName,
+			Version:      q.Version,
+			Group:        q.Group,
+			Kind:         q.Kind,
+		})
+	})
+	return err
 }
 
-func (c *Client) getAppcli(ctx context.Context) (application.ApplicationServiceClient, error) {
-	// from cache
-	if c.app != nil {
-		return c.app, nil
-	}
-	// init application cli
-	closer, appcli, err := c.ArgoCDcli.NewApplicationClient()
+func (c *Client) EnsureCluster(ctx context.Context, in *v1alpha1.Cluster) (*v1alpha1.Cluster, error) {
+	cli, err := c.getclustercli(ctx)
 	if err != nil {
 		return nil, err
 	}
-	go func() {
-		<-c.Ctx.Done()
-		_ = closer.Close()
-	}()
-	c.app = appcli
-	return appcli, nil
+	ret, err := cli.Create(ctx, &cluster.ClusterCreateRequest{
+		Cluster: in,
+		Upsert:  true,
+	})
+	if err != nil {
+		c.invalidCacheOnUnAuth(err)
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (c *Client) EnsureArgoProject(ctx context.Context, in *v1alpha1.AppProject) (*v1alpha1.AppProject, error) {
+	cli, err := c.getprojectcli(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ret, err := cli.Create(ctx, &project.ProjectCreateRequest{
+		Project: in,
+		Upsert:  true,
+	})
+	if err != nil {
+		c.invalidCacheOnUnAuth(err)
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (c *Client) EnsureRepository(ctx context.Context, repo *v1alpha1.Repository) (*v1alpha1.Repository, error) {
+	cli, err := c.getRepocli(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ret, err := cli.Create(ctx, &repository.RepoCreateRequest{Repo: repo, Upsert: true}) // create
+	if err != nil {
+		c.invalidCacheOnUnAuth(err)
+		return nil, err
+	}
+	return ret, nil
 }
 
 func (c *Client) getRepocli(ctx context.Context) (repository.RepositoryServiceClient, error) {
@@ -338,14 +274,50 @@ func (c *Client) getprojectcli(ctx context.Context) (project.ProjectServiceClien
 	return projectcli, nil
 }
 
-func (c *Client) invalidCacheOnUnAuth(err error) {
+func appfunc[T any](cli *Client, ctx context.Context, appfunc func(cli application.ApplicationServiceClient) (T, error)) (T, error) {
+	appcli, err := cli.getAppcli()
+	if err != nil {
+		return *new(T), err
+	}
+	ret, err := appfunc(appcli)
+	if err != nil {
+		if cli.invalidCacheOnUnAuth(err) {
+			appcli, err := cli.getAppcli()
+			if err != nil {
+				return *new(T), err
+			}
+			return appfunc(appcli)
+		}
+	}
+	return ret, nil
+}
+
+func (c *Client) getAppcli() (application.ApplicationServiceClient, error) {
+	// from cache
+	if c.app != nil {
+		return c.app, nil
+	}
+	// init application cli
+	closer, appcli, err := c.ArgoCDcli.NewApplicationClient()
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		<-c.Ctx.Done()
+		_ = closer.Close()
+	}()
+	c.app = appcli
+	return appcli, nil
+}
+
+func (c *Client) invalidCacheOnUnAuth(err error) bool {
 	if status.Code(err) != codes.Unauthenticated {
-		return
+		return false
 	}
 	// flush cache and retry
 	apiclient, err := NewArgoCDCli(c.Options)
 	if err != nil {
-		return
+		return false
 	}
 
 	c.lock.Lock()
@@ -355,4 +327,6 @@ func (c *Client) invalidCacheOnUnAuth(err error) {
 	c.cluster = nil
 	c.project = nil
 	c.repo = nil
+
+	return true
 }

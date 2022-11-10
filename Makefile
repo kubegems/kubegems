@@ -13,7 +13,8 @@ VERSION?=$(shell echo "${GIT_VERSION}" | sed -e 's/^v//')
 
 OS?=linux
 ARCH?=amd64
-BIN_DIR?=bin
+BIN_DIR?=$(shell pwd)/bin
+PLATFORM?=linux/amd64,linux/arm64
 
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
@@ -54,7 +55,7 @@ all: generate build container push helm-push## build all
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-generate: add-license gen-i18n generate-installer ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: add-license gen-i18n ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/plugins/kubegems-local/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
@@ -69,6 +70,8 @@ generate-installer: helm-package
 	| kubectl annotate -f -  --local  -oyaml \
 	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
+
+	# go run scripts/generate-system-alert/main.go
 
 swagger:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.4
@@ -134,11 +137,11 @@ helm-push: helm-package
 	;)
 
 docker: ## Build container image.
-	docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${IMG}  .
- 
+	docker buildx build --platform=${PLATFORM} --push -t ${IMG}  .
+
 KUBECTL_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubectl:latest
 kubectl-image:
-	docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl .
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl .
 
 clean:
 	- rm -rf ${BIN_DIR}

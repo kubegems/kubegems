@@ -26,6 +26,7 @@ import (
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/apis/networking"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,14 +68,14 @@ func updateAMConfig(cli client.Client) {
 
 	for _, v := range amCfgs.Items {
 		for i := range v.Spec.Receivers {
-			if v.Spec.Receivers[i].Name == prometheus.DefaultReceiverName {
-				v.Spec.Receivers[i] = prometheus.DefaultReceiver
+			if v.Spec.Receivers[i].Name == models.DefaultReceiver.Name {
+				v.Spec.Receivers[i] = models.DefaultReceiver
 				goto Update
 			}
 		}
 		// not found
 		log.Infof("default receiver not found in: %s %s\n", v.Namespace, v.Name)
-		v.Spec.Receivers = append(v.Spec.Receivers, prometheus.DefaultReceiver)
+		v.Spec.Receivers = append(v.Spec.Receivers, models.DefaultReceiver)
 	Update:
 		if err := cli.Update(ctx, v); err != nil {
 			panic(err)

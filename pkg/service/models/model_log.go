@@ -38,16 +38,19 @@ type LogQueryHistory struct {
 	FilterJSON string `gorm:"type:varchar(1024)"`
 	// logql
 	LogQL string `gorm:"type:varchar(1024)"`
+	// 时间区间
+	TimeRange string `gorm:"type:varchar(256);default:''"`
 	// 创建时间
 	CreateAt time.Time `sql:"DEFAULT:'current_timestamp'"`
 	// 创建者
-	Creator   *User
+	Creator   *User `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 	CreatorID uint
 }
 
 type LogQueryHistoryWithCount struct {
 	ID         uint
 	Ids        string
+	TimeRanges string
 	Cluster    *Cluster
 	ClusterID  uint
 	LabelJSON  string
@@ -78,7 +81,7 @@ type LogQuerySnapshot struct {
 	// 创建时间
 	CreateAt time.Time `sql:"DEFAULT:'current_timestamp'"`
 	// 创建者
-	Creator   *User
+	Creator   *User `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
 	CreatorID uint
 }
 

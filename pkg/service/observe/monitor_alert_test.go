@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package prometheus
+package observe
 
 import (
 	"testing"
@@ -20,6 +20,8 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
+	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 
 	"github.com/google/go-cmp/cmp"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -49,19 +51,19 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				AlertmanagerConfig: &v1alpha1.AlertmanagerConfig{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      "myconfig",
-						Namespace: GlobalAlertNamespace,
+						Namespace: prometheus.GlobalAlertNamespace,
 					},
 					Spec: v1alpha1.AlertmanagerConfigSpec{
 						Receivers: []v1alpha1.Receiver{
-							NullReceiver,
+							prometheus.NullReceiver,
 						},
 						Route: &v1alpha1.Route{
-							Receiver: NullReceiverName,
+							Receiver: prometheus.NullReceiverName,
 							Routes: []extv1.JSON{
 								{
 									Raw: []byte(`
 									{
-										"receiver": "receiver-1",
+										"receiver": "receiver-id-1",
 										"matchers": [
 											{
 												"name": "gems_alertname",
@@ -81,7 +83,7 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 				PrometheusRule: &monitoringv1.PrometheusRule{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      "myrule",
-						Namespace: GlobalAlertNamespace,
+						Namespace: prometheus.GlobalAlertNamespace,
 					},
 					Spec: monitoringv1.PrometheusRuleSpec{
 						Groups: []monitoringv1.RuleGroup{
@@ -93,12 +95,12 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 										Expr:  intstr.FromString(`kube_node_status_condition{condition=~"Ready", status=~"true"}==0`),
 										For:   "1m",
 										Labels: map[string]string{
-											AlertNameLabel:      "alert-1",
-											AlertNamespaceLabel: GlobalAlertNamespace,
-											SeverityLabel:       SeverityError,
+											prometheus.AlertNameLabel:      "alert-1",
+											prometheus.AlertNamespaceLabel: prometheus.GlobalAlertNamespace,
+											prometheus.SeverityLabel:       prometheus.SeverityError,
 										},
 										Annotations: map[string]string{
-											ExprJsonAnnotationKey: `{
+											prometheus.ExprJsonAnnotationKey: `{
 												"scope": "system",
 												"resource": "node",
 												"rule": "statusCondition",
@@ -122,21 +124,27 @@ func TestRawAlertResource_ToAlerts(t *testing.T) {
 			},
 			want: AlertRuleList[MonitorAlertRule]{{
 				BaseAlertRule: BaseAlertRule{
-					Namespace: GlobalAlertNamespace,
+					Namespace: prometheus.GlobalAlertNamespace,
 					Name:      "alert-1",
 					Expr:      `kube_node_status_condition{condition=~"Ready", status=~"true"}`,
 					For:       "1m",
 					AlertLevels: []AlertLevel{{
 						CompareOp:    "==",
 						CompareValue: "0",
-						Severity:     SeverityError,
+						Severity:     prometheus.SeverityError,
 					}},
-					Receivers:     []AlertReceiver{{Name: "receiver-1"}},
+					Receivers: []AlertReceiver{
+						{
+							AlertChannel: &models.AlertChannel{
+								ID: 1,
+							},
+						},
+					},
 					IsOpen:        true,
 					InhibitLabels: []string{},
 				},
 
-				PromqlGenerator: &PromqlGenerator{
+				PromqlGenerator: &prometheus.PromqlGenerator{
 					Scope:    "system",
 					Resource: "node",
 					Rule:     "statusCondition",

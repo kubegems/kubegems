@@ -236,7 +236,7 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 		md.Spec.Server.Kind = modelsv1beta1.ServerKindModelx
 		md.Spec.Model.URL = sourcedetails.Address
 		md.Spec.Server.Privileged = true
-		md.Spec.Server.StorageInitializerImage = "docker.io/kubegems/modelx-dl:latest"
+		md.Spec.Server.StorageInitializerImage = o.ModelxStorageInitalizer
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
 		}

@@ -38,6 +38,11 @@ type StoreOptions struct {
 	Mongo  *mongo.Options      `json:"mongo,omitempty"`
 	Mysql  *database.Options   `json:"mysql,omitempty"`
 	Sync   *models.SyncOptions `json:"sync,omitempty"`
+	Modelx *ModelxOptions      `json:"modelx,omitempty"`
+}
+
+type ModelxOptions struct {
+	InitImage string `json:"initImage,omitempty"`
 }
 
 func DefaultOptions() *StoreOptions {
@@ -46,6 +51,9 @@ func DefaultOptions() *StoreOptions {
 		Mongo:  mongo.DefaultOptions(),
 		Mysql:  database.NewDefaultOptions(),
 		Sync:   models.NewDefaultSyncOptions(),
+		Modelx: &ModelxOptions{
+			InitImage: "registry.cn-beijing.aliyuncs.com/kubegems/modelx-dl:latest",
+		},
 	}
 }
 
@@ -83,10 +91,11 @@ func (s *StoreServer) Run(ctx context.Context) error {
 
 	// setup api
 	handler, err := s.SetupAPI(ctx, APIDependencies{
-		Mongo:    mongodb,
-		Authc:    auth.NewUnVerifyJWTAuthenticationManager(),
-		Database: db,
-		Agents:   agents,
+		Mongo:           mongodb,
+		Authc:           auth.NewUnVerifyJWTAuthenticationManager(),
+		Database:        db,
+		Agents:          agents,
+		modelxInitImage: s.Options.Modelx.InitImage,
 	})
 	if err != nil {
 		return fmt.Errorf("setup api: %v", err)
@@ -102,10 +111,11 @@ func (s *StoreServer) Run(ctx context.Context) error {
 }
 
 type APIDependencies struct {
-	Agents   *agents.ClientSet
-	Database *database.Database
-	Mongo    *gomongo.Database
-	Authc    auth.AuthenticationManager
+	Agents          *agents.ClientSet
+	Database        *database.Database
+	Mongo           *gomongo.Database
+	Authc           auth.AuthenticationManager
+	modelxInitImage string
 }
 
 func (s *StoreServer) SetupAPI(ctx context.Context, deps APIDependencies) (http.Handler, error) {
@@ -115,7 +125,7 @@ func (s *StoreServer) SetupAPI(ctx context.Context, deps APIDependencies) (http.
 		return nil, fmt.Errorf("setup models api: %v", err)
 	}
 	// modeldeployment api
-	modeldeploymentsapi := modeldeployments.NewModelDeploymentAPI(deps.Agents, deps.Database, deps.Mongo)
+	modeldeploymentsapi := modeldeployments.NewModelDeploymentAPI(deps.Agents, deps.Database, deps.Mongo, deps.modelxInitImage)
 	return apiutil.NewRestfulAPI("v1",
 		[]restful.FilterFunction{
 			AuthenticationMiddleware(deps.Authc),

@@ -73,7 +73,7 @@ type PromqlTplRule struct {
 	UpdatedAt *time.Time `json:"-"`
 }
 
-func CheckGraphs(graphs []MetricGraph, namespace string, tplGetter templates.TplGetter) error {
+func CheckGraphs(graphs []prometheus.MetricGraph, namespace string, tplGetter templates.TplGetter) error {
 	// 逐个校验graph
 	for i, v := range graphs {
 		if v.Name == "" {
@@ -105,7 +105,7 @@ func CheckGraphs(graphs []MetricGraph, namespace string, tplGetter templates.Tpl
 			if err := v.PromqlGenerator.SetTpl(tplGetter); err != nil {
 				return err
 			}
-			if v.Tpl.Namespaced == false {
+			if !v.Tpl.Namespaced {
 				return fmt.Errorf("图表: %s 错误！不能查询集群范围资源", v.Name)
 			}
 			graphs[i].Unit = v.PromqlGenerator.Unit

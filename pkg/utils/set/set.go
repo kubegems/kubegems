@@ -61,10 +61,11 @@ func (s *Set[T]) Slice() (r []T) {
 	return
 }
 
-func (s *Set[T]) Remove(elems ...T) {
+func (s *Set[T]) Remove(elems ...T) *Set[T] {
 	for _, elem := range elems {
 		delete(s.maps, elem)
 	}
+	return s
 }
 
 func (s *Set[T]) Len() int {

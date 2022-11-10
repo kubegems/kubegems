@@ -25,6 +25,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
@@ -129,7 +130,7 @@ func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 			if err != nil {
 				return err
 			}
-			return cli.Extend().CreateOrUpdateSilenceIfNotExist(c.Request.Context(), req)
+			return observe.NewClient(cli, h.GetDB()).CreateOrUpdateSilenceIfNotExist(c.Request.Context(), req)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -172,7 +173,7 @@ func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		return cli.Extend().DeleteSilenceIfExist(ctx, req)
+		return observe.NewClient(cli, h.GetDB()).DeleteSilenceIfExist(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

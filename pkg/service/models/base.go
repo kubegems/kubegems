@@ -28,7 +28,6 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-logr/logr"
 	"github.com/go-sql-driver/mysql"
-	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"kubegems.io/kubegems/pkg/log"
@@ -70,17 +69,11 @@ func createDatabaseIfNotExists(ctx context.Context, opts *database.Options) (exi
 	return false, nil
 }
 
-func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, initData bool) error {
-	log := logr.FromContextOrDiscard(ctx)
+func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, migrate, initData bool) error {
 	// init database schema
-	exists, err := createDatabaseIfNotExists(ctx, opts)
+	_, err := createDatabaseIfNotExists(ctx, opts)
 	if err != nil {
 		return err
-	}
-
-	if exists {
-		log.Info("database already exists,skip migration stage")
-		return nil
 	}
 
 	db, err := database.NewDatabase(opts)
@@ -88,8 +81,10 @@ func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, ini
 		return err
 	}
 
-	if err := migrateModels(db.DB()); err != nil {
-		return err
+	if migrate {
+		if err := migrateModels(db.DB()); err != nil {
+			return err
+		}
 	}
 
 	if initData {
@@ -142,6 +137,9 @@ func initBaseData(db *gorm.DB) error {
 		if err := db.FirstOrCreate(&dashboardTpls[i]).Error; err != nil {
 			return err
 		}
+	}
+	if err := db.FirstOrCreate(DefaultChannel).Error; err != nil {
+		return err
 	}
 	return nil
 }
@@ -202,6 +200,8 @@ func migrateModels(db *gorm.DB) error {
 		&AlertInfo{},
 		// 告警消息表
 		&AlertMessage{},
+		// alert channels
+		&AlertChannel{},
 		// 监控面板表
 		&MonitorDashboard{}, &MonitorDashboardTpl{},
 		// 登陆源
@@ -218,7 +218,7 @@ func IsNotFound(err error) bool {
 }
 
 func GetErrMessage(err error) string {
-	me := &driver.MySQLError{}
+	me := &mysql.MySQLError{}
 	if !errors.As(err, &me) {
 		return err.Error()
 	}
@@ -273,7 +273,7 @@ func getDashboardTpls() ([]*MonitorDashboardTpl, error) {
 	ret := []*MonitorDashboardTpl{}
 	if err := filepath.Walk("config/dashboards", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return fmt.Errorf("prevent panic by handling failure accessing a path %q: %v", path, err)
 		}
 		if info.IsDir() || !strings.HasSuffix(info.Name(), ".yaml") {
 			return nil

@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package prometheus
+package observe
 
 import (
 	"testing"
+
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 func TestLogqlGenerator_ToLogql(t *testing.T) {
@@ -39,7 +41,7 @@ func TestLogqlGenerator_ToLogql(t *testing.T) {
 					"container": "mycontainer",
 				},
 			},
-			want: `sum(count_over_time({container=~"mycontainer", pod=~"mypod", namespace="myns"} |~ "error" [1m]))without(fluentd_thread)`,
+			want: "sum(count_over_time({container=~\"mycontainer\", pod=~\"mypod\", namespace=\"myns\"} |~ `error` [1m]))without(fluentd_thread)",
 		},
 	}
 	for _, tt := range tests {
@@ -81,7 +83,7 @@ func TestSplitQueryExpr(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotQuery, gotOp, gotValue, gotHasOp := SplitQueryExpr(tt.args.logql)
+			gotQuery, gotOp, gotValue, gotHasOp := prometheus.SplitQueryExpr(tt.args.logql)
 			if gotQuery != tt.wantQuery {
 				t.Errorf("SplitQueryExpr() gotQuery = %v, want %v", gotQuery, tt.wantQuery)
 			}

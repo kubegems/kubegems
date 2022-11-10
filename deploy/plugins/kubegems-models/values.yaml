@@ -987,6 +987,10 @@ mongodb:
   image:
     repository: kubegems/mongodb
   auth: {}
+  livenessProbe:
+    enabled: false
+  readinessProbe:
+    enabled: false
 
 ## @section RBAC Parameters
 

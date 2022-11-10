@@ -15,12 +15,34 @@
 package prometheus
 
 import (
-	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
+	"database/sql/driver"
+	"encoding/json"
 )
 
-const (
-	// 全局告警命名空间，非此命名空间强制加上namespace筛选
-	GlobalAlertNamespace = gemlabels.NamespaceMonitor
-	// namespace
-	PromqlNamespaceKey = "namespace"
-)
+func (g *MonitorGraphs) Scan(src interface{}) error {
+	switch v := src.(type) {
+	case []byte:
+		return json.Unmarshal(v, g)
+	}
+	return nil
+}
+
+// 注意这里不是指针，下同
+func (g MonitorGraphs) Value() (driver.Value, error) {
+	return json.Marshal(g)
+}
+
+func (g MonitorGraphs) GormDataType() string {
+	return "json"
+}
+
+type MonitorGraphs []MetricGraph
+
+type MetricGraph struct {
+	// graph名
+	Name string `json:"name"`
+	// 查询目标
+	*PromqlGenerator `json:"promqlGenerator"`
+	Expr             string `json:"expr"`
+	Unit             string `json:"unit"`
+}

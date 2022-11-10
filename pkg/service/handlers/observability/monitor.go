@@ -33,6 +33,7 @@ import (
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -279,19 +280,20 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 // @Description 监控告警规则列表
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                      true "cluster"
-// @Param       namespace path     string                                                      true "namespace"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]prometheus.MonitorAlertRule} "resp"
+// @Param       cluster   path     string                                                   true "cluster"
+// @Param       namespace path     string                                                   true "namespace"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]observe.MonitorAlertRule} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 
-	ret := []prometheus.MonitorAlertRule{}
+	ret := []observe.MonitorAlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		var err error
-		ret, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
+		observecli := observe.NewClient(cli, h.GetDB())
+		ret, err = observecli.ListMonitorAlertRules(ctx, namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -306,10 +308,10 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 // @Description 监控告警规则详情
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                    true "cluster"
-// @Param       namespace path     string                                                    true "namespace"
-// @Param       name      path     string                                                    true "name"
-// @Success     200       {object} handlers.ResponseStruct{Data=prometheus.MonitorAlertRule} "resp"
+// @Param       cluster   path     string                                                 true "cluster"
+// @Param       namespace path     string                                                 true "namespace"
+// @Param       name      path     string                                                 true "name"
+// @Success     200       {object} handlers.ResponseStruct{Data=observe.MonitorAlertRule} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [get]
 // @Security    JWT
 func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
@@ -317,10 +319,11 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	var alerts []prometheus.MonitorAlertRule
+	var alerts []observe.MonitorAlertRule
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		observecli := observe.NewClient(cli, h.GetDB())
 		var err error
-		alerts, err = cli.Extend().ListMonitorAlertRules(ctx, namespace, true, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
+		alerts, err = observecli.ListMonitorAlertRules(ctx, namespace, true, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -339,18 +342,19 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 	handlers.OK(c, alerts[index])
 }
 
-func (h *ObservabilityHandler) withAlertruleReq(c *gin.Context, f func(req prometheus.MonitorAlertRule) error) error {
-	req := prometheus.MonitorAlertRule{}
+func (h *ObservabilityHandler) withMonitorAlertReq(c *gin.Context, f func(req observe.MonitorAlertRule) error) error {
+	req := observe.MonitorAlertRule{}
 	if err := c.BindJSON(&req); err != nil {
 		return err
 	}
 	req.Namespace = c.Param("namespace")
-
-	if err := prometheus.MutateMonitorAlert(&req, h.GetDataBase().FindPromqlTpl); err != nil {
-		return err
+	for _, v := range req.BaseAlertRule.Receivers {
+		if err := h.GetDB().First(v.AlertChannel).Error; err != nil {
+			return err
+		}
 	}
 
-	if err := req.BaseAlertRule.CheckAndModify(); err != nil {
+	if err := observe.MutateMonitorAlert(&req, h.GetDataBase().FindPromqlTpl); err != nil {
 		return err
 	}
 	return f(req)
@@ -364,7 +368,7 @@ func (h *ObservabilityHandler) withAlertruleReq(c *gin.Context, f func(req prome
 // @Produce     json
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
-// @Param       form      body     prometheus.MonitorAlertRule          true "body"
+// @Param       form      body     observe.MonitorAlertRule             true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [post]
 // @Security    JWT
@@ -374,15 +378,16 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 
 	h.m.Lock()
 	defer h.m.Unlock()
-	if err := h.withAlertruleReq(c, func(req prometheus.MonitorAlertRule) error {
+	if err := h.withMonitorAlertReq(c, func(req observe.MonitorAlertRule) error {
 		h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 		action := i18n.Sprintf(context.TODO(), "create")
 		module := i18n.Sprintf(context.TODO(), "monitoring alert rule")
 		h.SetAuditData(c, action, module, req.Name)
 
 		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+			observecli := observe.NewClient(cli, h.GetDB())
 			// get、update、commit
-			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
+			raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
 				return err
 			}
@@ -398,11 +403,13 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 				return err
 			}
 
-			if err := raw.ModifyAlertRule(req, prometheus.Add); err != nil {
+			if err := raw.ModifyAlertRule(req, observe.Add); err != nil {
 				return err
 			}
-
-			return cli.Extend().CommitRawMonitorAlertResource(ctx, raw)
+			if err := observecli.CreateOrUpdateAlertEmailSecret(ctx, namespace, req.Receivers); err != nil {
+				return err
+			}
+			return observecli.CommitRawMonitorAlertResource(ctx, raw)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -425,7 +432,6 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 				}
 			}
 		}
-
 	}
 	return nil
 }
@@ -439,7 +445,7 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
 // @Param       name      path     string                               true "name"
-// @Param       form      body     prometheus.MonitorAlertRule          true "body"
+// @Param       form      body     observe.MonitorAlertRule             true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [put]
 // @Security    JWT
@@ -448,24 +454,27 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	h.m.Lock()
 	defer h.m.Unlock()
-	if err := h.withAlertruleReq(c, func(req prometheus.MonitorAlertRule) error {
+	if err := h.withMonitorAlertReq(c, func(req observe.MonitorAlertRule) error {
 		h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 		action := i18n.Sprintf(context.TODO(), "update")
 		module := i18n.Sprintf(context.TODO(), "monitoring alert rule")
 		h.SetAuditData(c, action, module, req.Name)
 
 		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+			observecli := observe.NewClient(cli, h.GetDB())
 			// get、update、commit
-			raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
+			raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 			if err != nil {
 				return err
 			}
 
-			if err := raw.ModifyAlertRule(req, prometheus.Update); err != nil {
+			if err := raw.ModifyAlertRule(req, observe.Update); err != nil {
 				return err
 			}
-
-			return cli.Extend().CommitRawMonitorAlertResource(ctx, raw)
+			if err := observecli.CreateOrUpdateAlertEmailSecret(ctx, namespace, req.Receivers); err != nil {
+				return err
+			}
+			return observecli.CommitRawMonitorAlertResource(ctx, raw)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -493,8 +502,8 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	source := c.Query("source")
-	req := prometheus.MonitorAlertRule{
-		BaseAlertRule: prometheus.BaseAlertRule{
+	req := observe.MonitorAlertRule{
+		BaseAlertRule: observe.BaseAlertRule{
 			Namespace: namespace,
 			Name:      name,
 		},
@@ -507,20 +516,19 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 	h.m.Lock()
 	defer h.m.Unlock()
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		observecli := observe.NewClient(cli, h.GetDB())
 		// get、update、commit
-		raw, err := cli.Extend().GetRawMonitorAlertResource(ctx, namespace, source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
+		raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
 		if err != nil {
 			return err
 		}
 
-		if err := raw.ModifyAlertRule(req, prometheus.Delete); err != nil {
+		if err := raw.ModifyAlertRule(req, observe.Delete); err != nil {
 			return err
 		}
-
-		if err := cli.Extend().CommitRawMonitorAlertResource(ctx, raw); err != nil {
+		if err := observecli.CommitRawMonitorAlertResource(ctx, raw); err != nil {
 			return err
 		}
-
 		// 清理silence规则
 		return deleteSilenceIfExist(ctx, namespace, name, cli)
 	}); err != nil {

@@ -5410,7 +5410,7 @@
                                         "Data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/prometheus.LoggingAlertRule"
+                                                "$ref": "#/definitions/observe.LoggingAlertRule"
                                             }
                                         }
                                     }
@@ -5458,7 +5458,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/prometheus.LoggingAlertRule"
+                            "$ref": "#/definitions/observe.LoggingAlertRule"
                         }
                     }
                 ],
@@ -5537,7 +5537,7 @@
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/prometheus.LoggingAlertRule"
+                                            "$ref": "#/definitions/observe.LoggingAlertRule"
                                         }
                                     }
                                 }
@@ -5584,7 +5584,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/prometheus.LoggingAlertRule"
+                            "$ref": "#/definitions/observe.LoggingAlertRule"
                         }
                     }
                 ],
@@ -6028,7 +6028,7 @@
                                         "Data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/prometheus.MonitorAlertRule"
+                                                "$ref": "#/definitions/observe.MonitorAlertRule"
                                             }
                                         }
                                     }
@@ -6076,7 +6076,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/prometheus.MonitorAlertRule"
+                            "$ref": "#/definitions/observe.MonitorAlertRule"
                         }
                     }
                 ],
@@ -6155,7 +6155,7 @@
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/prometheus.MonitorAlertRule"
+                                            "$ref": "#/definitions/observe.MonitorAlertRule"
                                         }
                                     }
                                 }
@@ -6209,7 +6209,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/prometheus.MonitorAlertRule"
+                            "$ref": "#/definitions/observe.MonitorAlertRule"
                         }
                     }
                 ],
@@ -6739,340 +6739,6 @@
                                     "properties": {
                                         "Data": {
                                             "type": "object"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "（日志/监控）告警接收器列表",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Observability"
-                ],
-                "summary": "（日志/监控）告警接收器列表",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "search",
-                        "name": "search",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/prometheus.ReceiverConfig"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "创建（日志/监控）告警接收器",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Observability"
-                ],
-                "summary": "创建（日志/监控）告警接收器",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "body",
-                        "name": "form",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/prometheus.ReceiverConfig"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/_/actions/test": {
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "发送测试邮件",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Observability"
-                ],
-                "summary": "发送测试邮件",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "body",
-                        "name": "form",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/prometheus.EmailConfig"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/receivers/{name}": {
-            "put": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "更新（日志/监控）告警接收器",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Observability"
-                ],
-                "summary": "更新（日志/监控）告警接收器",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "body",
-                        "name": "form",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/prometheus.ReceiverConfig"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "删除（日志/监控）告警接收器",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Observability"
-                ],
-                "summary": "删除（日志/监控）告警接收器",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "cluster",
-                        "name": "cluster",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "source",
-                        "name": "source",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "resp",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "string"
                                         }
                                     }
                                 }
@@ -7977,6 +7643,370 @@
                                     "properties": {
                                         "Data": {
                                             "$ref": "#/definitions/observability.AlertCountStatus"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/tenant/{tenant_id}/channels": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "告警渠道列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "告警渠道列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户id, 所有租户为_all",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "search in (name)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/models.AlertChannel"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "创建告警渠道",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "创建告警渠道",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户id, 所有租户为_all",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "form",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AlertChannel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/tenant/{tenant_id}/channels/{channel_id}": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "渠道列表详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "渠道列表详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户id, 所有租户为_all",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "告警渠道id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/models.AlertChannel"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "更新告警渠道",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "更新告警渠道",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户id, 所有租户为_all",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "告警渠道id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "form",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AlertChannel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "删除告警渠道",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "删除告警渠道",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户id, 所有租户为_all",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "告警渠道id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "form",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AlertChannel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/tenant/{tenant_id}/channels/{channel_id}/test": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "测试告警渠道",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "测试告警渠道",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户id, 所有租户为_all",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "告警渠道id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
                                         }
                                     }
                                 }
@@ -25604,6 +25634,12 @@
                 }
             }
         },
+        "channels.ChannelConfig": {
+            "type": "object",
+            "properties": {
+                "ChannelIf": {}
+            }
+        },
         "chart.Maintainer": {
             "type": "object",
             "properties": {
@@ -27214,6 +27250,30 @@
                 }
             }
         },
+        "models.AlertChannel": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "channelConfig": {
+                    "$ref": "#/definitions/channels.ChannelConfig"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/models.Tenant"
+                },
+                "tenantID": {
+                    "description": "若为null，则表示系统预置",
+                    "type": "integer"
+                }
+            }
+        },
         "models.AlertInfo": {
             "type": "object",
             "properties": {
@@ -28064,40 +28124,6 @@
                 }
             }
         },
-        "models.MetricGraph": {
-            "type": "object",
-            "properties": {
-                "expr": {
-                    "type": "string"
-                },
-                "labelpairs": {
-                    "description": "标签键值对",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "graph名",
-                    "type": "string"
-                },
-                "resource": {
-                    "description": "告警资源, eg. node、pod",
-                    "type": "string"
-                },
-                "rule": {
-                    "description": "告警规则名, eg. cpuUsage、memoryUsagePercent",
-                    "type": "string"
-                },
-                "scope": {
-                    "description": "scope",
-                    "type": "string"
-                },
-                "unit": {
-                    "type": "string"
-                }
-            }
-        },
         "models.MonitorDashboard": {
             "type": "object",
             "required": [
@@ -28125,7 +28151,7 @@
                     "description": "图表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.MetricGraph"
+                        "$ref": "#/definitions/prometheus.MetricGraph"
                     }
                 },
                 "id": {
@@ -28171,7 +28197,7 @@
                     "description": "图表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.MetricGraph"
+                        "$ref": "#/definitions/prometheus.MetricGraph"
                     }
                 },
                 "name": {
@@ -29233,34 +29259,7 @@
                 }
             }
         },
-        "pagination.PageData": {
-            "type": "object",
-            "properties": {
-                "currentPage": {
-                    "type": "integer"
-                },
-                "currentSize": {
-                    "type": "integer"
-                },
-                "list": {},
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pkix.AttributeTypeAndValue": {
-            "type": "object",
-            "properties": {
-                "type": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "value": {}
-            }
-        },
-        "prometheus.AlertLevel": {
+        "observe.AlertLevel": {
             "type": "object",
             "properties": {
                 "compareOp": {
@@ -29276,46 +29275,26 @@
                 }
             }
         },
-        "prometheus.AlertReceiver": {
+        "observe.AlertReceiver": {
             "type": "object",
             "properties": {
+                "alertChannel": {
+                    "$ref": "#/definitions/models.AlertChannel"
+                },
                 "interval": {
                     "description": "分组间隔",
                     "type": "string"
-                },
-                "name": {
-                    "type": "string"
                 }
             }
         },
-        "prometheus.EmailConfig": {
-            "type": "object",
-            "properties": {
-                "authPassword": {
-                    "type": "string"
-                },
-                "from": {
-                    "type": "string"
-                },
-                "requireTLS": {
-                    "type": "boolean"
-                },
-                "smtpServer": {
-                    "type": "string"
-                },
-                "to": {
-                    "type": "string"
-                }
-            }
-        },
-        "prometheus.LoggingAlertRule": {
+        "observe.LoggingAlertRule": {
             "type": "object",
             "properties": {
                 "alertLevels": {
                     "description": "告警级别",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/prometheus.AlertLevel"
+                        "$ref": "#/definitions/observe.AlertLevel"
                     }
                 },
                 "expr": {
@@ -29338,7 +29317,7 @@
                     "type": "boolean"
                 },
                 "logqlGenerator": {
-                    "$ref": "#/definitions/prometheus.LogqlGenerator"
+                    "$ref": "#/definitions/observe.LogqlGenerator"
                 },
                 "message": {
                     "description": "告警消息，若为空后端自动填充",
@@ -29365,7 +29344,7 @@
                     "description": "接收器",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/prometheus.AlertReceiver"
+                        "$ref": "#/definitions/observe.AlertReceiver"
                     }
                 },
                 "state": {
@@ -29374,7 +29353,7 @@
                 }
             }
         },
-        "prometheus.LogqlGenerator": {
+        "observe.LogqlGenerator": {
             "type": "object",
             "properties": {
                 "duration": {
@@ -29394,14 +29373,14 @@
                 }
             }
         },
-        "prometheus.MonitorAlertRule": {
+        "observe.MonitorAlertRule": {
             "type": "object",
             "properties": {
                 "alertLevels": {
                     "description": "告警级别",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/prometheus.AlertLevel"
+                        "$ref": "#/definitions/observe.AlertLevel"
                     }
                 },
                 "expr": {
@@ -29451,7 +29430,7 @@
                     "description": "接收器",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/prometheus.AlertReceiver"
+                        "$ref": "#/definitions/observe.AlertReceiver"
                     }
                 },
                 "source": {
@@ -29465,6 +29444,67 @@
                 "tplLost": {
                     "description": "监控模板是否丢失",
                     "type": "boolean"
+                }
+            }
+        },
+        "pagination.PageData": {
+            "type": "object",
+            "properties": {
+                "currentPage": {
+                    "type": "integer"
+                },
+                "currentSize": {
+                    "type": "integer"
+                },
+                "list": {},
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pkix.AttributeTypeAndValue": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "value": {}
+            }
+        },
+        "prometheus.MetricGraph": {
+            "type": "object",
+            "properties": {
+                "expr": {
+                    "type": "string"
+                },
+                "labelpairs": {
+                    "description": "标签键值对",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "graph名",
+                    "type": "string"
+                },
+                "resource": {
+                    "description": "告警资源, eg. node、pod",
+                    "type": "string"
+                },
+                "rule": {
+                    "description": "告警规则名, eg. cpuUsage、memoryUsagePercent",
+                    "type": "string"
+                },
+                "scope": {
+                    "description": "scope",
+                    "type": "string"
+                },
+                "unit": {
+                    "type": "string"
                 }
             }
         },
@@ -29511,41 +29551,6 @@
                 },
                 "state": {
                     "description": "Health         v1.RuleHealth  `json:\"health\"`\nLastError      string         `json:\"lastError,omitempty\"`\nEvaluationTime float64        `json:\"evaluationTime\"`\nLastEvaluation time.Time      `json:\"lastEvaluation\"`",
-                    "type": "string"
-                }
-            }
-        },
-        "prometheus.ReceiverConfig": {
-            "type": "object",
-            "properties": {
-                "alertProxyConfigs": {
-                    "type": "array",
-                    "items": {}
-                },
-                "emailConfigs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/prometheus.EmailConfig"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "webhookConfigs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/prometheus.WebhookConfig"
-                    }
-                }
-            }
-        },
-        "prometheus.WebhookConfig": {
-            "type": "object",
-            "properties": {
-                "url": {
                     "type": "string"
                 }
             }

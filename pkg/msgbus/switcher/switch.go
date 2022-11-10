@@ -59,7 +59,7 @@ func (ms *MessageSwitcher) DeRegistUser(user *NotifyUser) {
 func (ms *MessageSwitcher) DispatchMessage(msg *msgbus.NotifyMessage) {
 	switch msg.MessageType {
 	case msgbus.Alert:
-		webhookAlert := WebhookAlert{DataBase: ms.DataBase}
+		webhookAlert := prometheus.WebhookAlert{}
 		b, ok := msg.Content.(string)
 		if !ok {
 			log.Errorf("content type is not string: %s", msg.Content)
@@ -71,7 +71,7 @@ func (ms *MessageSwitcher) DispatchMessage(msg *msgbus.NotifyMessage) {
 		}
 
 		// 存告警消息表
-		fingerprintMap := webhookAlert.fingerprintMap()
+		fingerprintMap := webhookAlert.FingerprintMap()
 		dbalertMsgs := ms.saveFingerprintMapToDB(fingerprintMap)
 
 		// 发消息并存用户消息表
@@ -82,14 +82,14 @@ func (ms *MessageSwitcher) DispatchMessage(msg *msgbus.NotifyMessage) {
 			webhookAlert.CommonLabels[prometheus.AlertScopeLabel],
 			webhookAlert.CommonLabels[prometheus.AlertFromLabel],
 		)
-		toUsers := webhookAlert.GetAlertUsers(pos)
+		toUsers := GetAlertUsers(&webhookAlert, pos, ms.DataBase)
 		now := time.Now()
 		dbUserMsgs := []models.UserMessageStatus{}
 		// save之后有了ID，才能做关联
 		for i := range dbalertMsgs {
 			// 发送消息
 			for _, u := range ms.Users {
-				if _, ok := toUsers[u.UserID]; ok {
+				if toUsers.Has(u.UserID) {
 					ms.Send(u, &msgbus.NotifyMessage{
 						MessageType: msgbus.Alert,
 						Content: msgbus.MessageContent{
@@ -102,9 +102,9 @@ func (ms *MessageSwitcher) DispatchMessage(msg *msgbus.NotifyMessage) {
 			}
 
 			// 存用户消息表
-			usermsgs := make([]models.UserMessageStatus, len(toUsers))
+			usermsgs := make([]models.UserMessageStatus, toUsers.Len())
 			index := 0
-			for id := range toUsers {
+			for _, id := range toUsers.Slice() {
 				usermsgs[index].UserID = id
 				usermsgs[index].AlertMessageID = &dbalertMsgs[i].ID
 				usermsgs[index].IsRead = false

@@ -19,11 +19,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	mv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
@@ -36,8 +40,11 @@ import (
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/service/observe"
+	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -59,9 +66,12 @@ type IngInfo struct {
 var (
 	cctx           = ""
 	nginxAnnos     = make(map[string]NginxAnno)
+	channelMap     = map[string]*models.AlertChannel{}
 	nginxAnnosPath = "scripts/release-1.22-update/nginx-anno.yaml"
 	tgsPath        = "scripts/release-1.22-update/tg.yaml"
 	logAmcfgPath   = "scripts/release-1.22-update/log-amcfg.yaml"
+	channelPath    = "scripts/release-1.22-update/channels.yaml"
+	db             *database.Database
 )
 
 func main() {
@@ -91,16 +101,29 @@ func main() {
 	c.GetCache().WaitForCacheSync(ctx)
 
 	cli := c.GetClient()
+	db, err = database.NewDatabase(&database.Options{
+		Addr:      "10.12.32.41:3306",
+		Username:  "root",
+		Password:  "X69KdO15T8", // dev
+		Database:  "kubegems",
+		Collation: "utf8mb4_unicode_ci",
+	})
+	if err != nil {
+		panic(err)
+	}
 
-	bts, _ := os.ReadFile(nginxAnnosPath)
-	if err := yaml.Unmarshal(bts, &nginxAnnos); err != nil {
+	bts, _ := os.ReadFile(channelPath)
+	if err := yaml.Unmarshal(bts, &channelMap); err != nil {
 		panic(err)
 	}
 	// getAnno(cli)
 	// updateAnno(cli)
 	// updatePromrule(cli)
 	// updateGateway(cli)
-	mergeLogMonitorReceiver(cli)
+	// mergeLogMonitorReceiver(cli)
+	// getChannels(cli)
+	// saveChannels(cli)
+	updateReceivers(cli)
 }
 
 // alert manager config's default receiver
@@ -291,11 +314,244 @@ func getOrCreateAlertmanagerConfig(cli client.Client, ctx context.Context, names
 	err := cli.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, aconfig)
 	if kerrors.IsNotFound(err) {
 		// 初始化
-		aconfig = prometheus.GetBaseAlertmanagerConfig(namespace, name)
+		aconfig = observe.GetBaseAlertmanagerConfig(namespace, name)
 		if err := cli.Create(ctx, aconfig); err != nil {
 			return nil, err
 		}
 		return aconfig, nil
 	}
 	return aconfig, err
+}
+
+func getChannels(cli client.Client) {
+	ctx := context.TODO()
+	amconfigs := v1alpha1.AlertmanagerConfigList{}
+	if err := cli.List(ctx, &amconfigs, client.InNamespace(v1.NamespaceAll), client.HasLabels([]string{
+		gems.LabelAlertmanagerConfigName,
+	})); err != nil {
+		panic(err)
+	}
+
+	for _, v := range amconfigs.Items {
+		ns := v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: v.Namespace,
+			},
+		}
+		cli.Get(ctx, client.ObjectKeyFromObject(&ns), &ns)
+		tenant := models.Tenant{}
+		if err := db.DB().First(&tenant, "tenant_name = ?", ns.Labels[gems.LabelTenant]).Error; err != nil {
+			if err != gorm.ErrRecordNotFound {
+				panic(err)
+			}
+		}
+		for _, rec := range v.Spec.Receivers {
+			var tenantID *uint
+			if rec.Name == "gemcloud-default-webhook" {
+				continue
+			}
+			if tenant.ID == 0 {
+				tenantID = nil
+			} else {
+				tenantID = &tenant.ID
+			}
+			for _, wc := range rec.WebhookConfigs {
+				if _, ok := channelMap[webhookString(wc, tenantID)]; !ok {
+					if strings.Contains(*wc.URL, "alertproxy") {
+						u, _ := url.Parse(*wc.URL)
+						channelMap[webhookString(wc, tenantID)] = &models.AlertChannel{
+							Name: rec.Name,
+							ChannelConfig: channels.ChannelConfig{
+								ChannelIf: &channels.Feishu{
+									ChannelType: channels.TypeFeishu,
+									URL:         u.Query().Get("url"),
+									At:          u.Query().Get("at"),
+									SignSecret:  u.Query().Get("signSecret"),
+								},
+							},
+							TenantID: tenantID,
+						}
+					} else {
+						channelMap[webhookString(wc, tenantID)] = &models.AlertChannel{
+							Name: rec.Name,
+							ChannelConfig: channels.ChannelConfig{
+								ChannelIf: &channels.Webhook{
+									ChannelType: channels.TypeWebhook,
+									URL:         *wc.URL,
+								},
+							},
+							TenantID: tenantID,
+						}
+					}
+				}
+			}
+			for i, ec := range rec.EmailConfigs {
+				if _, ok := channelMap[emailString(ec, tenantID)]; !ok {
+					sec := v1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: v.Namespace,
+							Name:      channels.EmailSecretName,
+						},
+					}
+					cli.Get(ctx, client.ObjectKeyFromObject(&sec), &sec)
+					channelMap[emailString(ec, tenantID)] = &models.AlertChannel{
+						Name: rec.Name,
+						ChannelConfig: channels.ChannelConfig{
+							ChannelIf: &channels.Email{
+								ChannelType:  channels.TypeEmail,
+								SMTPServer:   ec.Smarthost,
+								RequireTLS:   *rec.EmailConfigs[i].RequireTLS,
+								From:         ec.From,
+								To:           ec.To,
+								AuthPassword: string(sec.Data[channels.EmailSecretKey(rec.Name, ec.From)]),
+							},
+						},
+						TenantID: tenantID,
+					}
+				}
+			}
+		}
+	}
+
+	id := 2
+	for _, v := range channelMap {
+		if v.Name == "gemcloud-default-webhook" {
+			continue
+		}
+		v.ID = uint(id)
+		id++
+	}
+	bts, _ := yaml.Marshal(channelMap)
+	os.WriteFile(channelPath, bts, os.ModeAppend)
+}
+
+func saveChannels(cli client.Client) {
+	for _, v := range channelMap {
+		if v.Name == "gemcloud-default-webhook" || v.Name == models.DefaultChannel.Name {
+			continue
+		}
+		if err := db.DB().Debug().Create(v).Error; err != nil {
+			panic(err)
+		}
+	}
+}
+
+func updateReceivers(cli client.Client) {
+	ctx := context.TODO()
+	amconfigs := v1alpha1.AlertmanagerConfigList{}
+	if err := cli.List(ctx, &amconfigs, client.InNamespace(v1.NamespaceAll), client.HasLabels([]string{
+		gems.LabelAlertmanagerConfigName,
+	})); err != nil {
+		panic(err)
+	}
+
+	for _, v := range amconfigs.Items {
+		ns := v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: v.Namespace,
+			},
+		}
+		cli.Get(ctx, client.ObjectKeyFromObject(&ns), &ns)
+		tenant := models.Tenant{}
+		if err := db.DB().First(&tenant, "tenant_name = ?", ns.Labels[gems.LabelTenant]).Error; err != nil {
+			if err != gorm.ErrRecordNotFound {
+				panic(err)
+			}
+		}
+		oldRecNameMap := map[string]string{}
+		secData := map[string][]byte{}
+
+		// receivers
+		for recID, rec := range v.Spec.Receivers {
+			var tenantID *uint
+			if len(rec.EmailConfigs) == 0 {
+				continue
+			}
+			if rec.Name == "gemcloud-default-webhook" {
+				v.Spec.Receivers[recID] = models.DefaultReceiver
+				continue
+			}
+			if tenant.ID == 0 {
+				tenantID = nil
+			} else {
+				tenantID = &tenant.ID
+			}
+			for _, wc := range rec.WebhookConfigs {
+				ch, ok := channelMap[webhookString(wc, tenantID)]
+				if !ok {
+					log.Fatalf("cluster: %s, ns: %s, rec: %s channel not found", cctx, v.Namespace, rec.Name)
+				}
+				v.Spec.Receivers[recID] = ch.ChannelConfig.ToReceiver(ch.ReceiverName())
+				oldRecNameMap[rec.Name] = ch.ReceiverName()
+				log.Printf("ns: %s, amcfg: %s, old rec: %s, new rec: %s", v.Namespace, v.Name, rec.Name, ch.ReceiverName())
+			}
+			for _, ec := range rec.EmailConfigs {
+				ch, ok := channelMap[emailString(ec, tenantID)]
+				if !ok {
+					log.Fatalf("cluster: %s, ns: %s, rec: %s channel not found", cctx, v.Namespace, rec.Name)
+				}
+				v.Spec.Receivers[recID] = ch.ChannelConfig.ToReceiver(ch.ReceiverName())
+				oldRecNameMap[rec.Name] = ch.ReceiverName()
+				secData[channels.EmailSecretKey(ch.ReceiverName(), ec.From)] = []byte(ch.ChannelConfig.ChannelIf.(*channels.Email).AuthPassword)
+				log.Printf("ns: %s, amcfg: %s, old rec: %s, new rec: %s", v.Namespace, v.Name, rec.Name, ch.ReceiverName())
+			}
+		}
+
+		// routes
+		routes, err := v.Spec.Route.ChildRoutes()
+		if err != nil {
+			panic(err)
+		}
+		newRoutes := []extv1.JSON{}
+		for _, route := range routes {
+			if route.Receiver == "gemcloud-default-webhook" {
+				route.Receiver = models.DefaultReceiver.Name
+			} else {
+				newRecName, ok := oldRecNameMap[route.Receiver]
+				if !ok {
+					log.Fatalf("cluster: %s, ns: %s, route rec: %s not found", cctx, v.Namespace, route.Receiver)
+				}
+				route.Receiver = newRecName
+			}
+			bts, _ := json.Marshal(route)
+			newRoutes = append(newRoutes, extv1.JSON{Raw: bts})
+		}
+		v.Spec.Route.Routes = newRoutes
+		if err := cli.Update(ctx, v); err != nil {
+			panic(err)
+		}
+
+		// secret
+		sec := v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: v.Namespace,
+				Name:      channels.EmailSecretName,
+			},
+		}
+		if err := cli.Get(ctx, client.ObjectKeyFromObject(&sec), &sec); err != nil {
+			log.Println(err)
+			continue
+		}
+		sec.Data = secData
+		if err := cli.Update(ctx, &sec); err != nil {
+			panic(err)
+		}
+	}
+	bts, _ := yaml.Marshal(amconfigs)
+	os.WriteFile("a.yaml", bts, os.ModeAppend)
+}
+
+func webhookString(w v1alpha1.WebhookConfig, id *uint) string {
+	if id == nil {
+		return fmt.Sprintf("%s-null", *w.URL)
+	}
+	return fmt.Sprintf("%s-%d", *w.URL, *id)
+}
+
+func emailString(e v1alpha1.EmailConfig, id *uint) string {
+	ret, _ := json.Marshal(e)
+	if id == nil {
+		return fmt.Sprintf("%s-null", string(ret))
+	}
+	return fmt.Sprintf("%s-%d", string(ret), *id)
 }
