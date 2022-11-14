@@ -74,6 +74,8 @@ require (
 	go.mongodb.org/mongo-driver v1.9.1
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
+	golang.org/x/exp v0.0.0-20220921164117-439092de6870
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 	golang.org/x/net v0.0.0-20220812174116-3211cb980234
 	golang.org/x/oauth2 v0.0.0-20220808172628-8227340efae7
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
@@ -93,11 +95,11 @@ require (
 	k8s.io/api v0.24.3
 	k8s.io/apiextensions-apiserver v0.23.6
 	k8s.io/apimachinery v0.24.3
+	k8s.io/cli-runtime v0.23.6
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kubectl v0.23.5
 	k8s.io/metrics v0.23.6
 	k8s.io/utils v0.0.0-20220812165043-ad590609e2e5
-	kubegems.io/bundle-controller v1.0.0-alpha3.0.20220927065436-63421ac26d9d
 	kubegems.io/configer v1.0.6
 	kubegems.io/ingress-nginx-operator v0.2.1
 	sigs.k8s.io/apiserver-network-proxy v0.0.33
@@ -329,7 +331,6 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/goleak v1.2.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
-	golang.org/x/exp v0.0.0-20220921164117-439092de6870 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
@@ -346,7 +347,6 @@ require (
 	istio.io/gogo-genproto v0.0.0-20220413184606-e76735307e2d // indirect
 	istio.io/pkg v0.0.0-20220413180906-765b7512325f // indirect
 	k8s.io/apiserver v0.23.6 // indirect
-	k8s.io/cli-runtime v0.23.6 // indirect
 	k8s.io/component-base v0.24.3 // indirect
 	k8s.io/component-helpers v0.23.6 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
@@ -356,7 +356,6 @@ require (
 	knative.dev/pkg v0.0.0-20220502225657-4fced0164c9a // indirect
 	oras.land/oras-go v1.1.1 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
