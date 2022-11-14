@@ -18,12 +18,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/go-logr/logr"
 	"golang.org/x/exp/slices"
 	"golang.org/x/mod/semver"
-	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
@@ -255,23 +253,12 @@ func (m *PluginManager) ListInstalled(ctx context.Context, checkHealthy bool) (m
 		return nil, err
 	}
 	ret := map[string]PluginVersion{}
-	mapsmu := sync.Mutex{}
 	for _, plugin := range pluginList.Items {
-		ret[plugin.Name] = PluginVersionFrom(plugin)
-	}
-	if checkHealthy {
-		eg := errgroup.Group{}
-		for name, val := range ret {
-			name, val := name, val
-			eg.Go(func() error {
-				CheckHealthy(ctx, m.Client, &val)
-				mapsmu.Lock()
-				ret[name] = val
-				mapsmu.Unlock()
-				return nil
-			})
+		pv := PluginVersionFrom(plugin)
+		if checkHealthy {
+			CheckHealthy(ctx, m.Client, &pv)
 		}
-		eg.Wait()
+		ret[plugin.Name] = pv
 	}
 	return ret, nil
 }
