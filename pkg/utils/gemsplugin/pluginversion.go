@@ -74,7 +74,7 @@ func (pv PluginVersion) ToPlugin() *pluginsv1beta1.Plugin {
 	}
 }
 
-func PluginVersionFrom(plugin *pluginsv1beta1.Plugin) PluginVersion {
+func PluginVersionFrom(plugin pluginsv1beta1.Plugin) PluginVersion {
 	annotations := plugin.Annotations
 	if annotations == nil {
 		annotations = map[string]string{}

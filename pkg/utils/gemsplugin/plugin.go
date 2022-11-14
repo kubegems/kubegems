@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/go-logr/logr"
 	"golang.org/x/exp/slices"
@@ -244,7 +245,7 @@ func (m *PluginManager) GetInstalled(ctx context.Context, name string) (*PluginV
 	); err != nil {
 		return nil, err
 	}
-	pv := PluginVersionFrom(plugin)
+	pv := PluginVersionFrom(*plugin)
 	return &pv, nil
 }
 
@@ -254,17 +255,19 @@ func (m *PluginManager) ListInstalled(ctx context.Context, checkHealthy bool) (m
 		return nil, err
 	}
 	ret := map[string]PluginVersion{}
+	mapsmu := sync.Mutex{}
 	for _, plugin := range pluginList.Items {
-		ret[plugin.Name] = PluginVersionFrom(&plugin)
+		ret[plugin.Name] = PluginVersionFrom(plugin)
 	}
 	if checkHealthy {
 		eg := errgroup.Group{}
-		for name := range ret {
-			name := name
+		for name, val := range ret {
+			name, val := name, val
 			eg.Go(func() error {
-				pv := ret[name]
-				CheckHealthy(ctx, m.Client, &pv)
-				ret[name] = pv
+				CheckHealthy(ctx, m.Client, &val)
+				mapsmu.Lock()
+				ret[name] = val
+				mapsmu.Unlock()
 				return nil
 			})
 		}
