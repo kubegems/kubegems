@@ -59,6 +59,7 @@ generate: add-license gen-i18n ## Generate  WebhookConfiguration, ClusterRole, C
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/plugins/kubegems-local/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
+	$(CONTROLLER_GEN) paths="./pkg/apis/edge/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-edge/crds
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"
 	sed -i 's/kubegemsVersion:.*/kubegemsVersion: $(GIT_VERSION)/g' deploy/kubegems.yaml
 	# go run scripts/generate-system-alert/main.go
