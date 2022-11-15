@@ -25,6 +25,12 @@ linters:
     - maligned # is deprecated (since v1.38.0)
     - interfacer # is deprecated (since v1.38.0)
     - nolintlint
+    - deadcode # is deprecated (since v1.49.0)
+    - structcheck # is deprecated (since v1.49.0)
+    - varcheck # is deprecated (since v1.49.0)
+    - nosnakecase # is deprecated (since v1.48.1)
+    - exhaustivestruct # is deprecated (since v1.46.0) 
+    - ifshort # is deprecated (since v1.48.0)
   presets:
     - bugs
     - comment
