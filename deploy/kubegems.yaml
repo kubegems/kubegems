@@ -5,6 +5,7 @@ metadata:
   namespace: kubegems-installer
   annotations:
     plugins.kubegems.io/category: core/KubeGems
+    plugins.kubegems.io/description: KubeGems global values.
 spec:
   kind: template
   url: https://charts.kubegems.io/kubegems
@@ -25,6 +26,7 @@ metadata:
   namespace: kubegems-installer
   annotations:
     plugins.kubegems.io/category: core/KubeGems
+    plugins.kubegems.io/description: KubeGems core service and dashboard.
 spec:
   kind: helm
   url: https://charts.kubegems.io/kubegems
