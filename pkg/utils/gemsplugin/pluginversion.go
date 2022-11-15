@@ -97,8 +97,10 @@ func PluginVersionFrom(plugin pluginsv1beta1.Plugin) PluginVersion {
 		pv.Healthy = true
 	}
 	pv.Values = plugin.Spec.Values
-
-	fillCategory(&pv, annotations[pluginscommon.AnnotationCategory])
+	if pv.Description == "" {
+		pv.Description = annotations[pluginscommon.AnnotationPluginDescription]
+	}
+	fillCategory(&pv, annotations)
 	return pv
 }
 
@@ -165,10 +167,11 @@ func fillFromAnnotations(pv *PluginVersion, annotations map[string]string) {
 		renderkind = pluginsv1beta1.BundleKind(kind)
 	}
 	pv.Kind = renderkind
-	fillCategory(pv, annotations[pluginscommon.AnnotationCategory])
+	fillCategory(pv, annotations)
 }
 
-func fillCategory(pv *PluginVersion, full string) {
+func fillCategory(pv *PluginVersion, annotations map[string]string) {
+	full := annotations[pluginscommon.AnnotationCategory]
 	if full == "" {
 		return
 	}
@@ -176,6 +179,9 @@ func fillCategory(pv *PluginVersion, full string) {
 	categories := strings.Split(full, "/")
 	if len(categories) == 1 {
 		cate = categories[0]
+		if oldmaincate := annotations["plugins.kubegems.io/main-category"]; oldmaincate != "" {
+			maincate = oldmaincate
+		}
 	} else if len(categories) > 1 {
 		maincate, cate = categories[0], categories[1]
 	}
