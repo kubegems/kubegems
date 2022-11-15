@@ -91,6 +91,11 @@ generate-i18n:
 generate-license:
 	./scripts/add_license.sh
 
+SERVER_IP ?= 127.0.0.1
+.PHONY: certs
+certs:
+	SERVER_IP=${SERVER_IP} sh scripts/generate-certs.sh
+
 swagger:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.4
 	swag f -g cmd/main.go
