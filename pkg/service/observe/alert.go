@@ -49,7 +49,7 @@ type AlertReceiver struct {
 	AlertChannel *models.AlertChannel `json:"alertChannel"`
 	Interval     string               `json:"interval"` // 分组间隔
 
-	RawReceiver   v1alpha1.Receiver `json:"rawReceiver"`
+	RawReceiver   v1alpha1.Receiver `json:"-"`
 	ChannelStatus `json:"channelStatus"`
 }
 
