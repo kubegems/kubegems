@@ -37,12 +37,12 @@ type AlertLevel struct {
 	Severity     string `json:"severity"`     // error, critical
 }
 
-type ChannelStatus string
+type ChannelStatus int
 
 const (
-	StatusNormal  ChannelStatus = "normal"
-	StatusChanged ChannelStatus = "changed"
-	StatusLost    ChannelStatus = "lost"
+	StatusNormal  ChannelStatus = iota // 告警渠道正常
+	StatusChanged                      // 告警渠道被修改过，现在数据不一致
+	StatusLost                         // 告警渠道丢失(被删除)
 )
 
 type AlertReceiver struct {
@@ -96,8 +96,19 @@ type BaseAlertRule struct {
 	AlertLevels   []AlertLevel    `json:"alertLevels"`   // 告警级别
 	Receivers     []AlertReceiver `json:"receivers"`     // 接收器
 
-	IsOpen bool   `json:"isOpen"` // 是否启用
-	State  string `json:"state"`  // 状态
+	IsOpen        bool   `json:"isOpen"` // 是否启用
+	State         string `json:"state"`  // 状态
+	ChannelStatus `json:"channelStatus"`
+}
+
+func (b *BaseAlertRule) SetChannelStatus() {
+	status := 0
+	for _, v := range b.Receivers {
+		if int(v.ChannelStatus) > status {
+			status = int(v.ChannelStatus)
+		}
+	}
+	b.ChannelStatus = ChannelStatus(status)
 }
 
 // IsExtraAlert 用于记录额外信息
