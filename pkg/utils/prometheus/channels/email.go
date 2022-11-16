@@ -93,3 +93,7 @@ func (e *Email) Test(alert prometheus.WebhookAlert) error {
 	}
 	return smtp.SendMail(e.SMTPServer, auth, e.From, receivers, buf)
 }
+
+func (e *Email) String() string {
+	return e.SMTPServer + e.From + e.To
+}

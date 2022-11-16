@@ -464,7 +464,7 @@ func updateReceivers(cli client.Client) {
 		// receivers
 		for recID, rec := range v.Spec.Receivers {
 			var tenantID *uint
-			if len(rec.EmailConfigs) == 0 {
+			if len(rec.EmailConfigs) == 0 && len(rec.WebhookConfigs) == 0 {
 				continue
 			}
 			if rec.Name == "gemcloud-default-webhook" {

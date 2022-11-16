@@ -23,6 +23,7 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
@@ -36,9 +37,51 @@ type AlertLevel struct {
 	Severity     string `json:"severity"`     // error, critical
 }
 
+type ChannelStatus string
+
+const (
+	StatusNormal  ChannelStatus = "normal"
+	StatusChanged ChannelStatus = "changed"
+	StatusLost    ChannelStatus = "lost"
+)
+
 type AlertReceiver struct {
 	AlertChannel *models.AlertChannel `json:"alertChannel"`
 	Interval     string               `json:"interval"` // 分组间隔
+
+	RawReceiver   v1alpha1.Receiver `json:"rawReceiver"`
+	ChannelStatus `json:"channelStatus"`
+}
+
+func (r *AlertReceiver) SetChannelAndStatus(getter channels.ChannelGetter) {
+	if r.AlertChannel == nil {
+		r.ChannelStatus = StatusLost
+		return
+	}
+	channelIf, err := getter(r.AlertChannel.ID)
+	if err != nil {
+		log.Warnf("get channelIf failed: %v", err)
+		r.ChannelStatus = StatusLost
+		return
+	}
+	r.AlertChannel.ChannelConfig.ChannelIf = channelIf
+
+	if len(r.RawReceiver.EmailConfigs) > 0 {
+		e := r.RawReceiver.EmailConfigs[0]
+		if e.Smarthost+e.From+e.To == channelIf.String() {
+			r.ChannelStatus = StatusNormal
+		} else {
+			r.ChannelStatus = StatusChanged
+		}
+	}
+	if len(r.RawReceiver.WebhookConfigs) > 0 {
+		w := r.RawReceiver.WebhookConfigs[0]
+		if *w.URL == channelIf.String() {
+			r.ChannelStatus = StatusNormal
+		} else {
+			r.ChannelStatus = StatusChanged
+		}
+	}
 }
 
 type BaseAlertRule struct {
@@ -198,6 +241,10 @@ func (base *BaseAlertResource) GetAlertReceiverMap() (map[string][]AlertReceiver
 	if err != nil {
 		return nil, err
 	}
+	rawRecMap := map[string]v1alpha1.Receiver{}
+	for _, v := range base.AMConfig.Spec.Receivers {
+		rawRecMap[v.Name] = v
+	}
 	// 以 alert name 为 key
 	ret := map[string][]AlertReceiver{}
 	for _, route := range routes {
@@ -210,7 +257,9 @@ func (base *BaseAlertResource) GetAlertReceiverMap() (map[string][]AlertReceiver
 						ID:   id,
 						Name: name,
 					},
+					RawReceiver: rawRecMap[route.Receiver],
 				}
+				rec.SetChannelAndStatus(base.ChannelGetter)
 				ret[m.Value] = append(ret[m.Value], rec)
 			}
 		}

@@ -84,3 +84,7 @@ func (w *Webhook) Test(alert prometheus.WebhookAlert) error {
 	log.Info("test webhook success", "url", w.URL, "resp", string(bts))
 	return nil
 }
+
+func (w *Webhook) String() string {
+	return w.URL
+}
