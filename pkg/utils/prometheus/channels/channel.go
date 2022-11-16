@@ -43,6 +43,7 @@ type ChannelIf interface {
 	ToReceiver(name string) v1alpha1.Receiver
 	Check() error
 	Test(alert prometheus.WebhookAlert) error
+	String() string
 }
 
 type ChannelConfig struct {

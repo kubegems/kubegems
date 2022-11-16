@@ -82,3 +82,7 @@ func (f *Feishu) Test(alert prometheus.WebhookAlert) error {
 	log.Info("test webhook success", "url", f.formatURL(), "resp", string(bts))
 	return nil
 }
+
+func (f *Feishu) String() string {
+	return f.formatURL()
+}
