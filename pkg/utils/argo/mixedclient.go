@@ -289,7 +289,7 @@ func appfunc[T any](cli *Client, ctx context.Context, appfunc func(cli applicati
 			return appfunc(appcli)
 		}
 	}
-	return ret, nil
+	return ret, err
 }
 
 func (c *Client) getAppcli() (application.ApplicationServiceClient, error) {
