@@ -155,6 +155,7 @@ func (c *ObserveClient) ListMonitorAlertRules(ctx context.Context, namespace str
 
 	// realtime alert rules 按照namespace+name 分组
 	for i := range ret {
+		ret[i].SetChannelStatus()
 		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
 		if promRule, ok := realTimeAlertRules[key]; ok {
 			ret[i].State = promRule.State
@@ -274,6 +275,7 @@ func (c *ObserveClient) ListLoggingAlertRules(ctx context.Context, namespace str
 	}
 
 	for i := range ret {
+		ret[i].SetChannelStatus()
 		key := prometheus.RealTimeAlertKey(ret[i].Namespace, ret[i].Name)
 		if promRule, ok := realTimeAlertRules[key]; ok {
 			ret[i].State = promRule.State
