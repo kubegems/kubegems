@@ -54,11 +54,11 @@ spec:
               {{- else }}
               server-urls: http://elasticsearch-master.observability:9200
               {{- end }}
-              {{- if .Values.elasticsearch.num-shards }}
-              num-shards: {{ .Values.elasticsearch.num-shards }}
+              {{- if index .Values "elasticsearch" "num-shards" }}
+              num-shards: {{ index .Values "elasticsearch" "num-shards" }}
               {{- end }}
-              {{- if .Values.elasticsearch.num-replicas }}
-              num-replicas: {{ .Values.elasticsearch.num-replicas }}
+              {{- if index .Values "elasticsearch" "num-replicas" }}
+              num-replicas: {{ index .Values "elasticsearch" "num-replicas" }}
               {{- end }}
               {{- if .Values.elasticsearch.timeout }}
               timeout: {{ .Values.elasticsearch.timeout }}
