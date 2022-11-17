@@ -18,8 +18,8 @@ spec:
           latency_histogram_buckets: [1ms, 10ms, 100ms, 500ms, 1s, 10s]
           dimensions_cache_size: 2000
           dimensions:
-            - name: k8s.namespace.name
-            - name: k8s.pod.name
+            - name: namespace
+            - name: pod
             - name: http.status_code
       exporters:
         jaeger:
