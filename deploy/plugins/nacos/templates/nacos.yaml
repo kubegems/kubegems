@@ -11,7 +11,7 @@ spec:
   values:
     namespace: {{ .Release.Namespace }}
     global:
-      {{ - if .Values.global.mode }}
+      {{- if .Values.global.mode }}
       mode: {{ .Values.global.mode }}
       {{- else }}
       mode: cluster
@@ -19,7 +19,7 @@ spec:
     service:
       type: ClusterIP
     nacos:
-      {{- if .Values.nacos.replicaCount}}
+      {{- if .Values.nacos.replicaCount }}
       replicaCount: {{ .Values.nacos.replicaCount }}
       {{- else }}
       replicaCount: 3
