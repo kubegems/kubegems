@@ -1,3 +1,10 @@
+## 1.22.1 / 2022-11-17
+### Enhancements 🎈
+* 🎈 perf(alert): receiver channel set status by @jojotong in https://github.com/kubegems/kubegems/pull/314
+* perf(otel): span metrics do not use recording rule by @jojotong in https://github.com/kubegems/kubegems/pull/315
+### Others
+* Set the standard label for spanmetrics by @LinkMaq in https://github.com/kubegems/kubegems/pull/316
+
 ## 1.22.0 / 2022-11-09
 
 - Since KubeGems 1.22.0, we had supported the Model Store. User of KubeGems can be download  tens of thousands AI models from HuggingFace and OpenMMLab. And they could be successfully run in Kubernetes easily. 
