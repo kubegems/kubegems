@@ -64,3 +64,7 @@ func (m *AliyunMsg) Check() error {
 func (m *AliyunMsg) Test(alert prometheus.WebhookAlert) error {
 	return testAlertproxy(m.formatURL(), alert)
 }
+
+func (m *AliyunMsg) String() string {
+	return m.formatURL()
+}

@@ -62,3 +62,7 @@ func (v *AliyunVoice) Check() error {
 func (v *AliyunVoice) Test(alert prometheus.WebhookAlert) error {
 	return testAlertproxy(v.formatURL(), alert)
 }
+
+func (v *AliyunVoice) String() string {
+	return v.formatURL()
+}
