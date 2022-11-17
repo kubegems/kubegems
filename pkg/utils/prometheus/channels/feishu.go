@@ -61,3 +61,7 @@ func (f *Feishu) Check() error {
 func (f *Feishu) Test(alert prometheus.WebhookAlert) error {
 	return testAlertproxy(f.formatURL(), alert)
 }
+
+func (f *Feishu) String() string {
+	return f.formatURL()
+}

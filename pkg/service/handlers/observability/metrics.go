@@ -196,16 +196,16 @@ func (h *ObservabilityHandler) OtelMetricsGraphs(c *gin.Context) {
 	ret := gin.H{}
 	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
 		queries := map[string]string{
-			"latencyP95": fmt.Sprintf(`histogram_quantile(0.95, sum(rate(gems_otel_latency_bucket{namespace="%s", service="%s"}[5m])) by (le,namespace,service))`, ns, svc),
-			"latencyP75": fmt.Sprintf(`histogram_quantile(0.75, sum(rate(gems_otel_latency_bucket{namespace="%s", service="%s"}[5m])) by (le,namespace,service))`, ns, svc),
-			"latencyP50": fmt.Sprintf(`histogram_quantile(0.50, sum(rate(gems_otel_latency_bucket{namespace="%s", service="%s"}[5m])) by (le,namespace,service))`, ns, svc),
-			"errorRate": fmt.Sprintf(`sum(irate(gems_otel_calls_total{namespace="%[1]s", service="%[2]s", status_code="STATUS_CODE_ERROR"}[5m]))by(namespace, service) /
-			sum(irate(gems_otel_calls_total{namespace="%[1]s", service="%[2]s"}[5m]))by(namespace, service)`, ns, svc),
-			"requestRate":          fmt.Sprintf(`sum(irate(gems_otel_calls_total{namespace="%s", service="%s"}[5m]))by(namespace, service)`, ns, svc),
-			"operationlatencyP95":  fmt.Sprintf(`histogram_quantile(0.95, sum(rate(gems_otel_latency_bucket{namespace="%s", service="%s"}[5m])) by (le,namespace,service,operation))`, ns, svc),
-			"operationRequestRate": fmt.Sprintf(`sum(irate(gems_otel_calls_total{namespace="%s", service="%s"}[5m]))by(namespace, service, operation)`, ns, svc),
-			"operationErrorRate": fmt.Sprintf(`sum(irate(gems_otel_calls_total{namespace="%[1]s", service="%[2]s", status_code="STATUS_CODE_ERROR"}[5m]))by(namespace, service, operation) /
-			sum(irate(gems_otel_calls_total{namespace="%[1]s", service="%[2]s"}[5m]))by(namespace, service, operation)`, ns, svc),
+			"latencyP95": fmt.Sprintf(`histogram_quantile(0.95, sum(rate(latency_bucket{namespace="%s", service_name="%s"}[5m])) by (le,namespace,service_name))`, ns, svc),
+			"latencyP75": fmt.Sprintf(`histogram_quantile(0.75, sum(rate(latency_bucket{namespace="%s", service_name="%s"}[5m])) by (le,namespace,service_name))`, ns, svc),
+			"latencyP50": fmt.Sprintf(`histogram_quantile(0.50, sum(rate(latency_bucket{namespace="%s", service_name="%s"}[5m])) by (le,namespace,service_name))`, ns, svc),
+			"errorRate": fmt.Sprintf(`sum(irate(calls_total{namespace="%[1]s", service_name="%[2]s", status_code="STATUS_CODE_ERROR"}[5m]))by(namespace, service_name) /
+			sum(irate(calls_total{namespace="%[1]s", service_name="%[2]s"}[5m]))by(namespace, service_name)`, ns, svc),
+			"requestRate":          fmt.Sprintf(`sum(irate(calls_total{namespace="%s", service_name="%s"}[5m]))by(namespace, service_name)`, ns, svc),
+			"operationlatencyP95":  fmt.Sprintf(`histogram_quantile(0.95, sum(rate(latency_bucket{namespace="%s", service_name="%s"}[5m])) by (le,namespace,service_name,operation))`, ns, svc),
+			"operationRequestRate": fmt.Sprintf(`sum(irate(calls_total{namespace="%s", service_name="%s"}[5m]))by(namespace, service_name, operation)`, ns, svc),
+			"operationErrorRate": fmt.Sprintf(`sum(irate(calls_total{namespace="%[1]s", service_name="%[2]s", status_code="STATUS_CODE_ERROR"}[5m]))by(namespace, service_name, operation) /
+			sum(irate(calls_total{namespace="%[1]s", service_name="%[2]s"}[5m]))by(namespace, service_name, operation)`, ns, svc),
 		}
 		wg := sync.WaitGroup{}
 		lock := sync.Mutex{}

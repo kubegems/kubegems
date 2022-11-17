@@ -23,6 +23,7 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	alertmanagertypes "github.com/prometheus/alertmanager/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
@@ -36,9 +37,51 @@ type AlertLevel struct {
 	Severity     string `json:"severity"`     // error, critical
 }
 
+type ChannelStatus int
+
+const (
+	StatusNormal  ChannelStatus = iota // 告警渠道正常
+	StatusChanged                      // 告警渠道被修改过，现在数据不一致
+	StatusLost                         // 告警渠道丢失(被删除)
+)
+
 type AlertReceiver struct {
 	AlertChannel *models.AlertChannel `json:"alertChannel"`
 	Interval     string               `json:"interval"` // 分组间隔
+
+	RawReceiver   v1alpha1.Receiver `json:"-"`
+	ChannelStatus `json:"channelStatus"`
+}
+
+func (r *AlertReceiver) SetChannelAndStatus(getter channels.ChannelGetter) {
+	if r.AlertChannel == nil {
+		r.ChannelStatus = StatusLost
+		return
+	}
+	channelIf, err := getter(r.AlertChannel.ID)
+	if err != nil {
+		log.Warnf("get channelIf failed: %v", err)
+		r.ChannelStatus = StatusLost
+		return
+	}
+	r.AlertChannel.ChannelConfig.ChannelIf = channelIf
+
+	if len(r.RawReceiver.EmailConfigs) > 0 {
+		e := r.RawReceiver.EmailConfigs[0]
+		if e.Smarthost+e.From+e.To == channelIf.String() {
+			r.ChannelStatus = StatusNormal
+		} else {
+			r.ChannelStatus = StatusChanged
+		}
+	}
+	if len(r.RawReceiver.WebhookConfigs) > 0 {
+		w := r.RawReceiver.WebhookConfigs[0]
+		if *w.URL == channelIf.String() {
+			r.ChannelStatus = StatusNormal
+		} else {
+			r.ChannelStatus = StatusChanged
+		}
+	}
 }
 
 type BaseAlertRule struct {
@@ -53,8 +96,19 @@ type BaseAlertRule struct {
 	AlertLevels   []AlertLevel    `json:"alertLevels"`   // 告警级别
 	Receivers     []AlertReceiver `json:"receivers"`     // 接收器
 
-	IsOpen bool   `json:"isOpen"` // 是否启用
-	State  string `json:"state"`  // 状态
+	IsOpen        bool   `json:"isOpen"` // 是否启用
+	State         string `json:"state"`  // 状态
+	ChannelStatus `json:"channelStatus"`
+}
+
+func (b *BaseAlertRule) SetChannelStatus() {
+	status := 0
+	for _, v := range b.Receivers {
+		if int(v.ChannelStatus) > status {
+			status = int(v.ChannelStatus)
+		}
+	}
+	b.ChannelStatus = ChannelStatus(status)
 }
 
 // IsExtraAlert 用于记录额外信息
@@ -198,6 +252,10 @@ func (base *BaseAlertResource) GetAlertReceiverMap() (map[string][]AlertReceiver
 	if err != nil {
 		return nil, err
 	}
+	rawRecMap := map[string]v1alpha1.Receiver{}
+	for _, v := range base.AMConfig.Spec.Receivers {
+		rawRecMap[v.Name] = v
+	}
 	// 以 alert name 为 key
 	ret := map[string][]AlertReceiver{}
 	for _, route := range routes {
@@ -210,7 +268,9 @@ func (base *BaseAlertResource) GetAlertReceiverMap() (map[string][]AlertReceiver
 						ID:   id,
 						Name: name,
 					},
+					RawReceiver: rawRecMap[route.Receiver],
 				}
+				rec.SetChannelAndStatus(base.ChannelGetter)
 				ret[m.Value] = append(ret[m.Value], rec)
 			}
 		}
@@ -245,16 +305,19 @@ func (base *BaseAlertResource) GetInhibitRuleMap() map[string]v1alpha1.InhibitRu
 	return ret
 }
 
-func (base *BaseAlertResource) Update(alertrules AlertRuleList[AlertRule]) error {
+func (base *BaseAlertResource) Update(alertrules AlertRuleList[AlertRule], act Action) error {
 	// update AlertmanagerConfig routes
 	base.UpdateRoutes(alertrules)
 	// update AlertmanagerConfig inhibit rules
 	base.UpdateInhibitRules(alertrules)
 	// update AlertmanagerConfig receivers
-	return base.UpdateReceivers(alertrules)
+	return base.UpdateReceivers(alertrules, act)
 }
 
-func (base *BaseAlertResource) UpdateReceivers(alertrules AlertRuleList[AlertRule]) error {
+func (base *BaseAlertResource) UpdateReceivers(alertrules AlertRuleList[AlertRule], act Action) error {
+	if act == Delete {
+		return nil
+	}
 	base.AMConfig.Spec.Receivers = []v1alpha1.Receiver{
 		prometheus.NullReceiver,
 		models.DefaultReceiver,

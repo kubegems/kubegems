@@ -122,7 +122,7 @@ Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的
 您可以前往 [Kubegems Release](https://github.com/kubegems/kubegems/tags) 查询到最新的版本号.
 
 ```sh
-export KUBEGEMS_VERSION=v1.22.0  #  安装 kubegems 的版本
+export KUBEGEMS_VERSION=v1.22.1  #  安装 kubegems 的版本
 ```
 
 当你的 Kubernetes 集群状态 Ready 后，执行下述命令安装 KuebGems Installer Operator。
