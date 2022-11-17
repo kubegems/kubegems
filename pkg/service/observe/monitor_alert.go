@@ -181,7 +181,7 @@ func (raw *RawMonitorAlertResource) ModifyAlertRule(newAlertRule MonitorAlertRul
 
 	// update PrometheusRule
 	raw.PrometheusRule.Spec.Groups = groups
-	return raw.Base.Update(alertRules.ToAlertRuleList())
+	return raw.Base.Update(alertRules.ToAlertRuleList(), act)
 }
 
 func alertNamespace(ns string) string {

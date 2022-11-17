@@ -186,7 +186,7 @@ func (raw *RawLoggingAlertRule) ModifyLoggingAlertRule(r LoggingAlertRule, act A
 		groups = append(groups, group)
 	}
 	raw.RuleGroups.Groups = groups
-	return raw.Base.Update(alertRules.ToAlertRuleList())
+	return raw.Base.Update(alertRules.ToAlertRuleList(), act)
 }
 
 func loggingAlertRuleToRaw(r LoggingAlertRule) (rulefmt.RuleGroup, error) {

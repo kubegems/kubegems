@@ -305,16 +305,19 @@ func (base *BaseAlertResource) GetInhibitRuleMap() map[string]v1alpha1.InhibitRu
 	return ret
 }
 
-func (base *BaseAlertResource) Update(alertrules AlertRuleList[AlertRule]) error {
+func (base *BaseAlertResource) Update(alertrules AlertRuleList[AlertRule], act Action) error {
 	// update AlertmanagerConfig routes
 	base.UpdateRoutes(alertrules)
 	// update AlertmanagerConfig inhibit rules
 	base.UpdateInhibitRules(alertrules)
 	// update AlertmanagerConfig receivers
-	return base.UpdateReceivers(alertrules)
+	return base.UpdateReceivers(alertrules, act)
 }
 
-func (base *BaseAlertResource) UpdateReceivers(alertrules AlertRuleList[AlertRule]) error {
+func (base *BaseAlertResource) UpdateReceivers(alertrules AlertRuleList[AlertRule], act Action) error {
+	if act == Delete {
+		return nil
+	}
 	base.AMConfig.Spec.Receivers = []v1alpha1.Receiver{
 		prometheus.NullReceiver,
 		models.DefaultReceiver,
