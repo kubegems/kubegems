@@ -2,8 +2,13 @@
 ### Enhancements 🎈
 * 🎈 perf(alert): receiver channel set status by @jojotong in https://github.com/kubegems/kubegems/pull/314
 * perf(otel): span metrics do not use recording rule by @jojotong in https://github.com/kubegems/kubegems/pull/315
+### Bugfixes 🐞
+* 🐞 fix(receiver): do not re-gen receiver when delete by @jojotong in https://github.com/kubegems/kubegems/pull/319
 ### Others
 * Set the standard label for spanmetrics by @LinkMaq in https://github.com/kubegems/kubegems/pull/316
+* fix nacos template error '-' by @LinkMaq in https://github.com/kubegems/kubegems/pull/317
+* Adding missing variables by @LinkMaq in https://github.com/kubegems/kubegems/pull/318
+* fix jaeger helm index error by @LinkMaq in https://github.com/kubegems/kubegems/pull/320
 
 ## 1.22.0 / 2022-11-09
 
