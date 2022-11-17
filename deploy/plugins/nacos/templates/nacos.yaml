@@ -11,11 +11,19 @@ spec:
   values:
     namespace: {{ .Release.Namespace }}
     global:
+      {{ - if .Values.global.mode }}
+      mode: {{ .Values.global.mode }}
+      {{- else }}
       mode: cluster
+      {{- end }}
     service:
       type: ClusterIP
     nacos:
-      replicaCount: 1
+      {{- if .Values.nacos.replicaCount}}
+      replicaCount: {{ .Values.nacos.replicaCount }}
+      {{- else }}
+      replicaCount: 3
+      {{- end }}
       image:
         # repository: nacos/nacos-server
         {{ include "common.images.repository" ( dict "registry" "docker.io" "repository" "nacos/nacos-server" "context" .) }}
