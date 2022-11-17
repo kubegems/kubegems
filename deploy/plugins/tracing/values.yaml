@@ -4,6 +4,10 @@ global:
 chartVersion: 2.34.0
 elasticsearch:
   address: "" # override the default address
+  num-shards: ""
+  num-replicas: ""
+  timeout: ""
+
 monitoring:
   prometheus:
     address: ""
