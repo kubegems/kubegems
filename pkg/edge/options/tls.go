@@ -21,16 +21,18 @@ import (
 )
 
 type TLS struct {
-	CertFile string `json:"certFile,omitempty"`
-	KeyFile  string `json:"keyFile,omitempty"`
-	CAFile   string `json:"caFile,omitempty"`
+	CertFile   string `json:"certFile,omitempty"`
+	KeyFile    string `json:"keyFile,omitempty"`
+	CAFile     string `json:"caFile,omitempty"`
+	ClientAuth bool   `json:"clientAuth,omitempty"`
 }
 
 func NewDefaultTLS() *TLS {
 	return &TLS{
-		CAFile:   "certs/ca.crt",
-		CertFile: "certs/tls.crt",
-		KeyFile:  "certs/tls.key",
+		CAFile:     "certs/ca.crt",
+		CertFile:   "certs/tls.crt",
+		KeyFile:    "certs/tls.key",
+		ClientAuth: false,
 	}
 }
 
@@ -53,6 +55,9 @@ func (o TLS) ToTLSConfig() (*tls.Config, error) {
 		cas.AppendCertsFromPEM(capem)
 		config.ClientCAs = cas
 		config.RootCAs = cas
+	}
+	if o.ClientAuth {
+		config.ClientAuth = tls.RequireAndVerifyClientCert
 	}
 	return config, nil
 }

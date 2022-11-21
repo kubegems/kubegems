@@ -15,9 +15,11 @@
 package response
 
 import (
+	"net/http"
 	"sort"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/kubegems/pkg/utils/httputil/request"
 )
 
 type SortAndSearchAble interface {
@@ -43,9 +45,14 @@ type Page struct {
 
 type TypedPage[T any] struct {
 	Total       int64
-	List        []T
+	List        []T // TODO: add lowercase fields tag here
 	CurrentPage int64
 	CurrentSize int64
+}
+
+func PageFromRequest[T any](req *http.Request, list []T) TypedPage[T] {
+	page, size := request.Query(req, "page", 1), request.Query(req, "size", defaultPageSize)
+	return NewTypedPage(list, page, size, nil, nil)
 }
 
 func NewTypedPage[T any](list []T, page, size int, pickfun func(item T) bool, sortfun func(a, b T) bool) TypedPage[T] {

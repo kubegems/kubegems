@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"kubegems.io/kubegems/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func GetKubeClient(kubeconfig []byte) (*rest.Config, *kubernetes.Clientset, error) {
@@ -60,4 +61,12 @@ func AutoClientConfig() (*rest.Config, error) {
 	} else {
 		return config, nil
 	}
+}
+
+func NewLocalClient() (client.WithWatch, error) {
+	cfg, err := AutoClientConfig()
+	if err != nil {
+		return nil, err
+	}
+	return client.NewWithWatch(cfg, client.Options{})
 }

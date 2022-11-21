@@ -44,21 +44,35 @@ func NewRestfulAPI(prefix string, filters []restful.FilterFunction, modules []Re
 	}
 
 	(&route.Tree{RouteUpdateFunc: listWrrapperFunc, Group: rg}).AddToWebService(ws)
-	ws.Filter(restful.CrossOriginResourceSharing{
+	cros := restful.CrossOriginResourceSharing{
 		AllowedHeaders: []string{".*"},
 		AllowedMethods: []string{"*"},
-	}.Filter)
-	ws.Filter(LogFilter)
-	ws.Filter(restful.OPTIONSFilter())
+	}
+	ws.Filter(cros.Filter)
 
 	healthz := new(restful.WebService)
 	healthz.Path("healthz").Route(
 		healthz.GET("").To(func(req *restful.Request, resp *restful.Response) {}).Doc("health check").Produces("text/plain").Writes("OK"),
 	)
+	restful.DefaultContainer.Filter(LogFilter)
+	restful.DefaultContainer.Filter(restful.OPTIONSFilter())
+	restful.DefaultContainer.ServiceErrorHandler(errhandlerfunc)
 	return restful.DefaultContainer.
 		Add(ws).
 		Add(healthz).
 		Add(route.BuildOpenAPIWebService([]*restful.WebService{ws}, path.Join(prefix, "docs.json"), completeInfo))
+}
+
+func errhandlerfunc(err restful.ServiceError, req *restful.Request, resp *restful.Response) {
+	if req.Request.Method == http.MethodOptions {
+		return
+	}
+	for header, values := range err.Header {
+		for _, value := range values {
+			resp.Header().Add(header, value)
+		}
+	}
+	resp.WriteErrorString(err.Code, err.Message)
 }
 
 func LogFilter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {

@@ -16,7 +16,7 @@ limitations under the License.
 
 syntax = "proto3";
 
-option go_package = "kubegems.io/grpc-tunnel/proto";
+option go_package = "kubegems.io/kubegems/pkg/edge/tunnel/proto";
 
 service PeerService {
   rpc Connect(stream Packet) returns (stream Packet) {}

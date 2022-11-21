@@ -14,14 +14,25 @@
 
 package options
 
+import (
+	"kubegems.io/kubegems/pkg/edge/tunnel"
+	"kubegems.io/kubegems/pkg/utils/database"
+)
+
 type ServerOptions struct {
-	Listen string `json:"listen,omitempty"`
-	TLS    *TLS   `json:"tLs,omitempty"`
+	Listen     string           `json:"listen,omitempty"`
+	Host       string           `json:"host,omitempty"`
+	ListenGrpc string           `json:"listenGrpc,omitempty"`
+	ServerID   string           `json:"serverID,omitempty"`
+	TLS        *TLS             `json:"tls,omitempty"`
+	Database   database.Options `json:"database,omitempty"`
 }
 
 func NewDefaultServer() *ServerOptions {
 	return &ServerOptions{
-		Listen: ":8088",
-		TLS:    NewDefaultTLS(),
+		Listen:     ":8080",
+		ListenGrpc: ":50052",
+		TLS:        NewDefaultTLS(),
+		ServerID:   tunnel.RandomServerID("server-"),
 	}
 }

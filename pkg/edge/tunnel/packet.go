@@ -22,7 +22,8 @@ import (
 const (
 	PacketKindData    PacketKind = iota // data or as a ack
 	PacketKindConnect                   // handshake and auth
-	PacketKindOpen                      // dial network
+	PacketKindOpen                      // open connection
+	PacketKindOpened                    // connection established
 	PacketKindClose                     // close connect/stream
 	PacketKindRoute                     // route update
 )
@@ -30,34 +31,37 @@ const (
 type PacketKind int
 
 type Packet struct {
-	Kind   PacketKind
-	Src    string
-	Dest   string
-	SrcID  int64
-	DestID int64
-	Data   []byte
-	Error  string
+	Kind    PacketKind
+	Src     string
+	Dest    string
+	SrcCID  int64
+	DestCID int64
+	Data    []byte
+	Error   string
 }
 
-type PeerUpdateKind string
+type RouteUpdateKind string
 
 const (
-	PeerUpdateKindAdd     PeerUpdateKind = "add"
-	PeerUpdateKindRemove  PeerUpdateKind = "remove"
-	PeerUpdateKindRefresh PeerUpdateKind = "refresh"
+	RouteUpdateKindInvalid RouteUpdateKind = "invalid"
+	RouteUpdateKindInit                    = "init"
+	RouteUpdateKindAppend                  = "append"
+	RouteUpdateKindRemove                  = "remove"
 )
 
+type Annotations map[string]string
+
 type PacketDataRoute struct {
-	Kind     PeerUpdateKind `json:"kind,omitempty"`
-	SubPeers []string       `json:"subPeers,omitempty"`
+	Kind        RouteUpdateKind        `json:"kind,omitempty"`
+	Annotations Annotations            `json:"annotations,omitempty"`
+	Peers       map[string]Annotations `json:"peers,omitempty"`
 }
 
 type PacketDataConnect struct {
-	Token   string      `json:"token,omitempty"`
-	Options PeerOptions `json:"options,omitempty"` // peer options
+	Token string `json:"token,omitempty"`
 }
 
-type PacketDataDialOptions struct {
+type PacketDataOpen struct {
 	Network string        `json:"network,omitempty"`
 	Address string        `json:"address,omitempty"`
 	Timeout time.Duration `json:"timeout,omitempty"`

@@ -17,7 +17,6 @@ package apis
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 
@@ -101,8 +100,7 @@ func (mu handlerMux) register(group, version, resource, action string, handler g
 	}
 }
 
-// nolint: funlen
-func Run(ctx context.Context, cluster cluster.Interface, system *system.Options, options *Options, debugOptions *DebugOptions) error {
+func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.Options, options *Options, debugOptions *DebugOptions) error {
 	ginr := gin.New()
 	ginr.Use(
 		// log
@@ -115,12 +113,17 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	if options.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())
 	}
+	ginhandler, err := Routes(ctx, cluster, options, debugOptions)
+	if err != nil {
+		return err
+	}
+	ginr.Any("/*path", ginhandler)
+	return system.ListenAndServeContext(ctx, systemoptions.Listen, systemoptions.TLSConfigOrNull(), ginr)
+}
 
+// nolint: funlen
+func Routes(ctx context.Context, cluster cluster.Interface, options *Options, debugOptions *DebugOptions) (func(c *gin.Context), error) {
 	rr := route.NewRouter()
-
-	ginr.Any("/*path", func(c *gin.Context) {
-		rr.Match(c)(c)
-	})
 
 	routes := handlerMux{r: rr}
 	routes.r.GET("/healthz", func(c *gin.Context) {
@@ -185,7 +188,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 
 	prometheusHandler, err := NewPrometheusHandler(options.PrometheusServer)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	routes.register("prometheus", "v1", "vector", ActionList, prometheusHandler.Vector)
 	routes.register("prometheus", "v1", "matrix", ActionList, prometheusHandler.Matrix)
@@ -197,7 +200,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 
 	alertmanagerHandler, err := NewAlertmanagerClient(options.AlertmanagerServer, cluster.Kubernetes())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	routes.register("alertmanager", "v1", "alerts", ActionList, alertmanagerHandler.ListAlerts)
 	routes.register("alertmanager", "v1", "alerts", ActionCheck, alertmanagerHandler.CheckConfig)
@@ -256,10 +259,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	clientrest := client.ClientRest{Cli: cluster.GetClient()}
 	clientrest.Register(routes.r)
 
-	if err := listen(ctx, system, ginr); err != nil {
-		return err
-	}
-	return nil
+	return func(c *gin.Context) { routes.r.Match(c)(c) }, err
 }
 
 func (mu handlerMux) registerREST(cluster cluster.Interface) {
@@ -288,37 +288,4 @@ func (mu handlerMux) registerREST(cluster cluster.Interface) {
 
 	mu.r.PATCH("/v1/{group}/{version}/{resource}/{name}/actions/scale", resthandler.Scale)
 	mu.r.PATCH("/v1/{group}/{version}/namespaces/{namespace}/{resource}/{name}/actions/scale", resthandler.Scale)
-}
-
-func listen(ctx context.Context, options *system.Options, handler http.Handler) error {
-	server := http.Server{
-		BaseContext: func(l net.Listener) context.Context { return ctx },
-		Addr:        options.Listen,
-		Handler:     handler,
-	}
-
-	if options.IsTLSConfigEnabled() {
-		tlsc, err := options.ToTLSConfig()
-		if err != nil {
-			return err
-		}
-		server.TLSConfig = tlsc
-		// server.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert // enable TLS client auth
-	} else {
-		log.Info("tls config not found")
-	}
-
-	go func() {
-		<-ctx.Done()
-		log.Info("shutting down server")
-		server.Close()
-	}()
-
-	if server.TLSConfig != nil {
-		log.Info("listen on https", "addr", options.Listen)
-		return server.ListenAndServeTLS("", "")
-	} else {
-		log.Info("listen on http", "addr", options.Listen)
-		return server.ListenAndServe()
-	}
 }

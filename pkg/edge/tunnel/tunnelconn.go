@@ -20,22 +20,39 @@ import (
 	"net"
 	"time"
 
-	"kubegems.io/kubegems/pkg/log"
+	"golang.org/x/sync/errgroup"
 )
 
-const DataChannelSize = 512
-
 type TunnelConn struct {
-	channel            Channel
-	cm                 *ConnectionManager
+	c *Connections
+
+	channel *ConnectedTunnel
+	rawConn net.Conn
+
+	local              string
 	localConnectionID  int64
-	localPeer          string
+	remote             string
 	remoteConnectionID int64
-	remotePeer         string
-	rdata              []byte
-	rawConn            net.Conn
-	closed             bool
-	ack                chan *connectData
+
+	rdata  []byte
+	closed bool
+	ack    chan *connectData
+}
+
+func (c *TunnelConn) opened(remotecid int64) {
+	c.c.opened(c, remotecid)
+}
+
+func (c *TunnelConn) accepted(conn net.Conn) error {
+	c.c.accepted(c, conn)
+	eg := errgroup.Group{}
+	eg.Go(c.remoteToTunnel)
+	eg.Go(c.tunnelToRemote)
+	return eg.Wait()
+}
+
+func (c *TunnelConn) close() error {
+	return c.c.close(c.remoteConnectionID)
 }
 
 func (c *TunnelConn) remoteToTunnel() error {
@@ -113,31 +130,15 @@ func (c *TunnelConn) Write(b []byte) (n int, err error) {
 	if c.closed {
 		return 0, net.ErrClosed
 	}
-	req := &Packet{
-		Kind:   PacketKindData,
-		Src:    c.localPeer,
-		SrcID:  c.localConnectionID,
-		Dest:   c.remotePeer,
-		DestID: c.remoteConnectionID,
-		Data:   b,
-	}
-	if err = c.channel.Send(req); err != nil {
+	if err = c.sendData(b); err != nil {
 		return 0, err
 	}
 	return len(b), err
 }
 
+// Close tunnel connection and close raw connection,remove self from connection manager
 func (c *TunnelConn) Close() error {
-	req := &Packet{
-		Kind:   PacketKindClose,
-		Src:    c.localPeer,
-		SrcID:  c.localConnectionID,
-		Dest:   c.remotePeer,
-		DestID: c.remoteConnectionID,
-	}
-	defer c.cm.RemoveConn(c.localConnectionID)
-	log.Info("close connection", "cid", c.localConnectionID)
-	return c.channel.Send(req)
+	return c.sendClose(c.close())
 }
 
 func (c *TunnelConn) LocalAddr() net.Addr {
@@ -149,13 +150,48 @@ func (c *TunnelConn) RemoteAddr() net.Addr {
 }
 
 func (c *TunnelConn) SetDeadline(t time.Time) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (c *TunnelConn) SetReadDeadline(t time.Time) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (c *TunnelConn) SetWriteDeadline(t time.Time) error {
-	panic("not implemented") // TODO: Implement
+	return nil
+}
+
+func (c *TunnelConn) sendData(data []byte) error {
+	return c.sendPkt(func(pkt *Packet) {
+		pkt.Kind = PacketKindData
+		pkt.Data = data
+	})
+}
+
+func (c *TunnelConn) sendClose(err error) error {
+	return c.sendPkt(func(pkt *Packet) {
+		pkt.Kind = PacketKindClose
+		if err != nil {
+			pkt.Error = err.Error()
+		}
+	})
+}
+
+func (c *TunnelConn) sendOpen(data PacketDataOpen) error {
+	return c.sendPkt(func(pkt *Packet) {
+		pkt.Kind = PacketKindOpen
+		pkt.Data = PacketEncode(data)
+	})
+}
+
+func (c *TunnelConn) sendPkt(fun func(pkt *Packet)) error {
+	pkt := &Packet{
+		Kind:    PacketKindData,
+		Src:     c.local,
+		SrcCID:  c.localConnectionID,
+		Dest:    c.remote,
+		DestCID: c.remoteConnectionID,
+	}
+	fun(pkt)
+	return c.channel.Send(pkt)
 }

@@ -30,9 +30,11 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	applicationv1beta1 "kubegems.io/kubegems/pkg/apis/application/v1beta1"
+	edgev1beta1 "kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
 	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func AddToschema(schema *runtime.Scheme) {
@@ -52,6 +54,7 @@ func AddToschema(schema *runtime.Scheme) {
 	_ = networkingpkgv1alpha3.AddToScheme(schema)
 	_ = networkingpkgv1beta1.AddToScheme(schema)
 	_ = modelsv1beta1.AddToScheme(schema)
+	_ = edgev1beta1.AddToScheme(schema)
 }
 
 // nolint: gochecknoinits
@@ -63,4 +66,15 @@ func GetScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
 	AddToschema(scheme)
 	return scheme
+}
+
+func FillGVK(object client.Object, scheme *runtime.Scheme) error {
+	gvks, unversioned, err := scheme.ObjectKinds(object)
+	if err != nil {
+		return err
+	}
+	gvk := gvks[0]
+	object.GetObjectKind().SetGroupVersionKind(gvk)
+	_ = unversioned
+	return nil
 }

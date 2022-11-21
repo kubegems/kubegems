@@ -18,6 +18,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"kubegems.io/kubegems/pkg/log"
@@ -58,6 +59,12 @@ func Parse(fs *pflag.FlagSet) error {
 	// print
 	Print(fs)
 	return nil
+}
+
+var DefaultValidator = validator.New()
+
+func Validate(data any) error {
+	return DefaultValidator.Struct(data)
 }
 
 func Print(fs *pflag.FlagSet) {

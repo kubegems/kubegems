@@ -73,6 +73,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/utils/system"
 	"kubegems.io/kubegems/pkg/utils/tracing"
 	"kubegems.io/kubegems/pkg/version"
 )
@@ -112,24 +113,10 @@ func (r *Router) Run(ctx context.Context) error {
 	if err := r.Complete(ctx); err != nil {
 		return err
 	}
-
-	httpserver := &http.Server{
-		Addr:    r.Opts.System.Listen,
-		Handler: r.gin,
-		BaseContext: func(l net.Listener) context.Context {
-			return ctx // 注入basecontext
-		},
-	}
-
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		log.FromContextOrDiscard(ctx).Info("start listen", "addr", httpserver.Addr)
-		go func() {
-			<-ctx.Done()
-			httpserver.Close()
-		}()
-		return httpserver.ListenAndServe()
+		return system.ListenAndServeContext(ctx, r.Opts.System.Listen, nil, r.gin)
 	})
 	eg.Go(func() error {
 		return r.auditInstance.Consumer(ctx)

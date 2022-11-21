@@ -16,85 +16,73 @@ package agent
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"net/http/httputil"
+	"crypto/tls"
+	"errors"
+	"net"
+	"os"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
+	"golang.org/x/sync/errgroup"
+	"kubegems.io/kubegems/pkg/edge/common"
 	"kubegems.io/kubegems/pkg/edge/options"
+	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
-	appoptions "sigs.k8s.io/apiserver-network-proxy/cmd/agent/app/options"
-	"sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client"
-	"sigs.k8s.io/apiserver-network-proxy/pkg/agent"
+	"kubegems.io/kubegems/pkg/utils/pprof"
 )
 
 func Run(ctx context.Context, opts *options.AgentOptions) error {
-	return runTranport(ctx, opts)
-
-	tlsConfig, err := opts.TLS.ToTLSConfig()
+	s, err := New(opts)
 	if err != nil {
 		return err
 	}
-
-	dialOptions := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			PermitWithoutStream: true,
-		}),
-	}
-	o := appoptions.NewGrpcProxyAgentOptions()
-	cc := &agent.ClientSetConfig{
-		Address:                 opts.EdgeHubAddr,
-		AgentID:                 o.AgentID,
-		AgentIdentifiers:        o.AgentIdentifiers,
-		SyncInterval:            o.SyncInterval,
-		ProbeInterval:           o.ProbeInterval,
-		SyncIntervalCap:         o.SyncIntervalCap,
-		DialOptions:             dialOptions,
-		ServiceAccountTokenPath: o.ServiceAccountTokenPath,
-		WarnOnChannelLimit:      o.WarnOnChannelLimit,
-		SyncForever:             o.SyncForever,
-	}
-
-	cs := cc.NewAgentClientSet(ctx.Done())
-	cs.Serve()
-
-	<-ctx.Done()
-	return nil
+	return s.Run(ctx)
 }
 
-func runTranport(ctx context.Context, opts *options.AgentOptions) error {
-	tlsConfig, err := opts.TLS.ToTLSConfig()
-	if err != nil {
-		return err
-	}
+type EdgeAgent struct {
+	tunnel.GrpcTunnelServer
+	upstreamAnnotations tunnel.Annotations
+	tlsConfig           *tls.Config
+	options             *options.AgentOptions
+	api                 *AgentAPI
+}
 
-	transportCreds := credentials.NewTLS(tlsConfig)
-	dialOption := grpc.WithTransportCredentials(transportCreds)
-	serverAddress := opts.EdgeHubAddr
-	tunnel, err := client.CreateSingleUseGrpcTunnelWithContext(ctx, ctx, serverAddress, dialOption)
-	if err != nil {
-		return fmt.Errorf("failed to create tunnel %s, got %v", serverAddress, err)
+func New(options *options.AgentOptions) (*EdgeAgent, error) {
+	if options.ClientID == "" {
+		return nil, errors.New("--clientid is required")
 	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			DialContext: tunnel.DialContext,
+	tlsConfig, err := options.TLS.ToTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+	annotations := map[string]string{
+		common.AnnotationKeyEdgeAgentAddress: "http://127.0.0.1" + options.Listen,
+		common.AnnotationKeyAPIserverAddress: "https://" + net.JoinHostPort(
+			os.Getenv("KUBERNETES_SERVICE_HOST"),
+			os.Getenv("KUBERNETES_SERVICE_PORT"),
+		),
+	}
+	agent := &EdgeAgent{
+		tlsConfig:           tlsConfig,
+		upstreamAnnotations: annotations,
+		options:             options,
+		api:                 &AgentAPI{},
+		GrpcTunnelServer: tunnel.GrpcTunnelServer{
+			TunnelServer: tunnel.NewTunnelServer(options.ClientID, nil),
 		},
 	}
+	return agent, nil
+}
 
-	resp, err := client.Get("https://10.21.32.21:443")
-	if err != nil {
-		log.Error(err, "do http")
-		return err
-	}
-	dump, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		return err
-	}
-	fmt.Print(string(dump))
-
-	return nil
+func (s *EdgeAgent) Run(ctx context.Context) error {
+	ctx = log.NewContext(ctx, log.LogrLogger)
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return s.GrpcTunnelServer.ConnectUpstream(ctx, s.options.EdgeHubAddr, s.tlsConfig, "", s.upstreamAnnotations)
+	})
+	eg.Go(func() error {
+		return s.api.Run(ctx, s.options.Listen)
+	})
+	eg.Go(func() error {
+		return pprof.Run(ctx)
+	})
+	return eg.Wait()
 }

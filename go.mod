@@ -103,8 +103,6 @@ require (
 	k8s.io/utils v0.0.0-20220812165043-ad590609e2e5
 	kubegems.io/configer v1.0.6
 	kubegems.io/ingress-nginx-operator v0.2.1
-	sigs.k8s.io/apiserver-network-proxy v0.0.33
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.33
 	sigs.k8s.io/controller-runtime v0.11.2
 	sigs.k8s.io/kustomize/api v0.11.4
 	sigs.k8s.io/kustomize/kyaml v0.13.6
@@ -205,6 +203,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/btree v1.0.1 // indirect
+	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-github/v41 v41.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect

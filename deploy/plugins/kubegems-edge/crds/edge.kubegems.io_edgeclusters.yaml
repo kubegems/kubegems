@@ -15,7 +15,24 @@ spec:
     singular: edgecluster
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - description: Status
+      jsonPath: .status.phase
+      name: Status
+      type: string
+    - description: Hub address for register
+      jsonPath: .spec.register.address
+      name: RegisterAddress
+      type: string
+    - description: Token used for register
+      jsonPath: .spec.register.bootstrapToken
+      name: Token
+      type: string
+    - description: CreationTimestamp of the bundle
+      jsonPath: .status.tunnel.lastOnlineTimestamp
+      name: LastOnline
+      type: string
+    name: v1beta1
     schema:
       openAPIV3Schema:
         properties:
@@ -32,6 +49,31 @@ spec:
           metadata:
             type: object
           spec:
+            properties:
+              register:
+                properties:
+                  bootstrapToken:
+                    type: string
+                  certs:
+                    properties:
+                      ca:
+                        format: byte
+                        type: string
+                      cert:
+                        format: byte
+                        type: string
+                      key:
+                        format: byte
+                        type: string
+                    type: object
+                  expiresAt:
+                    format: date-time
+                    type: string
+                  hubName:
+                    type: string
+                  image:
+                    type: string
+                type: object
             type: object
           status:
             properties:
@@ -46,7 +88,17 @@ spec:
                   lastRegister:
                     format: date-time
                     type: string
-                  lastReporr:
+                  lastRegisterToken:
+                    type: string
+                type: object
+              tunnel:
+                properties:
+                  connected:
+                    type: boolean
+                  lastOfflineTimestamp:
+                    format: date-time
+                    type: string
+                  lastOnlineTimestamp:
                     format: date-time
                     type: string
                 type: object

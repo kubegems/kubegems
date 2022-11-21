@@ -15,13 +15,17 @@
 package options
 
 type AgentOptions struct {
-	TLS         *TLS   `json:"tls,omitempty"`
+	Listen      string `json:"listen,omitempty"`
+	ClientID    string `json:"clientID,omitempty"`
 	EdgeHubAddr string `json:"edgeHubAddr,omitempty"`
+	TLS         *TLS   `json:"tls,omitempty"`
 }
 
 func NewDefaultAgentOptions() *AgentOptions {
 	return &AgentOptions{
 		TLS:         NewDefaultTLS(),
 		EdgeHubAddr: "127.0.0.1:8080",
+		ClientID:    "",
+		Listen:      ":8040",
 	}
 }

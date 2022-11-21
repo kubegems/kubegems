@@ -21,6 +21,10 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Status"
+// +kubebuilder:printcolumn:name="RegisterAddress",type="string",JSONPath=".spec.register.address",description="Hub address for register"
+// +kubebuilder:printcolumn:name="Token",type="string",JSONPath=".spec.register.bootstrapToken",description="Token used for register"
+// +kubebuilder:printcolumn:name="LastOnline",type="string",JSONPath=".status.tunnel.lastOnlineTimestamp",description="CreationTimestamp of the bundle"
 type EdgeCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -28,48 +32,59 @@ type EdgeCluster struct {
 	Status            EdgeClusterStatus `json:"status,omitempty"`
 }
 
-type EdgeClusterSpec struct{}
-
-type EdgeClusterStatus struct {
-	Phase       string                    `json:"phase,omitempty"`
-	Register    EdgeClusterStatusRegister `json:"register,omitempty"`
-	Manufacture ManufactureStatus         `json:"manufacture,omitempty"`
+type EdgeClusterSpec struct {
+	Register RegisterInfo `json:"register,omitempty"`
 }
 
-type EdgeClusterStatusRegister struct {
-	LastRegister metav1.Time `json:"lastRegister,omitempty"`
-	LastReporr   metav1.Time `json:"lastReporr,omitempty"`
+type RegisterInfo struct {
+	HubName        string       `json:"hubName,omitempty"`        // register on hub
+	ExpiresAt      *metav1.Time `json:"expiresAt,omitempty"`      // edge certs expires at,default 1 year
+	Image          string       `json:"image,omitempty"`          // edge certs
+	BootstrapToken string       `json:"bootstrapToken,omitempty"` // edge token
+	Certs          *Certs       `json:"certs,omitempty"`          // pre generated certs
+}
+
+type EdgeClusterPhase string
+
+const (
+	EdgeClusterPhaseWaiting = "Waiting"
+	EdgeClusterPhaseOnline  = "Online"
+	EdgeClusterPhaseOffline = "Offline"
+)
+
+type EdgeClusterStatus struct {
+	Phase       EdgeClusterPhase  `json:"phase,omitempty"`
+	Register    RegisterStatus    `json:"register,omitempty"`
+	Tunnel      TunnelStatus      `json:"tunnel,omitempty"`
+	Manufacture ManufactureStatus `json:"manufacture,omitempty"`
+}
+
+type ManagerStatus struct {
+	ManageAddress string `json:"manageAddress,omitempty"`
+}
+
+type Certs struct {
+	CA   []byte `json:"ca,omitempty"`
+	Cert []byte `json:"cert,omitempty"`
+	Key  []byte `json:"key,omitempty"`
+}
+
+type RegisterStatus struct {
+	LastRegister      *metav1.Time `json:"lastRegister,omitempty"`
+	LastRegisterToken string       `json:"lastRegisterToken,omitempty"`
+}
+
+type TunnelStatus struct {
+	Connected            bool         `json:"connected,omitempty"`
+	LastOnlineTimestamp  *metav1.Time `json:"lastOnlineTimestamp,omitempty"`
+	LastOfflineTimestamp *metav1.Time `json:"lastOfflineTimestamp,omitempty"`
 }
 
 type ManufactureStatus map[string]string
 
 // +kubebuilder:object:root=true
-type EdgeClusterCridential struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              EdgeClusterCridentialSpec   `json:"spec,omitempty"`
-	Status            EdgeClusterCridentialStatus `json:"status,omitempty"`
-}
-
-type EdgeClusterCridentialSpec struct {
-	Token string `json:"token,omitempty"`
-}
-
-type EdgeClusterCridentialStatus struct {
-	Expire metav1.Time `json:"expire,omitempty"`
-}
-
-// +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced
-// +kubebuilder:subresource:status
 type EdgeClusterList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []EdgeCluster `json:"items"`
-}
-
-// +kubebuilder:object:root=true
-type EdgeClusterCridentialList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []EdgeCluster `json:"items"`
@@ -78,6 +93,4 @@ type EdgeClusterCridentialList struct {
 var _ = SchemeBuilder.Register(
 	&EdgeCluster{},
 	&EdgeClusterList{},
-	&EdgeClusterCridential{},
-	&EdgeClusterCridentialList{},
 )

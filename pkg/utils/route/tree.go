@@ -183,6 +183,14 @@ func Do(method string, path string) *Route {
 	}
 }
 
+func OPTIONS(path string) *Route {
+	return Do(http.MethodOptions, path)
+}
+
+func HEAD(path string) *Route {
+	return Do(http.MethodHead, path)
+}
+
 func GET(path string) *Route {
 	return Do(http.MethodGet, path)
 }
