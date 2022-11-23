@@ -1,0 +1,21 @@
+apiVersion: v2
+appVersion: 0.0.0
+dependencies:
+  - name: common
+    repository: https://charts.kubegems.io/kubegems
+    version: 1.x.x
+description: KubeGems edge components
+home: kubegems.io
+keywords:
+  - kubegems
+maintainers:
+  - email: support@kubegems.io
+    name: KubeGems
+name: kubegems-edge
+sources:
+  - https://kubegems.io
+version: 0.0.0
+annotations:
+  plugins.kubegems.io/is-plugin: "true"
+  plugins.kubegems.io/install-namespace: "kubegems-edge"
+  plugins.kubegems.io/category: core/KubeGems

@@ -1,0 +1,27 @@
+{{- if .Values.server.enabled }}
+
+{{- if index .Values "cert-manager" "enabled" }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "kubegems.server.secretName" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: server
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  dnsNames:
+    - {{ printf "%s.%s.svc" (include "kubegems.server.fullname" .) .Release.Namespace }}
+    - {{ printf "%s.%s.svc.%s" (include "kubegems.server.fullname" .) .Release.Namespace .Values.clusterDomain }}
+  issuerRef:
+    kind: Issuer
+    name: {{ include "kubegems.server.fullname" . }}
+  secretName: {{ template "kubegems.server.jwt.secretName" . }}
+{{- end }}
+
+{{- end }}

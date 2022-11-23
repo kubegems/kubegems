@@ -67,7 +67,7 @@ func (s *EdgeServer) Run(ctx context.Context) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return s.server.Serve(ctx, s.options.ListenGrpc, s.tlsConfig)
+		return s.server.ServeGrpc(ctx, s.options.ListenGrpc, s.tlsConfig)
 	})
 	eg.Go(func() error {
 		return s.RunHTTPAPI(ctx, s.options.Listen, nil)

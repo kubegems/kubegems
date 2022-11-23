@@ -17,8 +17,6 @@ package tunnel
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
-	"net"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -30,6 +28,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"kubegems.io/kubegems/pkg/edge/tunnel/proto"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/system"
+)
+
+const (
+	DefaultRetryInterval = 10 * time.Second
 )
 
 type Options struct {
@@ -99,7 +102,7 @@ func Run(ctx context.Context, options *Options) error {
 	eg := errgroup.Group{}
 	if listen := options.Listen; listen != "" {
 		eg.Go(func() error {
-			return server.Serve(ctx, options.Listen, tlsConfig)
+			return server.ServeGrpc(ctx, options.Listen, tlsConfig)
 		})
 	}
 	if updtream := options.UpstreamAddr; updtream != "" {
@@ -134,23 +137,13 @@ func (s GrpcTunnelServer) GrpcServer(tlsConfig *tls.Config) *grpc.Server {
 	return grpcServer
 }
 
-func (s GrpcTunnelServer) Serve(ctx context.Context, listen string, tlsConfig *tls.Config) error {
-	grpcServer := s.GrpcServer(tlsConfig)
-	lis, err := net.Listen("tcp", listen)
-	if err != nil {
-		return fmt.Errorf("failed to listen on %s: %v", listen, err)
-	}
-	go func() {
-		<-ctx.Done()
-		grpcServer.Stop()
-	}()
-	log.Info("grpc server started", "listen", lis.Addr().String())
-	return grpcServer.Serve(lis)
+func (s GrpcTunnelServer) ServeGrpc(ctx context.Context, listen string, tlsConfig *tls.Config) error {
+	return system.ListenAndServeGRPCContext(ctx, listen, s.GrpcServer(tlsConfig))
 }
 
 func (s GrpcTunnelServer) ConnectUpstream(ctx context.Context, addr string, tlsConfig *tls.Config, token string, annotations Annotations) error {
-	logr.FromContextOrDiscard(ctx).Info("connecting upstream", "addr", addr)
-	return wait.PollImmediateInfiniteWithContext(ctx, 10*time.Second, func(ctx context.Context) (done bool, err error) {
+	log.FromContextOrDiscard(ctx).Info("connecting upstream", "addr", addr)
+	return wait.PollImmediateInfiniteWithContext(ctx, DefaultRetryInterval, func(ctx context.Context) (done bool, err error) {
 		if err := s.connectUpstream(ctx, addr, tlsConfig, token, annotations); err != nil {
 			log.Error(err, "connect upstream")
 		}

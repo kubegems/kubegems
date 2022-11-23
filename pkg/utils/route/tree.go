@@ -21,6 +21,7 @@ import (
 
 	restfulspec "github.com/emicklei/go-restful-openapi/v2"
 	"github.com/emicklei/go-restful/v3"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
 type Function = func(req *restful.Request, resp *restful.Response)
@@ -80,7 +81,6 @@ func (t *Tree) addWebService(ws *restful.WebService, meta string, basepath strin
 		}
 
 		if route.Consumes == nil {
-			route.Consumes = []string{restful.MIME_JSON}
 		}
 		if route.Produces == nil {
 			route.Produces = []string{restful.MIME_JSON}
@@ -315,4 +315,16 @@ func (p Param) Desc(desc string) Param {
 func (p Param) DataType(t string) Param {
 	p.Type = t
 	return p
+}
+
+func Healthz(checkfun func() error) Function {
+	return func(req *restful.Request, resp *restful.Response) {
+		if checkfun != nil {
+			if err := checkfun(); err != nil {
+				response.ServerError(resp, err)
+				return
+			}
+		}
+		response.OK(resp, "ok")
+	}
 }

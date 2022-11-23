@@ -83,16 +83,27 @@ func (s *EdgeHubServer) Run(ctx context.Context) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
 
 	eg, ctx := errgroup.WithContext(ctx)
-	eg.Go(func() error {
-		return s.RunHTTPGRPCMux(ctx)
-	})
+	if s.options.Listen == s.options.ListenGrpc {
+		eg.Go(func() error {
+			return s.RunHTTPGRPCMux(ctx)
+		})
+	} else {
+		eg.Go(func() error {
+			return s.RunHTTPAPI(ctx, s.options.Listen)
+		})
+		eg.Go(func() error {
+			return s.ServeGrpc(ctx, s.options.ListenGrpc, s.tlsConfig)
+		})
+	}
 	if s.options.CurrentNamespace != "" {
 		eg.Go(func() error {
 			return s.RunStatusWatcher(ctx)
 		})
 	}
 	eg.Go(func() error {
-		return s.ConnectUpstream(ctx, s.options.EdgeServerAddr, s.tlsConfig, "", s.upstreamAnnotations)
+		c := s.tlsConfig.Clone()
+		c.InsecureSkipVerify = true
+		return s.ConnectUpstream(ctx, s.options.EdgeServerAddr, c, "", s.upstreamAnnotations)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)
@@ -102,7 +113,7 @@ func (s *EdgeHubServer) Run(ctx context.Context) error {
 
 func (s *EdgeHubServer) RunHTTPGRPCMux(ctx context.Context) error {
 	return system.ListenAndServeContextGRPCAndHTTP(ctx,
-		s.options.Listen,
+		s.options.ListenGrpc,
 		s.tlsConfig,
 		s.HTTPHandler(),
 		s.GrpcServer(s.tlsConfig))
@@ -119,13 +130,7 @@ func (s *EdgeHubServer) HTTPHandler() http.Handler {
 }
 
 func (s *EdgeHubServer) RunHTTPAPI(ctx context.Context, listen string) error {
-	server := http.Server{Addr: listen, Handler: s.HTTPHandler()}
-	go func() {
-		<-ctx.Done()
-		server.Close()
-	}()
-	logr.FromContextOrDiscard(ctx).Info("started http server", "listen", listen)
-	return server.ListenAndServe()
+	return system.ListenAndServeContext(ctx, listen, nil, s.HTTPHandler())
 }
 
 func (s *EdgeHubServer) RunStatusWatcher(ctx context.Context) error {
