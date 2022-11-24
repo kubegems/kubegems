@@ -91,6 +91,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/observability/environment/:environment_id/monitor/dashboard", h.CheckByEnvironmentID, h.CreateDashboard)
 	rg.PUT("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.UpdateDashboard)
 	rg.DELETE("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id", h.CheckByEnvironmentID, h.DeleteDashboard)
+	rg.GET("/observability/environment/:environment_id/monitor/dashboard/:dashboard_id/query", h.CheckByEnvironmentID, h.DashboardQuery)
 
 	rg.GET("/observability/template/dashboard", h.ListDashboardTemplates)
 	rg.GET("/observability/template/dashboard/:name", h.GetDashboardTemplate)

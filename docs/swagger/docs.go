@@ -7028,6 +7028,93 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id}/query": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "监控dashboard panne指标查询",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "监控dashboard panne指标查询",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "环境ID",
+                        "name": "environment_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "dashboard id",
+                        "name": "dashboard_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "panel id",
+                        "name": "panel_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "step, 单位秒，默认0",
+                        "name": "step",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "pannel 查询结果",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/definitions/model.SampleStream"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/observability/monitor/exporters/{name}/schema": {
             "get": {
                 "security": [
@@ -21998,6 +22085,55 @@ const docTemplate = `{
                     }
                 }
             },
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "self update",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "self update information",
+                "parameters": [
+                    {
+                        "description": "表单",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/models.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -28015,6 +28151,10 @@ const docTemplate = `{
                 "logQL": {
                     "description": "logql",
                     "type": "string"
+                },
+                "timeRange": {
+                    "description": "时间区间",
+                    "type": "string"
                 }
             }
         },
@@ -28049,6 +28189,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "logQL": {
+                    "type": "string"
+                },
+                "timeRanges": {
                     "type": "string"
                 },
                 "total": {
@@ -29286,6 +29429,9 @@ const docTemplate = `{
         "observe.AlertReceiver": {
             "type": "object",
             "properties": {
+                "ChannelStatus": {
+                    "type": "integer"
+                },
                 "alertChannel": {
                     "$ref": "#/definitions/models.AlertChannel"
                 },
@@ -29298,6 +29444,9 @@ const docTemplate = `{
         "observe.LoggingAlertRule": {
             "type": "object",
             "properties": {
+                "ChannelStatus": {
+                    "type": "integer"
+                },
                 "alertLevels": {
                     "description": "告警级别",
                     "type": "array",
@@ -29384,6 +29533,9 @@ const docTemplate = `{
         "observe.MonitorAlertRule": {
             "type": "object",
             "properties": {
+                "ChannelStatus": {
+                    "type": "integer"
+                },
                 "alertLevels": {
                     "description": "告警级别",
                     "type": "array",
@@ -29485,31 +29637,14 @@ const docTemplate = `{
         "prometheus.MetricGraph": {
             "type": "object",
             "properties": {
-                "expr": {
-                    "type": "string"
-                },
-                "labelpairs": {
-                    "description": "标签键值对",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
                 "name": {
-                    "description": "graph名",
                     "type": "string"
                 },
-                "resource": {
-                    "description": "告警资源, eg. node、pod",
-                    "type": "string"
-                },
-                "rule": {
-                    "description": "告警规则名, eg. cpuUsage、memoryUsagePercent",
-                    "type": "string"
-                },
-                "scope": {
-                    "description": "scope",
-                    "type": "string"
+                "targets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/prometheus.Target"
+                    }
                 },
                 "unit": {
                     "type": "string"
@@ -29559,6 +29694,20 @@ const docTemplate = `{
                 },
                 "state": {
                     "description": "Health         v1.RuleHealth  ` + "`" + `json:\"health\"` + "`" + `\nLastError      string         ` + "`" + `json:\"lastError,omitempty\"` + "`" + `\nEvaluationTime float64        ` + "`" + `json:\"evaluationTime\"` + "`" + `\nLastEvaluation time.Time      ` + "`" + `json:\"lastEvaluation\"` + "`" + `",
+                    "type": "string"
+                }
+            }
+        },
+        "prometheus.Target": {
+            "type": "object",
+            "properties": {
+                "expr": {
+                    "type": "string"
+                },
+                "promqlGenerator": {
+                    "$ref": "#/definitions/prometheus.PromqlGenerator"
+                },
+                "targetName": {
                     "type": "string"
                 }
             }

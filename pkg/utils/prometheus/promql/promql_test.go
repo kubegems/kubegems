@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -142,6 +143,52 @@ func TestQuery_GetVectorSelectors(t *testing.T) {
 			}
 			if got := q.GetVectorSelectors(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Query.GetVectorSelectorNames() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPromqlByLabels(t *testing.T) {
+	type args struct {
+		metric model.Metric
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "null",
+			args: args{
+				metric: nil,
+			},
+			want: "{}",
+		},
+		{
+			name: "only labels",
+			args: args{
+				model.Metric{
+					"a": "b",
+				},
+			},
+			want: `{a="b"}`,
+		},
+		{
+			name: "all",
+			args: args{
+				metric: model.Metric{
+					"__name__": "query",
+					"a":        "b",
+					"c":        "d",
+				},
+			},
+			want: `query{a="b",c="d"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := PromqlByLabels(tt.args.metric); got != tt.want {
+				t.Errorf("PromqlByLabels() = %v, want %v", got, tt.want)
 			}
 		})
 	}

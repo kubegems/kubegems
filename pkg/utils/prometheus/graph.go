@@ -37,12 +37,14 @@ func (g MonitorGraphs) GormDataType() string {
 }
 
 type MonitorGraphs []MetricGraph
+type Target struct {
+	TargetName      string           `json:"targetName"`
+	PromqlGenerator *PromqlGenerator `json:"promqlGenerator"`
+	Expr            string           `json:"expr"`
+}
 
 type MetricGraph struct {
-	// graph名
-	Name string `json:"name"`
-	// 查询目标
-	*PromqlGenerator `json:"promqlGenerator"`
-	Expr             string `json:"expr"`
-	Unit             string `json:"unit"`
+	Name    string   `json:"name"`
+	Targets []Target `json:"targets"`
+	Unit    string   `json:"unit"`
 }
