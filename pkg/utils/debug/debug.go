@@ -35,14 +35,25 @@ import (
 	"k8s.io/client-go/transport/spdy"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/service/options"
+	"kubegems.io/kubegems/pkg/utils/argo"
+	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/helm"
 	"kubegems.io/kubegems/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/utils/redis"
 )
 
 // ApplyPortForwardingOptions using apiserver port forward port for options
-func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) error {
+func ApplyPortForwardingOptions(ctx context.Context,
+	debug bool,
+	dbopts *database.Options,
+	redisopts *redis.Options,
+	gitopts *git.Options,
+	appstoreopts *helm.Options,
+	argoopts *argo.Options,
+) error {
 	// debug mode only
-	if !opts.DebugMode {
+	if !debug {
 		return nil
 	}
 
@@ -71,8 +82,8 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 		if err != nil {
 			return err
 		}
-		opts.Mysql.Addr = addr
-		opts.Mysql.Password = string(mysqlSec.Data["mysql-root-password"])
+		dbopts.Addr = addr
+		dbopts.Password = string(mysqlSec.Data["mysql-root-password"])
 		return nil
 	})
 
@@ -86,8 +97,8 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 		if err != nil {
 			return err
 		}
-		opts.Redis.Addr = addr
-		opts.Redis.Password = string(redisSec.Data["redis-password"])
+		redisopts.Addr = addr
+		redisopts.Password = string(redisSec.Data["redis-password"])
 		return nil
 	})
 
@@ -97,19 +108,22 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 		if err != nil {
 			return err
 		}
-		opts.Git.Addr = "http://" + addr
-		opts.Git.Username = string(kubegemsSec.Data["GIT_USERNAME"])
-		opts.Git.Password = string(kubegemsSec.Data["GIT_PASSWORD"])
+		gitopts.Addr = "http://" + addr
+		gitopts.Username = string(kubegemsSec.Data["GIT_USERNAME"])
+		gitopts.Password = string(kubegemsSec.Data["GIT_PASSWORD"])
 		return nil
 	})
 
 	// chartmuseum
 	group.Go(func() error {
+		if appstoreopts == nil {
+			return nil
+		}
 		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-chartmuseum", 8080)
 		if err != nil {
 			return err
 		}
-		opts.Appstore.Addr = "http://" + addr
+		appstoreopts.Addr = "http://" + addr
 		return nil
 	})
 
@@ -123,8 +137,8 @@ func ApplyPortForwardingOptions(ctx context.Context, opts *options.Options) erro
 		if err != nil {
 			return err
 		}
-		opts.Argo.Addr = "http://" + addr
-		opts.Argo.Password = string(argoSec.Data["clearPassword"])
+		argoopts.Addr = "http://" + addr
+		argoopts.Password = string(argoSec.Data["clearPassword"])
 		return nil
 	})
 

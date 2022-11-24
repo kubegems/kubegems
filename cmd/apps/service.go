@@ -49,7 +49,7 @@ func NewServiceCmd() *cobra.Command {
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
 
-			if err := debug.ApplyPortForwardingOptions(ctx, options); err != nil {
+			if err := debug.ApplyPortForwardingOptions(ctx, options.DebugMode, options.Mysql, options.Redis, options.Git, options.Appstore, options.Argo); err != nil {
 				return err
 			}
 			return service.Run(ctx, options)
