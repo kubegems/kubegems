@@ -26,6 +26,7 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
@@ -35,7 +36,7 @@ var (
 )
 
 type Feishu struct {
-	ChannelType `json:"channelType"`
+	BaseChannel `json:",inline"`
 	URL         string `json:"url"`        // feishu robot webhook url
 	At          string `json:"at"`         // 要@的用户id，所有人则是 all
 	SignSecret  string `json:"signSecret"` // 签名校验key
@@ -56,7 +57,8 @@ func (f *Feishu) ToReceiver(name string) v1alpha1.Receiver {
 		Name: name,
 		WebhookConfigs: []v1alpha1.WebhookConfig{
 			{
-				URL: &u,
+				URL:          &u,
+				SendResolved: utils.BoolPointer(f.SendResolved),
 			},
 		},
 	}
