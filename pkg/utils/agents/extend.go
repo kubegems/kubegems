@@ -49,6 +49,13 @@ func (c *ExtendClient) ClusterResourceStatistics(ctx context.Context, ret interf
 	})
 }
 
+func (c *ExtendClient) ClusterStatistics(ctx context.Context, ret interface{}) error {
+	return c.DoRequest(ctx, Request{
+		Path: "/custom/statistics.system/v1/all",
+		Into: WrappedResponse(ret),
+	})
+}
+
 // health.system/v1
 func (c *ExtendClient) Healthy(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)

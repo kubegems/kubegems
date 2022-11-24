@@ -154,9 +154,10 @@ func Routes(ctx context.Context, cluster cluster.Interface, options *Options, de
 	routes.registerREST(cluster)
 
 	// custom api
-	staticsHandler := &StatisticsHandler{C: cluster.GetClient()}
+	staticsHandler := &StatisticsHandler{C: cluster}
 	routes.register("statistics.system", "v1", "workloads", ActionList, staticsHandler.ClusterWorkloadStatistics)
 	routes.register("statistics.system", "v1", "resources", ActionList, staticsHandler.ClusterResourceStatistics)
+	routes.register("statistics.system", "v1", "all", ActionList, staticsHandler.ClusterStatistics)
 
 	nodeHandler := &NodeHandler{C: cluster.GetClient()}
 	routes.register("core", "v1", "nodes", ActionGet, nodeHandler.Get)

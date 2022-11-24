@@ -13442,6 +13442,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/proxy/cluster/{cluster}/custom/statistics.system/v1/all": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "获取集群级别统计",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent.V1"
+                ],
+                "summary": "获取集群级别统计",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "counter",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/statistics.ClusterStatistics"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/proxy/cluster/{cluster}/custom/statistics.system/v1/resources": {
             "get": {
                 "security": [
@@ -30802,6 +30851,20 @@ const docTemplate = `{
                 "used": {
                     "description": "集群资源的真实使用量",
                     "$ref": "#/definitions/v1.ResourceList"
+                }
+            }
+        },
+        "statistics.ClusterStatistics": {
+            "type": "object",
+            "properties": {
+                "resources": {
+                    "$ref": "#/definitions/statistics.ClusterResourceStatistics"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "workloads": {
+                    "$ref": "#/definitions/statistics.ClusterWorkloadStatistics"
                 }
             }
         },
