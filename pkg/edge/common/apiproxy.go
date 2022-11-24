@@ -20,7 +20,6 @@ import (
 	"net/url"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
@@ -50,7 +49,7 @@ func (a *EdgeClusterAPI) Proxy(req *restful.Request, resp *restful.Response) {
 			req.URL.Host = proxyTarget.Host
 			req.URL.Path = path
 		},
-		Transport: tunnel.TransportOnTunnel(a.Tunnel, uid),
+		Transport: a.Tunnel.TransportOnTunnel(uid),
 	}
 	proxy.ServeHTTP(resp, req.Request)
 }

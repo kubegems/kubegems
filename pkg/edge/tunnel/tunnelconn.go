@@ -21,7 +21,10 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+	"kubegems.io/kubegems/pkg/log"
 )
+
+var ErrFullChannel = errors.New("channel full")
 
 type TunnelConn struct {
 	c *Connections
@@ -39,58 +42,36 @@ type TunnelConn struct {
 	ack    chan *connectData
 }
 
+func (c *TunnelConn) recv(remotecid int64, data []byte, err string) error {
+	select {
+	case c.ack <- &connectData{remoteID: remotecid, err: err, data: data}:
+		return nil
+	default:
+		log.Error(ErrFullChannel, "drop packet",
+			"cid", c.localConnectionID,
+			"remote", c.channel.ID,
+			"remote cid", c.remoteConnectionID,
+		)
+		return ErrFullChannel
+	}
+}
+
 func (c *TunnelConn) opened(remotecid int64) {
-	c.c.opened(c, remotecid)
+	c.remoteConnectionID = remotecid
 }
 
-func (c *TunnelConn) accepted(conn net.Conn) error {
-	c.c.accepted(c, conn)
+func (c *TunnelConn) accepted(conn net.Conn) {
+	c.rawConn = conn
 	eg := errgroup.Group{}
-	eg.Go(c.remoteToTunnel)
-	eg.Go(c.tunnelToRemote)
-	return eg.Wait()
-}
-
-func (c *TunnelConn) close() error {
-	return c.c.close(c.remoteConnectionID)
-}
-
-func (c *TunnelConn) remoteToTunnel() error {
-	var buf [1 << 12]byte
-	for {
-		n, err := c.rawConn.Read(buf[:])
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if _, err := c.Write(buf[:n]); err != nil {
-			return err
-		}
-	}
-}
-
-func (c *TunnelConn) tunnelToRemote() error {
-	for ack := range c.ack {
-		if ack == nil /*channel closed*/ {
-			return net.ErrClosed
-		}
-		if ack.err != "" {
-			return errors.New(ack.err)
-		}
-		pos := 0
-		for {
-			n, err := c.rawConn.Write(ack.data[pos:])
-			if err != nil {
-				return err
-			}
-			if n > 0 {
-				pos += n
-			}
-		}
-	}
-	return nil
+	eg.Go(func() error {
+		_, err := io.Copy(c.rawConn, c)
+		return err
+	})
+	eg.Go(func() error {
+		_, err := io.Copy(c, c.rawConn)
+		return err
+	})
+	eg.Wait()
 }
 
 type connectData struct {
@@ -107,6 +88,9 @@ func (c *TunnelConn) Read(b []byte) (n int, err error) {
 		ack := <-c.ack
 		if ack == nil /*closed*/ {
 			return 0, net.ErrClosed
+		}
+		if ack.err == "EOF" {
+			return 0, io.EOF
 		}
 		if ack.err != "" {
 			return 0, errors.New(ack.err)
@@ -139,6 +123,10 @@ func (c *TunnelConn) Write(b []byte) (n int, err error) {
 // Close tunnel connection and close raw connection,remove self from connection manager
 func (c *TunnelConn) Close() error {
 	return c.sendClose(c.close())
+}
+
+func (c *TunnelConn) close() error {
+	return c.c.close(c.remoteConnectionID)
 }
 
 func (c *TunnelConn) LocalAddr() net.Addr {

@@ -58,25 +58,23 @@ type CreateClusterResponse struct {
 }
 
 func (a *EdgeClusterAPI) PreCreateEdgeCluster(req *restful.Request, resp *restful.Response) {
-	options := &CreateClusterRequest{}
-	if err := request.Body(req.Request, options); err != nil {
+	cluster := &v1beta1.EdgeCluster{}
+	if err := request.Body(req.Request, cluster); err != nil {
 		response.BadRequest(resp, err.Error())
 		return
 	}
-
-	uid := options.UID
-	if uid == "" {
-		uid = uuid.NewString()
+	if cluster.Name == "" {
+		cluster.Name = uuid.NewString()
 	}
-	token := strings.ReplaceAll(uuid.NewString(), "-", "")
-
-	registerurl, err := a.Cluster.PreCreate(req.Request.Context(), uid, token, options.PrecreateOptions)
+	if cluster.Spec.Register.BootstrapToken == "" {
+		cluster.Spec.Register.BootstrapToken = strings.ReplaceAll(uuid.NewString(), "-", "")
+	}
+	created, err := a.Cluster.PreCreate(req.Request.Context(), cluster)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 		return
 	}
-	data := CreateClusterResponse{UID: uid, ManifestAddress: registerurl}
-	response.OK(resp, data)
+	response.OK(resp, created)
 }
 
 func (a *EdgeClusterAPI) GetEdgeCluster(req *restful.Request, resp *restful.Response) {
@@ -168,11 +166,15 @@ func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 		route.NewGroup("/edge-clusters").Tag("edge-cluster").AddRoutes(
 			route.GET("/").Paged().To(a.ListEdgeClusters).
 				ShortDesc("list clusters").
-				Parameters(route.QueryParameter("labels", "labels selector").Optional()).
-				Response([]*v1beta1.EdgeCluster{}),
+				Parameters(
+					route.QueryParameter("labels", "labels selector").Optional(),
+				).
+				Response([]v1beta1.EdgeCluster{}),
 			route.POST("").To(a.PreCreateEdgeCluster).ShortDesc("pre create cluster").
-				Parameters(route.BodyParameter("", CreateClusterRequest{})).
-				Response(CreateClusterResponse{}),
+				Parameters(
+					route.BodyParameter("", v1beta1.EdgeCluster{}),
+				).
+				Response(v1beta1.EdgeCluster{}),
 			route.GET("/{uid}").To(a.GetEdgeCluster).Parameters(
 				route.PathParameter("uid", "uid name"),
 			),

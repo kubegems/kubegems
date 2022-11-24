@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	metricsvebeta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
+	"kubegems.io/kubegems/pkg/agent/indexer"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -86,6 +87,19 @@ func WithWatchClient(o *cluster.Options) {
 
 func WithDefaultScheme(o *cluster.Options) {
 	o.Scheme = kube.GetScheme()
+}
+
+func NewClusterAndStart(ctx context.Context, config *rest.Config, options ...cluster.Option) (*Cluster, error) {
+	c, err := NewCluster(config, options...)
+	if err != nil {
+		return nil, err
+	}
+	if err := indexer.CustomIndexPods(c.GetCache()); err != nil {
+		return nil, err
+	}
+	go c.Start(ctx)
+	c.GetCache().WaitForCacheSync(ctx)
+	return c, nil
 }
 
 func NewCluster(config *rest.Config, options ...cluster.Option) (*Cluster, error) {

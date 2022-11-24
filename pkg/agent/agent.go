@@ -23,7 +23,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/agent/apis"
 	"kubegems.io/kubegems/pkg/agent/cluster"
-	"kubegems.io/kubegems/pkg/agent/indexer"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/pprof"
@@ -69,17 +68,10 @@ func Run(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	c, err := cluster.NewCluster(rest)
+	c, err := cluster.NewClusterAndStart(ctx, rest)
 	if err != nil {
 		return err
 	}
-
-	if err := indexer.CustomIndexPods(c.GetCache()); err != nil {
-		return err
-	}
-
-	go c.Start(ctx)
-	c.GetCache().WaitForCacheSync(ctx)
 
 	exporterHandler := exporter.NewHandler("gems_agent", map[string]exporter.Collectorfunc{
 		"plugin":                 exporter.NewPluginCollectorFunc(c), // plugin exporter

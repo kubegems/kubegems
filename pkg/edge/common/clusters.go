@@ -33,13 +33,16 @@ import (
 )
 
 const (
-	AnnotationKeyEdgeHubAddress   = "edge.kubegems.io/edge-hub-address"
-	AnnotationKeyEdgeHubCert      = "edge.kubegems.io/edge-hub-key"
-	AnnotationKeyEdgeHubCA        = "edge.kubegems.io/edge-hub-ca"
-	AnnotationKeyEdgeHubKey       = "edge.kubegems.io/edge-hub-cert"
-	AnnotationKeyEdgeAgentAddress = "edge.kubegems.io/edge-agent-address"
-	AnnotationKeyAPIserverAddress = "edge.kubegems.io/apiserver-address"
-	LabelKeIsyEdgeHub             = "edge.kubegems.io/is-edge-hub"
+	AnnotationKeyEdgeHubAddress = "edge.kubegems.io/edge-hub-address"
+	AnnotationKeyEdgeHubCert    = "edge.kubegems.io/edge-hub-key"
+	AnnotationKeyEdgeHubCA      = "edge.kubegems.io/edge-hub-ca"
+	AnnotationKeyEdgeHubKey     = "edge.kubegems.io/edge-hub-cert"
+	LabelKeIsyEdgeHub           = "edge.kubegems.io/is-edge-hub"
+
+	AnnotationKeyEdgeAgentAddress         = "edge.kubegems.io/edge-agent-address"
+	AnnotationKeyEdgeAgentRegisterAddress = "edge.kubegems.io/edge-agent-register-address"
+	AnnotationKeyKubernetesVersion        = "edge.kubegems.io/kubernetes-version"
+	AnnotationKeyAPIserverAddress         = "edge.kubegems.io/apiserver-address"
 )
 
 type EdgeClusterManager struct {
@@ -98,54 +101,38 @@ type PrecreateOptions struct {
 }
 
 // return a register address
-func (m *EdgeClusterManager) PreCreate(ctx context.Context, uid string, token string, options PrecreateOptions) (string, error) {
+func (m *EdgeClusterManager) PreCreate(ctx context.Context, example *v1beta1.EdgeCluster) (*v1beta1.EdgeCluster, error) {
 	// check hub is already exists
-	hub, err := m.Store.Get(ctx, options.HubName)
+	_, err := m.Store.Get(ctx, example.Spec.Register.HubName)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("get edge hub %s: %w", example.Spec.Register.HubName, err)
 	}
 	updatespec := func(in *v1beta1.EdgeCluster) error {
 		if in.Annotations == nil {
 			in.Annotations = map[string]string{}
 		}
-		for k, v := range options.Annotations {
+		for k, v := range example.Annotations {
 			in.Annotations[k] = v
 		}
 		if in.Labels == nil {
 			in.Labels = map[string]string{}
 		}
-		for k, v := range options.Labels {
+		for k, v := range example.Labels {
 			in.Labels[k] = v
 		}
-		in.Spec.Register.HubName = options.HubName
-		in.Spec.Register.Image = options.AgentImage
-		in.Spec.Register.BootstrapToken = token
+		in.Spec.Register = example.Spec.Register
 		if in.Status.Phase != v1beta1.EdgeClusterPhaseOnline {
 			in.Status.Phase = v1beta1.EdgeClusterPhaseWaiting
 		}
-		if options.CertExpireAt != nil {
-			in.Spec.Register.ExpiresAt = &metav1.Time{
-				Time: *options.CertExpireAt,
-			}
+		selfaddr := m.SelfAddress
+		if !strings.HasPrefix(selfaddr, "http") {
+			selfaddr = "http://" + selfaddr
 		}
-		if options.CreateCert {
-			certs, err := m.gencert(uid, options.CertExpireAt, hub)
-			if err != nil {
-				return err
-			}
-			in.Spec.Register.Certs = certs
-		}
+		manifestAddress := fmt.Sprintf("%s/v1/edge-cluster/%s/agent-installer.yaml?token=%s", selfaddr, in.Name, in.Spec.Register.BootstrapToken)
+		in.Status.Register.URL = manifestAddress
 		return nil
 	}
-	if _, err := m.Store.Update(ctx, uid, updatespec); err != nil {
-		return "", err
-	}
-	selfaddr := m.SelfAddress
-	if !strings.HasPrefix(selfaddr, "http") {
-		selfaddr = "http://" + selfaddr
-	}
-	manifestAddress := fmt.Sprintf("%s/v1/edge-cluster/%s/agent-installer.yaml?token=%s", selfaddr, uid, token)
-	return manifestAddress, nil
+	return m.Store.Update(ctx, example.Name, updatespec)
 }
 
 type InstallerTemplateValues struct {

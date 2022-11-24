@@ -55,10 +55,6 @@ func (c *Connections) pending(tun *ConnectedTunnel, remote string, remotecid int
 	return tunconn
 }
 
-func (c *Connections) accepted(tun *TunnelConn, rawconn net.Conn) {
-	tun.rawConn = rawconn
-}
-
 func (c *Connections) opened(tun *TunnelConn, remotecid int64) {
 	tun.remoteConnectionID = remotecid
 }
@@ -130,20 +126,6 @@ func (cm *ConnectionManager) tunnel(tun *ConnectedTunnel) *Connections {
 	return val
 }
 
-// func (cm *ConnectionManager) remote(remote string) *Connections {
-// 	if val, ok := cm.hosts[remote]; ok {
-// 		return val
-// 	} else {
-// 		val = &Connections{
-// 			connections: map[int64]*TunnelConn{},
-// 			remote:      remote,
-// 			local:       cm.s.id,
-// 		}
-// 		cm.hosts[remote] = val
-// 		return val
-// 	}
-// }
-
 func (cm *ConnectionManager) Open(network, address string, timeout time.Duration, dest string) (conn net.Conn, err error) {
 	dialctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -196,7 +178,7 @@ func (cm *ConnectionManager) Open(network, address string, timeout time.Duration
 	}
 }
 
-func (cm *ConnectionManager) accept(fromtunnel *ConnectedTunnel, remote string, remotecid int64, dialOptions PacketDataOpen) error {
+func (cm *ConnectionManager) accept(fromtunnel *ConnectedTunnel, remote string, remotecid int64, dialOptions PacketDataOpen) {
 	tunConn := cm.tunnel(fromtunnel).pending(fromtunnel, remote, remotecid)
 	defer tunConn.Close()
 
@@ -210,40 +192,28 @@ func (cm *ConnectionManager) accept(fromtunnel *ConnectedTunnel, remote string, 
 	if err != nil {
 		log.Error(err, "dial timeout", "options", dialOptions)
 		_ = tunConn.sendClose(err)
-		return err
+		return
 	}
+	defer conn.Close()
+
 	if err := tunConn.sendData([]byte{}); err != nil {
 		log.Error(err, "connection send ack")
-		return err
+		return
 	}
 	// established
 	log.Info("connection opened")
-	defer func() {
-		log.Info("connection routine exit")
-	}()
-	if err := tunConn.accepted(conn); err != nil {
-		log.Error(err, "connection exit")
-		return err
-	}
-	return nil
+	// copy
+	tunConn.accepted(conn)
+	log.Info("connection exit")
 }
 
-func (cm *ConnectionManager) ack(fromtunnel *ConnectedTunnel, from string, fromCID int64, localcid int64, data []byte, err string) error {
-	log.Info("packet ack", "cid", localcid, "remote", from, "remote cid", fromCID)
+func (cm *ConnectionManager) recv(fromtunnel *ConnectedTunnel, from string, fromCID int64, localcid int64, data []byte, err string) error {
+	log.Info("packet recv", "cid", localcid, "remote", from, "remote cid", fromCID)
 	conn := cm.tunnel(fromtunnel).get(localcid)
 	if conn == nil || conn.closed {
 		return net.ErrClosed
 	}
-	select {
-	case conn.ack <- &connectData{remoteID: fromCID, err: err, data: data}:
-	default:
-		log.Error(errors.New("channel full"), "drop packet",
-			"cid", conn.localConnectionID,
-			"remote", conn.channel.ID,
-			"remote cid", conn.remoteConnectionID,
-		)
-	}
-	return nil
+	return conn.recv(fromCID, data, err)
 }
 
 func (cm *ConnectionManager) close(fromtunnel *ConnectedTunnel, remote string, remotecid int64, localcid int64) (err error) {

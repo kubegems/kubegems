@@ -53,6 +53,7 @@ func RenderManifets(uid string, image string, edgehubaddress string, certs v1bet
 						Labels: commonlabels,
 					},
 					Spec: corev1.PodSpec{
+						ServiceAccountName: installname,
 						Containers: []corev1.Container{
 							{
 								Name:  "agent",

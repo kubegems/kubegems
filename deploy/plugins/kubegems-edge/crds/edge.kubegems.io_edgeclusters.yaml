@@ -90,6 +90,8 @@ spec:
                     type: string
                   lastRegisterToken:
                     type: string
+                  url:
+                    type: string
                 type: object
               tunnel:
                 properties:

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,11 +30,12 @@ import (
 var DefaultDialTimeout = 30 * time.Second
 
 type TunnelServer struct {
-	auth        AuthenticationManager
-	id          string
-	connections *ConnectionManager
-	routeTable  *RouteTable
-	eventer     *TunnelEventer
+	auth               AuthenticationManager
+	id                 string
+	connections        *ConnectionManager
+	routeTable         *RouteTable
+	eventer            *TunnelEventer
+	statefultransports sync.Map
 }
 
 func NewTunnelServer(id string, auth AuthenticationManager) *TunnelServer {
@@ -197,23 +199,22 @@ func (s *TunnelServer) forward(income *ConnectedTunnel, pkt *Packet) error {
 }
 
 func (s *TunnelServer) localIn(channel *ConnectedTunnel, pkt *Packet) {
-	log.V(5).Info("packet in", "src", pkt.Src, "dest", pkt.Dest)
+	log.Info("packet in", "src", pkt.Src, "dest", pkt.Dest)
 	switch pkt.Kind {
 	case PacketKindOpen:
 		go s.connections.accept(channel, pkt.Src, pkt.SrcCID, PacketDecode[PacketDataOpen](pkt.Data))
 	case PacketKindData:
-		go func() {
-			if err := s.connections.ack(channel, pkt.Src, pkt.SrcCID, pkt.DestCID, pkt.Data, pkt.Error); err != nil {
-				_ = channel.Send(&Packet{
-					Kind:    PacketKindClose,
-					SrcCID:  pkt.DestCID,
-					Src:     s.id,
-					Dest:    pkt.Src,
-					DestCID: pkt.SrcCID,
-					Error:   err.Error(),
-				})
-			}
-		}()
+		// it must recv as it's order,do not go
+		if err := s.connections.recv(channel, pkt.Src, pkt.SrcCID, pkt.DestCID, pkt.Data, pkt.Error); err != nil {
+			channel.Send(&Packet{
+				Kind:    PacketKindClose,
+				SrcCID:  pkt.DestCID,
+				Src:     s.id,
+				Dest:    pkt.Src,
+				DestCID: pkt.SrcCID,
+				Error:   err.Error(),
+			})
+		}
 	case PacketKindClose:
 		go s.connections.close(channel, pkt.Src, pkt.SrcCID, pkt.DestCID)
 	case PacketKindRoute:

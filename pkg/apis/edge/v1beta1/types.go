@@ -72,6 +72,7 @@ type Certs struct {
 type RegisterStatus struct {
 	LastRegister      *metav1.Time `json:"lastRegister,omitempty"`
 	LastRegisterToken string       `json:"lastRegisterToken,omitempty"`
+	URL               string       `json:"url,omitempty"`
 }
 
 type TunnelStatus struct {

@@ -16,70 +16,61 @@ package agent
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
-	"net"
-	"os"
 
 	"golang.org/x/sync/errgroup"
+	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/edge/common"
 	"kubegems.io/kubegems/pkg/edge/options"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/pprof"
 )
 
 func Run(ctx context.Context, opts *options.AgentOptions) error {
-	s, err := New(opts)
-	if err != nil {
-		return err
-	}
-	return s.Run(ctx)
+	return run(ctx, opts)
 }
 
-type EdgeAgent struct {
-	tunnel.GrpcTunnelServer
-	upstreamAnnotations tunnel.Annotations
-	tlsConfig           *tls.Config
-	options             *options.AgentOptions
-	api                 *AgentAPI
-}
-
-func New(options *options.AgentOptions) (*EdgeAgent, error) {
+func run(ctx context.Context, options *options.AgentOptions) error {
+	ctx = log.NewContext(ctx, log.LogrLogger)
 	if options.ClientID == "" {
-		return nil, errors.New("--clientid is required")
+		return errors.New("--clientid is required")
 	}
 	tlsConfig, err := options.TLS.ToTLSConfig()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	annotations := map[string]string{
-		common.AnnotationKeyEdgeAgentAddress: "http://127.0.0.1" + options.Listen,
-		common.AnnotationKeyAPIserverAddress: "https://" + net.JoinHostPort(
-			os.Getenv("KUBERNETES_SERVICE_HOST"),
-			os.Getenv("KUBERNETES_SERVICE_PORT"),
-		),
+	rest, err := kube.AutoClientConfig()
+	if err != nil {
+		return err
 	}
-	agent := &EdgeAgent{
-		tlsConfig:           tlsConfig,
-		upstreamAnnotations: annotations,
-		options:             options,
-		api:                 &AgentAPI{},
-		GrpcTunnelServer: tunnel.GrpcTunnelServer{
-			TunnelServer: tunnel.NewTunnelServer(options.ClientID, nil),
-		},
+	c, err := cluster.NewClusterAndStart(ctx, rest)
+	if err != nil {
+		return err
 	}
-	return agent, nil
-}
+	sv, err := c.Discovery().ServerVersion()
+	if err != nil {
+		return err
+	}
+	upstreamAnnotations := map[string]string{
+		common.AnnotationKeyEdgeAgentAddress:         "http://127.0.0.1" + options.Listen,
+		common.AnnotationKeyEdgeAgentRegisterAddress: options.EdgeHubAddr,
+		common.AnnotationKeyAPIserverAddress:         rest.Host,
+		common.AnnotationKeyKubernetesVersion:        sv.String(),
+	}
 
-func (s *EdgeAgent) Run(ctx context.Context) error {
-	ctx = log.NewContext(ctx, log.LogrLogger)
+	grpctunnel := tunnel.GrpcTunnelServer{
+		TunnelServer: tunnel.NewTunnelServer(options.ClientID, nil),
+	}
+	httpapi := &AgentAPI{cluster: c}
+
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return s.GrpcTunnelServer.ConnectUpstream(ctx, s.options.EdgeHubAddr, s.tlsConfig, "", s.upstreamAnnotations)
+		return grpctunnel.ConnectUpstream(ctx, options.EdgeHubAddr, tlsConfig, "", upstreamAnnotations)
 	})
 	eg.Go(func() error {
-		return s.api.Run(ctx, s.options.Listen)
+		return httpapi.Run(ctx, options.Listen)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)
