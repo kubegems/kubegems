@@ -20,9 +20,11 @@ import (
 	"net/http"
 	"strconv"
 
+	prommodel "github.com/prometheus/common/model"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/agents"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -54,8 +56,8 @@ func (h *ObservabilityHandler) ListDashboard(c *gin.Context) {
 // @Description 监控dashboard详情
 // @Accept      json
 // @Produce     json
-// @Param       environment_id path     string                                                true "环境ID"
-// @Param       dashboard_id   path     uint                                                  true "dashboard id"
+// @Param       environment_id path     string                                                    true  "环境ID"
+// @Param       dashboard_id   path     uint                                                      true  "dashboard id"
 // @Success     200            {object} handlers.ResponseStruct{Data=models.MonitorDashboard} "监控dashboard列表"
 // @Router      /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [get]
 // @Security    JWT
@@ -67,6 +69,76 @@ func (h *ObservabilityHandler) DashboardDetail(c *gin.Context) {
 	}
 
 	handlers.OK(c, ret)
+}
+
+// DashboardDetail 监控dashboard panne指标查询
+// @Tags        Observability
+// @Summary     监控dashboard panne指标查询
+// @Description 监控dashboard panne指标查询
+// @Accept      json
+// @Produce     json
+// @Param       environment_id path     string                                                true "环境ID"
+// @Param       dashboard_id   path     uint                                                  true "dashboard id"
+// @Param       panel_id       query    uint                                                      true  "panel id"
+// @Param       start          query    string                                                    false "开始时间，默认现在-30m"
+// @Param       end            query    string                                                    false "结束时间，默认现在"
+// @Param       step           query    int                                                       false "step, 单位秒，默认0"
+// @Success     200            {object} handlers.ResponseStruct{Data=map[string]prommodel.Matrix} "pannel 查询结果"
+// @Router      /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id}/query [get]
+// @Security    JWT
+func (h *ObservabilityHandler) DashboardQuery(c *gin.Context) {
+	querys, err := h.getMetricQuerysByDashboard(c)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	ret := map[string]prommodel.Matrix{}
+	for _, query := range querys {
+		if err := h.Execute(c.Request.Context(), query.Cluster, func(ctx context.Context, cli agents.Client) error {
+			if err := h.mutateMetricQueryReq(ctx, query); err != nil {
+				return err
+			}
+			result, err := cli.Extend().PrometheusQueryRange(ctx, query.Expr, query.Start, query.End, query.Step)
+			if err != nil {
+				return err
+			}
+			ret[query.TargetName] = result
+			return nil
+		}); err != nil {
+			handlers.NotOK(c, errors.Wrap(err, "query dashboard failed"))
+			return
+		}
+	}
+	handlers.OK(c, ret)
+}
+
+func (h *ObservabilityHandler) getMetricQuerysByDashboard(c *gin.Context) ([]*MetricQueryReq, error) {
+	dash := models.MonitorDashboard{}
+	querys := []*MetricQueryReq{}
+	if err := h.GetDB().Preload("Environment.Cluster").Find(&dash, "id = ?", c.Param("dashboard_id")).Error; err != nil {
+		return nil, err
+	}
+	panelID, err := strconv.Atoi(c.Query("panel_id"))
+	if err != nil {
+		return nil, errors.Wrap(err, "panel id not valid")
+	}
+	if panelID >= len(dash.Graphs) || panelID < 0 {
+		return nil, errors.Errorf("panel id %d out of range", panelID)
+	}
+
+	for _, target := range dash.Graphs[panelID].Targets {
+		querys = append(querys, &MetricQueryReq{
+			Cluster:         dash.Environment.Cluster.ClusterName,
+			Namespace:       dash.Environment.Namespace,
+			Start:           c.Query("start"),
+			End:             c.Query("end"),
+			Step:            c.Query("step"),
+			Expr:            target.Expr,
+			PromqlGenerator: target.PromqlGenerator,
+			TargetName:      target.TargetName,
+		})
+	}
+	return querys, nil
 }
 
 // CreateDashboard 创建监控dashboad

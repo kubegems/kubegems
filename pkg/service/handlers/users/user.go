@@ -77,7 +77,7 @@ func (h *UserHandler) ListUser(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       user_id path     uint                                      true "user_id"
-// @Success     200     {object} handlers.ResponseStruct{Data=models.User} "User"
+// @Success     200   {object} handlers.ResponseStruct{Data=models.User} "User"
 // @Router      /v1/user/{user_id} [get]
 // @Security    JWT
 func (h *UserHandler) RetrieveUser(c *gin.Context) {
@@ -134,7 +134,7 @@ func (h *UserHandler) PostUser(c *gin.Context) {
 // @Description self update
 // @Accept      json
 // @Produce     json
-// @Param       param   body     models.User                               true "表单"
+// @Param       param body     models.User                               true "表单"
 // @Success     200     {object} handlers.ResponseStruct{Data=models.User} "User"
 // @Router      /v1/user [put]
 // @Security    JWT

@@ -54,7 +54,8 @@ type MetricQueryReq struct {
 	End   string // 结束时间
 	Step  string // 样本间隔, 单位秒
 
-	Label string // 要查询的标签值
+	Label      string // 要查询的标签值
+	TargetName string // panel中多个查询的id
 }
 
 // Query 监控指标查询
@@ -78,12 +79,15 @@ type MetricQueryReq struct {
 // @Security    JWT
 func (h *ObservabilityHandler) QueryRange(c *gin.Context) {
 	ret := prommodel.Matrix{}
-	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
-		return h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
-			var err error
-			ret, err = cli.Extend().PrometheusQueryRange(ctx, req.Expr, req.Start, req.End, req.Step)
-			return err
-		})
+	req := h.getMetricQuery(c)
+	if err := h.mutateMetricQueryReq(c, req); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
+		var err error
+		ret, err = cli.Extend().PrometheusQueryRange(ctx, req.Expr, req.Start, req.End, req.Step)
+		return err
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -114,18 +118,18 @@ func (h *ObservabilityHandler) QueryRange(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 	ret := []string{}
-	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
-		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
-			var err error
-			matchs := req.Query.GetVectorSelectors()
-			ret, err = cli.Extend().GetPrometheusLabelValues(ctx, matchs, req.Label, req.Start, req.End)
-			return err
-		}); err != nil {
-			return i18n.Errorf(c, "get prometheus label values failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
-		}
-		return nil
-	}); err != nil {
+	req := h.getMetricQuery(c)
+	if err := h.mutateMetricQueryReq(c, req); err != nil {
 		handlers.NotOK(c, err)
+		return
+	}
+	if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
+		var err error
+		matchs := req.Query.GetVectorSelectors()
+		ret, err = cli.Extend().GetPrometheusLabelValues(ctx, matchs, req.Label, req.Start, req.End)
+		return err
+	}); err != nil {
+		handlers.NotOK(c, i18n.Errorf(c, "get prometheus label values failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err))
 		return
 	}
 
@@ -150,18 +154,18 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 	ret := []string{}
-	if err := h.withQueryParam(c, func(req *MetricQueryReq) error {
-		if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
-			var err error
-			matchs := req.Query.GetVectorSelectors()
-			ret, err = cli.Extend().GetPrometheusLabelNames(ctx, matchs, req.Start, req.End)
-			return err
-		}); err != nil {
-			return i18n.Errorf(c, "get prometheus label names failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err)
-		}
-		return nil
-	}); err != nil {
+	req := h.getMetricQuery(c)
+	if err := h.mutateMetricQueryReq(c, req); err != nil {
 		handlers.NotOK(c, err)
+		return
+	}
+	if err := h.Execute(c.Request.Context(), req.Cluster, func(ctx context.Context, cli agents.Client) error {
+		var err error
+		matchs := req.Query.GetVectorSelectors()
+		ret, err = cli.Extend().GetPrometheusLabelNames(ctx, matchs, req.Start, req.End)
+		return err
+	}); err != nil {
+		handlers.NotOK(c, i18n.Errorf(c, "get prometheus label names failed, cluster: %s, promql: %s, %w", req.Cluster, req.Expr, err))
 		return
 	}
 
@@ -231,8 +235,8 @@ func (h *ObservabilityHandler) OtelMetricsGraphs(c *gin.Context) {
 	handlers.OK(c, ret)
 }
 
-func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *MetricQueryReq) error) error {
-	q := &MetricQueryReq{
+func (h *ObservabilityHandler) getMetricQuery(c *gin.Context) *MetricQueryReq {
+	return &MetricQueryReq{
 		Cluster:   c.Param("cluster"),
 		Namespace: c.Param("namespace"),
 		Start:     c.Query("start"),
@@ -248,6 +252,9 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			LabelPairs: c.QueryMap("labelpairs"),
 		},
 	}
+}
+
+func (h *ObservabilityHandler) mutateMetricQueryReq(ctx context.Context, q *MetricQueryReq) error {
 	if q.Namespace == "_all" {
 		q.Namespace = ""
 	}
@@ -262,7 +269,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 	// 优先选用原生promql
 	if q.PromqlGenerator.Notpl() {
 		if q.Expr == "" {
-			return i18n.Errorf(c, "Template and native promql cannot be empty at the same time")
+			return i18n.Errorf(ctx, "Template and native promql cannot be empty at the same time")
 		}
 		if err := observe.CheckQueryExprNamespace(q.Expr, q.Namespace); err != nil {
 			return err
@@ -272,7 +279,7 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 			return err
 		}
 		if !q.PromqlGenerator.Tpl.Namespaced && q.Namespace != "" {
-			return i18n.Errorf(c, "Non namespace resources cannot filter the project environment")
+			return i18n.Errorf(ctx, "Non namespace resources cannot filter the project environment")
 		}
 		q.Expr = q.PromqlGenerator.Tpl.Expr
 	}
@@ -303,8 +310,8 @@ func (h *ObservabilityHandler) withQueryParam(c *gin.Context, f func(req *Metric
 		})
 	}
 	q.Expr = q.Query.String()
-
-	return f(q)
+	log.Debugf("query cluster: %s, expr: %s", q.Cluster, q.Expr)
+	return nil
 }
 
 // ListScopes 获取promql模板一级目录scope
@@ -576,11 +583,13 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 			return err
 		}
 		for _, dash := range dashborads {
-			for _, v := range dash.Graphs {
-				if v.Scope == rule.Resource.Scope.Name &&
-					v.Resource == rule.Resource.Name &&
-					v.Rule == rule.Name {
-					return fmt.Errorf("此模板正在被环境: %s 中的监控大盘: %s 使用", dash.Environment.EnvironmentName, dash.Name)
+			for _, graph := range dash.Graphs {
+				for _, target := range graph.Targets {
+					if target.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
+						target.PromqlGenerator.Resource == rule.Resource.Name &&
+						target.PromqlGenerator.Rule == rule.Name {
+						return fmt.Errorf("此模板正在被环境: %s 中的监控大盘: %s 使用", dash.Environment.EnvironmentName, dash.Name)
+					}
 				}
 			}
 		}
@@ -590,11 +599,13 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 			return err
 		}
 		for _, tpl := range tpls {
-			for _, v := range tpl.Graphs {
-				if v.Scope == rule.Resource.Scope.Name &&
-					v.Resource == rule.Resource.Name &&
-					v.Rule == rule.Name {
-					return fmt.Errorf("此模板正在被监控大盘模板: %s 使用", tpl.Name)
+			for _, graph := range tpl.Graphs {
+				for _, target := range graph.Targets {
+					if target.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
+						target.PromqlGenerator.Resource == rule.Resource.Name &&
+						target.PromqlGenerator.Rule == rule.Name {
+						return fmt.Errorf("此模板正在被监控大盘模板: %s 使用", tpl.Name)
+					}
 				}
 			}
 		}

@@ -23,6 +23,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
+	"kubegems.io/kubegems/pkg/utils/set"
 )
 
 // PromqlTplScope
@@ -74,41 +75,49 @@ type PromqlTplRule struct {
 }
 
 func CheckGraphs(graphs []prometheus.MetricGraph, namespace string, tplGetter templates.TplGetter) error {
+	targetSet := set.NewSet[string]()
 	// 逐个校验graph
-	for i, v := range graphs {
-		if v.Name == "" {
+	for i, graph := range graphs {
+		if graph.Name == "" {
 			return fmt.Errorf("图表名不能为空")
 		}
-
-		if v.PromqlGenerator.Notpl() {
-			if v.Expr == "" {
-				return fmt.Errorf("模板与原生promql不能同时为空")
-			}
-			query, err := promql.New(v.Expr)
-			if err != nil {
+		if graph.Unit != "" {
+			if _, err := prometheus.ParseUnit(graph.Unit); err != nil {
 				return err
 			}
-			if namespace != "" {
-				// 强制添加namespace selector
-				graphs[i].Expr = query.AddLabelMatchers(&labels.Matcher{
-					Type:  labels.MatchEqual,
-					Name:  "namespace",
-					Value: namespace,
-				}).String()
+		}
+		for j, target := range graph.Targets {
+			if targetSet.Has(target.TargetName) {
+				return fmt.Errorf("duplicated target name: %s", target.TargetName)
 			}
-			if v.Unit != "" {
-				if _, err := prometheus.ParseUnit(v.Unit); err != nil {
+			targetSet.Append(target.TargetName)
+
+			if target.PromqlGenerator.Notpl() {
+				if target.Expr == "" {
+					return fmt.Errorf("模板与原生promql不能同时为空")
+				}
+				query, err := promql.New(target.Expr)
+				if err != nil {
 					return err
 				}
+				if namespace != "" {
+					// 强制添加namespace selector
+					graphs[i].Targets[j].Expr = query.AddLabelMatchers(&labels.Matcher{
+						Type:  labels.MatchEqual,
+						Name:  "namespace",
+						Value: namespace,
+					}).String()
+				}
+
+			} else {
+				if err := target.PromqlGenerator.SetTpl(tplGetter); err != nil {
+					return err
+				}
+				if !target.PromqlGenerator.Tpl.Namespaced {
+					return fmt.Errorf("图表: %s-%s 错误！不能查询集群范围资源", graph.Name, target.TargetName)
+				}
+				graphs[i].Unit = target.PromqlGenerator.Unit
 			}
-		} else {
-			if err := v.PromqlGenerator.SetTpl(tplGetter); err != nil {
-				return err
-			}
-			if !v.Tpl.Namespaced {
-				return fmt.Errorf("图表: %s 错误！不能查询集群范围资源", v.Name)
-			}
-			graphs[i].Unit = v.PromqlGenerator.Unit
 		}
 	}
 	return nil

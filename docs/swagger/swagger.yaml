@@ -3867,6 +3867,9 @@ definitions:
       logQL:
         description: logql
         type: string
+      timeRange:
+        description: 时间区间
+        type: string
     type: object
   models.LogQueryHistoryWithCount:
     properties:
@@ -3889,6 +3892,8 @@ definitions:
       labelJSON:
         type: string
       logQL:
+        type: string
+      timeRanges:
         type: string
       total:
         type: string
@@ -4775,6 +4780,8 @@ definitions:
     type: object
   observe.AlertReceiver:
     properties:
+      ChannelStatus:
+        type: integer
       alertChannel:
         $ref: '#/definitions/models.AlertChannel'
       interval:
@@ -4783,6 +4790,8 @@ definitions:
     type: object
   observe.LoggingAlertRule:
     properties:
+      ChannelStatus:
+        type: integer
       alertLevels:
         description: 告警级别
         items:
@@ -4844,6 +4853,8 @@ definitions:
     type: object
   observe.MonitorAlertRule:
     properties:
+      ChannelStatus:
+        type: integer
       alertLevels:
         description: 告警级别
         items:
@@ -4915,25 +4926,12 @@ definitions:
     type: object
   prometheus.MetricGraph:
     properties:
-      expr:
-        type: string
-      labelpairs:
-        additionalProperties:
-          type: string
-        description: 标签键值对
-        type: object
       name:
-        description: graph名
         type: string
-      resource:
-        description: 告警资源, eg. node、pod
-        type: string
-      rule:
-        description: 告警规则名, eg. cpuUsage、memoryUsagePercent
-        type: string
-      scope:
-        description: scope
-        type: string
+      targets:
+        items:
+          $ref: '#/definitions/prometheus.Target'
+        type: array
       unit:
         type: string
     type: object
@@ -4976,6 +4974,15 @@ definitions:
           LastError      string         `json:"lastError,omitempty"`
           EvaluationTime float64        `json:"evaluationTime"`
           LastEvaluation time.Time      `json:"lastEvaluation"`
+        type: string
+    type: object
+  prometheus.Target:
+    properties:
+      expr:
+        type: string
+      promqlGenerator:
+        $ref: '#/definitions/prometheus.PromqlGenerator'
+      targetName:
         type: string
     type: object
   resource.Quantity:
@@ -21583,6 +21590,60 @@ paths:
       summary: 更新监控dashboad
       tags:
       - Observability
+  /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id}/query:
+    get:
+      consumes:
+      - application/json
+      description: 监控dashboard panne指标查询
+      parameters:
+      - description: 环境ID
+        in: path
+        name: environment_id
+        required: true
+        type: string
+      - description: dashboard id
+        in: path
+        name: dashboard_id
+        required: true
+        type: integer
+      - description: panel id
+        in: query
+        name: panel_id
+        required: true
+        type: integer
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      - description: step, 单位秒，默认0
+        in: query
+        name: step
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: pannel 查询结果
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  additionalProperties:
+                    items:
+                      $ref: '#/definitions/model.SampleStream'
+                    type: array
+                  type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 监控dashboard panne指标查询
+      tags:
+      - Observability
   /v1/observability/monitor/exporters/{name}/schema:
     get:
       consumes:
@@ -30627,6 +30688,34 @@ paths:
       security:
       - JWT: []
       summary: 创建User
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: self update
+      parameters:
+      - description: 表单
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/models.User'
+              type: object
+      security:
+      - JWT: []
+      summary: self update information
       tags:
       - User
   /v1/user/_/environment/{environment_id}:
