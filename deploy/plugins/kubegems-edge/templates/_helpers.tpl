@@ -63,6 +63,12 @@ Return the proper serviceAccount name
 {{- end -}}
 {{- end -}}
 
+
+# {{- include "kubegems-edge.hostname" .Values.host -}}
+{{- define "kubegems-edge.hostname" -}}
+{{ first (regexSplit ":" . -1) }}
+{{- end -}}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).

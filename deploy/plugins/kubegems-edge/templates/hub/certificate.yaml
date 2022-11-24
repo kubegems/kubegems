@@ -17,6 +17,7 @@ spec:
   dnsNames:
     - {{ printf "%s.%s.svc" (include "kubegems-edge.hub.fullname" .) .Release.Namespace }}
     - {{ printf "%s.%s.svc.%s" (include "kubegems-edge.hub.fullname" .) .Release.Namespace .Values.clusterDomain }}
+    - {{ include "kubegems-edge.hostname" .Values.server.host }}
   issuerRef:
     kind: Issuer
     name: {{ include "kubegems-edge.fullname" . }}

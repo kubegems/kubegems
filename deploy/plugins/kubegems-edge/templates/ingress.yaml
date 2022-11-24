@@ -24,7 +24,7 @@ spec:
   ingressClassName: {{ .Values.ingress.ingressClassName }}
   rules:
     {{- if .Values.hub.enabled }}
-    - host: {{ .Values.hub.host | quote }}
+    - host: {{ include "kubegems-edge.hostname" .Values.hub.host | quote }}
       http:
         paths:
           - path: {{ .Values.ingress.path }}
@@ -34,7 +34,7 @@ spec:
             backend: {{- include "common.ingress.backend" (dict "serviceName" (include "kubegems-edge.hub.fullname" .) "servicePort" "grpc" "context" $)  | nindent 14 }}
     {{- end -}}
     {{- if .Values.server.enabled }}
-    - host: {{ .Values.server.host | quote }}
+    - host: {{ include "kubegems-edge.hostname" .Values.server.host | quote }}
       http:
         paths:
           - path: {{ .Values.ingress.path }}

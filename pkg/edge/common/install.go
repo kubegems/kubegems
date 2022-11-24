@@ -17,6 +17,7 @@ package common
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
@@ -31,19 +32,13 @@ func RenderManifets(uid string, image string, edgehubaddress string, certs v1bet
 		"app.kubernetes.io/name":      "kubegems-edge",
 		"app.kubernetes.io/component": "agent",
 	}
-	agentCertsSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      installname + "-secret",
-			Namespace: installnamespace,
-		},
-		Type: corev1.SecretTypeTLS,
-		Data: map[string][]byte{
-			corev1.TLSCertKey:              certs.Cert,
-			corev1.TLSPrivateKeyKey:        certs.Key,
-			corev1.ServiceAccountRootCAKey: certs.CA,
-		},
-	}
+	certsSecretname := installname + "-secret"
 	return []client.Object{
+		&corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: installnamespace,
+			},
+		},
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      installname,
@@ -63,6 +58,8 @@ func RenderManifets(uid string, image string, edgehubaddress string, certs v1bet
 								Name:  "agent",
 								Image: image,
 								Args: []string{
+									"edge",
+									"agent",
 									"--listen=:8080",
 									"--edgehubaddr=" + edgehubaddress,
 									"--clientid=" + uid,
@@ -76,7 +73,7 @@ func RenderManifets(uid string, image string, edgehubaddress string, certs v1bet
 								VolumeMounts: []corev1.VolumeMount{
 									{
 										Name:      "certs",
-										MountPath: "/certs",
+										MountPath: "/app/certs",
 									},
 								},
 							},
@@ -86,7 +83,7 @@ func RenderManifets(uid string, image string, edgehubaddress string, certs v1bet
 								Name: "certs",
 								VolumeSource: corev1.VolumeSource{
 									Secret: &corev1.SecretVolumeSource{
-										SecretName: agentCertsSecret.Name,
+										SecretName: certsSecretname,
 									},
 								},
 							},
@@ -111,7 +108,41 @@ func RenderManifets(uid string, image string, edgehubaddress string, certs v1bet
 				},
 			},
 		},
-		agentCertsSecret,
-		// RBAC
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      certsSecretname,
+				Namespace: installnamespace,
+			},
+			Type: corev1.SecretTypeTLS,
+			Data: map[string][]byte{
+				corev1.TLSCertKey:              certs.Cert,
+				corev1.TLSPrivateKeyKey:        certs.Key,
+				corev1.ServiceAccountRootCAKey: certs.CA,
+			},
+		},
+		// cluster RBAC
+		&corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      installname,
+				Namespace: installnamespace,
+			},
+		},
+		&rbacv1.ClusterRoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: installname,
+			},
+			RoleRef: rbacv1.RoleRef{
+				APIGroup: rbacv1.GroupName,
+				Kind:     "ClusterRole",
+				Name:     "cluster-admin",
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Name:      installname,
+					Namespace: installnamespace,
+				},
+			},
+		},
 	}
 }

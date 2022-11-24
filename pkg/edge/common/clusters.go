@@ -91,6 +91,7 @@ type PrecreateOptions struct {
 	UID          string            `json:"uid,omitempty"`
 	HubName      string            `json:"hubName,omitempty"`      // hub name edge cluster registered to
 	Annotations  map[string]string `json:"annotations,omitempty"`  // edge annotations
+	Labels       map[string]string `json:"labels,omitempty"`       // edge labels
 	AgentImage   string            `json:"agentImage,omitempty"`   // agent image edge cluster used to register
 	CreateCert   bool              `json:"createCert,omitempty"`   // pre generated edge certificate
 	CertExpireAt *time.Time        `json:"certExpireAt,omitempty"` // the expiration of the certificate
@@ -109,6 +110,12 @@ func (m *EdgeClusterManager) PreCreate(ctx context.Context, uid string, token st
 		}
 		for k, v := range options.Annotations {
 			in.Annotations[k] = v
+		}
+		if in.Labels == nil {
+			in.Labels = map[string]string{}
+		}
+		for k, v := range options.Labels {
+			in.Labels[k] = v
 		}
 		in.Spec.Register.HubName = options.HubName
 		in.Spec.Register.Image = options.AgentImage

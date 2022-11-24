@@ -35,10 +35,20 @@ spec:
       port: {{ .Values.hub.service.ports.http }}
       protocol: TCP
       targetPort: http
+      {{- if (and (or (eq .Values.hub.service.type "NodePort") (eq .Values.hub.service.type "LoadBalancer")) (not (empty .Values.hub.service.nodePorts.http))) }}
+      nodePort: {{ .Values.hub.service.nodePorts.http }}
+      {{- else if eq .Values.hub.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
     - name: grpc
       port: {{ .Values.hub.service.ports.grpc }}
       protocol: TCP
       targetPort: grpc
+      {{- if (and (or (eq .Values.hub.service.type "NodePort") (eq .Values.hub.service.type "LoadBalancer")) (not (empty .Values.hub.service.nodePorts.grpc))) }}
+      nodePort: {{ .Values.hub.service.nodePorts.grpc }}
+      {{- else if eq .Values.hub.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
     {{- if .Values.hub.metrics.enabled }}
     - name: metrics
       port: {{ .Values.hub.metrics.service.port }}

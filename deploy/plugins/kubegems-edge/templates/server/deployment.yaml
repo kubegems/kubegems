@@ -80,6 +80,7 @@ spec:
             - --serverid={{ .Values.server.serverID }}
             - --listen=:{{ .Values.server.containerPorts.http }}
             - --listengrpc=:{{ .Values.server.containerPorts.grpc }}
+            - --host={{ .Values.server.host }}
             {{- if .Values.server.extraArgs }}
             {{- include "common.tplvalues.render" (dict "value" .Values.server.extraArgs "context" $) | nindent 12 }}
             {{- end }}

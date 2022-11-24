@@ -131,7 +131,7 @@ build-binaries:
 	- mkdir -p ${BIN_DIR}
 	@cp ${BIN_DIR}/kubegems-${OS}-${ARCH} ${BIN_DIR}/kubegems
 
-build-files: build-binaries ## Build around files
+build-files: ## Build around files
 	go run scripts/offline-plugins/main.go
 	cp -rf deploy/*.yaml ${BIN_DIR}/plugins/
 	mkdir -p ${BIN_DIR}/config
