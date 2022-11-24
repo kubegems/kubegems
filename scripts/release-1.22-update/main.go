@@ -363,10 +363,12 @@ func getChannels(cli client.Client) {
 							Name: rec.Name,
 							ChannelConfig: channels.ChannelConfig{
 								ChannelIf: &channels.Feishu{
-									ChannelType: channels.TypeFeishu,
-									URL:         u.Query().Get("url"),
-									At:          u.Query().Get("at"),
-									SignSecret:  u.Query().Get("signSecret"),
+									BaseChannel: channels.BaseChannel{
+										ChannelType: channels.TypeFeishu,
+									},
+									URL:        u.Query().Get("url"),
+									At:         u.Query().Get("at"),
+									SignSecret: u.Query().Get("signSecret"),
 								},
 							},
 							TenantID: tenantID,
@@ -376,8 +378,10 @@ func getChannels(cli client.Client) {
 							Name: rec.Name,
 							ChannelConfig: channels.ChannelConfig{
 								ChannelIf: &channels.Webhook{
-									ChannelType: channels.TypeWebhook,
-									URL:         *wc.URL,
+									BaseChannel: channels.BaseChannel{
+										ChannelType: channels.TypeWebhook,
+									},
+									URL: *wc.URL,
 								},
 							},
 							TenantID: tenantID,
@@ -398,7 +402,9 @@ func getChannels(cli client.Client) {
 						Name: rec.Name,
 						ChannelConfig: channels.ChannelConfig{
 							ChannelIf: &channels.Email{
-								ChannelType:  channels.TypeEmail,
+								BaseChannel: channels.BaseChannel{
+									ChannelType: channels.TypeEmail,
+								},
 								SMTPServer:   ec.Smarthost,
 								RequireTLS:   *rec.EmailConfigs[i].RequireTLS,
 								From:         ec.From,
