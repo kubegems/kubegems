@@ -28,17 +28,17 @@ import (
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
-func (c TypedClient) DialWebsocket(ctx context.Context, rpath string, headers http.Header) (*websocket.Conn, *http.Response, error) {
+func (c DelegateClient) DialWebsocket(ctx context.Context, rpath string, headers http.Header) (*websocket.Conn, *http.Response, error) {
 	wsu := (&url.URL{
 		Scheme: func() string {
-			if c.BaseAddr.Scheme == "http" {
+			if c.BaseAddr().Scheme == "http" {
 				return "ws"
 			} else {
 				return "wss"
 			}
 		}(),
-		Host: c.BaseAddr.Host,
-		Path: path.Join(c.BaseAddr.Path, rpath),
+		Host: c.BaseAddr().Host,
+		Path: path.Join(c.BaseAddr().Path, rpath),
 	}).String()
 	return c.websocket.DialContext(ctx, wsu, headers)
 }
@@ -114,7 +114,7 @@ func (c TypedClient) DoRawRequest(ctx context.Context, clientreq Request) (*http
 	}
 	req.URL.RawQuery = query.Encode()
 
-	return c.http.Do(req)
+	return c.HTTPClient.Do(req)
 }
 
 func (c TypedClient) DoRequest(ctx context.Context, req Request) error {

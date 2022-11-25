@@ -21,6 +21,7 @@ type Tunnel interface {
 
 type TunnelOptions struct {
 	SendRouteChange bool
+	IsDefaultOut    bool // send to this channel if no route
 }
 
 type ConnectedTunnel struct {

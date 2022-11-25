@@ -107,7 +107,7 @@ func Run(ctx context.Context, options *Options) error {
 	}
 	if updtream := options.UpstreamAddr; updtream != "" {
 		eg.Go(func() error {
-			return server.ConnectUpstream(ctx, options.UpstreamAddr, tlsConfig, options.Token, nil)
+			return server.ConnectUpstreamWithRetry(ctx, options.UpstreamAddr, tlsConfig, options.Token, nil)
 		})
 	}
 	return eg.Wait()
@@ -141,20 +141,30 @@ func (s GrpcTunnelServer) ServeGrpc(ctx context.Context, listen string, tlsConfi
 	return system.ListenAndServeGRPCContext(ctx, listen, s.GrpcServer(tlsConfig))
 }
 
-func (s GrpcTunnelServer) ConnectUpstream(ctx context.Context, addr string, tlsConfig *tls.Config, token string, annotations Annotations) error {
-	log.FromContextOrDiscard(ctx).Info("connecting upstream", "addr", addr)
+func (s GrpcTunnelServer) ConnectUpstreamWithRetry(ctx context.Context, addr string, tlsConfig *tls.Config, token string, annotations Annotations) error {
 	return wait.PollImmediateInfiniteWithContext(ctx, DefaultRetryInterval, func(ctx context.Context) (done bool, err error) {
-		if err := s.connectUpstream(ctx, addr, tlsConfig, token, annotations); err != nil {
-			log.Error(err, "connect upstream")
+		if err := s.ConnectUpstream(ctx, addr, tlsConfig, token, annotations); err != nil {
+			log.Error(err, "on connect upstream")
 		}
 		return false, nil
 	})
 }
 
-func (s GrpcTunnelServer) connectUpstream(ctx context.Context, addr string, tlsConfig *tls.Config, token string, annotations Annotations) error {
-	c, err := grpc.DialContext(ctx, addr,
-		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
-	)
+func (s GrpcTunnelServer) ConnectUpstream(ctx context.Context, addr string, tlsConfig *tls.Config, token string, annotations Annotations) error {
+	log.FromContextOrDiscard(ctx).Info("connecting upstream", "addr", addr, "annotations", annotations)
+	dialoptions := []grpc.DialOption{}
+	if tlsConfig != nil {
+		dialoptions = append(dialoptions,
+			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+		)
+	} else {
+		dialoptions = append(dialoptions,
+			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
+				InsecureSkipVerify: true,
+			})),
+		)
+	}
+	c, err := grpc.DialContext(ctx, addr, dialoptions...)
 	if err != nil {
 		return err
 	}
@@ -169,5 +179,8 @@ func (s GrpcTunnelServer) connectUpstream(ctx context.Context, addr string, tlsC
 		return err
 	}
 	peer := &GRPCTunnel[proto.PeerService_ConnectClient]{inner: stream}
-	return s.TunnelServer.Connect(ctx, peer, token, annotations, TunnelOptions{SendRouteChange: true})
+	return s.TunnelServer.Connect(ctx, peer, token, annotations, TunnelOptions{
+		SendRouteChange: true,
+		IsDefaultOut:    true, // as default out if no route info
+	})
 }

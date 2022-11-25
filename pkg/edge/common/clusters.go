@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -43,6 +44,9 @@ const (
 	AnnotationKeyEdgeAgentRegisterAddress = "edge.kubegems.io/edge-agent-register-address"
 	AnnotationKeyKubernetesVersion        = "edge.kubegems.io/kubernetes-version"
 	AnnotationKeyAPIserverAddress         = "edge.kubegems.io/apiserver-address"
+
+	// temporary connection do not write to database
+	AnnotationIsTemporaryConnect = "edge.kubegems.io/temporary-connect"
 )
 
 type EdgeClusterManager struct {
@@ -217,6 +221,10 @@ func (m *EdgeClusterManager) gencert(cn string, expire *time.Time, hub *v1beta1.
 }
 
 func (m *EdgeClusterManager) SetTunnelConnectedStatus(ctx context.Context, name string, connected bool, anno map[string]string) error {
+	if istemp, _ := strconv.ParseBool(anno[AnnotationIsTemporaryConnect]); istemp {
+		log.Info("ignore temporary connection", "name", name, "annotations", anno)
+		return nil
+	}
 	updatefunc := func(cluster *v1beta1.EdgeCluster) error {
 		now := metav1.Now()
 		if connected {

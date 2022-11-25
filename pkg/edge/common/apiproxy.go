@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/log"
@@ -48,8 +49,22 @@ func (a *EdgeClusterAPI) Proxy(req *restful.Request, resp *restful.Response) {
 			req.URL.Scheme = proxyTarget.Scheme
 			req.URL.Host = proxyTarget.Host
 			req.URL.Path = path
+			backcompactAddV1Prefix(req)
 		},
 		Transport: a.Tunnel.TransportOnTunnel(uid),
 	}
 	proxy.ServeHTTP(resp, req.Request)
+}
+
+// in original kubegems, api proxy to agent added "/v1" prefix
+func backcompactAddV1Prefix(req *http.Request) {
+	if strings.HasPrefix(req.URL.Path, "/v1") ||
+		req.URL.Path == "/healthz" ||
+		req.URL.Path == "/version" ||
+		strings.HasPrefix(req.URL.Path, "custom") ||
+		strings.HasPrefix(req.URL.Path, "internal") {
+		return
+	}
+	// add "/v1" prefix
+	req.URL.Path = "/v1" + req.URL.Path
 }

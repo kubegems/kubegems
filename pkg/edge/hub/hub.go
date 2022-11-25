@@ -103,7 +103,7 @@ func (s *EdgeHubServer) Run(ctx context.Context) error {
 	eg.Go(func() error {
 		c := s.tlsConfig.Clone()
 		c.InsecureSkipVerify = true
-		return s.ConnectUpstream(ctx, s.options.EdgeServerAddr, c, "", s.upstreamAnnotations)
+		return s.ConnectUpstreamWithRetry(ctx, s.options.EdgeServerAddr, c, "", s.upstreamAnnotations)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)

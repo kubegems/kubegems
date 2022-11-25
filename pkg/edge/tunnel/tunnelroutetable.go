@@ -23,9 +23,10 @@ import (
 )
 
 type RouteTable struct {
-	mu      sync.RWMutex
-	s       *TunnelServer
-	records map[string]*ChannelWithChildren
+	mu         sync.RWMutex
+	s          *TunnelServer
+	records    map[string]*ChannelWithChildren
+	defaultout *ConnectedTunnel
 }
 
 func NewEmptyRouteTable(s *TunnelServer) *RouteTable {
@@ -53,6 +54,10 @@ func (t *RouteTable) Select(dest string) (*ConnectedTunnel, error) {
 			return val.Channel, nil
 		}
 	}
+	// try default out
+	if t.defaultout != nil {
+		return t.defaultout, nil
+	}
 	return nil, fmt.Errorf("no destination for peer %s", dest)
 }
 
@@ -68,6 +73,11 @@ func (t *RouteTable) Connect(tun *ConnectedTunnel, data PacketDataRoute) {
 		Children:    data.Peers,
 	}
 	t.mu.Unlock()
+
+	// default out tunnel
+	if tun.Options.IsDefaultOut {
+		t.defaultout = tun
+	}
 
 	changes := maps.Clone(data.Peers)
 	changes[tun.ID] = data.Annotations

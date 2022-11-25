@@ -768,16 +768,7 @@ func UpdateContentImages(ctx context.Context, store GitStore, images []string, v
 		updated := false
 		ObjectPodTemplateFunc(obj, func(template *corev1.PodTemplateSpec) {
 			// 更新镜像
-			for i, c := range template.Spec.Containers {
-				for _, image := range images {
-					// Cautious:
-					//  foo/bar Match foo/bar:v1
-					//  foo/bar:v1 !Match foo/bar
-					if v1alpha1.KustomizeImage(c.Image).Match(v1alpha1.KustomizeImage(image)) {
-						template.Spec.Containers[i].Image = image
-					}
-				}
-			}
+			UpdateImage(template, images)
 			// 更新 version
 			template.Labels[LabelIstioVersion] = version
 			updated = true
@@ -789,4 +780,18 @@ func UpdateContentImages(ctx context.Context, store GitStore, images []string, v
 		}
 	}
 	return nil
+}
+
+func UpdateImage(template *corev1.PodTemplateSpec, images []string) {
+	// 更新镜像
+	for i, c := range template.Spec.Containers {
+		for _, image := range images {
+			// Cautious:
+			//  foo/bar Match foo/bar:v1
+			//  foo/bar:v1 !Match foo/bar
+			if v1alpha1.KustomizeImage(c.Image).Match(v1alpha1.KustomizeImage(image)) {
+				template.Spec.Containers[i].Image = image
+			}
+		}
+	}
 }

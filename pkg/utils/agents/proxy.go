@@ -34,7 +34,7 @@ import (
 )
 
 func (c TypedClient) Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error {
-	gvk, err := apiutil.GVKForObject(obj, c.scheme)
+	gvk, err := apiutil.GVKForObject(obj, c.RuntimeScheme)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (c TypedClient) Proxy(ctx context.Context, obj client.Object, port int, req
 			req.URL.Path = target.Path + req.URL.Path
 			req.Host = target.Host
 		},
-		Transport:      c.http.Transport,
+		Transport:      c.HTTPClient.Transport,
 		ModifyResponse: rewritefunc,
 	}).ServeHTTP(writer, req)
 	return nil
@@ -198,10 +198,11 @@ func (p *PortForwarder) Stop() {
 	p.ln.Close()
 }
 
-//  PortForward
+//	PortForward
+//
 // Deprecated: 无法使用，因 service 与 agent 中间还有一层 http proxy(apiserver). 无法直接使用 tcp 。
 func (c TypedClient) PortForward(ctx context.Context, obj client.Object, port int) (*PortForwarder, error) {
-	gvk, err := apiutil.GVKForObject(obj, c.scheme)
+	gvk, err := apiutil.GVKForObject(obj, c.RuntimeScheme)
 	if err != nil {
 		return nil, err
 	}

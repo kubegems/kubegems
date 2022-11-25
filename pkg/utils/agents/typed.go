@@ -24,24 +24,35 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/websocket"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 const jsonContentType = "application/json"
 
+func NewSimpleTypedClient(baseaddr string) (*TypedClient, error) {
+	agenturl, err := url.Parse(baseaddr)
+	if err != nil {
+		return nil, err
+	}
+	return &TypedClient{
+		BaseAddr:      agenturl,
+		RuntimeScheme: kube.GetScheme(),
+		HTTPClient:    http.DefaultClient,
+	}, nil
+}
+
 type TypedClient struct {
-	ClientMeta
-	scheme    *runtime.Scheme
-	http      *http.Client
-	websocket *websocket.Dialer
+	BaseAddr      *url.URL
+	RuntimeScheme *runtime.Scheme
+	HTTPClient    *http.Client
 }
 
 var _ client.WithWatch = TypedClient{}
@@ -51,7 +62,7 @@ func (c TypedClient) RESTMapper() meta.RESTMapper {
 }
 
 func (c TypedClient) Scheme() *runtime.Scheme {
-	return c.scheme
+	return c.RuntimeScheme
 }
 
 func (c TypedClient) Status() client.StatusWriter {
@@ -197,7 +208,7 @@ func (c TypedClient) request(ctx context.Context, method, contenttype string,
 	}
 	req.Header.Set("Content-Type", contenttype)
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -220,7 +231,7 @@ func (c TypedClient) request(ctx context.Context, method, contenttype string,
 }
 
 func (c TypedClient) requestAddr(obj runtime.Object, method string, namespace, name string, queries map[string]string) (string, error) {
-	gvk, err := apiutil.GVKForObject(obj, c.scheme)
+	gvk, err := apiutil.GVKForObject(obj, c.RuntimeScheme)
 	if err != nil {
 		return "", err
 	}
@@ -300,7 +311,7 @@ func (c TypedClient) Watch(ctx context.Context, obj client.ObjectList, opts ...c
 	// list as watch
 	queries["watch"] = "true"
 
-	gvk, err := apiutil.GVKForObject(obj, c.scheme)
+	gvk, err := apiutil.GVKForObject(obj, c.RuntimeScheme)
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +327,7 @@ func (c TypedClient) Watch(ctx context.Context, obj client.ObjectList, opts ...c
 		return nil, err
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +342,7 @@ func (c TypedClient) Watch(ctx context.Context, obj client.ObjectList, opts ...c
 	}
 
 	newitemfunc := func() client.Object {
-		obj, err := c.scheme.New(gvk)
+		obj, err := c.RuntimeScheme.New(gvk)
 		if err != nil {
 			return &unstructured.Unstructured{}
 		}

@@ -31,6 +31,7 @@ import (
 )
 
 type ExtendClient struct {
+	Name string
 	*TypedClient
 }
 
