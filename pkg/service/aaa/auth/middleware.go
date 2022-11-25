@@ -110,11 +110,12 @@ type BearerTokenUserLoader struct {
 
 func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIface, exist bool) {
 	htype, token := parseAuthorizationHeader(req)
-	if strings.ToLower(htype) != "bearer" {
-		return nil, false
-	}
 	_, span := tracer.Start(req.Context(), "GetUser", trace.WithAttributes(attribute.String("token", token)))
 	defer span.End()
+	if strings.ToLower(htype) != "bearer" {
+		log.Warnf("token %s not valid", token)
+		return nil, false
+	}
 	claims, err := l.JWT.ParseToken(token)
 	if err != nil {
 		log.Error(err, "parse jwt token")
