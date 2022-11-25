@@ -31,7 +31,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/pprof"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
-	"kubegems.io/kubegems/pkg/utils/tracing"
 )
 
 type Dependencies struct {
@@ -46,9 +45,6 @@ type Dependencies struct {
 func prepareDependencies(ctx context.Context, opts *options.Options) (*Dependencies, error) {
 	// logger
 	log.SetLevel(opts.LogLevel)
-
-	// tracing
-	tracing.SetGlobal(ctx)
 
 	// redis
 	rediscli, err := redis.NewClient(opts.Redis)
