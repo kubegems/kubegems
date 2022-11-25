@@ -73,7 +73,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
-	"kubegems.io/kubegems/pkg/utils/tracing"
+	"kubegems.io/kubegems/pkg/utils/trace"
 	"kubegems.io/kubegems/pkg/version"
 )
 
@@ -112,6 +112,13 @@ func (r *Router) Run(ctx context.Context) error {
 	if err := r.Complete(ctx); err != nil {
 		return err
 	}
+
+	// otel trace
+	shutdown, err := trace.InitTracer(ctx)
+	if err != nil {
+		return err
+	}
+	defer shutdown(ctx)
 
 	httpserver := &http.Server{
 		Addr:    r.Opts.System.Listen,
@@ -190,8 +197,8 @@ func (r *Router) Complete(ctx context.Context) error {
 		log.DefaultGinLoggerMideare(),
 		// panic recovery
 		gin.Recovery(),
-		// http tracing
-		tracing.GinMiddleware(),
+		// otel
+		trace.Middleware(),
 		// real ip tracking
 		RealClientIPMiddleware(),
 	}
