@@ -21,10 +21,11 @@ import (
 )
 
 type TLS struct {
-	CertFile   string `json:"certFile,omitempty"`
-	KeyFile    string `json:"keyFile,omitempty"`
-	CAFile     string `json:"caFile,omitempty"`
-	ClientAuth bool   `json:"clientAuth,omitempty"`
+	CertFile           string `json:"certFile,omitempty"`
+	KeyFile            string `json:"keyFile,omitempty"`
+	CAFile             string `json:"caFile,omitempty"`
+	ClientAuth         bool   `json:"clientAuth,omitempty"`
+	InsecureSkipVerify bool   `json:"insecureSkipVerify,omitempty"`
 }
 
 func NewDefaultTLS() *TLS {
@@ -58,6 +59,9 @@ func (o TLS) ToTLSConfig() (*tls.Config, error) {
 	}
 	if o.ClientAuth {
 		config.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+	if o.InsecureSkipVerify {
+		config.InsecureSkipVerify = true
 	}
 	return config, nil
 }

@@ -43,6 +43,7 @@ type Options struct {
 	Microservice *microservice.MicroserviceOptions `json:"microservice,omitempty"`
 	Mongo        *mongo.Options                    `json:"mongo,omitempty"`
 	Models       *ModelsOptions                    `json:"models,omitempty"`
+	Edge         *EdgeOptions                      `json:"edge,omitempty"`
 }
 
 type ModelsOptions struct {
@@ -52,6 +53,16 @@ type ModelsOptions struct {
 func NewDefaultModelsOptions() *ModelsOptions {
 	return &ModelsOptions{
 		Addr: "http://kubegems-models-store:8080",
+	}
+}
+
+type EdgeOptions struct {
+	Addr string `json:"addr,omitempty"`
+}
+
+func NewDefaultEdgeOptions() *EdgeOptions {
+	return &EdgeOptions{
+		Addr: "http://kubegems-edge-server.kubegems-edge:8080",
 	}
 }
 
@@ -71,6 +82,7 @@ func DefaultOptions() *Options {
 		Microservice: microservice.NewDefaultOptions(),
 		Mongo:        mongo.DefaultOptions(),
 		Models:       NewDefaultModelsOptions(),
+		Edge:         NewDefaultEdgeOptions(),
 	}
 	defaultoptions.System.Listen = ":8020"
 	return defaultoptions

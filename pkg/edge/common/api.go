@@ -157,7 +157,7 @@ func (a *EdgeClusterAPI) ListEdgeHubs(req *restful.Request, resp *restful.Respon
 
 func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 	r.AddRoutes(
-		route.GET("/edge-cluster/{uid}/agent-installer.yaml").To(a.InstallAgentTemplate).
+		route.GET("/edge-clusters/{uid}/agent-installer.yaml").To(a.InstallAgentTemplate).
 			Parameters(route.QueryParameter("token", "bootstrap token")),
 	).AddSubGroup(
 		route.NewGroup("/edge-hubs").Tag("edge-hub").AddRoutes(

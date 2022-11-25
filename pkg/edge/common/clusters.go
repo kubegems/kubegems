@@ -132,7 +132,7 @@ func (m *EdgeClusterManager) PreCreate(ctx context.Context, example *v1beta1.Edg
 		if !strings.HasPrefix(selfaddr, "http") {
 			selfaddr = "http://" + selfaddr
 		}
-		manifestAddress := fmt.Sprintf("%s/v1/edge-cluster/%s/agent-installer.yaml?token=%s", selfaddr, in.Name, in.Spec.Register.BootstrapToken)
+		manifestAddress := fmt.Sprintf("%s/v1/edge-clusters/%s/agent-installer.yaml?token=%s", selfaddr, in.Name, in.Spec.Register.BootstrapToken)
 		in.Status.Register.URL = manifestAddress
 		return nil
 	}
