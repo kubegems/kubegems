@@ -61,8 +61,8 @@ func backcompactAddV1Prefix(req *http.Request) {
 	if strings.HasPrefix(req.URL.Path, "/v1") ||
 		req.URL.Path == "/healthz" ||
 		req.URL.Path == "/version" ||
-		strings.HasPrefix(req.URL.Path, "custom") ||
-		strings.HasPrefix(req.URL.Path, "internal") {
+		strings.HasPrefix(req.URL.Path, "/custom") ||
+		strings.HasPrefix(req.URL.Path, "/internal") {
 		return
 	}
 	// add "/v1" prefix

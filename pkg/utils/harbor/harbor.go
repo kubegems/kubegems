@@ -114,6 +114,12 @@ type GetArtifactOptions struct {
 	WithSignature       bool
 }
 
+type Options struct {
+	Addr     string `json:"addr,omitempty"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
 func NewClient(host string, username, password string) (*Client, error) {
 	u, err := url.Parse(host)
 	if err != nil {

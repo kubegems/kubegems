@@ -28516,6 +28516,10 @@ const docTemplate = `{
         "models.Environment": {
             "type": "object",
             "properties": {
+                "allowEdgeRegistration": {
+                    "description": "允许边缘集群注册",
+                    "type": "boolean"
+                },
                 "applications": {
                     "description": "关联的应用",
                     "type": "array",

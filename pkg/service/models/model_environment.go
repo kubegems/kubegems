@@ -64,7 +64,8 @@ type Environment struct {
 	Applications []*Application `gorm:"many2many:application_environment_rels;"`
 	// 关联的用户
 	Users []*User `gorm:"many2many:environment_user_rels;"`
-
+	// 允许边缘集群注册
+	AllowEdgeRegistration bool
 	// 虚拟空间
 	VirtualSpaceID *uint
 	VirtualSpace   *VirtualSpace `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:SET NULL;"`
