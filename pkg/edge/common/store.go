@@ -17,6 +17,7 @@ package common
 import (
 	"context"
 	"reflect"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +31,7 @@ import (
 type ListOptions struct {
 	Page     int
 	Size     int
+	Search   string // name regexp
 	Selector labels.Selector
 }
 
@@ -67,7 +69,10 @@ func (s *EdgeClusterK8sStore) List(ctx context.Context, options ListOptions) (in
 	if options.Page == 0 && options.Size == 0 {
 		return len(list.Items), list.Items, nil
 	} else {
-		paged := response.NewTypedPage(list.Items, options.Page, options.Size, nil, nil)
+		searchname := func(item v1beta1.EdgeCluster) bool {
+			return options.Search == "" || strings.Contains(item.Name, options.Search)
+		}
+		paged := response.NewTypedPage(list.Items, options.Page, options.Size, searchname, nil)
 		return len(list.Items), paged.List, nil
 	}
 }
