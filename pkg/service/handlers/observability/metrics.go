@@ -638,3 +638,105 @@ func (h *ObservabilityHandler) getRuleReq(c *gin.Context) (*models.PromqlTplRule
 
 	return &req, nil
 }
+
+type OtelService struct {
+	ServiceName                string  `json:"serviceName"`
+	AvgRequestQPS              float64 `json:"avgRequestQPS"`              // 平均请求QPS
+	AvgResponseDurationSeconds float64 `json:"avgResponseDurationSeconds"` // 平均响应时间
+	P75ResponseDurationSeconds float64 `json:"p75ResponseDurationSeconds"` // p75
+	P90ResponseDurationSeconds float64 `json:"p90ResponseDurationSeconds"` // p90
+	ErrorCount                 float64 `json:"errorCount"`                 // 错误数
+	ErrorRate                  float64 `json:"errorRate"`                  // 错误率，百分比需要乘以100
+}
+
+// OtelServices OtelServices
+// @Tags        Observability
+// @Summary     OtelServices
+// @Description OtelServices
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                 true  "集群名"
+// @Param       namespace path     string                                 true  "命名空间，所有namespace为_all"
+// @Param       duration       query    string                                                    false "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
+// @Param       page        query    int                                                   false "page"
+// @Param       size        query    int                                                   false "size"
+// @Success     200       {object} handlers.ResponseStruct{Data=object} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/services [get]
+// @Security    JWT
+func (h *ObservabilityHandler) OtelServices(c *gin.Context) {
+	ns := c.Param("namespace")
+	dur := c.DefaultQuery("duration", "1h")
+	vectorMap := map[string]prommodel.Vector{}
+	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
+		// query prometheus
+		queries := map[string]string{
+			"AvgRequestQPS":              fmt.Sprintf(`sum(rate(calls_total{http_status_code!="", namespace="%s"}[%s]))by(service_name)`, ns, dur),
+			"AvgResponseDurationSeconds": fmt.Sprintf(`sum(increase(latency_sum{http_status_code!="", namespace="%[1]s"}[%[2]s]))by(service_name) / sum(increase(latency_count{http_status_code!="", namespace="%[1]s"}[%[2]s]))by(service_name) / 1000`, ns, dur),
+			"P75ResponseDurationSeconds": fmt.Sprintf(`histogram_quantile(0.75, sum by(service_name, le) (rate(latency_bucket{http_status_code!="", namespace="%s"}[%s]))) / 1000`, ns, dur),
+			"P90ResponseDurationSeconds": fmt.Sprintf(`histogram_quantile(0.90, sum by(service_name, le) (rate(latency_bucket{http_status_code!="", namespace="%s"}[%s]))) / 1000`, ns, dur),
+			"ErrorCount":                 fmt.Sprintf(`sum(increase(calls_total{http_status_code=~"4.*|5.*", namespace="%s"}[%s]))by(service_name)`, ns, dur),
+			"ErrorRate":                  fmt.Sprintf(`sum(increase(calls_total{http_status_code=~"4.*|5.*", namespace="%[1]s"}[%[2]s]))by(service_name) / sum(increase(calls_total{http_status_code!="", namespace="%[1]s"}[%[2]s]))by(service_name)`, ns, dur),
+		}
+		wg := sync.WaitGroup{}
+		lock := sync.Mutex{}
+		for key, query := range queries {
+			wg.Add(1)
+			go func(k, q string) {
+				v, err := cli.Extend().PrometheusVector(ctx, q)
+				if err != nil {
+					log.Error(err, "query failed", "key", k)
+				}
+				lock.Lock()
+				defer lock.Unlock()
+				vectorMap[k] = v
+				wg.Done()
+			}(key, query)
+		}
+		wg.Wait()
+		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+
+	svcMap := map[string]*OtelService{}
+	for field, vector := range vectorMap {
+		for _, v := range vector {
+			if serviceName, ok := v.Metric["service_name"]; ok {
+				if otelSvc, ok := svcMap[string(serviceName)]; ok {
+					otelSvc.setField(field, float64(v.Value))
+				} else {
+					otelSvc := &OtelService{ServiceName: string(serviceName)}
+					otelSvc.setField(field, float64(v.Value))
+					svcMap[string(serviceName)] = otelSvc
+				}
+			}
+		}
+	}
+
+	ret := []*OtelService{}
+	for _, v := range svcMap {
+		ret = append(ret, v)
+	}
+
+	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, func(i, j int) bool {
+		return ret[i].ServiceName < ret[j].ServiceName
+	}))
+}
+
+func (svc *OtelService) setField(field string, value float64) {
+	switch field {
+	case "AvgRequestQPS":
+		svc.AvgRequestQPS = value
+	case "AvgResponseDurationSeconds":
+		svc.AvgResponseDurationSeconds = value
+	case "P75ResponseDurationSeconds":
+		svc.P75ResponseDurationSeconds = value
+	case "P90ResponseDurationSeconds":
+		svc.P90ResponseDurationSeconds = value
+	case "ErrorCount":
+		svc.ErrorCount = value
+	case "ErrorRate":
+		svc.ErrorRate = value
+	}
+}

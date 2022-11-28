@@ -27,7 +27,6 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
-	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 )
 
 type ExtendClient struct {
@@ -148,10 +147,7 @@ func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, e
 	}
 
 	for _, v := range ret {
-		if v.Metric == nil {
-			v.Metric = make(prommodel.Metric)
-		}
-		v.Metric["__kubegems_expr__"] = prommodel.LabelValue(promql.PromqlByLabels(v.Metric))
+		v.Metric["__kubegems_expr__"] = prommodel.LabelValue(v.Metric.String())
 	}
 	return ret, nil
 }
@@ -166,6 +162,10 @@ func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prom
 		Into:  WrappedResponse(&ret),
 	}); err != nil {
 		return nil, fmt.Errorf("prometheus vector failed, cluster: %s, promql: %s, %v", c.Name, query, err)
+	}
+
+	for _, v := range ret {
+		v.Metric["__kubegems_expr__"] = prommodel.LabelValue(v.Metric.String())
 	}
 	return ret, nil
 }

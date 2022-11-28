@@ -101,4 +101,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 
 	// exporter
 	rg.GET("/observability/monitor/exporters/:name/schema", h.ExporterSchema)
+
+	// otel
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/otel/services", h.CheckByClusterNamespace, h.OtelServices)
 }
