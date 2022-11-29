@@ -149,7 +149,7 @@ func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, e
 	}
 
 	for _, v := range ret {
-		v.Metric["__kubegems_expr__"] = prommodel.LabelValue(v.Metric.String())
+		addMetricNameLabel(v.Metric, "{}")
 	}
 	return ret, nil
 }
@@ -168,9 +168,18 @@ func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prom
 	}
 
 	for _, v := range ret {
-		v.Metric["__kubegems_expr__"] = prommodel.LabelValue(v.Metric.String())
+		addMetricNameLabel(v.Metric, "{}")
 	}
 	return ret, nil
+}
+
+func addMetricNameLabel(metric prommodel.Metric, name string) {
+	if metric == nil {
+		metric = make(prommodel.Metric)
+	}
+	if _, ok := metric[prommodel.MetricNameLabel]; !ok {
+		metric[prommodel.MetricNameLabel] = prommodel.LabelValue(name)
+	}
 }
 
 func (c *ExtendClient) PrometheusTargets(ctx context.Context) (*promv1.TargetsResult, error) {
