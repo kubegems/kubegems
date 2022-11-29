@@ -44,23 +44,40 @@ type RegisterInfo struct {
 	Certs          *Certs       `json:"certs,omitempty"`          // pre generated certs
 }
 
-type EdgeClusterPhase string
+type EdgePhase string
 
 const (
-	EdgeClusterPhaseWaiting = "Waiting"
-	EdgeClusterPhaseOnline  = "Online"
-	EdgeClusterPhaseOffline = "Offline"
+	EdgePhaseWaiting = "Waiting"
+	EdgePhaseOnline  = "Online"
+	EdgePhaseOffline = "Offline"
 )
 
 type EdgeClusterStatus struct {
-	Phase       EdgeClusterPhase  `json:"phase,omitempty"`
+	Phase       EdgePhase         `json:"phase,omitempty"`
 	Register    RegisterStatus    `json:"register,omitempty"`
 	Tunnel      TunnelStatus      `json:"tunnel,omitempty"`
 	Manufacture ManufactureStatus `json:"manufacture,omitempty"`
 }
 
-type ManagerStatus struct {
-	ManageAddress string `json:"manageAddress,omitempty"`
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Status"
+// +kubebuilder:printcolumn:name="Address",type="string",JSONPath=".status.address",description="Hub address for register"
+// +kubebuilder:printcolumn:name="LastOnline",type="string",JSONPath=".status.tunnel.lastOnlineTimestamp",description="CreationTimestamp of the bundle"
+type EdgeHub struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec              EdgeHubSpec   `json:"spec,omitempty"`
+	Status            EdgeHubStatus `json:"status,omitempty"`
+}
+type EdgeHubSpec struct{}
+
+type EdgeHubStatus struct {
+	Phase       EdgePhase         `json:"phase,omitempty"`
+	Address     string            `json:"address,omitempty"` // address of the hub
+	Tunnel      TunnelStatus      `json:"tunnel,omitempty"`
+	Manufacture ManufactureStatus `json:"manufacture,omitempty"`
 }
 
 type Certs struct {
@@ -91,7 +108,17 @@ type EdgeClusterList struct {
 	Items           []EdgeCluster `json:"items"`
 }
 
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Namespaced
+type EdgeHubList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []EdgeHub `json:"items"`
+}
+
 var _ = SchemeBuilder.Register(
 	&EdgeCluster{},
 	&EdgeClusterList{},
+	&EdgeHub{},
+	&EdgeHubList{},
 )

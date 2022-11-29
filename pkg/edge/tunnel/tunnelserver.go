@@ -174,6 +174,7 @@ func (s *TunnelServer) forward(income *ConnectedTunnel, pkt *Packet) error {
 	log.Info("packet forward", "src", pkt.Src, "dest", pkt.Dest)
 	targetPeer, err := s.routeTable.Select(pkt.Dest)
 	if err != nil {
+		log.Error(err, "close forward", "src", pkt.Src, "dest", pkt.Dest)
 		_ = income.Send(&Packet{
 			Kind:    PacketKindClose,
 			Src:     s.id,

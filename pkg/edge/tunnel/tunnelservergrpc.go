@@ -151,7 +151,7 @@ func (s GrpcTunnelServer) ConnectUpstreamWithRetry(ctx context.Context, addr str
 }
 
 func (s GrpcTunnelServer) ConnectUpstream(ctx context.Context, addr string, tlsConfig *tls.Config, token string, annotations Annotations) error {
-	log.FromContextOrDiscard(ctx).Info("connecting upstream", "addr", addr, "annotations", annotations)
+	log.FromContextOrDiscard(ctx).Info("connecting upstream", "addr", addr)
 	dialoptions := []grpc.DialOption{}
 	if tlsConfig != nil {
 		dialoptions = append(dialoptions,

@@ -17,6 +17,7 @@ package common
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/cli-runtime/pkg/printers"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
+	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
@@ -50,49 +52,45 @@ const (
 	AnnotationIsTemporaryConnect = "edge.kubegems.io/temporary-connect"
 )
 
-type EdgeClusterManager struct {
-	SelfAddress string
-	Store       EdgeClusterStore
+type EdgeManager struct {
+	SelfAddress  string
+	ClusterStore EdgeStore[*v1beta1.EdgeCluster]
+	HubStore     EdgeStore[*v1beta1.EdgeHub]
 }
 
-func NewClusterManager(store EdgeClusterStore, selfhost string) *EdgeClusterManager {
-	return &EdgeClusterManager{
-		Store:       store,
-		SelfAddress: selfhost,
+func NewClusterManager(namespace string, selfhost string) (*EdgeManager, error) {
+	if namespace == "" {
+		namespace = kube.LocalNamespaceOrDefault(gems.NamespaceEdge)
 	}
-}
-
-func (m *EdgeClusterManager) List(ctx context.Context, labels labels.Selector) ([]v1beta1.EdgeCluster, error) {
-	_, list, err := m.Store.List(ctx, ListOptions{Selector: labels})
+	cli, err := kube.NewLocalClient()
 	if err != nil {
 		return nil, err
 	}
-	return list, nil
+
+	clustersStore := EdgeClusterK8sStore[*v1beta1.EdgeCluster]{cli: cli, ns: namespace, example: &v1beta1.EdgeCluster{}}
+	kube.FillGVK(clustersStore.example, cli.Scheme())
+
+	hubsStore := EdgeClusterK8sStore[*v1beta1.EdgeHub]{cli: cli, ns: namespace, example: &v1beta1.EdgeHub{}}
+	kube.FillGVK(hubsStore.example, cli.Scheme())
+
+	return &EdgeManager{
+		ClusterStore: clustersStore,
+		HubStore:     hubsStore,
+		SelfAddress:  selfhost,
+	}, nil
 }
 
-func (m *EdgeClusterManager) ListPage(ctx context.Context, page, size int, labels labels.Selector) (response.TypedPage[v1beta1.EdgeCluster], error) {
-	total, list, err := m.Store.List(ctx, ListOptions{Page: page, Size: size, Selector: labels})
+func (m *EdgeManager) ListPage(ctx context.Context, page, size int, labels labels.Selector) (response.TypedPage[*v1beta1.EdgeCluster], error) {
+	total, list, err := m.ClusterStore.List(ctx, ListOptions{Page: page, Size: size, Selector: labels})
 	if err != nil {
-		return response.TypedPage[v1beta1.EdgeCluster]{}, err
+		return response.TypedPage[*v1beta1.EdgeCluster]{}, err
 	}
-	return response.TypedPage[v1beta1.EdgeCluster]{
+	return response.TypedPage[*v1beta1.EdgeCluster]{
 		Total:       int64(total),
 		List:        list,
 		CurrentPage: int64(page),
 		CurrentSize: int64(size),
 	}, nil
-}
-
-func (m *EdgeClusterManager) Get(ctx context.Context, uid string) (*v1beta1.EdgeCluster, error) {
-	return m.Store.Get(ctx, uid)
-}
-
-func (m *EdgeClusterManager) Delete(ctx context.Context, uid string) (*v1beta1.EdgeCluster, error) {
-	return m.Store.Delete(ctx, uid)
-}
-
-func (m *EdgeClusterManager) Update(ctx context.Context, name string, fun func(cluster *v1beta1.EdgeCluster) error) (*v1beta1.EdgeCluster, error) {
-	return m.Store.Update(ctx, name, fun)
 }
 
 type PrecreateOptions struct {
@@ -106,9 +104,9 @@ type PrecreateOptions struct {
 }
 
 // return a register address
-func (m *EdgeClusterManager) PreCreate(ctx context.Context, example *v1beta1.EdgeCluster) (*v1beta1.EdgeCluster, error) {
+func (m *EdgeManager) PreCreate(ctx context.Context, example *v1beta1.EdgeCluster) (*v1beta1.EdgeCluster, error) {
 	// check hub is already exists
-	_, err := m.Store.Get(ctx, example.Spec.Register.HubName)
+	_, err := m.ClusterStore.Get(ctx, example.Spec.Register.HubName)
 	if err != nil {
 		return nil, fmt.Errorf("get edge hub %s: %w", example.Spec.Register.HubName, err)
 	}
@@ -126,8 +124,8 @@ func (m *EdgeClusterManager) PreCreate(ctx context.Context, example *v1beta1.Edg
 			in.Labels[k] = v
 		}
 		in.Spec.Register = example.Spec.Register
-		if in.Status.Phase != v1beta1.EdgeClusterPhaseOnline {
-			in.Status.Phase = v1beta1.EdgeClusterPhaseWaiting
+		if in.Status.Phase != v1beta1.EdgePhaseOnline {
+			in.Status.Phase = v1beta1.EdgePhaseWaiting
 		}
 		selfaddr := m.SelfAddress
 		if !strings.HasPrefix(selfaddr, "http") {
@@ -137,7 +135,7 @@ func (m *EdgeClusterManager) PreCreate(ctx context.Context, example *v1beta1.Edg
 		in.Status.Register.URL = manifestAddress
 		return nil
 	}
-	return m.Store.Update(ctx, example.Name, updatespec)
+	return m.ClusterStore.Update(ctx, example.Name, updatespec)
 }
 
 type InstallerTemplateValues struct {
@@ -148,8 +146,8 @@ type InstallerTemplateValues struct {
 	TLSCA       []byte
 }
 
-func (m *EdgeClusterManager) RenderInstallManifests(ctx context.Context, uid, token string) ([]byte, error) {
-	exists, err := m.Store.Get(ctx, uid)
+func (m *EdgeManager) RenderInstallManifests(ctx context.Context, uid, token string) ([]byte, error) {
+	exists, err := m.ClusterStore.Get(ctx, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +157,7 @@ func (m *EdgeClusterManager) RenderInstallManifests(ctx context.Context, uid, to
 	if exists.Spec.Register.HubName == "" {
 		return nil, fmt.Errorf("no hub name specified for the edge cluster")
 	}
-	hub, err := m.Store.Get(ctx, exists.Spec.Register.HubName)
+	hub, err := m.ClusterStore.Get(ctx, exists.Spec.Register.HubName)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +180,7 @@ func (m *EdgeClusterManager) RenderInstallManifests(ctx context.Context, uid, to
 		edgecerts = generated
 	}
 	// update register status
-	if _, err := m.Store.Update(ctx, uid, func(cluster *v1beta1.EdgeCluster) error {
+	if _, err := m.ClusterStore.Update(ctx, uid, func(cluster *v1beta1.EdgeCluster) error {
 		now := metav1.Now()
 		cluster.Status.Register.LastRegister = &now
 		cluster.Status.Register.LastRegisterToken = token
@@ -201,7 +199,7 @@ func (m *EdgeClusterManager) RenderInstallManifests(ctx context.Context, uid, to
 	return buf.Bytes(), nil
 }
 
-func (m *EdgeClusterManager) gencert(cn string, expire *time.Time, hub *v1beta1.EdgeCluster) (*v1beta1.Certs, error) {
+func (m *EdgeManager) gencert(cn string, expire *time.Time, hub *v1beta1.EdgeCluster) (*v1beta1.Certs, error) {
 	hubcert := v1beta1.Certs{
 		CA:   []byte(hub.Status.Manufacture[AnnotationKeyEdgeHubCA]),
 		Cert: []byte(hub.Status.Manufacture[AnnotationKeyEdgeHubCert]),
@@ -221,38 +219,50 @@ func (m *EdgeClusterManager) gencert(cn string, expire *time.Time, hub *v1beta1.
 	return edgecerts, nil
 }
 
-func (m *EdgeClusterManager) SetTunnelConnectedStatus(ctx context.Context, name string, connected bool, anno map[string]string) error {
-	log.Info("set tunnel status", "name", name, "connected", connected)
-
+func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context, name string, connected bool, anno map[string]string) error {
+	log.Info("set tunnel status", "name", name, "connected", connected, "annotations", anno)
+	// is temporary connection
 	if istemp, _ := strconv.ParseBool(anno[AnnotationIsTemporaryConnect]); istemp {
 		log.Info("ignore temporary connection", "name", name, "annotations", anno)
 		return nil
 	}
-	updatefunc := func(cluster *v1beta1.EdgeCluster) error {
-		now := metav1.Now()
-		if connected {
-			if _, ok := anno[AnnotationKeyEdgeHubAddress]; ok {
-				if cluster.Labels == nil {
-					cluster.Labels = make(map[string]string)
-				}
-				cluster.Labels[LabelKeIsyEdgeHub] = "true"
-			}
-			cluster.Status.Tunnel.Connected = true
-			cluster.Status.Tunnel.LastOnlineTimestamp = &now
-			cluster.Status.Phase = v1beta1.EdgeClusterPhaseOnline
+	now := metav1.Now()
+
+	// is edge hub
+	if address, ok := anno[AnnotationKeyEdgeHubAddress]; ok {
+		_, err := m.HubStore.Update(ctx, name, func(cluster *v1beta1.EdgeHub) error {
+			cluster.Status.Tunnel.Connected = connected
 			cluster.Status.Manufacture = anno // annotations as manufacture set
+			if connected {
+				cluster.Status.Address = address
+				cluster.Status.Tunnel.LastOnlineTimestamp = &now
+				cluster.Status.Phase = v1beta1.EdgePhaseOnline
+			} else {
+				cluster.Status.Tunnel.LastOfflineTimestamp = &now
+				cluster.Status.Phase = v1beta1.EdgePhaseOffline
+			}
+			return nil
+		})
+		return err
+	}
+
+	// is edge cluster
+	_, err := m.ClusterStore.Update(ctx, name, func(cluster *v1beta1.EdgeCluster) error {
+		cluster.Status.Tunnel.Connected = connected
+		cluster.Status.Manufacture = anno // annotations as manufacture set
+		if connected {
+			cluster.Status.Tunnel.LastOnlineTimestamp = &now
+			cluster.Status.Phase = v1beta1.EdgePhaseOnline
 		} else {
 			cluster.Status.Tunnel.LastOfflineTimestamp = &now
-			cluster.Status.Phase = v1beta1.EdgeClusterPhaseOffline
-			cluster.Status.Tunnel.Connected = false
+			cluster.Status.Phase = v1beta1.EdgePhaseOffline
 		}
 		return nil
-	}
-	_, err := m.Store.Update(ctx, name, updatefunc)
+	})
 	return err
 }
 
-func (s *EdgeClusterManager) SyncTunnelStatusFrom(ctx context.Context, server *tunnel.TunnelServer) error {
+func (s *EdgeManager) SyncTunnelStatusFrom(ctx context.Context, server *tunnel.TunnelServer) error {
 	logr.FromContextOrDiscard(ctx).Info("start syncing tunnel status")
 	watcher := server.Wacth(ctx)
 	defer watcher.Close()
@@ -261,20 +271,20 @@ func (s *EdgeClusterManager) SyncTunnelStatusFrom(ctx context.Context, server *t
 		switch event.Kind {
 		case tunnel.EventKindConnected:
 			for id, anno := range event.Peers {
-				if err := s.SetTunnelConnectedStatus(ctx, id, true, anno); err != nil {
+				if err := s.OnTunnelConnectedStatusChange(ctx, id, true, anno); err != nil {
 					log.Error(err, "set to online", "id", id)
 				}
 			}
 		case tunnel.EventKindDisConnected:
-			for id := range event.Peers {
-				if err := s.SetTunnelConnectedStatus(ctx, id, false, nil); err != nil {
+			for id, anno := range event.Peers {
+				if err := s.OnTunnelConnectedStatusChange(ctx, id, false, anno); err != nil {
 					log.Error(err, "set to offline", "id", id)
 				}
 			}
 		default:
 			log.Info("invalid event exit watcher")
-			break
+			return fmt.Errorf("invalid event type: %v", event.Kind)
 		}
 	}
-	return nil
+	return errors.New("watcher exit")
 }

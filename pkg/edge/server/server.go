@@ -38,7 +38,7 @@ func Run(ctx context.Context, options *options.ServerOptions) error {
 
 type EdgeServer struct {
 	server    *tunnel.GrpcTunnelServer
-	clusters  *common.EdgeClusterManager
+	clusters  *common.EdgeManager
 	tlsConfig *tls.Config
 	options   *options.ServerOptions
 }
@@ -48,7 +48,7 @@ func NewEdgeServer(options *options.ServerOptions) (*EdgeServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	store, err := common.NewLocalK8sStore("")
+	edgemanager, err := common.NewClusterManager("", options.Host)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func NewEdgeServer(options *options.ServerOptions) (*EdgeServer, error) {
 		},
 		tlsConfig: tlsConfig,
 		options:   options,
-		clusters:  common.NewClusterManager(store, options.Host),
+		clusters:  edgemanager,
 	}
 	return server, nil
 }

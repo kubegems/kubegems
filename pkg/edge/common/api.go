@@ -28,7 +28,7 @@ import (
 )
 
 type EdgeClusterAPI struct {
-	Cluster *EdgeClusterManager
+	Cluster *EdgeManager
 	Tunnel  *tunnel.TunnelServer
 }
 
@@ -79,7 +79,7 @@ func (a *EdgeClusterAPI) PreCreateEdgeCluster(req *restful.Request, resp *restfu
 
 func (a *EdgeClusterAPI) GetEdgeCluster(req *restful.Request, resp *restful.Response) {
 	uid := req.PathParameter("uid")
-	cluster, err := a.Cluster.Get(req.Request.Context(), uid)
+	cluster, err := a.Cluster.ClusterStore.Get(req.Request.Context(), uid)
 	if err != nil {
 		response.Error(resp, err)
 	} else {
@@ -89,7 +89,7 @@ func (a *EdgeClusterAPI) GetEdgeCluster(req *restful.Request, resp *restful.Resp
 
 func (a *EdgeClusterAPI) RemoveEdgeCluster(req *restful.Request, resp *restful.Response) {
 	uid := req.PathParameter("uid")
-	cluster, err := a.Cluster.Delete(req.Request.Context(), uid)
+	cluster, err := a.Cluster.ClusterStore.Delete(req.Request.Context(), uid)
 	if err != nil {
 		response.Error(resp, err)
 	} else {
@@ -104,7 +104,7 @@ func (a *EdgeClusterAPI) UpdateEdgeCluster(req *restful.Request, resp *restful.R
 		response.Error(resp, err)
 		return
 	}
-	cluster, err := a.Cluster.Update(req.Request.Context(), uid, func(cluster *v1beta1.EdgeCluster) error {
+	cluster, err := a.Cluster.ClusterStore.Update(req.Request.Context(), uid, func(cluster *v1beta1.EdgeCluster) error {
 		// update spec
 		cluster.Spec = update.Spec
 		// update annotations and labels
@@ -136,23 +136,12 @@ type EdgeHubItem struct {
 }
 
 func (a *EdgeClusterAPI) ListEdgeHubs(req *restful.Request, resp *restful.Response) {
-	selector := labels.SelectorFromSet(labels.Set{
-		LabelKeIsyEdgeHub: "true",
-	})
-	list, err := a.Cluster.List(req.Request.Context(), selector)
+	_, list, err := a.Cluster.HubStore.List(req.Request.Context(), ListOptions{})
 	if err != nil {
 		response.ServerError(resp, err)
 		return
 	}
-	ret := make([]EdgeHubItem, 0, len(list))
-	for _, item := range list {
-		ret = append(ret, EdgeHubItem{
-			Name:      item.Name,
-			Address:   item.Status.Manufacture[AnnotationKeyEdgeHubAddress],
-			Connected: item.Status.Tunnel.Connected,
-		})
-	}
-	response.OK(resp, ret)
+	response.OK(resp, list)
 }
 
 func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
@@ -161,7 +150,8 @@ func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 			Parameters(route.QueryParameter("token", "bootstrap token")),
 	).AddSubGroup(
 		route.NewGroup("/edge-hubs").Tag("edge-hub").AddRoutes(
-			route.GET("").To(a.ListEdgeHubs).Response([]EdgeHubItem{}),
+			route.GET("").To(a.ListEdgeHubs).ShortDesc("list edge hubs").
+				Response([]v1beta1.EdgeHub{}),
 		),
 		route.NewGroup("/edge-clusters").Tag("edge-cluster").AddRoutes(
 			route.GET("/").Paged().To(a.ListEdgeClusters).

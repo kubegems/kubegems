@@ -24,7 +24,9 @@ import (
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/pprof"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
 func Run(ctx context.Context, options *options.HubOptions) error {
@@ -72,6 +74,11 @@ func (s *EdgeHubServer) Run(ctx context.Context) error {
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		return s.ServeGrpc(ctx, s.options.ListenGrpc, s.tlsConfig)
+	})
+	eg.Go(func() error {
+		handler := apiutil.NewRestfulAPI("", nil, nil)
+		// handler provides a health check endpoint
+		return system.ListenAndServeContext(ctx, s.options.Listen, nil, handler)
 	})
 	eg.Go(func() error {
 		c := s.tlsConfig.Clone()

@@ -27,8 +27,7 @@ rules:
   - apiGroups:
       - 'edge.kubegems.io'
     resources:
-      - 'edgeclusters'
-      - 'edgeclusters/status'
+      - '*'
     verbs:
       - '*'
 ---

@@ -144,7 +144,6 @@ func (t *RouteTable) Update(id string, data PacketDataRoute) {
 	default:
 		log.Info("unexpected route update", "data", data)
 	}
-	log.Info("current route table", "records", t.records)
 	t.mu.Unlock()
 
 	t.advertise(id, PacketDataRoute{

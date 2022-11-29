@@ -25,18 +25,20 @@ import (
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
+const DefaultAgentAddress = "http://127.0.0.1:8080"
+
 func (a *EdgeClusterAPI) Proxy(req *restful.Request, resp *restful.Response) {
 	uid, path := req.PathParameter("uid"), "/"+req.PathParameter("path")
 	// the default agent address
 	ctx := req.Request.Context()
-	edgecluster, err := a.Cluster.Get(ctx, uid)
+	edgecluster, err := a.Cluster.ClusterStore.Get(ctx, uid)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 		return
 	}
 	agentaddress := edgecluster.Status.Manufacture[AnnotationKeyEdgeAgentAddress]
 	if agentaddress == "" {
-		agentaddress = "http://127.0.0.1:8080" // fallback
+		agentaddress = DefaultAgentAddress // fallback
 	}
 	log.Info("proxy http", "uid", uid, "target", agentaddress, "path", path)
 	proxyTarget, err := url.Parse(agentaddress)
