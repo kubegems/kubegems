@@ -191,13 +191,7 @@ func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 func (h *ObservabilityHandler) OtelMetricsGraphs(c *gin.Context) {
 	ns := c.Param("namespace")
 	svc := c.Query("service")
-	start := c.Query("start")
-	end := c.Query("end")
-	now := time.Now().UTC()
-	if start == "" || end == "" {
-		start = now.Add(-30 * time.Minute).Format(time.RFC3339)
-		end = now.Format(time.RFC3339)
-	}
+	start, end, _ := getRangeParams(c.Query("start"), c.Query("end"))
 
 	ret := gin.H{}
 	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
@@ -651,6 +645,19 @@ type OtelService struct {
 	ErrorRate                  float64 `json:"errorRate"`                  // 错误率，百分比需要乘以100
 }
 
+func getRangeParams(startStr, endStr string) (string, string, string) {
+	// 由于agent解析时没有管时区，所以这里需设置为UTC
+	start, err1 := time.ParseInLocation(time.RFC3339, startStr, time.UTC)
+	end, err2 := time.ParseInLocation(time.RFC3339, endStr, time.UTC)
+	if err1 != nil || err2 != nil {
+		log.Warnf("parse time failed, start: %v, end: %v", err1, err2)
+		now := time.Now().UTC()
+		start = now.Add(-30 * time.Minute)
+		end = now
+	}
+	return start.Format(time.RFC3339), end.Format(time.RFC3339), end.Sub(start).String()
+}
+
 // OtelServices 应用性能监控服务
 // @Tags        Observability
 // @Summary     应用性能监控服务
@@ -659,7 +666,8 @@ type OtelService struct {
 // @Produce     json
 // @Param       cluster   path     string                                                              true  "集群名"
 // @Param       namespace path     string                                                              true  "命名空间，所有namespace为_all"
-// @Param       duration  query    string                                                              false "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
+// @Param       start     query    string                                 false "开始时间，默认现在-30m"
+// @Param       end       query    string                                 false "结束时间，默认现在"
 // @Param       page      query    int                                                                 false "page"
 // @Param       size      query    int                                                                 false "size"
 // @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelService}} "resp"
@@ -667,7 +675,7 @@ type OtelService struct {
 // @Security    JWT
 func (h *ObservabilityHandler) OtelServices(c *gin.Context) {
 	ns := c.Param("namespace")
-	dur := c.DefaultQuery("duration", "30m")
+	_, _, dur := getRangeParams(c.Query("start"), c.Query("end"))
 	vectorMap := map[string]prommodel.Vector{}
 	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
 		// query prometheus
@@ -765,7 +773,8 @@ type OtelOverViewResp struct {
 // @Produce     json
 // @Param       cluster   path     string                                         true  "集群名"
 // @Param       namespace path     string                                         true  "命名空间"
-// @Param       duration  query    string                                         false "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
+// @Param       start     query    string                                 false "开始时间，默认现在-30m"
+// @Param       end       query    string                                 false "结束时间，默认现在"
 // @Param       pick      query    string                                         false "选择什么值(max/min/avg), default max"
 // @Param       page      query    int                                            false "page"
 // @Param       size      query    int                                            false "size"
@@ -774,18 +783,8 @@ type OtelOverViewResp struct {
 // @Security    JWT
 func (h *ObservabilityHandler) OtelOverview(c *gin.Context) {
 	ns := c.Param("namespace")
-	durStr := c.DefaultQuery("duration", "30m")
-	dur, err := prommodel.ParseDuration(durStr)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
 	pick := c.DefaultQuery("pick", "max")
-	// 由于agent解析时没有管时区，所以这里需设置为UTC
-	now := time.Now().In(time.UTC)
-	start := now.Add(-1 * time.Duration(dur)).Format(time.RFC3339)
-	end := now.Format(time.RFC3339)
-
+	start, end, dur := getRangeParams(c.Query("start"), c.Query("end"))
 	overView := OtelOverViewResp{}
 	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
 		p90ServiceDurationSeconds, err := cli.Extend().PrometheusQueryRange(ctx, fmt.Sprintf(`histogram_quantile(0.9, sum(rate(latency_bucket{namespace="%s"}[5m]))by(service_name, le)) / 1000`, ns), start, end, "")
@@ -799,12 +798,12 @@ func (h *ObservabilityHandler) OtelOverview(c *gin.Context) {
 		}
 		overView.P90OperationDurationSeconds = pickMatrixValue(p90OperationDurationSeconds, "operation", pick)
 
-		serviceErrorCount, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(calls_total{status_code="STATUS_CODE_ERROR", namespace="%s"}[30m]))by(service_name)`, ns))
+		serviceErrorCount, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(calls_total{status_code="STATUS_CODE_ERROR", namespace="%s"}[%s]))by(service_name)`, ns, dur))
 		if err != nil {
 			return err
 		}
 		overView.ServiceErrorCount = pickVectorValue(serviceErrorCount, "service_name")
-		dbOperationCount, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(calls_total{namespace="%s", operation=~"SELECT.*|UPDATE.*|INSERT.*|DELETE.*"}[30m]))by(operation)`, ns))
+		dbOperationCount, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(calls_total{namespace="%s", operation=~"SELECT.*|UPDATE.*|INSERT.*|DELETE.*"}[%s]))by(operation)`, ns, dur))
 		if err != nil {
 			return err
 		}
@@ -883,4 +882,54 @@ func pickVectorValue(vector prommodel.Vector, field string) []KV {
 		return ret[i].Value > ret[j].Value
 	})
 	return ret
+}
+
+// OtelServiceRequests 应用请求
+// @Tags        Observability
+// @Summary     应用请求
+// @Description 应用请求
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                         true  "集群名"
+// @Param       namespace path     string                                         true  "命名空间"
+// @Param service_name path string true "应用"
+// @Param       start     query    string                                 false "开始时间，默认现在-30m"
+// @Param       end       query    string                                 false "结束时间，默认现在"
+// @Success     200       {object} handlers.ResponseStruct{Data=OtelOverViewResp} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/requests [get]
+// @Security    JWT
+func (h *ObservabilityHandler) OtelServiceRequests(c *gin.Context) {
+	ns := c.Param("namespace")
+	svc := c.Param("service_name")
+	start, end, _ := getRangeParams(c.Query("start"), c.Query("end"))
+	ret := gin.H{}
+	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
+		queries := map[string]string{
+			"requestRate":        fmt.Sprintf(`sum(irate(calls_total{namespace="%s", service_name="%s"}[5m]))`, ns, svc),
+			"errorRate":          fmt.Sprintf(`sum(irate(calls_total{namespace="%[1]s", service_name="%[2]s", status_code="STATUS_CODE_ERROR"}[5m])) / sum(irate(calls_total{namespace="%[1]s", service_name="%[2]s"}[5m]))`, ns, svc),
+			"p75DurationSeconds": fmt.Sprintf(`histogram_quantile(0.75, sum(irate(latency_bucket{namespace="%s", service_name="%s"}[5m]))by(le))`, ns, svc),
+			"p90DurationSeconds": fmt.Sprintf(`histogram_quantile(0.90, sum(irate(latency_bucket{namespace="%s", service_name="%s"}[5m]))by(le))`, ns, svc),
+		}
+		wg := sync.WaitGroup{}
+		lock := sync.Mutex{}
+		for key, query := range queries {
+			wg.Add(1)
+			go func(k, q string) {
+				v, err := cli.Extend().PrometheusQueryRange(ctx, q, start, end, "")
+				if err != nil {
+					log.Error(err, "query failed", "key", k)
+				}
+				lock.Lock()
+				defer lock.Unlock()
+				ret[k] = v
+				wg.Done()
+			}(key, query)
+		}
+		wg.Wait()
+		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, ret)
 }
