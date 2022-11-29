@@ -36,7 +36,7 @@ type Options struct {
 	LogLevel  string                      `json:"loglevel,omitempty"`
 	System    *system.Options             `json:"system,omitempty"`
 	API       *apis.Options               `json:"api,omitempty"`
-	Debug     *apis.DebugOptions          `json:"debug,omitempty" description:"debug options"`
+	Kubectl   *apis.KubectlOptions        `json:"kubectl,omitempty" description:"kubectl options"`
 	Exporter  *prometheus.ExporterOptions `json:"exporter,omitempty"`
 }
 
@@ -47,7 +47,7 @@ func DefaultOptions() *Options {
 		LogLevel:  "debug",
 		System:    system.NewDefaultOptions(),
 		API:       apis.NewDefaultOptions(),
-		Debug:     apis.NewDefaultDebugOptions(),
+		Kubectl:   apis.NewDefaultKubectlOptions(),
 		Exporter:  prometheus.DefaultExporterOptions(),
 	}
 	defaultoptions.System.Listen = ":8041"
@@ -82,7 +82,7 @@ func Run(ctx context.Context, options *Options) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		return apis.Run(ctx, c, options.System, options.API, options.Debug)
+		return apis.Run(ctx, c, options.System, options.API, options.Kubectl)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)

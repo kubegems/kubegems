@@ -22,6 +22,8 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 )
 
+const DefaultEventChannelSize = 1024
+
 type TunnelEventer struct {
 	watchers sync.Map
 	s        *TunnelServer
@@ -63,6 +65,7 @@ func (t *TunnelEventer) sendWatcherEvent(event TunnelEvent) {
 		case watcher.ch <- event:
 		default:
 			//  full chan
+			log.Error(ErrFullChannel, "tunnel event channel", "uid", watcher.uid)
 		}
 		return true
 	})
@@ -77,7 +80,7 @@ func (t *TunnelEventer) Watch(ctx context.Context) EventWatcher {
 	uid := uuid.NewString()
 	watcher := EventWatcher{
 		uid:    uid,
-		ch:     make(chan TunnelEvent, 1),
+		ch:     make(chan TunnelEvent, DefaultEventChannelSize),
 		cancel: cancel,
 	}
 	log.Info("watcher start", "uid", uid)

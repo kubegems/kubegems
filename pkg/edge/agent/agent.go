@@ -17,8 +17,10 @@ package agent
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"golang.org/x/sync/errgroup"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/edge/common"
 	"kubegems.io/kubegems/pkg/edge/options"
@@ -53,13 +55,17 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 	if err != nil {
 		return err
 	}
+	nodeList, err := c.Kubernetes().CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	if err != nil {
+		return err
+	}
 	upstreamAnnotations := map[string]string{
 		common.AnnotationKeyEdgeAgentAddress:         "http://127.0.0.1" + options.Listen,
 		common.AnnotationKeyEdgeAgentRegisterAddress: options.EdgeHubAddr,
 		common.AnnotationKeyAPIserverAddress:         rest.Host,
 		common.AnnotationKeyKubernetesVersion:        sv.String(),
+		common.AnnotationKeyNodesCount:               strconv.Itoa(len(nodeList.Items)),
 	}
-
 	grpctunnel := tunnel.GrpcTunnelServer{
 		TunnelServer: tunnel.NewTunnelServer(options.ClientID, nil),
 	}

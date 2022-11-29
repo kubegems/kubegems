@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
+	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,7 +45,7 @@ type EdgeClusterStore interface {
 
 func NewLocalK8sStore(ns string) (*EdgeClusterK8sStore, error) {
 	if ns == "" {
-		ns = "kubegems-edge"
+		ns = kube.LocalNamespaceOrDefault(gems.NamespaceEdge)
 	}
 	cli, err := kube.NewLocalClient()
 	if err != nil {

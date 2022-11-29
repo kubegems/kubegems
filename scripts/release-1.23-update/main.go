@@ -23,11 +23,11 @@ import (
 	"gorm.io/datatypes"
 	v1 "k8s.io/api/core/v1"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/indexer"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
@@ -191,12 +191,12 @@ func updateReceivers() {
 		for i, rec := range v.Spec.Receivers {
 			for j := range v.Spec.Receivers[i].WebhookConfigs {
 				if rec.Name != models.DefaultReceiver.Name {
-					v.Spec.Receivers[i].WebhookConfigs[j].SendResolved = utils.BoolPointer(false)
+					v.Spec.Receivers[i].WebhookConfigs[j].SendResolved = pointer.Bool(false)
 					log.Printf("cluster: %s, ns: %s, webhook rec: %s", cctx, v.Namespace, rec.Name)
 				}
 			}
 			for j := range v.Spec.Receivers[i].EmailConfigs {
-				v.Spec.Receivers[i].EmailConfigs[j].SendResolved = utils.BoolPointer(false)
+				v.Spec.Receivers[i].EmailConfigs[j].SendResolved = pointer.Bool(false)
 				log.Printf("cluster: %s, ns: %s, email rec: %s", cctx, v.Namespace, rec.Name)
 			}
 		}

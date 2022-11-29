@@ -95,11 +95,6 @@ spec:
             {{- end }}
           {{- end }}
           env:
-            - name: MY_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: metadata.namespace
             - name: KUBEGEMS_DEBUG
               value: {{ ternary "true" "false" (or .Values.agent.image.debug ) | quote }}
             - name: LOG_LEVEL

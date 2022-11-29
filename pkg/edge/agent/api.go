@@ -36,7 +36,9 @@ func (a *AgentAPI) Run(ctx context.Context, listen string) error {
 		log.DefaultGinLoggerMideare(),
 		gin.Recovery(),
 	)
-	ginhandler, err := apis.Routes(ctx, a.cluster, apis.NewDefaultOptions(), apis.NewDefaultDebugOptions())
+	kubectlOptions := apis.NewDefaultKubectlOptions()
+	kubectlOptions.UseLocalKubectl = true
+	ginhandler, err := apis.Routes(ctx, a.cluster, apis.NewDefaultOptions(), kubectlOptions)
 	if err != nil {
 		return err
 	}

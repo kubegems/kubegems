@@ -14,25 +14,21 @@
 
 package options
 
-import "kubegems.io/kubegems/pkg/edge/tunnel"
-
 type HubOptions struct {
-	Listen           string `json:"listen,omitempty"`
-	ListenGrpc       string `json:"listenGrpc,omitempty"`
-	Host             string `json:"host,omitempty" validate:"required"`
-	ServerID         string `json:"serverID,omitempty" validate:"required"`
-	TLS              *TLS   `json:"tls,omitempty"`
-	CurrentNamespace string `json:"currentNamespace,omitempty"`
-	EdgeServerAddr   string `json:"edgeServerAddr,omitempty"`
+	Listen         string `json:"listen,omitempty"`
+	ListenGrpc     string `json:"listenGrpc,omitempty"`
+	Host           string `json:"host,omitempty" validate:"required"`
+	ServerID       string `json:"serverID,omitempty" validate:"required"`
+	TLS            *TLS   `json:"tls,omitempty"`
+	EdgeServerAddr string `json:"edgeServerAddr,omitempty"`
 }
 
 func NewDefaultHub() *HubOptions {
 	return &HubOptions{
-		Listen:           ":8080",
-		ListenGrpc:       ":50051",
-		TLS:              NewDefaultTLS(),
-		ServerID:         tunnel.RandomServerID("hub-"),
-		CurrentNamespace: "",
-		EdgeServerAddr:   "127.0.0.1:50052",
+		Listen:         ":8080",
+		ListenGrpc:     ":50051",
+		TLS:            NewDefaultTLS(),
+		ServerID:       "",
+		EdgeServerAddr: "127.0.0.1:50052",
 	}
 }

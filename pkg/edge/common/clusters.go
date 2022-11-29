@@ -44,6 +44,7 @@ const (
 	AnnotationKeyEdgeAgentRegisterAddress = "edge.kubegems.io/edge-agent-register-address"
 	AnnotationKeyKubernetesVersion        = "edge.kubegems.io/kubernetes-version"
 	AnnotationKeyAPIserverAddress         = "edge.kubegems.io/apiserver-address"
+	AnnotationKeyNodesCount               = "edge.kubegems.io/nodes-count"
 
 	// temporary connection do not write to database
 	AnnotationIsTemporaryConnect = "edge.kubegems.io/temporary-connect"
@@ -221,6 +222,8 @@ func (m *EdgeClusterManager) gencert(cn string, expire *time.Time, hub *v1beta1.
 }
 
 func (m *EdgeClusterManager) SetTunnelConnectedStatus(ctx context.Context, name string, connected bool, anno map[string]string) error {
+	log.Info("set tunnel status", "name", name, "connected", connected)
+
 	if istemp, _ := strconv.ParseBool(anno[AnnotationIsTemporaryConnect]); istemp {
 		log.Info("ignore temporary connection", "name", name, "annotations", anno)
 		return nil

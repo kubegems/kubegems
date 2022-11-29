@@ -18,10 +18,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"k8s.io/apimachinery/pkg/labels"
 	"kubegems.io/kubegems/pkg/agent/client"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/middleware"
@@ -33,25 +31,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/system"
 	"kubegems.io/kubegems/pkg/version"
 )
-
-type DebugOptions struct {
-	Image       string `json:"image,omitempty"`
-	Namespace   string `json:"namespace,omitempty"`
-	PodSelector string `json:"podSelector,omitempty"`
-	Container   string `json:"container,omitempty"`
-}
-
-func NewDefaultDebugOptions() *DebugOptions {
-	return &DebugOptions{
-		Namespace: os.Getenv("MY_NAMESPACE"),
-		PodSelector: labels.SelectorFromSet(
-			labels.Set{
-				"app.kubernetes.io/name": "gems-agent-kubectl",
-			}).String(),
-		Container: "gems-agent-kubectl",
-		Image:     "kubegems/debug-tools:latest",
-	}
-}
 
 type Options struct {
 	PrometheusServer   string `json:"prometheusServer,omitempty"`
@@ -100,7 +79,7 @@ func (mu handlerMux) register(group, version, resource, action string, handler g
 	}
 }
 
-func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.Options, options *Options, debugOptions *DebugOptions) error {
+func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.Options, apioptions *Options, kubectlOptions *KubectlOptions) error {
 	ginr := gin.New()
 	ginr.Use(
 		// log
@@ -110,10 +89,10 @@ func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.O
 		// panic recovery
 		gin.Recovery(),
 	)
-	if options.EnableHTTPSigs {
+	if apioptions.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())
 	}
-	ginhandler, err := Routes(ctx, cluster, options, debugOptions)
+	ginhandler, err := Routes(ctx, cluster, apioptions, kubectlOptions)
 	if err != nil {
 		return err
 	}
@@ -122,7 +101,7 @@ func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.O
 }
 
 // nolint: funlen
-func Routes(ctx context.Context, cluster cluster.Interface, options *Options, debugOptions *DebugOptions) (func(c *gin.Context), error) {
+func Routes(ctx context.Context, cluster cluster.Interface, options *Options, kubectlOptions *KubectlOptions) (func(c *gin.Context), error) {
 	rr := route.NewRouter()
 
 	routes := handlerMux{r: rr}
@@ -168,10 +147,13 @@ func Routes(ctx context.Context, cluster cluster.Interface, options *Options, de
 	nsHandler := &NamespaceHandler{C: cluster.GetClient()}
 	routes.register("core", "v1", "namespaces", ActionList, nsHandler.List)
 
-	podHandler := PodHandler{cluster: cluster, debugoptions: debugOptions}
+	kubectlHandler := KubectlHandler{cluster: cluster, options: kubectlOptions}
+	routes.register("system", "v1", "kubectl", ActionList, kubectlHandler.ExecKubectl)
+
+	podHandler := PodHandler{cluster: cluster}
 	routes.register("core", "v1", "pods", ActionList, podHandler.List)
 	routes.register("core", "v1", "pods", "shell", podHandler.ExecPods)
-	routes.register("core", "v1", "pods", "debug", podHandler.DebugPod)
+	routes.register("core", "v1", "pods", "debug", kubectlHandler.DebugPod)
 	routes.register("core", "v1", "pods", "logs", podHandler.GetContainerLogs)
 	routes.register("core", "v1", "pods", "file", podHandler.DownloadFileFromPod)
 	routes.register("core", "v1", "pods", "upfile", podHandler.UploadFileToContainer)
@@ -183,9 +165,6 @@ func Routes(ctx context.Context, cluster cluster.Interface, options *Options, de
 	routes.register("apps", "v1", "daemonsets", "rollback", rolloutHandler.DaemonsetRollback)
 	routes.register("apps", "v1", "statefulsets", "rollback", rolloutHandler.StatefulSetRollback)
 	routes.register("apps", "v1", "deployments", "rollback", rolloutHandler.DeploymentRollback)
-
-	kubectlHandler := KubectlHandler{cluster: cluster, debugoptions: debugOptions}
-	routes.register("system", "v1", "kubectl", ActionList, kubectlHandler.ExecKubectl)
 
 	prometheusHandler, err := NewPrometheusHandler(options.PrometheusServer)
 	if err != nil {

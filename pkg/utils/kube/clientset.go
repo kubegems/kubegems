@@ -15,9 +15,6 @@
 package kube
 
 import (
-	"os"
-	"path/filepath"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -50,23 +47,35 @@ func GetKubeRestConfig(kubeconfig []byte) (*rest.Config, error) {
 	return clientcmd.RESTConfigFromKubeConfig(kubeconfig)
 }
 
-// AutoClientConfig 自动获取当前环境 restConfig
-// 1. 先尝试使用InClusterConfig,
-// 2. 若不存在则使用 ~/.kube/config，
-// 3. 否不存在则失败
-func AutoClientConfig() (*rest.Config, error) {
-	if config, err := rest.InClusterConfig(); err != nil {
-		home, _ := os.UserHomeDir()
-		return clientcmd.BuildConfigFromFlags("", filepath.Join(home, ".kube", "config"))
-	} else {
-		return config, nil
-	}
-}
-
 func NewLocalClient() (client.WithWatch, error) {
 	cfg, err := AutoClientConfig()
 	if err != nil {
 		return nil, err
 	}
 	return client.NewWithWatch(cfg, client.Options{})
+}
+
+// AutoClientConfig 自动获取当前环境 restConfig
+func AutoClientConfig() (*rest.Config, error) {
+	return DefaultClientConfig().ClientConfig()
+}
+
+// DefaultClientConfig read config from kubeconfig or incluster config as fallback
+// It read config from KUBECONFIG environment file or default kubeconfig file or in cluster config.
+// https://github.com/kubernetes/client-go/blob/cab7ba1d4a523956b6395dcbe38620159ac43fef/tools/clientcmd/loader.go#L143-L152
+func DefaultClientConfig() clientcmd.ClientConfig {
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(), nil)
+}
+
+// LocalNamespace return namespace of default namespace of the kubeconfig or current pod namespace
+// Out of cluster: It read from kubeconfig default context namespace.
+// On cluster: It read from POD_NAMESPACE environment or the serviceaccount namespace file.
+// https://github.com/kubernetes/client-go/blob/cab7ba1d4a523956b6395dcbe38620159ac43fef/tools/clientcmd/client_config.go#L581-L596
+func LocalNamespaceOrDefault(def string) string {
+	ns, _, _ := DefaultClientConfig().Namespace()
+	if ns == "" || ns == "default" {
+		return def
+	}
+	return ns
 }
