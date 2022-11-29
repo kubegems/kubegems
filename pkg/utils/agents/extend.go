@@ -25,6 +25,7 @@ import (
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prommodel "github.com/prometheus/common/model"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
@@ -132,6 +133,7 @@ func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, matchs []st
 }
 
 func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, end, step string) (prommodel.Matrix, error) {
+	log.Debugf("query range: %s", query)
 	ret := prommodel.Matrix{}
 	values := url.Values{}
 	values.Add("query", query)
@@ -153,6 +155,7 @@ func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, e
 }
 
 func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prommodel.Vector, error) {
+	log.Debugf("query vector: %s", query)
 	ret := prommodel.Vector{}
 	values := url.Values{}
 	values.Add("query", query)

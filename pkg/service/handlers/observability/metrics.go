@@ -17,6 +17,8 @@ package observability
 import (
 	"context"
 	"fmt"
+	"math"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -142,8 +144,8 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 // @Description 查群prometheus label names
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                               true  "集群名"
-// @Param       namespace path     string                               true  "命名空间，所有namespace为_all"
+// @Param       cluster   path     string                                 true  "集群名"
+// @Param       namespace path     string                                 true  "命名空间，所有namespace为_all"
 // @Param       resource  query    string                                 false "查询资源"
 // @Param       rule      query    string                                 false "查询规则"
 // @Param       start     query    string                               false "开始时间，默认现在-30m"
@@ -178,8 +180,8 @@ func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 // @Description OtelMetricsGraphs
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                 true  "集群名"
-// @Param       namespace path     string                                 true  "命名空间，所有namespace为_all"
+// @Param       cluster   path     string                               true  "集群名"
+// @Param       namespace path     string                               true  "命名空间"
 // @Param       service   query    string                               false "jaeger service"
 // @Param       start     query    string                                 false "开始时间，默认现在-30m"
 // @Param       end       query    string                                 false "结束时间，默认现在"
@@ -649,33 +651,34 @@ type OtelService struct {
 	ErrorRate                  float64 `json:"errorRate"`                  // 错误率，百分比需要乘以100
 }
 
-// OtelServices OtelServices
+// OtelServices 应用性能监控服务
 // @Tags        Observability
-// @Summary     OtelServices
-// @Description OtelServices
+// @Summary     应用性能监控服务
+// @Description 应用性能监控服务
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                 true  "集群名"
-// @Param       namespace path     string                                 true  "命名空间，所有namespace为_all"
-// @Param       duration       query    string                                                    false "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
-// @Param       page        query    int                                                   false "page"
-// @Param       size        query    int                                                   false "size"
-// @Success     200       {object} handlers.ResponseStruct{Data=object} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/services [get]
+// @Param       cluster   path     string                                                              true  "集群名"
+// @Param       namespace path     string                                                              true  "命名空间，所有namespace为_all"
+// @Param       duration  query    string                                                              false "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
+// @Param       page      query    int                                                                 false "page"
+// @Param       size      query    int                                                                 false "size"
+// @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelService}} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services [get]
 // @Security    JWT
 func (h *ObservabilityHandler) OtelServices(c *gin.Context) {
 	ns := c.Param("namespace")
-	dur := c.DefaultQuery("duration", "1h")
+	dur := c.DefaultQuery("duration", "30m")
 	vectorMap := map[string]prommodel.Vector{}
 	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
 		// query prometheus
+		// 由于span metrics采集的数据，operation之间会有重合，这里计算出的qps、响应时间会不准确(偏大)
 		queries := map[string]string{
-			"AvgRequestQPS":              fmt.Sprintf(`sum(rate(calls_total{http_status_code!="", namespace="%s"}[%s]))by(service_name)`, ns, dur),
-			"AvgResponseDurationSeconds": fmt.Sprintf(`sum(increase(latency_sum{http_status_code!="", namespace="%[1]s"}[%[2]s]))by(service_name) / sum(increase(latency_count{http_status_code!="", namespace="%[1]s"}[%[2]s]))by(service_name) / 1000`, ns, dur),
-			"P75ResponseDurationSeconds": fmt.Sprintf(`histogram_quantile(0.75, sum by(service_name, le) (rate(latency_bucket{http_status_code!="", namespace="%s"}[%s]))) / 1000`, ns, dur),
-			"P90ResponseDurationSeconds": fmt.Sprintf(`histogram_quantile(0.90, sum by(service_name, le) (rate(latency_bucket{http_status_code!="", namespace="%s"}[%s]))) / 1000`, ns, dur),
-			"ErrorCount":                 fmt.Sprintf(`sum(increase(calls_total{http_status_code=~"4.*|5.*", namespace="%s"}[%s]))by(service_name)`, ns, dur),
-			"ErrorRate":                  fmt.Sprintf(`sum(increase(calls_total{http_status_code=~"4.*|5.*", namespace="%[1]s"}[%[2]s]))by(service_name) / sum(increase(calls_total{http_status_code!="", namespace="%[1]s"}[%[2]s]))by(service_name)`, ns, dur),
+			"AvgRequestQPS":              fmt.Sprintf(`sum(rate(calls_total{namespace="%s"}[%s]))by(service_name)`, ns, dur),
+			"AvgResponseDurationSeconds": fmt.Sprintf(`sum(increase(latency_sum{namespace="%[1]s"}[%[2]s]))by(service_name) / sum(increase(latency_count{namespace="%[1]s"}[%[2]s]))by(service_name) / 1000`, ns, dur),
+			"P75ResponseDurationSeconds": fmt.Sprintf(`histogram_quantile(0.75, sum(increase(latency_bucket{namespace="%s"}[%s]))by(service_name, le)) / 1000`, ns, dur),
+			"P90ResponseDurationSeconds": fmt.Sprintf(`histogram_quantile(0.90, sum(increase(latency_bucket{namespace="%s"}[%s]))by(service_name, le)) / 1000`, ns, dur),
+			"ErrorCount":                 fmt.Sprintf(`sum(increase(calls_total{status_code="STATUS_CODE_ERROR", namespace="%s"}[%s]))by(service_name)`, ns, dur),
+			"ErrorRate":                  fmt.Sprintf(`sum(increase(calls_total{status_code="STATUS_CODE_ERROR", namespace="%[1]s"}[%[2]s]))by(service_name) / sum(increase(calls_total{namespace="%[1]s"}[%[2]s]))by(service_name)`, ns, dur),
 		}
 		wg := sync.WaitGroup{}
 		lock := sync.Mutex{}
@@ -739,4 +742,145 @@ func (svc *OtelService) setField(field string, value float64) {
 	case "ErrorRate":
 		svc.ErrorRate = value
 	}
+}
+
+type KV struct {
+	LabelName  string  `json:"labelname"`
+	LabelValue string  `json:"labelvalue"`
+	Value      float64 `json:"value"`
+}
+
+type OtelOverViewResp struct {
+	P90ServiceDurationSeconds   []KV `json:"p90ServiceDurationSeconds"`   // p90最耗时服务
+	P90OperationDurationSeconds []KV `json:"p90OperationDurationSeconds"` // p90最耗时操作
+	ServiceErrorCount           []KV `json:"serviceErrorCount"`           // 服务错误数
+	DBOperationCount            []KV `json:"dbOperationCount"`            // 数据库操作数
+}
+
+// OtelOverview 应用性能监控概览
+// @Tags        Observability
+// @Summary     应用性能监控概览
+// @Description 应用性能监控概览
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                         true  "集群名"
+// @Param       namespace path     string                                         true  "命名空间"
+// @Param       duration  query    string                                         false "过去多长时间: 30s,5m,1h,1d,1w, 默认1h"
+// @Param       pick      query    string                                         false "选择什么值(max/min/avg), default max"
+// @Param       page      query    int                                            false "page"
+// @Param       size      query    int                                            false "size"
+// @Success     200       {object} handlers.ResponseStruct{Data=OtelOverViewResp} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/overview [get]
+// @Security    JWT
+func (h *ObservabilityHandler) OtelOverview(c *gin.Context) {
+	ns := c.Param("namespace")
+	durStr := c.DefaultQuery("duration", "30m")
+	dur, err := prommodel.ParseDuration(durStr)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	pick := c.DefaultQuery("pick", "max")
+	// 由于agent解析时没有管时区，所以这里需设置为UTC
+	now := time.Now().In(time.UTC)
+	start := now.Add(-1 * time.Duration(dur)).Format(time.RFC3339)
+	end := now.Format(time.RFC3339)
+
+	overView := OtelOverViewResp{}
+	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
+		p90ServiceDurationSeconds, err := cli.Extend().PrometheusQueryRange(ctx, fmt.Sprintf(`histogram_quantile(0.9, sum(rate(latency_bucket{namespace="%s"}[5m]))by(service_name, le)) / 1000`, ns), start, end, "")
+		if err != nil {
+			return err
+		}
+		overView.P90ServiceDurationSeconds = pickMatrixValue(p90ServiceDurationSeconds, "service_name", pick)
+		p90OperationDurationSeconds, err := cli.Extend().PrometheusQueryRange(ctx, fmt.Sprintf(`histogram_quantile(0.9, sum(rate(latency_bucket{namespace="%s"}[5m]))by(operation, le)) / 1000`, ns), start, end, "")
+		if err != nil {
+			return err
+		}
+		overView.P90OperationDurationSeconds = pickMatrixValue(p90OperationDurationSeconds, "operation", pick)
+
+		serviceErrorCount, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(calls_total{status_code="STATUS_CODE_ERROR", namespace="%s"}[30m]))by(service_name)`, ns))
+		if err != nil {
+			return err
+		}
+		overView.ServiceErrorCount = pickVectorValue(serviceErrorCount, "service_name")
+		dbOperationCount, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(calls_total{namespace="%s", operation=~"SELECT.*|UPDATE.*|INSERT.*|DELETE.*"}[30m]))by(operation)`, ns))
+		if err != nil {
+			return err
+		}
+		overView.DBOperationCount = pickVectorValue(dbOperationCount, "operation")
+		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, overView)
+}
+
+func pickMatrixValue(matrix prommodel.Matrix, field string, pick string) []KV {
+	getValue := func(pairs []prommodel.SamplePair, pick string) prommodel.SampleValue {
+		if len(pairs) == 0 {
+			return 0
+		}
+		// pick max/min/avg value
+		switch pick {
+		case "min":
+			min := pairs[0].Value
+			for _, v := range pairs {
+				if v.Value < min {
+					min = v.Value
+				}
+			}
+			return min
+		case "avg":
+			var sum prommodel.SampleValue
+			for _, v := range pairs {
+				sum += v.Value
+			}
+			return sum / prommodel.SampleValue(len(pairs))
+		default:
+			max := pairs[0].Value
+			for _, v := range pairs {
+				if v.Value > max {
+					max = v.Value
+				}
+			}
+			return max
+		}
+	}
+	ret := []KV{}
+	for _, v := range matrix {
+		if labelvalue, ok := v.Metric[prommodel.LabelName(field)]; ok {
+			value := float64(getValue(v.Values, pick))
+			if !math.IsNaN(value) {
+				ret = append(ret, KV{
+					LabelName:  field,
+					LabelValue: string(labelvalue),
+					Value:      value,
+				})
+			}
+		}
+	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Value > ret[j].Value
+	})
+	return ret
+}
+
+func pickVectorValue(vector prommodel.Vector, field string) []KV {
+	ret := []KV{}
+	for _, v := range vector {
+		if labelvalue, ok := v.Metric[prommodel.LabelName(field)]; ok {
+			ret = append(ret, KV{
+				LabelName:  field,
+				LabelValue: string(labelvalue),
+				Value:      float64(v.Value),
+			})
+		}
+	}
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Value > ret[j].Value
+	})
+	return ret
 }
