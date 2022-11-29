@@ -67,6 +67,10 @@ func (t *RouteTable) Connect(tun *ConnectedTunnel, data PacketDataRoute) {
 	if data.Peers == nil {
 		data.Peers = map[string]Annotations{}
 	}
+	if val, ok := t.records[tun.ID]; ok {
+		_ = val
+		// close old?
+	}
 	t.records[tun.ID] = &ChannelWithChildren{
 		Channel:     tun,
 		Annotations: data.Annotations,
