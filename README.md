@@ -24,6 +24,8 @@
   <span> • </span>
   <a href="https://github.com/kubegems/.github/blob/master/static/image/wechat.jpg?raw=true">Wechat</a>
   <span> • </span>
+  <a href="https://twitter.com/KubeGems">Twitter</a>
+  <span> • </span>
   <a href="https://kubegems.slack.com">Slack</a>
 </h2>
 
