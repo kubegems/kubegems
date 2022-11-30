@@ -80,6 +80,7 @@ func (h *ObservabilityHandler) DashboardDetail(c *gin.Context) {
 // @Param       environment_id path     string                                                true "环境ID"
 // @Param       dashboard_id   path     uint                                                  true "dashboard id"
 // @Param       panel_id       query    uint                                                      true  "panel id"
+// @Param       labelpairs     query    string                                                    false "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
 // @Param       start          query    string                                                    false "开始时间，默认现在-30m"
 // @Param       end            query    string                                                    false "结束时间，默认现在"
 // @Param       step           query    int                                                       false "step, 单位秒，默认0"
@@ -114,7 +115,7 @@ func (h *ObservabilityHandler) DashboardQuery(c *gin.Context) {
 
 func (h *ObservabilityHandler) getMetricQuerysByDashboard(c *gin.Context) ([]*MetricQueryReq, error) {
 	dash := models.MonitorDashboard{}
-	querys := []*MetricQueryReq{}
+	queries := []*MetricQueryReq{}
 	if err := h.GetDB().Preload("Environment.Cluster").Find(&dash, "id = ?", c.Param("dashboard_id")).Error; err != nil {
 		return nil, err
 	}
@@ -127,7 +128,7 @@ func (h *ObservabilityHandler) getMetricQuerysByDashboard(c *gin.Context) ([]*Me
 	}
 
 	for _, target := range dash.Graphs[panelID].Targets {
-		querys = append(querys, &MetricQueryReq{
+		queries = append(queries, &MetricQueryReq{
 			Cluster:         dash.Environment.Cluster.ClusterName,
 			Namespace:       dash.Environment.Namespace,
 			Start:           c.Query("start"),
@@ -138,7 +139,18 @@ func (h *ObservabilityHandler) getMetricQuerysByDashboard(c *gin.Context) ([]*Me
 			TargetName:      target.TargetName,
 		})
 	}
-	return querys, nil
+	globalLabelPairs := c.QueryMap("labelpairs")
+	if len(globalLabelPairs) > 0 {
+		for _, query := range queries {
+			for k, v := range globalLabelPairs {
+				if query.PromqlGenerator.LabelPairs == nil {
+					query.PromqlGenerator.LabelPairs = make(map[string]string)
+				}
+				query.PromqlGenerator.LabelPairs[k] = v
+			}
+		}
+	}
+	return queries, nil
 }
 
 // CreateDashboard 创建监控dashboad

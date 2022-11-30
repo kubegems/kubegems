@@ -7062,6 +7062,12 @@
                     },
                     {
                         "type": "string",
+                        "description": "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master\u0026labelpairs[pod]=_all",
+                        "name": "labelpairs",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "开始时间，默认现在-30m",
                         "name": "start",
                         "in": "query"
