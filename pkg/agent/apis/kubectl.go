@@ -97,6 +97,7 @@ func (h *KubectlHandler) DebugPod(c *gin.Context) {
 		"--",
 		"/start.sh",
 	}
+	// replace with https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container
 	ExecuteAtLocalOrRemoteKubectlPodWithWebsocket(c.Writer, c.Request, cmd, h.cluster, h.options)
 }
 

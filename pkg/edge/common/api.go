@@ -144,6 +144,16 @@ func (a *EdgeClusterAPI) ListEdgeHubs(req *restful.Request, resp *restful.Respon
 	response.OK(resp, list)
 }
 
+func (a *EdgeClusterAPI) GetEdgeHub(req *restful.Request, resp *restful.Response) {
+	uid := req.PathParameter("uid")
+	edgehub, err := a.Cluster.HubStore.Get(req.Request.Context(), uid)
+	if err != nil {
+		response.BadRequest(resp, err.Error())
+		return
+	}
+	response.OK(resp, edgehub)
+}
+
 func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 	r.AddRoutes(
 		route.GET("/edge-clusters/{uid}/agent-installer.yaml").To(a.InstallAgentTemplate).
@@ -152,6 +162,9 @@ func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 		route.NewGroup("/edge-hubs").Tag("edge-hub").AddRoutes(
 			route.GET("").To(a.ListEdgeHubs).ShortDesc("list edge hubs").
 				Response([]v1beta1.EdgeHub{}),
+			route.GET("/{uid}").To(a.GetEdgeHub).Parameters(
+				route.PathParameter("uid", "uid hub name"),
+			),
 		),
 		route.NewGroup("/edge-clusters").Tag("edge-cluster").AddRoutes(
 			route.GET("/").Paged().To(a.ListEdgeClusters).

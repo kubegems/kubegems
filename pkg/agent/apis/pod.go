@@ -221,6 +221,7 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 				TTY:       true,
 				Command:   DefaultExecCommand,
 			},
+			StreamOptions: stream,
 		}
 		return pe.Execute(ctx)
 	})
