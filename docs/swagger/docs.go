@@ -6717,8 +6717,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "过去多长时间: 30s,5m,1h,1d,1w, 默认1h",
-                        "name": "duration",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
                         "in": "query"
                     },
                     {
@@ -6797,8 +6803,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "过去多长时间: 30s,5m,1h,1d,1w, 默认1h",
-                        "name": "duration",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
                         "in": "query"
                     },
                     {
@@ -6836,12 +6848,177 @@ const docTemplate = `{
                                                         "List": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/observability.OtelService"
+                                                                "$ref": "#/definitions/observability.OtelView"
                                                             }
                                                         }
                                                     }
                                                 }
                                             ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/operations": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "应用操作",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "应用操作",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "集群名",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命名空间",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "应用",
+                        "name": "service_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/handlers.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "List": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/observability.OtelView"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/requests": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "应用请求",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "应用请求",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "集群名",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命名空间",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "应用",
+                        "name": "service_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/gin.H"
                                         }
                                     }
                                 }
@@ -26310,6 +26487,10 @@ const docTemplate = `{
                 }
             }
         },
+        "gin.H": {
+            "type": "object",
+            "additionalProperties": {}
+        },
         "gorm.DeletedAt": {
             "type": "object",
             "properties": {
@@ -29685,35 +29866,20 @@ const docTemplate = `{
                 }
             }
         },
-        "observability.OtelService": {
+        "observability.OtelView": {
             "type": "object",
             "properties": {
-                "avgRequestQPS": {
-                    "description": "平均请求QPS",
-                    "type": "number"
-                },
-                "avgResponseDurationSeconds": {
-                    "description": "平均响应时间",
-                    "type": "number"
-                },
-                "errorCount": {
-                    "description": "错误数",
-                    "type": "number"
-                },
-                "errorRate": {
-                    "description": "错误率，百分比需要乘以100",
-                    "type": "number"
-                },
-                "p75ResponseDurationSeconds": {
-                    "description": "p75",
-                    "type": "number"
-                },
-                "p90ResponseDurationSeconds": {
-                    "description": "p90",
-                    "type": "number"
-                },
-                "serviceName": {
+                "labelname": {
                     "type": "string"
+                },
+                "labelvalue": {
+                    "type": "string"
+                },
+                "valueMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    }
                 }
             }
         },

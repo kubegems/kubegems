@@ -1011,6 +1011,9 @@ definitions:
       version:
         type: string
     type: object
+  gin.H:
+    additionalProperties: {}
+    type: object
   gorm.DeletedAt:
     properties:
       time:
@@ -4792,28 +4795,16 @@ definitions:
           $ref: '#/definitions/observability.KV'
         type: array
     type: object
-  observability.OtelService:
+  observability.OtelView:
     properties:
-      avgRequestQPS:
-        description: 平均请求QPS
-        type: number
-      avgResponseDurationSeconds:
-        description: 平均响应时间
-        type: number
-      errorCount:
-        description: 错误数
-        type: number
-      errorRate:
-        description: 错误率，百分比需要乘以100
-        type: number
-      p75ResponseDurationSeconds:
-        description: p75
-        type: number
-      p90ResponseDurationSeconds:
-        description: p90
-        type: number
-      serviceName:
+      labelname:
         type: string
+      labelvalue:
+        type: string
+      valueMap:
+        additionalProperties:
+          type: number
+        type: object
     type: object
   observability.TableRet:
     properties:
@@ -21477,9 +21468,13 @@ paths:
         name: namespace
         required: true
         type: string
-      - description: '过去多长时间: 30s,5m,1h,1d,1w, 默认1h'
+      - description: 开始时间，默认现在-30m
         in: query
-        name: duration
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
         type: string
       - description: 选择什么值(max/min/avg), default max
         in: query
@@ -21526,9 +21521,13 @@ paths:
         name: namespace
         required: true
         type: string
-      - description: '过去多长时间: 30s,5m,1h,1d,1w, 默认1h'
+      - description: 开始时间，默认现在-30m
         in: query
-        name: duration
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
         type: string
       - description: page
         in: query
@@ -21553,13 +21552,112 @@ paths:
                   - properties:
                       List:
                         items:
-                          $ref: '#/definitions/observability.OtelService'
+                          $ref: '#/definitions/observability.OtelView'
                         type: array
                     type: object
               type: object
       security:
       - JWT: []
       summary: 应用性能监控服务
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/operations:
+    get:
+      consumes:
+      - application/json
+      description: 应用操作
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 应用
+        in: path
+        name: service_name
+        required: true
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  allOf:
+                  - $ref: '#/definitions/handlers.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/observability.OtelView'
+                        type: array
+                    type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 应用操作
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/requests:
+    get:
+      consumes:
+      - application/json
+      description: 应用请求
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 应用
+        in: path
+        name: service_name
+        required: true
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/gin.H'
+              type: object
+      security:
+      - JWT: []
+      summary: 应用请求
       tags:
       - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs:
