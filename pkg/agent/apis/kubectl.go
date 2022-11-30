@@ -52,7 +52,7 @@ func NewDefaultKubectlOptions() *KubectlOptions {
 			labels.Set{
 				"app.kubernetes.io/name": "kubegems-agent-kubectl",
 			}).String(),
-		DebugImage:      "kubegems/debug-tools:latest",
+		DebugImage:      "registry.cn-beijing.aliyuncs.com/kubegems/debug-tools:latest",
 		UseLocalKubectl: false,
 	}
 }

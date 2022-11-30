@@ -160,6 +160,10 @@ KUBEGEMS_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
 kubegems-image:
 	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_IMG} -f Dockerfile ${BIN_DIR}
 
+KUBEGEMS_DEBUG_IMG ?=  ${IMAGE_REGISTRY}/kubegems/debug-tools:$(IMAGE_TAG)
+debug-image:
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_DEBUG_IMG} -f Dockerfile.debug ${BIN_DIR}
+
 kubegems-edge-image: kubegems-edge-agent-image
 
 KUBEGEMS_EDGE_AGENT_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems-edge-agent:$(IMAGE_TAG)
