@@ -55,19 +55,21 @@ type MainCategory map[string]map[string][]api.PluginStatus
 // @Router      /v1/proxy/cluster/{cluster}/plugins [get]
 // @Security    JWT
 func (h *PluginHandler) List(c *gin.Context) {
-	plugins, err := h.PM.ListPlugins(c.Request.Context())
-	if err != nil {
-		NotOK(c, err)
-		return
-	}
 	if simple, _ := strconv.ParseBool(c.Query("simple")); simple {
 		ret := map[string]bool{}
+		plugins, _ := h.PM.ListPlugins(c.Request.Context())
+		// ignore errors on plugin crd not found or others
 		for name, v := range plugins {
 			ret[name] = (v.Installed != nil)
 		}
 		OK(c, ret)
 		return
 	} else {
+		plugins, err := h.PM.ListPlugins(c.Request.Context())
+		if err != nil {
+			NotOK(c, err)
+			return
+		}
 		categoriedPlugins := api.CategoriedPlugins(plugins)
 		OK(c, categoriedPlugins)
 	}
