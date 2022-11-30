@@ -60,11 +60,8 @@ func (h *PvcHandler) List(c *gin.Context) {
 		return
 	}
 
-	pvcInUse, snapClassInUse, err := h.getMapForSnapAndPod(c, ns)
-	if err != nil {
-		NotOK(c, err)
-		return
-	}
+	// ignore errors
+	pvcInUse, snapClassInUse, _ := h.getMapForSnapAndPod(c, ns)
 
 	objects := pvcList.Items
 	for _, obj := range objects {
