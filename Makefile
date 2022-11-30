@@ -19,9 +19,6 @@ PLATFORM?=linux/amd64,linux/arm64
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
 
-# Image URL to use all building/pushing image targets
-IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
-
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
 ldflags+=-X '${GOPACKAGE}/pkg/version.gitVersion=${GIT_VERSION}'
@@ -116,6 +113,7 @@ collect-i18n:
 define go-build
 	@echo "Building ${1}/${2}"
 	@CGO_ENABLED=0 GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-$(1)-$(2) cmd/main.go
+	@CGO_ENABLED=0 GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-edge-agent-$(1)-$(2) pkg/edge/cmd/kubegems-edge-agent/main.go
 endef
 
 ##@ Build
@@ -156,12 +154,21 @@ helm-push: helm-package
 	curl --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
 	;)
 
-docker: ## Build container image.
-	docker buildx build --platform=${PLATFORM} --push -t ${IMG}  .
+docker: kubegems-image kubegems-edge-image ## Build container image.
+
+KUBEGEMS_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
+kubegems-image:
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_IMG} -f Dockerfile ${BIN_DIR}
+
+kubegems-edge-image: kubegems-edge-agent-image
+
+KUBEGEMS_EDGE_AGENT_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems-edge-agent:$(IMAGE_TAG)
+kubegems-edge-agent-image:
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_EDGE_AGENT_IMG} -f Dockerfile.edge-agent ${BIN_DIR}
 
 KUBECTL_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubectl:latest
 kubectl-image:
-	docker buildx build --platform=${PLATFORM} --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl .
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl ${BIN_DIR}
 
 clean:
 	- rm -rf ${BIN_DIR}

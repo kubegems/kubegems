@@ -24,8 +24,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const DefaultEdgeAgentImage = "docker.io/kubegems/kubegems-edge-agent:latest"
+
 // nolint: gomnd,funlen
 func RenderManifets(uid string, image string, edgehubaddress string, certs v1beta1.Certs) []client.Object {
+	if image == "" {
+		image = DefaultEdgeAgentImage
+	}
 	installname, installnamespace := "kubegems-edge-agent", "kubegems-edge"
 	commonlabels := map[string]string{
 		"app.kubernetes.io/instance":  "kubegems-edge",
@@ -59,8 +64,6 @@ func RenderManifets(uid string, image string, edgehubaddress string, certs v1bet
 								Name:  "agent",
 								Image: image,
 								Args: []string{
-									"edge",
-									"agent",
 									"--listen=:8080",
 									"--edgehubaddr=" + edgehubaddress,
 									"--clientid=" + uid,

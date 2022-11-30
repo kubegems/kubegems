@@ -26,38 +26,22 @@ import (
 	"kubegems.io/kubegems/pkg/edge/options"
 	"kubegems.io/kubegems/pkg/edge/server"
 	"kubegems.io/kubegems/pkg/utils/config"
+	"kubegems.io/kubegems/pkg/version"
 )
-
-/*
-edge-node  --> edge-hub --> edge-server
-
-peer1 -> peer -> peer
-peer2 -> peer
-
-func connect()
-func dial()
-
-节点平行：
-- 提供本节点能够被代理访问的 IP
-- 提供本节点标识符号
-- 提供连接到本节点的实例
-- 能够上联至上级节点，提供本节点host的节点
-- 如果dial 本节点则使用本节点进行dial
-*/
 
 func NewEdgeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "edge",
 	}
 	cmd.AddCommand(
-		newEdgeAgentCmd(),
-		newEdgeHubCmd(),
-		newEdgeServerCmd(),
+		NewEdgeAgentCmd(),
+		NewEdgeHubCmd(),
+		NewEdgeServerCmd(),
 	)
 	return cmd
 }
 
-func newEdgeHubCmd() *cobra.Command {
+func NewEdgeHubCmd() *cobra.Command {
 	options := options.NewDefaultHub()
 	cmd := &cobra.Command{
 		Use: "hub",
@@ -74,7 +58,7 @@ func newEdgeHubCmd() *cobra.Command {
 	return cmd
 }
 
-func newEdgeServerCmd() *cobra.Command {
+func NewEdgeServerCmd() *cobra.Command {
 	options := options.NewDefaultServer()
 	cmd := &cobra.Command{
 		Use: "server",
@@ -91,10 +75,11 @@ func newEdgeServerCmd() *cobra.Command {
 	return cmd
 }
 
-func newEdgeAgentCmd() *cobra.Command {
+func NewEdgeAgentCmd() *cobra.Command {
 	options := options.NewDefaultAgentOptions()
 	cmd := &cobra.Command{
-		Use: "agent",
+		Use:     "agent",
+		Version: version.Get().String(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := config.Parse(cmd.Flags()); err != nil {
 				return err
