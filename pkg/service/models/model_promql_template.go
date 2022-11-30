@@ -75,7 +75,6 @@ type PromqlTplRule struct {
 }
 
 func CheckGraphs(graphs []prometheus.MetricGraph, namespace string, tplGetter templates.TplGetter) error {
-	targetSet := set.NewSet[string]()
 	// 逐个校验graph
 	for i, graph := range graphs {
 		if graph.Name == "" {
@@ -87,6 +86,7 @@ func CheckGraphs(graphs []prometheus.MetricGraph, namespace string, tplGetter te
 			}
 		}
 		for j, target := range graph.Targets {
+			targetSet := set.NewSet[string]()
 			if targetSet.Has(target.TargetName) {
 				return fmt.Errorf("duplicated target name: %s", target.TargetName)
 			}
