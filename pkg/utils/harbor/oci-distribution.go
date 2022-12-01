@@ -97,8 +97,13 @@ func (c *OCIDistributionClient) request(ctx context.Context, method string, path
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		errresp := &specsv1.ErrorResponse{}
-		if err := json.NewDecoder(resp.Body).Decode(errresp); err != nil {
-			return err
+		bodycontent, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		if json.Unmarshal(bodycontent, errresp) != nil {
+			// not a json response, return bodycontent as error message
+			errresp.Errors = append(errresp.Errors, specsv1.ErrorInfo{
+				Code:    resp.Status,
+				Message: string(bodycontent),
+			})
 		}
 		return errorResponseError(errresp)
 	}
