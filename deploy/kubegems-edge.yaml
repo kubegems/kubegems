@@ -1,0 +1,44 @@
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  name: kubegems-edge
+  namespace: kubegems-installer
+  annotations:
+    plugins.kubegems.io/category: core/KubeGems
+spec:
+  kind: helm
+  url: http://10.12.32.21:8000
+  installNamespace: kubegems-edge
+  version: 1.22.0
+  valuesFrom:
+    - kind: ConfigMap
+      name: "kubegems-global-values"
+      prefix: "global."
+  values:
+    global:
+      imageRegistry: registry.k8s.fatalc.cn
+      kubegemsVersion: edge
+    hub:
+      enabled: true
+      # host: "edge-hub.k8s.fatalc.cn:30002"
+      host: "edge-hub.develop.fatalc.cn:30002"
+      image:
+        pullPolicy: Always
+      service:
+        type: NodePort
+        nodePorts:
+          grpc: 30002
+      # serverID: ""
+      # a: b·
+    server:
+      enabled: true
+      # host: "edge-server.k8s.fatalc.cn:30001"
+      host: "edge-server.develop.fatalc.cn:30001"
+      image:
+        pullPolicy: Always
+      service:
+        type: NodePort
+        nodePorts:
+          http: 30001
+    # ingress:
+      # enabled: true
