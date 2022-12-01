@@ -161,6 +161,11 @@ func RandomRune(n int, kind string) []rune {
 	return b
 }
 
+// BoolPointer converts bool to *bool
+func BoolPointer(b bool) *bool {
+	return &b
+}
+
 func BoolToString(a bool) string {
 	if a {
 		return "1"

@@ -25,7 +25,7 @@ import (
 
 // AliyunMsg 阿里云短信
 type AliyunMsg struct {
-	ChannelType     `json:"channelType"`
+	BaseChannel     `json:",inline"`
 	AccessKeyId     string `json:"accessKeyId" binding:"required"`
 	AccessKeySecret string `json:"accessKeySecret" binding:"required"`
 	PhoneNumbers    string `json:"phoneNumbers" binding:"required"` // 电话号码，多个中间以","隔开

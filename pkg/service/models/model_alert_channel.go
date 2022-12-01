@@ -33,7 +33,10 @@ var (
 		Name: defaultChannelName,
 		ChannelConfig: channels.ChannelConfig{
 			ChannelIf: &channels.Webhook{
-				ChannelType:        channels.TypeWebhook,
+				BaseChannel: channels.BaseChannel{
+					ChannelType:  channels.TypeWebhook,
+					SendResolved: true,
+				},
 				URL:                channels.KubegemsWebhookURL,
 				InsecureSkipVerify: true,
 			},
