@@ -25,9 +25,9 @@ import (
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prommodel "github.com/prometheus/common/model"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
-	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 )
 
 type ExtendClient struct {
@@ -133,6 +133,7 @@ func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, matchs []st
 }
 
 func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, end, step string) (prommodel.Matrix, error) {
+	log.Debugf("query range: %s", query)
 	ret := prommodel.Matrix{}
 	values := url.Values{}
 	values.Add("query", query)
@@ -148,15 +149,13 @@ func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, e
 	}
 
 	for _, v := range ret {
-		if v.Metric == nil {
-			v.Metric = make(prommodel.Metric)
-		}
-		v.Metric["__kubegems_expr__"] = prommodel.LabelValue(promql.PromqlByLabels(v.Metric))
+		addMetricNameLabel(v.Metric, "{}")
 	}
 	return ret, nil
 }
 
 func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prommodel.Vector, error) {
+	log.Debugf("query vector: %s", query)
 	ret := prommodel.Vector{}
 	values := url.Values{}
 	values.Add("query", query)
@@ -167,7 +166,20 @@ func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prom
 	}); err != nil {
 		return nil, fmt.Errorf("prometheus vector failed, cluster: %s, promql: %s, %v", c.Name, query, err)
 	}
+
+	for _, v := range ret {
+		addMetricNameLabel(v.Metric, "{}")
+	}
 	return ret, nil
+}
+
+func addMetricNameLabel(metric prommodel.Metric, name string) {
+	if metric == nil {
+		metric = make(prommodel.Metric)
+	}
+	if _, ok := metric[prommodel.MetricNameLabel]; !ok {
+		metric[prommodel.MetricNameLabel] = prommodel.LabelValue(name)
+	}
 }
 
 func (c *ExtendClient) PrometheusTargets(ctx context.Context) (*promv1.TargetsResult, error) {

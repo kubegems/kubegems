@@ -6682,6 +6682,475 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/overview": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "应用性能监控概览",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "应用性能监控概览",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "集群名",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命名空间",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "选择什么值(max/min/avg), default max",
+                        "name": "pick",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/observability.OtelOverViewResp"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "应用性能监控服务",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "应用性能监控服务",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "集群名",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命名空间，所有namespace为_all",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/handlers.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "List": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/observability.OtelView"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/operations": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "应用操作",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "应用操作",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "集群名",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命名空间",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "应用",
+                        "name": "service_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/handlers.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "List": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/observability.OtelView"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/requests": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "应用请求",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "应用请求",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "集群名",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命名空间",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "应用",
+                        "name": "service_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/gin.H"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/traces": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "应用traces",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "应用traces",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "集群名",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命名空间",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "应用",
+                        "name": "service_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "trace的maxDuration",
+                        "name": "maxDuration",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "trace的minDuration",
+                        "name": "minDuration",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/handlers.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "List": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/observe.Trace"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs": {
             "get": {
                 "security": [
@@ -6710,7 +7179,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "命名空间，所有namespace为_all",
+                        "description": "命名空间",
                         "name": "namespace",
                         "in": "path",
                         "required": true
@@ -16807,6 +17276,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/tenant/{tenant_id}/environment/search": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "搜索环境",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tenant"
+                ],
+                "summary": "搜索环境",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "tenant_id",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "EnvironmentName",
+                        "name": "EnvironmentName",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "按环境名或namespace搜索",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Environments Info",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/tenanthandler.EnvironmentInfo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/tenant/{tenant_id}/environment_with_quotas": {
             "get": {
                 "security": [
@@ -26077,6 +26610,10 @@ const docTemplate = `{
                 }
             }
         },
+        "gin.H": {
+            "type": "object",
+            "additionalProperties": {}
+        },
         "gorm.DeletedAt": {
             "type": "object",
             "properties": {
@@ -29349,6 +29886,20 @@ const docTemplate = `{
                 }
             }
         },
+        "observability.KV": {
+            "type": "object",
+            "properties": {
+                "labelname": {
+                    "type": "string"
+                },
+                "labelvalue": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
         "observability.LogCollector": {
             "type": "object",
             "properties": {
@@ -29405,6 +29956,56 @@ const docTemplate = `{
                 }
             }
         },
+        "observability.OtelOverViewResp": {
+            "type": "object",
+            "properties": {
+                "dbOperationCount": {
+                    "description": "数据库操作数",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observability.KV"
+                    }
+                },
+                "p90OperationDurationSeconds": {
+                    "description": "p90最耗时操作",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observability.KV"
+                    }
+                },
+                "p90ServiceDurationSeconds": {
+                    "description": "p90最耗时服务",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observability.KV"
+                    }
+                },
+                "serviceErrorCount": {
+                    "description": "服务错误数",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observability.KV"
+                    }
+                }
+            }
+        },
+        "observability.OtelView": {
+            "type": "object",
+            "properties": {
+                "labelname": {
+                    "type": "string"
+                },
+                "labelvalue": {
+                    "type": "string"
+                },
+                "valueMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    }
+                }
+            }
+        },
         "observability.TableRet": {
             "type": "object",
             "properties": {
@@ -29444,6 +30045,32 @@ const docTemplate = `{
                 "interval": {
                     "description": "分组间隔",
                     "type": "string"
+                }
+            }
+        },
+        "observe.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "observe.Log": {
+            "type": "object",
+            "properties": {
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.KeyValue"
+                    }
+                },
+                "timestamp": {
+                    "type": "integer"
                 }
             }
         },
@@ -29610,6 +30237,120 @@ const docTemplate = `{
                 "tplLost": {
                     "description": "监控模板是否丢失",
                     "type": "boolean"
+                }
+            }
+        },
+        "observe.Process": {
+            "type": "object",
+            "properties": {
+                "serviceName": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.KeyValue"
+                    }
+                }
+            }
+        },
+        "observe.Reference": {
+            "type": "object",
+            "properties": {
+                "refType": {
+                    "type": "string"
+                },
+                "spanID": {
+                    "description": "deprecated",
+                    "type": "string"
+                },
+                "traceID": {
+                    "type": "string"
+                }
+            }
+        },
+        "observe.Span": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "description": "microseconds",
+                    "type": "integer"
+                },
+                "flags": {
+                    "type": "integer"
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.Log"
+                    }
+                },
+                "operationName": {
+                    "type": "string"
+                },
+                "parentSpanID": {
+                    "description": "deprecated",
+                    "type": "string"
+                },
+                "process": {
+                    "$ref": "#/definitions/observe.Process"
+                },
+                "processID": {
+                    "type": "string"
+                },
+                "references": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.Reference"
+                    }
+                },
+                "spanID": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "description": "microseconds since Unix epoch",
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.KeyValue"
+                    }
+                },
+                "traceID": {
+                    "type": "string"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "observe.Trace": {
+            "type": "object",
+            "properties": {
+                "processes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/observe.Process"
+                    }
+                },
+                "spans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.Span"
+                    }
+                },
+                "traceID": {
+                    "type": "string"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -30068,6 +30809,38 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": {
                 "type": "integer"
+            }
+        },
+        "tenanthandler.EnvironmentInfo": {
+            "type": "object",
+            "properties": {
+                "clusterID": {
+                    "type": "integer"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "environmentID": {
+                    "type": "integer"
+                },
+                "environmentName": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "projectName": {
+                    "type": "string"
+                },
+                "tenantID": {
+                    "type": "integer"
+                },
+                "tenantName": {
+                    "type": "string"
+                }
             }
         },
         "tenanthandler.tenantStatisticsData": {

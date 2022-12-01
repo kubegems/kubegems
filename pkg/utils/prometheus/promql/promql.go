@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"kubegems.io/kubegems/pkg/utils/set"
@@ -94,24 +93,4 @@ func (q *Query) String() string {
 		ret = fmt.Sprintf("sum(%s)by(%s)", q.Expr.String(), strings.Join(q.sumby, ","))
 	}
 	return ret
-}
-
-func PromqlByLabels(metric model.Metric) string {
-	selector := parser.VectorSelector{
-		Name: string(metric["__name__"]),
-	}
-	for k, v := range metric {
-		if k == "__name__" {
-			continue
-		}
-		selector.LabelMatchers = append(selector.LabelMatchers, &labels.Matcher{
-			Type:  labels.MatchEqual,
-			Name:  string(k),
-			Value: string(v),
-		})
-	}
-	if len(selector.LabelMatchers) == 0 {
-		return "{}"
-	}
-	return selector.String()
 }

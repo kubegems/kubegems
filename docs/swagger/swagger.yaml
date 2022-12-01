@@ -1011,6 +1011,9 @@ definitions:
       version:
         type: string
     type: object
+  gin.H:
+    additionalProperties: {}
+    type: object
   gorm.DeletedAt:
     properties:
       time:
@@ -4721,6 +4724,15 @@ definitions:
         description: 由哪个flow采集的日志
         type: string
     type: object
+  observability.KV:
+    properties:
+      labelname:
+        type: string
+      labelvalue:
+        type: string
+      value:
+        type: number
+    type: object
   observability.LogCollector:
     properties:
       apps:
@@ -4760,6 +4772,40 @@ definitions:
         description: 服务名
         type: string
     type: object
+  observability.OtelOverViewResp:
+    properties:
+      dbOperationCount:
+        description: 数据库操作数
+        items:
+          $ref: '#/definitions/observability.KV'
+        type: array
+      p90OperationDurationSeconds:
+        description: p90最耗时操作
+        items:
+          $ref: '#/definitions/observability.KV'
+        type: array
+      p90ServiceDurationSeconds:
+        description: p90最耗时服务
+        items:
+          $ref: '#/definitions/observability.KV'
+        type: array
+      serviceErrorCount:
+        description: 服务错误数
+        items:
+          $ref: '#/definitions/observability.KV'
+        type: array
+    type: object
+  observability.OtelView:
+    properties:
+      labelname:
+        type: string
+      labelvalue:
+        type: string
+      valueMap:
+        additionalProperties:
+          type: number
+        type: object
+    type: object
   observability.TableRet:
     properties:
       count:
@@ -4787,6 +4833,23 @@ definitions:
       interval:
         description: 分组间隔
         type: string
+    type: object
+  observe.KeyValue:
+    properties:
+      key:
+        type: string
+      type:
+        type: string
+      value: {}
+    type: object
+  observe.Log:
+    properties:
+      fields:
+        items:
+          $ref: '#/definitions/observe.KeyValue'
+        type: array
+      timestamp:
+        type: integer
     type: object
   observe.LoggingAlertRule:
     properties:
@@ -4905,6 +4968,82 @@ definitions:
       tplLost:
         description: 监控模板是否丢失
         type: boolean
+    type: object
+  observe.Process:
+    properties:
+      serviceName:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/observe.KeyValue'
+        type: array
+    type: object
+  observe.Reference:
+    properties:
+      refType:
+        type: string
+      spanID:
+        description: deprecated
+        type: string
+      traceID:
+        type: string
+    type: object
+  observe.Span:
+    properties:
+      duration:
+        description: microseconds
+        type: integer
+      flags:
+        type: integer
+      logs:
+        items:
+          $ref: '#/definitions/observe.Log'
+        type: array
+      operationName:
+        type: string
+      parentSpanID:
+        description: deprecated
+        type: string
+      process:
+        $ref: '#/definitions/observe.Process'
+      processID:
+        type: string
+      references:
+        items:
+          $ref: '#/definitions/observe.Reference'
+        type: array
+      spanID:
+        type: string
+      startTime:
+        description: microseconds since Unix epoch
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/observe.KeyValue'
+        type: array
+      traceID:
+        type: string
+      warnings:
+        items:
+          type: string
+        type: array
+    type: object
+  observe.Trace:
+    properties:
+      processes:
+        additionalProperties:
+          $ref: '#/definitions/observe.Process'
+        type: object
+      spans:
+        items:
+          $ref: '#/definitions/observe.Span'
+        type: array
+      traceID:
+        type: string
+      warnings:
+        items:
+          type: string
+        type: array
     type: object
   pagination.PageData:
     properties:
@@ -5215,6 +5354,27 @@ definitions:
   statistics.ClusterWorkloadStatistics:
     additionalProperties:
       type: integer
+    type: object
+  tenanthandler.EnvironmentInfo:
+    properties:
+      clusterID:
+        type: integer
+      clusterName:
+        type: string
+      environmentID:
+        type: integer
+      environmentName:
+        type: string
+      namespace:
+        type: string
+      projectID:
+        type: integer
+      projectName:
+        type: string
+      tenantID:
+        type: integer
+      tenantName:
+        type: string
     type: object
   tenanthandler.tenantStatisticsData:
     properties:
@@ -21385,6 +21545,290 @@ paths:
       summary: 监控采集器状态
       tags:
       - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/overview:
+    get:
+      consumes:
+      - application/json
+      description: 应用性能监控概览
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      - description: 选择什么值(max/min/avg), default max
+        in: query
+        name: pick
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/observability.OtelOverViewResp'
+              type: object
+      security:
+      - JWT: []
+      summary: 应用性能监控概览
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services:
+    get:
+      consumes:
+      - application/json
+      description: 应用性能监控服务
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间，所有namespace为_all
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  allOf:
+                  - $ref: '#/definitions/handlers.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/observability.OtelView'
+                        type: array
+                    type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 应用性能监控服务
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/operations:
+    get:
+      consumes:
+      - application/json
+      description: 应用操作
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 应用
+        in: path
+        name: service_name
+        required: true
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  allOf:
+                  - $ref: '#/definitions/handlers.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/observability.OtelView'
+                        type: array
+                    type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 应用操作
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/requests:
+    get:
+      consumes:
+      - application/json
+      description: 应用请求
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 应用
+        in: path
+        name: service_name
+        required: true
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/gin.H'
+              type: object
+      security:
+      - JWT: []
+      summary: 应用请求
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/traces:
+    get:
+      consumes:
+      - application/json
+      description: 应用traces
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 应用
+        in: path
+        name: service_name
+        required: true
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      - description: trace的maxDuration
+        in: query
+        name: maxDuration
+        required: true
+        type: string
+      - description: trace的minDuration
+        in: query
+        name: minDuration
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  allOf:
+                  - $ref: '#/definitions/handlers.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/observe.Trace'
+                        type: array
+                    type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 应用traces
+      tags:
+      - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs:
     get:
       consumes:
@@ -21396,7 +21840,7 @@ paths:
         name: cluster
         required: true
         type: string
-      - description: 命名空间，所有namespace为_all
+      - description: 命名空间
         in: path
         name: namespace
         required: true
@@ -27441,6 +27885,44 @@ paths:
       security:
       - JWT: []
       summary: 获取租户下的所有Environment列表
+      tags:
+      - Tenant
+  /v1/tenant/{tenant_id}/environment/search:
+    get:
+      consumes:
+      - application/json
+      description: 搜索环境
+      parameters:
+      - description: tenant_id
+        in: path
+        name: tenant_id
+        required: true
+        type: integer
+      - description: EnvironmentName
+        in: query
+        name: EnvironmentName
+        type: string
+      - description: 按环境名或namespace搜索
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Environments Info
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/tenanthandler.EnvironmentInfo'
+                  type: array
+              type: object
+      security:
+      - JWT: []
+      summary: 搜索环境
       tags:
       - Tenant
   /v1/tenant/{tenant_id}/environment_with_quotas:
