@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 	"golang.org/x/mod/semver"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -283,20 +284,36 @@ func (m *PluginManager) ListRemote(ctx context.Context) (map[string][]PluginVers
 	if err != nil {
 		return nil, err
 	}
-	ret := map[string][]PluginVersion{}
+	// name -> version -> pluginversion
+	pluginsmap := map[string]map[string]PluginVersion{}
 	for _, repo := range repos {
 		for name, pvs := range repo.Plugins {
-			if pluginversions, ok := ret[name]; ok {
-				ret[name] = append(pluginversions, pvs...)
-			} else {
-				ret[name] = pvs
+			pluginversions, ok := pluginsmap[name]
+			if !ok {
+				pluginversions = map[string]PluginVersion{}
+				pluginsmap[name] = pluginversions
+			}
+			for _, pv := range pvs {
+				// use repo priority as plugin priority
+				pv.Priority = repo.Priority
+				if exist, ok := pluginversions[pv.Version]; ok {
+					if exist.Priority < pv.Priority {
+						// replace use higher priority
+						pluginversions[pv.Version] = pv
+					}
+				} else {
+					pluginversions[pv.Version] = pv
+				}
 			}
 		}
 	}
-	for name := range ret {
-		slices.SortFunc(ret[name], func(a, b PluginVersion) bool {
+	ret := map[string][]PluginVersion{}
+	for k, v := range pluginsmap {
+		vs := maps.Values(v)
+		slices.SortFunc(vs, func(a, b PluginVersion) bool {
 			return semver.Compare(a.Version, b.Version) > -1
 		})
+		ret[k] = vs
 	}
 	return ret, nil
 }

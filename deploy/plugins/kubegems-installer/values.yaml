@@ -430,5 +430,7 @@ serviceAccount:
 repositories:
   - name: kubegems
     address: https://charts.kubegems.io/kubegems
+    priority: 99
   - name: local
     address: file:///app/plugins/charts.kubegems.io
+    priority: 10
