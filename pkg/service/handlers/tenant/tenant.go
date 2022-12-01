@@ -1114,7 +1114,7 @@ func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 // @Description 获取租户下的所有Environment列表
 // @Accept      json
 // @Produce     json
-// @Param       tenant_id       path     int                                                                        true  "tenant_id"
+// @Param       tenant_id path     int                                             true  "tenant_id"
 // @Param       EnvironmentName query    string                                                                     false "EnvironmentName"
 // @Param       preload         query    string                                                                     false "choices Creator,Cluster,Project,ResourceQuota,Applications,Users"
 // @Param       page            query    int                                                                        false "page"
@@ -1148,6 +1148,59 @@ func (h *TenantHandler) ListEnvironment(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, handlers.Page(total, list, int64(page), int64(size)))
+}
+
+type EnvironmentInfo struct {
+	ClusterID   uint   `json:"clusterID"`
+	ClusterName string `json:"clusterName"`
+	Namespace   string `json:"namespace"`
+
+	TenantID   uint   `json:"tenantID"`
+	TenantName string `json:"tenantName"`
+
+	ProjectID   uint   `json:"projectID"`
+	ProjectName string `json:"projectName"`
+
+	EnvironmentID   uint   `json:"environmentID"`
+	EnvironmentName string `json:"environmentName"`
+}
+
+// SearchEnvironment 搜索环境
+// @Tags        Tenant
+// @Summary     搜索环境
+// @Description 搜索环境
+// @Accept      json
+// @Produce     json
+// @Param       tenant_id       path     int                                                                        true  "tenant_id"
+// @Param       search    query    string                                          false "按环境名或namespace搜索"
+// @Success     200       {object} handlers.ResponseStruct{Data=[]EnvironmentInfo} "Environments Info"
+// @Router      /v1/tenant/{tenant_id}/environment/search [get]
+// @Security    JWT
+func (h *TenantHandler) SearchEnvironment(c *gin.Context) {
+	search := c.Query("search")
+	if search == "" {
+		handlers.NotOK(c, fmt.Errorf("search can't be empty"))
+		return
+	}
+	sql := fmt.Sprintf(
+		`select environments.id as environment_id, environments.environment_name, environments.namespace,
+				clusters.id as cluster_id, clusters.cluster_name,
+				projects.id as project_id, projects.project_name,
+				tenants.id as tenant_id, tenants.tenant_name
+		from environments left join clusters on environments.cluster_id = clusters.id
+			left join projects on environments.project_id = projects.id
+			left join tenants on projects.tenant_id = tenants.id
+		where (environments.environment_name like "%%%[1]s%%" or environments.namespace like "%%%[1]s%%")`, search)
+	tenantID := c.Param("tenant_id")
+	if tenantID != "_all" {
+		sql += " and tenants.id = " + tenantID
+	}
+	ret := []EnvironmentInfo{}
+	if err := h.GetDB().Raw(sql).Scan(&ret).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, ret)
 }
 
 type tenantStatisticsData struct {

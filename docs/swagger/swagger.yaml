@@ -27898,10 +27898,6 @@ paths:
         name: tenant_id
         required: true
         type: integer
-      - description: EnvironmentName
-        in: query
-        name: EnvironmentName
-        type: string
       - description: 按环境名或namespace搜索
         in: query
         name: search

@@ -17304,12 +17304,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "EnvironmentName",
-                        "name": "EnvironmentName",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "按环境名或namespace搜索",
                         "name": "search",
                         "in": "query"
