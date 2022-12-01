@@ -150,7 +150,7 @@ helm-package:
 	;)
 
 .PHONY: helm-push
-helm-push: helm-package
+helm-push:
 	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(VERSION).tgz), \
 	curl --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
 	;)

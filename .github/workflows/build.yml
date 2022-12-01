@@ -44,10 +44,8 @@ jobs:
             ~/.cache/go-build
             ~/go/pkg/mod
             ~/.cache/helm
-            bin/plugins
           key: ${{ runner.os }}-build-${{ hashFiles('**/go.sum','deploy/plugins') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          restore-keys: ${{ runner.os }}-build-
       # Build binary
       - name: Build binaries
         run: make build GIT_VERSION=${GITHUB_REF_NAME}
