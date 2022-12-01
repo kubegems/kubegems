@@ -397,6 +397,4 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.23.5
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.5
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.5
-	sigs.k8s.io/apiserver-network-proxy => ../../kubernetes-sigs/apiserver-network-proxy
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client => ../../kubernetes-sigs/apiserver-network-proxy/konnectivity-client
 )
