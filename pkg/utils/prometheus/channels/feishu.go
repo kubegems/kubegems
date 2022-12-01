@@ -26,9 +26,9 @@ import (
 
 type Feishu struct {
 	BaseChannel `json:",inline"`
-	URL         string `json:"url"`        // feishu robot webhook url
-	At          string `json:"at"`         // 要@的用户id，所有人则是 all
-	SignSecret  string `json:"signSecret"` // 签名校验key
+	URL         string `json:"url" binding:"required"` // feishu robot webhook url
+	At          string `json:"at"`                     // 要@的用户id，所有人则是 all
+	SignSecret  string `json:"signSecret"`             // 签名校验key
 }
 
 func (f *Feishu) formatURL() string {

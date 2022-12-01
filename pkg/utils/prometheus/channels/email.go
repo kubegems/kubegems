@@ -29,7 +29,7 @@ import (
 
 type Email struct {
 	BaseChannel  `json:",inline"`
-	SMTPServer   string `json:"smtpServer"`
+	SMTPServer   string `json:"smtpServer" binding:"required"`
 	RequireTLS   bool   `json:"requireTLS"`
 	From         string `json:"from" binding:"required"`
 	To           string `json:"to" binding:"required"`

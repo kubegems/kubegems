@@ -25,7 +25,7 @@ import (
 
 // AliyunVoice 阿里云语音
 type AliyunVoice struct {
-	ChannelType     `json:"channelType"`
+	BaseChannel     `json:",inline"`
 	AccessKeyId     string `json:"accessKeyId" binding:"required"`
 	AccessKeySecret string `json:"accessKeySecret" binding:"required"`
 	CallNumber      string `json:"callNumber" binding:"required"` // 电话号码，只支持单个
