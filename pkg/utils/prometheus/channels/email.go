@@ -23,12 +23,13 @@ import (
 	"github.com/emersion/go-smtp"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type Email struct {
-	ChannelType  `json:"channelType"`
-	SMTPServer   string `json:"smtpServer" binding:"required"`
+	BaseChannel  `json:",inline"`
+	SMTPServer   string `json:"smtpServer"`
 	RequireTLS   bool   `json:"requireTLS"`
 	From         string `json:"from" binding:"required"`
 	To           string `json:"to" binding:"required"`
@@ -70,6 +71,7 @@ func (e *Email) ToReceiver(name string) v1alpha1.Receiver {
 						Value: `Kubegems alert [{{ .CommonLabels.gems_alertname }}:{{ .Alerts.Firing | len }}] in [cluster:{{ .CommonLabels.cluster }}] [namespace:{{ .CommonLabels.gems_namespace }}]`,
 					},
 				},
+				SendResolved: utils.BoolPointer(e.SendResolved),
 			},
 		},
 	}

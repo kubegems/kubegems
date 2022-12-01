@@ -53,6 +53,11 @@ type ChannelIf interface {
 	String() string
 }
 
+type BaseChannel struct {
+	ChannelType  ChannelType `json:"channelType"`
+	SendResolved bool        `json:"sendResolved"`
+}
+
 type ChannelConfig struct {
 	ChannelIf
 }

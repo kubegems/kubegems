@@ -26,18 +26,20 @@ import (
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type Webhook struct {
-	ChannelType        `json:"channelType"`
-	URL                string `json:"url" binding:"required"`
+	BaseChannel        `json:",inline"`
+	URL                string `json:"url"`
 	InsecureSkipVerify bool   `json:"insecureSkipVerify"`
 }
 
 func (w *Webhook) ToReceiver(name string) v1alpha1.Receiver {
 	cfg := v1alpha1.WebhookConfig{
-		URL: &w.URL,
+		URL:          &w.URL,
+		SendResolved: utils.BoolPointer(w.SendResolved),
 	}
 	if w.InsecureSkipVerify {
 		cfg.HTTPConfig = &v1alpha1.HTTPConfig{
