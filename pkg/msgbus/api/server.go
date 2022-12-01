@@ -16,17 +16,15 @@ package api
 
 import (
 	"context"
-	"net"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/msgbus/options"
 	"kubegems.io/kubegems/pkg/msgbus/switcher"
 	"kubegems.io/kubegems/pkg/service/aaa"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
 func NewGinServer(opts *options.Options, database *database.Database, redis *redis.Client, ms *switcher.MessageSwitcher) (*gin.Engine, error) {
@@ -55,17 +53,5 @@ func RunGinServer(ctx context.Context, options *options.Options, db *database.Da
 	if err != nil {
 		return err
 	}
-	httpserver := &http.Server{
-		Addr:    options.System.Listen,
-		Handler: r,
-		BaseContext: func(l net.Listener) context.Context {
-			return ctx // 注入basecontext
-		},
-	}
-	go func() {
-		<-ctx.Done()
-		httpserver.Close()
-	}()
-	log.FromContextOrDiscard(ctx).Info("start listen", "addr", httpserver.Addr)
-	return httpserver.ListenAndServe()
+	return system.ListenAndServeContext(ctx, options.System.Listen, nil, r)
 }

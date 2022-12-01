@@ -46,6 +46,7 @@ type PluginVersion struct {
 	Values           pluginsv1beta1.Values       `json:"values,omitempty"`
 	Schema           string                      `json:"schema"`
 	ValuesFrom       []pluginsv1beta1.ValuesFrom `json:"valuesFrom,omitempty"`
+	Priority         int                         `json:"priority,omitempty"`
 }
 
 func (pv PluginVersion) ToPlugin() *pluginsv1beta1.Plugin {

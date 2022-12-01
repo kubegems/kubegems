@@ -3,6 +3,8 @@ kind: Plugin
 metadata:
   name: global
   namespace: kubegems-installer
+  annotations:
+    plugins.kubegems.io/category: core/KubeGems
 spec:
   kind: template
   url: https://charts.kubegems.io/kubegems
@@ -12,7 +14,7 @@ spec:
     clusterName: "manager-cluster"
     kubegemsVersion: v1.22.1
     # choose 'registry.cn-beijing.aliyuncs.com' or 'docker.io'
-    imageRegistry: docker.io
+    imageRegistry: registry.cn-beijing.aliyuncs.com
     imageRepository: "kubegems"
     storageClass: local-path # change me to use a different storage class
 ---
@@ -35,3 +37,20 @@ spec:
   values:
     ingress:
       hostname: dashboard.kubegems.io # change me to use a production hostname
+      ingressClassName: default-gateway
+    api:
+      image:
+        pullPolicy: Always
+    dashboard:
+      image:
+        pullPolicy: Always
+      service:
+        nodePorts:
+          http: 30531
+        type: NodePort
+    msgbus:
+      image:
+        pullPolicy: Always
+    worker:
+      image:
+        pullPolicy: Always

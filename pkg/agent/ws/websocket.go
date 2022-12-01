@@ -139,13 +139,13 @@ func (wsConn *WsConnection) WsClose() {
 	close(wsConn.outChan)
 }
 
-func InitWebsocket(resp http.ResponseWriter, req *http.Request) (wsConn *WsConnection, err error) {
-	var conn *websocket.Conn
-	if conn, err = Upgrader.Upgrade(resp, req, nil); err != nil {
-		return
+func InitWebsocket(resp http.ResponseWriter, req *http.Request) (*WsConnection, error) {
+	conn, err := Upgrader.Upgrade(resp, req, nil)
+	if err != nil {
+		return nil, err
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	wsConn = &WsConnection{
+	wsConn := &WsConnection{
 		conn:    conn,
 		cancel:  cancel,
 		lock:    sync.RWMutex{},
@@ -155,5 +155,5 @@ func InitWebsocket(resp http.ResponseWriter, req *http.Request) (wsConn *WsConne
 	}
 	go wsConn.wsReadLoop(ctx)
 	go wsConn.wsWriteLoop(ctx)
-	return
+	return wsConn, nil
 }

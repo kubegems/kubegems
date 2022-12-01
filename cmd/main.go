@@ -30,6 +30,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"kubegems.io/kubegems/cmd/apps"
+	"kubegems.io/kubegems/pkg/edge"
 	"kubegems.io/kubegems/pkg/version"
 )
 
@@ -59,6 +60,7 @@ func NewRootCmd() *cobra.Command {
 		apps.NewInstallerCmd(),
 		apps.NewPluginCmd(),
 		apps.NewModelsCmd(),
+		edge.NewEdgeCmd(),
 	)
 	return cmd
 }

@@ -55,10 +55,11 @@ type Client interface {
 var _ Client = &DelegateClient{}
 
 type DelegateClient struct {
-	*TypedClient
-	extend     *ExtendClient
-	kubernetes kubernetes.Interface
-	discovery  discovery.DiscoveryInterface
+	*ExtendClient
+	websocket     *websocket.Dialer
+	apiserverAddr *url.URL
+	kubernetes    kubernetes.Interface
+	discovery     discovery.DiscoveryInterface
 }
 
 type ClientMeta struct {
@@ -72,19 +73,19 @@ type ClientMeta struct {
 }
 
 func (c *DelegateClient) Extend() *ExtendClient {
-	return c.extend
+	return c.ExtendClient
 }
 
 func (c *DelegateClient) Name() string {
-	return c.ClientMeta.Name
+	return c.ExtendClient.Name
 }
 
 func (c *DelegateClient) BaseAddr() url.URL {
-	return *c.ClientMeta.BaseAddr
+	return *c.TypedClient.BaseAddr
 }
 
 func (c *DelegateClient) APIServerAddr() url.URL {
-	return *c.ClientMeta.APIServerAddr
+	return *c.apiserverAddr
 }
 
 func (c *DelegateClient) APIServerVersion() string {
@@ -96,7 +97,7 @@ func (c *DelegateClient) APIServerVersion() string {
 }
 
 func (c DelegateClient) ClientCertExpireAt() *time.Time {
-	if trans, ok := c.TypedClient.http.Transport.(*http.Transport); ok {
+	if trans, ok := c.TypedClient.HTTPClient.Transport.(*http.Transport); ok {
 		certs := trans.TLSClientConfig.Certificates
 		if len(certs) > 0 && len(certs[0].Certificate) > 0 {
 			cert, err := x509.ParseCertificate(certs[0].Certificate[0])
@@ -111,12 +112,18 @@ func (c DelegateClient) ClientCertExpireAt() *time.Time {
 }
 
 func newClient(meta ClientMeta, kubernetes kubernetes.Interface) Client {
-	typed := &TypedClient{
-		ClientMeta: meta,
-		http: &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: meta.TLSConfig,
-				Proxy:           meta.Proxy,
+	return &DelegateClient{
+		ExtendClient: &ExtendClient{
+			Name: meta.Name,
+			TypedClient: &TypedClient{
+				BaseAddr: meta.BaseAddr,
+				HTTPClient: &http.Client{
+					Transport: &http.Transport{
+						TLSClientConfig: meta.TLSConfig,
+						Proxy:           meta.Proxy,
+					},
+				},
+				RuntimeScheme: kube.GetScheme(),
 			},
 		},
 		websocket: &websocket.Dialer{
@@ -124,15 +131,8 @@ func newClient(meta ClientMeta, kubernetes kubernetes.Interface) Client {
 			HandshakeTimeout: 45 * time.Second,
 			TLSClientConfig:  meta.TLSConfig,
 		},
-		scheme: kube.GetScheme(),
-	}
-
-	return &DelegateClient{
-		TypedClient: typed,
-		extend: &ExtendClient{
-			TypedClient: typed,
-		},
-		kubernetes: kubernetes,
-		discovery:  memory.NewMemCacheClient(kubernetes.Discovery()),
+		apiserverAddr: meta.APIServerAddr,
+		kubernetes:    kubernetes,
+		discovery:     memory.NewMemCacheClient(kubernetes.Discovery()),
 	}
 }

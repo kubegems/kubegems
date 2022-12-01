@@ -72,6 +72,6 @@ func NewGinLoggerMideare(logger *zap.Logger) gin.HandlerFunc {
 			logger.Warn(http.StatusText(statusCode), fields...)
 			return
 		}
-		logger.Debug(http.StatusText(statusCode), fields...)
+		logger.Info(http.StatusText(statusCode), fields...)
 	}
 }

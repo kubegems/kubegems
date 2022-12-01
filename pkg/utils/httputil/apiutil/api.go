@@ -33,32 +33,53 @@ type RestModule interface {
 }
 
 func NewRestfulAPI(prefix string, filters []restful.FilterFunction, modules []RestModule) http.Handler {
+	return NewRestfulAPIWithHealthCheck(prefix, filters, modules, nil)
+}
+
+func NewRestfulAPIWithHealthCheck(prefix string, filters []restful.FilterFunction, modules []RestModule, healthCheckFun func() error) http.Handler {
 	ws := new(restful.WebService)
 	for _, filter := range filters {
 		ws.Filter(filter)
 	}
 
+	root := route.NewGroup("")
+	root.AddRoutes(
+		route.GET("healthz").Tag("default").Doc("health check").To(route.Healthz(healthCheckFun)),
+	)
+
 	rg := route.NewGroup(prefix)
 	for _, module := range modules {
 		module.RegisterRoute(rg)
 	}
+	root.AddSubGroup(rg)
 
-	(&route.Tree{RouteUpdateFunc: listWrrapperFunc, Group: rg}).AddToWebService(ws)
-	ws.Filter(restful.CrossOriginResourceSharing{
+	(&route.Tree{RouteUpdateFunc: listWrrapperFunc, Group: root}).AddToWebService(ws)
+	cros := restful.CrossOriginResourceSharing{
 		AllowedHeaders: []string{".*"},
 		AllowedMethods: []string{"*"},
-	}.Filter)
-	ws.Filter(LogFilter)
-	ws.Filter(restful.OPTIONSFilter())
+	}
+	// cross filter must set on webservice
+	ws.Filter(cros.Filter)
 
-	healthz := new(restful.WebService)
-	healthz.Path("healthz").Route(
-		healthz.GET("").To(func(req *restful.Request, resp *restful.Response) {}).Doc("health check").Produces("text/plain").Writes("OK"),
-	)
-	return restful.DefaultContainer.
-		Add(ws).
-		Add(healthz).
-		Add(route.BuildOpenAPIWebService([]*restful.WebService{ws}, path.Join(prefix, "docs.json"), completeInfo))
+	c := restful.NewContainer()
+	c.Filter(LogFilter)
+	c.Filter(c.OPTIONSFilter)
+	c.ServiceErrorHandler(errhandlerfunc)
+
+	apidocs := route.BuildOpenAPIWebService([]*restful.WebService{ws}, path.Join(prefix, "docs.json"), completeInfo)
+	return c.Add(ws).Add(apidocs)
+}
+
+func errhandlerfunc(err restful.ServiceError, req *restful.Request, resp *restful.Response) {
+	if req.Request.Method == http.MethodOptions {
+		return
+	}
+	for header, values := range err.Header {
+		for _, value := range values {
+			resp.Header().Add(header, value)
+		}
+	}
+	resp.WriteErrorString(err.Code, err.Message)
 }
 
 func LogFilter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {

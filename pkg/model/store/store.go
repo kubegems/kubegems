@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
-	"github.com/go-logr/logr"
 	gomongo "go.mongodb.org/mongo-driver/mongo"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/model/store/api/modeldeployments"
@@ -31,6 +30,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/mongo"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
 type StoreOptions struct {
@@ -71,8 +71,6 @@ type StoreServer struct {
 }
 
 func (s *StoreServer) Run(ctx context.Context) error {
-	log := logr.FromContextOrDiscard(ctx)
-
 	// setup mongodb
 	mongocli, mongodb, err := mongo.New(ctx, s.Options.Mongo)
 	if err != nil {
@@ -100,14 +98,7 @@ func (s *StoreServer) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("setup api: %v", err)
 	}
-
-	log.Info("start model store service", "listen", s.Options.Listen)
-	server := &http.Server{Addr: s.Options.Listen, Handler: handler}
-	go func() {
-		<-ctx.Done()
-		_ = server.Close()
-	}()
-	return server.ListenAndServe()
+	return system.ListenAndServeContext(ctx, s.Options.Listen, nil, handler)
 }
 
 type APIDependencies struct {

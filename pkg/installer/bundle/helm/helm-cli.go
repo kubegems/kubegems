@@ -30,6 +30,7 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/repo"
+	"kubegems.io/kubegems/pkg/version"
 )
 
 type ApplyOptions struct {
@@ -139,6 +140,9 @@ func downloadChart(ctx context.Context, repourl, name, version string) (string, 
 		Getters:          getter.All(settings),
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
+		Options: []getter.Option{
+			getter.WithUserAgent(KubegemsUserAgent()),
+		},
 	}
 	if repourl != "" {
 		chartURL, err := repo.FindChartInRepoURL(repourl, name, version, "", "", "", dl.Getters)
@@ -155,4 +159,8 @@ func downloadChart(ctx context.Context, repourl, name, version string) (string, 
 		return filename, fmt.Errorf("failed to download %s: %w", name, err)
 	}
 	return filename, nil
+}
+
+func KubegemsUserAgent() string {
+	return "Kubegems-installer/" + strings.TrimPrefix(version.Get().GitVersion, "v")
 }

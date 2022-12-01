@@ -29,6 +29,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils"
 	gempro "kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
 var (
@@ -72,14 +73,8 @@ func (h *Handler) Run(ctx context.Context, opts *gempro.ExporterOptions) error {
 	})
 	mu.Handle(MetricPath, h)
 
-	server := &http.Server{Addr: opts.Listen, Handler: mu}
-	go func() {
-		<-ctx.Done()
-		server.Close()
-		log.Info("prometheus exporter stopped")
-	}()
 	log.FromContextOrDiscard(ctx).Info("prometheus exporter listen on", "address", opts.Listen)
-	return server.ListenAndServe()
+	return system.ListenAndServeContext(ctx, opts.Listen, nil, mu)
 }
 
 func newHandlerWith(includeExporterMetrics bool, maxRequests int, logger *log.Logger) *Handler {

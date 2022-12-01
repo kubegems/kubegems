@@ -17,6 +17,7 @@ package gemsplugin
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,6 +35,7 @@ const PluginRepositoriesNamePrefix = "plugin-repository-"
 
 type Repository struct {
 	Name     string                     `json:"name,omitempty"`
+	Priority int                        `json:"priority,omitempty"`
 	Address  string                     `json:"address,omitempty"`
 	Plugins  map[string][]PluginVersion `json:"plugins,omitempty"`
 	LastSync time.Time                  `json:"lastSync,omitempty"`
@@ -130,11 +132,13 @@ func repoFromSecret(secret corev1.Secret) Repository {
 	plugins := map[string][]PluginVersion{}
 	_ = json.Unmarshal(secret.Data["plugins"], &plugins)
 	lastsync, _ := time.Parse(time.RFC3339, string(secret.Data["lastSync"]))
+	priority, _ := strconv.Atoi(string(secret.Data["priority"]))
 	return Repository{
 		Name:     strings.TrimPrefix(secret.GetName(), PluginRepositoriesNamePrefix),
 		Address:  string(secret.Data["address"]),
 		Plugins:  plugins,
 		LastSync: lastsync,
+		Priority: priority,
 	}
 }
 

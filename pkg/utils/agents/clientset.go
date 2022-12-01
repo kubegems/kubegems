@@ -19,7 +19,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"net/http"
 	"net/url"
 	"sync"
 
@@ -31,7 +30,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/database"
-	"kubegems.io/kubegems/pkg/utils/httpsigs"
 )
 
 type ClientSet struct {
@@ -221,30 +219,6 @@ func (s *serverInfo) TLSConfig() (*tls.Config, error) {
 	return tlsconfig, nil
 }
 
-type AuthInfo struct {
-	ClientCertificate []byte `json:"clientCertificate,omitempty"`
-	ClientKey         []byte `json:"clientKey,omitempty"`
-	Token             string `json:"token,omitempty"`
-	Username          string `json:"username,omitempty"`
-	Password          string `json:"password,omitempty"`
-}
-
-func (auth *AuthInfo) IsEmpty() bool {
-	return len(auth.ClientCertificate) == 0 && len(auth.ClientKey) == 0 && auth.Token == "" && auth.Username == "" && auth.Password == ""
-}
-
-func (auth *AuthInfo) Proxy(req *http.Request) (*url.URL, error) {
-	if auth.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+auth.Token)
-		return nil, nil
-	}
-	if _, _, exist := req.BasicAuth(); !exist && auth.Username != "" {
-		req.SetBasicAuth(auth.Username, auth.Password)
-		return nil, nil
-	}
-	return nil, nil
-}
-
 func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta, error) {
 	cluster := &models.Cluster{}
 	if err := h.database.DB().First(&cluster, "cluster_name = ?", name).Error; err != nil {
@@ -283,31 +257,4 @@ func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta
 		Proxy:         proxy.Proxy,
 	}
 	return climeta, nil
-}
-
-func httpSigner(basepath string) func(req *http.Request) (*url.URL, error) {
-	signer := httpsigs.GetSigner()
-	return func(req *http.Request) (*url.URL, error) {
-		signer.Sign(req, basepath)
-		return nil, nil
-	}
-}
-
-type ChainedProxy []func(*http.Request) (*url.URL, error)
-
-func (pc ChainedProxy) Proxy(req *http.Request) (*url.URL, error) {
-	var finalurl *url.URL
-	for _, p := range pc {
-		if p == nil {
-			continue
-		}
-		url, err := p(req)
-		if err != nil {
-			return nil, err
-		}
-		if url != nil {
-			finalurl = url
-		}
-	}
-	return finalurl, nil
 }

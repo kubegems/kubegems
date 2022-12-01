@@ -546,10 +546,8 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 }
 
 type ClusterQuota struct {
-	Version        string                               `json:"version"`
-	OversoldConfig datatypes.JSON                       `json:"oversoldConfig"`
-	Resources      statistics.ClusterResourceStatistics `json:"resources"`
-	Workloads      statistics.ClusterWorkloadStatistics `json:"workloads"`
+	statistics.ClusterStatistics
+	OversoldConfig datatypes.JSON `json:"oversoldConfig"`
 }
 
 // ClusterStatistics 集群资源状态
@@ -564,20 +562,13 @@ type ClusterQuota struct {
 // @Security    JWT
 func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
-		resources := statistics.ClusterResourceStatistics{}
-		if err := cli.Extend().ClusterResourceStatistics(ctx, &resources); err != nil {
+		statistics := statistics.ClusterStatistics{}
+		if err := cli.Extend().ClusterStatistics(ctx, &statistics); err != nil {
 			return nil, err
 		}
-		workloads := statistics.ClusterWorkloadStatistics{}
-		if err := cli.Extend().ClusterWorkloadStatistics(ctx, &workloads); err != nil {
-			return nil, err
-		}
-
 		return ClusterQuota{
-			Version:        cluster.Version,
-			Resources:      resources,
-			OversoldConfig: cluster.OversoldConfig,
-			Workloads:      workloads,
+			ClusterStatistics: statistics,
+			OversoldConfig:    cluster.OversoldConfig,
 		}, nil
 	})
 }

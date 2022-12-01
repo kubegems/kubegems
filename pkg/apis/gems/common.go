@@ -24,6 +24,7 @@ const (
 
 	NamespaceSystem    = "kubegems"
 	NamespaceLocal     = "kubegems-local"
+	NamespaceEdge      = "kubegems-edge"
 	NamespaceInstaller = "kubegems-installer"
 	NamespaceMonitor   = "kubegems-monitoring"
 	NamespaceLogging   = "kubegems-logging"

@@ -114,15 +114,15 @@ func DoRawResponse(w http.ResponseWriter, status int, data interface{}, headers 
 	}
 	switch val := data.(type) {
 	case io.Reader:
-		w.Header().Set("Content-Type", "application/octet-stream")
+		setContentTypeIfNotSet(w.Header(), "application/octet-stream")
 		w.WriteHeader(status)
 		_, _ = io.Copy(w, val)
 	case string:
-		w.Header().Set("Content-Type", "text/plain")
+		setContentTypeIfNotSet(w.Header(), "text/plain")
 		w.WriteHeader(status)
 		_, _ = w.Write([]byte(val))
 	case []byte:
-		w.Header().Set("Content-Type", "application/octet-stream")
+		setContentTypeIfNotSet(w.Header(), "application/octet-stream")
 		w.WriteHeader(status)
 		_, _ = w.Write(val)
 	case nil:
@@ -132,6 +132,12 @@ func DoRawResponse(w http.ResponseWriter, status int, data interface{}, headers 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		_ = json.NewEncoder(w).Encode(Response{Data: data})
+	}
+}
+
+func setContentTypeIfNotSet(hds http.Header, val string) {
+	if val := hds.Get("Content-Type"); val == "" {
+		hds.Set("Content-Type", val)
 	}
 }
 

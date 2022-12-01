@@ -17,12 +17,13 @@ package pprof
 import (
 	"context"
 	"expvar"
-	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
 
+	"github.com/go-logr/logr"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
 // ServeDebug provides a debug endpoint
@@ -45,20 +46,7 @@ func Run(ctx context.Context) error {
 	if port == "" {
 		port = ":6060"
 	}
-	server := http.Server{
-		Addr:    port,
-		Handler: newHandler(),
-		BaseContext: func(l net.Listener) context.Context {
-			return ctx
-		},
-	}
 	log := log.FromContextOrDiscard(ctx)
-
-	go func() {
-		<-ctx.Done()
-		_ = server.Shutdown(ctx)
-		log.Info("pprof stopped")
-	}()
-	log.Info("debug pprof listen", "addr", server.Addr)
-	return server.ListenAndServe()
+	ctx = logr.NewContext(ctx, log.WithValues("component", "pprof"))
+	return system.ListenAndServeContext(ctx, port, nil, newHandler())
 }

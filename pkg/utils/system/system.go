@@ -42,6 +42,14 @@ func (o *Options) IsTLSConfigEnabled() bool {
 	return (o.CertFile != "" && o.KeyFile != "")
 }
 
+func (o *Options) TLSConfigOrNull() *tls.Config {
+	if o.CertFile == "" || o.KeyFile == "" {
+		return nil
+	}
+	config, _ := o.ToTLSConfig()
+	return config
+}
+
 func (o *Options) ToTLSConfig() (*tls.Config, error) {
 	cafile, certfile, keyfile := o.CAFile, o.CertFile, o.KeyFile
 

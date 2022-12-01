@@ -40,9 +40,27 @@ func GetListOptions(r *http.Request) ListOptions {
 	}
 }
 
-// nolint: forcetypeassert,gomnd,ifshort
+func HeaderOrQuery[T any](r *http.Request, key string, defaultValue T) T {
+	if val := r.Header.Get(key); val == "" {
+		return ValueOrDefault(r.URL.Query().Get(key), defaultValue)
+	} else {
+		return ValueOrDefault(val, defaultValue)
+	}
+}
+
+func Header[T any](r *http.Request, key string, defaultValue T) T {
+	val := r.Header.Get(key)
+	return ValueOrDefault(val, defaultValue)
+}
+
 func Query[T any](r *http.Request, key string, defaultValue T) T {
 	val := r.URL.Query().Get(key)
+	return ValueOrDefault(val, defaultValue)
+}
+
+// nolint: forcetypeassert,gomnd,ifshort
+// ValueOrDefault return default value if empty string
+func ValueOrDefault[T any](val string, defaultValue T) T {
 	if val == "" {
 		return defaultValue
 	}

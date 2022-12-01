@@ -17,12 +17,9 @@ package apis
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"k8s.io/apimachinery/pkg/labels"
 	"kubegems.io/kubegems/pkg/agent/client"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/middleware"
@@ -34,25 +31,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/system"
 	"kubegems.io/kubegems/pkg/version"
 )
-
-type DebugOptions struct {
-	Image       string `json:"image,omitempty"`
-	Namespace   string `json:"namespace,omitempty"`
-	PodSelector string `json:"podSelector,omitempty"`
-	Container   string `json:"container,omitempty"`
-}
-
-func NewDefaultDebugOptions() *DebugOptions {
-	return &DebugOptions{
-		Namespace: os.Getenv("MY_NAMESPACE"),
-		PodSelector: labels.SelectorFromSet(
-			labels.Set{
-				"app.kubernetes.io/name": "gems-agent-kubectl",
-			}).String(),
-		Container: "gems-agent-kubectl",
-		Image:     "kubegems/debug-tools:latest",
-	}
-}
 
 type Options struct {
 	PrometheusServer   string `json:"prometheusServer,omitempty"`
@@ -101,8 +79,7 @@ func (mu handlerMux) register(group, version, resource, action string, handler g
 	}
 }
 
-// nolint: funlen
-func Run(ctx context.Context, cluster cluster.Interface, system *system.Options, options *Options, debugOptions *DebugOptions) error {
+func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.Options, apioptions *Options, kubectlOptions *KubectlOptions) error {
 	ginr := gin.New()
 	ginr.Use(
 		// log
@@ -112,15 +89,20 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 		// panic recovery
 		gin.Recovery(),
 	)
-	if options.EnableHTTPSigs {
+	if apioptions.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())
 	}
+	ginhandler, err := Routes(ctx, cluster, apioptions, kubectlOptions)
+	if err != nil {
+		return err
+	}
+	ginr.Any("/*path", ginhandler)
+	return system.ListenAndServeContext(ctx, systemoptions.Listen, systemoptions.TLSConfigOrNull(), ginr)
+}
 
+// nolint: funlen
+func Routes(ctx context.Context, cluster cluster.Interface, options *Options, kubectlOptions *KubectlOptions) (func(c *gin.Context), error) {
 	rr := route.NewRouter()
-
-	ginr.Any("/*path", func(c *gin.Context) {
-		rr.Match(c)(c)
-	})
 
 	routes := handlerMux{r: rr}
 	routes.r.GET("/healthz", func(c *gin.Context) {
@@ -151,9 +133,10 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.registerREST(cluster)
 
 	// custom api
-	staticsHandler := &StatisticsHandler{C: cluster.GetClient()}
+	staticsHandler := &StatisticsHandler{C: cluster}
 	routes.register("statistics.system", "v1", "workloads", ActionList, staticsHandler.ClusterWorkloadStatistics)
 	routes.register("statistics.system", "v1", "resources", ActionList, staticsHandler.ClusterResourceStatistics)
+	routes.register("statistics.system", "v1", "all", ActionList, staticsHandler.ClusterStatistics)
 
 	nodeHandler := &NodeHandler{C: cluster.GetClient()}
 	routes.register("core", "v1", "nodes", ActionGet, nodeHandler.Get)
@@ -164,10 +147,13 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	nsHandler := &NamespaceHandler{C: cluster.GetClient()}
 	routes.register("core", "v1", "namespaces", ActionList, nsHandler.List)
 
-	podHandler := PodHandler{cluster: cluster, debugoptions: debugOptions}
+	kubectlHandler := KubectlHandler{cluster: cluster, options: kubectlOptions}
+	routes.register("system", "v1", "kubectl", ActionList, kubectlHandler.ExecKubectl)
+
+	podHandler := PodHandler{cluster: cluster}
 	routes.register("core", "v1", "pods", ActionList, podHandler.List)
 	routes.register("core", "v1", "pods", "shell", podHandler.ExecPods)
-	routes.register("core", "v1", "pods", "debug", podHandler.DebugPod)
+	routes.register("core", "v1", "pods", "debug", kubectlHandler.DebugPod)
 	routes.register("core", "v1", "pods", "logs", podHandler.GetContainerLogs)
 	routes.register("core", "v1", "pods", "file", podHandler.DownloadFileFromPod)
 	routes.register("core", "v1", "pods", "upfile", podHandler.UploadFileToContainer)
@@ -180,12 +166,9 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	routes.register("apps", "v1", "statefulsets", "rollback", rolloutHandler.StatefulSetRollback)
 	routes.register("apps", "v1", "deployments", "rollback", rolloutHandler.DeploymentRollback)
 
-	kubectlHandler := KubectlHandler{cluster: cluster, debugoptions: debugOptions}
-	routes.register("system", "v1", "kubectl", ActionList, kubectlHandler.ExecKubectl)
-
 	prometheusHandler, err := NewPrometheusHandler(options.PrometheusServer)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	routes.register("prometheus", "v1", "vector", ActionList, prometheusHandler.Vector)
 	routes.register("prometheus", "v1", "matrix", ActionList, prometheusHandler.Matrix)
@@ -197,7 +180,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 
 	alertmanagerHandler, err := NewAlertmanagerClient(options.AlertmanagerServer, cluster.Kubernetes())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	routes.register("alertmanager", "v1", "alerts", ActionList, alertmanagerHandler.ListAlerts)
 	routes.register("alertmanager", "v1", "alerts", ActionCheck, alertmanagerHandler.CheckConfig)
@@ -256,10 +239,7 @@ func Run(ctx context.Context, cluster cluster.Interface, system *system.Options,
 	clientrest := client.ClientRest{Cli: cluster.GetClient()}
 	clientrest.Register(routes.r)
 
-	if err := listen(ctx, system, ginr); err != nil {
-		return err
-	}
-	return nil
+	return func(c *gin.Context) { routes.r.Match(c)(c) }, err
 }
 
 func (mu handlerMux) registerREST(cluster cluster.Interface) {
@@ -288,37 +268,4 @@ func (mu handlerMux) registerREST(cluster cluster.Interface) {
 
 	mu.r.PATCH("/v1/{group}/{version}/{resource}/{name}/actions/scale", resthandler.Scale)
 	mu.r.PATCH("/v1/{group}/{version}/namespaces/{namespace}/{resource}/{name}/actions/scale", resthandler.Scale)
-}
-
-func listen(ctx context.Context, options *system.Options, handler http.Handler) error {
-	server := http.Server{
-		BaseContext: func(l net.Listener) context.Context { return ctx },
-		Addr:        options.Listen,
-		Handler:     handler,
-	}
-
-	if options.IsTLSConfigEnabled() {
-		tlsc, err := options.ToTLSConfig()
-		if err != nil {
-			return err
-		}
-		server.TLSConfig = tlsc
-		// server.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert // enable TLS client auth
-	} else {
-		log.Info("tls config not found")
-	}
-
-	go func() {
-		<-ctx.Done()
-		log.Info("shutting down server")
-		server.Close()
-	}()
-
-	if server.TLSConfig != nil {
-		log.Info("listen on https", "addr", options.Listen)
-		return server.ListenAndServeTLS("", "")
-	} else {
-		log.Info("listen on http", "addr", options.Listen)
-		return server.ListenAndServe()
-	}
 }

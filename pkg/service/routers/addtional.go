@@ -46,5 +46,16 @@ func (r *Router) AddRestAPI(ctx context.Context, deps apis.Dependencies) error {
 	r.gin.Any("/v1/admin/*path", p.Handle)
 	r.gin.Any("/v1/sources/*path", p.Handle)
 	r.gin.Any("/v1/sources", p.Handle)
+
+	// kubegems edge
+	// just hardcode the path for now
+	edgep, err := proxy.NewProxy(deps.Opts.Edge.Addr)
+	if err != nil {
+		return err
+	}
+	r.gin.Any("/v1/edge-clusters", edgep.Handle)
+	r.gin.Any("/v1/edge-clusters/*path", edgep.Handle)
+	r.gin.Any("/v1/edge-hubs", edgep.Handle)
+	r.gin.Any("/v1/edge-hubs/*path", edgep.Handle)
 	return nil
 }

@@ -3710,6 +3710,9 @@ definitions:
     type: object
   models.Environment:
     properties:
+      allowEdgeRegistration:
+        description: 允许边缘集群注册
+        type: boolean
       applications:
         description: 关联的应用
         items:
@@ -5350,6 +5353,15 @@ definitions:
       used:
         $ref: '#/definitions/v1.ResourceList'
         description: 集群资源的真实使用量
+    type: object
+  statistics.ClusterStatistics:
+    properties:
+      resources:
+        $ref: '#/definitions/statistics.ClusterResourceStatistics'
+      version:
+        type: string
+      workloads:
+        $ref: '#/definitions/statistics.ClusterWorkloadStatistics'
     type: object
   statistics.ClusterWorkloadStatistics:
     additionalProperties:
@@ -26339,6 +26351,34 @@ paths:
       security:
       - JWT: []
       summary: Prometheus Vector
+      tags:
+      - Agent.V1
+  /v1/proxy/cluster/{cluster}/custom/statistics.system/v1/all:
+    get:
+      consumes:
+      - application/json
+      description: 获取集群级别统计
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: counter
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/statistics.ClusterStatistics'
+              type: object
+      security:
+      - JWT: []
+      summary: 获取集群级别统计
       tags:
       - Agent.V1
   /v1/proxy/cluster/{cluster}/custom/statistics.system/v1/resources:

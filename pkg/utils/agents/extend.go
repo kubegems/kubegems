@@ -31,6 +31,7 @@ import (
 )
 
 type ExtendClient struct {
+	Name string
 	*TypedClient
 }
 
@@ -45,6 +46,13 @@ func (c *ExtendClient) ClusterWorkloadStatistics(ctx context.Context, ret interf
 func (c *ExtendClient) ClusterResourceStatistics(ctx context.Context, ret interface{}) error {
 	return c.DoRequest(ctx, Request{
 		Path: "/custom/statistics.system/v1/resources",
+		Into: WrappedResponse(ret),
+	})
+}
+
+func (c *ExtendClient) ClusterStatistics(ctx context.Context, ret interface{}) error {
+	return c.DoRequest(ctx, Request{
+		Path: "/custom/statistics.system/v1/all",
 		Into: WrappedResponse(ret),
 	})
 }

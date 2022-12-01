@@ -10,4 +10,5 @@ metadata:
     "plugins.kubegems.io/is-plugin-repo": "true"
 data:
   address: {{ .address | b64enc }}
+  priority: {{ .priority | b64enc }}
 {{- end }}

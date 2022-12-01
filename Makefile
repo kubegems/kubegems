@@ -19,9 +19,6 @@ PLATFORM?=linux/amd64,linux/arm64
 IMAGE_REGISTRY?=docker.io
 IMAGE_TAG=${GIT_VERSION}
 
-# Image URL to use all building/pushing image targets
-IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
-
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
 ldflags+=-X '${GOPACKAGE}/pkg/version.gitVersion=${GIT_VERSION}'
@@ -55,13 +52,23 @@ all: generate build container push helm-push## build all
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-generate: add-license gen-i18n ## Generate  WebhookConfiguration, ClusterRole, CustomResourceDefinition objects and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: generate-i18n generate-proto generate-apis generate-license generate-versions generate-installer ## Generate all
+
+generate-apis:
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/gems/..."    crd  output:crd:artifacts:config=deploy/plugins/kubegems-local/crds
 	$(CONTROLLER_GEN) paths="./pkg/apis/models/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-models/crds
+	$(CONTROLLER_GEN) paths="./pkg/apis/edge/..."  crd  output:crd:artifacts:config=deploy/plugins/kubegems-edge/crds
 	$(CONTROLLER_GEN) paths="./pkg/..." object:headerFile="hack/boilerplate.go.txt"
+
+generate-proto:
+	protoc \
+	--go_out=. --go_opt=paths=source_relative \
+	--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+	pkg/edge/tunnel/proto/tunnel.proto
+
+generate-versions:
 	sed -i 's/kubegemsVersion:.*/kubegemsVersion: $(GIT_VERSION)/g' deploy/kubegems.yaml
-	# go run scripts/generate-system-alert/main.go
 
 generate-installer: helm-package
 	helm template --namespace kubegems-installer --include-crds \
@@ -71,7 +78,20 @@ generate-installer: helm-package
 	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
 
+generate-system-alert:
 	# go run scripts/generate-system-alert/main.go
+
+generate-i18n:
+	go run internal/cmd/i18n/main.go gen
+
+.PHONY: generate-license
+generate-license:
+	./scripts/add_license.sh
+
+SERVER_IP ?= 127.0.0.1
+.PHONY: certs
+certs:
+	SERVER_IP=${SERVER_IP} sh scripts/generate-certs.sh
 
 swagger:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.4
@@ -87,15 +107,13 @@ test: generate ## Run tests.
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
-gen-i18n:
-	go run internal/cmd/i18n/main.go gen
-
 collect-i18n:
 	go run internal/cmd/i18n/main.go collect
 
 define go-build
 	@echo "Building ${1}/${2}"
 	@CGO_ENABLED=0 GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-$(1)-$(2) cmd/main.go
+	@CGO_ENABLED=0 GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-edge-agent-$(1)-$(2) pkg/edge/cmd/kubegems-edge-agent/main.go
 endef
 
 ##@ Build
@@ -111,7 +129,7 @@ build-binaries:
 	- mkdir -p ${BIN_DIR}
 	@cp ${BIN_DIR}/kubegems-${OS}-${ARCH} ${BIN_DIR}/kubegems
 
-build-files: build-binaries ## Build around files
+build-files: ## Build around files
 	go run scripts/offline-plugins/main.go
 	cp -rf deploy/*.yaml ${BIN_DIR}/plugins/
 	mkdir -p ${BIN_DIR}/config
@@ -136,12 +154,25 @@ helm-push: helm-package
 	curl --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
 	;)
 
-docker: ## Build container image.
-	docker buildx build --platform=${PLATFORM} --push -t ${IMG}  .
+docker: kubegems-image kubegems-edge-image ## Build container image.
+
+KUBEGEMS_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
+kubegems-image:
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_IMG} -f Dockerfile ${BIN_DIR}
+
+KUBEGEMS_DEBUG_IMG ?=  ${IMAGE_REGISTRY}/kubegems/debug-tools:$(IMAGE_TAG)
+debug-image:
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_DEBUG_IMG} -f Dockerfile.debug ${BIN_DIR}
+
+kubegems-edge-image: kubegems-edge-agent-image
+
+KUBEGEMS_EDGE_AGENT_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems-edge-agent:$(IMAGE_TAG)
+kubegems-edge-agent-image:
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_EDGE_AGENT_IMG} -f Dockerfile.edge-agent ${BIN_DIR}
 
 KUBECTL_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubectl:latest
 kubectl-image:
-	docker buildx build --platform=${PLATFORM} --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl .
+	docker buildx build --platform=${PLATFORM} --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl ${BIN_DIR}
 
 clean:
 	- rm -rf ${BIN_DIR}
@@ -158,7 +189,7 @@ kustomize: ## Download kustomize locally if necessary.
 
 LINTER = ${BIN_DIR}/golangci-lint
 linter: ## Download controller-gen locally if necessary.
-	GOBIN=${BIN_DIR} go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.0
+	GOBIN=${BIN_DIR} go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
 
 K8S_VERSION = 1.20.0
 setup-envtest: ## setup operator test environment
@@ -176,7 +207,3 @@ ifeq (, $(shell which readme-generator))
 else
 	echo 'readme-generator-for-helm is already installed'
 endif
-
-.PHONY: add-license
-add-license:
-	./scripts/add_license.sh

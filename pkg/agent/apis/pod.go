@@ -34,19 +34,18 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/ws"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PodHandler struct {
-	cluster      cluster.Interface
-	debugoptions *DebugOptions
+	cluster cluster.Interface
 }
 
 // @Tags        Agent.V1
@@ -207,28 +206,25 @@ func filterByNodename(c *gin.Context, pods []v1.Pod) []v1.Pod {
 // @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/shell [get]
 // @Security    JWT
 func (h *PodHandler) ExecPods(c *gin.Context) {
-	conn, err := ws.InitWebsocket(c.Writer, c.Request)
-	if err != nil {
-		_ = conn.WsWrite(websocket.TextMessage, []byte("init websocket connection error"))
-		return
-	}
-	handler := &ws.StreamHandler{WsConn: conn, ResizeEvent: make(chan remotecommand.TerminalSize)}
-	exec, err := h.getExec(c)
-	if err != nil {
-		log.Infof("Upgrade Websocket Faield: %s", err.Error())
-		handlers.NotOK(c, err)
-		return
-	}
-	if err = exec.Stream(remotecommand.StreamOptions{
-		Stdin:             handler,
-		Stdout:            handler,
-		Stderr:            handler,
-		TerminalSizeQueue: handler,
-		Tty:               true,
-	}); err != nil {
-		_ = conn.WsWrite(websocket.TextMessage, []byte(err.Error()))
-		return
-	}
+	RunWebSocketStream(c.Writer, c.Request, func(ctx context.Context, stream remotecommand.StreamOptions) error {
+		pe := PodCmdExecutor{
+			Cluster: h.cluster,
+			Pod: client.ObjectKey{
+				Namespace: c.Param("namespace"),
+				Name:      c.Param("name"),
+			},
+			PodExecOptions: v1.PodExecOptions{
+				Container: request.HeaderOrQuery(c.Request, "container", ""),
+				Stdin:     true,
+				Stdout:    true,
+				Stderr:    true,
+				TTY:       true,
+				Command:   DefaultExecCommand,
+			},
+			StreamOptions: stream,
+		}
+		return pe.Execute(ctx)
+	})
 }
 
 // GetContainerLogs 获取容器的stdout输出
@@ -358,48 +354,6 @@ func (w *wsWriter) Write(data []byte) (int, error) {
 	return len(data), nil
 }
 
-func (h *PodHandler) getExec(c *gin.Context) (remotecommand.Executor, error) {
-	pe := &PodCmdExecutor{
-		Cluster:   h.cluster,
-		Namespace: c.Param("namespace"),
-		Pod:       c.Param("name"),
-		Container: paramFromHeaderOrQuery(c, "container", ""),
-		Stdin:     true,
-		Stdout:    true,
-		Stderr:    true,
-		TTY:       true,
-	}
-	command := []string{
-		"/bin/sh",
-		"-c",
-		"export LINES=20; export COLUMNS=100; export LANG=C.UTF-8; export TERM=xterm-256color; [ -x /bin/bash ] && exec /bin/bash || exec /bin/sh",
-	}
-	return pe.executor(command)
-}
-
-type PodCmdExecutor struct {
-	Cluster   cluster.Interface
-	Namespace string
-	Pod       string
-	Container string
-	Stdin     bool
-	Stdout    bool
-	Stderr    bool
-	TTY       bool
-}
-
-func (pe *PodCmdExecutor) executor(cmd []string) (remotecommand.Executor, error) {
-	req := pe.Cluster.Kubernetes().CoreV1().RESTClient().Post().Resource("pods").Namespace(pe.Namespace).Name(pe.Pod).SubResource("exec").VersionedParams(&v1.PodExecOptions{
-		Container: pe.Container,
-		Command:   cmd,
-		Stdin:     pe.Stdin,
-		Stdout:    pe.Stdout,
-		Stderr:    pe.Stderr,
-		TTY:       pe.TTY,
-	}, scheme.ParameterCodec)
-	return remotecommand.NewSPDYExecutor(pe.Cluster.Config(), "POST", req.URL())
-}
-
 type FileTransfer struct {
 	Cluster   cluster.Interface
 	Namespace string
@@ -409,30 +363,30 @@ type FileTransfer struct {
 }
 
 func (fd *FileTransfer) Download(c *gin.Context) error {
-	pe := PodCmdExecutor{
-		Cluster:   fd.Cluster,
-		Namespace: fd.Namespace,
-		Pod:       fd.Pod,
-		Container: fd.Container,
-		Stdout:    true,
-		Stderr:    true,
-	}
-	command := []string{"tar", "cf", "-", fd.Filename}
-	exec, err := pe.executor(command)
-	if err != nil {
-		return err
-	}
 	c.Header(
 		"Content-Disposition",
 		mime.FormatMediaType("attachment", map[string]string{
 			"filename": path.Base(fd.Filename) + ".tgz",
 		}),
 	)
-	e := exec.Stream(remotecommand.StreamOptions{
-		Stdout: RateLimitWriter(context.TODO(), c.Writer, 1024*1024),
-		Stderr: &fakeStdoutWriter{},
-	})
-	return e
+	pe := PodCmdExecutor{
+		Cluster: fd.Cluster,
+		Pod: client.ObjectKey{
+			Namespace: fd.Namespace,
+			Name:      fd.Pod,
+		},
+		PodExecOptions: v1.PodExecOptions{
+			Container: fd.Container,
+			Stdout:    true,
+			Stderr:    true,
+			Command:   []string{"tar", "cf", "-", fd.Filename},
+		},
+		StreamOptions: remotecommand.StreamOptions{
+			Stdout: RateLimitWriter(c.Request.Context(), c.Writer, 1024*1024),
+			Stderr: &fakeStdoutWriter{},
+		},
+	}
+	return pe.Execute(c.Request.Context())
 }
 
 func (fd *FileTransfer) Upload(c *gin.Context) error {
@@ -442,25 +396,28 @@ func (fd *FileTransfer) Upload(c *gin.Context) error {
 	}
 	r, w := io.Pipe()
 	go uploadFormData.convertTar(w)
-	pe := PodCmdExecutor{
-		Cluster:   fd.Cluster,
-		Namespace: fd.Namespace,
-		Pod:       fd.Pod,
-		Container: fd.Container,
-		Stdin:     true,
-		Stdout:    true,
-		Stderr:    true,
-	}
+
 	command := []string{"tar", "xf", "-", "-C", uploadFormData.Dest}
-	exec, err := pe.executor(command)
-	if err != nil {
-		return err
+	pe := PodCmdExecutor{
+		Cluster: fd.Cluster,
+		Pod: client.ObjectKey{
+			Namespace: fd.Namespace,
+			Name:      fd.Pod,
+		},
+		PodExecOptions: v1.PodExecOptions{
+			Command:   command,
+			Container: fd.Container,
+			Stdin:     true,
+			Stdout:    true,
+			Stderr:    true,
+		},
+		StreamOptions: remotecommand.StreamOptions{
+			Stdin:  r,
+			Stdout: &fakeStdoutWriter{},
+			Stderr: &fakeStdoutWriter{},
+		},
 	}
-	return exec.Stream(remotecommand.StreamOptions{
-		Stdin:  r,
-		Stdout: &fakeStdoutWriter{},
-		Stderr: &fakeStdoutWriter{},
-	})
+	return pe.Execute(c.Request.Context())
 }
 
 type uploadForm struct {
@@ -475,7 +432,7 @@ func (uf *uploadForm) convertTar(w io.WriteCloser) (err error) {
 			Name:    file.Filename,
 			Size:    file.Size,
 			ModTime: time.Now(),
-			Mode:    0644,
+			Mode:    0o644,
 		})
 		fd, err := file.Open()
 		if err != nil {
