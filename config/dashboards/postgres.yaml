@@ -8,90 +8,101 @@ variables:
   service: ""
 graphs:
   - name: Current QPS
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgFetchData
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgFetchData
+          unit: ""
   - name: Current TPS
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgXactCommit
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgXactCommit
+          unit: ""
   - name: Cache Hit Ratio
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgCacheHitRate
-      unit: percent-0.0-1.0
-    expr: ""
     unit: percent-0.0-1.0
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgCacheHitRate
+          unit: percent-0.0-1.0
   - name: Insert Rows
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgInsertedDate
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgInsertedDate
+          unit: ""
   - name: Idle Sessions
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgIdleSessions
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgIdleSessions
+          unit: ""
   - name: Sync Durations
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgSyncTime
-      unit: duration-ms
-    expr: ""
     unit: duration-s
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgSyncTime
+          unit: duration-ms
   - name: Write Durations
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgWriteTime
-      unit: duration-ms
-    expr: ""
     unit: duration-s
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgWriteTime
+          unit: duration-ms
   - name: Temp Files
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgTmpBytes
-      unit: bytes-B
-    expr: ""
     unit: bytes-B
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgTmpBytes
+          unit: bytes-B
   - name: Confilicts
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgConflicts
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgConflicts
+          unit: ""
   - name: Active Sessions
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgActivifyCount
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgActivifyCount
+          unit: ""
   - name: Shard Buffers
-    promqlGenerator:
-      scope: middlewires
-      resource: postgres
-      rule: pgSharedBuffersBytes
-      unit: bytes-B
-    expr: ""
     unit: bytes-B
+    targets:
+      - targetName: A
+        promqlGenerator:
+          scope: middlewires
+          resource: postgres
+          rule: pgSharedBuffersBytes
+          unit: bytes-B

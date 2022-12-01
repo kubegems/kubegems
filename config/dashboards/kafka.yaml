@@ -8,50 +8,62 @@ variables:
   service: ""
 graphs:
   - name: Kafka Brokers
-    promqlGenerator:
-      scope: middlewires
-      resource: kafka
-      rule: kafkaBrokers
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: kafka
+          rule: kafkaBrokers
+          unit: ""
   - name: Topics
-    promqlGenerator:
-      scope: middlewires
-      resource: kafka
-      rule: kafkaTopics
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: kafka
+          rule: kafkaTopics
+          unit: ""
   - name: Partitions
-    promqlGenerator:
-      scope: middlewires
-      resource: kafka
-      rule: kafkaPartitions
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: kafka
+          rule: kafkaPartitions
+          unit: ""
   - name: Consumer Latency
-    promqlGenerator:
-      scope: middlewires
-      resource: kafka
-      rule: kafkaConsumerLatency
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: kafka
+          rule: kafkaConsumerLatency
+          unit: ""
   - name: Producer Rate
-    promqlGenerator:
-      scope: middlewires
-      resource: kafka
-      rule: kafkaMessagesProduced
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: kafka
+          rule: kafkaMessagesProduced
+          unit: ""
   - name: Consumer Rate
-    promqlGenerator:
-      scope: middlewires
-      resource: kafka
-      rule: kafkaMessageConsumer
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: kafka
+          rule: kafkaMessageConsumer
+          unit: ""

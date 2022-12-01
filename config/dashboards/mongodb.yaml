@@ -8,74 +8,92 @@ variables:
   service: ""
 graphs:
   - name: Connections
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongodbConnections
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongodbConnections
+          unit: ""
   - name: Current QPS
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongodbQPS
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongodbQPS
+          unit: ""
   - name: Current TPS
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongodbTPS
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongodbTPS
+          unit: ""
   - name: Current Document OPS
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongodbDocument
-      unit: ""
-    expr: ""
     unit: ""
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongodbDocument
+          unit: ""
   - name: Network Received
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongodbReceivedBytes
-      unit: bytes/sec-B/s
-    expr: ""
     unit: bytes/sec-B/s
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongodbReceivedBytes
+          unit: bytes/sec-B/s
   - name: Network Sent
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongodbSentBytes
-      unit: bytes/sec-B/s
-    expr: ""
     unit: bytes/sec-B/s
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongodbSentBytes
+          unit: bytes/sec-B/s
   - name: Wiredtiger Cache Rate
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongodbWiredtigerCacheRate
-      unit: percent-0.0-1.0
-    expr: ""
     unit: percent-0.0-1.0
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongodbWiredtigerCacheRate
+          unit: percent-0.0-1.0
   - name: Response Time
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongdoResponseTime
-      unit: duration-us
-    expr: ""
     unit: duration-ms
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongdoResponseTime
+          unit: duration-us
   - name: Database Size
-    promqlGenerator:
-      scope: middlewires
-      resource: mongodb
-      rule: mongodbDataSize
-      unit: bytes-B
-    expr: ""
     unit: bytes-B
+    targets:
+      - targetName: A
+        expr: ""
+        promqlGenerator:
+          scope: middlewires
+          resource: mongodb
+          rule: mongodbDataSize
+          unit: bytes-B
