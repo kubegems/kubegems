@@ -144,15 +144,16 @@ helm-generate: readme-generator
 	;)
 
 KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
+.PHONY: helm-package
 helm-package:
 	$(foreach file, $(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
 	helm package -u -d ${KUBEGEM_CHARTS_DIR} --version ${VERSION} --app-version  ${VERSION} $(file) \
 	;)
 
 .PHONY: helm-push
-helm-push:
+helm-push: helm-package
 	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(VERSION).tgz), \
-	curl --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
+	curl -f --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
 	;)
 
 comma = ,

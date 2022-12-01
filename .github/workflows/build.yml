@@ -34,7 +34,7 @@ jobs:
 
       - name: Helm Package Push
         if: startsWith(github.ref, 'refs/tags/v')
-        run: make helm-package helm-push GIT_VERSION=${GITHUB_REF_NAME}
+        run: make helm-push GIT_VERSION=${GITHUB_REF_NAME} HELM_REPO_PASSWORD=${HELM_REPO_PASSWORD}
 
       # Cache go modules for faster builds
       # https://github.com/actions/cache/blob/main/examples.md#go---modules
