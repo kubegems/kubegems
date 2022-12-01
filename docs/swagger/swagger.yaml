@@ -4834,6 +4834,23 @@ definitions:
         description: 分组间隔
         type: string
     type: object
+  observe.KeyValue:
+    properties:
+      key:
+        type: string
+      type:
+        type: string
+      value: {}
+    type: object
+  observe.Log:
+    properties:
+      fields:
+        items:
+          $ref: '#/definitions/observe.KeyValue'
+        type: array
+      timestamp:
+        type: integer
+    type: object
   observe.LoggingAlertRule:
     properties:
       ChannelStatus:
@@ -4951,6 +4968,82 @@ definitions:
       tplLost:
         description: 监控模板是否丢失
         type: boolean
+    type: object
+  observe.Process:
+    properties:
+      serviceName:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/observe.KeyValue'
+        type: array
+    type: object
+  observe.Reference:
+    properties:
+      refType:
+        type: string
+      spanID:
+        description: deprecated
+        type: string
+      traceID:
+        type: string
+    type: object
+  observe.Span:
+    properties:
+      duration:
+        description: microseconds
+        type: integer
+      flags:
+        type: integer
+      logs:
+        items:
+          $ref: '#/definitions/observe.Log'
+        type: array
+      operationName:
+        type: string
+      parentSpanID:
+        description: deprecated
+        type: string
+      process:
+        $ref: '#/definitions/observe.Process'
+      processID:
+        type: string
+      references:
+        items:
+          $ref: '#/definitions/observe.Reference'
+        type: array
+      spanID:
+        type: string
+      startTime:
+        description: microseconds since Unix epoch
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/observe.KeyValue'
+        type: array
+      traceID:
+        type: string
+      warnings:
+        items:
+          type: string
+        type: array
+    type: object
+  observe.Trace:
+    properties:
+      processes:
+        additionalProperties:
+          $ref: '#/definitions/observe.Process'
+        type: object
+      spans:
+        items:
+          $ref: '#/definitions/observe.Span'
+        type: array
+      traceID:
+        type: string
+      warnings:
+        items:
+          type: string
+        type: array
     type: object
   pagination.PageData:
     properties:
@@ -21658,6 +21751,82 @@ paths:
       security:
       - JWT: []
       summary: 应用请求
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/traces:
+    get:
+      consumes:
+      - application/json
+      description: 应用traces
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: 命名空间
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: 应用
+        in: path
+        name: service_name
+        required: true
+        type: string
+      - description: 开始时间，默认现在-30m
+        in: query
+        name: start
+        type: string
+      - description: 结束时间，默认现在
+        in: query
+        name: end
+        type: string
+      - description: trace的maxDuration
+        in: query
+        name: maxDuration
+        required: true
+        type: string
+      - description: trace的minDuration
+        in: query
+        name: minDuration
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  allOf:
+                  - $ref: '#/definitions/handlers.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/observe.Trace'
+                        type: array
+                    type: object
+              type: object
+      security:
+      - JWT: []
+      summary: 应用traces
       tags:
       - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs:

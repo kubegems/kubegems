@@ -20,7 +20,9 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -51,6 +53,11 @@ var (
 		"namespace": gems.NamespaceMonitor,
 		"service":   "kube-prometheus-stack-alertmanager",
 		"port":      "9093",
+	}
+	jaegerProxyHeader = map[string]string{
+		"namespace": gems.NamespaceObserve,
+		"service":   "jaeger-operator-jaeger-query",
+		"port":      "16686",
 	}
 	allNamespace = "_all"
 )
@@ -568,4 +575,75 @@ func (c *ObserveClient) DeleteSilenceIfExist(ctx context.Context, info models.Al
 	default:
 		return fmt.Errorf("too many silences for alert: %v", info)
 	}
+}
+
+func (c ObserveClient) SearchTrace(
+	ctx context.Context,
+	service string,
+	start, end time.Time,
+	maxDuration, minDuration string,
+	limit int,
+) ([]Trace, error) {
+	q := url.Values{}
+	q.Add("service", service)
+	q.Add("start", strconv.FormatInt(start.UnixMicro(), 10))
+	q.Add("end", strconv.FormatInt(end.UnixMicro(), 10))
+	q.Add("maxDuration", maxDuration)
+	q.Add("minDuration", minDuration)
+	// q.Add("limit", limit)
+
+	resp := tracesResponse{}
+	req := agents.Request{
+		Method:  http.MethodGet,
+		Path:    "/v1/service-proxy/api/traces",
+		Query:   q,
+		Headers: agents.HeadersFrom(jaegerProxyHeader),
+		Into:    &resp,
+	}
+	if err := c.DoRequest(ctx, req); err != nil {
+		return nil, err
+	}
+	if len(resp.Errors) > 0 {
+		log.Errorf("jaeger resp err: %v", resp.Errors)
+		return nil, fmt.Errorf(resp.Errors[0].Msg)
+	}
+
+	var maxDur, minDur time.Duration
+	var err error
+	if maxDuration != "" {
+		maxDur, err = time.ParseDuration(maxDuration)
+		if err != nil {
+			return nil, errors.Wrap(err, "parse maxDuration")
+		}
+	}
+	if minDuration != "" {
+		minDur, err = time.ParseDuration(minDuration)
+		if err != nil {
+			return nil, errors.Wrap(err, "parse minDuration")
+		}
+	}
+
+	// 由于我们要求过滤的是trace的duration，而jaeger api过滤的是span的，所以需要我们手动过滤
+	ret := []Trace{}
+	for _, trace := range resp.Data {
+		validTrace := true
+		// 只要有一个span不满足，则认为该trace也不满足
+		for _, span := range trace.Spans {
+			if maxDuration != "" && span.Duration > uint64(maxDur.Microseconds()) {
+				validTrace = false
+				break
+			}
+			if minDuration != "" && span.Duration < uint64(minDur.Microseconds()) {
+				validTrace = false
+				break
+			}
+		}
+		if validTrace {
+			ret = append(ret, trace)
+		}
+	}
+	if len(ret) > limit {
+		return ret[:limit], nil
+	}
+	return ret, nil
 }

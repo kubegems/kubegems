@@ -7020,6 +7020,129 @@
                 }
             }
         },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/traces": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "应用traces",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "应用traces",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "集群名",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命名空间",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "应用",
+                        "name": "service_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间，默认现在-30m",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间，默认现在",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "trace的maxDuration",
+                        "name": "maxDuration",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "trace的minDuration",
+                        "name": "minDuration",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/handlers.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "List": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/observe.Trace"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs": {
             "get": {
                 "security": [
@@ -29917,6 +30040,32 @@
                 }
             }
         },
+        "observe.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "observe.Log": {
+            "type": "object",
+            "properties": {
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.KeyValue"
+                    }
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
         "observe.LoggingAlertRule": {
             "type": "object",
             "properties": {
@@ -30080,6 +30229,120 @@
                 "tplLost": {
                     "description": "监控模板是否丢失",
                     "type": "boolean"
+                }
+            }
+        },
+        "observe.Process": {
+            "type": "object",
+            "properties": {
+                "serviceName": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.KeyValue"
+                    }
+                }
+            }
+        },
+        "observe.Reference": {
+            "type": "object",
+            "properties": {
+                "refType": {
+                    "type": "string"
+                },
+                "spanID": {
+                    "description": "deprecated",
+                    "type": "string"
+                },
+                "traceID": {
+                    "type": "string"
+                }
+            }
+        },
+        "observe.Span": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "description": "microseconds",
+                    "type": "integer"
+                },
+                "flags": {
+                    "type": "integer"
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.Log"
+                    }
+                },
+                "operationName": {
+                    "type": "string"
+                },
+                "parentSpanID": {
+                    "description": "deprecated",
+                    "type": "string"
+                },
+                "process": {
+                    "$ref": "#/definitions/observe.Process"
+                },
+                "processID": {
+                    "type": "string"
+                },
+                "references": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.Reference"
+                    }
+                },
+                "spanID": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "description": "microseconds since Unix epoch",
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.KeyValue"
+                    }
+                },
+                "traceID": {
+                    "type": "string"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "observe.Trace": {
+            "type": "object",
+            "properties": {
+                "processes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/observe.Process"
+                    }
+                },
+                "spans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observe.Span"
+                    }
+                },
+                "traceID": {
+                    "type": "string"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

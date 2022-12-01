@@ -636,14 +636,7 @@ func (h *ObservabilityHandler) getRuleReq(c *gin.Context) (*models.PromqlTplRule
 
 func getRangeParams(startStr, endStr string) (string, string, string) {
 	// 由于agent解析时没有管时区，所以这里需设置为UTC
-	start, err1 := time.ParseInLocation(time.RFC3339, startStr, time.UTC)
-	end, err2 := time.ParseInLocation(time.RFC3339, endStr, time.UTC)
-	if err1 != nil || err2 != nil {
-		log.Warnf("parse time failed, start: %v, end: %v", err1, err2)
-		now := time.Now().UTC()
-		start = now.Add(-30 * time.Minute)
-		end = now
-	}
+	start, end := prometheus.ParseRangeTime(startStr, endStr, time.UTC)
 	return start.Format(time.RFC3339), end.Format(time.RFC3339), end.Sub(start).String()
 }
 
@@ -941,11 +934,11 @@ func (h *ObservabilityHandler) OtelServiceRequests(c *gin.Context) {
 // @Description 应用操作
 // @Accept      json
 // @Produce     json
-// @Param       cluster      path     string                                                           true  "集群名"
-// @Param       namespace    path     string                                                           true  "命名空间"
-// @Param       service_name path     string                                                           true  "应用"
-// @Param       start        query    string                                                           false "开始时间，默认现在-30m"
-// @Param       end          query    string                                                           false "结束时间，默认现在"
+// @Param       cluster      path     string                                                                true  "集群名"
+// @Param       namespace    path     string                                                                true  "命名空间"
+// @Param       service_name path     string                                                                true  "应用"
+// @Param       start        query    string                                                                false "开始时间，默认现在-30m"
+// @Param       end          query    string                                                                false "结束时间，默认现在"
 // @Success     200          {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelView}} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/operations [get]
 // @Security    JWT
@@ -971,4 +964,47 @@ func (h *ObservabilityHandler) OtelServiceOperations(c *gin.Context) {
 
 	ret := newOtelViews().addVectors(vectors, "operation").slice()
 	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, nil))
+}
+
+// OtelServiceTraces 应用traces
+// @Tags        Observability
+// @Summary     应用traces
+// @Description 应用traces
+// @Accept      json
+// @Produce     json
+// @Param       cluster      path     string                                                           true  "集群名"
+// @Param       namespace    path     string                                                           true  "命名空间"
+// @Param       service_name path     string                                                           true  "应用"
+// @Param       start        query    string                                                           false "开始时间，默认现在-30m"
+// @Param       end          query    string                                                           false "结束时间，默认现在"
+// @Param       maxDuration  query    string                                                                true  "trace的maxDuration"
+// @Param       minDuration  query    string                                                                true  "trace的minDuration"
+// @Param       limit        query    int                                                                   true  "limit"
+// @Param       page         query    int                                                                   false "page"
+// @Param       size         query    int                                                                   false "size"
+// @Success     200          {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]observe.Trace}} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/traces [get]
+// @Security    JWT
+func (h *ObservabilityHandler) OtelServiceTraces(c *gin.Context) {
+	// 前端传来的是UTC时间
+	start, end := prometheus.ParseRangeTime(c.Query("start"), c.Query("end"), time.UTC)
+	var traces []observe.Trace
+	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
+		limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+		if err != nil {
+			return err
+		}
+		observecli := observe.NewClient(cli, h.GetDB())
+		traces, err = observecli.SearchTrace(ctx,
+			c.Param("service_name"),
+			start, end,
+			c.Query("maxDuration"), c.Query("minDuration"),
+			limit,
+		)
+		return err
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, handlers.NewPageDataFromContext(c, traces, nil, nil))
 }
