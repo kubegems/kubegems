@@ -72,17 +72,5 @@ jobs:
           registry: ${{ secrets.SECONDARY_REGISTRY }}
           username: ${{ secrets.SECONDARY_REGISTRY_USERNAME }}
           password: ${{ secrets.SECONDARY_REGISTRY_PASSWORD }}
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v3.6.2
-        with:
-          images: ${{ secrets.REGISTRY }}/${{ env.IMAGE_NAME }},${{ secrets.SECONDARY_REGISTRY }}/${{ env.IMAGE_NAME }}
-      - name: Build and push Docker image
-        if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      - name: Make Docker
+        run: make docker GIT_VERSION=${GITHUB_REF_NAME} PUSH=${{ github.event_name != 'pull_request' }}

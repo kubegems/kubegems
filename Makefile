@@ -13,11 +13,12 @@ VERSION?=$(shell echo "${GIT_VERSION}" | sed -e 's/^v//')
 
 OS?=linux
 ARCH?=amd64
-BIN_DIR?=$(shell pwd)/bin
+BIN_DIR?=bin
 PLATFORM?=linux/amd64,linux/arm64
 
-IMAGE_REGISTRY?=docker.io
+IMAGE_REGISTRY?=docker.io,registry.cn-beijing.aliyuncs.com
 IMAGE_TAG=${GIT_VERSION}
+PUSH?=false
 
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
@@ -154,32 +155,35 @@ helm-push: helm-package
 	curl --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
 	;)
 
+comma = ,
+buildxbuild = docker buildx build --platform=${PLATFORM}
+buildxbuild += $(foreach n,$(subst $(comma), ,$(strip ${IMAGE_REGISTRY})),--tag $(n)/$1 )
+ifeq ($(PUSH),true)
+	buildxbuild += --push
+endif
+
 docker: kubegems-image kubegems-edge-image ## Build container image.
 
-KUBEGEMS_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems:$(IMAGE_TAG)
 kubegems-image:
-	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_IMG} -f Dockerfile ${BIN_DIR}
+	$(call buildxbuild,kubegems/kubegems:$(IMAGE_TAG)) -f Dockerfile ${BIN_DIR}	
 
-KUBEGEMS_DEBUG_IMG ?=  ${IMAGE_REGISTRY}/kubegems/debug-tools:$(IMAGE_TAG)
 debug-image:
-	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_DEBUG_IMG} -f Dockerfile.debug ${BIN_DIR}
+	$(call buildxbuild,kubegems/debug-tools:latest) -f Dockerfile.debug ${BIN_DIR}
 
 kubegems-edge-image: kubegems-edge-agent-image
 
-KUBEGEMS_EDGE_AGENT_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubegems-edge-agent:$(IMAGE_TAG)
 kubegems-edge-agent-image:
-	docker buildx build --platform=${PLATFORM} --push -t ${KUBEGEMS_EDGE_AGENT_IMG} -f Dockerfile.edge-agent ${BIN_DIR}
+	$(call buildxbuild,kubegems/kubegems-edge-agent:$(IMAGE_TAG)) -f Dockerfile.edge-agent ${BIN_DIR}
 
-KUBECTL_IMG ?=  ${IMAGE_REGISTRY}/kubegems/kubectl:latest
 kubectl-image:
-	docker buildx build --platform=${PLATFORM} --push -t ${KUBECTL_IMG} -f Dockerfile.kubectl ${BIN_DIR}
+	$(call buildxbuild,kubegems/kubectl:latest) -f Dockerfile.kubectl ${BIN_DIR}
 
 clean:
 	- rm -rf ${BIN_DIR}
 
 CONTROLLER_GEN = ${BIN_DIR}/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	GOBIN=${BIN_DIR} go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.9.0
+	GOBIN=$(abspath ${BIN_DIR}) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.9.0
 
 KUSTOMIZE = ${BIN_DIR}/kustomize
 KUSTOMIZE_VERSION = 4.4.1
@@ -189,7 +193,7 @@ kustomize: ## Download kustomize locally if necessary.
 
 LINTER = ${BIN_DIR}/golangci-lint
 linter: ## Download controller-gen locally if necessary.
-	GOBIN=${BIN_DIR} go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
+	GOBIN=$(abspath ${BIN_DIR}) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
 
 K8S_VERSION = 1.20.0
 setup-envtest: ## setup operator test environment
