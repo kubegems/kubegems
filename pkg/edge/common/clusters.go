@@ -80,8 +80,13 @@ func NewClusterManager(namespace string, selfhost string) (*EdgeManager, error) 
 	}, nil
 }
 
-func (m *EdgeManager) ListPage(ctx context.Context, page, size int, labels labels.Selector) (response.TypedPage[*v1beta1.EdgeCluster], error) {
-	total, list, err := m.ClusterStore.List(ctx, ListOptions{Page: page, Size: size, Selector: labels})
+func (m *EdgeManager) ListPage(ctx context.Context, page, size int, search string, labels labels.Selector) (response.TypedPage[*v1beta1.EdgeCluster], error) {
+	total, list, err := m.ClusterStore.List(ctx, ListOptions{
+		Page:     page,
+		Size:     size,
+		Selector: labels,
+		Search:   search,
+	})
 	if err != nil {
 		return response.TypedPage[*v1beta1.EdgeCluster]{}, err
 	}

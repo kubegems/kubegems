@@ -89,13 +89,14 @@ func PluginVersionFrom(plugin pluginsv1beta1.Plugin) PluginVersion {
 	pv.Version = plugin.Spec.Version
 	pv.Enabled = plugin.DeletionTimestamp == nil && !plugin.Spec.Disabled
 	pv.Repository = plugin.Spec.URL
-	pv.Message = plugin.Status.Message
 	if pv.Version == "" {
 		pv.Version = plugin.Status.Version
 	}
 	pv.ValuesFrom = plugin.Spec.ValuesFrom
 	if plugin.Status.Phase == pluginsv1beta1.PhaseInstalled {
 		pv.Healthy = true
+	} else {
+		pv.Message = plugin.Status.Message // display the message on not installed
 	}
 	pv.Values = plugin.Spec.Values
 	if pv.Description == "" {

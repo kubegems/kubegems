@@ -39,7 +39,7 @@ import (
 )
 
 type KubectlOptions struct {
-	DebugImage      string `json:"image,omitempty"`
+	DebugImage      string `json:"debugImage,omitempty"`
 	Namespace       string `json:"namespace,omitempty"`
 	PodSelector     string `json:"podSelector,omitempty"`
 	UseLocalKubectl bool   `json:"useLocalKubectl,omitempty"`

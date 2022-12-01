@@ -40,7 +40,7 @@ func (a *EdgeClusterAPI) ListEdgeClusters(req *restful.Request, resp *restful.Re
 		response.BadRequest(resp, err.Error())
 		return
 	}
-	list, err := a.Cluster.ListPage(req.Request.Context(), listopt.Page, listopt.Size, selector)
+	list, err := a.Cluster.ListPage(req.Request.Context(), listopt.Page, listopt.Size, listopt.Search, selector)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 	} else {

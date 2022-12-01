@@ -265,18 +265,11 @@ func (m *PluginManager) ListInstalled(ctx context.Context, checkHealthy bool) (m
 }
 
 func (m *PluginManager) GetRemote(ctx context.Context, name string) ([]PluginVersion, error) {
-	repos, err := m.ListRepos(ctx)
+	result, err := m.ListRemote(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ret := []PluginVersion{}
-	for _, repo := range repos {
-		ret = append(ret, repo.Plugins[name]...)
-	}
-	slices.SortFunc(ret, func(a, b PluginVersion) bool {
-		return semver.Compare(a.Version, b.Version) > 1
-	})
-	return ret, nil
+	return result[name], nil
 }
 
 func (m *PluginManager) ListRemote(ctx context.Context) (map[string][]PluginVersion, error) {
@@ -284,6 +277,10 @@ func (m *PluginManager) ListRemote(ctx context.Context) (map[string][]PluginVers
 	if err != nil {
 		return nil, err
 	}
+	return mergeAllrepoVersions(repos), nil
+}
+
+func mergeAllrepoVersions(repos map[string]Repository) map[string][]PluginVersion {
 	// name -> version -> pluginversion
 	pluginsmap := map[string]map[string]PluginVersion{}
 	for _, repo := range repos {
@@ -315,7 +312,7 @@ func (m *PluginManager) ListRemote(ctx context.Context) (map[string][]PluginVers
 		})
 		ret[k] = vs
 	}
-	return ret, nil
+	return ret
 }
 
 func (m *PluginManager) CheckUpdate(ctx context.Context) (map[string]Plugin, error) {

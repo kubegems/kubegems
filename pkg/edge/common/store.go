@@ -67,7 +67,7 @@ func (s EdgeClusterK8sStore[T]) List(ctx context.Context, options ListOptions) (
 			return options.Search == "" || strings.Contains(item.GetName(), options.Search)
 		}
 		paged := response.NewTypedPage(list.Items, options.Page, options.Size, searchname, nil)
-		return len(list.Items), toList[T](paged.List), nil
+		return int(paged.Total), toList[T](paged.List), nil
 	}
 }
 
