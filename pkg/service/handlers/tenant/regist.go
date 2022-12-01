@@ -51,6 +51,7 @@ func (h *TenantHandler) RegistRouter(rg *gin.RouterGroup) {
 
 	rg.GET("/tenant/:tenant_id/environment_with_quotas", h.CheckByTenantID, h.TenantEnvironments)
 	rg.GET("/tenant/:tenant_id/environment", h.CheckByTenantID, h.ListEnvironment)
+	rg.GET("/tenant/:tenant_id/environment/search", h.CheckByTenantID, h.SearchEnvironment)
 	rg.GET("/tenant/:tenant_id/statistics", h.CheckByTenantID, h.TenantStatistics)
 
 	rg.PUT("/tenant/:tenant_id/tenantresourcequota/:cluster_id", h.CheckByTenantID, h.PutTenantTenantResourceQuota)
