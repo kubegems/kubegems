@@ -1,3 +1,11 @@
+## 1.22.2 / 2022-12-1
+### Features 🎉
+* ✨ feat(channel): add sendResolved option by @jojotong in https://github.com/kubegems/kubegems/pull/324
+### Enhancements 🎈
+* import opentelemetry by @jojotong in https://github.com/kubegems/kubegems/pull/325
+### Bugfixes 🐞
+* 🐞 fix(auth): user auth error print log by @jojotong in https://github.com/kubegems/kubegems/pull/326
+
 ## 1.22.1 / 2022-11-17
 ### Enhancements 🎈
 * 🎈 perf(alert): receiver channel set status by @jojotong in https://github.com/kubegems/kubegems/pull/314
