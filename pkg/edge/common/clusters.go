@@ -111,7 +111,7 @@ type PrecreateOptions struct {
 // return a register address
 func (m *EdgeManager) PreCreate(ctx context.Context, example *v1beta1.EdgeCluster) (*v1beta1.EdgeCluster, error) {
 	// check hub is already exists
-	_, err := m.ClusterStore.Get(ctx, example.Spec.Register.HubName)
+	_, err := m.HubStore.Get(ctx, example.Spec.Register.HubName)
 	if err != nil {
 		return nil, fmt.Errorf("get edge hub %s: %w", example.Spec.Register.HubName, err)
 	}
