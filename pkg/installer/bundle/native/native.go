@@ -16,16 +16,12 @@ package native
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 type TemplateFun func(ctx context.Context, bundle *pluginsv1beta1.Plugin, into string) ([]byte, error)
@@ -62,10 +58,7 @@ func (p *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into s
 	if ns == "" {
 		ns = bundle.Namespace
 	}
-	// override namespace
-	p.CorrectNamespaces(ctx, ns, p.Cli.Client, resources)
-
-	diffresult := utils.Diff(bundle.Status.Resources, resources)
+	diffresult := utils.DiffWithDefaultNamespace(p.Cli.Client, ns, bundle.Status.Resources, resources)
 	if bundle.Status.Phase == pluginsv1beta1.PhaseInstalled &&
 		utils.EqualMapValues(bundle.Status.Values.Object, bundle.Spec.Values.Object) &&
 		len(diffresult.Creats) == 0 &&
@@ -92,7 +85,11 @@ func (p *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into s
 }
 
 func (p *Apply) Remove(ctx context.Context, bundle *pluginsv1beta1.Plugin) error {
-	managedResources, err := p.Cli.Sync(ctx, bundle.Status.Resources, nil, utils.NewDefaultSyncOptions())
+	ns := bundle.Spec.InstallNamespace
+	if ns == "" {
+		ns = bundle.Namespace
+	}
+	managedResources, err := p.Cli.Sync(ctx, ns, bundle.Status.Resources, nil, utils.NewDefaultSyncOptions())
 	if err != nil {
 		return err
 	}
@@ -100,35 +97,4 @@ func (p *Apply) Remove(ctx context.Context, bundle *pluginsv1beta1.Plugin) error
 	bundle.Status.Phase = pluginsv1beta1.PhaseDisabled
 	bundle.Status.Message = ""
 	return nil
-}
-
-func (p *Apply) CorrectNamespaces(ctx context.Context, ns string, cli client.Client, list []*unstructured.Unstructured) {
-	log := logr.FromContextOrDiscard(ctx)
-	for _, item := range list {
-		scopeName, err := p.IsNamespacedScope(cli, item)
-		if err != nil {
-			log.Error(err, "get scope name", "kind", item.GetKind())
-			continue
-		}
-		switch {
-		case scopeName == apimeta.RESTScopeNameNamespace && item.GetNamespace() == "":
-			item.SetNamespace(ns)
-		case scopeName == apimeta.RESTScopeNameRoot && item.GetNamespace() != "":
-			item.SetNamespace("")
-		}
-	}
-}
-
-func (p *Apply) IsNamespacedScope(cli client.Client, obj client.Object) (apimeta.RESTScopeName, error) {
-	restmapper := cli.RESTMapper()
-	scheme := cli.Scheme()
-	gvk, err := apiutil.GVKForObject(obj, scheme)
-	if err != nil {
-		return "", err
-	}
-	restmapping, err := restmapper.RESTMapping(gvk.GroupKind())
-	if err != nil {
-		return "", fmt.Errorf("failed to get restmapping: %w", err)
-	}
-	return restmapping.Scope.Name(), nil
 }

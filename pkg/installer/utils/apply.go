@@ -24,10 +24,14 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"kubegems.io/kubegems/pkg/apis/plugins"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -35,6 +39,17 @@ type DiffResult struct {
 	Creats  []*unstructured.Unstructured
 	Applys  []*unstructured.Unstructured
 	Removes []*unstructured.Unstructured
+}
+
+func DiffWithDefaultNamespace(
+	cli client.Client,
+	defaultnamespace string,
+	managed []corev1.ObjectReference,
+	resources []*unstructured.Unstructured,
+) DiffResult {
+	CorrectNamespaces(cli, defaultnamespace, resources)
+	CorrectNamespacesForRefrences(cli, defaultnamespace, managed)
+	return Diff(managed, resources)
 }
 
 func Diff(managed []corev1.ObjectReference, resources []*unstructured.Unstructured) DiffResult {
@@ -69,6 +84,7 @@ func NewDefaultSyncOptions() *SyncOptions {
 	return &SyncOptions{
 		ServerSideApply: true,
 		CreateNamespace: true,
+		CleanCRD:        false,
 	}
 }
 
@@ -82,8 +98,22 @@ type Apply struct {
 	Client client.Client
 }
 
-func (a *Apply) Sync(ctx context.Context, managed []corev1.ObjectReference, resources []*unstructured.Unstructured, options *SyncOptions) ([]corev1.ObjectReference, error) {
-	return a.SyncDiff(ctx, Diff(managed, resources), options)
+func (a *Apply) Sync(ctx context.Context,
+	defaultnamespace string,
+	managed []corev1.ObjectReference,
+	resources []*unstructured.Unstructured,
+	options *SyncOptions,
+) ([]corev1.ObjectReference, error) {
+	return a.
+		SyncDiff(
+			ctx,
+			DiffWithDefaultNamespace(
+				a.Client,
+				defaultnamespace,
+				managed,
+				resources,
+			),
+			options)
 }
 
 func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOptions) ([]corev1.ObjectReference, error) {
@@ -224,4 +254,52 @@ func IsCRD(obj client.Object) bool {
 	// kind: CustomResourceDefinition
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	return gvk.Group == "apiextensions.k8s.io" && gvk.Kind == "CustomResourceDefinition"
+}
+
+func CorrectNamespaces[T client.Object](cli client.Client, defaultNamespace string, list []T) {
+	for i, item := range list {
+		scopeName, err := NamespacedScopeOf(cli, item)
+		if err != nil {
+			continue
+		}
+		switch {
+		case scopeName == apimeta.RESTScopeNameNamespace && item.GetNamespace() == "":
+			item.SetNamespace(defaultNamespace)
+		case scopeName == apimeta.RESTScopeNameRoot && item.GetNamespace() != "":
+			item.SetNamespace("")
+		}
+		list[i] = item
+	}
+}
+
+func CorrectNamespacesForRefrences(cli client.Client, defaultns string, list []corev1.ObjectReference) {
+	for i, val := range list {
+		scopeName, err := NamespacedScopeOfGVK(cli, val.GroupVersionKind())
+		if err != nil {
+			continue
+		}
+		switch {
+		case scopeName == apimeta.RESTScopeNameNamespace && val.Namespace == "":
+			val.Namespace = defaultns
+		case scopeName == apimeta.RESTScopeNameRoot && val.Namespace != "":
+			val.Namespace = ""
+		}
+		list[i] = val
+	}
+}
+
+func NamespacedScopeOfGVK(cli client.Client, gvk schema.GroupVersionKind) (apimeta.RESTScopeName, error) {
+	restmapping, err := cli.RESTMapper().RESTMapping(gvk.GroupKind())
+	if err != nil {
+		return "", fmt.Errorf("failed to get restmapping: %w", err)
+	}
+	return restmapping.Scope.Name(), nil
+}
+
+func NamespacedScopeOf(cli client.Client, obj runtime.Object) (apimeta.RESTScopeName, error) {
+	gvk, err := apiutil.GVKForObject(obj, cli.Scheme())
+	if err != nil {
+		return "", err
+	}
+	return NamespacedScopeOfGVK(cli, gvk)
 }
