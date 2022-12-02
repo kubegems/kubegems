@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"crypto/tls"
+	"net/http"
 
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/edge/common"
@@ -66,12 +67,24 @@ func NewEdgeServer(options *options.ServerOptions) (*EdgeServer, error) {
 func (s *EdgeServer) Run(ctx context.Context) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
 	eg, ctx := errgroup.WithContext(ctx)
-	eg.Go(func() error {
-		return s.server.ServeGrpc(ctx, s.options.ListenGrpc, s.tlsConfig)
-	})
-	eg.Go(func() error {
-		return s.RunHTTPAPI(ctx, s.options.Listen, nil)
-	})
+
+	if s.options.Listen == s.options.ListenGrpc {
+		eg.Go(func() error {
+			return system.ListenAndServeContextGRPCAndHTTP(ctx,
+				s.options.Listen,
+				s.tlsConfig,
+				s.HTTPAPI(),
+				s.server.GrpcServer(s.tlsConfig),
+			)
+		})
+	} else {
+		eg.Go(func() error {
+			return s.server.ServeGrpc(ctx, s.options.ListenGrpc, s.tlsConfig)
+		})
+		eg.Go(func() error {
+			return system.ListenAndServeContext(ctx, s.options.Listen, nil, s.HTTPAPI())
+		})
+	}
 	eg.Go(func() error {
 		return s.clusters.SyncTunnelStatusFrom(ctx, s.server.TunnelServer)
 	})
@@ -81,12 +94,12 @@ func (s *EdgeServer) Run(ctx context.Context) error {
 	return eg.Wait()
 }
 
-func (s *EdgeServer) RunHTTPAPI(ctx context.Context, listen string, tls *tls.Config) error {
+func (s *EdgeServer) HTTPAPI() http.Handler {
 	edgehubapi := &common.EdgeClusterAPI{
 		Cluster: s.clusters,
 		Tunnel:  s.server.TunnelServer,
 	}
-	return system.ListenAndServeContext(ctx, listen, tls, apiutil.NewRestfulAPI("v1", nil, []apiutil.RestModule{
+	return apiutil.NewRestfulAPI("v1", nil, []apiutil.RestModule{
 		edgehubapi,
-	}))
+	})
 }

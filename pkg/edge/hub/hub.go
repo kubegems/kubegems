@@ -17,6 +17,7 @@ package hub
 import (
 	"context"
 	"crypto/tls"
+	"net/http"
 
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/edge/common"
@@ -72,14 +73,23 @@ func (s *EdgeHubServer) Run(ctx context.Context) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
 
 	eg, ctx := errgroup.WithContext(ctx)
-	eg.Go(func() error {
-		return s.ServeGrpc(ctx, s.options.ListenGrpc, s.tlsConfig)
-	})
-	eg.Go(func() error {
-		handler := apiutil.NewRestfulAPI("", nil, nil)
-		// handler provides a health check endpoint
-		return system.ListenAndServeContext(ctx, s.options.Listen, nil, handler)
-	})
+
+	if s.options.Listen == s.options.ListenGrpc {
+		eg.Go(func() error {
+			return system.ListenAndServeContextGRPCAndHTTP(
+				ctx, s.options.Listen, s.tlsConfig,
+				s.HTTPAPI(),
+				s.GrpcServer(s.tlsConfig),
+			)
+		})
+	} else {
+		eg.Go(func() error {
+			return s.ServeGrpc(ctx, s.options.ListenGrpc, s.tlsConfig)
+		})
+		eg.Go(func() error {
+			return system.ListenAndServeContext(ctx, s.options.Listen, nil, s.HTTPAPI())
+		})
+	}
 	eg.Go(func() error {
 		c := s.tlsConfig.Clone()
 		c.InsecureSkipVerify = true
@@ -89,4 +99,9 @@ func (s *EdgeHubServer) Run(ctx context.Context) error {
 		return pprof.Run(ctx)
 	})
 	return eg.Wait()
+}
+
+func (s *EdgeHubServer) HTTPAPI() http.Handler {
+	// handler provides a health check endpoint
+	return apiutil.NewRestfulAPI("", nil, nil)
 }
