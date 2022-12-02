@@ -162,7 +162,7 @@ func (m *EdgeManager) RenderInstallManifests(ctx context.Context, uid, token str
 	if exists.Spec.Register.HubName == "" {
 		return nil, fmt.Errorf("no hub name specified for the edge cluster")
 	}
-	hub, err := m.ClusterStore.Get(ctx, exists.Spec.Register.HubName)
+	hub, err := m.HubStore.Get(ctx, exists.Spec.Register.HubName)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func (m *EdgeManager) RenderInstallManifests(ctx context.Context, uid, token str
 	return buf.Bytes(), nil
 }
 
-func (m *EdgeManager) gencert(cn string, expire *time.Time, hub *v1beta1.EdgeCluster) (*v1beta1.Certs, error) {
+func (m *EdgeManager) gencert(cn string, expire *time.Time, hub *v1beta1.EdgeHub) (*v1beta1.Certs, error) {
 	hubcert := v1beta1.Certs{
 		CA:   []byte(hub.Status.Manufacture[AnnotationKeyEdgeHubCA]),
 		Cert: []byte(hub.Status.Manufacture[AnnotationKeyEdgeHubCert]),

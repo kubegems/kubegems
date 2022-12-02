@@ -492,7 +492,7 @@ hub:
 ##
 server:
   ## @param server.enabled Enable edge server component
-  enabled: true
+  enabled: false
   ## KubeGems server image
   ## ref: https://hub.docker.com/r/kubegems/kubegems/tags/
   ## @param server.image.registry server image registry
