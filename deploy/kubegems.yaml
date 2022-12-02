@@ -34,23 +34,3 @@ spec:
     - kind: ConfigMap
       name: "kubegems-global-values"
       prefix: "global."
-  values:
-    ingress:
-      hostname: dashboard.kubegems.io # change me to use a production hostname
-      ingressClassName: default-gateway
-    api:
-      image:
-        pullPolicy: Always
-    dashboard:
-      image:
-        pullPolicy: Always
-      service:
-        nodePorts:
-          http: 30531
-        type: NodePort
-    msgbus:
-      image:
-        pullPolicy: Always
-    worker:
-      image:
-        pullPolicy: Always
