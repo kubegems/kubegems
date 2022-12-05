@@ -1,11 +1,9 @@
 # syntax=docker/dockerfile:1
-FROM --platform=${BUILDPLATFORM} golang:alpine as builder
-ARG TARGETOS TARGETARCH
+FROM golang:alpine as builder
 RUN go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 RUN go install github.com/davecheney/httpstat@latest
 
-FROM --platform=${BUILDPLATFORM} alpine
-ARG TARGETOS TARGETARCH
+FROM alpine
 COPY --from=builder  /go/bin/* /usr/bin/
 RUN apk update && apk add --no-cache vim bash tcpdump curl wget strace mysql-client iproute2 redis jq iftop tzdata tar nmap bind-tools htop
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

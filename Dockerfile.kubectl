@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
 # Ref: https://www.docker.com/blog/how-to-rapidly-build-multi-architecture-images-with-buildx/
-FROM --platform=${BUILDPLATFORM} alpine
-ARG TARGETOS TARGETARCH
+FROM alpine
 RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories 
 RUN apk update && apk add tini bash bash-completion kubectl curl
 RUN mv /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh
