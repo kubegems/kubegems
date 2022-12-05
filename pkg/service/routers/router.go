@@ -71,10 +71,10 @@ import (
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/otel"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/system"
-	"kubegems.io/kubegems/pkg/utils/trace"
 	"kubegems.io/kubegems/pkg/version"
 )
 
@@ -114,12 +114,19 @@ func (r *Router) Run(ctx context.Context) error {
 		return err
 	}
 
-	// otel trace
-	shutdown, err := trace.InitTracer(ctx)
+	// otel gin
+	ginShutdown, err := otel.InitGinOtel(ctx)
 	if err != nil {
 		return err
 	}
-	defer shutdown(ctx)
+	defer ginShutdown(ctx)
+
+	// otel runtime
+	runtimeShutdown, err := otel.InitRuntimeOtel(ctx)
+	if err != nil {
+		return err
+	}
+	defer runtimeShutdown(ctx)
 
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
@@ -186,7 +193,7 @@ func (r *Router) Complete(ctx context.Context) error {
 		// panic recovery
 		gin.Recovery(),
 		// otel
-		trace.Middleware(),
+		otel.OtelGinMiddleware(),
 		// real ip tracking
 		RealClientIPMiddleware(),
 	}

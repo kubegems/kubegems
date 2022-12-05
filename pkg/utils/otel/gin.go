@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package trace
+package otel
 
 import (
 	"context"
@@ -26,7 +26,9 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 )
 
-func InitTracer(ctx context.Context) (func(context.Context) error, error) {
+type shutdownfunc func(ctx context.Context) error
+
+func InitGinOtel(ctx context.Context) (shutdownfunc, error) {
 	exporter, err := otlptracehttp.New(ctx)
 	if err != nil {
 		return nil, err
@@ -41,6 +43,6 @@ func InitTracer(ctx context.Context) (func(context.Context) error, error) {
 	return exporter.Shutdown, nil
 }
 
-func Middleware() gin.HandlerFunc {
+func OtelGinMiddleware() gin.HandlerFunc {
 	return otelgin.Middleware("kubegems-api", otelgin.WithPropagators(otel.GetTextMapPropagator()))
 }
