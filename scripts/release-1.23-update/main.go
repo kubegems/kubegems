@@ -135,7 +135,7 @@ func updateDashboardTpls() {
 		newGraphs := prometheus.MonitorGraphs{}
 		for _, graph := range tpl.OldGraphs {
 			newGraphs = append(newGraphs, prometheus.MetricGraph{
-				Name: tpl.Name,
+				Name: graph.Name,
 				Unit: graph.Unit,
 				Targets: []prometheus.Target{{
 					TargetName:      "A",
@@ -156,14 +156,14 @@ func updateDashboards() {
 		panic(err)
 	}
 
-	for _, tpl := range oldDashs {
-		if err := json.Unmarshal(tpl.Graphs, &tpl.OldGraphs); err != nil {
+	for _, oldDash := range oldDashs {
+		if err := json.Unmarshal(oldDash.Graphs, &oldDash.OldGraphs); err != nil {
 			panic(err)
 		}
 		newGraphs := prometheus.MonitorGraphs{}
-		for _, graph := range tpl.OldGraphs {
+		for _, graph := range oldDash.OldGraphs {
 			newGraphs = append(newGraphs, prometheus.MetricGraph{
-				Name: tpl.Name,
+				Name: graph.Name,
 				Unit: graph.Unit,
 				Targets: []prometheus.Target{{
 					TargetName:      "A",
@@ -172,7 +172,7 @@ func updateDashboards() {
 				}},
 			})
 		}
-		if err := db.DB().Model(&models.MonitorDashboard{}).Where("id= ?", tpl.ID).Update("graphs", newGraphs).Error; err != nil {
+		if err := db.DB().Model(&models.MonitorDashboard{}).Where("id= ?", oldDash.ID).Update("graphs", newGraphs).Error; err != nil {
 			panic(err)
 		}
 	}
