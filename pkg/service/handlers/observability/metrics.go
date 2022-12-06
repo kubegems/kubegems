@@ -674,16 +674,22 @@ func (views OtelViews) addVectors(vectors map[string]prommodel.Vector, labelname
 	return views
 }
 
-func (views OtelViews) slice() []*OtelView {
+func (views OtelViews) slice(sortby string) []*OtelView {
 	ret := make([]*OtelView, len(views))
 	index := 0
 	for _, view := range views {
 		ret[index] = view
 		index++
 	}
-	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].LabelValue < ret[j].LabelValue
-	})
+	if sortby == "" {
+		sort.Slice(ret, func(i, j int) bool {
+			return ret[i].LabelValue < ret[j].LabelValue
+		})
+	} else {
+		sort.Slice(ret, func(i, j int) bool {
+			return ret[i].ValueMap[sortby] < ret[j].ValueMap[sortby]
+		})
+	}
 	return ret
 }
 
@@ -697,6 +703,7 @@ func (views OtelViews) slice() []*OtelView {
 // @Param       namespace path     string                                                           true  "命名空间，所有namespace为_all"
 // @Param       start     query    string                                                           false "开始时间，默认现在-30m"
 // @Param       end       query    string                                                           false "结束时间，默认现在"
+// @Param       sortby    query    string                                                           false "通过valueMap的哪个字段排序，默认根据labelvalue排序"
 // @Param       page      query    int                                                              false "page"
 // @Param       size      query    int                                                              false "size"
 // @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelView}} "resp"
@@ -723,7 +730,7 @@ func (h *ObservabilityHandler) OtelServices(c *gin.Context) {
 		return
 	}
 
-	ret := newOtelViews().addVectors(vectors, "service_name").slice()
+	ret := newOtelViews().addVectors(vectors, "service_name").slice(c.Query("sortby"))
 	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, nil))
 }
 
@@ -772,8 +779,6 @@ type OtelOverViewResp struct {
 // @Param       start     query    string                                         false "开始时间，默认现在-30m"
 // @Param       end       query    string                                         false "结束时间，默认现在"
 // @Param       pick      query    string                                         false "选择什么值(max/min/avg), default max"
-// @Param       page      query    int                                            false "page"
-// @Param       size      query    int                                            false "size"
 // @Success     200       {object} handlers.ResponseStruct{Data=OtelOverViewResp} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/overview [get]
 // @Security    JWT
@@ -939,6 +944,9 @@ func (h *ObservabilityHandler) OtelServiceRequests(c *gin.Context) {
 // @Param       service_name path     string                                                                true  "应用"
 // @Param       start        query    string                                                                false "开始时间，默认现在-30m"
 // @Param       end          query    string                                                                false "结束时间，默认现在"
+// @Param       sortby       query    string                                                           false "通过valueMap的哪个字段排序，默认根据labelvalue排序"
+// @Param       page         query    int                                                              false "page"
+// @Param       size         query    int                                                              false "size"
 // @Success     200          {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelView}} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/operations [get]
 // @Security    JWT
@@ -962,7 +970,7 @@ func (h *ObservabilityHandler) OtelServiceOperations(c *gin.Context) {
 		return
 	}
 
-	ret := newOtelViews().addVectors(vectors, "operation").slice()
+	ret := newOtelViews().addVectors(vectors, "operation").slice(c.Query("sortby"))
 	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, nil))
 }
 

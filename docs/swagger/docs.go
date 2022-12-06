@@ -6732,18 +6732,6 @@ const docTemplate = `{
                         "description": "选择什么值(max/min/avg), default max",
                         "name": "pick",
                         "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "size",
-                        "name": "size",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -6811,6 +6799,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "结束时间，默认现在",
                         "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "通过valueMap的哪个字段排序，默认根据labelvalue排序",
+                        "name": "sortby",
                         "in": "query"
                     },
                     {
@@ -6913,6 +6907,24 @@ const docTemplate = `{
                         "type": "string",
                         "description": "结束时间，默认现在",
                         "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "通过valueMap的哪个字段排序，默认根据labelvalue排序",
+                        "name": "sortby",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
                         "in": "query"
                     }
                 ],
@@ -26625,6 +26637,9 @@ const docTemplate = `{
                 },
                 "namespace": {
                     "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
                 },
                 "repository": {
                     "type": "string"
