@@ -224,11 +224,15 @@ func (m *EdgeManager) gencert(cn string, expire *time.Time, hub *v1beta1.EdgeHub
 	return edgecerts, nil
 }
 
-func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context, name string, connected bool, anno map[string]string) error {
-	log.Info("set tunnel status", "name", name, "connected", connected, "annotations", anno)
+func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context,
+	connected bool,
+	fromname string, fromannotations map[string]string,
+	name string, anno map[string]string,
+) error {
+	log.Info("set tunnel status", "from", fromname, "name", name, "connected", connected, "annotations", anno)
 	// is temporary connection
 	if istemp, _ := strconv.ParseBool(anno[AnnotationIsTemporaryConnect]); istemp {
-		log.Info("ignore temporary connection", "name", name, "annotations", anno)
+		log.Info("ignore temporary connection", "from", fromname, "name", name, "annotations", anno)
 		return nil
 	}
 	now := metav1.Now()
@@ -254,6 +258,12 @@ func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context, name st
 	// is edge cluster
 	_, err := m.ClusterStore.Update(ctx, name, func(cluster *v1beta1.EdgeCluster) error {
 		cluster.Status.Tunnel.Connected = connected
+
+		// set hub address from hub address
+		if val := fromannotations[AnnotationKeyEdgeHubAddress]; val != "" {
+			anno[AnnotationKeyEdgeAgentRegisterAddress] = val
+		}
+
 		cluster.Status.Manufacture = anno // annotations as manufacture set
 		if connected {
 			cluster.Status.Tunnel.LastOnlineTimestamp = &now
@@ -276,13 +286,13 @@ func (s *EdgeManager) SyncTunnelStatusFrom(ctx context.Context, server *tunnel.T
 		switch event.Kind {
 		case tunnel.EventKindConnected:
 			for id, anno := range event.Peers {
-				if err := s.OnTunnelConnectedStatusChange(ctx, id, true, anno); err != nil {
+				if err := s.OnTunnelConnectedStatusChange(ctx, true, event.From, event.FromAnnotations, id, anno); err != nil {
 					log.Error(err, "set to online", "id", id)
 				}
 			}
 		case tunnel.EventKindDisConnected:
 			for id, anno := range event.Peers {
-				if err := s.OnTunnelConnectedStatusChange(ctx, id, false, anno); err != nil {
+				if err := s.OnTunnelConnectedStatusChange(ctx, false, event.From, event.FromAnnotations, id, anno); err != nil {
 					log.Error(err, "set to offline", "id", id)
 				}
 			}

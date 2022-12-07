@@ -23,7 +23,6 @@ const (
 	PacketKindData    PacketKind = iota // data or as a ack
 	PacketKindConnect                   // handshake and auth
 	PacketKindOpen                      // open connection
-	PacketKindOpened                    // connection established
 	PacketKindClose                     // close connect/stream
 	PacketKindRoute                     // route update
 )
@@ -40,13 +39,13 @@ type Packet struct {
 	Error   string
 }
 
-type RouteUpdateKind string
+type RouteUpdateKind int
 
 const (
-	RouteUpdateKindInvalid RouteUpdateKind = "invalid"
-	RouteUpdateKindInit                    = "init"
-	RouteUpdateKindAppend                  = "append"
-	RouteUpdateKindRemove                  = "remove"
+	RouteUpdateKindInvalid RouteUpdateKind = iota
+	RouteUpdateKindReferesh
+	RouteUpdateKindOnline
+	RouteUpdateKindOffline
 )
 
 type Annotations map[string]string

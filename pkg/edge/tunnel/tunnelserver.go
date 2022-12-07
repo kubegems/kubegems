@@ -58,6 +58,10 @@ func (s *TunnelServer) Connect(ctx context.Context, channel Tunnel, token string
 		return err
 	}
 	connectedChannel.Options = options
+	// check exists tunnel
+	if err := s.existsCheckStage(ctx, connectedChannel); err != nil {
+		return err
+	}
 	routedata, err := s.routeExchangeStage(ctx, connectedChannel, annotations)
 	if err != nil {
 		return err
@@ -128,34 +132,14 @@ func (s *TunnelServer) authStage(ctx context.Context, channel Tunnel, token stri
 }
 
 func (s *TunnelServer) routeExchangeStage(ctx context.Context, idchannel *ConnectedTunnel, annotationsToSend Annotations) (*PacketDataRoute, error) {
-	data := PacketDataRoute{
-		Kind:        RouteUpdateKindInit,
-		Annotations: annotationsToSend,
+	return s.routeTable.RouteExchange(idchannel, annotationsToSend)
+}
+
+func (s *TunnelServer) existsCheckStage(ctx context.Context, idchannel *ConnectedTunnel) error {
+	if s.routeTable.Exists(idchannel.ID) {
+		return fmt.Errorf("id %s of tunnel already exists", idchannel.ID)
 	}
-	if idchannel.Options.SendRouteChange {
-		data.Peers = s.routeTable.allRechablePeers()
-	}
-	log.Info("route send", "dest", idchannel.ID, "data", data)
-	// advetise self peers
-	if err := idchannel.Send(&Packet{
-		Kind: PacketKindRoute,
-		Src:  s.id,
-		Dest: idchannel.ID,
-		Data: PacketEncode(data),
-	}); err != nil {
-		return nil, err
-	}
-	// wait remote route
-	routepkt := &Packet{}
-	if err := idchannel.Recv(routepkt); err != nil {
-		return nil, err
-	}
-	if routepkt.Kind != PacketKindRoute {
-		return nil, fmt.Errorf("unexpect packet type %d", routepkt.Kind)
-	}
-	routedata := PacketDecode[PacketDataRoute](routepkt.Data)
-	log.Info("route recv", "src", routepkt.Src, "data", routedata)
-	return &routedata, nil
+	return nil
 }
 
 func (s *TunnelServer) preRouting(income *ConnectedTunnel, pkt *Packet) {
@@ -219,7 +203,7 @@ func (s *TunnelServer) localIn(channel *ConnectedTunnel, pkt *Packet) {
 	case PacketKindClose:
 		go s.connections.close(channel, pkt.Src, pkt.SrcCID, pkt.DestCID)
 	case PacketKindRoute:
-		go s.routeTable.Update(pkt.Src, PacketDecode[PacketDataRoute](pkt.Data))
+		go s.routeTable.OnChange(channel, PacketDecode[PacketDataRoute](pkt.Data))
 	}
 }
 
@@ -250,4 +234,8 @@ func (s *TunnelServer) Wacth(ctx context.Context) EventWatcher {
 
 func RandomServerID(prefix string) string {
 	return prefix + strings.ReplaceAll(uuid.NewString(), "-", "")
+}
+
+func (s *TunnelServer) Run(ctx context.Context, annotations Annotations) error {
+	return s.routeTable.RefreshRouter(ctx, 0, annotations)
 }

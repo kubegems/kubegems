@@ -17,6 +17,7 @@ package tunnel
 type Tunnel interface {
 	Recv(*Packet) error
 	Send(*Packet) error
+	Close() error
 }
 
 type TunnelOptions struct {

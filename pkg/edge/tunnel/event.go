@@ -41,8 +41,10 @@ const (
 )
 
 type TunnelEvent struct {
-	Kind  EventKind
-	Peers map[string]Annotations
+	From            string
+	FromAnnotations map[string]string
+	Kind            EventKind
+	Peers           map[string]Annotations
 }
 
 type EventWatcher struct {
@@ -89,8 +91,9 @@ func (t *TunnelEventer) Watch(ctx context.Context) EventWatcher {
 	t.watchers.Store(uid, watcher)
 	// send init list
 	watcher.ch <- TunnelEvent{
+		From:  t.s.id,
 		Kind:  EventKindConnected,
-		Peers: t.s.routeTable.allRechablePeers(),
+		Peers: t.s.routeTable.allRechablePeers(""),
 	}
 	go func() {
 		<-ctx.Done()

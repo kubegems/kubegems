@@ -88,6 +88,10 @@ func (t *GRPCTunnel[T]) Send(from *Packet) error {
 	})
 }
 
+func (t *GRPCTunnel[T]) Close() error {
+	return nil
+}
+
 func Run(ctx context.Context, options *Options) error {
 	ctx = logr.NewContext(ctx, log.LogrLogger)
 	log.Info("init", "options", options)

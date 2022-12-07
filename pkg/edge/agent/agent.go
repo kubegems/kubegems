@@ -73,7 +73,10 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return grpctunnel.ConnectUpstream(ctx, options.EdgeHubAddr, tlsConfig, "", upstreamAnnotations)
+		return grpctunnel.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, tlsConfig, "", upstreamAnnotations)
+	})
+	eg.Go(func() error {
+		return grpctunnel.TunnelServer.Run(ctx, upstreamAnnotations)
 	})
 	eg.Go(func() error {
 		return httpapi.Run(ctx, options.Listen)

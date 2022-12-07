@@ -15,8 +15,10 @@
 package tunnel
 
 import (
+	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"golang.org/x/exp/maps"
 	"kubegems.io/kubegems/pkg/log"
@@ -37,9 +39,9 @@ func NewEmptyRouteTable(s *TunnelServer) *RouteTable {
 }
 
 type ChannelWithChildren struct {
-	Channel     *ConnectedTunnel       `json:"channel,omitempty"` // channel is the direct connected channel
-	Annotations map[string]string      `json:"annotations,omitempty"`
-	Children    map[string]Annotations `json:"children,omitempty"` // children are channels connected to the direct channel
+	Channel     *ConnectedTunnel // channel is the direct connected channel
+	Annotations map[string]string
+	Children    map[string]Annotations // children are channels connected to the direct channel
 }
 
 func (t *RouteTable) Select(dest string) (*ConnectedTunnel, error) {
@@ -63,34 +65,28 @@ func (t *RouteTable) Select(dest string) (*ConnectedTunnel, error) {
 
 func (t *RouteTable) Connect(tun *ConnectedTunnel, data PacketDataRoute) {
 	log.Info("tunnel connected", "tunnel", tun.ID)
-	t.mu.Lock()
-	if data.Peers == nil {
-		data.Peers = map[string]Annotations{}
-	}
-	if val, ok := t.records[tun.ID]; ok {
-		_ = val
-		// close old?
-	}
-	t.records[tun.ID] = &ChannelWithChildren{
-		Channel:     tun,
-		Annotations: data.Annotations,
-		Children:    data.Peers,
-	}
-	t.mu.Unlock()
-
 	// default out tunnel
 	if tun.Options.IsDefaultOut {
 		t.defaultout = tun
 	}
+	t.OnChange(tun, data)
+}
 
-	changes := maps.Clone(data.Peers)
-	changes[tun.ID] = data.Annotations
-
-	// advertise we add peers we direct connect and it's subpeers.
-	t.advertise(tun.ID, PacketDataRoute{
-		Kind:  RouteUpdateKindAppend,
-		Peers: changes,
-	})
+func (t *RouteTable) RouteExchange(idchannel *ConnectedTunnel, annotationsToSend Annotations) (*PacketDataRoute, error) {
+	if err := t.advertiseRefresh(idchannel, true, annotationsToSend); err != nil {
+		return nil, err
+	}
+	// wait remote route
+	routepkt := &Packet{}
+	if err := idchannel.Recv(routepkt); err != nil {
+		return nil, err
+	}
+	if routepkt.Kind != PacketKindRoute {
+		return nil, fmt.Errorf("unexpect packet type %d", routepkt.Kind)
+	}
+	routedata := PacketDecode[PacketDataRoute](routepkt.Data)
+	log.Info("route exchange", "src", routepkt.Src, "data", routedata)
+	return &routedata, nil
 }
 
 func (t *RouteTable) Disconnect(stream *ConnectedTunnel) {
@@ -111,53 +107,78 @@ func (t *RouteTable) Disconnect(stream *ConnectedTunnel) {
 
 	// advertise we remove peers we direct connect and it's subpeers.
 	t.advertise(stream.ID, PacketDataRoute{
-		Kind:  RouteUpdateKindRemove,
+		Kind:  RouteUpdateKindOffline,
 		Peers: removedPeers,
 	})
 }
 
-func (t *RouteTable) Update(id string, data PacketDataRoute) {
+func (t *RouteTable) OnChange(from *ConnectedTunnel, data PacketDataRoute) {
+	id := from.ID
 	log.Info("route changed", "src", id, "data", data)
 	t.mu.Lock()
-	val, ok := t.records[id]
-	if !ok {
-		return
-	}
+
 	changed := map[string]Annotations{}
+	kind := data.Kind
 	switch data.Kind {
-	case RouteUpdateKindAppend:
+	case RouteUpdateKindReferesh:
+		if data.Peers == nil {
+			data.Peers = map[string]Annotations{}
+		}
+		if val, ok := t.records[id]; !ok {
+			t.records[id] = &ChannelWithChildren{Channel: from, Annotations: data.Annotations, Children: data.Peers}
+		} else {
+			val.Annotations = data.Annotations
+			val.Children = data.Peers
+		}
+		// advertise tun and all peers are online
+		kind = RouteUpdateKindOnline
+		maps.Copy(changed, data.Peers)
+		changed[id] = data.Annotations
+	case RouteUpdateKindOnline:
+		val, ok := t.records[id]
+		if !ok {
+			return
+		}
 		for add, anno := range data.Peers {
 			if _, ok := val.Children[add]; ok {
 				continue
 			}
 			val.Children[add] = anno
-			changed[add] = anno
 		}
-	case RouteUpdateKindRemove:
-		for remove, anno := range data.Peers {
+		maps.Copy(changed, data.Peers)
+	case RouteUpdateKindOffline:
+		val, ok := t.records[id]
+		if !ok {
+			return
+		}
+		for remove := range data.Peers {
 			if _, ok := val.Children[remove]; !ok {
 				continue
 			}
 			delete(val.Children, remove)
-			changed[remove] = anno
 		}
+		maps.Copy(changed, data.Peers)
 	default:
 		log.Info("unexpected route update", "data", data)
 	}
 	t.mu.Unlock()
 
 	t.advertise(id, PacketDataRoute{
-		Kind:  data.Kind,
-		Peers: changed,
+		Kind:        kind,
+		Annotations: data.Annotations,
+		Peers:       changed,
 	})
 }
 
-func (t *RouteTable) allRechablePeers() map[string]Annotations {
+func (t *RouteTable) allRechablePeers(exclude string) map[string]Annotations {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
 	ret := map[string]Annotations{}
 	for k, val := range t.records {
+		if k == exclude {
+			continue
+		}
 		maps.Copy(ret, val.Children)
 		ret[k] = val.Annotations
 	}
@@ -171,15 +192,19 @@ func (t *RouteTable) advertise(changesFrom string, changes PacketDataRoute) {
 
 	if t.s.eventer != nil {
 		switch changes.Kind {
-		case RouteUpdateKindAppend:
+		case RouteUpdateKindOnline:
 			t.s.eventer.sendWatcherEvent(TunnelEvent{
-				Kind:  EventKindConnected,
-				Peers: changes.Peers,
+				From:            changesFrom,
+				FromAnnotations: changes.Annotations,
+				Kind:            EventKindConnected,
+				Peers:           changes.Peers,
 			})
-		case RouteUpdateKindRemove:
+		case RouteUpdateKindOffline:
 			t.s.eventer.sendWatcherEvent(TunnelEvent{
-				Kind:  EventKindDisConnected,
-				Peers: changes.Peers,
+				From:            changesFrom,
+				FromAnnotations: changes.Annotations,
+				Kind:            EventKindDisConnected,
+				Peers:           changes.Peers,
 			})
 		}
 	}
@@ -191,14 +216,73 @@ func (t *RouteTable) advertise(changesFrom string, changes PacketDataRoute) {
 		if !peer.Channel.Options.SendRouteChange {
 			continue
 		}
-		data := changes
-		log.Info("advertise", "to", peer.Channel.ID, "data", data)
-		pkt := &Packet{
+		log.Info("advertise", "to", peer.Channel.ID, "data", changes)
+		peer.Channel.Send(&Packet{
 			Kind: PacketKindRoute,
 			Dest: peerid,
 			Src:  t.s.id,
-			Data: PacketEncode(data),
-		}
-		peer.Channel.Send(pkt)
+			Data: PacketEncode(changes),
+		})
 	}
+}
+
+func (t *RouteTable) Exists(id string) bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	_, ok := t.records[id]
+	return ok
+}
+
+func (t *RouteTable) RefreshRouter(ctx context.Context, duration time.Duration, annotations Annotations) error {
+	log.Info("starting refresh router")
+
+	if duration <= 0 {
+		duration = 30 * time.Second
+	}
+
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-timer.C:
+			timer.Reset(duration)
+			t.refreshRoute(annotations)
+		}
+	}
+}
+
+func (t *RouteTable) refreshRoute(annotationsToSend Annotations) error {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	for _, tun := range t.records {
+		if !tun.Channel.Options.SendRouteChange {
+			continue
+		}
+		t.advertiseRefresh(tun.Channel, false, annotationsToSend)
+	}
+	return nil
+}
+
+// send all upstream init routes
+func (t *RouteTable) advertiseRefresh(idchannel *ConnectedTunnel, isinit bool, annotationsToSend Annotations) error {
+	if !isinit && !idchannel.Options.SendRouteChange {
+		return nil
+	}
+	data := PacketDataRoute{
+		Kind:        RouteUpdateKindReferesh,
+		Annotations: annotationsToSend,
+	}
+	if idchannel.Options.SendRouteChange {
+		data.Peers = t.allRechablePeers(idchannel.ID)
+	}
+	log.Info("route refresh", "dest", idchannel.ID, "data", data)
+	// advetise self peers
+	return idchannel.Send(&Packet{
+		Kind: PacketKindRoute,
+		Src:  t.s.id,
+		Dest: idchannel.ID,
+		Data: PacketEncode(data),
+	})
 }
