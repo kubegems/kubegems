@@ -236,6 +236,6 @@ func RandomServerID(prefix string) string {
 	return prefix + strings.ReplaceAll(uuid.NewString(), "-", "")
 }
 
-func (s *TunnelServer) Run(ctx context.Context, annotations Annotations) error {
-	return s.routeTable.RefreshRouter(ctx, 0, annotations)
+func (s *TunnelServer) SendKeepAlive(ctx context.Context, annotationsToSend Annotations) error {
+	return s.routeTable.SendKeepAlive(annotationsToSend)
 }

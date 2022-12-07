@@ -18,9 +18,11 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/edge/common"
 	"kubegems.io/kubegems/pkg/edge/options"
@@ -32,6 +34,15 @@ import (
 
 func Run(ctx context.Context, opts *options.AgentOptions) error {
 	return run(ctx, opts)
+}
+
+type EdgeAgent struct {
+	config      *rest.Config
+	cluster     cluster.Interface
+	tunserver   tunnel.GrpcTunnelServer
+	httpapi     *AgentAPI
+	options     *options.AgentOptions
+	annotations tunnel.Annotations
 }
 
 func run(ctx context.Context, options *options.AgentOptions) error {
@@ -51,38 +62,65 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 	if err != nil {
 		return err
 	}
-	sv, err := c.Discovery().ServerVersion()
-	if err != nil {
-		return err
+	ea := &EdgeAgent{
+		config:      rest,
+		options:     options,
+		annotations: nil,
+		cluster:     c,
+		httpapi:     &AgentAPI{cluster: c},
+		tunserver:   tunnel.GrpcTunnelServer{TunnelServer: tunnel.NewTunnelServer(options.ClientID, nil)},
 	}
-	nodeList, err := c.Kubernetes().CoreV1().Nodes().List(ctx, v1.ListOptions{})
-	if err != nil {
-		return err
-	}
-	upstreamAnnotations := map[string]string{
-		common.AnnotationKeyEdgeAgentAddress:         "http://127.0.0.1" + options.Listen,
-		common.AnnotationKeyEdgeAgentRegisterAddress: options.EdgeHubAddr,
-		common.AnnotationKeyAPIserverAddress:         rest.Host,
-		common.AnnotationKeyKubernetesVersion:        sv.String(),
-		common.AnnotationKeyNodesCount:               strconv.Itoa(len(nodeList.Items)),
-	}
-	grpctunnel := tunnel.GrpcTunnelServer{
-		TunnelServer: tunnel.NewTunnelServer(options.ClientID, nil),
-	}
-	httpapi := &AgentAPI{cluster: c}
-
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return grpctunnel.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, tlsConfig, "", upstreamAnnotations)
+		return ea.tunserver.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, tlsConfig, "", ea.getAnnotations(ctx))
 	})
 	eg.Go(func() error {
-		return grpctunnel.TunnelServer.Run(ctx, upstreamAnnotations)
+		return ea.RunKeepAliveRouter(ctx, ea.options.KeepAliveInterval, ea.getAnnotations)
 	})
 	eg.Go(func() error {
-		return httpapi.Run(ctx, options.Listen)
+		return ea.httpapi.Run(ctx, options.Listen)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)
 	})
 	return eg.Wait()
+}
+
+func (ea *EdgeAgent) RunKeepAliveRouter(ctx context.Context, duration time.Duration, annotationsfunc func(ctx context.Context) tunnel.Annotations) error {
+	log.Info("starting refresh router")
+
+	if duration <= 0 {
+		duration = 30 * time.Second
+	}
+
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-timer.C:
+			timer.Reset(duration)
+			annotations := annotationsfunc(ctx)
+			ea.tunserver.TunnelServer.SendKeepAlive(ctx, annotations)
+		}
+	}
+}
+
+func (ea *EdgeAgent) getAnnotations(ctx context.Context) tunnel.Annotations {
+	if ea.annotations != nil {
+		return ea.annotations
+	}
+	sv, _ := ea.cluster.Discovery().ServerVersion()
+	nodeList, _ := ea.cluster.Kubernetes().CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	annotations := map[string]string{
+		common.AnnotationKeyEdgeAgentAddress:           "http://127.0.0.1" + ea.options.Listen,
+		common.AnnotationKeyEdgeAgentRegisterAddress:   ea.options.EdgeHubAddr,
+		common.AnnotationKeyEdgeAgentKeepaliveInterval: ea.options.KeepAliveInterval.String(),
+		common.AnnotationKeyAPIserverAddress:           ea.config.Host,
+		common.AnnotationKeyKubernetesVersion:          sv.String(),
+		common.AnnotationKeyNodesCount:                 strconv.Itoa(len(nodeList.Items)),
+	}
+	ea.annotations = annotations
+	return annotations
 }

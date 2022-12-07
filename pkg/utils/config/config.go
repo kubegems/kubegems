@@ -48,6 +48,7 @@ import (
 func Parse(fs *pflag.FlagSet) error {
 	// 从默认值配置
 	// fs 中已有默认值
+	printDefault(fs)
 	// 从文件配置
 	LoadConfigFile(fs)
 	// 从环境变量配置
@@ -70,7 +71,7 @@ func Validate(data any) error {
 func Print(fs *pflag.FlagSet) {
 	fs.VisitAll(func(flag *pflag.Flag) {
 		if flag.Changed {
-			logConfig("flag", flag.Name, flag.Value.String())
+			logConfig("flag", "--"+flag.Name, flag.Value.String())
 		}
 	})
 }
@@ -97,11 +98,11 @@ func LoadEnv(fs *pflag.FlagSet) {
 	})
 }
 
-func LoadConfigFile(fs *pflag.FlagSet) {
-	flagNameToConfigKey := func(fname string) string {
-		return strings.ToLower(strings.ReplaceAll(fname, "-", "."))
-	}
+func flagNameToConfigKey(fname string) string {
+	return strings.ToLower(strings.ReplaceAll(fname, "-", "."))
+}
 
+func LoadConfigFile(fs *pflag.FlagSet) {
 	v := viper.New()
 	v.SetConfigName("config")
 	v.SetConfigType("yaml")
@@ -118,6 +119,12 @@ func LoadConfigFile(fs *pflag.FlagSet) {
 			logConfig("file", filekeyname, val)
 			_ = f.Value.Set(val)
 		}
+	})
+}
+
+func printDefault(fs *pflag.FlagSet) {
+	fs.VisitAll(func(f *pflag.Flag) {
+		logConfig("default", flagNameToConfigKey(f.Name), f.DefValue)
 	})
 }
 

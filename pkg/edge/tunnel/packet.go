@@ -46,6 +46,7 @@ const (
 	RouteUpdateKindReferesh
 	RouteUpdateKindOnline
 	RouteUpdateKindOffline
+	RouteUpdateKindKeepAlive
 )
 
 type Annotations map[string]string

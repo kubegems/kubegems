@@ -60,6 +60,9 @@ spec:
                 properties:
                   connected:
                     type: boolean
+                  lastHeartBeatTimestamp:
+                    format: date-time
+                    type: string
                   lastOfflineTimestamp:
                     format: date-time
                     type: string

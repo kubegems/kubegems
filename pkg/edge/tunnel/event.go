@@ -37,6 +37,7 @@ type EventKind string
 
 const (
 	EventKindConnected    EventKind = "connected"
+	EventKindKeepalive    EventKind = "alive"
 	EventKindDisConnected EventKind = "disconnected"
 )
 

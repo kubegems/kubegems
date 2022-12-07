@@ -27,6 +27,7 @@ type TunnelOptions struct {
 
 type ConnectedTunnel struct {
 	Tunnel
-	ID      string
-	Options TunnelOptions
+	ID              string
+	AnnotationsSent Annotations
+	Options         TunnelOptions
 }

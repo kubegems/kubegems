@@ -93,9 +93,10 @@ type RegisterStatus struct {
 }
 
 type TunnelStatus struct {
-	Connected            bool         `json:"connected,omitempty"`
-	LastOnlineTimestamp  *metav1.Time `json:"lastOnlineTimestamp,omitempty"`
-	LastOfflineTimestamp *metav1.Time `json:"lastOfflineTimestamp,omitempty"`
+	Connected              bool         `json:"connected,omitempty"`
+	LastOnlineTimestamp    *metav1.Time `json:"lastOnlineTimestamp,omitempty"`
+	LastOfflineTimestamp   *metav1.Time `json:"lastOfflineTimestamp,omitempty"`
+	LastHeartBeatTimestamp *metav1.Time `json:"lastHeartBeatTimestamp,omitempty"`
 }
 
 type ManufactureStatus map[string]string

@@ -14,18 +14,22 @@
 
 package options
 
+import "time"
+
 type AgentOptions struct {
-	Listen      string `json:"listen,omitempty"`
-	ClientID    string `json:"clientID,omitempty"`
-	EdgeHubAddr string `json:"edgeHubAddr,omitempty"`
-	TLS         *TLS   `json:"tls,omitempty"`
+	Listen            string        `json:"listen,omitempty"`
+	ClientID          string        `json:"clientID,omitempty"`
+	EdgeHubAddr       string        `json:"edgeHubAddr,omitempty"`
+	TLS               *TLS          `json:"tls,omitempty"`
+	KeepAliveInterval time.Duration `json:"keepAliveInterval,omitempty"`
 }
 
 func NewDefaultAgentOptions() *AgentOptions {
 	return &AgentOptions{
-		TLS:         NewDefaultTLS(),
-		EdgeHubAddr: "127.0.0.1:8080",
-		ClientID:    "",
-		Listen:      ":8040",
+		TLS:               NewDefaultTLS(),
+		EdgeHubAddr:       "127.0.0.1:8080",
+		ClientID:          "",
+		Listen:            ":8040",
+		KeepAliveInterval: 30 * time.Minute,
 	}
 }

@@ -42,11 +42,12 @@ const (
 	AnnotationKeyEdgeHubKey     = "edge.kubegems.io/edge-hub-cert"
 	LabelKeIsyEdgeHub           = "edge.kubegems.io/is-edge-hub"
 
-	AnnotationKeyEdgeAgentAddress         = "edge.kubegems.io/edge-agent-address"
-	AnnotationKeyEdgeAgentRegisterAddress = "edge.kubegems.io/edge-agent-register-address"
-	AnnotationKeyKubernetesVersion        = "edge.kubegems.io/kubernetes-version"
-	AnnotationKeyAPIserverAddress         = "edge.kubegems.io/apiserver-address"
-	AnnotationKeyNodesCount               = "edge.kubegems.io/nodes-count"
+	AnnotationKeyEdgeAgentAddress           = "edge.kubegems.io/edge-agent-address"
+	AnnotationKeyEdgeAgentKeepaliveInterval = "edge.kubegems.io/edge-agent-keepalive-interval"
+	AnnotationKeyEdgeAgentRegisterAddress   = "edge.kubegems.io/edge-agent-register-address"
+	AnnotationKeyKubernetesVersion          = "edge.kubegems.io/kubernetes-version"
+	AnnotationKeyAPIserverAddress           = "edge.kubegems.io/apiserver-address"
+	AnnotationKeyNodesCount                 = "edge.kubegems.io/nodes-count"
 
 	// temporary connection do not write to database
 	AnnotationIsTemporaryConnect = "edge.kubegems.io/temporary-connect"
@@ -225,11 +226,10 @@ func (m *EdgeManager) gencert(cn string, expire *time.Time, hub *v1beta1.EdgeHub
 }
 
 func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context,
-	connected bool,
+	connected bool, isrefresh bool,
 	fromname string, fromannotations map[string]string,
 	name string, anno map[string]string,
 ) error {
-	log.Info("set tunnel status", "from", fromname, "name", name, "connected", connected, "annotations", anno)
 	// is temporary connection
 	if istemp, _ := strconv.ParseBool(anno[AnnotationIsTemporaryConnect]); istemp {
 		log.Info("ignore temporary connection", "from", fromname, "name", name, "annotations", anno)
@@ -239,6 +239,11 @@ func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context,
 
 	// is edge hub
 	if address, ok := anno[AnnotationKeyEdgeHubAddress]; ok {
+		// edgehub do not update heartbeat
+		if isrefresh {
+			return nil
+		}
+		log.Info("set hub tunnel status", "name", name, "connected", connected)
 		_, err := m.HubStore.Update(ctx, name, func(cluster *v1beta1.EdgeHub) error {
 			cluster.Status.Tunnel.Connected = connected
 			cluster.Status.Manufacture = anno // annotations as manufacture set
@@ -260,13 +265,20 @@ func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context,
 		cluster.Status.Tunnel.Connected = connected
 
 		// set hub address from hub address
-		if val := fromannotations[AnnotationKeyEdgeHubAddress]; val != "" {
-			anno[AnnotationKeyEdgeAgentRegisterAddress] = val
+		if !isrefresh {
+			if val := fromannotations[AnnotationKeyEdgeHubAddress]; val != "" {
+				anno[AnnotationKeyEdgeAgentRegisterAddress] = val
+			}
 		}
-
 		cluster.Status.Manufacture = anno // annotations as manufacture set
 		if connected {
-			cluster.Status.Tunnel.LastOnlineTimestamp = &now
+			if isrefresh {
+				log.Info("set heartbeat status", "from", fromname, "name", name)
+				cluster.Status.Tunnel.LastHeartBeatTimestamp = &now
+			} else {
+				log.Info("set tunnel status", "from", fromname, "name", name)
+				cluster.Status.Tunnel.LastOnlineTimestamp = &now
+			}
 			cluster.Status.Phase = v1beta1.EdgePhaseOnline
 		} else {
 			cluster.Status.Tunnel.LastOfflineTimestamp = &now
@@ -283,22 +295,14 @@ func (s *EdgeManager) SyncTunnelStatusFrom(ctx context.Context, server *tunnel.T
 	defer watcher.Close()
 
 	for event := range watcher.Result() {
-		switch event.Kind {
-		case tunnel.EventKindConnected:
-			for id, anno := range event.Peers {
-				if err := s.OnTunnelConnectedStatusChange(ctx, true, event.From, event.FromAnnotations, id, anno); err != nil {
-					log.Error(err, "set to online", "id", id)
-				}
+		for name, anno := range event.Peers {
+			if err := s.OnTunnelConnectedStatusChange(ctx,
+				event.Kind != tunnel.EventKindDisConnected, // is online
+				event.Kind == tunnel.EventKindKeepalive,    // is online keepalive
+				event.From, event.FromAnnotations,
+				name, anno); err != nil {
+				log.Error(err, "set to online", "id", name)
 			}
-		case tunnel.EventKindDisConnected:
-			for id, anno := range event.Peers {
-				if err := s.OnTunnelConnectedStatusChange(ctx, false, event.From, event.FromAnnotations, id, anno); err != nil {
-					log.Error(err, "set to offline", "id", id)
-				}
-			}
-		default:
-			log.Info("invalid event exit watcher")
-			return fmt.Errorf("invalid event type: %v", event.Kind)
 		}
 	}
 	return errors.New("watcher exit")
