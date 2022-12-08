@@ -37,8 +37,12 @@ func Exec(ctx context.Context, cmd string, args []string, options remotecommand.
 func TerminalSizeChannel(queue remotecommand.TerminalSizeQueue) <-chan remotecommand.TerminalSize {
 	ret := make(chan remotecommand.TerminalSize)
 	go func() {
-		for next := queue.Next(); next != nil; {
-			ret <- *next
+		for {
+			if next := queue.Next(); next == nil {
+				return
+			} else {
+				ret <- *next
+			}
 		}
 	}()
 	return ret

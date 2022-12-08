@@ -179,7 +179,9 @@ func RunWebSocketStream(
 		return
 	}
 	defer conn.WsClose()
-	stream := &ws.StreamHandler{WsConn: conn, ResizeEvent: make(chan remotecommand.TerminalSize)}
+	stream := &ws.StreamHandler{WsConn: conn, ResizeEvent: make(chan *remotecommand.TerminalSize)}
+	defer close(stream.ResizeEvent)
+
 	streamOptions := remotecommand.StreamOptions{
 		Stdin:             stream,
 		Stdout:            stream,

@@ -26,7 +26,7 @@ import (
 
 type StreamHandler struct {
 	WsConn      *WsConnection
-	ResizeEvent chan remotecommand.TerminalSize
+	ResizeEvent chan *remotecommand.TerminalSize
 }
 
 type xtermMessage struct {
@@ -36,10 +36,10 @@ type xtermMessage struct {
 	Cols    uint16 `json:"cols"`
 }
 
+// Next must return nil if the connection closed
 func (handler *StreamHandler) Next() (size *remotecommand.TerminalSize) {
 	ret := <-handler.ResizeEvent
-	size = &ret
-	return
+	return ret
 }
 
 func (handler *StreamHandler) Read(p []byte) (size int, err error) {
@@ -61,7 +61,7 @@ func (handler *StreamHandler) Read(p []byte) (size int, err error) {
 	}
 	switch xtermMsg.MsgType {
 	case "resize":
-		handler.ResizeEvent <- remotecommand.TerminalSize{Width: xtermMsg.Cols, Height: xtermMsg.Rows}
+		handler.ResizeEvent <- &remotecommand.TerminalSize{Width: xtermMsg.Cols, Height: xtermMsg.Rows}
 	case "input":
 		size = len(xtermMsg.Input)
 		copy(p, xtermMsg.Input)
