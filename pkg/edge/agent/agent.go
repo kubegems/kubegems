@@ -15,13 +15,20 @@
 package agent
 
 import (
+	"bytes"
 	"context"
-	"errors"
+	"encoding/json"
+	"fmt"
+	"os"
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/hashicorp/go-envparse"
+	"golang.org/x/exp/maps"
 	"golang.org/x/sync/errgroup"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/edge/common"
@@ -30,6 +37,8 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/pprof"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 func Run(ctx context.Context, opts *options.AgentOptions) error {
@@ -37,20 +46,23 @@ func Run(ctx context.Context, opts *options.AgentOptions) error {
 }
 
 type EdgeAgent struct {
-	config      *rest.Config
-	cluster     cluster.Interface
-	tunserver   tunnel.GrpcTunnelServer
-	httpapi     *AgentAPI
-	options     *options.AgentOptions
-	annotations tunnel.Annotations
+	config       *rest.Config
+	manufectures map[string]string
+	clientID     string
+	cluster      cluster.Interface
+	tunserver    tunnel.GrpcTunnelServer
+	httpapi      *AgentAPI
+	options      *options.AgentOptions
+	annotations  tunnel.Annotations
 }
 
 func run(ctx context.Context, options *options.AgentOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
-	if options.ClientID == "" {
-		return errors.New("--clientid is required")
-	}
 	tlsConfig, err := options.TLS.ToTLSConfig()
+	if err != nil {
+		return err
+	}
+	manufectures, err := ReadManufacture(options.ManufactureFile)
 	if err != nil {
 		return err
 	}
@@ -62,14 +74,25 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 	if err != nil {
 		return err
 	}
-	ea := &EdgeAgent{
-		config:      rest,
-		options:     options,
-		annotations: nil,
-		cluster:     c,
-		httpapi:     &AgentAPI{cluster: c},
-		tunserver:   tunnel.GrpcTunnelServer{TunnelServer: tunnel.NewTunnelServer(options.ClientID, nil)},
+	clientid, err := initClientID(ctx, c.GetClient(), options)
+	if err != nil {
+		return err
 	}
+	if clientid == "" {
+		return fmt.Errorf("empty client id specified")
+	}
+
+	ea := &EdgeAgent{
+		config:       rest,
+		manufectures: manufectures,
+		clientID:     clientid,
+		options:      options,
+		annotations:  nil,
+		cluster:      c,
+		httpapi:      &AgentAPI{cluster: c},
+		tunserver:    tunnel.GrpcTunnelServer{TunnelServer: tunnel.NewTunnelServer(clientid, nil)},
+	}
+
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		return ea.tunserver.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, tlsConfig, "", ea.getAnnotations(ctx))
@@ -112,7 +135,7 @@ func (ea *EdgeAgent) getAnnotations(ctx context.Context) tunnel.Annotations {
 		return ea.annotations
 	}
 	sv, _ := ea.cluster.Discovery().ServerVersion()
-	nodeList, _ := ea.cluster.Kubernetes().CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	nodeList, _ := ea.cluster.Kubernetes().CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	annotations := map[string]string{
 		common.AnnotationKeyEdgeAgentAddress:           "http://127.0.0.1" + ea.options.Listen,
 		common.AnnotationKeyEdgeAgentRegisterAddress:   ea.options.EdgeHubAddr,
@@ -121,6 +144,79 @@ func (ea *EdgeAgent) getAnnotations(ctx context.Context) tunnel.Annotations {
 		common.AnnotationKeyKubernetesVersion:          sv.String(),
 		common.AnnotationKeyNodesCount:                 strconv.Itoa(len(nodeList.Items)),
 	}
+	maps.Copy(annotations, ea.manufectures)
 	ea.annotations = annotations
 	return annotations
+}
+
+const clientIDKey = "client-id"
+
+func initClientID(ctx context.Context, cli client.Client, options *options.AgentOptions) (string, error) {
+	clientid := options.ClientID
+	// try secret
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      options.ClientIDSecret,
+			Namespace: kube.LocalNamespaceOrDefault("kubegems-edge"),
+		},
+	}
+	_, err := controllerutil.CreateOrPatch(ctx, cli, secret, func() error {
+		if secret.Data == nil {
+			secret.Data = map[string][]byte{}
+		}
+		secretid := string(secret.Data[clientIDKey])
+		switch {
+		case clientid == "" && secretid != "":
+			clientid = secretid
+		case clientid != "" && secretid != clientid:
+			secret.Data[clientIDKey] = []byte(clientid)
+		case clientid == "" && secretid == "":
+			clientid = uuid.NewString()
+			secret.Data[clientIDKey] = []byte(clientid)
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return clientid, nil
+}
+
+func ReadManufacture(file string) (map[string]string, error) {
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	kvs, err := ParseJSONFile(content)
+	if err != nil {
+		return ParseKVFile(content)
+	}
+	return kvs, nil
+}
+
+// ParseKVFile parse kv from FOO="bar" likes file
+func ParseKVFile(content []byte) (map[string]string, error) {
+	return envparse.Parse(bytes.NewReader(content))
+}
+
+func ParseJSONFile(content []byte) (map[string]string, error) {
+	kv := map[string]any{}
+
+	d := json.NewDecoder(bytes.NewReader(content))
+	d.UseNumber()
+	if err := d.Decode(&kv); err != nil {
+		return nil, err
+	}
+	ret := map[string]string{}
+	for k, v := range kv {
+		switch val := v.(type) {
+		case string:
+			ret[k] = val
+		case bool:
+			ret[k] = strconv.FormatBool(val)
+		case json.Number:
+			ret[k] = val.String()
+		}
+	}
+	return ret, nil
 }

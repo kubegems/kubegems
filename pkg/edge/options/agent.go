@@ -19,6 +19,8 @@ import "time"
 type AgentOptions struct {
 	Listen            string        `json:"listen,omitempty"`
 	ClientID          string        `json:"clientID,omitempty"`
+	ClientIDSecret    string        `json:"clientIDSecret,omitempty" description:"client ID secret"`
+	ManufactureFile   string        `json:"manufactureFile,omitempty" description:"file with manufacture info in json object format"`
 	EdgeHubAddr       string        `json:"edgeHubAddr,omitempty"`
 	TLS               *TLS          `json:"tls,omitempty"`
 	KeepAliveInterval time.Duration `json:"keepAliveInterval,omitempty"`
@@ -31,5 +33,7 @@ func NewDefaultAgentOptions() *AgentOptions {
 		ClientID:          "",
 		Listen:            ":8040",
 		KeepAliveInterval: 30 * time.Minute,
+		ClientIDSecret:    "kubegems-edge-agent-id",
+		ManufactureFile:   "/etc/os-release",
 	}
 }
