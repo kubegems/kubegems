@@ -42,18 +42,12 @@ func NewRestfulAPIWithHealthCheck(prefix string, filters []restful.FilterFunctio
 		ws.Filter(filter)
 	}
 
-	root := route.NewGroup("")
-	root.AddRoutes(
-		route.GET("healthz").Tag("default").Doc("health check").To(route.Healthz(healthCheckFun)),
-	)
-
 	rg := route.NewGroup(prefix)
 	for _, module := range modules {
 		module.RegisterRoute(rg)
 	}
-	root.AddSubGroup(rg)
 
-	(&route.Tree{RouteUpdateFunc: listWrrapperFunc, Group: root}).AddToWebService(ws)
+	(&route.Tree{RouteUpdateFunc: listWrrapperFunc, Group: rg}).AddToWebService(ws)
 	cros := restful.CrossOriginResourceSharing{
 		AllowedHeaders: []string{".*"},
 		AllowedMethods: []string{"*"},
@@ -67,7 +61,12 @@ func NewRestfulAPIWithHealthCheck(prefix string, filters []restful.FilterFunctio
 	c.ServiceErrorHandler(errhandlerfunc)
 
 	apidocs := route.BuildOpenAPIWebService([]*restful.WebService{ws}, path.Join(prefix, "docs.json"), completeInfo)
-	return c.Add(ws).Add(apidocs)
+
+	healthcheck := new(restful.WebService)
+	healthcheck.Path("healthz").Route(
+		healthcheck.GET("").To(route.Healthz(healthCheckFun)),
+	)
+	return c.Add(ws).Add(apidocs).Add(healthcheck)
 }
 
 func errhandlerfunc(err restful.ServiceError, req *restful.Request, resp *restful.Response) {
