@@ -149,6 +149,10 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 					logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", pv.Name, "version", pv.Version)
 				}
 			}
+			// fill current values
+			if installed := plugin.Installed; installed != nil {
+				pv.Values = *installed.Values.DeepCopy()
+			}
 			return &pv, nil
 		}
 	}
