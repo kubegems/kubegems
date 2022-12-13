@@ -22,16 +22,14 @@ type AgentOptions struct {
 	ClientIDSecret    string        `json:"clientIDSecret,omitempty" description:"client ID secret"`
 	ManufactureFile   string        `json:"manufactureFile,omitempty" description:"file with manufacture info in json object format"`
 	EdgeHubAddr       string        `json:"edgeHubAddr,omitempty"`
-	TLS               *TLS          `json:"tls,omitempty"`
 	KeepAliveInterval time.Duration `json:"keepAliveInterval,omitempty"`
 }
 
 func NewDefaultAgentOptions() *AgentOptions {
 	return &AgentOptions{
-		TLS:               NewDefaultTLS(),
 		EdgeHubAddr:       "127.0.0.1:8080",
 		ClientID:          "",
-		Listen:            ":8040",
+		Listen:            ":8080",
 		KeepAliveInterval: 30 * time.Minute,
 		ClientIDSecret:    "kubegems-edge-agent-id",
 		ManufactureFile:   "/etc/os-release",

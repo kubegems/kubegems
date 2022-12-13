@@ -58,10 +58,6 @@ type EdgeAgent struct {
 
 func run(ctx context.Context, options *options.AgentOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
-	tlsConfig, err := options.TLS.ToTLSConfig()
-	if err != nil {
-		return err
-	}
 	manufectures, err := ReadManufacture(options.ManufactureFile)
 	if err != nil {
 		return err
@@ -95,7 +91,7 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return ea.tunserver.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, tlsConfig, "", ea.getAnnotations(ctx))
+		return ea.tunserver.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, nil, "", ea.getAnnotations(ctx))
 	})
 	eg.Go(func() error {
 		return ea.RunKeepAliveRouter(ctx, ea.options.KeepAliveInterval, ea.getAnnotations)
