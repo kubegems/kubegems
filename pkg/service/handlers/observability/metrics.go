@@ -17,8 +17,10 @@ package observability
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -681,16 +683,43 @@ func (views OtelViews) slice(sortby string) []*OtelView {
 		ret[index] = view
 		index++
 	}
-	if sortby == "" {
+	sortasc := true
+	sortfield := ""
+	if strings.HasSuffix(sortby, "Desc") {
+		sortasc = false
+		sortfield = strings.TrimSuffix(sortby, "Desc")
+	} else {
+		sortfield = strings.TrimSuffix(sortby, "Asc")
+	}
+
+	if sortfield == "" {
 		sort.Slice(ret, func(i, j int) bool {
-			return ret[i].LabelValue < ret[j].LabelValue
+			if sortasc {
+				return ret[i].LabelValue < ret[j].LabelValue
+			} else {
+				return ret[i].LabelValue > ret[j].LabelValue
+			}
 		})
 	} else {
 		sort.Slice(ret, func(i, j int) bool {
-			return ret[i].ValueMap[sortby] < ret[j].ValueMap[sortby]
+			if sortasc {
+				return lessThan(ret[i].ValueMap[sortfield], ret[j].ValueMap[sortfield])
+			} else {
+				return lessThan(ret[j].ValueMap[sortfield], ret[i].ValueMap[sortfield])
+			}
 		})
 	}
 	return ret
+}
+
+func lessThan(a, b prommodel.SampleValue) bool {
+	if math.IsNaN(float64(a)) {
+		a = 0
+	}
+	if math.IsNaN(float64(b)) {
+		b = 0
+	}
+	return float64(a) < float64(b)
 }
 
 // OtelServices 应用性能监控服务
@@ -998,16 +1027,13 @@ func (h *ObservabilityHandler) OtelServiceTraces(c *gin.Context) {
 	start, end := prometheus.ParseRangeTime(c.Query("start"), c.Query("end"), time.UTC)
 	var traces []observe.Trace
 	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
-		limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
-		if err != nil {
-			return err
-		}
+		var err error
 		observecli := observe.NewClient(cli, h.GetDB())
 		traces, err = observecli.SearchTrace(ctx,
 			c.Param("service_name"),
 			start, end,
 			c.Query("maxDuration"), c.Query("minDuration"),
-			limit,
+			c.Query("limit"),
 		)
 		return err
 	}); err != nil {
