@@ -19,3 +19,4 @@ annotations:
   plugins.kubegems.io/is-plugin: "true"
   plugins.kubegems.io/install-namespace: "kubegems-edge"
   plugins.kubegems.io/category: core/KubeGems
+  plugins.kubegems.io/render-by: helm
