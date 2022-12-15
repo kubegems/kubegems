@@ -1032,13 +1032,16 @@ func (h *ObservabilityHandler) OtelServiceTraces(c *gin.Context) {
 	start, end := prometheus.ParseRangeTime(c.Query("start"), c.Query("end"), time.UTC)
 	var traces []observe.Trace
 	if err := h.Execute(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, cli agents.Client) error {
-		var err error
+		limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+		if err != nil {
+			return err
+		}
 		observecli := observe.NewClient(cli, h.GetDB())
 		traces, err = observecli.SearchTrace(ctx,
 			c.Param("service_name"),
 			start, end,
 			c.Query("maxDuration"), c.Query("minDuration"),
-			c.Query("limit"),
+			limit,
 		)
 		return err
 	}); err != nil {
