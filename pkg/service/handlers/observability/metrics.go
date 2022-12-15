@@ -847,6 +847,7 @@ func (h *ObservabilityHandler) OtelOverview(c *gin.Context) {
 }
 
 func pickMatrixValue(matrix prommodel.Matrix, field string, pick string) []KV {
+	// 在matrix中取最大/平均/最小的值
 	getValue := func(pairs []prommodel.SamplePair, pick string) prommodel.SampleValue {
 		if len(pairs) == 0 {
 			return 0
@@ -881,16 +882,18 @@ func pickMatrixValue(matrix prommodel.Matrix, field string, pick string) []KV {
 	for _, v := range matrix {
 		if labelvalue, ok := v.Metric[prommodel.LabelName(field)]; ok {
 			value := getValue(v.Values, pick)
-			ret = append(ret, KV{
-				LabelName:  field,
-				LabelValue: string(labelvalue),
-				Value:      value,
-			})
+			if !math.IsNaN(float64(value)) {
+				ret = append(ret, KV{
+					LabelName:  field,
+					LabelValue: string(labelvalue),
+					Value:      value,
+				})
+			}
 		}
 	}
 
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].Value > ret[j].Value
+		return lessThan(ret[j].Value, ret[i].Value)
 	})
 	return ret
 }
@@ -899,15 +902,17 @@ func pickVectorValue(vector prommodel.Vector, field string) []KV {
 	ret := []KV{}
 	for _, v := range vector {
 		if labelvalue, ok := v.Metric[prommodel.LabelName(field)]; ok {
-			ret = append(ret, KV{
-				LabelName:  field,
-				LabelValue: string(labelvalue),
-				Value:      v.Value,
-			})
+			if !math.IsNaN(float64(v.Value)) {
+				ret = append(ret, KV{
+					LabelName:  field,
+					LabelValue: string(labelvalue),
+					Value:      v.Value,
+				})
+			}
 		}
 	}
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].Value > ret[j].Value
+		return lessThan(ret[j].Value, ret[i].Value)
 	})
 	return ret
 }
