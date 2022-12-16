@@ -60,6 +60,7 @@ func (p *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into s
 	}
 	diffresult := utils.DiffWithDefaultNamespace(p.Cli.Client, ns, bundle.Status.Resources, resources)
 	if bundle.Status.Phase == pluginsv1beta1.PhaseInstalled &&
+		bundle.Spec.Version == bundle.Status.Version &&
 		utils.EqualMapValues(bundle.Status.Values.Object, bundle.Spec.Values.Object) &&
 		len(diffresult.Creats) == 0 &&
 		len(diffresult.Removes) == 0 {

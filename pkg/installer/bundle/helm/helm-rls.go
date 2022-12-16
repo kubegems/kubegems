@@ -97,7 +97,9 @@ func ApplyChart(ctx context.Context, cfg *rest.Config, rlsname, namespace string
 		return install.RunWithContext(ctx, chart, values)
 	}
 	// check should upgrade
-	if existRelease.Info.Status == release.StatusDeployed && equalMapValues(existRelease.Config, values) {
+	if existRelease.Info.Status == release.StatusDeployed &&
+		existRelease.Chart.Metadata.Version == chart.Metadata.Version &&
+		equalMapValues(existRelease.Config, values) {
 		log.Info("already uptodate", "values", values)
 		return existRelease, nil
 	}
