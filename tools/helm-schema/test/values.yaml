@@ -1,0 +1,21 @@
+service:
+  # @form true
+  enabled: false
+  # @hidden path=service.enabled;value=false
+  # @form true
+  # @schema required=http,grpc
+  # @title "service ports contiguration"
+  ports:
+    # @schema type=number;format=port;max=65535;min=1;pattern=
+    # @form true
+    http: 80
+    # @form true
+    grpc: 50051
+  nodePort:
+    # @schema default=0;nullable
+    http: null
+    grpc: null
+ingress:
+  enabled: false
+  # @schema format=hostname
+  host: "example.com"

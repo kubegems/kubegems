@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "properties": {
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "host": {
+          "type": "string",
+          "format": "hostname",
+          "default": "example.com"
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "form": true
+        },
+        "nodePort": {
+          "type": "object",
+          "properties": {
+            "grpc": {
+              "type": "object",
+              "nullable": true
+            },
+            "http": {
+              "type": "object",
+              "nullable": true,
+              "default": 0
+            }
+          }
+        },
+        "ports": {
+          "type": "object",
+          "required": [
+            "http",
+            "grpc"
+          ],
+          "properties": {
+            "grpc": {
+              "type": "integer",
+              "default": 50051,
+              "form": true
+            },
+            "http": {
+              "type": "integer",
+              "format": "port",
+              "default": 80,
+              "maximum": 65535,
+              "minimum": 1,
+              "form": true
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "service.enabled",
+            "value": false
+          },
+          "title": "service ports contiguration"
+        }
+      }
+    }
+  }
+}
