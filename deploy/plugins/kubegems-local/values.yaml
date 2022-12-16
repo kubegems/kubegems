@@ -165,7 +165,7 @@ agent:
   ## @param agent.podSecurityContext.fsGroup Set agent pod's Security Context fsGroup
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     fsGroup: 1001
   ## Configure Container Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -174,7 +174,7 @@ agent:
   ## @param agent.containerSecurityContext.runAsNonRoot Set agent containers' Security Context runAsNonRoot
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     runAsUser: 1001
     runAsNonRoot: true
 
