@@ -22,11 +22,14 @@ import (
 	"os/signal"
 
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	"github.com/spf13/cobra"
 	"gorm.io/datatypes"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/rest"
 	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -52,47 +55,110 @@ type IngInfo struct {
 
 const mysqlport = 3306
 
+type Options struct {
+	ManagerCluster  bool
+	AgentCluster    bool
+	KubegemsVersion string
+}
+
 func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
-	defer cancel()
+	configflags := genericclioptions.ConfigFlags{
+		KubeConfig: pointer.String(""),
+		Context:    pointer.String(""),
+	}
+	options := Options{
+		KubegemsVersion: "v1.23.0-alpha.2",
+	}
+	cmd := &cobra.Command{
+		Use: os.Args[0],
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+			defer cancel()
+			if !options.AgentCluster && !options.ManagerCluster {
+				return cmd.Usage()
+			}
+			cfg, err := configflags.ToRESTConfig()
+			if err != nil {
+				return err
+			}
+			return Run(ctx, cfg, options)
+		},
+	}
+	flags := cmd.Flags()
+	flags.StringVarP(&options.KubegemsVersion, "kubegemsVersion", "", options.KubegemsVersion, "kubegems upgrade to")
+	flags.BoolVarP(&options.ManagerCluster, "manager", "", options.ManagerCluster, "do migrations on manager cluster")
+	flags.BoolVarP(&options.AgentCluster, "agent", "", options.AgentCluster, "do migrations on agent cluster")
+	configflags.AddFlags(flags)
 
-	cfg, cli := setupClient()
-	_ = cli
+	if err := cmd.Execute(); err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+	}
+}
 
+func Run(ctx context.Context, cfg *rest.Config, options Options) error {
+	if options.ManagerCluster {
+		if err := MigrateOnManagerCluster(ctx, cfg, options.KubegemsVersion); err != nil {
+			return err
+		}
+	}
+	if options.AgentCluster {
+		if err := MigrateOnAgentCluster(ctx, cfg, options.KubegemsVersion); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVersion string) error {
+	db, err := setupDB(ctx, cfg)
+	if err != nil {
+		return err
+	}
+	// migrate models
+	log.Print("migrating mysql models schema")
+	if err := models.MigrateModels(db.DB()); err != nil {
+		return err
+	}
+	// updateDashboardTpls(db)
+	updateDashboards(db)
+	// updateReceivers(ctx, cli, rest.Host)
+	return nil
+}
+
+func MigrateOnAgentCluster(ctx context.Context, cfg *rest.Config, kubegemsVersion string) error {
+	cli, err := client.New(cfg, client.Options{})
+	if err != nil {
+		return err
+	}
+	if err := MigratePlugins(ctx, cli, kubegemsVersion); err != nil {
+		return err
+	}
+	return nil
+}
+
+func setupDB(ctx context.Context, cfg *rest.Config) (*database.Database, error) {
+	cli, err := client.New(cfg, client.Options{})
+	if err != nil {
+		return nil, err
+	}
 	selector := labels.SelectorFromSet(labels.Set{"app.kubernetes.io/name": "mysql"}).String()
 	listenport, err := kube.PortForward(ctx, cfg, "kubegems", selector, mysqlport)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	// find mysql password
 	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "kubegems-mysql", Namespace: "kubegems"}}
 	if err := cli.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
-		panic(err)
+		return nil, err
 	}
 	mysqlrootpassword := string(secret.Data["mysql-root-password"])
-	db, err := database.NewDatabase(&database.Options{
+	return database.NewDatabase(&database.Options{
 		Addr:      fmt.Sprintf("localhost:%d", listenport),
 		Username:  "root",
 		Password:  mysqlrootpassword,
 		Database:  "kubegems",
 		Collation: "utf8mb4_unicode_ci",
 	})
-	if err != nil {
-		panic(err)
-	}
-
-	// migrate models
-	log.Print("migrating mysql models schema")
-	if err := models.MigrateModels(db.DB()); err != nil {
-		panic(err)
-	}
-
-	// updateDashboardTpls(db)
-	updateDashboards(db)
-	// updateReceivers(ctx, cli, rest.Host)
-
-	log.Print("migrating kubegems plugins")
-	MigratePlugins(ctx, cli)
 }
 
 type DashTmp struct {
@@ -110,6 +176,7 @@ type OldGraph struct {
 }
 
 func updateDashboardTpls(db *database.Database) {
+	log.Print("updating monitoring dashboard templates in database")
 	oldDashTpls := []*DashTmp{}
 	if err := db.DB().Raw(`SELECT name, graphs FROM monitor_dashboard_tpls`).Scan(&oldDashTpls).Error; err != nil {
 		panic(err)
@@ -138,6 +205,7 @@ func updateDashboardTpls(db *database.Database) {
 }
 
 func updateDashboards(db *database.Database) {
+	log.Print("updating monitoring dashboard in database")
 	oldDashs := []*DashTmp{}
 	if err := db.DB().Raw(`SELECT id, graphs FROM monitor_dashboards`).Scan(&oldDashs).Error; err != nil {
 		panic(err)
@@ -166,6 +234,7 @@ func updateDashboards(db *database.Database) {
 }
 
 func updateReceivers(ctx context.Context, cli client.Client, cctx string) {
+	log.Print("updating monitoring receivers in database")
 	amconfigs := v1alpha1.AlertmanagerConfigList{}
 	if err := cli.List(ctx, &amconfigs, client.InNamespace(v1.NamespaceAll), client.HasLabels([]string{
 		gems.LabelAlertmanagerConfigName,

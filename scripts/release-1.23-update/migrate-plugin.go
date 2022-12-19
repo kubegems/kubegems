@@ -24,10 +24,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/rest"
+	"k8s.io/utils/pointer"
 	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
-	"kubegems.io/kubegems/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/utils/harbor"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -35,44 +35,27 @@ import (
 const (
 	OfficalChartsRepository = "https://charts.kubegems.io/kubegems"
 	DefaultPluginVersion    = "1.0.0"
-	DefaultKubegemsVersion  = "1.22.0"
 )
 
 // MigratePlugins migrate plugin cr from kubegems and kubegems-local namespace to kubegems-installer namespace
-func MigratePlugins(ctx context.Context, cli client.Client) {
+func MigratePlugins(ctx context.Context, cli client.Client, kubegemsVersion string) error {
+	log.Print("migrating kubegems plugins")
 	fromns := []string{"kubegems", "kubegems-local"}
 	if err := preCheck(ctx, cli); err != nil {
-		log.Print(err.Error())
-		return
+		return err
 	}
 	for _, nsFrom := range fromns {
-		log.Printf("migrating plugins from namespace: %s", nsFrom)
-		if err := migrateConfigmaps(ctx, cli, nsFrom); err != nil {
-			log.Print(err.Error())
-			return
+		if err := migrateConfigmaps(ctx, cli, nsFrom, kubegemsVersion); err != nil {
+			return err
 		}
-		if err := migratePlugins(ctx, cli, nsFrom); err != nil {
-			log.Print(err.Error())
-			return
+		if err := migratePlugins(ctx, cli, nsFrom, kubegemsVersion); err != nil {
+			return err
 		}
 		if err := cleanOldplugins(ctx, cli, nsFrom); err != nil {
-			log.Print(err.Error())
-			return
+			return err
 		}
 	}
-	// todo: update installer image to latest and scale up
-}
-
-func setupClient() (*rest.Config, client.Client) {
-	cfg, err := kube.AutoClientConfig()
-	if err != nil {
-		panic(err)
-	}
-	cli, err := client.New(cfg, client.Options{})
-	if err != nil {
-		panic(err)
-	}
-	return cfg, cli
+	return scaleUpInstaller(ctx, cli, kubegemsVersion)
 }
 
 func preCheck(ctx context.Context, cli client.Client) error {
@@ -106,7 +89,9 @@ func preCheck(ctx context.Context, cli client.Client) error {
 	}
 }
 
-func migrateConfigmaps(ctx context.Context, cli client.Client, fromns string) error {
+func migrateConfigmaps(ctx context.Context, cli client.Client, fromns string, kubegemsVersion string) error {
+	log.Printf("migrating configmaps in namespace %s", fromns)
+
 	cmlist := &corev1.ConfigMapList{}
 	if err := cli.List(ctx, cmlist, client.InNamespace(fromns)); err != nil {
 		return err
@@ -115,12 +100,17 @@ func migrateConfigmaps(ctx context.Context, cli client.Client, fromns string) er
 		if !strings.HasSuffix(val.Name, "-values") {
 			continue
 		}
+		log.Printf("migrate configmap [%s]", val.Name)
 		if val.Name == "kubegems-global-values" {
 			// rename keys
 			newdata := map[string]string{}
 			for k, v := range val.Data {
 				k = strings.TrimPrefix(k, "global.")
 				newdata[k] = v
+			}
+			if kubegemsVersion != "" {
+				// override kubegems version
+				newdata["kubegemsVersion"] = kubegemsVersion
 			}
 			val.Data = newdata
 			// create global plugin
@@ -175,7 +165,9 @@ func updateGlobalValueFromCM(cm *corev1.ConfigMap, global *pluginsv1beta1.Plugin
 	return nil
 }
 
-func migratePlugins(ctx context.Context, cli client.Client, fromns string) error {
+func migratePlugins(ctx context.Context, cli client.Client, fromns string, kubegemsVersion string) error {
+	log.Printf("migrating plugins in namespace %s", fromns)
+
 	pluginlist := &pluginsv1beta1.PluginList{}
 	if err := cli.List(ctx, pluginlist, client.InNamespace(fromns)); err != nil {
 		return err
@@ -195,7 +187,7 @@ func migratePlugins(ctx context.Context, cli client.Client, fromns string) error
 			},
 		}
 		_, err := controllerutil.CreateOrUpdate(ctx, cli, newplugin, func() error {
-			return migratePlugin(newplugin, &plugin)
+			return migratePlugin(newplugin, &plugin, kubegemsVersion)
 		})
 		if err != nil {
 			return err
@@ -204,7 +196,7 @@ func migratePlugins(ctx context.Context, cli client.Client, fromns string) error
 	return nil
 }
 
-func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin) error {
+func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin, newkubegemsChartVersion string) error {
 	plugin.Finalizers = old.Finalizers
 	// annotations
 	plugin.Annotations = old.Annotations
@@ -233,9 +225,9 @@ func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin) er
 	}
 	plugin.Spec.URL = "https://charts.kubegems.io/kubegems"
 	if strings.HasPrefix(plugin.Name, "kubegems") {
-		plugin.Spec.Version = "1.22.0" // latest kubegems version
+		plugin.Spec.Version = newkubegemsChartVersion // latest kubegems version
 	} else {
-		plugin.Spec.Version = "1.0.0" // default plugin version
+		plugin.Spec.Version = DefaultPluginVersion // default plugin version
 	}
 
 	for i, from := range plugin.Spec.ValuesFrom {
@@ -247,8 +239,8 @@ func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin) er
 }
 
 func cleanOldplugins(ctx context.Context, cli client.Client, fromns string) error {
+	log.Printf("clean all old plugins in namespace %s", fromns)
 	pluginlist := &pluginsv1beta1.PluginList{}
-	log.Printf("clean all old plugins")
 	if err := cli.List(ctx, pluginlist, client.InNamespace(fromns)); err != nil {
 		return err
 	}
@@ -258,8 +250,32 @@ func cleanOldplugins(ctx context.Context, cli client.Client, fromns string) erro
 			return err
 		}
 	}
-	if err := cli.DeleteAllOf(ctx, &pluginsv1beta1.Plugin{}, client.InNamespace(fromns)); err != nil {
+	return cli.DeleteAllOf(ctx, &pluginsv1beta1.Plugin{}, client.InNamespace(fromns))
+}
+
+func scaleUpInstaller(ctx context.Context, cli client.Client, kubegemsVersion string) error {
+	depinstaller := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kubegems-installer",
+			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+		},
+	}
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(depinstaller), depinstaller); err != nil {
 		return err
 	}
-	return nil
+
+	patch := client.MergeFrom(depinstaller.DeepCopy())
+	for i, container := range depinstaller.Spec.Template.Spec.Containers {
+		if !strings.Contains(container.Name, "installer") {
+			continue
+		}
+		// update image tag
+		image, _ := harbor.SplitImageNameTag(container.Image)
+		fullimage := image + ":" + kubegemsVersion
+		log.Printf("scale deployment %s/%s to 1 and set images to %s", depinstaller.Name, depinstaller.Namespace, fullimage)
+		depinstaller.Spec.Template.Spec.Containers[i].Image = fullimage
+	}
+	// sacle up to 1
+	depinstaller.Spec.Replicas = pointer.Int32(1)
+	return cli.Patch(ctx, depinstaller, patch)
 }
