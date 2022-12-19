@@ -119,9 +119,8 @@ func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVers
 	if err := models.MigrateModels(db.DB()); err != nil {
 		return err
 	}
-	// updateDashboardTpls(db)
+	updateDashboardTpls(db)
 	updateDashboards(db)
-	// updateReceivers(ctx, cli, rest.Host)
 	return nil
 }
 
@@ -131,6 +130,9 @@ func MigrateOnAgentCluster(ctx context.Context, cfg *rest.Config, kubegemsVersio
 		return err
 	}
 	if err := MigratePlugins(ctx, cli, kubegemsVersion); err != nil {
+		return err
+	}
+	if err := updateReceivers(ctx, cli, cfg.Host); err != nil {
 		return err
 	}
 	return nil
@@ -233,13 +235,13 @@ func updateDashboards(db *database.Database) {
 	}
 }
 
-func updateReceivers(ctx context.Context, cli client.Client, cctx string) {
+func updateReceivers(ctx context.Context, cli client.Client, cctx string) error {
 	log.Print("updating monitoring receivers in database")
 	amconfigs := v1alpha1.AlertmanagerConfigList{}
 	if err := cli.List(ctx, &amconfigs, client.InNamespace(v1.NamespaceAll), client.HasLabels([]string{
 		gems.LabelAlertmanagerConfigName,
 	})); err != nil {
-		panic(err)
+		return err
 	}
 
 	for _, v := range amconfigs.Items {
@@ -256,7 +258,8 @@ func updateReceivers(ctx context.Context, cli client.Client, cctx string) {
 			}
 		}
 		if err := cli.Update(ctx, v); err != nil {
-			panic(err)
+			return err
 		}
 	}
+	return nil
 }

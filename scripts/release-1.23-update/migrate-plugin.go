@@ -128,7 +128,6 @@ func migrateConfigmaps(ctx context.Context, cli client.Client, fromns string, ku
 			}); err != nil {
 				return err
 			}
-			continue
 		}
 		val.Namespace = pluginscommon.KubeGemsNamespaceInstaller
 		val.ResourceVersion = ""
