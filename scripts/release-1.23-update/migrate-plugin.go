@@ -55,7 +55,9 @@ func MigratePlugins(ctx context.Context, cli client.Client, kubegemsVersion stri
 			return err
 		}
 	}
-	return scaleUpInstaller(ctx, cli, kubegemsVersion)
+	// use: kubectl apply -f https://github.com/kubegems/kubegems/raw/release-1.23/deploy/installer.yaml
+	// return scaleUpInstaller(ctx, cli, kubegemsVersion)
+	return nil
 }
 
 func preCheck(ctx context.Context, cli client.Client) error {
