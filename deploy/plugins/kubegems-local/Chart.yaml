@@ -21,3 +21,4 @@ annotations:
   plugins.kubegems.io/values-from: "monitoring,tracing,logging"
   plugins.kubegems.io/category: core/KubeGems
   plugins.kubegems.io/render-by: helm
+  plugins.kubegems.io/required: "true"

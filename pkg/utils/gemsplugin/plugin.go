@@ -76,14 +76,16 @@ func (m *PluginManager) Install(ctx context.Context, name string, version string
 
 	exists := apiplugin.DeepCopy()
 	_, err = controllerutil.CreateOrUpdate(ctx, m.Client, exists, func() error {
-		exists.Annotations = apiplugin.Annotations
+		if exists.Annotations == nil {
+			exists.Annotations = map[string]string{}
+		}
+		for k, v := range apiplugin.Annotations {
+			exists.Annotations[k] = v
+		}
 		exists.Spec = apiplugin.Spec
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (m *PluginManager) UnInstall(ctx context.Context, name string) error {
@@ -134,27 +136,33 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 	if err != nil {
 		return nil, err
 	}
-	allversions := plugin.Available
-	if plugin.Installed != nil {
-		// if no version speci always return installed version
-		allversions = append([]PluginVersion{*plugin.Installed}, allversions...)
-	}
-	for _, pv := range allversions {
+	// prefer remote version
+	for i, item := range plugin.Available {
 		// if  no version we use the first version
 		// nolint: nestif
-		if version == "" || pv.Version == version {
+		if version == "" || item.Version == version {
 			// find schema
 			if withSchema {
-				if err := m.fillSchema(ctx, &pv); err != nil {
-					logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", pv.Name, "version", pv.Version)
+				if err := m.fillSchema(ctx, &item); err != nil {
+					logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", item.Name, "version", item.Version)
 				}
 			}
-			// fill current values
-			if installed := plugin.Installed; installed != nil {
-				pv.Values = *installed.Values.DeepCopy()
+			// fill current installed values
+			if plugin.Installed != nil {
+				plugin.Available[i].Values = *plugin.Installed.Values.DeepCopy()
 			}
-			return &pv, nil
+			return &plugin.Available[i], nil
 		}
+	}
+	// try installed
+	if plugin.Installed != nil && (version == "" || version == plugin.Installed.Version) {
+		// find schema
+		if withSchema {
+			if err := m.fillSchema(ctx, plugin.Installed); err != nil {
+				logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", plugin.Installed.Name, "version", plugin.Installed.Version)
+			}
+		}
+		return plugin.Installed, nil
 	}
 	return nil, fmt.Errorf("plugin %s version %s not found", name, version)
 }
@@ -241,14 +249,14 @@ func FindUpgradeable(availables []PluginVersion, installed PluginVersion, allins
 }
 
 func (m *PluginManager) GetInstalled(ctx context.Context, name string) (*PluginVersion, error) {
-	plugin := &pluginsv1beta1.Plugin{}
+	plugin := pluginsv1beta1.Plugin{}
 	if err := m.Client.Get(ctx,
 		client.ObjectKey{Namespace: pluginscommon.KubeGemsNamespaceInstaller, Name: name},
-		plugin,
+		&plugin,
 	); err != nil {
 		return nil, err
 	}
-	pv := PluginVersionFrom(*plugin)
+	pv := PluginVersionFrom(plugin)
 	return &pv, nil
 }
 
@@ -312,7 +320,7 @@ func mergeAllrepoVersions(repos map[string]Repository) map[string][]PluginVersio
 	for k, v := range pluginsmap {
 		vs := maps.Values(v)
 		slices.SortFunc(vs, func(a, b PluginVersion) bool {
-			return semver.Compare(a.Version, b.Version) > -1
+			return SemVersionBiggerThan(a.Version, b.Version)
 		})
 		ret[k] = vs
 	}

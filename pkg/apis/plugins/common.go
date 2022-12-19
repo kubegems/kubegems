@@ -41,9 +41,6 @@ const (
 	// example: "kubegems/global,logging" .
 	AnnotationValuesFrom = "plugins.kubegems.io/values-from"
 
-	// json format string to store plugin infos
-	AnnotationPluginInfo = "plugins.kubegems.io/plugin-info"
-
 	// description
 	AnnotationPluginDescription = "plugins.kubegems.io/description"
 

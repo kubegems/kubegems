@@ -21,4 +21,5 @@ annotations:
   plugins.kubegems.io/category: core/KubeGems
   plugins.kubegems.io/install-namespace: "kubegems-installer"
   plugins.kubegems.io/render-by: helm
+  plugins.kubegems.io/required: "true"
 version: 0.0.0

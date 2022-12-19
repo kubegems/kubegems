@@ -42,3 +42,4 @@ annotations:
   plugins.kubegems.io/install-namespace: "kubegems"
   plugins.kubegems.io/category: core/KubeGems
   plugins.kubegems.io/render-by: helm
+  plugins.kubegems.io/required: "true"

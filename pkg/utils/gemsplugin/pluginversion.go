@@ -15,7 +15,6 @@
 package gemsplugin
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -50,18 +49,19 @@ type PluginVersion struct {
 }
 
 func (pv PluginVersion) ToPlugin() *pluginsv1beta1.Plugin {
-	plugininfo, _ := json.Marshal(pv)
-	annotations := map[string]string{
-		pluginscommon.AnnotationPluginInfo: string(plugininfo),
-	}
 	if pv.Kind == "" {
 		pv.Kind = pluginsv1beta1.BundleKindTemplate // prefer use template with plugin
 	}
 	return &pluginsv1beta1.Plugin{
 		ObjectMeta: v1.ObjectMeta{
-			Name:        pv.Name,
-			Namespace:   pv.Namespace,
-			Annotations: annotations,
+			Name:      pv.Name,
+			Namespace: pv.Namespace,
+			Annotations: map[string]string{
+				pluginscommon.AnnotationCategory:          pv.MainCategory + "/" + pv.Category,
+				pluginscommon.AnnotationPluginDescription: pv.Description,
+				pluginscommon.AnnotationHealthCheck:       pv.HelathCheck,
+				pluginscommon.AnnotationRequired:          strconv.FormatBool(pv.Required),
+			},
 		},
 		Spec: pluginsv1beta1.PluginSpec{
 			Kind:             pv.Kind,
@@ -80,29 +80,29 @@ func PluginVersionFrom(plugin pluginsv1beta1.Plugin) PluginVersion {
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
-	pv := PluginVersion{}
-	_ = json.Unmarshal([]byte(annotations[pluginscommon.AnnotationPluginInfo]), &pv)
-
-	pv.Name = plugin.Name
-	pv.Namespace = plugin.Namespace
-	pv.InstallNamespace = plugin.Spec.InstallNamespace
-	pv.Version = plugin.Spec.Version
-	pv.Enabled = plugin.DeletionTimestamp == nil && !plugin.Spec.Disabled
-	pv.Repository = plugin.Spec.URL
-	if pv.Version == "" {
-		pv.Version = plugin.Status.Version
+	maincate, cate := parseCategory(annotations)
+	required, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationRequired])
+	pv := PluginVersion{
+		Name:             plugin.Name,
+		Namespace:        plugin.Namespace,
+		InstallNamespace: plugin.Spec.InstallNamespace,
+		Enabled:          plugin.DeletionTimestamp == nil && !plugin.Spec.Disabled,
+		Kind:             plugin.Spec.Kind,
+		Description:      annotations[pluginscommon.AnnotationPluginDescription],
+		HelathCheck:      annotations[pluginscommon.AnnotationHealthCheck],
+		MainCategory:     maincate,
+		Category:         cate,
+		Repository:       plugin.Spec.URL,
+		Version:          plugin.Spec.Version,
+		Values:           plugin.Spec.Values,
+		ValuesFrom:       plugin.Spec.ValuesFrom,
+		Required:         required,
 	}
-	pv.ValuesFrom = plugin.Spec.ValuesFrom
 	if plugin.Status.Phase == pluginsv1beta1.PhaseInstalled {
 		pv.Healthy = true
 	} else {
 		pv.Message = plugin.Status.Message // display the message on not installed
 	}
-	pv.Values = plugin.Spec.Values
-	if pv.Description == "" {
-		pv.Description = annotations[pluginscommon.AnnotationPluginDescription]
-	}
-	fillCategory(&pv, annotations)
 	return pv
 }
 
@@ -112,11 +112,10 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		annotations = map[string]string{}
 	}
 
-	valsFrom := []pluginsv1beta1.ValuesFrom{}
-
+	valsFroms := []pluginsv1beta1.ValuesFrom{}
 	if cv.Name != pluginscommon.KubegemsChartGlobal {
 		// always inject the global values reference in other plugin
-		valsFrom = append(valsFrom, pluginsv1beta1.ValuesFrom{
+		valsFroms = append(valsFroms, pluginsv1beta1.ValuesFrom{
 			Kind:     pluginsv1beta1.ValuesFromKindConfigmap,
 			Name:     pluginscommon.KubeGemsGlobalValuesConfigMapName,
 			Prefix:   pluginscommon.KubegemsChartGlobal + ".",
@@ -132,7 +131,7 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		if splits := strings.Split(val, "/"); len(splits) > 1 {
 			namespace, name = splits[0], splits[1]
 		}
-		valsFrom = append(valsFrom, pluginsv1beta1.ValuesFrom{
+		valsFroms = append(valsFroms, pluginsv1beta1.ValuesFrom{
 			Kind:      pluginsv1beta1.ValuesFromKindConfigmap,
 			Name:      fmt.Sprintf("kubegems-%s-values", name),
 			Namespace: namespace,
@@ -140,44 +139,36 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 			Optional:  true,
 		})
 	}
-
-	pv := PluginVersion{
-		Name:        cv.Name,
-		Repository:  repo,
-		Version:     cv.Version,
-		Description: cv.Description,
-		ValuesFrom:  valsFrom,
-	}
-	fillFromAnnotations(&pv, annotations)
-	return pv
-}
-
-func fillFromAnnotations(pv *PluginVersion, annotations map[string]string) {
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-
-	pv.InstallNamespace = annotations[pluginscommon.AnnotationInstallNamespace]
-	pv.Requirements = annotations[pluginscommon.AnnotationRequirements]
-	pv.HelathCheck = annotations[pluginscommon.AnnotationHealthCheck]
-
+	maincate, cate := parseCategory(annotations)
 	required, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationRequired])
-	pv.Required = required
-
-	renderkind := pluginsv1beta1.BundleKindTemplate
-	if kind := annotations[pluginscommon.AnnotationRenderBy]; kind != "" {
-		renderkind = pluginsv1beta1.BundleKind(kind)
+	return PluginVersion{
+		Name:             cv.Name,
+		Repository:       repo,
+		Version:          cv.Version,
+		Description:      cv.Description,
+		ValuesFrom:       valsFroms,
+		InstallNamespace: annotations[pluginscommon.AnnotationInstallNamespace],
+		Requirements:     annotations[pluginscommon.AnnotationRequirements],
+		HelathCheck:      annotations[pluginscommon.AnnotationHealthCheck],
+		Required:         required,
+		Kind: func() pluginsv1beta1.BundleKind {
+			if kind := annotations[pluginscommon.AnnotationRenderBy]; kind != "" {
+				return pluginsv1beta1.BundleKind(kind)
+			} else {
+				return pluginsv1beta1.BundleKindTemplate
+			}
+		}(),
+		MainCategory: maincate,
+		Category:     cate,
 	}
-	pv.Kind = renderkind
-	fillCategory(pv, annotations)
 }
 
-func fillCategory(pv *PluginVersion, annotations map[string]string) {
+func parseCategory(annotations map[string]string) (string, string) {
+	maincate, cate := "other", "unknow"
 	full := annotations[pluginscommon.AnnotationCategory]
 	if full == "" {
-		return
+		return maincate, cate
 	}
-	maincate, cate := "other", "unknow"
 	categories := strings.Split(full, "/")
 	if len(categories) == 1 {
 		cate = categories[0]
@@ -187,7 +178,7 @@ func fillCategory(pv *PluginVersion, annotations map[string]string) {
 	} else if len(categories) > 1 {
 		maincate, cate = categories[0], categories[1]
 	}
-	pv.MainCategory, pv.Category = maincate, cate
+	return maincate, cate
 }
 
 func IsPluginChart(cv *repo.ChartVersion) bool {
