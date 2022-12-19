@@ -221,6 +221,7 @@ func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin, ne
 				Prefix: "global.",
 			},
 		}
+		plugin.Spec.Values.Raw = nil
 		delete(plugin.Spec.Values.Object, "global")
 	}
 	plugin.Spec.URL = "https://charts.kubegems.io/kubegems"
