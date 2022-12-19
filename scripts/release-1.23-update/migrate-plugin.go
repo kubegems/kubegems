@@ -230,7 +230,7 @@ func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin, ne
 	}
 	plugin.Spec.URL = "https://charts.kubegems.io/kubegems"
 	if strings.HasPrefix(plugin.Name, "kubegems") {
-		plugin.Spec.Version = newkubegemsChartVersion // latest kubegems version
+		plugin.Spec.Version = strings.TrimPrefix(newkubegemsChartVersion, "v") // latest kubegems version
 	} else {
 		plugin.Spec.Version = DefaultPluginVersion // default plugin version
 	}
