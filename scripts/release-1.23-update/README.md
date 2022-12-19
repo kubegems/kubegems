@@ -12,10 +12,10 @@ Run on manager cluster:
 
 ```sh
 # switch kubeconfig current context to target cluster
-# apply 1.23 installer
-kubectl apply -f https://github.com/kubegems/kubegems/raw/release-1.23/deploy/installer.yaml
 # run migrate
 go run ./scripts/release-1.23-update --manager --agent --kubegemsVersion v1.23.0[-xxx]
+# apply 1.23 installer
+kubectl apply -f https://github.com/kubegems/kubegems/raw/release-1.23/deploy/installer.yaml
 ```
 
 or specify the context name in kubeconfig:
