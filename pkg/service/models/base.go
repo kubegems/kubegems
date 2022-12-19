@@ -82,13 +82,13 @@ func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, mig
 	}
 
 	if migrate {
-		if err := migrateModels(db.DB()); err != nil {
+		if err := MigrateModels(db.DB()); err != nil {
 			return err
 		}
 	}
 
 	if initData {
-		if err := initBaseData(db.DB()); err != nil {
+		if err := InitBaseData(db.DB()); err != nil {
 			return err
 		}
 	}
@@ -96,7 +96,7 @@ func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, mig
 }
 
 // 初始化系统角色和系统管理员
-func initBaseData(db *gorm.DB) error {
+func InitBaseData(db *gorm.DB) error {
 	active := true
 	sysadmin := SystemRole{ID: 1, RoleName: "系统管理员", RoleCode: "sysadmin"}
 	normal := SystemRole{ID: 2, RoleName: "普通用户", RoleCode: "normal"}
@@ -144,7 +144,7 @@ func initBaseData(db *gorm.DB) error {
 	return nil
 }
 
-func migrateModels(db *gorm.DB) error {
+func MigrateModels(db *gorm.DB) error {
 	return db.AutoMigrate(
 		// 审计表
 		&AuditLog{},

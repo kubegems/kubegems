@@ -16,23 +16,24 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"os/signal"
 
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"gorm.io/datatypes"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/utils/pointer"
-	"kubegems.io/kubegems/pkg/agent/cluster"
-	"kubegems.io/kubegems/pkg/agent/indexer"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
 )
 
 type NginxAnno struct {
@@ -49,49 +50,30 @@ type IngInfo struct {
 	NewValue     string `json:"newValue"`
 }
 
-var (
-	cctx           = ""
-	nginxAnnos     = make(map[string]NginxAnno)
-	channelMap     = map[string]*models.AlertChannel{}
-	nginxAnnosPath = "scripts/release-1.22-update/nginx-anno.yaml"
-	tgsPath        = "scripts/release-1.22-update/tg.yaml"
-	logAmcfgPath   = "scripts/release-1.22-update/log-amcfg.yaml"
-	channelPath    = "scripts/release-1.22-update/channels.yaml"
-	db             *database.Database
-	cli            client.Client
-)
+const mysqlport = 3306
 
 func main() {
-	cfg := clientcmdapi.Config{}
-	tmp, err := os.ReadFile("/home/slt/.kube/config")
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	defer cancel()
+
+	cfg, cli := setupClient()
+	_ = cli
+
+	selector := labels.SelectorFromSet(labels.Set{"app.kubernetes.io/name": "mysql"}).String()
+	listenport, err := kube.PortForward(ctx, cfg, "kubegems", selector, mysqlport)
 	if err != nil {
 		panic(err)
 	}
-	yaml.Unmarshal(tmp, &cfg)
-	cctx = cfg.CurrentContext
-
-	rest, err := kube.AutoClientConfig()
-	if err != nil {
+	// find mysql password
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "kubegems-mysql", Namespace: "kubegems"}}
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
 		panic(err)
 	}
-	c, err := cluster.NewCluster(rest)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := indexer.CustomIndexPods(c.GetCache()); err != nil {
-		panic(err)
-	}
-
-	ctx := context.TODO()
-	go c.Start(ctx)
-	c.GetCache().WaitForCacheSync(ctx)
-
-	cli = c.GetClient()
-	db, err = database.NewDatabase(&database.Options{
-		Addr:      "10.12.32.41:3306",
+	mysqlrootpassword := string(secret.Data["mysql-root-password"])
+	db, err := database.NewDatabase(&database.Options{
+		Addr:      fmt.Sprintf("localhost:%d", listenport),
 		Username:  "root",
-		Password:  "X69KdO15T8", // dev
+		Password:  mysqlrootpassword,
 		Database:  "kubegems",
 		Collation: "utf8mb4_unicode_ci",
 	})
@@ -99,13 +81,18 @@ func main() {
 		panic(err)
 	}
 
-	bts, _ := os.ReadFile(channelPath)
-	if err := yaml.Unmarshal(bts, &channelMap); err != nil {
+	// migrate models
+	log.Print("migrating mysql models schema")
+	if err := models.MigrateModels(db.DB()); err != nil {
 		panic(err)
 	}
-	// updateDashboardTpls()
-	updateDashboards()
-	// updateReceivers()
+
+	// updateDashboardTpls(db)
+	updateDashboards(db)
+	// updateReceivers(ctx, cli, rest.Host)
+
+	log.Print("migrating kubegems plugins")
+	MigratePlugins(ctx, cli)
 }
 
 type DashTmp struct {
@@ -122,7 +109,7 @@ type OldGraph struct {
 	PromqlGenerator *prometheus.PromqlGenerator `json:"promqlGenerator"`
 }
 
-func updateDashboardTpls() {
+func updateDashboardTpls(db *database.Database) {
 	oldDashTpls := []*DashTmp{}
 	if err := db.DB().Raw(`SELECT name, graphs FROM monitor_dashboard_tpls`).Scan(&oldDashTpls).Error; err != nil {
 		panic(err)
@@ -150,7 +137,7 @@ func updateDashboardTpls() {
 	}
 }
 
-func updateDashboards() {
+func updateDashboards(db *database.Database) {
 	oldDashs := []*DashTmp{}
 	if err := db.DB().Raw(`SELECT id, graphs FROM monitor_dashboards`).Scan(&oldDashs).Error; err != nil {
 		panic(err)
@@ -178,8 +165,7 @@ func updateDashboards() {
 	}
 }
 
-func updateReceivers() {
-	ctx := context.TODO()
+func updateReceivers(ctx context.Context, cli client.Client, cctx string) {
 	amconfigs := v1alpha1.AlertmanagerConfigList{}
 	if err := cli.List(ctx, &amconfigs, client.InNamespace(v1.NamespaceAll), client.HasLabels([]string{
 		gems.LabelAlertmanagerConfigName,
