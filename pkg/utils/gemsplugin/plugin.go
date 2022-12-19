@@ -137,7 +137,7 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 		return nil, err
 	}
 	// prefer remote version
-	for i, item := range plugin.Available {
+	for _, item := range plugin.Available {
 		// if  no version we use the first version
 		// nolint: nestif
 		if version == "" || item.Version == version {
@@ -149,9 +149,9 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 			}
 			// fill current installed values
 			if plugin.Installed != nil {
-				plugin.Available[i].Values = *plugin.Installed.Values.DeepCopy()
+				item.Values = *plugin.Installed.Values.DeepCopy()
 			}
-			return &plugin.Available[i], nil
+			return &item, nil
 		}
 	}
 	// try installed
