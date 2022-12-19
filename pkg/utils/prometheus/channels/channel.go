@@ -37,6 +37,7 @@ const (
 	TypeWebhook     ChannelType = "webhook"
 	TypeEmail       ChannelType = "email"
 	TypeFeishu      ChannelType = "feishu"
+	TypeDingding    ChannelType = "dingding"
 	TypeAliyunMsg   ChannelType = "aliyunMsg"
 	TypeAliyunVoice ChannelType = "aliyunVoice"
 )
@@ -136,6 +137,12 @@ func (m *ChannelConfig) UnmarshalJSON(b []byte) error {
 			return errors.Wrap(err, "unmarshal feishu channel")
 		}
 		m.ChannelIf = &feishu
+	case TypeDingding:
+		dingding := Dingding{}
+		if err := json.Unmarshal(b, &dingding); err != nil {
+			return errors.Wrap(err, "unmarshal dingding channel")
+		}
+		m.ChannelIf = &dingding
 	case TypeAliyunMsg:
 		aliyunMsg := AliyunMsg{}
 		if err := json.Unmarshal(b, &aliyunMsg); err != nil {
