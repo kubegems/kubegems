@@ -8,6 +8,12 @@ Generate `values.schema.json` from `values.yaml` for kubegems charts and plugins
 go install kubegems.io/kubegems/tools/helm-schema@latest
 ```
 
+or install from local source code
+
+```sh
+go install ./tools/helm-schema
+```
+
 ## Usage
 
 ```sh
