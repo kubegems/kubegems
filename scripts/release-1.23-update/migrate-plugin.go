@@ -213,6 +213,10 @@ func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin, ne
 	// spec
 	plugin.Spec = old.Spec
 	if old.Name == "kubegems" {
+		if plugin.Annotations == nil {
+			plugin.Annotations = map[string]string{}
+		}
+		plugin.Annotations[pluginscommon.AnnotationCategory] = "core/Kubegems"
 		plugin.Spec.InstallNamespace = "kubegems"
 		plugin.Spec.ValuesFrom = []pluginsv1beta1.ValuesFrom{
 			{

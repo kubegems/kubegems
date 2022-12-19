@@ -142,6 +142,7 @@ func downloadChart(ctx context.Context, repourl, name, version string) (string, 
 		RepositoryCache:  settings.RepositoryCache,
 		Options: []getter.Option{
 			getter.WithUserAgent(KubegemsUserAgent()),
+			getter.WithInsecureSkipVerifyTLS(true),
 		},
 	}
 	if repourl != "" {
