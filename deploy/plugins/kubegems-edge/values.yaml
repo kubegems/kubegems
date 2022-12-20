@@ -196,10 +196,10 @@ hub:
   ## Configure hub container tls secret
   ## @param hub.tls.enabled Enable hub http listen TLS
   ## @param hub.tls.useCertManager using cert manager to generate tls secret,if not using self-signed certificates if not exists
-  ## @param hub.tls.secretName customize default tls secret name
+  ## @param hub.tls.existingSecret use existsing tls secret name
   tls:
     enabled: true
-    secretName: ""
+    existingSecret: ""
 
   ## @param hub.logLevel Set log level
   logLevel: info
@@ -622,10 +622,10 @@ server:
   ## Configure hub container tls secret
   ## @param server.tls.enabled Enable hub http listen TLS
   ## @param server.tls.useCertManager using cert manager to generate tls secret,if not using self-signed certificates if not exists
-  ## @param server.tls.secretName customize default tls secret name
+  ## @param server.tls.existingSecret customize default tls secret name
   tls:
     enabled: true
-    secretName: ""
+    existingSecret: ""
   ## @param server.existingConfigmap The name of an existing ConfigMap with your custom configuration for server
   ##
   existingConfigmap: ""

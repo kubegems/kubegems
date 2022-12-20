@@ -1,4 +1,4 @@
-{{- if .Values.server.enabled }}
+{{- if and .Values.server.enabled (not .Values.hub.tls.existingSecret) }}
 
 {{- if index .Values "cert-manager" "enabled" }}
 apiVersion: cert-manager.io/v1

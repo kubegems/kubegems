@@ -45,8 +45,8 @@ Return the proper kubegems-edge.server image name
 Return the agent secretName
 */}}
 {{- define "kubegems-edge.hub.secretName" -}}
-{{- if .Values.hub.tls.secretName -}}
-    {{- .Values.hub.tls.secretName -}}
+{{- if .Values.hub.tls.existingSecret -}}
+    {{- .Values.hub.tls.existingSecret -}}
 {{- else -}}
     {{- include "kubegems-edge.hub.fullname" . -}}
 {{- end -}}
@@ -89,8 +89,8 @@ Return the proper kubegems-edge.server image name
 Return the agent secretName
 */}}
 {{- define "kubegems-edge.server.secretName" -}}
-{{- if .Values.server.tls.secretName -}}
-    {{- .Values.server.tls.secretName -}}
+{{- if .Values.server.tls.existingSecret -}}
+    {{- .Values.server.tls.existingSecret -}}
 {{- else -}}
     {{- include "kubegems-edge.server.fullname" . -}}
 {{- end -}}

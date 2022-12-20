@@ -60,10 +60,10 @@ func (o TLS) ToTLSConfig() (*tls.Config, error) {
 			// no nothing
 		} else {
 			cas.AppendCertsFromPEM(capem)
-			config.ClientCAs = cas
-			config.RootCAs = cas
 		}
 	}
+	config.ClientCAs = cas
+	config.RootCAs = cas
 	if o.ClientAuth {
 		config.ClientAuth = tls.RequireAndVerifyClientCert
 	}
