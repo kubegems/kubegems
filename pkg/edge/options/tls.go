@@ -47,15 +47,22 @@ func (o TLS) ToTLSConfig() (*tls.Config, error) {
 		Certificates: []tls.Certificate{certificate},
 	}
 	// ca
+	cas, err := x509.SystemCertPool()
+	if err != nil {
+		cas = x509.NewCertPool()
+	}
 	if o.CAFile != "" {
 		capem, err := os.ReadFile(o.CAFile)
 		if err != nil {
-			return nil, err
+			if !os.IsNotExist(err) {
+				return nil, err
+			}
+			// no nothing
+		} else {
+			cas.AppendCertsFromPEM(capem)
+			config.ClientCAs = cas
+			config.RootCAs = cas
 		}
-		cas := x509.NewCertPool()
-		cas.AppendCertsFromPEM(capem)
-		config.ClientCAs = cas
-		config.RootCAs = cas
 	}
 	if o.ClientAuth {
 		config.ClientAuth = tls.RequireAndVerifyClientCert
