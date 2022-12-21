@@ -7,8 +7,6 @@ import (
 	"net"
 	"net/http"
 
-	"emperror.dev/errors"
-	"github.com/argoproj/argo-cd/v2/util/io"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -36,7 +34,7 @@ func PortForward(ctx context.Context, config *rest.Config, namespace string, pod
 
 	transport, upgrader, err := spdy.RoundTripperFor(config)
 	if err != nil {
-		return -1, errors.Wrap(err, "Could not create round tripper")
+		return -1, fmt.Errorf("could not create round tripper: %w", err)
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
 
@@ -45,9 +43,9 @@ func PortForward(ctx context.Context, config *rest.Config, namespace string, pod
 	if err != nil {
 		return -1, err
 	}
-	tmpaddr, _ := ln.Addr().(*net.TCPAddr)
-	port := tmpaddr.Port
-	io.Close(ln)
+	// nolint: forcetypeassert
+	port := ln.Addr().(*net.TCPAddr).Port
+	ln.Close()
 
 	readyChan := make(chan struct{})
 	errChan := make(chan error)
