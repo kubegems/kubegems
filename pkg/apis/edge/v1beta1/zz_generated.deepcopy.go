@@ -320,12 +320,12 @@ func (in *TunnelStatus) DeepCopyInto(out *TunnelStatus) {
 		in, out := &in.LastOnlineTimestamp, &out.LastOnlineTimestamp
 		*out = (*in).DeepCopy()
 	}
-	if in.LastHeartBeatTimestamp != nil {
-		in, out := &in.LastHeartBeatTimestamp, &out.LastHeartBeatTimestamp
-		*out = (*in).DeepCopy()
-	}
 	if in.LastOfflineTimestamp != nil {
 		in, out := &in.LastOfflineTimestamp, &out.LastOfflineTimestamp
+		*out = (*in).DeepCopy()
+	}
+	if in.LastHeartBeatTimestamp != nil {
+		in, out := &in.LastHeartBeatTimestamp, &out.LastHeartBeatTimestamp
 		*out = (*in).DeepCopy()
 	}
 }

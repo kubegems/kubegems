@@ -318,6 +318,10 @@ metadata:
     meta.helm.sh/release-name: kubegems-installer
     meta.helm.sh/release-namespace: kubegems-installer
   labels:
+    app.kubernetes.io/instance: kubegems-installer
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kubegems-installer
+    helm.sh/chart: kubegems-installer-1.23.0-alpha.2
     plugins.kubegems.io/is-plugin-repo: "true"
   name: plugin-repository-kubegems
   namespace: kubegems-installer
@@ -332,6 +336,10 @@ metadata:
     meta.helm.sh/release-name: kubegems-installer
     meta.helm.sh/release-namespace: kubegems-installer
   labels:
+    app.kubernetes.io/instance: kubegems-installer
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kubegems-installer
+    helm.sh/chart: kubegems-installer-1.23.0-alpha.2
     plugins.kubegems.io/is-plugin-repo: "true"
   name: plugin-repository-local
   namespace: kubegems-installer

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -58,7 +59,7 @@ type EdgeAgent struct {
 
 func run(ctx context.Context, options *options.AgentOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
-	manufectures, err := ReadManufacture(options.ManufactureFile)
+	manufectures, err := ReadManufacture(options)
 	if err != nil {
 		return err
 	}
@@ -147,6 +148,8 @@ func (ea *EdgeAgent) getAnnotations(ctx context.Context) tunnel.Annotations {
 
 const clientIDKey = "client-id"
 
+const two = 2
+
 func initClientID(ctx context.Context, cli client.Client, options *options.AgentOptions) (string, error) {
 	clientid := options.ClientID
 	// try secret
@@ -178,14 +181,59 @@ func initClientID(ctx context.Context, cli client.Client, options *options.Agent
 	return clientid, nil
 }
 
-func ReadManufacture(file string) (map[string]string, error) {
+func ReadManufacture(options *options.AgentOptions) (map[string]string, error) {
+	fullkvs := map[string]string{}
+	for _, file := range options.ManufactureFile {
+		kvs, err := ParseKV(file)
+		if err != nil {
+			return nil, err
+		}
+		maps.Copy(fullkvs, kvs)
+	}
+
+	// kvs from flag
+	maps.Copy(fullkvs, ParseToMaps(options.Manufacture))
+
+	// remap
+	remapkeys := ParseToMaps(options.ManufactureRemap)
+
+	ret := map[string]string{}
+	for k, v := range fullkvs {
+		if newkey, ok := remapkeys[k]; ok {
+			ret[newkey] = v
+		} else {
+			ret[k] = v
+		}
+	}
+	return ret, nil
+}
+
+func ParseToMaps(list []string) map[string]string {
+	// remap
+	ret := map[string]string{}
+	for _, item := range list {
+		for _, kvstr := range strings.Split(item, ",") {
+			splits := strings.SplitN(kvstr, "=", two)
+			if len(splits) == two {
+				key, value := splits[0], splits[1]
+				ret[key] = value
+			}
+		}
+	}
+	return ret
+}
+
+func ParseKV(file string) (map[string]string, error) {
 	content, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
 	kvs, err := ParseJSONFile(content)
 	if err != nil {
-		return ParseKVFile(content)
+		kvs, err = ParseKVFile(content)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return kvs, nil
 }

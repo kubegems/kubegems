@@ -78,11 +78,15 @@ func NewEdgeServerCmd() *cobra.Command {
 func NewEdgeAgentCmd() *cobra.Command {
 	options := options.NewDefaultAgentOptions()
 	cmd := &cobra.Command{
-		Use:     "agent",
-		Version: version.Get().String(),
+		Use:                "agent",
+		Version:            version.Get().String(),
+		DisableFlagParsing: true, // avoid parse twice on slice args
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := config.Parse(cmd.Flags()); err != nil {
 				return err
+			}
+			if b, _ := cmd.Flags().GetBool("help"); b {
+				return cmd.Help()
 			}
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()

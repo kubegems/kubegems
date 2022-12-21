@@ -6,8 +6,11 @@ kind: Secret
 metadata:
   name: plugin-repository-{{ .name }}
   namespace: {{ $ns | quote }}
-  labels:
-    "plugins.kubegems.io/is-plugin-repo": "true"
+  {{- if $.Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $.Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+  labels: {{- include "common.labels.standard" $ | nindent 4 }}
+    plugins.kubegems.io/is-plugin-repo: "true"
 data:
   address: {{ .address | b64enc }}
   priority: {{ .priority | toString | b64enc }}
