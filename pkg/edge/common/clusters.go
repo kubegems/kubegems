@@ -55,8 +55,8 @@ const (
 
 type EdgeManager struct {
 	SelfAddress  string
-	ClusterStore EdgeStore[*v1beta1.EdgeCluster]
-	HubStore     EdgeStore[*v1beta1.EdgeHub]
+	ClusterStore EdgeClusterStore
+	HubStore     EdgeHubStore
 }
 
 func NewClusterManager(namespace string, selfhost string) (*EdgeManager, error) {
@@ -68,30 +68,25 @@ func NewClusterManager(namespace string, selfhost string) (*EdgeManager, error) 
 		return nil, err
 	}
 
-	clustersStore := EdgeClusterK8sStore[*v1beta1.EdgeCluster]{cli: cli, ns: namespace, example: &v1beta1.EdgeCluster{}}
-	kube.FillGVK(clustersStore.example, cli.Scheme())
-
-	hubsStore := EdgeClusterK8sStore[*v1beta1.EdgeHub]{cli: cli, ns: namespace, example: &v1beta1.EdgeHub{}}
-	kube.FillGVK(hubsStore.example, cli.Scheme())
-
 	return &EdgeManager{
-		ClusterStore: clustersStore,
-		HubStore:     hubsStore,
+		ClusterStore: EdgeClusterK8sStore{cli: cli, ns: namespace},
+		HubStore:     EdgeHubK8sStore{cli: cli, ns: namespace},
 		SelfAddress:  selfhost,
 	}, nil
 }
 
-func (m *EdgeManager) ListPage(ctx context.Context, page, size int, search string, labels labels.Selector) (response.TypedPage[*v1beta1.EdgeCluster], error) {
+func (m *EdgeManager) ListPage(ctx context.Context, page, size int, search string, labels, manufacture labels.Selector) (response.TypedPage[v1beta1.EdgeCluster], error) {
 	total, list, err := m.ClusterStore.List(ctx, ListOptions{
-		Page:     page,
-		Size:     size,
-		Selector: labels,
-		Search:   search,
+		Page:        page,
+		Size:        size,
+		Selector:    labels,
+		Search:      search,
+		Manufacture: manufacture,
 	})
 	if err != nil {
-		return response.TypedPage[*v1beta1.EdgeCluster]{}, err
+		return response.TypedPage[v1beta1.EdgeCluster]{}, err
 	}
-	return response.TypedPage[*v1beta1.EdgeCluster]{
+	return response.TypedPage[v1beta1.EdgeCluster]{
 		Total:       int64(total),
 		List:        list,
 		CurrentPage: int64(page),

@@ -33,14 +33,21 @@ type EdgeClusterAPI struct {
 }
 
 func (a *EdgeClusterAPI) ListEdgeClusters(req *restful.Request, resp *restful.Response) {
-	querylabels := request.Query(req.Request, "labels", "")
+	querylabels, querymanufacture := request.Query(req.Request, "labels", ""), request.Query(req.Request, "manufacture", "")
 	listopt := request.GetListOptions(req.Request)
 	selector, err := labels.Parse(querylabels)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 		return
 	}
-	list, err := a.Cluster.ListPage(req.Request.Context(), listopt.Page, listopt.Size, listopt.Search, selector)
+	manufacturesel, err := labels.Parse(querymanufacture)
+	if err != nil {
+		response.BadRequest(resp, err.Error())
+		return
+	}
+	list, err := a.Cluster.ListPage(req.Request.Context(),
+		listopt.Page, listopt.Size, listopt.Search,
+		selector, manufacturesel)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 	} else {
@@ -171,6 +178,7 @@ func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 				ShortDesc("list clusters").
 				Parameters(
 					route.QueryParameter("labels", "labels selector").Optional(),
+					route.QueryParameter("manufacture", "manufacture selector").Optional(),
 				).
 				Response([]v1beta1.EdgeCluster{}),
 			route.POST("").To(a.PreCreateEdgeCluster).ShortDesc("pre create cluster").

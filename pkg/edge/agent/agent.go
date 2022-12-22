@@ -196,16 +196,13 @@ func ReadManufacture(options *options.AgentOptions) (map[string]string, error) {
 
 	// remap
 	remapkeys := ParseToMaps(options.ManufactureRemap)
-
-	ret := map[string]string{}
-	for k, v := range fullkvs {
-		if newkey, ok := remapkeys[k]; ok {
-			ret[newkey] = v
-		} else {
-			ret[k] = v
+	for k, v := range remapkeys {
+		val, ok := fullkvs[v]
+		if ok {
+			fullkvs[k] = val
 		}
 	}
-	return ret, nil
+	return fullkvs, nil
 }
 
 func ParseToMaps(list []string) map[string]string {

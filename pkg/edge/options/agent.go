@@ -21,7 +21,7 @@ type AgentOptions struct {
 	ClientID          string        `json:"clientID,omitempty"`
 	ClientIDSecret    string        `json:"clientIDSecret,omitempty" description:"client ID secret"`
 	ManufactureFile   []string      `json:"manufactureFile,omitempty" description:"file with manufacture info in json object format"`
-	ManufactureRemap  []string      `json:"manufactureRemap,omitempty" description:"remap manufacture file key to newkey,example 'foo=newfoo'"`
+	ManufactureRemap  []string      `json:"manufactureRemap,omitempty" description:"remap manufacture file key to newkey,example 'newkey=existskey'"`
 	Manufacture       []string      `json:"manufacture,omitempty" description:"manufacture kvs,example 'device-id=value,foo=bar'"`
 	EdgeHubAddr       string        `json:"edgeHubAddr,omitempty"`
 	KeepAliveInterval time.Duration `json:"keepAliveInterval,omitempty"`
