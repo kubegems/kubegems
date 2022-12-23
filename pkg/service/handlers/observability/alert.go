@@ -53,7 +53,7 @@ func (h *ObservabilityHandler) DisableAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	action := i18n.Sprintf(context.TODO(), "disable")
-	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	module := i18n.Sprintf(context.TODO(), "alert rule")
 	h.SetAuditData(c, action, module, name)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
@@ -83,7 +83,7 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	action := i18n.Sprintf(context.TODO(), "enable")
-	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	module := i18n.Sprintf(context.TODO(), "alert rule")
 	h.SetAuditData(c, action, module, name)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 

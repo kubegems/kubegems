@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
@@ -60,6 +61,10 @@ type AlertChannel struct {
 
 func (c *AlertChannel) ReceiverName() string {
 	return fmt.Sprintf("%s-id-%d", c.Name, c.ID)
+}
+
+func (c *AlertChannel) ToAlertmanagerReceiver() v1alpha1.Receiver {
+	return c.ChannelConfig.ToReceiver(c.ReceiverName())
 }
 
 var receiverNameReg = regexp.MustCompile("(.*)-id-(.*)")
