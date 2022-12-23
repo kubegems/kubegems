@@ -45,7 +45,7 @@ func NewSimpleTypedClient(baseaddr string) (*TypedClient, error) {
 	return &TypedClient{
 		BaseAddr:      agenturl,
 		RuntimeScheme: kube.GetScheme(),
-		HTTPClient:    http.DefaultClient,
+		HTTPClient:    &http.Client{},
 	}, nil
 }
 
