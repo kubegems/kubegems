@@ -151,6 +151,37 @@ type Client struct {
 	base       *url.URL
 }
 
+type ListProjectRepositoriesOptions struct {
+	Page int
+	Size int
+}
+
+// RepoRecord holds the record of an repository in DB, all the infors are from the registry notification event.
+// nolint: tagliatelle
+type RepoRecord struct {
+	RepositoryID int64     `json:"repository_id"`
+	Name         string    `json:"name"`
+	ProjectID    int64     `json:"project_id"`
+	Description  string    `json:"description"`
+	PullCount    int64     `json:"pull_count"`
+	StarCount    int64     `json:"star_count"`
+	CreationTime time.Time `json:"creation_time"`
+	UpdateTime   time.Time `json:"update_time"`
+}
+
+// GET https://{host}/api/v2.0/projects/{project}/repositories?page_size=15&page=1
+func (c *Client) ListProjectRepositories(ctx context.Context, project string, options ListProjectRepositoriesOptions) ([]RepoRecord, error) {
+	queries := url.Values{}
+	queries.Set("page", strconv.Itoa(options.Page))
+	queries.Set("page_size", strconv.Itoa(options.Size))
+	path := fmt.Sprintf("/projects/%s/repositories?%s", project, queries.Encode())
+	ret := []RepoRecord{}
+	if err := c.doRequest(ctx, http.MethodGet, path, nil, &ret); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 // GET https://{host}/api/v2.0/projects/{{project_name}}/repositories/{{repository_name}}/artifacts
 func (c *Client) ListArtifact(ctx context.Context, image string, options GetArtifactOptions) ([]Artifact, error) {
 	project, repository, _, err := c.parseHarborSuitImage(image)
