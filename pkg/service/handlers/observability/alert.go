@@ -19,11 +19,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -739,4 +741,105 @@ func newDefaultSamplePair(start, end time.Time) []model.SamplePair {
 		})
 	}
 	return ret
+}
+
+func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) (*handlers.PageData, error) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+
+	// update all alert rules state in this namespace
+	thisClusterAlerts := []*models.AlertRule{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		err := h.GetDB().Find(&thisClusterAlerts,
+			"alert_type = ? and cluster = ? and namespace = ?", alerttype, cluster, namespace).Error
+		if err != nil {
+			return err
+		}
+		var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
+		if alerttype == prometheus.AlertTypeMonitor {
+			realTimeAlertRules, err = cli.Extend().GetPromeAlertRules(ctx, "")
+		} else {
+			realTimeAlertRules, err = cli.Extend().GetLokiAlertRules(ctx)
+		}
+		if err != nil {
+			return errors.Wrap(err, "get prometheus alerts")
+		}
+
+		for _, v := range thisClusterAlerts {
+			if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(v.Namespace, v.Name)]; ok {
+				v.State = promalert.State
+			} else {
+				v.State = "inactive"
+			}
+			if err := h.GetDB().Model(v).Update("state", v.State).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, errors.Wrap(err, "update alert rules state")
+	}
+
+	list := []*models.AlertRule{}
+	query, err := handlers.GetQuery(c, nil)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return nil, err
+	}
+	cond := &handlers.PageQueryCond{
+		Model:         "AlertRule",
+		SearchFields:  []string{"name", "expr"},
+		PreloadFields: []string{"Receivers", "Receivers.AlertChannel"},
+		Where: []*handlers.QArgs{
+			handlers.Args("cluster = ? and namespace = ?", cluster, namespace),
+			handlers.Args("alert_type = ?", alerttype),
+		},
+	}
+	if state := c.Query("state"); state != "" {
+		cond.Where = append(cond.Where, handlers.Args("state = ?", state))
+	}
+
+	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	if err != nil {
+		return nil, err
+	}
+	return handlers.Page(total, list, page, size), nil
+}
+
+func (h *ObservabilityHandler) getAlertRule(c *gin.Context, alerttype string) (*models.AlertRule, error) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	ret := models.AlertRule{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		err := h.GetDB().Preload("Receivers.AlertChannel").First(&ret,
+			"cluster = ? and namespace = ? and name = ?", cluster, namespace, name).Error
+		if err != nil {
+			return err
+		}
+		var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
+		if alerttype == prometheus.AlertTypeMonitor {
+			realTimeAlertRules, err = cli.Extend().GetPromeAlertRules(ctx, "")
+		} else {
+			realTimeAlertRules, err = cli.Extend().GetLokiAlertRules(ctx)
+		}
+		if err != nil {
+			return errors.Wrap(err, "get prometheus alerts")
+		}
+
+		if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(namespace, name)]; ok {
+			ret.State = promalert.State
+			sort.Slice(promalert.Alerts, func(i, j int) bool {
+				return promalert.Alerts[i].ActiveAt.After(promalert.Alerts[j].ActiveAt)
+			})
+			ret.RealTimeAlerts = promalert.Alerts
+		} else {
+			ret.State = "inactive"
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &ret, nil
 }

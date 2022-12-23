@@ -306,61 +306,11 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-
-	// update all alert rule's state in this namespace
-	thisClusterAlerts := []*models.AlertRule{}
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		if err := h.GetDB().Find(&thisClusterAlerts,
-			"alert_type = ? and cluster = ? and namespace = ?", prometheus.AlertTypeMonitor, cluster, namespace).Error; err != nil {
-			return err
-		}
-		realTimeAlertRules, err := cli.Extend().GetPromeAlertRules(ctx, "")
-		if err != nil {
-			return err
-		}
-		for _, v := range thisClusterAlerts {
-			if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(v.Namespace, v.Name)]; ok {
-				v.State = promalert.State
-			} else {
-				v.State = "inactive"
-			}
-			if err := h.GetDB().Model(v).Update("state", v.State).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	}); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	list := []*models.AlertRule{}
-	query, err := handlers.GetQuery(c, nil)
+	ret, err := h.listAlertRules(c, prometheus.AlertTypeMonitor)
 	if err != nil {
 		handlers.NotOK(c, err)
-		return
 	}
-	cond := &handlers.PageQueryCond{
-		Model:         "AlertRule",
-		SearchFields:  []string{"name", "expr"},
-		PreloadFields: []string{"Receivers", "Receivers.AlertChannel"},
-		Where: []*handlers.QArgs{
-			handlers.Args("cluster = ? and namespace = ?", cluster, namespace),
-			handlers.Args("alert_type = ?", prometheus.AlertTypeMonitor),
-		},
-	}
-	if state := c.Query("state"); state != "" {
-		cond.Where = append(cond.Where, handlers.Args("state = ?", state))
-	}
-
-	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	handlers.OK(c, handlers.Page(total, list, page, size))
+	handlers.OK(c, ret)
 }
 
 // GetMonitorAlertRule 监控告警规则详情
@@ -376,33 +326,9 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [get]
 // @Security    JWT
 func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-
-	ret := models.AlertRule{}
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		if err := h.GetDB().Preload("Receivers.AlertChannel").First(&ret,
-			"cluster = ? and namespace = ? and name = ?", cluster, namespace, name).Error; err != nil {
-			return err
-		}
-		realTimeAlertRules, err := cli.Extend().GetPromeAlertRules(ctx, "")
-		if err != nil {
-			return err
-		}
-		if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(namespace, name)]; ok {
-			ret.State = promalert.State
-			sort.Slice(promalert.Alerts, func(i, j int) bool {
-				return promalert.Alerts[i].ActiveAt.After(promalert.Alerts[j].ActiveAt)
-			})
-			ret.RealTimeAlerts = promalert.Alerts
-		} else {
-			ret.State = "inactive"
-		}
-		return nil
-	}); err != nil {
+	ret, err := h.getAlertRule(c, prometheus.AlertTypeMonitor)
+	if err != nil {
 		handlers.NotOK(c, err)
-		return
 	}
 	handlers.OK(c, ret)
 }
@@ -849,7 +775,6 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	handlers.OK(c, "ok")
 }
 
@@ -915,7 +840,6 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	handlers.OK(c, "ok")
 }
 
