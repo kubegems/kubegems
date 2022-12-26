@@ -15,13 +15,20 @@
 package observability
 
 import (
+	"context"
 	"fmt"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils"
+	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
@@ -129,8 +136,16 @@ func (h *ObservabilityHandler) CreateChannel(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	h.SetAuditData(c, "创建", "告警渠道", req.Name)
+	if req.TenantID == nil {
+		if c.Param("tenant_id") != "_all" {
+			handlers.NotOK(c, fmt.Errorf("你不能创建系统级告警渠道"))
+			return
+		}
+	} else {
+		h.SetExtraAuditData(c, models.ResTenant, *req.TenantID)
+	}
+
 	if err := h.GetDB().Create(req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -145,10 +160,10 @@ func (h *ObservabilityHandler) CreateChannel(c *gin.Context) {
 // @Description 更新告警渠道
 // @Accept      json
 // @Produce     json
-// @Param       tenant_id  path     string                               true "租户id, 所有租户为_all"
-// @Param       channel_id path     string                               true "告警渠道id"
-// @Param       form       body     models.AlertChannel                  true "body"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "resp"
+// @Param       tenant_id  path     string                                        true "租户id, 所有租户为_all"
+// @Param       channel_id path     string                                        true "告警渠道id"
+// @Param       form       body     models.AlertChannel                           true "body"
+// @Success     200        {object} handlers.ResponseStruct{Data=map[string]bool} "告警规则-更新状态的map"
 // @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id} [put]
 // @Security    JWT
 func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
@@ -157,14 +172,59 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	h.SetAuditData(c, "更新", "告警渠道", req.Name)
-	if err := h.GetDB().Updates(req).Error; err != nil {
+	if req.TenantID == nil {
+		if c.Param("tenant_id") != "_all" {
+			handlers.NotOK(c, fmt.Errorf("你不能更新系统级告警渠道"))
+			return
+		}
+	} else {
+		h.SetExtraAuditData(c, models.ResTenant, *req.TenantID)
+	}
+
+	// find associated alert rules
+	alertrules := []*models.AlertRule{}
+	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := h.GetDB().Updates(req).Error; err != nil {
+			return err
+		}
+
+		alertruleIDs := []uint{}
+		if err := h.GetDB().Model(&models.AlertReceiver{}).Distinct("alert_rule_id").Where("alert_channel_id = ?", req.ID).Scan(&alertruleIDs).Error; err != nil {
+			return err
+		}
+		return h.GetDB().Preload("Receivers.AlertChannel").Find(&alertrules, alertruleIDs).Error
+	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	handlers.OK(c, "ok")
+	// sync alert rules
+	status := map[string]bool{}
+	wg := &sync.WaitGroup{}
+	for _, v := range alertrules {
+		status[v.FullName()] = false
+		wg.Add(1)
+		go func(alertrule *models.AlertRule) {
+			defer wg.Done()
+			if err := h.Execute(c.Request.Context(), alertrule.Cluster, func(ctx context.Context, cli agents.Client) error {
+				if alertrule.AlertType == prometheus.AlertTypeMonitor {
+					return h.syncMonitorAlertRule(ctx, alertrule)
+				} else {
+					return h.syncLoggingAlertRule(ctx, alertrule)
+				}
+			}); err != nil {
+				log.Warnf("%s alert rule: %s sync failed", alertrule.AlertType, alertrule.FullName())
+				return
+			}
+			status[alertrule.FullName()] = true
+		}(v)
+	}
+	if utils.WaitGroupWithTimeout(wg, 5*time.Second) {
+		log.Warnf("Timed out waiting for wait group")
+	}
+
+	handlers.OK(c, status)
 }
 
 // DeleteChannel 删除告警渠道
@@ -196,6 +256,19 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 		h.SetExtraAuditData(c, models.ResTenant, *ch.TenantID)
 	}
 
+	receivers := []models.AlertReceiver{}
+	if err := h.GetDB().Preload("AlertRule").Find(&receivers, "alert_channel_id = ?", c.Param("channel_id")).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if len(receivers) > 0 {
+		tmp := make([]string, len(receivers))
+		for i, v := range receivers {
+			tmp[i] = v.AlertRule.FullName()
+		}
+		handlers.NotOK(c, fmt.Errorf("该告警渠道正在被告警规则: %s 使用", strings.Join(tmp, " ")))
+		return
+	}
 	if err := h.GetDB().Delete(ch).Error; err != nil {
 		handlers.NotOK(c, err)
 		return

@@ -196,10 +196,10 @@ func MigrateModels(db *gorm.DB) error {
 		&VirtualSpaceUserRels{},
 		// 虚拟域名表
 		&VirtualDomain{},
+		// 告警规则
+		&AlertRule{}, &AlertReceiver{},
 		// 告警信息表
-		&AlertInfo{},
-		// 告警消息表
-		&AlertMessage{},
+		&AlertInfo{}, &AlertMessage{},
 		// alert channels
 		&AlertChannel{},
 		// 监控面板表

@@ -5402,6 +5402,36 @@ const docTemplate = `{
                         "name": "namespace",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "choices (Receivers, Receivers.AlertChannel)",
+                        "name": "preload",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search in (name, expr)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "告警状态筛选(inactive, pending, firing)",
+                        "name": "state",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5416,10 +5446,22 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/observe.LoggingAlertRule"
-                                            }
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/handlers.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "List": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/models.AlertRule"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
                                         }
                                     }
                                 }
@@ -5466,7 +5508,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/observe.LoggingAlertRule"
+                            "$ref": "#/definitions/models.AlertRule"
                         }
                     }
                 ],
@@ -5545,7 +5587,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/observe.LoggingAlertRule"
+                                            "$ref": "#/definitions/models.AlertRule"
                                         }
                                     }
                                 }
@@ -5592,7 +5634,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/observe.LoggingAlertRule"
+                            "$ref": "#/definitions/models.AlertRule"
                         }
                     }
                 ],
@@ -6020,6 +6062,36 @@ const docTemplate = `{
                         "name": "namespace",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "choices (Receivers, Receivers.AlertChannel)",
+                        "name": "preload",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search in (name, expr)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "告警状态筛选(inactive, pending, firing)",
+                        "name": "state",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -6034,10 +6106,22 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/observe.MonitorAlertRule"
-                                            }
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/handlers.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "List": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/models.AlertRule"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
                                         }
                                     }
                                 }
@@ -6084,7 +6168,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/observe.MonitorAlertRule"
+                            "$ref": "#/definitions/models.AlertRule"
                         }
                     }
                 ],
@@ -6163,7 +6247,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/observe.MonitorAlertRule"
+                                            "$ref": "#/definitions/models.AlertRule"
                                         }
                                     }
                                 }
@@ -6217,7 +6301,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/observe.MonitorAlertRule"
+                            "$ref": "#/definitions/models.AlertRule"
                         }
                     }
                 ],
@@ -6279,13 +6363,6 @@ const docTemplate = `{
                         "description": "name",
                         "name": "name",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "source",
-                        "name": "source",
-                        "in": "query",
                         "required": true
                     }
                 ],
@@ -8459,7 +8536,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "resp",
+                        "description": "告警规则-更新状态的map",
                         "schema": {
                             "allOf": [
                                 {
@@ -8469,7 +8546,10 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "type": "string"
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "boolean"
+                                            }
                                         }
                                     }
                                 }
@@ -28068,6 +28148,22 @@ const docTemplate = `{
                 }
             }
         },
+        "models.AlertLevel": {
+            "type": "object",
+            "properties": {
+                "compareOp": {
+                    "type": "string"
+                },
+                "compareValue": {
+                    "description": "支持表达式, eg. 24 * 60",
+                    "type": "string"
+                },
+                "severity": {
+                    "description": "error, critical",
+                    "type": "string"
+                }
+            }
+        },
         "models.AlertMessage": {
             "type": "object",
             "properties": {
@@ -28101,6 +28197,112 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AlertReceiver": {
+            "type": "object",
+            "properties": {
+                "alertChannel": {
+                    "description": "删除channel时RESTRICT拒绝",
+                    "$ref": "#/definitions/models.AlertChannel"
+                },
+                "alertChannelID": {
+                    "type": "integer"
+                },
+                "alertRuleID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "interval": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AlertRule": {
+            "type": "object",
+            "required": [
+                "for",
+                "name"
+            ],
+            "properties": {
+                "alertLevels": {
+                    "description": "告警级别",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AlertLevel"
+                    }
+                },
+                "alertType": {
+                    "description": "logging or monitor",
+                    "type": "string"
+                },
+                "cluster": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "expr": {
+                    "description": "promql/logql表达式，不能包含比较运算符(\u003c, \u003c=, \u003e, \u003e=, ==)",
+                    "type": "string"
+                },
+                "for": {
+                    "description": "持续时间, eg. 10s, 1m, 1h",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "inhibitLabels": {
+                    "description": "如果有多个告警级别，需要配置告警抑制的labels",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "isOpen": {
+                    "description": "是否启用",
+                    "type": "boolean"
+                },
+                "logqlGenerator": {
+                    "$ref": "#/definitions/models.LogqlGenerator"
+                },
+                "message": {
+                    "description": "告警消息",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "promqlGenerator": {
+                    "$ref": "#/definitions/models.PromqlGenerator"
+                },
+                "realTimeAlerts": {
+                    "description": "实时告警",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.Alert"
+                    }
+                },
+                "receivers": {
+                    "description": "接收器, 删除alertrule时级联删除",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AlertReceiver"
+                    }
+                },
+                "state": {
+                    "description": "状态",
+                    "type": "string"
+                },
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -28852,6 +29054,26 @@ const docTemplate = `{
                 }
             }
         },
+        "models.LogqlGenerator": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "description": "时间范围",
+                    "type": "string"
+                },
+                "labelMatchers": {
+                    "description": "标签筛选器",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/promql.LabelMatcher"
+                    }
+                },
+                "match": {
+                    "description": "正则匹配的字符串",
+                    "type": "string"
+                }
+            }
+        },
         "models.Message": {
             "type": "object",
             "properties": {
@@ -29070,6 +29292,34 @@ const docTemplate = `{
                 }
             }
         },
+        "models.PromqlGenerator": {
+            "type": "object",
+            "properties": {
+                "labelMatchers": {
+                    "description": "标签筛选器",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/promql.LabelMatcher"
+                    }
+                },
+                "resource": {
+                    "description": "告警资源, eg. node、pod",
+                    "type": "string"
+                },
+                "rule": {
+                    "description": "告警规则名, eg. cpuUsage、memoryUsagePercent",
+                    "type": "string"
+                },
+                "scope": {
+                    "description": "scope",
+                    "type": "string"
+                },
+                "unit": {
+                    "description": "单位",
+                    "type": "string"
+                }
+            }
+        },
         "models.PromqlTplResource": {
             "type": "object",
             "required": [
@@ -29116,6 +29366,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "labels": {
+                    "description": "如果有多个告警级别，需要配置告警抑制的labels",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -30079,37 +30330,6 @@ const docTemplate = `{
                 }
             }
         },
-        "observe.AlertLevel": {
-            "type": "object",
-            "properties": {
-                "compareOp": {
-                    "type": "string"
-                },
-                "compareValue": {
-                    "description": "支持表达式, eg. 24 * 60",
-                    "type": "string"
-                },
-                "severity": {
-                    "description": "error, critical",
-                    "type": "string"
-                }
-            }
-        },
-        "observe.AlertReceiver": {
-            "type": "object",
-            "properties": {
-                "ChannelStatus": {
-                    "type": "integer"
-                },
-                "alertChannel": {
-                    "$ref": "#/definitions/models.AlertChannel"
-                },
-                "interval": {
-                    "description": "分组间隔",
-                    "type": "string"
-                }
-            }
-        },
         "observe.KeyValue": {
             "type": "object",
             "properties": {
@@ -30133,172 +30353,6 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "integer"
-                }
-            }
-        },
-        "observe.LoggingAlertRule": {
-            "type": "object",
-            "properties": {
-                "ChannelStatus": {
-                    "type": "integer"
-                },
-                "alertLevels": {
-                    "description": "告警级别",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/observe.AlertLevel"
-                    }
-                },
-                "expr": {
-                    "description": "promql/logql表达式，不能包含比较运算符(\u003c, \u003c=, \u003e, \u003e=, ==)",
-                    "type": "string"
-                },
-                "for": {
-                    "description": "持续时间, eg. 10s, 1m, 1h",
-                    "type": "string"
-                },
-                "inhibitLabels": {
-                    "description": "如果有多个告警级别，需要配置告警抑制的labels",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "isOpen": {
-                    "description": "是否启用",
-                    "type": "boolean"
-                },
-                "logqlGenerator": {
-                    "$ref": "#/definitions/observe.LogqlGenerator"
-                },
-                "message": {
-                    "description": "告警消息，若为空后端自动填充",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "origin": {
-                    "description": "原始的prometheusrule",
-                    "type": "string"
-                },
-                "realTimeAlerts": {
-                    "description": "实时告警",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.Alert"
-                    }
-                },
-                "receivers": {
-                    "description": "接收器",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/observe.AlertReceiver"
-                    }
-                },
-                "state": {
-                    "description": "状态",
-                    "type": "string"
-                }
-            }
-        },
-        "observe.LogqlGenerator": {
-            "type": "object",
-            "properties": {
-                "duration": {
-                    "description": "时间范围",
-                    "type": "string"
-                },
-                "labelpairs": {
-                    "description": "标签键值对",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "match": {
-                    "description": "正则匹配的字符串",
-                    "type": "string"
-                }
-            }
-        },
-        "observe.MonitorAlertRule": {
-            "type": "object",
-            "properties": {
-                "ChannelStatus": {
-                    "type": "integer"
-                },
-                "alertLevels": {
-                    "description": "告警级别",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/observe.AlertLevel"
-                    }
-                },
-                "expr": {
-                    "description": "promql/logql表达式，不能包含比较运算符(\u003c, \u003c=, \u003e, \u003e=, ==)",
-                    "type": "string"
-                },
-                "for": {
-                    "description": "持续时间, eg. 10s, 1m, 1h",
-                    "type": "string"
-                },
-                "inhibitLabels": {
-                    "description": "如果有多个告警级别，需要配置告警抑制的labels",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "isOpen": {
-                    "description": "是否启用",
-                    "type": "boolean"
-                },
-                "message": {
-                    "description": "告警消息，若为空后端自动填充",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "origin": {
-                    "description": "原始的prometheusrule",
-                    "type": "string"
-                },
-                "promqlGenerator": {
-                    "$ref": "#/definitions/prometheus.PromqlGenerator"
-                },
-                "realTimeAlerts": {
-                    "description": "实时告警",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1.Alert"
-                    }
-                },
-                "receivers": {
-                    "description": "接收器",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/observe.AlertReceiver"
-                    }
-                },
-                "source": {
-                    "description": "来自哪个prometheusrule",
-                    "type": "string"
-                },
-                "state": {
-                    "description": "状态",
-                    "type": "string"
-                },
-                "tplLost": {
-                    "description": "监控模板是否丢失",
-                    "type": "boolean"
                 }
             }
         },
@@ -30517,6 +30571,20 @@ const docTemplate = `{
                     "$ref": "#/definitions/prometheus.PromqlGenerator"
                 },
                 "targetName": {
+                    "type": "string"
+                }
+            }
+        },
+        "promql.LabelMatcher": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {
                     "type": "string"
                 }
             }
@@ -31624,7 +31692,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "Protocol for port. Must be UDP, TCP, or SCTP.\nDefaults to \"TCP\".\n+optional\n+default=\"TCP\"",
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -34033,7 +34101,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "Protocol is the protocol of the service port of which status is recorded here\nThe supported values are: \"TCP\", \"UDP\", \"SCTP\"",
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -34758,7 +34826,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\".\nDefault is TCP.\n+default=\"TCP\"\n+optional",
-                    "type": "string"
+                    "type": "integer"
                 },
                 "targetPort": {
                     "description": "Number or name of the port to access on the pods targeted by the service.\nNumber must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.\nIf this is a string, it will be looked up as a named port in the\ntarget Pod's container ports. If this is not specified, the value\nof the 'port' field is used (an identity map).\nThis field is ignored for services with clusterIP=None, and should be\nomitted or set equal to the 'port' field.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service\n+optional",

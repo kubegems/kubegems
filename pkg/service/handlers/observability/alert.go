@@ -19,21 +19,28 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/promql/parser"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
+	"kubegems.io/kubegems/pkg/utils/set"
 )
 
 // DisableAlertRule 禁用告警规则
@@ -53,12 +60,19 @@ func (h *ObservabilityHandler) DisableAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	action := i18n.Sprintf(context.TODO(), "disable")
-	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	module := i18n.Sprintf(context.TODO(), "alert rule")
 	h.SetAuditData(c, action, module, name)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		return createSilenceIfNotExist(ctx, namespace, name, cli)
+		return h.GetDB().Transaction(func(tx *gorm.DB) error {
+			if err := tx.Model(&models.AlertRule{}).
+				Where("cluster = ? and namespace = ? and name = ?", cluster, namespace, name).
+				Update("is_open", false).Error; err != nil {
+				return err
+			}
+			return createSilenceIfNotExist(ctx, namespace, name, cli)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -83,12 +97,19 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	action := i18n.Sprintf(context.TODO(), "enable")
-	module := i18n.Sprintf(context.TODO(), "log alert rule")
+	module := i18n.Sprintf(context.TODO(), "alert rule")
 	h.SetAuditData(c, action, module, name)
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		return deleteSilenceIfExist(ctx, namespace, name, cli)
+		return h.GetDB().Transaction(func(tx *gorm.DB) error {
+			if err := tx.Model(&models.AlertRule{}).
+				Where("cluster = ? and namespace = ? and name = ?", cluster, namespace, name).
+				Update("is_open", true).Error; err != nil {
+				return err
+			}
+			return deleteSilenceIfExist(ctx, namespace, name, cli)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -739,4 +760,327 @@ func newDefaultSamplePair(start, end time.Time) []model.SamplePair {
 		})
 	}
 	return ret
+}
+
+func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) (*handlers.PageData, error) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+
+	// update all alert rules state in this namespace
+	thisClusterAlerts := []*models.AlertRule{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		err := h.GetDB().Find(&thisClusterAlerts,
+			"alert_type = ? and cluster = ? and namespace = ?", alerttype, cluster, namespace).Error
+		if err != nil {
+			return err
+		}
+		var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
+		if alerttype == prometheus.AlertTypeMonitor {
+			realTimeAlertRules, err = cli.Extend().GetPromeAlertRules(ctx, "")
+		} else {
+			realTimeAlertRules, err = cli.Extend().GetLokiAlertRules(ctx)
+		}
+		if err != nil {
+			return errors.Wrap(err, "get prometheus alerts")
+		}
+
+		for _, v := range thisClusterAlerts {
+			if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(v.Namespace, v.Name)]; ok {
+				v.State = promalert.State
+			} else {
+				v.State = "inactive"
+			}
+			if err := h.GetDB().Model(v).Update("state", v.State).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, errors.Wrap(err, "update alert rules state")
+	}
+
+	list := []*models.AlertRule{}
+	query, err := handlers.GetQuery(c, nil)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return nil, err
+	}
+	cond := &handlers.PageQueryCond{
+		Model:         "AlertRule",
+		SearchFields:  []string{"name", "expr"},
+		PreloadFields: []string{"Receivers", "Receivers.AlertChannel"},
+		Where: []*handlers.QArgs{
+			handlers.Args("cluster = ? and namespace = ?", cluster, namespace),
+			handlers.Args("alert_type = ?", alerttype),
+		},
+	}
+	if state := c.Query("state"); state != "" {
+		cond.Where = append(cond.Where, handlers.Args("state = ?", state))
+	}
+
+	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	if err != nil {
+		return nil, err
+	}
+	return handlers.Page(total, list, page, size), nil
+}
+
+func (h *ObservabilityHandler) getAlertRule(c *gin.Context, alerttype string) (*models.AlertRule, error) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	ret := models.AlertRule{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		err := h.GetDB().Preload("Receivers.AlertChannel").First(&ret,
+			"cluster = ? and namespace = ? and name = ?", cluster, namespace, name).Error
+		if err != nil {
+			return err
+		}
+		var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
+		if alerttype == prometheus.AlertTypeMonitor {
+			realTimeAlertRules, err = cli.Extend().GetPromeAlertRules(ctx, "")
+		} else {
+			realTimeAlertRules, err = cli.Extend().GetLokiAlertRules(ctx)
+		}
+		if err != nil {
+			return errors.Wrap(err, "get prometheus alerts")
+		}
+
+		if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(namespace, name)]; ok {
+			ret.State = promalert.State
+			sort.Slice(promalert.Alerts, func(i, j int) bool {
+				return promalert.Alerts[i].ActiveAt.After(promalert.Alerts[j].ActiveAt)
+			})
+			ret.RealTimeAlerts = promalert.Alerts
+		} else {
+			ret.State = "inactive"
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &ret, nil
+}
+
+func (h *ObservabilityHandler) getAlertRuleReq(c *gin.Context) (*models.AlertRule, error) {
+	req := &models.AlertRule{}
+	if err := c.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	req.Cluster = c.Param("cluster")
+	req.Namespace = c.Param("namespace")
+	if strings.Contains(c.FullPath(), "monitor/alerts") {
+		req.AlertType = prometheus.AlertTypeMonitor
+	} else {
+		req.AlertType = prometheus.AlertTypeLogging
+	}
+	// set tpl
+	if req.PromqlGenerator != nil {
+		tpl, err := h.GetDataBase().FindPromqlTpl(req.PromqlGenerator.Scope, req.PromqlGenerator.Resource, req.PromqlGenerator.Rule)
+		if err != nil {
+			return nil, err
+		}
+		req.PromqlGenerator.Tpl = tpl
+	}
+
+	if err := setMessage(req); err != nil {
+		return nil, err
+	}
+	if err := setExpr(req); err != nil {
+		return nil, err
+	}
+	if err := setReceivers(req, h.GetDB()); err != nil {
+		return nil, err
+	}
+	if err := checkAlertLevels(req); err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func setMessage(alertrule *models.AlertRule) error {
+	switch alertrule.AlertType {
+	case prometheus.AlertTypeMonitor:
+		if alertrule.PromqlGenerator != nil {
+			if alertrule.Message == "" {
+				alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] ", alertrule.Name, prometheus.AlertClusterKey)
+				for _, label := range alertrule.PromqlGenerator.Tpl.Labels {
+					alertrule.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
+				}
+				unitValue, err := prometheus.ParseUnit(alertrule.PromqlGenerator.Unit)
+				if err != nil {
+					return err
+				}
+				alertrule.Message += fmt.Sprintf("%s trigger alert, value: %s%s", alertrule.PromqlGenerator.Tpl.RuleShowName, prometheus.ValueAnnotationExpr, unitValue.Show)
+			}
+		} else {
+			alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
+		}
+	case prometheus.AlertTypeLogging:
+		if alertrule.LogqlGenerator != nil {
+			alertrule.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] [namespace: {{ $labels.namespace }}] ", alertrule.Name, prometheus.AlertClusterKey)
+			for _, m := range alertrule.LogqlGenerator.LabelMatchers {
+				alertrule.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", m.Name, m.Name)
+			}
+			alertrule.Message += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", alertrule.LogqlGenerator.Duration, alertrule.LogqlGenerator.Match, prometheus.ValueAnnotationExpr)
+		} else {
+			alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $labels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
+		}
+	}
+	return nil
+}
+
+func setExpr(alertrule *models.AlertRule) error {
+	switch alertrule.AlertType {
+	case prometheus.AlertTypeMonitor:
+		if alertrule.PromqlGenerator != nil {
+			q, err := promql.New(alertrule.PromqlGenerator.Tpl.Expr)
+			if err != nil {
+				return err
+			}
+			if alertrule.Namespace != prometheus.GlobalAlertNamespace && alertrule.Namespace != "" {
+				alertrule.PromqlGenerator.LabelMatchers = append(alertrule.PromqlGenerator.LabelMatchers, promql.LabelMatcher{
+					Type:  promql.MatchEqual,
+					Name:  "namespace",
+					Value: alertrule.Namespace,
+				})
+			}
+
+			labelSet := set.NewSet[string]()
+			for _, m := range alertrule.PromqlGenerator.LabelMatchers {
+				if labelSet.Has(m.Name) {
+					return fmt.Errorf("duplicated label matcher: %s", m.String())
+				}
+				labelSet.Append(m.Name)
+				q.AddLabelMatchers(m.ToPromqlLabelMatcher())
+			}
+			alertrule.Expr = q.String()
+		}
+	case prometheus.AlertTypeLogging:
+		if alertrule.LogqlGenerator != nil {
+			dur, err := model.ParseDuration(alertrule.LogqlGenerator.Duration)
+			if err != nil {
+				return errors.Wrapf(err, "duration %s not valid", alertrule.LogqlGenerator.Duration)
+			}
+			if time.Duration(dur).Minutes() > 10 {
+				return errors.New("日志模板时长不能超过10m")
+			}
+			if _, err := regexp.Compile(alertrule.LogqlGenerator.Match); err != nil {
+				return errors.Wrapf(err, "match %s not valid", alertrule.LogqlGenerator.Match)
+			}
+			if len(alertrule.LogqlGenerator.LabelMatchers) == 0 {
+				return fmt.Errorf("labelMatchers can't be null")
+			}
+
+			labelvalues := []string{}
+			for _, v := range alertrule.LogqlGenerator.LabelMatchers {
+				labelvalues = append(labelvalues, v.String())
+			}
+			sort.Strings(labelvalues)
+			labelvalues = append(labelvalues, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace))
+			alertrule.Expr = fmt.Sprintf(
+				"sum(count_over_time({%s} |~ `%s` [%s]))without(fluentd_thread)",
+				strings.Join(labelvalues, ", "),
+				alertrule.LogqlGenerator.Match,
+				alertrule.LogqlGenerator.Duration,
+			)
+		}
+	}
+	if alertrule.Expr == "" {
+		errors.New("empty expr")
+	}
+	if alertrule.AlertType == prometheus.AlertTypeMonitor {
+		if _, err := parser.ParseExpr(alertrule.Expr); err != nil {
+			errors.Wrapf(err, "parse expr: %s", alertrule.Expr)
+		}
+	}
+	_, _, _, hasOp := prometheus.SplitQueryExpr(alertrule.Expr)
+	if hasOp {
+		return fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
+	}
+	if alertrule.Namespace != "" && alertrule.Namespace != prometheus.GlobalAlertNamespace {
+		if !(strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace=~"%s"`, alertrule.Namespace)) ||
+			strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace))) {
+			return fmt.Errorf(`query expr %[1]s must contains namespace %[2]s, eg: {namespace="%[2]s"}`, alertrule.Expr, alertrule.Namespace)
+		}
+	}
+	return nil
+}
+
+func setReceivers(alertrule *models.AlertRule, db *gorm.DB) error {
+	if len(alertrule.Receivers) == 0 {
+		return fmt.Errorf("告警接收器不能为空")
+	}
+	channelSet := set.NewSet[uint]()
+	for _, rec := range alertrule.Receivers {
+		if channelSet.Has(rec.AlertChannelID) {
+			return fmt.Errorf("告警渠道: %d重复", rec.AlertChannelID)
+		}
+		channelSet.Append(rec.AlertChannelID)
+	}
+	if !channelSet.Has(models.DefaultChannel.ID) {
+		alertrule.Receivers = append(alertrule.Receivers, &models.AlertReceiver{
+			AlertRuleID:    alertrule.ID,
+			AlertChannelID: models.DefaultChannel.ID,
+			Interval:       alertrule.Receivers[0].Interval,
+		})
+	}
+	for _, v := range alertrule.Receivers {
+		v.AlertChannel = &models.AlertChannel{ID: v.AlertChannelID}
+		if err := db.First(v.AlertChannel).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func checkAlertLevels(alertrule *models.AlertRule) error {
+	if len(alertrule.AlertLevels) == 0 {
+		return fmt.Errorf("告警级别不能为空")
+	}
+	severitySet := set.NewSet[string]()
+	for _, v := range alertrule.AlertLevels {
+		if severitySet.Has(v.Severity) {
+			return fmt.Errorf("有重复的告警级别")
+		}
+		severitySet.Append(v.Severity)
+	}
+
+	if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
+		return fmt.Errorf("有多个告警级别时，告警抑制标签不能为空!")
+	}
+	return nil
+}
+
+// create/update/delete receiver by it's status
+func updateReceiversInDB(alertrule *models.AlertRule, db *gorm.DB) error {
+	oldRecs := []*models.AlertReceiver{}
+	if err := db.Find(&oldRecs, "alert_rule_id = ?", alertrule.ID).Error; err != nil {
+		return err
+	}
+	// channelID id the key
+	oldRecMap := map[uint]*models.AlertReceiver{}
+	for _, v := range oldRecs {
+		oldRecMap[v.AlertChannelID] = v
+	}
+	for _, newRec := range alertrule.Receivers {
+		if oldRec, ok := oldRecMap[newRec.AlertChannelID]; ok {
+			newRec.ID = oldRec.ID
+			if err := db.Select("interval").Updates(newRec).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := db.Create(newRec).Error; err != nil {
+				return err
+			}
+		}
+		delete(oldRecMap, newRec.AlertChannelID)
+	}
+	for _, v := range oldRecMap {
+		if err := db.Delete(v).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
