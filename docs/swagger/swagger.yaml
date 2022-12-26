@@ -4779,7 +4779,7 @@ definitions:
     type: object
   observability.OtelOverViewResp:
     properties:
-      dbOperationCount:
+      dbOperationDurationSeconds:
         description: 数据库操作数
         items:
           $ref: '#/definitions/observability.KV'

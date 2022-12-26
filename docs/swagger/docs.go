@@ -30021,7 +30021,7 @@ const docTemplate = `{
         "observability.OtelOverViewResp": {
             "type": "object",
             "properties": {
-                "dbOperationCount": {
+                "dbOperationDurationSeconds": {
                     "description": "数据库操作数",
                     "type": "array",
                     "items": {

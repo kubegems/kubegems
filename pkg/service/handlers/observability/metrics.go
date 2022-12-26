@@ -794,7 +794,7 @@ type OtelOverViewResp struct {
 	P90ServiceDurationSeconds   []KV `json:"p90ServiceDurationSeconds"`   // p90最耗时服务
 	P90OperationDurationSeconds []KV `json:"p90OperationDurationSeconds"` // p90最耗时操作
 	ServiceErrorCount           []KV `json:"serviceErrorCount"`           // 服务错误数
-	DBOperationCount            []KV `json:"dbOperationCount"`            // 数据库操作数
+	DBOperationDurationSeconds  []KV `json:"dbOperationDurationSeconds"`  // 数据库操作数
 }
 
 // OtelOverview 应用性能监控概览
@@ -833,11 +833,11 @@ func (h *ObservabilityHandler) OtelOverview(c *gin.Context) {
 			return err
 		}
 		overView.ServiceErrorCount = pickVectorValue(serviceErrorCount, "service_name")
-		dbOperationCount, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(calls_total{namespace="%s", operation=~"SELECT.*|UPDATE.*|INSERT.*|DELETE.*"}[%s]))by(operation)`, ns, dur))
+		dbOperationDurationSeconds, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(latency_sum{namespace="%s", operation=~"SELECT.*|UPDATE.*|INSERT.*|DELETE.*"}[%s]))by(operation) / 1000`, ns, dur))
 		if err != nil {
 			return err
 		}
-		overView.DBOperationCount = pickVectorValue(dbOperationCount, "operation")
+		overView.DBOperationDurationSeconds = pickVectorValue(dbOperationDurationSeconds, "operation")
 		return nil
 	}); err != nil {
 		handlers.NotOK(c, err)
