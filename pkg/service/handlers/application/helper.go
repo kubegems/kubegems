@@ -79,24 +79,12 @@ func InitOrUpdateKustomization(fs billy.Filesystem, labels, annotations map[stri
 	// 写入/更新 kustomization.yaml
 	kustomization.FixKustomizationPostUnmarshalling()
 	kustomization.Resources = resourcefiles
-
-	if kustomization.CommonLabels == nil {
-		kustomization.CommonLabels = map[string]string{}
-	}
-	for k, v := range labels {
-		kustomization.CommonLabels[k] = v
-	}
+	kustomization.CommonAnnotations = annotations
+	kustomization.CommonLabels = labels
 
 	// ignore labels k "version"
 	// 不允许设置 istio version 作为 commonLabels，会导致未知问题
 	delete(kustomization.CommonLabels, LabelIstioVersion)
-
-	if kustomization.CommonAnnotations == nil {
-		kustomization.CommonAnnotations = map[string]string{}
-	}
-	for k, v := range annotations {
-		kustomization.CommonAnnotations[k] = v
-	}
 
 	kustomizecontent, err := yaml.Marshal(kustomization)
 	if err != nil {
