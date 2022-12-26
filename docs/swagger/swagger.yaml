@@ -6253,7 +6253,7 @@ definitions:
           Defaults to "TCP".
           +optional
           +default="TCP"
-        type: string
+        type: integer
     type: object
   v1.ContainerState:
     properties:
@@ -10123,7 +10123,7 @@ definitions:
         description: |-
           Protocol is the protocol of the service port of which status is recorded here
           The supported values are: "TCP", "UDP", "SCTP"
-        type: string
+        type: integer
     type: object
   v1.PortworxVolumeSource:
     properties:
@@ -11300,7 +11300,7 @@ definitions:
           Default is TCP.
           +default="TCP"
           +optional
-        type: string
+        type: integer
       targetPort:
         $ref: '#/definitions/intstr.IntOrString'
         description: |-
@@ -22692,13 +22692,15 @@ paths:
       - application/json
       responses:
         "200":
-          description: resp
+          description: 告警规则-更新状态的map
           schema:
             allOf:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  type: string
+                  additionalProperties:
+                    type: boolean
+                  type: object
               type: object
       security:
       - JWT: []

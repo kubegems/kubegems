@@ -8536,7 +8536,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "resp",
+                        "description": "告警规则-更新状态的map",
                         "schema": {
                             "allOf": [
                                 {
@@ -8546,7 +8546,10 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "type": "string"
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "boolean"
+                                            }
                                         }
                                     }
                                 }
@@ -31689,7 +31692,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "Protocol for port. Must be UDP, TCP, or SCTP.\nDefaults to \"TCP\".\n+optional\n+default=\"TCP\"",
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -34098,7 +34101,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "Protocol is the protocol of the service port of which status is recorded here\nThe supported values are: \"TCP\", \"UDP\", \"SCTP\"",
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -34823,7 +34826,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\".\nDefault is TCP.\n+default=\"TCP\"\n+optional",
-                    "type": "string"
+                    "type": "integer"
                 },
                 "targetPort": {
                     "description": "Number or name of the port to access on the pods targeted by the service.\nNumber must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.\nIf this is a string, it will be looked up as a named port in the\ntarget Pod's container ports. If this is not specified, the value\nof the 'port' field is used (an identity map).\nThis field is ignored for services with clusterIP=None, and should be\nomitted or set equal to the 'port' field.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service\n+optional",

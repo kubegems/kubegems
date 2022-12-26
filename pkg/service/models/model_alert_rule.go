@@ -15,6 +15,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -58,4 +59,8 @@ type AlertReceiver struct {
 	AlertChannel   *AlertChannel `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"alertChannel"` // 删除channel时RESTRICT拒绝
 
 	Interval string `json:"interval"`
+}
+
+func (r *AlertRule) FullName() string {
+	return fmt.Sprintf("[cluster:%s, namespace: %s, name: %s]", r.Cluster, r.Namespace, r.Name)
 }
