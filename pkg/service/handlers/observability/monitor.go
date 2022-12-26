@@ -19,10 +19,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"regexp"
-	"sort"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/go-version"
@@ -30,8 +27,6 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/promql/parser"
 	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -50,8 +45,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
-	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
-	"kubegems.io/kubegems/pkg/utils/set"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -295,13 +288,13 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 // @Description 监控告警规则列表
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                   true "cluster"
-// @Param       namespace path     string                                                   true "namespace"
-// @Param       preload     query    string                                                false "choices (Receivers, Receivers.AlertChannel)"
-// @Param       search      query    string                                                false "search in (name, expr)"
-// @Param       state      query    string                                                false "告警状态筛选(inactive, pending, firing)"
-// @Param       page      query    int                                                   false "page"
-// @Param       size      query    int                                                   false "size"
+// @Param       cluster   path     string                                                                   true  "cluster"
+// @Param       namespace path     string                                                                   true  "namespace"
+// @Param       preload   query    string                                                                   false "choices (Receivers, Receivers.AlertChannel)"
+// @Param       search    query    string                                                                   false "search in (name, expr)"
+// @Param       state     query    string                                                                   false "告警状态筛选(inactive, pending, firing)"
+// @Param       page      query    int                                                                      false "page"
+// @Param       size      query    int                                                                      false "size"
 // @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.AlertRule}} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [get]
 // @Security    JWT
@@ -319,9 +312,9 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 // @Description 监控告警规则详情
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                 true "cluster"
-// @Param       namespace path     string                                                 true "namespace"
-// @Param       name      path     string                                                 true "name"
+// @Param       cluster   path     string                                         true "cluster"
+// @Param       namespace path     string                                         true "namespace"
+// @Param       name      path     string                                         true "name"
 // @Success     200       {object} handlers.ResponseStruct{Data=models.AlertRule} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [get]
 // @Security    JWT
@@ -331,195 +324,6 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 		handlers.NotOK(c, err)
 	}
 	handlers.OK(c, ret)
-}
-
-func setMessage(alertrule *models.AlertRule) error {
-	switch alertrule.AlertType {
-	case prometheus.AlertTypeMonitor:
-		if alertrule.PromqlGenerator != nil {
-			if alertrule.Message == "" {
-				alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] ", alertrule.Name, prometheus.AlertClusterKey)
-				for _, label := range alertrule.PromqlGenerator.Tpl.Labels {
-					alertrule.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
-				}
-				unitValue, err := prometheus.ParseUnit(alertrule.PromqlGenerator.Unit)
-				if err != nil {
-					return err
-				}
-				alertrule.Message += fmt.Sprintf("%s trigger alert, value: %s%s", alertrule.PromqlGenerator.Tpl.RuleShowName, prometheus.ValueAnnotationExpr, unitValue.Show)
-			}
-		} else {
-			alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
-		}
-	case prometheus.AlertTypeLogging:
-		if alertrule.LogqlGenerator != nil {
-			alertrule.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] [namespace: {{ $labels.namespace }}] ", alertrule.Name, prometheus.AlertClusterKey)
-			for _, m := range alertrule.LogqlGenerator.LabelMatchers {
-				alertrule.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", m.Name, m.Name)
-			}
-			alertrule.Message += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", alertrule.LogqlGenerator.Duration, alertrule.LogqlGenerator.Match, prometheus.ValueAnnotationExpr)
-		} else {
-			alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $labels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
-		}
-	}
-	return nil
-}
-
-func setExpr(alertrule *models.AlertRule) error {
-	switch alertrule.AlertType {
-	case prometheus.AlertTypeMonitor:
-		if alertrule.PromqlGenerator != nil {
-			q, err := promql.New(alertrule.PromqlGenerator.Tpl.Expr)
-			if err != nil {
-				return err
-			}
-			if alertrule.Namespace != prometheus.GlobalAlertNamespace && alertrule.Namespace != "" {
-				alertrule.PromqlGenerator.LabelMatchers = append(alertrule.PromqlGenerator.LabelMatchers, promql.LabelMatcher{
-					Type:  promql.MatchEqual,
-					Name:  "namespace",
-					Value: alertrule.Namespace,
-				})
-			}
-
-			labelSet := set.NewSet[string]()
-			for _, m := range alertrule.PromqlGenerator.LabelMatchers {
-				if labelSet.Has(m.Name) {
-					return fmt.Errorf("duplicated label matcher: %s", m.String())
-				}
-				labelSet.Append(m.Name)
-				q.AddLabelMatchers(m.ToPromqlLabelMatcher())
-			}
-			alertrule.Expr = q.String()
-		}
-	case prometheus.AlertTypeLogging:
-		if alertrule.LogqlGenerator != nil {
-			dur, err := model.ParseDuration(alertrule.LogqlGenerator.Duration)
-			if err != nil {
-				return errors.Wrapf(err, "duration %s not valid", alertrule.LogqlGenerator.Duration)
-			}
-			if time.Duration(dur).Minutes() > 10 {
-				return errors.New("日志模板时长不能超过10m")
-			}
-			if _, err := regexp.Compile(alertrule.LogqlGenerator.Match); err != nil {
-				return errors.Wrapf(err, "match %s not valid", alertrule.LogqlGenerator.Match)
-			}
-			if len(alertrule.LogqlGenerator.LabelMatchers) == 0 {
-				return fmt.Errorf("labelMatchers can't be null")
-			}
-
-			labelvalues := []string{}
-			for _, v := range alertrule.LogqlGenerator.LabelMatchers {
-				labelvalues = append(labelvalues, v.String())
-			}
-			sort.Strings(labelvalues)
-			labelvalues = append(labelvalues, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace))
-			alertrule.Expr = fmt.Sprintf(
-				"sum(count_over_time({%s} |~ `%s` [%s]))without(fluentd_thread)",
-				strings.Join(labelvalues, ", "),
-				alertrule.LogqlGenerator.Match,
-				alertrule.LogqlGenerator.Duration,
-			)
-		}
-	}
-	if alertrule.Expr == "" {
-		errors.New("empty expr")
-	}
-	if alertrule.AlertType == prometheus.AlertTypeMonitor {
-		if _, err := parser.ParseExpr(alertrule.Expr); err != nil {
-			errors.Wrapf(err, "parse expr: %s", alertrule.Expr)
-		}
-	}
-	_, _, _, hasOp := prometheus.SplitQueryExpr(alertrule.Expr)
-	if hasOp {
-		return fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
-	}
-	if alertrule.Namespace != "" && alertrule.Namespace != prometheus.GlobalAlertNamespace {
-		if !(strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace=~"%s"`, alertrule.Namespace)) ||
-			strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace))) {
-			return fmt.Errorf(`query expr %[1]s must contains namespace %[2]s, eg: {namespace="%[2]s"}`, alertrule.Expr, alertrule.Namespace)
-		}
-	}
-	return nil
-}
-
-func setReceivers(alertrule *models.AlertRule, db *gorm.DB) error {
-	if len(alertrule.Receivers) == 0 {
-		return fmt.Errorf("告警接收器不能为空")
-	}
-	channelSet := set.NewSet[uint]()
-	for _, rec := range alertrule.Receivers {
-		if channelSet.Has(rec.AlertChannelID) {
-			return fmt.Errorf("告警渠道: %d重复", rec.AlertChannelID)
-		}
-		channelSet.Append(rec.AlertChannelID)
-	}
-	if !channelSet.Has(models.DefaultChannel.ID) {
-		alertrule.Receivers = append(alertrule.Receivers, &models.AlertReceiver{
-			AlertChannelID: models.DefaultChannel.ID,
-			Interval:       alertrule.Receivers[0].Interval,
-		})
-	}
-	for _, v := range alertrule.Receivers {
-		v.AlertChannel = &models.AlertChannel{ID: v.AlertChannelID}
-		if err := db.First(v.AlertChannel).Error; err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func checkAlertLevels(alertrule *models.AlertRule) error {
-	if len(alertrule.AlertLevels) == 0 {
-		return fmt.Errorf("告警级别不能为空")
-	}
-	severitySet := set.NewSet[string]()
-	for _, v := range alertrule.AlertLevels {
-		if severitySet.Has(v.Severity) {
-			return fmt.Errorf("有重复的告警级别")
-		}
-		severitySet.Append(v.Severity)
-	}
-
-	if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
-		return fmt.Errorf("有多个告警级别时，告警抑制标签不能为空!")
-	}
-	return nil
-}
-
-func (h *ObservabilityHandler) getAlertRuleReq(c *gin.Context) (*models.AlertRule, error) {
-	req := &models.AlertRule{}
-	if err := c.BindJSON(&req); err != nil {
-		return nil, err
-	}
-	req.Cluster = c.Param("cluster")
-	req.Namespace = c.Param("namespace")
-	if strings.Contains(c.FullPath(), "monitor/alerts") {
-		req.AlertType = prometheus.AlertTypeMonitor
-	} else {
-		req.AlertType = prometheus.AlertTypeLogging
-	}
-	// set tpl
-	if req.PromqlGenerator != nil {
-		tpl, err := h.GetDataBase().FindPromqlTpl(req.PromqlGenerator.Scope, req.PromqlGenerator.Resource, req.PromqlGenerator.Rule)
-		if err != nil {
-			return nil, err
-		}
-		req.PromqlGenerator.Tpl = tpl
-	}
-
-	if err := setMessage(req); err != nil {
-		return nil, err
-	}
-	if err := setExpr(req); err != nil {
-		return nil, err
-	}
-	if err := setReceivers(req, h.GetDB()); err != nil {
-		return nil, err
-	}
-	if err := checkAlertLevels(req); err != nil {
-		return nil, err
-	}
-	return req, nil
 }
 
 func (h *ObservabilityHandler) withMonitorAlertReq(c *gin.Context, f func(req observe.MonitorAlertRule) error) error {
@@ -743,7 +547,7 @@ func (h *ObservabilityHandler) deleteMonitorAlertRule(ctx context.Context, alert
 // @Produce     json
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
-// @Param       form      body     models.AlertRule             true "body"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [post]
 // @Security    JWT
@@ -804,7 +608,7 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
 // @Param       name      path     string                               true "name"
-// @Param       form      body     models.AlertRule             true "body"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [put]
 // @Security    JWT
@@ -814,16 +618,6 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if req.ID == 0 {
-		handlers.NotOK(c, errors.New("alert rule id is empty"))
-		return
-	}
-	for _, rec := range req.Receivers {
-		if rec.AlertRuleID == 0 {
-			handlers.NotOK(c, errors.New("alert rule id in receiver is empty"))
-			return
-		}
-	}
 
 	ctx := c.Request.Context()
 	h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
@@ -832,7 +626,11 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 	h.SetAuditData(c, action, module, req.Name)
 
 	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(req).Error; err != nil {
+		if err := updateReceiversInDB(req, tx); err != nil {
+			return errors.Wrap(err, "update receivers")
+		}
+		if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "promql_generator").
+			Updates(req).Error; err != nil {
 			return err
 		}
 		return h.syncMonitorAlertRule(ctx, req)

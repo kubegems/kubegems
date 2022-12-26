@@ -3391,6 +3391,17 @@ definitions:
       tenantName:
         type: string
     type: object
+  models.AlertLevel:
+    properties:
+      compareOp:
+        type: string
+      compareValue:
+        description: 支持表达式, eg. 24 * 60
+        type: string
+      severity:
+        description: error, critical
+        type: string
+    type: object
   models.AlertMessage:
     properties:
       alertInfo:
@@ -3416,6 +3427,80 @@ definitions:
         type: string
       value:
         type: string
+    type: object
+  models.AlertReceiver:
+    properties:
+      alertChannel:
+        $ref: '#/definitions/models.AlertChannel'
+        description: 删除channel时RESTRICT拒绝
+      alertChannelID:
+        type: integer
+      alertRuleID:
+        type: integer
+      id:
+        type: integer
+      interval:
+        type: string
+    type: object
+  models.AlertRule:
+    properties:
+      alertLevels:
+        description: 告警级别
+        items:
+          $ref: '#/definitions/models.AlertLevel'
+        type: array
+      alertType:
+        description: logging or monitor
+        type: string
+      cluster:
+        type: string
+      createdAt:
+        type: string
+      expr:
+        description: promql/logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
+        type: string
+      for:
+        description: 持续时间, eg. 10s, 1m, 1h
+        type: string
+      id:
+        type: integer
+      inhibitLabels:
+        description: 如果有多个告警级别，需要配置告警抑制的labels
+        items:
+          type: string
+        type: array
+      isOpen:
+        description: 是否启用
+        type: boolean
+      logqlGenerator:
+        $ref: '#/definitions/models.LogqlGenerator'
+      message:
+        description: 告警消息
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      promqlGenerator:
+        $ref: '#/definitions/models.PromqlGenerator'
+      realTimeAlerts:
+        description: 实时告警
+        items:
+          $ref: '#/definitions/v1.Alert'
+        type: array
+      receivers:
+        description: 接收器, 删除alertrule时级联删除
+        items:
+          $ref: '#/definitions/models.AlertReceiver'
+        type: array
+      state:
+        description: 状态
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - for
+    - name
     type: object
   models.Announcement:
     properties:
@@ -3940,6 +4025,20 @@ definitions:
       startTime:
         type: string
     type: object
+  models.LogqlGenerator:
+    properties:
+      duration:
+        description: 时间范围
+        type: string
+      labelMatchers:
+        description: 标签筛选器
+        items:
+          $ref: '#/definitions/promql.LabelMatcher'
+        type: array
+      match:
+        description: 正则匹配的字符串
+        type: string
+    type: object
   models.Message:
     properties:
       content:
@@ -4093,6 +4192,26 @@ definitions:
     - role
     - userID
     type: object
+  models.PromqlGenerator:
+    properties:
+      labelMatchers:
+        description: 标签筛选器
+        items:
+          $ref: '#/definitions/promql.LabelMatcher'
+        type: array
+      resource:
+        description: 告警资源, eg. node、pod
+        type: string
+      rule:
+        description: 告警规则名, eg. cpuUsage、memoryUsagePercent
+        type: string
+      scope:
+        description: scope
+        type: string
+      unit:
+        description: 单位
+        type: string
+    type: object
   models.PromqlTplResource:
     properties:
       id:
@@ -4122,6 +4241,7 @@ definitions:
       id:
         type: integer
       labels:
+        description: 如果有多个告警级别，需要配置告警抑制的labels
         items:
           type: string
         type: array
@@ -4818,27 +4938,6 @@ definitions:
       groupValue:
         type: string
     type: object
-  observe.AlertLevel:
-    properties:
-      compareOp:
-        type: string
-      compareValue:
-        description: 支持表达式, eg. 24 * 60
-        type: string
-      severity:
-        description: error, critical
-        type: string
-    type: object
-  observe.AlertReceiver:
-    properties:
-      ChannelStatus:
-        type: integer
-      alertChannel:
-        $ref: '#/definitions/models.AlertChannel'
-      interval:
-        description: 分组间隔
-        type: string
-    type: object
   observe.KeyValue:
     properties:
       key:
@@ -4855,124 +4954,6 @@ definitions:
         type: array
       timestamp:
         type: integer
-    type: object
-  observe.LoggingAlertRule:
-    properties:
-      ChannelStatus:
-        type: integer
-      alertLevels:
-        description: 告警级别
-        items:
-          $ref: '#/definitions/observe.AlertLevel'
-        type: array
-      expr:
-        description: promql/logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
-        type: string
-      for:
-        description: 持续时间, eg. 10s, 1m, 1h
-        type: string
-      inhibitLabels:
-        description: 如果有多个告警级别，需要配置告警抑制的labels
-        items:
-          type: string
-        type: array
-      isOpen:
-        description: 是否启用
-        type: boolean
-      logqlGenerator:
-        $ref: '#/definitions/observe.LogqlGenerator'
-      message:
-        description: 告警消息，若为空后端自动填充
-        type: string
-      name:
-        type: string
-      namespace:
-        type: string
-      origin:
-        description: 原始的prometheusrule
-        type: string
-      realTimeAlerts:
-        description: 实时告警
-        items:
-          $ref: '#/definitions/v1.Alert'
-        type: array
-      receivers:
-        description: 接收器
-        items:
-          $ref: '#/definitions/observe.AlertReceiver'
-        type: array
-      state:
-        description: 状态
-        type: string
-    type: object
-  observe.LogqlGenerator:
-    properties:
-      duration:
-        description: 时间范围
-        type: string
-      labelpairs:
-        additionalProperties:
-          type: string
-        description: 标签键值对
-        type: object
-      match:
-        description: 正则匹配的字符串
-        type: string
-    type: object
-  observe.MonitorAlertRule:
-    properties:
-      ChannelStatus:
-        type: integer
-      alertLevels:
-        description: 告警级别
-        items:
-          $ref: '#/definitions/observe.AlertLevel'
-        type: array
-      expr:
-        description: promql/logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
-        type: string
-      for:
-        description: 持续时间, eg. 10s, 1m, 1h
-        type: string
-      inhibitLabels:
-        description: 如果有多个告警级别，需要配置告警抑制的labels
-        items:
-          type: string
-        type: array
-      isOpen:
-        description: 是否启用
-        type: boolean
-      message:
-        description: 告警消息，若为空后端自动填充
-        type: string
-      name:
-        type: string
-      namespace:
-        type: string
-      origin:
-        description: 原始的prometheusrule
-        type: string
-      promqlGenerator:
-        $ref: '#/definitions/prometheus.PromqlGenerator'
-      realTimeAlerts:
-        description: 实时告警
-        items:
-          $ref: '#/definitions/v1.Alert'
-        type: array
-      receivers:
-        description: 接收器
-        items:
-          $ref: '#/definitions/observe.AlertReceiver'
-        type: array
-      source:
-        description: 来自哪个prometheusrule
-        type: string
-      state:
-        description: 状态
-        type: string
-      tplLost:
-        description: 监控模板是否丢失
-        type: boolean
     type: object
   observe.Process:
     properties:
@@ -5127,6 +5108,15 @@ definitions:
       promqlGenerator:
         $ref: '#/definitions/prometheus.PromqlGenerator'
       targetName:
+        type: string
+    type: object
+  promql.LabelMatcher:
+    properties:
+      name:
+        type: string
+      type:
+        type: string
+      value:
         type: string
     type: object
   resource.Quantity:
@@ -20776,6 +20766,26 @@ paths:
         name: namespace
         required: true
         type: string
+      - description: choices (Receivers, Receivers.AlertChannel)
+        in: query
+        name: preload
+        type: string
+      - description: search in (name, expr)
+        in: query
+        name: search
+        type: string
+      - description: 告警状态筛选(inactive, pending, firing)
+        in: query
+        name: state
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
       produces:
       - application/json
       responses:
@@ -20786,9 +20796,14 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  items:
-                    $ref: '#/definitions/observe.LoggingAlertRule'
-                  type: array
+                  allOf:
+                  - $ref: '#/definitions/handlers.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/models.AlertRule'
+                        type: array
+                    type: object
               type: object
       security:
       - JWT: []
@@ -20815,7 +20830,7 @@ paths:
         name: form
         required: true
         schema:
-          $ref: '#/definitions/observe.LoggingAlertRule'
+          $ref: '#/definitions/models.AlertRule'
       produces:
       - application/json
       responses:
@@ -20901,7 +20916,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/observe.LoggingAlertRule'
+                  $ref: '#/definitions/models.AlertRule'
               type: object
       security:
       - JWT: []
@@ -20928,7 +20943,7 @@ paths:
         name: form
         required: true
         schema:
-          $ref: '#/definitions/observe.LoggingAlertRule'
+          $ref: '#/definitions/models.AlertRule'
       produces:
       - application/json
       responses:
@@ -21148,6 +21163,26 @@ paths:
         name: namespace
         required: true
         type: string
+      - description: choices (Receivers, Receivers.AlertChannel)
+        in: query
+        name: preload
+        type: string
+      - description: search in (name, expr)
+        in: query
+        name: search
+        type: string
+      - description: 告警状态筛选(inactive, pending, firing)
+        in: query
+        name: state
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: size
+        in: query
+        name: size
+        type: integer
       produces:
       - application/json
       responses:
@@ -21158,9 +21193,14 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  items:
-                    $ref: '#/definitions/observe.MonitorAlertRule'
-                  type: array
+                  allOf:
+                  - $ref: '#/definitions/handlers.PageData'
+                  - properties:
+                      List:
+                        items:
+                          $ref: '#/definitions/models.AlertRule'
+                        type: array
+                    type: object
               type: object
       security:
       - JWT: []
@@ -21187,7 +21227,7 @@ paths:
         name: form
         required: true
         schema:
-          $ref: '#/definitions/observe.MonitorAlertRule'
+          $ref: '#/definitions/models.AlertRule'
       produces:
       - application/json
       responses:
@@ -21224,11 +21264,6 @@ paths:
       - description: name
         in: path
         name: name
-        required: true
-        type: string
-      - description: source
-        in: query
-        name: source
         required: true
         type: string
       produces:
@@ -21278,7 +21313,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/observe.MonitorAlertRule'
+                  $ref: '#/definitions/models.AlertRule'
               type: object
       security:
       - JWT: []
@@ -21310,7 +21345,7 @@ paths:
         name: form
         required: true
         schema:
-          $ref: '#/definitions/observe.MonitorAlertRule'
+          $ref: '#/definitions/models.AlertRule'
       produces:
       - application/json
       responses:

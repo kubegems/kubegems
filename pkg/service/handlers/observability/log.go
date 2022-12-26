@@ -340,13 +340,13 @@ func getAppsLogStatus(podList corev1.PodList, flowList v1beta1.FlowList) map[str
 // @Description 日志告警规则列表
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                   true "cluster"
-// @Param       namespace path     string                                                   true "namespace"
-// @Param       preload     query    string                                                false "choices (Receivers, Receivers.AlertChannel)"
-// @Param       search      query    string                                                false "search in (name, expr)"
-// @Param       state      query    string                                                false "告警状态筛选(inactive, pending, firing)"
-// @Param       page      query    int                                                   false "page"
-// @Param       size      query    int                                                   false "size"
+// @Param       cluster   path     string                                                                   true  "cluster"
+// @Param       namespace path     string                                                                   true  "namespace"
+// @Param       preload   query    string                                                                   false "choices (Receivers, Receivers.AlertChannel)"
+// @Param       search    query    string                                                                   false "search in (name, expr)"
+// @Param       state     query    string                                                                   false "告警状态筛选(inactive, pending, firing)"
+// @Param       page      query    int                                                                      false "page"
+// @Param       size      query    int                                                                      false "size"
 // @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.AlertRule}} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [get]
 // @Security    JWT
@@ -364,9 +364,9 @@ func (h *ObservabilityHandler) ListLoggingAlertRule(c *gin.Context) {
 // @Description 日志告警规则详情
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                 true "cluster"
-// @Param       namespace path     string                                                 true "namespace"
-// @Param       name      path     string                                                 true "name"
+// @Param       cluster   path     string                                         true "cluster"
+// @Param       namespace path     string                                         true "namespace"
+// @Param       name      path     string                                         true "name"
 // @Success     200       {object} handlers.ResponseStruct{Data=models.AlertRule} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [get]
 // @Security    JWT
@@ -555,7 +555,7 @@ func (h *ObservabilityHandler) deleteLoggingAlertRule(ctx context.Context, alert
 // @Produce     json
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
-// @Param       form      body     models.AlertRule             true "body"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [post]
 // @Security    JWT
@@ -598,7 +598,7 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 // @Produce     json
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
-// @Param       form      body     models.AlertRule             true "body"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [put]
 // @Security    JWT
@@ -608,16 +608,6 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if req.ID == 0 {
-		handlers.NotOK(c, errors.New("alert rule id is empty"))
-		return
-	}
-	for _, rec := range req.Receivers {
-		if rec.AlertRuleID == 0 {
-			handlers.NotOK(c, errors.New("alert rule id in receiver is empty"))
-			return
-		}
-	}
 
 	ctx := c.Request.Context()
 	h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
@@ -625,7 +615,11 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 	module := i18n.Sprintf(ctx, "logging alert rule")
 	h.SetAuditData(c, action, module, req.Name)
 	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(req).Error; err != nil {
+		if err := updateReceiversInDB(req, tx); err != nil {
+			return errors.Wrap(err, "update receivers")
+		}
+		if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "logql_generator").
+			Updates(req).Error; err != nil {
 			return err
 		}
 		return h.syncLoggingAlertRule(ctx, req)

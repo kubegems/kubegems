@@ -37,10 +37,15 @@ func (m *LabelMatcher) ToPromqlLabelMatcher() *labels.Matcher {
 		ret.Type = labels.MatchRegexp
 	case MatchNotRegexp:
 		ret.Type = labels.MatchNotRegexp
+	default:
+		ret.Type = labels.MatchEqual
 	}
 	return &ret
 }
 
 func (m *LabelMatcher) String() string {
+	if m.Type == "" {
+		m.Type = MatchEqual
+	}
 	return fmt.Sprintf("%s%s%q", m.Name, m.Type, m.Value)
 }
