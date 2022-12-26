@@ -16,6 +16,7 @@ package common
 
 import (
 	"context"
+	"math"
 	"reflect"
 	"strings"
 
@@ -61,15 +62,15 @@ func (s EdgeClusterK8sStore) List(ctx context.Context, options ListOptions) (int
 		return 0, nil, err
 	}
 	if options.Page == 0 && options.Size == 0 {
-		return len(list.Items), (list.Items), nil
-	} else {
-		searchname := func(item v1beta1.EdgeCluster) bool {
-			return (options.Search == "" || strings.Contains(item.GetName(), options.Search)) &&
-				(options.Manufacture == nil || options.Manufacture.Matches(labels.Set(item.Status.Manufacture)))
-		}
-		paged := response.NewTypedPage(list.Items, options.Page, options.Size, searchname, nil)
-		return int(paged.Total), paged.List, nil
+		options.Size = math.MaxInt // like do not page
+		options.Page = 1
 	}
+	searchfunc := func(item v1beta1.EdgeCluster) bool {
+		return (options.Search == "" || strings.Contains(item.GetName(), options.Search)) &&
+			(options.Manufacture == nil || options.Manufacture.Matches(labels.Set(item.Status.Manufacture)))
+	}
+	paged := response.NewTypedPage(list.Items, options.Page, options.Size, searchfunc, nil)
+	return int(paged.Total), paged.List, nil
 }
 
 func (s EdgeClusterK8sStore) Get(ctx context.Context, name string) (*v1beta1.EdgeCluster, error) {
