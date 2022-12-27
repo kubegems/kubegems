@@ -84,7 +84,7 @@ func (h *AuditLogHandler) ListAuditLog(c *gin.Context) {
 		Where:        where,
 		SearchFields: []string{"name"},
 	}
-	total, page, size, err := query.PageList(h.GetDB().Order("id DESC"), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("id DESC"), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -104,7 +104,7 @@ func (h *AuditLogHandler) ListAuditLog(c *gin.Context) {
 // @Security    JWT
 func (h *AuditLogHandler) RetrieveAuditLog(c *gin.Context) {
 	var obj models.AuditLog
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

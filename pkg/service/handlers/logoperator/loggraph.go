@@ -52,7 +52,8 @@ func (h *LogOperatorHandler) GetTenantNamespaces(c *gin.Context) ([]string, erro
 	var list []models.Environment
 	var namespaces []string
 	projectids := []uint{}
-	if err := h.GetDB().Model(&models.Project{}).Where("tenant_id = ?", c.Param(PrimaryKeyName)).Pluck("id", &projectids).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Model(&models.Project{}).Where("tenant_id = ?", c.Param(PrimaryKeyName)).Pluck("id", &projectids).Error; err != nil {
 		return nil, err
 	}
 	query, err := handlers.GetQuery(c, nil)
@@ -67,7 +68,7 @@ func (h *LogOperatorHandler) GetTenantNamespaces(c *gin.Context) ([]string, erro
 		Where:                  []*handlers.QArgs{handlers.Args("project_id in (?)", projectids)},
 	}
 
-	_, _, _, err = query.PageList(h.GetDB(), cond, &list)
+	_, _, _, err = query.PageList(h.GetDB().WithContext(ctx), cond, &list)
 
 	if err != nil {
 		return nil, err

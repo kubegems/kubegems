@@ -42,7 +42,7 @@ import (
 // @Security    JWT
 func (h *ObservabilityHandler) ListDashboard(c *gin.Context) {
 	ret := []models.MonitorDashboard{}
-	if err := h.GetDB().Find(&ret, "environment_id = ?", c.Param("environment_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Find(&ret, "environment_id = ?", c.Param("environment_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -63,7 +63,7 @@ func (h *ObservabilityHandler) ListDashboard(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) DashboardDetail(c *gin.Context) {
 	ret := models.MonitorDashboard{}
-	if err := h.GetDB().Find(&ret, "id = ?", c.Param("dashboard_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Find(&ret, "id = ?", c.Param("dashboard_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -116,7 +116,7 @@ func (h *ObservabilityHandler) DashboardQuery(c *gin.Context) {
 func (h *ObservabilityHandler) getMetricQuerysByDashboard(c *gin.Context) ([]*MetricQueryReq, error) {
 	dash := models.MonitorDashboard{}
 	queries := []*MetricQueryReq{}
-	if err := h.GetDB().Preload("Environment.Cluster").Find(&dash, "id = ?", c.Param("dashboard_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Preload("Environment.Cluster").Find(&dash, "id = ?", c.Param("dashboard_id")).Error; err != nil {
 		return nil, err
 	}
 	panelID, err := strconv.Atoi(c.Query("panel_id"))
@@ -174,7 +174,7 @@ func (h *ObservabilityHandler) CreateDashboard(c *gin.Context) {
 	h.SetAuditData(c, action, module, req.Name)
 	h.SetExtraAuditData(c, models.ResEnvironment, *req.EnvironmentID)
 
-	if err := h.GetDB().Save(req).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -204,7 +204,7 @@ func (h *ObservabilityHandler) UpdateDashboard(c *gin.Context) {
 	h.SetAuditData(c, action, module, req.Name)
 	h.SetExtraAuditData(c, models.ResEnvironment, *req.EnvironmentID)
 
-	if err := h.GetDB().Save(req).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -224,7 +224,7 @@ func (h *ObservabilityHandler) UpdateDashboard(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 	d := models.MonitorDashboard{}
-	if err := h.GetDB().First(&d, "id = ?", c.Param("dashboard_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&d, "id = ?", c.Param("dashboard_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -233,7 +233,7 @@ func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 	h.SetAuditData(c, action, module, d.Name)
 	h.SetExtraAuditData(c, models.ResEnvironment, *d.EnvironmentID)
 
-	if err := h.GetDB().Delete(&d).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&d).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -253,7 +253,7 @@ func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
 	tpls := []models.MonitorDashboardTpl{}
-	if err := h.GetDB().Find(&tpls).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Find(&tpls).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -272,7 +272,7 @@ func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) GetDashboardTemplate(c *gin.Context) {
 	tpl := models.MonitorDashboardTpl{Name: c.Param("name")}
-	if err := h.GetDB().First(&tpl).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&tpl).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -303,7 +303,7 @@ func (h *ObservabilityHandler) AddDashboardTemplates(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Create(&tpl).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(&tpl).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -332,7 +332,7 @@ func (h *ObservabilityHandler) UpdateDashboardTemplates(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Save(&tpl).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(&tpl).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -351,7 +351,7 @@ func (h *ObservabilityHandler) UpdateDashboardTemplates(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteDashboardTemplate(c *gin.Context) {
 	tpl := models.MonitorDashboardTpl{Name: c.Param("name")}
-	if err := h.GetDB().Delete(&tpl).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&tpl).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -363,9 +363,10 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 	if err := c.BindJSON(&req); err != nil {
 		return nil, err
 	}
+	ctx := c.Request.Context()
 	if c.Request.Method == http.MethodPost && req.Template != "" {
 		tpl := models.MonitorDashboardTpl{Name: req.Template}
-		if err := h.GetDB().First(&tpl).Error; err != nil {
+		if err := h.GetDB().WithContext(ctx).First(&tpl).Error; err != nil {
 			return nil, errors.Wrapf(err, "get template: %s failed", req.Template)
 		}
 		req.Start = tpl.Start
@@ -387,7 +388,7 @@ func (h *ObservabilityHandler) getDashboardReq(c *gin.Context) (*models.MonitorD
 	req.Creator = u.GetUsername()
 
 	env := models.Environment{}
-	if err := h.GetDB().First(&env, "id = ?", req.EnvironmentID).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&env, "id = ?", req.EnvironmentID).Error; err != nil {
 		return nil, err
 	}
 

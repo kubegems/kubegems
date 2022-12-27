@@ -84,7 +84,7 @@ func (h *ObservabilityHandler) ListChannels(c *gin.Context) {
 	if tenantID != "_all" {
 		cond.Where = append(cond.Where, handlers.Args("tenant_id is null or tenant_id = ?", tenantID))
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -106,7 +106,7 @@ func (h *ObservabilityHandler) ListChannels(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) GetChannel(c *gin.Context) {
 	tenantID := c.Param("tenant_id")
-	query := h.GetDB()
+	query := h.GetDB().WithContext(c.Request.Context())
 	if tenantID != "_all" {
 		query.Where("tenant_id = ? or tenant_id is null", tenantID)
 	}
@@ -146,7 +146,7 @@ func (h *ObservabilityHandler) CreateChannel(c *gin.Context) {
 		h.SetExtraAuditData(c, models.ResTenant, *req.TenantID)
 	}
 
-	if err := h.GetDB().Create(req).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -184,16 +184,17 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 
 	// find associated alert rules
 	alertrules := []*models.AlertRule{}
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := h.GetDB().Updates(req).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Updates(req).Error; err != nil {
 			return err
 		}
 
 		alertruleIDs := []uint{}
-		if err := h.GetDB().Model(&models.AlertReceiver{}).Distinct("alert_rule_id").Where("alert_channel_id = ?", req.ID).Scan(&alertruleIDs).Error; err != nil {
+		if err := tx.Model(&models.AlertReceiver{}).Distinct("alert_rule_id").Where("alert_channel_id = ?", req.ID).Scan(&alertruleIDs).Error; err != nil {
 			return err
 		}
-		return h.GetDB().Preload("Receivers.AlertChannel").Find(&alertrules, alertruleIDs).Error
+		return tx.Preload("Receivers.AlertChannel").Find(&alertrules, alertruleIDs).Error
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -207,7 +208,7 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 		wg.Add(1)
 		go func(alertrule *models.AlertRule) {
 			defer wg.Done()
-			if err := h.Execute(c.Request.Context(), alertrule.Cluster, func(ctx context.Context, cli agents.Client) error {
+			if err := h.Execute(ctx, alertrule.Cluster, func(ctx context.Context, cli agents.Client) error {
 				if alertrule.AlertType == prometheus.AlertTypeMonitor {
 					return h.syncMonitorAlertRule(ctx, alertrule)
 				} else {
@@ -241,7 +242,8 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 	ch := &models.AlertChannel{}
-	if err := h.GetDB().First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -257,7 +259,7 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 	}
 
 	receivers := []models.AlertReceiver{}
-	if err := h.GetDB().Preload("AlertRule").Find(&receivers, "alert_channel_id = ?", c.Param("channel_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Preload("AlertRule").Find(&receivers, "alert_channel_id = ?", c.Param("channel_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -269,7 +271,7 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 		handlers.NotOK(c, fmt.Errorf("该告警渠道正在被告警规则: %s 使用", strings.Join(tmp, " ")))
 		return
 	}
-	if err := h.GetDB().Delete(ch).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(ch).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -290,7 +292,7 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) TestChannel(c *gin.Context) {
 	ch := &models.AlertChannel{}
-	if err := h.GetDB().First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

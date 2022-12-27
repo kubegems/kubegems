@@ -385,7 +385,7 @@ func (h *ObservabilityHandler) getLoggingAlertReq(c *gin.Context) (observe.Loggi
 	}
 	req.Namespace = c.Param("namespace")
 	for _, v := range req.BaseAlertRule.Receivers {
-		if err := h.GetDB().First(v.AlertChannel).Error; err != nil {
+		if err := h.GetDB().WithContext(c.Request.Context()).First(v.AlertChannel).Error; err != nil {
 			return req, err
 		}
 	}
@@ -571,7 +571,7 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 	action := i18n.Sprintf(ctx, "create")
 	module := i18n.Sprintf(ctx, "logging alert rule")
 	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		allRules := []models.AlertRule{}
 		if err := tx.Find(&allRules, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
 			return err
@@ -614,7 +614,7 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 	action := i18n.Sprintf(ctx, "update")
 	module := i18n.Sprintf(ctx, "logging alert rule")
 	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := updateReceiversInDB(req, tx); err != nil {
 			return errors.Wrap(err, "update receivers")
 		}
@@ -655,7 +655,7 @@ func (h *ObservabilityHandler) DeleteLoggingAlertRule(c *gin.Context) {
 	module := i18n.Sprintf(ctx, "logging alert rule")
 	h.SetAuditData(c, action, module, req.Name)
 
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(req, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
 			return err
 		}

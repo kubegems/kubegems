@@ -62,7 +62,7 @@ func (h *UserHandler) ListUser(c *gin.Context) {
 		SearchFields:  SearchFields,
 		SortFields:    OrderFields,
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -82,7 +82,7 @@ func (h *UserHandler) ListUser(c *gin.Context) {
 // @Security    JWT
 func (h *UserHandler) RetrieveUser(c *gin.Context) {
 	var obj models.User
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -118,7 +118,7 @@ func (h *UserHandler) PostUser(c *gin.Context) {
 		SystemRoleID: 2,
 		IsActive:     &truePtr,
 	}
-	if err := h.GetDB().Create(&user).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(&user).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -169,7 +169,8 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 		userId = user.GetID()
 	}
 	var oldUser, newUser models.User
-	if err := h.GetDB().First(&oldUser, userId).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&oldUser, userId).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -186,7 +187,7 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 	oldUser.Email = newUser.Email
 	oldUser.Phone = newUser.Phone
 
-	if err := h.GetDB().Save(&oldUser).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&oldUser).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -212,11 +213,12 @@ func (h *UserHandler) PutUser(c *gin.Context) {
 // @Security    JWT
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	var obj models.User
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NoContent(c, nil)
 		return
 	}
-	if err := h.GetDB().Delete(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -256,7 +258,7 @@ func (h *UserHandler) ListUserTenant(c *gin.Context) {
 		Join:          handlers.Args("join tenant_user_rels on tenant_user_rels.tenant_id = tenants.id"),
 		Where:         []*handlers.QArgs{handlers.Args("tenant_user_rels.user_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -280,7 +282,8 @@ type ResetPasswordReq struct {
 // @Security    JWT
 func (h *UserHandler) ResetUserPassword(c *gin.Context) {
 	var user models.User
-	if err := h.GetDB().First(&user, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&user, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -302,7 +305,7 @@ func (h *UserHandler) ResetUserPassword(c *gin.Context) {
 		return
 	}
 	user.Password = encryptPassword
-	if err := h.GetDB().Save(&user).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&user).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -336,7 +339,7 @@ func (h *UserHandler) ListEnvironmentUser(c *gin.Context) {
 		Join:         handlers.Args("join environment_user_rels on environment_user_rels.user_id = users.id"),
 		Where:        []*handlers.QArgs{handlers.Args("environment_user_rels.environment_id in ?", strings.Split(c.Param("environment_id"), ","))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return

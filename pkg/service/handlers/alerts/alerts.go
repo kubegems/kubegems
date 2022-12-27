@@ -70,7 +70,7 @@ func (h *AlertsHandler) ListBlackList(c *gin.Context) {
 		cond.Where = append(cond.Where, handlers.Args("namespace = ?", namespace))
 	}
 
-	total, page, size, err := query.PageList(h.GetDB().Order("silence_updated_at desc"), cond, &ret)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("silence_updated_at desc"), cond, &ret)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -121,7 +121,7 @@ func formatBlackListSummary(labels map[string]string, f templates.TplGetter) str
 // @Security    JWT
 func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 	if err := h.withBlackListReq(c, func(req models.AlertInfo) error {
-		return h.GetDB().Transaction(func(tx *gorm.DB) error {
+		return h.GetDB().WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
 			if err := tx.Save(&req).Error; err != nil {
 				return err
 			}
@@ -130,7 +130,7 @@ func (h *AlertsHandler) AddToBlackList(c *gin.Context) {
 			if err != nil {
 				return err
 			}
-			return observe.NewClient(cli, h.GetDB()).CreateOrUpdateSilenceIfNotExist(c.Request.Context(), req)
+			return observe.NewClient(cli, tx).CreateOrUpdateSilenceIfNotExist(c.Request.Context(), req)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -153,7 +153,7 @@ func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 	req := models.AlertInfo{
 		Fingerprint: c.Param("fingerprint"),
 	}
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&req, "fingerprint = ?", req.Fingerprint).Error; err != nil {
 			return err
 		}
@@ -173,7 +173,7 @@ func (h *AlertsHandler) RemoveInBlackList(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		return observe.NewClient(cli, h.GetDB()).DeleteSilenceIfExist(ctx, req)
+		return observe.NewClient(cli, tx).DeleteSilenceIfExist(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -191,7 +191,7 @@ func (h *AlertsHandler) withBlackListReq(c *gin.Context, f func(req models.Alert
 	if err := c.BindJSON(&req); err != nil {
 		return err
 	}
-	if err := h.GetDB().First(&req, "fingerprint = ?", req.Fingerprint).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&req, "fingerprint = ?", req.Fingerprint).Error; err != nil {
 		return err
 	}
 	req.SilenceCreator = u.GetUsername()
