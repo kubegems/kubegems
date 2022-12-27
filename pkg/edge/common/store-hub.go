@@ -85,7 +85,12 @@ func (s EdgeHubK8sStore) Update(ctx context.Context, name string, fun func(clust
 }
 
 func (s EdgeHubK8sStore) Delete(ctx context.Context, name string) (*v1beta1.EdgeHub, error) {
-	remove := &v1beta1.EdgeHub{}
+	remove := &v1beta1.EdgeHub{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: s.ns,
+		},
+	}
 	if err := s.cli.Delete(ctx, remove); err != nil {
 		return remove, err
 	}

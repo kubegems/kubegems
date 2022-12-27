@@ -95,7 +95,12 @@ func (s EdgeClusterK8sStore) Update(ctx context.Context, name string, fun func(c
 }
 
 func (s EdgeClusterK8sStore) Delete(ctx context.Context, name string) (*v1beta1.EdgeCluster, error) {
-	remove := &v1beta1.EdgeCluster{}
+	remove := &v1beta1.EdgeCluster{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: s.ns,
+		},
+	}
 	if err := s.cli.Delete(ctx, remove); err != nil {
 		return remove, err
 	}
