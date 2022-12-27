@@ -63,7 +63,7 @@ func NewDatabase(options *Options) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := db.Use(otelgorm.NewPlugin(otelgorm.WithoutQueryVariables())); err != nil {
+	if err := db.Use(otelgorm.NewPlugin()); err != nil {
 		return nil, err
 	}
 	return &Database{

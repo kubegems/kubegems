@@ -25,6 +25,9 @@ import (
 	"path"
 
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
@@ -118,8 +121,22 @@ func (c TypedClient) DoRawRequest(ctx context.Context, clientreq Request) (*http
 }
 
 func (c TypedClient) DoRequest(ctx context.Context, req Request) error {
+	if req.Method == "" {
+		req.Method = "GET"
+	}
+	ctx, span := tracer.Start(ctx,
+		fmt.Sprintf("TypedClient.%s %s", req.Method, req.Path),
+		trace.WithAttributes(
+			attribute.String("k8s.apiserver.host", c.BaseAddr.Host),
+			attribute.String("request.method", req.Method),
+			attribute.String("request.path", req.Path),
+			attribute.String("request.query", req.Query.Encode()),
+		),
+	)
+	defer span.End()
 	resp, err := c.DoRawRequest(ctx, req)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	defer resp.Body.Close()
@@ -127,14 +144,19 @@ func (c TypedClient) DoRequest(ctx context.Context, req Request) error {
 	// err
 	if resp.StatusCode >= http.StatusBadRequest {
 		content, _ := io.ReadAll(resp.Body) // resp body may be empty
-		return fmt.Errorf("request error: code %d, body %s", resp.StatusCode, string(content))
+		err := fmt.Errorf("request error: code %d, body %s", resp.StatusCode, string(content))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	// success
 	if req.Into != nil {
 		if err := json.NewDecoder(resp.Body).Decode(req.Into); err != nil {
-			return fmt.Errorf("decode resp: err: %w", err)
+			err := fmt.Errorf("decode resp: err: %w", err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
 		}
 	}
+	span.SetStatus(codes.Ok, "")
 	return nil
 }
