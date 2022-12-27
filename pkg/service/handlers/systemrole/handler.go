@@ -60,7 +60,7 @@ func (h *SystemRoleHandler) ListSystemRole(c *gin.Context) {
 		SortFields:    OrderFields,
 		PreloadFields: []string{"Users"},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -80,7 +80,7 @@ func (h *SystemRoleHandler) ListSystemRole(c *gin.Context) {
 // @Security    JWT
 func (h *SystemRoleHandler) RetrieveSystemRole(c *gin.Context) {
 	var obj models.SystemRole
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -103,7 +103,7 @@ func (h *SystemRoleHandler) PostSystemRole(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Create(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -125,11 +125,12 @@ func (h *SystemRoleHandler) PostSystemRole(c *gin.Context) {
 // @Security    JWT
 func (h *SystemRoleHandler) DeleteSystemRole(c *gin.Context) {
 	var obj models.SystemRole
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NoContent(c, nil)
 		return
 	}
-	if err := h.GetDB().Delete(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -157,7 +158,8 @@ func (h *SystemRoleHandler) ListSystemRoleUser(c *gin.Context) {
 		obj  models.SystemRole
 		list []models.User
 	)
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -171,7 +173,7 @@ func (h *SystemRoleHandler) ListSystemRoleUser(c *gin.Context) {
 		PreloadFields: []string{"Tenants", "SystemRole"},
 		Where:         []*handlers.QArgs{handlers.Args("system_role_id = ?", obj.ID)},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(ctx), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -197,16 +199,17 @@ func (h *SystemRoleHandler) PutSystemRoleUser(c *gin.Context) {
 	)
 	roleid := c.Param("systemrole_id")
 	userid := c.Param("user_id")
-	if err := h.GetDB().First(&role, roleid).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&role, roleid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().First(&user, userid).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&user, userid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	user.SystemRoleID = role.ID
-	if err := h.GetDB().Model(&user).Save(&user).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Model(&user).Save(&user).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -253,11 +256,12 @@ func (h *SystemRoleHandler) DeleteSystemRoleUser(c *gin.Context) {
 	)
 	roleid := c.Param("systemrole_id")
 	userid := c.Param("user_id")
-	if err := h.GetDB().First(&role, roleid).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&role, roleid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().First(&user, userid).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&user, userid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -267,7 +271,7 @@ func (h *SystemRoleHandler) DeleteSystemRoleUser(c *gin.Context) {
 	module := i18n.Sprintf(context.TODO(), "system role")
 	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "user %s / role %s", user.Username, role.RoleName))
 
-	if err := h.GetDB().Model(&role).Association("Users").Delete(&user); err != nil {
+	if err := h.GetDB().WithContext(ctx).Model(&role).Association("Users").Delete(&user); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

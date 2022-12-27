@@ -88,13 +88,14 @@ func (h *ProjectHandler) ProjectNoneResourceStatistics(c *gin.Context) {
 		envCount  int64
 		userCount int64
 	)
-	if err := h.GetDB().First(&proj, c.Param("project_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&proj, c.Param("project_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	appCount = h.GetDB().Model(&proj).Association("Applications").Count()
-	envCount = h.GetDB().Model(&proj).Association("Environments").Count()
-	userCount = h.GetDB().Model(&proj).Association("Users").Count()
+	appCount = h.GetDB().WithContext(ctx).Model(&proj).Association("Applications").Count()
+	envCount = h.GetDB().WithContext(ctx).Model(&proj).Association("Environments").Count()
+	userCount = h.GetDB().WithContext(ctx).Model(&proj).Association("Users").Count()
 	handlers.OK(c, gin.H{
 		"ApplicationCount": appCount,
 		"EnvironmentCount": envCount,
@@ -115,12 +116,11 @@ func (h *ProjectHandler) ProjectNoneResourceStatistics(c *gin.Context) {
 // @Security    JWT
 func (h *ProjectHandler) ProjectStatistics(c *gin.Context) {
 	var proj models.Project
-	if err := h.GetDB().Preload("Environments").Preload("Environments.Cluster").First(&proj, c.Param("project_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Environments").Preload("Environments.Cluster").First(&proj, c.Param("project_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-
-	ctx := c.Request.Context()
 
 	envTotal := len(proj.Environments)
 	if envTotal == 0 {
@@ -172,12 +172,13 @@ func (h *ProjectHandler) ProjectStatistics(c *gin.Context) {
 // @Security    JWT
 func (h *ProjectHandler) EnvironmentStatistics(c *gin.Context) {
 	var env models.Environment
-	if err := h.GetDB().Preload("Cluster").First(&env, "project_id = ? and id = ?", c.Param("project_id"), c.Param("environment_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Cluster").First(&env, "project_id = ? and id = ?", c.Param("project_id"), c.Param("environment_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	rq, err := h.getDefaultResourceQuota(c.Request.Context(), env.Cluster.ClusterName, env.Namespace)
+	rq, err := h.getDefaultResourceQuota(ctx, env.Cluster.ClusterName, env.Namespace)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -400,11 +401,12 @@ func (h *ProjectHandler) GetEnvironmentResourceQuota(c *gin.Context) {
 		proj models.Project
 		env  models.Environment
 	)
-	if err := h.GetDB().First(&proj, c.Param("project_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&proj, c.Param("project_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Preload("Cluster").First(&env, "id = ?", c.Param("environment_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Preload("Cluster").First(&env, "id = ?", c.Param("environment_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -414,7 +416,7 @@ func (h *ProjectHandler) GetEnvironmentResourceQuota(c *gin.Context) {
 		EnvironmentID uint
 	}{}
 	sql := "select count(*) as app_count, environment_id from application_environment_rels where environment_id = ? group by environment_id"
-	if err := h.GetDB().Table("application_environment_rels").Exec(sql, c.Param("environment_id")).Scan(&envAppCount).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Table("application_environment_rels").Exec(sql, c.Param("environment_id")).Scan(&envAppCount).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -506,13 +508,14 @@ func (h *ProjectHandler) GetProjectListResourceQuotas(c *gin.Context) {
 	cond := &handlers.PageQueryCond{
 		Model: "Project",
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &projects)
+	ctx := c.Request.Context()
+	total, page, size, err := query.PageList(h.GetDB().WithContext(ctx), cond, &projects)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	for _, proj := range projects {
-		tmpret, err := h.getProjectAggretateQuota(c.Request.Context(), int(proj.ID))
+		tmpret, err := h.getProjectAggretateQuota(ctx, int(proj.ID))
 		if err != nil {
 			handlers.NotOK(c, err)
 			return
@@ -535,7 +538,7 @@ type res struct {
 func (h *ProjectHandler) getProjectNoAggretateQuota(ctx context.Context, projectId int) (map[string]*res, error) {
 	ret := map[string]*res{}
 	var proj models.Project
-	if err := h.GetDB().Preload("Tenant").Preload("Environments.Cluster").First(&proj, "id = ?", projectId).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Preload("Tenant").Preload("Environments.Cluster").First(&proj, "id = ?", projectId).Error; err != nil {
 		return nil, err
 	}
 	envids := []uint{}
@@ -547,7 +550,7 @@ func (h *ProjectHandler) getProjectNoAggretateQuota(ctx context.Context, project
 		EnvironmentID uint
 	}{}
 	sql := "select count(*) as app_count, environment_id from application_environment_rels where environment_id in (?) group by environment_id"
-	if err := h.GetDB().Table("application_environment_rels").Exec(sql, envids).Scan(&envAppCount).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Table("application_environment_rels").Exec(sql, envids).Scan(&envAppCount).Error; err != nil {
 		return nil, err
 	}
 	countMap := map[uint]int{}
@@ -586,7 +589,7 @@ type projectRes struct {
 // 获取项目在各个环境下的资源的聚合数据
 func (h *ProjectHandler) getProjectAggretateQuota(ctx context.Context, projectId int) (*projectRes, error) {
 	var proj models.Project
-	if err := h.GetDB().Preload("Tenant").Preload("Environments.Cluster").First(&proj, "id = ?", projectId).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Preload("Tenant").Preload("Environments.Cluster").First(&proj, "id = ?", projectId).Error; err != nil {
 		return nil, err
 	}
 	var (
@@ -594,9 +597,9 @@ func (h *ProjectHandler) getProjectAggretateQuota(ctx context.Context, projectId
 		envCount    int64
 		personCount int64
 	)
-	h.GetDB().Table("applications").Where("project_id = ?", projectId).Count(&appCount)
-	h.GetDB().Table("environments").Where("project_id = ?", projectId).Count(&envCount)
-	h.GetDB().Table("project_user_rels").Where("project_id = ?", projectId).Count(&personCount)
+	h.GetDB().WithContext(ctx).Table("applications").Where("project_id = ?", projectId).Count(&appCount)
+	h.GetDB().WithContext(ctx).Table("environments").Where("project_id = ?", projectId).Count(&envCount)
+	h.GetDB().WithContext(ctx).Table("project_user_rels").Where("project_id = ?", projectId).Count(&personCount)
 
 	clusterMap := map[string][]string{}
 	for _, env := range proj.Environments {
@@ -666,7 +669,8 @@ func (h *ProjectHandler) getProjectAggretateQuota(ctx context.Context, projectId
 // @Security    JWT
 func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 	var obj models.Project
-	if err := h.GetDB().Preload("Tenant").First(&obj, c.Param("project_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Tenant").First(&obj, c.Param("project_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -677,19 +681,18 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 	}
 	user, _ := h.GetContextUser(c)
 	var cluster models.Cluster
-	if err := h.GetDB().First(&cluster, env.ClusterID).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&cluster, env.ClusterID).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	env.CreatorID = user.GetID()
 	env.LimitRange = models.FillDefaultLimigrange(&env)
 
-	ctx := c.Request.Context()
-	if err := environment.ValidateEnvironmentNamespace(ctx, h.BaseHandler, h.GetDB(), env.Namespace, env.EnvironmentName, cluster.ClusterName); err != nil {
+	if err := environment.ValidateEnvironmentNamespace(ctx, h.BaseHandler, h.GetDB().WithContext(ctx), env.Namespace, env.EnvironmentName, cluster.ClusterName); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&env).Error; err != nil {
 			return err
 		}
@@ -734,15 +737,15 @@ func (h *ProjectHandler) ProjectEnvironments(c *gin.Context) {
 	var environments []models.Environment
 	var proj models.Project
 
-	if e := h.GetDB().Preload("Tenant").First(&proj, "id = ?", projectid).Error; e != nil {
-		handlers.NotOK(c, e)
-		return
-	}
-	if e := h.GetDB().Preload("Cluster").Preload("Creator").Find(&environments, "project_id = ?", projectid).Error; e != nil {
-		handlers.NotOK(c, e)
-		return
-	}
 	ctx := c.Request.Context()
+	if e := h.GetDB().WithContext(ctx).Preload("Tenant").First(&proj, "id = ?", projectid).Error; e != nil {
+		handlers.NotOK(c, e)
+		return
+	}
+	if e := h.GetDB().WithContext(ctx).Preload("Cluster").Preload("Creator").Find(&environments, "project_id = ?", projectid).Error; e != nil {
+		handlers.NotOK(c, e)
+		return
+	}
 
 	for _, env := range environments {
 		env.Cluster.KubeConfig = nil
@@ -801,11 +804,12 @@ func (h *ProjectHandler) ProjectSwitch(c *gin.Context) {
 		proj    models.Project
 		cluster models.Cluster
 	)
-	if e := h.GetDB().Preload("Tenant").First(&proj, "id = ?", c.Param("project_id")).Error; e != nil {
+	ctx := c.Request.Context()
+	if e := h.GetDB().WithContext(ctx).Preload("Tenant").First(&proj, "id = ?", c.Param("project_id")).Error; e != nil {
 		handlers.NotOK(c, e)
 		return
 	}
-	if e := h.GetDB().First(&cluster, "id = ?", form.ClusterID).Error; e != nil {
+	if e := h.GetDB().WithContext(ctx).First(&cluster, "id = ?", form.ClusterID).Error; e != nil {
 		handlers.NotOK(c, e)
 		return
 	}
@@ -813,8 +817,6 @@ func (h *ProjectHandler) ProjectSwitch(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "update")
 	module := i18n.Sprintf(context.TODO(), "project network isolation")
 	h.SetAuditData(c, action, module, proj.ProjectName)
-
-	ctx := c.Request.Context()
 
 	tnetpol := &gemsv1beta1.TenantNetworkPolicy{}
 	err := h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
@@ -861,13 +863,14 @@ func (h *ProjectHandler) TenantProjectListResourceQuotas(c *gin.Context) {
 		projects []models.Project
 		ret      []interface{}
 	)
-	if err := h.GetDB().Find(&projects, "tenant_id = ?", c.Param("tenant_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Find(&projects, "tenant_id = ?", c.Param("tenant_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 
 	}
 	for _, proj := range projects {
-		tmpret, err := h.getProjectAggretateQuota(c.Request.Context(), int(proj.ID))
+		tmpret, err := h.getProjectAggretateQuota(ctx, int(proj.ID))
 		if err != nil {
 			handlers.NotOK(c, err)
 			return

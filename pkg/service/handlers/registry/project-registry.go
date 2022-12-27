@@ -50,7 +50,8 @@ func (h *RegistryHandler) PostProjectRegistry(c *gin.Context) {
 
 	// 检查默认仓库
 	defaultRegistries := []models.Registry{}
-	if err := h.GetDB().Where("project_id = ? and id != ? and is_default = ?", registry.ProjectID, registry.ID, true).
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Where("project_id = ? and id != ? and is_default = ?", registry.ProjectID, registry.ID, true).
 		Find(&defaultRegistries).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -60,9 +61,7 @@ func (h *RegistryHandler) PostProjectRegistry(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
-
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&registry).Error; err != nil {
 			return err
 		}
@@ -108,7 +107,7 @@ func (h *RegistryHandler) ListProjectRegistry(c *gin.Context) {
 		PreloadFields: []string{"Creator", "Project"},
 		Where:         []*handlers.QArgs{handlers.Args("project_id = ?", c.Param("project_id"))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -129,7 +128,7 @@ func (h *RegistryHandler) ListProjectRegistry(c *gin.Context) {
 // @Security    JWT
 func (h *RegistryHandler) RetrieveProjectRegistry(c *gin.Context) {
 	var registry models.Registry
-	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -149,7 +148,8 @@ func (h *RegistryHandler) RetrieveProjectRegistry(c *gin.Context) {
 // @Security    JWT
 func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 	var registry models.Registry
-	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -164,7 +164,7 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 
 	// 检查默认仓库
 	defaultRegistries := []models.Registry{}
-	if err := h.GetDB().Where("project_id = ? and id != ? and is_default = ?", registry.ProjectID, registry.ID, true).
+	if err := h.GetDB().WithContext(ctx).Where("project_id = ? and id != ? and is_default = ?", registry.ProjectID, registry.ID, true).
 		Find(&defaultRegistries).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -174,8 +174,7 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&registry).Error; err != nil {
 			return err
 		}
@@ -208,7 +207,8 @@ func (h *RegistryHandler) PutProjectRegistry(c *gin.Context) {
 // @Security    JWT
 func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 	var registry models.Registry
-	if err := h.GetDB().First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -228,7 +228,7 @@ func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 
 	// 检查默认仓库
 	defaultRegistries := []models.Registry{}
-	if err := h.GetDB().Where("project_id = ? and id != ? and is_default = ?", registry.ProjectID, registry.ID, true).
+	if err := h.GetDB().WithContext(ctx).Where("project_id = ? and id != ? and is_default = ?", registry.ProjectID, registry.ID, true).
 		Find(&defaultRegistries).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -238,8 +238,7 @@ func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&registry).Error; err != nil {
 			return err
 		}
@@ -268,10 +267,10 @@ func (h *RegistryHandler) SetDefaultProjectRegistry(c *gin.Context) {
 // @Security    JWT
 func (h *RegistryHandler) DeleteProjectRegistry(c *gin.Context) {
 	var registry models.Registry
-	h.GetDB().First(&registry, c.Param("registry_id"))
-
 	ctx := c.Request.Context()
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	h.GetDB().WithContext(ctx).First(&registry, c.Param("registry_id"))
+
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&registry, "project_id = ? and id = ?", c.Param(ProjectKeyName), c.Param("registry_id")).Error; err != nil {
 			return err
 		}

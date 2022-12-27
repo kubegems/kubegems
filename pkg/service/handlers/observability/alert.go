@@ -65,7 +65,7 @@ func (h *ObservabilityHandler) DisableAlertRule(c *gin.Context) {
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		return h.GetDB().Transaction(func(tx *gorm.DB) error {
+		return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			if err := tx.Model(&models.AlertRule{}).
 				Where("cluster = ? and namespace = ? and name = ?", cluster, namespace, name).
 				Update("is_open", false).Error; err != nil {
@@ -102,7 +102,7 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		return h.GetDB().Transaction(func(tx *gorm.DB) error {
+		return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			if err := tx.Model(&models.AlertRule{}).
 				Where("cluster = ? and namespace = ? and name = ?", cluster, namespace, name).
 				Update("is_open", true).Error; err != nil {
@@ -268,7 +268,8 @@ func (h *ObservabilityHandler) AlertHistory(c *gin.Context) {
 	// 若同时有resolved和firing。展示resolved
 	// select max(status) from alert_messages
 	// output: resolved
-	tmpQuery := h.GetDB().Table("alert_messages").
+	ctx := c.Request.Context()
+	tmpQuery := h.GetDB().WithContext(ctx).Table("alert_messages").
 		Select(`alert_messages.fingerprint,
 			starts_at,
 			max(ends_at) as ends_at,
@@ -294,7 +295,7 @@ func (h *ObservabilityHandler) AlertHistory(c *gin.Context) {
 	}
 
 	// 中间表
-	query := h.GetDB().Table("(?) as t", tmpQuery)
+	query := h.GetDB().WithContext(ctx).Table("(?) as t", tmpQuery)
 	status := c.Query("status")
 	if status != "" {
 		query.Where("status = ?", status)
@@ -348,7 +349,7 @@ func (h *ObservabilityHandler) AlertRepeats(c *gin.Context) {
 		},
 		Join: handlers.Args("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint"),
 	}
-	total, page, size, err := query.PageList(h.GetDB().Order("created_at desc"), cond, &messages)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("created_at desc"), cond, &messages)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -407,13 +408,14 @@ func (h *ObservabilityHandler) AlertToday(c *gin.Context) {
 	yesterdayBegin := todayBedin.Add(-24 * time.Hour)
 	todayEnd := todayBedin.Add(24 * time.Hour)
 	tenantID := c.Param("tenant_id")
-	yesterdayQuery := h.GetDB().Table("alert_messages").
+	ctx := c.Request.Context()
+	yesterdayQuery := h.GetDB().WithContext(ctx).Table("alert_messages").
 		Select("status, count(alert_infos.fingerprint) as count").
 		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
 		Where("created_at >= ?", yesterdayBegin).
 		Where("created_at < ?", todayBedin).
 		Group("status")
-	todayQuery := h.GetDB().Table("alert_messages").
+	todayQuery := h.GetDB().WithContext(ctx).Table("alert_messages").
 		Select("status, count(alert_infos.fingerprint) as count").
 		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
 		Where("created_at >= ?", todayBedin).
@@ -422,7 +424,7 @@ func (h *ObservabilityHandler) AlertToday(c *gin.Context) {
 
 	if tenantID != "_all" {
 		t := models.Tenant{}
-		h.GetDB().First(&t, "id = ?", tenantID)
+		h.GetDB().WithContext(ctx).First(&t, "id = ?", tenantID)
 		yesterdayQuery.Where("tenant_name = ?", t.TenantName)
 		todayQuery.Where("tenant_name = ?", t.TenantName)
 	}
@@ -504,7 +506,8 @@ func (h *ObservabilityHandler) AlertGraph(c *gin.Context) {
 		end = utils.NextDayStartTime(time.Now())
 	}
 
-	query := h.GetDB().Table("alert_messages").
+	ctx := c.Request.Context()
+	query := h.GetDB().WithContext(ctx).Table("alert_messages").
 		Select(`project_name, DATE_FORMAT(created_at, "%Y-%m-%d") as date, count(alert_messages.fingerprint) as count`).
 		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
 		Where("created_at >= ?", start).
@@ -514,7 +517,7 @@ func (h *ObservabilityHandler) AlertGraph(c *gin.Context) {
 	tenantID := c.Param("tenant_id")
 	if c.Param("tenant_id") != "_all" {
 		t := models.Tenant{}
-		h.GetDB().First(&t, "id = ?", tenantID)
+		h.GetDB().WithContext(ctx).First(&t, "id = ?", tenantID)
 		query.Where("tenant_name = ?", t.TenantName)
 	}
 
@@ -587,7 +590,8 @@ func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 		end = utils.NextDayStartTime(time.Now())
 	}
 
-	query := h.GetDB().Table("alert_messages").
+	ctx := c.Request.Context()
+	query := h.GetDB().WithContext(ctx).Table("alert_messages").
 		Joins("join alert_infos on alert_messages.fingerprint = alert_infos.fingerprint").
 		Where("created_at >= ?", start).
 		Where("created_at < ?", end)
@@ -595,7 +599,7 @@ func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 	tenantID := c.Param("tenant_id")
 	if c.Param("tenant_id") != "_all" {
 		t := models.Tenant{}
-		h.GetDB().First(&t, "id = ?", tenantID)
+		h.GetDB().WithContext(ctx).First(&t, "id = ?", tenantID)
 		query.Where("tenant_name = ?", t.TenantName)
 	}
 
@@ -662,10 +666,11 @@ func (h *ObservabilityHandler) SearchAlert(c *gin.Context) {
 	var total int64
 	var messages []models.AlertMessage
 
-	query := h.GetDB().Preload("AlertInfo").Joins("AlertInfo")
+	ctx := c.Request.Context()
+	query := h.GetDB().WithContext(ctx).Preload("AlertInfo").Joins("AlertInfo")
 	if tenantID != "_all" {
 		t := models.Tenant{}
-		h.GetDB().First(&t, "id = ?", tenantID)
+		h.GetDB().WithContext(ctx).First(&t, "id = ?", tenantID)
 		query.Where("tenant_name = ?", t.TenantName)
 	}
 	if project != "" {
@@ -769,7 +774,7 @@ func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) 
 	// update all alert rules state in this namespace
 	thisClusterAlerts := []*models.AlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		err := h.GetDB().Find(&thisClusterAlerts,
+		err := h.GetDB().WithContext(ctx).Find(&thisClusterAlerts,
 			"alert_type = ? and cluster = ? and namespace = ?", alerttype, cluster, namespace).Error
 		if err != nil {
 			return err
@@ -790,7 +795,7 @@ func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) 
 			} else {
 				v.State = "inactive"
 			}
-			if err := h.GetDB().Model(v).Update("state", v.State).Error; err != nil {
+			if err := h.GetDB().WithContext(ctx).Model(v).Update("state", v.State).Error; err != nil {
 				return err
 			}
 		}
@@ -818,7 +823,7 @@ func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) 
 		cond.Where = append(cond.Where, handlers.Args("state = ?", state))
 	}
 
-	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("name"), cond, &list)
 	if err != nil {
 		return nil, err
 	}
@@ -832,7 +837,7 @@ func (h *ObservabilityHandler) getAlertRule(c *gin.Context, alerttype string) (*
 
 	ret := models.AlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		err := h.GetDB().Preload("Receivers.AlertChannel").First(&ret,
+		err := h.GetDB().WithContext(ctx).Preload("Receivers.AlertChannel").First(&ret,
 			"cluster = ? and namespace = ? and name = ?", cluster, namespace, name).Error
 		if err != nil {
 			return err
@@ -890,7 +895,7 @@ func (h *ObservabilityHandler) getAlertRuleReq(c *gin.Context) (*models.AlertRul
 	if err := setExpr(req); err != nil {
 		return nil, err
 	}
-	if err := setReceivers(req, h.GetDB()); err != nil {
+	if err := setReceivers(req, h.GetDB().WithContext(c.Request.Context())); err != nil {
 		return nil, err
 	}
 	if err := checkAlertLevels(req); err != nil {

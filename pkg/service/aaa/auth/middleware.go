@@ -26,7 +26,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/aaa"
@@ -110,7 +109,7 @@ type BearerTokenUserLoader struct {
 
 func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIface, exist bool) {
 	htype, token := parseAuthorizationHeader(req)
-	_, span := tracer.Start(req.Context(), "GetUser", trace.WithAttributes(attribute.String("token", token)))
+	_, span := tracer.Start(req.Context(), "GetUser")
 	defer span.End()
 	if strings.ToLower(htype) != "bearer" {
 		log.Warnf("token %s not valid", token)

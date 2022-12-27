@@ -38,7 +38,7 @@ func (h *MyHandler) Myinfo(c *gin.Context) {
 		return
 	}
 	var user models.User
-	if e := h.GetDB().Preload("SystemRole").Preload("Tenants").First(&user, "id = ?", u.GetID()).Error; e != nil {
+	if e := h.GetDB().WithContext(c.Request.Context()).Preload("SystemRole").Preload("Tenants").First(&user, "id = ?", u.GetID()).Error; e != nil {
 		handlers.Forbidden(c, i18n.Errorf(c, "forbidden, please login"))
 		return
 	}
@@ -81,7 +81,7 @@ func (h *MyHandler) MyTenants(c *gin.Context) {
 		return
 	}
 	tenants := []models.Tenant{}
-	h.GetDB().
+	h.GetDB().WithContext(c.Request.Context()).
 		Joins("tenant_user_rels on tenant_user_rels.tenant_id = tenants.id").
 		Where("tenant_user_rels.user_id = ?", u.GetID()).Find(&tenants)
 	handlers.OK(c, tenants)
@@ -104,7 +104,8 @@ func (h *MyHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 	cuser := models.User{}
-	h.GetDB().First(&cuser, u.GetID())
+	ctx := c.Request.Context()
+	h.GetDB().WithContext(ctx).First(&cuser, u.GetID())
 	form := &resetPasswordForm{}
 	c.BindJSON(form)
 
@@ -129,7 +130,7 @@ func (h *MyHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 	cuser.Password = pass
-	if err := h.GetDB().Save(&cuser).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&cuser).Error; err != nil {
 		return
 	}
 	handlers.OK(c, nil)

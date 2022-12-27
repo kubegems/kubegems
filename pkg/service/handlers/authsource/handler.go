@@ -41,7 +41,7 @@ import (
 // @Security    JWT
 func (h *AuthSourceHandler) ListAuthSourceSimple(c *gin.Context) {
 	list := []models.AuthSourceSimple{}
-	if err := h.GetDB().Find(&list).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Find(&list).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -111,7 +111,7 @@ func (h *AuthSourceHandler) ListAuthSource(c *gin.Context) {
 	cond := &handlers.PageQueryCond{
 		Model: "AuthSource",
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -141,7 +141,7 @@ func (h *AuthSourceHandler) Create(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().WithContext(ctx).Save(&source).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).WithContext(ctx).Save(&source).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -166,7 +166,7 @@ func (h *AuthSourceHandler) Modify(c *gin.Context) {
 	)
 	ctx := c.Request.Context()
 	pk := utils.ToUint(c.Param("source_id"))
-	if err := h.GetDB().WithContext(ctx).First(&source, pk).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).WithContext(ctx).First(&source, pk).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -182,7 +182,7 @@ func (h *AuthSourceHandler) Modify(c *gin.Context) {
 	source.Config = newOne.Config
 	source.UpdatedAt = &now
 	source.Enabled = newOne.Enabled
-	if err := h.GetDB().Save(source).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(source).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -203,7 +203,7 @@ func (h *AuthSourceHandler) Modify(c *gin.Context) {
 func (h *AuthSourceHandler) Delete(c *gin.Context) {
 	var source models.AuthSource
 	pk := utils.ToUint(c.Param("source_id"))
-	h.GetDB().Delete(&source, pk)
+	h.GetDB().WithContext(c.Request.Context()).Delete(&source, pk)
 	handlers.NoContent(c, nil)
 }
 

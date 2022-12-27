@@ -51,7 +51,7 @@ func (h *LogQueryHistoryHandler) ListLogQueryHistory(c *gin.Context) {
 		SearchFields:  []string{"LogQL"},
 		PreloadFields: []string{"Cluster", "Creator"},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -79,7 +79,7 @@ func (h *LogQueryHistoryHandler) DeleteLogQueryHistory(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Delete(&obj, uint(lid)).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&obj, uint(lid)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -117,7 +117,7 @@ func (h *LogQueryHistoryHandler) BatchDeleteLogQueryHistory(c *gin.Context) {
 		handlers.NoContent(c, nil)
 		return
 	}
-	if err := h.GetDB().Delete(&models.LogQueryHistory{}, "id in (?)", idints).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&models.LogQueryHistory{}, "id in (?)", idints).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -144,7 +144,7 @@ func (h *LogQueryHistoryHandler) PostLogQueryHistory(c *gin.Context) {
 	module := i18n.Sprintf(context.TODO(), "logquery history")
 	h.SetAuditData(c, action, module, "")
 
-	if err := h.GetDB().Create(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

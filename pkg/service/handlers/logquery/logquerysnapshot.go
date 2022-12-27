@@ -50,7 +50,7 @@ func (h *LogQuerySnapshotHandler) ListLogQuerySnapshot(c *gin.Context) {
 		SearchFields:  []string{"SnapshotName"},
 		PreloadFields: []string{"Cluster", "Creator"},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -70,7 +70,7 @@ func (h *LogQuerySnapshotHandler) ListLogQuerySnapshot(c *gin.Context) {
 // @Security    JWT
 func (h *LogQuerySnapshotHandler) RetrieveLogQuerySnapshot(c *gin.Context) {
 	var obj models.LogQuerySnapshot
-	if err := h.GetDB().First(&obj, c.Param("logquerysnapshot_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param("logquerysnapshot_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -89,14 +89,15 @@ func (h *LogQuerySnapshotHandler) RetrieveLogQuerySnapshot(c *gin.Context) {
 // @Security    JWT
 func (h *LogQuerySnapshotHandler) DeleteLogQuerySnapshot(c *gin.Context) {
 	var obj models.LogQuerySnapshot
-	if err := h.GetDB().First(&obj, c.Param("logquerysnapshot_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param("logquerysnapshot_id")).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
 	action := i18n.Sprintf(context.TODO(), "delete")
 	module := i18n.Sprintf(context.TODO(), "log snapshot")
 	h.SetAuditData(c, action, module, obj.SnapshotName)
-	if err := h.GetDB().Delete(&obj, c.Param("logquerysnapshot_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&obj, c.Param("logquerysnapshot_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -122,7 +123,7 @@ func (h *LogQuerySnapshotHandler) PostLogQuerySnapshot(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "create")
 	module := i18n.Sprintf(context.TODO(), "log snapshot")
 	h.SetAuditData(c, action, module, obj.SnapshotName)
-	if err := h.GetDB().Create(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

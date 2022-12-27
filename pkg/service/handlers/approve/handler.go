@@ -62,7 +62,7 @@ func (a ApprovesList) Less(i, j int) bool { return a[i].CreatedAt.After(a[j].Cre
 func (h *ApproveHandler) ListApproves(c *gin.Context) {
 	// 审批中的，查quota
 	var quotas []models.TenantResourceQuota
-	if err := h.GetDB().
+	if err := h.GetDB().WithContext(c.Request.Context()).
 		Preload("Tenant").
 		Preload("Cluster").
 		Preload("TenantResourceQuotaApply").
@@ -111,7 +111,8 @@ func (h *ApproveHandler) ListApproves(c *gin.Context) {
 func (h *ApproveHandler) Pass(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	quota := models.TenantResourceQuota{ID: uint(id)}
-	if err := h.GetDB().Preload("TenantResourceQuotaApply").Preload("Tenant").Preload("Cluster").First(&quota).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("TenantResourceQuotaApply").Preload("Tenant").Preload("Cluster").First(&quota).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the tenant has no enough resources in the current cluster"))
 		return
 	}
@@ -134,12 +135,11 @@ func (h *ApproveHandler) Pass(c *gin.Context) {
 	}
 
 	targetUser := models.User{}
-	h.GetDB().Where("username = ?", quota.TenantResourceQuotaApply.Username).First(&targetUser)
+	h.GetDB().WithContext(ctx).Where("username = ?", quota.TenantResourceQuotaApply.Username).First(&targetUser)
 
 	// 应用新的resource quota
-	ctx := c.Request.Context()
 	quota.Content = content
-	if e := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	if e := h.GetDB().WithContext(ctx).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&quota).Error; err != nil {
 			return err
 		}
@@ -150,7 +150,7 @@ func (h *ApproveHandler) Pass(c *gin.Context) {
 	}
 
 	// 外键是SET NULL，直接删除记录即可
-	if err := h.GetDB().Delete(quota.TenantResourceQuotaApply).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(quota.TenantResourceQuotaApply).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -179,7 +179,8 @@ func (h *ApproveHandler) Reject(c *gin.Context) {
 		return
 	}
 	quota := models.TenantResourceQuota{ID: uint(id)}
-	if err := h.GetDB().Preload("TenantResourceQuotaApply").Preload("Tenant").Preload("Cluster").First(&quota).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("TenantResourceQuotaApply").Preload("Tenant").Preload("Cluster").First(&quota).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("the tenant has no resource quota available in the current cluster"))
 		return
 	}
@@ -189,13 +190,13 @@ func (h *ApproveHandler) Reject(c *gin.Context) {
 		return
 	}
 
-	if err := h.GetDB().Delete(quota.TenantResourceQuotaApply).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(quota.TenantResourceQuotaApply).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
 	targetUser := models.User{}
-	h.GetDB().Where("username = ?", quota.TenantResourceQuotaApply.Username).First(&targetUser)
+	h.GetDB().WithContext(ctx).Where("username = ?", quota.TenantResourceQuotaApply.Username).First(&targetUser)
 
 	action := i18n.Sprintf(context.TODO(), "rejected")
 	module := i18n.Sprintf(context.TODO(), "cluster resource quota adjustment application")

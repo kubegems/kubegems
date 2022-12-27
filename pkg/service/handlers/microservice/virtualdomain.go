@@ -58,7 +58,7 @@ func (h *VirtualDomainHandler) ListVirtualDomain(c *gin.Context) {
 		// Join:         handlers.Args("left join virtual_spaces on virtual_spaces.virtual_domain_id = virtual_domains.id"),
 		// Select:       handlers.Args("virtual_domains.*, if(virtual_spaces.virtual_domain_id is null, false, true) as is_using"),
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -79,7 +79,7 @@ func (h *VirtualDomainHandler) ListVirtualDomain(c *gin.Context) {
 func (h *VirtualDomainHandler) GetVirtualDomain(c *gin.Context) {
 	// get vd
 	vd := models.VirtualDomain{}
-	if err := h.GetDB().First(&vd, c.Param("virtualdomain_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&vd, c.Param("virtualdomain_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -112,7 +112,7 @@ func (h *VirtualDomainHandler) PostVirtualDomain(c *gin.Context) {
 	vd.CreatedBy = u.GetUsername()
 	vd.IsActive = true
 
-	if err := h.GetDB().Save(&vd).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(&vd).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -133,7 +133,7 @@ func (h *VirtualDomainHandler) PostVirtualDomain(c *gin.Context) {
 // @Security    JWT
 func (h *VirtualDomainHandler) PutVirtualDomain(c *gin.Context) {
 	var obj models.VirtualDomain
-	if err := h.GetDB().First(&obj, c.Param("virtualdomain_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param("virtualdomain_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -151,7 +151,7 @@ func (h *VirtualDomainHandler) PutVirtualDomain(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -171,7 +171,8 @@ func (h *VirtualDomainHandler) PutVirtualDomain(c *gin.Context) {
 func (h *VirtualDomainHandler) DeleteVirtualDomain(c *gin.Context) {
 	// get vd
 	vd := models.VirtualDomain{}
-	if err := h.GetDB().First(&vd, c.Param("virtualdomain_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&vd, c.Param("virtualdomain_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -181,7 +182,7 @@ func (h *VirtualDomainHandler) DeleteVirtualDomain(c *gin.Context) {
 	h.SetAuditData(c, action, module, vd.VirtualDomainName)
 	h.SetExtraAuditData(c, models.ResVirtualDomain, vd.ID)
 
-	if err := h.GetDB().Delete(&vd).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&vd).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

@@ -23,6 +23,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/kubernetes"
@@ -52,7 +54,10 @@ type Client interface {
 	Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error
 }
 
-var _ Client = &DelegateClient{}
+var (
+	_      Client       = &DelegateClient{}
+	tracer trace.Tracer = otel.Tracer("AgentClient")
+)
 
 type DelegateClient struct {
 	*ExtendClient

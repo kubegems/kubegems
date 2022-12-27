@@ -18,6 +18,7 @@ import (
 	"time"
 
 	driver "github.com/go-sql-driver/mysql"
+	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/log"
@@ -60,6 +61,9 @@ func NewDatabase(options *Options) (*Database, error) {
 		Logger: log.NewDefaultGormZapLogger(),
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err := db.Use(otelgorm.NewPlugin()); err != nil {
 		return nil, err
 	}
 	return &Database{

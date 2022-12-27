@@ -337,7 +337,7 @@ func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
 		SearchFields:  []string{"name"},
 		PreloadFields: []string{"Resources", "Resources.Rules"},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -373,7 +373,7 @@ func (h *ObservabilityHandler) ListResources(c *gin.Context) {
 		PreloadFields: []string{"Scope", "Rules"},
 		Where:         []*handlers.QArgs{handlers.Args("scope_id = ?", c.Param("scope_id"))},
 	}
-	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("name"), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -417,7 +417,7 @@ func (h *ObservabilityHandler) ListRules(c *gin.Context) {
 	if resourceID != "_all" {
 		cond.Where = append(cond.Where, handlers.Args("resource_id = ?", resourceID))
 	}
-	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("name"), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -442,7 +442,7 @@ func (h *ObservabilityHandler) GetRule(c *gin.Context) {
 	tenantID := c.Param("tenant_id")
 	preload := c.Query("preload")
 
-	query := h.GetDB().Model(&models.PromqlTplRule{})
+	query := h.GetDB().WithContext(c.Request.Context()).Model(&models.PromqlTplRule{})
 	if preload == "Resource" || preload == "Resource.Scope" {
 		query.Preload(preload)
 	}
@@ -497,7 +497,8 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 	}
 
 	var count int64
-	if err := h.GetDB().Model(&models.PromqlTplRule{}).
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Model(&models.PromqlTplRule{}).
 		Where("resource_id = ? and name = ?", req.ResourceID, req.Name).
 		Count(&count).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -510,7 +511,7 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "create")
 	module := i18n.Sprintf(context.TODO(), "monitoring query template")
 	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().Create(&req).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Create(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -538,7 +539,7 @@ func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "update")
 	module := i18n.Sprintf(context.TODO(), "monitoring query template")
 	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().Save(&req).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -558,7 +559,8 @@ func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 	rule := &models.PromqlTplRule{}
-	if err := h.GetDB().Preload("Resource.Scope").First(rule, "id = ?", c.Param("rule_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Resource.Scope").First(rule, "id = ?", c.Param("rule_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -574,7 +576,7 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 		h.SetExtraAuditData(c, models.ResTenant, *rule.TenantID)
 	}
 
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		dashborads := []models.MonitorDashboard{}
 		if err := tx.Preload("Environment").Find(&dashborads).Error; err != nil {
 			return err
@@ -1036,7 +1038,7 @@ func (h *ObservabilityHandler) OtelServiceTraces(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		observecli := observe.NewClient(cli, h.GetDB())
+		observecli := observe.NewClient(cli, h.GetDB().WithContext(ctx))
 		traces, err = observecli.SearchTrace(ctx,
 			c.Param("service_name"),
 			start, end,
