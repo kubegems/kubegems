@@ -42,6 +42,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+const ClientIDSecret = "kubegems-edge-agent-id"
+
 func Run(ctx context.Context, opts *options.AgentOptions) error {
 	return run(ctx, opts)
 }
@@ -59,10 +61,7 @@ type EdgeAgent struct {
 
 func run(ctx context.Context, options *options.AgentOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
-	manufectures, err := ReadManufacture(options)
-	if err != nil {
-		return err
-	}
+
 	rest, err := kube.AutoClientConfig()
 	if err != nil {
 		return err
@@ -71,14 +70,17 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 	if err != nil {
 		return err
 	}
-	clientid, err := initClientID(ctx, c.GetClient(), options)
+	clientid, err := getClientID(ctx, c.GetClient(), options)
 	if err != nil {
 		return err
 	}
 	if clientid == "" {
 		return fmt.Errorf("empty client id specified")
 	}
-
+	manufectures, err := ReadManufacture(options, clientid)
+	if err != nil {
+		return err
+	}
 	ea := &EdgeAgent{
 		config:       rest,
 		manufectures: manufectures,
@@ -150,12 +152,12 @@ const clientIDKey = "client-id"
 
 const two = 2
 
-func initClientID(ctx context.Context, cli client.Client, options *options.AgentOptions) (string, error) {
-	clientid := options.ClientID
+func getClientID(ctx context.Context, cli client.Client, options *options.AgentOptions) (string, error) {
+	clientid := ""
 	// try secret
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      options.ClientIDSecret,
+			Name:      ClientIDSecret,
 			Namespace: kube.LocalNamespaceOrDefault("kubegems-edge"),
 		},
 	}
@@ -163,15 +165,11 @@ func initClientID(ctx context.Context, cli client.Client, options *options.Agent
 		if secret.Data == nil {
 			secret.Data = map[string][]byte{}
 		}
-		secretid := string(secret.Data[clientIDKey])
-		switch {
-		case clientid == "" && secretid != "":
-			clientid = secretid
-		case clientid != "" && secretid != clientid:
-			secret.Data[clientIDKey] = []byte(clientid)
-		case clientid == "" && secretid == "":
+		if existsclientid := string(secret.Data[clientIDKey]); existsclientid == "" {
 			clientid = uuid.NewString()
 			secret.Data[clientIDKey] = []byte(clientid)
+		} else {
+			clientid = existsclientid
 		}
 		return nil
 	})
@@ -181,7 +179,7 @@ func initClientID(ctx context.Context, cli client.Client, options *options.Agent
 	return clientid, nil
 }
 
-func ReadManufacture(options *options.AgentOptions) (map[string]string, error) {
+func ReadManufacture(options *options.AgentOptions, clientID string) (map[string]string, error) {
 	fullkvs := map[string]string{}
 	for _, file := range options.ManufactureFile {
 		kvs, err := ParseKV(file)
@@ -201,6 +199,14 @@ func ReadManufacture(options *options.AgentOptions) (map[string]string, error) {
 		if ok {
 			fullkvs[k] = val
 		}
+	}
+	// remap device id
+	if options.DeviceIDKey != "" {
+		fullkvs[common.AnnotationKeyDeviceID] = fullkvs[options.DeviceIDKey]
+	}
+	// default device id
+	if val := fullkvs[common.AnnotationKeyDeviceID]; val == "" {
+		fullkvs[common.AnnotationKeyDeviceID] = clientID
 	}
 	return fullkvs, nil
 }

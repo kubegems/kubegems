@@ -18,11 +18,11 @@ import "time"
 
 type AgentOptions struct {
 	Listen            string        `json:"listen,omitempty"`
-	ClientID          string        `json:"clientID,omitempty"`
-	ClientIDSecret    string        `json:"clientIDSecret,omitempty" description:"client ID secret"`
+	DeviceID          string        `json:"deviceID,omitempty"  description:"device id in kubegems edge,use random generated client-id by default"`
+	DeviceIDKey       string        `json:"deviceIDKey,omitempty"  description:"use value of key as device-id in manufacture"`
 	ManufactureFile   []string      `json:"manufactureFile,omitempty" description:"file with manufacture info in json object format"`
 	ManufactureRemap  []string      `json:"manufactureRemap,omitempty" description:"remap manufacture file key to newkey,example 'newkey=existskey'"`
-	Manufacture       []string      `json:"manufacture,omitempty" description:"manufacture kvs,example 'device-id=value,foo=bar'"`
+	Manufacture       []string      `json:"manufacture,omitempty" description:"manufacture kvs,example 'some-key=value,foo=bar'"`
 	EdgeHubAddr       string        `json:"edgeHubAddr,omitempty"`
 	KeepAliveInterval time.Duration `json:"keepAliveInterval,omitempty"`
 }
@@ -30,10 +30,10 @@ type AgentOptions struct {
 func NewDefaultAgentOptions() *AgentOptions {
 	return &AgentOptions{
 		EdgeHubAddr:       "127.0.0.1:8080",
-		ClientID:          "",
 		Listen:            ":8080",
+		DeviceID:          "",
+		DeviceIDKey:       "",
 		KeepAliveInterval: 30 * time.Minute,
-		ClientIDSecret:    "kubegems-edge-agent-id",
 		ManufactureFile:   []string{"/etc/os-release"},
 		ManufactureRemap:  []string{},
 		Manufacture:       []string{},

@@ -48,6 +48,7 @@ const (
 	AnnotationKeyKubernetesVersion          = "edge.kubegems.io/kubernetes-version"
 	AnnotationKeyAPIserverAddress           = "edge.kubegems.io/apiserver-address"
 	AnnotationKeyNodesCount                 = "edge.kubegems.io/nodes-count"
+	AnnotationKeyDeviceID                   = "edge.kubegems.io/device-id"
 
 	// temporary connection do not write to database
 	AnnotationIsTemporaryConnect = "edge.kubegems.io/temporary-connect"
