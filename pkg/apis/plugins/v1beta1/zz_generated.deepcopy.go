@@ -132,7 +132,7 @@ func (in *PluginStatus) DeepCopyInto(out *PluginStatus) {
 	in.UpgradeTimestamp.DeepCopyInto(&out.UpgradeTimestamp)
 	if in.Resources != nil {
 		in, out := &in.Resources, &out.Resources
-		*out = make([]v1.ObjectReference, len(*in))
+		*out = make([]ManagedResource, len(*in))
 		copy(*out, *in)
 	}
 }

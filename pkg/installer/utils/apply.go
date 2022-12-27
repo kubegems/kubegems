@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"kubegems.io/kubegems/pkg/apis/plugins"
+	"kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -44,7 +45,7 @@ type DiffResult struct {
 func DiffWithDefaultNamespace(
 	cli client.Client,
 	defaultnamespace string,
-	managed []corev1.ObjectReference,
+	managed []v1beta1.ManagedResource,
 	resources []*unstructured.Unstructured,
 ) DiffResult {
 	CorrectNamespaces(cli, defaultnamespace, resources)
@@ -52,14 +53,14 @@ func DiffWithDefaultNamespace(
 	return Diff(managed, resources)
 }
 
-func Diff(managed []corev1.ObjectReference, resources []*unstructured.Unstructured) DiffResult {
+func Diff(managed []v1beta1.ManagedResource, resources []*unstructured.Unstructured) DiffResult {
 	result := DiffResult{}
-	managedmap := map[corev1.ObjectReference]bool{}
+	managedmap := map[v1beta1.ManagedResource]bool{}
 	for _, item := range managed {
 		managedmap[item] = false
 	}
 	for _, item := range resources {
-		man := GetReference(item)
+		man := v1beta1.GetReference(item)
 		if _, ok := managedmap[man]; !ok {
 			result.Creats = append(result.Creats, item)
 		} else {
@@ -100,28 +101,27 @@ type Apply struct {
 
 func (a *Apply) Sync(ctx context.Context,
 	defaultnamespace string,
-	managed []corev1.ObjectReference,
+	managed []v1beta1.ManagedResource,
 	resources []*unstructured.Unstructured,
 	options *SyncOptions,
-) ([]corev1.ObjectReference, error) {
-	return a.
-		SyncDiff(
-			ctx,
-			DiffWithDefaultNamespace(
-				a.Client,
-				defaultnamespace,
-				managed,
-				resources,
-			),
-			options)
+) ([]v1beta1.ManagedResource, error) {
+	return a.SyncDiff(
+		ctx,
+		DiffWithDefaultNamespace(
+			a.Client,
+			defaultnamespace,
+			managed,
+			resources,
+		),
+		options)
 }
 
-func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOptions) ([]corev1.ObjectReference, error) {
+func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOptions) ([]v1beta1.ManagedResource, error) {
 	log := logr.FromContextOrDiscard(ctx)
 
 	errs := []string{}
 
-	managed := []corev1.ObjectReference{}
+	managed := []v1beta1.ManagedResource{}
 	// create
 	for _, item := range diff.Creats {
 		log.Info("creating resource", "resource", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
@@ -134,12 +134,12 @@ func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOpti
 			errs = append(errs, err.Error())
 			continue
 		}
-		managed = append(managed, GetReference(item)) // set managed
+		managed = append(managed, v1beta1.GetReference(item)) // set managed
 	}
 
 	// apply
 	for _, item := range diff.Applys {
-		managed = append(managed, GetReference(item)) // set managed
+		managed = append(managed, v1beta1.GetReference(item)) // set managed
 
 		if IsSkipedOn(item, plugins.AnnotationIgnoreOptionOnUpdate) {
 			log.Info("ignoring update", "resource", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
@@ -174,7 +174,7 @@ func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOpti
 				log.Error(err, "deleting resource")
 				errs = append(errs, err.Error())
 				// if not removed, keep in managed
-				managed = append(managed, GetReference(item)) // set managed
+				managed = append(managed, v1beta1.GetReference(item)) // set managed
 				continue
 			}
 		}
@@ -272,7 +272,7 @@ func CorrectNamespaces[T client.Object](cli client.Client, defaultNamespace stri
 	}
 }
 
-func CorrectNamespacesForRefrences(cli client.Client, defaultns string, list []corev1.ObjectReference) {
+func CorrectNamespacesForRefrences(cli client.Client, defaultns string, list []v1beta1.ManagedResource) {
 	for i, val := range list {
 		scopeName, err := NamespacedScopeOfGVK(cli, val.GroupVersionKind())
 		if err != nil {

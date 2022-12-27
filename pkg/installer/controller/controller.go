@@ -29,6 +29,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"kubegems.io/kubegems/pkg/apis/core/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/bundle"
@@ -123,6 +124,7 @@ func Setup(ctx context.Context, mgr ctrl.Manager, options *bundle.Options) error
 		WithOptions(controller.Options{MaxConcurrentReconciles: PluginsControllerConcurrency}).
 		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, handler).
 		Watches(&source.Kind{Type: &corev1.Secret{}}, handler).
+		Watches(&source.Kind{Type: &pluginsv1beta1.Plugin{}}, PluginUnhealthyTrigger(ctx, mgr.GetClient())).
 		Complete(r)
 }
 
@@ -180,6 +182,36 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return ctrl.Result{}, err
 }
 
+func PluginUnhealthyTrigger(ctx context.Context, cli client.Client) handler.EventHandler {
+	log := logr.FromContextOrDiscard(ctx)
+	return handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+		plugin, ok := obj.(*pluginsv1beta1.Plugin)
+		if !ok {
+			return nil
+		}
+		// trigger check only if plugin not heathy
+		if plugin.Status.Phase != pluginsv1beta1.PhaseFailed {
+			return nil
+		}
+		plugins := pluginsv1beta1.PluginList{}
+		_ = cli.List(ctx, &plugins)
+		var requests []reconcile.Request
+		for _, item := range plugins.Items {
+			for _, ref := range item.Status.Resources {
+				if ref.Namespace == "" {
+					continue
+				}
+				if ref.APIVersion == plugin.APIVersion && ref.Kind == plugin.Kind &&
+					ref.Name == obj.GetName() && ref.Namespace == obj.GetNamespace() {
+					log.Info("triggering reconciliation", "plugin", item.Name, "kind", plugin.Kind, "name", obj.GetName(), "namespace", item.GetNamespace())
+					requests = append(requests, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&item)})
+				}
+			}
+		}
+		return requests
+	})
+}
+
 func ConfigMapOrSecretTrigger(ctx context.Context, cli client.Client) handler.EventHandler {
 	log := logr.FromContextOrDiscard(ctx)
 	return handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
@@ -225,8 +257,40 @@ func (r *Reconciler) Sync(ctx context.Context, bundle *pluginsv1beta1.Plugin) er
 		if err := r.resolveValuesRef(ctx, bundle); err != nil {
 			return err
 		}
-		return r.Applier.Apply(ctx, bundle)
+		if err := r.Applier.Apply(ctx, bundle); err != nil {
+			return err
+		}
+		return r.checkResourcesStatus(ctx, bundle)
 	}
+}
+
+// ResourcesStatus fill resource status
+func (r *Reconciler) checkResourcesStatus(ctx context.Context, bundle *pluginsv1beta1.Plugin) error {
+	for i, res := range bundle.Status.Resources {
+		if res.Kind == "Plugin" || res.APIVersion == v1beta1.GroupVersion.String() {
+			// check plugin status
+			if err := r.checkPluginStatus(ctx, &bundle.Status.Resources[i]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (r *Reconciler) checkPluginStatus(ctx context.Context, managed *pluginsv1beta1.ManagedResource) error {
+	plugin := &pluginsv1beta1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      managed.Name,
+			Namespace: managed.Namespace,
+		},
+	}
+	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(plugin), plugin); err != nil {
+		return err
+	}
+	if plugin.Status.Phase != pluginsv1beta1.PhaseInstalled && plugin.Status.Message != "" {
+		return fmt.Errorf("plugin %s/%s: %s", plugin.Namespace, plugin.Name, plugin.Status.Message)
+	}
+	return nil
 }
 
 type DependencyError struct {
