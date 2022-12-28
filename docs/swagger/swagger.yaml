@@ -22006,6 +22006,39 @@ paths:
       summary: OtelMetricsGraphs
       tags:
       - Observability
+  /v1/observability/cluster/{cluster}/traces/{trace_id}:
+    get:
+      consumes:
+      - application/json
+      description: GetTrace by trace_id
+      parameters:
+      - description: 集群名
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: trace id
+        in: path
+        name: trace_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/observe.Trace'
+              type: object
+      security:
+      - JWT: []
+      summary: GetTrace by trace_id
+      tags:
+      - Observability
   /v1/observability/environment/{environment_id}/monitor/dashboard:
     get:
       consumes:

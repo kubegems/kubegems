@@ -110,4 +110,5 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/otel/appmonitor/services/:service_name/requests", h.CheckByClusterNamespace, h.OtelServiceRequests)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/otel/appmonitor/services/:service_name/operations", h.CheckByClusterNamespace, h.OtelServiceOperations)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/otel/appmonitor/services/:service_name/traces", h.CheckByClusterNamespace, h.OtelServiceTraces)
+	rg.GET("/observability/cluster/:cluster/traces/:trace_id", h.GetTrace)
 }
