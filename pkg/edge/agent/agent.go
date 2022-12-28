@@ -200,14 +200,17 @@ func ReadManufacture(options *options.AgentOptions, clientID string) (map[string
 			fullkvs[k] = val
 		}
 	}
-	// remap device id
-	if options.DeviceIDKey != "" {
-		fullkvs[common.AnnotationKeyDeviceID] = fullkvs[options.DeviceIDKey]
+
+	deviceid := options.DeviceID
+	if deviceid == "" {
+		// remap device id
+		deviceid = fullkvs[options.DeviceIDKey]
 	}
-	// default device id
-	if val := fullkvs[common.AnnotationKeyDeviceID]; val == "" {
-		fullkvs[common.AnnotationKeyDeviceID] = clientID
+	if deviceid == "" {
+		// default device id
+		deviceid = clientID
 	}
+	fullkvs[common.AnnotationKeyDeviceID] = deviceid
 	return fullkvs, nil
 }
 
