@@ -598,6 +598,11 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 		if len(allRules) > 0 {
 			return errors.Errorf("alert rule %s is already exist", req.Name)
 		}
+		for _, rec := range req.Receivers {
+			if rec.ID > 0 {
+				return errors.Errorf("receiver's id should be null when create")
+			}
+		}
 		if err := tx.Create(req).Error; err != nil {
 			return err
 		}
