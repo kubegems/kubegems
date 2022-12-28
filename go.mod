@@ -70,7 +70,6 @@ require (
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
 	github.com/swaggo/gin-swagger v1.3.1
 	github.com/swaggo/swag v1.8.1
-	github.com/uptrace/opentelemetry-go-extra/otelgorm v0.1.17
 	github.com/zitadel/oidc v1.7.0
 	go.mongodb.org/mongo-driver v1.9.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.36.4
@@ -97,8 +96,8 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.0.2
-	gorm.io/driver/mysql v1.4.4
-	gorm.io/gorm v1.23.10
+	gorm.io/driver/mysql v1.1.2
+	gorm.io/gorm v1.21.15
 	helm.sh/helm/v3 v3.8.2
 	istio.io/api v0.0.0-20220512212136-561ffec82582
 	istio.io/client-go v1.13.4-0.20220512212836-a717f1acbd1f
@@ -264,7 +263,6 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/mattn/go-sqlite3 v1.14.8 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -322,7 +320,6 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-	github.com/uptrace/opentelemetry-go-extra/otelsql v0.1.17 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/vjeantet/grok v1.0.0 // indirect
@@ -351,7 +348,7 @@ require (
 	go.starlark.net v0.0.0-20211013185944-b0039bd2cfe3 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/goleak v1.2.0 // indirect
-	go.uber.org/multierr v1.7.0 // indirect
+	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect

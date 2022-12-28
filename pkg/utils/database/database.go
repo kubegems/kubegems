@@ -18,10 +18,10 @@ import (
 	"time"
 
 	driver "github.com/go-sql-driver/mysql"
-	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/otel/gorm/tracing"
 )
 
 type Options struct {
@@ -63,7 +63,7 @@ func NewDatabase(options *Options) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := db.Use(otelgorm.NewPlugin()); err != nil {
+	if err := db.Use(tracing.NewPlugin()); err != nil {
 		return nil, err
 	}
 	return &Database{
