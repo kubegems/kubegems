@@ -340,8 +340,8 @@ func getAppsLogStatus(podList corev1.PodList, flowList v1beta1.FlowList) map[str
 // @Description 日志告警规则列表
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                                   true  "cluster"
-// @Param       namespace path     string                                                                   true  "namespace"
+// @Param       cluster   path     string                                        true "cluster"
+// @Param       namespace path     string                                        true "namespace"
 // @Param       preload   query    string                                                                   false "choices (Receivers, Receivers.AlertChannel)"
 // @Param       search    query    string                                                                   false "search in (name, expr)"
 // @Param       state     query    string                                                                   false "告警状态筛选(inactive, pending, firing)"
@@ -352,6 +352,25 @@ func getAppsLogStatus(podList corev1.PodList, flowList v1beta1.FlowList) map[str
 // @Security    JWT
 func (h *ObservabilityHandler) ListLoggingAlertRule(c *gin.Context) {
 	ret, err := h.listAlertRules(c, prometheus.AlertTypeLogging)
+	if err != nil {
+		handlers.NotOK(c, err)
+	}
+	handlers.OK(c, ret)
+}
+
+// ListLoggingAlertRulesStatus 日志告警规则状态
+// @Tags        Observability
+// @Summary     日志告警规则状态
+// @Description 日志告警规则状态
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                                   true  "cluster"
+// @Param       namespace path     string                                                                   true  "namespace"
+// @Success     200       {object} handlers.ResponseStruct{Data=PromeAlertCount} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/_/status [get]
+// @Security    JWT
+func (h *ObservabilityHandler) ListLoggingAlertRulesStatus(c *gin.Context) {
+	ret, err := h.listAlertRulesStatus(c, prometheus.AlertTypeLogging)
 	if err != nil {
 		handlers.NotOK(c, err)
 	}

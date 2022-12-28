@@ -288,8 +288,8 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 // @Description 监控告警规则列表
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                                   true  "cluster"
-// @Param       namespace path     string                                                                   true  "namespace"
+// @Param       cluster   path     string                                        true "cluster"
+// @Param       namespace path     string                                        true "namespace"
 // @Param       preload   query    string                                                                   false "choices (Receivers, Receivers.AlertChannel)"
 // @Param       search    query    string                                                                   false "search in (name, expr)"
 // @Param       state     query    string                                                                   false "告警状态筛选(inactive, pending, firing)"
@@ -300,6 +300,25 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 	ret, err := h.listAlertRules(c, prometheus.AlertTypeMonitor)
+	if err != nil {
+		handlers.NotOK(c, err)
+	}
+	handlers.OK(c, ret)
+}
+
+// ListMonitorAlertRulesStatus 监控告警规则状态
+// @Tags        Observability
+// @Summary     监控告警规则状态
+// @Description 监控告警规则状态
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                                   true  "cluster"
+// @Param       namespace path     string                                                                   true  "namespace"
+// @Success     200       {object} handlers.ResponseStruct{Data=PromeAlertCount} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/_/status [get]
+// @Security    JWT
+func (h *ObservabilityHandler) ListMonitorAlertRulesStatus(c *gin.Context) {
+	ret, err := h.listAlertRulesStatus(c, prometheus.AlertTypeMonitor)
 	if err != nil {
 		handlers.NotOK(c, err)
 	}

@@ -4931,6 +4931,15 @@ definitions:
           type: number
         type: object
     type: object
+  observability.PromeAlertCount:
+    properties:
+      firing:
+        type: integer
+      inactive:
+        type: integer
+      pending:
+        type: integer
+    type: object
   observability.TableRet:
     properties:
       count:
@@ -20848,6 +20857,39 @@ paths:
       summary: 创建日志告警规则
       tags:
       - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/_/status:
+    get:
+      consumes:
+      - application/json
+      description: 日志告警规则状态
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/observability.PromeAlertCount'
+              type: object
+      security:
+      - JWT: []
+      summary: 日志告警规则状态
+      tags:
+      - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name}:
     delete:
       consumes:
@@ -21243,6 +21285,39 @@ paths:
       security:
       - JWT: []
       summary: 创建监控告警规则
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/_/status:
+    get:
+      consumes:
+      - application/json
+      description: 监控告警规则状态
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  $ref: '#/definitions/observability.PromeAlertCount'
+              type: object
+      security:
+      - JWT: []
+      summary: 监控告警规则状态
       tags:
       - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name}:

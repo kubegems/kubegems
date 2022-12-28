@@ -767,14 +767,54 @@ func newDefaultSamplePair(start, end time.Time) []model.SamplePair {
 	return ret
 }
 
+type PromeAlertCount struct {
+	Inactive int `json:"inactive"`
+	Pending  int `json:"pending"`
+	Firing   int `json:"firing"`
+}
+
+func (h *ObservabilityHandler) listAlertRulesStatus(c *gin.Context, alerttype string) (PromeAlertCount, error) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	ret := PromeAlertCount{}
+	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
+		var err error
+		if alerttype == prometheus.AlertTypeMonitor {
+			realTimeAlertRules, err = cli.Extend().GetPromeAlertRules(ctx, "")
+		} else {
+			realTimeAlertRules, err = cli.Extend().GetLokiAlertRules(ctx)
+		}
+		if err != nil {
+			return errors.Wrap(err, "get alert rules status")
+		}
+		for k, v := range realTimeAlertRules {
+			if strings.HasPrefix(k, "gems-"+namespace) {
+				switch v.State {
+				case "inactive":
+					ret.Inactive++
+				case "pending":
+					ret.Pending++
+				case "firing":
+					ret.Firing++
+				}
+			}
+		}
+		return nil
+	}); err != nil {
+		return ret, err
+	}
+	return ret, nil
+}
+
 func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) (*handlers.PageData, error) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 
 	// update all alert rules state in this namespace
-	thisClusterAlerts := []*models.AlertRule{}
+	thisNSAlerts := []*models.AlertRule{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		err := h.GetDB().WithContext(ctx).Find(&thisClusterAlerts,
+		err := h.GetDB().WithContext(ctx).Find(&thisNSAlerts,
 			"alert_type = ? and cluster = ? and namespace = ?", alerttype, cluster, namespace).Error
 		if err != nil {
 			return err
@@ -789,7 +829,7 @@ func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) 
 			return errors.Wrap(err, "get prometheus alerts")
 		}
 
-		for _, v := range thisClusterAlerts {
+		for _, v := range thisNSAlerts {
 			if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(v.Namespace, v.Name)]; ok {
 				v.State = promalert.State
 			} else {

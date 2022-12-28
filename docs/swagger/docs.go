@@ -5534,6 +5534,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/_/status": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "日志告警规则状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "日志告警规则状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/observability.PromeAlertCount"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name}": {
             "get": {
                 "security": [
@@ -6185,6 +6241,62 @@ const docTemplate = `{
                                     "properties": {
                                         "Data": {
                                             "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/_/status": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "监控告警规则状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "监控告警规则状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/observability.PromeAlertCount"
                                         }
                                     }
                                 }
@@ -30316,6 +30428,20 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "number"
                     }
+                }
+            }
+        },
+        "observability.PromeAlertCount": {
+            "type": "object",
+            "properties": {
+                "firing": {
+                    "type": "integer"
+                },
+                "inactive": {
+                    "type": "integer"
+                },
+                "pending": {
+                    "type": "integer"
                 }
             }
         },
