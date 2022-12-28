@@ -89,12 +89,26 @@ func WithDefaultScheme(o *cluster.Options) {
 	o.Scheme = kube.GetScheme()
 }
 
-func NewClusterAndStart(ctx context.Context, config *rest.Config, options ...cluster.Option) (*Cluster, error) {
-	c, err := NewCluster(config, options...)
+func WithInNamespace(ns string) func(o *cluster.Options) {
+	return func(o *cluster.Options) {
+		o.Namespace = ns
+	}
+}
+
+func NewClusterAndStartWithIndexer(ctx context.Context, config *rest.Config, options ...cluster.Option) (*Cluster, error) {
+	c, err := NewClusterAndStart(ctx, config, options...)
 	if err != nil {
 		return nil, err
 	}
 	if err := indexer.CustomIndexPods(c.GetCache()); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func NewClusterAndStart(ctx context.Context, config *rest.Config, options ...cluster.Option) (*Cluster, error) {
+	c, err := NewCluster(config, options...)
+	if err != nil {
 		return nil, err
 	}
 	go c.Start(ctx)

@@ -27,12 +27,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/cli-runtime/pkg/printers"
+	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/kube"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -60,15 +62,29 @@ type EdgeManager struct {
 	HubStore     EdgeHubStore
 }
 
-func NewClusterManager(namespace string, selfhost string) (*EdgeManager, error) {
+func NewClusterManager(ctx context.Context, namespace string, selfhost string) (*EdgeManager, error) {
 	if namespace == "" {
 		namespace = kube.LocalNamespaceOrDefault(gems.NamespaceEdge)
 	}
-	cli, err := kube.NewLocalClient()
+	cfg, err := kube.AutoClientConfig()
 	if err != nil {
 		return nil, err
 	}
 
+	c, err := cluster.NewClusterAndStart(ctx, cfg, cluster.WithInNamespace(namespace))
+	if err != nil {
+		return nil, err
+	}
+	// add device id index
+	c.GetCache().IndexField(ctx, &v1beta1.EdgeCluster{}, "device-id", func(o client.Object) []string {
+		cluster, ok := o.(*v1beta1.EdgeCluster)
+		if !ok {
+			return nil
+		}
+		return []string{cluster.Status.Manufacture[AnnotationKeyDeviceID]}
+	})
+
+	cli := c.GetClient()
 	return &EdgeManager{
 		ClusterStore: EdgeClusterK8sStore{cli: cli, ns: namespace},
 		HubStore:     EdgeHubK8sStore{cli: cli, ns: namespace},
@@ -76,7 +92,11 @@ func NewClusterManager(namespace string, selfhost string) (*EdgeManager, error) 
 	}, nil
 }
 
-func (m *EdgeManager) ListPage(ctx context.Context, page, size int, search string, labels, manufacture labels.Selector) (response.TypedPage[v1beta1.EdgeCluster], error) {
+func (m *EdgeManager) ListPage(
+	ctx context.Context,
+	page, size int,
+	search string, labels, manufacture labels.Selector,
+) (response.TypedPage[v1beta1.EdgeCluster], error) {
 	total, list, err := m.ClusterStore.List(ctx, ListOptions{
 		Page:        page,
 		Size:        size,

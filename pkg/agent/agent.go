@@ -68,7 +68,7 @@ func Run(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	c, err := cluster.NewClusterAndStart(ctx, rest)
+	c, err := cluster.NewClusterAndStartWithIndexer(ctx, rest)
 	if err != nil {
 		return err
 	}

@@ -66,7 +66,7 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 	if err != nil {
 		return err
 	}
-	c, err := cluster.NewClusterAndStart(ctx, rest)
+	c, err := cluster.NewClusterAndStartWithIndexer(ctx, rest)
 	if err != nil {
 		return err
 	}
