@@ -266,6 +266,13 @@ func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context,
 				anno[AnnotationKeyEdgeAgentRegisterAddress] = val
 			}
 		}
+		if deviceid := anno[AnnotationKeyDeviceID]; deviceid != "" {
+			if cluster.Labels == nil {
+				cluster.Labels = map[string]string{}
+			}
+			// set device id in label to select
+			cluster.Labels[AnnotationKeyDeviceID] = deviceid
+		}
 		cluster.Status.Manufacture = anno // annotations as manufacture set
 		if connected {
 			if isrefresh {
