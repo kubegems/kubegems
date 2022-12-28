@@ -992,12 +992,7 @@ func setExpr(alertrule *models.AlertRule) error {
 				})
 			}
 
-			labelSet := set.NewSet[string]()
 			for _, m := range alertrule.PromqlGenerator.LabelMatchers {
-				if labelSet.Has(m.Name) {
-					return fmt.Errorf("duplicated label matcher: %s", m.String())
-				}
-				labelSet.Append(m.Name)
 				q.AddLabelMatchers(m.ToPromqlLabelMatcher())
 			}
 			alertrule.Expr = q.String()
