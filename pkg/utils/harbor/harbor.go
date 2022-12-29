@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"strconv"
 	"strings"
@@ -120,35 +119,17 @@ type Options struct {
 	Password string `json:"password,omitempty"`
 }
 
-func NewClient(host string, username, password string) (*Client, error) {
-	u, err := url.Parse(host)
-	if err != nil {
-		return nil, err
-	}
-	u.Path += apiVerisonPrefix
-
-	jar, err := cookiejar.New(&cookiejar.Options{})
-	if err != nil {
-		return nil, err
-	}
-	_ = jar
-
-	// login and get CSRF_TOKEN
-	return &Client{
-		httpclient: &http.Client{},
-		base:       u,
-		auth: HarborAuth{
-			Username: username,
-			Password: password,
-		},
-	}, nil
+func NewClient(server string, username, password string) *Client {
+	return &Client{OCIDistributionClient: OCIDistributionClient{
+		Server:   server,
+		Username: username,
+		Password: password,
+	}}
 }
 
 type Client struct {
-	httpclient *http.Client
-	auth       HarborAuth
-	csrftoken  string
-	base       *url.URL
+	OCIDistributionClient
+	csrftoken string
 }
 
 type ListProjectRepositoriesOptions struct {
@@ -410,7 +391,7 @@ func (c *Client) doRequest(ctx context.Context, method string, path string, data
 		body = bytes.NewBuffer(bts)
 	}
 
-	req, err := http.NewRequest(method, c.base.String()+path, body)
+	req, err := http.NewRequest(method, c.Server+apiVerisonPrefix+path, body)
 	if err != nil {
 		return err
 	}
@@ -426,8 +407,8 @@ func (c *Client) doRequest(ctx context.Context, method string, path string, data
 		// always add json content header
 		req.Header.Add("Content-Type", "application/json")
 	}
-	req.SetBasicAuth(c.auth.Username, c.auth.Password)
-	resp, err := c.httpclient.Do(req)
+	req.SetBasicAuth(c.Username, c.Password)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
