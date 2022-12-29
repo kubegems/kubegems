@@ -177,7 +177,14 @@ func (m *PluginManager) fillSchema(ctx context.Context, pv *PluginVersion) error
 	if err != nil {
 		return err
 	} else {
-		pv.Schema = string(chart.Schema)
+		files := map[string]string{}
+		for _, item := range chart.Files {
+			if !strings.HasSuffix(item.Name, ".json") {
+				continue
+			}
+			files[item.Name] = string(item.Data)
+		}
+		pv.Files = files
 		return nil
 	}
 }

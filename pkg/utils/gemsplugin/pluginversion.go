@@ -43,7 +43,7 @@ type PluginVersion struct {
 	Requirements     string                      `json:"requirements,omitempty"` // dependecies requirements
 	Message          string                      `json:"message,omitempty"`
 	Values           pluginsv1beta1.Values       `json:"values,omitempty"`
-	Schema           string                      `json:"schema"`
+	Files            map[string]string           `json:"files,omitempty"`
 	ValuesFrom       []pluginsv1beta1.ValuesFrom `json:"valuesFrom,omitempty"`
 	Priority         int                         `json:"priority,omitempty"`
 }
