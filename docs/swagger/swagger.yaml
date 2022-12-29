@@ -3472,6 +3472,11 @@ definitions:
       isOpen:
         description: 是否启用
         type: boolean
+      k8SResourceStatus:
+        $ref: '#/definitions/gormdatatypes.JSONMap'
+        description: |-
+          eg: status: ok/error
+          reason: alertmanagerconfig lost/receiver not matched/...
       logqlGenerator:
         $ref: '#/definitions/models.LogqlGenerator'
       message:
@@ -6262,7 +6267,7 @@ definitions:
           Defaults to "TCP".
           +optional
           +default="TCP"
-        type: integer
+        type: string
     type: object
   v1.ContainerState:
     properties:
@@ -10132,7 +10137,7 @@ definitions:
         description: |-
           Protocol is the protocol of the service port of which status is recorded here
           The supported values are: "TCP", "UDP", "SCTP"
-        type: integer
+        type: string
     type: object
   v1.PortworxVolumeSource:
     properties:
@@ -11309,7 +11314,7 @@ definitions:
           Default is TCP.
           +default="TCP"
           +optional
-        type: integer
+        type: string
       targetPort:
         $ref: '#/definitions/intstr.IntOrString'
         description: |-
@@ -20601,6 +20606,44 @@ paths:
       security:
       - JWT: []
       summary: 启用告警规则
+      tags:
+      - Observability
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/message:
+    post:
+      consumes:
+      - application/json
+      description: 生成告警规则消息
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 生成告警规则消息
       tags:
       - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/history:

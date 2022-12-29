@@ -5119,6 +5119,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/message": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "生成告警规则消息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Observability"
+                ],
+                "summary": "生成告警规则消息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "cluster",
+                        "name": "cluster",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "resp",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/history": {
             "get": {
                 "security": [
@@ -28436,6 +28499,10 @@ const docTemplate = `{
                     "description": "是否启用",
                     "type": "boolean"
                 },
+                "k8SResourceStatus": {
+                    "description": "eg: status: ok/error\nreason: alertmanagerconfig lost/receiver not matched/...",
+                    "$ref": "#/definitions/gormdatatypes.JSONMap"
+                },
                 "logqlGenerator": {
                     "$ref": "#/definitions/models.LogqlGenerator"
                 },
@@ -31874,7 +31941,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "Protocol for port. Must be UDP, TCP, or SCTP.\nDefaults to \"TCP\".\n+optional\n+default=\"TCP\"",
-                    "type": "integer"
+                    "type": "string"
                 }
             }
         },
@@ -34283,7 +34350,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "Protocol is the protocol of the service port of which status is recorded here\nThe supported values are: \"TCP\", \"UDP\", \"SCTP\"",
-                    "type": "integer"
+                    "type": "string"
                 }
             }
         },
@@ -35008,7 +35075,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\".\nDefault is TCP.\n+default=\"TCP\"\n+optional",
-                    "type": "integer"
+                    "type": "string"
                 },
                 "targetPort": {
                     "description": "Number or name of the port to access on the pods targeted by the service.\nNumber must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.\nIf this is a string, it will be looked up as a named port in the\ntarget Pod's container ports. If this is not specified, the value\nof the 'port' field is used (an identity map).\nThis field is ignored for services with clusterIP=None, and should be\nomitted or set equal to the 'port' field.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service\n+optional",

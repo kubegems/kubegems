@@ -414,19 +414,14 @@ func (h *ObservabilityHandler) getLoggingAlertReq(c *gin.Context) (observe.Loggi
 	return req, nil
 }
 
-func (h *ObservabilityHandler) syncLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
-	cli, err := h.GetAgents().ClientOf(ctx, alertrule.Cluster)
-	if err != nil {
-		return err
-	}
-
-	if err := syncEmailSecret(ctx, cli, alertrule); err != nil {
+func (p *AlertRuleProcessor) syncLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync secret failed")
 	}
-	if err := syncLokiRules(ctx, cli, alertrule); err != nil {
+	if err := p.syncLokiRules(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync loki rules failed")
 	}
-	if err := syncAlertmanagerConfig(ctx, cli, alertrule); err != nil {
+	if err := p.syncAlertmanagerConfig(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync alertmanagerconfig failed")
 	}
 	return nil
@@ -437,7 +432,7 @@ const (
 	LokiRecordingRulesKey  = "kubegems-loki-recording-rules.yaml"
 )
 
-func syncLokiRules(ctx context.Context, cli agents.Client, alertrule *models.AlertRule) error {
+func (p *AlertRuleProcessor) syncLokiRules(ctx context.Context, alertrule *models.AlertRule) error {
 	cm := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: gems.NamespaceLogging,
@@ -468,7 +463,7 @@ func syncLokiRules(ctx context.Context, cli agents.Client, alertrule *models.Ale
 		thisGroup.Rules = append(thisGroup.Rules, rule)
 	}
 
-	_, err = controllerutil.CreateOrUpdate(ctx, cli, cm, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, p.cli, cm, func() error {
 		// get from cm
 		allgroups := rulefmt.RuleGroups{}
 		if groupstr, ok := cm.Data[alertrule.Namespace]; ok {
@@ -506,18 +501,14 @@ func syncLokiRules(ctx context.Context, cli agents.Client, alertrule *models.Ale
 	return err
 }
 
-func (h *ObservabilityHandler) deleteLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
-	cli, err := h.GetAgents().ClientOf(ctx, alertrule.Cluster)
-	if err != nil {
-		return err
-	}
+func (p *AlertRuleProcessor) deleteLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
 	cm := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: gems.NamespaceLogging,
 			Name:      LoggingAlertRuleCMName,
 		},
 	}
-	if _, err := controllerutil.CreateOrUpdate(ctx, cli, cm, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, p.cli, cm, func() error {
 		// get from cm
 		allgroups := rulefmt.RuleGroups{}
 		if groupstr, ok := cm.Data[alertrule.Namespace]; ok {
@@ -554,7 +545,7 @@ func (h *ObservabilityHandler) deleteLoggingAlertRule(ctx context.Context, alert
 		return errors.Wrap(err, "delete from loki rules")
 	}
 
-	if err := cli.Delete(ctx, &v1alpha1.AlertmanagerConfig{
+	if err := p.cli.Delete(ctx, &v1alpha1.AlertmanagerConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: alertrule.Namespace,
 			Name:      alertrule.Name,
@@ -563,7 +554,7 @@ func (h *ObservabilityHandler) deleteLoggingAlertRule(ctx context.Context, alert
 		return errors.Wrap(err, "delete from alertmanager config")
 	}
 
-	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, cli)
+	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
 }
 
 // CreateLoggingAlertRule 创建日志告警规则
@@ -579,34 +570,33 @@ func (h *ObservabilityHandler) deleteLoggingAlertRule(ctx context.Context, alert
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [post]
 // @Security    JWT
 func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
-	req, err := h.getAlertRuleReq(c)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	ctx := c.Request.Context()
-	h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
-	action := i18n.Sprintf(ctx, "create")
-	module := i18n.Sprintf(ctx, "logging alert rule")
-	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		allRules := []models.AlertRule{}
-		if err := tx.Find(&allRules, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
+		if err != nil {
 			return err
 		}
-		if len(allRules) > 0 {
-			return errors.Errorf("alert rule %s is already exist", req.Name)
-		}
-		for _, rec := range req.Receivers {
-			if rec.ID > 0 {
-				return errors.Errorf("receiver's id should be null when create")
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "create")
+		module := i18n.Sprintf(ctx, "logging alert rule")
+		h.SetAuditData(c, action, module, req.Name)
+		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+			allRules := []models.AlertRule{}
+			if err := tx.Find(&allRules, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
+				return err
 			}
-		}
-		if err := tx.Create(req).Error; err != nil {
-			return err
-		}
-		return h.syncLoggingAlertRule(ctx, req)
+			if len(allRules) > 0 {
+				return errors.Errorf("alert rule %s is already exist", req.Name)
+			}
+			for _, rec := range req.Receivers {
+				if rec.ID > 0 {
+					return errors.Errorf("receiver's id should be null when create")
+				}
+			}
+			if err := tx.Create(req).Error; err != nil {
+				return err
+			}
+			return p.syncLoggingAlertRule(ctx, req)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -627,26 +617,25 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [put]
 // @Security    JWT
 func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
-	req, err := h.getAlertRuleReq(c)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	ctx := c.Request.Context()
-	h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
-	action := i18n.Sprintf(ctx, "update")
-	module := i18n.Sprintf(ctx, "logging alert rule")
-	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := updateReceiversInDB(req, tx); err != nil {
-			return errors.Wrap(err, "update receivers")
-		}
-		if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "logql_generator").
-			Updates(req).Error; err != nil {
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
+		if err != nil {
 			return err
 		}
-		return h.syncLoggingAlertRule(ctx, req)
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "update")
+		module := i18n.Sprintf(ctx, "logging alert rule")
+		h.SetAuditData(c, action, module, req.Name)
+		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := updateReceiversInDB(req, tx); err != nil {
+				return errors.Wrap(err, "update receivers")
+			}
+			if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "logql_generator").
+				Updates(req).Error; err != nil {
+				return err
+			}
+			return p.syncLoggingAlertRule(ctx, req)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -672,21 +661,21 @@ func (h *ObservabilityHandler) DeleteLoggingAlertRule(c *gin.Context) {
 		Namespace: c.Param("namespace"),
 		Name:      c.Param("name"),
 	}
+	if err := h.withAlertRuleProcessor(c.Request.Context(), req.Cluster, func(ctx context.Context, p *AlertRuleProcessor) error {
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "delete")
+		module := i18n.Sprintf(ctx, "logging alert rule")
+		h.SetAuditData(c, action, module, req.Name)
 
-	ctx := c.Request.Context()
-	h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
-	action := i18n.Sprintf(ctx, "delete")
-	module := i18n.Sprintf(ctx, "logging alert rule")
-	h.SetAuditData(c, action, module, req.Name)
-
-	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(req, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
-			return err
-		}
-		if err := tx.Delete(req).Error; err != nil {
-			return err
-		}
-		return h.deleteLoggingAlertRule(ctx, req)
+		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := tx.First(req, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
+				return err
+			}
+			if err := tx.Delete(req).Error; err != nil {
+				return err
+			}
+			return p.deleteLoggingAlertRule(ctx, req)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

@@ -17,7 +17,6 @@ package observability
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -30,7 +29,6 @@ import (
 	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -302,6 +300,7 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 	ret, err := h.listAlertRules(c, prometheus.AlertTypeMonitor)
 	if err != nil {
 		handlers.NotOK(c, err)
+		return
 	}
 	handlers.OK(c, ret)
 }
@@ -321,6 +320,7 @@ func (h *ObservabilityHandler) ListMonitorAlertRulesStatus(c *gin.Context) {
 	ret, err := h.listAlertRulesStatus(c, prometheus.AlertTypeMonitor)
 	if err != nil {
 		handlers.NotOK(c, err)
+		return
 	}
 	handlers.OK(c, ret)
 }
@@ -341,6 +341,7 @@ func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
 	ret, err := h.getAlertRule(c, prometheus.AlertTypeMonitor)
 	if err != nil {
 		handlers.NotOK(c, err)
+		return
 	}
 	handlers.OK(c, ret)
 }
@@ -363,7 +364,7 @@ func (h *ObservabilityHandler) withMonitorAlertReq(c *gin.Context, f func(req ob
 	return f(req)
 }
 
-func syncEmailSecret(ctx context.Context, cli agents.Client, alertrule *models.AlertRule) error {
+func (p *AlertRuleProcessor) syncEmailSecret(ctx context.Context, alertrule *models.AlertRule) error {
 	emails := map[string]*channels.Email{}
 	for _, rec := range alertrule.Receivers {
 		switch v := rec.AlertChannel.ChannelConfig.ChannelIf.(type) {
@@ -379,7 +380,7 @@ func syncEmailSecret(ctx context.Context, cli agents.Client, alertrule *models.A
 		},
 		Type: v1.SecretTypeOpaque,
 	}
-	_, err := controllerutil.CreateOrUpdate(ctx, cli, sec, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, sec, func() error {
 		if sec.Data == nil {
 			sec.Data = make(map[string][]byte)
 		}
@@ -391,7 +392,7 @@ func syncEmailSecret(ctx context.Context, cli agents.Client, alertrule *models.A
 	return err
 }
 
-func syncPrometheusRule(ctx context.Context, cli agents.Client, alertrule *models.AlertRule) error {
+func (p *AlertRuleProcessor) syncPrometheusRule(ctx context.Context, alertrule *models.AlertRule) error {
 	prule := &monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: alertrule.Namespace,
@@ -402,7 +403,7 @@ func syncPrometheusRule(ctx context.Context, cli agents.Client, alertrule *model
 			},
 		},
 	}
-	_, err := controllerutil.CreateOrUpdate(ctx, cli, prule, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, prule, func() error {
 		rg := monitoringv1.RuleGroup{Name: alertrule.Name}
 		for _, level := range alertrule.AlertLevels {
 			rule := monitoringv1.Rule{
@@ -427,118 +428,21 @@ func syncPrometheusRule(ctx context.Context, cli agents.Client, alertrule *model
 	return err
 }
 
-func syncAlertmanagerConfig(ctx context.Context, cli agents.Client, alertrule *models.AlertRule) error {
-	// alertmanagerconfig
-	amcfg := &v1alpha1.AlertmanagerConfig{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: alertrule.Namespace,
-			Name:      alertrule.Name,
-			Labels: map[string]string{
-				gems.LabelAlertmanagerConfigType: prometheus.AlertTypeMonitor,
-				gems.LabelAlertmanagerConfigName: alertrule.Name,
-			},
-		},
-	}
-	_, err := controllerutil.CreateOrUpdate(ctx, cli, amcfg, func() error {
-		amcfg.Spec = v1alpha1.AlertmanagerConfigSpec{
-			Route: &v1alpha1.Route{
-				Receiver:      prometheus.NullReceiverName,
-				GroupBy:       []string{prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel},
-				GroupWait:     "30s",
-				GroupInterval: "30s",
-				Routes:        []apiextensionsv1.JSON{},
-			},
-			Receivers: []v1alpha1.Receiver{
-				prometheus.NullReceiver,
-			},
-			InhibitRules: []v1alpha1.InhibitRule{},
-		}
-		for _, rec := range alertrule.Receivers {
-			rawRouteData, _ := json.Marshal(v1alpha1.Route{
-				Receiver:       rec.AlertChannel.ReceiverName(),
-				RepeatInterval: rec.Interval,
-				Continue:       true,
-				Matchers: []v1alpha1.Matcher{
-					{
-						Name:  prometheus.AlertNamespaceLabel,
-						Value: alertrule.Namespace,
-					},
-					{
-						Name:  prometheus.AlertNameLabel,
-						Value: alertrule.Name,
-					},
-				},
-			})
-			// receiver
-			amcfg.Spec.Receivers = append(amcfg.Spec.Receivers, rec.AlertChannel.ToAlertmanagerReceiver())
-			// route
-			amcfg.Spec.Route.Routes = append(amcfg.Spec.Route.Routes, apiextensionsv1.JSON{Raw: rawRouteData})
-		}
-		// inhibit label
-		if len(alertrule.InhibitLabels) > 0 {
-			amcfg.Spec.InhibitRules = append(amcfg.Spec.InhibitRules, v1alpha1.InhibitRule{
-				SourceMatch: []v1alpha1.Matcher{
-					{
-						Name:  prometheus.AlertNamespaceLabel,
-						Value: alertrule.Namespace,
-					},
-					{
-						Name:  prometheus.AlertNameLabel,
-						Value: alertrule.Name,
-					},
-					{
-						Name:  prometheus.SeverityLabel,
-						Value: prometheus.SeverityCritical,
-						Regex: false,
-					},
-				},
-				TargetMatch: []v1alpha1.Matcher{
-					{
-						Name:  prometheus.AlertNamespaceLabel,
-						Value: alertrule.Namespace,
-					},
-					{
-						Name:  prometheus.AlertNameLabel,
-						Value: alertrule.Name,
-					},
-					{
-						Name:  prometheus.SeverityLabel,
-						Value: prometheus.SeverityError,
-						Regex: false,
-					},
-				},
-				Equal: append(alertrule.InhibitLabels, prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel),
-			})
-		}
-		return nil
-	})
-	return err
-}
-
-func (h *ObservabilityHandler) syncMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
-	cli, err := h.GetAgents().ClientOf(ctx, alertrule.Cluster)
-	if err != nil {
-		return err
-	}
-
-	if err := syncEmailSecret(ctx, cli, alertrule); err != nil {
+func (p *AlertRuleProcessor) syncMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync secret failed")
 	}
-	if err := syncPrometheusRule(ctx, cli, alertrule); err != nil {
+	if err := p.syncPrometheusRule(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync prometheusrule failed")
 	}
-	if err := syncAlertmanagerConfig(ctx, cli, alertrule); err != nil {
+	if err := p.syncAlertmanagerConfig(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync alertmanagerconfig failed")
 	}
 	return nil
 }
 
-func (h *ObservabilityHandler) deleteMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
-	cli, err := h.GetAgents().ClientOf(ctx, alertrule.Cluster)
-	if err != nil {
-		return err
-	}
-	if err := cli.Delete(ctx, &monitoringv1.PrometheusRule{
+func (p *AlertRuleProcessor) deleteMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	if err := p.cli.Delete(ctx, &monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: alertrule.Namespace,
 			Name:      alertrule.Name,
@@ -546,7 +450,7 @@ func (h *ObservabilityHandler) deleteMonitorAlertRule(ctx context.Context, alert
 	}); err != nil && !kerrors.IsNotFound(err) {
 		return err
 	}
-	if err := cli.Delete(ctx, &v1alpha1.AlertmanagerConfig{
+	if err := p.cli.Delete(ctx, &v1alpha1.AlertmanagerConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: alertrule.Namespace,
 			Name:      alertrule.Name,
@@ -555,7 +459,7 @@ func (h *ObservabilityHandler) deleteMonitorAlertRule(ctx context.Context, alert
 		return err
 	}
 
-	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, cli)
+	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
 }
 
 // CreateMonitorAlertRule 创建监控告警规则
@@ -571,34 +475,34 @@ func (h *ObservabilityHandler) deleteMonitorAlertRule(ctx context.Context, alert
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [post]
 // @Security    JWT
 func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
-	req, err := h.getAlertRuleReq(c)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	ctx := c.Request.Context()
-	h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
-	action := i18n.Sprintf(ctx, "create")
-	module := i18n.Sprintf(ctx, "monitor alert rule")
-	h.SetAuditData(c, action, module, req.Name)
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
+		if err != nil {
+			return err
+		}
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "create")
+		module := i18n.Sprintf(ctx, "monitor alert rule")
+		h.SetAuditData(c, action, module, req.Name)
 
-	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		allRules := []models.AlertRule{}
-		if err := tx.Find(&allRules, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
-			return err
-		}
-		if len(allRules) > 0 {
-			return errors.Errorf("alert rule %s is already exist", req.Name)
-		}
-		for _, rec := range req.Receivers {
-			if rec.ID > 0 {
-				return errors.Errorf("receiver's id should be null when create")
+		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+			allRules := []models.AlertRule{}
+			if err := tx.Find(&allRules, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
+				return err
 			}
-		}
-		if err := tx.Create(req).Error; err != nil {
-			return err
-		}
-		return h.syncMonitorAlertRule(ctx, req)
+			if len(allRules) > 0 {
+				return errors.Errorf("alert rule %s is already exist", req.Name)
+			}
+			for _, rec := range req.Receivers {
+				if rec.ID > 0 {
+					return errors.Errorf("receiver's id should be null when create")
+				}
+			}
+			if err := tx.Create(req).Error; err != nil {
+				return err
+			}
+			return p.syncMonitorAlertRule(ctx, req)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -637,27 +541,26 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [put]
 // @Security    JWT
 func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
-	req, err := h.getAlertRuleReq(c)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-
-	ctx := c.Request.Context()
-	h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
-	action := i18n.Sprintf(ctx, "update")
-	module := i18n.Sprintf(ctx, "monitor alert rule")
-	h.SetAuditData(c, action, module, req.Name)
-
-	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := updateReceiversInDB(req, tx); err != nil {
-			return errors.Wrap(err, "update receivers")
-		}
-		if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "promql_generator").
-			Updates(req).Error; err != nil {
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
+		if err != nil {
 			return err
 		}
-		return h.syncMonitorAlertRule(ctx, req)
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "update")
+		module := i18n.Sprintf(ctx, "monitor alert rule")
+		h.SetAuditData(c, action, module, req.Name)
+
+		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := updateReceiversInDB(req, tx); err != nil {
+				return errors.Wrap(err, "update receivers")
+			}
+			if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "promql_generator").
+				Updates(req).Error; err != nil {
+				return err
+			}
+			return p.syncMonitorAlertRule(ctx, req)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -683,21 +586,21 @@ func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
 		Namespace: c.Param("namespace"),
 		Name:      c.Param("name"),
 	}
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "delete")
+		module := i18n.Sprintf(ctx, "monitor alert rule")
+		h.SetAuditData(c, action, module, req.Name)
 
-	ctx := c.Request.Context()
-	h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
-	action := i18n.Sprintf(ctx, "delete")
-	module := i18n.Sprintf(ctx, "monitor alert rule")
-	h.SetAuditData(c, action, module, req.Name)
-
-	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(req, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
-			return err
-		}
-		if err := tx.Delete(req).Error; err != nil {
-			return err
-		}
-		return h.deleteMonitorAlertRule(ctx, req)
+		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := tx.First(req, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
+				return err
+			}
+			if err := tx.Delete(req).Error; err != nil {
+				return err
+			}
+			return p.deleteMonitorAlertRule(ctx, req)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

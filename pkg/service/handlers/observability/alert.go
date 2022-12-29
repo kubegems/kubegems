@@ -16,6 +16,7 @@ package observability
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -27,20 +28,26 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql/parser"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 	"kubegems.io/kubegems/pkg/utils/set"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // DisableAlertRule 禁用告警规则
@@ -115,6 +122,34 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, "ok")
+}
+
+// GenerateAlertMessage 生成告警规则消息
+// @Tags        Observability
+// @Summary     生成告警规则消息
+// @Description 生成告警规则消息
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       name      path     string                               true "name"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/message [post]
+// @Security    JWT
+func (h *ObservabilityHandler) GenerateAlertMessage(c *gin.Context) {
+	var msg string
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
+		if err != nil {
+			return err
+		}
+		msg, err = genarateMessage(req)
+		return err
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, msg)
 }
 
 // Deprecated. use cli.Extend().ListSilences instead
@@ -908,34 +943,64 @@ func (h *ObservabilityHandler) getAlertRule(c *gin.Context, alerttype string) (*
 	return &ret, nil
 }
 
-func (h *ObservabilityHandler) getAlertRuleReq(c *gin.Context) (*models.AlertRule, error) {
+type AlertRuleProcessor struct {
+	cli agents.Client
+	db  *database.Database
+}
+
+func NewAlertRuleProcessor(cli agents.Client, db *database.Database) *AlertRuleProcessor {
+	return &AlertRuleProcessor{cli: cli, db: db}
+}
+
+func (p *AlertRuleProcessor) DBWithCtx(ctx context.Context) *gorm.DB {
+	return p.db.DB().WithContext(ctx)
+}
+
+func (h *ObservabilityHandler) withAlertRuleProcessor(ctx context.Context, cluster string, f func(ctx context.Context, p *AlertRuleProcessor) error) error {
+	cli, err := h.GetAgents().ClientOf(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	processor := NewAlertRuleProcessor(cli, h.GetDataBase())
+	return f(ctx, processor)
+}
+
+func (p *AlertRuleProcessor) getAlertRuleReq(c *gin.Context) (*models.AlertRule, error) {
 	req := &models.AlertRule{}
-	if err := c.BindJSON(&req); err != nil {
+	err := c.BindJSON(&req)
+	if err != nil {
 		return nil, err
 	}
 	req.Cluster = c.Param("cluster")
 	req.Namespace = c.Param("namespace")
-	if strings.Contains(c.FullPath(), "monitor/alerts") {
-		req.AlertType = prometheus.AlertTypeMonitor
-	} else {
-		req.AlertType = prometheus.AlertTypeLogging
+
+	// set alert type
+	if req.AlertType == "" {
+		if strings.Contains(c.FullPath(), "monitor/alerts") {
+			req.AlertType = prometheus.AlertTypeMonitor
+		} else {
+			req.AlertType = prometheus.AlertTypeLogging
+		}
 	}
 	// set tpl
 	if req.PromqlGenerator != nil {
-		tpl, err := h.GetDataBase().FindPromqlTpl(req.PromqlGenerator.Scope, req.PromqlGenerator.Resource, req.PromqlGenerator.Rule)
+		tpl, err := p.db.FindPromqlTpl(req.PromqlGenerator.Scope, req.PromqlGenerator.Resource, req.PromqlGenerator.Rule)
 		if err != nil {
 			return nil, err
 		}
 		req.PromqlGenerator.Tpl = tpl
 	}
 
-	if err := setMessage(req); err != nil {
-		return nil, err
+	if req.Message == "" {
+		req.Message, err = genarateMessage(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err := setExpr(req); err != nil {
 		return nil, err
 	}
-	if err := setReceivers(req, h.GetDB().WithContext(c.Request.Context())); err != nil {
+	if err := setReceivers(req, p.db.DB().WithContext(c.Request.Context())); err != nil {
 		return nil, err
 	}
 	if err := checkAlertLevels(req); err != nil {
@@ -944,36 +1009,35 @@ func (h *ObservabilityHandler) getAlertRuleReq(c *gin.Context) (*models.AlertRul
 	return req, nil
 }
 
-func setMessage(alertrule *models.AlertRule) error {
+func genarateMessage(alertrule *models.AlertRule) (string, error) {
+	var ret string
 	switch alertrule.AlertType {
 	case prometheus.AlertTypeMonitor:
 		if alertrule.PromqlGenerator != nil {
-			if alertrule.Message == "" {
-				alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] ", alertrule.Name, prometheus.AlertClusterKey)
-				for _, label := range alertrule.PromqlGenerator.Tpl.Labels {
-					alertrule.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
-				}
-				unitValue, err := prometheus.ParseUnit(alertrule.PromqlGenerator.Unit)
-				if err != nil {
-					return err
-				}
-				alertrule.Message += fmt.Sprintf("%s trigger alert, value: %s%s", alertrule.PromqlGenerator.Tpl.RuleShowName, prometheus.ValueAnnotationExpr, unitValue.Show)
+			ret = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] ", alertrule.Name, prometheus.AlertClusterKey)
+			for _, label := range alertrule.PromqlGenerator.Tpl.Labels {
+				ret += fmt.Sprintf("[%s:{{ $labels.%s }}] ", label, label)
 			}
+			unitValue, err := prometheus.ParseUnit(alertrule.PromqlGenerator.Unit)
+			if err != nil {
+				return "", err
+			}
+			ret += fmt.Sprintf("%s trigger alert, value: %s%s", alertrule.PromqlGenerator.Tpl.RuleShowName, prometheus.ValueAnnotationExpr, unitValue.Show)
 		} else {
-			alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
+			ret = fmt.Sprintf("%s: [cluster:{{ $externalLabels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
 		}
 	case prometheus.AlertTypeLogging:
 		if alertrule.LogqlGenerator != nil {
-			alertrule.Message = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] [namespace: {{ $labels.namespace }}] ", alertrule.Name, prometheus.AlertClusterKey)
+			ret = fmt.Sprintf("%s: [集群:{{ $labels.%s }}] [namespace: {{ $labels.namespace }}] ", alertrule.Name, prometheus.AlertClusterKey)
 			for _, m := range alertrule.LogqlGenerator.LabelMatchers {
 				alertrule.Message += fmt.Sprintf("[%s:{{ $labels.%s }}] ", m.Name, m.Name)
 			}
-			alertrule.Message += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", alertrule.LogqlGenerator.Duration, alertrule.LogqlGenerator.Match, prometheus.ValueAnnotationExpr)
+			ret += fmt.Sprintf("日志中过去 %s 出现字符串 [%s] 次数触发告警, 当前值: %s", alertrule.LogqlGenerator.Duration, alertrule.LogqlGenerator.Match, prometheus.ValueAnnotationExpr)
 		} else {
-			alertrule.Message = fmt.Sprintf("%s: [cluster:{{ $labels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
+			ret = fmt.Sprintf("%s: [cluster:{{ $labels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
 		}
 	}
-	return nil
+	return ret, nil
 }
 
 func setExpr(alertrule *models.AlertRule) error {
@@ -1123,4 +1187,92 @@ func updateReceiversInDB(alertrule *models.AlertRule, db *gorm.DB) error {
 		}
 	}
 	return nil
+}
+
+func (p *AlertRuleProcessor) syncAlertmanagerConfig(ctx context.Context, alertrule *models.AlertRule) error {
+	// alertmanagerconfig
+	amcfg := &v1alpha1.AlertmanagerConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: alertrule.Namespace,
+			Name:      alertrule.Name,
+			Labels: map[string]string{
+				gems.LabelAlertmanagerConfigType: prometheus.AlertTypeMonitor,
+				gems.LabelAlertmanagerConfigName: alertrule.Name,
+			},
+		},
+	}
+	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, amcfg, func() error {
+		amcfg.Spec = v1alpha1.AlertmanagerConfigSpec{
+			Route: &v1alpha1.Route{
+				Receiver:      prometheus.NullReceiverName,
+				GroupBy:       []string{prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel},
+				GroupWait:     "30s",
+				GroupInterval: "30s",
+				Routes:        []apiextensionsv1.JSON{},
+			},
+			Receivers: []v1alpha1.Receiver{
+				prometheus.NullReceiver,
+			},
+			InhibitRules: []v1alpha1.InhibitRule{},
+		}
+		for _, rec := range alertrule.Receivers {
+			rawRouteData, _ := json.Marshal(v1alpha1.Route{
+				Receiver:       rec.AlertChannel.ReceiverName(),
+				RepeatInterval: rec.Interval,
+				Continue:       true,
+				Matchers: []v1alpha1.Matcher{
+					{
+						Name:  prometheus.AlertNamespaceLabel,
+						Value: alertrule.Namespace,
+					},
+					{
+						Name:  prometheus.AlertNameLabel,
+						Value: alertrule.Name,
+					},
+				},
+			})
+			// receiver
+			amcfg.Spec.Receivers = append(amcfg.Spec.Receivers, rec.AlertChannel.ToAlertmanagerReceiver())
+			// route
+			amcfg.Spec.Route.Routes = append(amcfg.Spec.Route.Routes, apiextensionsv1.JSON{Raw: rawRouteData})
+		}
+		// inhibit label
+		if len(alertrule.InhibitLabels) > 0 {
+			amcfg.Spec.InhibitRules = append(amcfg.Spec.InhibitRules, v1alpha1.InhibitRule{
+				SourceMatch: []v1alpha1.Matcher{
+					{
+						Name:  prometheus.AlertNamespaceLabel,
+						Value: alertrule.Namespace,
+					},
+					{
+						Name:  prometheus.AlertNameLabel,
+						Value: alertrule.Name,
+					},
+					{
+						Name:  prometheus.SeverityLabel,
+						Value: prometheus.SeverityCritical,
+						Regex: false,
+					},
+				},
+				TargetMatch: []v1alpha1.Matcher{
+					{
+						Name:  prometheus.AlertNamespaceLabel,
+						Value: alertrule.Namespace,
+					},
+					{
+						Name:  prometheus.AlertNameLabel,
+						Value: alertrule.Name,
+					},
+					{
+						Name:  prometheus.SeverityLabel,
+						Value: prometheus.SeverityError,
+						Regex: false,
+					},
+				},
+				Equal: append(alertrule.InhibitLabels, prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel),
+			})
+		}
+		return nil
+	})
+	return err
 }
