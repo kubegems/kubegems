@@ -994,6 +994,9 @@ func (p *AlertRuleProcessor) getAlertRuleReq(c *gin.Context) (*models.AlertRule,
 	}
 	req.Cluster = c.Param("cluster")
 	req.Namespace = c.Param("namespace")
+	if req.Namespace == "" {
+		return nil, errors.Errorf("namespace can't be empty")
+	}
 
 	// set alert type
 	if req.AlertType == "" {
@@ -1021,7 +1024,7 @@ func (p *AlertRuleProcessor) getAlertRuleReq(c *gin.Context) (*models.AlertRule,
 	if err := setExpr(req); err != nil {
 		return nil, err
 	}
-	if err := setReceivers(req, p.db.DB().WithContext(c.Request.Context())); err != nil {
+	if err := SetReceivers(req, p.db.DB().WithContext(c.Request.Context())); err != nil {
 		return nil, err
 	}
 	if err := checkAlertLevels(req); err != nil {
@@ -1069,7 +1072,7 @@ func setExpr(alertrule *models.AlertRule) error {
 			if err != nil {
 				return err
 			}
-			if alertrule.Namespace != prometheus.GlobalAlertNamespace && alertrule.Namespace != "" {
+			if alertrule.Namespace != prometheus.GlobalAlertNamespace {
 				alertrule.PromqlGenerator.LabelMatchers = append(alertrule.PromqlGenerator.LabelMatchers, promql.LabelMatcher{
 					Type:  promql.MatchEqual,
 					Name:  "namespace",
@@ -1124,7 +1127,7 @@ func setExpr(alertrule *models.AlertRule) error {
 	if hasOp {
 		return fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
 	}
-	if alertrule.Namespace != "" && alertrule.Namespace != prometheus.GlobalAlertNamespace {
+	if alertrule.Namespace != prometheus.GlobalAlertNamespace {
 		if !(strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace=~"%s"`, alertrule.Namespace)) ||
 			strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace))) {
 			return fmt.Errorf(`query expr %[1]s must contains namespace %[2]s, eg: {namespace="%[2]s"}`, alertrule.Expr, alertrule.Namespace)
@@ -1133,7 +1136,7 @@ func setExpr(alertrule *models.AlertRule) error {
 	return nil
 }
 
-func setReceivers(alertrule *models.AlertRule, db *gorm.DB) error {
+func SetReceivers(alertrule *models.AlertRule, db *gorm.DB) error {
 	if len(alertrule.Receivers) == 0 {
 		return fmt.Errorf("告警接收器不能为空")
 	}
@@ -1294,7 +1297,7 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 		InhibitRules: []v1alpha1.InhibitRule{},
 	}
 	for _, rec := range alertrule.Receivers {
-		rawRouteData, _ := json.Marshal(v1alpha1.Route{
+		route := v1alpha1.Route{
 			Receiver:       rec.AlertChannel.ReceiverName(),
 			RepeatInterval: rec.Interval,
 			Continue:       true,
@@ -1308,7 +1311,14 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 					Value: alertrule.Name,
 				},
 			},
-		})
+		}
+		if alertrule.Namespace == prometheus.GlobalAlertNamespace {
+			route.Matchers = append(route.Matchers, v1alpha1.Matcher{
+				Name:  "namespace",
+				Value: alertrule.Namespace,
+			})
+		}
+		rawRouteData, _ := json.Marshal(route)
 		// receiver
 		ret.Receivers = append(ret.Receivers, rec.AlertChannel.ToAlertmanagerReceiver())
 		// route
@@ -1316,7 +1326,7 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 	}
 	// inhibit label
 	if len(alertrule.InhibitLabels) > 0 {
-		ret.InhibitRules = append(ret.InhibitRules, v1alpha1.InhibitRule{
+		inhibitrule := v1alpha1.InhibitRule{
 			SourceMatch: []v1alpha1.Matcher{
 				{
 					Name:  prometheus.AlertNamespaceLabel,
@@ -1348,7 +1358,19 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 				},
 			},
 			Equal: append(alertrule.InhibitLabels, prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel),
-		})
+		}
+		if alertrule.Namespace != prometheus.GlobalAlertNamespace {
+			inhibitrule.SourceMatch = append(inhibitrule.SourceMatch, v1alpha1.Matcher{
+				Name:  "namespace",
+				Value: alertrule.Namespace,
+			})
+			inhibitrule.TargetMatch = append(inhibitrule.TargetMatch, v1alpha1.Matcher{
+				Name:  "namespace",
+				Value: alertrule.Namespace,
+			})
+			inhibitrule.Equal = append(inhibitrule.Equal, "namespace")
+		}
+		ret.InhibitRules = append(ret.InhibitRules)
 	}
 	return ret
 }
@@ -1426,7 +1448,7 @@ const (
 func mutateLokiRuleGroups(
 	lokiRuleData map[string]string,
 	namespace string,
-	mutate func(groups []monitoringv1.RuleGroup),
+	mutate func(spec *monitoringv1.PrometheusRuleSpec),
 ) error {
 	// get from cm
 	allgroups := monitoringv1.PrometheusRuleSpec{}
@@ -1436,7 +1458,7 @@ func mutateLokiRuleGroups(
 		}
 	}
 
-	mutate(allgroups.Groups)
+	mutate(&allgroups)
 
 	// set to cm
 	bts, err := yaml.Marshal(allgroups)
@@ -1460,20 +1482,20 @@ func (p *AlertRuleProcessor) syncLokiRules(ctx context.Context, alertrule *model
 
 	rg := GenerateRuleGroup(alertrule)
 	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, lokiRuleCM, func() error {
-		return mutateLokiRuleGroups(lokiRuleCM.Data, alertrule.Namespace, func(groups []monitoringv1.RuleGroup) {
+		return mutateLokiRuleGroups(lokiRuleCM.Data, alertrule.Namespace, func(spec *monitoringv1.PrometheusRuleSpec) {
 			// create or update
 			index := -1
-			for i, v := range groups {
+			for i, v := range spec.Groups {
 				if v.Name == rg.Name {
 					index = i
 				}
 			}
 			if index == -1 {
 				// create
-				groups = append(groups, rg)
+				spec.Groups = append(spec.Groups, rg)
 			} else {
 				// update
-				groups[index] = rg
+				spec.Groups[index] = rg
 			}
 		})
 	})
@@ -1488,11 +1510,11 @@ func (p *AlertRuleProcessor) deleteLoggingAlertRule(ctx context.Context, alertru
 		},
 	}
 	if _, err := controllerutil.CreateOrUpdate(ctx, p.cli, lokiRuleCM, func() error {
-		return mutateLokiRuleGroups(lokiRuleCM.Data, alertrule.Namespace, func(groups []monitoringv1.RuleGroup) {
+		return mutateLokiRuleGroups(lokiRuleCM.Data, alertrule.Namespace, func(spec *monitoringv1.PrometheusRuleSpec) {
 			// delete
 			found := false
 			newGroups := []monitoringv1.RuleGroup{}
-			for _, v := range groups {
+			for _, v := range spec.Groups {
 				if v.Name == alertrule.Name {
 					found = true
 				} else {
@@ -1502,6 +1524,7 @@ func (p *AlertRuleProcessor) deleteLoggingAlertRule(ctx context.Context, alertru
 			if !found {
 				log.Warnf("log alert rule %s not found in loki rules", alertrule.Name)
 			}
+			spec.Groups = newGroups
 		})
 	}); err != nil {
 		return errors.Wrap(err, "delete from loki rules")
