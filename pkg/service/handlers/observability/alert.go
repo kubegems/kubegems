@@ -81,9 +81,11 @@ func (h *ObservabilityHandler) DisableAlertRule(c *gin.Context) {
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-			if err := tx.Model(&models.AlertRule{}).
-				Where("cluster = ? and namespace = ? and name = ?", cluster, namespace, name).
-				Update("is_open", false).Error; err != nil {
+			alertrule := &models.AlertRule{}
+			if err := tx.First(&alertrule, "cluster = ? and namespace = ? and name = ?", cluster, namespace, name).Error; err != nil {
+				return err
+			}
+			if err := tx.Model(alertrule).Update("is_open", false).Error; err != nil {
 				return err
 			}
 			return createSilenceIfNotExist(ctx, namespace, name, cli)
@@ -118,9 +120,11 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
 		return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-			if err := tx.Model(&models.AlertRule{}).
-				Where("cluster = ? and namespace = ? and name = ?", cluster, namespace, name).
-				Update("is_open", true).Error; err != nil {
+			alertrule := &models.AlertRule{}
+			if err := tx.First(&alertrule, "cluster = ? and namespace = ? and name = ?", cluster, namespace, name).Error; err != nil {
+				return err
+			}
+			if err := tx.Model(alertrule).Update("is_open", true).Error; err != nil {
 				return err
 			}
 			return deleteSilenceIfExist(ctx, namespace, name, cli)
@@ -822,8 +826,13 @@ func (h *ObservabilityHandler) listAlertRulesStatus(c *gin.Context, alerttype st
 	namespace := c.Param("namespace")
 	ret := PromeAlertCount{}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
+		dbAlertRules := []*models.AlertRule{}
+		err := h.GetDB().WithContext(ctx).Find(&dbAlertRules,
+			"alert_type = ? and cluster = ? and namespace = ?", alerttype, cluster, namespace).Error
+		if err != nil {
+			return err
+		}
 		var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
-		var err error
 		if alerttype == prometheus.AlertTypeMonitor {
 			realTimeAlertRules, err = cli.Extend().GetPromeAlertRules(ctx, "")
 		} else {
@@ -832,16 +841,19 @@ func (h *ObservabilityHandler) listAlertRulesStatus(c *gin.Context, alerttype st
 		if err != nil {
 			return errors.Wrap(err, "get alert rules status")
 		}
-		for k, v := range realTimeAlertRules {
-			if strings.HasPrefix(k, "gems-"+namespace) {
-				switch v.State {
-				case "inactive":
-					ret.Inactive++
-				case "pending":
-					ret.Pending++
-				case "firing":
-					ret.Firing++
-				}
+		for _, v := range dbAlertRules {
+			if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(v.Namespace, v.Name)]; ok {
+				v.State = promalert.State
+			} else {
+				v.State = "inactive"
+			}
+			switch v.State {
+			case "inactive":
+				ret.Inactive++
+			case "pending":
+				ret.Pending++
+			case "firing":
+				ret.Firing++
 			}
 		}
 		return nil
