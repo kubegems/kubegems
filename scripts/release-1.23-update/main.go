@@ -33,25 +33,12 @@ import (
 	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-type NginxAnno struct {
-	NewKey   string    `json:"newKey"` // empty means no need to set
-	IngInfos []IngInfo `json:"ingInfos"`
-}
-
-type IngInfo struct {
-	Cluster      string `json:"cluster"`
-	Namespace    string `json:"namespace"`
-	Name         string `json:"name"`
-	IngressClass string `json:"ingressClass"`
-	OldValue     string `json:"oldValue"`
-	NewValue     string `json:"newValue"`
-}
 
 const mysqlport = 3306
 
@@ -114,6 +101,10 @@ func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVers
 	if err != nil {
 		return err
 	}
+	agentclientset, err := agents.NewClientSet(db)
+	if err != nil {
+		return err
+	}
 	// migrate models
 	log.Print("migrating mysql models schema")
 	if err := models.MigrateModels(db.DB()); err != nil {
@@ -121,6 +112,10 @@ func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVers
 	}
 	updateDashboardTpls(db)
 	updateDashboards(db)
+
+	if err := exportOldAlertRulesToDB(ctx, *agentclientset, db); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -203,6 +198,7 @@ func updateDashboardTpls(db *database.Database) {
 		if err := db.DB().Model(&models.MonitorDashboardTpl{}).Where("name= ?", tpl.Name).Update("graphs", newGraphs).Error; err != nil {
 			panic(err)
 		}
+		log.Printf("update dashboard template: %s", tpl.Name)
 	}
 }
 
@@ -232,6 +228,7 @@ func updateDashboards(db *database.Database) {
 		if err := db.DB().Model(&models.MonitorDashboard{}).Where("id= ?", oldDash.ID).Update("graphs", newGraphs).Error; err != nil {
 			panic(err)
 		}
+		log.Printf("update dashboard template: %s", oldDash.Name)
 	}
 }
 
