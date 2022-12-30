@@ -28,6 +28,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alerttypes "github.com/prometheus/alertmanager/types"
@@ -35,19 +36,26 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	v1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/i18n"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
 	"kubegems.io/kubegems/pkg/utils/set"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 )
 
 // DisableAlertRule 禁用告警规则
@@ -133,6 +141,7 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
 // @Param       name      path     string                               true "name"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/message [post]
 // @Security    JWT
@@ -1132,8 +1141,8 @@ func setReceivers(alertrule *models.AlertRule, db *gorm.DB) error {
 	}
 	for _, v := range alertrule.Receivers {
 		v.AlertChannel = &models.AlertChannel{ID: v.AlertChannelID}
-		if err := db.First(v.AlertChannel).Error; err != nil {
-			return err
+		if err := db.First(v.AlertChannel, "id = ?", v.AlertChannelID).Error; err != nil {
+			return errors.Wrapf(err, "alert channel: %d not found", v.AlertChannelID)
 		}
 	}
 	return nil
@@ -1202,77 +1211,381 @@ func (p *AlertRuleProcessor) syncAlertmanagerConfig(ctx context.Context, alertru
 		},
 	}
 	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, amcfg, func() error {
-		amcfg.Spec = v1alpha1.AlertmanagerConfigSpec{
-			Route: &v1alpha1.Route{
-				Receiver:      prometheus.NullReceiverName,
-				GroupBy:       []string{prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel},
-				GroupWait:     "30s",
-				GroupInterval: "30s",
-				Routes:        []apiextensionsv1.JSON{},
-			},
-			Receivers: []v1alpha1.Receiver{
-				prometheus.NullReceiver,
-			},
-			InhibitRules: []v1alpha1.InhibitRule{},
+		amcfg.Spec = GenerateAmcfgSpec(alertrule)
+		return nil
+	})
+	return err
+}
+
+func (p *AlertRuleProcessor) syncEmailSecret(ctx context.Context, alertrule *models.AlertRule) error {
+	emails := map[string]*channels.Email{}
+	for _, rec := range alertrule.Receivers {
+		switch v := rec.AlertChannel.ChannelConfig.ChannelIf.(type) {
+		case *channels.Email:
+			emails[rec.AlertChannel.ReceiverName()] = v
 		}
-		for _, rec := range alertrule.Receivers {
-			rawRouteData, _ := json.Marshal(v1alpha1.Route{
-				Receiver:       rec.AlertChannel.ReceiverName(),
-				RepeatInterval: rec.Interval,
-				Continue:       true,
-				Matchers: []v1alpha1.Matcher{
-					{
-						Name:  prometheus.AlertNamespaceLabel,
-						Value: alertrule.Namespace,
-					},
-					{
-						Name:  prometheus.AlertNameLabel,
-						Value: alertrule.Name,
-					},
-				},
-			})
-			// receiver
-			amcfg.Spec.Receivers = append(amcfg.Spec.Receivers, rec.AlertChannel.ToAlertmanagerReceiver())
-			// route
-			amcfg.Spec.Route.Routes = append(amcfg.Spec.Route.Routes, apiextensionsv1.JSON{Raw: rawRouteData})
+	}
+	sec := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      channels.EmailSecretName,
+			Namespace: alertrule.Namespace,
+			Labels:    channels.EmailSecretLabel,
+		},
+		Type: v1.SecretTypeOpaque,
+	}
+	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, sec, func() error {
+		if sec.Data == nil {
+			sec.Data = make(map[string][]byte)
 		}
-		// inhibit label
-		if len(alertrule.InhibitLabels) > 0 {
-			amcfg.Spec.InhibitRules = append(amcfg.Spec.InhibitRules, v1alpha1.InhibitRule{
-				SourceMatch: []v1alpha1.Matcher{
-					{
-						Name:  prometheus.AlertNamespaceLabel,
-						Value: alertrule.Namespace,
-					},
-					{
-						Name:  prometheus.AlertNameLabel,
-						Value: alertrule.Name,
-					},
-					{
-						Name:  prometheus.SeverityLabel,
-						Value: prometheus.SeverityCritical,
-						Regex: false,
-					},
-				},
-				TargetMatch: []v1alpha1.Matcher{
-					{
-						Name:  prometheus.AlertNamespaceLabel,
-						Value: alertrule.Namespace,
-					},
-					{
-						Name:  prometheus.AlertNameLabel,
-						Value: alertrule.Name,
-					},
-					{
-						Name:  prometheus.SeverityLabel,
-						Value: prometheus.SeverityError,
-						Regex: false,
-					},
-				},
-				Equal: append(alertrule.InhibitLabels, prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel),
-			})
+		for recName, v := range emails {
+			sec.Data[channels.EmailSecretKey(recName, v.From)] = []byte(v.AuthPassword) // 不需要encode
 		}
 		return nil
 	})
 	return err
+}
+
+func GenerateRuleGroup(alertrule *models.AlertRule) monitoringv1.RuleGroup {
+	rg := monitoringv1.RuleGroup{Name: alertrule.Name}
+	for _, level := range alertrule.AlertLevels {
+		rule := monitoringv1.Rule{
+			Alert: alertrule.Name,
+			Expr:  intstr.FromString(fmt.Sprintf("%s%s%s", alertrule.Expr, level.CompareOp, level.CompareValue)),
+			For:   alertrule.For,
+			Labels: map[string]string{
+				prometheus.AlertNamespaceLabel: alertrule.Namespace,
+				prometheus.AlertNameLabel:      alertrule.Name,
+				prometheus.SeverityLabel:       level.Severity,
+			},
+			Annotations: map[string]string{
+				prometheus.MessageAnnotationsKey: alertrule.Message,
+				prometheus.ValueAnnotationKey:    prometheus.ValueAnnotationExpr,
+			},
+		}
+		rg.Rules = append(rg.Rules, rule)
+	}
+	return rg
+}
+
+func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigSpec {
+	ret := v1alpha1.AlertmanagerConfigSpec{
+		Route: &v1alpha1.Route{
+			Receiver:      prometheus.NullReceiverName,
+			GroupBy:       []string{prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel},
+			GroupWait:     "30s",
+			GroupInterval: "30s",
+			Routes:        []apiextensionsv1.JSON{},
+		},
+		Receivers: []v1alpha1.Receiver{
+			prometheus.NullReceiver,
+		},
+		InhibitRules: []v1alpha1.InhibitRule{},
+	}
+	for _, rec := range alertrule.Receivers {
+		rawRouteData, _ := json.Marshal(v1alpha1.Route{
+			Receiver:       rec.AlertChannel.ReceiverName(),
+			RepeatInterval: rec.Interval,
+			Continue:       true,
+			Matchers: []v1alpha1.Matcher{
+				{
+					Name:  prometheus.AlertNamespaceLabel,
+					Value: alertrule.Namespace,
+				},
+				{
+					Name:  prometheus.AlertNameLabel,
+					Value: alertrule.Name,
+				},
+			},
+		})
+		// receiver
+		ret.Receivers = append(ret.Receivers, rec.AlertChannel.ToAlertmanagerReceiver())
+		// route
+		ret.Route.Routes = append(ret.Route.Routes, apiextensionsv1.JSON{Raw: rawRouteData})
+	}
+	// inhibit label
+	if len(alertrule.InhibitLabels) > 0 {
+		ret.InhibitRules = append(ret.InhibitRules, v1alpha1.InhibitRule{
+			SourceMatch: []v1alpha1.Matcher{
+				{
+					Name:  prometheus.AlertNamespaceLabel,
+					Value: alertrule.Namespace,
+				},
+				{
+					Name:  prometheus.AlertNameLabel,
+					Value: alertrule.Name,
+				},
+				{
+					Name:  prometheus.SeverityLabel,
+					Value: prometheus.SeverityCritical,
+					Regex: false,
+				},
+			},
+			TargetMatch: []v1alpha1.Matcher{
+				{
+					Name:  prometheus.AlertNamespaceLabel,
+					Value: alertrule.Namespace,
+				},
+				{
+					Name:  prometheus.AlertNameLabel,
+					Value: alertrule.Name,
+				},
+				{
+					Name:  prometheus.SeverityLabel,
+					Value: prometheus.SeverityError,
+					Regex: false,
+				},
+			},
+			Equal: append(alertrule.InhibitLabels, prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel),
+		})
+	}
+	return ret
+}
+
+func (p *AlertRuleProcessor) syncPrometheusRule(ctx context.Context, alertrule *models.AlertRule) error {
+	prule := &monitoringv1.PrometheusRule{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: alertrule.Namespace,
+			Name:      alertrule.Name,
+			Labels: map[string]string{
+				gems.LabelPrometheusRuleType: prometheus.AlertTypeMonitor,
+				gems.LabelPrometheusRuleName: alertrule.Name,
+			},
+		},
+	}
+	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, prule, func() error {
+		prule.Spec.Groups = []monitoringv1.RuleGroup{GenerateRuleGroup(alertrule)}
+		return nil
+	})
+	return err
+}
+
+func (p *AlertRuleProcessor) syncMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
+		return errors.Wrap(err, "sync secret failed")
+	}
+	if err := p.syncPrometheusRule(ctx, alertrule); err != nil {
+		return errors.Wrap(err, "sync prometheusrule failed")
+	}
+	if err := p.syncAlertmanagerConfig(ctx, alertrule); err != nil {
+		return errors.Wrap(err, "sync alertmanagerconfig failed")
+	}
+	return nil
+}
+
+func (p *AlertRuleProcessor) deleteMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	if err := p.cli.Delete(ctx, &monitoringv1.PrometheusRule{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: alertrule.Namespace,
+			Name:      alertrule.Name,
+		},
+	}); err != nil && !kerrors.IsNotFound(err) {
+		return err
+	}
+	if err := p.cli.Delete(ctx, &v1alpha1.AlertmanagerConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: alertrule.Namespace,
+			Name:      alertrule.Name,
+		},
+	}); err != nil && !kerrors.IsNotFound(err) {
+		return err
+	}
+
+	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
+}
+
+func (p *AlertRuleProcessor) syncLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
+		return errors.Wrap(err, "sync secret failed")
+	}
+	if err := p.syncLokiRules(ctx, alertrule); err != nil {
+		return errors.Wrap(err, "sync loki rules failed")
+	}
+	if err := p.syncAlertmanagerConfig(ctx, alertrule); err != nil {
+		return errors.Wrap(err, "sync alertmanagerconfig failed")
+	}
+	return nil
+}
+
+const (
+	LoggingAlertRuleCMName = "kubegems-loki-rules"
+	LokiRecordingRulesKey  = "kubegems-loki-recording-rules.yaml"
+)
+
+func mutateLokiRuleGroups(
+	lokiRuleData map[string]string,
+	namespace string,
+	mutate func(groups []monitoringv1.RuleGroup),
+) error {
+	// get from cm
+	allgroups := monitoringv1.PrometheusRuleSpec{}
+	if groupstr, ok := lokiRuleData[namespace]; ok {
+		if err := yaml.Unmarshal([]byte(groupstr), &allgroups); err != nil {
+			return errors.Wrapf(err, "decode log rulegroups:\n%s", groupstr)
+		}
+	}
+
+	mutate(allgroups.Groups)
+
+	// set to cm
+	bts, err := yaml.Marshal(allgroups)
+	if err != nil {
+		errors.Wrap(err, "encode log rulegroups")
+	}
+	if lokiRuleData == nil {
+		lokiRuleData = make(map[string]string)
+	}
+	lokiRuleData[namespace] = string(bts)
+	return nil
+}
+
+func (p *AlertRuleProcessor) syncLokiRules(ctx context.Context, alertrule *models.AlertRule) error {
+	lokiRuleCM := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: gems.NamespaceLogging,
+			Name:      LoggingAlertRuleCMName,
+		},
+	}
+
+	rg := GenerateRuleGroup(alertrule)
+	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, lokiRuleCM, func() error {
+		return mutateLokiRuleGroups(lokiRuleCM.Data, alertrule.Namespace, func(groups []monitoringv1.RuleGroup) {
+			// create or update
+			index := -1
+			for i, v := range groups {
+				if v.Name == rg.Name {
+					index = i
+				}
+			}
+			if index == -1 {
+				// create
+				groups = append(groups, rg)
+			} else {
+				// update
+				groups[index] = rg
+			}
+		})
+	})
+	return err
+}
+
+func (p *AlertRuleProcessor) deleteLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	lokiRuleCM := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: gems.NamespaceLogging,
+			Name:      LoggingAlertRuleCMName,
+		},
+	}
+	if _, err := controllerutil.CreateOrUpdate(ctx, p.cli, lokiRuleCM, func() error {
+		return mutateLokiRuleGroups(lokiRuleCM.Data, alertrule.Namespace, func(groups []monitoringv1.RuleGroup) {
+			// delete
+			found := false
+			newGroups := []monitoringv1.RuleGroup{}
+			for _, v := range groups {
+				if v.Name == alertrule.Name {
+					found = true
+				} else {
+					newGroups = append(newGroups, v)
+				}
+			}
+			if !found {
+				log.Warnf("log alert rule %s not found in loki rules", alertrule.Name)
+			}
+		})
+	}); err != nil {
+		return errors.Wrap(err, "delete from loki rules")
+	}
+
+	if err := p.cli.Delete(ctx, &v1alpha1.AlertmanagerConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: alertrule.Namespace,
+			Name:      alertrule.Name,
+		},
+	}); err != nil && !kerrors.IsNotFound(err) {
+		return errors.Wrap(err, "delete from alertmanager config")
+	}
+
+	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
+}
+
+type K8sAlertCfg struct {
+	monitoringv1.RuleGroup          `json:"ruleGroup"`
+	v1alpha1.AlertmanagerConfigSpec `json:"alertmanagerConfigSpec"`
+}
+
+// clustername/namespace/name-alertrule map
+func (p *AlertRuleProcessor) GetK8sAlertCfg(ctx context.Context) (map[string]K8sAlertCfg, error) {
+	// amcfg
+	amcfgList := v1alpha1.AlertmanagerConfigList{}
+	if err := p.cli.List(ctx, &amcfgList, client.InNamespace(v1.NamespaceAll), client.HasLabels([]string{
+		gems.LabelAlertmanagerConfigType, gems.LabelAlertmanagerConfigName,
+	})); err != nil {
+		return nil, err
+	}
+
+	ruleGroupMap := map[string]monitoringv1.RuleGroup{}
+
+	// rulegroup by prometheus
+	promruleList := monitoringv1.PrometheusRuleList{}
+	if err := p.cli.List(ctx, &promruleList, client.InNamespace(v1.NamespaceAll), client.HasLabels([]string{
+		gems.LabelPrometheusRuleType, gems.LabelPrometheusRuleName,
+	})); err != nil {
+		return nil, err
+	}
+	for _, rule := range promruleList.Items {
+		if rule.Name == prometheus.DefaultAlertCRDName {
+			continue
+		}
+		for _, group := range rule.Spec.Groups {
+			key := models.AlertRuleKey(p.cli.Name(), rule.Namespace, group.Name)
+			if _, ok := ruleGroupMap[key]; ok {
+				log.Warnf("duplicated alert rule: %s")
+			} else {
+				ruleGroupMap[key] = group
+			}
+		}
+	}
+
+	// rulegroup by loki
+	lokiruleCm := v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: gems.NamespaceLogging,
+			Name:      LoggingAlertRuleCMName,
+		},
+	}
+	if err := p.cli.Get(ctx, client.ObjectKeyFromObject(&lokiruleCm), &lokiruleCm); err != nil {
+		return nil, err
+	}
+	for k, v := range lokiruleCm.Data {
+		// skip recording rule
+		if k == LokiRecordingRulesKey {
+			continue
+		}
+		groups := monitoringv1.PrometheusRuleSpec{}
+		if err := yaml.Unmarshal([]byte(v), &groups); err != nil {
+			return nil, errors.Wrapf(err, "decode log rulegroups: \n%s", v)
+		}
+		for _, group := range groups.Groups {
+			key := models.AlertRuleKey(p.cli.Name(), k, group.Name)
+			if _, ok := ruleGroupMap[key]; ok {
+				log.Warnf("duplicated alert rule: %s")
+			} else {
+				ruleGroupMap[key] = group
+			}
+		}
+	}
+
+	ret := map[string]K8sAlertCfg{}
+	for _, amcfg := range amcfgList.Items {
+		if amcfg.Name == prometheus.DefaultAlertCRDName {
+			continue
+		}
+		key := models.AlertRuleKey(p.cli.Name(), amcfg.Namespace, amcfg.Name)
+		if group, ok := ruleGroupMap[key]; ok {
+			ret[key] = K8sAlertCfg{RuleGroup: group, AlertmanagerConfigSpec: amcfg.Spec}
+		} else {
+			log.Warnf("rule group for alertrule %s not found", key)
+		}
+	}
+
+	return ret, nil
 }

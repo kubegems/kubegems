@@ -287,10 +287,12 @@ func (n *Server) execute(ctx context.Context, task *jsonArgsStep) (err error) {
 	for _, result := range rvs {
 		task.Status.Result = append(task.Status.Result, reflect.Indirect(result).Interface())
 	}
-	log.Info("executed", "step", task.Name, "func", task.Function, "result", task.Status.Result)
 	// 返回的最后一个参数如果是 error 则作为本次error
 	if e, ok := rvs[len(rvs)-1].Interface().(error); ok {
 		err = e
+		log.Error(err, "executed", "step", task.Name, "func", task.Function)
+	} else {
+		log.Info("executed", "step", task.Name, "func", task.Function, "result", task.Status.Result)
 	}
 	return err
 }

@@ -977,6 +977,10 @@ definitions:
         type: string
       enabled:
         type: boolean
+      files:
+        additionalProperties:
+          type: string
+        type: object
       healthy:
         type: boolean
       helathCheck:
@@ -1001,8 +1005,6 @@ definitions:
         type: boolean
       requirements:
         description: dependecies requirements
-        type: string
-      schema:
         type: string
       values:
         $ref: '#/definitions/v1beta1.Values'
@@ -3472,7 +3474,7 @@ definitions:
       isOpen:
         description: 是否启用
         type: boolean
-      k8SResourceStatus:
+      k8sResourceStatus:
         $ref: '#/definitions/gormdatatypes.JSONMap'
         description: |-
           eg: status: ok/error
@@ -6267,7 +6269,7 @@ definitions:
           Defaults to "TCP".
           +optional
           +default="TCP"
-        type: string
+        type: integer
     type: object
   v1.ContainerState:
     properties:
@@ -10137,7 +10139,7 @@ definitions:
         description: |-
           Protocol is the protocol of the service port of which status is recorded here
           The supported values are: "TCP", "UDP", "SCTP"
-        type: string
+        type: integer
     type: object
   v1.PortworxVolumeSource:
     properties:
@@ -11314,7 +11316,7 @@ definitions:
           Default is TCP.
           +default="TCP"
           +optional
-        type: string
+        type: integer
       targetPort:
         $ref: '#/definitions/intstr.IntOrString'
         description: |-
@@ -20629,6 +20631,12 @@ paths:
         name: name
         required: true
         type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          $ref: '#/definitions/models.AlertRule'
       produces:
       - application/json
       responses:

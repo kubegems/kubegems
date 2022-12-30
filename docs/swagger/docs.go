@@ -5158,6 +5158,15 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "form",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AlertRule"
+                        }
                     }
                 ],
                 "responses": {
@@ -26925,6 +26934,12 @@ const docTemplate = `{
                 "enabled": {
                     "type": "boolean"
                 },
+                "files": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "healthy": {
                     "type": "boolean"
                 },
@@ -26960,9 +26975,6 @@ const docTemplate = `{
                 },
                 "requirements": {
                     "description": "dependecies requirements",
-                    "type": "string"
-                },
-                "schema": {
                     "type": "string"
                 },
                 "values": {
@@ -28499,7 +28511,7 @@ const docTemplate = `{
                     "description": "是否启用",
                     "type": "boolean"
                 },
-                "k8SResourceStatus": {
+                "k8sResourceStatus": {
                     "description": "eg: status: ok/error\nreason: alertmanagerconfig lost/receiver not matched/...",
                     "$ref": "#/definitions/gormdatatypes.JSONMap"
                 },
@@ -31941,7 +31953,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "Protocol for port. Must be UDP, TCP, or SCTP.\nDefaults to \"TCP\".\n+optional\n+default=\"TCP\"",
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -34350,7 +34362,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "Protocol is the protocol of the service port of which status is recorded here\nThe supported values are: \"TCP\", \"UDP\", \"SCTP\"",
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -35075,7 +35087,7 @@ const docTemplate = `{
                 },
                 "protocol": {
                     "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\".\nDefault is TCP.\n+default=\"TCP\"\n+optional",
-                    "type": "string"
+                    "type": "integer"
                 },
                 "targetPort": {
                     "description": "Number or name of the port to access on the pods targeted by the service.\nNumber must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.\nIf this is a string, it will be looked up as a named port in the\ntarget Pod's container ports. If this is not specified, the value\nof the 'port' field is used (an identity map).\nThis field is ignored for services with clusterIP=None, and should be\nomitted or set equal to the 'port' field.\nMore info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service\n+optional",
