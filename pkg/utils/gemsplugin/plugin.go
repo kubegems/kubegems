@@ -178,7 +178,7 @@ func (m *PluginManager) fillSchema(ctx context.Context, pv *PluginVersion) error
 		return err
 	} else {
 		files := map[string]string{}
-		for _, item := range chart.Files {
+		for _, item := range chart.Raw {
 			if !strings.HasSuffix(item.Name, ".json") {
 				continue
 			}
