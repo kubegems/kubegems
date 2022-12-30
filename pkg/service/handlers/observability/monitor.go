@@ -28,12 +28,9 @@ import (
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
@@ -42,7 +39,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
-	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -362,104 +358,6 @@ func (h *ObservabilityHandler) withMonitorAlertReq(c *gin.Context, f func(req ob
 		return err
 	}
 	return f(req)
-}
-
-func (p *AlertRuleProcessor) syncEmailSecret(ctx context.Context, alertrule *models.AlertRule) error {
-	emails := map[string]*channels.Email{}
-	for _, rec := range alertrule.Receivers {
-		switch v := rec.AlertChannel.ChannelConfig.ChannelIf.(type) {
-		case *channels.Email:
-			emails[rec.AlertChannel.ReceiverName()] = v
-		}
-	}
-	sec := &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      channels.EmailSecretName,
-			Namespace: alertrule.Namespace,
-			Labels:    channels.EmailSecretLabel,
-		},
-		Type: v1.SecretTypeOpaque,
-	}
-	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, sec, func() error {
-		if sec.Data == nil {
-			sec.Data = make(map[string][]byte)
-		}
-		for recName, v := range emails {
-			sec.Data[channels.EmailSecretKey(recName, v.From)] = []byte(v.AuthPassword) // 不需要encode
-		}
-		return nil
-	})
-	return err
-}
-
-func (p *AlertRuleProcessor) syncPrometheusRule(ctx context.Context, alertrule *models.AlertRule) error {
-	prule := &monitoringv1.PrometheusRule{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: alertrule.Namespace,
-			Name:      alertrule.Name,
-			Labels: map[string]string{
-				gems.LabelPrometheusRuleType: prometheus.AlertTypeMonitor,
-				gems.LabelPrometheusRuleName: alertrule.Name,
-			},
-		},
-	}
-	_, err := controllerutil.CreateOrUpdate(ctx, p.cli, prule, func() error {
-		rg := monitoringv1.RuleGroup{Name: alertrule.Name}
-		for _, level := range alertrule.AlertLevels {
-			rule := monitoringv1.Rule{
-				Alert: alertrule.Name,
-				Expr:  intstr.FromString(fmt.Sprintf("%s%s%s", alertrule.Expr, level.CompareOp, level.CompareValue)),
-				For:   alertrule.For,
-				Labels: map[string]string{
-					prometheus.AlertNamespaceLabel: alertrule.Namespace,
-					prometheus.AlertNameLabel:      alertrule.Name,
-					prometheus.SeverityLabel:       level.Severity,
-				},
-				Annotations: map[string]string{
-					prometheus.MessageAnnotationsKey: alertrule.Message,
-					prometheus.ValueAnnotationKey:    prometheus.ValueAnnotationExpr,
-				},
-			}
-			rg.Rules = append(rg.Rules, rule)
-		}
-		prule.Spec.Groups = []monitoringv1.RuleGroup{rg}
-		return nil
-	})
-	return err
-}
-
-func (p *AlertRuleProcessor) syncMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
-	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
-		return errors.Wrap(err, "sync secret failed")
-	}
-	if err := p.syncPrometheusRule(ctx, alertrule); err != nil {
-		return errors.Wrap(err, "sync prometheusrule failed")
-	}
-	if err := p.syncAlertmanagerConfig(ctx, alertrule); err != nil {
-		return errors.Wrap(err, "sync alertmanagerconfig failed")
-	}
-	return nil
-}
-
-func (p *AlertRuleProcessor) deleteMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
-	if err := p.cli.Delete(ctx, &monitoringv1.PrometheusRule{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: alertrule.Namespace,
-			Name:      alertrule.Name,
-		},
-	}); err != nil && !kerrors.IsNotFound(err) {
-		return err
-	}
-	if err := p.cli.Delete(ctx, &v1alpha1.AlertmanagerConfig{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: alertrule.Namespace,
-			Name:      alertrule.Name,
-		},
-	}); err != nil && !kerrors.IsNotFound(err) {
-		return err
-	}
-
-	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
 }
 
 // CreateMonitorAlertRule 创建监控告警规则

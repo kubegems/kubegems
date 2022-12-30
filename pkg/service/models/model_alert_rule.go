@@ -45,6 +45,10 @@ type AlertRule struct {
 	State          string          `json:"state"`                      // 状态
 	RealTimeAlerts []*promv1.Alert `gorm:"-" json:"realTimeAlerts"`    // 实时告警
 
+	// eg: status: ok/error
+	// reason: alertmanagerconfig lost/receiver not matched/...
+	K8sResourceStatus gormdatatypes.JSONMap `gorm:"type:varchar(50)" json:"k8sResourceStatus"` // 对应的k8s资源状态
+
 	CreatedAt *time.Time `json:"createdAt"`
 	UpdatedAt *time.Time `json:"updatedAt"`
 }
@@ -61,6 +65,10 @@ type AlertReceiver struct {
 	Interval string `json:"interval"`
 }
 
+func AlertRuleKey(cluster, namespace, name string) string {
+	return fmt.Sprintf("%s/%s/%s", cluster, namespace, name)
+}
+
 func (r *AlertRule) FullName() string {
-	return fmt.Sprintf("[cluster:%s, namespace: %s, name: %s]", r.Cluster, r.Namespace, r.Name)
+	return AlertRuleKey(r.Cluster, r.Namespace, r.Name)
 }

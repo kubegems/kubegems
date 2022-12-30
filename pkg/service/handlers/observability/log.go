@@ -26,18 +26,11 @@ import (
 	"github.com/banzaicloud/logging-operator/pkg/sdk/logging/model/filter"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
-	"github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/pkg/rulefmt"
-	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/i18n"
-	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/observe"
@@ -412,149 +405,6 @@ func (h *ObservabilityHandler) getLoggingAlertReq(c *gin.Context) (observe.Loggi
 		return req, err
 	}
 	return req, nil
-}
-
-func (p *AlertRuleProcessor) syncLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
-	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
-		return errors.Wrap(err, "sync secret failed")
-	}
-	if err := p.syncLokiRules(ctx, alertrule); err != nil {
-		return errors.Wrap(err, "sync loki rules failed")
-	}
-	if err := p.syncAlertmanagerConfig(ctx, alertrule); err != nil {
-		return errors.Wrap(err, "sync alertmanagerconfig failed")
-	}
-	return nil
-}
-
-const (
-	LoggingAlertRuleCMName = "kubegems-loki-rules"
-	LokiRecordingRulesKey  = "kubegems-loki-recording-rules.yaml"
-)
-
-func (p *AlertRuleProcessor) syncLokiRules(ctx context.Context, alertrule *models.AlertRule) error {
-	cm := &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: gems.NamespaceLogging,
-			Name:      LoggingAlertRuleCMName,
-		},
-	}
-	thisGroup := rulefmt.RuleGroup{Name: alertrule.Name}
-	dur, err := model.ParseDuration(alertrule.For)
-	if err != nil {
-		return err
-	}
-	for _, level := range alertrule.AlertLevels {
-		rule := rulefmt.RuleNode{
-			Alert: yaml.Node{Kind: yaml.ScalarNode, Value: alertrule.Name},
-			Expr:  yaml.Node{Kind: yaml.ScalarNode, Value: fmt.Sprintf("%s%s%s", alertrule.Expr, level.CompareOp, level.CompareValue)},
-			For:   dur,
-			Labels: map[string]string{
-				prometheus.AlertNamespaceLabel: alertrule.Namespace,
-				prometheus.AlertNameLabel:      alertrule.Name,
-				prometheus.SeverityLabel:       level.Severity,
-			},
-			Annotations: map[string]string{
-				prometheus.MessageAnnotationsKey: alertrule.Message,
-				prometheus.ValueAnnotationKey:    prometheus.ValueAnnotationExpr,
-			},
-		}
-
-		thisGroup.Rules = append(thisGroup.Rules, rule)
-	}
-
-	_, err = controllerutil.CreateOrUpdate(ctx, p.cli, cm, func() error {
-		// get from cm
-		allgroups := rulefmt.RuleGroups{}
-		if groupstr, ok := cm.Data[alertrule.Namespace]; ok {
-			if err := yaml.Unmarshal([]byte(groupstr), &allgroups); err != nil {
-				return errors.Wrapf(err, "decode log rulegroups")
-			}
-		}
-
-		// create or update
-		index := -1
-		for i, v := range allgroups.Groups {
-			if v.Name == thisGroup.Name {
-				index = i
-			}
-		}
-		if index == -1 {
-			// create
-			allgroups.Groups = append(allgroups.Groups, thisGroup)
-		} else {
-			// update
-			allgroups.Groups[index] = thisGroup
-		}
-
-		// set to cm
-		bts, err := yaml.Marshal(allgroups)
-		if err != nil {
-			return err
-		}
-		if cm.Data == nil {
-			cm.Data = make(map[string]string)
-		}
-		cm.Data[alertrule.Namespace] = string(bts)
-		return nil
-	})
-	return err
-}
-
-func (p *AlertRuleProcessor) deleteLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
-	cm := &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: gems.NamespaceLogging,
-			Name:      LoggingAlertRuleCMName,
-		},
-	}
-	if _, err := controllerutil.CreateOrUpdate(ctx, p.cli, cm, func() error {
-		// get from cm
-		allgroups := rulefmt.RuleGroups{}
-		if groupstr, ok := cm.Data[alertrule.Namespace]; ok {
-			if err := yaml.Unmarshal([]byte(groupstr), &allgroups); err != nil {
-				return errors.Wrapf(err, "decode log rulegroups")
-			}
-		}
-
-		// delete
-		found := false
-		newGroups := []rulefmt.RuleGroup{}
-		for _, v := range allgroups.Groups {
-			if v.Name == alertrule.Name {
-				found = true
-			} else {
-				newGroups = append(newGroups, v)
-			}
-		}
-		if !found {
-			log.Warnf("log alert rule %s not found in loki rules", alertrule.Name)
-		}
-
-		// set to cm
-		bts, err := yaml.Marshal(newGroups)
-		if err != nil {
-			return err
-		}
-		if cm.Data == nil {
-			cm.Data = make(map[string]string)
-		}
-		cm.Data[alertrule.Namespace] = string(bts)
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "delete from loki rules")
-	}
-
-	if err := p.cli.Delete(ctx, &v1alpha1.AlertmanagerConfig{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: alertrule.Namespace,
-			Name:      alertrule.Name,
-		},
-	}); err != nil && !kerrors.IsNotFound(err) {
-		return errors.Wrap(err, "delete from alertmanager config")
-	}
-
-	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
 }
 
 // CreateLoggingAlertRule 创建日志告警规则
