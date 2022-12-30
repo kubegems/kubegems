@@ -35,6 +35,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	pkgcluster "sigs.k8s.io/controller-runtime/pkg/cluster"
 )
 
 const (
@@ -70,24 +71,23 @@ func NewClusterManager(ctx context.Context, namespace string, selfhost string) (
 	if err != nil {
 		return nil, err
 	}
-
-	c, err := cluster.NewClusterAndStart(ctx, cfg, cluster.WithInNamespace(namespace))
+	apply := func(c pkgcluster.Cluster) error {
+		// add device id index
+		return c.GetCache().IndexField(ctx, &v1beta1.EdgeCluster{}, "device-id", func(o client.Object) []string {
+			cluster, ok := o.(*v1beta1.EdgeCluster)
+			if !ok {
+				return nil
+			}
+			return []string{cluster.Status.Manufacture[AnnotationKeyDeviceID]}
+		})
+	}
+	c, err := cluster.NewClusterAndStart(ctx, cfg, apply, cluster.WithInNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
-	// add device id index
-	c.GetCache().IndexField(ctx, &v1beta1.EdgeCluster{}, "device-id", func(o client.Object) []string {
-		cluster, ok := o.(*v1beta1.EdgeCluster)
-		if !ok {
-			return nil
-		}
-		return []string{cluster.Status.Manufacture[AnnotationKeyDeviceID]}
-	})
-
-	cli := c.GetClient()
 	return &EdgeManager{
-		ClusterStore: EdgeClusterK8sStore{cli: cli, ns: namespace},
-		HubStore:     EdgeHubK8sStore{cli: cli, ns: namespace},
+		ClusterStore: EdgeClusterK8sStore{cli: c.GetClient(), ns: namespace},
+		HubStore:     EdgeHubK8sStore{cli: c.GetClient(), ns: namespace},
 		SelfAddress:  selfhost,
 	}, nil
 }

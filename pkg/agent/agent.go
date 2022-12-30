@@ -24,7 +24,6 @@ import (
 	"kubegems.io/kubegems/pkg/agent/apis"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/pprof"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
@@ -63,12 +62,7 @@ func Run(ctx context.Context, options *Options) error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	rest, err := kube.AutoClientConfig()
-	if err != nil {
-		return err
-	}
-
-	c, err := cluster.NewClusterAndStartWithIndexer(ctx, rest)
+	c, err := cluster.NewLocalAgentClusterAndStart(ctx)
 	if err != nil {
 		return err
 	}

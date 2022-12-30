@@ -44,10 +44,6 @@ import (
 
 const ClientIDSecret = "kubegems-edge-agent-id"
 
-func Run(ctx context.Context, opts *options.AgentOptions) error {
-	return run(ctx, opts)
-}
-
 type EdgeAgent struct {
 	config       *rest.Config
 	manufectures map[string]string
@@ -59,14 +55,10 @@ type EdgeAgent struct {
 	annotations  tunnel.Annotations
 }
 
-func run(ctx context.Context, options *options.AgentOptions) error {
+func Run(ctx context.Context, options *options.AgentOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
 
-	rest, err := kube.AutoClientConfig()
-	if err != nil {
-		return err
-	}
-	c, err := cluster.NewClusterAndStartWithIndexer(ctx, rest)
+	c, err := cluster.NewLocalAgentClusterAndStart(ctx)
 	if err != nil {
 		return err
 	}
@@ -82,7 +74,7 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 		return err
 	}
 	ea := &EdgeAgent{
-		config:       rest,
+		config:       c.GetConfig(),
 		manufectures: manufectures,
 		clientID:     clientid,
 		options:      options,
