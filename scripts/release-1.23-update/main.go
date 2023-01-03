@@ -101,7 +101,7 @@ func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVers
 	if err != nil {
 		return err
 	}
-	agentclientset, err := agents.NewClientSet(db)
+	cs, err := agents.NewClientSet(db)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,18 @@ func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVers
 	updateDashboardTpls(db)
 	updateDashboards(db)
 
-	if err := exportOldAlertRulesToDB(ctx, *agentclientset, db); err != nil {
+	// export, clean, sync
+	_, err = exportOldAlertRulesToDB(ctx, cs, db)
+	if err != nil {
+		return err
+	}
+	if err := updateAlertRuleName(db); err != nil {
+		return err
+	}
+	if err := deleteK8sAlertRuleCfgs(ctx, cs); err != nil {
+		return err
+	}
+	if err := syncAlertRules(ctx, cs, db); err != nil {
 		return err
 	}
 	return nil

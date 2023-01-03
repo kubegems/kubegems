@@ -445,7 +445,7 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 			if err := tx.Create(req).Error; err != nil {
 				return err
 			}
-			return p.syncLoggingAlertRule(ctx, req)
+			return p.SyncLoggingAlertRule(ctx, req)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -484,7 +484,7 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 				Updates(req).Error; err != nil {
 				return err
 			}
-			return p.syncLoggingAlertRule(ctx, req)
+			return p.SyncLoggingAlertRule(ctx, req)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)

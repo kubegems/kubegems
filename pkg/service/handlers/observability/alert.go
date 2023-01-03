@@ -1393,7 +1393,7 @@ func (p *AlertRuleProcessor) syncPrometheusRule(ctx context.Context, alertrule *
 	return err
 }
 
-func (p *AlertRuleProcessor) syncMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+func (p *AlertRuleProcessor) SyncMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
 	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync secret failed")
 	}
@@ -1427,7 +1427,7 @@ func (p *AlertRuleProcessor) deleteMonitorAlertRule(ctx context.Context, alertru
 	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
 }
 
-func (p *AlertRuleProcessor) syncLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+func (p *AlertRuleProcessor) SyncLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
 	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync secret failed")
 	}
