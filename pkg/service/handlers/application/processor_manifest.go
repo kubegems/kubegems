@@ -79,10 +79,6 @@ func (h *ManifestProcessor) Create(ctx context.Context, ref PathRef, manifest Ma
 		if err := initSampleManifest(fs, manifest.Name, manifest.Kind); err != nil {
 			return err
 		}
-		// init kustomization with labels
-		if err := InitOrUpdateKustomization(fs, manifest.Labels, manifest.Annotations); err != nil {
-			return err
-		}
 		// init readme
 		if err := util.WriteFile(fs, ReadmeFilename, []byte(manifest.Description), os.ModePerm); err != nil {
 			return err
@@ -227,11 +223,8 @@ func (h *ManifestProcessor) List(ctx context.Context, ref PathRef, options ...Ma
 
 func (h *ManifestProcessor) Update(ctx context.Context, ref PathRef, manifest Manifest) error {
 	updatefunc := func(_ context.Context, fs billy.Filesystem) error {
-		if err := util.WriteFile(fs, ReadmeFilename, []byte(manifest.Description), os.ModePerm); err != nil {
-			return err
-		}
-		// update kustomization
-		return InitOrUpdateKustomization(fs, manifest.Labels, manifest.Annotations)
+		// update readme
+		return util.WriteFile(fs, ReadmeFilename, []byte(manifest.Description), os.ModePerm)
 	}
 	return h.UpdateContentFunc(ctx, ref, updatefunc, "update description")
 }

@@ -101,7 +101,7 @@ func UpdateKustomizeCommit(msg string) RepositoryFunc {
 		if err != nil {
 			return err
 		}
-		if err := InitOrUpdateKustomization(fs, nil, nil); err != nil {
+		if err := InitOrUpdateKustomization(fs); err != nil {
 			return err
 		}
 		// commit
