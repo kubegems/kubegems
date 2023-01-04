@@ -7,8 +7,11 @@
 # @description.en Corresponds to the configuration in the kubernetes service resource
 service:
   # @form true
+  # @order 99
   enabled: false
-  # @hidden path=service.enabled;value=false
+  # @form true
+  address: ""
+  # @hidden service.enabled=false
   # @form true
   # @schema required=http,grpc
   # @title "服务端口配置"

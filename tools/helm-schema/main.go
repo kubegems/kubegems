@@ -16,8 +16,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/go-openapi/spec"
+	"github.com/mitchellh/copystructure"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
@@ -37,6 +36,9 @@ const DefaultFilePerm = 0o755
 var ExtraPropsHandlers = map[string]ExtraPropsHandler{
 	"schema": SchemaOptionHandler,
 	"param":  NoopOptionHandler, // ignore @param options
+	"hidden": HiddenOptionHandler,
+	"order":  OrderOptionHandler,
+	"title":  TitleOptionHandler,
 }
 
 type ExtraPropsHandler func(schema *spec.Schema, options any)
@@ -118,6 +120,9 @@ func SplitSchemaI18n(schema *spec.Schema) map[string]*spec.Schema {
 			removeDotKey(copyschema.ExtraProps)
 			ret[lang] = copyschema
 		}
+		if ret[lang].ExtraProps == nil {
+			ret[lang].ExtraProps = map[string]interface{}{}
+		}
 		ret[lang].ExtraProps[basekey] = v
 	}
 	if schema.Items != nil {
@@ -143,6 +148,9 @@ func SplitSchemaI18n(schema *spec.Schema) map[string]*spec.Schema {
 			if _, ok := ret[lang]; !ok {
 				ret[lang] = DeepCopySchema(schema)
 			}
+			if ret[lang].Properties == nil {
+				ret[lang].Properties = spec.SchemaProperties{}
+			}
 			ret[lang].Properties[name] = *itemlangschema
 		}
 	}
@@ -156,12 +164,12 @@ func removeDotKey(kvs map[string]any) {
 }
 
 func DeepCopySchema(in *spec.Schema) *spec.Schema {
-	out := &spec.Schema{}
-	raw := bytes.NewBuffer(nil)
-	// do not use json as encoder
-	gob.NewEncoder(raw).Encode(in)
-	gob.NewDecoder(raw).Decode(out)
-	return out
+	out, err := copystructure.Copy(in)
+	if err != nil {
+		panic(err)
+	}
+	// nolint: forcetypeassert
+	return out.(*spec.Schema)
 }
 
 func GenerateSchema(values []byte) (*spec.Schema, error) {
@@ -229,17 +237,13 @@ func completeFromComment(schema *spec.Schema, comment string) {
 	annotaionOptions, leftcomment := parseComment(comment)
 	_ = leftcomment
 	for key, options := range annotaionOptions {
-		switch key {
-		// case "title":
-		// 	schema.Title = annotationOptionsToString(options)
-		// case "description":
-		// 	schema.Description = annotationOptionsToString(options)
-		default:
-			if handler, ok := ExtraPropsHandlers[key]; ok && handler != nil {
-				handler(schema, options)
-			} else {
-				DefaultOptionHandler(schema, key, options)
-			}
+		if schema.ExtraProps == nil {
+			schema.ExtraProps = map[string]interface{}{}
+		}
+		if handler, ok := ExtraPropsHandlers[key]; ok && handler != nil {
+			handler(schema, options)
+		} else {
+			DefaultOptionHandler(schema, key, options)
 		}
 	}
 }
@@ -386,4 +390,76 @@ func formatYamlStr(str string) any {
 }
 
 func NoopOptionHandler(schema *spec.Schema, options any) {
+}
+
+type HiddenProps struct {
+	Operator   HiddenPropsOperator `json:"operator,omitempty"`
+	Conditions []HiddenCondition   `json:"conditions,omitempty"`
+}
+
+// Ref: https://github.com/kubegems/dashboard/blob/448f9c5767d4232adf4c86b711ae252f5a9e43de/src/views/appstore/components/DeployWizard/Param/index.vue#L160-L185
+const (
+	HiddenPropsOperatorOr  = "or"
+	HiddenPropsOperatorAnd = "and"
+	HiddenPropsOperatorNor = "nor"
+	HiddenPropsOperatorNot = "not"
+)
+
+type HiddenPropsOperator string
+
+type HiddenCondition struct {
+	Path  string `json:"path"`
+	Value any    `json:"value"`
+}
+
+func HiddenOptionHandler(schema *spec.Schema, options any) {
+	kvs, ok := options.(map[string]string)
+	if !ok {
+		return
+	}
+	// convert map k=v to object type {path=jsonpath, value=value}
+	operator := kvs["operator"]
+	delete(kvs, "operator")
+	if len(kvs) == 0 {
+		return
+	}
+	if len(kvs) == 1 {
+		// simple type
+		for k, v := range kvs {
+			schema.ExtraProps["hidden"] = HiddenCondition{Path: k, Value: formatYamlStr(v)}
+			return
+		}
+	}
+	if operator == "" {
+		operator = HiddenPropsOperatorOr
+	}
+	props := HiddenProps{
+		Operator: HiddenPropsOperator(operator),
+	}
+	for k, v := range kvs {
+		props.Conditions = append(props.Conditions, HiddenCondition{Path: k, Value: formatYamlStr(v)})
+	}
+	schema.ExtraProps["hidden"] = props
+}
+
+// OrderOptionHandler handle properties order
+// Ref: https://github.com/go-openapi/spec/blob/1005cfb91978aa416cfc5a1251b790126390788a/properties.go#L44
+func OrderOptionHandler(schema *spec.Schema, options any) {
+	val, ok := options.(string)
+	if !ok {
+		return
+	}
+	if schema.Extensions == nil {
+		schema.Extensions = spec.Extensions{}
+	}
+	schema.Extensions.Add("x-order", val)
+}
+
+func TitleOptionHandler(schema *spec.Schema, options any) {
+	// automate add @form=true when @title exists
+	if schema.ExtraProps == nil {
+		schema.ExtraProps = map[string]interface{}{}
+	}
+	schema.ExtraProps["form"] = true
+	DefaultOptionHandler(schema, "title", options)
 }

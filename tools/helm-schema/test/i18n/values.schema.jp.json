@@ -21,6 +21,11 @@
         "enabled": {
           "type": "boolean",
           "default": false,
+          "x-order": "99",
+          "form": true
+        },
+        "address": {
+          "type": "string",
           "form": true
         },
         "nodePort": {
