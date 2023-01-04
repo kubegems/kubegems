@@ -48,7 +48,7 @@
               "type": "integer",
               "default": 50051,
               "form": true,
-              "title": "GRPC 端口"
+              "title": "GRPC Port"
             },
             "http": {
               "type": "integer",
@@ -57,7 +57,7 @@
               "maximum": 65535,
               "minimum": 1,
               "form": true,
-              "title": "HTTP 端口"
+              "title": "HTTP Port"
             }
           },
           "form": true,
@@ -65,12 +65,12 @@
             "path": "service.enabled",
             "value": false
           },
-          "title": "服务端口配置"
+          "title": "service ports contiguration"
         }
       },
-      "description": "对应kubernetes service资源中的配置",
+      "description": "Corresponds to the configuration in the kubernetes service resource",
       "form": true,
-      "title": "服务配置"
+      "title": "Service Contiguration"
     }
   },
   "$schema": "http://json-schema.org/schema#"

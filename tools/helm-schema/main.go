@@ -17,6 +17,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,6 +27,8 @@ import (
 	"strings"
 
 	"github.com/go-openapi/spec"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 )
 
@@ -65,9 +68,12 @@ func main() {
 }
 
 func GenerateWriteSchema(chartpath string) error {
-	readfile := filepath.Join(chartpath, "values.yaml")
-	fmt.Printf("Reading %s\n", readfile)
-	valuecontent, err := os.ReadFile(readfile)
+	if filepath.Base(chartpath) == "values.yaml" {
+		chartpath = filepath.Dir(chartpath)
+	}
+	valuesfile := filepath.Join(chartpath, "values.yaml")
+	fmt.Printf("Reading %s\n", valuesfile)
+	valuecontent, err := os.ReadFile(valuesfile)
 	if err != nil {
 		return err
 	}
@@ -75,14 +81,87 @@ func GenerateWriteSchema(chartpath string) error {
 	if err != nil {
 		return err
 	}
-	schemacontent, err := json.MarshalIndent(schema, "", "  ")
+	for lang, langschema := range SplitSchemaI18n(schema) {
+		if err := writeJson(filepath.Join(chartpath, "i18n", fmt.Sprintf("values.schema.%s.json", lang)), langschema); err != nil {
+			return err
+		}
+	}
+	return writeJson(filepath.Join(chartpath, "values.schema.json"), schema)
+}
+
+func writeJson(filename string, data any) error {
+	schemacontent, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
+	if err := os.MkdirAll(filepath.Dir(filename), DefaultFilePerm); err != nil {
+		return err
+	}
+	fmt.Printf("Writing %s\n", filename)
+	return os.WriteFile(filename, schemacontent, DefaultFilePerm)
+}
 
-	writefile := filepath.Join(chartpath, "values.schema.json")
-	fmt.Printf("Writing %s\n", writefile)
-	return os.WriteFile(writefile, schemacontent, DefaultFilePerm)
+// SplitSchemaI18n
+// nolint: gocognit
+func SplitSchemaI18n(schema *spec.Schema) map[string]*spec.Schema {
+	ret := map[string]*spec.Schema{}
+	for k, v := range schema.ExtraProps {
+		i := strings.IndexRune(k, '.')
+		if i < 0 {
+			continue
+		}
+		// this is a dot key,remove from parent
+		delete(schema.ExtraProps, k)
+		basekey, lang := k[:i], k[i+1:]
+		if _, ok := ret[lang]; !ok {
+			copyschema := DeepCopySchema(schema)
+			removeDotKey(copyschema.ExtraProps)
+			ret[lang] = copyschema
+		}
+		ret[lang].ExtraProps[basekey] = v
+	}
+	if schema.Items != nil {
+		if itemschema := schema.Items.Schema; itemschema != nil {
+			for lang, langschema := range SplitSchemaI18n(itemschema) {
+				if _, ok := ret[lang]; !ok {
+					ret[lang].Items.Schema = DeepCopySchema(schema)
+				}
+				ret[lang].Items.Schema = langschema
+			}
+		}
+		for i, itemschema := range schema.Items.Schemas {
+			for lang, langschema := range SplitSchemaI18n(&itemschema) {
+				if _, ok := ret[lang]; !ok {
+					ret[lang].Items.Schemas = slices.Clone(schema.Items.Schemas)
+				}
+				ret[lang].Items.Schemas[i] = *langschema
+			}
+		}
+	}
+	for name, val := range schema.Properties {
+		for lang, itemlangschema := range SplitSchemaI18n(&val) {
+			if _, ok := ret[lang]; !ok {
+				ret[lang] = DeepCopySchema(schema)
+			}
+			ret[lang].Properties[name] = *itemlangschema
+		}
+	}
+	return ret
+}
+
+func removeDotKey(kvs map[string]any) {
+	maps.DeleteFunc(kvs, func(k string, _ any) bool {
+		return strings.ContainsRune(k, '.')
+	})
+}
+
+func DeepCopySchema(in *spec.Schema) *spec.Schema {
+	out := &spec.Schema{}
+	raw := bytes.NewBuffer(nil)
+	// do not use json as encoder
+	gob.NewEncoder(raw).Encode(in)
+	gob.NewDecoder(raw).Decode(out)
+	return out
 }
 
 func GenerateSchema(values []byte) (*spec.Schema, error) {
@@ -90,12 +169,11 @@ func GenerateSchema(values []byte) (*spec.Schema, error) {
 	if err := yaml.Unmarshal(values, node); err != nil {
 		return nil, err
 	}
-	schema := nodeSchema(node, "")
-	return &schema, nil
+	return nodeSchema(node, ""), nil
 }
 
-func nodeSchema(node *yaml.Node, keycomment string) spec.Schema {
-	schema := spec.Schema{SchemaProps: spec.SchemaProps{Type: spec.StringOrArray{"object"}}}
+func nodeSchema(node *yaml.Node, keycomment string) *spec.Schema {
+	schema := &spec.Schema{SchemaProps: spec.SchemaProps{Type: spec.StringOrArray{"object"}}}
 	switch node.Kind {
 	case yaml.DocumentNode:
 		schema := nodeSchema(node.Content[0], "")
@@ -106,7 +184,7 @@ func nodeSchema(node *yaml.Node, keycomment string) spec.Schema {
 		for i := 0; i < len(node.Content); i += 2 {
 			key, keycomment := node.Content[i].Value, node.Content[i].HeadComment
 			valueNode := node.Content[i+1]
-			properties[key] = nodeSchema(valueNode, keycomment)
+			properties[key] = *nodeSchema(valueNode, keycomment)
 		}
 		schema.Type = spec.StringOrArray{"object"}
 		schema.Properties = properties
@@ -132,72 +210,108 @@ func nodeSchema(node *yaml.Node, keycomment string) spec.Schema {
 			schema.Items = nil
 		} else if len(node.Content) == 1 {
 			schema := nodeSchema(node.Content[0], "")
-			schema.Items = &spec.SchemaOrArray{Schema: &schema}
+			schema.Items = &spec.SchemaOrArray{Schema: schema}
 		} else {
 			schemas := []spec.Schema{}
 			for _, itemnode := range node.Content {
-				schemas = append(schemas, nodeSchema(itemnode, ""))
+				schemas = append(schemas, *nodeSchema(itemnode, ""))
 			}
 			schema.Items = &spec.SchemaOrArray{Schemas: schemas}
 		}
 		schema.Type = spec.StringOrArray{"array"}
 	}
 	// update from comment
-	setExtraProperties(&schema, keycomment)
+	completeFromComment(schema, keycomment)
 	return schema
 }
 
-// nolint: gomnd
-func setExtraProperties(schema *spec.Schema, comment string) {
-	if comment == "" {
-		return
+func completeFromComment(schema *spec.Schema, comment string) {
+	annotaionOptions, leftcomment := parseComment(comment)
+	_ = leftcomment
+	for key, options := range annotaionOptions {
+		switch key {
+		// case "title":
+		// 	schema.Title = annotationOptionsToString(options)
+		// case "description":
+		// 	schema.Description = annotationOptionsToString(options)
+		default:
+			if handler, ok := ExtraPropsHandlers[key]; ok && handler != nil {
+				handler(schema, options)
+			} else {
+				DefaultOptionHandler(schema, key, options)
+			}
+		}
 	}
-	extras := map[string]any{}
+}
+
+func annotationOptionsToString(val any) string {
+	strval, ok := val.(string)
+	if !ok {
+		return ""
+	}
+	if formated, ok := formatYamlStr(strval).(string); ok {
+		return formated
+	}
+	return strval
+}
+
+// nolint: gomnd
+func parseComment(comment string) (map[string]any, string) {
+	if comment == "" {
+		return nil, ""
+	}
+	var othercomments []string
+	annotations := map[string]any{}
+
 	buf := bufio.NewReader(strings.NewReader(comment))
 	for {
-		line, isprefix, err := buf.ReadLine()
+		line, _, err := buf.ReadLine()
 		if err == io.EOF {
 			break
 		}
-		// no line more 4096 char
-		_ = isprefix
-		//    # @schema type=number,format=port,max=65535,min=1
-		//    # @form true
-		i := bytes.IndexRune(line, '@')
-		if i < 0 || i == len(line) {
+		if len(line) == 0 {
 			continue
 		}
-		splits := strings.SplitN(string(line[i+1:]), " ", 2)
+		// example: # @schema type=number,format=port,max=65535,min=1
+		// trim prefix '#' and remove leading space
+		for i, b := range line[1:] {
+			if b != ' ' {
+				line = line[i+1:]
+				break
+			}
+		}
+		if len(line) == 0 {
+			continue
+		}
+		// start with '@'
+		if line[0] != '@' {
+			othercomments = append(othercomments, string(line))
+			continue
+		}
+		splits := strings.SplitN(string(line[1:]), " ", 2)
 		if len(splits) == 1 {
 			continue
 		}
-
 		key, opts := splits[0], splits[1]
 		//  treat no '=',';' string as plain text
 		if !strings.Contains(opts, "=") && !strings.Contains(opts, ";") {
-			extras[string(key)] = opts
-		} else {
-			options := map[string]string{}
-			for _, opt := range strings.Split(opts, ";") {
-				if opt == "" {
-					continue
-				}
-				if optsplits := strings.SplitN(opt, "=", 2); len(optsplits) == 1 {
-					options[optsplits[0]] = ""
-				} else {
-					options[optsplits[0]] = optsplits[1]
-				}
+			annotations[key] = opts
+			continue
+		}
+		options := map[string]string{}
+		for _, opt := range strings.Split(opts, ";") {
+			if opt == "" {
+				continue
 			}
-			extras[string(key)] = options
+			if optsplits := strings.SplitN(opt, "=", 2); len(optsplits) == 1 {
+				options[optsplits[0]] = ""
+			} else {
+				options[optsplits[0]] = optsplits[1]
+			}
 		}
+		annotations[key] = options
 	}
-	for kind, options := range extras {
-		if handler, ok := ExtraPropsHandlers[kind]; ok && handler != nil {
-			handler(schema, options)
-		} else {
-			DefaultOptionHandler(schema, kind, options)
-		}
-	}
+	return annotations, strings.Join(othercomments, "\n")
 }
 
 // nolint: gomnd
