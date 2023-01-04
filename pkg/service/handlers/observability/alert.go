@@ -151,10 +151,24 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) GenerateAlertMessage(c *gin.Context) {
 	var msg string
-	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
-		req, err := p.getAlertRuleReq(c)
+	if err := h.Process(func() error {
+		req := &models.AlertRule{}
+		err := c.BindJSON(req)
 		if err != nil {
 			return err
+		}
+		req.Cluster = c.Param("cluster")
+		req.Namespace = c.Param("namespace")
+		if req.Namespace == "" {
+			return errors.Errorf("namespace can't be empty")
+		}
+		// set tpl
+		if req.PromqlGenerator != nil {
+			tpl, err := h.GetDataBase().FindPromqlTpl(req.PromqlGenerator.Scope, req.PromqlGenerator.Resource, req.PromqlGenerator.Rule)
+			if err != nil {
+				return err
+			}
+			req.PromqlGenerator.Tpl = tpl
 		}
 		msg, err = genarateMessage(req)
 		return err
@@ -916,7 +930,7 @@ func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) 
 		},
 	}
 	if state := c.Query("state"); state != "" {
-		cond.Where = append(cond.Where, handlers.Args("state = ?", state))
+		cond.Where = append(cond.Where, handlers.Args("state in (?)", strings.Split(state, ",")))
 	}
 
 	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("name"), cond, &list)
@@ -1060,6 +1074,8 @@ func genarateMessage(alertrule *models.AlertRule) (string, error) {
 		} else {
 			ret = fmt.Sprintf("%s: [cluster:{{ $labels.%s }}] trigger alert, value: %s", alertrule.Name, prometheus.AlertClusterKey, prometheus.ValueAnnotationExpr)
 		}
+	default:
+		return "", errors.Errorf("unknown alert type: %s", alertrule.AlertType)
 	}
 	return ret, nil
 }

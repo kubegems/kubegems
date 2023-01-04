@@ -138,3 +138,7 @@ func (h BaseHandler) SendToMsgbus(c *gin.Context, mutateMsg func(msg *msgclient.
 
 	go h.GetMessageBusClient().Send(msg)
 }
+
+func (h BaseHandler) Process(f func() error) error {
+	return f()
+}
