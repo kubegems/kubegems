@@ -136,18 +136,20 @@ func (t *AlertRuleSyncTasker) CheckAlertRuleConfig(ctx context.Context) error {
 			AlertmanagerConfigSpec: observability.GenerateAmcfgSpec(alertrule),
 		}
 		cfgInK8s, ok := k8sAlertCfg.Load(alertrule.FullName())
-		if !ok {
-			alertrule.K8sResourceStatus = alertCfgStatusError("k8s alert rule config lost")
-		}
-		diff := cmp.Diff(cfgInDB, cfgInK8s.(observability.K8sAlertCfg),
-			cmpopts.EquateEmpty(),       // eg. slice nil equal to empty
-			cmp.Comparer(compareRoutes), // compare for []apiextensionsv1.JSON
-		)
-		if diff == "" {
-			alertrule.K8sResourceStatus = alertCfgStatusOK()
+		if ok {
+			diff := cmp.Diff(cfgInDB, cfgInK8s.(observability.K8sAlertCfg),
+				cmpopts.EquateEmpty(),       // eg. slice nil equal to empty
+				cmp.Comparer(compareRoutes), // compare for []apiextensionsv1.JSON
+			)
+			if diff == "" {
+				alertrule.K8sResourceStatus = alertCfgStatusOK()
+			} else {
+				alertrule.K8sResourceStatus = alertCfgStatusError(diff)
+				log.Warnf("alertrule: %s not matched, diff:\n%s", alertrule.FullName(), diff)
+			}
 		} else {
-			alertrule.K8sResourceStatus = alertCfgStatusError(diff)
-			log.Warnf("alertrule: %s not matched, diff:\n%s", alertrule.FullName(), diff)
+			alertrule.K8sResourceStatus = alertCfgStatusError("k8s alert rule config lost")
+			log.Warnf("alertrule: %s k8s config lost", alertrule.FullName())
 		}
 		if err := t.DB.DB().Model(alertrule).Update("k8s_resource_status", alertrule.K8sResourceStatus).Error; err != nil {
 			log.Warnf("update k8s_resource_status for alertrule: %s failed", alertrule.FullName())
