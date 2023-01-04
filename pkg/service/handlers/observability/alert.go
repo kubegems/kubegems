@@ -220,28 +220,29 @@ func (h *ObservabilityHandler) SyncAlertRule(c *gin.Context) {
 		}
 
 		for _, v := range alertrules {
-			cli, err := h.GetAgents().ClientOf(ctx, v.Cluster)
-			if err != nil {
-				statusMap[v.FullName()] = fmt.Sprintf("client of: %s failed, %v", cli.Name(), err)
-				continue
-			}
-			p := NewAlertRuleProcessor(cli, h.GetDataBase())
-			switch v.AlertType {
-			case prometheus.AlertTypeMonitor:
-				if err := p.SyncMonitorAlertRule(ctx, v); err != nil {
-					statusMap[v.FullName()] = fmt.Sprintf("sync monitor alertrule: %s failed: %v", v.FullName(), err)
-					continue
+			syncAlertRule := func(alertrule *models.AlertRule) string {
+				cli, err := h.GetAgents().ClientOf(ctx, alertrule.Cluster)
+				if err != nil {
+					return fmt.Sprintf("client of: %s failed, %v", cli.Name(), err)
 				}
-			case prometheus.AlertTypeLogging:
-				if err := p.SyncLoggingAlertRule(ctx, v); err != nil {
-					statusMap[v.FullName()] = fmt.Sprintf("sync logging alertrule: %s failed: %v", v.FullName(), err)
-					continue
+				p := NewAlertRuleProcessor(cli, h.GetDataBase())
+				switch alertrule.AlertType {
+				case prometheus.AlertTypeMonitor:
+					if err := p.SyncMonitorAlertRule(ctx, alertrule); err != nil {
+						return fmt.Sprintf("sync monitor alertrule: %s failed: %v", alertrule.FullName(), err)
+					}
+				case prometheus.AlertTypeLogging:
+					if err := p.SyncLoggingAlertRule(ctx, alertrule); err != nil {
+						return fmt.Sprintf("sync logging alertrule: %s failed: %v", alertrule.FullName(), err)
+					}
+				default:
+					return fmt.Sprintf("unknown alerttype: %v", alertrule)
 				}
-			default:
-				statusMap[v.FullName()] = fmt.Sprintf("unknown alerttype: %v", v)
-				continue
+				return "success"
 			}
-			statusMap[v.FullName()] = "success"
+			status := syncAlertRule(v)
+			log.Info("sync alertrule", "name", v.FullName(), "status", status)
+			statusMap[v.FullName()] = status
 		}
 		return nil
 	}); err != nil {
@@ -1457,7 +1458,7 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 			})
 			inhibitrule.Equal = append(inhibitrule.Equal, "namespace")
 		}
-		ret.InhibitRules = append(ret.InhibitRules)
+		ret.InhibitRules = append(ret.InhibitRules, inhibitrule)
 	}
 	return ret
 }
