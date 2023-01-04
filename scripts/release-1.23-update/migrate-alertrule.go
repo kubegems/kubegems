@@ -104,7 +104,7 @@ func deleteK8sAlertRuleCfgs(ctx context.Context, cs *agents.ClientSet) error {
 
 func syncAlertRules(ctx context.Context, cs *agents.ClientSet, db *database.Database) error {
 	alertrules := []*models.AlertRule{}
-	if err := db.DB().Find(&alertrules).Error; err != nil {
+	if err := db.DB().Preload("Receivers.AlertChannel").Find(&alertrules).Error; err != nil {
 		return err
 	}
 	for _, v := range alertrules {
@@ -127,6 +127,7 @@ func syncAlertRules(ctx context.Context, cs *agents.ClientSet, db *database.Data
 			}
 		default:
 			log.Errorf("unknown alerttype: %v", v)
+			continue
 		}
 		log.Info("sync alert rule success", "name", v.FullName())
 	}

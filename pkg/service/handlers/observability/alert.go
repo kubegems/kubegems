@@ -179,6 +179,78 @@ func (h *ObservabilityHandler) GenerateAlertMessage(c *gin.Context) {
 	handlers.OK(c, msg)
 }
 
+// SyncAlertRule 同步告警规则
+// @Tags        Observability
+// @Summary     同步告警规则
+// @Description 同步告警规则
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                          true "cluster, 支持_all"
+// @Param       namespace path     string                                          true "namespace, 支持_all"
+// @Param       name      path     string                                          true "name, 支持_all"
+// @Success     200       {object} handlers.ResponseStruct{Data=map[string]string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/sync [post]
+// @Security    JWT
+func (h *ObservabilityHandler) SyncAlertRule(c *gin.Context) {
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	statusMap := map[string]string{}
+	if err := h.Process(func() error {
+		if cluster == "_all" || namespace == "_all" {
+			user, _ := h.GetContextUser(c)
+			if user.GetSystemRoleID() != 1 {
+				return errors.Errorf("only system admin can sync all cluster or namespace")
+			}
+		}
+		alertrules := []*models.AlertRule{}
+		ctx := c.Request.Context()
+		query := h.GetDB().WithContext(ctx).Preload("Receivers.AlertChannel")
+
+		setWhere := func(fieldname, fieldvalue string) {
+			if fieldvalue != "_all" {
+				query.Where("%s = ?", fieldvalue)
+			}
+		}
+		setWhere("cluster", cluster)
+		setWhere("namespace", namespace)
+		setWhere("name", name)
+		if err := query.Find(&alertrules).Error; err != nil {
+			return err
+		}
+
+		for _, v := range alertrules {
+			cli, err := h.GetAgents().ClientOf(ctx, v.Cluster)
+			if err != nil {
+				statusMap[v.FullName()] = fmt.Sprintf("client of: %s failed, %v", cli.Name(), err)
+				continue
+			}
+			p := NewAlertRuleProcessor(cli, h.GetDataBase())
+			switch v.AlertType {
+			case prometheus.AlertTypeMonitor:
+				if err := p.SyncMonitorAlertRule(ctx, v); err != nil {
+					statusMap[v.FullName()] = fmt.Sprintf("sync monitor alertrule: %s failed: %v", v.FullName(), err)
+					continue
+				}
+			case prometheus.AlertTypeLogging:
+				if err := p.SyncLoggingAlertRule(ctx, v); err != nil {
+					statusMap[v.FullName()] = fmt.Sprintf("sync logging alertrule: %s failed: %v", v.FullName(), err)
+					continue
+				}
+			default:
+				statusMap[v.FullName()] = fmt.Sprintf("unknown alerttype: %v", v)
+				continue
+			}
+			statusMap[v.FullName()] = "success"
+		}
+		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, statusMap)
+}
+
 // Deprecated. use cli.Extend().ListSilences instead
 func listSilences(ctx context.Context, namespace string, cli agents.Client) ([]*alerttypes.Silence, error) {
 	silences := []*alerttypes.Silence{}
@@ -1312,6 +1384,13 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 		},
 		InhibitRules: []v1alpha1.InhibitRule{},
 	}
+	if alertrule.Namespace != prometheus.GlobalAlertNamespace {
+		// force add namespace matcher
+		ret.Route.Matchers = append(ret.Route.Matchers, v1alpha1.Matcher{
+			Name:  "namespace",
+			Value: alertrule.Namespace,
+		})
+	}
 	for _, rec := range alertrule.Receivers {
 		route := v1alpha1.Route{
 			Receiver:       rec.AlertChannel.ReceiverName(),
@@ -1327,12 +1406,6 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 					Value: alertrule.Name,
 				},
 			},
-		}
-		if alertrule.Namespace == prometheus.GlobalAlertNamespace {
-			route.Matchers = append(route.Matchers, v1alpha1.Matcher{
-				Name:  "namespace",
-				Value: alertrule.Namespace,
-			})
 		}
 		rawRouteData, _ := json.Marshal(route)
 		// receiver
@@ -1355,7 +1428,6 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 				{
 					Name:  prometheus.SeverityLabel,
 					Value: prometheus.SeverityCritical,
-					Regex: false,
 				},
 			},
 			TargetMatch: []v1alpha1.Matcher{
@@ -1370,7 +1442,6 @@ func GenerateAmcfgSpec(alertrule *models.AlertRule) v1alpha1.AlertmanagerConfigS
 				{
 					Name:  prometheus.SeverityLabel,
 					Value: prometheus.SeverityError,
-					Regex: false,
 				},
 			},
 			Equal: append(alertrule.InhibitLabels, prometheus.AlertNamespaceLabel, prometheus.AlertNameLabel),
