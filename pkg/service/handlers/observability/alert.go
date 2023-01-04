@@ -33,6 +33,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+	promlabels "github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -1162,13 +1163,12 @@ func setExpr(alertrule *models.AlertRule) error {
 				return err
 			}
 			if alertrule.Namespace != prometheus.GlobalAlertNamespace {
-				alertrule.PromqlGenerator.LabelMatchers = append(alertrule.PromqlGenerator.LabelMatchers, promql.LabelMatcher{
-					Type:  promql.MatchEqual,
+				q.AddLabelMatchers(&promlabels.Matcher{
+					Type:  promlabels.MatchEqual,
 					Name:  "namespace",
 					Value: alertrule.Namespace,
 				})
 			}
-
 			for _, m := range alertrule.PromqlGenerator.LabelMatchers {
 				q.AddLabelMatchers(m.ToPromqlLabelMatcher())
 			}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/prometheus/prometheus/pkg/labels"
+	"kubegems.io/kubegems/pkg/utils/set"
 )
 
 // MatchType is an enum for label matching types.
@@ -48,4 +49,16 @@ func (m *LabelMatcher) String() string {
 		m.Type = MatchEqual
 	}
 	return fmt.Sprintf("%s%s%q", m.Name, m.Type, m.Value)
+}
+
+func RemoveDuplicated(ms []LabelMatcher) []LabelMatcher {
+	ret := []LabelMatcher{}
+	s := set.NewSet[string]()
+	for _, m := range ms {
+		if !s.Has(m.String()) {
+			ret = append(ret, m)
+			s.Append(m.String())
+		}
+	}
+	return ret
 }

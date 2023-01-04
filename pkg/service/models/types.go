@@ -60,6 +60,7 @@ type PromqlGenerator struct {
 }
 
 func (m PromqlGenerator) Value() (driver.Value, error) {
+	promql.RemoveDuplicated(m.LabelMatchers)
 	ba, err := json.Marshal(m)
 	return string(ba), err
 }
@@ -94,6 +95,7 @@ type LogqlGenerator struct {
 }
 
 func (m LogqlGenerator) Value() (driver.Value, error) {
+	promql.RemoveDuplicated(m.LabelMatchers)
 	ba, err := json.Marshal(m)
 	return string(ba), err
 }
