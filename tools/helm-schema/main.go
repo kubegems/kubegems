@@ -258,7 +258,7 @@ func (g Generator) nodeSchema(node *yaml.Node, keycomment string, depth int) *sp
 			schema.Type = spec.StringOrArray{"string"}
 			schema.Format = "data-time"
 		case "!!null":
-			schema.Nullable = true
+			schema.Type = spec.StringOrArray{"null"}
 		default:
 			schema.Type = spec.StringOrArray{"object"}
 		}

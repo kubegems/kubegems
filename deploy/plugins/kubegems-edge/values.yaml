@@ -108,7 +108,7 @@ hub:
   ## @param hub.host Advertised host to accept connections
   # @title Advertise Host
   # @hidden hub.enabled=false
-  # @schema format=uri
+  # @schema format=hostname
   host: "kubegems-edge-hub.kubegems-edge"
   ## @param hub.serverAddress Upstream edge server address.
   # @title EdgeServer 地址
@@ -406,11 +406,11 @@ hub:
     # @hidden hub.service.type!=NodePort
     nodePorts:
       # @title HTTP Node 端口号
-      # @schema min=30000;max=32767
-      http: 0
+      # @schema min=30000;max=32767;type=integer
+      http: null
       # @title GRPC Node 端口号
-      # @schema min=30000;max=32767
-      grpc: 0
+      # @schema min=30000;max=32767;type=integer
+      grpc: null
 
     ## @param hub.service.clusterIP hub service Cluster IP
     ## e.g.:
@@ -582,7 +582,7 @@ server:
   serverID: kubegems-edge-server
   # @title Advertised Host
   # @hidden server.enabled=false
-  # @schema format=uri
+  # @schema format=hostname
   host: "kubegems-edge-server.kubegems-edge"
   ## @param server.replicaCount Number of server replicas to deploy
   ##
@@ -853,11 +853,11 @@ server:
     # @hidden server.service.type!=NodePort
     nodePorts:
       # @title HTTP Node 端口号
-      # @schema min=30000;max=32767
-      http: 0
+      # @schema min=30000;max=32767;type=integer
+      http: null
       # @title GRPC Node 端口号
-      # @schema min=30000;max=32767
-      grpc: 0
+      # @schema min=30000;max=32767;type=integer
+      grpc: null
     ## @param hub.service.clusterIP hub service Cluster IP
     ## e.g.:
     ## clusterIP: None

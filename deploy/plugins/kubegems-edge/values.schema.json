@@ -54,7 +54,7 @@
         },
         "host": {
           "type": "string",
-          "format": "uri",
+          "format": "hostname",
           "title": "Advertise Host",
           "default": "kubegems-edge-hub.kubegems-edge",
           "form": true,
@@ -137,17 +137,21 @@
               "title": "NodePort 配置",
               "properties": {
                 "grpc": {
-                  "type": "integer",
+                  "type": [
+                    "null",
+                    "integer"
+                  ],
                   "title": "GRPC Node 端口号",
-                  "default": 0,
                   "maximum": 32767,
                   "minimum": 30000,
                   "form": true
                 },
                 "http": {
-                  "type": "integer",
+                  "type": [
+                    "null",
+                    "integer"
+                  ],
                   "title": "HTTP Node 端口号",
-                  "default": 0,
                   "maximum": 32767,
                   "minimum": 30000,
                   "form": true
@@ -235,7 +239,7 @@
         },
         "host": {
           "type": "string",
-          "format": "uri",
+          "format": "hostname",
           "title": "Advertised Host",
           "default": "kubegems-edge-server.kubegems-edge",
           "form": true,
@@ -307,17 +311,21 @@
               "title": "NodePort 配置",
               "properties": {
                 "grpc": {
-                  "type": "integer",
+                  "type": [
+                    "null",
+                    "integer"
+                  ],
                   "title": "GRPC Node 端口号",
-                  "default": 0,
                   "maximum": 32767,
                   "minimum": 30000,
                   "form": true
                 },
                 "http": {
-                  "type": "integer",
+                  "type": [
+                    "null",
+                    "integer"
+                  ],
                   "title": "HTTP Node 端口号",
-                  "default": 0,
                   "maximum": 32767,
                   "minimum": 30000,
                   "form": true
