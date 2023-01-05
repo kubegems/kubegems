@@ -1,0 +1,349 @@
+{
+  "type": "object",
+  "properties": {
+    "hub": {
+      "type": "object",
+      "title": "HUB 配置",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "启用",
+          "default": true,
+          "x-order": "0",
+          "form": true
+        },
+        "updateStrategy": {
+          "type": "object",
+          "title": "更新策略",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "类型",
+              "default": "RollingUpdate",
+              "enum": [
+                "RollingUpdate",
+                "Recreate"
+              ],
+              "form": true
+            }
+          },
+          "x-order": "8",
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        },
+        "logLevel": {
+          "type": "string",
+          "title": "日志等级",
+          "default": "info",
+          "enum": [
+            "trace",
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "x-order": "9",
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        },
+        "host": {
+          "type": "string",
+          "format": "uri",
+          "title": "Advertise Host",
+          "default": "kubegems-edge-hub.kubegems-edge",
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        },
+        "image": {
+          "type": "object",
+          "title": "镜像配置",
+          "properties": {
+            "pullPolicy": {
+              "type": "string",
+              "title": "拉取策略",
+              "default": "IfNotPresent",
+              "enum": [
+                "Alway",
+                "IfNotPresent",
+                "None"
+              ],
+              "form": true
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        },
+        "replicaCount": {
+          "type": "integer",
+          "title": "副本数",
+          "default": 1,
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        },
+        "serverAddress": {
+          "type": "string",
+          "format": "uri",
+          "title": "EdgeServer 地址",
+          "default": "kubegems-edge-server.kubegems-edge:50051",
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        },
+        "serverID": {
+          "type": "string",
+          "title": "Server ID",
+          "default": "kubegems-edge-hub",
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        },
+        "service": {
+          "type": "object",
+          "title": "Service 配置",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Service类型",
+              "default": "ClusterIP",
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "Loadbalancer"
+              ],
+              "x-order": "10",
+              "form": true
+            },
+            "nodePorts": {
+              "type": "object",
+              "title": "NodePort 配置",
+              "properties": {
+                "grpc": {
+                  "type": "integer",
+                  "title": "GRPC Node 端口号",
+                  "default": 0,
+                  "maximum": 32767,
+                  "minimum": 30000,
+                  "form": true
+                },
+                "http": {
+                  "type": "integer",
+                  "title": "HTTP Node 端口号",
+                  "default": 0,
+                  "maximum": 32767,
+                  "minimum": 30000,
+                  "form": true
+                }
+              },
+              "form": true,
+              "hidden": {
+                "operator": "not",
+                "conditions": [
+                  {
+                    "path": "hub.service.type",
+                    "value": "NodePort"
+                  }
+                ]
+              }
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        },
+        "tls": {
+          "type": "object",
+          "title": "TLS 配置",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "启用",
+              "default": true,
+              "x-order": "0",
+              "form": true
+            },
+            "useCertManager": {
+              "type": "boolean",
+              "title": "使用 CertManager",
+              "default": false,
+              "x-order": "10",
+              "form": true,
+              "hidden": {
+                "path": "hub.tls.enabled",
+                "value": false
+              }
+            },
+            "existingSecret": {
+              "type": "string",
+              "title": "已有 Secret 配置名称",
+              "minLength": 0,
+              "form": true,
+              "hidden": {
+                "operator": "or",
+                "conditions": [
+                  {
+                    "path": "hub.tls.enabled",
+                    "value": false
+                  },
+                  {
+                    "path": "hub.tls.useCertManager",
+                    "value": true
+                  }
+                ]
+              }
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "hub.enabled",
+            "value": false
+          }
+        }
+      },
+      "form": true
+    },
+    "server": {
+      "type": "object",
+      "title": "Edge Server 配置",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "启用",
+          "default": false,
+          "x-order": "0",
+          "form": true
+        },
+        "host": {
+          "type": "string",
+          "format": "uri",
+          "title": "Advertised Host",
+          "default": "kubegems-edge-server.kubegems-edge",
+          "form": true,
+          "hidden": {
+            "path": "server.enabled",
+            "value": false
+          }
+        },
+        "image": {
+          "type": "object",
+          "title": "镜像配置",
+          "properties": {
+            "pullPolicy": {
+              "type": "string",
+              "title": "拉取策略",
+              "default": "IfNotPresent",
+              "enum": [
+                "Alway",
+                "IfNotPresent",
+                "None"
+              ],
+              "form": true
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "server.enabled",
+            "value": false
+          }
+        },
+        "replicaCount": {
+          "type": "integer",
+          "title": "副本数",
+          "default": 1,
+          "form": true,
+          "hidden": {
+            "path": "server.enabled",
+            "value": false
+          }
+        },
+        "serverID": {
+          "type": "string",
+          "title": "Server ID",
+          "default": "kubegems-edge-server",
+          "form": true,
+          "hidden": {
+            "path": "server.enabled",
+            "value": false
+          }
+        },
+        "service": {
+          "type": "object",
+          "title": "Service 配置",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Service类型",
+              "default": "ClusterIP",
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "Loadbalancer"
+              ],
+              "x-order": "10",
+              "form": true
+            },
+            "nodePorts": {
+              "type": "object",
+              "title": "NodePort 配置",
+              "properties": {
+                "grpc": {
+                  "type": "integer",
+                  "title": "GRPC Node 端口号",
+                  "default": 0,
+                  "maximum": 32767,
+                  "minimum": 30000,
+                  "form": true
+                },
+                "http": {
+                  "type": "integer",
+                  "title": "HTTP Node 端口号",
+                  "default": 0,
+                  "maximum": 32767,
+                  "minimum": 30000,
+                  "form": true
+                }
+              },
+              "form": true,
+              "hidden": {
+                "operator": "not",
+                "conditions": [
+                  {
+                    "path": "server.service.type",
+                    "value": "NodePort"
+                  }
+                ]
+              }
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "server.enabled",
+            "value": false
+          }
+        }
+      },
+      "form": true
+    }
+  },
+  "$schema": "http://json-schema.org/schema#"
+}

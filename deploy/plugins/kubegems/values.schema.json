@@ -1,0 +1,156 @@
+{
+  "type": "object",
+  "properties": {
+    "api": {
+      "type": "object",
+      "title": "API 配置",
+      "properties": {
+        "image": {
+          "type": "object",
+          "title": "镜像设置",
+          "properties": {
+            "pullPolicy": {
+              "type": "string",
+              "title": "拉取策略",
+              "default": "IfNotPresent",
+              "enum": [
+                "Alway",
+                "IfNotPresent",
+                "None"
+              ],
+              "form": true
+            }
+          },
+          "form": true
+        },
+        "replicaCount": {
+          "type": "integer",
+          "title": "副本数",
+          "default": 1,
+          "form": true
+        },
+        "service": {
+          "type": "object",
+          "title": "Service 配置",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Service 类型",
+              "default": "ClusterIP",
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "LoadBalancer"
+              ],
+              "x-order": "10",
+              "form": true
+            },
+            "nodePorts": {
+              "type": "object",
+              "title": "NodePort 端口配置",
+              "properties": {
+                "http": {
+                  "type": "integer",
+                  "title": "HTTP NodePort 端口号",
+                  "default": 0,
+                  "maximum": 65535,
+                  "minimum": 0,
+                  "form": true
+                }
+              },
+              "form": true,
+              "hidden": {
+                "operator": "not",
+                "conditions": [
+                  {
+                    "path": "dashboard.service.type",
+                    "value": "NodePort"
+                  }
+                ]
+              }
+            }
+          },
+          "form": true
+        }
+      },
+      "form": true
+    },
+    "dashboard": {
+      "type": "object",
+      "title": "Dashboard 配置",
+      "properties": {
+        "image": {
+          "type": "object",
+          "title": "Dashboard Image 配置",
+          "properties": {
+            "pullPolicy": {
+              "type": "string",
+              "title": "拉取策略",
+              "default": "IfNotPresent",
+              "enum": [
+                "Alway",
+                "IfNotPresent",
+                "None"
+              ],
+              "form": true
+            }
+          },
+          "form": true
+        },
+        "replicaCount": {
+          "type": "integer",
+          "title": "副本数",
+          "default": 1,
+          "form": true
+        },
+        "service": {
+          "type": "object",
+          "title": "Dashboard Service 配置",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Service 类型",
+              "default": "ClusterIP",
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "LoadBalancer"
+              ],
+              "x-order": "10",
+              "form": true
+            },
+            "nodePorts": {
+              "type": "object",
+              "title": "NodePort 端口配置",
+              "properties": {
+                "http": {
+                  "type": [
+                    "string",
+                    "integer"
+                  ],
+                  "title": "HTTP NodePort 端口号",
+                  "maximum": 65535,
+                  "minimum": 0,
+                  "form": true
+                }
+              },
+              "form": true,
+              "hidden": {
+                "operator": "not",
+                "conditions": [
+                  {
+                    "path": "dashboard.service.type",
+                    "value": "NodePort"
+                  }
+                ]
+              }
+            }
+          },
+          "form": true
+        }
+      },
+      "form": true
+    }
+  },
+  "$schema": "http://json-schema.org/schema#"
+}

@@ -61,8 +61,11 @@ diagnosticMode:
 
 ## hub parameters
 ##
+# @title HUB 配置
 hub:
   ## @param hub.enabled Enable edge hub component
+  # @title 启用
+  # @order 0
   enabled: true
   ## KubeGems hub image
   ## ref: https://hub.docker.com/r/kubegems/kubegems/tags/
@@ -73,6 +76,8 @@ hub:
   ## @param hub.image.pullSecrets hub image pull secrets
   ## @param hub.image.debug Enable hub image debug mode
   ##
+  # @title 镜像配置
+  # @hidden hub.enabled=false
   image:
     registry: docker.io
     repository: kubegems/kubegems
@@ -81,6 +86,8 @@ hub:
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
+    # @title 拉取策略
+    # @schema enum=Alway,IfNotPresent,None
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
@@ -95,14 +102,24 @@ hub:
     debug: false
 
   ## @param hub.serverID identifier for the edge hub instance.
+  # @title Server ID
+  # @hidden hub.enabled=false
   serverID: kubegems-edge-hub
   ## @param hub.host Advertised host to accept connections
+  # @title Advertise Host
+  # @hidden hub.enabled=false
+  # @schema format=uri
   host: "kubegems-edge-hub.kubegems-edge"
   ## @param hub.serverAddress Upstream edge server address.
+  # @title EdgeServer 地址
+  # @hidden hub.enabled=false
+  # @schema format=uri
   serverAddress: "kubegems-edge-server.kubegems-edge:50051"
 
   ## @param hub.replicaCount Number of hub replicas to deploy
   ##
+  # @title 副本数
+  # @hidden hub.enabled=false
   replicaCount: 1
   ## @param hub.containerPorts.http hub HTTP container port
   ## @param hub.containerPorts.http server probe port
@@ -197,11 +214,27 @@ hub:
   ## @param hub.tls.enabled Enable hub http listen TLS
   ## @param hub.tls.useCertManager using cert manager to generate tls secret,if not using self-signed certificates if not exists
   ## @param hub.tls.existingSecret use existsing tls secret name
+  # @title TLS 配置
+  # @hidden hub.enabled=false
   tls:
+    # @title 启用
+    # @order 0
     enabled: true
+    # @title 使用 CertManager
+    # @hidden hub.tls.enabled=false
+    # @order 10
+    useCertManager: false
+    # @title 已有 Secret 配置名称
+    # set id optional
+    # @schema minlen=0
+    # @hidden hub.tls.enabled=false;operator=or;hub.tls.useCertManager=true
     existingSecret: ""
 
   ## @param hub.logLevel Set log level
+  # @title 日志等级
+  # @schema enum=trace,debug,info,warn,error
+  # @order 9
+  # @hidden hub.enabled=false
   logLevel: info
 
   ## @param hub.existingConfigmap The name of an existing ConfigMap with your custom configuration for hub
@@ -266,10 +299,12 @@ hub:
   ## @param hub.updateStrategy.type hub statefulset strategy type
   ## ref: https://kubernetes.io/docs/concepts/workloads/servers/statefulset/#update-strategies
   ##
+  # @title 更新策略
+  # @hidden hub.enabled=false
+  # @order 8
   updateStrategy:
-    ## StrategyType
-    ## Can be set to RollingUpdate or OnDelete
-    ##
+    # @title 类型
+    # @schema enum=RollingUpdate,Recreate
     type: RollingUpdate
   ## @param hub.priorityClassName hub pods' priorityClassName
   ##
@@ -347,9 +382,14 @@ hub:
 
   ## hub service parameters
   ##
+  # @title Service 配置
+  # @hidden hub.enabled=false
   service:
     ## @param hub.service.type hub service type
     ##
+    # @title Service类型
+    # @schema enum=ClusterIP,NodePort,Loadbalancer
+    # @order 10
     type: ClusterIP
     ## @param hub.service.ports.http hub service HTTP port
     ## if tls set, tls listen on this port
@@ -362,8 +402,14 @@ hub:
     ## @param hub.service.nodePorts.http [number,nullable] Node port for HTTP
     ## NOTE: choose port between <30000-32767>
     ##
+    # @title NodePort 配置
+    # @hidden hub.service.type!=NodePort
     nodePorts:
+      # @title HTTP Node 端口号
+      # @schema min=30000;max=32767
       http: 0
+      # @title GRPC Node 端口号
+      # @schema min=30000;max=32767
       grpc: 0
 
     ## @param hub.service.clusterIP hub service Cluster IP
@@ -490,8 +536,11 @@ hub:
 
 ## server configuration
 ##
+# @title Edge Server 配置
 server:
   ## @param server.enabled Enable edge server component
+  # @title 启用
+  # @order 0
   enabled: false
   ## KubeGems server image
   ## ref: https://hub.docker.com/r/kubegems/kubegems/tags/
@@ -502,6 +551,9 @@ server:
   ## @param server.image.pullSecrets server image pull secrets
   ## @param server.image.debug Enable server image debug mode
   ##
+
+  # @title 镜像配置
+  # @hidden server.enabled=false
   image:
     registry: docker.io
     repository: kubegems/kubegems
@@ -510,6 +562,8 @@ server:
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
+    # @title 拉取策略
+    # @schema enum=Alway,IfNotPresent,None
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
@@ -522,10 +576,18 @@ server:
     ## Enable debug mode
     ##
     debug: false
+
+  # @title Server ID
+  # @hidden server.enabled=false
   serverID: kubegems-edge-server
-  host: "kubegems-edge-server.kubegems-edge:1"
+  # @title Advertised Host
+  # @hidden server.enabled=false
+  # @schema format=uri
+  host: "kubegems-edge-server.kubegems-edge"
   ## @param server.replicaCount Number of server replicas to deploy
   ##
+  # @title 副本数
+  # @hidden server.enabled=false
   replicaCount: 1
   ## @param server.containerPorts.probe server probe port
   ## @param server.containerPorts.http server probe port
@@ -768,9 +830,14 @@ server:
 
   ## server service parameters
   ##
+  # @title Service 配置
+  # @hidden server.enabled=false
   service:
     ## @param hub.service.type hub service type
     ##
+    # @title Service类型
+    # @schema enum=ClusterIP,NodePort,Loadbalancer
+    # @order 10
     type: ClusterIP
     ## @param hub.service.ports.http hub service HTTP port
     ## if tls set, tls listen on this port
@@ -782,8 +849,14 @@ server:
     ## @param hub.service.nodePorts.http [number,nullable] Node port for HTTP
     ## NOTE: choose port between <30000-32767>
     ##
+    # @title NodePort 配置
+    # @hidden server.service.type!=NodePort
     nodePorts:
+      # @title HTTP Node 端口号
+      # @schema min=30000;max=32767
       http: 0
+      # @title GRPC Node 端口号
+      # @schema min=30000;max=32767
       grpc: 0
     ## @param hub.service.clusterIP hub service Cluster IP
     ## e.g.:

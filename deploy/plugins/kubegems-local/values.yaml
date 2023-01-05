@@ -61,6 +61,7 @@ diagnosticMode:
 
 ## agent parameters
 ##
+# @title Agent 配置
 agent:
   ## KubeGems agent image
   ## ref: https://hub.docker.com/r/kubegems/kubegems/tags/
@@ -71,6 +72,7 @@ agent:
   ## @param agent.image.pullSecrets agent image pull secrets
   ## @param agent.image.debug Enable agent image debug mode
   ##
+  # @title 镜像配置
   image:
     registry: docker.io
     repository: kubegems/kubegems
@@ -79,6 +81,8 @@ agent:
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
+    # @title 拉取策略
+    # @schema enum=Alway,IfNotPresent,None
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
@@ -123,7 +127,7 @@ agent:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 10
+    initialDelaySeconds: 5
     timeoutSeconds: 1
     periodSeconds: 20
     failureThreshold: 6
@@ -137,7 +141,7 @@ agent:
   ##
   startupProbe:
     enabled: false
-    initialDelaySeconds: 10
+    initialDelaySeconds: 1
     timeoutSeconds: 1
     periodSeconds: 20
     failureThreshold: 6
@@ -189,7 +193,9 @@ agent:
 
   ## @param agent.httpSignature.enabled Enable agent HTTP Signature validation
   ## @param agent.httpSignature.token HTTP Signature encode token override
+  # @title 验证请求签名
   httpSignature:
+    # @title 启用
     enabled: true
     token: ""
 
@@ -383,9 +389,11 @@ agent:
 
   ## @section Agent Metrics parameters
   ##
+  # @title Metrics 配置
   metrics:
     ## @param agent.metrics.enabled Create a service for accessing the metrics endpoint
     ##
+    # @title 启用
     enabled: false
     ## Metrics service parameters
     ##

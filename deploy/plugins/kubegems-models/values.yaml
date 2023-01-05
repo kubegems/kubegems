@@ -59,6 +59,7 @@ diagnosticMode:
 
 ## controller configuration
 ##
+# @title Controller 配置
 controller:
   ## kubegems controller image
   ## @param controller.image.registry controller image registry
@@ -182,6 +183,7 @@ controller:
     enabled: true
 
   ## @param controller.baseDomain Models Ingress Base Domain
+  # @title Ingress 基本域名
   baseDomain: models.kubegems.io
   ## Configure logging
   ##
@@ -401,8 +403,10 @@ controller:
 
 ## store configuration
 ##
+# @title Store 配置
 store:
   ## @param store.enabled enabled model store api
+  # @title 启用
   enabled: false
   ## kubegems store image
   ## @param store.image.registry store image registry
@@ -648,6 +652,7 @@ store:
 
   ## store service parameters
   ##
+  # @title Service 配置
   service:
     ## @param store.service.type store service type
     ##
@@ -691,8 +696,10 @@ store:
 
 ## sync configuration
 ##
+# @title Sync 配置
 sync:
   ## @param sync.enabled enabled model sync
+  # @title 启用
   enabled: false
   ## kubegems sync image
   ## @param sync.image.registry sync image registry

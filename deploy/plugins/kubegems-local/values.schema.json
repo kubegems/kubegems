@@ -1,0 +1,57 @@
+{
+  "type": "object",
+  "properties": {
+    "agent": {
+      "type": "object",
+      "title": "Agent 配置",
+      "properties": {
+        "httpSignature": {
+          "type": "object",
+          "title": "验证请求签名",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "启用",
+              "default": true,
+              "form": true
+            }
+          },
+          "form": true
+        },
+        "image": {
+          "type": "object",
+          "title": "镜像配置",
+          "properties": {
+            "pullPolicy": {
+              "type": "string",
+              "title": "拉取策略",
+              "default": "IfNotPresent",
+              "enum": [
+                "Alway",
+                "IfNotPresent",
+                "None"
+              ],
+              "form": true
+            }
+          },
+          "form": true
+        },
+        "metrics": {
+          "type": "object",
+          "title": "Metrics 配置",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "启用",
+              "default": false,
+              "form": true
+            }
+          },
+          "form": true
+        }
+      },
+      "form": true
+    }
+  },
+  "$schema": "http://json-schema.org/schema#"
+}

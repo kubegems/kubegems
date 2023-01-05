@@ -61,6 +61,7 @@ diagnosticMode:
 
 ## dashboard configuration
 ##
+# @title Dashboard 配置
 dashboard:
   ## Bitnami dashboard image
   ## ref: https://hub.docker.com/r/bitnami/%%IMAGE_NAME%%/tags/
@@ -71,6 +72,7 @@ dashboard:
   ## @param dashboard.image.pullSecrets dashboard image pull secrets
   ## @param dashboard.image.debug Enable dashboard image debug mode
   ##
+  # @title Dashboard Image 配置
   image:
     registry: docker.io
     repository: kubegems/dashboard
@@ -79,6 +81,8 @@ dashboard:
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
+    # @title 拉取策略
+    # @schema enum=Alway,IfNotPresent,None
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
@@ -93,6 +97,7 @@ dashboard:
     debug: false
   ## @param dashboard.replicaCount Number of dashboard replicas to deploy
   ##
+  # @title 副本数
   replicaCount: 1
   ## @param dashboard.containerPorts.http dashboard HTTP container port
   ##
@@ -109,7 +114,6 @@ dashboard:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 10
     timeoutSeconds: 1
     periodSeconds: 20
     failureThreshold: 6
@@ -157,8 +161,12 @@ dashboard:
   ## @param dashboard.resources.requests The requested resources for the dashboard containers
   ##
   resources:
-    limits: {}
-    requests: {}
+    limits:
+      cpu: "1"
+      memory: 512Mi
+    requests:
+      cpu: 500
+      memory: 128Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param dashboard.podSecurityContext.enabled Enabled dashboard pods' Security Context
@@ -302,9 +310,13 @@ dashboard:
 
   ## dashboard service parameters
   ##
+  # @title Dashboard Service 配置
   service:
     ## @param dashboard.service.type dashboard service type
     ##
+    # @title Service 类型
+    # @schema enum=ClusterIP,NodePort,LoadBalancer
+    # @order 10
     type: ClusterIP
     ## @param dashboard.service.ports.http dashboard service HTTP port
     ##
@@ -314,7 +326,11 @@ dashboard:
     ## @param dashboard.service.nodePorts.http [number] Node port for HTTP
     ## NOTE: choose port between <30000-32767>
     ##
+    # @title NodePort 端口配置
+    # @hidden dashboard.service.type!=NodePort
     nodePorts:
+      # @title HTTP NodePort 端口号
+      # @schema type=integer;min=0;max=65535
       http: ""
     ## @param dashboard.service.clusterIP dashboard service Cluster IP
     ## e.g.:
@@ -630,6 +646,7 @@ init:
 
 ## API configuration
 ##
+# @title API 配置
 api:
   ## @param api.image.registry API image registry
   ## @param api.image.repository API image repository
@@ -638,6 +655,7 @@ api:
   ## @param api.image.pullSecrets API image pull secrets
   ## @param api.image.debug Enable API image debug mode
   ##
+  # @title 镜像设置
   image:
     registry: docker.io
     repository: kubegems/kubegems
@@ -646,6 +664,8 @@ api:
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
+    # @title 拉取策略
+    # @schema enum=Alway,IfNotPresent,None
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
@@ -660,6 +680,7 @@ api:
     debug: false
   ## @param api.replicaCount Number of API replicas to deploy
   ##
+  # @title 副本数
   replicaCount: 1
   ## @param api.containerPorts.http API HTTP container port
   ##
@@ -724,8 +745,12 @@ api:
   ## @param api.resources.requests The requested resources for the API containers
   ##
   resources:
-    limits: {}
-    requests: {}
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 500
+      memory: 128Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param api.podSecurityContext.enabled Enabled API pods' Security Context
@@ -875,9 +900,13 @@ api:
 
   ## api service parameters
   ##
+  # @title Service 配置
   service:
     ## @param api.service.type API service type
     ##
+    # @title Service 类型
+    # @schema enum=ClusterIP,NodePort,LoadBalancer
+    # @order 10
     type: ClusterIP
     ## @param api.service.ports.http API service HTTP port
     ##
@@ -887,7 +916,11 @@ api:
     ## @param api.service.nodePorts.http Node port for HTTP
     ## NOTE: choose port between <30000-32767>
     ##
+    # @title NodePort 端口配置
+    # @hidden dashboard.service.type!=NodePort
     nodePorts:
+      # @title HTTP NodePort 端口号
+      # @schema type=integer;min=0;max=65535
       http: 0
     ## @param api.service.clusterIP API service Cluster IP
     ## e.g.:
@@ -1100,8 +1133,12 @@ msgbus:
   ## @param msgbus.resources.requests The requested resources for the msgbus containers
   ##
   resources:
-    limits: {}
-    requests: {}
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 500
+      memory: 128Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param msgbus.podSecurityContext.enabled Enabled msgbus pods' Security Context
@@ -1468,8 +1505,12 @@ worker:
   ## @param worker.resources.requests The requested resources for the worker containers
   ##
   resources:
-    limits: {}
-    requests: {}
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 500
+      memory: 128Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param worker.podSecurityContext.enabled Enabled worker pods' Security Context

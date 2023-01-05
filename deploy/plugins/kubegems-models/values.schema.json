@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "properties": {
+    "controller": {
+      "type": "object",
+      "title": "Controller 配置",
+      "properties": {
+        "baseDomain": {
+          "type": "string",
+          "title": "Ingress 基本域名",
+          "default": "models.kubegems.io",
+          "form": true
+        }
+      },
+      "form": true
+    },
+    "store": {
+      "type": "object",
+      "title": "Store 配置",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "启用",
+          "default": false,
+          "form": true
+        },
+        "service": {
+          "type": "object",
+          "title": "Service 配置",
+          "form": true
+        }
+      },
+      "form": true
+    },
+    "sync": {
+      "type": "object",
+      "title": "Sync 配置",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "启用",
+          "default": false,
+          "form": true
+        }
+      },
+      "form": true
+    }
+  },
+  "$schema": "http://json-schema.org/schema#"
+}
