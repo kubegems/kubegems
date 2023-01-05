@@ -106,7 +106,7 @@ func GenerateWriteSchema(chartpath string, options Options) error {
 	if err != nil {
 		return err
 	}
-	if schema == nil {
+	if schema == nil || (len(schema.Properties) == 0 && schema.Items == nil) {
 		fmt.Printf("Empty schema of %s\n", valuesfile)
 		return nil
 	}
