@@ -138,8 +138,8 @@
               "properties": {
                 "grpc": {
                   "type": [
-                    "null",
-                    "integer"
+                    "integer",
+                    "null"
                   ],
                   "title": "GRPC Node 端口号",
                   "maximum": 32767,
@@ -148,8 +148,8 @@
                 },
                 "http": {
                   "type": [
-                    "null",
-                    "integer"
+                    "integer",
+                    "null"
                   ],
                   "title": "HTTP Node 端口号",
                   "maximum": 32767,
@@ -312,8 +312,8 @@
               "properties": {
                 "grpc": {
                   "type": [
-                    "null",
-                    "integer"
+                    "integer",
+                    "null"
                   ],
                   "title": "GRPC Node 端口号",
                   "maximum": 32767,
@@ -322,8 +322,8 @@
                 },
                 "http": {
                   "type": [
-                    "null",
-                    "integer"
+                    "integer",
+                    "null"
                   ],
                   "title": "HTTP Node 端口号",
                   "maximum": 32767,

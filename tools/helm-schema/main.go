@@ -534,7 +534,8 @@ func SetSchemaProp(schema *spec.Schema, k string, v string) {
 		schema.Description = v
 	case "type":
 		if !schema.Type.Contains(v) {
-			schema.Type = append(schema.Type, v)
+			// use prepend
+			schema.Type = append([]string{v}, schema.Type...)
 		}
 	default:
 		if schema.ExtraProps == nil {
