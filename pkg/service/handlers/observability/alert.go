@@ -227,17 +227,8 @@ func (h *ObservabilityHandler) SyncAlertRule(c *gin.Context) {
 					return fmt.Sprintf("client of: %s failed, %v", cli.Name(), err)
 				}
 				p := NewAlertRuleProcessor(cli, h.GetDataBase())
-				switch alertrule.AlertType {
-				case prometheus.AlertTypeMonitor:
-					if err := p.SyncMonitorAlertRule(ctx, alertrule); err != nil {
-						return fmt.Sprintf("sync monitor alertrule: %s failed: %v", alertrule.FullName(), err)
-					}
-				case prometheus.AlertTypeLogging:
-					if err := p.SyncLoggingAlertRule(ctx, alertrule); err != nil {
-						return fmt.Sprintf("sync logging alertrule: %s failed: %v", alertrule.FullName(), err)
-					}
-				default:
-					return fmt.Sprintf("unknown alerttype: %v", alertrule)
+				if err := p.SyncAlertRule(ctx, v); err != nil {
+					return err.Error()
 				}
 				return "success"
 			}
@@ -1074,6 +1065,36 @@ func (h *ObservabilityHandler) withAlertRuleProcessor(ctx context.Context, clust
 	return f(ctx, processor)
 }
 
+func (p *AlertRuleProcessor) MutateAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	if alertrule.Namespace == "" {
+		return errors.Errorf("namespace can't be empty")
+	}
+
+	// set tpl
+	if alertrule.PromqlGenerator != nil {
+		tpl, err := p.db.FindPromqlTpl(alertrule.PromqlGenerator.Scope, alertrule.PromqlGenerator.Resource, alertrule.PromqlGenerator.Rule)
+		if err != nil {
+			return err
+		}
+		alertrule.PromqlGenerator.Tpl = tpl
+	}
+
+	if alertrule.Message == "" {
+		msg, err := genarateMessage(alertrule)
+		if err != nil {
+			return err
+		}
+		alertrule.Message = msg
+	}
+	if err := setExpr(alertrule); err != nil {
+		return err
+	}
+	if err := SetReceivers(alertrule, p.db.DB().WithContext(ctx)); err != nil {
+		return err
+	}
+	return checkAlertLevels(alertrule)
+}
+
 func (p *AlertRuleProcessor) getAlertRuleReq(c *gin.Context) (*models.AlertRule, error) {
 	req := &models.AlertRule{}
 	err := c.BindJSON(&req)
@@ -1082,9 +1103,6 @@ func (p *AlertRuleProcessor) getAlertRuleReq(c *gin.Context) (*models.AlertRule,
 	}
 	req.Cluster = c.Param("cluster")
 	req.Namespace = c.Param("namespace")
-	if req.Namespace == "" {
-		return nil, errors.Errorf("namespace can't be empty")
-	}
 
 	// set alert type
 	if req.AlertType == "" {
@@ -1094,28 +1112,7 @@ func (p *AlertRuleProcessor) getAlertRuleReq(c *gin.Context) (*models.AlertRule,
 			req.AlertType = prometheus.AlertTypeLogging
 		}
 	}
-	// set tpl
-	if req.PromqlGenerator != nil {
-		tpl, err := p.db.FindPromqlTpl(req.PromqlGenerator.Scope, req.PromqlGenerator.Resource, req.PromqlGenerator.Rule)
-		if err != nil {
-			return nil, err
-		}
-		req.PromqlGenerator.Tpl = tpl
-	}
-
-	if req.Message == "" {
-		req.Message, err = genarateMessage(req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if err := setExpr(req); err != nil {
-		return nil, err
-	}
-	if err := SetReceivers(req, p.db.DB().WithContext(c.Request.Context())); err != nil {
-		return nil, err
-	}
-	if err := checkAlertLevels(req); err != nil {
+	if err := p.MutateAlertRule(c.Request.Context(), req); err != nil {
 		return nil, err
 	}
 	return req, nil
@@ -1481,7 +1478,7 @@ func (p *AlertRuleProcessor) syncPrometheusRule(ctx context.Context, alertrule *
 	return err
 }
 
-func (p *AlertRuleProcessor) SyncMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+func (p *AlertRuleProcessor) syncMonitorAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
 	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync secret failed")
 	}
@@ -1515,7 +1512,7 @@ func (p *AlertRuleProcessor) deleteMonitorAlertRule(ctx context.Context, alertru
 	return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
 }
 
-func (p *AlertRuleProcessor) SyncLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+func (p *AlertRuleProcessor) syncLoggingAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
 	if err := p.syncEmailSecret(ctx, alertrule); err != nil {
 		return errors.Wrap(err, "sync secret failed")
 	}
@@ -1526,6 +1523,26 @@ func (p *AlertRuleProcessor) SyncLoggingAlertRule(ctx context.Context, alertrule
 		return errors.Wrap(err, "sync alertmanagerconfig failed")
 	}
 	return nil
+}
+
+func (p *AlertRuleProcessor) SyncAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	switch alertrule.AlertType {
+	case prometheus.AlertTypeMonitor:
+		if err := p.syncMonitorAlertRule(ctx, alertrule); err != nil {
+			return errors.Wrapf(err, "sync monitor alertrule: %s", alertrule.FullName())
+		}
+	case prometheus.AlertTypeLogging:
+		if err := p.syncLoggingAlertRule(ctx, alertrule); err != nil {
+			return errors.Wrapf(err, "sync logging alertrule: %s", alertrule.FullName())
+		}
+	default:
+		return errors.Errorf("unknown alerttype: %v", alertrule)
+	}
+	if alertrule.IsOpen {
+		return deleteSilenceIfExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
+	} else {
+		return createSilenceIfNotExist(ctx, alertrule.Namespace, alertrule.Name, p.cli)
+	}
 }
 
 const (
@@ -1652,7 +1669,7 @@ func (p *AlertRuleProcessor) GetK8sAlertCfg(ctx context.Context) (map[string]K8s
 	if err := p.cli.List(ctx, &promruleList, client.InNamespace(v1.NamespaceAll), client.HasLabels([]string{
 		gems.LabelPrometheusRuleType, gems.LabelPrometheusRuleName,
 	})); err != nil {
-		return nil, err
+		log.Error(err, "list prometheusrule")
 	}
 	for _, rule := range promruleList.Items {
 		if rule.Name == prometheus.DefaultAlertCRDName {
@@ -1676,7 +1693,7 @@ func (p *AlertRuleProcessor) GetK8sAlertCfg(ctx context.Context) (map[string]K8s
 		},
 	}
 	if err := p.cli.Get(ctx, client.ObjectKeyFromObject(&lokiruleCm), &lokiruleCm); err != nil {
-		return nil, err
+		log.Error(err, "get loki configmap")
 	}
 	for k, v := range lokiruleCm.Data {
 		// skip recording rule

@@ -1,78 +1,95 @@
 # k8s节点
-- name: KubernetesNodeNotReady
+- name: kubernetes-node-not-ready
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
     rule: statusCondition
-    labelpairs:
-      condition: Ready
-      status: "true"
-  for: 5m
+    labelMatchers:
+      - type: "="
+        name: condition
+        value: Ready
+      - type: "="
+        name: status
+        value: "true"
+  for: 0m
   alertLevels:
     - compareOp: "=="
       compareValue: "0"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: KubernetesMemoryPressure
+- name: kubernetes-memory-pressure
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
     rule: statusCondition
-    labelpairs:
-      condition: MemoryPressure
-      status: "true"
+    labelMatchers:
+      - type: "="
+        name: condition
+        value: MemoryPressure
+      - type: "="
+        name: status
+        value: "true"
   for: 5m
   alertLevels:
     - compareOp: "=="
       compareValue: "1"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 1h
-- name: KubernetesDiskPressure
+- name: kubernetes-disk-pressure
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
     rule: statusCondition
-    labelpairs:
-      condition: DiskPressure
-      status: "true"
+    labelMatchers:
+      - type: "="
+        name: condition
+        value: DiskPressure
+      - type: "="
+        name: status
+        value: "true"
   for: 5m
   alertLevels:
     - compareOp: "=="
       compareValue: "1"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 1h
-- name: KubernetesOutOfDisk
+- name: kubernetes-out-of-disk
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
     rule: statusCondition
-    labelpairs:
-      condition: OutOfDisk
-      status: "true"
+    labelMatchers:
+      - type: "="
+        name: condition
+        value: OutOfDisk
+      - type: "="
+        name: status
+        value: "true"
   for: 5m
   alertLevels:
     - compareOp: "=="
       compareValue: "1"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 1h
-- name: KubernetesPodNumberTooHigh
+- name: kubernetes-pod-number-too-high
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
@@ -83,54 +100,62 @@
       compareValue: "90"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 1h
 
 # 系统namepace pod
-- name: KubernetesPodCrashLooping
+- name: kubernetes-pod-crash-looping
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: containers
     resource: container
     rule: restartTimesLast5m
-    labelpairs:
-      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
+    labelMatchers:
+      - type: "=~"
+        name: namespace
+        value: kubegems.*|istio-system|observability|kube-system|local-path-storage
   for: 1m
   alertLevels:
     - compareOp: ">"
       compareValue: "2"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: KubernetesPodOOMKilling
+- name: kubernetes-pod-oom-killing
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: containers
     resource: container
     rule: statusTerminatedReason
-    labelpairs:
-      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
-      reason: "OOMKilled"
+    labelMatchers:
+      - type: "=~"
+        name: namespace
+        value: kubegems.*|istio-system|observability|kube-system|local-path-storage
+      - type: "="
+        name: "reason"
+        value: "OOMKilled"
   for: 1m
   alertLevels:
     - compareOp: ">"
       compareValue: "0"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: KubegemsPvcUsageTooHigh
+- name: kubegems-pvc-usage-too-high
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: containers
     resource: pvc
     rule: volumeUsagePercent
-    labelpairs:
-      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
+    labelMatchers:
+      - type: "=~"
+        name: namespace
+        value: kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1m
   alertLevels:
     - compareOp: ">"
@@ -141,13 +166,13 @@
       severity: critical
   inhibitLabels: ["namespace", "persistentvolumeclaim"]
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
 
 # 节点 host
-- name: HostHighCpuLoad
+- name: host-high-cpu-load
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
@@ -158,11 +183,11 @@
       compareValue: "80"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: HostHighMemoryLoad
+- name: host-high-memory-load
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
@@ -173,11 +198,11 @@
       compareValue: "90"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: HostUnusualDiskReadRate
+- name: host-unusual-disk-read-rate
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
@@ -188,11 +213,11 @@
       compareValue: "50 * 1024 * 1024"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: HostUnusualDiskWriteRate
+- name: host-unusual-disk-write-rate
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
@@ -203,11 +228,11 @@
       compareValue: "50 * 1024 * 1024"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: HostNetworkReceiveErrors
+- name: host-network-receive-errors
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
@@ -218,11 +243,11 @@
       compareValue: "1"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: HostNetworkTransmitErrors
+- name: host-network-transmit-errors
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
@@ -233,11 +258,11 @@
       compareValue: "1"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: HostHighLoad5
+- name: host-high-load5
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: node
@@ -252,48 +277,66 @@
       severity: critical
   inhibitLabels: ["node"]
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
+      interval: 10m
+- name: node-no-container-metrics
+  namespace: kubegems-monitoring
+  alertType: monitor
+  expr: count(gems_container_memory_usage_bytes)by(node)
+  for: 5m
+  alertLevels:
+    - compareOp: "=="
+      compareValue: "0"
+      severity: critical
+  receivers:
+    - alertChannelID: 1
       interval: 10m
 # 证书
-- name: CertManagerCertExpirySoon
+- name: cert-manager-cert-expiry-soon
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: others
     resource: cert
     rule: expirationRemainTime
-    labelpairs:
-      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
+    labelMatchers:
+      - type: "="
+        name: namespace
+        value: kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1h
   alertLevels:
     - compareOp: "<"
       compareValue: "7 * 24 * 60 * 60"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 12h
-- name: CertManagerCertNotReady
+- name: cert-manager-cert-not-ready
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: others
     resource: cert
     rule: status
-    labelpairs:
-      namespace: "kubegems.*|istio-system|observability|kube-system|local-path-storage"
-      condition: "False|Unknown"
+    labelMatchers:
+      - type: "="
+        name: namespace
+        value: kubegems.*|istio-system|observability|kube-system|local-path-storage"
+      - type: "=~"
+        name: condition
+        value: "False|Unknown"
   for: 0m
   alertLevels:
     - compareOp: "=="
       compareValue: "1"
       severity: error
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
 # cluster
-- name: ClusterHighCpuLoad
+- name: cluster-high-cpu-load
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: cluster
@@ -304,11 +347,11 @@
       compareValue: "80"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: ClusterHighMemoryLoad
+- name: cluster-high-memory-load
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: cluster
@@ -319,59 +362,64 @@
       compareValue: "90"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
-- name: ClusterComponentCertExpirySoon
+- name: cluster-component-cert-expiry-soon
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: system
     resource: cluster
     rule: certExpirationRemainTime
-    labelpairs:
-      component: apiserver
+    labelMatchers:
+      - type: "="
+        name: component
+        value: apiserver
   for: 1h
   alertLevels:
     - compareOp: "<"
       compareValue: "7 * 24 * 60 * 60"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
 # plugin
-- name: GemsPluginFailed
+- name: gems-plugin-failed
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: others
     resource: plugin
     rule: status
-    labelpairs:
-      enabled: "true"
+    labelMatchers:
+      - type: "="
+        name: enabled
+        value: true"
   for: 1m
   alertLevels:
     - compareOp: "=="
       compareValue: "0"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m
 # exporter
-- name: ExporterDown
+- name: exporter-down
   namespace: kubegems-monitoring
+  alertType: monitor
   promqlGenerator:
     scope: others
     resource: exporter
     rule: status
-    labelpairs:
-      job: "alertmanager|cert-manager|kubegems-local-agent|kube-state-metrics|kubelet|apiserver"
+    labelMatchers:
+      - type: "=~"
+        name: job
+        value: alertmanager|cert-manager|kubegems-local-agent|kube-state-metrics|kubelet|apiserver"
   for: 1m
   alertLevels:
     - compareOp: "=="
       compareValue: "0"
       severity: critical
   receivers:
-    - alertChannel:
-        id: 1
+    - alertChannelID: 1
       interval: 10m

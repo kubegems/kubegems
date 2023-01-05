@@ -113,21 +113,8 @@ func syncAlertRules(ctx context.Context, cs *agents.ClientSet, db *database.Data
 			log.Errorf("client of: %s failed", cli.Name())
 			continue
 		}
-		p := observability.NewAlertRuleProcessor(cli, db)
-		switch v.AlertType {
-		case prometheus.AlertTypeMonitor:
-			if err := p.SyncMonitorAlertRule(ctx, v); err != nil {
-				log.Errorf("sync monitor alertrule: %s failed: %v", v.FullName(), err)
-				continue
-			}
-		case prometheus.AlertTypeLogging:
-			if err := p.SyncLoggingAlertRule(ctx, v); err != nil {
-				log.Errorf("sync logging alertrule: %s failed: %v", v.FullName(), err)
-				continue
-			}
-		default:
-			log.Errorf("unknown alerttype: %v", v)
-			continue
+		if err := observability.NewAlertRuleProcessor(cli, db).SyncAlertRule(ctx, v); err != nil {
+			log.Error(err, "SyncAlertRule")
 		}
 		log.Info("sync alert rule success", "name", v.FullName())
 	}

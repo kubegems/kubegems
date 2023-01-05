@@ -209,12 +209,7 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 		go func(alertrule *models.AlertRule) {
 			defer wg.Done()
 			if err := h.Execute(ctx, alertrule.Cluster, func(ctx context.Context, cli agents.Client) error {
-				p := NewAlertRuleProcessor(cli, h.GetDataBase())
-				if alertrule.AlertType == prometheus.AlertTypeMonitor {
-					return p.SyncMonitorAlertRule(ctx, alertrule)
-				} else {
-					return p.SyncLoggingAlertRule(ctx, alertrule)
-				}
+				return NewAlertRuleProcessor(cli, h.GetDataBase()).SyncAlertRule(ctx, alertrule)
 			}); err != nil {
 				log.Warnf("%s alert rule: %s sync failed", alertrule.AlertType, alertrule.FullName())
 				return

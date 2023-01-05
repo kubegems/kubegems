@@ -399,7 +399,7 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 			if err := tx.Create(req).Error; err != nil {
 				return err
 			}
-			return p.SyncMonitorAlertRule(ctx, req)
+			return p.syncMonitorAlertRule(ctx, req)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -457,7 +457,7 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 				Updates(req).Error; err != nil {
 				return err
 			}
-			return p.SyncMonitorAlertRule(ctx, req)
+			return p.syncMonitorAlertRule(ctx, req)
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
