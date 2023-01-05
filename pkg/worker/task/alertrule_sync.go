@@ -17,17 +17,20 @@ package task
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers/observability"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/workflow"
 	"sigs.k8s.io/yaml"
@@ -39,33 +42,40 @@ type AlertRuleSyncTasker struct {
 }
 
 const (
-	TaskFunction_AlertRuleStateSync   = "alertrule-state-sync"
-	TaskFunction_AlertRuleConfigCheck = "alertrule-config-check"
+	TaskFunction_SyncAlertRuleState   = "sync-alertrule-state"
+	TaskFunction_CheckAlertRuleConfig = "check-alertrule-config"
+	TaskFunction_SyncSystemAlertRule  = "sync-system-alertrule"
 )
 
 func (t *AlertRuleSyncTasker) ProvideFuntions() map[string]interface{} {
 	return map[string]interface{}{
-		TaskFunction_AlertRuleStateSync:   t.SyncAlertRuleStatus,
-		TaskFunction_AlertRuleConfigCheck: t.CheckAlertRuleConfig,
+		TaskFunction_SyncAlertRuleState:   t.SyncAlertRuleState,
+		TaskFunction_CheckAlertRuleConfig: t.CheckAlertRuleConfig,
+		TaskFunction_SyncSystemAlertRule:  t.SyncSystemAlertRule,
 	}
 }
 
 func (s *AlertRuleSyncTasker) Crontasks() map[string]Task {
 	return map[string]Task{
 		"@every 2m": {
-			Name:  "alertrule state sync",
+			Name:  "sync alertrule state",
 			Group: "alertrule",
-			Steps: []workflow.Step{{Function: TaskFunction_AlertRuleStateSync}},
+			Steps: []workflow.Step{{Function: TaskFunction_SyncAlertRuleState}},
 		},
 		"@every 10m": {
-			Name:  "alertrule config check",
+			Name:  "check alertrule config",
 			Group: "alertrule",
-			Steps: []workflow.Step{{Function: TaskFunction_AlertRuleConfigCheck}},
+			Steps: []workflow.Step{{Function: TaskFunction_CheckAlertRuleConfig}},
+		},
+		"@every 15m": {
+			Name:  "sync system alertrule",
+			Group: "alertrule",
+			Steps: []workflow.Step{{Function: TaskFunction_SyncSystemAlertRule}},
 		},
 	}
 }
 
-func (t *AlertRuleSyncTasker) SyncAlertRuleStatus(ctx context.Context) error {
+func (t *AlertRuleSyncTasker) SyncAlertRuleState(ctx context.Context) error {
 	alertrules := []*models.AlertRule{}
 	if err := t.DB.DB().Find(&alertrules).Error; err != nil {
 		return err
@@ -157,6 +167,56 @@ func (t *AlertRuleSyncTasker) CheckAlertRuleConfig(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (t *AlertRuleSyncTasker) SyncSystemAlertRule(ctx context.Context) error {
+	bts, err := os.ReadFile("config/system-alert.yaml")
+	if err != nil {
+		return errors.Wrap(err, "read system alert rule")
+	}
+	return t.cs.ExecuteInEachCluster(ctx, func(ctx context.Context, cli agents.Client) error {
+		pm := &gemsplugin.PluginManager{Client: cli}
+		plugin, err := pm.Get(ctx, "monitoring")
+		if err != nil {
+			log.Error(err, "get monitor plugin", "cluster", cli.Name())
+			return nil
+		}
+		if !plugin.Installed.Enabled {
+			log.Errorf("monitor plugin not enabled in cluster: %s", cli.Name())
+			return nil
+		}
+
+		sysRules := []*models.AlertRule{}
+		if err := yaml.Unmarshal(bts, &sysRules); err != nil {
+			return errors.Wrap(err, "unmarshal system alert rule")
+		}
+		p := observability.NewAlertRuleProcessor(cli, t.DB)
+		for _, v := range sysRules {
+			v.Cluster = cli.Name()
+			if err := p.MutateAlertRule(ctx, v); err != nil {
+				return errors.Wrapf(err, "MutateAlertRule: %s", v.FullName())
+			}
+			if err := t.DB.DB().Preload("Receivers.AlertChannel").First(v, "cluster = ? and namespace = ? and name = ?", v.Cluster, v.Namespace, v.Name).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					if err := t.DB.DB().Create(v).Error; err != nil {
+						return errors.Wrapf(err, "CreateAlertRule: %s", v.FullName())
+					}
+					log.Info("create in db success", "alertrule", v.FullName())
+				} else {
+					return errors.Wrapf(err, "get alertrule: %s", v.FullName())
+				}
+			}
+
+			if v.K8sResourceStatus != nil && v.K8sResourceStatus["status"] == "ok" {
+				continue
+			}
+			if err := p.SyncAlertRule(ctx, v); err != nil {
+				log.Error(err, "sync system alertrule failed", "alertrule", v.FullName())
+			}
+			log.Info("sync success", "alertrule", v.FullName())
+		}
+		return nil
+	})
 }
 
 // routes order and content order may changed after umarshal, so we compare after marshal

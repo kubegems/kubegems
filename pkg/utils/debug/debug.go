@@ -104,6 +104,9 @@ func ApplyPortForwardingOptions(ctx context.Context,
 
 	// git
 	group.Go(func() error {
+		if gitopts == nil {
+			return nil
+		}
 		addr, err := PortForward(ctx, rest, gems.NamespaceSystem, "kubegems-gitea-http", 3000)
 		if err != nil {
 			return err
