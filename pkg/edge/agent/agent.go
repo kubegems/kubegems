@@ -17,6 +17,7 @@ package agent
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -58,6 +59,10 @@ type EdgeAgent struct {
 func Run(ctx context.Context, options *options.AgentOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
 
+	tlsconfig := &tls.Config{
+		InsecureSkipVerify: options.TLS.InsecureSkipVerify,
+	}
+
 	c, err := cluster.NewLocalAgentClusterAndStart(ctx)
 	if err != nil {
 		return err
@@ -86,7 +91,7 @@ func Run(ctx context.Context, options *options.AgentOptions) error {
 
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return ea.tunserver.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, nil, "", ea.getAnnotations(ctx))
+		return ea.tunserver.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, tlsconfig, "", ea.getAnnotations(ctx))
 	})
 	eg.Go(func() error {
 		return ea.RunKeepAliveRouter(ctx, ea.options.KeepAliveInterval, ea.getAnnotations)

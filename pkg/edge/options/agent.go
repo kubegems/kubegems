@@ -18,13 +18,18 @@ import "time"
 
 type AgentOptions struct {
 	Listen            string        `json:"listen,omitempty"`
-	DeviceID          string        `json:"deviceID,omitempty"  description:"device id in kubegems edge,use random generated client-id by default"`
-	DeviceIDKey       string        `json:"deviceIDKey,omitempty"  description:"use value of key as device-id in manufacture"`
+	DeviceID          string        `json:"deviceID,omitempty" description:"device id in kubegems edge,use random generated client-id by default"`
+	DeviceIDKey       string        `json:"deviceIDKey,omitempty" description:"use value of key as device-id in manufacture"`
 	ManufactureFile   []string      `json:"manufactureFile,omitempty" description:"file with manufacture info in json object format"`
 	ManufactureRemap  []string      `json:"manufactureRemap,omitempty" description:"remap manufacture file key to newkey,example 'newkey=existskey'"`
 	Manufacture       []string      `json:"manufacture,omitempty" description:"manufacture kvs,example 'some-key=value,foo=bar'"`
 	EdgeHubAddr       string        `json:"edgeHubAddr,omitempty"`
 	KeepAliveInterval time.Duration `json:"keepAliveInterval,omitempty"`
+	TLS               *ClientTLS    `json:"tls,omitempty" description:"skip server tls verify"`
+}
+
+type ClientTLS struct {
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 func NewDefaultAgentOptions() *AgentOptions {
@@ -37,5 +42,6 @@ func NewDefaultAgentOptions() *AgentOptions {
 		ManufactureFile:   []string{"/etc/os-release"},
 		ManufactureRemap:  []string{},
 		Manufacture:       []string{},
+		TLS:               &ClientTLS{},
 	}
 }
