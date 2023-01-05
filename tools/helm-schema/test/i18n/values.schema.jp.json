@@ -1,49 +1,31 @@
 {
   "type": "object",
   "properties": {
-    "ingress": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false
-        },
-        "host": {
-          "type": "string",
-          "format": "hostname",
-          "default": "example.com"
-        }
-      }
-    },
     "service": {
+      "description": "kubernetes サービス リソースの構成に対応します",
       "type": "object",
+      "title": "サービス構成",
       "properties": {
         "enabled": {
           "type": "boolean",
+          "title": "启用",
           "default": false,
           "x-order": "99",
           "form": true
         },
         "address": {
           "type": "string",
-          "form": true
-        },
-        "nodePort": {
-          "type": "object",
-          "properties": {
-            "grpc": {
-              "type": "object",
-              "nullable": true
-            },
-            "http": {
-              "type": "object",
-              "nullable": true,
-              "default": 0
-            }
+          "title": "address",
+          "minLength": 0,
+          "form": true,
+          "hidden": {
+            "path": "service.enabled",
+            "value": false
           }
         },
         "ports": {
           "type": "object",
+          "title": "サービス ポートの構成",
           "required": [
             "http",
             "grpc"
@@ -51,31 +33,28 @@
           "properties": {
             "grpc": {
               "type": "integer",
+              "title": "GRPC ポート",
               "default": 50051,
-              "form": true,
-              "title": "GRPC ポート"
+              "form": true
             },
             "http": {
               "type": "integer",
               "format": "port",
+              "title": "HTTP ポート",
               "default": 80,
               "maximum": 65535,
               "minimum": 1,
-              "form": true,
-              "title": "HTTP ポート"
+              "form": true
             }
           },
           "form": true,
           "hidden": {
             "path": "service.enabled",
             "value": false
-          },
-          "title": "サービス ポートの構成"
+          }
         }
       },
-      "description": "kubernetes サービス リソースの構成に対応します",
-      "form": true,
-      "title": "サービス構成"
+      "form": true
     }
   },
   "$schema": "http://json-schema.org/schema#"

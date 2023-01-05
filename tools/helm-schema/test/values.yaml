@@ -1,4 +1,3 @@
-# @form true
 # @title "服务配置"
 # @title.en "Service Contiguration"
 # @title.jp "サービス構成"
@@ -6,25 +5,24 @@
 # @description.jp kubernetes サービス リソースの構成に対応します
 # @description.en Corresponds to the configuration in the kubernetes service resource
 service:
-  # @form true
   # @order 99
+  # @title "启用"
   enabled: false
-  # @form true
+  # @title address
+  # @schema minLength=0
+  # @hidden service.enabled=false
   address: ""
   # @hidden service.enabled=false
-  # @form true
   # @schema required=http,grpc
   # @title "服务端口配置"
   # @title.en "service ports contiguration"
   # @title.jp "サービス ポートの構成"
   ports:
-    # @form true
     # @title "HTTP 端口"
     # @title.en "HTTP Port"
     # @title.jp "HTTP ポート"
-    # @schema type=number;format=port;max=65535;min=1;pattern=
+    # @schema format=port;max=65535;min=1;pattern=
     http: 80
-    # @form true
     # @title "GRPC 端口"
     # @title.en "GRPC Port"
     # @title.jp "GRPC ポート"

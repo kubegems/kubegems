@@ -17,6 +17,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -43,17 +44,26 @@ var ExtraPropsHandlers = map[string]ExtraPropsHandler{
 
 type ExtraPropsHandler func(schema *spec.Schema, options any)
 
-func main() {
-	if len(os.Args) <= 1 {
-		fmt.Printf(`  %s [path]...
-  Usage:
-    Generate value shema from values.yaml for kubegems helm chart or plugin.
+type Options struct {
+	// parse all schema include not titled
+	IncludeAll bool
+}
 
-  Example:
-    %s path/to/helm-chart
-`, os.Args[0], os.Args[0])
-		os.Exit(1)
+func main() {
+	help := false
+	options := Options{
+		IncludeAll: false,
 	}
+	flag.BoolVar(&help, "h", help, "show help")
+	flag.BoolVar(&options.IncludeAll, "a", options.IncludeAll, "include all schema")
+	flag.Usage = Usage
+	flag.Parse()
+
+	if len(os.Args) <= 1 || help {
+		flag.Usage()
+		return
+	}
+
 	for _, glob := range os.Args[1:] {
 		matches, err := filepath.Glob(glob)
 		if err != nil {
@@ -61,7 +71,7 @@ func main() {
 			os.Exit(1)
 		}
 		for _, path := range matches {
-			if err := GenerateWriteSchema(path); err != nil {
+			if err := GenerateWriteSchema(path, options); err != nil {
 				fmt.Printf("Error: %s\n", err.Error())
 				os.Exit(1)
 			}
@@ -69,7 +79,19 @@ func main() {
 	}
 }
 
-func GenerateWriteSchema(chartpath string) error {
+func Usage() {
+	fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n\n", os.Args[0])
+	fmt.Fprintf(flag.CommandLine.Output(), `Example:
+	%s test/helm-chart/values.yaml
+	%s test/helm-chart
+	%s test/*
+
+`, os.Args[0], os.Args[0], os.Args[0])
+	fmt.Fprint(flag.CommandLine.Output(), "Args:\n")
+	flag.PrintDefaults()
+}
+
+func GenerateWriteSchema(chartpath string, options Options) error {
 	if filepath.Base(chartpath) == "values.yaml" {
 		chartpath = filepath.Dir(chartpath)
 	}
@@ -79,9 +101,14 @@ func GenerateWriteSchema(chartpath string) error {
 	if err != nil {
 		return err
 	}
-	schema, err := GenerateSchema(valuecontent)
+
+	schema, err := Generator{AllSchema: options.IncludeAll}.GenerateSchema(valuecontent)
 	if err != nil {
 		return err
+	}
+	if schema == nil {
+		fmt.Printf("Empty schema of %s\n", valuesfile)
+		return nil
 	}
 	for lang, langschema := range SplitSchemaI18n(schema) {
 		if err := writeJson(filepath.Join(chartpath, "i18n", fmt.Sprintf("values.schema.%s.json", lang)), langschema); err != nil {
@@ -106,8 +133,15 @@ func writeJson(filename string, data any) error {
 // SplitSchemaI18n
 // nolint: gocognit
 func SplitSchemaI18n(schema *spec.Schema) map[string]*spec.Schema {
+	if schema == nil {
+		return nil
+	}
 	ret := map[string]*spec.Schema{}
 	for k, v := range schema.ExtraProps {
+		strv, ok := v.(string)
+		if !ok {
+			continue
+		}
 		i := strings.IndexRune(k, '.')
 		if i < 0 {
 			continue
@@ -120,10 +154,7 @@ func SplitSchemaI18n(schema *spec.Schema) map[string]*spec.Schema {
 			removeDotKey(copyschema.ExtraProps)
 			ret[lang] = copyschema
 		}
-		if ret[lang].ExtraProps == nil {
-			ret[lang].ExtraProps = map[string]interface{}{}
-		}
-		ret[lang].ExtraProps[basekey] = v
+		SetSchemaProp(ret[lang], basekey, strv)
 	}
 	if schema.Items != nil {
 		if itemschema := schema.Items.Schema; itemschema != nil {
@@ -172,30 +203,46 @@ func DeepCopySchema(in *spec.Schema) *spec.Schema {
 	return out.(*spec.Schema)
 }
 
-func GenerateSchema(values []byte) (*spec.Schema, error) {
+type Generator struct {
+	AllSchema bool
+	MaxDepth  int
+}
+
+func (g Generator) GenerateSchema(values []byte) (*spec.Schema, error) {
 	node := &yaml.Node{}
 	if err := yaml.Unmarshal(values, node); err != nil {
 		return nil, err
 	}
-	return nodeSchema(node, ""), nil
+	return g.nodeSchema(node, "", 0), nil
 }
 
-func nodeSchema(node *yaml.Node, keycomment string) *spec.Schema {
-	schema := &spec.Schema{SchemaProps: spec.SchemaProps{Type: spec.StringOrArray{"object"}}}
+// nolint: funlen
+func (g Generator) nodeSchema(node *yaml.Node, keycomment string, depth int) *spec.Schema {
+	if g.MaxDepth > 0 && g.MaxDepth < depth {
+		return nil
+	}
+	schema := &spec.Schema{}
 	switch node.Kind {
 	case yaml.DocumentNode:
-		schema := nodeSchema(node.Content[0], "")
-		schema.Schema = "http://json-schema.org/schema#"
-		return schema
+		rootschema := g.nodeSchema(node.Content[0], "", 0)
+		if rootschema == nil {
+			return nil
+		}
+		rootschema.Schema = "http://json-schema.org/schema#"
+		return rootschema
 	case yaml.MappingNode:
-		properties := spec.SchemaProperties{}
+		schema.Type = spec.StringOrArray{"object"}
+		if schema.Properties == nil {
+			schema.Properties = spec.SchemaProperties{}
+		}
 		for i := 0; i < len(node.Content); i += 2 {
 			key, keycomment := node.Content[i].Value, node.Content[i].HeadComment
-			valueNode := node.Content[i+1]
-			properties[key] = *nodeSchema(valueNode, keycomment)
+			objectProperty := g.nodeSchema(node.Content[i+1], keycomment, depth+1)
+			if objectProperty == nil {
+				continue
+			}
+			schema.Properties[key] = *objectProperty
 		}
-		schema.Type = spec.StringOrArray{"object"}
-		schema.Properties = properties
 	case yaml.ScalarNode:
 		schema.Default = formatYamlStr(node.Value)
 		switch node.Tag {
@@ -212,24 +259,31 @@ func nodeSchema(node *yaml.Node, keycomment string) *spec.Schema {
 			schema.Format = "data-time"
 		case "!!null":
 			schema.Nullable = true
+		default:
+			schema.Type = spec.StringOrArray{"object"}
 		}
 	case yaml.SequenceNode:
-		if len(node.Content) == 0 {
-			schema.Items = nil
-		} else if len(node.Content) == 1 {
-			schema := nodeSchema(node.Content[0], "")
-			schema.Items = &spec.SchemaOrArray{Schema: schema}
-		} else {
-			schemas := []spec.Schema{}
-			for _, itemnode := range node.Content {
-				schemas = append(schemas, *nodeSchema(itemnode, ""))
+		schema.Type = spec.StringOrArray{"array"}
+		var schemas []spec.Schema
+		for _, itemnode := range node.Content {
+			itemProperty := g.nodeSchema(itemnode, "", depth+1)
+			if itemProperty == nil {
+				continue
 			}
+			schemas = append(schemas, *itemProperty)
+		}
+		if len(schemas) == 1 {
+			schema.Items = &spec.SchemaOrArray{Schema: &schemas[0]}
+		} else {
 			schema.Items = &spec.SchemaOrArray{Schemas: schemas}
 		}
-		schema.Type = spec.StringOrArray{"array"}
 	}
 	// update from comment
 	completeFromComment(schema, keycomment)
+	// depth > 0 in case of root schema has no title field.
+	if depth > 0 && !g.AllSchema && schema.Title == "" {
+		return nil
+	}
 	return schema
 }
 
@@ -246,17 +300,6 @@ func completeFromComment(schema *spec.Schema, comment string) {
 			DefaultOptionHandler(schema, key, options)
 		}
 	}
-}
-
-func annotationOptionsToString(val any) string {
-	strval, ok := val.(string)
-	if !ok {
-		return ""
-	}
-	if formated, ok := formatYamlStr(strval).(string); ok {
-		return formated
-	}
-	return strval
 }
 
 // nolint: gomnd
@@ -324,57 +367,22 @@ func SchemaOptionHandler(schema *spec.Schema, options any) {
 	if !ok {
 		return
 	}
-	floatPointer := func(in string) *float64 {
-		fval, err := strconv.ParseFloat(in, 32)
-		if err != nil {
-			return nil
-		}
-		return &fval
-	}
-	// performance: direct get val from map key
 	for k, v := range kvs {
-		switch k {
-		case "min", "minmum":
-			schema.Minimum = floatPointer(v)
-		case "max", "maxmum":
-			schema.Maximum = floatPointer(v)
-		case "format":
-			schema.Format = v
-		case "pattern":
-			schema.Pattern = v
-		case "required":
-			schema.Required = strings.Split(v, ",")
-		case "default":
-			schema.Default = formatYamlStr(v)
-		case "nullable":
-			if v == "" {
-				schema.Nullable = true
-			} else {
-				schema.Nullable, _ = strconv.ParseBool(v)
-			}
-		case "example":
-			schema.Example = v
-		case "enum":
-			enums := []any{}
-			for _, item := range strings.Split(v, ",") {
-				enums = append(enums, formatYamlStr(item))
-			}
-			schema.Enum = enums
-		}
+		SetSchemaProp(schema, k, v)
 	}
 }
 
 func DefaultOptionHandler(schema *spec.Schema, kind string, options any) {
-	if schema.ExtraProps == nil {
-		schema.ExtraProps = map[string]interface{}{}
-	}
 	switch val := options.(type) {
 	case string:
-		schema.ExtraProps[kind] = formatYamlStr(val)
+		SetSchemaProp(schema, kind, val)
 	case map[string]string:
 		kvs := map[string]any{}
 		for k, v := range val {
 			kvs[k] = formatYamlStr(v)
+		}
+		if schema.ExtraProps == nil {
+			schema.ExtraProps = map[string]interface{}{}
 		}
 		schema.ExtraProps[kind] = kvs
 	}
@@ -426,6 +434,19 @@ func HiddenOptionHandler(schema *spec.Schema, options any) {
 	if len(kvs) == 1 {
 		// simple type
 		for k, v := range kvs {
+			// case : foo!=bar key=foo!
+			if strings.HasSuffix(k, "!") {
+				schema.ExtraProps["hidden"] = HiddenProps{
+					Operator: HiddenPropsOperatorNot,
+					Conditions: []HiddenCondition{
+						{
+							Path:  strings.TrimSuffix(k, "!"),
+							Value: formatYamlStr(v),
+						},
+					},
+				}
+				return
+			}
 			schema.ExtraProps["hidden"] = HiddenCondition{Path: k, Value: formatYamlStr(v)}
 			return
 		}
@@ -445,21 +466,80 @@ func HiddenOptionHandler(schema *spec.Schema, options any) {
 // OrderOptionHandler handle properties order
 // Ref: https://github.com/go-openapi/spec/blob/1005cfb91978aa416cfc5a1251b790126390788a/properties.go#L44
 func OrderOptionHandler(schema *spec.Schema, options any) {
-	val, ok := options.(string)
-	if !ok {
-		return
-	}
-	if schema.Extensions == nil {
-		schema.Extensions = spec.Extensions{}
-	}
-	schema.Extensions.Add("x-order", val)
+	schema.AddExtension("x-order", options)
 }
 
 func TitleOptionHandler(schema *spec.Schema, options any) {
-	// automate add @form=true when @title exists
-	if schema.ExtraProps == nil {
-		schema.ExtraProps = map[string]interface{}{}
+	title, ok := options.(string)
+	if !ok {
+		return
 	}
-	schema.ExtraProps["form"] = true
-	DefaultOptionHandler(schema, "title", options)
+	DefaultOptionHandler(schema, "title", formatYamlStr(title))
+	// automate add @form=true when @title exists
+	if schema.Title != "" {
+		SetSchemaProp(schema, "form", "true")
+	}
+}
+
+// nolint: gomnd,funlen
+func SetSchemaProp(schema *spec.Schema, k string, v string) {
+	floatPointer := func(in string) *float64 {
+		fval, err := strconv.ParseFloat(in, 32)
+		if err != nil {
+			return nil
+		}
+		return &fval
+	}
+	int64Pointer := func(in string) *int64 {
+		ival, err := strconv.ParseInt(in, 10, 64)
+		if err != nil {
+			return nil
+		}
+		return &ival
+	}
+	switch k {
+	case "min", "minmum":
+		schema.Minimum = floatPointer(v)
+	case "minLength", "minLen", "minlen":
+		schema.MinLength = int64Pointer(v)
+	case "maxLength", "maxLen", "maxlen":
+		schema.MaxLength = int64Pointer(v)
+	case "max", "maxmum":
+		schema.Maximum = floatPointer(v)
+	case "format":
+		schema.Format = v
+	case "pattern":
+		schema.Pattern = v
+	case "required":
+		schema.Required = strings.Split(v, ",")
+	case "default":
+		schema.Default = formatYamlStr(v)
+	case "nullable":
+		if v == "" {
+			schema.Nullable = true
+		} else {
+			schema.Nullable, _ = strconv.ParseBool(v)
+		}
+	case "example":
+		schema.Example = v
+	case "title":
+		schema.Title = v
+	case "enum":
+		enums := []any{}
+		for _, item := range strings.Split(v, ",") {
+			enums = append(enums, formatYamlStr(item))
+		}
+		schema.Enum = enums
+	case "description":
+		schema.Description = v
+	case "type":
+		if !schema.Type.Contains(v) {
+			schema.Type = append(schema.Type, v)
+		}
+	default:
+		if schema.ExtraProps == nil {
+			schema.ExtraProps = map[string]any{}
+		}
+		schema.ExtraProps[k] = formatYamlStr(v)
+	}
 }

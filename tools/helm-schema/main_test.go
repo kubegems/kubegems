@@ -48,7 +48,7 @@ func TestGenerateSchema(t *testing.T) {
 				t.Error(err)
 				return
 			}
-			got, err := GenerateSchema(valuescontent)
+			got, err := Generator{}.GenerateSchema(valuescontent)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GenerateSchema() error = %v, wantErr %v", err, tt.wantErr)
 				return
