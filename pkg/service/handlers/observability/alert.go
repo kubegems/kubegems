@@ -1014,13 +1014,16 @@ func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) 
 		}
 
 		for _, v := range thisNSAlerts {
+			var newState string
 			if promalert, ok := realTimeAlertRules[prometheus.RealTimeAlertKey(v.Namespace, v.Name)]; ok {
-				v.State = promalert.State
+				newState = promalert.State
 			} else {
-				v.State = "inactive"
+				newState = "inactive"
 			}
-			if err := h.GetDB().WithContext(ctx).Model(v).Update("state", v.State).Error; err != nil {
-				return err
+			if v.State != newState {
+				if err := h.GetDB().WithContext(ctx).Model(v).Update("state", newState).Error; err != nil {
+					return err
+				}
 			}
 		}
 		return nil
