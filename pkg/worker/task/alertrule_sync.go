@@ -23,6 +23,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -127,7 +128,7 @@ func (t *AlertRuleSyncTasker) CheckAlertRuleConfig(ctx context.Context) error {
 	if err := t.DB.DB().Preload("Receivers.AlertChannel").Find(&alertrules).Error; err != nil {
 		return err
 	}
-	k8sAlertCfg := sync.Map{}
+	allK8sAlertCfg := sync.Map{}
 	if err := t.cs.ExecuteInEachCluster(ctx, func(ctx context.Context, cli agents.Client) error {
 		cfgs, err := observability.NewAlertRuleProcessor(cli, t.DB).GetK8sAlertCfg(ctx)
 		if err != nil {
@@ -135,45 +136,77 @@ func (t *AlertRuleSyncTasker) CheckAlertRuleConfig(ctx context.Context) error {
 			return nil
 		}
 		for key, cfg := range cfgs {
-			if _, ok := k8sAlertCfg.Load(key); ok {
+			if _, ok := allK8sAlertCfg.Load(key); ok {
 				log.Warnf("duplicated alert rule: %s", key)
 				continue
 			}
-			k8sAlertCfg.Store(key, cfg)
+			allK8sAlertCfg.Store(key, cfg)
 		}
 		return nil
 	}); err != nil {
 		return err
 	}
-	for _, alertrule := range alertrules {
-		cfgInDB := observability.K8sAlertCfg{
-			RuleGroup:              observability.GenerateRuleGroup(alertrule),
-			AlertmanagerConfigSpec: observability.GenerateAmcfgSpec(alertrule),
-		}
-		var newStatus gormdatatypes.JSONMap
-		cfgInK8s, ok := k8sAlertCfg.Load(alertrule.FullName())
-		if ok {
-			diff := cmp.Diff(cfgInDB, cfgInK8s.(observability.K8sAlertCfg),
-				cmpopts.EquateEmpty(),       // eg. slice nil equal to empty
-				cmp.Comparer(compareRoutes), // compare for []apiextensionsv1.JSON
-			)
-			if diff == "" {
-				newStatus = alertCfgStatusOK()
-			} else {
-				newStatus = alertCfgStatusError(diff)
-				log.Warnf("alertrule: %s not matched, diff:\n%s", alertrule.FullName(), diff)
+
+	eg := errgroup.Group{}
+	eg.SetLimit(5)
+	for _, v := range alertrules {
+		alertrule := v
+		eg.Go(func() error {
+			err := checkK8sAlertCfg(alertrule, &allK8sAlertCfg)
+			if err == nil && alertrule.AlertType == prometheus.AlertTypeMonitor {
+				err = checkPrometheusQueryResult(ctx, alertrule, t.cs)
 			}
-		} else {
-			newStatus = alertCfgStatusError("k8s alert rule config lost")
-			log.Warnf("alertrule: %s k8s config lost", alertrule.FullName())
-		}
-		if !cmp.Equal(alertrule.K8sResourceStatus, newStatus) {
-			if err := t.DB.DB().Model(alertrule).Omit(clause.Associations).Update("k8s_resource_status", newStatus).Error; err != nil {
-				log.Warnf("update k8s_resource_status for alertrule: %s failed", alertrule.FullName())
+			newStatus := alertCfgStatus(err)
+			if !cmp.Equal(alertrule.K8sResourceStatus, newStatus) {
+				if err := t.DB.DB().Model(alertrule).Omit(clause.Associations).Update("k8s_resource_status", newStatus).Error; err != nil {
+					log.Warnf("update k8s_resource_status for alertrule: %s failed", alertrule.FullName())
+				}
 			}
+			return nil
+		})
+	}
+	eg.Wait()
+
+	return nil
+}
+
+func checkK8sAlertCfg(alertrule *models.AlertRule, k8sAlertCfgs *sync.Map) error {
+	cfgInDB := observability.K8sAlertCfg{
+		RuleGroup:              observability.GenerateRuleGroup(alertrule),
+		AlertmanagerConfigSpec: observability.GenerateAmcfgSpec(alertrule),
+	}
+	cfgInK8s, ok := k8sAlertCfgs.Load(alertrule.FullName())
+	if ok {
+		diff := cmp.Diff(cfgInDB, cfgInK8s.(observability.K8sAlertCfg),
+			cmpopts.EquateEmpty(),       // eg. slice nil equal to empty
+			cmp.Comparer(compareRoutes), // compare for []apiextensionsv1.JSON
+		)
+		if diff != "" {
+			return errors.Errorf(diff)
+		}
+	} else {
+		return errors.Errorf("k8s alert rule config lost")
+	}
+	return nil
+}
+
+func checkPrometheusQueryResult(ctx context.Context, alertrule *models.AlertRule, cs *agents.ClientSet) error {
+	cli, err := cs.ClientOf(ctx, alertrule.Cluster)
+	if err != nil {
+		return err
+	}
+	vector, err := cli.Extend().PrometheusVector(ctx, alertrule.Expr)
+	if err != nil {
+		return err
+	}
+	if vector.Len() == 0 {
+		return errors.Errorf("query prometheus result is empty")
+	}
+	for _, v := range vector {
+		if alertrule.Namespace != prometheus.GlobalAlertNamespace && v.Metric["namespace"] == "" {
+			return errors.Errorf("query prometheus result should contains label [namespace]")
 		}
 	}
-
 	return nil
 }
 
@@ -234,15 +267,14 @@ func compareRoutes(a, b []apiextensionsv1.JSON) bool {
 	return string(bts1) == string(bts2)
 }
 
-func alertCfgStatusOK() gormdatatypes.JSONMap {
+func alertCfgStatus(err error) gormdatatypes.JSONMap {
+	if err != nil {
+		return gormdatatypes.JSONMap{
+			"status": "error",
+			"reason": err.Error(),
+		}
+	}
 	return gormdatatypes.JSONMap{
 		"status": "ok",
-	}
-}
-
-func alertCfgStatusError(reason string) gormdatatypes.JSONMap {
-	return gormdatatypes.JSONMap{
-		"status": "error",
-		"reason": reason,
 	}
 }
