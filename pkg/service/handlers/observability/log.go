@@ -429,24 +429,7 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 		action := i18n.Sprintf(ctx, "create")
 		module := i18n.Sprintf(ctx, "logging alert rule")
 		h.SetAuditData(c, action, module, req.Name)
-		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
-			allRules := []models.AlertRule{}
-			if err := tx.Find(&allRules, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
-				return err
-			}
-			if len(allRules) > 0 {
-				return errors.Errorf("alert rule %s is already exist", req.Name)
-			}
-			for _, rec := range req.Receivers {
-				if rec.ID > 0 {
-					return errors.Errorf("receiver's id should be null when create")
-				}
-			}
-			if err := tx.Create(req).Error; err != nil {
-				return err
-			}
-			return p.syncLoggingAlertRule(ctx, req)
-		})
+		return p.createAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

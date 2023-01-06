@@ -20534,6 +20534,47 @@ paths:
       summary: 检验oauth jwt token
       tags:
       - Oauth
+  /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts-import:
+    post:
+      consumes:
+      - application/json
+      description: 导入告警规则
+      parameters:
+      - description: cluster
+        in: path
+        name: cluster
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: form
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/models.AlertRule'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: resp
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseStruct'
+            - properties:
+                Data:
+                  type: string
+              type: object
+      security:
+      - JWT: []
+      summary: 导入告警规则
+      tags:
+      - Observability
   /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/disable:
     post:
       consumes:

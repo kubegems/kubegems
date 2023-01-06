@@ -65,6 +65,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/actions/disable", h.CheckByClusterNamespace, h.DisableAlertRule)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/actions/message", h.CheckByClusterNamespace, h.GenerateAlertMessage)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/actions/sync", h.CheckByClusterNamespace, h.SyncAlertRule)
+	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts-import", h.CheckByClusterNamespace, h.ImportAlertRules)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/history", h.CheckByClusterNamespace, h.AlertHistory)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/repeats", h.CheckByClusterNamespace, h.AlertRepeats)
 

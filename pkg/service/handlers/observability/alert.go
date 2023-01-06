@@ -244,6 +244,50 @@ func (h *ObservabilityHandler) SyncAlertRule(c *gin.Context) {
 	handlers.OK(c, statusMap)
 }
 
+// ImportAlertRules 导入告警规则
+// @Tags        Observability
+// @Summary     导入告警规则
+// @Description 导入告警规则
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                               true "cluster"
+// @Param       namespace path     string                               true "namespace"
+// @Param       form      body     []models.AlertRule                     true "body"
+// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts-import [post]
+// @Security    JWT
+func (h *ObservabilityHandler) ImportAlertRules(c *gin.Context) {
+	alertrules := []*models.AlertRule{}
+	if err := c.BindJSON(&alertrules); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	cluster := c.Param("cluster")
+	namespace := c.Param("namespace")
+	if err := h.withAlertRuleProcessor(c.Request.Context(), cluster, func(ctx context.Context, p *AlertRuleProcessor) error {
+		for _, v := range alertrules {
+			v.Cluster = cluster
+			v.Namespace = namespace
+			if v.AlertType == "" {
+				return fmt.Errorf("alertrule %s type can't be null", v.FullName())
+			}
+			// replace __namespace__
+			v.Expr = strings.ReplaceAll(v.Expr, "__namespace__", v.Namespace)
+			if err := p.MutateAlertRule(ctx, v); err != nil {
+				return errors.Wrapf(err, "mutate alertrule: %s", v.FullName())
+			}
+			if err := p.createAlertRule(ctx, v); err != nil {
+				return errors.Wrapf(err, "create alertrule: %s", v.FullName())
+			}
+		}
+		return nil
+	}); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, "ok")
+}
+
 // Deprecated. use cli.Extend().ListSilences instead
 func listSilences(ctx context.Context, namespace string, cli agents.Client) ([]*alerttypes.Silence, error) {
 	silences := []*alerttypes.Silence{}
@@ -1523,6 +1567,27 @@ func (p *AlertRuleProcessor) syncLoggingAlertRule(ctx context.Context, alertrule
 		return errors.Wrap(err, "sync alertmanagerconfig failed")
 	}
 	return nil
+}
+
+func (p *AlertRuleProcessor) createAlertRule(ctx context.Context, req *models.AlertRule) error {
+	return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+		allRules := []models.AlertRule{}
+		if err := tx.Find(&allRules, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
+			return err
+		}
+		if len(allRules) > 0 {
+			return errors.Errorf("alert rule %s is already exist", req.Name)
+		}
+		for _, rec := range req.Receivers {
+			if rec.ID > 0 {
+				return errors.Errorf("receiver's id should be null when create")
+			}
+		}
+		if err := tx.Create(req).Error; err != nil {
+			return err
+		}
+		return p.SyncAlertRule(ctx, req)
+	})
 }
 
 func (p *AlertRuleProcessor) SyncAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
