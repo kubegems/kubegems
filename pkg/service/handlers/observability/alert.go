@@ -1220,6 +1220,9 @@ func setExpr(alertrule *models.AlertRule) error {
 			}
 			alertrule.Expr = q.String()
 		}
+		if _, err := parser.ParseExpr(alertrule.Expr); err != nil {
+			return errors.Wrapf(err, "parse expr: %s", alertrule.Expr)
+		}
 	case prometheus.AlertTypeLogging:
 		if alertrule.LogqlGenerator != nil {
 			dur, err := model.ParseDuration(alertrule.LogqlGenerator.Duration)
@@ -1251,20 +1254,14 @@ func setExpr(alertrule *models.AlertRule) error {
 		}
 	}
 	if alertrule.Expr == "" {
-		errors.New("empty expr")
-	}
-	if alertrule.AlertType == prometheus.AlertTypeMonitor {
-		if _, err := parser.ParseExpr(alertrule.Expr); err != nil {
-			errors.Wrapf(err, "parse expr: %s", alertrule.Expr)
-		}
+		return errors.New("empty expr")
 	}
 	_, _, _, hasOp := prometheus.SplitQueryExpr(alertrule.Expr)
 	if hasOp {
 		return fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
 	}
 	if alertrule.Namespace != prometheus.GlobalAlertNamespace {
-		if !(strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace=~"%s"`, alertrule.Namespace)) ||
-			strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace))) {
+		if !strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace)) {
 			return fmt.Errorf(`query expr %[1]s must contains namespace %[2]s, eg: {namespace="%[2]s"}`, alertrule.Expr, alertrule.Namespace)
 		}
 	}
@@ -1748,7 +1745,7 @@ func (p *AlertRuleProcessor) GetK8sAlertCfg(ctx context.Context) (map[string]K8s
 		for _, group := range rule.Spec.Groups {
 			key := models.AlertRuleKey(p.cli.Name(), rule.Namespace, group.Name)
 			if _, ok := ruleGroupMap[key]; ok {
-				log.Warnf("duplicated alert rule: %s")
+				log.Warnf("duplicated alert rule: %s", key)
 			} else {
 				ruleGroupMap[key] = group
 			}
@@ -1763,7 +1760,7 @@ func (p *AlertRuleProcessor) GetK8sAlertCfg(ctx context.Context) (map[string]K8s
 		},
 	}
 	if err := p.cli.Get(ctx, client.ObjectKeyFromObject(&lokiruleCm), &lokiruleCm); err != nil {
-		log.Error(err, "get loki configmap")
+		log.Warnf("get loki configmap from cluster: %s failed, %v", p.cli.Name(), err)
 	}
 	for k, v := range lokiruleCm.Data {
 		// skip recording rule
@@ -1786,9 +1783,6 @@ func (p *AlertRuleProcessor) GetK8sAlertCfg(ctx context.Context) (map[string]K8s
 
 	ret := map[string]K8sAlertCfg{}
 	for _, amcfg := range amcfgList.Items {
-		if amcfg.Name == prometheus.DefaultAlertCRDName {
-			continue
-		}
 		key := models.AlertRuleKey(p.cli.Name(), amcfg.Namespace, amcfg.Name)
 		if group, ok := ruleGroupMap[key]; ok {
 			ret[key] = K8sAlertCfg{RuleGroup: group, AlertmanagerConfigSpec: amcfg.Spec}

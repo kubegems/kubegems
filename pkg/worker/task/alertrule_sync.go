@@ -24,6 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers/observability"
@@ -31,6 +32,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/gemsplugin"
+	"kubegems.io/kubegems/pkg/utils/gormdatatypes"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/workflow"
 	"sigs.k8s.io/yaml"
@@ -112,7 +114,7 @@ func (t *AlertRuleSyncTasker) SyncAlertRuleState(ctx context.Context) error {
 			newState = "inactive"
 		}
 		if alertrule.State != newState {
-			if err := t.DB.DB().Model(alertrule).Update("state", newState).Error; err != nil {
+			if err := t.DB.DB().Model(alertrule).Omit(clause.Associations).Update("state", newState).Error; err != nil {
 				return errors.Wrapf(err, "update alert rule %s state failed", alertrule.FullName())
 			}
 		}
@@ -148,7 +150,7 @@ func (t *AlertRuleSyncTasker) CheckAlertRuleConfig(ctx context.Context) error {
 			RuleGroup:              observability.GenerateRuleGroup(alertrule),
 			AlertmanagerConfigSpec: observability.GenerateAmcfgSpec(alertrule),
 		}
-		var newStatus map[string]string
+		var newStatus gormdatatypes.JSONMap
 		cfgInK8s, ok := k8sAlertCfg.Load(alertrule.FullName())
 		if ok {
 			diff := cmp.Diff(cfgInDB, cfgInK8s.(observability.K8sAlertCfg),
@@ -166,7 +168,7 @@ func (t *AlertRuleSyncTasker) CheckAlertRuleConfig(ctx context.Context) error {
 			log.Warnf("alertrule: %s k8s config lost", alertrule.FullName())
 		}
 		if !cmp.Equal(alertrule.K8sResourceStatus, newStatus) {
-			if err := t.DB.DB().Model(alertrule).Update("k8s_resource_status", alertrule.K8sResourceStatus).Error; err != nil {
+			if err := t.DB.DB().Model(alertrule).Omit(clause.Associations).Update("k8s_resource_status", newStatus).Error; err != nil {
 				log.Warnf("update k8s_resource_status for alertrule: %s failed", alertrule.FullName())
 			}
 		}
@@ -232,14 +234,14 @@ func compareRoutes(a, b []apiextensionsv1.JSON) bool {
 	return string(bts1) == string(bts2)
 }
 
-func alertCfgStatusOK() map[string]string {
-	return map[string]string{
+func alertCfgStatusOK() gormdatatypes.JSONMap {
+	return gormdatatypes.JSONMap{
 		"status": "ok",
 	}
 }
 
-func alertCfgStatusError(reason string) map[string]string {
-	return map[string]string{
+func alertCfgStatusError(reason string) gormdatatypes.JSONMap {
+	return gormdatatypes.JSONMap{
 		"status": "error",
 		"reason": reason,
 	}
