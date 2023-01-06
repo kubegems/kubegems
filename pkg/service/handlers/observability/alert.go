@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -252,19 +253,23 @@ func (h *ObservabilityHandler) SyncAlertRule(c *gin.Context) {
 // @Produce     json
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
-// @Param       form      body     []models.AlertRule                     true "body"
+// @Param       form      body     []models.AlertRule                   true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts-import [post]
 // @Security    JWT
 func (h *ObservabilityHandler) ImportAlertRules(c *gin.Context) {
-	alertrules := []*models.AlertRule{}
-	if err := c.BindJSON(&alertrules); err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	if err := h.withAlertRuleProcessor(c.Request.Context(), cluster, func(ctx context.Context, p *AlertRuleProcessor) error {
+		alertrules := []*models.AlertRule{}
+		bts, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			return err
+		}
+		if err := yaml.Unmarshal(bts, &alertrules); err != nil {
+			return err
+		}
+
 		for _, v := range alertrules {
 			v.Cluster = cluster
 			v.Namespace = namespace
