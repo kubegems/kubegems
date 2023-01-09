@@ -25,7 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
-	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
+	plugins "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/utils/harbor"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -66,7 +66,7 @@ func preCheck(ctx context.Context, cli client.Client) error {
 	depinstaller := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kubegems-installer",
-			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+			Namespace: plugins.KubeGemsNamespaceInstaller,
 		},
 	}
 	log.Printf("scale deployment %s/%s to 0 ", depinstaller.Name, depinstaller.Namespace)
@@ -118,8 +118,8 @@ func migrateConfigmaps(ctx context.Context, cli client.Client, fromns string, ku
 			// create global plugin
 			globalplugin := &pluginsv1beta1.Plugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      pluginscommon.KubegemsChartGlobal,
-					Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+					Name:      plugins.KubegemsChartGlobal,
+					Namespace: plugins.KubeGemsNamespaceInstaller,
 				},
 			}
 			log.Printf("create/update global plugin")
@@ -129,7 +129,7 @@ func migrateConfigmaps(ctx context.Context, cli client.Client, fromns string, ku
 				return err
 			}
 		}
-		val.Namespace = pluginscommon.KubeGemsNamespaceInstaller
+		val.Namespace = plugins.KubeGemsNamespaceInstaller
 		val.ResourceVersion = ""
 		tmp := val.DeepCopy()
 		log.Printf("migrate values for configmap [%s]", tmp.Name)
@@ -154,7 +154,7 @@ func updateGlobalValueFromCM(cm *corev1.ConfigMap, global *pluginsv1beta1.Plugin
 		pluginvalues[k] = v
 	}
 
-	global.Annotations[pluginscommon.AnnotationCategory] = "core/KubeGems"
+	global.Annotations[plugins.AnnotationCategory] = "core/KubeGems"
 	// create global plugin
 	global.Spec = pluginsv1beta1.PluginSpec{
 		URL:     OfficalChartsRepository,
@@ -184,7 +184,7 @@ func migratePlugins(ctx context.Context, cli client.Client, fromns string, kubeg
 		newplugin := &pluginsv1beta1.Plugin{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      plugin.Name,
-				Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+				Namespace: plugins.KubeGemsNamespaceInstaller,
 			},
 		}
 		_, err := controllerutil.CreateOrUpdate(ctx, cli, newplugin, func() error {
@@ -205,9 +205,9 @@ func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin, ne
 	maincate, ok := plugin.Annotations["plugins.kubegems.io/main-category"]
 	if ok {
 		delete(plugin.Annotations, "plugins.kubegems.io/main-category")
-		cate := plugin.Annotations[pluginscommon.AnnotationCategory]
+		cate := plugin.Annotations[plugins.AnnotationCategory]
 		if !strings.Contains(cate, "/") {
-			plugin.Annotations[pluginscommon.AnnotationCategory] = maincate + "/" + cate
+			plugin.Annotations[plugins.AnnotationCategory] = maincate + "/" + cate
 		}
 	}
 
@@ -217,7 +217,7 @@ func migratePlugin(plugin *pluginsv1beta1.Plugin, old *pluginsv1beta1.Plugin, ne
 		if plugin.Annotations == nil {
 			plugin.Annotations = map[string]string{}
 		}
-		plugin.Annotations[pluginscommon.AnnotationCategory] = "core/Kubegems"
+		plugin.Annotations[plugins.AnnotationCategory] = "core/Kubegems"
 		plugin.Spec.InstallNamespace = "kubegems"
 		plugin.Spec.ValuesFrom = []pluginsv1beta1.ValuesFrom{
 			{
@@ -263,7 +263,7 @@ func scaleUpInstaller(ctx context.Context, cli client.Client, kubegemsVersion st
 	depinstaller := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kubegems-installer",
-			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+			Namespace: plugins.KubeGemsNamespaceInstaller,
 		},
 	}
 	if err := cli.Get(ctx, client.ObjectKeyFromObject(depinstaller), depinstaller); err != nil {

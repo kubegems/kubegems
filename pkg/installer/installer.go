@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"kubegems.io/kubegems/pkg/apis/plugins"
 	"kubegems.io/kubegems/pkg/installer/api"
 	"kubegems.io/kubegems/pkg/installer/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -33,7 +34,7 @@ func NewDefaultOptions() *Options {
 	return &Options{
 		Controller: controller.NewDefaultOptions(),
 		API:        api.DefaultOptions(),
-		PluginsDir: "plugins",
+		PluginsDir: plugins.KubegemsPluginsCachePath,
 	}
 }
 

@@ -26,17 +26,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
-	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
+	"kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/utils"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	KubegemsChartsRepoURL = "https://charts.kubegems.io/kubegems"
-	KubeGemPluginsPath    = "plugins"
 )
 
 type Bootstrap struct {
@@ -56,8 +51,8 @@ type GlobalValues struct {
 func (m *PluginManager) GetGlobalValues(ctx context.Context) (*GlobalValues, error) {
 	globalplugin := &pluginsv1beta1.Plugin{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pluginscommon.KubegemsChartGlobal,
-			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+			Name:      plugins.KubegemsChartGlobal,
+			Namespace: plugins.KubeGemsNamespaceInstaller,
 		},
 	}
 	if err := m.Client.Get(ctx, client.ObjectKeyFromObject(globalplugin), globalplugin); err != nil {
@@ -77,7 +72,7 @@ func (m *PluginManager) GetGlobalValues(ctx context.Context) (*GlobalValues, err
 func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 	ns := i.Namespace
 	if ns == "" {
-		ns = pluginscommon.KubeGemsNamespaceInstaller
+		ns = plugins.KubeGemsNamespaceInstaller
 	}
 	cli, err := kube.NewClient(i.Config)
 	if err != nil {
@@ -85,7 +80,7 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 	}
 
 	// apply installer
-	installerobjects, err := ParseInstallerObjects(KubeGemPluginsPath, values)
+	installerobjects, err := ParseInstallerObjects(plugins.KubegemsPluginsCachePath, values)
 	if err != nil {
 		return err
 	}
@@ -99,10 +94,6 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 
 	// we have preset repos
 	pm := &PluginManager{Client: cli}
-	// we can check update after repo cache exists.
-	if err := pm.UpdateLocalRepoCache(ctx); err != nil {
-		return err
-	}
 
 	globalvals := map[string]interface{}{
 		"imageRegistry":   values.ImageRegistry,
@@ -112,13 +103,13 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 		"kubegemsVersion": values.KubegemsVersion,
 		"runtime":         values.Runtime,
 	}
-	if err := pm.Install(ctx, pluginscommon.KubegemsChartGlobal, "", globalvals); err != nil {
+	if err := pm.Install(ctx, plugins.KubegemsChartGlobal, "", globalvals); err != nil {
 		return err
 	}
-	if err := pm.Install(ctx, pluginscommon.KubegemsChartInstaller, version, nil); err != nil {
+	if err := pm.Install(ctx, plugins.KubegemsChartInstaller, version, nil); err != nil {
 		return err
 	}
-	if err := pm.Install(ctx, pluginscommon.KubegemsChartLocal, version, nil); err != nil {
+	if err := pm.Install(ctx, plugins.KubegemsChartLocal, version, nil); err != nil {
 		return err
 	}
 	return nil
@@ -127,7 +118,7 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 func (i Bootstrap) Remove(ctx context.Context) error {
 	ns := i.Namespace
 	if ns == "" {
-		ns = pluginscommon.KubeGemsNamespaceInstaller
+		ns = plugins.KubeGemsNamespaceInstaller
 	}
 	_ = ns
 	// do nothing

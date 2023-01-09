@@ -22,7 +22,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"helm.sh/helm/v3/pkg/repo"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
+	plugins "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 )
 
@@ -45,6 +45,7 @@ type PluginVersion struct {
 	MainCategory     string                      `json:"mainCategory,omitempty"`
 	Category         string                      `json:"category,omitempty"`
 	Repository       string                      `json:"repository,omitempty"`
+	RepositoryName   string                      `json:"repositoryName,omitempty"`
 	Version          string                      `json:"version,omitempty"`
 	Healthy          bool                        `json:"healthy,omitempty"`
 	Required         bool                        `json:"required,omitempty"`
@@ -65,10 +66,10 @@ func (pv PluginVersion) ToPlugin() *pluginsv1beta1.Plugin {
 			Name:      pv.Name,
 			Namespace: pv.Namespace,
 			Annotations: map[string]string{
-				pluginscommon.AnnotationCategory:          pv.MainCategory + "/" + pv.Category,
-				pluginscommon.AnnotationPluginDescription: pv.Description,
-				pluginscommon.AnnotationHealthCheck:       pv.HelathCheck,
-				pluginscommon.AnnotationRequired:          strconv.FormatBool(pv.Required),
+				plugins.AnnotationCategory:          pv.MainCategory + "/" + pv.Category,
+				plugins.AnnotationPluginDescription: pv.Description,
+				plugins.AnnotationHealthCheck:       pv.HelathCheck,
+				plugins.AnnotationRequired:          strconv.FormatBool(pv.Required),
 			},
 		},
 		Spec: pluginsv1beta1.PluginSpec{
@@ -89,15 +90,15 @@ func PluginVersionFrom(plugin pluginsv1beta1.Plugin) PluginVersion {
 		annotations = map[string]string{}
 	}
 	maincate, cate := parseCategory(annotations)
-	required, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationRequired])
+	required, _ := strconv.ParseBool(annotations[plugins.AnnotationRequired])
 	pv := PluginVersion{
 		Name:             plugin.Name,
 		Namespace:        plugin.Namespace,
 		InstallNamespace: plugin.Spec.InstallNamespace,
 		Enabled:          plugin.DeletionTimestamp == nil && !plugin.Spec.Disabled,
 		Kind:             plugin.Spec.Kind,
-		Description:      annotations[pluginscommon.AnnotationPluginDescription],
-		HelathCheck:      annotations[pluginscommon.AnnotationHealthCheck],
+		Description:      annotations[plugins.AnnotationPluginDescription],
+		HelathCheck:      annotations[plugins.AnnotationHealthCheck],
 		MainCategory:     maincate,
 		Category:         cate,
 		Repository:       plugin.Spec.URL,
@@ -114,25 +115,25 @@ func PluginVersionFrom(plugin pluginsv1beta1.Plugin) PluginVersion {
 	return pv
 }
 
-func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) PluginVersion {
+func PluginVersionFromRepoChartVersion(repo *Repository, cv *repo.ChartVersion) PluginVersion {
 	annotations := cv.Annotations
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
 
 	valsFroms := []pluginsv1beta1.ValuesFrom{}
-	if cv.Name != pluginscommon.KubegemsChartGlobal {
+	if cv.Name != plugins.KubegemsChartGlobal {
 		// always inject the global values reference in other plugin
 		valsFroms = append(valsFroms, pluginsv1beta1.ValuesFrom{
 			Kind:     pluginsv1beta1.ValuesFromKindConfigmap,
-			Name:     pluginscommon.KubeGemsGlobalValuesConfigMapName,
-			Prefix:   pluginscommon.KubegemsChartGlobal + ".",
+			Name:     plugins.KubeGemsGlobalValuesConfigMapName,
+			Prefix:   plugins.KubegemsChartGlobal + ".",
 			Optional: true,
 		})
 	}
 
-	for _, val := range strings.Split(annotations[pluginscommon.AnnotationValuesFrom], ",") {
-		if val == "" || val == pluginscommon.KubegemsChartGlobal {
+	for _, val := range strings.Split(annotations[plugins.AnnotationValuesFrom], ",") {
+		if val == "" || val == plugins.KubegemsChartGlobal {
 			continue
 		}
 		namespace, name := "", val
@@ -148,19 +149,20 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		})
 	}
 	maincate, cate := parseCategory(annotations)
-	required, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationRequired])
+	required, _ := strconv.ParseBool(annotations[plugins.AnnotationRequired])
 	return PluginVersion{
 		Name:             cv.Name,
-		Repository:       repo,
+		Repository:       repo.Address,
+		RepositoryName:   repo.Name,
 		Version:          cv.Version,
 		Description:      cv.Description,
 		ValuesFrom:       valsFroms,
-		InstallNamespace: annotations[pluginscommon.AnnotationInstallNamespace],
-		Requirements:     ParseRequirements(annotations[pluginscommon.AnnotationRequirements]),
-		HelathCheck:      annotations[pluginscommon.AnnotationHealthCheck],
+		InstallNamespace: annotations[plugins.AnnotationInstallNamespace],
+		Requirements:     ParseRequirements(annotations[plugins.AnnotationRequirements]),
+		HelathCheck:      annotations[plugins.AnnotationHealthCheck],
 		Required:         required,
 		Kind: func() pluginsv1beta1.BundleKind {
-			if kind := annotations[pluginscommon.AnnotationRenderBy]; kind != "" {
+			if kind := annotations[plugins.AnnotationRenderBy]; kind != "" {
 				return pluginsv1beta1.BundleKind(kind)
 			} else {
 				return pluginsv1beta1.BundleKindTemplate
@@ -173,7 +175,7 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 
 func parseCategory(annotations map[string]string) (string, string) {
 	maincate, cate := "other", "unknow"
-	full := annotations[pluginscommon.AnnotationCategory]
+	full := annotations[plugins.AnnotationCategory]
 	if full == "" {
 		return maincate, cate
 	}
@@ -194,7 +196,7 @@ func IsPluginChart(cv *repo.ChartVersion) bool {
 	if annotations == nil {
 		return false
 	}
-	b, _ := strconv.ParseBool(annotations[pluginscommon.AnnotationIsPlugin])
+	b, _ := strconv.ParseBool(annotations[plugins.AnnotationIsPlugin])
 	return b
 }
 
@@ -262,6 +264,9 @@ func CheckDependecies(requirements Requirements, installs map[string]PluginVersi
 
 // ParseRequirements
 func ParseRequirements(str string) []Requirement {
+	if str == "" {
+		return nil
+	}
 	requirements := []Requirement{}
 	// nolint: gomnd
 	for _, req := range strings.Split(str, ",") {

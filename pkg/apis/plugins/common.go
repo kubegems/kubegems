@@ -15,6 +15,11 @@
 package plugins
 
 const (
+	KubegemsChartsRepoURL    = "https://charts.kubegems.io/kubegems"
+	KubegemsPluginsCachePath = "plugins"
+)
+
+const (
 	AnnotationIgnoreOptions        = "bundle.kubegems.io/ignore-options"
 	AnnotationIgnoreOptionOnUpdate = "OnUpdate"
 	AnnotationIgnoreOptionOnDelete = "OnDelete"

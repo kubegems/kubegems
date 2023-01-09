@@ -66,7 +66,7 @@ func (o *PluginsAPI) RepoAdd(req *restful.Request, resp *restful.Response) {
 		response.Error(resp, err)
 		return
 	}
-	if err := o.PM.SetRepo(req.Request.Context(), repo, true); err != nil {
+	if err := o.PM.UpdateRepo(req.Request.Context(), repo); err != nil {
 		response.Error(resp, err)
 		return
 	}

@@ -24,7 +24,7 @@ import (
 	"golang.org/x/exp/slices"
 	"golang.org/x/mod/semver"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
+	plugins "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/bundle"
 	"kubegems.io/kubegems/pkg/installer/bundle/helm"
@@ -32,8 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
-const DefaultPluginsDir = "plugins"
 
 type Plugin struct {
 	Name         string          `json:"name"`
@@ -48,8 +46,9 @@ type Plugin struct {
 }
 
 type PluginManager struct {
-	CacheDir string
-	Client   client.Client
+	CacheDir         string
+	Client           client.Client
+	builtinRepoCache *Repository
 }
 
 func DefaultPluginManager(cachedir string) (*PluginManager, error) {
@@ -69,10 +68,16 @@ func (m *PluginManager) Install(ctx context.Context, name string, version string
 	if err != nil {
 		return err
 	}
+	// check dependencies
+	installed, _ := m.ListInstalled(ctx, false)
+	if err := CheckDependecies(pv.Requirements, installed); err != nil {
+		return err
+	}
+
 	pv.Values = pluginsv1beta1.Values{Object: values}.FullFill()
 	apiplugin := pv.ToPlugin()
 	// all of plugins must install in installer namespace
-	apiplugin.Namespace = pluginscommon.KubeGemsNamespaceInstaller
+	apiplugin.Namespace = plugins.KubeGemsNamespaceInstaller
 
 	exists := apiplugin.DeepCopy()
 	_, err = controllerutil.CreateOrUpdate(ctx, m.Client, exists, func() error {
@@ -92,7 +97,7 @@ func (m *PluginManager) UnInstall(ctx context.Context, name string) error {
 	return m.Client.Delete(ctx, &pluginsv1beta1.Plugin{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
-			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+			Namespace: plugins.KubeGemsNamespaceInstaller,
 		},
 	})
 }
@@ -131,6 +136,7 @@ func (m *PluginManager) Get(ctx context.Context, name string) (*Plugin, error) {
 	return &plugin, nil
 }
 
+// nolint funlen
 func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version string, withSchema bool, withDpendeciesCheck bool) (*PluginVersion, error) {
 	plugin, err := m.Get(ctx, name)
 	if err != nil {
@@ -174,7 +180,7 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 
 func (m *PluginManager) fillSchema(ctx context.Context, pv *PluginVersion) error {
 	if m.CacheDir == "" {
-		m.CacheDir = DefaultPluginsDir
+		m.CacheDir = plugins.KubegemsPluginsCachePath
 	}
 	// we cache in a dir same with plugins use.
 	cachedir := bundle.PerRepoCacheDir(pv.Repository, m.CacheDir)
@@ -252,10 +258,6 @@ func FindUpgradeable(availables []PluginVersion, installed PluginVersion, allins
 		if !SemVersionBiggerThan(available.Version, installed.Version) {
 			continue
 		}
-		// meet all requirements
-		if CheckDependecies(available.Requirements, allinstall) == nil {
-			return &available
-		}
 	}
 	return nil
 }
@@ -263,7 +265,7 @@ func FindUpgradeable(availables []PluginVersion, installed PluginVersion, allins
 func (m *PluginManager) GetInstalled(ctx context.Context, name string) (*PluginVersion, error) {
 	plugin := pluginsv1beta1.Plugin{}
 	if err := m.Client.Get(ctx,
-		client.ObjectKey{Namespace: pluginscommon.KubeGemsNamespaceInstaller, Name: name},
+		client.ObjectKey{Namespace: plugins.KubeGemsNamespaceInstaller, Name: name},
 		&plugin,
 	); err != nil {
 		return nil, err
@@ -274,7 +276,7 @@ func (m *PluginManager) GetInstalled(ctx context.Context, name string) (*PluginV
 
 func (m *PluginManager) ListInstalled(ctx context.Context, checkHealthy bool) (map[string]PluginVersion, error) {
 	pluginList := &pluginsv1beta1.PluginList{}
-	if err := m.Client.List(ctx, pluginList, client.InNamespace(pluginscommon.KubeGemsNamespaceInstaller)); err != nil {
+	if err := m.Client.List(ctx, pluginList, client.InNamespace(plugins.KubeGemsNamespaceInstaller)); err != nil {
 		return nil, err
 	}
 	ret := map[string]PluginVersion{}
@@ -318,7 +320,7 @@ func mergeAllrepoVersions(repos map[string]Repository) map[string][]PluginVersio
 				// use repo priority as plugin priority
 				pv.Priority = repo.Priority
 				if exist, ok := pluginversions[pv.Version]; ok {
-					if exist.Priority < pv.Priority {
+					if exist.Priority > pv.Priority {
 						// replace use higher priority
 						pluginversions[pv.Version] = pv
 					}
@@ -359,21 +361,4 @@ func (m *PluginManager) CheckUpdate(ctx context.Context) (map[string]Plugin, err
 		}
 	}
 	return upgradable, nil
-}
-
-func (m *PluginManager) UpdateLocalRepoCache(ctx context.Context) error {
-	repos, err := m.ListRepos(ctx)
-	if err != nil {
-		return err
-	}
-	for _, repo := range repos {
-		if !strings.HasPrefix(repo.Address, "file://") {
-			continue
-		}
-		// with refresh
-		if err := m.SetRepo(ctx, &repo, true); err != nil {
-			return err
-		}
-	}
-	return nil
 }

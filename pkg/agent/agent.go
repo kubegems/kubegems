@@ -55,6 +55,7 @@ func DefaultOptions() *Options {
 
 func Run(ctx context.Context, options *Options) error {
 	log.SetLevel(options.LogLevel)
+	ctx = log.NewContext(ctx, log.LogrLogger)
 
 	if options.DebugMode {
 		gin.SetMode(gin.DebugMode)

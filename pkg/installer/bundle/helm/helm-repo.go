@@ -32,17 +32,17 @@ const IndexFileName = "index.yaml"
 const FileProtocolSchema = "file"
 
 func LoadIndex(ctx context.Context, uri string) (*repo.IndexFile, error) {
-	u, err := url.ParseRequestURI(uri)
+	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, err
 	}
 	switch u.Scheme {
 	case "http", "https":
 		return LoadRemoteIndex(ctx, uri)
-	case FileProtocolSchema:
+	case FileProtocolSchema, "":
 		return LoadLocalIndex(filepath.Join(u.Path, IndexFileName))
 	default:
-		return nil, fmt.Errorf("unsupported uri %s", uri)
+		return nil, fmt.Errorf("unsupported schema of uri %s", uri)
 	}
 }
 
