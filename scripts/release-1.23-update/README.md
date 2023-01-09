@@ -1,8 +1,29 @@
 # Upgrade from 1.22 to 1.23
 
-## Usage
+## Monitor plugin
+1. update crds
+```bash
+kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
+kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
+kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
+kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
+kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
+kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
+kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
+```
+2. upgrate monitor plugin to 43.2.1 on dashboard
+3. patch alertmanager to disable force namespace(because https://github.com/prometheus-community/helm-charts/pull/2882 not merged yet)
+```bash
+kubectl patch alertmanager -n kubegems-monitoring kube-prometheus-stack-alertmanager --type merge -p '{"spec": {"alertmanagerConfigMatcherStrategy": {"type":"None"}}}'
+```
 
-Run on manager cluster:
+## Opentelemetry plugin
+upgrate opentelemetry plugin to 0.28.1 on dashboard
+
+## Run script
+
+### Run on manager cluster:
 
 ```sh
 # switch kubeconfig current context to target cluster
@@ -16,7 +37,11 @@ or specify the context name in kubeconfig:
 go run ./scripts/release-1.23-update --context <context_name> --manager --kubegemsVersion v1.23.0[-xxx]
 ```
 
-Run on per agent cluster(include manager cluster):
+To avoid migrate alertrule failed, we should do two things in database manually, after exec `exportOldAlertRulesToDB`:
+1. change chinese alertrule name to english
+2. update alertrule RedisMemoryHigh's expr and alert levels
+
+### Run on per agent cluster(include manager cluster):
 
 ```sh
 # switch kubeconfig context to target cluster

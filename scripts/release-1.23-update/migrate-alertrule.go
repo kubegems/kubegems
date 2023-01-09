@@ -131,10 +131,7 @@ func convertMonitorAlertRule(cluster string, monitorRule observe.MonitorAlertRul
 		Message:       monitorRule.Message,
 		For:           monitorRule.For,
 		InhibitLabels: monitorRule.InhibitLabels,
-		// AlertLevels: ,
-		// Receivers: ,
-		// PromqlGenerator: ,
-		IsOpen: monitorRule.IsOpen,
+		IsOpen:        monitorRule.IsOpen,
 	}
 	for _, level := range monitorRule.AlertLevels {
 		ret.AlertLevels = append(ret.AlertLevels, models.AlertLevel{
@@ -177,10 +174,7 @@ func convertLoggingAlertRule(cluster string, loggingRule observe.LoggingAlertRul
 		Message:       loggingRule.Message,
 		For:           loggingRule.For,
 		InhibitLabels: loggingRule.InhibitLabels,
-		// AlertLevels: ,
-		// Receivers: ,
-		// LogqlGenerator: ,
-		IsOpen: loggingRule.IsOpen,
+		IsOpen:        loggingRule.IsOpen,
 	}
 	for _, level := range loggingRule.AlertLevels {
 		ret.AlertLevels = append(ret.AlertLevels, models.AlertLevel{
