@@ -23,6 +23,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/jwt"
 	"kubegems.io/kubegems/pkg/utils/mongo"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
+	"kubegems.io/kubegems/pkg/utils/otel"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/system"
@@ -44,6 +45,7 @@ type Options struct {
 	Mongo        *mongo.Options                    `json:"mongo,omitempty"`
 	Models       *ModelsOptions                    `json:"models,omitempty"`
 	Edge         *EdgeOptions                      `json:"edge,omitempty"`
+	Otel         *otel.Options                     `json:"otel,omitempty"`
 }
 
 type ModelsOptions struct {
@@ -83,6 +85,7 @@ func DefaultOptions() *Options {
 		Mongo:        mongo.DefaultOptions(),
 		Models:       NewDefaultModelsOptions(),
 		Edge:         NewDefaultEdgeOptions(),
+		Otel:         otel.NewDefaultOptions(),
 	}
 	defaultoptions.System.Listen = ":8020"
 	return defaultoptions
