@@ -1,2532 +1,3785 @@
 - id: 1
   name: system
-  showName: 系统资源
   namespaced: false
   resources:
-    - id: 14
-      name: cluster
-      showName: cluster
-      scopeID: 1
-      rules:
-        - id: 128
-          name: certExpirationRemainTime
-          showName: Cluster Certs Expiration Time (second)
-          description: ""
-          expr: gems_agent_cluster_component_cert_expiration_remain_seconds
-          unit: duration-s
-          labels:
-            - component
-          resourceID: 14
-          tenantID:
-        - id: 129
-          name: cpuUsagePercent
-          showName: Cluster CPU Usage Ratio (%)
-          description: ""
-          expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100
-          unit: percent-0-100
-          labels: []
-          resourceID: 14
-          tenantID:
-        - id: 130
-          name: memoryUsagePercent
-          showName: Cluster Memory Usage Ratio (%)
-          description: ""
-          expr:
-            "(1- sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes))
-            * 100"
-          unit: percent-0-100
-          labels: []
-          resourceID: 14
-          tenantID:
-    - id: 15
-      name: environment
-      showName: environment
-      scopeID: 1
-      rules:
-        - id: 131
-          name: cpuUsage
-          showName: Environment CPU Usage (1000m=1Core)
-          description: ""
-          expr: gems_namespace_cpu_usage_cores
-          unit: short
-          labels:
-            - tenant
-            - project
-            - environment
-            - namespace
-          resourceID: 15
-          tenantID:
-        - id: 132
-          name: memoryUsage
-          showName: Environment Memory Usage (bytes)
-          description: ""
-          expr: gems_namespace_memory_usage_bytes
-          unit: bytes-B
-          labels:
-            - tenant
-            - project
-            - environment
-            - namespace
-          resourceID: 15
-          tenantID:
-        - id: 133
-          name: networkInBPS
-          showName: Environment Network Received (bytes/s)
-          description: ""
-          expr: gems_namespace_network_receive_bps
-          unit: bytes/sec-B/s
-          labels:
-            - tenant
-            - project
-            - environment
-            - namespace
-          resourceID: 15
-          tenantID:
-        - id: 134
-          name: networkOutBPS
-          showName: Environment Network Sent (bytes/s)
-          description: ""
-          expr: gems_namespace_network_send_bps
-          unit: bytes/sec-B/s
-          labels:
-            - tenant
-            - project
-            - environment
-            - namespace
-          resourceID: 15
-          tenantID:
-        - id: 135
-          name: volumeUsage
-          showName: Environment PersistentVolume Usage (bytes)
-          description: ""
-          expr: gems_namespace_pvc_usage_bytes
-          unit: bytes-B
-          labels:
-            - tenant
-            - project
-            - environment
-            - namespace
-          resourceID: 15
-          tenantID:
-    - id: 16
-      name: node
-      showName: host
-      scopeID: 1
-      rules:
-        - id: 136
-          name: cpuTotal
-          showName: CPU Total (1000m=1Core)
-          description: ""
-          expr: gems_node_cpu_total_cores
-          unit: short
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 137
-          name: cpuUsage
-          showName: CPU Total Usage (1000m=1Core)
-          description: ""
-          expr: gems_node_cpu_usage_cores
-          unit: short
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 138
-          name: cpuUsagePercent
-          showName: Host CPU Usage Ratio (%)
-          description: ""
-          expr: gems_node_cpu_usage_percent
-          unit: percent-0-100
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 139
-          name: diskReadBPS
-          showName: Host Disk Read (bytes/s)
-          description: ""
-          expr: gems_node_disk_read_bps
-          unit: bytes/sec-B/s
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 140
-          name: diskReadIOPS
-          showName: Host Disk Read OPS
-          description: ""
-          expr: gems_node_disk_read_iops
-          unit: ""
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 141
-          name: diskTotal
-          showName: Host Disk Total Size (bytes)
-          description: ""
-          expr: gems_node_disk_total_bytes
-          unit: bytes-B
-          labels:
-            - node
-            - device
-          resourceID: 16
-          tenantID:
-        - id: 142
-          name: diskUsage
-          showName: Host Disk Usage  (bytes)
-          description: ""
-          expr: gems_node_disk_usage_bytes
-          unit: bytes-B
-          labels:
-            - node
-            - device
-          resourceID: 16
-          tenantID:
-        - id: 143
-          name: diskUsagePercent
-          showName: Host Disk Usage Ratio (%)
-          description: ""
-          expr: gems_node_disk_usage_percent
-          unit: percent-0-100
-          labels:
-            - node
-            - device
-          resourceID: 16
-          tenantID:
-        - id: 144
-          name: diskWriteBPS
-          showName: Host Disk Write (bytes/s)
-          description: ""
-          expr: gems_node_disk_write_bps
-          unit: bytes/sec-B/s
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 145
-          name: diskWriteIOPS
-          showName: Host Disk Write OPS
-          description: ""
-          expr: gems_node_disk_write_iops
-          unit: ""
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 146
-          name: load1
-          showName: Host Load 1
-          description: ""
-          expr: gems_node_load1
-          unit: ""
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 147
-          name: load15
-          showName: Host Load 15
-          description: ""
-          expr: gems_node_load15
-          unit: ""
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 148
-          name: load5
-          showName: Host Load 5
-          description: ""
-          expr: gems_node_load5
-          unit: ""
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 149
-          name: memoryTotal
-          showName: Host Memory Total Size (bytes)
-          description: ""
-          expr: gems_node_memory_total_bytes
-          unit: bytes-B
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 150
-          name: memoryUsage
-          showName: Host Memory Usage (bytes)
-          description: ""
-          expr: gems_node_memory_usage_bytes
-          unit: bytes-B
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 151
-          name: memoryUsagePercent
-          showName: Host Memory Usage Ratio (%)
-          description: ""
-          expr: gems_node_memory_usage_percent
-          unit: percent-0-100
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 152
-          name: networkInBPS
-          showName: Host Network Received (bytes/s)
-          description: ""
-          expr: gems_node_network_receive_bps
-          unit: bytes/sec-B/s
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 153
-          name: networkInErrPercent
-          showName: Host Network Receive ErrorPack Ratio (%)
-          description: ""
-          expr: gems_node_network_receive_errs_percent
-          unit: percent-0-100
-          labels:
-            - node
-            - instance
-            - device
-          resourceID: 16
-          tenantID:
-        - id: 154
-          name: networkOutBPS
-          showName: Host Network Sent (bytes/s)
-          description: ""
-          expr: gems_node_network_send_bps
-          unit: bytes/sec-B/s
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 155
-          name: networkOutErrPercent
-          showName: Host Network Sent ErrorPack Ratio (%)
-          description: ""
-          expr: gems_node_network_send_errs_percent
-          unit: percent-0-100
-          labels:
-            - node
-            - instance
-            - device
-          resourceID: 16
-          tenantID:
-        - id: 156
-          name: runningPodCount
-          showName: Host Running Pods
-          description: ""
-          expr: gems_node_running_pod_count
-          unit: ""
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 157
-          name: runningPodPercent
-          showName: Host Running Pod Usage Ratio (%)
-          description: ""
-          expr: gems_node_running_pod_percent
-          unit: percent-0-100
-          labels:
-            - node
-          resourceID: 16
-          tenantID:
-        - id: 158
-          name: statusCondition
-          showName: Host Kubelet Status Condition
-          description: ""
-          expr: kube_node_status_condition
-          unit: ""
-          labels:
-            - node
-            - condition
-            - status
-          resourceID: 16
-          tenantID:
+  - id: 14
+    name: cluster
+    rules:
+    - description: ""
+      expr: gems_agent_cluster_component_cert_expiration_remain_seconds
+      id: 128
+      labels:
+      - component
+      name: certExpirationRemainTime
+      resourceID: 14
+      showName: Cluster Certs Expiration Time (second)
+      tenantID: null
+      unit: duration-s
+    - description: ""
+      expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100
+      id: 129
+      labels: []
+      name: cpuUsagePercent
+      resourceID: 14
+      showName: Cluster CPU Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: (1- sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes))
+        * 100
+      id: 130
+      labels: []
+      name: memoryUsagePercent
+      resourceID: 14
+      showName: Cluster Memory Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    scopeID: 1
+    showName: cluster
+  - id: 15
+    name: environment
+    rules:
+    - description: ""
+      expr: gems_namespace_cpu_usage_cores
+      id: 131
+      labels:
+      - tenant
+      - project
+      - environment
+      - namespace
+      name: cpuUsage
+      resourceID: 15
+      showName: Environment CPU Usage (1000m=1Core)
+      tenantID: null
+      unit: short
+    - description: ""
+      expr: gems_namespace_memory_usage_bytes
+      id: 132
+      labels:
+      - tenant
+      - project
+      - environment
+      - namespace
+      name: memoryUsage
+      resourceID: 15
+      showName: Environment Memory Usage (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_namespace_network_receive_bps
+      id: 133
+      labels:
+      - tenant
+      - project
+      - environment
+      - namespace
+      name: networkInBPS
+      resourceID: 15
+      showName: Environment Network Received (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: gems_namespace_network_send_bps
+      id: 134
+      labels:
+      - tenant
+      - project
+      - environment
+      - namespace
+      name: networkOutBPS
+      resourceID: 15
+      showName: Environment Network Sent (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: gems_namespace_pvc_usage_bytes
+      id: 135
+      labels:
+      - tenant
+      - project
+      - environment
+      - namespace
+      name: volumeUsage
+      resourceID: 15
+      showName: Environment PersistentVolume Usage (bytes)
+      tenantID: null
+      unit: bytes-B
+    scopeID: 1
+    showName: environment
+  - id: 16
+    name: node
+    rules:
+    - description: ""
+      expr: gems_node_cpu_total_cores
+      id: 136
+      labels:
+      - node
+      name: cpuTotal
+      resourceID: 16
+      showName: CPU Total (1000m=1Core)
+      tenantID: null
+      unit: short
+    - description: ""
+      expr: gems_node_cpu_usage_cores
+      id: 137
+      labels:
+      - node
+      name: cpuUsage
+      resourceID: 16
+      showName: CPU Total Usage (1000m=1Core)
+      tenantID: null
+      unit: short
+    - description: ""
+      expr: gems_node_cpu_usage_percent
+      id: 138
+      labels:
+      - node
+      name: cpuUsagePercent
+      resourceID: 16
+      showName: Host CPU Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: gems_node_disk_read_bps
+      id: 139
+      labels:
+      - node
+      name: diskReadBPS
+      resourceID: 16
+      showName: Host Disk Read (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: gems_node_disk_read_iops
+      id: 140
+      labels:
+      - node
+      name: diskReadIOPS
+      resourceID: 16
+      showName: Host Disk Read OPS
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: gems_node_disk_total_bytes
+      id: 141
+      labels:
+      - node
+      - device
+      name: diskTotal
+      resourceID: 16
+      showName: Host Disk Total Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_node_disk_usage_bytes
+      id: 142
+      labels:
+      - node
+      - device
+      name: diskUsage
+      resourceID: 16
+      showName: Host Disk Usage  (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_node_disk_usage_percent
+      id: 143
+      labels:
+      - node
+      - device
+      name: diskUsagePercent
+      resourceID: 16
+      showName: Host Disk Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: gems_node_disk_write_bps
+      id: 144
+      labels:
+      - node
+      name: diskWriteBPS
+      resourceID: 16
+      showName: Host Disk Write (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: gems_node_disk_write_iops
+      id: 145
+      labels:
+      - node
+      name: diskWriteIOPS
+      resourceID: 16
+      showName: Host Disk Write OPS
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: gems_node_load1
+      id: 146
+      labels:
+      - node
+      name: load1
+      resourceID: 16
+      showName: Host Load 1
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: gems_node_load15
+      id: 147
+      labels:
+      - node
+      name: load15
+      resourceID: 16
+      showName: Host Load 15
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: gems_node_load5
+      id: 148
+      labels:
+      - node
+      name: load5
+      resourceID: 16
+      showName: Host Load 5
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: gems_node_memory_total_bytes
+      id: 149
+      labels:
+      - node
+      name: memoryTotal
+      resourceID: 16
+      showName: Host Memory Total Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_node_memory_usage_bytes
+      id: 150
+      labels:
+      - node
+      name: memoryUsage
+      resourceID: 16
+      showName: Host Memory Usage (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_node_memory_usage_percent
+      id: 151
+      labels:
+      - node
+      name: memoryUsagePercent
+      resourceID: 16
+      showName: Host Memory Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: gems_node_network_receive_bps
+      id: 152
+      labels:
+      - node
+      name: networkInBPS
+      resourceID: 16
+      showName: Host Network Received (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: gems_node_network_receive_errs_percent
+      id: 153
+      labels:
+      - node
+      - instance
+      - device
+      name: networkInErrPercent
+      resourceID: 16
+      showName: Host Network Receive ErrorPack Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: gems_node_network_send_bps
+      id: 154
+      labels:
+      - node
+      name: networkOutBPS
+      resourceID: 16
+      showName: Host Network Sent (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: gems_node_network_send_errs_percent
+      id: 155
+      labels:
+      - node
+      - instance
+      - device
+      name: networkOutErrPercent
+      resourceID: 16
+      showName: Host Network Sent ErrorPack Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: gems_node_running_pod_count
+      id: 156
+      labels:
+      - node
+      name: runningPodCount
+      resourceID: 16
+      showName: Host Running Pods
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: gems_node_running_pod_percent
+      id: 157
+      labels:
+      - node
+      name: runningPodPercent
+      resourceID: 16
+      showName: Host Running Pod Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: kube_node_status_condition
+      id: 158
+      labels:
+      - node
+      - condition
+      - status
+      name: statusCondition
+      resourceID: 16
+      showName: Host Kubelet Status Condition
+      tenantID: null
+      unit: ""
+    scopeID: 1
+    showName: host
+  showName: 系统资源
 - id: 2
   name: containers
-  showName: 容器资源
   namespaced: true
   resources:
-    - id: 1
-      name: container
-      showName: container
-      scopeID: 2
-      rules:
-        - id: 1
-          name: cpuTotal
-          showName: Pod CPU Limits (1000m=1Core)
-          description: ""
-          expr: gems_container_cpu_limit_cores
-          unit: short
-          labels:
-            - node
-            - namespace
-            - pod
-            - container
-            - owner_kind
-            - workload
-          resourceID: 1
-          tenantID:
-        - id: 2
-          name: cpuUsage
-          showName: Pod CPU Usage (1000m=1Core)
-          description: ""
-          expr: gems_container_cpu_usage_cores
-          unit: short
-          labels:
-            - node
-            - namespace
-            - pod
-            - container
-            - owner_kind
-            - workload
-          resourceID: 1
-          tenantID:
-        - id: 3
-          name: cpuUsagePercent
-          showName: Pod CPU Usage Ratio (%)
-          description: ""
-          expr: gems_container_cpu_usage_percent
-          unit: percent-0-100
-          labels:
-            - node
-            - namespace
-            - pod
-            - container
-            - owner_kind
-            - workload
-          resourceID: 1
-          tenantID:
-        - id: 4
-          name: memoryTotal
-          showName: Pod Memory Limits (bytes)
-          description: ""
-          expr: gems_container_memory_limit_bytes
-          unit: bytes-B
-          labels:
-            - node
-            - namespace
-            - pod
-            - container
-            - owner_kind
-            - workload
-          resourceID: 1
-          tenantID:
-        - id: 5
-          name: memoryUsage
-          showName: Pod Memory Usage (bytes)
-          description: ""
-          expr: gems_container_memory_usage_bytes
-          unit: bytes-B
-          labels:
-            - node
-            - namespace
-            - pod
-            - container
-            - owner_kind
-            - workload
-          resourceID: 1
-          tenantID:
-        - id: 6
-          name: memoryUsagePercent
-          showName: Pod Memory Usage Ratio (%)
-          description: ""
-          expr: gems_container_memory_usage_percent
-          unit: percent-0-100
-          labels:
-            - node
-            - namespace
-            - pod
-            - container
-            - owner_kind
-            - workload
-          resourceID: 1
-          tenantID:
-        - id: 7
-          name: networkInBPS
-          showName: Pod Network Received (bytes/s)
-          description: ""
-          expr: gems_container_network_receive_bps
-          unit: bytes/sec-B/s
-          labels:
-            - node
-            - namespace
-            - pod
-            - owner_kind
-            - workload
-          resourceID: 1
-          tenantID:
-        - id: 8
-          name: networkOutBPS
-          showName: Pod Network Sent (bytes/s)
-          description: ""
-          expr: gems_container_network_send_bps
-          unit: bytes/sec-B/s
-          labels:
-            - node
-            - namespace
-            - pod
-            - owner_kind
-            - workload
-          resourceID: 1
-          tenantID:
-        - id: 9
-          name: restartTimesLast5m
-          showName: Pod Restart Reason Last 5 minutes
-          description: ""
-          expr: gems_container_restart_times_last_5m
-          unit: ""
-          labels:
-            - namespace
-            - pod
-            - container
-          resourceID: 1
-          tenantID:
-        - id: 10
-          name: statusTerminatedReason
-          showName: Pod Terminated Reason
-          description: ""
-          expr: kube_pod_container_status_terminated_reason
-          unit: ""
-          labels:
-            - namespace
-            - pod
-            - container
-            - reason
-          resourceID: 1
-          tenantID:
-    - id: 2
-      name: log
-      showName: log
-      scopeID: 2
-      rules:
-        - id: 11
-          name: errorLogCount
-          showName: Error logs Last 1 Minutes (lines)
-          description: ""
-          expr: gems_loki_error_logs_count_last_1m
-          unit: ""
-          labels:
-            - namespace
-            - pod
-          resourceID: 2
-          tenantID:
-        - id: 12
-          name: logCount
-          showName: Logs Last 1 Minute (lines)
-          description: ""
-          expr: gems_loki_logs_count_last_1m
-          unit: ""
-          labels:
-            - namespace
-            - pod
-          resourceID: 2
-          tenantID:
-    - id: 3
-      name: pvc
-      showName: volume
-      scopeID: 2
-      rules:
-        - id: 13
-          name: volumeTotal
-          showName: PersistentVolume Total Size (bytes)
-          description: ""
-          expr: gems_pvc_total_bytes
-          unit: bytes-B
-          labels:
-            - node
-            - namespace
-            - persistentvolumeclaim
-          resourceID: 3
-          tenantID:
-        - id: 14
-          name: volumeUsage
-          showName: PersistentVolume Usage Size (bytes)
-          description: ""
-          expr: gems_pvc_usage_bytes
-          unit: bytes-B
-          labels:
-            - node
-            - namespace
-            - persistentvolumeclaim
-          resourceID: 3
-          tenantID:
-        - id: 15
-          name: volumeUsagePercent
-          showName: PersistentVolume Usage Ratio (%)
-          description: ""
-          expr: gems_pvc_usage_percent
-          unit: percent-0-100
-          labels:
-            - node
-            - namespace
-            - persistentvolumeclaim
-          resourceID: 3
-          tenantID:
+  - id: 1
+    name: container
+    rules:
+    - description: ""
+      expr: gems_container_cpu_limit_cores
+      id: 1
+      labels:
+      - node
+      - namespace
+      - pod
+      - owner_kind
+      - workload
+      name: cpuTotal
+      resourceID: 1
+      showName: Pod CPU Limits (1000m=1Core)
+      tenantID: null
+      unit: short
+    - description: ""
+      expr: gems_container_cpu_usage_cores
+      id: 2
+      labels:
+      - node
+      - namespace
+      - pod
+      - owner_kind
+      - workload
+      name: cpuUsage
+      resourceID: 1
+      showName: Pod CPU Usage (1000m=1Core)
+      tenantID: null
+      unit: short
+    - description: ""
+      expr: gems_container_cpu_usage_percent
+      id: 3
+      labels:
+      - node
+      - namespace
+      - pod
+      - owner_kind
+      - workload
+      name: cpuUsagePercent
+      resourceID: 1
+      showName: Pod CPU Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: gems_container_memory_limit_bytes
+      id: 4
+      labels:
+      - node
+      - namespace
+      - pod
+      - owner_kind
+      - workload
+      name: memoryTotal
+      resourceID: 1
+      showName: Pod Memory Limits (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_container_memory_usage_bytes
+      id: 5
+      labels:
+      - node
+      - namespace
+      - pod
+      - owner_kind
+      - workload
+      name: memoryUsage
+      resourceID: 1
+      showName: Pod Memory Usage (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_container_memory_usage_percent
+      id: 6
+      labels:
+      - node
+      - namespace
+      - pod
+      - owner_kind
+      - workload
+      name: memoryUsagePercent
+      resourceID: 1
+      showName: Pod Memory Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: gems_container_network_receive_bps
+      id: 7
+      labels:
+      - node
+      - namespace
+      - pod
+      - owner_kind
+      - workload
+      name: networkInBPS
+      resourceID: 1
+      showName: Pod Network Received (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: gems_container_network_send_bps
+      id: 8
+      labels:
+      - node
+      - namespace
+      - pod
+      - owner_kind
+      - workload
+      name: networkOutBPS
+      resourceID: 1
+      showName: Pod Network Sent (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: gems_container_restart_times_last_5m
+      id: 9
+      labels:
+      - namespace
+      - pod
+      - container
+      name: restartTimesLast5m
+      resourceID: 1
+      showName: Pod Restart Reason Last 5 minutes
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: kube_pod_container_status_terminated_reason
+      id: 10
+      labels:
+      - namespace
+      - pod
+      - container
+      - reason
+      name: statusTerminatedReason
+      resourceID: 1
+      showName: Pod Terminated Reason
+      tenantID: null
+      unit: ""
+    scopeID: 2
+    showName: container
+  - id: 2
+    name: log
+    rules:
+    - description: ""
+      expr: gems_loki_error_logs_count_last_1m
+      id: 11
+      labels:
+      - namespace
+      - pod
+      name: errorLogCount
+      resourceID: 2
+      showName: Error logs Last 1 Minutes (lines)
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: gems_loki_logs_count_last_1m
+      id: 12
+      labels:
+      - namespace
+      - pod
+      name: logCount
+      resourceID: 2
+      showName: Logs Last 1 Minute (lines)
+      tenantID: null
+      unit: ""
+    scopeID: 2
+    showName: log
+  - id: 3
+    name: pvc
+    rules:
+    - description: ""
+      expr: gems_pvc_total_bytes
+      id: 13
+      labels:
+      - node
+      - namespace
+      - persistentvolumeclaim
+      name: volumeTotal
+      resourceID: 3
+      showName: PersistentVolume Total Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_pvc_usage_bytes
+      id: 14
+      labels:
+      - node
+      - namespace
+      - persistentvolumeclaim
+      name: volumeUsage
+      resourceID: 3
+      showName: PersistentVolume Usage Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: gems_pvc_usage_percent
+      id: 15
+      labels:
+      - node
+      - namespace
+      - persistentvolumeclaim
+      name: volumeUsagePercent
+      resourceID: 3
+      showName: PersistentVolume Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    scopeID: 2
+    showName: volume
+  showName: 容器资源
 - id: 3
   name: middlewires
-  showName: 中间件
   namespaced: true
   resources:
-    - id: 4
-      name: consul
-      showName: consul
-      scopeID: 3
-      rules:
-        - id: 16
-          name: consulLanMembers
-          showName: Consul Cluster Members
-          description: ""
-          expr: consul_serf_lan_members
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 4
-          tenantID:
-        - id: 17
-          name: consulRaftLeader
-          showName: Consul Raft Leader
-          description: ""
-          expr: consul_raft_leader
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 4
-          tenantID:
-        - id: 18
-          name: consulRaftPeers
-          showName: Consul Raft Peers
-          description: ""
-          expr: consul_raft_peers
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 4
-          tenantID:
-        - id: 19
-          name: consulService
-          showName: Consule Catalog Services
-          description: ""
-          expr: consul_catalog_services
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 4
-          tenantID:
-        - id: 20
-          name: consulServiceHealthy
-          showName: Consul Catalog Service Healthy
-          description: ""
-          expr: consul_catalog_service_node_healthy
-          unit: ""
-          labels:
-            - service
-            - namespace
-            - service_name
-            - service_id
-          resourceID: 4
-          tenantID:
-        - id: 21
-          name: consulServiceTag
-          showName: "Consul Service Tag "
-          description: ""
-          expr: consul_service_tag
-          unit: ""
-          labels:
-            - service
-            - namespace
-            - service_id
-            - tag
-          resourceID: 4
-          tenantID:
-        - id: 22
-          name: consulState
-          showName: Up
-          description: ""
-          expr: consul_up
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 4
-          tenantID:
-    - id: 5
-      name: elasticsearch
-      showName: elasticsearch
-      scopeID: 3
-      rules:
-        - id: 23
-          name: esActivePrimaryShards
-          showName: Active Primary Shards
-          description: ""
-          expr: elasticsearch_cluster_health_active_primary_shards
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 24
-          name: esActiveShards
-          showName: Active Shards
-          description: ""
-          expr: elasticsearch_cluster_health_active_shards
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 25
-          name: esBreakersTripped
-          showName: Breakers Tripped
-          description: ""
-          expr: elasticsearch_breakers_tripped
-          unit: ""
-          labels:
-            - service
-            - host
-            - breaker
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 26
-          name: esCPUPercent
-          showName: CPU Usage Ratio (%)
-          description: ""
-          expr: elasticsearch_process_cpu_percent
-          unit: percent-0-100
-          labels:
-            - service
-            - host
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 27
-          name: esDelayedUnassignedShards
-          showName: Delayed Unassigned Shards
-          description: ""
-          expr: elasticsearch_cluster_health_delayed_unassigned_shards
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 28
-          name: esFilesystemAvailableBytes
-          showName: Filesystem Available (bytes)
-          description: ""
-          expr: elasticsearch_filesystem_data_available_bytes
-          unit: bytes-B
-          labels:
-            - service
-            - host
-            - path
-            - " mount"
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 29
-          name: esGcCount
-          showName: JVM GC Count
-          description: ""
-          expr: irate(elasticsearch_jvm_gc_collection_seconds_count[5m])
-          unit: ""
-          labels:
-            - host
-            - service
-            - gc
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 30
-          name: esGcSeconds
-          showName: JVM GC Time (s)
-          description: ""
-          expr: irate(elasticsearch_jvm_gc_collection_seconds_sum[5m])
-          unit: duration-s
-          labels:
-            - service
-            - host
-            - gc
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 31
-          name: esIndicesPerNode
-          showName: Indices Docs Per Node
-          description: ""
-          expr: elasticsearch_indices_docs
-          unit: short
-          labels:
-            - service
-            - host
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 32
-          name: esInitializingShards
-          showName: Initializing Shards
-          description: ""
-          expr: elasticsearch_cluster_health_initializing_shards
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 33
-          name: esJVMMemoryUsageBytes
-          showName: JVM Memory Usage (bytes)
-          description: ""
-          expr: elasticsearch_jvm_memory_used_bytes
-          unit: bytes-B
-          labels:
-            - area
-            - service
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 34
-          name: esJVMMemoryUsagePersent
-          showName: JVM Memory Usage Rate (%)
-          description: ""
-          expr: elasticsearch_jvm_memory_used_bytes/elasticsearch_jvm_memory_max_bytes
-          unit: percent-0.0-1.0
-          labels:
-            - service
-            - host
-          resourceID: 5
-          tenantID:
-        - id: 35
-          name: esOpenfiles
-          showName: Open Files
-          description: ""
-          expr: elasticsearch_process_open_files_count
-          unit: ""
-          labels:
-            - service
-            - host
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 36
-          name: esOsLoad1
-          showName: OS Load 1
-          description: ""
-          expr: elasticsearch_os_load1
-          unit: ""
-          labels:
-            - service
-            - host
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 37
-          name: esPendingTask
-          showName: Pending Tasks
-          description: ""
-          expr: elasticsearch_cluster_health_number_of_pending_tasks
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 38
-          name: esQueryCacheBytes
-          showName: Query Cache_Size (bytes)
-          description: ""
-          expr: elasticsearch_indices_query_cache_memory_size_bytes
-          unit: bytes-B
-          labels:
-            - service
-            - host
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 39
-          name: esQueryDuration
-          showName: Query Duration (s)
-          description: ""
-          expr: irate(elasticsearch_indices_search_query_time_seconds[5m])
-          unit: duration-s
-          labels:
-            - service
-            - host
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 40
-          name: esReceivedBytes
-          showName: Network Received (bytes/s)
-          description: ""
-          expr: irate(elasticsearch_transport_rx_size_bytes_total[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - host
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 41
-          name: esRelocatingsShards
-          showName: Relocating Shards
-          description: ""
-          expr: elasticsearch_cluster_health_relocating_shards
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 42
-          name: esSentBytes
-          showName: Network Sent (bytes/s)
-          description: ""
-          expr: irate(elasticsearch_transport_tx_size_bytes_total[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - host
-            - namespace
-          resourceID: 5
-          tenantID:
-        - id: 43
-          name: esUnassignedShards
-          showName: Unassigned Shards
-          description: ""
-          expr: elasticsearch_cluster_health_unassigned_shards
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 5
-          tenantID:
-    - id: 6
-      name: kafka
-      showName: kafka
-      scopeID: 3
-      rules:
-        - id: 44
-          name: kafkaBrokers
-          showName: Brokers
-          description: ""
-          expr: kafka_brokers
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 6
-          tenantID:
-        - id: 45
-          name: kafkaConsumerLatency
-          showName: Consumer Latency
-          description: ""
-          expr: "sum by (consumergroup,topic,namespace,service) (kafka_consumergroup_lag) "
-          unit: ""
-          labels:
-            - service
-            - topic
-            - namespace
-            - consumergroup
-          resourceID: 6
-          tenantID:
-        - id: 46
-          name: kafkaMessageConsumer
-          showName: Message Consumer Rate (messages/s)
-          description: ""
-          expr: "sum(rate(kafka_consumergroup_current_offset[5m])) by (topic,namespace,service) "
-          unit: ""
-          labels:
-            - service
-            - topic
-            - namespace
-          resourceID: 6
-          tenantID:
-        - id: 47
-          name: kafkaMessagesProduced
-          showName: Message Producer Rate (messages/s)
-          description: ""
-          expr:
-            'sum(rate(kafka_topic_partition_current_offset{topic!~"__.*"}[5m]))
-            by (topic,namespace,service) '
-          unit: ""
-          labels:
-            - service
-            - topic
-            - namespace
-          resourceID: 6
-          tenantID:
-        - id: 48
-          name: kafkaPartitions
-          showName: Partitions
-          description: ""
-          expr: sum(kafka_topic_partitions) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 6
-          tenantID:
-        - id: 49
-          name: kafkaTopics
-          showName: Topics
-          description: ""
-          expr: count(count by (topic,service,namespace) (kafka_topic_partitions))
-          unit: ""
-          labels:
-            - service
-            - topic
-            - namespace
-          resourceID: 6
-          tenantID:
-    - id: 7
-      name: mongodb
-      showName: mongodb
-      scopeID: 3
-      rules:
-        - id: 50
-          name: mongdbState
-          showName: Up
-          description: ""
-          expr: mongodb_up
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 51
-          name: mongdoResponseTime
-          showName: Response Time (us)
-          description: ""
-          expr: "rate(mongodb_mongod_op_latencies_latency_total[5m]) / rate(mongodb_mongod_op_latencies_ops_total[5m]) "
-          unit: duration-us
-          labels:
-            - service
-            - type
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 52
-          name: mongodbAsserts
-          showName: Asserts Total
-          description: ""
-          expr: rate(mongodb_asserts_total[5m])
-          unit: ""
-          labels:
-            - service
-            - type
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 53
-          name: mongodbCacheBytes
-          showName: Wiredtiger Cache Size (bytes)
-          description: ""
-          expr: mongodb_mongod_wiredtiger_cache_bytes
-          unit: bytes-B
-          labels:
-            - service
-            - type
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 54
-          name: mongodbConnections
-          showName: Connections
-          description: ""
-          expr: mongodb_connections
-          unit: ""
-          labels:
-            - service
-            - state
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 55
-          name: mongodbCursor
-          showName: Cursor Open
-          description: ""
-          expr: mongodb_mongod_metrics_cursor_open
-          unit: ""
-          labels:
-            - service
-            - state
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 56
-          name: mongodbDataSize
-          showName: DB Size (bytes)
-          description: ""
-          expr: mongodb_mongod_db_data_size_bytes
-          unit: bytes-B
-          labels:
-            - service
-            - db
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 57
-          name: mongodbDocument
-          showName: Document Operations (op/s)
-          description: ""
-          expr: irate(mongodb_mongod_metrics_document_total[5m])
-          unit: ""
-          labels:
-            - service
-            - state
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 58
-          name: mongodbGlobalLock
-          showName: Global Locks
-          description: ""
-          expr: mongodb_mongod_global_lock_total
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 59
-          name: mongodbIndexSize
-          showName: Index Size (bytes)
-          description: ""
-          expr: mongodb_mongod_db_index_size_bytes
-          unit: bytes-B
-          labels:
-            - service
-            - db
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 60
-          name: mongodbLockQueue
-          showName: Lock Queue
-          description: ""
-          expr: mongodb_mongod_global_lock_current_queue
-          unit: ""
-          labels:
-            - service
-            - type
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 61
-          name: mongodbMemory
-          showName: Memory Usage (M bytes)
-          description: ""
-          expr: mongodb_memory
-          unit: bytes-MB
-          labels:
-            - service
-            - type
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 62
-          name: mongodbObjects
-          showName: Objects Total
-          description: ""
-          expr: mongodb_mongod_db_objects_total
-          unit: ""
-          labels:
-            - service
-            - db
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 63
-          name: mongodbOplogSize
-          showName: Oplog Size (bytes)
-          description: ""
-          expr: mongodb_mongod_replset_oplog_size_bytes
-          unit: bytes-B
-          labels:
-            - service
-            - type
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 64
-          name: mongodbPageFaults
-          showName: Page Faults Total
-          description: ""
-          expr: mongodb_extra_info_page_faults_total
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 65
-          name: mongodbQPS
-          showName: QPS
-          description: ""
-          expr:
-            sum(rate(mongodb_op_counters_total{type=~"query|getmore"}[5m]))  by
-            (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 66
-          name: mongodbReceivedBytes
-          showName: Network Received (bytes/s)
-          description: ""
-          expr: irate(mongodb_network_bytes_total{state="in_bytes"}[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 67
-          name: mongodbSentBytes
-          showName: Network Sent (bytes/s)
-          description: ""
-          expr: irate(mongodb_network_bytes_total{state="out_bytes"}[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 68
-          name: mongodbTPS
-          showName: TPS
-          description: ""
-          expr:
-            sum(rate(mongodb_op_counters_total{type=~"insert|update|delete"}[5m]))
-            by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 69
-          name: mongodbWiredtigerCacheRate
-          showName: Wiredtiger Cache Ratio (%)
-          description: ""
-          expr:
-            sum by (namespace,service) (mongodb_mongod_wiredtiger_cache_bytes{type="total"})
-            / sum by (namespace,service)(mongodb_mongod_wiredtiger_cache_bytes_total)
-          unit: percent-0.0-1.0
-          labels:
-            - service
-            - namespace
-          resourceID: 7
-          tenantID:
-        - id: 175
-          name: mongodbWiredtigerCacheBytes
-          showName: Wiredtiger Cache I/O (bytes/s)
-          description: Size of cached data written to or read from (bytes/s)
-          expr: rate(mongodb_mongod_wiredtiger_cache_bytes_total[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-            - type
-          resourceID: 7
-          tenantID:
-        - id: 176
-          name: mongodbWiredtigerDirtyCache
-          showName: Wiredtiger Dirty Cache Rate
-          description: Percentage of cached dirty pages.
-          expr:
-            100 * sum by (namespace,service) (mongodb_mongod_wiredtiger_cache_pages{type="dirty"})
-            / sum by (namespace,service) (mongodb_mongod_wiredtiger_cache_pages{type="total"})
-          unit: percent-0-100
-          labels:
-            - namespace
-            - service
-          resourceID: 7
-          tenantID:
-        - id: 177
-          name: mongodbWiredtigerCacheEvicted
-          showName: Wiredtiger Cache Evicted Rate
-          description: Rate of cache evicted pages
-          expr: rate(mongodb_mongod_wiredtiger_cache_evicted_total[5m])
-          unit: ""
-          labels:
-            - namesace
-            - service
-            - type
-          resourceID: 7
-          tenantID:
-    - id: 8
-      name: mysql
-      showName: mysql
-      scopeID: 3
-      rules:
-        - id: 70
-          name: mysqlCommandTop10
-          showName: Command Top10
-          description: ""
-          expr: topk(10, rate(mysql_global_status_commands_total[5m])>0)
-          unit: ""
-          labels:
-            - service
-            - command
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 71
-          name: mysqlConnections
-          showName: Connections
-          description: Generic metric from SHOW GLOBAL STATUS.
-          expr: mysql_global_status_max_used_connections
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 72
-          name: mysqlInnodbBufferSize
-          showName: InnoDB Buffer Pool (bytes)
-          description: ""
-          expr: mysql_global_variables_innodb_buffer_pool_size
-          unit: bytes-B
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 73
-          name: mysqlOpenFiles
-          showName: Open Files
-          description: ""
-          expr: mysql_global_status_innodb_num_open_files
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 74
-          name: mysqlQPS
-          showName: QPS
-          description: ""
-          expr: rate(mysql_global_status_queries[5m])
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 75
-          name: mysqlQuestions
-          showName: " Questions Rate (questions/s)"
-          description: ""
-          expr: rate(mysql_global_status_questions[5m])
-          unit: ""
-          labels:
-            - service
-          resourceID: 8
-          tenantID:
-        - id: 76
-          name: mysqlReceivedBytes
-          showName: " Network Received (bytes/s)"
-          description: ""
-          expr: irate(mysql_global_status_bytes_received[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 77
-          name: mysqlSentBytes
-          showName: Network Sent (bytes/s)
-          description: ""
-          expr: " irate(mysql_global_status_bytes_sent[5m])"
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 78
-          name: mysqlSlowQuery
-          showName: Slow Queries Rate (queries/min)
-          description: ""
-          expr: idelta(mysql_global_status_slow_queries[1m])
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 79
-          name: mysqlSlowQueryEnabled
-          showName: MySQL Slow Query Enabled
-          description: Wether MySQL enabled slow queries
-          expr: mysql_global_variables_slow_query_log
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 80
-          name: mysqlState
-          showName: Up
-          description: ""
-          expr: mysql_up
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 81
-          name: mysqlTPS
-          showName: TPS
-          description: ""
-          expr:
-            'sum(rate(mysql_global_status_commands_total{command=~"insert|update|delete"}[5m]))
-            without (command) '
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 82
-          name: mysqlTabelLockWaited
-          showName: Table Locks Waited 5 Minutes
-          description: ""
-          expr: sum(increase(mysql_global_status_table_locks_waited[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 83
-          name: mysqlTableOpenCacheHitRatio
-          showName: Table Open Cache Hit Ratio (%)
-          description: ""
-          expr:
-            rate(mysql_global_status_table_open_cache_hits[5m]) / ( rate(mysql_global_status_table_open_cache_hits[5m])
-            + rate(mysql_global_status_table_open_cache_misses[5m]) )
-          unit: percent-0.0-1.0
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 84
-          name: mysqlTableSize
-          showName: Table Size (bytes)
-          description: ""
-          expr: sum by (schema,service,namespace) (mysql_info_schema_table_size)
-          unit: bytes-B
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 85
-          name: mysqlThreads
-          showName: Threads (by state)
-          description: ""
-          expr: mysql_info_schema_threads
-          unit: ""
-          labels:
-            - service
-            - state
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 86
-          name: mysqlTmpTables
-          showName: Tmp Table Created Rate (tables/s)
-          description: ""
-          expr: sum(rate(mysql_global_status_created_tmp_tables[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 87
-          name: mysqlTotalRows
-          showName: Table Rows
-          description: ""
-          expr: sum(mysql_info_schema_table_rows) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 159
-          name: mysqlRunningThread
-          showName: Running Threads
-          description: Generic metric from SHOW GLOBAL STATUS.
-          expr: mysql_global_status_threads_running
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 161
-          name: mysqlInnodbLogWait
-          showName: InnoDB Log Waits
-          description: Generic metric from SHOW GLOBAL STATUS.
-          expr: mysql_global_status_innodb_log_waits
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 8
-          tenantID:
-        - id: 162
-          name: mysqlInnodbDataWrite
-          showName: InnoDB Data Write Rate (bytes/s)
-          description: " InnoDB bytes written from the physical disk "
-          expr: rate(mysql_global_status_innodb_data_writes[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 163
-          name: mysqlInnodbDataRead
-          showName: InnoDB Data Read Rate (bytes/s)
-          description: InnoDB bytes read from the physical disk
-          expr: rate(mysql_global_status_innodb_data_read[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 164
-          name: mysqlErrorConnections
-          showName: Error Connections Per Minute (by type)
-          description: mysql_global_status_connection_errors_total
-          expr: delta(mysql_global_status_connection_errors_total[1m])
-          unit: ""
-          labels:
-            - namespace
-            - service
-            - error
-          resourceID: 8
-          tenantID:
-        - id: 165
-          name: mysqlHandler
-          showName: Handler Rate (second)
-          description: Rate of executed MySQL handlers.
-          expr: rate(mysql_global_status_handlers_total{ handler=~"commit|rollback|savepoint.*|prepare"}[5m])
-          unit: short
-          labels:
-            - service
-            - namespace
-            - handler
-          resourceID: 8
-          tenantID:
-        - id: 166
-          name: mysqlSortRows
-          showName: Sort Rows Rate
-          description:
-            Due to a query's structure, order, or other requirements, MySQL
-            sorts the rows before returning them.
-          expr: sum(rate(mysql_global_status_sort_rows[5m])) by (service,namespace)
-          unit: short
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 167
-          name: mysqlSortRange
-          showName: Sort Range Rate
-          description:
-            Due to a query's structure, order, or other requirements, MySQL
-            sorts the rows before returning them.
-          expr: sum(rate(mysql_global_status_sort_range[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 168
-          name: mysqlSortMergePass
-          showName: Sort Merge Passes Rate
-          description:
-            Due to a query's structure, order, or other requirements, MySQL
-            sorts the rows before returning them.
-          expr: sum(rate(mysql_global_status_sort_merge_passes{}[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 8
-          tenantID:
-        - id: 169
-          name: mysqlSortScan
-          showName: Sort Scan Rate
-          description:
-            "Due to a query's structure, order, or other requirements, MySQL
-            sorts the rows before returning them. "
-          expr: sum(rate(mysql_global_status_sort_scan[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 170
-          name: mysqlSelectFullJoin
-          showName: Select Full Join Rate
-          description:
-            " the number of joins that are not joined on an index, this is
-            usually a huge performance hit."
-          expr: sum(rate(mysql_global_status_select_full_join[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 171
-          name: mysqlSelectRangeJoin
-          showName: Select Full Range Join Rate
-          description: "Generic metric from SHOW GLOBAL STATUS.
-
-            "
-          expr: sum(rate(mysql_global_status_select_full_range_join[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 172
-          name: mysqlSelectRange
-          showName: Select Range Rate
-          description:
-            how many queries used a range scan, which means MySQL scanned
-            all rows in a given range.
-          expr: sum(rate(mysql_global_status_select_range[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 173
-          name: mysqlSelectScan
-          showName: Select Scan Rate
-          description:
-            how many queries caused full table scans, in which all the data
-            in the table had to be read and either discarded or returned.
-          expr: sum(rate(mysql_global_status_select_scan[5m])) by (namespace,service)
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 8
-          tenantID:
-        - id: 174
-          name: mysqlBufferPoolPage
-          showName: Buffer Pool Pages Ratio (%)
-          description: Innodb buffer pool page Ratios
-          expr:
-            (sum by (namespace,service)(mysql_global_status_buffer_pool_pages) -
-            sum by (namespace,service)(mysql_global_status_buffer_pool_pages{state="free"}))
-            / sum(mysql_global_status_buffer_pool_pages) by (namespace,service)
-          unit: percent-0.0-1.0
-          labels:
-            - namespace
-            - service
-          resourceID: 8
-          tenantID:
-    - id: 9
-      name: postgres
-      showName: postgres
-      scopeID: 3
-      rules:
-        - id: 88
-          name: pdXactRollback
-          showName: Xact Rollback
-          description: ""
-          expr: irate(pg_stat_database_xact_rollback[5m])
-          unit: ""
-          labels:
-            - datname
-            - namespace
-            - service
-          resourceID: 9
-          tenantID:
-        - id: 89
-          name: pgActivifyCount
-          showName: Active Sessions
-          description: ""
-          expr: pg_stat_activity_count{state="active"} !=0
-          unit: ""
-          labels:
-            - namespace
-            - service
-            - datname
-          resourceID: 9
-          tenantID:
-        - id: 90
-          name: pgCacheHitRate
-          showName: Cache Hit Ratio (%)
-          description: ""
-          expr:
-            pg_stat_database_blks_hit{} / (pg_stat_database_blks_read{} + pg_stat_database_blks_hit{})
-            <= 1
-          unit: percent-0.0-1.0
-          labels:
-            - datname
-            - service
-            - namespace
-          resourceID: 9
-          tenantID:
-        - id: 91
-          name: pgConflicts
-          showName: Conflicts
-          description: ""
-          expr: pg_stat_database_conflicts
-          unit: ""
-          labels:
-            - namespace
-            - datname
-            - service
-          resourceID: 9
-          tenantID:
-        - id: 92
-          name: pgDeadlocks
-          showName: Deadlocks
-          description: ""
-          expr: pg_stat_database_deadlocks
-          unit: ""
-          labels:
-            - namespace
-            - service
-            - datname
-          resourceID: 9
-          tenantID:
-        - id: 93
-          name: pgDeleteData
-          showName: Delete Rows Rate
-          description: ""
-          expr: irate(pg_stat_database_tup_deleted[5m])
-          unit: bytes-B
-          labels:
-            - namespace
-            - datname
-            - service
-          resourceID: 9
-          tenantID:
-        - id: 94
-          name: pgEffectiveCacheSizeBytes
-          showName: Effective Cache (bytes)
-          description: ""
-          expr: pg_settings_effective_cache_size_bytes
-          unit: bytes-B
-          labels:
-            - namespace
-            - service
-          resourceID: 9
-          tenantID:
-        - id: 95
-          name: pgFetchData
-          showName: QPS
-          description: ""
-          expr: irate(pg_stat_database_tup_fetched[5m])
-          unit: ""
-          labels:
-            - namespace
-            - service
-            - datname
-          resourceID: 9
-          tenantID:
-        - id: 96
-          name: pgIdleSessions
-          showName: Idle Sessions
-          description: ""
-          expr:
-            pg_stat_activity_count{state=~"idle|idle in transaction|idle in transaction
-            (aborted)"}
-          unit: ""
-          labels:
-            - namespace
-            - datname
-            - service
-            - state
-          resourceID: 9
-          tenantID:
-        - id: 97
-          name: pgInsertedDate
-          showName: Insert Rows Rate
-          description: ""
-          expr: irate(pg_stat_database_tup_inserted[5m])
-          unit: ""
-          labels:
-            - namespace
-            - service
-            - datname
-          resourceID: 9
-          tenantID:
-        - id: 98
-          name: pgLockCount
-          showName: Lock Tables
-          description: ""
-          expr: pg_locks_count != 0
-          unit: ""
-          labels:
-            - namespace
-            - datname
-            - mode
-          resourceID: 9
-          tenantID:
-        - id: 99
-          name: pgMaxConnections
-          showName: Max Connections
-          description: ""
-          expr: pg_settings_max_connections
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 9
-          tenantID:
-        - id: 100
-          name: pgReturnData
-          showName: Return Rows Rate
-          description: ""
-          expr: irate(pg_stat_database_tup_returned[5m])
-          unit: ""
-          labels:
-            - namespace
-            - datname
-            - service
-          resourceID: 9
-          tenantID:
-        - id: 101
-          name: pgSharedBuffersBytes
-          showName: Shared Buffers (bytes)
-          description: ""
-          expr: pg_settings_shared_buffers_bytes
-          unit: bytes-B
-          labels:
-            - namespace
-            - service
-          resourceID: 9
-          tenantID:
-        - id: 102
-          name: pgState
-          showName: Up
-          description: ""
-          expr: pg_static
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 9
-          tenantID:
-        - id: 103
-          name: pgSyncTime
-          showName: Checkpoint Sync Time (ms)
-          description: ""
-          expr: irate(pg_stat_bgwriter_checkpoint_sync_time{}[5m])
-          unit: duration-ms
-          labels:
-            - namespace
-            - service
-          resourceID: 9
-          tenantID:
-        - id: 104
-          name: pgTmpBytes
-          showName: Temp File (bytes)
-          description: ""
-          expr: irate(pg_stat_database_temp_bytes[5m])
-          unit: bytes-B
-          labels:
-            - namespace
-            - service
-            - datname
-          resourceID: 9
-          tenantID:
-        - id: 105
-          name: pgUpdatedData
-          showName: Update Rows Rate
-          description: ""
-          expr: irate(pg_stat_database_tup_updated[5m])
-          unit: ""
-          labels:
-            - namespace
-            - service
-            - datname
-          resourceID: 9
-          tenantID:
-        - id: 106
-          name: pgWriteTime
-          showName: Checkpoint Write Time (ms)
-          description: ""
-          expr: irate(pg_stat_bgwriter_checkpoint_write_time{}[5m])
-          unit: duration-ms
-          labels:
-            - service
-            - namespace
-          resourceID: 9
-          tenantID:
-        - id: 107
-          name: pgXactCommit
-          showName: TPS
-          description: ""
-          expr: irate(pg_stat_database_xact_commit[5m])
-          unit: ""
-          labels:
-            - datname
-            - service
-            - datname
-          resourceID: 9
-          tenantID:
-        - id: 178
-          name: pgDBSize
-          showName: Database Size (bytes)
-          description: Disk space used by the database
-          expr: pg_database_size_bytes
-          unit: bytes-B
-          labels:
-            - service
-            - namespace
-            - datname
-          resourceID: 9
-          tenantID:
-        - id: 179
-          name: pgLocksCount
-          showName: Locks Count
-          description: Number of locks
-          expr: pg_locks_count
-          unit: ""
-          labels:
-            - namespace
-            - service
-            - datname
-            - mode
-          resourceID: 9
-          tenantID:
-    - id: 10
-      name: redis
-      showName: redis
-      scopeID: 3
-      rules:
-        - id: 108
-          name: redisClients
-          showName: Connected Clients
-          description: ""
-          expr: redis_connected_clients
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 109
-          name: redisCommandsTop5
-          showName: Commands Top5
-          description: ""
-          expr: topk(5, irate(redis_commands_total[1m]))
-          unit: ""
-          labels:
-            - service
-            - cmd
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 110
-          name: redisCpuUsage
-          showName: CPU Usage (1000m=1Core)
-          description: ""
-          expr: "irate(redis_cpu_user_seconds_total[5m]) + irate(redis_cpu_sys_seconds_total[5m]) "
-          unit: short
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 111
-          name: redisKeys
-          showName: DB Keys
-          description: ""
-          expr: sum (redis_db_keys) by (db,namespace,service)
-          unit: ""
-          labels:
-            - service
-            - db
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 112
-          name: redisKeysEvicted
-          showName: Evicted Keys Total
-          description: ""
-          expr: redis_evicted_keys_total
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 113
-          name: redisKeysExpiring
-          showName: Expireing Keys
-          description: ""
-          expr: redis_db_keys_expiring
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 114
-          name: redisKeysHitRate
-          showName: Keys Hit Ratio (%)
-          description: ""
-          expr: redis_keyspace_hits_total / (redis_keyspace_hits_total+ redis_keyspace_misses_total)
-          unit: percent-0.0-1.0
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 115
-          name: redisKeysHits
-          showName: Keys Hits Total
-          description: ""
-          expr: redis_keyspace_hits_total
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 116
-          name: redisKeysMissed
-          showName: Key Misses Total
-          description: ""
-          expr: redis_keyspace_misses_total
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 117
-          name: redisMemoryUsedBytes
-          showName: Memory Used (bytes)
-          description: ""
-          expr: redis_memory_used_bytes
-          unit: bytes-B
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 118
-          name: redisNoExpiringKeyRate
-          showName: Not-Expiring Keys Ratio (%)
-          description: ""
-          expr:
-            1 - sum(redis_db_keys_expiring)by(namespace, service) / sum(redis_db_keys)by(namespace,
-            service)
-          unit: percent-0.0-1.0
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 119
-          name: redisOPS
-          showName: Commands Processed (op/s)
-          description: ""
-          expr: irate(redis_commands_processed_total[5m])
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 120
-          name: redisReceivedByted
-          showName: Network Received (bytes/s)
-          description: ""
-          expr: irate(redis_net_input_bytes_total[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 121
-          name: redisRejectedConnectionsTotal
-          showName: Rejected Connections Total
-          description: ""
-          expr: redis_rejected_connections_total
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 122
-          name: redisSentBytes
-          showName: Network Sent (bytes/s)
-          description: ""
-          expr: irate(redis_net_output_bytes_total[5m])
-          unit: bytes/sec-B/s
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-        - id: 123
-          name: redisState
-          showName: Up
-          description: ""
-          expr: redis_up
-          unit: ""
-          labels:
-            - service
-            - namespace
-          resourceID: 10
-          tenantID:
-    - id: 17
-      name: jmx
-      showName: java
-      scopeID: 3
-      rules:
-        - id: 180
-          name: javaOSLoadAverage
-          showName: Host System Load Average
-          description: ""
-          expr: java_lang_OperatingSystem_SystemLoadAverage
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 181
-          name: javaOSCPULoad
-          showName: Host CPU Load
-          description: ""
-          expr: avg_over_time(java_lang_OperatingSystem_SystemCpuLoad{}[1m]) * 100
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 182
-          name: javaOSProcessLoad
-          showName: Host Process Cpu Load
-          description: ""
-          expr: avg_over_time(java_lang_OperatingSystem_ProcessCpuLoad{}[1m]) * 100
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 183
-          name: javaMemoryUitls
-          showName: Host Memory Uitls
-          description: ""
-          expr:
-            100 - (100 * java_lang_OperatingSystem_FreePhysicalMemorySize{} / on(service,namespace)
-            java_lang_OperatingSystem_TotalPhysicalMemorySize{})
-          unit: percent-0-100
-          labels:
-            - service
-            - namespace
-          resourceID: 17
-          tenantID:
-        - id: 184
-          name: javaOSOpenFileDescriptor
-          showName: Host OpenFile Descriptor
-          description: ""
-          expr: java_lang_OperatingSystem_OpenFileDescriptorCount
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 185
-          name: javaHeapMemoryUsage
-          showName: Heap Memory Usage
-          description: ""
-          expr: java_lang_Memory_HeapMemoryUsage_used
-          unit: bytes-B
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 186
-          name: javaNoHeapMemoryUsage
-          showName: No Heap Memory Usage
-          description: ""
-          expr: java_lang_Memory_NonHeapMemoryUsage_used
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 187
-          name: javaHeapCommittedMemory
-          showName: Heap Committed Memory
-          description: ""
-          expr: java_lang_Memory_HeapMemoryUsage_committed
-          unit: bytes-B
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 188
-          name: javaNoHeapCommittedMemory
-          showName: No Heap Committed Memory
-          description: ""
-          expr: java_lang_Memory_NonHeapMemoryUsage_committed
-          unit: bytes-B
-          labels:
-            - service
-            - namespace
-          resourceID: 17
-          tenantID:
-        - id: 189
-          name: javaMemoryPool
-          showName: Memory Pool
-          description: ""
-          expr: java_lang_MemoryPool_Usage_used
-          unit: bytes-B
-          labels:
-            - namespace
-            - service
-            - name
-          resourceID: 17
-          tenantID:
-        - id: 190
-          name: javaCommittedMemoryPool
-          showName: Committed Memory Pool
-          description: ""
-          expr: java_lang_MemoryPool_Usage_committed
-          unit: bytes-B
-          labels:
-            - namespace
-            - service
-            - name
-          resourceID: 17
-          tenantID:
-        - id: 191
-          name: javaGCCount
-          showName: GC Count
-          description: ""
-          expr: increase(java_lang_GarbageCollector_CollectionCount{}[1m])
-          unit: ""
-          labels:
-            - namespace
-            - service
-            - name
-          resourceID: 17
-          tenantID:
-        - id: 192
-          name: javaGCDuration
-          showName: GC Durations (second)
-          description: ""
-          expr: rate(java_lang_GarbageCollector_CollectionTime{}[1m])
-          unit: duration-s
-          labels:
-            - namespace
-            - service
-            - name
-          resourceID: 17
-          tenantID:
-        - id: 193
-          name: javaThreadCount
-          showName: Thread Count
-          description: ""
-          expr: java_lang_Threading_ThreadCount
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 194
-          name: javaDaemonThreadCount
-          showName: Daemon Thread Count
-          description: ""
-          expr: java_lang_Threading_DaemonThreadCount
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-        - id: 195
-          name: javaLoadedClassCount
-          showName: Loaded Class Count
-          description: ""
-          expr: java_lang_ClassLoading_LoadedClassCount
-          unit: ""
-          labels:
-            - namespace
-            - service
-          resourceID: 17
-          tenantID:
-    - id: 18
-      name: apisix
-      showName: apisix
-      scopeID: 3
-      rules:
-        - id: 199
-          name: apisixHttpStatusRate
-          showName: HTTP QPS
-          description: HTTP status codes per service in APISIX
-          expr: sum by (job,matched_host, namespace) (irate(apisix_http_status[5m]))
-          unit: ""
-          labels:
-            - job
-            - matched_host
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 200
-          name: apisixConnections
-          showName: Connections Rate
-          description: Number of HTTP connections
-          expr: sum by (job,state,namespace) (irate(apisix_nginx_http_current_connections[5m]))
-          unit: ""
-          labels:
-            - job
-            - state
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 201
-          name: apisixEtcdIndexKeys
-          showName: Keys index modifed by Etcd
-          description: Etcd modify index for APISIX keys
-          expr: sum by (job,key,namespace) (apisix_etcd_modify_indexes)
-          unit: ""
-          labels:
-            - job
-            - key
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 202
-          name: apisixHttp4xx
-          showName: HTTP 4xx Ratio (%)
-          description: HTTP1/2  Status 4xx
-          expr:
-            sum by (job,matched_host,namespace)(apisix_http_status{code=~"[4].*",matched_host!~""})
-            /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
-          unit: percent-0.0-1.0
-          labels:
-            - matched_host
-            - job
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 203
-          name: apisixHttp5xx
-          showName: HTTP 5xx Ratio (%)
-          description: HTTP1/2 Status 5xx
-          expr:
-            sum by (job,matched_host,namespace)(apisix_http_status{code=~"[5].*",matched_host!~""})
-            /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
-          unit: percent-0.0-1.0
-          labels:
-            - job
-            - matched_host
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 204
-          name: apisixHttpSucess
-          showName: HTTP Successfully Rate (%)
-          description: HTTP1/2  Successfully Rate
-          expr:
-            sum by (job,matched_host, namespace)(apisix_http_status{code!~"[4-5].*",matched_host!~""})
-            /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
-          unit: percent-0.0-1.0
-          labels:
-            - job
-            - matched_host
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 205
-          name: apisixEtcdReady
-          showName: Etcd Ready
-          description: ""
-          expr: apisix_etcd_reachable
-          unit: ""
-          labels:
-            - job
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 206
-          name: apisixBandwidth
-          showName: Network Traffic
-          description: Total bandwidth in bytes consumed per service in APISIX
-          expr: sum by(type,job,namespace) (irate(apisix_bandwidth[5m]))
-          unit: bytes/sec-B/s
-          labels:
-            - type
-            - job
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 207
-          name: apisixP95
-          showName: Latency P95 by Route (ms)
-          description: APISIX P95
-          expr:
-            histogram_quantile(0.95, sum(rate(apisix_http_latency_bucket{}[5m]))
-            by (le,route,type,job,namespace))
-          unit: duration-ms
-          labels:
-            - route
-            - type
-            - job
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 208
-          name: apisixP90
-          showName: Latency P90 by Route (ms)
-          description: ""
-          expr:
-            histogram_quantile(0.90, sum(rate(apisix_http_latency_bucket{}[5m]))
-            by (le,route,type,job,namespace))
-          unit: duration-ms
-          labels:
-            - route
-            - type
-            - job
-            - namespace
-          resourceID: 18
-          tenantID:
-        - id: 209
-          name: apisixP50
-          showName: Latency P50 by Route (ms)
-          description: ""
-          expr:
-            histogram_quantile(0.50, sum(rate(apisix_http_latency_bucket{}[5m]))
-            by (le,route,type,job,namespace))
-          unit: duration-ms
-          labels:
-            - route
-            - type
-            - namespace
-            - job
-          resourceID: 18
-          tenantID:
+  - id: 4
+    name: consul
+    rules:
+    - description: ""
+      expr: consul_serf_lan_members
+      id: 16
+      labels:
+      - namespace
+      - service
+      name: consulLanMembers
+      resourceID: 4
+      showName: Consul Cluster Members
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: consul_raft_leader
+      id: 17
+      labels:
+      - service
+      - namespace
+      name: consulRaftLeader
+      resourceID: 4
+      showName: Consul Raft Leader
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: consul_raft_peers
+      id: 18
+      labels:
+      - namespace
+      - service
+      name: consulRaftPeers
+      resourceID: 4
+      showName: Consul Raft Peers
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: consul_catalog_services
+      id: 19
+      labels:
+      - namespace
+      - service
+      name: consulService
+      resourceID: 4
+      showName: Consule Catalog Services
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: consul_catalog_service_node_healthy
+      id: 20
+      labels:
+      - service
+      - namespace
+      - service_name
+      - service_id
+      name: consulServiceHealthy
+      resourceID: 4
+      showName: Consul Catalog Service Healthy
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: consul_service_tag
+      id: 21
+      labels:
+      - service
+      - namespace
+      - service_id
+      - tag
+      name: consulServiceTag
+      resourceID: 4
+      showName: 'Consul Service Tag '
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: consul_up
+      id: 22
+      labels:
+      - service
+      - namespace
+      name: consulState
+      resourceID: 4
+      showName: Up
+      tenantID: null
+      unit: ""
+    scopeID: 3
+    showName: consul
+  - id: 5
+    name: elasticsearch
+    rules:
+    - description: ""
+      expr: elasticsearch_cluster_health_active_primary_shards
+      id: 23
+      labels:
+      - service
+      - namespace
+      name: esActivePrimaryShards
+      resourceID: 5
+      showName: Active Primary Shards
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: elasticsearch_cluster_health_active_shards
+      id: 24
+      labels:
+      - service
+      - namespace
+      name: esActiveShards
+      resourceID: 5
+      showName: Active Shards
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: elasticsearch_breakers_tripped
+      id: 25
+      labels:
+      - service
+      - host
+      - breaker
+      - namespace
+      name: esBreakersTripped
+      resourceID: 5
+      showName: Breakers Tripped
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: elasticsearch_process_cpu_percent
+      id: 26
+      labels:
+      - service
+      - host
+      - namespace
+      name: esCPUPercent
+      resourceID: 5
+      showName: CPU Usage Ratio (%)
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: elasticsearch_cluster_health_delayed_unassigned_shards
+      id: 27
+      labels:
+      - service
+      - namespace
+      name: esDelayedUnassignedShards
+      resourceID: 5
+      showName: Delayed Unassigned Shards
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: elasticsearch_filesystem_data_available_bytes
+      id: 28
+      labels:
+      - service
+      - host
+      - path
+      - ' mount'
+      - namespace
+      name: esFilesystemAvailableBytes
+      resourceID: 5
+      showName: Filesystem Available (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: irate(elasticsearch_jvm_gc_collection_seconds_count[5m])
+      id: 29
+      labels:
+      - host
+      - service
+      - gc
+      - namespace
+      name: esGcCount
+      resourceID: 5
+      showName: JVM GC Count
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(elasticsearch_jvm_gc_collection_seconds_sum[5m])
+      id: 30
+      labels:
+      - service
+      - host
+      - gc
+      - namespace
+      name: esGcSeconds
+      resourceID: 5
+      showName: JVM GC Time (s)
+      tenantID: null
+      unit: duration-s
+    - description: ""
+      expr: elasticsearch_indices_docs
+      id: 31
+      labels:
+      - service
+      - host
+      - namespace
+      name: esIndicesPerNode
+      resourceID: 5
+      showName: Indices Docs Per Node
+      tenantID: null
+      unit: short
+    - description: ""
+      expr: elasticsearch_cluster_health_initializing_shards
+      id: 32
+      labels:
+      - service
+      - namespace
+      name: esInitializingShards
+      resourceID: 5
+      showName: Initializing Shards
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: elasticsearch_jvm_memory_used_bytes
+      id: 33
+      labels:
+      - area
+      - service
+      - namespace
+      name: esJVMMemoryUsageBytes
+      resourceID: 5
+      showName: JVM Memory Usage (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: elasticsearch_jvm_memory_used_bytes/elasticsearch_jvm_memory_max_bytes
+      id: 34
+      labels:
+      - service
+      - host
+      name: esJVMMemoryUsagePersent
+      resourceID: 5
+      showName: JVM Memory Usage Rate (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: ""
+      expr: elasticsearch_process_open_files_count
+      id: 35
+      labels:
+      - service
+      - host
+      - namespace
+      name: esOpenfiles
+      resourceID: 5
+      showName: Open Files
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: elasticsearch_os_load1
+      id: 36
+      labels:
+      - service
+      - host
+      - namespace
+      name: esOsLoad1
+      resourceID: 5
+      showName: OS Load 1
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: elasticsearch_cluster_health_number_of_pending_tasks
+      id: 37
+      labels:
+      - service
+      - namespace
+      name: esPendingTask
+      resourceID: 5
+      showName: Pending Tasks
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: elasticsearch_indices_query_cache_memory_size_bytes
+      id: 38
+      labels:
+      - service
+      - host
+      - namespace
+      name: esQueryCacheBytes
+      resourceID: 5
+      showName: Query Cache_Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: irate(elasticsearch_indices_search_query_time_seconds[5m])
+      id: 39
+      labels:
+      - service
+      - host
+      - namespace
+      name: esQueryDuration
+      resourceID: 5
+      showName: Query Duration (s)
+      tenantID: null
+      unit: duration-s
+    - description: ""
+      expr: irate(elasticsearch_transport_rx_size_bytes_total[5m])
+      id: 40
+      labels:
+      - service
+      - host
+      - namespace
+      name: esReceivedBytes
+      resourceID: 5
+      showName: Network Received (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: elasticsearch_cluster_health_relocating_shards
+      id: 41
+      labels:
+      - service
+      - namespace
+      name: esRelocatingsShards
+      resourceID: 5
+      showName: Relocating Shards
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(elasticsearch_transport_tx_size_bytes_total[5m])
+      id: 42
+      labels:
+      - service
+      - host
+      - namespace
+      name: esSentBytes
+      resourceID: 5
+      showName: Network Sent (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: elasticsearch_cluster_health_unassigned_shards
+      id: 43
+      labels:
+      - service
+      - namespace
+      name: esUnassignedShards
+      resourceID: 5
+      showName: Unassigned Shards
+      tenantID: null
+      unit: ""
+    scopeID: 3
+    showName: elasticsearch
+  - id: 6
+    name: kafka
+    rules:
+    - description: ""
+      expr: kafka_brokers
+      id: 44
+      labels:
+      - service
+      - namespace
+      name: kafkaBrokers
+      resourceID: 6
+      showName: Brokers
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: 'sum by (consumergroup,topic,namespace,service) (kafka_consumergroup_lag) '
+      id: 45
+      labels:
+      - service
+      - topic
+      - namespace
+      - consumergroup
+      name: kafkaConsumerLatency
+      resourceID: 6
+      showName: Consumer Latency
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: 'sum(rate(kafka_consumergroup_current_offset[5m])) by (topic,namespace,service) '
+      id: 46
+      labels:
+      - service
+      - topic
+      - namespace
+      name: kafkaMessageConsumer
+      resourceID: 6
+      showName: Message Consumer Rate (messages/s)
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: 'sum(rate(kafka_topic_partition_current_offset{topic!~"__.*"}[5m])) by
+        (topic,namespace,service) '
+      id: 47
+      labels:
+      - service
+      - topic
+      - namespace
+      name: kafkaMessagesProduced
+      resourceID: 6
+      showName: Message Producer Rate (messages/s)
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: sum(kafka_topic_partitions) by (namespace,service)
+      id: 48
+      labels:
+      - service
+      - namespace
+      name: kafkaPartitions
+      resourceID: 6
+      showName: Partitions
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: count(count by (topic,service,namespace) (kafka_topic_partitions))
+      id: 49
+      labels:
+      - service
+      - topic
+      - namespace
+      name: kafkaTopics
+      resourceID: 6
+      showName: Topics
+      tenantID: null
+      unit: ""
+    scopeID: 3
+    showName: kafka
+  - id: 7
+    name: mongodb
+    rules:
+    - description: ""
+      expr: mongodb_up
+      id: 50
+      labels:
+      - service
+      - namespace
+      name: mongdbState
+      resourceID: 7
+      showName: Up
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: 'rate(mongodb_mongod_op_latencies_latency_total[5m]) / rate(mongodb_mongod_op_latencies_ops_total[5m]) '
+      id: 51
+      labels:
+      - service
+      - type
+      - namespace
+      name: mongdoResponseTime
+      resourceID: 7
+      showName: Response Time (us)
+      tenantID: null
+      unit: duration-us
+    - description: ""
+      expr: rate(mongodb_asserts_total[5m])
+      id: 52
+      labels:
+      - service
+      - type
+      - namespace
+      name: mongodbAsserts
+      resourceID: 7
+      showName: Asserts Total
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mongodb_mongod_wiredtiger_cache_bytes
+      id: 53
+      labels:
+      - service
+      - type
+      - namespace
+      name: mongodbCacheBytes
+      resourceID: 7
+      showName: Wiredtiger Cache Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: mongodb_connections
+      id: 54
+      labels:
+      - service
+      - state
+      - namespace
+      name: mongodbConnections
+      resourceID: 7
+      showName: Connections
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mongodb_mongod_metrics_cursor_open
+      id: 55
+      labels:
+      - service
+      - state
+      - namespace
+      name: mongodbCursor
+      resourceID: 7
+      showName: Cursor Open
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mongodb_mongod_db_data_size_bytes
+      id: 56
+      labels:
+      - service
+      - db
+      - namespace
+      name: mongodbDataSize
+      resourceID: 7
+      showName: DB Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: irate(mongodb_mongod_metrics_document_total[5m])
+      id: 57
+      labels:
+      - service
+      - state
+      - namespace
+      name: mongodbDocument
+      resourceID: 7
+      showName: Document Operations (op/s)
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mongodb_mongod_global_lock_total
+      id: 58
+      labels:
+      - service
+      - namespace
+      name: mongodbGlobalLock
+      resourceID: 7
+      showName: Global Locks
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mongodb_mongod_db_index_size_bytes
+      id: 59
+      labels:
+      - service
+      - db
+      - namespace
+      name: mongodbIndexSize
+      resourceID: 7
+      showName: Index Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: mongodb_mongod_global_lock_current_queue
+      id: 60
+      labels:
+      - service
+      - type
+      - namespace
+      name: mongodbLockQueue
+      resourceID: 7
+      showName: Lock Queue
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mongodb_memory
+      id: 61
+      labels:
+      - service
+      - type
+      - namespace
+      name: mongodbMemory
+      resourceID: 7
+      showName: Memory Usage (M bytes)
+      tenantID: null
+      unit: bytes-MB
+    - description: ""
+      expr: mongodb_mongod_db_objects_total
+      id: 62
+      labels:
+      - service
+      - db
+      - namespace
+      name: mongodbObjects
+      resourceID: 7
+      showName: Objects Total
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mongodb_mongod_replset_oplog_size_bytes
+      id: 63
+      labels:
+      - service
+      - type
+      - namespace
+      name: mongodbOplogSize
+      resourceID: 7
+      showName: Oplog Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: mongodb_extra_info_page_faults_total
+      id: 64
+      labels:
+      - service
+      - namespace
+      name: mongodbPageFaults
+      resourceID: 7
+      showName: Page Faults Total
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: sum(rate(mongodb_op_counters_total{type=~"query|getmore"}[5m]))  by (namespace,service)
+      id: 65
+      labels:
+      - service
+      - namespace
+      name: mongodbQPS
+      resourceID: 7
+      showName: QPS
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(mongodb_network_bytes_total{state="in_bytes"}[5m])
+      id: 66
+      labels:
+      - service
+      - namespace
+      name: mongodbReceivedBytes
+      resourceID: 7
+      showName: Network Received (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: irate(mongodb_network_bytes_total{state="out_bytes"}[5m])
+      id: 67
+      labels:
+      - service
+      - namespace
+      name: mongodbSentBytes
+      resourceID: 7
+      showName: Network Sent (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: sum(rate(mongodb_op_counters_total{type=~"insert|update|delete"}[5m]))
+        by (namespace,service)
+      id: 68
+      labels:
+      - service
+      - namespace
+      name: mongodbTPS
+      resourceID: 7
+      showName: TPS
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: sum by (namespace,service) (mongodb_mongod_wiredtiger_cache_bytes{type="total"})
+        / sum by (namespace,service)(mongodb_mongod_wiredtiger_cache_bytes_total)
+      id: 69
+      labels:
+      - service
+      - namespace
+      name: mongodbWiredtigerCacheRate
+      resourceID: 7
+      showName: Wiredtiger Cache Ratio (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: Size of cached data written to or read from (bytes/s)
+      expr: rate(mongodb_mongod_wiredtiger_cache_bytes_total[5m])
+      id: 175
+      labels:
+      - service
+      - namespace
+      - type
+      name: mongodbWiredtigerCacheBytes
+      resourceID: 7
+      showName: Wiredtiger Cache I/O (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: Percentage of cached dirty pages.
+      expr: 100 * sum by (namespace,service) (mongodb_mongod_wiredtiger_cache_pages{type="dirty"})
+        / sum by (namespace,service) (mongodb_mongod_wiredtiger_cache_pages{type="total"})
+      id: 176
+      labels:
+      - namespace
+      - service
+      name: mongodbWiredtigerDirtyCache
+      resourceID: 7
+      showName: Wiredtiger Dirty Cache Rate
+      tenantID: null
+      unit: percent-0-100
+    - description: Rate of cache evicted pages
+      expr: rate(mongodb_mongod_wiredtiger_cache_evicted_total[5m])
+      id: 177
+      labels:
+      - namesace
+      - service
+      - type
+      name: mongodbWiredtigerCacheEvicted
+      resourceID: 7
+      showName: Wiredtiger Cache Evicted Rate
+      tenantID: null
+      unit: ""
+    scopeID: 3
+    showName: mongodb
+  - id: 8
+    name: mysql
+    rules:
+    - description: ""
+      expr: topk(10, rate(mysql_global_status_commands_total[5m])>0)
+      id: 70
+      labels:
+      - service
+      - command
+      - namespace
+      name: mysqlCommandTop10
+      resourceID: 8
+      showName: Command Top10
+      tenantID: null
+      unit: ""
+    - description: Generic metric from SHOW GLOBAL STATUS.
+      expr: mysql_global_status_max_used_connections
+      id: 71
+      labels:
+      - service
+      - namespace
+      name: mysqlConnections
+      resourceID: 8
+      showName: Connections
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mysql_global_variables_innodb_buffer_pool_size
+      id: 72
+      labels:
+      - service
+      - namespace
+      name: mysqlInnodbBufferSize
+      resourceID: 8
+      showName: InnoDB Buffer Pool (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: mysql_global_status_innodb_num_open_files
+      id: 73
+      labels:
+      - service
+      - namespace
+      name: mysqlOpenFiles
+      resourceID: 8
+      showName: Open Files
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: rate(mysql_global_status_queries[5m])
+      id: 74
+      labels:
+      - service
+      - namespace
+      name: mysqlQPS
+      resourceID: 8
+      showName: QPS
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: rate(mysql_global_status_questions[5m])
+      id: 75
+      labels:
+      - service
+      name: mysqlQuestions
+      resourceID: 8
+      showName: ' Questions Rate (questions/s)'
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(mysql_global_status_bytes_received[5m])
+      id: 76
+      labels:
+      - service
+      - namespace
+      name: mysqlReceivedBytes
+      resourceID: 8
+      showName: ' Network Received (bytes/s)'
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: ' irate(mysql_global_status_bytes_sent[5m])'
+      id: 77
+      labels:
+      - service
+      - namespace
+      name: mysqlSentBytes
+      resourceID: 8
+      showName: Network Sent (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: idelta(mysql_global_status_slow_queries[1m])
+      id: 78
+      labels:
+      - service
+      - namespace
+      name: mysqlSlowQuery
+      resourceID: 8
+      showName: Slow Queries Rate (queries/min)
+      tenantID: null
+      unit: ""
+    - description: Wether MySQL enabled slow queries
+      expr: mysql_global_variables_slow_query_log
+      id: 79
+      labels:
+      - service
+      - namespace
+      name: mysqlSlowQueryEnabled
+      resourceID: 8
+      showName: MySQL Slow Query Enabled
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: mysql_up
+      id: 80
+      labels:
+      - service
+      - namespace
+      name: mysqlState
+      resourceID: 8
+      showName: Up
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: 'sum(rate(mysql_global_status_commands_total{command=~"insert|update|delete"}[5m]))
+        without (command) '
+      id: 81
+      labels:
+      - service
+      - namespace
+      name: mysqlTPS
+      resourceID: 8
+      showName: TPS
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: sum(increase(mysql_global_status_table_locks_waited[5m])) by (namespace,service)
+      id: 82
+      labels:
+      - service
+      - namespace
+      name: mysqlTabelLockWaited
+      resourceID: 8
+      showName: Table Locks Waited 5 Minutes
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: rate(mysql_global_status_table_open_cache_hits[5m]) / ( rate(mysql_global_status_table_open_cache_hits[5m])
+        + rate(mysql_global_status_table_open_cache_misses[5m]) )
+      id: 83
+      labels:
+      - service
+      - namespace
+      name: mysqlTableOpenCacheHitRatio
+      resourceID: 8
+      showName: Table Open Cache Hit Ratio (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: ""
+      expr: sum by (schema,service,namespace) (mysql_info_schema_table_size)
+      id: 84
+      labels:
+      - service
+      - namespace
+      name: mysqlTableSize
+      resourceID: 8
+      showName: Table Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: mysql_info_schema_threads
+      id: 85
+      labels:
+      - service
+      - state
+      - namespace
+      name: mysqlThreads
+      resourceID: 8
+      showName: Threads (by state)
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: sum(rate(mysql_global_status_created_tmp_tables[5m])) by (namespace,service)
+      id: 86
+      labels:
+      - service
+      - namespace
+      name: mysqlTmpTables
+      resourceID: 8
+      showName: Tmp Table Created Rate (tables/s)
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: sum(mysql_info_schema_table_rows) by (namespace,service)
+      id: 87
+      labels:
+      - service
+      - namespace
+      name: mysqlTotalRows
+      resourceID: 8
+      showName: Table Rows
+      tenantID: null
+      unit: ""
+    - description: Generic metric from SHOW GLOBAL STATUS.
+      expr: mysql_global_status_threads_running
+      id: 159
+      labels:
+      - service
+      - namespace
+      name: mysqlRunningThread
+      resourceID: 8
+      showName: Running Threads
+      tenantID: null
+      unit: ""
+    - description: Generic metric from SHOW GLOBAL STATUS.
+      expr: mysql_global_status_innodb_log_waits
+      id: 161
+      labels:
+      - namespace
+      - service
+      name: mysqlInnodbLogWait
+      resourceID: 8
+      showName: InnoDB Log Waits
+      tenantID: null
+      unit: ""
+    - description: ' InnoDB bytes written from the physical disk '
+      expr: rate(mysql_global_status_innodb_data_writes[5m])
+      id: 162
+      labels:
+      - service
+      - namespace
+      name: mysqlInnodbDataWrite
+      resourceID: 8
+      showName: InnoDB Data Write Rate (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: InnoDB bytes read from the physical disk
+      expr: rate(mysql_global_status_innodb_data_read[5m])
+      id: 163
+      labels:
+      - service
+      - namespace
+      name: mysqlInnodbDataRead
+      resourceID: 8
+      showName: InnoDB Data Read Rate (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: mysql_global_status_connection_errors_total
+      expr: delta(mysql_global_status_connection_errors_total[1m])
+      id: 164
+      labels:
+      - namespace
+      - service
+      - error
+      name: mysqlErrorConnections
+      resourceID: 8
+      showName: Error Connections Per Minute (by type)
+      tenantID: null
+      unit: ""
+    - description: Rate of executed MySQL handlers.
+      expr: rate(mysql_global_status_handlers_total{ handler=~"commit|rollback|savepoint.*|prepare"}[5m])
+      id: 165
+      labels:
+      - service
+      - namespace
+      - handler
+      name: mysqlHandler
+      resourceID: 8
+      showName: Handler Rate (second)
+      tenantID: null
+      unit: short
+    - description: Due to a query's structure, order, or other requirements, MySQL
+        sorts the rows before returning them.
+      expr: sum(rate(mysql_global_status_sort_rows[5m])) by (service,namespace)
+      id: 166
+      labels:
+      - service
+      - namespace
+      name: mysqlSortRows
+      resourceID: 8
+      showName: Sort Rows Rate
+      tenantID: null
+      unit: short
+    - description: Due to a query's structure, order, or other requirements, MySQL
+        sorts the rows before returning them.
+      expr: sum(rate(mysql_global_status_sort_range[5m])) by (namespace,service)
+      id: 167
+      labels:
+      - service
+      - namespace
+      name: mysqlSortRange
+      resourceID: 8
+      showName: Sort Range Rate
+      tenantID: null
+      unit: ""
+    - description: Due to a query's structure, order, or other requirements, MySQL
+        sorts the rows before returning them.
+      expr: sum(rate(mysql_global_status_sort_merge_passes{}[5m])) by (namespace,service)
+      id: 168
+      labels:
+      - namespace
+      - service
+      name: mysqlSortMergePass
+      resourceID: 8
+      showName: Sort Merge Passes Rate
+      tenantID: null
+      unit: ""
+    - description: 'Due to a query''s structure, order, or other requirements, MySQL
+        sorts the rows before returning them. '
+      expr: sum(rate(mysql_global_status_sort_scan[5m])) by (namespace,service)
+      id: 169
+      labels:
+      - service
+      - namespace
+      name: mysqlSortScan
+      resourceID: 8
+      showName: Sort Scan Rate
+      tenantID: null
+      unit: ""
+    - description: ' the number of joins that are not joined on an index, this is
+        usually a huge performance hit.'
+      expr: sum(rate(mysql_global_status_select_full_join[5m])) by (namespace,service)
+      id: 170
+      labels:
+      - service
+      - namespace
+      name: mysqlSelectFullJoin
+      resourceID: 8
+      showName: Select Full Join Rate
+      tenantID: null
+      unit: ""
+    - description: |
+        Generic metric from SHOW GLOBAL STATUS.
+      expr: sum(rate(mysql_global_status_select_full_range_join[5m])) by (namespace,service)
+      id: 171
+      labels:
+      - service
+      - namespace
+      name: mysqlSelectRangeJoin
+      resourceID: 8
+      showName: Select Full Range Join Rate
+      tenantID: null
+      unit: ""
+    - description: how many queries used a range scan, which means MySQL scanned all
+        rows in a given range.
+      expr: sum(rate(mysql_global_status_select_range[5m])) by (namespace,service)
+      id: 172
+      labels:
+      - service
+      - namespace
+      name: mysqlSelectRange
+      resourceID: 8
+      showName: Select Range Rate
+      tenantID: null
+      unit: ""
+    - description: how many queries caused full table scans, in which all the data
+        in the table had to be read and either discarded or returned.
+      expr: sum(rate(mysql_global_status_select_scan[5m])) by (namespace,service)
+      id: 173
+      labels:
+      - service
+      - namespace
+      name: mysqlSelectScan
+      resourceID: 8
+      showName: Select Scan Rate
+      tenantID: null
+      unit: ""
+    - description: Innodb buffer pool page Ratios
+      expr: (sum by (namespace,service)(mysql_global_status_buffer_pool_pages) - sum
+        by (namespace,service)(mysql_global_status_buffer_pool_pages{state="free"}))
+        / sum(mysql_global_status_buffer_pool_pages) by (namespace,service)
+      id: 174
+      labels:
+      - namespace
+      - service
+      name: mysqlBufferPoolPage
+      resourceID: 8
+      showName: Buffer Pool Pages Ratio (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    scopeID: 3
+    showName: mysql
+  - id: 9
+    name: postgres
+    rules:
+    - description: ""
+      expr: irate(pg_stat_database_xact_rollback[5m])
+      id: 88
+      labels:
+      - datname
+      - namespace
+      - service
+      name: pdXactRollback
+      resourceID: 9
+      showName: Xact Rollback
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: pg_stat_activity_count{state="active"} !=0
+      id: 89
+      labels:
+      - namespace
+      - service
+      - datname
+      name: pgActivifyCount
+      resourceID: 9
+      showName: Active Sessions
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: pg_stat_database_blks_hit{} / (pg_stat_database_blks_read{} + pg_stat_database_blks_hit{})
+        <= 1
+      id: 90
+      labels:
+      - datname
+      - service
+      - namespace
+      name: pgCacheHitRate
+      resourceID: 9
+      showName: Cache Hit Ratio (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: ""
+      expr: pg_stat_database_conflicts
+      id: 91
+      labels:
+      - namespace
+      - datname
+      - service
+      name: pgConflicts
+      resourceID: 9
+      showName: Conflicts
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: pg_stat_database_deadlocks
+      id: 92
+      labels:
+      - namespace
+      - service
+      - datname
+      name: pgDeadlocks
+      resourceID: 9
+      showName: Deadlocks
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(pg_stat_database_tup_deleted[5m])
+      id: 93
+      labels:
+      - namespace
+      - datname
+      - service
+      name: pgDeleteData
+      resourceID: 9
+      showName: Delete Rows Rate
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: pg_settings_effective_cache_size_bytes
+      id: 94
+      labels:
+      - namespace
+      - service
+      name: pgEffectiveCacheSizeBytes
+      resourceID: 9
+      showName: Effective Cache (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: irate(pg_stat_database_tup_fetched[5m])
+      id: 95
+      labels:
+      - namespace
+      - service
+      - datname
+      name: pgFetchData
+      resourceID: 9
+      showName: QPS
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: pg_stat_activity_count{state=~"idle|idle in transaction|idle in transaction
+        (aborted)"}
+      id: 96
+      labels:
+      - namespace
+      - datname
+      - service
+      - state
+      name: pgIdleSessions
+      resourceID: 9
+      showName: Idle Sessions
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(pg_stat_database_tup_inserted[5m])
+      id: 97
+      labels:
+      - namespace
+      - service
+      - datname
+      name: pgInsertedDate
+      resourceID: 9
+      showName: Insert Rows Rate
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: pg_locks_count != 0
+      id: 98
+      labels:
+      - namespace
+      - datname
+      - mode
+      name: pgLockCount
+      resourceID: 9
+      showName: Lock Tables
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: pg_settings_max_connections
+      id: 99
+      labels:
+      - service
+      - namespace
+      name: pgMaxConnections
+      resourceID: 9
+      showName: Max Connections
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(pg_stat_database_tup_returned[5m])
+      id: 100
+      labels:
+      - namespace
+      - datname
+      - service
+      name: pgReturnData
+      resourceID: 9
+      showName: Return Rows Rate
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: pg_settings_shared_buffers_bytes
+      id: 101
+      labels:
+      - namespace
+      - service
+      name: pgSharedBuffersBytes
+      resourceID: 9
+      showName: Shared Buffers (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: pg_static
+      id: 102
+      labels:
+      - service
+      - namespace
+      name: pgState
+      resourceID: 9
+      showName: Up
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(pg_stat_bgwriter_checkpoint_sync_time{}[5m])
+      id: 103
+      labels:
+      - namespace
+      - service
+      name: pgSyncTime
+      resourceID: 9
+      showName: Checkpoint Sync Time (ms)
+      tenantID: null
+      unit: duration-ms
+    - description: ""
+      expr: irate(pg_stat_database_temp_bytes[5m])
+      id: 104
+      labels:
+      - namespace
+      - service
+      - datname
+      name: pgTmpBytes
+      resourceID: 9
+      showName: Temp File (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: irate(pg_stat_database_tup_updated[5m])
+      id: 105
+      labels:
+      - namespace
+      - service
+      - datname
+      name: pgUpdatedData
+      resourceID: 9
+      showName: Update Rows Rate
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(pg_stat_bgwriter_checkpoint_write_time{}[5m])
+      id: 106
+      labels:
+      - service
+      - namespace
+      name: pgWriteTime
+      resourceID: 9
+      showName: Checkpoint Write Time (ms)
+      tenantID: null
+      unit: duration-ms
+    - description: ""
+      expr: irate(pg_stat_database_xact_commit[5m])
+      id: 107
+      labels:
+      - datname
+      - service
+      - datname
+      name: pgXactCommit
+      resourceID: 9
+      showName: TPS
+      tenantID: null
+      unit: ""
+    - description: Disk space used by the database
+      expr: pg_database_size_bytes
+      id: 178
+      labels:
+      - service
+      - namespace
+      - datname
+      name: pgDBSize
+      resourceID: 9
+      showName: Database Size (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: Number of locks
+      expr: pg_locks_count
+      id: 179
+      labels:
+      - namespace
+      - service
+      - datname
+      - mode
+      name: pgLocksCount
+      resourceID: 9
+      showName: Locks Count
+      tenantID: null
+      unit: ""
+    scopeID: 3
+    showName: postgres
+  - id: 10
+    name: redis
+    rules:
+    - description: ""
+      expr: redis_connected_clients
+      id: 108
+      labels:
+      - service
+      - namespace
+      name: redisClients
+      resourceID: 10
+      showName: Connected Clients
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: topk(5, irate(redis_commands_total[1m]))
+      id: 109
+      labels:
+      - service
+      - cmd
+      - namespace
+      name: redisCommandsTop5
+      resourceID: 10
+      showName: Commands Top5
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: 'irate(redis_cpu_user_seconds_total[5m]) + irate(redis_cpu_sys_seconds_total[5m]) '
+      id: 110
+      labels:
+      - service
+      - namespace
+      name: redisCpuUsage
+      resourceID: 10
+      showName: CPU Usage (1000m=1Core)
+      tenantID: null
+      unit: short
+    - description: ""
+      expr: sum (redis_db_keys) by (db,namespace,service)
+      id: 111
+      labels:
+      - service
+      - db
+      - namespace
+      name: redisKeys
+      resourceID: 10
+      showName: DB Keys
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: redis_evicted_keys_total
+      id: 112
+      labels:
+      - service
+      - namespace
+      name: redisKeysEvicted
+      resourceID: 10
+      showName: Evicted Keys Total
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: redis_db_keys_expiring
+      id: 113
+      labels:
+      - service
+      - namespace
+      name: redisKeysExpiring
+      resourceID: 10
+      showName: Expireing Keys
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: redis_keyspace_hits_total / (redis_keyspace_hits_total+ redis_keyspace_misses_total)
+      id: 114
+      labels:
+      - service
+      - namespace
+      name: redisKeysHitRate
+      resourceID: 10
+      showName: Keys Hit Ratio (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: ""
+      expr: redis_keyspace_hits_total
+      id: 115
+      labels:
+      - service
+      - namespace
+      name: redisKeysHits
+      resourceID: 10
+      showName: Keys Hits Total
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: redis_keyspace_misses_total
+      id: 116
+      labels:
+      - service
+      - namespace
+      name: redisKeysMissed
+      resourceID: 10
+      showName: Key Misses Total
+      tenantID: null
+      unit: ""
+    - description: Used Memory represents the total number of bytes allocated by Redis
+        using its allocator (either standard libc, jemalloc, or an alternative allocator
+        such as tcmalloc). Monitoring this metric can help prevent “Out of memory”
+        errors in the database.
+      expr: redis_memory_used_bytes
+      id: 117
+      labels:
+      - service
+      - namespace
+      name: redisMemoryUsedBytes
+      resourceID: 10
+      showName: Memory Used (bytes)
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: 1 - sum(redis_db_keys_expiring)by(namespace, service) / sum(redis_db_keys)by(namespace,
+        service)
+      id: 118
+      labels:
+      - service
+      - namespace
+      name: redisNoExpiringKeyRate
+      resourceID: 10
+      showName: Not-Expiring Keys Ratio (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: ""
+      expr: irate(redis_commands_processed_total[5m])
+      id: 119
+      labels:
+      - service
+      - namespace
+      name: redisOPS
+      resourceID: 10
+      showName: Commands Processed (op/s)
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(redis_net_input_bytes_total[5m])
+      id: 120
+      labels:
+      - service
+      - namespace
+      name: redisReceivedByted
+      resourceID: 10
+      showName: Network Received (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: redis_rejected_connections_total
+      id: 121
+      labels:
+      - service
+      - namespace
+      name: redisRejectedConnectionsTotal
+      resourceID: 10
+      showName: Rejected Connections Total
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: irate(redis_net_output_bytes_total[5m])
+      id: 122
+      labels:
+      - service
+      - namespace
+      name: redisSentBytes
+      resourceID: 10
+      showName: Network Sent (bytes/s)
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: ""
+      expr: redis_up
+      id: 123
+      labels:
+      - service
+      - namespace
+      name: redisState
+      resourceID: 10
+      showName: Up
+      tenantID: null
+      unit: ""
+    - description: Used Memory RSS is the set size, or the number of bytes that the
+        operating system has allocated to Redis. This information helps identify memory
+        fragmentation.
+      expr: redis_memory_used_rss_bytes
+      id: 320
+      labels:
+      - service
+      - namespace
+      name: redisRssMemoryUsedBytes
+      resourceID: 10
+      showName: Rss Memory Used Bytes
+      tenantID: null
+      unit: bytes-B
+    scopeID: 3
+    showName: redis
+  - id: 17
+    name: jmx
+    rules:
+    - description: ""
+      expr: java_lang_OperatingSystem_SystemLoadAverage
+      id: 180
+      labels:
+      - namespace
+      - service
+      name: javaOSLoadAverage
+      resourceID: 17
+      showName: Host System Load Average
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: avg_over_time(java_lang_OperatingSystem_SystemCpuLoad{}[1m]) * 100
+      id: 181
+      labels:
+      - namespace
+      - service
+      name: javaOSCPULoad
+      resourceID: 17
+      showName: Host CPU Load
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: avg_over_time(java_lang_OperatingSystem_ProcessCpuLoad{}[1m]) * 100
+      id: 182
+      labels:
+      - namespace
+      - service
+      name: javaOSProcessLoad
+      resourceID: 17
+      showName: Host Process Cpu Load
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: 100 - (100 * java_lang_OperatingSystem_FreePhysicalMemorySize{} / on(service,namespace)
+        java_lang_OperatingSystem_TotalPhysicalMemorySize{})
+      id: 183
+      labels:
+      - service
+      - namespace
+      name: javaMemoryUitls
+      resourceID: 17
+      showName: Host Memory Uitls
+      tenantID: null
+      unit: percent-0-100
+    - description: ""
+      expr: java_lang_OperatingSystem_OpenFileDescriptorCount
+      id: 184
+      labels:
+      - namespace
+      - service
+      name: javaOSOpenFileDescriptor
+      resourceID: 17
+      showName: Host OpenFile Descriptor
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: java_lang_Memory_HeapMemoryUsage_used
+      id: 185
+      labels:
+      - namespace
+      - service
+      name: javaHeapMemoryUsage
+      resourceID: 17
+      showName: Heap Memory Usage
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: java_lang_Memory_NonHeapMemoryUsage_used
+      id: 186
+      labels:
+      - namespace
+      - service
+      name: javaNoHeapMemoryUsage
+      resourceID: 17
+      showName: No Heap Memory Usage
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: java_lang_Memory_HeapMemoryUsage_committed
+      id: 187
+      labels:
+      - namespace
+      - service
+      name: javaHeapCommittedMemory
+      resourceID: 17
+      showName: Heap Committed Memory
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: java_lang_Memory_NonHeapMemoryUsage_committed
+      id: 188
+      labels:
+      - service
+      - namespace
+      name: javaNoHeapCommittedMemory
+      resourceID: 17
+      showName: No Heap Committed Memory
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: java_lang_MemoryPool_Usage_used
+      id: 189
+      labels:
+      - namespace
+      - service
+      - name
+      name: javaMemoryPool
+      resourceID: 17
+      showName: Memory Pool
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: java_lang_MemoryPool_Usage_committed
+      id: 190
+      labels:
+      - namespace
+      - service
+      - name
+      name: javaCommittedMemoryPool
+      resourceID: 17
+      showName: Committed Memory Pool
+      tenantID: null
+      unit: bytes-B
+    - description: ""
+      expr: increase(java_lang_GarbageCollector_CollectionCount{}[1m])
+      id: 191
+      labels:
+      - namespace
+      - service
+      - name
+      name: javaGCCount
+      resourceID: 17
+      showName: GC Count
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: rate(java_lang_GarbageCollector_CollectionTime{}[1m])
+      id: 192
+      labels:
+      - namespace
+      - service
+      - name
+      name: javaGCDuration
+      resourceID: 17
+      showName: GC Durations (second)
+      tenantID: null
+      unit: duration-s
+    - description: ""
+      expr: java_lang_Threading_ThreadCount
+      id: 193
+      labels:
+      - namespace
+      - service
+      name: javaThreadCount
+      resourceID: 17
+      showName: Thread Count
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: java_lang_Threading_DaemonThreadCount
+      id: 194
+      labels:
+      - namespace
+      - service
+      name: javaDaemonThreadCount
+      resourceID: 17
+      showName: Daemon Thread Count
+      tenantID: null
+      unit: ""
+    - description: ""
+      expr: java_lang_ClassLoading_LoadedClassCount
+      id: 195
+      labels:
+      - namespace
+      - service
+      name: javaLoadedClassCount
+      resourceID: 17
+      showName: Loaded Class Count
+      tenantID: null
+      unit: ""
+    scopeID: 3
+    showName: java
+  - id: 18
+    name: apisix
+    rules:
+    - description: HTTP status codes per service in APISIX
+      expr: sum by (job,matched_host, namespace) (irate(apisix_http_status[5m]))
+      id: 199
+      labels:
+      - job
+      - matched_host
+      - namespace
+      name: apisixHttpStatusRate
+      resourceID: 18
+      showName: HTTP QPS
+      tenantID: null
+      unit: ""
+    - description: Number of HTTP connections
+      expr: sum by (job,state,namespace) (irate(apisix_nginx_http_current_connections[5m]))
+      id: 200
+      labels:
+      - job
+      - state
+      - namespace
+      name: apisixConnections
+      resourceID: 18
+      showName: Connections Rate
+      tenantID: null
+      unit: ""
+    - description: Etcd modify index for APISIX keys
+      expr: sum by (job,key,namespace) (apisix_etcd_modify_indexes)
+      id: 201
+      labels:
+      - job
+      - key
+      - namespace
+      name: apisixEtcdIndexKeys
+      resourceID: 18
+      showName: Keys index modifed by Etcd
+      tenantID: null
+      unit: ""
+    - description: HTTP1/2  Status 4xx
+      expr: sum by (job,matched_host,namespace)(apisix_http_status{code=~"[4].*",matched_host!~""})
+        /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
+      id: 202
+      labels:
+      - matched_host
+      - job
+      - namespace
+      name: apisixHttp4xx
+      resourceID: 18
+      showName: HTTP 4xx Ratio (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: HTTP1/2 Status 5xx
+      expr: sum by (job,matched_host,namespace)(apisix_http_status{code=~"[5].*",matched_host!~""})
+        /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
+      id: 203
+      labels:
+      - job
+      - matched_host
+      - namespace
+      name: apisixHttp5xx
+      resourceID: 18
+      showName: HTTP 5xx Ratio (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: HTTP1/2  Successfully Rate
+      expr: sum by (job,matched_host, namespace)(apisix_http_status{code!~"[4-5].*",matched_host!~""})
+        /sum by (job,matched_host, namespace) (apisix_http_status{matched_host!~""})
+      id: 204
+      labels:
+      - job
+      - matched_host
+      - namespace
+      name: apisixHttpSucess
+      resourceID: 18
+      showName: HTTP Successfully Rate (%)
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: ""
+      expr: apisix_etcd_reachable
+      id: 205
+      labels:
+      - job
+      - namespace
+      name: apisixEtcdReady
+      resourceID: 18
+      showName: Etcd Ready
+      tenantID: null
+      unit: ""
+    - description: Total bandwidth in bytes consumed per service in APISIX
+      expr: sum by(type,job,namespace) (irate(apisix_bandwidth[5m]))
+      id: 206
+      labels:
+      - type
+      - job
+      - namespace
+      name: apisixBandwidth
+      resourceID: 18
+      showName: Network Traffic
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: APISIX P95
+      expr: histogram_quantile(0.95, sum(rate(apisix_http_latency_bucket{}[5m])) by
+        (le,route,type,job,namespace))
+      id: 207
+      labels:
+      - route
+      - type
+      - job
+      - namespace
+      name: apisixP95
+      resourceID: 18
+      showName: Latency P95 by Route (ms)
+      tenantID: null
+      unit: duration-ms
+    - description: ""
+      expr: histogram_quantile(0.90, sum(rate(apisix_http_latency_bucket{}[5m])) by
+        (le,route,type,job,namespace))
+      id: 208
+      labels:
+      - route
+      - type
+      - job
+      - namespace
+      name: apisixP90
+      resourceID: 18
+      showName: Latency P90 by Route (ms)
+      tenantID: null
+      unit: duration-ms
+    - description: ""
+      expr: histogram_quantile(0.50, sum(rate(apisix_http_latency_bucket{}[5m])) by
+        (le,route,type,job,namespace))
+      id: 209
+      labels:
+      - route
+      - type
+      - namespace
+      - job
+      name: apisixP50
+      resourceID: 18
+      showName: Latency P50 by Route (ms)
+      tenantID: null
+      unit: duration-ms
+    - description: ""
+      expr: sum by (job, namespace)(apisix_http_status{code!~"[4-5].*",matched_host!~""})
+        /sum by (job, namespace) (apisix_http_status{matched_host!~""})
+      id: 211
+      labels:
+      - job
+      - namespace
+      name: apisixTotalHttpSucess
+      resourceID: 18
+      showName: HttpSucess Total
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: ""
+      expr: sum by (job, namespace) (irate(apisix_http_status[5m]))
+      id: 212
+      labels:
+      - job
+      - namespace
+      name: apisixTotalHttpStatusRate
+      resourceID: 18
+      showName: HTTP QPS Total
+      tenantID: null
+      unit: short
+    scopeID: 3
+    showName: apisix
+  showName: 中间件
 - id: 4
   name: others
-  showName: 其他
   namespaced: true
   resources:
-    - id: 11
-      name: cert
-      showName: certificates
-      scopeID: 4
-      rules:
-        - id: 124
-          name: expirationRemainTime
-          showName: Expiration Time (second)
-          description: ""
-          expr: gems_cert_expiration_remain_seconds
-          unit: duration-s
-          labels:
-            - namespace
-            - name
-          resourceID: 11
-          tenantID:
-        - id: 125
-          name: status
-          showName: Certs Ready
-          description: ""
-          expr: certmanager_certificate_ready_status
-          unit: ""
-          labels:
-            - namespace
-            - name
-            - condition
-          resourceID: 11
-          tenantID:
-    - id: 12
-      name: exporter
-      showName: collector
-      scopeID: 4
-      rules:
-        - id: 126
-          name: status
-          showName: Plugins State
-          description: ""
-          expr: up
-          unit: ""
-          labels:
-            - instance
-            - job
-          resourceID: 12
-          tenantID:
-    - id: 13
-      name: plugin
-      showName: plugin
-      scopeID: 4
-      rules:
-        - id: 127
-          name: status
-          showName: KubeGems Plugins Status
-          description: ""
-          expr: gems_server_plugin_status
-          unit: ""
-          labels:
-            - type
-            - namespace
-            - plugin
-            - version
-            - enabled
-          resourceID: 13
-          tenantID:
+  - id: 11
+    name: cert
+    rules:
+    - description: ""
+      expr: gems_cert_expiration_remain_seconds
+      id: 124
+      labels:
+      - namespace
+      - name
+      name: expirationRemainTime
+      resourceID: 11
+      showName: Expiration Time (second)
+      tenantID: null
+      unit: duration-s
+    - description: ""
+      expr: certmanager_certificate_ready_status
+      id: 125
+      labels:
+      - namespace
+      - name
+      - condition
+      name: status
+      resourceID: 11
+      showName: Certs Ready
+      tenantID: null
+      unit: ""
+    scopeID: 4
+    showName: certificates
+  - id: 12
+    name: exporter
+    rules:
+    - description: ""
+      expr: up
+      id: 126
+      labels:
+      - instance
+      - job
+      name: status
+      resourceID: 12
+      showName: Plugins State
+      tenantID: null
+      unit: ""
+    scopeID: 4
+    showName: collector
+  - id: 13
+    name: plugin
+    rules:
+    - description: ""
+      expr: gems_server_plugin_status
+      id: 127
+      labels:
+      - type
+      - namespace
+      - plugin
+      - version
+      - enabled
+      name: status
+      resourceID: 13
+      showName: KubeGems Plugins Status
+      tenantID: null
+      unit: ""
+    scopeID: 4
+    showName: plugin
+  showName: 其他
+- id: 5
+  name: opentelemetry
+  namespaced: true
+  resources:
+  - id: 19
+    name: otel_jvm
+    rules:
+    - description: jvm_memory_used_heap
+      expr: jvm_memory_used{area='heap'}
+      id: 213
+      labels:
+      - id
+      - pod
+      - namespace
+      - service_name
+      name: jvm_memory_used_heap
+      resourceID: 19
+      showName: Heap Memory Used
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_memory_used_nonheap
+      expr: jvm_memory_used{area='nonheap'}
+      id: 214
+      labels:
+      - id
+      - pod
+      - namespace
+      - service_name
+      name: jvm_memory_used_nonheap
+      resourceID: 19
+      showName: Nonheap Memory Used
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_memory_committed_heap
+      expr: jvm_memory_committed{area='heap'}
+      id: 215
+      labels:
+      - id
+      - pod
+      - namespace
+      - service_name
+      name: jvm_memory_committed_heap
+      resourceID: 19
+      showName: Heap Memory Committed
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_memory_committed_nonheap
+      expr: jvm_memory_committed{area='nonheap'}
+      id: 216
+      labels:
+      - id
+      - pod
+      - namespace
+      - service_name
+      name: jvm_memory_committed_nonheap
+      resourceID: 19
+      showName: Nonheap Memory Committed
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_gc_pause_count_major
+      expr: jvm_gc_pause_count{action="end of major GC"}
+      id: 217
+      labels:
+      - cause
+      - pod
+      - namespace
+      - service_name
+      name: jvm_gc_pause_count_major
+      resourceID: 19
+      showName: Major GC
+      tenantID: null
+      unit: ""
+    - description: jvm_gc_pause_count_minor
+      expr: jvm_gc_pause_count{action='end of minor GC'}
+      id: 218
+      labels:
+      - cause
+      - pod
+      - namespace
+      - service_name
+      name: jvm_gc_pause_count_minor
+      resourceID: 19
+      showName: Minor GC
+      tenantID: null
+      unit: ""
+    - description: jvm_gc_pause_duration
+      expr: histogram_quantile(1, sum by(le,action,pod,namespace,service_name) (rate(jvm_gc_pause_bucket[5m])))
+      id: 219
+      labels:
+      - action
+      - pod
+      - namespace
+      - service_name
+      name: jvm_gc_pause_duration
+      resourceID: 19
+      showName: GC Duration
+      tenantID: null
+      unit: duration-ms
+    - description: jvm_memory_max
+      expr: jvm_memory_max{area='heap'}
+      id: 221
+      labels:
+      - id
+      - pod
+      - namespace
+      - service_name
+      name: jvm_memory_max
+      resourceID: 19
+      showName: Heap Memory Max
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_memory_max_nonheap
+      expr: jvm_memory_max{area='nonheap'}
+      id: 222
+      labels:
+      - id
+      - namespace
+      - service_name
+      - pod
+      name: jvm_memory_max_nonheap
+      resourceID: 19
+      showName: Nonheap Memory Max
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_buffer_memory_used
+      expr: jvm_buffer_memory_used
+      id: 223
+      labels:
+      - id
+      - pod
+      - namespace
+      - service_name
+      name: jvm_buffer_memory_used
+      resourceID: 19
+      showName: 'Buffer Pool Memory Usead '
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_buffer_total_capacity
+      expr: jvm_buffer_total_capacity
+      id: 224
+      labels:
+      - id
+      - namespace
+      - pod
+      - service_name
+      name: jvm_buffer_total_capacity
+      resourceID: 19
+      showName: Buffer Pool Memory Capacity
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_threads_states
+      expr: jvm_threads_states
+      id: 225
+      labels:
+      - state
+      - pod
+      - namespace
+      - service_name
+      name: jvm_threads_states
+      resourceID: 19
+      showName: Threads States
+      tenantID: null
+      unit: ""
+    - description: jvm_buffer_count
+      expr: jvm_buffer_count
+      id: 226
+      labels:
+      - id
+      - pod
+      - namespace
+      - service_name
+      name: jvm_buffer_count
+      resourceID: 19
+      showName: Buffer Pool Count
+      tenantID: null
+      unit: ""
+    - description: jvm_threads_live
+      expr: jvm_threads_live
+      id: 227
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jvm_threads_live
+      resourceID: 19
+      showName: Threads Live
+      tenantID: null
+      unit: ""
+    - description: jvm_threads_peak
+      expr: jvm_threads_peak
+      id: 228
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jvm_threads_peak
+      resourceID: 19
+      showName: Threads Peak
+      tenantID: null
+      unit: ""
+    - description: jvm_classes_loaded
+      expr: jvm_classes_loaded
+      id: 229
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jvm_classes_loaded
+      resourceID: 19
+      showName: Class Loaded
+      tenantID: null
+      unit: ""
+    - description: jvm_threads_daemon
+      expr: jvm_threads_daemon
+      id: 230
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jvm_threads_daemon
+      resourceID: 19
+      showName: Threads Daemon
+      tenantID: null
+      unit: ""
+    - description: jvm_gc_live_data_size
+      expr: jvm_gc_live_data_size
+      id: 231
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jvm_gc_live_data_size
+      resourceID: 19
+      showName: GC Live Date
+      tenantID: null
+      unit: bytes-B
+    - description: jvm_gc_max_data_size
+      expr: jvm_gc_max_data_size
+      id: 232
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jvm_gc_max_data_size
+      resourceID: 19
+      showName: GC Max Data
+      tenantID: null
+      unit: bytes-B
+    - description: process_files_max
+      expr: process_files_max
+      id: 244
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: process_files_max
+      resourceID: 19
+      showName: Process Files Max
+      tenantID: null
+      unit: ""
+    - description: process_files_open
+      expr: process_files_open
+      id: 245
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: process_files_open
+      resourceID: 19
+      showName: Process Files Open
+      tenantID: null
+      unit: ""
+    - description: system_cpu_usage
+      expr: system_cpu_usage
+      id: 246
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: system_cpu_usage
+      resourceID: 19
+      showName: System CPU Usage
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: system_load_average_1m
+      expr: system_load_average_1m
+      id: 247
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: system_load_average_1m
+      resourceID: 19
+      showName: System Load 1
+      tenantID: null
+      unit: ""
+    - description: process_cpu_usage
+      expr: process_cpu_usage
+      id: 248
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: process_cpu_usage
+      resourceID: 19
+      showName: Process CPU Usage
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: Incremented for an increase in the size of the (young) heap memory
+        pool after one GC to before the next
+      expr: rate(jvm_gc_memory_allocated[5m])
+      id: 249
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jvm_gc_memory_allocated
+      resourceID: 19
+      showName: GC Memory Allocated
+      tenantID: null
+      unit: bytes-B
+    - description: Count of positive increases in the size of the old generation memory
+        pool before GC to after GC
+      expr: rate(jvm_gc_memory_promoted[5m])
+      id: 250
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jvm_gc_memory_promoted
+      resourceID: 19
+      showName: GC Memory Promoted
+      tenantID: null
+      unit: bytes-B
+    scopeID: 5
+    showName: jvm
+  - id: 20
+    name: otel_jdbc
+    rules:
+    - description: jdbc_connections_max
+      expr: jdbc_connections_max
+      id: 233
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jdbc_connections_max
+      resourceID: 20
+      showName: Connections Max
+      tenantID: null
+      unit: ""
+    - description: jdbc_connections_min
+      expr: jdbc_connections_min
+      id: 234
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: jdbc_connections_min
+      resourceID: 20
+      showName: Connection Min
+      tenantID: null
+      unit: ""
+    - description: db_client_connections_use_time
+      expr: histogram_quantile(0.95, sum by(pod, pool_name,namespace,service_name,le)
+        (rate(db_client_connections_use_time_bucket[5m])))
+      id: 235
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - pool_name
+      name: db_client_connections_use_time
+      resourceID: 20
+      showName: Connections Use Time P95
+      tenantID: null
+      unit: duration-ms
+    - description: db_client_connections_wait_time
+      expr: histogram_quantile(0.95, sum by(pod,pool_name,namespace,service_name,le)
+        (rate(db_client_connections_wait_time_bucket[5m])))
+      id: 236
+      labels:
+      - pod
+      - pool_name
+      - namespace
+      - service_name
+      name: db_client_connections_wait_time
+      resourceID: 20
+      showName: Connections Wait Time P95
+      tenantID: null
+      unit: duration-ms
+    - description: hikaricp_connections
+      expr: hikaricp_connections
+      id: 237
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: hikaricp_connections
+      resourceID: 20
+      showName: Hikaricp Connections
+      tenantID: null
+      unit: ""
+    - description: hikaricp_connections_acquire
+      expr: histogram_quantile(0.95, sum by(pod,pool,namespace,service_name,le) (rate(hikaricp_connections_acquire_bucket[5m])))
+      id: 238
+      labels:
+      - pod
+      - pool
+      - namespace
+      - service_name
+      name: hikaricp_connections_acquire
+      resourceID: 20
+      showName: Hikaricp Connections Acquire Time P95
+      tenantID: null
+      unit: duration-ms
+    - description: hikaricp_connections_active
+      expr: hikaricp_connections_active
+      id: 239
+      labels:
+      - pod
+      - namespace
+      - pool
+      - service_name
+      name: hikaricp_connections_active
+      resourceID: 20
+      showName: Hikaricp Connections Active
+      tenantID: null
+      unit: ""
+    - description: hikaricp_connections_creation
+      expr: histogram_quantile(0.95, sum by(pod,pool,namespace,service_name,le) (rate(hikaricp_connections_creation_bucket[5m])))
+      id: 240
+      labels:
+      - pod
+      - pool
+      - namespace
+      - service_name
+      name: hikaricp_connections_creation
+      resourceID: 20
+      showName: Hikaricp Connections Creation Time P95
+      tenantID: null
+      unit: duration-ms
+    - description: hikaricp_connections_usage
+      expr: histogram_quantile(0.95, sum by(pod,pool,namespace,service_name,le) (rate(hikaricp_connections_usage_bucket[5m])))
+      id: 241
+      labels:
+      - pod
+      - pool
+      - namespace
+      - service_name
+      name: hikaricp_connections_usage
+      resourceID: 20
+      showName: Hikaricp Connections Usage Time P95
+      tenantID: null
+      unit: duration-ms
+    - description: hikaricp_connections_pending
+      expr: hikaricp_connections_pending
+      id: 242
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: hikaricp_connections_pending
+      resourceID: 20
+      showName: Hikaricp Connections Pending
+      tenantID: null
+      unit: ""
+    - description: hikaricp_connections_max
+      expr: hikaricp_connections_max
+      id: 243
+      labels:
+      - pod
+      - namespace
+      - service_name
+      name: hikaricp_connections_max
+      resourceID: 20
+      showName: Hikaricp Connections Max
+      tenantID: null
+      unit: ""
+    - description: db_client_connections_create_time
+      expr: histogram_quantile(0.95, sum by(pod, pool_name,namespace,service_name,le)
+        (rate(db_client_connections_create_time_bucket[5m])))
+      id: 261
+      labels:
+      - pod
+      - namespace
+      - poo_name
+      - service_name
+      name: db_client_connections_create_time
+      resourceID: 20
+      showName: Connections Create Time P95
+      tenantID: null
+      unit: duration-ms
+    - description: db_client_connections_usage
+      expr: db_client_connections_usage
+      id: 262
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - state
+      name: db_client_connections_usage
+      resourceID: 20
+      showName: Connection Usage
+      tenantID: null
+      unit: ""
+    scopeID: 5
+    showName: jdbc
+  - id: 21
+    name: otel_http
+    rules:
+    - description: http_client_duration
+      expr: histogram_quantile(0.9, sum by(service_name,pod,namespace,le,net_peer_name)
+        (rate(http_client_duration_bucket[5m])))
+      id: 251
+      labels:
+      - pod
+      - namespace
+      - net_peer_name
+      - service_name
+      name: http_client_duration
+      resourceID: 21
+      showName: HTTP Client Duration P90
+      tenantID: null
+      unit: duration-ms
+    - description: http_client_request_size
+      expr: histogram_quantile(1, sum by(service_name,pod,namespace,le,net_peer_name)
+        (rate(http_client_request_size_bucket[5m])))
+      id: 252
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - net_peer_name
+      name: http_client_request_size
+      resourceID: 21
+      showName: HTTP Client Request Size Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: http_client_response_size
+      expr: histogram_quantile(1, sum by(service_name,pod,namespace,le,net_peer_name)
+        (rate(http_client_response_size_bucket[5m])))
+      id: 253
+      labels:
+      - pod
+      - namespace
+      - net_peer_name
+      - service_name
+      name: http_client_response_size
+      resourceID: 21
+      showName: HTTP Client Response Size Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: http_server_duration
+      expr: histogram_quantile(0.9, sum by(service_name,pod,namespace,le,net_host_name,http_route)
+        (rate(http_server_duration_bucket[5m])))
+      id: 254
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - net_host_name
+      - http_route
+      name: http_server_duration
+      resourceID: 21
+      showName: HTTP Server Duration P90
+      tenantID: null
+      unit: duration-ms
+    - description: http_server_request_size
+      expr: histogram_quantile(1, sum by(service_name,pod,namespace,le,net_host_name)
+        (rate(http_server_request_size_bucket[5m])))
+      id: 255
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - net_host_name
+      name: http_server_request_size
+      resourceID: 21
+      showName: HTTP Server Request Size Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: http_server_response_size
+      expr: histogram_quantile(1, sum by(service_name,pod,namespace,le,net_host_name)
+        (rate(http_server_response_size_bucket[5m])))
+      id: 256
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - net_host_name
+      name: http_server_response_size
+      resourceID: 21
+      showName: HTTP Server Response Size Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: http_server_active_requests
+      expr: http_server_active_requests
+      id: 257
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - net_host_name
+      name: http_server_active_requests
+      resourceID: 21
+      showName: HTTP Server Active Requests
+      tenantID: null
+      unit: ""
+    - description: http_client_duration_avg
+      expr: http_client_duration_sum / http_client_duration_count
+      id: 259
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - net_peer_name
+      name: http_client_duration_avg
+      resourceID: 21
+      showName: HTTP Client Duration Average
+      tenantID: null
+      unit: duration-ms
+    - description: http_server_duration_avg
+      expr: http_server_duration_sum/http_server_duration_count
+      id: 260
+      labels:
+      - pod
+      - namespace
+      - servcei_name
+      - http_route
+      name: http_server_duration_avg
+      resourceID: 21
+      showName: HTTP Server Duration Average
+      tenantID: null
+      unit: duration-ms
+    scopeID: 5
+    showName: http
+  - id: 22
+    name: otel_log
+    rules:
+    - description: logback_events
+      expr: delta(logback_events[5m])
+      id: 258
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - level
+      name: logback_events
+      resourceID: 22
+      showName: Logback Events Last 5 Min
+      tenantID: null
+      unit: ""
+    scopeID: 5
+    showName: log
+  - id: 23
+    name: otel_kafka
+    rules:
+    - description: kafka_consumer_bytes_consumed_rate
+      expr: kafka_consumer_bytes_consumed_rate >0
+      id: 263
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      - topic
+      name: kafka_consumer_bytes_consumed_rate
+      resourceID: 23
+      showName: Comsumer Comsumed Rate Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: kafka_consumer_commit_latency_avg
+      expr: kafka_consumer_commit_latency_avg >0
+      id: 264
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_commit_latency_avg
+      resourceID: 23
+      showName: Consumer Commit Latency Average
+      tenantID: null
+      unit: ""
+    - description: kafka_consumer_commit_rate
+      expr: kafka_consumer_commit_rate >0
+      id: 265
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_commit_rate
+      resourceID: 23
+      showName: Consumer Commit Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_consumer_commit_latency_max
+      expr: kafka_consumer_commit_latency_max > 0
+      id: 266
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_commit_latency_max
+      resourceID: 23
+      showName: Consumer Commit Latency Max
+      tenantID: null
+      unit: ""
+    - description: kafka_consumer_connection_close_rate
+      expr: kafka_consumer_connection_close_rate  > 0
+      id: 267
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_connection_close_rate
+      resourceID: 23
+      showName: Consumer Cconnection Close Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_consumer_connection_count
+      expr: kafka_consumer_connection_count >0
+      id: 268
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_connection_count
+      resourceID: 23
+      showName: Consumer Connection
+      tenantID: null
+      unit: ""
+    - description: kafka_consumer_connection_creation_rate
+      expr: kafka_consumer_connection_creation_rate >0
+      id: 269
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_connection_creation_rate
+      resourceID: 23
+      showName: ConsumerC onnection Creation Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_consumer_fetch_latency_avg
+      expr: kafka_consumer_fetch_latency_avg >0
+      id: 270
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_fetch_latency_avg
+      resourceID: 23
+      showName: Consumer Fetch Latency Average
+      tenantID: null
+      unit: ""
+    - description: kafka_consumer_fetch_rate
+      expr: kafka_consumer_fetch_rate >0
+      id: 271
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_fetch_rate
+      resourceID: 23
+      showName: Cconsumer Fetch Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_consumer_fetch_size_avg
+      expr: kafka_consumer_fetch_size_avg >0
+      id: 272
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_fetch_size_avg
+      resourceID: 23
+      showName: Consumer Fetch Size Average
+      tenantID: null
+      unit: bytes-B
+    - description: kafka_consumer_incoming_byte_rate
+      expr: kafka_consumer_incoming_byte_rate > 0
+      id: 273
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_incoming_byte_rate
+      resourceID: 23
+      showName: Consumer Incoming Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: kafka_consumer_io_ratio
+      expr: kafka_consumer_io_ratio >0
+      id: 274
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_io_ratio
+      resourceID: 23
+      showName: Consumer IO Ratio
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: kafka_consumer_network_io_rate
+      expr: kafka_consumer_network_io_rate >0
+      id: 275
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_network_io_rate
+      resourceID: 23
+      showName: Consumer Network IO Rate
+      tenantID: null
+      unit: percent-0.0-1.0
+    - description: kafka_consumer_outgoing_byte_rate
+      expr: kafka_consumer_outgoing_byte_rate >0
+      id: 276
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_outgoing_byte_rate
+      resourceID: 23
+      showName: Consumer Outgoing Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: kafka_consumer_request_rate
+      expr: kafka_consumer_request_rate >0
+      id: 277
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_consumer_request_rate
+      resourceID: 23
+      showName: Consumer Request Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_producer_byte_rate
+      expr: kafka_producer_byte_rate >0
+      id: 278
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      - topic
+      name: kafka_producer_byte_rate
+      resourceID: 23
+      showName: Producer Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: kafka_producer_compression_rate
+      expr: kafka_producer_compression_rate >0
+      id: 279
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_compression_rate
+      resourceID: 23
+      showName: Producer Compression Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_producer_connection_creation_rate
+      expr: kafka_producer_connection_creation_rate >0
+      id: 280
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_connection_creation_rate
+      resourceID: 23
+      showName: Producer Connection Creation Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_producer_incoming_byte_rate
+      expr: kafka_producer_incoming_byte_rate >0
+      id: 281
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_incoming_byte_rate
+      resourceID: 23
+      showName: Producer Incoming Byte Rate
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: kafka_producer_io_ratio
+      expr: kafka_producer_io_ratio >0
+      id: 282
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_io_ratio
+      resourceID: 23
+      showName: Producer IO Ratio
+      tenantID: null
+      unit: ""
+    - description: kafka_producer_network_io_rate
+      expr: kafka_producer_network_io_rate >0
+      id: 283
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_network_io_rate
+      resourceID: 23
+      showName: Producer Network IO Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_producer_outgoing_byte_rate
+      expr: kafka_producer_outgoing_byte_rate >0
+      id: 284
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_outgoing_byte_rate
+      resourceID: 23
+      showName: Producer Outgoing Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: kafka_producer_request_rate
+      expr: kafka_producer_request_rate >0
+      id: 285
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_request_rate
+      resourceID: 23
+      showName: Producer Request Rate
+      tenantID: null
+      unit: ""
+    - description: kafka_producer_waiting_threads
+      expr: kafka_producer_waiting_threads
+      id: 286
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_waiting_threads
+      resourceID: 23
+      showName: Producer Waiting Threads
+      tenantID: null
+      unit: ""
+    - description: kafka_producer_topic_byte_rate
+      expr: kafka_producer_topic_byte_rate >0
+      id: 287
+      labels:
+      - pod
+      - namespace
+      - service_name
+      - client_id
+      name: kafka_producer_topic_byte_rate
+      resourceID: 23
+      showName: Producer Topic Byte
+      tenantID: null
+      unit: bytes/sec-B/s
+    scopeID: 5
+    showName: kafka
+  - id: 24
+    name: otel_process_jvm
+    rules:
+    - description: process_runtime_jvm_gc_duration_count
+      expr: process_runtime_jvm_gc_duration_count
+      id: 300
+      labels:
+      - service_name
+      - pod
+      - namespace
+      - action
+      name: process_runtime_jvm_gc_duration_count
+      resourceID: 24
+      showName: JVM GC Count
+      tenantID: null
+      unit: ""
+    - description: process_runtime_jvm_buffer_count
+      expr: process_runtime_jvm_buffer_count
+      id: 301
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_buffer_count
+      resourceID: 24
+      showName: Buffer Count
+      tenantID: null
+      unit: ""
+    - description: process_runtime_jvm_buffer_limit
+      expr: process_runtime_jvm_buffer_limit
+      id: 302
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_buffer_limit
+      resourceID: 24
+      showName: Buffer Limit
+      tenantID: null
+      unit: ""
+    - description: process_runtime_jvm_buffer_usage
+      expr: process_runtime_jvm_buffer_usage
+      id: 303
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_buffer_usage
+      resourceID: 24
+      showName: Buffer Usage
+      tenantID: null
+      unit: ""
+    - description: process_runtime_jvm_classes_loaded
+      expr: process_runtime_jvm_classes_loaded
+      id: 304
+      labels:
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_classes_loaded
+      resourceID: 24
+      showName: Classes Loaded
+      tenantID: null
+      unit: ""
+    - description: process_runtime_jvm_cpu_utilization
+      expr: process_runtime_jvm_cpu_utilization
+      id: 305
+      labels:
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_cpu_utilization
+      resourceID: 24
+      showName: CPU Utilization
+      tenantID: null
+      unit: short
+    - description: process_runtime_jvm_classes_unloaded
+      expr: process_runtime_jvm_classes_unloaded
+      id: 306
+      labels:
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_classes_unloaded
+      resourceID: 24
+      showName: Classes Unloaded
+      tenantID: null
+      unit: ""
+    - description: process_runtime_jvm_memory_committed
+      expr: process_runtime_jvm_memory_committed{type="heap"}
+      id: 307
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_committed
+      resourceID: 24
+      showName: Heap Memory Committed
+      tenantID: null
+      unit: bytes-B
+    - description: "process_runtime_jvm_memory_committed\t"
+      expr: process_runtime_jvm_memory_committed{type="non_heap"}
+      id: 308
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_committed_nonheap
+      resourceID: 24
+      showName: Non-Heap Memory Committed
+      tenantID: null
+      unit: bytes-B
+    - description: process_runtime_jvm_memory_usage
+      expr: process_runtime_jvm_memory_usage{type="heap"}
+      id: 309
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_usage
+      resourceID: 24
+      showName: Heap Memory Usage
+      tenantID: null
+      unit: bytes-B
+    - description: process_runtime_jvm_memory_usage
+      expr: process_runtime_jvm_memory_usage{type="non_heap"}
+      id: 310
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_usage_nonheap
+      resourceID: 24
+      showName: Non-Heap Memory Usage
+      tenantID: null
+      unit: bytes-B
+    - description: process_runtime_jvm_system_cpu_load_1m
+      expr: process_runtime_jvm_system_cpu_load_1m
+      id: 311
+      labels:
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_system_cpu_load_1m
+      resourceID: 24
+      showName: System Load 1
+      tenantID: null
+      unit: ""
+    - description: process_runtime_jvm_system_cpu_utilization
+      expr: process_runtime_jvm_system_cpu_utilization
+      id: 312
+      labels:
+      - service_name
+      - namespace
+      - pod
+      name: process_runtime_jvm_system_cpu_utilization
+      resourceID: 24
+      showName: System CPU Utilization
+      tenantID: null
+      unit: short
+    - description: process_runtime_jvm_threads_count
+      expr: process_runtime_jvm_threads_count
+      id: 313
+      labels:
+      - daemon
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_threads_count
+      resourceID: 24
+      showName: Threads Count (Daemon)
+      tenantID: null
+      unit: ""
+    - description: process_runtime_jvm_memory_usage_after_last_gc
+      expr: memory_usage_after_last_gc
+      id: 314
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_usage_after_last_gc
+      resourceID: 24
+      showName: Memory Usage After Last GC
+      tenantID: null
+      unit: bytes-B
+    - description: process_runtime_jvm_memory_init
+      expr: process_runtime_jvm_memory_init{type="heap"}
+      id: 315
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_init
+      resourceID: 24
+      showName: Heap Memory Init
+      tenantID: null
+      unit: bytes-B
+    - description: process_runtime_jvm_memory_init
+      expr: process_runtime_jvm_memory_init{type="non_heap"}
+      id: 316
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_init_nonheap
+      resourceID: 24
+      showName: Non-Heap Memory Init
+      tenantID: null
+      unit: bytes-B
+    - description: process_runtime_jvm_memory_limit
+      expr: process_runtime_jvm_memory_limit{type="heap"}
+      id: 317
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_limit
+      resourceID: 24
+      showName: Heap Memory Limit
+      tenantID: null
+      unit: bytes-B
+    - description: process_runtime_jvm_memory_limit
+      expr: process_runtime_jvm_memory_limit{type="non_heap"}
+      id: 318
+      labels:
+      - pool
+      - service_name
+      - pod
+      - namespace
+      name: process_runtime_jvm_memory_limit_nonheap
+      resourceID: 24
+      showName: Non-Heap Memory Limit
+      tenantID: null
+      unit: bytes-B
+    - description: JVM GC Duration
+      expr: "histogram_quantile(1, sum by(le,action,pod,namespace,service_name) (rate(process_runtime_jvm_gc_duration_bucket[5m])))\t"
+      id: 319
+      labels:
+      - action
+      - pod
+      - namespace
+      - service_name
+      name: process_runtime_jvm_gc_duration
+      resourceID: 24
+      showName: GC Duration
+      tenantID: null
+      unit: duration-ms
+    scopeID: 5
+    showName: jvm(old)
+  showName: OpenTelemetry
