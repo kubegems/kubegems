@@ -12,14 +12,25 @@ kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.c
 kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
 kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.61.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
 ```
-2. upgrate monitor plugin to 43.2.1 on dashboard
-3. patch alertmanager to disable force namespace(because https://github.com/prometheus-community/helm-charts/pull/2882 not merged yet)
+2. upgrate monitor plugin to 43.2.1
+```
+kubectl patch plugins.plugins.kubegems.io -n kubegems-installer monitoring --type merge -p '{"spec":{"version":"43.2.1"}}'
+```
+3. goto dashboard to change `externalHost`, `externalPort`
+4. patch alertmanager to disable force namespace(because https://github.com/prometheus-community/helm-charts/pull/2882 not merged yet)
 ```bash
 kubectl patch alertmanager -n kubegems-monitoring kube-prometheus-stack-alertmanager --type merge -p '{"spec": {"alertmanagerConfigMatcherStrategy": {"type":"None"}}}'
 ```
 
 ## Opentelemetry plugin
-upgrate opentelemetry plugin to 0.28.1 on dashboard
+1. upgrate opentelemetry plugin to 0.28.1
+```
+kubectl patch plugins.plugins.kubegems.io -n kubegems-installer opentelemetry --type merge -p '{"spec":{"version":"0.28.1"}}'
+```
+2. remove prometheusremotewrite exporter
+```
+kubectl patch plugins.plugins.kubegems.io -n observability opentelemetry-collector --type json -p '[{"op": "remove", "path": "/spec/values/config/exporters/prometheusremotewrite"}]'
+```
 
 ## Run script
 
