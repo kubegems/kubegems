@@ -130,7 +130,7 @@ func PerRepoCacheDir(repo string, basedir string) string {
 	if repou.Scheme == "file" {
 		return filepath.Join(basedir, filepath.Base(repou.Path))
 	} else {
-		return filepath.Join(basedir, repou.Hostname())
+		return filepath.Join(basedir, filepath.Join(repou.Hostname(), repou.Path))
 	}
 }
 

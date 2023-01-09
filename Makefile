@@ -146,7 +146,7 @@ helm-generate: readme-generator
 	readme-generator -v $(file)values.yaml -r $(file)README.md \
 	;)
 
-KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
+KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io/kubegems
 .PHONY: helm-package
 helm-package:
 	$(foreach file, $(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
