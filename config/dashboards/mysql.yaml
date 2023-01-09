@@ -1,149 +1,149 @@
-name: MySQL
 description: Mysql 监控模板
-step: 30s
+end: now
+graphs:
+- name: Connections
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlConnections
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Query Rate
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlQuestions
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Slow Querier
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlSlowQuery
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Current QPS
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlQPS
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Current TPS
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlTPS
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Table Hit Rate
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlTableOpenCacheHitRatio
+      scope: middlewires
+      unit: percent-0.0-1.0
+    targetName: A
+  unit: percent-0.0-1.0
+- name: Network Received
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlReceivedBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: Network Sent
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlSentBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: Open Files
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlOpenFiles
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Top10 Command
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlCommandTop10
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Database Size
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlTableSize
+      scope: middlewires
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Total Rows
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlTotalRows
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Global Table Lock Wait 5m
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlTabelLockWaited
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Threads Numbers
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mysql
+      rule: mysqlThreads
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+name: MySQL
 refresh: 30s
 start: now-30m
-end: now
+step: 30s
 variables:
   service: ""
-graphs:
-  - name: Connections
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlConnections
-          unit: ""
-  - name: Query Rate
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlQuestions
-          unit: ""
-  - name: Slow Querier
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlSlowQuery
-          unit: ""
-  - name: Current QPS
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlQPS
-          unit: ""
-  - name: Current TPS
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlTPS
-          unit: ""
-  - name: Table Hit Rate
-    unit: percent-0.0-1.0
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlTableOpenCacheHitRatio
-          unit: percent-0.0-1.0
-  - name: Network Received
-    unit: bytes/sec-B/s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlReceivedBytes
-          unit: bytes/sec-B/s
-  - name: Network Sent
-    unit: bytes/sec-B/s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlSentBytes
-          unit: bytes/sec-B/s
-  - name: Open Files
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlOpenFiles
-          unit: ""
-  - name: Top10 Command
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlCommandTop10
-          unit: ""
-  - name: Database Size
-    unit: bytes-B
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlTableSize
-          unit: bytes-B
-  - name: Total Rows
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlTotalRows
-          unit: ""
-  - name: Global Table Lock Wait 5m
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlTabelLockWaited
-          unit: ""
-  - name: Threads Numbers
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mysql
-          rule: mysqlThreads
-          unit: ""

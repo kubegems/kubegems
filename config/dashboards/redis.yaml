@@ -1,109 +1,109 @@
-name: Redis
 description: Redis 监控模板
-step: 30s
+end: now
+graphs:
+- name: Connected Clients
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisClients
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Keys Hit Rate
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisKeysHitRate
+      scope: middlewires
+      unit: percent-0.0-1.0
+    targetName: A
+  unit: percent-0.0-1.0
+- name: Keys Total
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisKeys
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Command Top 5
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisCommandsTop5
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Network Sent
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisSentBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: Network Received
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisReceivedByted
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: Command Processed
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisOPS
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: CPU Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisCpuUsage
+      scope: middlewires
+      unit: short
+    targetName: A
+  unit: short
+- name: Memory Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisMemoryUsedBytes
+      scope: middlewires
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Not-Expiring Keys Ratio
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: redis
+      rule: redisNoExpiringKeyRate
+      scope: middlewires
+      unit: percent-0.0-1.0
+    targetName: A
+  unit: percent-0.0-1.0
+name: Redis
 refresh: 30s
 start: now-30m
-end: now
+step: 30s
 variables:
   service: ""
-graphs:
-  - name: Connected Clients
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisClients
-          unit: ""
-  - name: Keys Hit Rate
-    unit: percent-0.0-1.0
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisKeysHitRate
-          unit: percent-0.0-1.0
-  - name: Keys Total
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisKeys
-          unit: ""
-  - name: Command Top 5
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisCommandsTop5
-          unit: ""
-  - name: Network Sent
-    unit: bytes/sec-B/s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisSentBytes
-          unit: bytes/sec-B/s
-  - name: Network Received
-    unit: bytes/sec-B/s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisReceivedByted
-          unit: bytes/sec-B/s
-  - name: Command Processed
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisOPS
-          unit: ""
-  - name: CPU Usage
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisCpuUsage
-          unit: ""
-  - name: Memory Usage
-    unit: bytes-B
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisMemoryUsedBytes
-          unit: bytes-B
-  - name: Not-Expiring Keys Ratio
-    unit: percent-0.0-1.0
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: redis
-          rule: redisNoExpiringKeyRate
-          unit: percent-0.0-1.0

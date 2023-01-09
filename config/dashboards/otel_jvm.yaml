@@ -1,0 +1,189 @@
+description: OpenTelemetry JVM监控模板
+end: now
+graphs:
+- name: Major GC
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_gc_pause_count_major
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Heap Memory Max
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_memory_max
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Nonheap Memory Max
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_memory_max_nonheap
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Minor GC
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_gc_pause_count_minor
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Heap Memory Used
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_memory_used_heap
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Nonheap Memory Used
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_memory_used_nonheap
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: 'Buffer Pool Memory Usead '
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_buffer_memory_used
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Heap Memory Committed
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_memory_committed_heap
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Nonheap Memory Committed
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_memory_committed_nonheap
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: GC Memory Allocated
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_gc_memory_allocated
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: GC Memory Promoted
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_gc_memory_promoted
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: GC Duration
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_gc_pause_duration
+      scope: opentelemetry
+      unit: duration-ms
+    targetName: A
+  unit: duration-ms
+- name: Class Loaded
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_classes_loaded
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Threads States
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: jvm_threads_states
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Process Files Open
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: process_files_open
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Process CPU Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: process_cpu_usage
+      scope: opentelemetry
+      unit: percent-0.0-1.0
+    targetName: A
+  unit: percent-0.0-1.0
+- name: System CPU Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: system_cpu_usage
+      scope: opentelemetry
+      unit: percent-0.0-1.0
+    targetName: A
+  unit: percent-0.0-1.0
+- name: System Load 1
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_jvm
+      rule: system_load_average_1m
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+name: Otel_JVM
+refresh: 30s
+start: now-30m
+step: 30s
+variables:
+  service_name: ""

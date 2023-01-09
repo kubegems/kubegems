@@ -1,69 +1,69 @@
-name: Kafka
 description: Kafka 监控模板
-step: 30s
+end: now
+graphs:
+- name: Kafka Brokers
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: kafka
+      rule: kafkaBrokers
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Topics
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: kafka
+      rule: kafkaTopics
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Partitions
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: kafka
+      rule: kafkaPartitions
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Consumer Latency
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: kafka
+      rule: kafkaConsumerLatency
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Producer Rate
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: kafka
+      rule: kafkaMessagesProduced
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Consumer Rate
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: kafka
+      rule: kafkaMessageConsumer
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+name: Kafka
 refresh: 30s
 start: now-30m
-end: now
+step: 30s
 variables:
   service: ""
-graphs:
-  - name: Kafka Brokers
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: kafka
-          rule: kafkaBrokers
-          unit: ""
-  - name: Topics
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: kafka
-          rule: kafkaTopics
-          unit: ""
-  - name: Partitions
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: kafka
-          rule: kafkaPartitions
-          unit: ""
-  - name: Consumer Latency
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: kafka
-          rule: kafkaConsumerLatency
-          unit: ""
-  - name: Producer Rate
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: kafka
-          rule: kafkaMessagesProduced
-          unit: ""
-  - name: Consumer Rate
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: kafka
-          rule: kafkaMessageConsumer
-          unit: ""

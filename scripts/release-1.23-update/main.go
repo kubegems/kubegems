@@ -118,6 +118,10 @@ func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVers
 	if err != nil {
 		return err
 	}
+
+	// we should do two things in database manually, before exec blow scripts:
+	// 1. change chinese alertrule name to english
+	// 2. update alertrule RedisMemoryHigh's expr and alert levels
 	if err := updateAlertRuleName(db); err != nil {
 		return err
 	}

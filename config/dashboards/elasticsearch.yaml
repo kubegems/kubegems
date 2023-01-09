@@ -1,129 +1,129 @@
-name: ElasticSearch
 description: ElasticSearch 监控模板
-step: 30s
+end: now
+graphs:
+- name: CPU Usage Ratio
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esCPUPercent
+      scope: middlewires
+      unit: percent-0-100
+    targetName: A
+  unit: percent-0-100
+- name: OS Load 1
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esOsLoad1
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: JVM GC Time
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esGcSeconds
+      scope: middlewires
+      unit: duration-s
+    targetName: A
+  unit: duration-s
+- name: JVM GC Count
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esGcCount
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Query Durations
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esQueryDuration
+      scope: middlewires
+      unit: duration-s
+    targetName: A
+  unit: duration-s
+- name: JVM Memory Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esJVMMemoryUsageBytes
+      scope: middlewires
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: JVM Memory Usage Rate
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esJVMMemoryUsagePersent
+      scope: middlewires
+      unit: percent-0.0-1.0
+    targetName: A
+  unit: percent-0.0-1.0
+- name: Indices Docs Per Node
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esIndicesPerNode
+      scope: middlewires
+      unit: short
+    targetName: A
+  unit: short
+- name: Query Cache
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esQueryCacheBytes
+      scope: middlewires
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Network Sent
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esSentBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: 'Network Received '
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esReceivedBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: Filesystem Avaliable
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: elasticsearch
+      rule: esFilesystemAvailableBytes
+      scope: middlewires
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+name: ElasticSearch
 refresh: 30s
 start: now-30m
-end: now
+step: 30s
 variables:
   service: ""
-graphs:
-  - name: CPU Usage Ratio
-    unit: percent-0-100
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esCPUPercent
-          unit: percent-0-100
-  - name: OS Load 1
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esOsLoad1
-          unit: ""
-  - name: JVM GC Time
-    unit: duration-s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esGcSeconds
-          unit: duration-s
-  - name: JVM GC Count
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esGcCount
-          unit: ""
-  - name: Query Durations
-    unit: duration-s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esQueryDuration
-          unit: duration-s
-  - name: JVM Memory Usage
-    unit: bytes-B
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esJVMMemoryUsageBytes
-          unit: bytes-B
-  - name: JVM Memory Usage Rate
-    unit: percent-0.0-1.0
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esJVMMemoryUsagePersent
-          unit: percent-0.0-1.0
-  - name: Indices Docs Per Node
-    unit: short
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esIndicesPerNode
-          unit: short
-  - name: Query Cache
-    unit: bytes-B
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esQueryCacheBytes
-          unit: bytes-B
-  - name: Network Sent
-    unit: bytes/sec-B/s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esSentBytes
-          unit: bytes/sec-B/s
-  - name: "Network Received "
-    unit: bytes/sec-B/s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esReceivedBytes
-          unit: bytes/sec-B/s
-  - name: Filesystem Avaliable
-    unit: bytes-B
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: elasticsearch
-          rule: esFilesystemAvailableBytes
-          unit: bytes-B
