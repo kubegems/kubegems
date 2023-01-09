@@ -25,6 +25,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
@@ -114,20 +115,6 @@ func (r *Router) Run(ctx context.Context) error {
 		return err
 	}
 
-	// otel gin
-	ginShutdown, err := otel.InitGinOtel(ctx)
-	if err != nil {
-		return err
-	}
-	defer ginShutdown(ctx)
-
-	// otel runtime
-	runtimeShutdown, err := otel.InitRuntimeOtel(ctx)
-	if err != nil {
-		return err
-	}
-	defer runtimeShutdown(ctx)
-
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
@@ -179,10 +166,9 @@ func (r *Router) Complete(ctx context.Context) error {
 	dir, _ := os.Getwd()
 	router.StaticFS("/lokiExport", http.Dir(dir+"/lokiExport"))
 
-	// authMiddleware, err := auth.NewAuthMiddleware(r.Opts.JWT, r.Database, r.Redis, aaa.NewUserInfoHandler())
-	// if err != nil {
-	// 	return err
-	// }
+	if err := otel.Init(ctx, r.Opts.Otel); err != nil {
+		return err
+	}
 
 	globalMiddlewares := []func(*gin.Context){
 		i18n.SetLang,
@@ -193,7 +179,7 @@ func (r *Router) Complete(ctx context.Context) error {
 		// panic recovery
 		gin.Recovery(),
 		// otel
-		otel.OtelGinMiddleware(),
+		otelgin.Middleware("kubegems-api"),
 		// real ip tracking
 		RealClientIPMiddleware(),
 	}
