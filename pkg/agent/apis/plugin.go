@@ -88,7 +88,7 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Security    JWT
 func (h *PluginHandler) Get(c *gin.Context) {
 	name, version := c.Param("name"), c.Query("version")
-	plugin, err := h.PM.GetPluginVersion(c.Request.Context(), name, version, true)
+	plugin, err := h.PM.GetPluginVersion(c.Request.Context(), name, version, true, true)
 	if err != nil {
 		NotOK(c, err)
 		return

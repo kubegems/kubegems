@@ -65,7 +65,7 @@ func DefaultPluginManager(cachedir string) (*PluginManager, error) {
 }
 
 func (m *PluginManager) Install(ctx context.Context, name string, version string, values map[string]any) error {
-	pv, err := m.GetPluginVersion(ctx, name, version, false)
+	pv, err := m.GetPluginVersion(ctx, name, version, false, false)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (m *PluginManager) Get(ctx context.Context, name string) (*Plugin, error) {
 	return &plugin, nil
 }
 
-func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version string, withSchema bool) (*PluginVersion, error) {
+func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version string, withSchema bool, withDpendeciesCheck bool) (*PluginVersion, error) {
 	plugin, err := m.Get(ctx, name)
 	if err != nil {
 		return nil, err
@@ -146,6 +146,11 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 				if err := m.fillSchema(ctx, &item); err != nil {
 					logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", item.Name, "version", item.Version)
 				}
+			}
+			if withDpendeciesCheck && len(item.Requirements) > 0 {
+				// list installed ignore error
+				installed, _ := m.ListInstalled(ctx, false)
+				CheckDependecies(item.Requirements, installed)
 			}
 			// fill current installed values
 			if plugin.Installed != nil {

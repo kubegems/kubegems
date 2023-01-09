@@ -27109,7 +27109,10 @@ const docTemplate = `{
                 },
                 "requirements": {
                     "description": "dependecies requirements",
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/gemsplugin.Requirement"
+                    }
                 },
                 "values": {
                     "$ref": "#/definitions/v1beta1.Values"
@@ -27121,6 +27124,20 @@ const docTemplate = `{
                     }
                 },
                 "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "gemsplugin.Requirement": {
+            "type": "object",
+            "properties": {
+                "expr": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }

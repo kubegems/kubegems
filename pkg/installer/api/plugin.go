@@ -128,7 +128,7 @@ func (o *PluginsAPI) GetPlugin(req *restful.Request, resp *restful.Response) {
 	name := req.PathParameter("name")
 	version := req.QueryParameter("version")
 
-	pv, err := o.PM.GetPluginVersion(req.Request.Context(), name, version, true)
+	pv, err := o.PM.GetPluginVersion(req.Request.Context(), name, version, true, true)
 	if err != nil {
 		response.Error(resp, err)
 		return

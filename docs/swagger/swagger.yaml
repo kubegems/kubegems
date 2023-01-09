@@ -1005,7 +1005,9 @@ definitions:
         type: boolean
       requirements:
         description: dependecies requirements
-        type: string
+        items:
+          $ref: '#/definitions/gemsplugin.Requirement'
+        type: array
       values:
         $ref: '#/definitions/v1beta1.Values'
       valuesFrom:
@@ -1013,6 +1015,15 @@ definitions:
           $ref: '#/definitions/v1beta1.ValuesFrom'
         type: array
       version:
+        type: string
+    type: object
+  gemsplugin.Requirement:
+    properties:
+      expr:
+        type: string
+      message:
+        type: string
+      name:
         type: string
     type: object
   gin.H:

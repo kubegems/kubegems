@@ -26,6 +26,14 @@ import (
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 )
 
+type Requirement struct {
+	Name    string `json:"name,omitempty"`
+	Expr    string `json:"expr,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+type Requirements []Requirement
+
 type PluginVersion struct {
 	Name             string                      `json:"name,omitempty"`
 	Namespace        string                      `json:"namespace,omitempty"`
@@ -40,7 +48,7 @@ type PluginVersion struct {
 	Version          string                      `json:"version,omitempty"`
 	Healthy          bool                        `json:"healthy,omitempty"`
 	Required         bool                        `json:"required,omitempty"`
-	Requirements     string                      `json:"requirements,omitempty"` // dependecies requirements
+	Requirements     Requirements                `json:"requirements,omitempty"` // dependecies requirements
 	Message          string                      `json:"message,omitempty"`
 	Values           pluginsv1beta1.Values       `json:"values,omitempty"`
 	Files            map[string]string           `json:"files,omitempty"`
@@ -148,7 +156,7 @@ func PluginVersionFromRepoChartVersion(repo string, cv *repo.ChartVersion) Plugi
 		Description:      cv.Description,
 		ValuesFrom:       valsFroms,
 		InstallNamespace: annotations[pluginscommon.AnnotationInstallNamespace],
-		Requirements:     annotations[pluginscommon.AnnotationRequirements],
+		Requirements:     ParseRequirements(annotations[pluginscommon.AnnotationRequirements]),
 		HelathCheck:      annotations[pluginscommon.AnnotationHealthCheck],
 		Required:         required,
 		Kind: func() pluginsv1beta1.BundleKind {
@@ -200,30 +208,40 @@ func (list ErrorList) Error() string {
 	return msg
 }
 
-func CheckDependecy(requirements string, exist PluginVersion) error {
-	reqs := ParseRequirements(requirements)
-	if req, ok := reqs[exist.Name]; ok {
-		existver, err := semver.NewVersion(exist.Version)
-		if err != nil {
-			// we cant check version so adopt any.
+func CheckDependecy(requirements Requirements, exist PluginVersion) error {
+	for _, reqrequirement := range requirements {
+		if reqrequirement.Name == exist.Name {
+			constraint, err := semver.NewConstraint(reqrequirement.Expr)
+			if err != nil {
+				return nil
+			}
+			existver, err := semver.NewVersion(exist.Version)
+			if err != nil {
+				// we cant check version so adopt any.
+				return nil
+			}
+			if !constraint.Check(existver) {
+				return fmt.Errorf("version not matched: %s", exist.Version)
+			}
 			return nil
 		}
-		if !req.Check(existver) {
-			return fmt.Errorf("version not matched: %s", exist.Version)
-		}
-		return nil
 	}
-	// not required
 	return nil
 }
 
-func CheckDependecies(requirements string, installs map[string]PluginVersion) error {
-	reqs := ParseRequirements(requirements)
+func CheckDependecies(requirements Requirements, installs map[string]PluginVersion) error {
 	var errs ErrorList
-	for name, constraint := range reqs {
+	for i, requirement := range requirements {
+		name := requirement.Name
+		constraint, err := semver.NewConstraint(requirement.Expr)
+		if err != nil {
+			continue
+		}
 		installed, ok := installs[name]
 		if !ok {
-			errs = append(errs, fmt.Errorf("%s not installed,require: %s", name, constraint))
+			err := fmt.Errorf("%s not installed,require: %s", name, constraint)
+			errs = append(errs, err)
+			requirements[i].Message = err.Error()
 			continue
 		}
 		ver, err := semver.NewVersion(installed.Version)
@@ -231,44 +249,38 @@ func CheckDependecies(requirements string, installs map[string]PluginVersion) er
 			continue
 		}
 		if !constraint.Check(ver) {
-			errs = append(errs, fmt.Errorf("%s not meet,require: %s", name, constraint))
+			err := fmt.Errorf("%s version %s installed,but not meet require: %s", ver, name, constraint)
+			errs = append(errs, err)
+			requirements[i].Message = err.Error()
 		}
 	}
-	if len(errs) != 0 {
+	if errs != nil || len(errs) > 0 {
 		return errs
 	}
 	return nil
 }
 
-type Requirement struct {
-	Name       string
-	Constraint string
-}
-
 // ParseRequirements
-func ParseRequirements(str string) map[string]*semver.Constraints {
-	requirements := map[string]*semver.Constraints{}
+func ParseRequirements(str string) []Requirement {
+	requirements := []Requirement{}
 	// nolint: gomnd
 	for _, req := range strings.Split(str, ",") {
 		if req == "" {
 			continue
 		}
-		splites := strings.SplitN(req, " ", 2)
-		switch len(splites) {
-		case 1:
-			constraint, err := semver.NewConstraint("")
-			if err != nil {
-				continue
-			}
-			requirements[splites[0]] = constraint
-		case 2:
-			constraint, err := semver.NewConstraint(splites[1])
-			if err != nil {
-				continue
-			}
-			requirements[splites[0]] = constraint
-		default:
-			continue
+		i := strings.IndexFunc(req, func(r rune) bool {
+			return r == '>' ||
+				r == '=' ||
+				r == '<' ||
+				r == '~' ||
+				r == '^' ||
+				r == '*' ||
+				r == '!'
+		})
+		if i > 0 {
+			requirements = append(requirements, Requirement{Name: strings.TrimSpace(req[:i]), Expr: req[i:]})
+		} else {
+			requirements = append(requirements, Requirement{Name: strings.TrimSpace(req), Expr: "*"})
 		}
 	}
 	return requirements
