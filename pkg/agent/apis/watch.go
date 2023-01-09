@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -32,20 +33,14 @@ import (
 )
 
 type Watcher struct {
-	Cache       cache.Cache
-	Connections sync.Map
-}
-
-// websocket conn 不支持并发,当前场景需要读写锁
-type SyncConn struct {
-	conn *websocket.Conn
-	lock sync.RWMutex
+	Cache          cache.Cache
+	connectionPool ConnectionPool
 }
 
 func NewWatcher(c cache.Cache) *Watcher {
 	return &Watcher{
-		Cache:       c,
-		Connections: sync.Map{},
+		Cache:          c,
+		connectionPool: NewConnectionPool(),
 	}
 }
 
@@ -65,42 +60,12 @@ func (w *Watcher) StreamWatch(c *gin.Context) {
 	if err != nil {
 		c.AbortWithStatus(400)
 	}
-	sessionID := uuid.NewString()
-	w.join(conn, sessionID)
+	sconn := wrapperSyncConn(conn, w.connectionPool)
+	w.connectionPool.Join(sconn)
 }
 
-func (w *Watcher) send(obj interface{}) []string {
-	failed := []string{}
-	w.Connections.Range(func(k, c interface{}) bool {
-		sconn := c.(*SyncConn)
-		sconn.lock.Lock()
-		defer sconn.lock.Unlock()
-		e := sconn.conn.WriteJSON(obj)
-		if e != nil {
-			failed = append(failed, k.(string))
-		}
-		return true
-	})
-	return failed
-}
-
-func (w *Watcher) removeFailed(failed []string) {
-	for _, k := range failed {
-		w.Connections.Delete(k)
-	}
-}
-
-func (w *Watcher) DispatchMessage(obj interface{}) {
-	failedSessions := w.send(obj)
-	w.removeFailed(failedSessions)
-}
-
-func (w *Watcher) join(conn *websocket.Conn, sessionid string) {
-	sconn := &SyncConn{
-		conn: conn,
-		lock: sync.RWMutex{},
-	}
-	w.Connections.Store(sessionid, sconn)
+func (w *Watcher) DispatchMessage(message interface{}) {
+	go w.connectionPool.DispatchMessage(message)
 }
 
 func (w *Watcher) Notify(obj interface{}, evt msgbus.EventKind) {
@@ -172,4 +137,108 @@ func generateNotifyMessage(gvk schema.GroupVersionKind, meta metav1.ObjectMeta, 
 
 func getNamespacedName(meta metav1.ObjectMeta) string {
 	return fmt.Sprintf("%s/%s", meta.Namespace, meta.Name)
+}
+
+// ConnectionPool websocket 连接池，自动维护连接状态
+type ConnectionPool interface {
+	// Join 加入连接池
+	Join(conn *syncConn)
+	// 从连接池中删除指定客户端
+	Remove(clients ...string)
+	// 开始运行连接池
+	Start()
+	// 分发消息
+	DispatchMessage(message interface{})
+}
+
+func NewConnectionPool() ConnectionPool {
+	pool := &watcherConnectionPool{
+		Locker:   &sync.Mutex{},
+		pool:     map[string]*syncConn{},
+		stopedCh: make(chan string, 100),
+	}
+	pool.Start()
+	return pool
+}
+
+type watcherConnectionPool struct {
+	sync.Locker
+	pool     map[string]*syncConn
+	stopedCh chan string
+}
+
+func (p *watcherConnectionPool) Join(conn *syncConn) {
+	p.Lock()
+	defer p.Unlock()
+	p.pool[conn.clientID] = conn
+}
+
+func (p *watcherConnectionPool) Remove(clients ...string) {
+	p.Lock()
+	defer p.Unlock()
+	for _, client := range clients {
+		delete(p.pool, client)
+	}
+}
+
+func (p *watcherConnectionPool) Start() {
+	go func() {
+		for {
+			clientId := <-p.stopedCh
+			p.Remove(clientId)
+		}
+	}()
+}
+
+func (p *watcherConnectionPool) DispatchMessage(message interface{}) {
+	unhealthy := []string{}
+	for clientID, conn := range p.pool {
+		err := conn.WriteJSON(message)
+		if err != nil {
+			unhealthy = append(unhealthy, clientID)
+		}
+	}
+	p.Remove(unhealthy...)
+}
+
+type syncConn struct {
+	sync.Locker
+	conn     *websocket.Conn
+	clientID string
+	pool     ConnectionPool
+}
+
+func wrapperSyncConn(conn *websocket.Conn, pool ConnectionPool) *syncConn {
+	clientID := uuid.NewString()
+	originHandler := conn.CloseHandler()
+	conn.SetCloseHandler(func(code int, message string) error {
+		pool.Remove(clientID)
+		return originHandler(code, message)
+	})
+	return &syncConn{
+		Locker:   &sync.Mutex{},
+		conn:     conn,
+		clientID: clientID,
+		pool:     pool,
+	}
+}
+
+func (syncConn *syncConn) WriteJSON(message interface{}) error {
+	syncConn.Lock()
+	defer syncConn.Unlock()
+	timeout := time.After(time.Second * 3)
+	errch := make(chan error, 1)
+	go func() {
+		errch <- syncConn.conn.WriteJSON(message)
+	}()
+	select {
+	case err := <-errch:
+		if err != nil {
+			syncConn.conn.Close()
+		}
+		return err
+	case <-timeout:
+		syncConn.conn.Close()
+		return fmt.Errorf("time out")
+	}
 }
