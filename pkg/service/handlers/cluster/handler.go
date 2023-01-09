@@ -32,13 +32,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"kubegems.io/kubegems/pkg/i18n"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/statistics"
@@ -242,7 +242,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
 				}
-				return gemsplugin.Bootstrap{Config: config}.Remove(ctx)
+				return pluginmanager.Bootstrap{Config: config}.Remove(ctx)
 			})
 		}); err != nil {
 			handlers.NotOK(c, err)
@@ -520,7 +520,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				splits = append(splits, "")
 			}
 			registry, repository := splits[0], splits[1]
-			return gemsplugin.Bootstrap{Config: config}.Install(ctx, gemsplugin.GlobalValues{
+			return pluginmanager.Bootstrap{Config: config}.Install(ctx, pluginmanager.GlobalValues{
 				ImageRegistry:   registry,
 				ImageRepository: repository,
 				ClusterName:     cluster.ClusterName,

@@ -14265,7 +14265,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "Data": {
-                                            "$ref": "#/definitions/gemsplugin.PluginVersion"
+                                            "$ref": "#/definitions/pluginmanager.PluginVersion"
                                         }
                                     }
                                 }
@@ -14312,7 +14312,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/gemsplugin.PluginVersion"
+                            "$ref": "#/definitions/pluginmanager.PluginVersion"
                         }
                     }
                 ],
@@ -26930,7 +26930,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "globalValues": {
-                    "$ref": "#/definitions/gemsplugin.GlobalValues"
+                    "$ref": "#/definitions/pluginmanager.GlobalValues"
                 },
                 "message": {
                     "type": "string"
@@ -27029,115 +27029,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "warning": {
-                    "type": "string"
-                }
-            }
-        },
-        "gemsplugin.GlobalValues": {
-            "type": "object",
-            "properties": {
-                "clusterName": {
-                    "type": "string"
-                },
-                "imageRegistry": {
-                    "type": "string"
-                },
-                "imageRepository": {
-                    "type": "string"
-                },
-                "kubegemsVersion": {
-                    "type": "string"
-                },
-                "runtime": {
-                    "type": "string"
-                },
-                "storageClass": {
-                    "type": "string"
-                }
-            }
-        },
-        "gemsplugin.PluginVersion": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "enabled": {
-                    "type": "boolean"
-                },
-                "files": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "healthy": {
-                    "type": "boolean"
-                },
-                "helathCheck": {
-                    "type": "string"
-                },
-                "installNamespace": {
-                    "type": "string"
-                },
-                "kind": {
-                    "type": "string"
-                },
-                "mainCategory": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "priority": {
-                    "type": "integer"
-                },
-                "repository": {
-                    "type": "string"
-                },
-                "required": {
-                    "type": "boolean"
-                },
-                "requirements": {
-                    "description": "dependecies requirements",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/gemsplugin.Requirement"
-                    }
-                },
-                "values": {
-                    "$ref": "#/definitions/v1beta1.Values"
-                },
-                "valuesFrom": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/v1beta1.ValuesFrom"
-                    }
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "gemsplugin.Requirement": {
-            "type": "object",
-            "properties": {
-                "expr": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "name": {
                     "type": "string"
                 }
             }
@@ -30907,6 +30798,115 @@ const docTemplate = `{
                     }
                 },
                 "value": {}
+            }
+        },
+        "pluginmanager.GlobalValues": {
+            "type": "object",
+            "properties": {
+                "clusterName": {
+                    "type": "string"
+                },
+                "imageRegistry": {
+                    "type": "string"
+                },
+                "imageRepository": {
+                    "type": "string"
+                },
+                "kubegemsVersion": {
+                    "type": "string"
+                },
+                "runtime": {
+                    "type": "string"
+                },
+                "storageClass": {
+                    "type": "string"
+                }
+            }
+        },
+        "pluginmanager.PluginVersion": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "files": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "healthy": {
+                    "type": "boolean"
+                },
+                "helathCheck": {
+                    "type": "string"
+                },
+                "installNamespace": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "mainCategory": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "repository": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "requirements": {
+                    "description": "dependecies requirements",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pluginmanager.Requirement"
+                    }
+                },
+                "values": {
+                    "$ref": "#/definitions/v1beta1.Values"
+                },
+                "valuesFrom": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1beta1.ValuesFrom"
+                    }
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "pluginmanager.Requirement": {
+            "type": "object",
+            "properties": {
+                "expr": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
             }
         },
         "prometheus.MetricGraph": {

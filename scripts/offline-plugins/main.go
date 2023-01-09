@@ -29,8 +29,8 @@ import (
 	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/bundle"
 	"kubegems.io/kubegems/pkg/installer/bundle/helm"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/installer/utils"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 )
 
 func main() {
@@ -53,21 +53,21 @@ func DownloadLatestCharts(ctx context.Context, repoaddr string, into string, kub
 
 	applier := bundle.NewDefaultApply(nil, nil, &bundle.Options{CacheDir: into})
 
-	pluginrepo := gemsplugin.Repository{Address: repoaddr}
+	pluginrepo := pluginmanager.Repository{Address: repoaddr}
 	if err := pluginrepo.RefreshRepoIndex(ctx); err != nil {
 		return err
 	}
 
-	kubegemsExample := gemsplugin.PluginVersion{Name: "kubegems", Version: kubegemsVersion}
+	kubegemsExample := pluginmanager.PluginVersion{Name: "kubegems", Version: kubegemsVersion}
 	for name, versions := range pluginrepo.Plugins {
 		// do not download kubegems charts,it exists locally.
 		if strings.HasPrefix(name, "kubegems") {
 			continue
 		}
-		var cacheVersion *gemsplugin.PluginVersion
+		var cacheVersion *pluginmanager.PluginVersion
 		// find latest version match kubegems
 		for _, item := range versions {
-			if err := gemsplugin.CheckDependecy(item.Requirements, kubegemsExample); err != nil {
+			if err := pluginmanager.CheckDependecy(item.Requirements, kubegemsExample); err != nil {
 				continue
 			} else {
 				cacheVersion = &item

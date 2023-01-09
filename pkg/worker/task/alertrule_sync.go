@@ -27,12 +27,12 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers/observability"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/gormdatatypes"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/workflow"
@@ -216,7 +216,7 @@ func (t *AlertRuleSyncTasker) SyncSystemAlertRule(ctx context.Context) error {
 		return errors.Wrap(err, "read system alert rule")
 	}
 	return t.cs.ExecuteInEachCluster(ctx, func(ctx context.Context, cli agents.Client) error {
-		pm := &gemsplugin.PluginManager{Client: cli}
+		pm := &pluginmanager.PluginManager{Client: cli}
 		plugin, err := pm.Get(ctx, "monitoring")
 		if err != nil {
 			log.Error(err, "get monitor plugin", "cluster", cli.Name())

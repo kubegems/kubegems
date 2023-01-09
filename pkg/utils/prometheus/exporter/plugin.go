@@ -22,8 +22,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 )
 
 type PluginCollector struct {
@@ -58,7 +58,7 @@ func (c *PluginCollector) Update(ch chan<- prometheus.Metric) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	pm := gemsplugin.PluginManager{Client: c.clus.GetClient()}
+	pm := pluginmanager.PluginManager{Client: c.clus.GetClient()}
 	allPlugins, err := pm.ListInstalled(ctx, true)
 	if err != nil {
 		log.Error(err, "get plugins failed")

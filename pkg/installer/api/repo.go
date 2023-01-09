@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
@@ -61,7 +61,7 @@ func (o *PluginsAPI) RepoGet(req *restful.Request, resp *restful.Response) {
 }
 
 func (o *PluginsAPI) RepoAdd(req *restful.Request, resp *restful.Response) {
-	repo := &gemsplugin.Repository{}
+	repo := &pluginmanager.Repository{}
 	if err := request.Body(req.Request, &repo); err != nil {
 		response.Error(resp, err)
 		return

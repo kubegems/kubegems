@@ -884,7 +884,7 @@ definitions:
         description: 判断是否存在installer，若存在即可加为控制集群
         type: boolean
       globalValues:
-        $ref: '#/definitions/gemsplugin.GlobalValues'
+        $ref: '#/definitions/pluginmanager.GlobalValues'
       message:
         type: string
       serverInfo:
@@ -952,78 +952,6 @@ definitions:
         description: 是否启用服务网格
         type: boolean
       warning:
-        type: string
-    type: object
-  gemsplugin.GlobalValues:
-    properties:
-      clusterName:
-        type: string
-      imageRegistry:
-        type: string
-      imageRepository:
-        type: string
-      kubegemsVersion:
-        type: string
-      runtime:
-        type: string
-      storageClass:
-        type: string
-    type: object
-  gemsplugin.PluginVersion:
-    properties:
-      category:
-        type: string
-      description:
-        type: string
-      enabled:
-        type: boolean
-      files:
-        additionalProperties:
-          type: string
-        type: object
-      healthy:
-        type: boolean
-      helathCheck:
-        type: string
-      installNamespace:
-        type: string
-      kind:
-        type: string
-      mainCategory:
-        type: string
-      message:
-        type: string
-      name:
-        type: string
-      namespace:
-        type: string
-      priority:
-        type: integer
-      repository:
-        type: string
-      required:
-        type: boolean
-      requirements:
-        description: dependecies requirements
-        items:
-          $ref: '#/definitions/gemsplugin.Requirement'
-        type: array
-      values:
-        $ref: '#/definitions/v1beta1.Values'
-      valuesFrom:
-        items:
-          $ref: '#/definitions/v1beta1.ValuesFrom'
-        type: array
-      version:
-        type: string
-    type: object
-  gemsplugin.Requirement:
-    properties:
-      expr:
-        type: string
-      message:
-        type: string
-      name:
         type: string
     type: object
   gin.H:
@@ -5075,6 +5003,78 @@ definitions:
           type: integer
         type: array
       value: {}
+    type: object
+  pluginmanager.GlobalValues:
+    properties:
+      clusterName:
+        type: string
+      imageRegistry:
+        type: string
+      imageRepository:
+        type: string
+      kubegemsVersion:
+        type: string
+      runtime:
+        type: string
+      storageClass:
+        type: string
+    type: object
+  pluginmanager.PluginVersion:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      enabled:
+        type: boolean
+      files:
+        additionalProperties:
+          type: string
+        type: object
+      healthy:
+        type: boolean
+      helathCheck:
+        type: string
+      installNamespace:
+        type: string
+      kind:
+        type: string
+      mainCategory:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      priority:
+        type: integer
+      repository:
+        type: string
+      required:
+        type: boolean
+      requirements:
+        description: dependecies requirements
+        items:
+          $ref: '#/definitions/pluginmanager.Requirement'
+        type: array
+      values:
+        $ref: '#/definitions/v1beta1.Values'
+      valuesFrom:
+        items:
+          $ref: '#/definitions/v1beta1.ValuesFrom'
+        type: array
+      version:
+        type: string
+    type: object
+  pluginmanager.Requirement:
+    properties:
+      expr:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
     type: object
   prometheus.MetricGraph:
     properties:
@@ -26861,7 +26861,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseStruct'
             - properties:
                 Data:
-                  $ref: '#/definitions/gemsplugin.PluginVersion'
+                  $ref: '#/definitions/pluginmanager.PluginVersion'
               type: object
       security:
       - JWT: []
@@ -26888,7 +26888,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/gemsplugin.PluginVersion'
+          $ref: '#/definitions/pluginmanager.PluginVersion'
       produces:
       - application/json
       responses:
