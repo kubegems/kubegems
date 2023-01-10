@@ -211,7 +211,7 @@ func checkPrometheusQueryResult(ctx context.Context, alertrule *models.AlertRule
 }
 
 func (t *AlertRuleSyncTasker) SyncSystemAlertRule(ctx context.Context) error {
-	bts, err := os.ReadFile("config/system-alert.yaml")
+	bts, err := os.ReadFile("config/system_alert.yaml")
 	if err != nil {
 		return errors.Wrap(err, "read system alert rule")
 	}

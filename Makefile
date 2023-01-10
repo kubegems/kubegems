@@ -82,9 +82,6 @@ generate-installer: helm-package
 	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
 
-generate-system-alert:
-	# go run scripts/generate-system-alert/main.go
-
 generate-i18n:
 	go run internal/cmd/i18n/main.go gen
 
@@ -137,7 +134,7 @@ build-files: ## Build around files
 	go run scripts/offline-plugins/main.go
 	cp -rf deploy/*.yaml ${BIN_DIR}/plugins/
 	mkdir -p ${BIN_DIR}/config
-	cp -rf config/promql_tpl.yaml ${BIN_DIR}/config/
+	cp config/promql_tpl.yaml config/system_alert.yaml ${BIN_DIR}/config/
 	cp -rf config/dashboards/ ${BIN_DIR}/config/dashboards/
 
 CHARTS = kubegems kubegems-local kubegems-installer kubegems-models
