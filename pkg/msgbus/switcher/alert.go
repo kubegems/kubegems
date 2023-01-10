@@ -89,17 +89,12 @@ type ResID struct {
 }
 
 // map 效率更高
-func GetAlertUsers(w *prometheus.WebhookAlert, pos database.AlertPosition, database *database.Database) *set.Set[uint] {
+func GetAlertUsers(pos database.AlertPosition, database *database.Database) *set.Set[uint] {
 	ret := set.NewSet[uint]()
-	switch w.CommonLabels["gems_alert_scope"] {
-	case prometheus.ScopeSystemAdmin:
+	if pos.Namespace == prometheus.GlobalAlertNamespace {
 		ret.Append(database.SystemAdmins()...) // 系统管理员
-	case prometheus.ScopeSystemUser:
-		ret.Append(database.SystemUsers()...) // 系统所有用户
-	default: // normal and null
-		// 环境用户
-		// 项目管理员
-		// 租户管理员
+	} else {
+		// 环境用户、项目管理员、租户管理员
 		ret.Append(database.EnvUsers(pos.EnvironmentID)...).
 			Append(database.ProjectAdmins(pos.ProjectID)...).
 			Append(database.TenantAdmins(pos.TenantID)...)

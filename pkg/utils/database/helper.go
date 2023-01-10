@@ -111,9 +111,9 @@ type AlertPosition struct {
 	From string // 告警来自哪里，monitor/logging
 }
 
-func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope, from string) (AlertPosition, error) {
+func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name string, isMonitor bool) (AlertPosition, error) {
 	ret := AlertPosition{}
-	if scope == "" || scope == prometheus.ScopeNormal {
+	if namespace != prometheus.GlobalAlertNamespace {
 		sql := `select environments.id as environment_id, environments.environment_name, environments.cluster_id, projects.id as project_id, projects.project_name, tenants.id as tenant_id, tenants.tenant_name
 		from environments left join clusters on environments.cluster_id = clusters.id
 			left join projects on environments.project_id = projects.id
@@ -125,8 +125,7 @@ func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope, from 
 		}
 
 		if ret.ClusterID == 0 || ret.EnvironmentID == 0 || ret.ProjectID == 0 || ret.TenantID == 0 {
-			err := fmt.Errorf("can't find such resource by cluster %s namesapce %s", cluster, namespace)
-			return ret, err
+			return ret, fmt.Errorf("can't find such resource by cluster %s namesapce %s", cluster, namespace)
 		}
 	} else {
 		sql := `select clusters.id as cluster_id from clusters where clusters.cluster_name = ?`
@@ -136,8 +135,7 @@ func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope, from 
 		}
 
 		if ret.ClusterID == 0 {
-			err := fmt.Errorf("can't find such resource by cluster %s", cluster)
-			return ret, err
+			return ret, fmt.Errorf("can't find such resource by cluster %s", cluster)
 		}
 	}
 
@@ -145,10 +143,10 @@ func (h *DatabaseHelper) GetAlertPosition(cluster, namespace, name, scope, from 
 	ret.Namespace = namespace
 	ret.AlertName = name
 
-	if from == "" {
+	if isMonitor {
 		ret.From = prometheus.AlertTypeMonitor
 	} else {
-		ret.From = from
+		ret.From = prometheus.AlertTypeLogging
 	}
 	return ret, nil
 }

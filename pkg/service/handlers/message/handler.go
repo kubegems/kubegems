@@ -25,7 +25,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
-	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type MessageRet []models.Message
@@ -160,7 +159,8 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 			labels := map[string]string{}
 			json.Unmarshal(alertmsg.AlertInfo.Labels, &labels)
 
-			pos, err := h.GetDataBase().GetAlertPosition(alertmsg.AlertInfo.ClusterName, alertmsg.AlertInfo.Namespace, alertmsg.AlertInfo.Name, labels[prometheus.AlertScopeLabel], labels[prometheus.AlertFromLabel])
+			_, isMonitor := labels["prometheus"]
+			pos, err := h.GetDataBase().GetAlertPosition(alertmsg.AlertInfo.ClusterName, alertmsg.AlertInfo.Namespace, alertmsg.AlertInfo.Name, isMonitor)
 			if err != nil {
 				handlers.NotOK(c, err)
 				return
