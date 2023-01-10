@@ -33,6 +33,8 @@ HELM_REPO_USERNAME?=kubegems
 HELM_REPO_PASSWORD?=
 CHARTMUSEUM_ADDR?=https://${HELM_REPO_USERNAME}:${HELM_REPO_PASSWORD}@charts.kubegems.io/kubegems
 
+KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io/kubegems
+
 ##@ All
 
 all: generate build container push helm-push## build all
@@ -77,7 +79,7 @@ generate-versions:
 generate-installer: helm-package
 	helm template --namespace kubegems-installer --include-crds \
 	--set global.kubegemsVersion=$(GIT_VERSION) \
-	kubegems-installer ${BIN_DIR}/plugins/charts.kubegems.io/kubegems-installer-${VERSION}.tgz \
+	kubegems-installer ${KUBEGEM_CHARTS_DIR}/kubegems-installer-${VERSION}.tgz \
 	| kubectl annotate -f -  --local  -oyaml \
 	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
@@ -143,7 +145,6 @@ helm-generate: readme-generator
 	readme-generator -v $(file)values.yaml -r $(file)README.md \
 	;)
 
-KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io/kubegems
 .PHONY: helm-package
 helm-package:
 	$(foreach file, $(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
