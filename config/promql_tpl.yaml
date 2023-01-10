@@ -1260,6 +1260,28 @@
       showName: Wiredtiger Cache Evicted Rate
       tenantID: null
       unit: ""
+    - description: Server status of network recceived
+      expr: irate(mongodb_ss_network_bytesIn[5m])
+      id: 321
+      labels:
+      - service
+      - namespace
+      name: ReceivedBytesV2
+      resourceID: 7
+      showName: ReceivedBytes v2
+      tenantID: null
+      unit: bytes/sec-B/s
+    - description: Server status of network sented
+      expr: rate(mongodb_ss_network_bytesOut[5m])
+      id: 322
+      labels:
+      - service
+      - namespace
+      name: SentBytesV2
+      resourceID: 7
+      showName: SentBytes v2
+      tenantID: null
+      unit: bytes/sec-B/s
     scopeID: 3
     showName: mongodb
   - id: 8
@@ -1927,7 +1949,7 @@
       tenantID: null
       unit: ""
     - description: ""
-      expr: topk(5, irate(redis_commands_total[1m]))
+      expr: topk(5, irate(redis_commands_total[5m]))
       id: 109
       labels:
       - service
@@ -2127,7 +2149,7 @@
       tenantID: null
       unit: ""
     - description: ""
-      expr: avg_over_time(java_lang_OperatingSystem_SystemCpuLoad{}[1m]) * 100
+      expr: avg_over_time(java_lang_OperatingSystem_SystemCpuLoad{}[5m]) * 100
       id: 181
       labels:
       - namespace
@@ -2138,7 +2160,7 @@
       tenantID: null
       unit: ""
     - description: ""
-      expr: avg_over_time(java_lang_OperatingSystem_ProcessCpuLoad{}[1m]) * 100
+      expr: avg_over_time(java_lang_OperatingSystem_ProcessCpuLoad{}[5m]) * 100
       id: 182
       labels:
       - namespace
@@ -2240,7 +2262,7 @@
       tenantID: null
       unit: bytes-B
     - description: ""
-      expr: increase(java_lang_GarbageCollector_CollectionCount{}[1m])
+      expr: increase(java_lang_GarbageCollector_CollectionCount{}[5m])
       id: 191
       labels:
       - namespace
@@ -2252,7 +2274,7 @@
       tenantID: null
       unit: ""
     - description: ""
-      expr: rate(java_lang_GarbageCollector_CollectionTime{}[1m])
+      expr: rate(java_lang_GarbageCollector_CollectionTime{}[5m])
       id: 192
       labels:
       - namespace
@@ -2519,7 +2541,7 @@
     name: plugin
     rules:
     - description: ""
-      expr: gems_server_plugin_status
+      expr: gems_agent_plugin_status
       id: 127
       labels:
       - type

@@ -300,7 +300,7 @@
     resource: cert
     rule: expirationRemainTime
     labelMatchers:
-      - type: "="
+      - type: "=~"
         name: namespace
         value: kubegems.*|istio-system|observability|kube-system|local-path-storage"
   for: 1h
@@ -319,7 +319,7 @@
     resource: cert
     rule: status
     labelMatchers:
-      - type: "="
+      - type: "=~"
         name: namespace
         value: kubegems.*|istio-system|observability|kube-system|local-path-storage"
       - type: "=~"

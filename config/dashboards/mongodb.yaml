@@ -41,36 +41,40 @@ graphs:
       unit: ""
     targetName: A
   unit: ""
-- name: Network Received
+- name: DB Size
   targets:
   - expr: ""
     promqlGenerator:
       resource: mongodb
-      rule: mongodbReceivedBytes
+      rule: mongodbIndexSize
       scope: middlewires
-      unit: bytes/sec-B/s
-    targetName: A
-  unit: bytes/sec-B/s
-- name: Network Sent
+      unit: bytes-B
+    targetName: index size
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbOplogSize
+      scope: middlewires
+      unit: bytes-B
+    targetName: oplog size
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbDataSize
+      scope: middlewires
+      unit: bytes-B
+    targetName: db size
+  unit: bytes-B
+- name: Object Total
   targets:
   - expr: ""
     promqlGenerator:
       resource: mongodb
-      rule: mongodbSentBytes
+      rule: mongodbObjects
       scope: middlewires
-      unit: bytes/sec-B/s
-    targetName: A
-  unit: bytes/sec-B/s
-- name: Wiredtiger Cache Rate
-  targets:
-  - expr: ""
-    promqlGenerator:
-      resource: mongodb
-      rule: mongodbWiredtigerCacheRate
-      scope: middlewires
-      unit: percent-0.0-1.0
-    targetName: A
-  unit: percent-0.0-1.0
+      unit: ""
+    targetName: Object Total
+  unit: ""
 - name: Response Time
   targets:
   - expr: ""
@@ -81,16 +85,70 @@ graphs:
       unit: duration-us
     targetName: A
   unit: duration-us
-- name: Database Size
+- name: Network Received
   targets:
   - expr: ""
     promqlGenerator:
       resource: mongodb
-      rule: mongodbDataSize
+      rule: mongodbReceivedBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: ReceivedBytesV2
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: mongodbReceivedBytesV2
+  unit: bytes/sec-B/s
+- name: Network Sent
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbSentBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: SentBytesV2
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: mongodbSentBytesV2
+  unit: bytes/sec-B/s
+- name: Wiredtiger Cache
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbCacheBytes
       scope: middlewires
       unit: bytes-B
-    targetName: A
+    targetName: Wiredtiger Cache
   unit: bytes-B
+- name: Wiredtiger Cache Rate
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbWiredtigerCacheRate
+      scope: middlewires
+      unit: percent-0.0-1.0
+    targetName: A
+  unit: percent-0.0-1.0
+- name: Memory Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbMemory
+      scope: middlewires
+      unit: bytes-MB
+    targetName: Memory Usage
+  unit: bytes-MB
 name: MongoDB
 refresh: 30s
 start: now-30m
