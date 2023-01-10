@@ -36,7 +36,6 @@ import (
 	alerttypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	promlabels "github.com/prometheus/prometheus/pkg/labels"
-	"github.com/prometheus/prometheus/promql/parser"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
@@ -1229,9 +1228,6 @@ func GenerateExpr(alertrule *models.AlertRule) (string, error) {
 				q.AddLabelMatchers(m.ToPromqlLabelMatcher())
 			}
 			generatedExpr = q.String()
-		}
-		if _, err := parser.ParseExpr(generatedExpr); err != nil {
-			return "", errors.Wrapf(err, "parse expr: %s", generatedExpr)
 		}
 	case prometheus.AlertTypeLogging:
 		if alertrule.LogqlGenerator != nil {
