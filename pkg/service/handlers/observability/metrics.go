@@ -539,11 +539,27 @@ func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "update")
 	module := i18n.Sprintf(context.TODO(), "monitoring query template")
 	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().WithContext(c.Request.Context()).Save(&req).Error; err != nil {
+
+	alertrules := []*models.AlertRule{}
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Preload("Resource.Scope").Select("name", "show_name", "description", "expr", "unit", "labels").Updates(req).Error; err != nil {
+			return err
+		}
+		return tx.Preload("Receivers.AlertChannel").
+			Find(&alertrules,
+				`promql_generator -> "$.scope" = ? and promql_generator -> "$.resource" = ? and promql_generator -> "$.rule" = ?`,
+				req.Resource.Scope.Name,
+				req.Resource.Name,
+				req.Name,
+			).Error
+	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, "ok")
+
+	status, _ := h.syncAlertRulesWithTimeout(ctx, alertrules, 5*time.Second)
+	handlers.OK(c, status)
 }
 
 // DeleteRules 删除promql模板三级目录rule
@@ -582,14 +598,8 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 			return err
 		}
 		for _, dash := range dashborads {
-			for _, graph := range dash.Graphs {
-				for _, target := range graph.Targets {
-					if target.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
-						target.PromqlGenerator.Resource == rule.Resource.Name &&
-						target.PromqlGenerator.Rule == rule.Name {
-						return fmt.Errorf("此模板正在被环境: %s 中的监控大盘: %s 使用", dash.Environment.EnvironmentName, dash.Name)
-					}
-				}
+			if dash.Graphs.IsUsingTpl(rule.Resource.Scope.Name, rule.Resource.Name, rule.Name) {
+				return fmt.Errorf("此模板正在被环境: %s 中的监控大盘: %s 使用", dash.Environment.EnvironmentName, dash.Name)
 			}
 		}
 
@@ -598,15 +608,26 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 			return err
 		}
 		for _, tpl := range tpls {
-			for _, graph := range tpl.Graphs {
-				for _, target := range graph.Targets {
-					if target.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
-						target.PromqlGenerator.Resource == rule.Resource.Name &&
-						target.PromqlGenerator.Rule == rule.Name {
-						return fmt.Errorf("此模板正在被监控大盘模板: %s 使用", tpl.Name)
-					}
-				}
+			if tpl.Graphs.IsUsingTpl(rule.Resource.Scope.Name, rule.Resource.Name, rule.Name) {
+				return fmt.Errorf("此模板正在被监控大盘模板: %s 使用", tpl.Name)
 			}
+		}
+
+		alertrules := []*models.AlertRule{}
+		if err := tx.Find(&alertrules,
+			`promql_generator -> "$.scope" = ? and promql_generator -> "$.resource" = ? and promql_generator -> "$.rule" = ?`,
+			rule.Resource.Scope.Name,
+			rule.Resource.Name,
+			rule.Name,
+		).Error; err != nil {
+			return err
+		}
+		if len(alertrules) > 0 {
+			tmp := make([]string, len(alertrules))
+			for i, v := range alertrules {
+				tmp[i] = v.FullName()
+			}
+			return fmt.Errorf("此模板正在被告警规则: [%s] 使用", strings.Join(tmp, ","))
 		}
 		return tx.Delete(rule).Error
 	}); err != nil {

@@ -48,3 +48,17 @@ type MetricGraph struct {
 	Targets []Target `json:"targets"`
 	Unit    string   `json:"unit"`
 }
+
+func (graphs MonitorGraphs) IsUsingTpl(scope, resource, rule string) bool {
+	for _, graph := range graphs {
+		for _, t := range graph.Targets {
+			if t.PromqlGenerator != nil &&
+				t.PromqlGenerator.Scope == scope &&
+				t.PromqlGenerator.Resource == resource &&
+				t.PromqlGenerator.Rule == rule {
+				return true
+			}
+		}
+	}
+	return false
+}

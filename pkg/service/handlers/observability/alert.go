@@ -25,6 +25,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -1795,4 +1796,29 @@ func (p *AlertRuleProcessor) GetK8sAlertCfg(ctx context.Context) (map[string]K8s
 	}
 
 	return ret, nil
+}
+
+func (h *ObservabilityHandler) syncAlertRulesWithTimeout(ctx context.Context, alertrules []*models.AlertRule, timeout time.Duration) (status map[string]bool, isTimeout bool) {
+	// sync alert rules
+	status = map[string]bool{}
+	wg := &sync.WaitGroup{}
+	for _, v := range alertrules {
+		status[v.FullName()] = false
+		wg.Add(1)
+		go func(alertrule *models.AlertRule) {
+			defer wg.Done()
+			if err := h.Execute(ctx, alertrule.Cluster, func(ctx context.Context, cli agents.Client) error {
+				return NewAlertRuleProcessor(cli, h.GetDataBase()).SyncAlertRule(ctx, alertrule)
+			}); err != nil {
+				log.Warnf("%s alert rule: %s sync failed", alertrule.AlertType, alertrule.FullName())
+				return
+			}
+			status[alertrule.FullName()] = true
+		}(v)
+	}
+	isTimeout = utils.WaitGroupWithTimeout(wg, timeout)
+	if isTimeout {
+		log.Warnf("Timed out waiting for wait group")
+	}
+	return
 }

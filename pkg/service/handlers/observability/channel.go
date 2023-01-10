@@ -15,20 +15,15 @@
 package observability
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/utils"
-	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
@@ -200,27 +195,7 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 		return
 	}
 
-	// sync alert rules
-	status := map[string]bool{}
-	wg := &sync.WaitGroup{}
-	for _, v := range alertrules {
-		status[v.FullName()] = false
-		wg.Add(1)
-		go func(alertrule *models.AlertRule) {
-			defer wg.Done()
-			if err := h.Execute(ctx, alertrule.Cluster, func(ctx context.Context, cli agents.Client) error {
-				return NewAlertRuleProcessor(cli, h.GetDataBase()).SyncAlertRule(ctx, alertrule)
-			}); err != nil {
-				log.Warnf("%s alert rule: %s sync failed", alertrule.AlertType, alertrule.FullName())
-				return
-			}
-			status[alertrule.FullName()] = true
-		}(v)
-	}
-	if utils.WaitGroupWithTimeout(wg, 5*time.Second) {
-		log.Warnf("Timed out waiting for wait group")
-	}
-
+	status, _ := h.syncAlertRulesWithTimeout(ctx, alertrules, 5*time.Second)
 	handlers.OK(c, status)
 }
 
@@ -264,7 +239,7 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 		for i, v := range receivers {
 			tmp[i] = v.AlertRule.FullName()
 		}
-		handlers.NotOK(c, fmt.Errorf("该告警渠道正在被告警规则: %s 使用", strings.Join(tmp, " ")))
+		handlers.NotOK(c, fmt.Errorf("该告警渠道正在被告警规则: [%s] 使用", strings.Join(tmp, ",")))
 		return
 	}
 	if err := h.GetDB().WithContext(ctx).Delete(ch).Error; err != nil {
