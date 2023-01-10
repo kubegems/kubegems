@@ -39,7 +39,7 @@ func (p *PluginsAPI) List(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
 	cli, err := p.agents.ClientOfManager(ctx)
 	if err != nil {
-		response.Error(resp, err)
+		response.OK(resp, []PluginsStatus{})
 		return
 	}
 
