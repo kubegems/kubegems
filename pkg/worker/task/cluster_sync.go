@@ -29,12 +29,28 @@ type ClusterSyncTasker struct {
 }
 
 func (t *ClusterSyncTasker) Sync(ctx context.Context) error {
+	clusters := []*models.Cluster{}
+	if err := t.DB.DB().Find(&clusters).Error; err != nil {
+		return err
+	}
 	return t.cs.ExecuteInEachCluster(context.TODO(), func(ctx context.Context, cli agents.Client) error {
-		return t.DB.DB().Model(&models.Cluster{}).Where("cluster_name = ?", cli.Name()).
-			Updates(map[string]interface{}{
-				"version":               cli.APIServerVersion(),
-				"client_cert_expire_at": cli.ClientCertExpireAt(),
-			}).Error
+		for _, v := range clusters {
+			if v.ClusterName == cli.Name() {
+				version := cli.APIServerVersion()
+				exp := cli.ClientCertExpireAt()
+				if v.Version != version {
+					if err := t.DB.DB().Model(v).Update("version", version).Error; err != nil {
+						return err
+					}
+				}
+				if !v.ClientCertExpireAt.Equal(*exp) {
+					if err := t.DB.DB().Model(v).Update("client_cert_expire_at", exp).Error; err != nil {
+						return err
+					}
+				}
+			}
+		}
+		return nil
 	})
 }
 
