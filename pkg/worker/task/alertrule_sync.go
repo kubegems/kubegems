@@ -154,7 +154,7 @@ func (t *AlertRuleSyncTasker) CheckAlertRuleConfig(ctx context.Context) error {
 		eg.Go(func() error {
 			err := checkK8sAlertCfg(alertrule, &allK8sAlertCfg)
 			if err == nil && alertrule.AlertType == prometheus.AlertTypeMonitor {
-				err = checkPrometheusQueryResult(ctx, alertrule, t.cs)
+				err = t.checkExpr(ctx, alertrule)
 			}
 			newStatus := alertCfgStatus(err)
 			if !cmp.Equal(alertrule.K8sResourceStatus, newStatus) {
@@ -190,8 +190,24 @@ func checkK8sAlertCfg(alertrule *models.AlertRule, k8sAlertCfgs *sync.Map) error
 	return nil
 }
 
-func checkPrometheusQueryResult(ctx context.Context, alertrule *models.AlertRule, cs *agents.ClientSet) error {
-	cli, err := cs.ClientOf(ctx, alertrule.Cluster)
+func (t *AlertRuleSyncTasker) checkExpr(ctx context.Context, alertrule *models.AlertRule) error {
+	// check expr
+	if alertrule.PromqlGenerator != nil {
+		tpl, err := t.DB.FindPromqlTpl(alertrule.PromqlGenerator.Scope, alertrule.PromqlGenerator.Resource, alertrule.PromqlGenerator.Rule)
+		if err != nil {
+			return err
+		}
+		alertrule.PromqlGenerator.Tpl = tpl
+	}
+	generatedExpr, err := observability.GenerateExpr(alertrule)
+	if err != nil {
+		return err
+	}
+	if generatedExpr != alertrule.Expr {
+		return errors.Errorf("generated expr:[%s] not equal to expr now: [%s]", generatedExpr, alertrule.Expr)
+	}
+
+	cli, err := t.cs.ClientOf(ctx, alertrule.Cluster)
 	if err != nil {
 		return err
 	}
@@ -199,9 +215,12 @@ func checkPrometheusQueryResult(ctx context.Context, alertrule *models.AlertRule
 	if err != nil {
 		return err
 	}
+	// check result empty
 	if vector.Len() == 0 {
 		return errors.Errorf("query prometheus result is empty")
 	}
+
+	// check label namespace
 	for _, v := range vector {
 		if alertrule.Namespace != prometheus.GlobalAlertNamespace && v.Metric["namespace"] == "" {
 			return errors.Errorf("query prometheus result should contains label [namespace]")

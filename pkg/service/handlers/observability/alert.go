@@ -1139,9 +1139,14 @@ func (p *AlertRuleProcessor) MutateAlertRule(ctx context.Context, alertrule *mod
 		}
 		alertrule.Message = msg
 	}
-	if err := setExpr(alertrule); err != nil {
+
+	// set generatedExpr
+	generatedExpr, err := GenerateExpr(alertrule)
+	if err != nil {
 		return err
 	}
+	alertrule.Expr = generatedExpr
+
 	if err := SetReceivers(alertrule, p.db.DB().WithContext(ctx)); err != nil {
 		return err
 	}
@@ -1204,13 +1209,14 @@ func genarateMessage(alertrule *models.AlertRule) (string, error) {
 	return ret, nil
 }
 
-func setExpr(alertrule *models.AlertRule) error {
+func GenerateExpr(alertrule *models.AlertRule) (string, error) {
+	var generatedExpr string
 	switch alertrule.AlertType {
 	case prometheus.AlertTypeMonitor:
 		if alertrule.PromqlGenerator != nil {
 			q, err := promql.New(alertrule.PromqlGenerator.Tpl.Expr)
 			if err != nil {
-				return err
+				return "", err
 			}
 			if alertrule.Namespace != prometheus.GlobalAlertNamespace {
 				q.AddLabelMatchers(&promlabels.Matcher{
@@ -1222,25 +1228,25 @@ func setExpr(alertrule *models.AlertRule) error {
 			for _, m := range alertrule.PromqlGenerator.LabelMatchers {
 				q.AddLabelMatchers(m.ToPromqlLabelMatcher())
 			}
-			alertrule.Expr = q.String()
+			generatedExpr = q.String()
 		}
-		if _, err := parser.ParseExpr(alertrule.Expr); err != nil {
-			return errors.Wrapf(err, "parse expr: %s", alertrule.Expr)
+		if _, err := parser.ParseExpr(generatedExpr); err != nil {
+			return "", errors.Wrapf(err, "parse expr: %s", generatedExpr)
 		}
 	case prometheus.AlertTypeLogging:
 		if alertrule.LogqlGenerator != nil {
 			dur, err := model.ParseDuration(alertrule.LogqlGenerator.Duration)
 			if err != nil {
-				return errors.Wrapf(err, "duration %s not valid", alertrule.LogqlGenerator.Duration)
+				return "", errors.Wrapf(err, "duration %s not valid", alertrule.LogqlGenerator.Duration)
 			}
 			if time.Duration(dur).Minutes() > 10 {
-				return errors.New("日志模板时长不能超过10m")
+				return "", errors.New("日志模板时长不能超过10m")
 			}
 			if _, err := regexp.Compile(alertrule.LogqlGenerator.Match); err != nil {
-				return errors.Wrapf(err, "match %s not valid", alertrule.LogqlGenerator.Match)
+				return "", errors.Wrapf(err, "match %s not valid", alertrule.LogqlGenerator.Match)
 			}
 			if len(alertrule.LogqlGenerator.LabelMatchers) == 0 {
-				return fmt.Errorf("labelMatchers can't be null")
+				return "", fmt.Errorf("labelMatchers can't be null")
 			}
 
 			labelvalues := []string{}
@@ -1249,7 +1255,7 @@ func setExpr(alertrule *models.AlertRule) error {
 			}
 			sort.Strings(labelvalues)
 			labelvalues = append(labelvalues, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace))
-			alertrule.Expr = fmt.Sprintf(
+			generatedExpr = fmt.Sprintf(
 				"sum(count_over_time({%s} |~ `%s` [%s]))without(fluentd_thread)",
 				strings.Join(labelvalues, ", "),
 				alertrule.LogqlGenerator.Match,
@@ -1257,19 +1263,24 @@ func setExpr(alertrule *models.AlertRule) error {
 			)
 		}
 	}
-	if alertrule.Expr == "" {
-		return errors.New("empty expr")
+
+	if generatedExpr == "" {
+		generatedExpr = alertrule.Expr
 	}
-	_, _, _, hasOp := prometheus.SplitQueryExpr(alertrule.Expr)
+	if generatedExpr == "" {
+		return "", errors.New("empty expr")
+	}
+	_, _, _, hasOp := prometheus.SplitQueryExpr(generatedExpr)
 	if hasOp {
-		return fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
+		return "", fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
 	}
 	if alertrule.Namespace != prometheus.GlobalAlertNamespace {
-		if !strings.Contains(alertrule.Expr, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace)) {
-			return fmt.Errorf(`query expr %[1]s must contains namespace %[2]s, eg: {namespace="%[2]s"}`, alertrule.Expr, alertrule.Namespace)
+		if !strings.Contains(generatedExpr, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace)) {
+			return "", fmt.Errorf(`query expr %[1]s must contains namespace %[2]s, eg: {namespace="%[2]s"}`, generatedExpr, alertrule.Namespace)
 		}
 	}
-	return nil
+
+	return generatedExpr, nil
 }
 
 func SetReceivers(alertrule *models.AlertRule, db *gorm.DB) error {
