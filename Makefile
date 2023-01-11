@@ -58,7 +58,7 @@ help: ## Display this help.
 generate: generate-i18n generate-schema generate-proto generate-apis generate-license generate-versions generate-installer ## Generate all
 
 generate-schema:
-	helm-schema deploy/plugins/kubegems-*
+	helm-schema deploy/plugins/kubegems*
 
 generate-apis:
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds

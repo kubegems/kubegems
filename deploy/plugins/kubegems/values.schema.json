@@ -63,7 +63,7 @@
                 "operator": "not",
                 "conditions": [
                   {
-                    "path": "dashboard.service.type",
+                    "path": "api.service.type",
                     "value": "NodePort"
                   }
                 ]
@@ -125,8 +125,8 @@
               "properties": {
                 "http": {
                   "type": [
-                    "string",
-                    "integer"
+                    "integer",
+                    "string"
                   ],
                   "title": "HTTP NodePort 端口号",
                   "maximum": 65535,

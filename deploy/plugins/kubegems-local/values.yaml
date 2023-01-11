@@ -82,7 +82,7 @@ agent:
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
     # @title 拉取策略
-    # @schema enum=Alway,IfNotPresent,None
+    # @schema enum=Always,IfNotPresent,None
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.

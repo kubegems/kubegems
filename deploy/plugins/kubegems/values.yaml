@@ -922,7 +922,7 @@ api:
     ## NOTE: choose port between <30000-32767>
     ##
     # @title NodePort 端口配置
-    # @hidden dashboard.service.type!=NodePort
+    # @hidden api.service.type!=NodePort
     nodePorts:
       # @title HTTP NodePort 端口号
       # @schema type=integer;min=0;max=65535
