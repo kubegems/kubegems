@@ -255,8 +255,8 @@ func (m *PluginManager) ListPlugins(ctx context.Context) (map[string]Plugin, err
 
 func FindUpgradeable(availables []PluginVersion, installed PluginVersion, allinstall map[string]PluginVersion) *PluginVersion {
 	for _, available := range availables {
-		if !SemVersionBiggerThan(available.Version, installed.Version) {
-			continue
+		if SemVersionBiggerThan(available.Version, installed.Version) {
+			return &available
 		}
 	}
 	return nil
