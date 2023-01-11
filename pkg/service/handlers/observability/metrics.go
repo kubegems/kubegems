@@ -531,27 +531,31 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 // @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [put]
 // @Security    JWT
 func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
-	req, err := h.getRuleReq(c)
+	newRule, err := h.getRuleReq(c)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	action := i18n.Sprintf(context.TODO(), "update")
 	module := i18n.Sprintf(context.TODO(), "monitoring query template")
-	h.SetAuditData(c, action, module, req.Name)
+	h.SetAuditData(c, action, module, newRule.Name)
 
 	alertrules := []*models.AlertRule{}
 	ctx := c.Request.Context()
 	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Preload("Resource.Scope").Select("name", "show_name", "description", "expr", "unit", "labels").Updates(req).Error; err != nil {
+		oldRule := models.PromqlTplRule{}
+		if err := tx.Preload("Resource.Scope").First(&oldRule, "id = ?", c.Param("rule_id")).Error; err != nil {
+			return err
+		}
+		if err := tx.Select("name", "show_name", "description", "expr", "unit", "labels").Updates(newRule).Error; err != nil {
 			return err
 		}
 		return tx.Preload("Receivers.AlertChannel").
 			Find(&alertrules,
 				`promql_generator -> "$.scope" = ? and promql_generator -> "$.resource" = ? and promql_generator -> "$.rule" = ?`,
-				req.Resource.Scope.Name,
-				req.Resource.Name,
-				req.Name,
+				oldRule.Resource.Scope.Name,
+				oldRule.Resource.Name,
+				oldRule.Name,
 			).Error
 	}); err != nil {
 		handlers.NotOK(c, err)

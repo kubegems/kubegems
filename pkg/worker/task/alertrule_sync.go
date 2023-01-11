@@ -266,23 +266,31 @@ func (t *AlertRuleSyncTasker) SyncSystemAlertRule(ctx context.Context) error {
 	})
 }
 
-func createOrUpdateSysAlertRule(ctx context.Context, p *observability.AlertRuleProcessor, v *models.AlertRule) (bool, error) {
-	if err := p.DBWithCtx(ctx).Preload("Receivers.AlertChannel").First(v, "cluster = ? and namespace = ? and name = ?", v.Cluster, v.Namespace, v.Name).Error; err != nil {
+func createOrUpdateSysAlertRule(ctx context.Context, p *observability.AlertRuleProcessor, sysrule *models.AlertRule) (bool, error) {
+	dbrule := &models.AlertRule{}
+	if err := p.DBWithCtx(ctx).Preload("Receivers.AlertChannel").First(dbrule, "cluster = ? and namespace = ? and name = ?", sysrule.Cluster, sysrule.Namespace, sysrule.Name).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			if err := p.MutateAlertRule(ctx, v); err != nil {
+			if err := p.MutateAlertRule(ctx, sysrule); err != nil {
 				return false, err
 			}
-			return true, p.CreateAlertRule(ctx, v)
+			return true, p.CreateAlertRule(ctx, sysrule)
 		} else {
-			return false, errors.Wrapf(err, "get alertrule: %s", v.FullName())
+			return false, errors.Wrapf(err, "get alertrule: %s", sysrule.FullName())
 		}
 	}
-	if v.K8sResourceStatus != nil && v.K8sResourceStatus["status"] != "ok" {
+	if dbrule.K8sResourceStatus != nil && dbrule.K8sResourceStatus["status"] != "ok" {
 		// only update when error
-		if err := p.MutateAlertRule(ctx, v); err != nil {
+		if err := p.MutateAlertRule(ctx, sysrule); err != nil {
 			return false, err
 		}
-		return true, p.UpdateAlertRule(ctx, v)
+		dbrule.AlertLevels = sysrule.AlertLevels
+		dbrule.Expr = sysrule.Expr
+		dbrule.For = sysrule.For
+		dbrule.InhibitLabels = sysrule.InhibitLabels
+		dbrule.LogqlGenerator = sysrule.LogqlGenerator
+		dbrule.PromqlGenerator = sysrule.PromqlGenerator
+		dbrule.Message = sysrule.Message
+		return true, p.UpdateAlertRule(ctx, dbrule)
 	}
 	return false, nil
 }
