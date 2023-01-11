@@ -14,7 +14,6 @@
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubegems)](https://artifacthub.io/packages/search?repo=kubegems)
 ![license](https://img.shields.io/github/license/kubegems/kubegems)
 
-
 <h2>
   <a href="https://kubegems.io/">Website</a>
   <span> • </span>
@@ -29,14 +28,13 @@
   <a href="https://kubegems.slack.com">Slack</a>
 </h2>
 
-🇨🇳 Chinese(Simplified)  🇭🇰 Chinese(Traditional)  🇺🇸 English  🇯🇵 Japanese 
+🇨🇳 Chinese(Simplified) 🇭🇰 Chinese(Traditional) 🇺🇸 English 🇯🇵 Japanese
 
 ## Introduction
 
 > English | [中文](README_zh.md)
 
 [KubeGems](https://kubegems.io) is an open source, enterprise-class multi-tenant container cloud platform. Built around a cloud-native community, and kubegems provides access to multiple kubernetes clusters with rich component management and resource cost analysis capabilities to help enterprises quickly build and build a localized, powerful and low-cost cloud management platform.
-
 
 ## Highlights
 
@@ -108,7 +106,7 @@ Kubegems follows the best practices of cloud-native applications and delivers th
 
 You can visit our [KubeGems Online Demo](https://demo.kubegems.io)
 
->account: `admin`    password: `demo!@#admin`
+> account: `admin` password: `demo!@#admin`
 
 ## Getting started
 
@@ -126,7 +124,7 @@ You can Install your k8s cluster using any of the following methods, supported k
 Choose a kubegems version from [Kubegems Release](https://github.com/kubegems/kubegems/tags):
 
 ```sh
-export KUBEGEMS_VERSION=v1.22.2  # change to kubegems version
+export KUBEGEMS_VERSION=<TAG_NAME>  # change to kubegems version
 ```
 
 When your k8s cluster is ready, next you can install kubegems insatller operator on your cluster.
@@ -166,6 +164,7 @@ More information refer to [CONTRIBUTING.md](https://github.com/kubegems/kubegems
 ### Thanks to the contributors of KubeGems !
 
 [//]: contributor-faces
+
 <a href="https://github.com/pepesi"><img src="https://avatars.githubusercontent.com/u/12043478?v=4" title="pepesi" width="80" height="80"></a>
 <a href="https://github.com/chenshunliang"><img src="https://avatars.githubusercontent.com/u/6768455?v=4" title="chenshunliang" width="80" height="80"></a>
 <a href="https://github.com/cnfatal"><img src="https://avatars.githubusercontent.com/u/15731850?v=4" title="cnfatal" width="80" height="80"></a>
@@ -178,4 +177,3 @@ More information refer to [CONTRIBUTING.md](https://github.com/kubegems/kubegems
 <a href="https://github.com/itxx00"><img src="https://avatars.githubusercontent.com/u/1866789?v=4" title="itxx00" width="80" height="80"></a>
 <a href="https://github.com/VioZhang"><img src="https://avatars.githubusercontent.com/u/41519383?v=4" title="VioZhang" width="80" height="80"></a>
 <a href="https://github.com/liutao-east"><img src="https://avatars.githubusercontent.com/u/20122705?v=4" title="liutao-east" width="80" height="80"></a>
-
