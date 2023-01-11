@@ -76,7 +76,7 @@ func NewDefaultOptions() *Options {
 		ProbeAddr:            ":8081",
 		EnableLeaderElection: false,
 		Enablewebhook:        true,
-		Repository:           "docker.io/kubegems/ingress-nginx-operator",
+		Repository:           "docker.io/kubegems/ingress-nginx-controller",
 	}
 }
 
