@@ -163,10 +163,10 @@ dashboard:
   resources:
     limits:
       cpu: "1"
-      memory: 512Mi
+      memory: 1Gi
     requests:
-      cpu: 500
-      memory: 128Mi
+      cpu: "500m"
+      memory: 512Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param dashboard.podSecurityContext.enabled Enabled dashboard pods' Security Context
@@ -749,8 +749,8 @@ api:
       cpu: "1"
       memory: 1Gi
     requests:
-      cpu: 500
-      memory: 128Mi
+      cpu: 500m
+      memory: 512Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param api.podSecurityContext.enabled Enabled API pods' Security Context
@@ -1142,8 +1142,8 @@ msgbus:
       cpu: "1"
       memory: 1Gi
     requests:
-      cpu: 500
-      memory: 128Mi
+      cpu: 500m
+      memory: 512Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param msgbus.podSecurityContext.enabled Enabled msgbus pods' Security Context
@@ -1514,8 +1514,8 @@ worker:
       cpu: "1"
       memory: 1Gi
     requests:
-      cpu: 500
-      memory: 128Mi
+      cpu: 500m
+      memory: 512Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param worker.podSecurityContext.enabled Enabled worker pods' Security Context

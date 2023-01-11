@@ -161,8 +161,12 @@ agent:
   ## @param agent.resources.requests The requested resources for the agent containers
   ##
   resources:
-    limits: {}
-    requests: {}
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param agent.podSecurityContext.enabled Enabled agent pods' Security Context
