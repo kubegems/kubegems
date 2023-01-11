@@ -16,7 +16,7 @@
     },
     "store": {
       "type": "object",
-      "title": "Store 配置",
+      "title": "模型商店配置",
       "properties": {
         "enabled": {
           "type": "boolean",
@@ -34,7 +34,7 @@
     },
     "sync": {
       "type": "object",
-      "title": "Sync 配置",
+      "title": "模型同步配置",
       "properties": {
         "enabled": {
           "type": "boolean",

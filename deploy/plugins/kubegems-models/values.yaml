@@ -403,7 +403,7 @@ controller:
 
 ## store configuration
 ##
-# @title Store 配置
+# @title 模型商店配置
 store:
   ## @param store.enabled enabled model store api
   # @title 启用
@@ -696,7 +696,7 @@ store:
 
 ## sync configuration
 ##
-# @title Sync 配置
+# @title 模型同步配置
 sync:
   ## @param sync.enabled enabled model sync
   # @title 启用
