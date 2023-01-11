@@ -206,12 +206,12 @@
                 "operator": "or",
                 "conditions": [
                   {
-                    "path": "hub.tls.enabled",
-                    "value": false
-                  },
-                  {
                     "path": "hub.tls.useCertManager",
                     "value": true
+                  },
+                  {
+                    "path": "hub.tls.enabled",
+                    "value": false
                   }
                 ]
               }
