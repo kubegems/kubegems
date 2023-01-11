@@ -32,6 +32,12 @@ kubectl patch plugins.plugins.kubegems.io -n kubegems-installer opentelemetry --
 kubectl patch plugins.plugins.kubegems.io -n observability opentelemetry-collector --type json -p '[{"op": "remove", "path": "/spec/values/config/exporters/prometheusremotewrite"}]'
 ```
 
+## Eventer plugin
+1. upgrate eventer plugin to 2.1.5
+```
+kubectl patch plugins.plugins.kubegems.io -n kubegems-installer eventer --type merge -p '{"spec":{"version":"2.1.5"}}'
+```
+
 ## Run script
 
 ### Run on manager cluster:
