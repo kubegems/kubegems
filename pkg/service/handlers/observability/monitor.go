@@ -22,7 +22,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/go-version"
-	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -383,7 +382,7 @@ func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
 		module := i18n.Sprintf(ctx, "monitor alert rule")
 		h.SetAuditData(c, action, module, req.Name)
 
-		return p.createAlertRule(ctx, req)
+		return p.CreateAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -432,16 +431,7 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 		module := i18n.Sprintf(ctx, "monitor alert rule")
 		h.SetAuditData(c, action, module, req.Name)
 
-		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
-			if err := updateReceiversInDB(req, tx); err != nil {
-				return errors.Wrap(err, "update receivers")
-			}
-			if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "promql_generator").
-				Updates(req).Error; err != nil {
-				return err
-			}
-			return p.syncMonitorAlertRule(ctx, req)
-		})
+		return p.UpdateAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

@@ -253,30 +253,38 @@ func (t *AlertRuleSyncTasker) SyncSystemAlertRule(ctx context.Context) error {
 		p := observability.NewAlertRuleProcessor(cli, t.DB)
 		for _, v := range sysRules {
 			v.Cluster = cli.Name()
-			if err := p.MutateAlertRule(ctx, v); err != nil {
-				return errors.Wrapf(err, "MutateAlertRule: %s", v.FullName())
-			}
-			if err := t.DB.DB().Preload("Receivers.AlertChannel").First(v, "cluster = ? and namespace = ? and name = ?", v.Cluster, v.Namespace, v.Name).Error; err != nil {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					if err := t.DB.DB().Create(v).Error; err != nil {
-						return errors.Wrapf(err, "CreateAlertRule: %s", v.FullName())
-					}
-					log.Info("create in db success", "alertrule", v.FullName())
-				} else {
-					return errors.Wrapf(err, "get alertrule: %s", v.FullName())
-				}
-			}
-
-			if v.K8sResourceStatus != nil && v.K8sResourceStatus["status"] == "ok" {
+			synced, err := createOrUpdateSysAlertRule(ctx, p, v)
+			if err != nil {
+				log.Error(err, "sync system alertrule", "name", v.FullName())
 				continue
 			}
-			if err := p.SyncAlertRule(ctx, v); err != nil {
-				log.Error(err, "sync system alertrule failed", "alertrule", v.FullName())
+			if synced {
+				log.Info("success to sync system alertrule", "name", v.FullName())
 			}
-			log.Info("sync success", "alertrule", v.FullName())
 		}
 		return nil
 	})
+}
+
+func createOrUpdateSysAlertRule(ctx context.Context, p *observability.AlertRuleProcessor, v *models.AlertRule) (bool, error) {
+	if err := p.DBWithCtx(ctx).Preload("Receivers.AlertChannel").First(v, "cluster = ? and namespace = ? and name = ?", v.Cluster, v.Namespace, v.Name).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := p.MutateAlertRule(ctx, v); err != nil {
+				return false, err
+			}
+			return true, p.CreateAlertRule(ctx, v)
+		} else {
+			return false, errors.Wrapf(err, "get alertrule: %s", v.FullName())
+		}
+	}
+	if v.K8sResourceStatus != nil && v.K8sResourceStatus["status"] != "ok" {
+		// only update when error
+		if err := p.MutateAlertRule(ctx, v); err != nil {
+			return false, err
+		}
+		return true, p.UpdateAlertRule(ctx, v)
+	}
+	return false, nil
 }
 
 // routes order and content order may changed after umarshal, so we compare after marshal

@@ -25,7 +25,6 @@ import (
 	v1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"github.com/banzaicloud/logging-operator/pkg/sdk/logging/model/filter"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -429,7 +428,7 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 		action := i18n.Sprintf(ctx, "create")
 		module := i18n.Sprintf(ctx, "logging alert rule")
 		h.SetAuditData(c, action, module, req.Name)
-		return p.createAlertRule(ctx, req)
+		return p.CreateAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -459,16 +458,7 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 		action := i18n.Sprintf(ctx, "update")
 		module := i18n.Sprintf(ctx, "logging alert rule")
 		h.SetAuditData(c, action, module, req.Name)
-		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
-			if err := updateReceiversInDB(req, tx); err != nil {
-				return errors.Wrap(err, "update receivers")
-			}
-			if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "logql_generator").
-				Updates(req).Error; err != nil {
-				return err
-			}
-			return p.syncLoggingAlertRule(ctx, req)
-		})
+		return p.UpdateAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return

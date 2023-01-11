@@ -281,7 +281,7 @@ func (h *ObservabilityHandler) ImportAlertRules(c *gin.Context) {
 			if err := p.MutateAlertRule(ctx, v); err != nil {
 				return errors.Wrapf(err, "mutate alertrule: %s", v.FullName())
 			}
-			if err := p.createAlertRule(ctx, v); err != nil {
+			if err := p.CreateAlertRule(ctx, v); err != nil {
 				return errors.Wrapf(err, "create alertrule: %s", v.FullName())
 			}
 		}
@@ -1582,7 +1582,7 @@ func (p *AlertRuleProcessor) syncLoggingAlertRule(ctx context.Context, alertrule
 	return nil
 }
 
-func (p *AlertRuleProcessor) createAlertRule(ctx context.Context, req *models.AlertRule) error {
+func (p *AlertRuleProcessor) CreateAlertRule(ctx context.Context, req *models.AlertRule) error {
 	return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
 		allRules := []models.AlertRule{}
 		if err := tx.Find(&allRules, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
@@ -1597,6 +1597,19 @@ func (p *AlertRuleProcessor) createAlertRule(ctx context.Context, req *models.Al
 			}
 		}
 		if err := tx.Create(req).Error; err != nil {
+			return err
+		}
+		return p.SyncAlertRule(ctx, req)
+	})
+}
+
+func (p *AlertRuleProcessor) UpdateAlertRule(ctx context.Context, req *models.AlertRule) error {
+	return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := updateReceiversInDB(req, tx); err != nil {
+			return errors.Wrap(err, "update receivers")
+		}
+		if err := tx.Select("expr", "for", "message", "inhibit_labels", "alert_levels", "promql_generator", "logql_generator").
+			Updates(req).Error; err != nil {
 			return err
 		}
 		return p.SyncAlertRule(ctx, req)
