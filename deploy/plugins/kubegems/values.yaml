@@ -778,6 +778,11 @@ api:
     useCertManager: false
     secretName: ""
 
+  ## @param api.opentelemetry.enabled Enable opentelemetry
+  opentelemetry:
+    enabled: true
+    endpoint: http://opentelemetry-collector.observability:4318
+
   ## @param api.existingConfigmap The name of an existing ConfigMap with your custom configuration for API
   ##
   existingConfigmap: ""
