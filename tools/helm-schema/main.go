@@ -244,7 +244,6 @@ func (g Generator) nodeSchema(node *yaml.Node, keycomment string, depth int) *sp
 			schema.Properties[key] = *objectProperty
 		}
 	case yaml.ScalarNode:
-		schema.Default = formatYamlStr(node.Value)
 		switch node.Tag {
 		case "!!str", "!binary":
 			schema.Type = spec.StringOrArray{"string"}
@@ -261,6 +260,14 @@ func (g Generator) nodeSchema(node *yaml.Node, keycomment string, depth int) *sp
 			schema.Type = spec.StringOrArray{"null"}
 		default:
 			schema.Type = spec.StringOrArray{"object"}
+		}
+		// set default value
+		if node.Value != "" {
+			if schema.Type.Contains("string") {
+				schema.Default = node.Value // string type's default values is string
+			} else {
+				schema.Default = formatYamlStr(node.Value)
+			}
 		}
 	case yaml.SequenceNode:
 		schema.Type = spec.StringOrArray{"array"}
