@@ -74,7 +74,11 @@ type PromqlGenerator struct {
 }
 
 func (m PromqlGenerator) Value() (driver.Value, error) {
-	m.LabelMatchers = promql.RemoveDuplicated(m.LabelMatchers)
+	var err error
+	m.LabelMatchers, err = promql.CheckAndRemoveDuplicated(m.LabelMatchers)
+	if err != nil {
+		return "", err
+	}
 	ba, err := json.Marshal(m)
 	return string(ba), err
 }
@@ -109,7 +113,11 @@ type LogqlGenerator struct {
 }
 
 func (m LogqlGenerator) Value() (driver.Value, error) {
-	m.LabelMatchers = promql.RemoveDuplicated(m.LabelMatchers)
+	var err error
+	m.LabelMatchers, err = promql.CheckAndRemoveDuplicated(m.LabelMatchers)
+	if err != nil {
+		return "", err
+	}
 	ba, err := json.Marshal(m)
 	return string(ba), err
 }

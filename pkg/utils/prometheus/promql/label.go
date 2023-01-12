@@ -16,6 +16,7 @@ package promql
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/prometheus/prometheus/pkg/labels"
 	"kubegems.io/kubegems/pkg/utils/set"
@@ -65,14 +66,19 @@ func (m *LabelMatcher) String() string {
 	return fmt.Sprintf("%s%s%q", m.Name, m.Type, m.Value)
 }
 
-func RemoveDuplicated(ms []LabelMatcher) []LabelMatcher {
+func CheckAndRemoveDuplicated(ms []LabelMatcher) ([]LabelMatcher, error) {
 	ret := []LabelMatcher{}
 	s := set.NewSet[string]()
 	for _, m := range ms {
+		if m.Type != MatchRegexp && m.Type != MatchNotRegexp {
+			if strings.Contains(m.Value, "|") {
+				return nil, fmt.Errorf("You can only select multiple when using =~ or !=")
+			}
+		}
 		if !s.Has(m.String()) {
 			ret = append(ret, m)
 			s.Append(m.String())
 		}
 	}
-	return ret
+	return ret, nil
 }
