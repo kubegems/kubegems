@@ -41,7 +41,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/service/handlers/registry/synchronizer"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/loki"
@@ -711,12 +710,12 @@ type EnvironmentObservabilityRet struct {
 func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	env := models.Environment{}
 	ctx := c.Request.Context()
-	if err := h.GetDB().WithContext(ctx).Preload("Cluster").Preload("Project").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
+	db := h.GetDB().WithContext(ctx)
+	if err := db.Preload("Cluster").Preload("Project").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	dur := c.DefaultQuery("duration", "1h")
 	ret := EnvironmentObservabilityRet{
 		EnvironmentID:   env.ID,
 		EnvironmentName: env.EnvironmentName,
@@ -724,9 +723,48 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 		ProjectName:     env.Project.ProjectName,
 		ClusterName:     env.Cluster.ClusterName,
 		Namespace:       env.Namespace,
-	}
-	h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
 
+		AlertResourceMap: make(map[string]int),
+	}
+
+	alertrules := []models.AlertRule{}
+	if err := db.Find(&alertrules, "cluster = ? and namespace = ?", env.Cluster.ClusterName, env.Namespace).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	ret.AlertRuleCount = len(alertrules)
+
+	for _, v := range alertrules {
+		var key string
+		if v.AlertType == prometheus.AlertTypeMonitor {
+			if v.PromqlGenerator != nil {
+				key = v.PromqlGenerator.Resource
+			} else {
+				key = "raw promql"
+			}
+		} else {
+			key = "logging"
+		}
+		if count, ok := ret.AlertResourceMap[key]; ok {
+			count++
+			ret.AlertResourceMap[key] = count
+		} else {
+			ret.AlertResourceMap[key] = 1
+		}
+		if v.State == "firing" {
+			for _, level := range v.AlertLevels {
+				if level.Severity == prometheus.SeverityError {
+					ret.ErrorAlertCount++
+				}
+				if level.Severity == prometheus.SeverityCritical {
+					ret.CriticalAlertCount++
+				}
+			}
+		}
+	}
+
+	dur := c.DefaultQuery("duration", "1h")
+	h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
 		eg := errgroup.Group{}
 
 		// log, monitor, mesh status
@@ -811,60 +849,6 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 				return err
 			}
 			ret.MonitorCollectorCount = len(sms.Items)
-			return nil
-		})
-
-		// alert rules
-		eg.Go(func() error {
-			obervecli := observe.NewClient(cli, h.GetDB().WithContext(ctx))
-			monitoralerts, err := obervecli.ListMonitorAlertRules(ctx, env.Namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
-			if err != nil {
-				return err
-			}
-			logalerts, err := obervecli.ListLoggingAlertRules(ctx, env.Namespace, false)
-			if err != nil {
-				return err
-			}
-
-			addRealtimeAlert := func(levels []observe.AlertLevel) {
-				for _, level := range levels {
-					if level.Severity == prometheus.SeverityError {
-						ret.ErrorAlertCount++
-					} else if level.Severity == prometheus.SeverityCritical {
-						ret.CriticalAlertCount++
-					}
-				}
-			}
-
-			alertResourceMap := make(map[string]int)
-			for _, v := range monitoralerts {
-				var key string
-				if v.PromqlGenerator.Notpl() {
-					key = "raw promql"
-				} else {
-					key = v.PromqlGenerator.Resource
-				}
-
-				if count, ok := alertResourceMap[key]; ok {
-					count++
-					alertResourceMap[key] = count
-				} else {
-					alertResourceMap[key] = 1
-				}
-
-				if v.State == "firing" {
-					addRealtimeAlert(v.AlertLevels)
-				}
-			}
-			if len(logalerts) > 0 {
-				alertResourceMap["logging"] = len(logalerts)
-			}
-			for _, v := range logalerts {
-				addRealtimeAlert(v.AlertLevels)
-			}
-
-			ret.AlertRuleCount = len(monitoralerts) + len(logalerts)
-			ret.AlertResourceMap = alertResourceMap
 			return nil
 		})
 
