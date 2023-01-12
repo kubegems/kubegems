@@ -202,8 +202,8 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 }
 
 /*
-	删除项目后
-	删除各个集群的环境(tenv),tenv本身删除是Controller自带垃圾回收的，其ns下所有资源将清空
+删除项目后
+删除各个集群的环境(tenv),tenv本身删除是Controller自带垃圾回收的，其ns下所有资源将清空
 */
 func (h *ProjectHandler) afterProjectDelete(ctx context.Context, tx *gorm.DB, p *models.Project) error {
 	for _, env := range p.Environments {
@@ -351,16 +351,24 @@ func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 // @Router      /v1/project/{project_id}/user/{user_id} [put]
 // @Security    JWT
 func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
-	var rel models.ProjectUserRels
-	if err := c.BindJSON(&rel); err != nil {
+	var (
+		tmp, rel models.ProjectUserRels
+	)
+	if err := c.BindJSON(&tmp); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+	if tmp.ProjectID != utils.ToUint(c.Param("project_id")) || tmp.UserID != utils.ToUint(c.Param("user_id")) {
+		handlers.NotOK(c, i18n.Errorf(c, "parameters missmatched"))
+		return
+	}
 	ctx := c.Request.Context()
-	if err := h.GetDB().WithContext(ctx).First(&rel, "project_id = ? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
+
+	if err := h.GetDB().WithContext(ctx).Preload("Project.Tenant").First(&rel, "project_id = ? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "can't modify project member role, the user is not a member of the project"))
 		return
 	}
+	rel.Role = tmp.Role
 	if err := h.GetDB().WithContext(ctx).Save(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -369,7 +377,6 @@ func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
 	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.GetDB().WithContext(ctx).Preload("Project.Tenant").First(&rel, rel.ID)
 	action := i18n.Sprintf(context.TODO(), "update")
 	module := i18n.Sprintf(context.TODO(), "project member")
 	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "project %s / user %s / role %s", rel.Project.ProjectName, user.Username, rel.Role))
