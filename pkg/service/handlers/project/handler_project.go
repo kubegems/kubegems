@@ -179,8 +179,8 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 }
 
 /*
-	删除项目后
-	删除各个集群的环境(tenv),tenv本身删除是Controller自带垃圾回收的，其ns下所有资源将清空
+删除项目后
+删除各个集群的环境(tenv),tenv本身删除是Controller自带垃圾回收的，其ns下所有资源将清空
 */
 func (h *ProjectHandler) afterProjectDelete(ctx context.Context, tx *gorm.DB, p *models.Project) error {
 	for _, env := range p.Environments {
@@ -325,15 +325,20 @@ func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 // @Router       /v1/project/{project_id}/user/{user_id} [put]
 // @Security     JWT
 func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
-	var rel models.ProjectUserRels
-	if err := c.BindJSON(&rel); err != nil {
+	var tmp, rel models.ProjectUserRels
+	if err := c.BindJSON(&tmp); err != nil {
 		handlers.NotOK(c, err)
+		return
+	}
+	if tmp.ProjectID != utils.ToUint(c.Param("project_id")) || tmp.UserID != utils.ToUint(c.Param("user_id")) {
+		handlers.NotOK(c, fmt.Errorf("parameters missmatched"))
 		return
 	}
 	if err := h.GetDB().First(&rel, "project_id = ? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
 		handlers.NotOK(c, fmt.Errorf("不可以修改不存在的 \"项目-用户\" 关系"))
 		return
 	}
+	rel.Role = tmp.Role
 	if err := h.GetDB().Save(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
