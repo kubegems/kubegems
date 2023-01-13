@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   kind: helm
-  url: https://charts.bitnami.com/bitnami
+  url: https://charts.kubegems.io/bitnami
   version: {{ .Chart.AppVersion }}
   values:
     image:

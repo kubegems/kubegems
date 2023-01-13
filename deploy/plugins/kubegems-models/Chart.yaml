@@ -2,12 +2,12 @@ apiVersion: v2
 appVersion: v1.22.2
 dependencies:
   - name: common
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://charts.kubegems.ui/bitnami
     tags:
       - bitnami-common
     version: 1.14.1
   - name: mongodb
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://charts.kubegems.io/bitnami
     version: 12.1.23
     condition: store.enabled
 description: KubeGems 模型商店.

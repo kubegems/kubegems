@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   kind: helm
-  url: https://charts.bitnami.com/bitnami
+  url: https://charts.kubegems.io/bitnami
   chart: redis
   version: 16.9.11
   values:

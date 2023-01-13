@@ -4,7 +4,7 @@ type: library
 name: common
 dependencies:
   - name: common
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://charts.kubegems.io/bitnami
     tags:
       - bitnami-common
     version: 1.14.1
