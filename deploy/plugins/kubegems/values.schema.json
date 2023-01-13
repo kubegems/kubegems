@@ -14,7 +14,7 @@
               "title": "拉取策略",
               "default": "IfNotPresent",
               "enum": [
-                "Alway",
+                "Always",
                 "IfNotPresent",
                 "None"
               ],
@@ -111,7 +111,7 @@
               "title": "拉取策略",
               "default": "IfNotPresent",
               "enum": [
-                "Alway",
+                "Always",
                 "IfNotPresent",
                 "None"
               ],

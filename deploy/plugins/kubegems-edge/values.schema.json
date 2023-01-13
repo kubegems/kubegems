@@ -72,7 +72,7 @@
               "title": "拉取策略",
               "default": "IfNotPresent",
               "enum": [
-                "Alway",
+                "Always",
                 "IfNotPresent",
                 "None"
               ],
@@ -206,12 +206,12 @@
                 "operator": "or",
                 "conditions": [
                   {
-                    "path": "hub.tls.enabled",
-                    "value": false
-                  },
-                  {
                     "path": "hub.tls.useCertManager",
                     "value": true
+                  },
+                  {
+                    "path": "hub.tls.enabled",
+                    "value": false
                   }
                 ]
               }
@@ -257,7 +257,7 @@
               "title": "拉取策略",
               "default": "IfNotPresent",
               "enum": [
-                "Alway",
+                "Always",
                 "IfNotPresent",
                 "None"
               ],
