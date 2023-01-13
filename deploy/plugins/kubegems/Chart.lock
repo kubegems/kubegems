@@ -3,10 +3,10 @@ dependencies:
   repository: https://charts.bitnami.com/bitnami
   version: 1.14.1
 - name: mysql
-  repository: https://charts.bitnami.com/bitnami
+  repository: https://charts.kubegems.io/bitnami
   version: 8.9.6
 - name: redis
-  repository: https://charts.bitnami.com/bitnami
+  repository: https://charts.kubegems.io/bitnami
   version: 16.9.11
 - name: gitea
   repository: https://charts.kubegems.io/kubegems
@@ -17,5 +17,5 @@ dependencies:
 - name: chartmuseum
   repository: https://charts.kubegems.io/kubegems
   version: 3.8.0
-digest: sha256:912fc11e3d0e4f63a68c91b1861ffde44c050d6734e38e6c2bc4daf0b1afdd4f
-generated: "2022-07-01T14:50:50.824785904+08:00"
+digest: sha256:62ea800c22c559277a3d92844fae4d64f148294359f607d442fdbde1f0df6d3c
+generated: "2023-01-13T11:38:54.160007+08:00"
