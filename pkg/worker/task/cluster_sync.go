@@ -43,7 +43,7 @@ func (t *ClusterSyncTasker) Sync(ctx context.Context) error {
 						return err
 					}
 				}
-				if !v.ClientCertExpireAt.Equal(*exp) {
+				if v.ClientCertExpireAt == nil || !v.ClientCertExpireAt.Equal(*exp) {
 					if err := t.DB.DB().Model(v).Update("client_cert_expire_at", exp).Error; err != nil {
 						return err
 					}
