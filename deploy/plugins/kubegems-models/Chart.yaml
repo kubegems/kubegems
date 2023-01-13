@@ -2,7 +2,7 @@ apiVersion: v2
 appVersion: v1.22.2
 dependencies:
   - name: common
-    repository: https://charts.kubegems.ui/bitnami
+    repository: https://charts.kubegems.io/bitnami
     tags:
       - bitnami-common
     version: 1.14.1
