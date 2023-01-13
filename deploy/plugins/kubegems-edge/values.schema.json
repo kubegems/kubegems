@@ -54,7 +54,6 @@
         },
         "host": {
           "type": "string",
-          "format": "hostname",
           "title": "Advertise Host",
           "default": "kubegems-edge-hub.kubegems-edge",
           "form": true,
@@ -206,12 +205,12 @@
                 "operator": "or",
                 "conditions": [
                   {
-                    "path": "hub.tls.useCertManager",
-                    "value": true
-                  },
-                  {
                     "path": "hub.tls.enabled",
                     "value": false
+                  },
+                  {
+                    "path": "hub.tls.useCertManager",
+                    "value": true
                   }
                 ]
               }
@@ -239,7 +238,6 @@
         },
         "host": {
           "type": "string",
-          "format": "hostname",
           "title": "Advertised Host",
           "default": "kubegems-edge-server.kubegems-edge",
           "form": true,
