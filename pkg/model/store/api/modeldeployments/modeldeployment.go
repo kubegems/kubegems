@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto"
 	"encoding/hex"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -32,6 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/kubegems/pkg/apis/application"
+	"kubegems.io/kubegems/pkg/apis/models"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
 	"kubegems.io/kubegems/pkg/model/deployment"
@@ -260,6 +262,9 @@ const (
 
 func completeProbes(md *modelsv1beta1.ModelDeployment) {
 	if len(md.Spec.Server.Ports) == 0 && md.Spec.Server.Kind == modelsv1beta1.ServerKindModelx {
+		return
+	}
+	if enabled, _ := strconv.ParseBool(md.Annotations[models.AnnotationEnableProbes]); !enabled {
 		return
 	}
 	initDelay := DefaultInitDeplaySeconds
