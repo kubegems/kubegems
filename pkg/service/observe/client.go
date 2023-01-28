@@ -136,7 +136,7 @@ func (c *ObserveClient) ListMonitorAlertRules(ctx context.Context, namespace str
 	for key, rule := range promRuleMap {
 		amconfig, ok := amConfigMap[key]
 		if !ok {
-			log.Warnf("alertmanager config %s in namespace %s not found", rule.Name, rule.Namespace)
+			log.Warnf("alertmanager config %s in cluster: %s namespace %s not found", rule.Name, c.Name(), rule.Namespace)
 			continue
 		}
 		raw := &RawMonitorAlertResource{

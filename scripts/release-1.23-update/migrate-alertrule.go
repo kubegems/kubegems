@@ -16,11 +16,14 @@ package main
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/stoewer/go-strcase"
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
@@ -38,7 +41,7 @@ func exportOldAlertRulesToDB(ctx context.Context, cs *agents.ClientSet, db *data
 	alertrules := []*models.AlertRule{}
 	if err := cs.ExecuteInEachCluster(ctx, func(ctx context.Context, cli agents.Client) error {
 		observecli := observe.NewClient(cli, db.DB())
-		monitorAlertRules, err := observecli.ListMonitorAlertRules(ctx, "", false, db.NewPromqlTplMapperFromDB().FindPromqlTpl)
+		monitorAlertRules, err := observecli.ListMonitorAlertRules(ctx, "", false, models.NewPromqlTplMapperFromFile().FindPromqlTpl)
 		if err != nil {
 			log.Errorf("ListMonitorAlertRules in cluster: %s, err: %v", cli.Name(), err)
 		}
@@ -69,17 +72,53 @@ func exportOldAlertRulesToDB(ctx context.Context, cs *agents.ClientSet, db *data
 	return alertrules, nil
 }
 
+// update alertname map in file
+func updateAlertNameMap(db *database.Database) error {
+	alertNameMap := map[string]string{}
+	f, err := os.OpenFile("scripts/release-1.23-update/alert-name-map.yaml", os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	if err := yaml.NewDecoder(f).Decode(alertNameMap); err != nil {
+		return err
+	}
+	oldnames := []string{}
+	if err := db.DB().Raw(`SELECT distinct name FROM slt.alert_rules where length(name) != char_length(name) or name like "% %"`).Scan(&oldnames).Error; err != nil {
+		return err
+	}
+	for _, v := range oldnames {
+		if _, ok := alertNameMap[v]; !ok {
+			alertNameMap[v] = ""
+		}
+	}
+	return yaml.NewEncoder(f).Encode(alertNameMap)
+}
+
+// update alert rule name in db
 func updateAlertRuleName(db *database.Database) error {
+	alertNameMap := map[string]string{}
+	f, err := os.OpenFile("scripts/release-1.23-update/alert-name-map.yaml", os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	if err := yaml.NewDecoder(f).Decode(alertNameMap); err != nil {
+		return err
+	}
 	alertrules := []*models.AlertRule{}
 	if err := db.DB().Find(&alertrules).Error; err != nil {
 		return err
 	}
 	for _, v := range alertrules {
-		newname := strcase.KebabCase(v.Name)
-		if err := db.DB().Model(v).Update("name", newname).Error; err != nil {
-			return errors.Wrapf(err, "update alertrule: %s name", v.FullName())
+		newname, ok := alertNameMap[v.Name]
+		if !ok {
+			newname = strcase.KebabCase(v.Name)
 		}
-		log.Info("update alertrule name", "alertrule", v.FullName(), "newname", newname)
+		if v.Name != newname {
+			log.Info("update alertrule name", "alertrule", v.FullName(), "newname", newname)
+			if err := db.DB().Model(v).Update("name", newname).Error; err != nil {
+				return errors.Wrapf(err, "update alertrule: %s name", v.FullName())
+			}
+		}
 	}
 	return nil
 }
@@ -135,6 +174,13 @@ func syncAlertRules(ctx context.Context, cs *agents.ClientSet, db *database.Data
 	return nil
 }
 
+func matchType(value string) promql.MatchType {
+	if strings.Contains(value, "|") {
+		return promql.MatchRegexp
+	}
+	return promql.MatchEqual
+}
+
 func convertMonitorAlertRule(cluster string, monitorRule observe.MonitorAlertRule) *models.AlertRule {
 	ret := &models.AlertRule{
 		Cluster:       cluster,
@@ -169,11 +215,14 @@ func convertMonitorAlertRule(cluster string, monitorRule observe.MonitorAlertRul
 		}
 		for k, v := range monitorRule.PromqlGenerator.LabelPairs {
 			ret.PromqlGenerator.LabelMatchers = append(ret.PromqlGenerator.LabelMatchers, promql.LabelMatcher{
-				Type:  promql.MatchEqual,
+				Type:  matchType(v),
 				Name:  k,
 				Value: v,
 			})
 		}
+	}
+	if monitorRule.ChannelStatus != observe.StatusNormal {
+		log.Errorf("monitor alertrule: %s channel status: %d", ret.FullName(), monitorRule.ChannelStatus)
 	}
 	return ret
 }
@@ -210,11 +259,14 @@ func convertLoggingAlertRule(cluster string, loggingRule observe.LoggingAlertRul
 		}
 		for k, v := range loggingRule.LogqlGenerator.LabelPairs {
 			ret.LogqlGenerator.LabelMatchers = append(ret.LogqlGenerator.LabelMatchers, promql.LabelMatcher{
-				Type:  promql.MatchEqual,
+				Type:  matchType(v),
 				Name:  k,
 				Value: v,
 			})
 		}
+	}
+	if loggingRule.ChannelStatus != observe.StatusNormal {
+		log.Errorf("logging alertrule: %s channel status: %d", ret.FullName(), loggingRule.ChannelStatus)
 	}
 	return ret
 }

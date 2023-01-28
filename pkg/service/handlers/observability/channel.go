@@ -219,7 +219,7 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 		return
 	}
 
-	h.SetAuditData(c, "更新", "告警渠道", ch.Name)
+	h.SetAuditData(c, "删除", "告警渠道", ch.Name)
 	if ch.TenantID == nil {
 		if c.Param("tenant_id") != "_all" {
 			handlers.NotOK(c, fmt.Errorf("你不能删除系统级告警渠道"))
