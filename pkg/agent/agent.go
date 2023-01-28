@@ -50,6 +50,7 @@ func DefaultOptions() *Options {
 		API:       apis.NewDefaultOptions(),
 		Kubectl:   apis.NewDefaultKubectlOptions(),
 		Exporter:  prometheus.DefaultExporterOptions(),
+		Otel:      otel.NewDefaultOptions(),
 	}
 	defaultoptions.System.Listen = ":8041"
 	return defaultoptions
