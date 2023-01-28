@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -50,7 +51,7 @@ func NewSimpleTypedClient(baseaddr string) (*TypedClient, error) {
 	return &TypedClient{
 		BaseAddr:      agenturl,
 		RuntimeScheme: kube.GetScheme(),
-		HTTPClient:    &http.Client{},
+		HTTPClient:    &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)},
 	}, nil
 }
 

@@ -24,6 +24,7 @@ import (
 	"kubegems.io/kubegems/pkg/agent/apis"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/otel"
 	"kubegems.io/kubegems/pkg/utils/pprof"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
@@ -37,6 +38,7 @@ type Options struct {
 	API       *apis.Options               `json:"api,omitempty"`
 	Kubectl   *apis.KubectlOptions        `json:"kubectl,omitempty" description:"kubectl options"`
 	Exporter  *prometheus.ExporterOptions `json:"exporter,omitempty"`
+	Otel      *otel.Options               `json:"otel,omitempty"`
 }
 
 func DefaultOptions() *Options {
@@ -74,8 +76,11 @@ func Run(ctx context.Context, options *Options) error {
 		"cluster_component_cert": exporter.NewCertCollectorFunc(),    // cluster component cert
 	})
 
-	eg, ctx := errgroup.WithContext(ctx)
+	if err := otel.Init(ctx, options.Otel); err != nil {
+		return err
+	}
 
+	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		return apis.Run(ctx, c, options.System, options.API, options.Kubectl)
 	})

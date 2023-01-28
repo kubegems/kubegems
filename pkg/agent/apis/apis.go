@@ -20,6 +20,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"kubegems.io/kubegems/pkg/agent/client"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/middleware"
@@ -88,6 +89,8 @@ func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.O
 		exporter.GetRequestCollector().HandlerFunc(),
 		// panic recovery
 		gin.Recovery(),
+		// otel
+		otelgin.Middleware("kubegems-agent"),
 	)
 	if apioptions.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())
