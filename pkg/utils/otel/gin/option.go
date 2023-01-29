@@ -64,7 +64,7 @@ func WithTracerProvider(provider oteltrace.TracerProvider) Option {
 	})
 }
 
-// WithFilter use a filter to drop no need trace witch return false
+// WithFilter use a filter to drop no need traces whitch return false.
 func WithFilter(f Filter) Option {
 	return optionFunc(func(cfg *config) {
 		if f != nil {
@@ -73,6 +73,7 @@ func WithFilter(f Filter) Option {
 	})
 }
 
+// WithSpanNameGenerater set a generater to generate span name.
 func WithSpanNameGenerater(g SpanNameGenerater) Option {
 	return optionFunc(func(cfg *config) {
 		if g != nil {

@@ -97,10 +97,11 @@ func Run(ctx context.Context,
 		// panic recovery
 		gin.Recovery(),
 		// otel
-		otelgin.Middleware("kubegems-agent",
+		otelgin.TraceMiddleware("kubegems-agent",
 			otelgin.WithFilter(otel.PathFilter(otelopts)),
 			otelgin.WithSpanNameGenerater(otel.UseRealPath()),
 		),
+		otelgin.MeterMiddleware("kubegems-agent"),
 	)
 	if apioptions.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())

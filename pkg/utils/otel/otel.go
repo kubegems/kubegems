@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/metric"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"kubegems.io/kubegems/pkg/log"
 	otelgin "kubegems.io/kubegems/pkg/utils/otel/gin"
@@ -44,32 +44,42 @@ func NewDefaultOptions() *Options {
 	}
 }
 
+func initTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
+	exp, err := otlptracehttp.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithBatcher(exp),
+	)
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	return tp, nil
+}
+
+func initMeter(ctx context.Context) (*sdkmetric.MeterProvider, error) {
+	exp, err := otlpmetrichttp.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+	mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exp, sdkmetric.WithInterval(15*time.Second))))
+	global.SetMeterProvider(mp)
+	return mp, nil
+}
+
 func Init(ctx context.Context, opts *Options) error {
 	if !opts.Enable {
 		return nil
 	}
 	otel.SetLogger(log.LogrLogger)
 
-	// trace
-	traceExporter, err := otlptracehttp.New(ctx)
-	if err != nil {
+	if _, err := initTracer(ctx); err != nil {
 		return err
 	}
-	traceProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
-		sdktrace.WithBatcher(traceExporter),
-	)
-	otel.SetTracerProvider(traceProvider)
-	otel.SetTextMapPropagator(propagation.TraceContext{})
-
-	// metric
-	metricExporter, err := otlpmetrichttp.New(ctx)
-	if err != nil {
+	if _, err := initMeter(ctx); err != nil {
 		return err
 	}
-	reader := metric.NewPeriodicReader(metricExporter, metric.WithInterval(5*time.Second))
-	metricProvider := metric.NewMeterProvider(metric.WithReader(reader))
-	global.SetMeterProvider(metricProvider)
 
 	// start runtime metric
 	return runtime.Start(runtime.WithMinimumReadMemStatsInterval(15 * time.Second))

@@ -35,10 +35,10 @@ const (
 	tracerName = "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
-// Middleware returns middleware that will trace incoming requests.
+// TraceMiddleware returns middleware that will trace incoming requests.
 // The service parameter should describe the name of the (virtual)
 // server handling the request.
-func Middleware(service string, opts ...Option) gin.HandlerFunc {
+func TraceMiddleware(service string, opts ...Option) gin.HandlerFunc {
 	cfg := config{}
 	for _, opt := range opts {
 		opt.apply(&cfg)

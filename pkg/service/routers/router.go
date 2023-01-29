@@ -179,10 +179,11 @@ func (r *Router) Complete(ctx context.Context) error {
 		// panic recovery
 		gin.Recovery(),
 		// otel
-		otelgin.Middleware("kubegems-api",
+		otelgin.TraceMiddleware("kubegems-api",
 			otelgin.WithFilter(otel.PathFilter(r.Opts.Otel)),
 			otelgin.WithSpanNameGenerater(otel.UseRealPath()),
 		),
+		otelgin.MeterMiddleware("kubegems-api"),
 		// real ip tracking
 		RealClientIPMiddleware(),
 	}
