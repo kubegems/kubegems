@@ -81,7 +81,13 @@ func (mu handlerMux) register(group, version, resource, action string, handler g
 	}
 }
 
-func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.Options, apioptions *Options, kubectlOptions *KubectlOptions) error {
+func Run(ctx context.Context,
+	cluster cluster.Interface,
+	systemoptions *system.Options,
+	apioptions *Options,
+	kubectlOptions *KubectlOptions,
+	otelopts *otel.Options,
+) error {
 	ginr := gin.New()
 	ginr.Use(
 		// log
@@ -91,7 +97,10 @@ func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.O
 		// panic recovery
 		gin.Recovery(),
 		// otel
-		otelgin.Middleware("kubegems-agent", otelgin.WithFilter(otel.PathFilter()), otelgin.WithSpanNameGenerater(otel.UseRealPath())),
+		otelgin.Middleware("kubegems-agent",
+			otelgin.WithFilter(otel.PathFilter(otelopts)),
+			otelgin.WithSpanNameGenerater(otel.UseRealPath()),
+		),
 	)
 	if apioptions.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())

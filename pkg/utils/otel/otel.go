@@ -16,6 +16,7 @@ package otel
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,12 +33,14 @@ import (
 )
 
 type Options struct {
-	Enable bool `json:"enable" description:"enable otel"`
+	Enable       bool   `json:"enable" description:"enable otel"`
+	ExcludePaths string `json:"excludePaths" description:"exclude http request paths to sample, split by ','"`
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		Enable: false,
+		Enable:       false,
+		ExcludePaths: "/healthz",
 	}
 }
 
@@ -72,9 +75,40 @@ func Init(ctx context.Context, opts *Options) error {
 	return runtime.Start(runtime.WithMinimumReadMemStatsInterval(15 * time.Second))
 }
 
-func PathFilter() otelgin.Filter {
+// type kubegemsSampler struct{}
+
+// func (as kubegemsSampler) ShouldSample(p sdktrace.SamplingParameters) sdktrace.SamplingResult {
+// 	result := sdktrace.SamplingResult{
+// 		Tracestate: trace.SpanContextFromContext(p.ParentContext).TraceState(),
+// 	}
+// 	shouldSample := true
+// 	for _, att := range p.Attributes {
+// 		if att.Key == "kubegems.ignore" && att.Value.AsBool() == true {
+// 			shouldSample = false
+// 			break
+// 		}
+// 	}
+// 	if shouldSample {
+// 		result.Decision = sdktrace.RecordAndSample
+// 	} else {
+// 		result.Decision = sdktrace.Drop
+// 	}
+// 	return result
+// }
+
+// func (as kubegemsSampler) Description() string {
+// 	return "KubegemsSampler"
+// }
+
+func PathFilter(opts *Options) otelgin.Filter {
+	paths := strings.Split(opts.ExcludePaths, ",")
 	return func(c *gin.Context) bool {
-		return c.Request.URL.Path != "healthz"
+		for _, excludePath := range paths {
+			if c.Request.URL.Path == excludePath {
+				return false
+			}
+		}
+		return true
 	}
 }
 

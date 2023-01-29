@@ -83,7 +83,7 @@ func Run(ctx context.Context, options *Options) error {
 
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return apis.Run(ctx, c, options.System, options.API, options.Kubectl)
+		return apis.Run(ctx, c, options.System, options.API, options.Kubectl, options.Otel)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)
