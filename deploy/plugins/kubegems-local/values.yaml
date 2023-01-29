@@ -102,7 +102,7 @@ agent:
     # @title 是否接入Opentelemetry
     enabled: true
     # @title Opentelemetry endpoint
-    # @hidden false.opentelemetry.enabled=false
+    # @hidden agent.opentelemetry.enabled=false
     endpoint: http://opentelemetry-collector.observability:4318
   ## @param agent.replicaCount Number of agent replicas to deploy
   ##

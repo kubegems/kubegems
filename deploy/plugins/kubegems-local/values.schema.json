@@ -65,7 +65,7 @@
               "default": "http://opentelemetry-collector.observability:4318",
               "form": true,
               "hidden": {
-                "path": "false.opentelemetry.enabled",
+                "path": "agent.opentelemetry.enabled",
                 "value": false
               }
             }

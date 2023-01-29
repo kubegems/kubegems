@@ -1,6 +1,7 @@
 .idea
 __debug_bin
 .vscode
+*.code-workspace
 tmp/
 bin/
 vendor/
