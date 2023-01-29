@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"kubegems.io/kubegems/pkg/log"
@@ -54,6 +55,7 @@ func Init(ctx context.Context, opts *Options) error {
 		sdktrace.WithBatcher(traceExporter),
 	)
 	otel.SetTracerProvider(traceProvider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	// metric
 	metricExporter, err := otlpmetrichttp.New(ctx)

@@ -25,9 +25,10 @@ import (
 	"strconv"
 	"strings"
 
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -51,7 +52,7 @@ func NewSimpleTypedClient(baseaddr string) (*TypedClient, error) {
 	return &TypedClient{
 		BaseAddr:      agenturl,
 		RuntimeScheme: kube.GetScheme(),
-		HTTPClient:    &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)},
+		HTTPClient:    &http.Client{},
 	}, nil
 }
 
@@ -235,6 +236,9 @@ func (c TypedClient) request(ctx context.Context, method, contenttype string,
 		return err
 	}
 	req.Header.Set("Content-Type", contenttype)
+
+	// inject for propagator to do distribute tracing
+	otel.GetTextMapPropagator().Inject(req.Context(), propagation.HeaderCarrier(req.Header))
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {

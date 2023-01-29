@@ -25,8 +25,10 @@ import (
 	"path"
 
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
@@ -107,6 +109,9 @@ func (c TypedClient) DoRawRequest(ctx context.Context, clientreq Request) (*http
 	if clientreq.Headers.Get("Content-Type") == "" {
 		req.Header.Add("Content-Type", "application/json")
 	}
+
+	// inject for propagator to do distribute tracing
+	otel.GetTextMapPropagator().Inject(req.Context(), propagation.HeaderCarrier(req.Header))
 
 	// queries
 	query := req.URL.Query()
