@@ -83,6 +83,9 @@ spec:
             {{- if .Values.agent.httpSignature.enabled }}
             - --api-enablehttpsigs
             {{- end}}
+            {{- if .Values.agent.opentelemetry.enabled }}
+            - --otel-enable
+            {{- end }}
             - --api-prometheusserver={{ include "monitoring.prometheus.address" . }}
             - --api-alertmanagerserver={{ include "monitoring.alertmanager.address" . }}
             - --api-lokiserver={{ include "logging.loki.address" . }}
@@ -99,6 +102,31 @@ spec:
               value: {{ ternary "true" "false" (or .Values.agent.image.debug ) | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.agent.logLevel }}
+            {{- if .Values.agent.opentelemetry.enabled }}
+            - name: OTEL_K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: OTEL_K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: OTEL_SERVICE_NAME
+              value: kubegems-agent
+            - name: OTEL_K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.name=$(OTEL_SERVICE_NAME),namespace=$(OTEL_K8S_NAMESPACE),node=$(OTEL_K8S_NODE_NAME),pod=$(OTEL_K8S_POD_NAME)
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.agent.opentelemetry.endpoint }}
+            - name: OTEL_EXPORTER_OTLP_INSECURE
+              value: "true"
+            {{- end }}
             {{- if .Values.agent.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.agent.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}

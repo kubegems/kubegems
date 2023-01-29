@@ -95,6 +95,15 @@ agent:
     ## Enable debug mode
     ##
     debug: false
+  ## @param agent.opentelemetry.enabled Enable opentelemetry
+  ##
+  # @title Opentelemetry 接入配置
+  opentelemetry:
+    # @title 是否接入Opentelemetry
+    enabled: true
+    # @title Opentelemetry endpoint
+    # @hidden false.opentelemetry.enabled=false
+    endpoint: http://opentelemetry-collector.observability:4318
   ## @param agent.replicaCount Number of agent replicas to deploy
   ##
   replicaCount: 1

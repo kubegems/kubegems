@@ -48,6 +48,29 @@
             }
           },
           "form": true
+        },
+        "opentelemetry": {
+          "type": "object",
+          "title": "Opentelemetry 接入配置",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "是否接入Opentelemetry",
+              "default": true,
+              "form": true
+            },
+            "endpoint": {
+              "type": "string",
+              "title": "Opentelemetry endpoint",
+              "default": "http://opentelemetry-collector.observability:4318",
+              "form": true,
+              "hidden": {
+                "path": "false.opentelemetry.enabled",
+                "value": false
+              }
+            }
+          },
+          "form": true
         }
       },
       "form": true
