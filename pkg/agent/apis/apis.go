@@ -20,13 +20,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"kubegems.io/kubegems/pkg/agent/client"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/middleware"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/otel"
+	otelgin "kubegems.io/kubegems/pkg/utils/otel/gin"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/route"
 	"kubegems.io/kubegems/pkg/utils/system"
@@ -90,7 +91,7 @@ func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.O
 		// panic recovery
 		gin.Recovery(),
 		// otel
-		otelgin.Middleware("kubegems-agent"),
+		otelgin.Middleware("kubegems-agent", otelgin.WithFilter(otel.PathFilter()), otelgin.WithSpanNameGenerater(otel.UseRealPath())),
 	)
 	if apioptions.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())

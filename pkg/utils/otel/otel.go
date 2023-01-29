@@ -18,6 +18,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -27,6 +28,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"kubegems.io/kubegems/pkg/log"
+	otelgin "kubegems.io/kubegems/pkg/utils/otel/gin"
 )
 
 type Options struct {
@@ -68,4 +70,16 @@ func Init(ctx context.Context, opts *Options) error {
 
 	// start runtime metric
 	return runtime.Start(runtime.WithMinimumReadMemStatsInterval(15 * time.Second))
+}
+
+func PathFilter() otelgin.Filter {
+	return func(c *gin.Context) bool {
+		return c.Request.URL.Path != "healthz"
+	}
+}
+
+func UseRealPath() otelgin.SpanNameGenerater {
+	return func(c *gin.Context) string {
+		return c.Request.URL.Path
+	}
 }

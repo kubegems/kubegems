@@ -25,7 +25,6 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
@@ -73,6 +72,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/otel"
+	otelgin "kubegems.io/kubegems/pkg/utils/otel/gin"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/system"
@@ -179,7 +179,7 @@ func (r *Router) Complete(ctx context.Context) error {
 		// panic recovery
 		gin.Recovery(),
 		// otel
-		otelgin.Middleware("kubegems-api"),
+		otelgin.Middleware("kubegems-api", otelgin.WithFilter(otel.PathFilter()), otelgin.WithSpanNameGenerater(otel.UseRealPath())),
 		// real ip tracking
 		RealClientIPMiddleware(),
 	}
