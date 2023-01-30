@@ -49,7 +49,7 @@ var (
 // AlertChannel
 type AlertChannel struct {
 	ID            uint                   `gorm:"primarykey" json:"id"`
-	Name          string                 `gorm:"type:varchar(50)" binding:"required" json:"name"`
+	Name          string                 `gorm:"type:varchar(50)" binding:"min=1,max=50" json:"name"`
 	ChannelConfig channels.ChannelConfig `json:"channelConfig"`
 
 	TenantID *uint   `json:"tenantID"` // 若为null，则表示系统预置

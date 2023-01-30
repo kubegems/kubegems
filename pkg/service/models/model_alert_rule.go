@@ -27,7 +27,7 @@ type AlertRule struct {
 	ID        uint   `gorm:"primarykey" json:"id"`
 	Cluster   string `gorm:"type:varchar(50)" json:"cluster"`
 	Namespace string `gorm:"type:varchar(50)" json:"namespace"`
-	Name      string `gorm:"type:varchar(50)" binding:"required" json:"name"`
+	Name      string `gorm:"type:varchar(50)" binding:"min=1,max=50" json:"name"`
 	AlertType string `gorm:"type:varchar(50);default:monitor" json:"alertType"` // logging or monitor
 
 	Expr    string `json:"expr"`                                           // promql/logql表达式，不能包含比较运算符(<, <=, >, >=, ==)
