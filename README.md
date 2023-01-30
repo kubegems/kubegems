@@ -177,3 +177,4 @@ More information refer to [CONTRIBUTING.md](https://github.com/kubegems/kubegems
 <a href="https://github.com/itxx00"><img src="https://avatars.githubusercontent.com/u/1866789?v=4" title="itxx00" width="80" height="80"></a>
 <a href="https://github.com/VioZhang"><img src="https://avatars.githubusercontent.com/u/41519383?v=4" title="VioZhang" width="80" height="80"></a>
 <a href="https://github.com/liutao-east"><img src="https://avatars.githubusercontent.com/u/20122705?v=4" title="liutao-east" width="80" height="80"></a>
+<a href="https://github.com/cuisongliu"><img src="https://avatars.githubusercontent.com/u/4150905?v=4" title="cuisongliu" width="80" height="80"></a>
