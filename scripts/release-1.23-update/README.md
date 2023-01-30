@@ -29,9 +29,9 @@ kubectl patch plugins.plugins.kubegems.io -n observability opentelemetry-collect
 ```
 
 ## Eventer plugin
-1. upgrate eventer plugin to 2.1.5
+1. upgrate eventer plugin to 2.1.6
 ```
-kubectl patch plugins.plugins.kubegems.io -n kubegems-installer eventer --type merge -p '{"spec":{"version":"2.1.5"}}'
+kubectl patch plugins.plugins.kubegems.io -n kubegems-installer eventer --type merge -p '{"spec":{"version":"2.1.6"}}'
 ```
 
 ## Run script
