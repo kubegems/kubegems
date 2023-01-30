@@ -1298,6 +1298,7 @@ func SetReceivers(alertrule *models.AlertRule, db *gorm.DB) error {
 		})
 	}
 	for _, v := range alertrule.Receivers {
+		v.AlertRuleID = alertrule.ID
 		v.AlertChannel = &models.AlertChannel{ID: v.AlertChannelID}
 		if err := db.First(v.AlertChannel, "id = ?", v.AlertChannelID).Error; err != nil {
 			return errors.Wrapf(err, "alert channel: %d not found", v.AlertChannelID)

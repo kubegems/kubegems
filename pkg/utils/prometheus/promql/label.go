@@ -72,7 +72,7 @@ func CheckAndRemoveDuplicated(ms []LabelMatcher) ([]LabelMatcher, error) {
 	for _, m := range ms {
 		if m.Type != MatchRegexp && m.Type != MatchNotRegexp {
 			if strings.Contains(m.Value, "|") {
-				return nil, fmt.Errorf("You can only select multiple when using =~ or !=")
+				return nil, fmt.Errorf("labelmatchers check failed: you can only select multiple when using =~ or !=")
 			}
 		}
 		if !s.Has(m.String()) {
