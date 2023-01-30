@@ -1597,7 +1597,7 @@ func (p *AlertRuleProcessor) CreateAlertRule(ctx context.Context, req *models.Al
 				return errors.Errorf("receiver's id should be null when create")
 			}
 		}
-		if err := tx.Create(req).Error; err != nil {
+		if err := tx.Omit("Receivers.AlertChannel").Create(req).Error; err != nil {
 			return err
 		}
 		return p.SyncAlertRule(ctx, req)

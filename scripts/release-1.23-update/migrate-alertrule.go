@@ -16,8 +16,11 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
+	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -64,7 +67,7 @@ func exportOldAlertRulesToDB(ctx context.Context, cs *agents.ClientSet, db *data
 			log.Errorf("SetReceivers for: %s failed: %v", v.FullName(), err)
 			continue
 		}
-		if err := db.DB().Create(v).Error; err != nil {
+		if err := db.DB().Omit("Receivers.AlertChannel").Create(v).Error; err != nil {
 			log.Errorf("create alertrule %s in db failed: %v", v.FullName(), err)
 		}
 		log.Info("export alertrule success", "name", v.FullName())
@@ -73,9 +76,9 @@ func exportOldAlertRulesToDB(ctx context.Context, cs *agents.ClientSet, db *data
 }
 
 // update alertname map in file
-func updateAlertNameMap(db *database.Database) error {
+func updateAlertNameMapInFile(db *database.Database) error {
 	alertNameMap := map[string]string{}
-	f, err := os.OpenFile("scripts/release-1.23-update/alert-name-map.yaml", os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile(alertNameMapFile, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return err
 	}
@@ -83,21 +86,31 @@ func updateAlertNameMap(db *database.Database) error {
 		return err
 	}
 	oldnames := []string{}
-	if err := db.DB().Raw(`SELECT distinct name FROM slt.alert_rules where length(name) != char_length(name) or name like "% %"`).Scan(&oldnames).Error; err != nil {
+	if err := db.DB().Raw(`SELECT name FROM slt.alert_rules where length(name) != char_length(name) or name like "% %"`).Scan(&oldnames).Error; err != nil {
 		return err
 	}
 	for _, v := range oldnames {
 		if _, ok := alertNameMap[v]; !ok {
 			alertNameMap[v] = ""
+			log.Info("add new alert name", "name", v)
 		}
 	}
-	return yaml.NewEncoder(f).Encode(alertNameMap)
+
+	bts, _ := yaml.Marshal(alertNameMap)
+	return os.WriteFile(alertNameMapFile, bts, 0644)
+}
+
+type alertruleInfo struct {
+	OldName string
+	NewName string
+
+	database.EnvInfo
 }
 
 // update alert rule name in db
-func updateAlertRuleName(db *database.Database) error {
+func updateAlertRuleNameInDB(db *database.Database) error {
 	alertNameMap := map[string]string{}
-	f, err := os.OpenFile("scripts/release-1.23-update/alert-name-map.yaml", os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile(alertNameMapFile, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return err
 	}
@@ -108,11 +121,23 @@ func updateAlertRuleName(db *database.Database) error {
 	if err := db.DB().Find(&alertrules).Error; err != nil {
 		return err
 	}
+
+	envinfo, err := db.ClusterNS2EnvMap()
+	if err != nil {
+		return err
+	}
+	records := make([][]string, 0, len(alertrules))
 	for _, v := range alertrules {
 		newname, ok := alertNameMap[v.Name]
 		if !ok {
 			newname = strcase.KebabCase(v.Name)
 		}
+		info := envinfo[fmt.Sprintf("%s/%s", v.Cluster, v.Namespace)]
+		records = append(records, []string{
+			v.Name, newname, info.ClusterName, info.Namespace,
+			info.TenantName, info.ProjectName, info.EnvironmentName,
+		})
+
 		if v.Name != newname {
 			log.Info("update alertrule name", "alertrule", v.FullName(), "newname", newname)
 			if err := db.DB().Model(v).Update("name", newname).Error; err != nil {
@@ -120,6 +145,15 @@ func updateAlertRuleName(db *database.Database) error {
 			}
 		}
 	}
+
+	file, _ := os.OpenFile(alertNameChangeRecordFile, os.O_CREATE|os.O_RDWR, 0644)
+	defer file.Close()
+	file.Write([]byte{0xEF, 0xBB, 0xBF})
+	w := csv.NewWriter(file)
+	w.Write([]string{"oldname", "newname", "cluster", "namespace", "tenant_name", "project_name", "environment_name"})
+	w.WriteAll(records)
+
+	time.Sleep((5 * time.Second))
 	return nil
 }
 

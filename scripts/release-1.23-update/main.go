@@ -23,6 +23,7 @@ import (
 
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 	"gorm.io/datatypes"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -48,13 +49,19 @@ type Options struct {
 	KubegemsVersion string
 }
 
+var (
+	alertNameMapFile          = "scripts/release-1.23-update/alert-name-map.yaml"
+	oldAlertRuleBackupFile    = "scripts/release-1.23-update/backup.yaml"
+	alertNameChangeRecordFile = "scripts/release-1.23-update/record.csv"
+)
+
 func main() {
 	configflags := genericclioptions.ConfigFlags{
 		KubeConfig: pointer.String(""),
 		Context:    pointer.String(""),
 	}
 	options := Options{
-		KubegemsVersion: "v1.23.0-alpha.2",
+		KubegemsVersion: "v1.23.0",
 	}
 	cmd := &cobra.Command{
 		Use: os.Args[0],
@@ -114,15 +121,20 @@ func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVers
 	updateDashboards(db)
 
 	// export, clean, sync
-	_, err = exportOldAlertRulesToDB(ctx, cs, db)
+	alertrules, err := exportOldAlertRulesToDB(ctx, cs, db)
 	if err != nil {
 		return err
 	}
+	bts, _ := yaml.Marshal(alertrules)
+	os.WriteFile(oldAlertRuleBackupFile, bts, 0644)
 
-	// we should do two things in database manually, before exec blow scripts:
+	// we should do two things in database manually before exec scripts below:
 	// 1. change chinese alertrule name to english
 	// 2. update alertrule RedisMemoryHigh's expr and alert levels
-	if err := updateAlertRuleName(db); err != nil {
+	if err := updateAlertNameMapInFile(db); err != nil {
+		return err
+	}
+	if err := updateAlertRuleNameInDB(db); err != nil {
 		return err
 	}
 	if err := deleteK8sAlertRuleCfgs(ctx, cs); err != nil {
