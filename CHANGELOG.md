@@ -1,3 +1,34 @@
+## 1.23.0 / 2023-1-30
+Kubegems v1.23 is released now. we refactor alert rule and support edge cluster in this version.
+If you want to upgrate from v1.22 to v1.23, please refer instruction <https://github.com/kubegems/kubegems/blob/release-1.23/scripts/release-1.23-update/README.md> to migrate.
+### Changes 🛠
+* Changes related to internationalization, enhancement for site announcement by @pepesi in https://github.com/kubegems/kubegems/pull/239
+* refactor(alertrule): store in db and sync to k8s by @jojotong in https://github.com/kubegems/kubegems/pull/371
+* disable zap logger sampling by @jojotong in https://github.com/kubegems/kubegems/pull/415
+### Features 🎉
+* feat(plugin): add plugins configurable and remote repo support by @cnfatal in https://github.com/kubegems/kubegems/pull/241
+* Feat aliyun channels by @jojotong in https://github.com/kubegems/kubegems/pull/309
+* Feat dashboard muti query targets by @jojotong in https://github.com/kubegems/kubegems/pull/323
+* ✨ feat(otel): add otel service appmonitor apis by @jojotong in https://github.com/kubegems/kubegems/pull/331
+* ✨ feat(env): search environment by @jojotong in https://github.com/kubegems/kubegems/pull/332
+* Feature: Edge Supports by @cnfatal in https://github.com/kubegems/kubegems/pull/333
+* ✨ feat(channel): dingding by @jojotong in https://github.com/kubegems/kubegems/pull/344
+* add sql and agent client request to opentelemetry by @jojotong in https://github.com/kubegems/kubegems/pull/374
+* ✨ feat(worker): add task to sync alert rule state and check config by @jojotong in https://github.com/kubegems/kubegems/pull/379
+* ✨ feat(worker): sync system alert rules by @jojotong in https://github.com/kubegems/kubegems/pull/383
+### Enhancements 🎈
+* kubectl container enhancement;support completion;suppport emoji character; use init job on databse initialize. by @cnfatal in https://github.com/kubegems/kubegems/pull/281
+* add otel runtime metric by @jojotong in https://github.com/kubegems/kubegems/pull/336
+* 🎈 perf(worker): check alertrule query result by @jojotong in https://github.com/kubegems/kubegems/pull/390
+* sync(tpl): add script to export monitor tpls by @jojotong in https://github.com/kubegems/kubegems/pull/396
+* 🎈 perf(otel): add option to enable or disable otel by @jojotong in https://github.com/kubegems/kubegems/pull/398
+### Bugfixes 🐞
+* Bugfix user related by @pepesi in https://github.com/kubegems/kubegems/pull/301
+* bugfix, websocket caused memory grow high by @pepesi in https://github.com/kubegems/kubegems/pull/397
+* BUGFIX for modify user project role failed by @pepesi in https://github.com/kubegems/kubegems/pull/406
+### Others
+* docs: add contributors on readme by @LinkMaq in https://github.com/kubegems/kubegems/pull/269
+
 ## 1.22.2 / 2022-12-1
 ### Features 🎉
 * ✨ feat(channel): add sendResolved option by @jojotong in https://github.com/kubegems/kubegems/pull/324
