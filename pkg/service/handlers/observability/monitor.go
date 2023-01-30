@@ -527,20 +527,16 @@ func (h *ObservabilityHandler) ExporterSchema(c *gin.Context) {
 		return
 	}
 
-	var schema, values string
+	ret := gin.H{
+		"app":     name,
+		"version": maxVersion,
+		"repo":    strings.TrimSuffix(h.AppStoreOpt.Addr, "/") + "/" + exporterRepo,
+	}
 	for _, v := range chartfiles {
-		if v.Name == "values.schema.json" {
-			schema = base64.StdEncoding.EncodeToString(v.Data)
-		} else if v.Name == "values.yaml" {
-			values = base64.StdEncoding.EncodeToString(v.Data)
+		switch v.Name {
+		case "values.yaml", "values.schema.json", "alerts.yaml":
+			ret[v.Name] = base64.StdEncoding.EncodeToString(v.Data)
 		}
 	}
-
-	handlers.OK(c, gin.H{
-		"values.schema.json": schema,
-		"values.yaml":        values,
-		"app":                name,
-		"version":            maxVersion,
-		"repo":               strings.TrimSuffix(h.AppStoreOpt.Addr, "/") + "/" + exporterRepo,
-	})
+	handlers.OK(c, ret)
 }
