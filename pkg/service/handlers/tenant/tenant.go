@@ -88,7 +88,8 @@ func (h *TenantHandler) ListTenant(c *gin.Context) {
 		SortFields:    OrderFields,
 		PreloadFields: PreloadFields,
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	ctx := c.Request.Context()
+	total, page, size, err := query.PageList(h.GetDB().WithContext(ctx), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -108,7 +109,7 @@ func (h *TenantHandler) ListTenant(c *gin.Context) {
 			ResourceQuota datatypes.JSON
 		}
 		allocated := []tenantallocated{}
-		if err := h.GetDB().Raw(`select environments.id as environment_id, tenants.id as tenant_id, environments.resource_quota
+		if err := h.GetDB().WithContext(ctx).Raw(`select environments.id as environment_id, tenants.id as tenant_id, environments.resource_quota
 		from environments left join projects on environments.project_id = projects.id
 				left join tenants on projects.tenant_id = tenants.id where tenant_id in ?`, tids).Scan(&allocated).Error; err != nil {
 			handlers.NotOK(c, err)
@@ -175,7 +176,7 @@ func (h *TenantHandler) ListTenant(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) RetrieveTenant(c *gin.Context) {
 	var obj models.Tenant
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -200,7 +201,7 @@ func (h *TenantHandler) PostTenant(c *gin.Context) {
 	}
 	// 默认租户是启用的
 	obj.IsActive = true
-	if err := h.GetDB().Create(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -235,7 +236,8 @@ func (h *TenantHandler) PostTenant(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) PutTenant(c *gin.Context) {
 	var obj models.Tenant
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -253,7 +255,7 @@ func (h *TenantHandler) PutTenant(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -273,13 +275,14 @@ func (h *TenantHandler) PutTenant(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) DeleteTenant(c *gin.Context) {
 	var obj models.Tenant
+	ctx := c.Request.Context()
 	// 这儿是删除数据，不存在preload 敏感数据的情况
-	if err := h.GetDB().Preload("ResourceQuotas.Cluster").First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Preload("ResourceQuotas.Cluster").First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NoContent(c, nil)
 		return
 	}
 
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&obj).Error; err != nil {
 			return err
 		}
@@ -341,7 +344,7 @@ func (h *TenantHandler) ListTenantUser(c *gin.Context) {
 		Join:          handlers.Args("join tenant_user_rels on tenant_user_rels.user_id = users.id"),
 		Where:         []*handlers.QArgs{handlers.Args("tenant_user_rels.tenant_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -362,7 +365,7 @@ func (h *TenantHandler) ListTenantUser(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) RetrieveTenantUser(c *gin.Context) {
 	var obj models.User
-	if err := h.GetDB().Table(
+	if err := h.GetDB().WithContext(c.Request.Context()).Table(
 		"users",
 	).Joins(
 		"join  tenant_user_rels on tenant_user_rels.user_id = users.id",
@@ -393,7 +396,8 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 		rel    models.TenantUserRels
 		user   models.User
 	)
-	if err := h.GetDB().Preload("ResourceQuotas").First(&tenant, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("ResourceQuotas").First(&tenant, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the tenant does not exist"))
 		return
 	}
@@ -405,11 +409,11 @@ func (h *TenantHandler) PostTenantUser(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := h.GetDB().Preload("SystemRole").First(&user, rel.UserID).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the user to add is not found"))
 		return
 	}
-	if err := h.GetDB().Save(&rel).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -448,7 +452,8 @@ func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 		rel  models.TenantUserRels
 		user models.User
 	)
-	if err := h.GetDB().Preload("Tenant").First(&rel, "user_id = ? and tenant_id = ?", c.Param("user_id"), c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Tenant").First(&rel, "user_id = ? and tenant_id = ?", c.Param("user_id"), c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "can't modify tenant member role, the user is not a member of the tenant"))
 		return
 	}
@@ -460,15 +465,15 @@ func (h *TenantHandler) PutTenantUser(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := h.GetDB().Save(&rel).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.GetDB().Preload("Tenant").First(&rel, rel.ID)
+	h.GetDB().WithContext(ctx).Preload("Tenant").First(&rel, rel.ID)
 
 	action := i18n.Sprintf(context.TODO(), "modify")
 	module := i18n.Sprintf(context.TODO(), "tenant member role")
@@ -510,32 +515,33 @@ func (h *TenantHandler) DeleteTenantUser(c *gin.Context) {
 	)
 	tenantid := c.Param(PrimaryKeyName)
 	userid := c.Param("user_id")
-	if err := h.GetDB().Preload("Projects.Environments").First(&obj, tenantid).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Projects.Environments").First(&obj, tenantid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().First(&subobj, userid).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&subobj, userid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.GetDB().First(&rel, "tenant_id = ? and user_id = ?", tenantid, userid)
-	h.GetDB().Delete(&rel)
+	h.GetDB().WithContext(ctx).First(&rel, "tenant_id = ? and user_id = ?", tenantid, userid)
+	h.GetDB().WithContext(ctx).Delete(&rel)
 	for _, proj := range obj.Projects {
 		projids = append(projids, proj.ID)
 		for _, env := range proj.Environments {
 			envids = append(envids, env.ID)
 		}
 	}
-	if err := h.GetDB().Delete(&projrel, "project_id in (?) and user_id = ?", projids, userid).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&projrel, "project_id in (?) and user_id = ?", projids, userid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Delete(&envrel, "environment_id in (?) and user_id = ?", envids, userid).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&envrel, "environment_id in (?) and user_id = ?", envids, userid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
 
 	action := i18n.Sprintf(context.TODO(), "delete")
@@ -592,7 +598,7 @@ func (h *TenantHandler) ListTenantProject(c *gin.Context) {
 		cond.Where = append(cond.Where, handlers.Args("project_user_rels.user_id = ?", user.GetID()))
 	}
 
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -613,7 +619,7 @@ func (h *TenantHandler) ListTenantProject(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) RetrieveTenantProject(c *gin.Context) {
 	var project models.Project
-	if err := h.GetDB().Where("tenant_id = ? and id = ?", c.Param(project.ProjectAlias), c.Param("project_id")).First(&project).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Where("tenant_id = ? and id = ?", c.Param(project.ProjectAlias), c.Param("project_id")).First(&project).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -636,7 +642,8 @@ func (h *TenantHandler) PostTenantProject(c *gin.Context) {
 		tenant  models.Tenant
 		project models.Project
 	)
-	if err := h.GetDB().First(&tenant, c.Param("tenant_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&tenant, c.Param("tenant_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -647,7 +654,7 @@ func (h *TenantHandler) PostTenantProject(c *gin.Context) {
 	if project.TenantID != tenant.ID {
 		project.TenantID = tenant.ID
 	}
-	if err := h.GetDB().Create(&project).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Create(&project).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -695,7 +702,7 @@ func (h *TenantHandler) ListTenantTenantResourceQuota(c *gin.Context) {
 		PreloadSensitiveFields: map[string]string{"Cluster": "id, cluster_name"},
 		Where:                  []*handlers.QArgs{handlers.Args("tenant_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -716,7 +723,7 @@ func (h *TenantHandler) ListTenantTenantResourceQuota(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) RetrieveTenantTenantResourceQuota(c *gin.Context) {
 	var trq models.TenantResourceQuota
-	if err := h.GetDB().First(&trq, "tenant_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("tenantresourcequota_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&trq, "tenant_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("tenantresourcequota_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -735,12 +742,13 @@ func (h *TenantHandler) RetrieveTenantTenantResourceQuota(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) EnableTenant(c *gin.Context) {
 	var obj models.Tenant
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	obj.IsActive = true
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -776,12 +784,13 @@ func (h *TenantHandler) EnableTenant(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) DisableTenant(c *gin.Context) {
 	var obj models.Tenant
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	obj.IsActive = false
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -827,7 +836,7 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 	}
 	ctx := c.Request.Context()
 
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&obj).Error; err != nil {
 			return err
 		}
@@ -837,7 +846,7 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 		return
 	}
 
-	h.GetDB().Preload("Tenant").Preload("Cluster", func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name") }).First(&obj, obj.ID)
+	h.GetDB().WithContext(ctx).Preload("Tenant").Preload("Cluster", func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name") }).First(&obj, obj.ID)
 
 	action := i18n.Sprintf(context.TODO(), "create")
 	module := i18n.Sprintf(context.TODO(), "cluster resource quota")
@@ -938,7 +947,8 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 
 	// origin
 	var trq models.TenantResourceQuota
-	if err := h.GetDB().Preload(
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload(
 		"Cluster",
 		func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name, oversold_config") },
 	).Preload("Tenant").First(&trq, "tenant_id = ? and cluster_id = ?", c.Param(PrimaryKeyName), c.Param("cluster_id")).Error; err != nil {
@@ -946,7 +956,6 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
 	if err := h.ValidateTenantResourceQuota(ctx, trq.Cluster.ClusterName, trq.Cluster.OversoldConfig, trq.Content, newreq.Content); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -960,7 +969,7 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", trq.Tenant.TenantName, trq.Cluster.ClusterName))
 	h.SetExtraAuditData(c, models.ResTenant, trq.TenantID)
 
-	if e := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	if e := h.GetDB().WithContext(ctx).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if e := tx.Save(&trq).Error; e != nil {
 			return e
 		}
@@ -985,15 +994,15 @@ func (h *TenantHandler) PutTenantTenantResourceQuota(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) DeleteTenantResourceQuota(c *gin.Context) {
 	var trq models.TenantResourceQuota
-	if err := h.GetDB().Preload("Tenant").Preload(
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Tenant").Preload(
 		"Cluster",
 		func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name") },
 	).First(&trq, "tenant_id = ? and cluster_id = ?", c.Param(PrimaryKeyName), c.Param("cluster_id")).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
-	ctx := c.Request.Context()
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&trq).Error; err != nil {
 			return err
 		}
@@ -1042,7 +1051,8 @@ func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 		envs   []models.Environment
 	)
 	tenantid := c.Param(PrimaryKeyName)
-	if err := h.GetDB().Preload("Projects").First(&tenant, "id = ?", tenantid).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Projects").First(&tenant, "id = ?", tenantid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -1051,10 +1061,8 @@ func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 		projectids = append(projectids, proj.ID)
 	}
 
-	ctx := c.Request.Context()
-
 	search := c.Query("search")
-	q := h.GetDB().Preload("Project").Preload(
+	q := h.GetDB().WithContext(ctx).Preload("Project").Preload(
 		"Creator",
 		func(tx *gorm.DB) *gorm.DB { return tx.Select("id, username") },
 	).Preload(
@@ -1126,7 +1134,8 @@ func (h *TenantHandler) TenantEnvironments(c *gin.Context) {
 func (h *TenantHandler) ListEnvironment(c *gin.Context) {
 	var list []models.Environment
 	projectids := []uint{}
-	if err := h.GetDB().Model(&models.Project{}).Where("tenant_id = ?", c.Param(PrimaryKeyName)).Pluck("id", &projectids).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Model(&models.Project{}).Where("tenant_id = ?", c.Param(PrimaryKeyName)).Pluck("id", &projectids).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -1142,7 +1151,7 @@ func (h *TenantHandler) ListEnvironment(c *gin.Context) {
 		PreloadSensitiveFields: map[string]string{"Cluster": "id, cluster_name, version"},
 		Where:                  []*handlers.QArgs{handlers.Args("project_id in (?)", projectids)},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(ctx), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -1196,7 +1205,7 @@ func (h *TenantHandler) SearchEnvironment(c *gin.Context) {
 		sql += " and tenants.id = " + tenantID
 	}
 	ret := []EnvironmentInfo{}
-	if err := h.GetDB().Raw(sql).Scan(&ret).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Raw(sql).Scan(&ret).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -1238,20 +1247,19 @@ func (h *TenantHandler) TenantStatistics(c *gin.Context) {
 		statefulsetsCount int64
 		podCount          int64
 	)
-	if err := h.GetDB().Preload("ResourceQuotas.Cluster").Preload("Projects").First(&tenant, "id = ?", c.Param("tenant_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("ResourceQuotas.Cluster").Preload("Projects").First(&tenant, "id = ?", c.Param("tenant_id")).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "tenant is not found"))
 		return
 	}
 
-	ctx := c.Request.Context()
-
-	h.GetDB().Model(&models.TenantUserRels{}).Where("tenant_id = ?", c.Param("tenant_id")).Count(&usercount)
+	h.GetDB().WithContext(ctx).Model(&models.TenantUserRels{}).Where("tenant_id = ?", c.Param("tenant_id")).Count(&usercount)
 	pids := []uint{}
 	for _, p := range tenant.Projects {
 		pids = append(pids, p.ID)
 	}
-	h.GetDB().Model(&models.Application{}).Where("project_id in (?)", pids).Count(&appcount)
-	h.GetDB().Model(&models.Environment{}).Where("project_id in (?)", pids).Count(&envcount)
+	h.GetDB().WithContext(ctx).Model(&models.Application{}).Where("project_id in (?)", pids).Count(&appcount)
+	h.GetDB().WithContext(ctx).Model(&models.Environment{}).Where("project_id in (?)", pids).Count(&envcount)
 
 	if len(tenant.ResourceQuotas) != 0 {
 		wg := sync.WaitGroup{}
@@ -1341,11 +1349,12 @@ func (h *TenantHandler) TenantSwitch(c *gin.Context) {
 		tenant  models.Tenant
 		cluster models.Cluster
 	)
-	if e := h.GetDB().First(&tenant, "id = ?", c.Param(PrimaryKeyName)).Error; e != nil {
+	ctx := c.Request.Context()
+	if e := h.GetDB().WithContext(ctx).First(&tenant, "id = ?", c.Param(PrimaryKeyName)).Error; e != nil {
 		handlers.NotOK(c, e)
 		return
 	}
-	if e := h.GetDB().First(&cluster, "id = ?", form.ClusterID).Error; e != nil {
+	if e := h.GetDB().WithContext(ctx).First(&cluster, "id = ?", form.ClusterID).Error; e != nil {
 		handlers.NotOK(c, e)
 		return
 	}
@@ -1355,7 +1364,6 @@ func (h *TenantHandler) TenantSwitch(c *gin.Context) {
 	h.SetAuditData(c, action, module, tenant.TenantName)
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
 
-	ctx := c.Request.Context()
 	tnetpol := &v1beta1.TenantNetworkPolicy{}
 	err := h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
 		if err := cli.Get(ctx, client.ObjectKey{Name: tenant.TenantName}, tnetpol); err != nil {
@@ -1395,7 +1403,8 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 	}
 
 	tenantID, _ := strconv.Atoi(c.Param(PrimaryKeyName))
-	if err := h.GetDB().Preload("Tenant").Preload(
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Tenant").Preload(
 		"Cluster",
 		func(tx *gorm.DB) *gorm.DB { return tx.Select("id, cluster_name, oversold_config") },
 	).Preload("TenantResourceQuotaApply").First(&quota, "tenant_id = ? and cluster_id = ?", tenantID, c.Param("cluster_id")).Error; err != nil {
@@ -1407,8 +1416,6 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 	if u == nil {
 		u = &models.User{}
 	}
-
-	ctx := c.Request.Context()
 
 	// 没有就新建，有就更新
 	if quota.TenantResourceQuotaApplyID == nil {
@@ -1423,11 +1430,11 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 		return
 	}
 
-	if err := h.GetDB().Save(quota.TenantResourceQuotaApply).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(quota.TenantResourceQuotaApply).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Save(&quota).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&quota).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -1463,7 +1470,7 @@ func (h *TenantHandler) CreateTenantResourceQuotaApply(c *gin.Context) {
 // @Security    JWT
 func (h *TenantHandler) GetTenantTenantResourceQuotaApply(c *gin.Context) {
 	var obj models.TenantResourceQuotaApply
-	if err := h.GetDB().First(&obj, "id = ?", c.Param("tenantresourcequotaapply_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, "id = ?", c.Param("tenantresourcequotaapply_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -1511,18 +1518,18 @@ const (
 func (h *TenantHandler) ListTenantGateway(c *gin.Context) {
 	clusterid := c.Param("cluster_id")
 	cluster := models.Cluster{}
-	if err := h.GetDB().First(&cluster, clusterid).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&cluster, clusterid).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are quering on is not found"))
 		return
 	}
-	ctx := c.Request.Context()
 	// _all 不筛选租户
 	tenantidStr := c.Param("tenant_id")
 	var selector labels.Selector
 	if tenantidStr != "_all" && tenantidStr != "0" {
 		tenantid, _ := strconv.Atoi(tenantidStr)
 		tenant := models.Tenant{ID: uint(tenantid)}
-		if err := h.GetDB().First(&tenant).Error; err != nil {
+		if err := h.GetDB().WithContext(ctx).First(&tenant).Error; err != nil {
 			handlers.NotOK(c, i18n.Errorf(c, "the tenant you are quering in is not found"))
 			return
 		}
@@ -1605,12 +1612,11 @@ func (h *TenantHandler) GetTenantGateway(c *gin.Context) {
 	ingressClass := c.Query("ingressClass")
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
 	cluster := models.Cluster{ID: uint(clusterid)}
-	if err := h.GetDB().First(&cluster).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&cluster).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are quering on is not found"))
 		return
 	}
-
-	ctx := c.Request.Context()
 
 	if ingressClass != "" {
 		tglist, err := h.listGateways(ctx, cluster.ClusterName,
@@ -1654,11 +1660,12 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
 	tenant := models.Tenant{ID: uint(tenantid)}
 	cluster := models.Cluster{ID: uint(clusterid)}
-	if err := h.GetDB().First(&tenant).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&tenant).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the tenant you are quering in is not found"))
 		return
 	}
-	if err := h.GetDB().First(&cluster).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&cluster).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the tenant you are quering on is not found"))
 		return
 	}
@@ -1673,7 +1680,6 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 	module := i18n.Sprintf(context.TODO(), "cluster tenant gateway")
 	h.SetAuditData(c, action, module, i18n.Sprintf(c, "tenant %s / cluster %s", tenant.TenantName, cluster.ClusterName))
 	h.SetExtraAuditData(c, models.ResTenant, tenant.ID)
-	ctx := c.Request.Context()
 
 	if err := h.createGateway(ctx, cluster.ClusterName, &tg); err != nil {
 		handlers.NotOK(c, err)
@@ -1696,7 +1702,8 @@ func (h *TenantHandler) CreateTenantGateway(c *gin.Context) {
 func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 	clusterid, _ := strconv.Atoi(c.Param("cluster_id"))
 	cluster := models.Cluster{ID: uint(clusterid)}
-	if err := h.GetDB().First(&cluster).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&cluster).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are quering in is not found"))
 		return
 	}
@@ -1705,8 +1712,6 @@ func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
-	ctx := c.Request.Context()
 
 	u, _ := h.GetContextUser(c)
 	auth := h.ModelCache().GetUserAuthority(u)
@@ -1722,7 +1727,7 @@ func (h *TenantHandler) UpdateTenantGateway(c *gin.Context) {
 	if tg.Name != defaultGatewayName {
 		tenantid, _ := strconv.Atoi(c.Param("tenant_id"))
 		tenant := models.Tenant{ID: uint(tenantid)}
-		if err := h.GetDB().First(&tenant).Error; err != nil {
+		if err := h.GetDB().WithContext(ctx).First(&tenant).Error; err != nil {
 			handlers.NotOK(c, i18n.Errorf(c, "the tenant you are action is not found"))
 			return
 		}
@@ -1754,11 +1759,12 @@ func (h *TenantHandler) DeleteTenantGateway(c *gin.Context) {
 	name := c.Param("name")
 	tenant := models.Tenant{ID: uint(tenantid)}
 	cluster := models.Cluster{ID: uint(clusterid)}
-	if err := h.GetDB().First(&tenant).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&tenant).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the tenant you are action is not found"))
 		return
 	}
-	if err := h.GetDB().First(&cluster).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&cluster).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are action is not found"))
 		return
 	}
@@ -1799,12 +1805,11 @@ type GatewayAddr struct {
 // @Security    JWT
 func (h *TenantHandler) GetObjectTenantGatewayAddr(c *gin.Context) {
 	cluster := models.Cluster{}
-	if err := h.GetDB().First(&cluster, "id = ?", c.Param("cluster_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&cluster, "id = ?", c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-
-	ctx := c.Request.Context()
 
 	tg, err := h.getGateway(ctx, cluster.ClusterName, c.Param("name"))
 	if err != nil {

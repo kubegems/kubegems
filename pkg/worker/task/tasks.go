@@ -76,6 +76,8 @@ func Run(ctx context.Context, rediscli *redis.Client,
 		&HelmSyncTasker{DB: db, ChartRepoUrl: helmOptions.Addr},
 		// cluster
 		&ClusterSyncTasker{DB: db, cs: agents},
+		// alertrule
+		&AlertRuleSyncTasker{DB: db, cs: agents},
 	}
 	if err := p.RegisterTasker(taskers...); err != nil {
 		return err

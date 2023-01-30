@@ -312,10 +312,7 @@ func (h *ImageHandler) OnHarborFunc(c *gin.Context, harborfun HarborFunc, ocifun
 		_ = h.completeRegistryOption(options, image, params.ProjectID) // ignore
 
 		// try harbor
-		cli, err := harbor.NewClient(options.URL, options.Username, options.Password)
-		if err != nil {
-			return nil, err
-		}
+		cli := harbor.NewClient(options.URL, options.Username, options.Password)
 
 		if _, err := cli.SystemInfo(ctx); err != nil {
 			// try oci

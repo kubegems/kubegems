@@ -60,7 +60,7 @@ func (h *RegistryHandler) ListRegistry(c *gin.Context) {
 		SearchFields:  SearchFields,
 		PreloadFields: PreloadFields,
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -80,7 +80,7 @@ func (h *RegistryHandler) ListRegistry(c *gin.Context) {
 // @Security    JWT
 func (h *RegistryHandler) RetrieveRegistry(c *gin.Context) {
 	var obj models.Registry
-	if err := h.GetDB().First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -100,7 +100,8 @@ func (h *RegistryHandler) RetrieveRegistry(c *gin.Context) {
 // @Security    JWT
 func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 	var obj models.Registry
-	if err := h.GetDB().First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -119,7 +120,7 @@ func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 
 	// 检查其他默认仓库
 	defaultRegistries := []models.Registry{}
-	if err := h.GetDB().Where("project_id = ? and id != ? and is_default = ?", obj.ProjectID, obj.ID, true).
+	if err := h.GetDB().WithContext(ctx).Where("project_id = ? and id != ? and is_default = ?", obj.ProjectID, obj.ID, true).
 		Find(&defaultRegistries).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -129,14 +130,13 @@ func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
 	// 检查用户名密码
 	if err := h.validate(ctx, &obj); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&obj).Error; err != nil {
 			return err
 		}
@@ -162,7 +162,8 @@ func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 // @Security    JWT
 func (h *RegistryHandler) DeleteRegistry(c *gin.Context) {
 	var obj models.Registry
-	if err := h.GetDB().First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
@@ -171,9 +172,7 @@ func (h *RegistryHandler) DeleteRegistry(c *gin.Context) {
 	h.SetAuditData(c, action, module, obj.RegistryName)
 	h.SetExtraAuditData(c, models.ResProject, obj.ProjectID)
 
-	ctx := c.Request.Context()
-
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&obj, c.Param(ProjectKeyName)).Error; err != nil {
 			return err
 		}

@@ -38,14 +38,15 @@ func (h *SelsHandler) UserSels(c *gin.Context) {
 	ret := []UserSel{}
 	tenant_id := c.Query("tenant_id")
 	all := c.Query("all")
+	ctx := c.Request.Context()
 	if tenant_id == "" {
 		if all == "true" {
-			h.GetDB().Model(&models.User{}).Find(&ret)
+			h.GetDB().WithContext(ctx).Model(&models.User{}).Find(&ret)
 		} else {
-			h.GetDB().Model(&models.User{}).Find(&ret, "is_active = true")
+			h.GetDB().WithContext(ctx).Model(&models.User{}).Find(&ret, "is_active = true")
 		}
 	} else {
-		h.GetDB().Model(&models.User{}).Joins(
+		h.GetDB().WithContext(ctx).Model(&models.User{}).Joins(
 			"join tenant_user_rels on tenant_user_rels.user_id = users.id",
 		).Find(
 			&ret,
@@ -68,13 +69,14 @@ func (h *SelsHandler) UserSels(c *gin.Context) {
 func (h *SelsHandler) TenantSels(c *gin.Context) {
 	ret := []TenantSel{}
 	all := c.Query("all")
+	ctx := c.Request.Context()
 	if all == "true" {
-		h.GetDB().Model(&models.Tenant{}).Find(&ret)
+		h.GetDB().WithContext(ctx).Model(&models.Tenant{}).Find(&ret)
 	} else {
-		h.GetDB().Model(&models.Tenant{}).Find(&ret, "is_active = true")
+		h.GetDB().WithContext(ctx).Model(&models.Tenant{}).Find(&ret, "is_active = true")
 	}
 	quotas := []models.TenantResourceQuota{}
-	h.GetDB().Model(&models.TenantResourceQuota{}).Preload("Cluster").Find(&quotas)
+	h.GetDB().WithContext(ctx).Model(&models.TenantResourceQuota{}).Preload("Cluster").Find(&quotas)
 	tmap := map[uint][]string{}
 	for _, quota := range quotas {
 		if quota.Cluster != nil {
@@ -104,10 +106,11 @@ func (h *SelsHandler) TenantSels(c *gin.Context) {
 func (h *SelsHandler) ProjectSels(c *gin.Context) {
 	ret := []ProjectSel{}
 	tenant_id := c.Query("tenant_id")
+	ctx := c.Request.Context()
 	if tenant_id == "" {
-		h.GetDB().Model(&models.Project{}).Find(&ret)
+		h.GetDB().WithContext(ctx).Model(&models.Project{}).Find(&ret)
 	} else {
-		h.GetDB().Model(&models.Project{}).Find(&ret, "tenant_id = ?", tenant_id)
+		h.GetDB().WithContext(ctx).Model(&models.Project{}).Find(&ret, "tenant_id = ?", tenant_id)
 	}
 	handlers.OK(c, handlers.Page(int64(len(ret)), ret, 1, 10000))
 }
@@ -124,10 +127,11 @@ func (h *SelsHandler) ProjectSels(c *gin.Context) {
 func (h *SelsHandler) EnvironmentSels(c *gin.Context) {
 	ret := []EnvironmentSel{}
 	tenant_id := c.Query("tenant_id")
+	ctx := c.Request.Context()
 	if tenant_id == "" {
-		h.GetDB().Model(&models.Environment{}).Find(&ret)
+		h.GetDB().WithContext(ctx).Model(&models.Environment{}).Find(&ret)
 	} else {
-		h.GetDB().Model(&models.Environment{}).Find(&ret, "tenant_id = ?", tenant_id)
+		h.GetDB().WithContext(ctx).Model(&models.Environment{}).Find(&ret, "tenant_id = ?", tenant_id)
 	}
 	handlers.OK(c, handlers.Page(int64(len(ret)), ret, 1, 10000))
 }
@@ -144,10 +148,11 @@ func (h *SelsHandler) EnvironmentSels(c *gin.Context) {
 func (h *SelsHandler) ApplicationSels(c *gin.Context) {
 	ret := []ApplicationSel{}
 	project_id := c.Query("project_id")
+	ctx := c.Request.Context()
 	if project_id == "" {
-		h.GetDB().Model(&models.Application{}).Find(&ret)
+		h.GetDB().WithContext(ctx).Model(&models.Application{}).Find(&ret)
 	} else {
-		h.GetDB().Model(&models.Application{}).Find(&ret, "project_id = ?", project_id)
+		h.GetDB().WithContext(ctx).Model(&models.Application{}).Find(&ret, "project_id = ?", project_id)
 	}
 	handlers.OK(c, handlers.Page(int64(len(ret)), ret, 1, 10000))
 }

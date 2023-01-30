@@ -37,6 +37,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.DELETE("/observability/cluster/:cluster/namespaces/:namespace/monitor", h.CheckByClusterNamespace, h.DeleteMonitorCollector)
 
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/alerts", h.CheckByClusterNamespace, h.ListMonitorAlertRule)
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/alerts/_/status", h.CheckByClusterNamespace, h.ListMonitorAlertRulesStatus)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/monitor/alerts/:name", h.CheckByClusterNamespace, h.GetMonitorAlertRule)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/monitor/alerts", h.CheckByClusterNamespace, h.CreateMonitorAlertRule)
 	rg.PUT("/observability/cluster/:cluster/namespaces/:namespace/monitor/alerts/:name", h.CheckByClusterNamespace, h.UpdateMonitorAlertRule)
@@ -54,6 +55,7 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/observability/tenant/:tenant_id/channels/:channel_id/test", h.TestChannel)
 
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts", h.CheckByClusterNamespace, h.ListLoggingAlertRule)
+	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts/_/status", h.CheckByClusterNamespace, h.ListLoggingAlertRulesStatus)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts/:name", h.CheckByClusterNamespace, h.GetLoggingAlertRule)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts", h.CheckByClusterNamespace, h.CreateLoggingAlertRule)
 	rg.PUT("/observability/cluster/:cluster/namespaces/:namespace/logging/alerts/:name", h.CheckByClusterNamespace, h.UpdateLoggingAlertRule)
@@ -61,6 +63,9 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/actions/enable", h.CheckByClusterNamespace, h.EnableAlertRule)
 	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/actions/disable", h.CheckByClusterNamespace, h.DisableAlertRule)
+	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/actions/message", h.CheckByClusterNamespace, h.GenerateAlertMessage)
+	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/actions/sync", h.CheckByClusterNamespace, h.SyncAlertRule)
+	rg.POST("/observability/cluster/:cluster/namespaces/:namespace/alerts-import", h.CheckByClusterNamespace, h.ImportAlertRules)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/history", h.CheckByClusterNamespace, h.AlertHistory)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/alerts/:name/repeats", h.CheckByClusterNamespace, h.AlertRepeats)
 
@@ -108,4 +113,5 @@ func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/otel/appmonitor/services/:service_name/requests", h.CheckByClusterNamespace, h.OtelServiceRequests)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/otel/appmonitor/services/:service_name/operations", h.CheckByClusterNamespace, h.OtelServiceOperations)
 	rg.GET("/observability/cluster/:cluster/namespaces/:namespace/otel/appmonitor/services/:service_name/traces", h.CheckByClusterNamespace, h.OtelServiceTraces)
+	rg.GET("/observability/cluster/:cluster/traces/:trace_id", h.GetTrace)
 }

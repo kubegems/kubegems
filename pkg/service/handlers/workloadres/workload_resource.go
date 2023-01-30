@@ -46,7 +46,7 @@ func (h *WorkloadHandler) ListWorkload(c *gin.Context) {
 	namespace := c.Query("namespace")
 	workloadtype := c.Query("workloadtype")
 	var workloads []*models.Workload
-	tx := h.GetDB().
+	tx := h.GetDB().WithContext(c.Request.Context()).
 		Preload("Containers").
 		Where("cpu_limit_stdvar = 0 and memory_limit_stdvar = 0 and cluster_name = ? and type = ?", cluster, workloadtype)
 	if namespace != "_all" {
@@ -80,7 +80,7 @@ func (h *WorkloadHandler) ListWorkload(c *gin.Context) {
 // @Security    JWT
 func (h *WorkloadHandler) DeleteWorkload(c *gin.Context) {
 	var obj models.Workload
-	if err := h.GetDB().Delete(&obj, c.Param("workload_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&obj, c.Param("workload_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

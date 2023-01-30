@@ -15,6 +15,11 @@
 package plugins
 
 const (
+	KubegemsChartsRepoURL    = "https://charts.kubegems.io/kubegems"
+	KubegemsPluginsCachePath = "plugins"
+)
+
+const (
 	AnnotationIgnoreOptions        = "bundle.kubegems.io/ignore-options"
 	AnnotationIgnoreOptionOnUpdate = "OnUpdate"
 	AnnotationIgnoreOptionOnDelete = "OnDelete"
@@ -40,9 +45,6 @@ const (
 	// ref values from configmap in "[namespace/]<name>" format,multiple split by ','
 	// example: "kubegems/global,logging" .
 	AnnotationValuesFrom = "plugins.kubegems.io/values-from"
-
-	// json format string to store plugin infos
-	AnnotationPluginInfo = "plugins.kubegems.io/plugin-info"
 
 	// description
 	AnnotationPluginDescription = "plugins.kubegems.io/description"

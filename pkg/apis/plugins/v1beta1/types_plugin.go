@@ -17,6 +17,8 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PluginSpec struct {
@@ -108,7 +110,7 @@ type PluginStatus struct {
 	UpgradeTimestamp metav1.Time `json:"upgradeTimestamp,omitempty"`
 
 	// Resources is a list of resources created/managed by the bundle.
-	Resources []corev1.ObjectReference `json:"resources,omitempty"`
+	Resources []ManagedResource `json:"resources,omitempty"`
 }
 
 type ManagedResource struct {
@@ -116,7 +118,30 @@ type ManagedResource struct {
 	Kind       string `json:"kind,omitempty"`
 	Namespace  string `json:"namespace,omitempty"`
 	Name       string `json:"name,omitempty"`
+	// Status     string `json:"status,omitempty"`
+	// Message    string `json:"message,omitempty"`
 }
+
+func GetReference(obj client.Object) ManagedResource {
+	return ManagedResource{
+		APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
+		Namespace:  obj.GetNamespace(),
+		Name:       obj.GetName(),
+	}
+}
+
+// IsAnAPIObject allows clients to preemptively get a reference to an API object and pass it to places that
+// intend only to get a reference to that object. This simplifies the event recording interface.
+func (obj *ManagedResource) SetGroupVersionKind(gvk schema.GroupVersionKind) {
+	obj.APIVersion, obj.Kind = gvk.ToAPIVersionAndKind()
+}
+
+func (obj *ManagedResource) GroupVersionKind() schema.GroupVersionKind {
+	return schema.FromAPIVersionAndKind(obj.APIVersion, obj.Kind)
+}
+
+func (obj *ManagedResource) GetObjectKind() schema.ObjectKind { return obj }
 
 type Phase string
 

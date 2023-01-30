@@ -25,15 +25,17 @@ import (
 	v1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
 	"github.com/banzaicloud/logging-operator/pkg/sdk/logging/model/filter"
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -330,23 +332,39 @@ func getAppsLogStatus(podList corev1.PodList, flowList v1beta1.FlowList) map[str
 // @Description 日志告警规则列表
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                   true "cluster"
-// @Param       namespace path     string                                                   true "namespace"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]observe.LoggingAlertRule} "resp"
+// @Param       cluster   path     string                                        true "cluster"
+// @Param       namespace path     string                                        true "namespace"
+// @Param       preload   query    string                                                                   false "choices (Receivers, Receivers.AlertChannel)"
+// @Param       search    query    string                                                                   false "search in (name, expr)"
+// @Param       state     query    string                                                                   false "告警状态筛选(inactive, pending, firing)"
+// @Param       page      query    int                                                                      false "page"
+// @Param       size      query    int                                                                      false "size"
+// @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.AlertRule}} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListLoggingAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-
-	ret := []observe.LoggingAlertRule{}
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		var err error
-		ret, err = observe.NewClient(cli, h.GetDB()).ListLoggingAlertRules(ctx, namespace, false)
-		return err
-	}); err != nil {
+	ret, err := h.listAlertRules(c, prometheus.AlertTypeLogging)
+	if err != nil {
 		handlers.NotOK(c, err)
-		return
+	}
+	handlers.OK(c, ret)
+}
+
+// ListLoggingAlertRulesStatus 日志告警规则状态
+// @Tags        Observability
+// @Summary     日志告警规则状态
+// @Description 日志告警规则状态
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                                   true  "cluster"
+// @Param       namespace path     string                                                                   true  "namespace"
+// @Success     200       {object} handlers.ResponseStruct{Data=PromeAlertCount} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/_/status [get]
+// @Security    JWT
+func (h *ObservabilityHandler) ListLoggingAlertRulesStatus(c *gin.Context) {
+	ret, err := h.listAlertRulesStatus(c, prometheus.AlertTypeLogging)
+	if err != nil {
+		handlers.NotOK(c, err)
 	}
 	handlers.OK(c, ret)
 }
@@ -357,37 +375,18 @@ func (h *ObservabilityHandler) ListLoggingAlertRule(c *gin.Context) {
 // @Description 日志告警规则详情
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                 true "cluster"
-// @Param       namespace path     string                                                 true "namespace"
-// @Param       name      path     string                                                 true "name"
-// @Success     200       {object} handlers.ResponseStruct{Data=observe.LoggingAlertRule} "resp"
+// @Param       cluster   path     string                                         true "cluster"
+// @Param       namespace path     string                                         true "namespace"
+// @Param       name      path     string                                         true "name"
+// @Success     200       {object} handlers.ResponseStruct{Data=models.AlertRule} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [get]
 // @Security    JWT
 func (h *ObservabilityHandler) GetLoggingAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-
-	alertrules := []observe.LoggingAlertRule{}
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		var err error
-		alertrules, err = observe.NewClient(cli, h.GetDB()).ListLoggingAlertRules(ctx, namespace, true)
-		return err
-	}); err != nil {
+	ret, err := h.getAlertRule(c, prometheus.AlertTypeLogging)
+	if err != nil {
 		handlers.NotOK(c, err)
-		return
 	}
-	index := -1
-	for i := range alertrules {
-		if alertrules[i].Name == name {
-			index = i
-			break
-		}
-	}
-	if index == -1 {
-		handlers.NotOK(c, i18n.Errorf(c, "alert rule %s not found", name))
-	}
-	handlers.OK(c, alertrules[index])
+	handlers.OK(c, ret)
 }
 
 func (h *ObservabilityHandler) getLoggingAlertReq(c *gin.Context) (observe.LoggingAlertRule, error) {
@@ -397,7 +396,7 @@ func (h *ObservabilityHandler) getLoggingAlertReq(c *gin.Context) (observe.Loggi
 	}
 	req.Namespace = c.Param("namespace")
 	for _, v := range req.BaseAlertRule.Receivers {
-		if err := h.GetDB().First(v.AlertChannel).Error; err != nil {
+		if err := h.GetDB().WithContext(c.Request.Context()).First(v.AlertChannel).Error; err != nil {
 			return req, err
 		}
 	}
@@ -415,53 +414,21 @@ func (h *ObservabilityHandler) getLoggingAlertReq(c *gin.Context) (observe.Loggi
 // @Produce     json
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
-// @Param       form      body     observe.LoggingAlertRule             true "body"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts [post]
 // @Security    JWT
 func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-
-	req, err := h.getLoggingAlertReq(c)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	action := i18n.Sprintf(context.TODO(), "create")
-	module := i18n.Sprintf(context.TODO(), "log alert rule")
-	h.SetAuditData(c, action, module, req.Name)
-
-	h.m.Lock()
-	defer h.m.Unlock()
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli, h.GetDB())
-		raw, err := observecli.GetRawLoggingAlertResource(ctx, namespace)
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
 		if err != nil {
 			return err
 		}
-
-		// check name duplicated in log alert
-		// check name duplicated
-		amconfigList := v1alpha1.AlertmanagerConfigList{}
-		if err := cli.List(ctx, &amconfigList,
-			client.InNamespace(namespace),
-			client.HasLabels([]string{gems.LabelAlertmanagerConfigName}),
-		); err != nil {
-			return err
-		}
-		if err := checkAlertName(req.Name, amconfigList.Items); err != nil {
-			return err
-		}
-
-		if err := raw.ModifyLoggingAlertRule(req, observe.Add); err != nil {
-			return err
-		}
-		if err := observecli.CreateOrUpdateAlertEmailSecret(ctx, namespace, req.Receivers); err != nil {
-			return err
-		}
-		return observecli.CommitRawLoggingAlertResource(ctx, raw)
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "create")
+		module := i18n.Sprintf(ctx, "logging alert rule")
+		h.SetAuditData(c, action, module, req.Name)
+		return p.CreateAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -477,39 +444,21 @@ func (h *ObservabilityHandler) CreateLoggingAlertRule(c *gin.Context) {
 // @Produce     json
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
-// @Param       form      body     observe.LoggingAlertRule             true "body"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [put]
 // @Security    JWT
 func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-
-	req, err := h.getLoggingAlertReq(c)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	action := i18n.Sprintf(context.TODO(), "update")
-	module := i18n.Sprintf(context.TODO(), "log alert rule")
-	h.SetAuditData(c, action, module, req.Name)
-
-	h.m.Lock()
-	defer h.m.Unlock()
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli, h.GetDB())
-		raw, err := observecli.GetRawLoggingAlertResource(ctx, namespace)
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
 		if err != nil {
 			return err
 		}
-		if err := raw.ModifyLoggingAlertRule(req, observe.Update); err != nil {
-			return err
-		}
-		if err := observecli.CreateOrUpdateAlertEmailSecret(ctx, namespace, req.Receivers); err != nil {
-			return err
-		}
-		return observecli.CommitRawLoggingAlertResource(ctx, raw)
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "update")
+		module := i18n.Sprintf(ctx, "logging alert rule")
+		h.SetAuditData(c, action, module, req.Name)
+		return p.UpdateAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -530,36 +479,30 @@ func (h *ObservabilityHandler) UpdateLoggingAlertRule(c *gin.Context) {
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/logging/alerts/{name} [delete]
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteLoggingAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-
-	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	h.SetAuditData(c, "删除", "日志告警规则", name)
-	req := observe.LoggingAlertRule{
-		BaseAlertRule: observe.BaseAlertRule{
-			Namespace: namespace,
-			Name:      name,
-		},
+	req := &models.AlertRule{
+		Cluster:   c.Param("cluster"),
+		Namespace: c.Param("namespace"),
+		Name:      c.Param("name"),
 	}
-	h.m.Lock()
-	defer h.m.Unlock()
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli, h.GetDB())
-		raw, err := observecli.GetRawLoggingAlertResource(ctx, namespace)
-		if err != nil {
-			return err
-		}
-		if err := raw.ModifyLoggingAlertRule(req, observe.Delete); err != nil {
-			return err
-		}
-		if err := observecli.CommitRawLoggingAlertResource(ctx, raw); err != nil {
-			return err
-		}
-		return deleteSilenceIfExist(ctx, namespace, name, cli)
+	if err := h.withAlertRuleProcessor(c.Request.Context(), req.Cluster, func(ctx context.Context, p *AlertRuleProcessor) error {
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "delete")
+		module := i18n.Sprintf(ctx, "logging alert rule")
+		h.SetAuditData(c, action, module, req.Name)
+
+		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := tx.First(req, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
+				return err
+			}
+			if err := tx.Delete(req).Error; err != nil {
+				return err
+			}
+			return p.deleteLoggingAlertRule(ctx, req)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+
 	handlers.OK(c, "ok")
 }

@@ -1,0 +1,69 @@
+description: OpenTelemetry HTTP监控模板
+end: now
+graphs:
+- name: HTTP Client Duration P90
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_http
+      rule: http_client_duration
+      scope: opentelemetry
+      unit: duration-ms
+    targetName: A
+  unit: duration-ms
+- name: HTTP Client Request Size Byte
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_http
+      rule: http_client_request_size
+      scope: opentelemetry
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: HTTP Client Response Size Byte
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_http
+      rule: http_client_response_size
+      scope: opentelemetry
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: HTTP Server Duration P90
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_http
+      rule: http_server_duration
+      scope: opentelemetry
+      unit: duration-ms
+    targetName: A
+  unit: duration-ms
+- name: HTTP Server Request Size Byte
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_http
+      rule: http_server_request_size
+      scope: opentelemetry
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+- name: HTTP Server Response Size Byte
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_http
+      rule: http_server_response_size
+      scope: opentelemetry
+      unit: bytes/sec-B/s
+    targetName: A
+  unit: bytes/sec-B/s
+name: Otel_HTTP
+refresh: 30s
+start: now-30m
+step: 30s
+variables:
+  service_name: ""

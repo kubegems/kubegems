@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gemsplugin
+package pluginmanager
 
 import (
 	"context"
@@ -24,7 +24,7 @@ import (
 	"golang.org/x/exp/slices"
 	"golang.org/x/mod/semver"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	pluginscommon "kubegems.io/kubegems/pkg/apis/plugins"
+	plugins "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/bundle"
 	"kubegems.io/kubegems/pkg/installer/bundle/helm"
@@ -32,8 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
-const DefaultPluginsDir = "plugins"
 
 type Plugin struct {
 	Name         string          `json:"name"`
@@ -48,8 +46,9 @@ type Plugin struct {
 }
 
 type PluginManager struct {
-	CacheDir string
-	Client   client.Client
+	CacheDir         string
+	Client           client.Client
+	builtinRepoCache *Repository
 }
 
 func DefaultPluginManager(cachedir string) (*PluginManager, error) {
@@ -65,32 +64,40 @@ func DefaultPluginManager(cachedir string) (*PluginManager, error) {
 }
 
 func (m *PluginManager) Install(ctx context.Context, name string, version string, values map[string]any) error {
-	pv, err := m.GetPluginVersion(ctx, name, version, false)
+	pv, err := m.GetPluginVersion(ctx, name, version, false, false)
 	if err != nil {
 		return err
 	}
+	// check dependencies
+	installed, _ := m.ListInstalled(ctx, false)
+	if err := CheckDependecies(pv.Requirements, installed); err != nil {
+		return err
+	}
+
 	pv.Values = pluginsv1beta1.Values{Object: values}.FullFill()
 	apiplugin := pv.ToPlugin()
 	// all of plugins must install in installer namespace
-	apiplugin.Namespace = pluginscommon.KubeGemsNamespaceInstaller
+	apiplugin.Namespace = plugins.KubeGemsNamespaceInstaller
 
 	exists := apiplugin.DeepCopy()
 	_, err = controllerutil.CreateOrUpdate(ctx, m.Client, exists, func() error {
-		exists.Annotations = apiplugin.Annotations
+		if exists.Annotations == nil {
+			exists.Annotations = map[string]string{}
+		}
+		for k, v := range apiplugin.Annotations {
+			exists.Annotations[k] = v
+		}
 		exists.Spec = apiplugin.Spec
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (m *PluginManager) UnInstall(ctx context.Context, name string) error {
 	return m.Client.Delete(ctx, &pluginsv1beta1.Plugin{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
-			Namespace: pluginscommon.KubeGemsNamespaceInstaller,
+			Namespace: plugins.KubeGemsNamespaceInstaller,
 		},
 	})
 }
@@ -129,39 +136,51 @@ func (m *PluginManager) Get(ctx context.Context, name string) (*Plugin, error) {
 	return &plugin, nil
 }
 
-func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version string, withSchema bool) (*PluginVersion, error) {
+// nolint funlen
+func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version string, withSchema bool, withDpendeciesCheck bool) (*PluginVersion, error) {
 	plugin, err := m.Get(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	allversions := plugin.Available
-	if plugin.Installed != nil {
-		// if no version speci always return installed version
-		allversions = append([]PluginVersion{*plugin.Installed}, allversions...)
-	}
-	for _, pv := range allversions {
+	// prefer remote version
+	for _, item := range plugin.Available {
 		// if  no version we use the first version
 		// nolint: nestif
-		if version == "" || pv.Version == version {
+		if version == "" || item.Version == version {
 			// find schema
 			if withSchema {
-				if err := m.fillSchema(ctx, &pv); err != nil {
-					logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", pv.Name, "version", pv.Version)
+				if err := m.fillSchema(ctx, &item); err != nil {
+					logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", item.Name, "version", item.Version)
 				}
 			}
-			// fill current values
-			if installed := plugin.Installed; installed != nil {
-				pv.Values = *installed.Values.DeepCopy()
+			if withDpendeciesCheck && len(item.Requirements) > 0 {
+				// list installed ignore error
+				installed, _ := m.ListInstalled(ctx, false)
+				CheckDependecies(item.Requirements, installed)
 			}
-			return &pv, nil
+			// fill current installed values
+			if plugin.Installed != nil {
+				item.Values = *plugin.Installed.Values.DeepCopy()
+			}
+			return &item, nil
 		}
+	}
+	// try installed
+	if plugin.Installed != nil && (version == "" || version == plugin.Installed.Version) {
+		// find schema
+		if withSchema {
+			if err := m.fillSchema(ctx, plugin.Installed); err != nil {
+				logr.FromContextOrDiscard(ctx).Error(err, "get schema", "plugin", plugin.Installed.Name, "version", plugin.Installed.Version)
+			}
+		}
+		return plugin.Installed, nil
 	}
 	return nil, fmt.Errorf("plugin %s version %s not found", name, version)
 }
 
 func (m *PluginManager) fillSchema(ctx context.Context, pv *PluginVersion) error {
 	if m.CacheDir == "" {
-		m.CacheDir = DefaultPluginsDir
+		m.CacheDir = plugins.KubegemsPluginsCachePath
 	}
 	// we cache in a dir same with plugins use.
 	cachedir := bundle.PerRepoCacheDir(pv.Repository, m.CacheDir)
@@ -169,7 +188,14 @@ func (m *PluginManager) fillSchema(ctx context.Context, pv *PluginVersion) error
 	if err != nil {
 		return err
 	} else {
-		pv.Schema = string(chart.Schema)
+		files := map[string]string{}
+		for _, item := range chart.Raw {
+			if !strings.HasSuffix(item.Name, ".json") {
+				continue
+			}
+			files[item.Name] = string(item.Data)
+		}
+		pv.Files = files
 		return nil
 	}
 }
@@ -229,11 +255,7 @@ func (m *PluginManager) ListPlugins(ctx context.Context) (map[string]Plugin, err
 
 func FindUpgradeable(availables []PluginVersion, installed PluginVersion, allinstall map[string]PluginVersion) *PluginVersion {
 	for _, available := range availables {
-		if !SemVersionBiggerThan(available.Version, installed.Version) {
-			continue
-		}
-		// meet all requirements
-		if CheckDependecies(available.Requirements, allinstall) == nil {
+		if SemVersionBiggerThan(available.Version, installed.Version) {
 			return &available
 		}
 	}
@@ -241,20 +263,20 @@ func FindUpgradeable(availables []PluginVersion, installed PluginVersion, allins
 }
 
 func (m *PluginManager) GetInstalled(ctx context.Context, name string) (*PluginVersion, error) {
-	plugin := &pluginsv1beta1.Plugin{}
+	plugin := pluginsv1beta1.Plugin{}
 	if err := m.Client.Get(ctx,
-		client.ObjectKey{Namespace: pluginscommon.KubeGemsNamespaceInstaller, Name: name},
-		plugin,
+		client.ObjectKey{Namespace: plugins.KubeGemsNamespaceInstaller, Name: name},
+		&plugin,
 	); err != nil {
 		return nil, err
 	}
-	pv := PluginVersionFrom(*plugin)
+	pv := PluginVersionFrom(plugin)
 	return &pv, nil
 }
 
 func (m *PluginManager) ListInstalled(ctx context.Context, checkHealthy bool) (map[string]PluginVersion, error) {
 	pluginList := &pluginsv1beta1.PluginList{}
-	if err := m.Client.List(ctx, pluginList, client.InNamespace(pluginscommon.KubeGemsNamespaceInstaller)); err != nil {
+	if err := m.Client.List(ctx, pluginList, client.InNamespace(plugins.KubeGemsNamespaceInstaller)); err != nil {
 		return nil, err
 	}
 	ret := map[string]PluginVersion{}
@@ -298,7 +320,7 @@ func mergeAllrepoVersions(repos map[string]Repository) map[string][]PluginVersio
 				// use repo priority as plugin priority
 				pv.Priority = repo.Priority
 				if exist, ok := pluginversions[pv.Version]; ok {
-					if exist.Priority < pv.Priority {
+					if exist.Priority > pv.Priority {
 						// replace use higher priority
 						pluginversions[pv.Version] = pv
 					}
@@ -312,7 +334,7 @@ func mergeAllrepoVersions(repos map[string]Repository) map[string][]PluginVersio
 	for k, v := range pluginsmap {
 		vs := maps.Values(v)
 		slices.SortFunc(vs, func(a, b PluginVersion) bool {
-			return semver.Compare(a.Version, b.Version) > -1
+			return SemVersionBiggerThan(a.Version, b.Version)
 		})
 		ret[k] = vs
 	}
@@ -339,21 +361,4 @@ func (m *PluginManager) CheckUpdate(ctx context.Context) (map[string]Plugin, err
 		}
 	}
 	return upgradable, nil
-}
-
-func (m *PluginManager) UpdateLocalRepoCache(ctx context.Context) error {
-	repos, err := m.ListRepos(ctx)
-	if err != nil {
-		return err
-	}
-	for _, repo := range repos {
-		if !strings.HasPrefix(repo.Address, "file://") {
-			continue
-		}
-		// with refresh
-		if err := m.SetRepo(ctx, &repo, true); err != nil {
-			return err
-		}
-	}
-	return nil
 }

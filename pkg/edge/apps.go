@@ -78,11 +78,25 @@ func NewEdgeServerCmd() *cobra.Command {
 func NewEdgeAgentCmd() *cobra.Command {
 	options := options.NewDefaultAgentOptions()
 	cmd := &cobra.Command{
-		Use:     "agent",
-		Version: version.Get().String(),
+		Use: "agent",
+		Example: `
+	To use SN as kubegems-edge device id from a manufacturefile:
+	$ cat /etc/some-file
+	SN=sn-123456
+	...
+	$ kubegems-edge-agent --manufacturefile=/etc/some-file --deviceidkey=SN
+
+	Or set kubegems-edge device id from flag:
+	$ kubegems-edge-agent --deviceid=sn-123456
+		`,
+		Version:            version.Get().String(),
+		DisableFlagParsing: true, // avoid parse twice on slice args
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := config.Parse(cmd.Flags()); err != nil {
 				return err
+			}
+			if b, _ := cmd.Flags().GetBool("help"); b {
+				return cmd.Help()
 			}
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()

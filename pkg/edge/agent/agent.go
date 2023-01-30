@@ -17,10 +17,12 @@ package agent
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,9 +43,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func Run(ctx context.Context, opts *options.AgentOptions) error {
-	return run(ctx, opts)
-}
+const ClientIDSecret = "kubegems-edge-agent-id"
 
 type EdgeAgent struct {
 	config       *rest.Config
@@ -56,30 +56,30 @@ type EdgeAgent struct {
 	annotations  tunnel.Annotations
 }
 
-func run(ctx context.Context, options *options.AgentOptions) error {
+func Run(ctx context.Context, options *options.AgentOptions) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
-	manufectures, err := ReadManufacture(options.ManufactureFile)
+
+	tlsconfig := &tls.Config{
+		InsecureSkipVerify: options.TLS.InsecureSkipVerify,
+	}
+
+	c, err := cluster.NewLocalAgentClusterAndStart(ctx)
 	if err != nil {
 		return err
 	}
-	rest, err := kube.AutoClientConfig()
-	if err != nil {
-		return err
-	}
-	c, err := cluster.NewClusterAndStart(ctx, rest)
-	if err != nil {
-		return err
-	}
-	clientid, err := initClientID(ctx, c.GetClient(), options)
+	clientid, err := getClientID(ctx, c.GetClient(), options)
 	if err != nil {
 		return err
 	}
 	if clientid == "" {
 		return fmt.Errorf("empty client id specified")
 	}
-
+	manufectures, err := ReadManufacture(options, clientid)
+	if err != nil {
+		return err
+	}
 	ea := &EdgeAgent{
-		config:       rest,
+		config:       c.GetConfig(),
 		manufectures: manufectures,
 		clientID:     clientid,
 		options:      options,
@@ -91,7 +91,7 @@ func run(ctx context.Context, options *options.AgentOptions) error {
 
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return ea.tunserver.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, nil, "", ea.getAnnotations(ctx))
+		return ea.tunserver.ConnectUpstreamWithRetry(ctx, options.EdgeHubAddr, tlsconfig, "", ea.getAnnotations(ctx))
 	})
 	eg.Go(func() error {
 		return ea.RunKeepAliveRouter(ctx, ea.options.KeepAliveInterval, ea.getAnnotations)
@@ -147,12 +147,14 @@ func (ea *EdgeAgent) getAnnotations(ctx context.Context) tunnel.Annotations {
 
 const clientIDKey = "client-id"
 
-func initClientID(ctx context.Context, cli client.Client, options *options.AgentOptions) (string, error) {
-	clientid := options.ClientID
+const two = 2
+
+func getClientID(ctx context.Context, cli client.Client, options *options.AgentOptions) (string, error) {
+	clientid := ""
 	// try secret
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      options.ClientIDSecret,
+			Name:      ClientIDSecret,
 			Namespace: kube.LocalNamespaceOrDefault("kubegems-edge"),
 		},
 	}
@@ -160,15 +162,11 @@ func initClientID(ctx context.Context, cli client.Client, options *options.Agent
 		if secret.Data == nil {
 			secret.Data = map[string][]byte{}
 		}
-		secretid := string(secret.Data[clientIDKey])
-		switch {
-		case clientid == "" && secretid != "":
-			clientid = secretid
-		case clientid != "" && secretid != clientid:
-			secret.Data[clientIDKey] = []byte(clientid)
-		case clientid == "" && secretid == "":
+		if existsclientid := string(secret.Data[clientIDKey]); existsclientid == "" {
 			clientid = uuid.NewString()
 			secret.Data[clientIDKey] = []byte(clientid)
+		} else {
+			clientid = existsclientid
 		}
 		return nil
 	})
@@ -178,14 +176,67 @@ func initClientID(ctx context.Context, cli client.Client, options *options.Agent
 	return clientid, nil
 }
 
-func ReadManufacture(file string) (map[string]string, error) {
+func ReadManufacture(options *options.AgentOptions, clientID string) (map[string]string, error) {
+	fullkvs := map[string]string{}
+	for _, file := range options.ManufactureFile {
+		kvs, err := ParseKV(file)
+		if err != nil {
+			return nil, err
+		}
+		maps.Copy(fullkvs, kvs)
+	}
+
+	// kvs from flag
+	maps.Copy(fullkvs, ParseToMaps(options.Manufacture))
+
+	// remap
+	remapkeys := ParseToMaps(options.ManufactureRemap)
+	for k, v := range remapkeys {
+		val, ok := fullkvs[v]
+		if ok {
+			fullkvs[k] = val
+		}
+	}
+
+	deviceid := options.DeviceID
+	if deviceid == "" {
+		// remap device id
+		deviceid = fullkvs[options.DeviceIDKey]
+	}
+	if deviceid == "" {
+		// default device id
+		deviceid = clientID
+	}
+	fullkvs[common.AnnotationKeyDeviceID] = deviceid
+	return fullkvs, nil
+}
+
+func ParseToMaps(list []string) map[string]string {
+	// remap
+	ret := map[string]string{}
+	for _, item := range list {
+		for _, kvstr := range strings.Split(item, ",") {
+			splits := strings.SplitN(kvstr, "=", two)
+			if len(splits) == two {
+				key, value := splits[0], splits[1]
+				ret[key] = value
+			}
+		}
+	}
+	return ret
+}
+
+func ParseKV(file string) (map[string]string, error) {
 	content, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
 	kvs, err := ParseJSONFile(content)
 	if err != nil {
-		return ParseKVFile(content)
+		kvs, err = ParseKVFile(content)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return kvs, nil
 }

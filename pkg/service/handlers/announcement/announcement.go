@@ -62,7 +62,7 @@ func (h *AnnouncementHandler) ListAnnouncement(c *gin.Context) {
 			handlers.Args("start_at <= ? and end_at >= ?", now, now),
 		)
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -82,7 +82,7 @@ func (h *AnnouncementHandler) ListAnnouncement(c *gin.Context) {
 // @Security    JWT
 func (h *AnnouncementHandler) GetAnnouncement(c *gin.Context) {
 	ret := models.Announcement{}
-	if err := h.GetDB().First(&ret, c.Param("id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&ret, c.Param("id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -110,7 +110,7 @@ func (h *AnnouncementHandler) PostAnnouncement(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "site announcement period is invalid, the end time is earlier than the start time"))
 		return
 	}
-	if err := h.GetDB().Create(&req).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -139,7 +139,7 @@ func (h *AnnouncementHandler) PutAnnouncement(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "site announcement period is invalid, the end time is earlier than the start time"))
 		return
 	}
-	if err := h.GetDB().Updates(&req).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Updates(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -158,7 +158,7 @@ func (h *AnnouncementHandler) PutAnnouncement(c *gin.Context) {
 // @Security    JWT
 func (h *AnnouncementHandler) DeleteAnnouncement(c *gin.Context) {
 	req := models.Announcement{}
-	if err := h.GetDB().Delete(&req, c.Param("id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&req, c.Param("id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

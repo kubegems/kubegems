@@ -93,13 +93,14 @@ func (h *VirtualSpaceHandler) ListVirtualSpace(c *gin.Context) {
 		},
 	}
 	u, _ := h.GetContextUser(c)
+	ctx := c.Request.Context()
 	if !h.ModelCache().GetUserAuthority(u).IsSystemAdmin() {
-		subQuery := h.GetDB().Table("virtual_space_user_rels").
+		subQuery := h.GetDB().WithContext(ctx).Table("virtual_space_user_rels").
 			Select("virtual_space_id").
 			Where("user_id = ?", u.GetID())
 		cond.Where = append(cond.Where, handlers.Args("id in (?)", subQuery))
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(ctx), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -120,7 +121,7 @@ func (h *VirtualSpaceHandler) ListVirtualSpace(c *gin.Context) {
 func (h *VirtualSpaceHandler) GetVirtualSpace(c *gin.Context) {
 	// get vs
 	vs := models.VirtualSpace{}
-	if err := h.GetDB().
+	if err := h.GetDB().WithContext(c.Request.Context()).
 		Preload("Users").
 		Preload("Environments.Cluster", func(tx *gorm.DB) *gorm.DB {
 			return tx.Select("id, cluster_name")
@@ -159,7 +160,7 @@ func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 	vs.CreatedBy = u.GetUsername()
 	vs.IsActive = true
 
-	if err := h.GetDB().Save(&vs).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(&vs).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -190,7 +191,8 @@ func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 // @Security    JWT
 func (h *VirtualSpaceHandler) PutVirtualSpace(c *gin.Context) {
 	var obj models.VirtualSpace
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -208,7 +210,7 @@ func (h *VirtualSpaceHandler) PutVirtualSpace(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -229,7 +231,8 @@ func (h *VirtualSpaceHandler) PutVirtualSpace(c *gin.Context) {
 // @Security    JWT
 func (h *VirtualSpaceHandler) EnableOrDisableVirtualSpace(c *gin.Context) {
 	var obj models.VirtualSpace
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -246,7 +249,7 @@ func (h *VirtualSpaceHandler) EnableOrDisableVirtualSpace(c *gin.Context) {
 	h.SetExtraAuditData(c, models.ResVirtualSpace, obj.ID)
 
 	obj.IsActive = enable
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -266,7 +269,8 @@ func (h *VirtualSpaceHandler) EnableOrDisableVirtualSpace(c *gin.Context) {
 func (h *VirtualSpaceHandler) DeleteVirtualSpace(c *gin.Context) {
 	// get vs
 	vs := models.VirtualSpace{}
-	if err := h.GetDB().Preload("Environments").First(&vs, c.Param("virtualspace_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Environments").First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -286,7 +290,7 @@ func (h *VirtualSpaceHandler) DeleteVirtualSpace(c *gin.Context) {
 		))
 		return
 	}
-	if err := h.GetDB().Delete(&vs).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&vs).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -332,7 +336,7 @@ func (h *VirtualSpaceHandler) ListEnvironment(c *gin.Context) {
 			handlers.Args("virtual_space_id = ?", c.Param("virtualspace_id")),
 		},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -358,7 +362,8 @@ func (h *VirtualSpaceHandler) AddEnvironment(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Preload("Cluster").First(&env).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Cluster").First(&env).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -373,12 +378,12 @@ func (h *VirtualSpaceHandler) AddEnvironment(c *gin.Context) {
 
 	// get vs
 	vs := models.VirtualSpace{}
-	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		env.VirtualSpaceID = &vs.ID
 		if err := tx.Save(&env).Error; err != nil {
 			return err
@@ -410,7 +415,7 @@ func (h *VirtualSpaceHandler) RemoveEnvironment(c *gin.Context) {
 		}
 		vs := *env.VirtualSpace
 		// 只删除关联
-		if err := h.GetDB().Transaction(func(db *gorm.DB) error {
+		if err := h.GetDB().WithContext(ctx).Transaction(func(db *gorm.DB) error {
 			if err := db.Model(&vs).Association("Environments").Delete(&env); err != nil {
 				return err
 			}
@@ -641,7 +646,7 @@ func (h *VirtualSpaceHandler) ListVirtualSpaceUser(c *gin.Context) {
 		Join:         handlers.Args("join virtual_space_user_rels on virtual_space_user_rels.user_id = users.id"),
 		Where:        []*handlers.QArgs{handlers.Args("virtual_space_user_rels.virtual_space_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -666,15 +671,16 @@ func (h *VirtualSpaceHandler) PostVirtualSpaceUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Create(&rel).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Create(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	user := models.User{}
-	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.GetDB().Preload("VirtualSpace").First(&rel, rel.ID)
+	h.GetDB().WithContext(ctx).Preload("VirtualSpace").First(&rel, rel.ID)
 
 	action := i18n.Sprintf(context.TODO(), "add")
 	module := i18n.Sprintf(context.TODO(), "virtual space member")
@@ -696,17 +702,18 @@ func (h *VirtualSpaceHandler) PostVirtualSpaceUser(c *gin.Context) {
 // @Security    JWT
 func (h *VirtualSpaceHandler) DeleteVirtualSpaceUser(c *gin.Context) {
 	var rel models.VirtualSpaceUserRels
-	if err := h.GetDB().Preload("VirtualSpace").First(&rel, "virtual_space_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("VirtualSpace").First(&rel, "virtual_space_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Delete(&rel).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
 	user := models.User{}
-	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, c.Param("user_id"))
 	h.ModelCache().FlushUserAuthority(&user)
 
 	action := i18n.Sprintf(context.TODO(), "delete")
@@ -931,7 +938,8 @@ func (h *VirtualSpaceHandler) environmentProcess(c *gin.Context, decodebody inte
 	}
 
 	env := models.Environment{}
-	if err := h.GetDB().Preload("VirtualSpace").Preload("Cluster").Preload("Project.Tenant").First(&env, c.Param("environment_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("VirtualSpace").Preload("Cluster").Preload("Project.Tenant").First(&env, c.Param("environment_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -940,7 +948,7 @@ func (h *VirtualSpaceHandler) environmentProcess(c *gin.Context, decodebody inte
 		return
 	}
 
-	respdata, err := process(c.Request.Context(), env)
+	respdata, err := process(ctx, env)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return

@@ -22,9 +22,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/go-version"
-	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -33,10 +34,10 @@ import (
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -67,7 +68,7 @@ func (h *ObservabilityHandler) GetMonitorCollector(c *gin.Context) {
 		Service: svcname,
 	}
 	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		sm := v1.ServiceMonitor{}
+		sm := monitoringv1.ServiceMonitor{}
 		if err := cli.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      svcname,
@@ -186,20 +187,20 @@ func (h *ObservabilityHandler) AddOrUpdateMonitorCollector(c *gin.Context) {
 			return i18n.Errorf(c, "port %s not found in Service %s", req.Port, svc.Name)
 		}
 
-		sm := v1.ServiceMonitor{
+		sm := monitoringv1.ServiceMonitor{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
 				Name:      req.Service,
 			},
 		}
 		_, err := controllerutil.CreateOrUpdate(ctx, cli, &sm, func() error {
-			sm.Spec = v1.ServiceMonitorSpec{
+			sm.Spec = monitoringv1.ServiceMonitorSpec{
 				Selector: *metav1.SetAsLabelSelector(svc.Labels),
-				NamespaceSelector: v1.NamespaceSelector{
+				NamespaceSelector: monitoringv1.NamespaceSelector{
 					Any:        false,
 					MatchNames: []string{namespace},
 				},
-				Endpoints: []v1.Endpoint{{
+				Endpoints: []monitoringv1.Endpoint{{
 					Port:        req.Port,
 					HonorLabels: true,
 					Interval:    "30s",
@@ -256,7 +257,7 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 			return err
 		}
 
-		if err := cli.Delete(ctx, &v1.ServiceMonitor{
+		if err := cli.Delete(ctx, &monitoringv1.ServiceMonitor{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
 				Name:      svcname,
@@ -280,22 +281,39 @@ func (h *ObservabilityHandler) DeleteMonitorCollector(c *gin.Context) {
 // @Description 监控告警规则列表
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                   true "cluster"
-// @Param       namespace path     string                                                   true "namespace"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]observe.MonitorAlertRule} "resp"
+// @Param       cluster   path     string                                        true "cluster"
+// @Param       namespace path     string                                        true "namespace"
+// @Param       preload   query    string                                                                   false "choices (Receivers, Receivers.AlertChannel)"
+// @Param       search    query    string                                                                   false "search in (name, expr)"
+// @Param       state     query    string                                                                   false "告警状态筛选(inactive, pending, firing)"
+// @Param       page      query    int                                                                      false "page"
+// @Param       size      query    int                                                                      false "size"
+// @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.AlertRule}} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [get]
 // @Security    JWT
 func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
+	ret, err := h.listAlertRules(c, prometheus.AlertTypeMonitor)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, ret)
+}
 
-	ret := []observe.MonitorAlertRule{}
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		var err error
-		observecli := observe.NewClient(cli, h.GetDB())
-		ret, err = observecli.ListMonitorAlertRules(ctx, namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
-		return err
-	}); err != nil {
+// ListMonitorAlertRulesStatus 监控告警规则状态
+// @Tags        Observability
+// @Summary     监控告警规则状态
+// @Description 监控告警规则状态
+// @Accept      json
+// @Produce     json
+// @Param       cluster   path     string                                                                   true  "cluster"
+// @Param       namespace path     string                                                                   true  "namespace"
+// @Success     200       {object} handlers.ResponseStruct{Data=PromeAlertCount} "resp"
+// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/_/status [get]
+// @Security    JWT
+func (h *ObservabilityHandler) ListMonitorAlertRulesStatus(c *gin.Context) {
+	ret, err := h.listAlertRulesStatus(c, prometheus.AlertTypeMonitor)
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -308,38 +326,19 @@ func (h *ObservabilityHandler) ListMonitorAlertRule(c *gin.Context) {
 // @Description 监控告警规则详情
 // @Accept      json
 // @Produce     json
-// @Param       cluster   path     string                                                 true "cluster"
-// @Param       namespace path     string                                                 true "namespace"
-// @Param       name      path     string                                                 true "name"
-// @Success     200       {object} handlers.ResponseStruct{Data=observe.MonitorAlertRule} "resp"
+// @Param       cluster   path     string                                         true "cluster"
+// @Param       namespace path     string                                         true "namespace"
+// @Param       name      path     string                                         true "name"
+// @Success     200       {object} handlers.ResponseStruct{Data=models.AlertRule} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [get]
 // @Security    JWT
 func (h *ObservabilityHandler) GetMonitorAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-
-	var alerts []observe.MonitorAlertRule
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli, h.GetDB())
-		var err error
-		alerts, err = observecli.ListMonitorAlertRules(ctx, namespace, true, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
-		return err
-	}); err != nil {
+	ret, err := h.getAlertRule(c, prometheus.AlertTypeMonitor)
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	index := -1
-	for i := range alerts {
-		if alerts[i].Name == name {
-			index = i
-			break
-		}
-	}
-	if index == -1 {
-		handlers.NotOK(c, i18n.Errorf(c, "alert rule %s not found", name))
-	}
-	handlers.OK(c, alerts[index])
+	handlers.OK(c, ret)
 }
 
 func (h *ObservabilityHandler) withMonitorAlertReq(c *gin.Context, f func(req observe.MonitorAlertRule) error) error {
@@ -349,7 +348,7 @@ func (h *ObservabilityHandler) withMonitorAlertReq(c *gin.Context, f func(req ob
 	}
 	req.Namespace = c.Param("namespace")
 	for _, v := range req.BaseAlertRule.Receivers {
-		if err := h.GetDB().First(v.AlertChannel).Error; err != nil {
+		if err := h.GetDB().WithContext(c.Request.Context()).First(v.AlertChannel).Error; err != nil {
 			return err
 		}
 	}
@@ -368,54 +367,26 @@ func (h *ObservabilityHandler) withMonitorAlertReq(c *gin.Context, f func(req ob
 // @Produce     json
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
-// @Param       form      body     observe.MonitorAlertRule             true "body"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts [post]
 // @Security    JWT
 func (h *ObservabilityHandler) CreateMonitorAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-
-	h.m.Lock()
-	defer h.m.Unlock()
-	if err := h.withMonitorAlertReq(c, func(req observe.MonitorAlertRule) error {
-		h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-		action := i18n.Sprintf(context.TODO(), "create")
-		module := i18n.Sprintf(context.TODO(), "monitoring alert rule")
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
+		if err != nil {
+			return err
+		}
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "create")
+		module := i18n.Sprintf(ctx, "monitor alert rule")
 		h.SetAuditData(c, action, module, req.Name)
 
-		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-			observecli := observe.NewClient(cli, h.GetDB())
-			// get、update、commit
-			raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
-			if err != nil {
-				return err
-			}
-
-			// check name duplicated
-			amconfigList := v1alpha1.AlertmanagerConfigList{}
-			if err := cli.List(ctx, &amconfigList, client.InNamespace(namespace), client.HasLabels([]string{
-				gems.LabelAlertmanagerConfigName,
-			})); err != nil {
-				return err
-			}
-			if err := checkAlertName(req.Name, amconfigList.Items); err != nil {
-				return err
-			}
-
-			if err := raw.ModifyAlertRule(req, observe.Add); err != nil {
-				return err
-			}
-			if err := observecli.CreateOrUpdateAlertEmailSecret(ctx, namespace, req.Receivers); err != nil {
-				return err
-			}
-			return observecli.CommitRawMonitorAlertResource(ctx, raw)
-		})
+		return p.CreateAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	handlers.OK(c, "ok")
 }
 
@@ -445,42 +416,26 @@ func checkAlertName(name string, amconfigs []*v1alpha1.AlertmanagerConfig) error
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
 // @Param       name      path     string                               true "name"
-// @Param       form      body     observe.MonitorAlertRule             true "body"
+// @Param       form      body     models.AlertRule                     true "body"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [put]
 // @Security    JWT
 func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-	h.m.Lock()
-	defer h.m.Unlock()
-	if err := h.withMonitorAlertReq(c, func(req observe.MonitorAlertRule) error {
-		h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-		action := i18n.Sprintf(context.TODO(), "update")
-		module := i18n.Sprintf(context.TODO(), "monitoring alert rule")
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		req, err := p.getAlertRuleReq(c)
+		if err != nil {
+			return err
+		}
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "update")
+		module := i18n.Sprintf(ctx, "monitor alert rule")
 		h.SetAuditData(c, action, module, req.Name)
 
-		return h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-			observecli := observe.NewClient(cli, h.GetDB())
-			// get、update、commit
-			raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, req.Source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
-			if err != nil {
-				return err
-			}
-
-			if err := raw.ModifyAlertRule(req, observe.Update); err != nil {
-				return err
-			}
-			if err := observecli.CreateOrUpdateAlertEmailSecret(ctx, namespace, req.Receivers); err != nil {
-				return err
-			}
-			return observecli.CommitRawMonitorAlertResource(ctx, raw)
-		})
+		return p.UpdateAlertRule(ctx, req)
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	handlers.OK(c, "ok")
 }
 
@@ -493,48 +448,35 @@ func (h *ObservabilityHandler) UpdateMonitorAlertRule(c *gin.Context) {
 // @Param       cluster   path     string                               true "cluster"
 // @Param       namespace path     string                               true "namespace"
 // @Param       name      path     string                               true "name"
-// @Param       source    query    string                               true "source"
 // @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
 // @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/alerts/{name} [delete]
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteMonitorAlertRule(c *gin.Context) {
-	cluster := c.Param("cluster")
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-	source := c.Query("source")
-	req := observe.MonitorAlertRule{
-		BaseAlertRule: observe.BaseAlertRule{
-			Namespace: namespace,
-			Name:      name,
-		},
+	req := &models.AlertRule{
+		Cluster:   c.Param("cluster"),
+		Namespace: c.Param("namespace"),
+		Name:      c.Param("name"),
 	}
-	h.SetExtraAuditDataByClusterNamespace(c, cluster, namespace)
-	action := i18n.Sprintf(context.TODO(), "delete")
-	module := i18n.Sprintf(context.TODO(), "monitoring alert rule")
-	h.SetAuditData(c, action, module, req.Name)
+	if err := h.withAlertRuleProcessor(c.Request.Context(), c.Param("cluster"), func(ctx context.Context, p *AlertRuleProcessor) error {
+		h.SetExtraAuditDataByClusterNamespace(c, req.Cluster, req.Namespace)
+		action := i18n.Sprintf(ctx, "delete")
+		module := i18n.Sprintf(ctx, "monitor alert rule")
+		h.SetAuditData(c, action, module, req.Name)
 
-	h.m.Lock()
-	defer h.m.Unlock()
-	if err := h.Execute(c.Request.Context(), cluster, func(ctx context.Context, cli agents.Client) error {
-		observecli := observe.NewClient(cli, h.GetDB())
-		// get、update、commit
-		raw, err := observecli.GetRawMonitorAlertResource(ctx, namespace, source, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
-		if err != nil {
-			return err
-		}
-
-		if err := raw.ModifyAlertRule(req, observe.Delete); err != nil {
-			return err
-		}
-		if err := observecli.CommitRawMonitorAlertResource(ctx, raw); err != nil {
-			return err
-		}
-		// 清理silence规则
-		return deleteSilenceIfExist(ctx, namespace, name, cli)
+		return p.DBWithCtx(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := tx.First(req, "cluster = ? and namespace = ? and name = ?", req.Cluster, req.Namespace, req.Name).Error; err != nil {
+				return err
+			}
+			if err := tx.Delete(req).Error; err != nil {
+				return err
+			}
+			return p.deleteMonitorAlertRule(ctx, req)
+		})
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+
 	handlers.OK(c, "ok")
 }
 
@@ -585,20 +527,16 @@ func (h *ObservabilityHandler) ExporterSchema(c *gin.Context) {
 		return
 	}
 
-	var schema, values string
+	ret := gin.H{
+		"app":     name,
+		"version": maxVersion,
+		"repo":    strings.TrimSuffix(h.AppStoreOpt.Addr, "/") + "/" + exporterRepo,
+	}
 	for _, v := range chartfiles {
-		if v.Name == "values.schema.json" {
-			schema = base64.StdEncoding.EncodeToString(v.Data)
-		} else if v.Name == "values.yaml" {
-			values = base64.StdEncoding.EncodeToString(v.Data)
+		switch v.Name {
+		case "values.yaml", "values.schema.json", "alerts.yaml":
+			ret[v.Name] = base64.StdEncoding.EncodeToString(v.Data)
 		}
 	}
-
-	handlers.OK(c, gin.H{
-		"values.schema.json": schema,
-		"values.yaml":        values,
-		"app":                name,
-		"version":            maxVersion,
-		"repo":               strings.TrimSuffix(h.AppStoreOpt.Addr, "/") + "/" + exporterRepo,
-	})
+	handlers.OK(c, ret)
 }

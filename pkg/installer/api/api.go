@@ -19,7 +19,7 @@ import (
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/route"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,7 +38,7 @@ func DefaultOptions() *Options {
 }
 
 func Run(ctx context.Context, options *Options, cachedir string) error {
-	pm, err := gemsplugin.DefaultPluginManager(cachedir)
+	pm, err := pluginmanager.DefaultPluginManager(cachedir)
 	if err != nil {
 		return err
 	}
@@ -60,11 +60,11 @@ func Run(ctx context.Context, options *Options, cachedir string) error {
 }
 
 type PluginsAPI struct {
-	PM *gemsplugin.PluginManager
+	PM *pluginmanager.PluginManager
 }
 
 func NewPluginsAPI(cli client.Client) *PluginsAPI {
-	return &PluginsAPI{PM: &gemsplugin.PluginManager{Client: cli}}
+	return &PluginsAPI{PM: &pluginmanager.PluginManager{Client: cli}}
 }
 
 func (o *PluginsAPI) RegisterRoute(rg *route.Group) {

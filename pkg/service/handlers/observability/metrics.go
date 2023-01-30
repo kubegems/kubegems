@@ -337,7 +337,7 @@ func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
 		SearchFields:  []string{"name"},
 		PreloadFields: []string{"Resources", "Resources.Rules"},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -373,7 +373,7 @@ func (h *ObservabilityHandler) ListResources(c *gin.Context) {
 		PreloadFields: []string{"Scope", "Rules"},
 		Where:         []*handlers.QArgs{handlers.Args("scope_id = ?", c.Param("scope_id"))},
 	}
-	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("name"), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -417,7 +417,7 @@ func (h *ObservabilityHandler) ListRules(c *gin.Context) {
 	if resourceID != "_all" {
 		cond.Where = append(cond.Where, handlers.Args("resource_id = ?", resourceID))
 	}
-	total, page, size, err := query.PageList(h.GetDB().Order("name"), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()).Order("name"), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -442,7 +442,7 @@ func (h *ObservabilityHandler) GetRule(c *gin.Context) {
 	tenantID := c.Param("tenant_id")
 	preload := c.Query("preload")
 
-	query := h.GetDB().Model(&models.PromqlTplRule{})
+	query := h.GetDB().WithContext(c.Request.Context()).Model(&models.PromqlTplRule{})
 	if preload == "Resource" || preload == "Resource.Scope" {
 		query.Preload(preload)
 	}
@@ -497,7 +497,8 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 	}
 
 	var count int64
-	if err := h.GetDB().Model(&models.PromqlTplRule{}).
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Model(&models.PromqlTplRule{}).
 		Where("resource_id = ? and name = ?", req.ResourceID, req.Name).
 		Count(&count).Error; err != nil {
 		handlers.NotOK(c, err)
@@ -510,7 +511,7 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "create")
 	module := i18n.Sprintf(context.TODO(), "monitoring query template")
 	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().Create(&req).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Create(&req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -530,19 +531,39 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 // @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [put]
 // @Security    JWT
 func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
-	req, err := h.getRuleReq(c)
+	newRule, err := h.getRuleReq(c)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	action := i18n.Sprintf(context.TODO(), "update")
 	module := i18n.Sprintf(context.TODO(), "monitoring query template")
-	h.SetAuditData(c, action, module, req.Name)
-	if err := h.GetDB().Save(&req).Error; err != nil {
+	h.SetAuditData(c, action, module, newRule.Name)
+
+	alertrules := []*models.AlertRule{}
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		oldRule := models.PromqlTplRule{}
+		if err := tx.Preload("Resource.Scope").First(&oldRule, "id = ?", c.Param("rule_id")).Error; err != nil {
+			return err
+		}
+		if err := tx.Select("name", "show_name", "description", "expr", "unit", "labels").Updates(newRule).Error; err != nil {
+			return err
+		}
+		return tx.Preload("Receivers.AlertChannel").
+			Find(&alertrules,
+				`promql_generator -> "$.scope" = ? and promql_generator -> "$.resource" = ? and promql_generator -> "$.rule" = ?`,
+				oldRule.Resource.Scope.Name,
+				oldRule.Resource.Name,
+				oldRule.Name,
+			).Error
+	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	handlers.OK(c, "ok")
+
+	status, _ := h.syncAlertRulesWithTimeout(ctx, alertrules, 5*time.Second)
+	handlers.OK(c, status)
 }
 
 // DeleteRules 删除promql模板三级目录rule
@@ -558,7 +579,8 @@ func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 	rule := &models.PromqlTplRule{}
-	if err := h.GetDB().Preload("Resource.Scope").First(rule, "id = ?", c.Param("rule_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Resource.Scope").First(rule, "id = ?", c.Param("rule_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -574,20 +596,14 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 		h.SetExtraAuditData(c, models.ResTenant, *rule.TenantID)
 	}
 
-	if err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		dashborads := []models.MonitorDashboard{}
 		if err := tx.Preload("Environment").Find(&dashborads).Error; err != nil {
 			return err
 		}
 		for _, dash := range dashborads {
-			for _, graph := range dash.Graphs {
-				for _, target := range graph.Targets {
-					if target.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
-						target.PromqlGenerator.Resource == rule.Resource.Name &&
-						target.PromqlGenerator.Rule == rule.Name {
-						return fmt.Errorf("此模板正在被环境: %s 中的监控大盘: %s 使用", dash.Environment.EnvironmentName, dash.Name)
-					}
-				}
+			if dash.Graphs.IsUsingTpl(rule.Resource.Scope.Name, rule.Resource.Name, rule.Name) {
+				return fmt.Errorf("此模板正在被环境: %s 中的监控大盘: %s 使用", dash.Environment.EnvironmentName, dash.Name)
 			}
 		}
 
@@ -596,15 +612,26 @@ func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 			return err
 		}
 		for _, tpl := range tpls {
-			for _, graph := range tpl.Graphs {
-				for _, target := range graph.Targets {
-					if target.PromqlGenerator.Scope == rule.Resource.Scope.Name &&
-						target.PromqlGenerator.Resource == rule.Resource.Name &&
-						target.PromqlGenerator.Rule == rule.Name {
-						return fmt.Errorf("此模板正在被监控大盘模板: %s 使用", tpl.Name)
-					}
-				}
+			if tpl.Graphs.IsUsingTpl(rule.Resource.Scope.Name, rule.Resource.Name, rule.Name) {
+				return fmt.Errorf("此模板正在被监控大盘模板: %s 使用", tpl.Name)
 			}
+		}
+
+		alertrules := []*models.AlertRule{}
+		if err := tx.Find(&alertrules,
+			`promql_generator -> "$.scope" = ? and promql_generator -> "$.resource" = ? and promql_generator -> "$.rule" = ?`,
+			rule.Resource.Scope.Name,
+			rule.Resource.Name,
+			rule.Name,
+		).Error; err != nil {
+			return err
+		}
+		if len(alertrules) > 0 {
+			tmp := make([]string, len(alertrules))
+			for i, v := range alertrules {
+				tmp[i] = v.FullName()
+			}
+			return fmt.Errorf("此模板正在被告警规则: [%s] 使用", strings.Join(tmp, ","))
 		}
 		return tx.Delete(rule).Error
 	}); err != nil {
@@ -794,7 +821,7 @@ type OtelOverViewResp struct {
 	P90ServiceDurationSeconds   []KV `json:"p90ServiceDurationSeconds"`   // p90最耗时服务
 	P90OperationDurationSeconds []KV `json:"p90OperationDurationSeconds"` // p90最耗时操作
 	ServiceErrorCount           []KV `json:"serviceErrorCount"`           // 服务错误数
-	DBOperationCount            []KV `json:"dbOperationCount"`            // 数据库操作数
+	DBOperationDurationSeconds  []KV `json:"dbOperationDurationSeconds"`  // 数据库操作数
 }
 
 // OtelOverview 应用性能监控概览
@@ -833,11 +860,11 @@ func (h *ObservabilityHandler) OtelOverview(c *gin.Context) {
 			return err
 		}
 		overView.ServiceErrorCount = pickVectorValue(serviceErrorCount, "service_name")
-		dbOperationCount, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(calls_total{namespace="%s", operation=~"SELECT.*|UPDATE.*|INSERT.*|DELETE.*"}[%s]))by(operation)`, ns, dur))
+		dbOperationDurationSeconds, err := cli.Extend().PrometheusVector(ctx, fmt.Sprintf(`sum(increase(latency_sum{namespace="%s", operation=~"SELECT.*|UPDATE.*|INSERT.*|DELETE.*"}[%s]))by(operation) / 1000`, ns, dur))
 		if err != nil {
 			return err
 		}
-		overView.DBOperationCount = pickVectorValue(dbOperationCount, "operation")
+		overView.DBOperationDurationSeconds = pickVectorValue(dbOperationDurationSeconds, "operation")
 		return nil
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -1036,7 +1063,7 @@ func (h *ObservabilityHandler) OtelServiceTraces(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		observecli := observe.NewClient(cli, h.GetDB())
+		observecli := observe.NewClient(cli, h.GetDB().WithContext(ctx))
 		traces, err = observecli.SearchTrace(ctx,
 			c.Param("service_name"),
 			start, end,

@@ -73,7 +73,7 @@ func (h *ProjectHandler) ListProject(c *gin.Context) {
 		SearchFields:  SearchFields,
 		PreloadFields: PreloadFields,
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -96,7 +96,8 @@ func (h *ProjectHandler) RetrieveProject(c *gin.Context) {
 		obj   models.Project
 		users []*models.User
 	)
-	if err := h.GetDB().Select(
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Select(
 		"users.*, project_user_rels.role",
 	).Joins(
 		"join project_user_rels  on  project_user_rels.user_id = users.id",
@@ -104,7 +105,7 @@ func (h *ProjectHandler) RetrieveProject(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Preload("Tenant").First(&obj, "id = ?", c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Preload("Tenant").First(&obj, "id = ?", c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -125,7 +126,8 @@ func (h *ProjectHandler) RetrieveProject(c *gin.Context) {
 // @Security    JWT
 func (h *ProjectHandler) PutProject(c *gin.Context) {
 	var obj models.Project
-	if err := h.GetDB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -143,7 +145,7 @@ func (h *ProjectHandler) PutProject(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := h.GetDB().Save(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -163,7 +165,8 @@ func (h *ProjectHandler) PutProject(c *gin.Context) {
 // @Security    JWT
 func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	var obj models.Project
-	if err := h.GetDB().Preload("Environments.Cluster").Preload("Tenant").First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Environments.Cluster").Preload("Tenant").First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
@@ -175,9 +178,7 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	h.SetAuditData(c, action, module, obj.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, obj.ID)
 
-	ctx := c.Request.Context()
-
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&obj).Error; err != nil {
 			return err
 		}
@@ -201,8 +202,8 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 }
 
 /*
-	删除项目后
-	删除各个集群的环境(tenv),tenv本身删除是Controller自带垃圾回收的，其ns下所有资源将清空
+删除项目后
+删除各个集群的环境(tenv),tenv本身删除是Controller自带垃圾回收的，其ns下所有资源将清空
 */
 func (h *ProjectHandler) afterProjectDelete(ctx context.Context, tx *gorm.DB, p *models.Project) error {
 	for _, env := range p.Environments {
@@ -250,7 +251,7 @@ func (h *ProjectHandler) ListProjectUser(c *gin.Context) {
 		Join:          handlers.Args("join project_user_rels on project_user_rels.user_id = users.id"),
 		Where:         []*handlers.QArgs{handlers.Args("project_user_rels.project_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -271,7 +272,7 @@ func (h *ProjectHandler) ListProjectUser(c *gin.Context) {
 // @Security    JWT
 func (h *ProjectHandler) RetrieveProjectUser(c *gin.Context) {
 	var user models.User
-	if err := h.GetDB().Model(
+	if err := h.GetDB().WithContext(c.Request.Context()).Model(
 		&models.User{},
 	).Joins(
 		"join project_user_rels on project_user_rels.user_id = users.id",
@@ -303,15 +304,16 @@ func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Create(&rel).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Create(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	user := models.User{}
-	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.GetDB().Preload("Project.Tenant").First(&rel, rel.ID)
+	h.GetDB().WithContext(ctx).Preload("Project.Tenant").First(&rel, rel.ID)
 
 	action := i18n.Sprintf(context.TODO(), "add")
 	module := i18n.Sprintf(context.TODO(), "project member")
@@ -349,24 +351,32 @@ func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 // @Router      /v1/project/{project_id}/user/{user_id} [put]
 // @Security    JWT
 func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
-	var rel models.ProjectUserRels
-	if err := c.BindJSON(&rel); err != nil {
+	var (
+		tmp, rel models.ProjectUserRels
+	)
+	if err := c.BindJSON(&tmp); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().First(&rel, "project_id = ? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
+	if tmp.ProjectID != utils.ToUint(c.Param("project_id")) || tmp.UserID != utils.ToUint(c.Param("user_id")) {
+		handlers.NotOK(c, i18n.Errorf(c, "parameters missmatched"))
+		return
+	}
+	ctx := c.Request.Context()
+
+	if err := h.GetDB().WithContext(ctx).Preload("Project.Tenant").First(&rel, "project_id = ? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "can't modify project member role, the user is not a member of the project"))
 		return
 	}
-	if err := h.GetDB().Save(&rel).Error; err != nil {
+	rel.Role = tmp.Role
+	if err := h.GetDB().WithContext(ctx).Save(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	user := models.User{}
-	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
 
-	h.GetDB().Preload("Project.Tenant").First(&rel, rel.ID)
 	action := i18n.Sprintf(context.TODO(), "update")
 	module := i18n.Sprintf(context.TODO(), "project member")
 	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "project %s / user %s / role %s", rel.Project.ProjectName, user.Username, rel.Role))
@@ -406,28 +416,29 @@ func (h *ProjectHandler) DeleteProjectUser(c *gin.Context) {
 		rel    models.ProjectUserRels
 		envrel models.EnvironmentUserRels
 	)
-	if err := h.GetDB().Model(&rel).First(&rel, "project_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Model(&rel).First(&rel, "project_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
-	h.GetDB().Preload("Project.Tenant").First(&rel, rel.ID)
-	if err := h.GetDB().Delete(&rel).Error; err != nil {
+	h.GetDB().WithContext(ctx).Preload("Project.Tenant").First(&rel, rel.ID)
+	if err := h.GetDB().WithContext(ctx).Delete(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	// 从项目中删除用户同时也要从项目下各个环境中删除
 	envids := []uint{}
-	if err := h.GetDB().Model(&models.Environment{}).Where("project_id = ?", c.Param(PrimaryKeyName)).Pluck("id", &envids).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Model(&models.Environment{}).Where("project_id = ?", c.Param(PrimaryKeyName)).Pluck("id", &envids).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Delete(&envrel, "environment_id in (?) and user_id = ?", envids, c.Param("user_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Delete(&envrel, "environment_id in (?) and user_id = ?", envids, c.Param("user_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
 	user := models.User{}
-	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, c.Param("user_id"))
 	h.ModelCache().FlushUserAuthority(&user)
 
 	action := i18n.Sprintf(context.TODO(), "delete")
@@ -487,7 +498,8 @@ func (h *ProjectHandler) ListProjectEnvironment(c *gin.Context) {
 		PreloadSensitiveFields: PreloadSensitiveFields,
 		Where:                  []*handlers.QArgs{handlers.Args("project_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	ctx := c.Request.Context()
+	total, page, size, err := query.PageList(h.GetDB().WithContext(ctx), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -498,7 +510,7 @@ func (h *ProjectHandler) ListProjectEnvironment(c *gin.Context) {
 		for i := range list {
 			index := i
 			eg.Go(func() error {
-				return h.Execute(c.Request.Context(), list[index].Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
+				return h.Execute(ctx, list[index].Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
 					ns := corev1.Namespace{}
 					if err := cli.Get(ctx, types.NamespacedName{Name: list[index].Namespace}, &ns); err != nil {
 						return err
@@ -529,7 +541,7 @@ func (h *ProjectHandler) ListProjectEnvironment(c *gin.Context) {
 // @Security    JWT
 func (h *ProjectHandler) RetrieveProjectEnvironment(c *gin.Context) {
 	var env models.Environment
-	if err := h.GetDB().First(&env, "project_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("environment_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&env, "project_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("environment_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -557,13 +569,14 @@ func (h *ProjectHandler) GetProjectResource(c *gin.Context) {
 	dayTime := utils.NextDayStartTime(dateTime)
 
 	proj := models.Project{}
-	if err := h.GetDB().Preload("Tenant").Where("id = ?", c.Param("project_id")).First(&proj).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Tenant").Where("id = ?", c.Param("project_id")).First(&proj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
 	envs := []models.Environment{}
-	if err := h.GetDB().Where("project_id = ?", proj.ID).Find(&envs).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Where("project_id = ?", proj.ID).Find(&envs).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -571,7 +584,7 @@ func (h *ProjectHandler) GetProjectResource(c *gin.Context) {
 	var list []models.EnvironmentResource
 	for _, env := range envs {
 		var envREs models.EnvironmentResource
-		if err := h.GetDB().
+		if err := h.GetDB().WithContext(ctx).
 			Where("tenant_name = ? and project_name = ? and environment_name = ? and created_at >= ? and created_at < ?", proj.Tenant.TenantName, proj.ProjectName, env.EnvironmentName, dayTime.Format(time.RFC3339), dayTime.Add(24*time.Hour).Format(time.RFC3339)).
 			Order("created_at").
 			First(&envREs).Error; err != nil {

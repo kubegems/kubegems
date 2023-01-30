@@ -41,7 +41,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/service/handlers/registry/synchronizer"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/loki"
@@ -91,7 +90,7 @@ func (h *EnvironmentHandler) ListEnvironment(c *gin.Context) {
 		PreloadSensitiveFields: PreloadSensitiveFields,
 		PreloadFields:          PreloadFields,
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -114,7 +113,8 @@ func (h *EnvironmentHandler) RetrieveEnvironment(c *gin.Context) {
 		users []*models.User
 		obj   models.Environment
 	)
-	if err := h.GetDB().Select(
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Select(
 		"users.*, environment_user_rels.role",
 	).Joins(
 		"join environment_user_rels  on  environment_user_rels.user_id = users.id",
@@ -122,7 +122,7 @@ func (h *EnvironmentHandler) RetrieveEnvironment(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Preload("Cluster", clusterSensitiveFunc).First(&obj, "id = ?", c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Preload("Cluster", clusterSensitiveFunc).First(&obj, "id = ?", c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -143,7 +143,8 @@ func (h *EnvironmentHandler) RetrieveEnvironment(c *gin.Context) {
 // @Security    JWT
 func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 	var obj models.Environment
-	if err := h.GetDB().Preload("Cluster").First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Cluster").First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -160,13 +161,12 @@ func (h *EnvironmentHandler) PutEnvironment(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	ctx := c.Request.Context()
 	cluster := obj.Cluster
-	if err := ValidateEnvironmentNamespace(ctx, h.BaseHandler, h.GetDB(), obj.Namespace, obj.EnvironmentName, obj.Cluster.ClusterName); err != nil {
+	if err := ValidateEnvironmentNamespace(ctx, h.BaseHandler, h.GetDB().WithContext(ctx), obj.Namespace, obj.EnvironmentName, obj.Cluster.ClusterName); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Omit(clause.Associations).Save(&obj).Error; err != nil {
 			return err
 		}
@@ -304,7 +304,8 @@ func createOrUpdateEnvironment(ctx context.Context, h base.BaseHandler, clustern
 // @Security    JWT
 func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 	var obj models.Environment
-	if err := h.GetDB().Preload(
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload(
 		"Cluster",
 		clusterSensitiveFunc,
 	).Preload(
@@ -320,9 +321,7 @@ func (h *EnvironmentHandler) DeleteEnvironment(c *gin.Context) {
 	envUsers := h.GetDataBase().EnvUsers(obj.ID)
 	projAdmins := h.GetDataBase().ProjectAdmins(obj.ProjectID)
 
-	ctx := c.Request.Context()
-
-	err := h.GetDB().Transaction(func(tx *gorm.DB) error {
+	err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&obj).Error; err != nil {
 			return err
 		}
@@ -392,7 +391,7 @@ func (h *EnvironmentHandler) ListEnvironmentUser(c *gin.Context) {
 		Join:                   handlers.Args("join environment_user_rels on environment_user_rels.user_id = users.id"),
 		Where:                  []*handlers.QArgs{handlers.Args("environment_user_rels.environment_id = ?", c.Param(PrimaryKeyName))},
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -413,7 +412,7 @@ func (h *EnvironmentHandler) ListEnvironmentUser(c *gin.Context) {
 // @Security    JWT
 func (h *EnvironmentHandler) RetrieveEnvironmentUser(c *gin.Context) {
 	var user models.User
-	if err := h.GetDB().Joins(
+	if err := h.GetDB().WithContext(c.Request.Context()).Joins(
 		"join environment_user_rels on environment_user_rels.user_id = users.id",
 	).First(
 		&user,
@@ -443,14 +442,15 @@ func (h *EnvironmentHandler) PostEnvironmentUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Create(&rel).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Create(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	user := models.User{}
-	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
-	h.GetDB().Preload("Environment").First(&rel, rel.ID)
+	h.GetDB().WithContext(ctx).Preload("Environment").First(&rel, rel.ID)
 
 	action := i18n.Sprintf(context.TODO(), "add")
 	module := i18n.Sprintf(context.TODO(), "environment member")
@@ -484,7 +484,8 @@ func (h *EnvironmentHandler) PostEnvironmentUser(c *gin.Context) {
 // @Security    JWT
 func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 	var rel models.EnvironmentUserRels
-	if err := h.GetDB().First(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the environment member role you are modifying is not exist"))
 		return
 	}
@@ -492,14 +493,14 @@ func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	if err := h.GetDB().Save(&rel).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&rel).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	user := models.User{}
-	h.GetDB().Preload("SystemRole").First(&user, rel.UserID)
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, rel.UserID)
 	h.ModelCache().FlushUserAuthority(&user)
-	h.GetDB().Preload("Environment").First(&rel, rel.ID)
+	h.GetDB().WithContext(ctx).Preload("Environment").First(&rel, rel.ID)
 
 	action := i18n.Sprintf(context.TODO(), "update")
 	module := i18n.Sprintf(context.TODO(), "environment member")
@@ -531,17 +532,18 @@ func (h *EnvironmentHandler) PutEnvironmentUser(c *gin.Context) {
 // @Security    JWT
 func (h *EnvironmentHandler) DeleteEnvironmentUser(c *gin.Context) {
 	var rel models.EnvironmentUserRels
-	if err := h.GetDB().First(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
-	h.GetDB().Preload("Environment.Project.Tenant").First(&rel, rel.ID)
-	if err := h.GetDB().Delete(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
+	h.GetDB().WithContext(ctx).Preload("Environment.Project.Tenant").First(&rel, rel.ID)
+	if err := h.GetDB().WithContext(ctx).Delete(&rel, "environment_id =? and user_id = ?", c.Param(PrimaryKeyName), c.Param("user_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	user := models.User{}
-	h.GetDB().Preload("SystemRole").First(&user, c.Param("user_id"))
+	h.GetDB().WithContext(ctx).Preload("SystemRole").First(&user, c.Param("user_id"))
 	h.ModelCache().FlushUserAuthority(&user)
 
 	action := i18n.Sprintf(context.TODO(), "delete")
@@ -583,7 +585,8 @@ func (h *EnvironmentHandler) GetEnvironmentResource(c *gin.Context) {
 	dayTime := utils.NextDayStartTime(dateTime)
 
 	env := models.Environment{}
-	if err := h.GetDB().Preload("Project.Tenant").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Project.Tenant").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -592,7 +595,7 @@ func (h *EnvironmentHandler) GetEnvironmentResource(c *gin.Context) {
 
 	var envREs models.EnvironmentResource
 	// eg. 查看1号的。要取2号的第一条数据
-	if err := h.GetDB().
+	if err := h.GetDB().WithContext(ctx).
 		Where("tenant_name = ? and project_name = ? and environment_name = ? and created_at >= ? and created_at < ?", tenantName, env.Project.ProjectName, env.EnvironmentName, dayTime.Format(time.RFC3339), dayTime.Add(24*time.Hour).Format(time.RFC3339)).
 		Order("created_at").
 		First(&envREs).Error; err != nil {
@@ -618,7 +621,8 @@ func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 		return
 	}
 	var env models.Environment
-	if e := h.GetDB().Preload("Cluster", clusterSensitiveFunc).Preload("Project.Tenant").First(&env, "id = ?", c.Param(PrimaryKeyName)).Error; e != nil {
+	ctx := c.Request.Context()
+	if e := h.GetDB().WithContext(ctx).Preload("Cluster", clusterSensitiveFunc).Preload("Project.Tenant").First(&env, "id = ?", c.Param(PrimaryKeyName)).Error; e != nil {
 		handlers.NotOK(c, e)
 		return
 	}
@@ -626,8 +630,6 @@ func (h *EnvironmentHandler) EnvironmentSwitch(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "enable")
 	module := i18n.Sprintf(context.TODO(), "environment network isolation")
 	h.SetAuditData(c, action, module, env.EnvironmentName)
-
-	ctx := c.Request.Context()
 
 	tnetpol := &v1beta1.TenantNetworkPolicy{}
 	err := h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
@@ -707,13 +709,13 @@ type EnvironmentObservabilityRet struct {
 // @Security    JWT
 func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 	env := models.Environment{}
-	if err := h.GetDB().Preload("Cluster").Preload("Project").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
+	ctx := c.Request.Context()
+	db := h.GetDB().WithContext(ctx)
+	if err := db.Preload("Cluster").Preload("Project").Where("id = ?", c.Param("environment_id")).First(&env).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	dur := c.DefaultQuery("duration", "1h")
-	ctx := c.Request.Context()
 	ret := EnvironmentObservabilityRet{
 		EnvironmentID:   env.ID,
 		EnvironmentName: env.EnvironmentName,
@@ -721,9 +723,48 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 		ProjectName:     env.Project.ProjectName,
 		ClusterName:     env.Cluster.ClusterName,
 		Namespace:       env.Namespace,
-	}
-	h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
 
+		AlertResourceMap: make(map[string]int),
+	}
+
+	alertrules := []models.AlertRule{}
+	if err := db.Find(&alertrules, "cluster = ? and namespace = ?", env.Cluster.ClusterName, env.Namespace).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	ret.AlertRuleCount = len(alertrules)
+
+	for _, v := range alertrules {
+		var key string
+		if v.AlertType == prometheus.AlertTypeMonitor {
+			if v.PromqlGenerator != nil {
+				key = v.PromqlGenerator.Resource
+			} else {
+				key = "raw promql"
+			}
+		} else {
+			key = "logging"
+		}
+		if count, ok := ret.AlertResourceMap[key]; ok {
+			count++
+			ret.AlertResourceMap[key] = count
+		} else {
+			ret.AlertResourceMap[key] = 1
+		}
+		if v.State == "firing" {
+			for _, level := range v.AlertLevels {
+				if level.Severity == prometheus.SeverityError {
+					ret.ErrorAlertCount++
+				}
+				if level.Severity == prometheus.SeverityCritical {
+					ret.CriticalAlertCount++
+				}
+			}
+		}
+	}
+
+	dur := c.DefaultQuery("duration", "1h")
+	h.Execute(ctx, env.Cluster.ClusterName, func(ctx context.Context, cli agents.Client) error {
 		eg := errgroup.Group{}
 
 		// log, monitor, mesh status
@@ -808,60 +849,6 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 				return err
 			}
 			ret.MonitorCollectorCount = len(sms.Items)
-			return nil
-		})
-
-		// alert rules
-		eg.Go(func() error {
-			obervecli := observe.NewClient(cli, h.GetDB())
-			monitoralerts, err := obervecli.ListMonitorAlertRules(ctx, env.Namespace, false, h.GetDataBase().NewPromqlTplMapperFromDB().FindPromqlTpl)
-			if err != nil {
-				return err
-			}
-			logalerts, err := obervecli.ListLoggingAlertRules(ctx, env.Namespace, false)
-			if err != nil {
-				return err
-			}
-
-			addRealtimeAlert := func(levels []observe.AlertLevel) {
-				for _, level := range levels {
-					if level.Severity == prometheus.SeverityError {
-						ret.ErrorAlertCount++
-					} else if level.Severity == prometheus.SeverityCritical {
-						ret.CriticalAlertCount++
-					}
-				}
-			}
-
-			alertResourceMap := make(map[string]int)
-			for _, v := range monitoralerts {
-				var key string
-				if v.PromqlGenerator.Notpl() {
-					key = "raw promql"
-				} else {
-					key = v.PromqlGenerator.Resource
-				}
-
-				if count, ok := alertResourceMap[key]; ok {
-					count++
-					alertResourceMap[key] = count
-				} else {
-					alertResourceMap[key] = 1
-				}
-
-				if v.State == "firing" {
-					addRealtimeAlert(v.AlertLevels)
-				}
-			}
-			if len(logalerts) > 0 {
-				alertResourceMap["logging"] = len(logalerts)
-			}
-			for _, v := range logalerts {
-				addRealtimeAlert(v.AlertLevels)
-			}
-
-			ret.AlertRuleCount = len(monitoralerts) + len(logalerts)
-			ret.AlertResourceMap = alertResourceMap
 			return nil
 		})
 

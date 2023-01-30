@@ -28,7 +28,7 @@
   <a href="https://kubegems.slack.com">Slack</a>
 </h2>
 
- 🇨🇳 简体中文  🇭🇰 繁体中文  🇺🇸 英文  🇯🇵 日语
+🇨🇳 简体中文 🇭🇰 繁体中文 🇺🇸 英文 🇯🇵 日语
 
 ## 介绍
 
@@ -38,7 +38,7 @@
 
 ## 功能
 
-Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的方式向用户提供服务。
+Kubegems 遵循云原生应用程序的最佳实践，以最简单、最有效的方式向用户提供服务。
 
 <details>
   <summary><b> 多 Kubernetes 集群管理</b></summary>
@@ -106,7 +106,7 @@ Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的
 
 您可以访问 KubeGems 的[在线环境](https://demo.kubegems.io)
 
-> 用户名：`admin`   密码： `demo!@#admin`
+> 用户名：`admin` 密码： `demo!@#admin`
 
 ## 快速开始
 
@@ -126,7 +126,7 @@ Kubegems遵循云原生应用程序的最佳实践，以最简单、最有效的
 您可以前往 [Kubegems Release](https://github.com/kubegems/kubegems/tags) 查询到最新的版本号.
 
 ```sh
-export KUBEGEMS_VERSION=v1.22.2  #  安装 kubegems 的版本
+export KUBEGEMS_VERSION=<TAG_NAME>  #  安装 kubegems 的版本
 ```
 
 当你的 Kubernetes 集群状态 Ready 后，执行下述命令安装 KuebGems Installer Operator。
@@ -155,18 +155,19 @@ kubectl apply -f kubegems.yaml
 
 如果您认为这个项目有用，请帮助我们：
 
-- 支持这个项目的开发并star这个repo ⭐
-- 如果您在生产环境中使用KubeGems，请将自己添加到[adopters](./ADOPTERS.md)列表中 👌
+- 支持这个项目的开发并 star 这个 repo ⭐
+- 如果您在生产环境中使用 KubeGems，请将自己添加到[adopters](./ADOPTERS.md)列表中 👌
 - 帮助新用户解决他们可能遇到的问题 🙋
 - 发送带有新功能和错误修复的拉取请求 🚀
 
-我们非常欢迎您在KubeGems社区在平台体验、标准化应用程序、插件共享等领域的贡献和分享。
+我们非常欢迎您在 KubeGems 社区在平台体验、标准化应用程序、插件共享等领域的贡献和分享。
 
 更多信息，请访问 <https://github.com/kubegems/kubegems/blob/main/CONTRIBUTING.md>
 
 ### 感谢以下贡献者 !
 
 [//]: contributor-faces
+
 <a href="https://github.com/pepesi"><img src="https://avatars.githubusercontent.com/u/12043478?v=4" title="pepesi" width="80" height="80"></a>
 <a href="https://github.com/chenshunliang"><img src="https://avatars.githubusercontent.com/u/6768455?v=4" title="chenshunliang" width="80" height="80"></a>
 <a href="https://github.com/cnfatal"><img src="https://avatars.githubusercontent.com/u/15731850?v=4" title="cnfatal" width="80" height="80"></a>

@@ -1,0 +1,61 @@
+{
+  "type": "object",
+  "properties": {
+    "service": {
+      "description": "Corresponds to the configuration in the kubernetes service resource",
+      "type": "object",
+      "title": "Service Contiguration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "启用",
+          "default": false,
+          "x-order": "99",
+          "form": true
+        },
+        "address": {
+          "type": "string",
+          "title": "address",
+          "minLength": 0,
+          "form": true,
+          "hidden": {
+            "path": "service.enabled",
+            "value": false
+          }
+        },
+        "ports": {
+          "type": "object",
+          "title": "service ports contiguration",
+          "required": [
+            "http",
+            "grpc"
+          ],
+          "properties": {
+            "grpc": {
+              "type": "integer",
+              "title": "GRPC Port",
+              "default": 50051,
+              "form": true
+            },
+            "http": {
+              "type": "integer",
+              "format": "port",
+              "title": "HTTP Port",
+              "default": 80,
+              "maximum": 65535,
+              "minimum": 1,
+              "form": true
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "service.enabled",
+            "value": false
+          }
+        }
+      },
+      "form": true
+    }
+  },
+  "$schema": "http://json-schema.org/schema#"
+}

@@ -1,6 +1,7 @@
 .idea
 __debug_bin
 .vscode
+*.code-workspace
 tmp/
 bin/
 vendor/
@@ -13,3 +14,4 @@ local_debug.go
 *.tgz
 scripts/fakedata/kubeconfigs/*.yaml
 data/
+/plugins

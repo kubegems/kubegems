@@ -218,7 +218,7 @@ func (pe PodCmdExecutor) Execute(ctx context.Context) error {
 			&pe.PodExecOptions,
 			scheme.ParameterCodec,
 		)
-	executor, err := remotecommand.NewSPDYExecutor(pe.Cluster.Config(), "POST", req.URL())
+	executor, err := remotecommand.NewSPDYExecutor(pe.Cluster.GetConfig(), "POST", req.URL())
 	if err != nil {
 		return err
 	}

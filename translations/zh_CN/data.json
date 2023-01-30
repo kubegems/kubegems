@@ -1,5 +1,5 @@
 {
-  "Apply to adjust the resources of tenant %s in cluster %s": "应用来调整组中 %s 的租户资源 %s",
+  "Apply to adjust the resources of tenant %s in cluster %s": "申请调整租户 %s 在集群 %s 的资源",
   "CPU or Memory can't be empty at the same time, please provide one at least": "CPU 或内存不能同时为空，请至少提供一个",
   "Failed to synchronize the image registry information to the cluster: %w": "无法同步镜像仓库信息到集群: %w",
   "HPA": "HPA",
@@ -181,7 +181,7 @@
   "update": "更新",
   "update user %s to project %s members as role %s": "更新用户 %s 为项目 %s 成员为角色 %s",
   "user %s / role %s": "用户 %s / 角色 %s",
-  "user %s applied to adjust the ResourceQuota of tenant %s in cluster %s": "用户 %s 已应用来调整集群 %s 中租户的 ResourceQuota %s",
+  "user %s applied to adjust the ResourceQuota of tenant %s in cluster %s": "用户 %s 申请调整租户 %s 在集群 %s 中的资源",
   "validate tenant resoure quota failed, can't get cluster resource statistics: %w": "验证租户资源配额失败，无法获取集群资源统计： %w",
   "validate tenant resoure quota failed: %w": "验证租户资源配额失败： %w",
   "validate username and password to the registry faild: %w": "验证镜像仓库的用户名和密码失败： %w",

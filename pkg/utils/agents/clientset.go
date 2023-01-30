@@ -99,7 +99,7 @@ func (h ClientSet) ExecuteInEachCluster(ctx context.Context, f func(ctx context.
 func (h *ClientSet) ClientOfManager(ctx context.Context) (Client, error) {
 	ret := []string{}
 	cluster := &models.Cluster{Primary: true}
-	if err := h.database.DB().Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
+	if err := h.database.DB().WithContext(ctx).Where(cluster).Model(cluster).Pluck("cluster_name", &ret).Error; err != nil {
 		return nil, err
 	}
 	if len(ret) == 0 {
@@ -221,7 +221,7 @@ func (s *serverInfo) TLSConfig() (*tls.Config, error) {
 
 func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta, error) {
 	cluster := &models.Cluster{}
-	if err := h.database.DB().First(&cluster, "cluster_name = ?", name).Error; err != nil {
+	if err := h.database.DB().WithContext(ctx).First(&cluster, "cluster_name = ?", name).Error; err != nil {
 		return nil, err
 	}
 

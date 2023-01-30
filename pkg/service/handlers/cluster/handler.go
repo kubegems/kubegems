@@ -32,13 +32,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"kubegems.io/kubegems/pkg/i18n"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
 	msgclient "kubegems.io/kubegems/pkg/msgbus/client"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/statistics"
@@ -79,7 +79,7 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 		SearchFields:  SearchFields,
 		PreloadFields: []string{"Environments", "TenantResourceQuotas"},
 	}
-	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -98,7 +98,7 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 // @Security    JWT
 func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 	var clusters []*models.Cluster
-	if err := h.GetDataBase().DB().Find(&clusters).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Find(&clusters).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -135,7 +135,7 @@ func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 // @Security    JWT
 func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 	var obj models.Cluster
-	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -165,7 +165,8 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 // @Security    JWT
 func (h *ClusterHandler) PutCluster(c *gin.Context) {
 	var obj models.Cluster
-	if err := h.GetDataBase().DB().First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -180,7 +181,7 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := h.GetDataBase().DB().Save(&obj).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).Save(&obj).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -202,7 +203,8 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 // @Security    JWT
 func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 	cluster := &models.Cluster{}
-	if err := h.GetDataBase().DB().First(cluster, c.Param(PrimaryKeyName)).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(cluster, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NoContent(c, err)
 		return
 	}
@@ -216,31 +218,31 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 	}
 
 	trqs := []models.TenantResourceQuota{}
-	h.GetDataBase().DB().Where("cluster_id = ?", cluster.ID).Find(&trqs)
+	h.GetDB().WithContext(ctx).Where("cluster_id = ?", cluster.ID).Find(&trqs)
 	if len(trqs) != 0 {
 		handlers.NotOK(c, i18n.Errorf(c, "can't delete the cluster %s, some tenants has resources on it", cluster.ClusterName))
 		return
 	}
 
 	envs := []models.Environment{}
-	h.GetDataBase().DB().Where("cluster_id = ?", cluster.ID).Find(&envs)
+	h.GetDB().WithContext(ctx).Where("cluster_id = ?", cluster.ID).Find(&envs)
 	if len(envs) != 0 {
 		handlers.NotOK(c, i18n.Errorf(c, "can't delete the cluster %s, some environments has resources on it", cluster.ClusterName))
 		return
 	}
 	recordOnly := c.DefaultQuery("record_only", "true") == "true"
 	if recordOnly {
-		if err := h.GetDB().Delete(cluster).Error; err != nil {
+		if err := h.GetDB().WithContext(ctx).Delete(cluster).Error; err != nil {
 			handlers.NotOK(c, err)
 			return
 		}
 	} else {
 		if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
-			return h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
+			return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
 				}
-				return gemsplugin.Bootstrap{Config: config}.Remove(ctx)
+				return pluginmanager.Bootstrap{Config: config}.Remove(ctx)
 			})
 		}); err != nil {
 			handlers.NotOK(c, err)
@@ -288,7 +290,7 @@ func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 			handlers.Args("cluster_id = ?", clusterid),
 		},
 	}
-	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -321,7 +323,8 @@ func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 		return
 	}
 	clusterid := utils.ToUint(c.Param(PrimaryKeyName))
-	if err := h.GetDB().First(&cluster, clusterid).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&cluster, clusterid).Error; err != nil {
 		handlers.NotOK(c, i18n.Errorf(c, "the cluster you are querying doesn't exist"))
 		return
 	}
@@ -333,7 +336,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 			handlers.Args("cluster_id = ?", clusterid),
 		},
 	}
-	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(ctx), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -370,7 +373,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 	group by
 		log_ql
 	order by total desc;`
-	if err := h.GetDataBase().DB().Raw(
+	if err := h.GetDB().WithContext(c.Request.Context()).Raw(
 		rawsql,
 		user.GetID(),
 		clusterid,
@@ -408,7 +411,7 @@ func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 		return
 	}
 	clusterid := utils.ToUint(c.Param(PrimaryKeyName))
-	if err := h.GetDB().First(&cluster, clusterid).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&cluster, clusterid).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -420,7 +423,7 @@ func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 			handlers.Args("cluster_id = ?", clusterid),
 		},
 	}
-	total, page, size, err := query.PageList(h.GetDataBase().DB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -457,7 +460,8 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		return
 	}
 	var existCount int64
-	if err := h.GetDB().Model(
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Model(
 		&models.Cluster{},
 	).Where(
 		"cluster_name = ? or api_server = ?", cluster.ClusterName, apiserver,
@@ -490,7 +494,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 
 		// 如果为第一个添加的集群，则设置为主集群
 		count := int64(0)
-		if err := h.GetDB().Model(&models.Cluster{}).Count(&count).Error; err != nil {
+		if err := h.GetDB().WithContext(ctx).Model(&models.Cluster{}).Count(&count).Error; err != nil {
 			return err
 		}
 		if count == 0 {
@@ -500,14 +504,14 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		// 控制集群检验
 		if cluster.Primary {
 			var primarysCount int64
-			if err := h.GetDataBase().DB().Model(&models.Cluster{}).Where(`'primary' = ?`, true).Count(&primarysCount).Error; err != nil {
+			if err := h.GetDB().WithContext(ctx).Model(&models.Cluster{}).Where(`'primary' = ?`, true).Count(&primarysCount).Error; err != nil {
 				return err
 			}
 			if primarysCount > 0 {
 				return i18n.Errorf(c, "the primary cluster existed already, more than one primary cluster is not allowed")
 			}
 		}
-		if err := h.GetDataBase().DB().Transaction(func(tx *gorm.DB) error {
+		if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
@@ -516,7 +520,7 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				splits = append(splits, "")
 			}
 			registry, repository := splits[0], splits[1]
-			return gemsplugin.Bootstrap{Config: config}.Install(ctx, gemsplugin.GlobalValues{
+			return pluginmanager.Bootstrap{Config: config}.Install(ctx, pluginmanager.GlobalValues{
 				ImageRegistry:   registry,
 				ImageRepository: repository,
 				ClusterName:     cluster.ClusterName,
@@ -575,7 +579,7 @@ func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 
 func (h *ClusterHandler) cluster(c *gin.Context, fun func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error)) {
 	var cluster models.Cluster
-	if err := h.GetDataBase().DB().First(&cluster, c.Param(PrimaryKeyName)).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(&cluster, c.Param(PrimaryKeyName)).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

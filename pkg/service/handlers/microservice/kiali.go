@@ -47,12 +47,12 @@ func (h *VirtualSpaceHandler) KialiAPI(c *gin.Context) {
 	kialisvc, kialinamespace := options.KialiName, options.KialiNamespace
 	// get and check env
 	env := models.Environment{}
-	if err := h.GetDB().Preload("Cluster").First(&env, c.Param("environment_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Preload("Cluster").First(&env, c.Param("environment_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	cluster, namespace, kialipath := env.Cluster.ClusterName, env.Namespace, c.Param("path")
-	ctx := c.Request.Context()
 	_ = namespace
 
 	process := func() error {

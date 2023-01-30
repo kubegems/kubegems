@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gemsplugin
+package pluginmanager
 
 import (
 	"testing"
@@ -29,7 +29,7 @@ func TestCheckDependecies(t *testing.T) {
 	}{
 		{
 			args: args{
-				requirements: "foo > 1.1.0,bar = 1.0.0",
+				requirements: "foo>1.1.0,bar=1.0.0",
 				installs: map[string]PluginVersion{
 					"foo": {
 						Version: "1.1.0",
@@ -41,7 +41,6 @@ func TestCheckDependecies(t *testing.T) {
 			},
 			wantErr: true,
 		},
-
 		{
 			args: args{
 				requirements: "foo > 1.1.0,bar = 1.0.0",
@@ -59,7 +58,8 @@ func TestCheckDependecies(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.args.requirements, func(t *testing.T) {
-			if err := CheckDependecies(tt.args.requirements, tt.args.installs); (err != nil) != tt.wantErr {
+			reqs := ParseRequirements(tt.args.requirements)
+			if err := CheckDependecies(reqs, tt.args.installs); (err != nil) != tt.wantErr {
 				t.Errorf("CheckDependecies() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

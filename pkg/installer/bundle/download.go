@@ -59,15 +59,9 @@ func Download(ctx context.Context, repo, name, version, path, cacheDir string) (
 	if name == "" {
 		return "", errors.New("empty name")
 	}
-
 	if repo == "" {
 		return "", fmt.Errorf("no url specified for %s", name)
 	}
-	if cacheDir == "" {
-		home, _ := os.UserHomeDir()
-		cacheDir = filepath.Join(home, ".cache", "kubegems", "bundles")
-	}
-
 	basename := name
 	if version != "" {
 		basename = name + "-" + version
@@ -127,10 +121,14 @@ func PerRepoCacheDir(repo string, basedir string) string {
 	if err != nil {
 		return basedir
 	}
+	if basedir == "" {
+		home, _ := os.UserHomeDir()
+		basedir = filepath.Join(home, ".cache", "kubegems", "bundles")
+	}
 	if repou.Scheme == "file" {
 		return filepath.Join(basedir, filepath.Base(repou.Path))
 	} else {
-		return filepath.Join(basedir, repou.Hostname())
+		return filepath.Join(basedir, filepath.Join(repou.Hostname(), repou.Path))
 	}
 }
 

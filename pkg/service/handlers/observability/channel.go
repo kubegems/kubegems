@@ -17,9 +17,11 @@ package observability
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
@@ -77,7 +79,7 @@ func (h *ObservabilityHandler) ListChannels(c *gin.Context) {
 	if tenantID != "_all" {
 		cond.Where = append(cond.Where, handlers.Args("tenant_id is null or tenant_id = ?", tenantID))
 	}
-	total, page, size, err := query.PageList(h.GetDB(), cond, &list)
+	total, page, size, err := query.PageList(h.GetDB().WithContext(c.Request.Context()), cond, &list)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -99,7 +101,7 @@ func (h *ObservabilityHandler) ListChannels(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) GetChannel(c *gin.Context) {
 	tenantID := c.Param("tenant_id")
-	query := h.GetDB()
+	query := h.GetDB().WithContext(c.Request.Context())
 	if tenantID != "_all" {
 		query.Where("tenant_id = ? or tenant_id is null", tenantID)
 	}
@@ -129,9 +131,17 @@ func (h *ObservabilityHandler) CreateChannel(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	h.SetAuditData(c, "创建", "告警渠道", req.Name)
-	if err := h.GetDB().Create(req).Error; err != nil {
+	if req.TenantID == nil {
+		if c.Param("tenant_id") != "_all" {
+			handlers.NotOK(c, fmt.Errorf("你不能创建系统级告警渠道"))
+			return
+		}
+	} else {
+		h.SetExtraAuditData(c, models.ResTenant, *req.TenantID)
+	}
+
+	if err := h.GetDB().WithContext(c.Request.Context()).Create(req).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -145,10 +155,10 @@ func (h *ObservabilityHandler) CreateChannel(c *gin.Context) {
 // @Description 更新告警渠道
 // @Accept      json
 // @Produce     json
-// @Param       tenant_id  path     string                               true "租户id, 所有租户为_all"
-// @Param       channel_id path     string                               true "告警渠道id"
-// @Param       form       body     models.AlertChannel                  true "body"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "resp"
+// @Param       tenant_id  path     string                                        true "租户id, 所有租户为_all"
+// @Param       channel_id path     string                                        true "告警渠道id"
+// @Param       form       body     models.AlertChannel                           true "body"
+// @Success     200        {object} handlers.ResponseStruct{Data=map[string]bool} "告警规则-更新状态的map"
 // @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id} [put]
 // @Security    JWT
 func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
@@ -157,14 +167,36 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-
 	h.SetAuditData(c, "更新", "告警渠道", req.Name)
-	if err := h.GetDB().Updates(req).Error; err != nil {
+	if req.TenantID == nil {
+		if c.Param("tenant_id") != "_all" {
+			handlers.NotOK(c, fmt.Errorf("你不能更新系统级告警渠道"))
+			return
+		}
+	} else {
+		h.SetExtraAuditData(c, models.ResTenant, *req.TenantID)
+	}
+
+	// find associated alert rules
+	alertrules := []*models.AlertRule{}
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Updates(req).Error; err != nil {
+			return err
+		}
+
+		alertruleIDs := []uint{}
+		if err := tx.Model(&models.AlertReceiver{}).Distinct("alert_rule_id").Where("alert_channel_id = ?", req.ID).Scan(&alertruleIDs).Error; err != nil {
+			return err
+		}
+		return tx.Preload("Receivers.AlertChannel").Find(&alertrules, alertruleIDs).Error
+	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	handlers.OK(c, "ok")
+	status, _ := h.syncAlertRulesWithTimeout(ctx, alertrules, 5*time.Second)
+	handlers.OK(c, status)
 }
 
 // DeleteChannel 删除告警渠道
@@ -181,12 +213,13 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 	ch := &models.AlertChannel{}
-	if err := h.GetDB().First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	h.SetAuditData(c, "更新", "告警渠道", ch.Name)
+	h.SetAuditData(c, "删除", "告警渠道", ch.Name)
 	if ch.TenantID == nil {
 		if c.Param("tenant_id") != "_all" {
 			handlers.NotOK(c, fmt.Errorf("你不能删除系统级告警渠道"))
@@ -196,7 +229,20 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 		h.SetExtraAuditData(c, models.ResTenant, *ch.TenantID)
 	}
 
-	if err := h.GetDB().Delete(ch).Error; err != nil {
+	receivers := []models.AlertReceiver{}
+	if err := h.GetDB().WithContext(ctx).Preload("AlertRule").Find(&receivers, "alert_channel_id = ?", c.Param("channel_id")).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if len(receivers) > 0 {
+		tmp := make([]string, len(receivers))
+		for i, v := range receivers {
+			tmp[i] = v.AlertRule.FullName()
+		}
+		handlers.NotOK(c, fmt.Errorf("该告警渠道正在被告警规则: [%s] 使用", strings.Join(tmp, ",")))
+		return
+	}
+	if err := h.GetDB().WithContext(ctx).Delete(ch).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -217,7 +263,7 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 // @Security    JWT
 func (h *ObservabilityHandler) TestChannel(c *gin.Context) {
 	ch := &models.AlertChannel{}
-	if err := h.GetDB().First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

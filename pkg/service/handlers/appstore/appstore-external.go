@@ -39,7 +39,7 @@ import (
 // @Security    JWT
 func (h *AppstoreHandler) ListExternalRepo(c *gin.Context) {
 	list := []models.ChartRepo{}
-	if tx := h.GetDB().Find(&list); tx.Error != nil {
+	if tx := h.GetDB().WithContext(c.Request.Context()).Find(&list); tx.Error != nil {
 		handlers.NotOK(c, tx.Error)
 		return
 	}
@@ -75,7 +75,7 @@ func (h *AppstoreHandler) PutExternalRepo(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "create")
 	module := i18n.Sprintf(context.TODO(), "external helm chart repo")
 	h.SetAuditData(c, action, module, repo.ChartRepoName)
-	if err := h.GetDB().Save(repo).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Save(repo).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	} else {
@@ -102,7 +102,7 @@ func (h *AppstoreHandler) DeleteExternalRepo(c *gin.Context) {
 	module := i18n.Sprintf(context.TODO(), "external helm chart repo")
 	h.SetAuditData(c, action, module, c.Param("name"))
 	repo := &models.ChartRepo{ChartRepoName: c.Param("name")}
-	if err := h.GetDB().Where(repo).Delete(repo).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Where(repo).Delete(repo).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	} else {
@@ -131,7 +131,7 @@ func (h *AppstoreHandler) SyncExternalRepo(c *gin.Context) {
 		return
 	}
 	repo := &models.ChartRepo{ChartRepoName: reponame}
-	if err := h.GetDB().Where(repo).Take(repo).Error; err != nil {
+	if err := h.GetDB().WithContext(c.Request.Context()).Where(repo).Take(repo).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}

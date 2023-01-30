@@ -23,7 +23,7 @@ import (
 const (
 	LabelModelNameHash     = GroupName + "/name-hash"
 	LabelModelSource       = GroupName + "/source"
-	AnnotationModelVersion = GroupName + "/version"
+	AnnotationEnableProbes = GroupName + "/enable-probes"
 )
 
 type Properties map[string]interface{}

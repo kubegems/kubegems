@@ -33,6 +33,8 @@ HELM_REPO_USERNAME?=kubegems
 HELM_REPO_PASSWORD?=
 CHARTMUSEUM_ADDR?=https://${HELM_REPO_USERNAME}:${HELM_REPO_PASSWORD}@charts.kubegems.io/kubegems
 
+KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io/kubegems
+
 ##@ All
 
 all: generate build container push helm-push## build all
@@ -53,7 +55,10 @@ all: generate build container push helm-push## build all
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-generate: generate-i18n generate-proto generate-apis generate-license generate-versions generate-installer ## Generate all
+generate: generate-i18n generate-schema generate-proto generate-apis generate-license generate-versions generate-installer ## Generate all
+
+generate-schema:
+	helm-schema deploy/plugins/kubegems*
 
 generate-apis:
 	$(CONTROLLER_GEN) paths="./pkg/apis/plugins/..." crd  output:crd:artifacts:config=deploy/plugins/kubegems-installer/crds
@@ -69,18 +74,15 @@ generate-proto:
 	pkg/edge/tunnel/proto/tunnel.proto
 
 generate-versions:
-	sed -i 's/kubegemsVersion:.*/kubegemsVersion: $(GIT_VERSION)/g' deploy/kubegems.yaml
+	yq -i 'select(.metadata.name == "kubegems").spec.version="$(VERSION)" | select(.metadata.name == "global").spec.values.kubegemsVersion="$(GIT_VERSION)"' deploy/kubegems.yaml
 
 generate-installer: helm-package
 	helm template --namespace kubegems-installer --include-crds \
 	--set global.kubegemsVersion=$(GIT_VERSION) \
-	kubegems-installer ${BIN_DIR}/plugins/charts.kubegems.io/kubegems-installer-${VERSION}.tgz \
+	kubegems-installer ${KUBEGEM_CHARTS_DIR}/kubegems-installer-${VERSION}.tgz \
 	| kubectl annotate -f -  --local  -oyaml \
 	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
-
-generate-system-alert:
-	# go run scripts/generate-system-alert/main.go
 
 generate-i18n:
 	go run internal/cmd/i18n/main.go gen
@@ -134,7 +136,7 @@ build-files: ## Build around files
 	go run scripts/offline-plugins/main.go
 	cp -rf deploy/*.yaml ${BIN_DIR}/plugins/
 	mkdir -p ${BIN_DIR}/config
-	cp -rf config/promql_tpl.yaml ${BIN_DIR}/config/
+	cp -f config/promql_tpl.yaml config/system_alert.yaml ${BIN_DIR}/config/
 	cp -rf config/dashboards/ ${BIN_DIR}/config/dashboards/
 
 CHARTS = kubegems kubegems-local kubegems-installer kubegems-models
@@ -143,7 +145,6 @@ helm-generate: readme-generator
 	readme-generator -v $(file)values.yaml -r $(file)README.md \
 	;)
 
-KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io
 .PHONY: helm-package
 helm-package:
 	$(foreach file, $(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \

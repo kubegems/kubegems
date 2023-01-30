@@ -80,17 +80,17 @@ func (h *IstioGatewayHandler) ListGateway(c *gin.Context) {
 	istioGatewayNamespace := h.MicroserviceOptions.GatewayNamespace
 
 	vs := models.VirtualSpace{}
-	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
-	ctx := c.Request.Context()
 	op := pkgv1alpha1.IstioOperator{}
 	deps := appsv1.DeploymentList{} // 获取副本数
 	svcs := corev1.ServiceList{}    // 获取端口
@@ -165,18 +165,18 @@ func (h *IstioGatewayHandler) GetGateway(c *gin.Context) {
 	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
 
 	vs := models.VirtualSpace{}
-	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 
 	name := c.Param("name")
-	ctx := c.Request.Context()
 	op := pkgv1alpha1.IstioOperator{}
 	gateways := v1beta1.GatewayList{}
 	virtualSvcs := v1beta1.VirtualServiceList{}
@@ -294,12 +294,13 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 	istioGatewayNamespace := h.MicroserviceOptions.GatewayNamespace
 
 	vs := models.VirtualSpace{}
-	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -311,7 +312,6 @@ func (h *IstioGatewayHandler) CreateGateway(c *gin.Context) {
 	}
 	gw.Enabled = true // 默认启用
 
-	ctx := c.Request.Context()
 	op := pkgv1alpha1.IstioOperator{}
 	if err := h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 		dep := appsv1.Deployment{}
@@ -377,12 +377,13 @@ func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
 	istioGatewayNamespace := h.MicroserviceOptions.GatewayNamespace
 
 	vs := models.VirtualSpace{}
-	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -393,7 +394,6 @@ func (h *IstioGatewayHandler) UpdateGateway(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
 	op := pkgv1alpha1.IstioOperator{}
 	if err := h.Execute(ctx, cluster.ClusterName, func(ctx context.Context, tc agents.Client) error {
 		if err := tc.Get(ctx, types.NamespacedName{
@@ -476,18 +476,17 @@ func (h *IstioGatewayHandler) DeleteGateway(c *gin.Context) {
 	istioOperatorName := h.MicroserviceOptions.IstioOperatorName
 
 	vs := models.VirtualSpace{}
-	if err := h.GetDB().First(&vs, c.Param("virtualspace_id")).Error; err != nil {
+	ctx := c.Request.Context()
+	if err := h.GetDB().WithContext(ctx).First(&vs, c.Param("virtualspace_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	cluster := models.Cluster{}
-	if err := h.GetDB().First(&cluster, c.Param("cluster_id")).Error; err != nil {
+	if err := h.GetDB().WithContext(ctx).First(&cluster, c.Param("cluster_id")).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
 	gwName := c.Param("name")
-
-	ctx := c.Request.Context()
 
 	op := &pkgv1alpha1.IstioOperator{
 		ObjectMeta: v1.ObjectMeta{

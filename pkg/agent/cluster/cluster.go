@@ -36,7 +36,6 @@ import (
 
 type Interface interface {
 	cluster.Cluster
-	Config() *rest.Config
 	Kubernetes() kubernetes.Interface
 	Discovery() discovery.CachedDiscoveryInterface
 	Watch(ctx context.Context, list client.ObjectList, callback func(watch.Event) error, opts ...client.ListOption) error
@@ -44,7 +43,6 @@ type Interface interface {
 
 type Cluster struct {
 	cluster.Cluster
-	config     *rest.Config
 	discovery  discovery.CachedDiscoveryInterface
 	kubernetes kubernetes.Interface
 }
@@ -89,12 +87,29 @@ func WithDefaultScheme(o *cluster.Options) {
 	o.Scheme = kube.GetScheme()
 }
 
-func NewClusterAndStart(ctx context.Context, config *rest.Config, options ...cluster.Option) (*Cluster, error) {
+func WithInNamespace(ns string) func(o *cluster.Options) {
+	return func(o *cluster.Options) {
+		o.Namespace = ns
+	}
+}
+
+func NewLocalAgentClusterAndStart(ctx context.Context, options ...cluster.Option) (*Cluster, error) {
+	config, err := kube.AutoClientConfig()
+	if err != nil {
+		return nil, err
+	}
+	apply := func(c cluster.Cluster) error {
+		return indexer.CustomIndexPods(c.GetCache())
+	}
+	return NewClusterAndStart(ctx, config, apply, options...)
+}
+
+func NewClusterAndStart(ctx context.Context, config *rest.Config, apply func(c cluster.Cluster) error, options ...cluster.Option) (*Cluster, error) {
 	c, err := NewCluster(config, options...)
 	if err != nil {
 		return nil, err
 	}
-	if err := indexer.CustomIndexPods(c.GetCache()); err != nil {
+	if err := apply(c); err != nil {
 		return nil, err
 	}
 	go c.Start(ctx)
@@ -125,17 +140,12 @@ func NewCluster(config *rest.Config, options ...cluster.Option) (*Cluster, error
 	return &Cluster{
 		Cluster:    c,
 		kubernetes: kubernetesClientSet,
-		config:     config,
 		discovery:  memory.NewMemCacheClient(discovery),
 	}, nil
 }
 
 func (c *Cluster) Kubernetes() kubernetes.Interface {
 	return c.kubernetes
-}
-
-func (c *Cluster) Config() *rest.Config {
-	return c.config
 }
 
 func (c *Cluster) Discovery() discovery.CachedDiscoveryInterface {
@@ -161,7 +171,7 @@ func (c *Cluster) Watch(ctx context.Context, list client.ObjectList, callback fu
 	listOpts := client.ListOptions{}
 	listOpts.ApplyOptions(opts)
 
-	config := c.config
+	config := c.GetConfig()
 	nclient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return err

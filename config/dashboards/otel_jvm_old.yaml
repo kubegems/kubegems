@@ -1,0 +1,149 @@
+description: OpenTelemetry JVM(old)监控模板
+end: now
+graphs:
+- name: JVM GC Count
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_gc_duration_count
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Heap Memory Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_memory_usage
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Non-Heap Memory Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_memory_usage_nonheap
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: GC Duration
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_gc_duration
+      scope: opentelemetry
+      unit: duration-ms
+    targetName: A
+  unit: duration-ms
+- name: Heap Memory Committed
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_memory_committed
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Non-Heap Memory Committed
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_memory_committed_nonheap
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Memory Usage After Last GC
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_memory_usage_after_last_gc
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Heap Memory Init
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_memory_init
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Non-Heap Memory Init
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_memory_init_nonheap
+      scope: opentelemetry
+      unit: bytes-B
+    targetName: A
+  unit: bytes-B
+- name: Buffer Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_buffer_usage
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Classes Loaded
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_classes_loaded
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Threads Count (Daemon)
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_threads_count
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+- name: System CPU Utilization
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_system_cpu_utilization
+      scope: opentelemetry
+      unit: short
+    targetName: A
+  unit: short
+- name: System Load 1
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: otel_process_jvm
+      rule: process_runtime_jvm_system_cpu_load_1m
+      scope: opentelemetry
+      unit: ""
+    targetName: A
+  unit: ""
+name: Otel_JVM_old
+refresh: 30s
+start: now-30m
+step: 30s
+variables:
+  service_name: ""

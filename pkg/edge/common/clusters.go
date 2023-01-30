@@ -27,12 +27,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/cli-runtime/pkg/printers"
+	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/kube"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	pkgcluster "sigs.k8s.io/controller-runtime/pkg/cluster"
 )
 
 const (
@@ -48,6 +51,7 @@ const (
 	AnnotationKeyKubernetesVersion          = "edge.kubegems.io/kubernetes-version"
 	AnnotationKeyAPIserverAddress           = "edge.kubegems.io/apiserver-address"
 	AnnotationKeyNodesCount                 = "edge.kubegems.io/nodes-count"
+	AnnotationKeyDeviceID                   = "edge.kubegems.io/device-id"
 
 	// temporary connection do not write to database
 	AnnotationIsTemporaryConnect = "edge.kubegems.io/temporary-connect"
@@ -55,43 +59,55 @@ const (
 
 type EdgeManager struct {
 	SelfAddress  string
-	ClusterStore EdgeStore[*v1beta1.EdgeCluster]
-	HubStore     EdgeStore[*v1beta1.EdgeHub]
+	ClusterStore EdgeClusterStore
+	HubStore     EdgeHubStore
 }
 
-func NewClusterManager(namespace string, selfhost string) (*EdgeManager, error) {
+func NewClusterManager(ctx context.Context, namespace string, selfhost string) (*EdgeManager, error) {
 	if namespace == "" {
 		namespace = kube.LocalNamespaceOrDefault(gems.NamespaceEdge)
 	}
-	cli, err := kube.NewLocalClient()
+	cfg, err := kube.AutoClientConfig()
 	if err != nil {
 		return nil, err
 	}
-
-	clustersStore := EdgeClusterK8sStore[*v1beta1.EdgeCluster]{cli: cli, ns: namespace, example: &v1beta1.EdgeCluster{}}
-	kube.FillGVK(clustersStore.example, cli.Scheme())
-
-	hubsStore := EdgeClusterK8sStore[*v1beta1.EdgeHub]{cli: cli, ns: namespace, example: &v1beta1.EdgeHub{}}
-	kube.FillGVK(hubsStore.example, cli.Scheme())
-
+	apply := func(c pkgcluster.Cluster) error {
+		// add device id index
+		return c.GetCache().IndexField(ctx, &v1beta1.EdgeCluster{}, "device-id", func(o client.Object) []string {
+			cluster, ok := o.(*v1beta1.EdgeCluster)
+			if !ok {
+				return nil
+			}
+			return []string{cluster.Status.Manufacture[AnnotationKeyDeviceID]}
+		})
+	}
+	c, err := cluster.NewClusterAndStart(ctx, cfg, apply, cluster.WithInNamespace(namespace))
+	if err != nil {
+		return nil, err
+	}
 	return &EdgeManager{
-		ClusterStore: clustersStore,
-		HubStore:     hubsStore,
+		ClusterStore: EdgeClusterK8sStore{cli: c.GetClient(), ns: namespace},
+		HubStore:     EdgeHubK8sStore{cli: c.GetClient(), ns: namespace},
 		SelfAddress:  selfhost,
 	}, nil
 }
 
-func (m *EdgeManager) ListPage(ctx context.Context, page, size int, search string, labels labels.Selector) (response.TypedPage[*v1beta1.EdgeCluster], error) {
+func (m *EdgeManager) ListPage(
+	ctx context.Context,
+	page, size int,
+	search string, labels, manufacture labels.Selector,
+) (response.TypedPage[v1beta1.EdgeCluster], error) {
 	total, list, err := m.ClusterStore.List(ctx, ListOptions{
-		Page:     page,
-		Size:     size,
-		Selector: labels,
-		Search:   search,
+		Page:        page,
+		Size:        size,
+		Selector:    labels,
+		Search:      search,
+		Manufacture: manufacture,
 	})
 	if err != nil {
-		return response.TypedPage[*v1beta1.EdgeCluster]{}, err
+		return response.TypedPage[v1beta1.EdgeCluster]{}, err
 	}
-	return response.TypedPage[*v1beta1.EdgeCluster]{
+	return response.TypedPage[v1beta1.EdgeCluster]{
 		Total:       int64(total),
 		List:        list,
 		CurrentPage: int64(page),
@@ -269,6 +285,13 @@ func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context,
 			if val := fromannotations[AnnotationKeyEdgeHubAddress]; val != "" {
 				anno[AnnotationKeyEdgeAgentRegisterAddress] = val
 			}
+		}
+		if deviceid := anno[AnnotationKeyDeviceID]; deviceid != "" {
+			if cluster.Labels == nil {
+				cluster.Labels = map[string]string{}
+			}
+			// set device id in label to select
+			cluster.Labels[AnnotationKeyDeviceID] = deviceid
 		}
 		cluster.Status.Manufacture = anno // annotations as manufacture set
 		if connected {

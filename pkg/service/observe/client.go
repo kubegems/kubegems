@@ -136,7 +136,7 @@ func (c *ObserveClient) ListMonitorAlertRules(ctx context.Context, namespace str
 	for key, rule := range promRuleMap {
 		amconfig, ok := amConfigMap[key]
 		if !ok {
-			log.Warnf("alertmanager config %s in namespace %s not found", rule.Name, rule.Namespace)
+			log.Warnf("alertmanager config %s in cluster: %s namespace %s not found", rule.Name, c.Name(), rule.Namespace)
 			continue
 		}
 		raw := &RawMonitorAlertResource{
@@ -645,4 +645,28 @@ func (c ObserveClient) SearchTrace(
 		return ret[:limit], nil
 	}
 	return ret, nil
+}
+
+func (c ObserveClient) GetTrace(
+	ctx context.Context,
+	traceID string,
+) (*Trace, error) {
+	resp := tracesResponse{}
+	req := agents.Request{
+		Method:  http.MethodGet,
+		Path:    "/v1/service-proxy/api/traces/" + traceID,
+		Headers: agents.HeadersFrom(jaegerProxyHeader),
+		Into:    &resp,
+	}
+	if err := c.DoRequest(ctx, req); err != nil {
+		return nil, err
+	}
+	if len(resp.Errors) > 0 {
+		log.Errorf("jaeger resp err: %v", resp.Errors)
+		return nil, fmt.Errorf(resp.Errors[0].Msg)
+	}
+	if len(resp.Data) == 0 {
+		return nil, fmt.Errorf("no trace found")
+	}
+	return &resp.Data[0], nil
 }

@@ -72,6 +72,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/otel"
+	otelgin "kubegems.io/kubegems/pkg/utils/otel/gin"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/system"
@@ -113,20 +114,6 @@ func (r *Router) Run(ctx context.Context) error {
 	if err := r.Complete(ctx); err != nil {
 		return err
 	}
-
-	// otel gin
-	ginShutdown, err := otel.InitGinOtel(ctx)
-	if err != nil {
-		return err
-	}
-	defer ginShutdown(ctx)
-
-	// otel runtime
-	runtimeShutdown, err := otel.InitRuntimeOtel(ctx)
-	if err != nil {
-		return err
-	}
-	defer runtimeShutdown(ctx)
 
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
@@ -179,10 +166,9 @@ func (r *Router) Complete(ctx context.Context) error {
 	dir, _ := os.Getwd()
 	router.StaticFS("/lokiExport", http.Dir(dir+"/lokiExport"))
 
-	// authMiddleware, err := auth.NewAuthMiddleware(r.Opts.JWT, r.Database, r.Redis, aaa.NewUserInfoHandler())
-	// if err != nil {
-	// 	return err
-	// }
+	if err := otel.Init(ctx, r.Opts.Otel); err != nil {
+		return err
+	}
 
 	globalMiddlewares := []func(*gin.Context){
 		i18n.SetLang,
@@ -193,7 +179,11 @@ func (r *Router) Complete(ctx context.Context) error {
 		// panic recovery
 		gin.Recovery(),
 		// otel
-		otel.OtelGinMiddleware(),
+		otelgin.TraceMiddleware("kubegems-api",
+			otelgin.WithFilter(otel.PathFilter(r.Opts.Otel)),
+			otelgin.WithSpanNameGenerater(otel.UseRealPath()),
+		),
+		otelgin.MeterMiddleware("kubegems-api"),
 		// real ip tracking
 		RealClientIPMiddleware(),
 	}

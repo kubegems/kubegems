@@ -16,41 +16,42 @@ package common
 
 import (
 	"context"
+	"math"
 	"reflect"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ListOptions struct {
-	Page     int
-	Size     int
-	Search   string // name regexp
-	Selector labels.Selector
+	Page        int
+	Size        int
+	Search      string // name regexp
+	Selector    labels.Selector
+	Manufacture labels.Selector
 }
 
-type EdgeStore[T any] interface {
-	List(ctx context.Context, options ListOptions) (int, []T, error)
-	Get(ctx context.Context, name string) (T, error)
-	Update(ctx context.Context, name string, fun func(cluster T) error) (T, error)
-	Delete(ctx context.Context, name string) (T, error)
+type EdgeClusterStore interface {
+	List(ctx context.Context, options ListOptions) (int, []v1beta1.EdgeCluster, error)
+	Get(ctx context.Context, name string) (*v1beta1.EdgeCluster, error)
+	Update(ctx context.Context, name string, fun func(cluster *v1beta1.EdgeCluster) error) (*v1beta1.EdgeCluster, error)
+	Delete(ctx context.Context, name string) (*v1beta1.EdgeCluster, error)
 }
 
-type EdgeClusterK8sStore[T client.Object] struct {
-	cli     client.Client
-	example T
-	ns      string
+type EdgeClusterK8sStore struct {
+	cli client.Client
+	ns  string
 }
 
-func (s EdgeClusterK8sStore[T]) List(ctx context.Context, options ListOptions) (int, []T, error) {
-	list := &unstructured.UnstructuredList{}
-	list.GetObjectKind().SetGroupVersionKind(s.example.GetObjectKind().GroupVersionKind())
-
+func (s EdgeClusterK8sStore) List(ctx context.Context, options ListOptions) (int, []v1beta1.EdgeCluster, error) {
+	list := &v1beta1.EdgeClusterList{}
 	listopts := []client.ListOption{
 		client.InNamespace(s.ns),
 	}
@@ -61,46 +62,49 @@ func (s EdgeClusterK8sStore[T]) List(ctx context.Context, options ListOptions) (
 		return 0, nil, err
 	}
 	if options.Page == 0 && options.Size == 0 {
-		return len(list.Items), toList[T](list.Items), nil
-	} else {
-		searchname := func(item unstructured.Unstructured) bool {
-			return options.Search == "" || strings.Contains(item.GetName(), options.Search)
-		}
-		paged := response.NewTypedPage(list.Items, options.Page, options.Size, searchname, nil)
-		return int(paged.Total), toList[T](paged.List), nil
+		options.Size = math.MaxInt // like do not page
+		options.Page = 1
 	}
+	searchfunc := func(item v1beta1.EdgeCluster) bool {
+		return (options.Search == "" || strings.Contains(item.GetName(), options.Search)) &&
+			(options.Manufacture == nil || options.Manufacture.Matches(labels.Set(item.Status.Manufacture)))
+	}
+	paged := response.NewTypedPage(list.Items, options.Page, options.Size, searchfunc, nil)
+	return int(paged.Total), paged.List, nil
 }
 
-func toList[T any](list []unstructured.Unstructured) []T {
-	ret := make([]T, len(list))
-	for i, item := range list {
-		runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &ret[i])
-	}
-	return ret
-}
-
-func (s EdgeClusterK8sStore[T]) Get(ctx context.Context, name string) (T, error) {
-	ret := s.new(name)
+func (s EdgeClusterK8sStore) Get(ctx context.Context, name string) (*v1beta1.EdgeCluster, error) {
+	ret := &v1beta1.EdgeCluster{}
 	if err := s.cli.Get(ctx, client.ObjectKey{Name: name, Namespace: s.ns}, ret); err != nil {
 		return ret, err
 	}
 	return ret, nil
 }
 
-func (s EdgeClusterK8sStore[T]) Update(ctx context.Context, name string, fun func(cluster T) error) (T, error) {
-	obj := s.new(name)
+func (s EdgeClusterK8sStore) Update(ctx context.Context, name string, fun func(cluster *v1beta1.EdgeCluster) error) (*v1beta1.EdgeCluster, error) {
+	obj := &v1beta1.EdgeCluster{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: s.ns,
+		},
+	}
 	if err := CreateOrUpdateWithStatus(ctx, s.cli, obj, fun); err != nil {
 		return obj, err
 	}
 	return obj, nil
 }
 
-func (s EdgeClusterK8sStore[T]) new(name string) T {
-	// nolint: forcetypeassert
-	obj := s.example.DeepCopyObject().(T)
-	obj.SetName(name)
-	obj.SetNamespace(s.ns)
-	return obj
+func (s EdgeClusterK8sStore) Delete(ctx context.Context, name string) (*v1beta1.EdgeCluster, error) {
+	remove := &v1beta1.EdgeCluster{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: s.ns,
+		},
+	}
+	if err := s.cli.Delete(ctx, remove); err != nil {
+		return remove, err
+	}
+	return remove, nil
 }
 
 // nolint: nestif,funlen,gocognit,forcetypeassert
@@ -197,12 +201,4 @@ func CreateOrUpdateWithStatus[T client.Object](ctx context.Context, cli client.C
 		return cli.Status().Patch(ctx, obj, statusPatch)
 	}
 	return nil
-}
-
-func (s EdgeClusterK8sStore[T]) Delete(ctx context.Context, name string) (T, error) {
-	remove := s.new(name)
-	if err := s.cli.Delete(ctx, remove); err != nil {
-		return remove, err
-	}
-	return remove, nil
 }

@@ -1,59 +1,59 @@
-name: Consul
 description: Consul 监控模板
-step: 30s
+end: now
+graphs:
+- name: Consul Raft Leader
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: consul
+      rule: consulRaftLeader
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Consul Cluster Members
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: consul
+      rule: consulLanMembers
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Consul Raft Peers
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: consul
+      rule: consulRaftPeers
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Consul Service Healthy
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: consul
+      rule: consulServiceHealthy
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Service Count
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: consul
+      rule: consulService
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+name: Consul
 refresh: 30s
 start: now-30m
-end: now
+step: 30s
 variables:
   service: ""
-graphs:
-  - name: Consul Raft Leader
-    unit: ""
-    targets:
-      - targetName: A
-        expr:
-        promqlGenerator:
-          scope: middlewires
-          resource: consul
-          rule: consulRaftLeader
-          unit: ""
-  - name: Consul Cluster Members
-    unit: ""
-    targets:
-      - targetName: A
-        expr:
-        promqlGenerator:
-          scope: middlewires
-          resource: consul
-          rule: consulLanMembers
-          unit: ""
-  - name: Consul Raft Peers
-    unit: ""
-    targets:
-      - targetName: A
-        expr:
-        promqlGenerator:
-          scope: middlewires
-          resource: consul
-          rule: consulRaftPeers
-          unit: ""
-  - name: Consul Service Healthy
-    unit: ""
-    targets:
-      - targetName: A
-        expr:
-        promqlGenerator:
-          scope: middlewires
-          resource: consul
-          rule: consulServiceHealthy
-          unit: ""
-  - name: Service Count
-    unit: ""
-    targets:
-      - targetName: A
-        expr:
-        promqlGenerator:
-          scope: middlewires
-          resource: consul
-          rule: consulService
-          unit: ""

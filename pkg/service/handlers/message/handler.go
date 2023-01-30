@@ -25,7 +25,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
-	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
 type MessageRet []models.Message
@@ -57,7 +56,7 @@ func (h *MessageHandler) ListMessage(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
 	messageType := c.Query("message_type")
-	q := h.GetDB().Where("user_id = ?", user.GetID())
+	q := h.GetDB().WithContext(c.Request.Context()).Where("user_id = ?", user.GetID())
 
 	switch messageType {
 	case string(msgbus.Message), string(msgbus.Approve):
@@ -137,14 +136,15 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 		return
 	}
 
-	readQuery := h.GetDB().Model(models.UserMessageStatus{}).Where("user_id = ?", user.GetID())
+	ctx := c.Request.Context()
+	readQuery := h.GetDB().WithContext(ctx).Model(models.UserMessageStatus{}).Where("user_id = ?", user.GetID())
 	details := models.Message{}
 	if msgID != "_all" {
 		switch msgType {
 		case string(msgbus.Message), string(msgbus.Approve):
 			readQuery.Where("message_id = ?", msgID)
 			// 返回
-			if err := h.GetDB().First(&details, "id = ?", msgID).Error; err != nil {
+			if err := h.GetDB().WithContext(ctx).First(&details, "id = ?", msgID).Error; err != nil {
 				handlers.NotOK(c, err)
 				return
 			}
@@ -152,14 +152,15 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 			readQuery.Where("alert_message_id = ?", msgID)
 			// 返回
 			alertmsg := models.AlertMessage{}
-			if err := h.GetDB().Preload("AlertInfo").First(&alertmsg, "id = ?", msgID).Error; err != nil {
+			if err := h.GetDB().WithContext(ctx).Preload("AlertInfo").First(&alertmsg, "id = ?", msgID).Error; err != nil {
 				handlers.NotOK(c, err)
 				return
 			}
 			labels := map[string]string{}
 			json.Unmarshal(alertmsg.AlertInfo.Labels, &labels)
 
-			pos, err := h.GetDataBase().GetAlertPosition(alertmsg.AlertInfo.ClusterName, alertmsg.AlertInfo.Namespace, alertmsg.AlertInfo.Name, labels[prometheus.AlertScopeLabel], labels[prometheus.AlertFromLabel])
+			_, isMonitor := labels["prometheus"]
+			pos, err := h.GetDataBase().GetAlertPosition(alertmsg.AlertInfo.ClusterName, alertmsg.AlertInfo.Namespace, alertmsg.AlertInfo.Name, isMonitor)
 			if err != nil {
 				handlers.NotOK(c, err)
 				return

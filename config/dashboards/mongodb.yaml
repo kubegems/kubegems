@@ -1,99 +1,157 @@
-name: MongoDB
 description: MongoDB 监控模板
-step: 30s
+end: now
+graphs:
+- name: Connections
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbConnections
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Current QPS
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbQPS
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Current TPS
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbTPS
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: Current Document OPS
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbDocument
+      scope: middlewires
+      unit: ""
+    targetName: A
+  unit: ""
+- name: DB Size
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbIndexSize
+      scope: middlewires
+      unit: bytes-B
+    targetName: index size
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbOplogSize
+      scope: middlewires
+      unit: bytes-B
+    targetName: oplog size
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbDataSize
+      scope: middlewires
+      unit: bytes-B
+    targetName: db size
+  unit: bytes-B
+- name: Object Total
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbObjects
+      scope: middlewires
+      unit: ""
+    targetName: Object Total
+  unit: ""
+- name: Response Time
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongdoResponseTime
+      scope: middlewires
+      unit: duration-us
+    targetName: A
+  unit: duration-us
+- name: Network Received
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbReceivedBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: ReceivedBytesV2
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: mongodbReceivedBytesV2
+  unit: bytes/sec-B/s
+- name: Network Sent
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbSentBytes
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: A
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: SentBytesV2
+      scope: middlewires
+      unit: bytes/sec-B/s
+    targetName: mongodbSentBytesV2
+  unit: bytes/sec-B/s
+- name: Wiredtiger Cache
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbCacheBytes
+      scope: middlewires
+      unit: bytes-B
+    targetName: Wiredtiger Cache
+  unit: bytes-B
+- name: Wiredtiger Cache Rate
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbWiredtigerCacheRate
+      scope: middlewires
+      unit: percent-0.0-1.0
+    targetName: A
+  unit: percent-0.0-1.0
+- name: Memory Usage
+  targets:
+  - expr: ""
+    promqlGenerator:
+      resource: mongodb
+      rule: mongodbMemory
+      scope: middlewires
+      unit: bytes-MB
+    targetName: Memory Usage
+  unit: bytes-MB
+name: MongoDB
 refresh: 30s
 start: now-30m
-end: now
+step: 30s
 variables:
   service: ""
-graphs:
-  - name: Connections
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongodbConnections
-          unit: ""
-  - name: Current QPS
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongodbQPS
-          unit: ""
-  - name: Current TPS
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongodbTPS
-          unit: ""
-  - name: Current Document OPS
-    unit: ""
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongodbDocument
-          unit: ""
-  - name: Network Received
-    unit: bytes/sec-B/s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongodbReceivedBytes
-          unit: bytes/sec-B/s
-  - name: Network Sent
-    unit: bytes/sec-B/s
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongodbSentBytes
-          unit: bytes/sec-B/s
-  - name: Wiredtiger Cache Rate
-    unit: percent-0.0-1.0
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongodbWiredtigerCacheRate
-          unit: percent-0.0-1.0
-  - name: Response Time
-    unit: duration-ms
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongdoResponseTime
-          unit: duration-us
-  - name: Database Size
-    unit: bytes-B
-    targets:
-      - targetName: A
-        expr: ""
-        promqlGenerator:
-          scope: middlewires
-          resource: mongodb
-          rule: mongodbDataSize
-          unit: bytes-B

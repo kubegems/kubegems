@@ -18,7 +18,7 @@ import (
 	"sort"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
@@ -54,7 +54,7 @@ func SortPluginStatusByName(list []PluginStatus) {
 	})
 }
 
-func ToViewPlugin(plugin gemsplugin.Plugin) PluginStatus {
+func ToViewPlugin(plugin pluginmanager.Plugin) PluginStatus {
 	ps := PluginStatus{
 		Name:        plugin.Name,
 		Namespace:   plugin.Namespace,
@@ -83,7 +83,7 @@ func ToViewPlugin(plugin gemsplugin.Plugin) PluginStatus {
 	return ps
 }
 
-func CategoriedPlugins(plugins map[string]gemsplugin.Plugin) map[string]map[string][]PluginStatus {
+func CategoriedPlugins(plugins map[string]pluginmanager.Plugin) map[string]map[string][]PluginStatus {
 	pluginstatus := []PluginStatus{}
 
 	for _, plugin := range plugins {
@@ -128,7 +128,7 @@ func (o *PluginsAPI) GetPlugin(req *restful.Request, resp *restful.Response) {
 	name := req.PathParameter("name")
 	version := req.QueryParameter("version")
 
-	pv, err := o.PM.GetPluginVersion(req.Request.Context(), name, version, true)
+	pv, err := o.PM.GetPluginVersion(req.Request.Context(), name, version, true, true)
 	if err != nil {
 		response.Error(resp, err)
 		return
@@ -140,7 +140,7 @@ func (o *PluginsAPI) EnablePlugin(req *restful.Request, resp *restful.Response) 
 	name := req.PathParameter("name")
 	version := req.QueryParameter("version")
 
-	pv := &gemsplugin.PluginVersion{}
+	pv := &pluginmanager.PluginVersion{}
 	if err := request.Body(req.Request, pv); err != nil {
 		response.Error(resp, err)
 		return

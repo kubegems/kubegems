@@ -30,7 +30,7 @@ import (
 )
 
 func Run(ctx context.Context, options *options.ServerOptions) error {
-	server, err := NewEdgeServer(options)
+	server, err := NewEdgeServer(ctx, options)
 	if err != nil {
 		return err
 	}
@@ -44,12 +44,12 @@ type EdgeServer struct {
 	options   *options.ServerOptions
 }
 
-func NewEdgeServer(options *options.ServerOptions) (*EdgeServer, error) {
+func NewEdgeServer(ctx context.Context, options *options.ServerOptions) (*EdgeServer, error) {
 	tlsConfig, err := options.TLS.ToTLSConfig()
 	if err != nil {
 		return nil, err
 	}
-	edgemanager, err := common.NewClusterManager("", options.Host)
+	edgemanager, err := common.NewClusterManager(ctx, "", options.Host)
 	if err != nil {
 		return nil, err
 	}

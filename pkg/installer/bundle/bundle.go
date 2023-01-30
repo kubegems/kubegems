@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"k8s.io/client-go/rest"
+	plugins "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/bundle/helm"
 	"kubegems.io/kubegems/pkg/installer/bundle/kustomize"
@@ -43,7 +44,7 @@ type Options struct {
 }
 
 func NewDefaultOptions() *Options {
-	return &Options{CacheDir: "plugins"}
+	return &Options{CacheDir: plugins.KubegemsPluginsCachePath}
 }
 
 func NewDefaultApply(cfg *rest.Config, cli client.Client, options *Options) *BundleApplier {

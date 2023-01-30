@@ -45,7 +45,7 @@ var ForFileContentFunc = git.ForFileContentFunc
 
 var KustimizationFilename = konfig.DefaultKustomizationFileName()
 
-func InitOrUpdateKustomization(fs billy.Filesystem, labels, annotations map[string]string) error {
+func InitOrUpdateKustomization(fs billy.Filesystem) error {
 	fis, err := fs.ReadDir(".")
 	if err != nil {
 		return err
@@ -79,24 +79,13 @@ func InitOrUpdateKustomization(fs billy.Filesystem, labels, annotations map[stri
 	// 写入/更新 kustomization.yaml
 	kustomization.FixKustomizationPostUnmarshalling()
 	kustomization.Resources = resourcefiles
-
-	if kustomization.CommonLabels == nil {
-		kustomization.CommonLabels = map[string]string{}
-	}
-	for k, v := range labels {
-		kustomization.CommonLabels[k] = v
-	}
+	// 禁止使用 commonLabels 以防止覆盖编排中使用到的 label 造成不必要麻烦
+	kustomization.CommonAnnotations = nil
+	kustomization.CommonLabels = nil
 
 	// ignore labels k "version"
 	// 不允许设置 istio version 作为 commonLabels，会导致未知问题
 	delete(kustomization.CommonLabels, LabelIstioVersion)
-
-	if kustomization.CommonAnnotations == nil {
-		kustomization.CommonAnnotations = map[string]string{}
-	}
-	for k, v := range annotations {
-		kustomization.CommonAnnotations[k] = v
-	}
 
 	kustomizecontent, err := yaml.Marshal(kustomization)
 	if err != nil {

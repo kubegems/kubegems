@@ -2,16 +2,16 @@ apiVersion: v2
 appVersion: 0.0.0
 dependencies:
   - name: common
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://charts.kubegems.io/bitnami
     tags:
       - bitnami-common
     version: 1.14.1
   - name: mysql
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://charts.kubegems.io/bitnami
     condition: mysql.enabled
     version: 8.9.6
   - name: redis
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://charts.kubegems.io/bitnami
     condition: redis.enabled
     version: 16.9.11
   - name: gitea
@@ -42,3 +42,4 @@ annotations:
   plugins.kubegems.io/install-namespace: "kubegems"
   plugins.kubegems.io/category: core/KubeGems
   plugins.kubegems.io/render-by: helm
+  plugins.kubegems.io/required: "true"

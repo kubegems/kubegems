@@ -19,13 +19,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/installer/api"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 )
 
 type PluginHandler struct {
-	PM *gemsplugin.PluginManager
+	PM *pluginmanager.PluginManager
 }
 
 type PluginStatus struct {
@@ -80,15 +80,15 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Description 插件详情
 // @Accept      json
 // @Produce     json
-// @Param       cluster path     string                                                 true "cluster"
-// @Param       name    path     string                                                 true "name"
-// @Param       version query    string                                                 true "version"
-// @Success     200     {object} handlers.ResponseStruct{Data=gemsplugin.PluginVersion} "Plugins"
+// @Param       cluster path     string                                                    true "cluster"
+// @Param       name    path     string                                                    true "name"
+// @Param       version query    string                                                    true "version"
+// @Success     200     {object} handlers.ResponseStruct{Data=pluginmanager.PluginVersion} "Plugins"
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [get]
 // @Security    JWT
 func (h *PluginHandler) Get(c *gin.Context) {
 	name, version := c.Param("name"), c.Query("version")
-	plugin, err := h.PM.GetPluginVersion(c.Request.Context(), name, version, true)
+	plugin, err := h.PM.GetPluginVersion(c.Request.Context(), name, version, true, true)
 	if err != nil {
 		NotOK(c, err)
 		return
@@ -103,14 +103,14 @@ func (h *PluginHandler) Get(c *gin.Context) {
 // @Produce     json
 // @Param       cluster path     string                               true "cluster"
 // @Param       name    path     string                               true "name"
-// @Param       body    body     gemsplugin.PluginVersion             true "pluginVersion"
+// @Param       body    body     pluginmanager.PluginVersion          true "pluginVersion"
 // @Success     200     {object} handlers.ResponseStruct{Data=string} "ok"
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [post]
 // @Security    JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	name := c.Param("name")
 
-	pv := gemsplugin.PluginVersion{}
+	pv := pluginmanager.PluginVersion{}
 	if err := request.Body(c.Request, &pv); err != nil {
 		NotOK(c, err)
 		return

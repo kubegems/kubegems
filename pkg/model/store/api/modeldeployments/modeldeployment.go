@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto"
 	"encoding/hex"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -32,6 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubegems.io/kubegems/pkg/apis/application"
+	"kubegems.io/kubegems/pkg/apis/models"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
 	"kubegems.io/kubegems/pkg/model/deployment"
@@ -63,10 +65,8 @@ func HashModelName(modelname string) string {
 
 func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp *restful.Response) {
 	ctx := req.Request.Context()
-
 	log := logr.FromContextOrDiscard(ctx).WithValues("method", "ListAllModelDeployments")
 	source, modelname := storemodels.DecodeSourceModelName(req)
-
 	retlist, listmu := []ModelDeploymentOverview{}, &sync.Mutex{}
 	eg := errgroup.Group{}
 	for _, cluster := range o.Clientset.Clusters() {
@@ -78,7 +78,6 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 				return err
 			}
 			list := &modelsv1beta1.ModelDeploymentList{}
-
 			// nolint: gomnd
 			ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 			defer cancel()
@@ -90,10 +89,8 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 				log.Error(err, "failed to list model deployments", "cluster", cluster)
 				return err
 			}
-
 			listmu.Lock()
 			defer listmu.Unlock()
-
 			for _, md := range list.Items {
 				if md.Annotations == nil {
 					md.Annotations = make(map[string]string)
@@ -116,11 +113,9 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 			return nil
 		})
 	}
-
 	if err := eg.Wait(); err != nil {
 		log.Error(err, "wait list model deployments")
 	}
-
 	listoptions := request.GetListOptions(req.Request)
 	// sort by creation timestamp desc
 	paged := response.NewPageData(retlist, listoptions.Page, listoptions.Size, nil, func(i, j int) bool {
@@ -195,10 +190,6 @@ func (o *ModelDeploymentAPI) completeModelDeployment(ctx context.Context, md *mo
 }
 
 func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
-	// set default gateway
-	if md.Spec.Ingress.GatewayName == "" {
-		md.Spec.Ingress.GatewayName = "default-gateway"
-	}
 	source, modelname := md.Spec.Model.Source, md.Spec.Model.Name
 	if source == "" || modelname == "" {
 		return nil
@@ -211,10 +202,12 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 	if err != nil {
 		return err
 	}
-
 	// set task
 	md.Spec.Model.Task = modeldetails.Task
-
+	// set default gateway
+	if md.Spec.Ingress.GatewayName == "" {
+		md.Spec.Ingress.GatewayName = "default-gateway"
+	}
 	// set first source image if not set
 	switch sourcedetails.Kind {
 	case repository.SourceKindHuggingface:
@@ -241,16 +234,12 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
 		}
 	}
-
 	completeProbes(md)
-
 	// resource request
 	if len(md.Spec.Server.Resources.Requests) == 0 {
 		requests := md.Spec.Server.Resources.Limits.DeepCopy()
-
 		requests[corev1.ResourceCPU] = resource.MustParse("100m")
 		requests[corev1.ResourceMemory] = resource.MustParse("100Mi")
-
 		md.Spec.Server.Resources.Requests = requests
 	}
 	removeEmptyResource(md.Spec.Server.Resources.Requests)
@@ -266,39 +255,64 @@ func removeEmptyResource(list corev1.ResourceList) {
 	}
 }
 
+const (
+	DefaultInitDeplaySeconds = 180
+	ModelxInitDeplaySeconds  = 60
+)
+
 func completeProbes(md *modelsv1beta1.ModelDeployment) {
-	if len(md.Spec.Server.Ports) == 0 {
+	if len(md.Spec.Server.Ports) == 0 && md.Spec.Server.Kind == modelsv1beta1.ServerKindModelx {
 		return
 	}
-	md.Spec.Server.PodSpec = deployment.CreateOrUpdateContainer(md.Spec.Server.PodSpec,
-		deployment.ModelContainerName,
-		func(c *v1.Container, _ *v1.PodSpec) {
-			probehandler := v1.ProbeHandler{
-				TCPSocket: &v1.TCPSocketAction{
-					Port: detectMainPort(append(md.Spec.Server.Ports, c.Ports...)),
-				},
-			}
-			if c.ReadinessProbe == nil {
-				// nolint: gomnd
-				c.ReadinessProbe = &v1.Probe{
-					ProbeHandler:        probehandler,
-					InitialDelaySeconds: 180, // 3min
-					PeriodSeconds:       30,  // 0.5 * 20 =10min
-					FailureThreshold:    20,
-				}
-			}
-			if c.LivenessProbe == nil {
-				c.LivenessProbe = &v1.Probe{ProbeHandler: probehandler}
-			}
-		})
+	if enabled, _ := strconv.ParseBool(md.Annotations[models.AnnotationEnableProbes]); !enabled {
+		return
+	}
+	initDelay := DefaultInitDeplaySeconds
+	if md.Spec.Server.Kind == modelsv1beta1.ServerKindModelx {
+		initDelay = ModelxInitDeplaySeconds
+	}
+	md.Spec.Server.PodSpec = deployment.CreateOrUpdateContainer(md.Spec.Server.PodSpec, deployment.ModelContainerName, func(c *v1.Container, _ *v1.PodSpec) {
+		// nolint: gomnd
+		probe := &v1.Probe{
+			InitialDelaySeconds: int32(initDelay),
+			PeriodSeconds:       10,
+			FailureThreshold:    12,
+		}
+		// seldon'll set probe handler to selon's default when using MLServer
+		// but no server will not.
+		if md.Spec.Server.Kind == modelsv1beta1.ServerKindModelx {
+			probe.ProbeHandler = v1.ProbeHandler{TCPSocket: &v1.TCPSocketAction{
+				Port: detectMainPort(append(md.Spec.Server.Ports, c.Ports...)),
+			}}
+		}
+		if c.ReadinessProbe == nil {
+			c.ReadinessProbe = probe
+		}
+		if c.LivenessProbe == nil {
+			c.LivenessProbe = probe
+		}
+	})
 }
 
 func detectMainPort(ports []v1.ContainerPort) intstr.IntOrString {
-	port := ports[0]
-	if port.Name != "" {
-		return intstr.FromString(port.Name)
+	if len(ports) == 0 {
+		return intstr.FromString("")
 	}
-	return intstr.FromInt(int(port.ContainerPort))
+	// find http prefix first
+	var findport *v1.ContainerPort
+	for i, port := range ports {
+		if strings.Contains(port.Name, "http") {
+			findport = &ports[i]
+			break
+		}
+	}
+	if findport == nil {
+		findport = &ports[0]
+	}
+	if findport.Name != "" {
+		return intstr.FromString(findport.Name)
+	}
+	return intstr.FromInt(int(findport.ContainerPort))
 }
 
 func (o *ModelDeploymentAPI) UpdateModelDeployment(req *restful.Request, resp *restful.Response) {

@@ -75,14 +75,14 @@ func (ms *MessageSwitcher) DispatchMessage(msg *msgbus.NotifyMessage) {
 		dbalertMsgs := ms.saveFingerprintMapToDB(fingerprintMap)
 
 		// 发消息并存用户消息表
+		_, isMonitor := webhookAlert.CommonLabels["prometheus"]
 		pos, _ := ms.DataBase.GetAlertPosition(
 			webhookAlert.CommonLabels[prometheus.AlertClusterKey],
 			webhookAlert.CommonLabels[prometheus.AlertNamespaceLabel],
 			webhookAlert.CommonLabels[prometheus.AlertNameLabel],
-			webhookAlert.CommonLabels[prometheus.AlertScopeLabel],
-			webhookAlert.CommonLabels[prometheus.AlertFromLabel],
+			isMonitor,
 		)
-		toUsers := GetAlertUsers(&webhookAlert, pos, ms.DataBase)
+		toUsers := GetAlertUsers(pos, ms.DataBase)
 		now := time.Now()
 		dbUserMsgs := []models.UserMessageStatus{}
 		// save之后有了ID，才能做关联

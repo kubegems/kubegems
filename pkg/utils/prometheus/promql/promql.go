@@ -20,6 +20,7 @@ import (
 
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/set"
 )
 
@@ -58,6 +59,7 @@ func (q *Query) AddLabelMatchers(matchers ...*labels.Matcher) *Query {
 				if found == nil {
 					vs.LabelMatchers = append(vs.LabelMatchers, dest)
 				} else {
+					log.Warnf("duplicated label matcher, old: %s, new: %s", found.String(), dest.String())
 					found.Type = dest.Type
 					found.Value = dest.Value
 				}

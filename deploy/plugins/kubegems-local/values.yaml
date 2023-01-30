@@ -61,6 +61,7 @@ diagnosticMode:
 
 ## agent parameters
 ##
+# @title Agent 配置
 agent:
   ## KubeGems agent image
   ## ref: https://hub.docker.com/r/kubegems/kubegems/tags/
@@ -71,6 +72,7 @@ agent:
   ## @param agent.image.pullSecrets agent image pull secrets
   ## @param agent.image.debug Enable agent image debug mode
   ##
+  # @title 镜像配置
   image:
     registry: docker.io
     repository: kubegems/kubegems
@@ -79,6 +81,8 @@ agent:
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
+    # @title 拉取策略
+    # @schema enum=Always,IfNotPresent,None
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
@@ -91,6 +95,15 @@ agent:
     ## Enable debug mode
     ##
     debug: false
+  ## @param agent.opentelemetry.enabled Enable opentelemetry
+  ##
+  # @title Opentelemetry 接入配置
+  opentelemetry:
+    # @title 是否接入Opentelemetry
+    enabled: true
+    # @title Opentelemetry endpoint
+    # @hidden agent.opentelemetry.enabled=false
+    endpoint: http://opentelemetry-collector.observability:4318
   ## @param agent.replicaCount Number of agent replicas to deploy
   ##
   replicaCount: 1
@@ -123,7 +136,7 @@ agent:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 10
+    initialDelaySeconds: 5
     timeoutSeconds: 1
     periodSeconds: 20
     failureThreshold: 6
@@ -137,7 +150,7 @@ agent:
   ##
   startupProbe:
     enabled: false
-    initialDelaySeconds: 10
+    initialDelaySeconds: 1
     timeoutSeconds: 1
     periodSeconds: 20
     failureThreshold: 6
@@ -157,8 +170,12 @@ agent:
   ## @param agent.resources.requests The requested resources for the agent containers
   ##
   resources:
-    limits: {}
-    requests: {}
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param agent.podSecurityContext.enabled Enabled agent pods' Security Context
@@ -189,7 +206,9 @@ agent:
 
   ## @param agent.httpSignature.enabled Enable agent HTTP Signature validation
   ## @param agent.httpSignature.token HTTP Signature encode token override
+  # @title 验证请求签名
   httpSignature:
+    # @title 启用
     enabled: true
     token: ""
 
@@ -383,9 +402,11 @@ agent:
 
   ## @section Agent Metrics parameters
   ##
+  # @title Metrics 配置
   metrics:
     ## @param agent.metrics.enabled Create a service for accessing the metrics endpoint
     ##
+    # @title 启用
     enabled: false
     ## Metrics service parameters
     ##

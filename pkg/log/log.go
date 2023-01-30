@@ -43,6 +43,7 @@ func MustNewLogger() (*zap.Logger, logr.Logger) {
 	config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(TimeFormat)
 	config.DisableCaller = false    // disable caller
 	config.DisableStacktrace = true // disable stacktrace
+	config.Sampling = nil           // disable sampling
 	logger, err := config.Build()
 	if err != nil {
 		panic(err)

@@ -15,7 +15,8 @@ spec:
       app.kubernetes.io/component: agent
       app.kubernetes.io/instance: kubegems-edge
       app.kubernetes.io/name: kubegems-edge
-  strategy: {}
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -27,6 +28,7 @@ spec:
       nodeSelector: # prefer manager node
         node-role.kubernetes.io/control-plane: "true"
       hostNetwork: true # in case of cni not working
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: agent
           args:

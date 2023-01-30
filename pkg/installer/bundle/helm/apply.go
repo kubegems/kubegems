@@ -21,9 +21,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/release"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	"kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/utils"
 )
@@ -62,11 +62,11 @@ func (r *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into s
 	return nil
 }
 
-func ParseResourceReferences(resources []byte) []corev1.ObjectReference {
+func ParseResourceReferences(resources []byte) []v1beta1.ManagedResource {
 	ress, _ := utils.SplitYAML(resources)
-	managedResources := make([]corev1.ObjectReference, len(ress))
+	managedResources := make([]v1beta1.ManagedResource, len(ress))
 	for i, res := range ress {
-		managedResources[i] = utils.GetReference(res)
+		managedResources[i] = v1beta1.GetReference(res)
 	}
 	return managedResources
 }

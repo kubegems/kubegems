@@ -21,6 +21,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/otel/gorm/tracing"
 )
 
 type Options struct {
@@ -60,6 +61,9 @@ func NewDatabase(options *Options) (*Database, error) {
 		Logger: log.NewDefaultGormZapLogger(),
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err := db.Use(tracing.NewPlugin()); err != nil {
 		return nil, err
 	}
 	return &Database{

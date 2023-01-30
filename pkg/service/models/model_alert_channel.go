@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	"gorm.io/gorm"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
@@ -48,7 +49,7 @@ var (
 // AlertChannel
 type AlertChannel struct {
 	ID            uint                   `gorm:"primarykey" json:"id"`
-	Name          string                 `gorm:"type:varchar(50)" binding:"required" json:"name"`
+	Name          string                 `gorm:"type:varchar(50)" binding:"min=1,max=50" json:"name"`
 	ChannelConfig channels.ChannelConfig `json:"channelConfig"`
 
 	TenantID *uint   `json:"tenantID"` // 若为null，则表示系统预置
@@ -60,6 +61,10 @@ type AlertChannel struct {
 
 func (c *AlertChannel) ReceiverName() string {
 	return fmt.Sprintf("%s-id-%d", c.Name, c.ID)
+}
+
+func (c *AlertChannel) ToAlertmanagerReceiver() v1alpha1.Receiver {
+	return c.ChannelConfig.ToReceiver(c.ReceiverName())
 }
 
 var receiverNameReg = regexp.MustCompile("(.*)-id-(.*)")

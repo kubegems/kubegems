@@ -24,8 +24,10 @@ import (
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/middleware"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/gemsplugin"
+	"kubegems.io/kubegems/pkg/utils/otel"
+	otelgin "kubegems.io/kubegems/pkg/utils/otel/gin"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/route"
 	"kubegems.io/kubegems/pkg/utils/system"
@@ -79,7 +81,13 @@ func (mu handlerMux) register(group, version, resource, action string, handler g
 	}
 }
 
-func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.Options, apioptions *Options, kubectlOptions *KubectlOptions) error {
+func Run(ctx context.Context,
+	cluster cluster.Interface,
+	systemoptions *system.Options,
+	apioptions *Options,
+	kubectlOptions *KubectlOptions,
+	otelopts *otel.Options,
+) error {
 	ginr := gin.New()
 	ginr.Use(
 		// log
@@ -88,6 +96,12 @@ func Run(ctx context.Context, cluster cluster.Interface, systemoptions *system.O
 		exporter.GetRequestCollector().HandlerFunc(),
 		// panic recovery
 		gin.Recovery(),
+		// otel
+		otelgin.TraceMiddleware("kubegems-agent",
+			otelgin.WithFilter(otel.PathFilter(otelopts)),
+			otelgin.WithSpanNameGenerater(otel.UseRealPath()),
+		),
+		otelgin.MeterMiddleware("kubegems-agent"),
 	)
 	if apioptions.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())
@@ -210,7 +224,7 @@ func Routes(ctx context.Context, cluster cluster.Interface, options *Options, ku
 	secretHandler := SecretHandler{C: cluster.GetClient(), cluster: cluster}
 	routes.register("core", "v1", "secrets", ActionList, secretHandler.List)
 
-	pluginHandler := PluginHandler{PM: &gemsplugin.PluginManager{Client: cluster.GetClient()}}
+	pluginHandler := PluginHandler{PM: &pluginmanager.PluginManager{Client: cluster.GetClient()}}
 	routes.r.GET("/v1/plugins", pluginHandler.List)
 	routes.r.GET("/v1/plugins/{name}", pluginHandler.Get)
 	routes.r.POST("/v1/plugins/{name}", pluginHandler.Enable)

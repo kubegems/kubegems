@@ -18,17 +18,24 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,7 +52,7 @@ func NewSimpleTypedClient(baseaddr string) (*TypedClient, error) {
 	return &TypedClient{
 		BaseAddr:      agenturl,
 		RuntimeScheme: kube.GetScheme(),
-		HTTPClient:    http.DefaultClient,
+		HTTPClient:    &http.Client{},
 	}, nil
 }
 
@@ -184,8 +191,28 @@ func (c TypedClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ..
 func (c TypedClient) request(ctx context.Context, method, contenttype string,
 	obj runtime.Object, namespace, name string, queries map[string]string, data []byte,
 ) error {
-	addr, err := c.requestAddr(obj, method, namespace, name, queries)
+	gvk, err := apiutil.GVKForObject(obj, c.RuntimeScheme)
 	if err != nil {
+		return err
+	}
+	ctx, span := tracer.Start(ctx,
+		fmt.Sprintf("TypedClient.%s %s", method, gvk.Kind),
+		trace.WithAttributes(
+			attribute.String("k8s.apiserver.host", c.BaseAddr.Host),
+			attribute.String("request.method", method),
+			attribute.String("k8s.obj.gvk", gvk.String()),
+			attribute.String("k8s.obj.namespace", namespace),
+			attribute.String("k8s.obj.name", name),
+		),
+	)
+	defer span.End()
+
+	gvk.Kind = strings.TrimSuffix(gvk.Kind, "List")
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
+
+	addr, err := c.requestAddr(gvk, method, namespace, name, queries)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -196,6 +223,7 @@ func (c TypedClient) request(ctx context.Context, method, contenttype string,
 		} else {
 			content, err := json.Marshal(obj)
 			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
 				return err
 			}
 			body = bytes.NewReader(content)
@@ -204,12 +232,17 @@ func (c TypedClient) request(ctx context.Context, method, contenttype string,
 
 	req, err := http.NewRequestWithContext(ctx, method, addr, body)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	req.Header.Set("Content-Type", contenttype)
 
+	// inject for propagator to do distribute tracing
+	otel.GetTextMapPropagator().Inject(req.Context(), propagation.HeaderCarrier(req.Header))
+
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	defer resp.Body.Close()
@@ -220,24 +253,20 @@ func (c TypedClient) request(ctx context.Context, method, contenttype string,
 		if err := json.NewDecoder(resp.Body).Decode(status); err != nil {
 			return err
 		}
+		span.SetStatus(codes.Error, status.String())
 		return &errors.StatusError{ErrStatus: *status}
 	}
 
 	// ok
 	if err := json.NewDecoder(resp.Body).Decode(obj); err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+	span.SetStatus(codes.Ok, "")
 	return nil
 }
 
-func (c TypedClient) requestAddr(obj runtime.Object, method string, namespace, name string, queries map[string]string) (string, error) {
-	gvk, err := apiutil.GVKForObject(obj, c.RuntimeScheme)
-	if err != nil {
-		return "", err
-	}
-	gvk.Kind = strings.TrimSuffix(gvk.Kind, "List")
-	obj.GetObjectKind().SetGroupVersionKind(gvk)
-
+func (c TypedClient) requestAddr(gvk schema.GroupVersionKind, method string, namespace, name string, queries map[string]string) (string, error) {
 	sb := &strings.Builder{}
 	// assumes without a suffix '/'
 	sb.WriteString(c.BaseAddr.String())
@@ -317,7 +346,7 @@ func (c TypedClient) Watch(ctx context.Context, obj client.ObjectList, opts ...c
 	}
 	gvk.Kind = strings.TrimSuffix(gvk.Kind, "List")
 
-	addr, err := c.requestAddr(obj, http.MethodGet, options.Namespace, "", queries)
+	addr, err := c.requestAddr(gvk, http.MethodGet, options.Namespace, "", queries)
 	if err != nil {
 		return nil, err
 	}
