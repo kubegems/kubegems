@@ -35,19 +35,28 @@ kubectl patch plugins.plugins.kubegems.io -n kubegems-installer eventer --type m
 ```
 
 ## Run script
+### Set alertrule name map
+This vervion we refactor alertrule, it's name do not support chinese characters any more.
+So, before run migrate script, your old alertrule name should be changed manually:
+1. create a new file: `scripts/release-1.23-update/alert-name-map.yaml`
+2. fill in this file as `oldname-newname` key-value format, and the newname must be `kebab case`, eg:
+```yaml
+CPU使用率告警: cpu-usage-alert
+内存使用率超过80%: memory-usage-80-percent
+```
 
 ### Run on manager cluster:
 
 ```sh
 # switch kubeconfig current context to target cluster
 # run migrate
-go run ./scripts/release-1.23-update --manager --kubegemsVersion v1.23.0[-xxx]
+go run ./scripts/release-1.23-update --manager --kubegemsVersion v1.23.0
 ```
 
 or specify the context name in kubeconfig:
 
 ```sh
-go run ./scripts/release-1.23-update --context <context_name> --manager --kubegemsVersion v1.23.0[-xxx]
+go run ./scripts/release-1.23-update --context <context_name> --manager --kubegemsVersion v1.23.0
 ```
 
 To avoid migrate alertrule failed, we should do two things in database manually, after exec `exportOldAlertRulesToDB`:
@@ -58,7 +67,7 @@ To avoid migrate alertrule failed, we should do two things in database manually,
 
 ```sh
 # switch kubeconfig context to target cluster
-go run ./scripts/release-1.23-update --agent --kubegemsVersion v1.23.0[-xxx]
+go run ./scripts/release-1.23-update --agent --kubegemsVersion v1.23.0
 # apply 1.23 installer
 kubectl apply -f https://github.com/kubegems/kubegems/raw/release-1.23/deploy/installer.yaml
 ```
