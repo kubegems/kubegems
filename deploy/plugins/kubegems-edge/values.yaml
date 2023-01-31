@@ -387,7 +387,7 @@ hub:
     ## @param hub.service.type hub service type
     ##
     # @title Service类型
-    # @schema enum=ClusterIP,NodePort,Loadbalancer
+    # @schema enum=ClusterIP,NodePort,LoadBalancer
     # @order 10
     type: ClusterIP
     ## @param hub.service.ports.http hub service HTTP port
@@ -834,7 +834,7 @@ server:
     ## @param hub.service.type hub service type
     ##
     # @title Service类型
-    # @schema enum=ClusterIP,NodePort,Loadbalancer
+    # @schema enum=ClusterIP,NodePort,LoadBalancer
     # @order 10
     type: ClusterIP
     ## @param hub.service.ports.http hub service HTTP port
