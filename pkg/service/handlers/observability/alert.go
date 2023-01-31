@@ -1118,6 +1118,9 @@ func (h *ObservabilityHandler) withAlertRuleProcessor(ctx context.Context, clust
 }
 
 func (p *AlertRuleProcessor) MutateAlertRule(ctx context.Context, alertrule *models.AlertRule) error {
+	if err := models.IsValidAlertRuleName(alertrule.Name); err != nil {
+		return err
+	}
 	if alertrule.Namespace == "" {
 		return errors.Errorf("namespace can't be empty")
 	}

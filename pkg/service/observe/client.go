@@ -257,7 +257,7 @@ func (c *ObserveClient) ListLoggingAlertRules(ctx context.Context, namespace str
 	for thisNamesapce, rulegroups := range groupNamespaceMap {
 		amconfig, ok := configNamespaceMap[thisNamesapce]
 		if !ok {
-			log.Warnf("alertmanager in namespace %s not found", thisNamesapce)
+			log.Warnf("logging alertmanager config in cluster %s namespace %s not found", c.Name(), thisNamesapce)
 			continue
 		}
 		raw := &RawLoggingAlertRule{
