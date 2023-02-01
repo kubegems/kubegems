@@ -624,7 +624,7 @@ func (c ObserveClient) SearchTrace(
 	}
 
 	// 由于我们要求过滤的是trace的duration，而jaeger api过滤的是span的，所以需要我们手动过滤
-	ret := []Trace{}
+	ret := make([]Trace, 0, len(resp.Data))
 	for _, trace := range resp.Data {
 		validTrace := true
 		// 只判断第一个span
@@ -641,6 +641,10 @@ func (c ObserveClient) SearchTrace(
 			ret = append(ret, trace)
 		}
 	}
+	// sort by starttime desc
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Spans[0].StartTime > ret[j].Spans[0].StartTime
+	})
 	if len(ret) > limit {
 		return ret[:limit], nil
 	}
