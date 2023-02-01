@@ -114,8 +114,16 @@ func Run(ctx context.Context,
 	return system.ListenAndServeContext(ctx, systemoptions.Listen, systemoptions.TLSConfigOrNull(), ginr)
 }
 
-// nolint: funlen
 func Routes(ctx context.Context, cluster cluster.Interface, options *Options, kubectlOptions *KubectlOptions) (func(c *gin.Context), error) {
+	return RoutesWithDisablePlugin(ctx, cluster, options, kubectlOptions, false)
+}
+
+// nolint: funlen
+func RoutesWithDisablePlugin(ctx context.Context,
+	cluster cluster.Interface,
+	options *Options, kubectlOptions *KubectlOptions,
+	disablePlugin bool,
+) (func(c *gin.Context), error) {
 	rr := route.NewRouter()
 
 	routes := handlerMux{r: rr}
@@ -224,7 +232,7 @@ func Routes(ctx context.Context, cluster cluster.Interface, options *Options, ku
 	secretHandler := SecretHandler{C: cluster.GetClient(), cluster: cluster}
 	routes.register("core", "v1", "secrets", ActionList, secretHandler.List)
 
-	pluginHandler := PluginHandler{PM: &pluginmanager.PluginManager{Client: cluster.GetClient()}}
+	pluginHandler := PluginHandler{PM: &pluginmanager.PluginManager{Client: cluster.GetClient()}, Disabled: disablePlugin}
 	routes.r.GET("/v1/plugins", pluginHandler.List)
 	routes.r.GET("/v1/plugins/{name}", pluginHandler.Get)
 	routes.r.POST("/v1/plugins/{name}", pluginHandler.Enable)

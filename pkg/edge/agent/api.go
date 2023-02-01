@@ -38,7 +38,7 @@ func (a *AgentAPI) Run(ctx context.Context, listen string) error {
 	)
 	kubectlOptions := apis.NewDefaultKubectlOptions()
 	kubectlOptions.UseLocalKubectl = true
-	ginhandler, err := apis.Routes(ctx, a.cluster, apis.NewDefaultOptions(), kubectlOptions)
+	ginhandler, err := apis.RoutesWithDisablePlugin(ctx, a.cluster, apis.NewDefaultOptions(), kubectlOptions, true)
 	if err != nil {
 		return err
 	}

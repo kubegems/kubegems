@@ -15,6 +15,7 @@
 package apis
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -24,8 +25,11 @@ import (
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 )
 
+var ErrPluginDisabled = errors.New("plugin system disabled")
+
 type PluginHandler struct {
-	PM *pluginmanager.PluginManager
+	PM       *pluginmanager.PluginManager
+	Disabled bool // when disabled, return fake or empty result
 }
 
 type PluginStatus struct {
@@ -55,21 +59,27 @@ type MainCategory map[string]map[string][]api.PluginStatus
 // @Router      /v1/proxy/cluster/{cluster}/plugins [get]
 // @Security    JWT
 func (h *PluginHandler) List(c *gin.Context) {
-	if simple, _ := strconv.ParseBool(c.Query("simple")); simple {
+	simple, _ := strconv.ParseBool(c.Query("simple"))
+	if h.Disabled {
+		if simple {
+			OK(c, map[string]bool{})
+			return
+		}
+		OK(c, api.CategoriedPlugins(nil))
+		return
+	}
+	plugins, err := h.PM.ListPlugins(c.Request.Context())
+	if err != nil && !simple {
+		NotOK(c, err)
+		return
+	}
+	if simple {
 		ret := map[string]bool{}
-		plugins, _ := h.PM.ListPlugins(c.Request.Context())
-		// ignore errors on plugin crd not found or others
 		for name, v := range plugins {
 			ret[name] = (v.Installed != nil)
 		}
 		OK(c, ret)
-		return
 	} else {
-		plugins, err := h.PM.ListPlugins(c.Request.Context())
-		if err != nil {
-			NotOK(c, err)
-			return
-		}
 		categoriedPlugins := api.CategoriedPlugins(plugins)
 		OK(c, categoriedPlugins)
 	}
@@ -87,6 +97,10 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [get]
 // @Security    JWT
 func (h *PluginHandler) Get(c *gin.Context) {
+	if h.Disabled {
+		NotOK(c, ErrPluginDisabled)
+		return
+	}
 	name, version := c.Param("name"), c.Query("version")
 	plugin, err := h.PM.GetPluginVersion(c.Request.Context(), name, version, true, true)
 	if err != nil {
@@ -108,6 +122,10 @@ func (h *PluginHandler) Get(c *gin.Context) {
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [post]
 // @Security    JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
+	if h.Disabled {
+		NotOK(c, ErrPluginDisabled)
+		return
+	}
 	name := c.Param("name")
 
 	pv := pluginmanager.PluginVersion{}
@@ -135,6 +153,10 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Router      /v1/proxy/cluster/{cluster}/plugins [delete]
 // @Security    JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
+	if h.Disabled {
+		NotOK(c, ErrPluginDisabled)
+		return
+	}
 	name := c.Param("name")
 
 	if err := h.PM.UnInstall(c.Request.Context(), name); err != nil {
@@ -154,6 +176,10 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 // @Success     200     {object} handlers.ResponseStruct{Data=[]api.PluginStatus} "ok"
 // @Router      /v1/proxy/cluster/{cluster}/plugins:check-update [post]
 func (h *PluginHandler) CheckUpdate(c *gin.Context) {
+	if h.Disabled {
+		NotOK(c, ErrPluginDisabled)
+		return
+	}
 	upgradeable, err := h.PM.CheckUpdate(c.Request.Context())
 	if err != nil {
 		NotOK(c, err)
