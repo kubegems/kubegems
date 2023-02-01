@@ -57,16 +57,18 @@ type DeploiedManifest struct {
 }
 
 type ManifestRuntime struct {
-	Status       string      `json:"status"`       // 运行时状态
-	Kind         string      `json:"kind"`         // 运行时负载类型
-	WorkloadName string      `json:"workloadName"` // 运行时
-	Images       []string    `json:"images"`       // 运行时镜像
-	Message      string      `json:"message"`      // 运行时消息提示
-	CreateAt     metav1.Time `json:"createAt"`     // 运行时创建时间
-	Creator      string      `json:"creator"`      // 运行时创建人
-	Raw          interface{} `json:"raw"`          // 运行时
-	DeployStatus string      `json:"deployStatus"` // 异步部署的状态，取最新一个
-	IstioVersion string      `json:"istioVersion"` // 运行时的 istio version
+	Status       string            `json:"status"` // 运行时状态
+	Labels       map[string]string `json:"labels"`
+	Annotations  map[string]string `json:"annotations"`
+	Kind         string            `json:"kind"`         // 运行时负载类型
+	WorkloadName string            `json:"workloadName"` // 运行时
+	Images       []string          `json:"images"`       // 运行时镜像
+	Message      string            `json:"message"`      // 运行时消息提示
+	CreateAt     metav1.Time       `json:"createAt"`     // 运行时创建时间
+	Creator      string            `json:"creator"`      // 运行时创建人
+	Raw          interface{}       `json:"raw"`          // 运行时
+	DeployStatus string            `json:"deployStatus"` // 异步部署的状态，取最新一个
+	IstioVersion string            `json:"istioVersion"` // 运行时的 istio version
 }
 
 type ManifestDeploy struct {

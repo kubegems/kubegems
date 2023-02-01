@@ -156,7 +156,8 @@ func (h *ApplicationProcessor) List(ctx context.Context, ref PathRef) ([]Deploie
 	}
 
 	// argo 覆盖git
-	for _, app := range applist.Items {
+	for i := range applist.Items {
+		app := applist.Items[i]
 		appname := app.Labels[LabelApplication]
 		if appname == "" {
 			continue
@@ -200,7 +201,8 @@ func CompleteDeploiedManifestRuntime(app *v1alpha1.Application, status *Deploied
 	if status.Ref.IsEmpty() {
 		status.Ref.FromArgoLabel(app.Labels)
 	}
-
+	status.Runtime.Labels = app.Labels
+	status.Runtime.Annotations = app.Annotations
 	if app == nil || app.CreationTimestamp.IsZero() {
 		status.Runtime.Status = StatusNoArgoApp
 		return status
