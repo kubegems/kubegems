@@ -16,9 +16,12 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"kubegems.io/kubegems/pkg/utils/gormdatatypes"
 )
 
@@ -71,4 +74,14 @@ func AlertRuleKey(cluster, namespace, name string) string {
 
 func (r *AlertRule) FullName() string {
 	return AlertRuleKey(r.Cluster, r.Namespace, r.Name)
+}
+
+// [metadata.name: Invalid value: "艹": a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'), metadata.labels: Invalid value: "艹": a valid label must be an empty string or consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyValue',  or 'my_value',  or '12345', regex used for validation is '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?')]
+func IsValidAlertRuleName(name string) error {
+	errs := validation.IsDNS1035Label(name)
+	errs = append(errs, validation.IsValidLabelValue(name)...)
+	if len(errs) > 0 {
+		return errors.Errorf("alert rule name not valid: %s", strings.Join(errs, ", "))
+	}
+	return nil
 }

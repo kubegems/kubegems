@@ -126,7 +126,7 @@
               "enum": [
                 "ClusterIP",
                 "NodePort",
-                "Loadbalancer"
+                "LoadBalancer"
               ],
               "x-order": "10",
               "form": true
@@ -205,12 +205,12 @@
                 "operator": "or",
                 "conditions": [
                   {
-                    "path": "hub.tls.enabled",
-                    "value": false
-                  },
-                  {
                     "path": "hub.tls.useCertManager",
                     "value": true
+                  },
+                  {
+                    "path": "hub.tls.enabled",
+                    "value": false
                   }
                 ]
               }
@@ -299,7 +299,7 @@
               "enum": [
                 "ClusterIP",
                 "NodePort",
-                "Loadbalancer"
+                "LoadBalancer"
               ],
               "x-order": "10",
               "form": true

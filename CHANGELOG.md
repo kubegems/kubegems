@@ -1,3 +1,8 @@
+## ## 1.23.1 / 2023-2-1
+### Enhancements 🎈
+* 🎈 perf(script): check alertrule name on 1.23 update by @jojotong in https://github.com/kubegems/kubegems/pull/418
+* 🎈 perf(trace): sort by start time desc by @jojotong in https://github.com/kubegems/kubegems/pull/420
+
 ## 1.23.0 / 2023-1-30
 Kubegems v1.23 is released now. we refactor alert rule and support edge cluster in this version.
 If you want to upgrate from v1.22 to v1.23, please refer instruction <https://github.com/kubegems/kubegems/blob/release-1.23/scripts/release-1.23-update/README.md> to migrate.

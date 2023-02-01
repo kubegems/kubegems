@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -82,7 +83,7 @@ func updateAlertNameMapInFile(db *database.Database) error {
 	if err != nil {
 		return err
 	}
-	if err := yaml.NewDecoder(f).Decode(alertNameMap); err != nil {
+	if err := yaml.NewDecoder(f).Decode(alertNameMap); err != nil && err != io.EOF {
 		return err
 	}
 	oldnames := []string{}
@@ -132,6 +133,10 @@ func updateAlertRuleNameInDB(db *database.Database) error {
 		if !ok {
 			newname = strcase.KebabCase(v.Name)
 		}
+		if err := models.IsValidAlertRuleName(newname); err != nil {
+			return err
+		}
+
 		info := envinfo[fmt.Sprintf("%s/%s", v.Cluster, v.Namespace)]
 		records = append(records, []string{
 			v.Name, newname, info.ClusterName, info.Namespace,
@@ -202,8 +207,9 @@ func syncAlertRules(ctx context.Context, cs *agents.ClientSet, db *database.Data
 		}
 		if err := observability.NewAlertRuleProcessor(cli, db).SyncAlertRule(ctx, v); err != nil {
 			log.Error(err, "SyncAlertRule")
+		} else {
+			log.Info("sync alert rule success", "name", v.FullName())
 		}
-		log.Info("sync alert rule success", "name", v.FullName())
 	}
 	return nil
 }
