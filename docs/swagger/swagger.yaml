@@ -86,12 +86,20 @@ definitions:
     type: object
   application.AppStoreDeployForm:
     properties:
+      annotations:
+        additionalProperties:
+          type: string
+        type: object
       chart:
         description: chart名称
         type: string
       chartVersion:
         description: chart版本
         type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
       name:
         type: string
       repoURL:
@@ -3290,14 +3298,14 @@ definitions:
       id:
         type: integer
       name:
+        maxLength: 50
+        minLength: 1
         type: string
       tenant:
         $ref: '#/definitions/models.Tenant'
       tenantID:
         description: 若为null，则表示系统预置
         type: integer
-    required:
-    - name
     type: object
   models.AlertInfo:
     properties:
@@ -3424,6 +3432,8 @@ definitions:
         description: 告警消息
         type: string
       name:
+        maxLength: 50
+        minLength: 1
         type: string
       namespace:
         type: string
@@ -3446,7 +3456,6 @@ definitions:
         type: string
     required:
     - for
-    - name
     type: object
   models.Announcement:
     properties:
@@ -5050,6 +5059,8 @@ definitions:
       priority:
         type: integer
       repository:
+        type: string
+      repositoryName:
         type: string
       required:
         type: boolean
