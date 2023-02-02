@@ -205,12 +205,12 @@
                 "operator": "or",
                 "conditions": [
                   {
-                    "path": "hub.tls.useCertManager",
-                    "value": true
-                  },
-                  {
                     "path": "hub.tls.enabled",
                     "value": false
+                  },
+                  {
+                    "path": "hub.tls.useCertManager",
+                    "value": true
                   }
                 ]
               }
@@ -336,6 +336,54 @@
                   {
                     "path": "server.service.type",
                     "value": "NodePort"
+                  }
+                ]
+              }
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "server.enabled",
+            "value": false
+          }
+        },
+        "tls": {
+          "type": "object",
+          "title": "TLS 配置",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "启用",
+              "default": true,
+              "x-order": "0",
+              "form": true
+            },
+            "useCertManager": {
+              "type": "boolean",
+              "title": "使用 CertManager",
+              "default": false,
+              "x-order": "10",
+              "form": true,
+              "hidden": {
+                "path": "server.tls.enabled",
+                "value": false
+              }
+            },
+            "existingSecret": {
+              "type": "string",
+              "title": "已有 Secret 配置名称",
+              "minLength": 0,
+              "form": true,
+              "hidden": {
+                "operator": "or",
+                "conditions": [
+                  {
+                    "path": "server.tls.enabled",
+                    "value": false
+                  },
+                  {
+                    "path": "server.tls.useCertManager",
+                    "value": true
                   }
                 ]
               }
