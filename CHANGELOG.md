@@ -1,4 +1,4 @@
-## ## 1.23.1 / 2023-2-1
+## 1.23.1 / 2023-2-1
 ### Enhancements 🎈
 * 🎈 perf(script): check alertrule name on 1.23 update by @jojotong in https://github.com/kubegems/kubegems/pull/418
 * 🎈 perf(trace): sort by start time desc by @jojotong in https://github.com/kubegems/kubegems/pull/420

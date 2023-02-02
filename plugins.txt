@@ -20,7 +20,7 @@ node-local-dns 0.2.1
 node-problem-detector 2.2.2
 nvidia-device-plugin 0.11.0
 openkruise 1.2.0
-opentelemetry 0.28.1
+opentelemetry 0.28.2
 profiling 0.2.86
 prometheus-cloud-dial 0.22.0
 prometheus-node-exporter 3.3.0
