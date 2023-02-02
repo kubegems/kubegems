@@ -201,12 +201,12 @@ func CompleteDeploiedManifestRuntime(app *v1alpha1.Application, status *Deploied
 	if status.Ref.IsEmpty() {
 		status.Ref.FromArgoLabel(app.Labels)
 	}
-	status.Runtime.Labels = app.Labels
-	status.Runtime.Annotations = app.Annotations
 	if app == nil || app.CreationTimestamp.IsZero() {
 		status.Runtime.Status = StatusNoArgoApp
 		return status
 	}
+	status.Runtime.Labels = app.Labels
+	status.Runtime.Annotations = app.Annotations
 	if creator, ok := app.Annotations[AnnotationKeyCreator]; ok {
 		status.Runtime.Creator = creator
 
