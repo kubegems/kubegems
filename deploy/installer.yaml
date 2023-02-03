@@ -354,6 +354,38 @@ subjects:
   name: kubegems-installer
   namespace: kubegems-installer
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: kubegems-installer
+    meta.helm.sh/release-namespace: kubegems-installer
+    prometheus.io/port: "9100"
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/component: installer
+    app.kubernetes.io/instance: kubegems-installer
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kubegems-installer
+    helm.sh/chart: kubegems-installer-1.23.1
+  name: kubegems-installer
+  namespace: kubegems-installer
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: http
+  - name: metrics
+    port: 9100
+    protocol: TCP
+    targetPort: metrics
+  selector:
+    app.kubernetes.io/component: installer
+    app.kubernetes.io/instance: kubegems-installer
+    app.kubernetes.io/name: kubegems-installer
+  type: ClusterIP
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -390,7 +422,6 @@ spec:
       - args:
         - installer
         - --enableleaderelection
-        - --probeaddr=:8080
         - --metricsaddr=:9100
         env:
         - name: LOG_LEVEL
@@ -401,7 +432,7 @@ spec:
           failureThreshold: 6
           httpGet:
             path: /healthz
-            port: probe
+            port: http
           initialDelaySeconds: 5
           periodSeconds: 10
           successThreshold: 1
@@ -409,7 +440,7 @@ spec:
         name: installer
         ports:
         - containerPort: 8080
-          name: probe
+          name: http
           protocol: TCP
         - containerPort: 9100
           name: metrics
@@ -418,7 +449,7 @@ spec:
           failureThreshold: 6
           httpGet:
             path: /healthz
-            port: probe
+            port: http
           initialDelaySeconds: 5
           periodSeconds: 10
           successThreshold: 1

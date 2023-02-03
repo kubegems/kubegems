@@ -78,7 +78,6 @@ spec:
             {{- if .Values.installer.leaderElection.enabled }}
             - --enableleaderelection
             {{- end }}
-            - --probeaddr=:{{- .Values.installer.containerPorts.probe }}
             {{- if .Values.installer.metrics.enabled }}
             - --metricsaddr=:{{- .Values.installer.metrics.service.port }}
             {{- end }}
@@ -107,8 +106,8 @@ spec:
           resources: {{- toYaml .Values.installer.resources | nindent 12 }}
           {{- end }}
           ports:
-            - name: probe
-              containerPort: {{ .Values.installer.containerPorts.probe }}
+            - name: http
+              containerPort: {{ .Values.installer.containerPorts.http }}
               protocol: TCP
             {{- if .Values.installer.metrics.enabled }}
             - name: metrics
@@ -119,7 +118,7 @@ spec:
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.installer.livenessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
               path: /healthz
-              port: probe
+              port: http
           {{- else if .Values.installer.customLivenessProbe }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.installer.customLivenessProbe "context" $) | nindent 12 }}
           {{- end }}
@@ -127,7 +126,7 @@ spec:
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.installer.readinessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
               path: /healthz
-              port: probe
+              port: http
           {{- else if .Values.installer.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.installer.customReadinessProbe "context" $) | nindent 12 }}
           {{- end }}

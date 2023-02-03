@@ -23,6 +23,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/agent/apis"
 	"kubegems.io/kubegems/pkg/agent/cluster"
+	installerapi "kubegems.io/kubegems/pkg/installer/api"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/otel"
 	"kubegems.io/kubegems/pkg/utils/pprof"
@@ -39,6 +40,7 @@ type Options struct {
 	Kubectl   *apis.KubectlOptions        `json:"kubectl,omitempty" description:"kubectl options"`
 	Exporter  *prometheus.ExporterOptions `json:"exporter,omitempty"`
 	Otel      *otel.Options               `json:"otel,omitempty"`
+	Installer *installerapi.ClientOptions `json:"installer,omitempty"`
 }
 
 func DefaultOptions() *Options {
@@ -51,6 +53,7 @@ func DefaultOptions() *Options {
 		Kubectl:   apis.NewDefaultKubectlOptions(),
 		Exporter:  prometheus.DefaultExporterOptions(),
 		Otel:      otel.NewDefaultOptions(),
+		Installer: installerapi.NewDefaultClientOptions(),
 	}
 	defaultoptions.System.Listen = ":8041"
 	return defaultoptions
@@ -83,7 +86,7 @@ func Run(ctx context.Context, options *Options) error {
 
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return apis.Run(ctx, c, options.System, options.API, options.Kubectl, options.Otel)
+		return apis.Run(ctx, c, options.System, options.API, options.Kubectl, options.Otel, options.Installer)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)

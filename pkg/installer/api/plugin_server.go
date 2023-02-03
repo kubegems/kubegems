@@ -40,12 +40,21 @@ type PluginStatus struct {
 }
 
 func (o *PluginsAPI) ListPlugins(req *restful.Request, resp *restful.Response) {
-	plugins, err := o.PM.ListPlugins(req.Request.Context())
-	if err != nil {
-		response.Error(resp, err)
-		return
+	if request.Query(req.Request, "check-update", false) {
+		upgradeable, err := o.PM.CheckUpdate(req.Request.Context())
+		if err != nil {
+			response.Error(resp, err)
+			return
+		}
+		response.OK(resp, upgradeable)
+	} else {
+		plugins, err := o.PM.ListPlugins(req.Request.Context())
+		if err != nil {
+			response.Error(resp, err)
+			return
+		}
+		response.OK(resp, plugins)
 	}
-	response.OK(resp, CategoriedPlugins(plugins))
 }
 
 func SortPluginStatusByName(list []PluginStatus) {
@@ -127,8 +136,10 @@ func withCategory[T any](list []T, getCate func(T) string) map[string][]T {
 func (o *PluginsAPI) GetPlugin(req *restful.Request, resp *restful.Response) {
 	name := req.PathParameter("name")
 	version := req.QueryParameter("version")
+	withSchema := request.Query(req.Request, "schema", false)
+	healthCheck := request.Query(req.Request, "check", false)
 
-	pv, err := o.PM.GetPluginVersion(req.Request.Context(), name, version, true, true)
+	pv, err := o.PM.GetPluginVersion(req.Request.Context(), name, version, withSchema, healthCheck)
 	if err != nil {
 		response.Error(resp, err)
 		return

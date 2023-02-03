@@ -70,7 +70,7 @@ func NewDefaultOptions() *Options {
 	return &Options{
 		MetricsAddr:          "127.0.0.1:9100", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
-		ProbeAddr:            ":8081",
+		ProbeAddr:            ":8081", // depracated
 	}
 }
 
@@ -78,11 +78,10 @@ func Run(ctx context.Context, options *Options, cachedir string) error {
 	ctrl.SetLogger(logr.FromContextOrDiscard(ctx))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     options.MetricsAddr,
-		HealthProbeBindAddress: options.ProbeAddr,
-		LeaderElection:         options.EnableLeaderElection,
-		LeaderElectionID:       plugins.GroupName,
+		Scheme:             scheme,
+		MetricsBindAddress: options.MetricsAddr,
+		LeaderElection:     options.EnableLeaderElection,
+		LeaderElectionID:   plugins.GroupName,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

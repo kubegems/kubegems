@@ -22,7 +22,6 @@ import (
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/route"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Options struct {
@@ -42,11 +41,13 @@ func Run(ctx context.Context, options *Options, cachedir string) error {
 	if err != nil {
 		return err
 	}
-	modules := []apiutil.RestModule{&PluginsAPI{PM: pm}}
+	modules := []apiutil.RestModule{
+		NewPluginsAPI(pm),
+	}
 
 	server := http.Server{
 		Addr:    options.Listen,
-		Handler: apiutil.NewRestfulAPI("", nil, modules),
+		Handler: apiutil.NewRestfulAPI("v1", nil, modules),
 	}
 	go func() {
 		<-ctx.Done()
@@ -63,8 +64,8 @@ type PluginsAPI struct {
 	PM *pluginmanager.PluginManager
 }
 
-func NewPluginsAPI(cli client.Client) *PluginsAPI {
-	return &PluginsAPI{PM: &pluginmanager.PluginManager{Client: cli}}
+func NewPluginsAPI(pm *pluginmanager.PluginManager) *PluginsAPI {
+	return &PluginsAPI{PM: pm}
 }
 
 func (o *PluginsAPI) RegisterRoute(rg *route.Group) {
