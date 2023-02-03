@@ -42,7 +42,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/statistics"
-	"kubegems.io/kubegems/pkg/version"
 )
 
 var (
@@ -525,7 +524,6 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				ImageRepository: repository,
 				ClusterName:     cluster.ClusterName,
 				StorageClass:    cluster.DefaultStorageClass,
-				KubegemsVersion: version.Get().GitVersion,
 				Runtime:         cluster.Runtime,
 			})
 		}); err != nil {

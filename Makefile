@@ -77,11 +77,8 @@ generate-versions:
 	yq -i 'select(.metadata.name == "kubegems").spec.version="$(VERSION)" | select(.metadata.name == "global").spec.values.kubegemsVersion="$(GIT_VERSION)"' deploy/kubegems.yaml
 
 generate-installer: helm-package
-	helm template --namespace kubegems-installer --include-crds \
-	--set global.kubegemsVersion=$(GIT_VERSION) \
-	kubegems-installer ${KUBEGEM_CHARTS_DIR}/kubegems-installer-${VERSION}.tgz \
-	| kubectl annotate -f -  --local  -oyaml \
-	meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
+	helm template --namespace kubegems-installer --include-crds kubegems-installer ${KUBEGEM_CHARTS_DIR}/kubegems-installer-${VERSION}.tgz \
+	| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
 
 generate-i18n:

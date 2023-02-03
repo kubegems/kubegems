@@ -176,62 +176,8 @@ func (o *Offline) Download(ctx context.Context, basedir string) error {
 			}
 		}
 	}
-	return nil
-}
-
-func DownloadLatestCharts(ctx context.Context, repoaddr string, into string, kubegemsVersion string) error {
-	applier := bundle.NewDefaultApply(nil, nil, &bundle.Options{CacheDir: into})
-	pluginrepo := pluginmanager.Repository{Address: repoaddr}
-	if err := pluginrepo.RefreshRepoIndex(ctx); err != nil {
-		return err
-	}
-	kubegemsExample := pluginmanager.PluginVersion{Name: "kubegems", Version: kubegemsVersion}
-	for name, versions := range pluginrepo.Plugins {
-		// do not download kubegems charts,it exists locally.
-		if strings.HasPrefix(name, "kubegems") {
-			continue
-		}
-		var cacheVersion *pluginmanager.PluginVersion
-		// find latest version match kubegems
-		for _, item := range versions {
-			if err := pluginmanager.CheckDependecy(item.Requirements, kubegemsExample); err != nil {
-				log.Printf("ignore plugin [%s-%s] on dependencis not match: %s", item.Name, item.Version, err.Error())
-				continue
-			} else {
-				cacheVersion = &item
-				break
-			}
-		}
-		if cacheVersion == nil {
-			log.Printf("no matched version to cache on plugin %s", name)
-			continue
-		}
-		log.Printf("download %s-%s from %s", cacheVersion.Name, cacheVersion.Version, repoaddr)
-		manifest, err := applier.Template(ctx, cacheVersion.ToPlugin())
-		if err != nil {
-			log.Printf("on template: %v", err)
-			return err
-		}
-		// parse plugins
-		objs, err := utils.SplitYAMLFilterd[*pluginv1beta1.Plugin](bytes.NewReader(manifest))
-		if err != nil {
-			return err
-		}
-		// download plugin
-		for _, plugin := range objs {
-			name := plugin.Spec.Chart
-			if name == "" {
-				name = plugin.Name
-			}
-			log.Printf("download %s-%s from %s", name, plugin.Spec.Version, plugin.Spec.URL)
-			if _, err := applier.Download(ctx, plugin); err != nil {
-				log.Printf("on download: %v", err)
-				return err
-			}
-		}
-	}
 	// build index
-	indexpath := bundle.PerRepoCacheDir(repoaddr, into)
+	indexpath := bundle.PerRepoCacheDir(o.repo.Address, basedir)
 	log.Printf("generating helm repo index.yaml under %s", indexpath)
 	i, err := repo.IndexDirectory(indexpath, "")
 	if err != nil {
