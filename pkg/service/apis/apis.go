@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
+	"go.opentelemetry.io/otel"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/service/apis/oidc"
 	"kubegems.io/kubegems/pkg/service/apis/plugins"
@@ -66,7 +67,7 @@ func InitAPI(ctx context.Context, deps Dependencies) (http.Handler, error) {
 				"/keys",
 				"/.well-known/openid-configuration",
 			},
-			auth.NewAuthMiddleware(deps.Opts.JWT, nil).GoRestfulMiddleware, // authc
+			auth.NewAuthMiddleware(deps.Opts.JWT, nil, otel.GetTracerProvider().Tracer("kubegems.io/kubegems")).GoRestfulMiddleware, // authc
 		),
 	}
 	return apiutil.NewRestfulAPI("", middlewares, modules), nil

@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
@@ -55,8 +54,7 @@ type Client interface {
 }
 
 var (
-	_      Client       = &DelegateClient{}
-	tracer trace.Tracer = otel.Tracer("AgentClient")
+	_ Client = &DelegateClient{}
 )
 
 type DelegateClient struct {
@@ -116,7 +114,7 @@ func (c DelegateClient) ClientCertExpireAt() *time.Time {
 	return nil
 }
 
-func newClient(meta ClientMeta, kubernetes kubernetes.Interface) Client {
+func newClient(meta ClientMeta, kubernetes kubernetes.Interface, tracer trace.Tracer) Client {
 	return &DelegateClient{
 		ExtendClient: &ExtendClient{
 			Name: meta.Name,
@@ -129,6 +127,7 @@ func newClient(meta ClientMeta, kubernetes kubernetes.Interface) Client {
 					},
 				},
 				RuntimeScheme: kube.GetScheme(),
+				tracer:        tracer,
 			},
 		},
 		websocket: &websocket.Dialer{

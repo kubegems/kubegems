@@ -23,6 +23,8 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	"k8s.io/client-go/kubernetes"
@@ -35,6 +37,7 @@ import (
 type ClientSet struct {
 	database *database.Database
 	clients  sync.Map // name -> *Client
+	tracer   trace.Tracer
 }
 
 // Initialize for gorm plugin
@@ -48,7 +51,7 @@ func (h *ClientSet) Name() string {
 }
 
 func NewClientSet(database *database.Database) (*ClientSet, error) {
-	return &ClientSet{database: database}, nil
+	return &ClientSet{database: database, tracer: otel.GetTracerProvider().Tracer("kubegems.io/kubegems")}, nil
 }
 
 func ApiServerProxyPath(namespace, schema, svcname, port string) string {
@@ -130,7 +133,7 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	cli := newClient(*meta, clientset)
+	cli := newClient(*meta, clientset, h.tracer)
 	h.clients.Store(name, cli)
 	return cli, nil
 }

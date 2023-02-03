@@ -53,6 +53,7 @@ func NewSimpleTypedClient(baseaddr string) (*TypedClient, error) {
 		BaseAddr:      agenturl,
 		RuntimeScheme: kube.GetScheme(),
 		HTTPClient:    &http.Client{},
+		tracer:        otel.Tracer("kubegems-test-tracer"),
 	}, nil
 }
 
@@ -60,6 +61,7 @@ type TypedClient struct {
 	BaseAddr      *url.URL
 	RuntimeScheme *runtime.Scheme
 	HTTPClient    *http.Client
+	tracer        trace.Tracer
 }
 
 var _ client.WithWatch = TypedClient{}
@@ -195,7 +197,7 @@ func (c TypedClient) request(ctx context.Context, method, contenttype string,
 	if err != nil {
 		return err
 	}
-	ctx, span := tracer.Start(ctx,
+	ctx, span := c.tracer.Start(ctx,
 		fmt.Sprintf("TypedClient.%s %s", method, gvk.Kind),
 		trace.WithAttributes(
 			attribute.String("k8s.apiserver.host", c.BaseAddr.Host),
