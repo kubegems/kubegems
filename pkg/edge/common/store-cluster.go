@@ -66,8 +66,23 @@ func (s EdgeClusterK8sStore) List(ctx context.Context, options ListOptions) (int
 		options.Page = 1
 	}
 	searchfunc := func(item v1beta1.EdgeCluster) bool {
-		return (options.Search == "" || strings.Contains(item.GetName(), options.Search)) &&
-			(options.Manufacture == nil || options.Manufacture.Matches(labels.Set(item.Status.Manufacture)))
+		if search := options.Search; search != "" {
+			// match search name
+			if !strings.Contains(item.GetName(), search) {
+				return false
+			}
+			// match search device id
+			if devid, ok := item.Status.Manufacture[AnnotationKeyDeviceID]; ok && !strings.Contains(devid, search) {
+				return false
+			}
+		}
+		// match labels
+		if sele := options.Manufacture; sele != nil {
+			if !sele.Matches(labels.Set(item.Status.Manufacture)) {
+				return false
+			}
+		}
+		return true
 	}
 	paged := response.NewTypedPage(list.Items, options.Page, options.Size, searchfunc, nil)
 	return int(paged.Total), paged.List, nil
