@@ -1,4 +1,28 @@
- {{/*
+{{/*
+Return the proper image name
+{{ include "common.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
+*/}}
+{{- define "kubegems.images.image" -}}
+{{- $registryName := .imageRoot.registry -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $tag := .imageRoot.tag | toString -}}
+{{- if or (not $tag) (eq $tag "latest") -}}
+    {{- $tag = printf "v%s" .root.Chart.AppVersion | toString -}}
+{{- end -}}
+{{- if .global.kubegemsVersion }}
+    {{- $tag = .global.kubegemsVersion | toString -}}
+{{- end }}
+{{- if .global.imageRegistry }}
+    {{- $registryName = .global.imageRegistry -}}
+{{- end -}}
+{{- if $registryName }}
+    {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+{{- else -}}
+    {{- printf "%s:%s" $repositoryName $tag -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
@@ -19,31 +43,10 @@ Return the agent secretName
 {{- end -}}
 
 {{/*
-Return the proper image name
-{{ include "kubegems-local.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
-*/}}
-{{- define "kubegems-local.images.image" -}}
-{{- $registryName := .imageRoot.registry -}}
-{{- $repositoryName := .imageRoot.repository -}}
-{{- $tag := .imageRoot.tag | toString -}}
-{{- if .global.kubegemsVersion }}
-    {{- $tag = .global.kubegemsVersion | toString -}}
-{{- end }}
-{{- if .global.imageRegistry }}
-    {{- $registryName = .global.imageRegistry -}}
-{{- end -}}
-{{- if $registryName }}
-    {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
-{{- else -}}
-    {{- printf "%s:%s" $repositoryName $tag -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Return the proper kubegems-local.agent image name
 */}}
 {{- define "kubegems-local.agent.image" -}}
-{{ include "kubegems-local.images.image" (dict "imageRoot" .Values.agent.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.agent.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{/*
@@ -112,7 +115,7 @@ Return the controller webhook secretName
 Return the proper kubegems-local image name
 */}}
 {{- define "kubegems-local.controller.image" -}}
-{{ include "kubegems-local.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{/*

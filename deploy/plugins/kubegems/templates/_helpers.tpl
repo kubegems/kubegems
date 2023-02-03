@@ -6,13 +6,14 @@ Return the proper image name
 {{- $registryName := .imageRoot.registry -}}
 {{- $repositoryName := .imageRoot.repository -}}
 {{- $tag := .imageRoot.tag | toString -}}
+{{- if or (not $tag) (eq $tag "latest") -}}
+    {{- $tag = printf "v%s" .root.Chart.AppVersion | toString -}}
+{{- end -}}
 {{- if .global.kubegemsVersion }}
     {{- $tag = .global.kubegemsVersion | toString -}}
 {{- end }}
-{{- if .global }}
-    {{- if .global.imageRegistry }}
-        {{- $registryName = .global.imageRegistry -}}
-    {{- end -}}
+{{- if .global.imageRegistry }}
+    {{- $registryName = .global.imageRegistry -}}
 {{- end -}}
 {{- if $registryName }}
     {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
@@ -40,7 +41,7 @@ Return the proper kubegems dashboard name
 Return the proper kubegems image name
 */}}
 {{- define "kubegems.dashboard.image" -}}
-{{- include "kubegems.images.image" (dict "imageRoot" .Values.dashboard.image "global" .Values.global) -}}
+{{- include "kubegems.images.image" (dict "imageRoot" .Values.dashboard.image "global" .Values.global "root" .) -}}
 {{- end -}}
 
 {{- define "kubegems.api.address" -}}
@@ -68,11 +69,11 @@ If release name contains chart name it will be used as a full name.
 Return the proper kubegems.api image name
 */}}
 {{- define "kubegems.init.image" -}}
-{{- include "kubegems.images.image" (dict "imageRoot" .Values.init.image "global" .Values.global) -}}
+{{- include "kubegems.images.image" (dict "imageRoot" .Values.init.image "global" .Values.global "root" .) -}}
 {{- end -}}
 
 {{- define "kubegems.init.charts.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{- define "kubegems.init.charts.fullname" -}}
@@ -107,7 +108,7 @@ Return the api jwt secretName
 Return the proper kubegems.api image name
 */}}
 {{- define "kubegems.api.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.api.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.api.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{/*
@@ -121,7 +122,7 @@ Return the proper kubegems msgbus name
 Return the proper kubegems image name
 */}}
 {{- define "kubegems.msgbus.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.msgbus.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.msgbus.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{/*
@@ -135,7 +136,7 @@ Return the proper kubegems msgbus name
 Return the proper kubegems image name
 */}}
 {{- define "kubegems.worker.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.worker.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.worker.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{/*

@@ -13,7 +13,6 @@ spec:
   version: "1.0.0"
   values:
     clusterName: "manager-cluster"
-    kubegemsVersion: v1.23.1
     # choose 'registry.cn-beijing.aliyuncs.com' or 'docker.io'
     imageRegistry: registry.cn-beijing.aliyuncs.com
     imageRepository: "kubegems"

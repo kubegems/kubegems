@@ -1,3 +1,27 @@
+{{/*
+Return the proper image name
+{{ include "common.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
+*/}}
+{{- define "kubegems.images.image" -}}
+{{- $registryName := .imageRoot.registry -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $tag := .imageRoot.tag | toString -}}
+{{- if or (not $tag) (eq $tag "latest") -}}
+    {{- $tag = printf "v%s" .root.Chart.AppVersion | toString -}}
+{{- end -}}
+{{- if .global.kubegemsVersion }}
+    {{- $tag = .global.kubegemsVersion | toString -}}
+{{- end }}
+{{- if .global.imageRegistry }}
+    {{- $registryName = .global.imageRegistry -}}
+{{- end -}}
+{{- if $registryName }}
+    {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+{{- else -}}
+    {{- printf "%s:%s" $repositoryName $tag -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "kubegems.controller.fullname" -}}
 {{- printf "%s-controller" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -11,7 +35,7 @@
 {{- end -}}
 
 {{- define "kubegems.controller.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.controller.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{- define "kubegems.store.fullname" -}}
@@ -19,7 +43,7 @@
 {{- end -}}
 
 {{- define "kubegems.store.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.store.image "global" .Values.global) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.store.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{- define "kubegems.sync.fullname" -}}
@@ -32,28 +56,6 @@
 
 {{- define "kubegems.sync.address" -}}
 {{ printf "http://%s:%.0f" (include "kubegems.sync.fullname" .) (.Values.sync.service.ports.http) }}
-{{- end -}}
-
-{{- /*
-{{ include "kubegems.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
-*/ -}}
-{{- define "kubegems.images.image" -}}
-{{- $registryName := .imageRoot.registry -}}
-{{- $repositoryName := .imageRoot.repository -}}
-{{- $tag := .imageRoot.tag | toString -}}
-{{- if .global.kubegemsVersion }}
-    {{- $tag = .global.kubegemsVersion | toString -}}
-{{- end }}
-{{- if .global }}
-    {{- if .global.imageRegistry }}
-        {{- $registryName = .global.imageRegistry -}}
-    {{- end -}}
-{{- end -}}
-{{- if $registryName }}
-    {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
-{{- else -}}
-    {{- printf "%s:%s" $repositoryName $tag -}}
-{{- end -}}
 {{- end -}}
 
 {{- define "kubegems.mongodb.name" -}}
