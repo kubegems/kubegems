@@ -189,7 +189,7 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 		if err := tx.Model(&models.AlertReceiver{}).Distinct("alert_rule_id").Where("alert_channel_id = ?", req.ID).Scan(&alertruleIDs).Error; err != nil {
 			return err
 		}
-		return tx.Preload("Receivers.AlertChannel").Find(&alertrules, alertruleIDs).Error
+		return tx.Preload("Receivers.AlertChannel").Where("id in ?", alertruleIDs).Find(&alertrules).Error
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
