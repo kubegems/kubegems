@@ -9,7 +9,7 @@ require (
 	github.com/Xuanwo/go-locale v1.1.0
 	github.com/alicebob/miniredis/v2 v2.21.0
 	github.com/argoproj/argo-cd/v2 v2.3.4
-	github.com/argoproj/argo-rollouts v1.2.1
+	github.com/argoproj/argo-rollouts v1.2.2
 	github.com/aws/aws-sdk-go-v2 v1.16.5
 	github.com/aws/aws-sdk-go-v2/config v1.13.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.8.0
