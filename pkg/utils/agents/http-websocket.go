@@ -27,6 +27,7 @@ import (
 	"github.com/gorilla/websocket"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
@@ -95,7 +96,12 @@ func (c TypedClient) DoRawRequest(ctx context.Context, clientreq Request) (*http
 		body = bytes.NewReader(content)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, clientreq.Method, addr, body)
+	userBaggage, err := baggage.Parse(fmt.Sprintf("user.name=%s", "kubegems-test"))
+	if err != nil {
+		otel.Handle(err)
+	}
+
+	req, err := http.NewRequestWithContext(baggage.ContextWithBaggage(ctx, userBaggage), clientreq.Method, addr, body)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +135,8 @@ func (c TypedClient) DoRequest(ctx context.Context, req Request) error {
 	if req.Method == "" {
 		req.Method = "GET"
 	}
-	ctx, span := tracer.Start(ctx,
+
+	ctx, span := c.tracer.Start(ctx,
 		fmt.Sprintf("TypedClient.%s %s", req.Method, req.Path),
 		trace.WithAttributes(
 			attribute.String("k8s.apiserver.host", c.BaseAddr.Host),
