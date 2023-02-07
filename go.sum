@@ -293,8 +293,8 @@ github.com/apparentlymart/go-textseg v1.0.0/go.mod h1:z96Txxhf3xSFMPmb5X/1W05FF/
 github.com/apparentlymart/go-textseg/v13 v13.0.0/go.mod h1:ZK2fH7c4NqDTLtiYLvIkEghdlcqw7yxLeM89kiTRPUo=
 github.com/argoproj/argo-cd/v2 v2.3.4 h1:mj+snMMf9LoHWMH3rLCkBWSRETv1Sq8lxuuyLxH+76A=
 github.com/argoproj/argo-cd/v2 v2.3.4/go.mod h1:EuPH0/rLe/FdHGwQ/EVucspMnF3v4qd7da6N6CG+oJA=
-github.com/argoproj/argo-rollouts v1.2.1 h1:4hSgKEqpQsZreZBv+XcLsB+oBaRGMVW19nMScx5ikIQ=
-github.com/argoproj/argo-rollouts v1.2.1/go.mod h1:ETmWr9Lysxr9SgbqalMMBdytBcDHUt9qulFoKJ9b9ZU=
+github.com/argoproj/argo-rollouts v1.2.2 h1:CONx1ybjt2tpuEl53fHXznyq7ir/O4FxIGLuHvlRgpo=
+github.com/argoproj/argo-rollouts v1.2.2/go.mod h1:ETmWr9Lysxr9SgbqalMMBdytBcDHUt9qulFoKJ9b9ZU=
 github.com/argoproj/gitops-engine v0.6.2 h1:hM+pQeplCeIPAvfAmr1f91+ykxqaU0GAzuxVujqlKHM=
 github.com/argoproj/gitops-engine v0.6.2/go.mod h1:pRgVpLW7pZqf7n3COJ7UcDepk4cI61LAcJd64Q3Jq/c=
 github.com/argoproj/pkg v0.11.1-0.20211203175135-36c59d8fafe0 h1:Cfp7rO/HpVxnwlRqJe0jHiBbZ77ZgXhB6HWlYD02Xdc=

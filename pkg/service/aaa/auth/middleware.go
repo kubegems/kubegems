@@ -24,8 +24,8 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/gin-gonic/gin"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/aaa"
@@ -34,17 +34,16 @@ import (
 	"kubegems.io/kubegems/pkg/utils/jwt"
 )
 
-var tracer = otel.Tracer("auth")
-
 type AuthMiddleware struct {
 	getters []UserGetterIface
 	uif     aaa.ContextUserOperator
 }
 
-func NewAuthMiddleware(opts *jwt.Options, userif aaa.ContextUserOperator) *AuthMiddleware {
+func NewAuthMiddleware(opts *jwt.Options, userif aaa.ContextUserOperator, tracer trace.Tracer) *AuthMiddleware {
 	var getters []UserGetterIface
 	getters = append(getters, &BearerTokenUserLoader{
-		JWT: opts.ToJWT(),
+		JWT:    opts.ToJWT(),
+		tracer: tracer,
 	})
 	getters = append(getters, &PrivateTokenUserLoader{})
 	return &AuthMiddleware{
@@ -104,12 +103,13 @@ type UserGetterIface interface {
 
 // BearerTokenUserLoader  bearer type
 type BearerTokenUserLoader struct {
-	JWT *jwt.JWT
+	JWT    *jwt.JWT
+	tracer trace.Tracer
 }
 
 func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIface, exist bool) {
 	htype, token := parseAuthorizationHeader(req)
-	_, span := tracer.Start(req.Context(), "GetUser")
+	_, span := l.tracer.Start(req.Context(), "GetUser")
 	defer span.End()
 	if strings.ToLower(htype) != "bearer" {
 		log.Warnf("token %s not valid", token)

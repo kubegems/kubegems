@@ -24,7 +24,7 @@ import (
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/middleware"
 	"kubegems.io/kubegems/pkg/apis/gems"
-	"kubegems.io/kubegems/pkg/installer/pluginmanager"
+	installerapi "kubegems.io/kubegems/pkg/installer/api"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/otel"
 	otelgin "kubegems.io/kubegems/pkg/utils/otel/gin"
@@ -87,6 +87,7 @@ func Run(ctx context.Context,
 	apioptions *Options,
 	kubectlOptions *KubectlOptions,
 	otelopts *otel.Options,
+	installer *installerapi.ClientOptions,
 ) error {
 	ginr := gin.New()
 	ginr.Use(
@@ -106,7 +107,7 @@ func Run(ctx context.Context,
 	if apioptions.EnableHTTPSigs {
 		ginr.Use(middleware.SignerMiddleware())
 	}
-	ginhandler, err := Routes(ctx, cluster, apioptions, kubectlOptions)
+	ginhandler, err := Routes(ctx, cluster, apioptions, kubectlOptions, installer)
 	if err != nil {
 		return err
 	}
@@ -115,7 +116,11 @@ func Run(ctx context.Context,
 }
 
 // nolint: funlen
-func Routes(ctx context.Context, cluster cluster.Interface, options *Options, kubectlOptions *KubectlOptions) (func(c *gin.Context), error) {
+func Routes(ctx context.Context, cluster cluster.Interface,
+	options *Options,
+	kubectlOptions *KubectlOptions,
+	installerOptions *installerapi.ClientOptions,
+) (func(c *gin.Context), error) {
 	rr := route.NewRouter()
 
 	routes := handlerMux{r: rr}
@@ -224,7 +229,10 @@ func Routes(ctx context.Context, cluster cluster.Interface, options *Options, ku
 	secretHandler := SecretHandler{C: cluster.GetClient(), cluster: cluster}
 	routes.register("core", "v1", "secrets", ActionList, secretHandler.List)
 
-	pluginHandler := PluginHandler{PM: &pluginmanager.PluginManager{Client: cluster.GetClient()}}
+	pluginHandler, err := NewPluginHandler(installerOptions)
+	if err != nil {
+		return nil, err
+	}
 	routes.r.GET("/v1/plugins", pluginHandler.List)
 	routes.r.GET("/v1/plugins/{name}", pluginHandler.Get)
 	routes.r.POST("/v1/plugins/{name}", pluginHandler.Enable)

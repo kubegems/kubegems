@@ -25,6 +25,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
@@ -71,7 +72,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/git"
-	"kubegems.io/kubegems/pkg/utils/otel"
+	kotel "kubegems.io/kubegems/pkg/utils/otel"
 	otelgin "kubegems.io/kubegems/pkg/utils/otel/gin"
 	"kubegems.io/kubegems/pkg/utils/prometheus/exporter"
 	"kubegems.io/kubegems/pkg/utils/redis"
@@ -166,7 +167,7 @@ func (r *Router) Complete(ctx context.Context) error {
 	dir, _ := os.Getwd()
 	router.StaticFS("/lokiExport", http.Dir(dir+"/lokiExport"))
 
-	if err := otel.Init(ctx, r.Opts.Otel); err != nil {
+	if err := kotel.Init(ctx, r.Opts.Otel); err != nil {
 		return err
 	}
 
@@ -180,8 +181,8 @@ func (r *Router) Complete(ctx context.Context) error {
 		gin.Recovery(),
 		// otel
 		otelgin.TraceMiddleware("kubegems-api",
-			otelgin.WithFilter(otel.PathFilter(r.Opts.Otel)),
-			otelgin.WithSpanNameGenerater(otel.UseRealPath()),
+			otelgin.WithFilter(kotel.PathFilter(r.Opts.Otel)),
+			otelgin.WithSpanNameGenerater(kotel.UseRealPath()),
 		),
 		otelgin.MeterMiddleware("kubegems-api"),
 		// real ip tracking
@@ -230,7 +231,7 @@ func (r *Router) Complete(ctx context.Context) error {
 	// 注册中间件
 	apiMidwares := []func(*gin.Context){
 		// authc
-		auth.NewAuthMiddleware(r.Opts.JWT, userif).FilterFunc,
+		auth.NewAuthMiddleware(r.Opts.JWT, userif, otel.GetTracerProvider().Tracer("kubegems.io/kubegems")).FilterFunc,
 		// audit
 		r.auditInstance.Middleware(),
 	}

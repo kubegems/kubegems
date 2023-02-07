@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kubegems.installer.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: installer
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if .Values.installer.annotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.installer.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if and .Values.installer.metrics.enabled .Values.installer.metrics.service.annotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.installer.metrics.service.annotations "context" $) | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.installer.service.type }}
+  {{- if or (eq .Values.installer.service.type "LoadBalancer") (eq .Values.installer.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.installer.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq .Values.installer.service.type "LoadBalancer") (not (empty .Values.installer.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ .Values.installer.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if and (eq .Values.installer.service.type "LoadBalancer") (not (empty .Values.installer.service.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.installer.service.loadBalancerIP }}
+  {{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.installer.service.ports.http }}
+      protocol: TCP
+      targetPort: http
+    {{- if .Values.installer.metrics.enabled }}
+    - name: metrics
+      port: {{ .Values.installer.metrics.service.port }}
+      targetPort: metrics
+      protocol: TCP
+    {{- end }}
+    {{- if .Values.installer.service.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.installer.service.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{- include "common.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: installer

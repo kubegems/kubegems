@@ -1,4 +1,10 @@
-## ## 1.23.1 / 2023-2-1
+## 1.23.2 / 2023-2-7
+### Enhancements 🎈
+* 🎈 perf(otel): use baggage by @jojotong in https://github.com/kubegems/kubegems/pull/435
+### Bugfixes 🐞
+* 🐞 fix(channel): find alertrule must add 'where', sync map by @jojotong in https://github.com/kubegems/kubegems/pull/433
+
+## 1.23.1 / 2023-2-1
 ### Enhancements 🎈
 * 🎈 perf(script): check alertrule name on 1.23 update by @jojotong in https://github.com/kubegems/kubegems/pull/418
 * 🎈 perf(trace): sort by start time desc by @jojotong in https://github.com/kubegems/kubegems/pull/420

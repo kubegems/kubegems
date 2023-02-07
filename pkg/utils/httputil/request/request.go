@@ -17,6 +17,7 @@ package request
 import (
 	"encoding/json"
 	"encoding/xml"
+	"mime"
 	"net/http"
 	"strconv"
 	"strings"
@@ -87,11 +88,13 @@ func ValueOrDefault[T any](val string, defaultValue T) T {
 }
 
 func Body(r *http.Request, into any) error {
-	switch r.Header.Get("Content-Type") {
-	case "application/json", "":
+	mediatype, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	switch mediatype {
+	case "application/json":
 		return json.NewDecoder(r.Body).Decode(into)
 	case "application/xml":
 		return xml.NewDecoder(r.Body).Decode(into)
+	default:
+		return json.NewDecoder(r.Body).Decode(into)
 	}
-	return nil
 }

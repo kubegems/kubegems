@@ -93,10 +93,10 @@ installer:
   ## @param installer.replicaCount Number of installer replicas to deploy
   ##
   replicaCount: 1
-  ## @param installer.containerPorts.probe installer probe container port
+  ## @param installer.containerPorts.http installer http container port
   ##
   containerPorts:
-    probe: 8080
+    http: 8080
   ## Configure extra options for installer containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
   ## @param installer.livenessProbe.enabled Enable livenessProbe on installer containers
@@ -309,6 +309,51 @@ installer:
   ##    command: ['sh', '-c', 'echo "hello world"']
   ##
   initContainers: {}
+
+  ## installer service parameters
+  ##
+  service:
+    ## @param hub.service.type hub service type
+    ##
+    type: ClusterIP
+    ## @param hub.service.ports.http hub service HTTP port
+    ## if tls set, tls listen on this port
+    ##
+    ports:
+      http: 8080
+    ## Node ports to expose
+    ## @param hub.service.nodePorts.http [number,nullable] Node port for HTTP
+    ## NOTE: choose port between <30000-32767>
+    ##
+    nodePorts:
+      http: null
+    ## @param hub.service.clusterIP hub service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIP: ""
+    ## @param hub.service.loadBalancerIP hub service Load Balancer IP
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+    ##
+    loadBalancerIP: ""
+    ## @param hub.service.loadBalancerSourceRanges hub service Load Balancer sources
+    ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ##   - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: []
+    ## @param hub.service.externalTrafficPolicy hub service external traffic policy
+    ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Cluster
+    ## @param hub.service.annotations Additional custom annotations for hub service
+    ##
+    annotations: {}
+    ## @param hub.service.extraPorts Extra ports to expose in hub service (normally used with the `sidecars` value)
+    ##
+    extraPorts: []
+
 
   ## @section Agent Metrics parameters
   ##

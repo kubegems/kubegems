@@ -22,6 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/codes"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -84,6 +85,10 @@ func TraceMiddleware(service string, opts ...Option) gin.HandlerFunc {
 		ctx, span := tracer.Start(ctx, spanName, opts...)
 		defer span.End()
 
+		reqBaggage := baggage.FromContext(ctx)
+		span.SetAttributes(
+			attribute.String("user.name", reqBaggage.Member("user.name").Value()),
+		)
 		// pass the span through the request context
 		c.Request = c.Request.WithContext(ctx)
 

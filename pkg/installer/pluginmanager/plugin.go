@@ -51,6 +51,10 @@ type PluginManager struct {
 	builtinRepoCache *Repository
 }
 
+func PluginManagerFromClient(cli client.Client) *PluginManager {
+	return &PluginManager{Client: cli}
+}
+
 func DefaultPluginManager(cachedir string) (*PluginManager, error) {
 	cfg, err := kube.AutoClientConfig()
 	if err != nil {
@@ -156,6 +160,7 @@ func (m *PluginManager) GetPluginVersion(ctx context.Context, name, version stri
 			if withDpendeciesCheck && len(item.Requirements) > 0 {
 				// list installed ignore error
 				installed, _ := m.ListInstalled(ctx, false)
+				// check and update requrements' error field.
 				CheckDependecies(item.Requirements, installed)
 			}
 			// fill current installed values

@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel"
 	"kubegems.io/kubegems/pkg/msgbus/options"
 	"kubegems.io/kubegems/pkg/msgbus/switcher"
 	"kubegems.io/kubegems/pkg/service/aaa"
@@ -30,7 +31,7 @@ import (
 func NewGinServer(opts *options.Options, database *database.Database, redis *redis.Client, ms *switcher.MessageSwitcher) (*gin.Engine, error) {
 	r := gin.Default()
 	// 初始化需要注册的中间件
-	authMiddleware := auth.NewAuthMiddleware(opts.JWT, aaa.NewUserInfoHandler())
+	authMiddleware := auth.NewAuthMiddleware(opts.JWT, aaa.NewUserInfoHandler(), otel.GetTracerProvider().Tracer("kubegems.io/kubegems"))
 	middlewares := []func(*gin.Context){
 		authMiddleware.FilterFunc,
 	}

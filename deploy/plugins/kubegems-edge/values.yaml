@@ -81,7 +81,7 @@ hub:
   image:
     registry: docker.io
     repository: kubegems/kubegems
-    tag: main
+    tag: latest
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -683,8 +683,19 @@ server:
   ## @param server.tls.enabled Enable hub http listen TLS
   ## @param server.tls.useCertManager using cert manager to generate tls secret,if not using self-signed certificates if not exists
   ## @param server.tls.existingSecret customize default tls secret name
+  # @title TLS 配置
+  # @hidden server.enabled=false
   tls:
+    # @title 启用
+    # @order 0
     enabled: true
+    # @title 使用 CertManager
+    # @hidden server.tls.enabled=false
+    # @order 10
+    useCertManager: false
+    # @title 已有 Secret 配置名称
+    # @schema minlen=0
+    # @hidden server.tls.enabled=false;operator=or;server.tls.useCertManager=true
     existingSecret: ""
   ## @param server.existingConfigmap The name of an existing ConfigMap with your custom configuration for server
   ##

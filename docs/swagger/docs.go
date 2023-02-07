@@ -25909,6 +25909,12 @@ const docTemplate = `{
                 "values"
             ],
             "properties": {
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "chart": {
                     "description": "chart名称",
                     "type": "string"
@@ -25916,6 +25922,12 @@ const docTemplate = `{
                 "chartVersion": {
                     "description": "chart版本",
                     "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -28362,9 +28374,6 @@ const docTemplate = `{
         },
         "models.AlertChannel": {
             "type": "object",
-            "required": [
-                "name"
-            ],
             "properties": {
                 "channelConfig": {
                     "$ref": "#/definitions/channels.ChannelConfig"
@@ -28373,7 +28382,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
                 },
                 "tenant": {
                     "$ref": "#/definitions/models.Tenant"
@@ -28510,8 +28521,7 @@ const docTemplate = `{
         "models.AlertRule": {
             "type": "object",
             "required": [
-                "for",
-                "name"
+                "for"
             ],
             "properties": {
                 "alertLevels": {
@@ -28565,7 +28575,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
                 },
                 "namespace": {
                     "type": "string"
@@ -30869,6 +30881,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "repository": {
+                    "type": "string"
+                },
+                "repositoryName": {
                     "type": "string"
                 },
                 "required": {

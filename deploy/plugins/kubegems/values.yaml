@@ -16,7 +16,7 @@ global:
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
   ##
-  kubegemsVersion: "main"
+  kubegemsVersion: ""
 
 ## @section Common parameters
 

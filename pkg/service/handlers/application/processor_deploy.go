@@ -107,11 +107,13 @@ func (p *ApplicationProcessor) UpdateImages(ctx context.Context, ref PathRef, im
 }
 
 type AppStoreDeployForm struct {
-	Name         string          `json:"name" binding:"required"`
-	RepoURL      string          `json:"repoURL" binding:"required"`      // 仓库index地址
-	Chart        string          `json:"chart" binding:"required"`        // chart名称
-	ChartVersion string          `json:"chartVersion" binding:"required"` // chart版本
-	Values       json.RawMessage `json:"values" binding:"required"`
+	Name         string            `json:"name" binding:"required"`
+	Annotations  map[string]string `json:"annotations"`
+	Labels       map[string]string `json:"labels"`
+	RepoURL      string            `json:"repoURL" binding:"required"`      // 仓库index地址
+	Chart        string            `json:"chart" binding:"required"`        // chart名称
+	ChartVersion string            `json:"chartVersion" binding:"required"` // chart版本
+	Values       json.RawMessage   `json:"values" binding:"required"`
 }
 
 func (h *ApplicationProcessor) Get(ctx context.Context, ref PathRef) (*DeploiedManifest, error) {
@@ -154,7 +156,8 @@ func (h *ApplicationProcessor) List(ctx context.Context, ref PathRef) ([]Deploie
 	}
 
 	// argo 覆盖git
-	for _, app := range applist.Items {
+	for i := range applist.Items {
+		app := applist.Items[i]
 		appname := app.Labels[LabelApplication]
 		if appname == "" {
 			continue
@@ -198,11 +201,12 @@ func CompleteDeploiedManifestRuntime(app *v1alpha1.Application, status *Deploied
 	if status.Ref.IsEmpty() {
 		status.Ref.FromArgoLabel(app.Labels)
 	}
-
 	if app == nil || app.CreationTimestamp.IsZero() {
 		status.Runtime.Status = StatusNoArgoApp
 		return status
 	}
+	status.Runtime.Labels = app.Labels
+	status.Runtime.Annotations = app.Annotations
 	if creator, ok := app.Annotations[AnnotationKeyCreator]; ok {
 		status.Runtime.Creator = creator
 
@@ -334,6 +338,8 @@ func (h *ApplicationProcessor) deployHelmApplication(ctx context.Context, ref Pa
 
 	sethelmfunc := func(app *v1alpha1.Application) error {
 		app.Labels[LabelKeyFrom] = LabelValueFromAppStore // is from app
+		app.Annotations = labels.Merge(form.Annotations, app.Annotations)
+		app.Labels = labels.Merge(form.Labels, app.Labels)
 		app.Spec.Source = v1alpha1.ApplicationSource{
 			RepoURL:        form.RepoURL,
 			TargetRevision: form.ChartVersion,

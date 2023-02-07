@@ -84,7 +84,7 @@ func NewPageData(list interface{}, page, size int, filterfn PageFilterFunc, sort
 }
 
 func OK(w http.ResponseWriter, data interface{}) {
-	DoRawResponse(w, http.StatusOK, data, nil)
+	DoRawResponse(w, http.StatusOK, Response{Data: data}, nil)
 }
 
 func NotFound(w http.ResponseWriter, message string) {
@@ -131,7 +131,7 @@ func DoRawResponse(w http.ResponseWriter, status int, data interface{}, headers 
 	default:
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
-		_ = json.NewEncoder(w).Encode(Response{Data: data})
+		_ = json.NewEncoder(w).Encode(data)
 	}
 }
 

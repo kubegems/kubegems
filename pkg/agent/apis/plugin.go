@@ -15,17 +15,33 @@
 package apis
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"kubegems.io/kubegems/pkg/installer/api"
+	installerapi "kubegems.io/kubegems/pkg/installer/api"
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 )
 
+var ErrPluginDisabled = errors.New("plugin system disabled")
+
+func NewPluginHandler(installer *installerapi.ClientOptions) (*PluginHandler, error) {
+	disabled := installer == nil || installer.Addr == ""
+	var client *installerapi.PluginsClient
+	if !disabled {
+		cli, err := installerapi.NewPluginsClient(installer.Addr)
+		if err != nil {
+			return nil, err
+		}
+		client = cli
+	}
+	return &PluginHandler{PM: client}, nil
+}
+
 type PluginHandler struct {
-	PM *pluginmanager.PluginManager
+	PM *installerapi.PluginsClient
 }
 
 type PluginStatus struct {
@@ -42,7 +58,7 @@ type PluginStatus struct {
 	category     string `json:"-"`
 }
 
-type MainCategory map[string]map[string][]api.PluginStatus
+type MainCategory map[string]map[string][]installerapi.PluginStatus
 
 // @Tags        Agent.Plugin
 // @Summary     获取Plugin列表数据
@@ -55,24 +71,31 @@ type MainCategory map[string]map[string][]api.PluginStatus
 // @Router      /v1/proxy/cluster/{cluster}/plugins [get]
 // @Security    JWT
 func (h *PluginHandler) List(c *gin.Context) {
-	if simple, _ := strconv.ParseBool(c.Query("simple")); simple {
-		ret := map[string]bool{}
+	simple, _ := strconv.ParseBool(c.Query("simple"))
+	if h.PM == nil {
+		if simple {
+			OK(c, map[string]bool{})
+			return
+		}
+		OK(c, installerapi.CategoriedPlugins(nil))
+		return
+	}
+	if simple {
 		plugins, _ := h.PM.ListPlugins(c.Request.Context())
-		// ignore errors on plugin crd not found or others
+		ret := map[string]bool{}
 		for name, v := range plugins {
 			ret[name] = (v.Installed != nil)
 		}
 		OK(c, ret)
 		return
-	} else {
-		plugins, err := h.PM.ListPlugins(c.Request.Context())
-		if err != nil {
-			NotOK(c, err)
-			return
-		}
-		categoriedPlugins := api.CategoriedPlugins(plugins)
-		OK(c, categoriedPlugins)
 	}
+	plugins, err := h.PM.ListPlugins(c.Request.Context())
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	categoriedPlugins := installerapi.CategoriedPlugins(plugins)
+	OK(c, categoriedPlugins)
 }
 
 // @Tags        Agent.Plugin
@@ -87,6 +110,10 @@ func (h *PluginHandler) List(c *gin.Context) {
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [get]
 // @Security    JWT
 func (h *PluginHandler) Get(c *gin.Context) {
+	if h.PM == nil {
+		NotOK(c, ErrPluginDisabled)
+		return
+	}
 	name, version := c.Param("name"), c.Query("version")
 	plugin, err := h.PM.GetPluginVersion(c.Request.Context(), name, version, true, true)
 	if err != nil {
@@ -108,6 +135,10 @@ func (h *PluginHandler) Get(c *gin.Context) {
 // @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [post]
 // @Security    JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
+	if h.PM == nil {
+		NotOK(c, ErrPluginDisabled)
+		return
+	}
 	name := c.Param("name")
 
 	pv := pluginmanager.PluginVersion{}
@@ -135,6 +166,10 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 // @Router      /v1/proxy/cluster/{cluster}/plugins [delete]
 // @Security    JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
+	if h.PM == nil {
+		NotOK(c, ErrPluginDisabled)
+		return
+	}
 	name := c.Param("name")
 
 	if err := h.PM.UnInstall(c.Request.Context(), name); err != nil {
@@ -154,16 +189,20 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 // @Success     200     {object} handlers.ResponseStruct{Data=[]api.PluginStatus} "ok"
 // @Router      /v1/proxy/cluster/{cluster}/plugins:check-update [post]
 func (h *PluginHandler) CheckUpdate(c *gin.Context) {
+	if h.PM == nil {
+		NotOK(c, ErrPluginDisabled)
+		return
+	}
 	upgradeable, err := h.PM.CheckUpdate(c.Request.Context())
 	if err != nil {
 		NotOK(c, err)
 		return
 	}
 
-	upgradeableStatus := []api.PluginStatus{}
+	upgradeableStatus := []installerapi.PluginStatus{}
 	for _, item := range upgradeable {
-		upgradeableStatus = append(upgradeableStatus, api.ToViewPlugin(item))
+		upgradeableStatus = append(upgradeableStatus, installerapi.ToViewPlugin(item))
 	}
-	api.SortPluginStatusByName(upgradeableStatus)
+	installerapi.SortPluginStatusByName(upgradeableStatus)
 	OK(c, upgradeableStatus)
 }

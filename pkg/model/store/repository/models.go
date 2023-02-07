@@ -42,7 +42,7 @@ func NewModelsRepository(db *mongo.Database) *ModelsRepository {
 func (m *ModelsRepository) InitSchema(ctx context.Context) error {
 	names, err := m.Collection.Indexes().CreateMany(ctx, []mongo.IndexModel{
 		{
-			Keys:    bson.D{{Key: "source", Value: 1}, {Key: "name", Value: 1}},
+			Keys:    bson.D{{Key: "source", Value: 1}, {Key: "name", Value: 1}, {Key: "task", Value: 1}},
 			Options: &options.IndexOptions{Unique: pointer.Bool(true)},
 		},
 		// we used this unio index at list models page

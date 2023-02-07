@@ -31,6 +31,7 @@ import (
 	"kubegems.io/kubegems/pkg/installer/utils"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/version"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -44,7 +45,6 @@ type GlobalValues struct {
 	ImageRepository string `json:"imageRepository"`
 	ClusterName     string `json:"clusterName"`
 	StorageClass    string `json:"storageClass"`
-	KubegemsVersion string `json:"kubegemsVersion"`
 	Runtime         string `json:"runtime"`
 }
 
@@ -78,9 +78,11 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 	if err != nil {
 		return err
 	}
+	// v1.21.X -> 1.21.X , cause helm chart version follow pure semver.
+	kubegemsVersion := version.Get().GitVersion
 
 	// apply installer
-	installerobjects, err := ParseInstallerObjects(plugins.KubegemsPluginsCachePath, values)
+	installerobjects, err := ParseInstallerObjects(plugins.KubegemsPluginsCachePath, values, kubegemsVersion)
 	if err != nil {
 		return err
 	}
@@ -89,10 +91,6 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 	}
 
 	// apply plugins
-	// v1.21.X -> 1.21.X , cause helm chart version follow pure semver.
-	version := strings.TrimSpace(strings.TrimPrefix(values.KubegemsVersion, "v"))
-
-	// we have preset repos
 	pm := &PluginManager{Client: cli}
 
 	globalvals := map[string]interface{}{
@@ -100,16 +98,16 @@ func (i Bootstrap) Install(ctx context.Context, values GlobalValues) error {
 		"imageRepository": values.ImageRepository,
 		"clusterName":     values.ClusterName,
 		"storageClass":    values.StorageClass,
-		"kubegemsVersion": values.KubegemsVersion,
 		"runtime":         values.Runtime,
 	}
 	if err := pm.Install(ctx, plugins.KubegemsChartGlobal, "", globalvals); err != nil {
 		return err
 	}
-	if err := pm.Install(ctx, plugins.KubegemsChartInstaller, version, nil); err != nil {
+	cahrtversion := strings.TrimPrefix(kubegemsVersion, "v")
+	if err := pm.Install(ctx, plugins.KubegemsChartInstaller, cahrtversion, nil); err != nil {
 		return err
 	}
-	if err := pm.Install(ctx, plugins.KubegemsChartLocal, version, nil); err != nil {
+	if err := pm.Install(ctx, plugins.KubegemsChartLocal, cahrtversion, nil); err != nil {
 		return err
 	}
 	return nil
@@ -125,10 +123,13 @@ func (i Bootstrap) Remove(ctx context.Context) error {
 	return nil
 }
 
-func ParseInstallerObjects(path string, values GlobalValues) ([]client.Object, error) {
+func ParseInstallerObjects(path string, values GlobalValues, version string) ([]client.Object, error) {
 	objects, err := utils.ReadObjectsFromFile[client.Object](filepath.Join(path, "installer.yaml"))
 	if err != nil {
 		return nil, err
+	}
+	if version == "" {
+		return objects, nil
 	}
 	// update image of kubegems container
 	for _, obj := range objects {
@@ -139,7 +140,7 @@ func ParseInstallerObjects(path string, values GlobalValues) ([]client.Object, e
 					continue
 				}
 				containerImage := fmt.Sprintf(
-					"%s/%s/kubegems:%s", values.ImageRegistry, values.ImageRepository, values.KubegemsVersion,
+					"%s/%s/kubegems:%s", values.ImageRegistry, values.ImageRepository, version,
 				)
 				item.Spec.Template.Spec.Containers[i].Image = containerImage
 			}
