@@ -17,6 +17,7 @@ spec:
     imageRegistry: registry.cn-beijing.aliyuncs.com
     imageRepository: "kubegems"
     storageClass: local-path # change me to use a different storage class
+    kubegemsVersion: v1.23.2
 ---
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
@@ -30,7 +31,7 @@ spec:
   kind: helm
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
-  version: 1.23.1
+  version: 1.23.2
   valuesFrom:
     - kind: ConfigMap
       name: "kubegems-global-values"
