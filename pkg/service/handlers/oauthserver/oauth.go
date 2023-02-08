@@ -29,6 +29,7 @@ import (
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/go-oauth2/oauth2/v4/store"
 	"github.com/golang-jwt/jwt"
+	"go.opentelemetry.io/otel/trace"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
@@ -47,7 +48,7 @@ type OauthServer struct {
 	m           sync.Mutex
 }
 
-func NewOauthServer(opts *kjwt.Options, base base.BaseHandler) *OauthServer {
+func NewOauthServer(opts *kjwt.Options, base base.BaseHandler, tracer trace.Tracer) *OauthServer {
 	s := &OauthServer{
 		BaseHandler: base,
 		manager:     manage.NewDefaultManager(),
@@ -70,7 +71,7 @@ func NewOauthServer(opts *kjwt.Options, base base.BaseHandler) *OauthServer {
 
 	s.srv = server.NewServer(server.NewConfig(), s.manager)
 	s.srv.SetClientInfoHandler(func(r *http.Request) (clientID string, clientSecret string, err error) {
-		loader := auth.BearerTokenUserLoader{JWT: opts.ToJWT()}
+		loader := auth.BearerTokenUserLoader{JWT: opts.ToJWT(), Tracer: tracer}
 		user, exist := loader.GetUser(r)
 		if !exist {
 			err = fmt.Errorf("user not exist")

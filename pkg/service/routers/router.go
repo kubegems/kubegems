@@ -219,7 +219,8 @@ func (r *Router) Complete(ctx context.Context) error {
 	router.GET("/v1/oauth/addr", oauth.GetOauthAddr)
 	router.GET("/v1/oauth/callback", oauth.GetOauthToken)
 
-	oauthserver := oauthserver.NewOauthServer(r.Opts.JWT, basehandler)
+	tracer := otel.GetTracerProvider().Tracer("kubegems.io/kubegems")
+	oauthserver := oauthserver.NewOauthServer(r.Opts.JWT, basehandler, tracer)
 	router.GET("/v1/oauth/validate", oauthserver.Validate)
 
 	authSourceHandler := authsource.AuthSourceHandler{BaseHandler: basehandler}
@@ -231,7 +232,7 @@ func (r *Router) Complete(ctx context.Context) error {
 	// 注册中间件
 	apiMidwares := []func(*gin.Context){
 		// authc
-		auth.NewAuthMiddleware(r.Opts.JWT, userif, otel.GetTracerProvider().Tracer("kubegems.io/kubegems")).FilterFunc,
+		auth.NewAuthMiddleware(r.Opts.JWT, userif, tracer).FilterFunc,
 		// audit
 		r.auditInstance.Middleware(),
 	}
