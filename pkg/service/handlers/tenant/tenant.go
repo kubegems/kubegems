@@ -546,7 +546,7 @@ func (h *TenantHandler) DeleteTenantUser(c *gin.Context) {
 
 	action := i18n.Sprintf(context.TODO(), "delete")
 	module := i18n.Sprintf(context.TODO(), "tenant member")
-	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "tenant %s / user %s", rel.Tenant.TenantName, user.Username))
+	h.SetAuditData(c, action, module, i18n.Sprintf(context.TODO(), "tenant %s / user %s", obj.TenantName, user.Username))
 	h.SetExtraAuditData(c, models.ResTenant, rel.TenantID)
 
 	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
