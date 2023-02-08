@@ -43,7 +43,7 @@ func NewAuthMiddleware(opts *jwt.Options, userif aaa.ContextUserOperator, tracer
 	var getters []UserGetterIface
 	getters = append(getters, &BearerTokenUserLoader{
 		JWT:    opts.ToJWT(),
-		tracer: tracer,
+		Tracer: tracer,
 	})
 	getters = append(getters, &PrivateTokenUserLoader{})
 	return &AuthMiddleware{
@@ -104,12 +104,12 @@ type UserGetterIface interface {
 // BearerTokenUserLoader  bearer type
 type BearerTokenUserLoader struct {
 	JWT    *jwt.JWT
-	tracer trace.Tracer
+	Tracer trace.Tracer
 }
 
 func (l *BearerTokenUserLoader) GetUser(req *http.Request) (u user.CommonUserIface, exist bool) {
 	htype, token := parseAuthorizationHeader(req)
-	_, span := l.tracer.Start(req.Context(), "GetUser")
+	_, span := l.Tracer.Start(req.Context(), "GetUser")
 	defer span.End()
 	if strings.ToLower(htype) != "bearer" {
 		log.Warnf("token %s not valid", token)
