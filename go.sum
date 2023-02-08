@@ -3920,8 +3920,8 @@ k8s.io/utils v0.0.0-20220812165043-ad590609e2e5 h1:XmRqFcQlCy/lKRZ39j+RVpokYNroH
 k8s.io/utils v0.0.0-20220812165043-ad590609e2e5/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
 knative.dev/pkg v0.0.0-20220502225657-4fced0164c9a h1:ZigqZSYo+MYoZB7KsM+OAoVc/nWUz5iLX8J6zAJzRns=
 knative.dev/pkg v0.0.0-20220502225657-4fced0164c9a/go.mod h1:NXK3p/UMCbFybBM9xQGii3TuMN/WKHByXcYsTwZ6Y6U=
-kubegems.io/configer v1.0.6 h1:IBCJsMRQoERLTohqJt3I9lr2DGMjNRBP2DWlE/58p8Q=
-kubegems.io/configer v1.0.6/go.mod h1:zPVFdQeaTCxsASoLi/MoHMxIMpsLnG2Ol9cF7gWQ7as=
+kubegems.io/configer v1.0.8 h1:HC+fw8SrgFXio4/QxX1Pob4emHXbAjryeX4qW83m8oU=
+kubegems.io/configer v1.0.8/go.mod h1:zPVFdQeaTCxsASoLi/MoHMxIMpsLnG2Ol9cF7gWQ7as=
 kubegems.io/ingress-nginx-operator v0.2.1 h1:iMBExFDkCYvlrfLqGPPjDvCZNHpN0FGb16smAn974QM=
 kubegems.io/ingress-nginx-operator v0.2.1/go.mod h1:gADnzt6HxjlWoRXrOfTeocUY5j/VZwPkXPqsWfIS8Z0=
 modernc.org/b v1.0.0/go.mod h1:uZWcZfRj1BpYzfN9JTerzlNUnnPsV9O2ZA8JsRcubNg=
