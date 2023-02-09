@@ -553,7 +553,7 @@ func (h *TenantHandler) DeleteTenantUser(c *gin.Context) {
 		msg.EventKind = msgbus.Delete
 		msg.ResourceType = msgbus.Tenant
 		msg.ResourceID = rel.TenantID
-		msg.Detail = i18n.Sprintf(context.TODO(), "delete user %s from tenant %s members", user.Username, rel.Tenant.TenantName)
+		msg.Detail = i18n.Sprintf(context.TODO(), "delete user %s from tenant %s members", user.Username, obj.TenantName)
 		msg.ToUsers.Append(rel.UserID)
 		msg.AffectedUsers.Append(rel.UserID)
 	})
