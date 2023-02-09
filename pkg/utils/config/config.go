@@ -54,10 +54,8 @@ func Parse(fs *pflag.FlagSet) error {
 	// 从环境变量配置
 	LoadEnv(fs)
 	// 从命令行配置
-	if !fs.Parsed() {
-		if err := fs.Parse(os.Args); err != nil {
-			return err
-		}
+	if err := fs.Parse(os.Args[1:]); err != nil {
+		return err
 	}
 	// print
 	Print(fs)
