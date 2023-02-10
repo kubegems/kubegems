@@ -1,61 +1,104 @@
-{
-  "type": "object",
-  "properties": {
-    "service": {
-      "description": "对应kubernetes service资源中的配置",
-      "type": "object",
-      "title": "服务配置",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "title": "启用",
-          "default": false,
-          "x-order": "99",
-          "form": true
-        },
-        "address": {
-          "type": "string",
-          "title": "address",
-          "minLength": 0,
-          "form": true,
-          "hidden": {
-            "path": "service.enabled",
-            "value": false
+  {
+    "type": "object",
+    "properties": {
+      "emptyList": {
+        "type": "array",
+        "title": "EmptyList",
+        "items": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "vals": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         },
-        "ports": {
+        "form": true
+      },
+      "list": {
+        "type": "array",
+        "title": "PlacholderList",
+        "items": {
           "type": "object",
-          "title": "服务端口配置",
-          "required": [
-            "http",
-            "grpc"
-          ],
           "properties": {
-            "grpc": {
-              "type": "integer",
-              "title": "GRPC 端口",
-              "default": 50051,
+            "name": {
+              "type": "string",
+              "title": "Item Name",
+              "default": "some name",
               "form": true
             },
-            "http": {
-              "type": "integer",
-              "format": "port",
-              "title": "HTTP 端口",
-              "default": 80,
-              "maximum": 65535,
-              "minimum": 1,
+            "values": {
+              "type": "array",
+              "title": "Item Value",
+              "items": {
+                "type": "string",
+                "default": "127.0.0.1"
+              },
               "form": true
             }
-          },
-          "form": true,
-          "hidden": {
-            "path": "service.enabled",
-            "value": false
           }
-        }
+        },
+        "form": true
       },
-      "form": true
-    }
-  },
-  "$schema": "http://json-schema.org/schema#"
-}
+      "service": {
+        "description": "对应kubernetes service资源中的配置",
+        "type": "object",
+        "title": "服务配置",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "启用",
+            "default": false,
+            "x-order": "99",
+            "form": true
+          },
+          "address": {
+            "type": "string",
+            "title": "address",
+            "minLength": 0,
+            "form": true,
+            "hidden": {
+              "path": "service.enabled",
+              "value": false
+            }
+          },
+          "ports": {
+            "type": "object",
+            "title": "服务端口配置",
+            "required": [
+              "http",
+              "grpc"
+            ],
+            "properties": {
+              "grpc": {
+                "type": "integer",
+                "title": "GRPC 端口",
+                "default": 50051,
+                "form": true
+              },
+              "http": {
+                "type": "integer",
+                "format": "port",
+                "title": "HTTP 端口",
+                "default": 80,
+                "maximum": 65535,
+                "minimum": 1,
+                "form": true
+              }
+            },
+            "form": true,
+            "hidden": {
+              "path": "service.enabled",
+              "value": false
+            }
+          }
+        },
+        "form": true
+      }
+    },
+    "$schema": "http://json-schema.org/schema#"
+  }

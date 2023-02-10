@@ -1,6 +1,49 @@
 {
   "type": "object",
   "properties": {
+    "emptyList": {
+      "type": "array",
+      "title": "EmptyList",
+      "items": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "vals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "form": true
+    },
+    "list": {
+      "type": "array",
+      "title": "PlacholderList",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Item Name",
+            "default": "some name",
+            "form": true
+          },
+          "values": {
+            "type": "array",
+            "title": "Item Value",
+            "items": {
+              "type": "string",
+              "default": "127.0.0.1"
+            },
+            "form": true
+          }
+        }
+      },
+      "form": true
+    },
     "service": {
       "description": "Corresponds to the configuration in the kubernetes service resource",
       "type": "object",
