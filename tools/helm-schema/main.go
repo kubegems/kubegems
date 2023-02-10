@@ -106,13 +106,14 @@ func GenerateWriteSchema(chartpath string, options Options) error {
 	if err != nil {
 		return err
 	}
-	if schema == nil || (len(schema.Properties) == 0 && schema.Items == nil) {
-		fmt.Printf("Empty schema of %s\n", valuesfile)
-		return nil
-	}
 
 	if !options.IncludeAll {
 		PurgeSchema(schema)
+	}
+
+	if schema == nil || (len(schema.Properties) == 0 && schema.Items == nil) {
+		fmt.Printf("Empty schema of %s\n", valuesfile)
+		return nil
 	}
 
 	for lang, langschema := range SplitSchemaI18n(schema) {
