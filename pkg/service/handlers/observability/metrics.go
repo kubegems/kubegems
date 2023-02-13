@@ -884,7 +884,7 @@ func pickMatrixValue(matrix prommodel.Matrix, field string, pick string) []KV {
 		case "min":
 			min := pairs[0].Value
 			for _, v := range pairs {
-				if v.Value < min {
+				if lessThan(v.Value, min) {
 					min = v.Value
 				}
 			}
@@ -892,13 +892,15 @@ func pickMatrixValue(matrix prommodel.Matrix, field string, pick string) []KV {
 		case "avg":
 			var sum prommodel.SampleValue
 			for _, v := range pairs {
-				sum += v.Value
+				if !math.IsNaN(float64(v.Value)) {
+					sum += v.Value
+				}
 			}
 			return sum / prommodel.SampleValue(len(pairs))
 		default:
 			max := pairs[0].Value
 			for _, v := range pairs {
-				if v.Value > max {
+				if lessThan(max, v.Value) {
 					max = v.Value
 				}
 			}

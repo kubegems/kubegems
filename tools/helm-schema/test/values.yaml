@@ -35,3 +35,13 @@ ingress:
   enabled: false
   # @schema format=hostname
   host: "example.com"
+# @title PlacholderList
+list:
+  - # @title Item Name
+    name: "some name"
+    # @title Item Value
+    values:
+      - "127.0.0.1"
+# @title EmptyList
+# @schema items={"properties":{"name":{"type":"string"},"vals":{"type":"array","items":{"type":"string"}}}}
+emptyList: []

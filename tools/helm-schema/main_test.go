@@ -15,10 +15,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -43,18 +39,11 @@ func TestGenerateSchema(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valuescontent, err := os.ReadFile(filepath.Join(tt.args.chartpath, "values.yaml"))
-			if err != nil {
-				t.Error(err)
-				return
-			}
-			got, err := Generator{}.GenerateSchema(valuescontent)
+			err := GenerateWriteSchema("test", Options{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GenerateSchema() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			gotcontent, _ := json.MarshalIndent(got, "", "  ")
-			fmt.Printf("GenerateSchema() = %s", gotcontent)
 		})
 	}
 }

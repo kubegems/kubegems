@@ -111,7 +111,7 @@ require (
 	k8s.io/kubernetes v1.23.1
 	k8s.io/metrics v0.23.6
 	k8s.io/utils v0.0.0-20220812165043-ad590609e2e5
-	kubegems.io/configer v1.0.6
+	kubegems.io/configer v1.1.4
 	kubegems.io/ingress-nginx-operator v0.2.1
 	sigs.k8s.io/controller-runtime v0.11.2
 	sigs.k8s.io/kustomize/api v0.11.4

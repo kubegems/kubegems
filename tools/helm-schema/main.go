@@ -102,14 +102,20 @@ func GenerateWriteSchema(chartpath string, options Options) error {
 		return err
 	}
 
-	schema, err := Generator{AllSchema: options.IncludeAll}.GenerateSchema(valuecontent)
+	schema, err := GenerateSchema(valuecontent)
 	if err != nil {
 		return err
 	}
+
+	if !options.IncludeAll {
+		PurgeSchema(schema)
+	}
+
 	if schema == nil || (len(schema.Properties) == 0 && schema.Items == nil) {
 		fmt.Printf("Empty schema of %s\n", valuesfile)
 		return nil
 	}
+
 	for lang, langschema := range SplitSchemaI18n(schema) {
 		if err := writeJson(filepath.Join(chartpath, "i18n", fmt.Sprintf("values.schema.%s.json", lang)), langschema); err != nil {
 			return err
@@ -128,6 +134,28 @@ func writeJson(filename string, data any) error {
 	}
 	fmt.Printf("Writing %s\n", filename)
 	return os.WriteFile(filename, schemacontent, DefaultFilePerm)
+}
+
+func PurgeSchema(schema *spec.Schema) {
+	if schema == nil {
+		return
+	}
+	switch {
+	case schema.Type.Contains("object"):
+		for k, item := range schema.Properties {
+			if item.Title == "" {
+				delete(schema.Properties, k)
+			} else {
+				PurgeSchema(&item)
+				schema.Properties[k] = item
+			}
+		}
+	case schema.Type.Contains("array"):
+		PurgeSchema(schema.Items.Schema)
+		for i := range schema.Items.Schemas {
+			PurgeSchema(&schema.Items.Schemas[i])
+		}
+	}
 }
 
 // SplitSchemaI18n
@@ -203,28 +231,20 @@ func DeepCopySchema(in *spec.Schema) *spec.Schema {
 	return out.(*spec.Schema)
 }
 
-type Generator struct {
-	AllSchema bool
-	MaxDepth  int
-}
-
-func (g Generator) GenerateSchema(values []byte) (*spec.Schema, error) {
+func GenerateSchema(values []byte) (*spec.Schema, error) {
 	node := &yaml.Node{}
 	if err := yaml.Unmarshal(values, node); err != nil {
 		return nil, err
 	}
-	return g.nodeSchema(node, "", 0), nil
+	return nodeSchema(node, ""), nil
 }
 
 // nolint: funlen
-func (g Generator) nodeSchema(node *yaml.Node, keycomment string, depth int) *spec.Schema {
-	if g.MaxDepth > 0 && g.MaxDepth < depth {
-		return nil
-	}
+func nodeSchema(node *yaml.Node, keycomment string) *spec.Schema {
 	schema := &spec.Schema{}
 	switch node.Kind {
 	case yaml.DocumentNode:
-		rootschema := g.nodeSchema(node.Content[0], "", 0)
+		rootschema := nodeSchema(node.Content[0], "")
 		if rootschema == nil {
 			return nil
 		}
@@ -237,11 +257,26 @@ func (g Generator) nodeSchema(node *yaml.Node, keycomment string, depth int) *sp
 		}
 		for i := 0; i < len(node.Content); i += 2 {
 			key, keycomment := node.Content[i].Value, node.Content[i].HeadComment
-			objectProperty := g.nodeSchema(node.Content[i+1], keycomment, depth+1)
+			objectProperty := nodeSchema(node.Content[i+1], keycomment)
 			if objectProperty == nil {
 				continue
 			}
 			schema.Properties[key] = *objectProperty
+		}
+	case yaml.SequenceNode:
+		schema.Type = spec.StringOrArray{"array"}
+		var schemas []spec.Schema
+		for _, itemnode := range node.Content {
+			itemProperty := nodeSchema(itemnode, "")
+			if itemProperty == nil {
+				continue
+			}
+			schemas = append(schemas, *itemProperty)
+		}
+		if len(schemas) == 1 {
+			schema.Items = &spec.SchemaOrArray{Schema: &schemas[0]}
+		} else {
+			schema.Items = &spec.SchemaOrArray{Schemas: schemas}
 		}
 	case yaml.ScalarNode:
 		switch node.Tag {
@@ -269,28 +304,9 @@ func (g Generator) nodeSchema(node *yaml.Node, keycomment string, depth int) *sp
 				schema.Default = formatYamlStr(node.Value)
 			}
 		}
-	case yaml.SequenceNode:
-		schema.Type = spec.StringOrArray{"array"}
-		var schemas []spec.Schema
-		for _, itemnode := range node.Content {
-			itemProperty := g.nodeSchema(itemnode, "", depth+1)
-			if itemProperty == nil {
-				continue
-			}
-			schemas = append(schemas, *itemProperty)
-		}
-		if len(schemas) == 1 {
-			schema.Items = &spec.SchemaOrArray{Schema: &schemas[0]}
-		} else {
-			schema.Items = &spec.SchemaOrArray{Schemas: schemas}
-		}
 	}
 	// update from comment
 	completeFromComment(schema, keycomment)
-	// depth > 0 in case of root schema has no title field.
-	if depth > 0 && !g.AllSchema && schema.Title == "" {
-		return nil
-	}
 	return schema
 }
 
@@ -544,6 +560,12 @@ func SetSchemaProp(schema *spec.Schema, k string, v string) {
 			// use prepend
 			schema.Type = append([]string{v}, schema.Type...)
 		}
+	case "items":
+		items := &spec.SchemaOrArray{}
+		if err := json.Unmarshal([]byte(v), items); err != nil {
+			fmt.Printf("Unable decode schema items values: %s error: %s\n", v, err.Error())
+		}
+		schema.Items = items
 	default:
 		if schema.ExtraProps == nil {
 			schema.ExtraProps = map[string]any{}

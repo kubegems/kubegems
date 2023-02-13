@@ -1,3 +1,12 @@
+## 1.23.4 / 2023-2-13
+### Changes 🛠
+* bugfix npe & upgrade configer by @pepesi in https://github.com/kubegems/kubegems/pull/444
+### Bugfixes 🐞
+* bugfix audit npe when delete tenant member by @pepesi in https://github.com/kubegems/kubegems/pull/446
+* 🐞 fix(appmonitor): otel overview ignore nan by @jojotong in https://github.com/kubegems/kubegems/pull/449
+
+## 1.23.3 / 2023-2-9
+
 ## 1.23.2 / 2023-2-7
 ### Enhancements 🎈
 * 🎈 perf(otel): use baggage by @jojotong in https://github.com/kubegems/kubegems/pull/435
