@@ -330,6 +330,9 @@ func Revert(rev string) RepositoryFunc {
 }
 
 func IsPermmitedResource(obj runtime.Object) bool {
+	// allow all resources,set limit at argocd project
+	return true
+
 	gvk := obj.GetObjectKind().GroupVersionKind()
 
 	for _, white := range ResourceWhileList {
