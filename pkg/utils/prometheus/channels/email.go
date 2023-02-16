@@ -37,10 +37,9 @@ type Email struct {
 }
 
 var (
-	EmailSecretName                    = "gemscloud-email-password"
-	EmailSecretLabel map[string]string = map[string]string{
-		"gemcloud": "email-secret",
-	}
+	EmailSecretName       = "gemscloud-email-password"
+	EmailSecretLabelKey   = "gemcloud"
+	EmailSecretLabelValue = "email-secret"
 )
 
 func EmailSecretKey(receverName, from string) string {

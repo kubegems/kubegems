@@ -1391,7 +1391,9 @@ func (p *AlertRuleProcessor) syncEmailSecret(ctx context.Context, alertrule *mod
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      channels.EmailSecretName,
 			Namespace: alertrule.Namespace,
-			Labels:    channels.EmailSecretLabel,
+			Labels: map[string]string{
+				channels.EmailSecretLabelKey: channels.EmailSecretLabelValue,
+			},
 		},
 		Type: v1.SecretTypeOpaque,
 	}
