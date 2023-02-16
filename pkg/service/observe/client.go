@@ -450,7 +450,9 @@ func (c *ObserveClient) CreateOrUpdateAlertEmailSecret(ctx context.Context, name
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      channels.EmailSecretName,
 			Namespace: namespace,
-			Labels:    channels.EmailSecretLabel,
+			Labels: map[string]string{
+				channels.EmailSecretLabelKey: channels.EmailSecretLabelValue,
+			},
 		},
 		Type: v1.SecretTypeOpaque,
 	}
