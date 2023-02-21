@@ -60,17 +60,17 @@ func (t *AlertRuleSyncTasker) ProvideFuntions() map[string]interface{} {
 
 func (s *AlertRuleSyncTasker) Crontasks() map[string]Task {
 	return map[string]Task{
-		"@every 2m": {
+		"@every 5m": {
 			Name:  "sync alertrule state",
 			Group: "alertrule",
 			Steps: []workflow.Step{{Function: TaskFunction_SyncAlertRuleState}},
 		},
-		"@every 10m": {
+		"@every 12h": {
 			Name:  "check alertrule config",
 			Group: "alertrule",
 			Steps: []workflow.Step{{Function: TaskFunction_CheckAlertRuleConfig}},
 		},
-		"@every 15m": {
+		"@daily": {
 			Name:  "sync system alertrule",
 			Group: "alertrule",
 			Steps: []workflow.Step{{Function: TaskFunction_SyncSystemAlertRule}},
