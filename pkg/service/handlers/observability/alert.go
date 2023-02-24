@@ -1269,10 +1269,6 @@ func GenerateExpr(alertrule *models.AlertRule) (string, error) {
 	if generatedExpr == "" {
 		return "", errors.New("empty expr")
 	}
-	_, _, _, hasOp := prometheus.SplitQueryExpr(generatedExpr)
-	if hasOp {
-		return "", fmt.Errorf("查询表达式不能包含比较运算符(<|<=|==|!=|>|>=)")
-	}
 	if alertrule.Namespace != prometheus.GlobalAlertNamespace {
 		if !strings.Contains(generatedExpr, fmt.Sprintf(`namespace="%s"`, alertrule.Namespace)) {
 			return "", fmt.Errorf(`query expr %[1]s must contains namespace %[2]s, eg: {namespace="%[2]s"}`, generatedExpr, alertrule.Namespace)
@@ -1322,8 +1318,13 @@ func checkAlertLevels(alertrule *models.AlertRule) error {
 		severitySet.Append(v.Severity)
 	}
 
-	if len(alertrule.AlertLevels) > 1 && len(alertrule.InhibitLabels) == 0 {
-		return fmt.Errorf("有多个告警级别时，告警抑制标签不能为空!")
+	if len(alertrule.AlertLevels) > 1 {
+		if len(alertrule.InhibitLabels) == 0 {
+			return fmt.Errorf("有多个告警级别时，告警抑制标签不能为空!")
+		}
+		if alertrule.PromqlGenerator == nil && alertrule.LogqlGenerator == nil {
+			return fmt.Errorf("原生表达式不支持配置多个告警级别")
+		}
 	}
 	return nil
 }
@@ -1410,11 +1411,20 @@ func (p *AlertRuleProcessor) syncEmailSecret(ctx context.Context, alertrule *mod
 }
 
 func GenerateRuleGroup(alertrule *models.AlertRule) monitoringv1.RuleGroup {
+	exprFunc := func(level models.AlertLevel) string {
+		if alertrule.PromqlGenerator == nil && alertrule.LogqlGenerator == nil {
+			// use expr directly if from raw promql or logql
+			return alertrule.Expr
+		} else {
+			return fmt.Sprintf("%s%s%s", alertrule.Expr, level.CompareOp, level.CompareValue)
+		}
+	}
+
 	rg := monitoringv1.RuleGroup{Name: alertrule.Name}
 	for _, level := range alertrule.AlertLevels {
 		rule := monitoringv1.Rule{
 			Alert: alertrule.Name,
-			Expr:  intstr.FromString(fmt.Sprintf("%s%s%s", alertrule.Expr, level.CompareOp, level.CompareValue)),
+			Expr:  intstr.FromString(exprFunc(level)),
 			For:   alertrule.For,
 			Labels: map[string]string{
 				prometheus.AlertNamespaceLabel: alertrule.Namespace,

@@ -143,6 +143,9 @@ func MigrateOnManagerCluster(ctx context.Context, cfg *rest.Config, kubegemsVers
 	if err := syncAlertRules(ctx, cs, db); err != nil {
 		return err
 	}
+	if err := migrateAlertLevelFromPromqlOrLogql(ctx, db); err != nil {
+		return err
+	}
 	return nil
 }
 
