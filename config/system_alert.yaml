@@ -214,7 +214,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 1h
 - name: host-unusual-disk-write-rate
   namespace: kubegems-monitoring
   alertType: monitor
@@ -229,7 +229,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 1h
 - name: host-network-receive-errors
   namespace: kubegems-monitoring
   alertType: monitor
@@ -278,7 +278,7 @@
   inhibitLabels: ["node"]
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 1h
 - name: node-no-container-metrics
   namespace: kubegems-monitoring
   alertType: monitor
@@ -422,4 +422,4 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 1h
