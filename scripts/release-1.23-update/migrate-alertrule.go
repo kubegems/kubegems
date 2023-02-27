@@ -214,6 +214,31 @@ func syncAlertRules(ctx context.Context, cs *agents.ClientSet, db *database.Data
 	return nil
 }
 
+func migrateAlertLevelFromPromqlOrLogql(ctx context.Context, db *database.Database) error {
+	alertrules := []*models.AlertRule{}
+	if err := db.DB().Preload("Receivers.AlertChannel").Where("promql_generator is null and logql_generator is null").
+		Find(&alertrules).Error; err != nil {
+		return err
+	}
+
+	for _, v := range alertrules {
+		if len(v.AlertLevels) > 1 {
+			log.Error(fmt.Errorf("too many alert levels"), "name", v.FullName())
+			continue
+		}
+		level := &v.AlertLevels[0]
+		newExpr := fmt.Sprintf("%s%s%s", v.Expr, level.CompareOp, level.CompareValue)
+		log.Info("migrateAlertLevelFromPromqlOrLogql", "name", v.FullName(), "old", v.Expr, "new", newExpr)
+		v.Expr = newExpr
+		level.CompareOp = ""
+		level.CompareValue = ""
+		if err := db.DB().Select("expr", "alert_levels").Updates(v).Error; err != nil {
+			log.Error(err, "name", v.FullName())
+		}
+	}
+	return nil
+}
+
 func matchType(value string) promql.MatchType {
 	if strings.Contains(value, "|") {
 		return promql.MatchRegexp

@@ -26,9 +26,9 @@ import (
 
 type AlertLevels []AlertLevel
 type AlertLevel struct {
-	CompareOp    string `json:"compareOp"`
-	CompareValue string `json:"compareValue"` // 支持表达式, eg. 24 * 60
-	Severity     string `json:"severity"`     // error, critical
+	CompareOp    string `json:"compareOp,omitempty"`
+	CompareValue string `json:"compareValue,omitempty"` // 支持表达式, eg. 24 * 60
+	Severity     string `json:"severity"`               // error, critical
 }
 
 func (m AlertLevels) Value() (driver.Value, error) {

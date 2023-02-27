@@ -33,7 +33,7 @@ func GetServerCertExpiredTime(serverURL string) (*time.Time, error) {
 		InsecureSkipVerify: true,
 	}
 
-	u, err := url.Parse(APIServerURL)
+	u, err := url.Parse(serverURL)
 	if err != nil {
 		return nil, err
 	}

@@ -1,3 +1,9 @@
+## 1.23.5 / 2023-2-24
+### Enhancements 🎈
+* 🎈 perf(alert): remove alertlevel value if from promql or logql by @jojotong in https://github.com/kubegems/kubegems/pull/456
+### Bugfixes 🐞
+* 🐞 fix(alertrule): email secret label shouldn't use globa variable map. by @jojotong in https://github.com/kubegems/kubegems/pull/453
+
 ## 1.23.4 / 2023-2-13
 ### Changes 🛠
 * bugfix npe & upgrade configer by @pepesi in https://github.com/kubegems/kubegems/pull/444
