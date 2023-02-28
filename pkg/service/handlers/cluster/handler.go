@@ -17,6 +17,7 @@ package clusterhandler
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"regexp"
@@ -644,10 +645,11 @@ func ConfigClientCertExpire(cfg *rest.Config) *time.Time {
 	if err != nil {
 		return nil
 	}
-	if crt.Leaf == nil {
+	x509cert, err := x509.ParseCertificate(crt.Certificate[0])
+	if err != nil {
 		return nil
 	}
-	return &crt.Leaf.NotAfter
+	return &x509cert.NotAfter
 }
 
 func (h *ClusterHandler) batchWithTimeout(ctx *gin.Context, clusters []*models.Cluster, timeout time.Duration, f func(idx int, name string, cli agents.Client)) {
