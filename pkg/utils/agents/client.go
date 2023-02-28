@@ -17,7 +17,6 @@ package agents
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"net/http"
 	"net/url"
 	"time"
@@ -27,7 +26,6 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/kubernetes"
-	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -48,14 +46,11 @@ type Client interface {
 	BaseAddr() url.URL
 	APIServerAddr() url.URL
 	APIServerVersion() string
-	ClientCertExpireAt() *time.Time
 	// Deprecated: remove
 	Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error
 }
 
-var (
-	_ Client = &DelegateClient{}
-)
+var _ Client = &DelegateClient{}
 
 type DelegateClient struct {
 	*ExtendClient
@@ -97,21 +92,6 @@ func (c *DelegateClient) APIServerVersion() string {
 		return ""
 	}
 	return version.String()
-}
-
-func (c DelegateClient) ClientCertExpireAt() *time.Time {
-	if trans, ok := c.TypedClient.HTTPClient.Transport.(*http.Transport); ok {
-		certs := trans.TLSClientConfig.Certificates
-		if len(certs) > 0 && len(certs[0].Certificate) > 0 {
-			cert, err := x509.ParseCertificate(certs[0].Certificate[0])
-			if err != nil {
-				log.Error(err, "parse agentclient tls cert")
-				return nil
-			}
-			return &cert.NotAfter
-		}
-	}
-	return nil
 }
 
 func newClient(meta ClientMeta, kubernetes kubernetes.Interface, tracer trace.Tracer) Client {
