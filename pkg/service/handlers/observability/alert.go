@@ -1069,6 +1069,9 @@ func (h *ObservabilityHandler) getAlertRule(c *gin.Context, alerttype string) (*
 		if err != nil {
 			return err
 		}
+		bts, _ := yaml.Marshal(GenerateRuleGroup(&ret))
+		ret.Origin = string(bts)
+
 		var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
 		if alerttype == prometheus.AlertTypeMonitor {
 			realTimeAlertRules, err = cli.Extend().GetPromeAlertRules(ctx, "")

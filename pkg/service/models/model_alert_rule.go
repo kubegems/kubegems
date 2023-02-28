@@ -51,6 +51,7 @@ type AlertRule struct {
 	// eg: status: ok/error
 	// reason: alertmanagerconfig lost/receiver not matched/...
 	K8sResourceStatus gormdatatypes.JSONMap `gorm:"type:varchar(50)" json:"k8sResourceStatus"` // 对应的k8s资源状态
+	Origin            string                `gorm:"-" json:"origin,omitempty"`                 // rule group
 
 	CreatedAt *time.Time `json:"createdAt"`
 	UpdatedAt *time.Time `json:"updatedAt"`
