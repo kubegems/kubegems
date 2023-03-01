@@ -29,6 +29,7 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/helper/chroot"
 	"github.com/go-git/go-billy/v5/util"
+	"github.com/go-logr/logr"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
@@ -495,7 +496,12 @@ func (h *ApplicationProcessor) createArgoCluster(ctx context.Context, clusternam
 
 	cachekey := "cluster/" + cluster.Name
 	if val, ok := h.argostatuscache.Load(cachekey); ok {
-		return val.(*v1alpha1.Cluster), nil
+		// check kubeconfig
+		exists := val.(*v1alpha1.Cluster)
+		if string(exists.Config.CertData) == string(cluster.Config.CertData) {
+			return exists, nil
+		}
+		logr.FromContextOrDiscard(ctx).Info("cluster config changed", "cluster", clustername)
 	}
 
 	existcluster, err := h.Argo.EnsureCluster(ctx, cluster)
@@ -584,6 +590,10 @@ func (h *ApplicationProcessor) createArgoGitRepo(ctx context.Context, gitCloneUr
 }
 
 func (h *ApplicationProcessor) Sync(ctx context.Context, ref PathRef, resources ...v1alpha1.SyncOperationResource) error {
+	// do check in case of cluster config update
+	if _, _, _, err := h.prepareArgoApplication(ctx, ref); err != nil {
+		return err
+	}
 	if err := h.Argo.Sync(ctx, ref.FullName(), resources); err != nil {
 		if !errors.IsNotFound(err) && grpcstatus.Code(err) != grpccodes.NotFound {
 			return fmt.Errorf("sync app %s: %v", ref.Name, err)
@@ -597,24 +607,31 @@ func (h *ApplicationProcessor) Sync(ctx context.Context, ref PathRef, resources 
 	return nil
 }
 
-func (h *ApplicationProcessor) deployArgoApplication(ctx context.Context, ref PathRef, updatespecfunc func(*v1alpha1.Application) error) (*v1alpha1.Application, error) {
+func (h *ApplicationProcessor) prepareArgoApplication(ctx context.Context, ref PathRef) (clustername string, projectname string, namespace string, err error) {
+	envdetails, err := h.DataBase.GetEnvironmentWithCluster(ref)
+	if err != nil {
+		return "", "", "", err
+	}
+	// create argo cluster
+	argocluster, err := h.createArgoCluster(ctx, envdetails.ClusterName, envdetails.ClusterKubeConfig)
+	if err != nil {
+		return "", "", "", err
+	}
+	// create argo project for env
+	argoproject, err := h.createArgoProjectForEnvironment(ctx, ref, argocluster.Server, envdetails.Namespace)
+	if err != nil {
+		return "", "", "", err
+	}
+	return argocluster.Name, argoproject.Name, envdetails.Namespace, nil
+}
+
+func (h *ApplicationProcessor) deployArgoApplication(
+	ctx context.Context, ref PathRef, update func(*v1alpha1.Application) error,
+) (*v1alpha1.Application, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "argo-deploy")
 	defer span.Finish()
 
-	envdetails, err := h.DataBase.GetEnvironmentWithCluster(ref)
-	if err != nil {
-		return nil, err
-	}
-	namespace := envdetails.Namespace
-	kubeconfig := envdetails.ClusterKubeConfig
-
-	// create argo cluster
-	argocluster, err := h.createArgoCluster(ctx, envdetails.ClusterName, kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-	// create argo project for env
-	argoproject, err := h.createArgoProjectForEnvironment(ctx, ref, argocluster.Server, namespace)
+	clustername, projectname, namespace, err := h.prepareArgoApplication(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -642,15 +659,15 @@ func (h *ApplicationProcessor) deployArgoApplication(ctx context.Context, ref Pa
 		},
 		Spec: v1alpha1.ApplicationSpec{
 			Destination: v1alpha1.ApplicationDestination{
-				Name:      argocluster.Name, // managed cluster name（agent name）
+				Name:      clustername, // managed cluster name（agent name）
 				Namespace: namespace,
 			},
-			Project: argoproject.Name,
+			Project: projectname,
 		},
 	}
 
 	// custome update
-	if err := updatespecfunc(argoapplication); err != nil {
+	if err := update(argoapplication); err != nil {
 		return nil, err
 	}
 
