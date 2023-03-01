@@ -98,7 +98,7 @@ func (h *TenantHandler) ListTenant(c *gin.Context) {
 	pagedata := handlers.Page(total, list, int64(page), int64(size))
 	if ok, _ := strconv.ParseBool(c.Query("containAllocatedResourcequota")); ok {
 		tids := []uint{}
-		tenants := pagedata.List.([]models.Tenant)
+		tenants := pagedata.List
 		for i := range tenants {
 			tids = append(tids, tenants[i].ID)
 		}

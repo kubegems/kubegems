@@ -43,7 +43,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
-	"kubegems.io/kubegems/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -552,7 +551,7 @@ func (h *VirtualSpaceHandler) ListWorkload(c *gin.Context) {
 		size, _ := strconv.Atoi(c.Query("size"))
 		search := c.Query("search")
 
-		pagedlist := response.NewTypedPage(list, page, size, func(i WorkloadDetails) bool {
+		pagedlist := response.PageFrom(list, page, size, func(i WorkloadDetails) bool {
 			return strings.Contains(i.Name, search)
 		}, func(a, b WorkloadDetails) bool {
 			switch {
@@ -739,8 +738,6 @@ type WorkloadDetails struct {
 	Services      []corev1.Service `json:"services,omitempty"` // 关联的service
 	client.Object                  // 原始数据
 }
-
-var _ pagination.SortAndSearchAble = WorkloadDetails{}
 
 const (
 	WorkloadKindDeployment  = "Deployment"

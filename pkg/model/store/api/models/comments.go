@@ -50,7 +50,7 @@ func (m *ModelsAPI) ListComments(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	total, _ := m.CommentRepository.Count(req.Request.Context(), listOptions)
-	response.OK(resp, response.Page{
+	response.OK(resp, response.Page[repository.CommentWithAddtional]{
 		List:  list,
 		Total: total,
 		Page:  listOptions.Page,

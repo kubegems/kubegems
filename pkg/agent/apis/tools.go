@@ -18,12 +18,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	"kubegems.io/kubegems/pkg/utils/pagination"
 )
 
-const (
-	allNamespace = "_all"
-)
+const allNamespace = "_all"
 
 func getLabelSelector(c *gin.Context) labels.Selector {
 	labelsMap := c.QueryMap("labels")
@@ -43,10 +40,6 @@ func paramFromHeaderOrQuery(c *gin.Context, key, defaultV string) string {
 	}
 	return defaultV
 }
-
-var NewPageDataFromContext = pagination.NewPageDataFromContext
-
-type SortAndSearchAble = pagination.SortAndSearchAble
 
 func getFieldSelector(c *gin.Context) (fields.Selector, bool) {
 	fieldSelectorStr := c.Query("fieldSelector")

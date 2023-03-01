@@ -22,7 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/utils/certificate"
-	"kubegems.io/kubegems/pkg/utils/pagination"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -43,8 +43,6 @@ func (s SecretWithCertsInfo) GetName() string {
 func (s SecretWithCertsInfo) GetCreationTimestamp() metav1.Time {
 	return s.Secret.CreationTimestamp
 }
-
-var _ pagination.SortAndSearchAble = SecretWithCertsInfo{}
 
 // @Tags        Agent.V1
 // @Summary     获取Secret列表数据
@@ -82,9 +80,7 @@ func (h *SecretHandler) List(c *gin.Context) {
 			CertInfo: parseCertsInfo(secret),
 		}
 	}
-
-	pageData := pagination.NewPageDataFromContextReflect(c, listWithCertsInfo)
-
+	pageData := response.PageObjectFromRequest(c.Request, listWithCertsInfo)
 	if iswatch, _ := strconv.ParseBool(c.Query("watch")); iswatch {
 		// list
 		c.SSEvent("data", pageData)

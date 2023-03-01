@@ -37,12 +37,9 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/istio"
-	"kubegems.io/kubegems/pkg/utils/pagination"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
-var _ pagination.SortAndSearchAble = ServiceDetail{}
 
 type ServiceDetail struct {
 	Service          v1.Service                              `json:"service"`
@@ -115,7 +112,7 @@ func (h *VirtualSpaceHandler) ListServices(c *gin.Context) {
 		size, _ := strconv.Atoi(c.Query("size"))
 		search := c.Query("search")
 
-		ret := response.NewTypedPage(sl.Services, page, size, func(i kialimodels.ServiceOverview) bool {
+		ret := response.PageFrom(sl.Services, page, size, func(i kialimodels.ServiceOverview) bool {
 			return strings.Contains(i.Name, search)
 		}, func(a, b kialimodels.ServiceOverview) bool {
 			switch {

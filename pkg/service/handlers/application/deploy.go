@@ -17,7 +17,7 @@ package application
 import (
 	"context"
 	"fmt"
-	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -125,10 +125,13 @@ func (h *ApplicationHandler) List(c *gin.Context) {
 			return nil, err
 		}
 		// 分页
-		searchnamefunc := func(i int) bool {
-			return strings.Contains(dm[i].Name, c.Query("search"))
+		namefunc := func(i DeploiedManifest) string {
+			return i.Name
 		}
-		paged := handlers.NewPageDataFromContext(c, dm, searchnamefunc, nil)
+		timefunc := func(i DeploiedManifest) time.Time {
+			return i.CreateAt.Time
+		}
+		paged := handlers.NewPageDataFromContext(c, dm, namefunc, timefunc)
 		return paged, nil
 	})
 }

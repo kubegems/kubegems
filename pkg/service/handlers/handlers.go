@@ -16,194 +16,132 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
-	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/models/validate"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
 var namer = schema.NamingStrategy{}
 
 const (
-	defaultPageSize = 10
-)
-
-const (
 	MessageOK           = "ok"
 	MessageNotFound     = "not found"
-	MessageError        = "err"
 	MessageForbidden    = "forbidden"
 	MessageUnauthorized = "unauthorized"
 )
 
-type ResponseStruct struct {
-	Message   string
-	Data      interface{}
-	ErrorData interface{}
-}
-
-type PageData struct {
-	Total       int64
-	List        interface{}
-	CurrentPage int64
-	CurrentSize int64
-}
-
-func Page(total int64, list interface{}, page, size int64) *PageData {
-	return &PageData{
-		Total:       total,
-		List:        list,
-		CurrentPage: page,
-		CurrentSize: size,
-	}
-}
-
-func Response(c *gin.Context, code int, msg string, data interface{}) {
-	c.JSON(code, ResponseStruct{Message: msg, Data: data})
+func Page[T any](total int64, list []T, page, size int64) *response.Page[T] {
+	return &response.Page[T]{Total: total, List: list, Page: page, Size: size}
 }
 
 func OK(c *gin.Context, data interface{}) {
-	c.JSON(http.StatusOK, ResponseStruct{Message: MessageOK, Data: data})
+	Response(c, http.StatusOK, data, nil)
 }
 
 func Created(c *gin.Context, data interface{}) {
-	c.JSON(http.StatusCreated, ResponseStruct{Message: MessageOK, Data: data})
+	Response(c, http.StatusCreated, data, nil)
 }
 
 func NoContent(c *gin.Context, data interface{}) {
-	c.JSON(http.StatusNoContent, ResponseStruct{Message: MessageOK, Data: data})
+	Response(c, http.StatusNoContent, data, nil)
 }
 
-func Forbidden(c *gin.Context, data interface{}) {
-	c.JSON(http.StatusForbidden, ResponseStruct{Message: MessageForbidden, Data: data})
+func BadRequest(c *gin.Context, err error) {
+	Error(c, http.StatusBadRequest, err)
 }
 
-func Unauthorized(c *gin.Context, data interface{}) {
-	c.JSON(http.StatusUnauthorized, ResponseStruct{Message: MessageUnauthorized, Data: data})
+func Forbidden(c *gin.Context, err error) {
+	Error(c, http.StatusForbidden, err)
 }
 
-func errResponse(errData interface{}) ResponseStruct {
-	return ResponseStruct{Message: MessageError, ErrorData: errData}
+func Unauthorized(c *gin.Context, err error) {
+	Error(c, http.StatusUnauthorized, err)
+}
+
+func Error(c *gin.Context, code int, err error) {
+	Response(c, code, nil, err)
+}
+
+func Response(c *gin.Context, code int, data interface{}, err error) {
+	if err != nil {
+		if code == 0 {
+			code = http.StatusBadRequest
+		}
+		c.JSON(code, response.Response{Message: err.Error(), Error: err})
+		return
+	}
+	if code == 0 {
+		code = http.StatusOK
+	}
+	c.JSON(code, response.Response{Data: data})
 }
 
 func NotOK(c *gin.Context, err error) {
 	log.Error(err, "not ok")
 	defer func() {
-		c.Errors = append(c.Errors, &gin.Error{
-			Err:  err,
-			Type: gin.ErrorTypeAny,
-		})
+		c.Errors = append(c.Errors, &gin.Error{Err: err, Type: gin.ErrorTypeAny})
 	}()
+	// validation error
 	if errs, ok := err.(validator.ValidationErrors); ok {
 		verrors := []string{}
 		for _, e := range errs {
+			// TODO: get trans from context
 			verrors = append(verrors, e.Translate(validate.Get().Translator))
 		}
-		c.AbortWithStatusJSON(http.StatusBadRequest, errResponse(strings.Join(verrors, ";")))
+		BadRequest(c, errors.New(strings.Join(verrors, ";")))
 		return
 	}
-	if err, ok := err.(*errors.StatusError); ok {
-		c.AbortWithStatusJSON(http.StatusBadRequest, errResponse(err.Error()))
+	// k8s apiserver error
+	// always as badrequest,do not return 401,403
+	if errors.Is(err, &apierrors.StatusError{}) {
+		BadRequest(c, err)
 		return
 	}
-
 	// grpc error
 	if rpcerr, ok := status.FromError(err); ok {
 		if rpcerr.Code() == codes.NotFound {
-			c.AbortWithStatusJSON(http.StatusNotFound, errResponse(err.Error()))
+			Error(c, http.StatusNotFound, err)
 			return
 		}
 	}
-
-	if models.IsNotFound(err) {
-		msg := i18n.Sprintf(context.TODO(), "the object or the parent object is not found")
-		c.AbortWithStatusJSON(http.StatusNotFound, errResponse(msg))
+	// gorm error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		msg := i18n.Errorf(c.Request.Context(), "the object or the parent object is not found")
+		Error(c, http.StatusNotFound, msg)
 		return
 	}
-	msg := models.GetErrMessage(err)
-	c.AbortWithStatusJSON(http.StatusBadRequest, errResponse(msg))
+
+	// mysql error
+	me := &mysql.MySQLError{}
+	if errors.As(err, &me) {
+		BadRequest(c, models.FormatMysqlError(me))
+		return
+	}
+
+	// default error
+	BadRequest(c, err)
 }
 
-func NewPageDataFromContext(c *gin.Context, fulllist interface{}, pick PageFilterFunc, sortfn PageSortFunc) PageData {
-	page, _ := strconv.Atoi(c.Query("page"))
-	size, _ := strconv.Atoi(c.Query("size"))
-	if pick == nil {
-		pick = NoopPageFilterFunc
-	}
-	return NewPageData(fulllist, page, size, pick, sortfn)
-}
-
-type (
-	PageFilterFunc func(i int) bool
-	PageSortFunc   func(i, j int) bool
-)
-
-var (
-	NoopPageFilterFunc = func(i int) bool { return true }
-	NoopPageSortFunc   = func(i, j int) bool { return false }
-)
-
-func NewPageData(list interface{}, page, size int, filterfn PageFilterFunc, sortfn PageSortFunc) PageData {
-	if page < 1 {
-		page = 1
-	}
-	if size < 1 {
-		size = defaultPageSize
-	}
-	// sort
-	if sortfn != nil {
-		sort.Slice(list, sortfn)
-	}
-
-	v := reflect.ValueOf(list)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	if v.Kind() != reflect.Slice {
-		return PageData{}
-	}
-
-	// filter
-	if filterfn != nil {
-		ret := reflect.MakeSlice(v.Type(), 0, 10)
-		for i := 0; i < v.Len(); i++ {
-			if filterfn(i) {
-				ret = reflect.Append(ret, v.Index(i))
-			}
-		}
-		v = ret
-	}
-
-	// page
-	total := v.Len()
-	start := (page - 1) * size
-	end := page * size
-	if end > total {
-		end = total
-	}
-	v = v.Slice(start, end)
-
-	return PageData{
-		List:        v.Interface(),
-		Total:       int64(total),
-		CurrentPage: int64(page),
-		CurrentSize: int64(size),
-	}
+func NewPageDataFromContext[T any](c *gin.Context, list []T, namefunc func(item T) string, timefunc func(item T) time.Time) response.Page[T] {
+	return response.PageFromRequest(c.Request, list, namefunc, timefunc)
 }
 
 func contains(arr []string, s string) bool {
@@ -430,31 +368,6 @@ func (q *URLQuery) PageList(db *gorm.DB, cond *PageQueryCond, dest interface{}) 
 func (q *URLQuery) MustPreload(mustpreloads []string) *URLQuery {
 	q.preloads = append(q.preloads, mustpreloads...)
 	return q
-}
-
-func (q *URLQuery) PageResponse(data interface{}) interface{} {
-	if q.sortFunc != nil {
-		q.sortFunc(data, q.Order)
-	}
-	kdata := reflect.TypeOf(data)
-	if kdata.Kind() != reflect.Array && kdata.Kind() != reflect.Slice {
-		return ResponseStruct{Message: MessageError, ErrorData: fmt.Sprintf("error data to paginate, kind is %v", kdata.Kind())}
-	}
-	vdata := reflect.ValueOf(data)
-	total := int64(vdata.Len())
-	if q.endPos >= total {
-		q.endPos = total
-	}
-	if q.startPos >= q.endPos {
-		return ResponseStruct{
-			Message: MessageOK,
-			Data:    Page(int64(total), []interface{}{}, int64(q.page), int64(q.size)),
-		}
-	}
-	return ResponseStruct{
-		Message: MessageOK,
-		Data:    Page(int64(total), vdata.Slice(int(q.startPos), int(q.endPos)).Interface(), int64(q.page), int64(q.size)),
-	}
 }
 
 // 网络隔离用到的数据结构

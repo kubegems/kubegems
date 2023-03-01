@@ -41,6 +41,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -100,14 +101,8 @@ func (h *PodHandler) List(c *gin.Context) {
 		NotOK(c, err)
 		return
 	}
-
-	objects := podList.Items
-
-	objects = filterByNodename(c, objects)
-	pageData := NewPageDataFromContext(c, func(i int) SortAndSearchAble {
-		return &objects[i]
-	}, len(objects), objects)
-
+	objects := filterByNodename(c, podList.Items)
+	pageData := response.PageObjectFromRequest(c.Request, objects)
 	if iswatch, _ := strconv.ParseBool(c.Query("watch")); iswatch {
 		// list
 		c.SSEvent("data", pageData)

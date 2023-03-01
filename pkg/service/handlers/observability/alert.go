@@ -51,6 +51,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
 	"kubegems.io/kubegems/pkg/utils/prometheus/promql"
@@ -991,7 +992,7 @@ func (h *ObservabilityHandler) listAlertRulesStatus(c *gin.Context, alerttype st
 	return ret, nil
 }
 
-func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) (*handlers.PageData, error) {
+func (h *ObservabilityHandler) listAlertRules(c *gin.Context, alerttype string) (*response.Page[*models.AlertRule], error) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 

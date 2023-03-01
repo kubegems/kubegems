@@ -165,7 +165,7 @@ func (m ModelsAPI) AdminListModel(req *restful.Request, resp *restful.Response) 
 	}
 	// ignore total count error
 	total, _ := m.ModelRepository.Count(ctx, listOptions)
-	response.OK(resp, response.Page{
+	response.OK(resp, response.Page[repository.ModelWithAddtional]{
 		List:  list,
 		Total: total,
 		Page:  listOptions.Page,

@@ -78,7 +78,7 @@ func (s EdgeClusterK8sStore) List(ctx context.Context, options ListOptions) (int
 	sortfunc := func(a, b v1beta1.EdgeCluster) bool {
 		return !a.CreationTimestamp.Before(&b.CreationTimestamp)
 	}
-	paged := response.NewTypedPage(list.Items, options.Page, options.Size, searchfunc, sortfunc)
+	paged := response.PageFrom(list.Items, options.Page, options.Size, searchfunc, sortfunc)
 	return int(paged.Total), paged.List, nil
 }
 

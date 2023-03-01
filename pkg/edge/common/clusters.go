@@ -32,6 +32,7 @@ import (
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -94,24 +95,24 @@ func NewClusterManager(ctx context.Context, namespace string, selfhost string) (
 
 func (m *EdgeManager) ListPage(
 	ctx context.Context,
-	page, size int,
-	search string, labels, manufacture labels.Selector,
-) (response.TypedPage[v1beta1.EdgeCluster], error) {
+	opts request.ListOptions,
+	labels, manufacture labels.Selector,
+) (response.Page[v1beta1.EdgeCluster], error) {
 	total, list, err := m.ClusterStore.List(ctx, ListOptions{
-		Page:        page,
-		Size:        size,
+		Page:        opts.Page,
+		Size:        opts.Size,
+		Search:      opts.Search,
 		Selector:    labels,
-		Search:      search,
 		Manufacture: manufacture,
 	})
 	if err != nil {
-		return response.TypedPage[v1beta1.EdgeCluster]{}, err
+		return response.Page[v1beta1.EdgeCluster]{}, err
 	}
-	return response.TypedPage[v1beta1.EdgeCluster]{
-		Total:       int64(total),
-		List:        list,
-		CurrentPage: int64(page),
-		CurrentSize: int64(size),
+	return response.Page[v1beta1.EdgeCluster]{
+		Total: int64(total),
+		List:  list,
+		Page:  int64(opts.Page),
+		Size:  int64(opts.Size),
 	}, nil
 }
 

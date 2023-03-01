@@ -34,7 +34,6 @@ type EdgeClusterAPI struct {
 
 func (a *EdgeClusterAPI) ListEdgeClusters(req *restful.Request, resp *restful.Response) {
 	querylabels, querymanufacture := request.Query(req.Request, "labels", ""), request.Query(req.Request, "manufacture", "")
-	listopt := request.GetListOptions(req.Request)
 	selector, err := labels.Parse(querylabels)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
@@ -45,14 +44,24 @@ func (a *EdgeClusterAPI) ListEdgeClusters(req *restful.Request, resp *restful.Re
 		response.BadRequest(resp, err.Error())
 		return
 	}
-	list, err := a.Cluster.ListPage(req.Request.Context(),
-		listopt.Page, listopt.Size, listopt.Search,
-		selector, manufacturesel)
+	listopt := request.GetListOptions(req.Request)
+	total, list, err := a.Cluster.ClusterStore.List(req.Request.Context(), ListOptions{
+		Page:        listopt.Page,
+		Size:        listopt.Size,
+		Search:      listopt.Search,
+		Selector:    selector,
+		Manufacture: manufacturesel,
+	})
 	if err != nil {
 		response.BadRequest(resp, err.Error())
-	} else {
-		response.OK(resp, list)
+		return
 	}
+	response.OK(resp, response.Page[v1beta1.EdgeCluster]{
+		Total: int64(total),
+		List:  list,
+		Page:  int64(listopt.Page),
+		Size:  int64(listopt.Size),
+	})
 }
 
 type CreateClusterRequest struct {

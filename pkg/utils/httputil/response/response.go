@@ -19,8 +19,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"reflect"
-	"sort"
 )
 
 type Response struct {
@@ -29,62 +27,8 @@ type Response struct {
 	Error   interface{} `json:"error,omitempty"`
 }
 
-type PageFilterFunc func(i int) bool
-
-type PageSortFunc func(i, j int) bool
-
-const defaultPageSize = 10
-
-func NewPageData(list interface{}, page, size int, filterfn PageFilterFunc, sortfn PageSortFunc) Page {
-	if page < 1 {
-		page = 1
-	}
-	if size < 1 {
-		size = defaultPageSize
-	}
-	// sort
-	if sortfn != nil {
-		sort.Slice(list, sortfn)
-	}
-
-	v := reflect.ValueOf(list)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	if v.Kind() != reflect.Slice {
-		return Page{}
-	}
-
-	// filter
-	if filterfn != nil {
-		ret := reflect.MakeSlice(v.Type(), 0, size)
-		for i := 0; i < v.Len(); i++ {
-			if filterfn(i) {
-				ret = reflect.Append(ret, v.Index(i))
-			}
-		}
-		v = ret
-	}
-
-	// page
-	total := v.Len()
-	start := (page - 1) * size
-	end := page * size
-	if end > total {
-		end = total
-	}
-	v = v.Slice(start, end)
-
-	return Page{
-		List:  v.Interface(),
-		Total: int64(total),
-		Page:  int64(page),
-		Size:  int64(size),
-	}
-}
-
 func OK(w http.ResponseWriter, data interface{}) {
-	DoRawResponse(w, http.StatusOK, Response{Data: data}, nil)
+	Raw(w, http.StatusOK, Response{Data: data}, nil)
 }
 
 func NotFound(w http.ResponseWriter, message string) {
@@ -102,13 +46,13 @@ func ServerError(w http.ResponseWriter, err error) {
 func Error(w http.ResponseWriter, err error) {
 	serr := &StatusError{}
 	if errors.As(err, &serr) {
-		DoRawResponse(w, serr.Status, Response{Message: err.Error(), Error: err}, nil)
+		Raw(w, serr.Status, Response{Message: err.Error(), Error: err}, nil)
 	} else {
-		DoRawResponse(w, http.StatusBadRequest, Response{Message: err.Error(), Error: err}, nil)
+		Raw(w, http.StatusBadRequest, Response{Message: err.Error(), Error: err}, nil)
 	}
 }
 
-func DoRawResponse(w http.ResponseWriter, status int, data interface{}, headers map[string]string) {
+func Raw(w http.ResponseWriter, status int, data interface{}, headers map[string]string) {
 	for k, v := range headers {
 		w.Header().Set(k, v)
 	}
@@ -151,8 +95,5 @@ func (e StatusError) Error() string {
 }
 
 func NewError(status int, message string) *StatusError {
-	return &StatusError{
-		Status:  status,
-		Message: message,
-	}
+	return &StatusError{Status: status, Message: message}
 }

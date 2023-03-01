@@ -217,24 +217,28 @@ func IsNotFound(err error) bool {
 	return errors.Is(err, gorm.ErrRecordNotFound)
 }
 
-func GetErrMessage(err error) string {
+func GetErrMessage(err error) error {
 	me := &mysql.MySQLError{}
 	if !errors.As(err, &me) {
-		return err.Error()
+		return err
 	}
+	return FormatMysqlError(me)
+}
+
+func FormatMysqlError(me *mysql.MySQLError) error {
 	switch me.Number {
 	case mysqlerr.ER_DUP_ENTRY:
-		return fmt.Sprintf("存在重名对象(code=%v)", me.Number)
+		return fmt.Errorf("存在重名对象(code=%v)", me.Number)
 	case mysqlerr.ER_DATA_TOO_LONG:
-		return fmt.Sprintf("数据超长(code=%v)", me.Number)
+		return fmt.Errorf("数据超长(code=%v)", me.Number)
 	case mysqlerr.ER_TRUNCATED_WRONG_VALUE:
-		return fmt.Sprintf("日期格式错误(code=%v)", me.Number)
+		return fmt.Errorf("日期格式错误(code=%v)", me.Number)
 	case mysqlerr.ER_NO_REFERENCED_ROW_2:
-		return fmt.Sprintf("系统错误(外键关联数据出错 code=%v)", me.Number)
+		return fmt.Errorf("系统错误(外键关联数据出错 code=%v)", me.Number)
 	case mysqlerr.ER_ROW_IS_REFERENCED_2:
-		return fmt.Sprintf("系统错误(外键关联数据错误 code=%v)", me.Number)
+		return fmt.Errorf("系统错误(外键关联数据错误 code=%v)", me.Number)
 	default:
-		return fmt.Sprintf("系统错误(code=%v, message=%v)!", me.Number, me.Message)
+		return fmt.Errorf("系统错误(code=%v, message=%v)!", me.Number, me.Message)
 	}
 }
 

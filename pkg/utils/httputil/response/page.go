@@ -16,51 +16,75 @@ package response
 
 import (
 	"net/http"
-	"sort"
+	"strings"
+	"time"
 
+	"golang.org/x/exp/slices"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
 )
 
-type SortAndSearchAble interface {
-	GetName() string
-	GetCreationTimestamp() metav1.Time
+const DefaultPageSize = 10
+
+type Page[T any] struct {
+	Total int64 `json:"total"`
+	List  []T   `json:"list"`
+	Page  int64 `json:"page"`
+	Size  int64 `json:"size"`
 }
 
+type Timed interface {
+	GetCreationTimestamp() metav1.Time
+}
 type Named interface {
 	GetName() string
 }
-
-type (
-	TypedSortFun[T any]   func(a, b T) bool
-	TypedFilterFun[T any] func(item T) bool
-)
-
-type Page struct {
-	List  interface{} `json:"list"`
-	Total int64       `json:"total"`
-	Page  int64       `json:"page,omitempty"`
-	Size  int64       `json:"size,omitempty"`
+type NameTimed interface {
+	Timed
+	Named
 }
 
-type TypedPage[T any] struct {
-	Total       int64
-	List        []T // TODO: add lowercase fields tag here
-	CurrentPage int64
-	CurrentSize int64
+// PageObjectFromRequest used for client.Object pagination T in list
+// use any of T to suit for both eg. Pod(not implement metav1.Object) and *Pod(metav1.Object)
+func PageObjectFromRequest[T any](req *http.Request, list []T) Page[T] {
+	getname := func(t T) string {
+		if item, ok := any(t).(Named); ok {
+			return item.GetName()
+		}
+		if item, ok := any(&t).(Named); ok {
+			return item.GetName()
+		}
+		return ""
+	}
+	gettime := func(t T) time.Time {
+		if item, ok := any(t).(Timed); ok {
+			return item.GetCreationTimestamp().Time
+		}
+		if item, ok := any(&t).(Timed); ok {
+			return item.GetCreationTimestamp().Time
+		}
+		return time.Time{}
+	}
+	return PageFromRequest(req, list, getname, gettime)
 }
 
-func PageFromRequest[T any](req *http.Request, list []T) TypedPage[T] {
-	page, size := request.Query(req, "page", 1), request.Query(req, "size", defaultPageSize)
-	return NewTypedPage(list, page, size, nil, nil)
+// PageFromRequest auto pagination from user request on item name or time in list
+func PageFromRequest[T any](req *http.Request, list []T, namefunc func(item T) string, timefunc func(item T) time.Time) Page[T] {
+	page, size := request.Query(req, "page", 1), request.Query(req, "size", DefaultPageSize)
+	sort, search := request.Query(req, "sort", ""), request.Query(req, "search", "")
+	return PageFrom(list, page, size, searchNameFunc(search, namefunc), sortFuncBy(sort, namefunc, timefunc))
 }
 
-func NewTypedPage[T any](list []T, page, size int, pickfun func(item T) bool, sortfun func(a, b T) bool) TypedPage[T] {
+func PageOnly[T any](list []T, page, size int) Page[T] {
+	return PageFrom(list, page, size, nil, nil)
+}
+
+func PageFrom[T any](list []T, page, size int, pickfun func(item T) bool, sortfun func(a, b T) bool) Page[T] {
 	if page < 1 {
 		page = 1
 	}
 	if size < 1 {
-		size = defaultPageSize
+		size = DefaultPageSize
 	}
 
 	// filter
@@ -76,9 +100,7 @@ func NewTypedPage[T any](list []T, page, size int, pickfun func(item T) bool, so
 
 	// sort
 	if sortfun != nil {
-		sort.Slice(list, func(i, j int) bool {
-			return sortfun(list[i], list[j])
-		})
+		slices.SortFunc(list, sortfun)
 	}
 
 	// page
@@ -93,10 +115,54 @@ func NewTypedPage[T any](list []T, page, size int, pickfun func(item T) bool, so
 		endIdx = total
 	}
 	list = list[startIdx:endIdx]
-	return TypedPage[T]{
-		Total:       int64(total),
-		List:        list,
-		CurrentPage: int64(page),
-		CurrentSize: int64(size),
+	return Page[T]{
+		Total: int64(total),
+		List:  list,
+		Page:  int64(page),
+		Size:  int64(size),
+	}
+}
+
+func searchNameFunc[T any](search string, getname func(T) string) func(T) bool {
+	if getname == nil || search == "" {
+		return nil
+	}
+	return func(item T) bool {
+		return strings.Contains(getname(item), search)
+	}
+}
+
+func sortFuncBy[T any](by string, getname func(T) string, gettime func(T) time.Time) func(a, b T) bool {
+	switch by {
+	case "createTimeAsc":
+		if gettime == nil {
+			return nil
+		}
+		return func(a, b T) bool {
+			return gettime(a).Before(gettime(b))
+		}
+	case "createTimeDesc", "createTime", "time":
+		if gettime == nil {
+			return nil
+		}
+		return func(a, b T) bool {
+			return gettime(a).After(gettime(b))
+		}
+	case "nameDesc":
+		if getname == nil {
+			return nil
+		}
+		return func(a, b T) bool {
+			return strings.Compare(getname(a), getname(b)) == 1
+		}
+	case "nameAsc", "name":
+		fallthrough
+	default:
+		if getname == nil {
+			return nil
+		}
+		return func(a, b T) bool {
+			return strings.Compare(getname(a), getname(b)) == -1
+		}
 	}
 }

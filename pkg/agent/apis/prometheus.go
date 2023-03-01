@@ -16,8 +16,8 @@ package apis
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -84,11 +84,7 @@ func (p *prometheusHandler) Vector(c *gin.Context) {
 	}
 	if notnull, _ := strconv.ParseBool(c.Query("notnull")); notnull {
 		if obj.String() == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, handlers.ResponseStruct{
-				Message:   "空查询",
-				Data:      nil,
-				ErrorData: "空查询",
-			})
+			NotOK(c, errors.New("空查询"))
 			return
 		}
 	}
