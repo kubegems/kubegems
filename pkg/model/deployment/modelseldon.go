@@ -16,6 +16,7 @@ package deployment
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -83,6 +84,16 @@ func (r *SeldonModelServe) Apply(ctx context.Context, md *modelsv1beta1.ModelDep
 }
 
 func (r *SeldonModelServe) completeStatusURL(ctx context.Context, md *modelsv1beta1.ModelDeployment, sd *machinelearningv1.SeldonDeployment) error {
+	if err := r.completeStatusHTTPURL(ctx, md, sd); err != nil {
+		return err
+	}
+	if err := r.completeStatusGrpcURL(ctx, md, sd); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *SeldonModelServe) completeStatusHTTPURL(ctx context.Context, md *modelsv1beta1.ModelDeployment, sd *machinelearningv1.SeldonDeployment) error {
 	// find same name ingress
 	ingress := &networkingv1.Ingress{}
 	// ignore error
@@ -121,6 +132,32 @@ func (r *SeldonModelServe) completeStatusURL(ctx context.Context, md *modelsv1be
 		}
 	}
 	md.Status.URL = u.String()
+	return nil
+}
+
+func (r *SeldonModelServe) completeStatusGrpcURL(ctx context.Context, md *modelsv1beta1.ModelDeployment, sd *machinelearningv1.SeldonDeployment) error {
+	// find same name ingress
+	grpchost, grpcport := "", int32(0)
+
+	ingress := &networkingv1.Ingress{}
+	_ = r.Client.Get(ctx, client.ObjectKey{Name: md.Name, Namespace: md.Namespace}, ingress)
+	for _, rule := range ingress.Spec.Rules {
+		if host := rule.Host; host != "" {
+			grpchost = host
+			break
+		}
+	}
+	if gatewayName := md.Spec.Ingress.GatewayName; gatewayName != "" {
+		gateway := &gemsv1beta1.TenantGateway{}
+		_ = r.Client.Get(ctx, client.ObjectKey{Name: gatewayName}, gateway)
+		for _, gatewayport := range gateway.Status.Ports {
+			if gatewayport.Name == "https" || strings.Contains(gatewayport.Name, "grpc") {
+				grpcport = gatewayport.NodePort
+				break
+			}
+		}
+	}
+	md.Status.GRPCAddress = fmt.Sprintf("%s:%d", grpchost, grpcport)
 	return nil
 }
 

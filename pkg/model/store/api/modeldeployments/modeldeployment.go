@@ -49,6 +49,7 @@ type ModelDeploymentOverview struct {
 	ModelName         string      `json:"modelName"`
 	ModelVersion      string      `json:"modelVersion"`
 	URL               string      `json:"url"`
+	GRPCAddress       string      `json:"grpcAddress"`
 	Cluster           string      `json:"cluster"`
 	Namespace         string      `json:"namespace"`
 	Creator           string      `json:"creator"`
@@ -101,6 +102,7 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 					ModelName:         md.Spec.Model.Name,
 					ModelVersion:      md.Spec.Model.Version,
 					URL:               md.Status.URL,
+					GRPCAddress:       md.Status.GRPCAddress,
 					Phase:             string(md.Status.Phase),
 					Cluster:           cluster,
 					Namespace:         md.Namespace,

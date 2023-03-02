@@ -7337,6 +7337,8 @@ spec:
             type: object
           status:
             properties:
+              grpcAddress:
+                type: string
               message:
                 type: string
               phase:

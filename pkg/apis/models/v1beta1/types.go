@@ -140,9 +140,10 @@ type IngressSpec struct {
 }
 
 type ModelDeploymentStatus struct {
-	URL     string `json:"url,omitempty"` // url of the model deployment serving endpoint
-	Phase   Phase  `json:"phase,omitempty"`
-	Message string `json:"message,omitempty"`
+	URL         string `json:"url,omitempty"` // url of the model deployment serving endpoint
+	GRPCAddress string `json:"grpcAddress,omitempty"`
+	Phase       Phase  `json:"phase,omitempty"`
+	Message     string `json:"message,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	RawStatus *runtime.RawExtension `json:"rawStatus,omitempty"`
 }
