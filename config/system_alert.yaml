@@ -282,12 +282,10 @@
 - name: node-no-container-metrics
   namespace: kubegems-monitoring
   alertType: monitor
-  expr: count(gems_container_memory_usage_bytes)by(node)
+  expr: count(gems_container_memory_usage_bytes)by(node) == 0
   for: 5m
   alertLevels:
-    - compareOp: "=="
-      compareValue: "0"
-      severity: critical
+    - severity: critical
   receivers:
     - alertChannelID: 1
       interval: 10m
