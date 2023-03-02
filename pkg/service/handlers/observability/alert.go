@@ -1852,7 +1852,7 @@ func (h *ObservabilityHandler) syncAlertRulesWithTimeout(ctx context.Context, al
 				log.Warnf("%s alert rule: %s sync failed", alertrule.AlertType, alertrule.FullName())
 				return
 			}
-			tmp.Store(alertrule.FullName(), false)
+			tmp.Store(alertrule.FullName(), true)
 		}(v)
 	}
 	status = map[string]bool{}
