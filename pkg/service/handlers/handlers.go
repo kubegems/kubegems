@@ -32,6 +32,7 @@ import (
 	"gorm.io/gorm/schema"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"kubegems.io/kubegems/pkg/i18n"
+	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/models/validate"
 )
@@ -101,6 +102,7 @@ func errResponse(errData interface{}) ResponseStruct {
 }
 
 func NotOK(c *gin.Context, err error) {
+	log.Error(err, "not ok")
 	defer func() {
 		c.Errors = append(c.Errors, &gin.Error{
 			Err:  err,

@@ -1069,6 +1069,9 @@ func (h *ObservabilityHandler) getAlertRule(c *gin.Context, alerttype string) (*
 		if err != nil {
 			return err
 		}
+		bts, _ := yaml.Marshal(GenerateRuleGroup(&ret))
+		ret.Origin = string(bts)
+
 		var realTimeAlertRules map[string]prometheus.RealTimeAlertRule
 		if alerttype == prometheus.AlertTypeMonitor {
 			realTimeAlertRules, err = cli.Extend().GetPromeAlertRules(ctx, "")
@@ -1849,7 +1852,7 @@ func (h *ObservabilityHandler) syncAlertRulesWithTimeout(ctx context.Context, al
 				log.Warnf("%s alert rule: %s sync failed", alertrule.AlertType, alertrule.FullName())
 				return
 			}
-			tmp.Store(alertrule.FullName(), false)
+			tmp.Store(alertrule.FullName(), true)
 		}(v)
 	}
 	status = map[string]bool{}

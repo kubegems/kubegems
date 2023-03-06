@@ -1,3 +1,9 @@
+## 1.23.6 / 2023-3-2
+### Bugfixes 🐞
+🐞 fix(cluster): cert expire parse
+🐞 fix(alert): show rule group in alert detail
+🐞 fix(channel): sync alert rule status
+
 ## 1.23.5 / 2023-2-24
 ### Enhancements 🎈
 * 🎈 perf(alert): remove alertlevel value if from promql or logql by @jojotong in https://github.com/kubegems/kubegems/pull/456

@@ -16,6 +16,8 @@ package clusterhandler
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"regexp"
@@ -39,6 +41,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/statistics"
@@ -169,9 +172,10 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	action := i18n.Sprintf(context.TODO(), "update")
-	module := i18n.Sprintf(context.TODO(), "cluster")
+
+	action, module := i18n.Sprintf(c, "update"), i18n.Sprintf(c, "cluster")
 	h.SetAuditData(c, action, module, obj.ClusterName)
+
 	if err := c.BindJSON(&obj); err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -180,7 +184,12 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := h.GetDB().WithContext(ctx).Save(&obj).Error; err != nil {
+	if err := OnKubeConfig(c, obj.KubeConfig, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		if err := CompleteCluster(ctx, &obj, config, clientSet); err != nil {
+			return err
+		}
+		return h.GetDB().WithContext(ctx).Save(&obj).Error
+	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
@@ -236,7 +245,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 			return
 		}
 	} else {
-		if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		if err := OnKubeConfig(c, cluster.KubeConfig, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
 			return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
@@ -450,67 +459,26 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		handlers.NotOK(c, errors.New("empty cluster name"))
 		return
 	}
-
-	// nolint: dogsled
-	apiserver, _, _, _, err := kube.GetKubeconfigInfos(cluster.KubeConfig)
-	if err != nil {
-		log.Error(err, "failed to validate kubeconfg, may format error")
-		handlers.NotOK(c, i18n.Errorf(c, "failed to validate kubeconfg, may format error"))
-		return
-	}
-	var existCount int64
 	ctx := c.Request.Context()
-	if err := h.GetDB().WithContext(ctx).Model(
-		&models.Cluster{},
-	).Where(
-		"cluster_name = ? or api_server = ?", cluster.ClusterName, apiserver,
-	).Count(&existCount).Error; err != nil {
-		log.Error(err, "failed to detect the cluster is existed %v", err)
-		handlers.NotOK(c, i18n.Errorf(c, "failed to detect the cluster is existed"))
-		return
-	}
-	if existCount > 0 {
-		handlers.NotOK(c, i18n.Errorf(c, "the cluster with name %s existed, can't add the same one"))
-		return
-	}
-	action := i18n.Sprintf(context.TODO(), "create")
-	module := i18n.Sprintf(context.TODO(), "cluster")
+
+	action, module := i18n.Sprintf(ctx, "create"), i18n.Sprintf(ctx, "cluster")
 	h.SetAuditData(c, action, module, cluster.ClusterName)
 
-	if err := withClusterAndK8sClient(c, cluster, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
-		txClause := clause.OnConflict{
-			DoUpdates: clause.AssignmentColumns([]string{
-				"kube_config",
-				"version",
-				"runtime",
-				"primary",
-				"vendor",
-				"image_repo",
-				"default_storage_class",
-				"deleted_at",
-			}),
-		}
-
-		// 如果为第一个添加的集群，则设置为主集群
-		count := int64(0)
-		if err := h.GetDB().WithContext(ctx).Model(&models.Cluster{}).Count(&count).Error; err != nil {
+	if err := OnKubeConfig(ctx, cluster.KubeConfig, func(ctx context.Context, cs *kubernetes.Clientset, cfg *rest.Config) error {
+		// complete cluster info
+		if err := CompleteCluster(ctx, cluster, cfg, cs); err != nil {
 			return err
 		}
-		if count == 0 {
-			cluster.Primary = true
+		// check database
+		if err := CheckBeforeAdd(ctx, h.GetDataBase(), cluster); err != nil {
+			return err
 		}
-
-		// 控制集群检验
-		if cluster.Primary {
-			var primarysCount int64
-			if err := h.GetDB().WithContext(ctx).Model(&models.Cluster{}).Where(`'primary' = ?`, true).Count(&primarysCount).Error; err != nil {
-				return err
-			}
-			if primarysCount > 0 {
-				return i18n.Errorf(c, "the primary cluster existed already, more than one primary cluster is not allowed")
-			}
+		txClause := clause.OnConflict{
+			DoUpdates: clause.AssignmentColumns([]string{
+				"kube_config", "version", "runtime", "primary", "vendor", "image_repo", "default_storage_class", "deleted_at",
+			}),
 		}
-		if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
@@ -519,31 +487,26 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 				splits = append(splits, "")
 			}
 			registry, repository := splits[0], splits[1]
-			return pluginmanager.Bootstrap{Config: config}.Install(ctx, pluginmanager.GlobalValues{
+			globalvalues := pluginmanager.GlobalValues{
 				ImageRegistry:   registry,
 				ImageRepository: repository,
 				ClusterName:     cluster.ClusterName,
 				StorageClass:    cluster.DefaultStorageClass,
 				Runtime:         cluster.Runtime,
-			})
-		}); err != nil {
-			log.Error(err, "create cluster failed")
-			return err
-		}
-
-		h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
-			msg.EventKind = msgbus.Add
-			msg.ResourceType = msgbus.Cluster
-			msg.ResourceID = cluster.ID
-			msg.Detail = i18n.Sprintf(context.TODO(), "add a new cluster %s into kubegems", cluster.ClusterName)
-			msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
+			}
+			return pluginmanager.Bootstrap{Config: cfg}.Install(ctx, globalvalues)
 		})
-
-		return nil
 	}); err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
+
+	h.SendToMsgbus(c, func(msg *msgclient.MsgRequest) {
+		msg.EventKind, msg.ResourceType, msg.ResourceID = msgbus.Add, msgbus.Cluster, cluster.ID
+		msg.Detail = i18n.Sprintf(c, "add a new cluster %s into kubegems", cluster.ClusterName)
+		msg.ToUsers.Append(h.GetDataBase().SystemAdmins()...)
+	})
+
 	handlers.Created(c, cluster)
 }
 
@@ -587,38 +550,106 @@ func (h *ClusterHandler) cluster(c *gin.Context, fun func(ctx context.Context, c
 	})(c)
 }
 
-func withClusterAndK8sClient(
-	c *gin.Context,
-	cluster *models.Cluster,
-	f func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error,
+func OnKubeConfig(ctx context.Context,
+	cfgraw []byte,
+	f func(ctx context.Context, cs *kubernetes.Clientset, cfg *rest.Config) error,
 ) error {
-	// 获取clientSet
-	restconfig, clientSet, err := kube.GetKubeClient(cluster.KubeConfig)
+	cfg, cs, err := kube.GetKubeClient(cfgraw)
 	if err != nil {
-		return i18n.Errorf(c, "failed to build client via kubeconfig: %w", err)
+		return i18n.Errorf(ctx, "invalid kubeconfig: %w", err)
 	}
-	serverSersion, err := clientSet.ServerVersion()
+	return f(ctx, cs, cfg)
+}
+
+func CheckBeforeAdd(ctx context.Context, db *database.Database, cluster *models.Cluster) error {
+	// duplicate check
+	var existCount int64
+	if err := db.DB().WithContext(ctx).
+		Model(&models.Cluster{}).
+		Where("cluster_name = ? or api_server = ?", cluster.ClusterName, cluster.APIServer).
+		Count(&existCount).Error; err != nil {
+		return i18n.Errorf(ctx, "failed to detect the cluster is existed")
+	}
+	if existCount > 0 {
+		return i18n.Errorf(ctx, "the cluster with name %s existed, can't add the same one", cluster.ClusterName)
+	}
+	// 如果为第一个添加的集群，则设置为主集群
+	count := int64(0)
+	if err := db.DB().WithContext(ctx).Model(&models.Cluster{}).Count(&count).Error; err != nil {
+		return err
+	}
+	if count == 0 {
+		cluster.Primary = true
+	}
+	// 控制集群检验
+	if cluster.Primary {
+		var primarysCount int64
+		if err := db.DB().WithContext(ctx).Model(&models.Cluster{}).Where(`'primary' = ?`, true).Count(&primarysCount).Error; err != nil {
+			return err
+		}
+		if primarysCount > 0 {
+			return i18n.Errorf(ctx, "the primary cluster existed already, more than one primary cluster is not allowed")
+		}
+	}
+	return nil
+}
+
+func CompleteCluster(ctx context.Context, cluster *models.Cluster, restconfig *rest.Config, clientSet kubernetes.Interface) error {
+	// update client config expire
+	if expire := ConfigClientCertExpire(restconfig); expire != nil {
+		cluster.ClientCertExpireAt = expire
+	}
+
+	// set cri runtime
+	if cluster.Runtime == "" {
+		criruntime, err := DetectCRIRuntime(ctx, clientSet)
+		if err != nil {
+			return fmt.Errorf("failed to list cluster's nodes: %w", err)
+		}
+		cluster.Runtime = criruntime
+	}
+
+	// set server addr and version
+	serverSersion, err := clientSet.Discovery().ServerVersion()
 	if err != nil {
 		return fmt.Errorf("failed to get the cluster APIServerInfo: %w", err)
 	}
-	ctx := c.Request.Context()
-	nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to list cluster's nodes: %w", err)
-	}
-	cluster.APIServer = restconfig.Host
-	cluster.Version = serverSersion.String()
+	cluster.APIServer, cluster.Version = restconfig.Host, serverSersion.String()
 
+	return nil
+}
+
+func DetectCRIRuntime(ctx context.Context, cs kubernetes.Interface) (string, error) {
+	nodes, err := cs.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to list cluster's nodes: %w", err)
+	}
 	// get container runtime
 	reg := regexp.MustCompile("(.*)://(.*)")
 	for _, n := range nodes.Items {
 		matches := reg.FindStringSubmatch(n.Status.NodeInfo.ContainerRuntimeVersion)
+		// nolint: gomnd
 		if len(matches) == 3 {
-			cluster.Runtime = matches[1]
-			break
+			return matches[1], nil
 		}
 	}
-	return f(ctx, clientSet, restconfig)
+	// default
+	return "containerd", nil
+}
+
+func ConfigClientCertExpire(cfg *rest.Config) *time.Time {
+	if len(cfg.CertData) == 0 || len(cfg.KeyData) == 0 {
+		return nil
+	}
+	crt, err := tls.X509KeyPair(cfg.CertData, cfg.KeyData)
+	if err != nil {
+		return nil
+	}
+	x509cert, err := x509.ParseCertificate(crt.Certificate[0])
+	if err != nil {
+		return nil
+	}
+	return &x509cert.NotAfter
 }
 
 func (h *ClusterHandler) batchWithTimeout(ctx *gin.Context, clusters []*models.Cluster, timeout time.Duration, f func(idx int, name string, cli agents.Client)) {
