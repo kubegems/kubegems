@@ -49,7 +49,7 @@ require (
 	github.com/kiali/kiali v1.43.0
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/mattbaird/jsonpatch v0.0.0-20200820163806-098863c1fc24
-	github.com/oam-dev/kubevela v1.1.8
+	github.com/oam-dev/kubevela v1.5.9
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/opencontainers/distribution-spec v1.0.1
@@ -85,7 +85,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
 	golang.org/x/exp v0.0.0-20220921164117-439092de6870
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
-	golang.org/x/net v0.0.0-20220812174116-3211cb980234
+	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 	golang.org/x/oauth2 v0.0.0-20220808172628-8227340efae7
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8
@@ -100,14 +100,14 @@ require (
 	gorm.io/gorm v1.21.15
 	helm.sh/helm/v3 v3.8.2
 	istio.io/api v0.0.0-20220512212136-561ffec82582
-	istio.io/client-go v1.13.4-0.20220512212836-a717f1acbd1f
+	istio.io/client-go v1.13.4
 	istio.io/istio v0.0.0-20220516185659-202e88863858
 	k8s.io/api v0.24.3
 	k8s.io/apiextensions-apiserver v0.23.6
 	k8s.io/apimachinery v0.24.3
 	k8s.io/cli-runtime v0.23.6
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/kubectl v0.23.5
+	k8s.io/kubectl v0.23.6
 	k8s.io/kubernetes v1.23.1
 	k8s.io/metrics v0.23.6
 	k8s.io/utils v0.0.0-20220812165043-ad590609e2e5
@@ -284,7 +284,7 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198 // indirect
-	github.com/opencontainers/runc v1.1.2 // indirect
+	github.com/opencontainers/runc v1.1.3 // indirect
 	github.com/opencontainers/selinux v1.10.0 // indirect
 	github.com/openshift/api v0.0.0-20211209135129-c58d9f695577 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
