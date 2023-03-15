@@ -1,0 +1,23 @@
+apiVersion: v2
+appVersion: 0.0.0
+dependencies:
+  - name: common
+    repository: https://charts.kubegems.io/kubegems
+    version: 1.x.x
+description: KubeGems appstore and application center.
+home: kubegems.io
+keywords:
+  - kubegems
+maintainers:
+  - email: support@kubegems.io
+    name: KubeGems
+name: kubegems-apps
+sources:
+  - https://kubegems.io
+version: 0.0.0
+annotations:
+  plugins.kubegems.io/is-plugin: "true"
+  plugins.kubegems.io/install-namespace: "kubegems"
+  plugins.kubegems.io/category: core/KubeGems
+  plugins.kubegems.io/render-by: helm
+  plugins.kubegems.io/requirements: kubegems >= 1.24.0

@@ -82,17 +82,13 @@ spec:
             {{- end }}
           {{- end }}
           env:
-            {{- include "kubegems.common.env" . | indent 12 }}
-            - name: KUBEGEMS_DEBUG
-              value: {{ ternary "true" "false" (or .Values.worker.image.debug ) | quote }}
-            - name: LOG_LEVEL
-              value: {{ .Values.worker.logLevel }}
+            {{- include "kubegems.database.env" . | indent 12 }}
+            {{- include "kubegems.section.env" (dict "name" "kubegems-msgbus" "root" .Values.msgbus ) | indent 12 }}
+            {{- include "kubegems.apps.env" . | indent 12 }}
             {{- if .Values.worker.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
           envFrom:
-            - secretRef:
-                name: {{ include "kubegems.secret.fullname" . }}
             {{- if .Values.worker.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.worker.extraEnvVarsCM "context" $) }}

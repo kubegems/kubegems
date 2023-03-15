@@ -1,0 +1,6 @@
+dependencies:
+- name: common
+  repository: https://charts.kubegems.io/kubegems
+  version: 1.0.0
+digest: sha256:c6170500a07df56bf0d6bea4282cf328cabfb7c6200e54d82ce94c06ae56682b
+generated: "2023-02-27T12:04:34.597537733+08:00"

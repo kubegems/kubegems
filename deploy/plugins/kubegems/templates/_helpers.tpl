@@ -73,7 +73,7 @@ Return the proper kubegems.api image name
 {{- end -}}
 
 {{- define "kubegems.init.charts.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global "root" .) }}
+{{ include "common.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{- define "kubegems.init.charts.fullname" -}}

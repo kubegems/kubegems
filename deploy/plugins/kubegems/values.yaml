@@ -2164,3 +2164,9 @@ chartmuseum:
 externalAppstore:
   enabled: false
   address: "https://chartmuseum.example.com"
+
+# @title 应用管理模块
+kubegems-apps:
+  # @title 启用
+  # default enable app center for backcompact
+  enabled: true

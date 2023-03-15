@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "启用",
+      "default": true,
+      "form": true
+    }
+  },
+  "$schema": "http://json-schema.org/schema#"
+}

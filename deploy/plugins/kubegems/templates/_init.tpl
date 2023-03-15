@@ -12,10 +12,7 @@
   - --initdata
   {{- end }}
   env:
-  {{- include "kubegems.common.env" . | indent 2 }}
-  envFrom:
-  - secretRef:
-      name: {{ template "kubegems.secret.fullname" . }}
+  {{- include "kubegems.database.env" . | indent 2 }}
   {{- if .Values.init.extraEnvVarsCM }}
   - configMapRef:
       name: {{ include "common.tplvalues.render" (dict "value" .Values.init.extraEnvVarsCM "context" $) }}

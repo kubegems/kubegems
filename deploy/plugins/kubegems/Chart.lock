@@ -18,4 +18,4 @@ dependencies:
   repository: https://charts.kubegems.io/kubegems
   version: 3.8.0
 digest: sha256:5dffb9d53e278c61166eb9a2bb91dd3013fc80d1fbb7e06806988635163766d8
-generated: "2022-12-21T06:11:14.140462625-07:00"
+generated: "2023-02-27T11:12:23.734619589+08:00"
