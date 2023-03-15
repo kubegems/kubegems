@@ -27,9 +27,7 @@ import (
 )
 
 func registPlugins(rg *gin.RouterGroup, basehandler base.BaseHandler) error {
-	configPlugin, err := cserice.NewPlugin(&PluginInfoGetter{
-		BaseHandler: basehandler,
-	}, basehandler.GetDB())
+	configPlugin, err := cserice.NewPlugin(&PluginInfoGetter{BaseHandler: basehandler}, basehandler.GetDB())
 	if err != nil {
 		return err
 	}
