@@ -38,7 +38,7 @@ type Dependencies struct {
 	Redis     *redis.Client
 	Databse   *database.Database
 	Argocli   *argo.Client
-	Git       *git.SimpleLocalProvider
+	Git       git.Provider
 	Agentscli *agents.ClientSet
 	Logger    logr.Logger
 }
@@ -63,16 +63,10 @@ func prepareDependencies(ctx context.Context, options *Options) (*Dependencies, 
 		return nil, err
 	}
 	// git
-	gitprovider, err := git.NewProvider(options.Git)
-	if err != nil {
-		return nil, err
-	}
-
+	gitprovider := git.NewLazyProvider(options.Git)
 	// argo
-	argocli, err := argo.NewClient(ctx, options.Argo)
-	if err != nil {
-		return nil, err
-	}
+	argocli := argo.NewLazyClient(ctx, options.Argo)
+
 	return &Dependencies{
 		Redis:     rediscli,
 		Databse:   databasecli,

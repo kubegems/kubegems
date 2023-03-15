@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package applications
+package api
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/kubegems/pkg/service/handlers/application"
+	"kubegems.io/kubegems/pkg/apps/application"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/route"
 )

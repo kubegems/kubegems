@@ -93,10 +93,7 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 	}
 
 	// argo 客户端
-	argocli, err := argo.NewClient(ctx, options.Argo)
-	if err != nil {
-		return nil, fmt.Errorf("初始化argocd client错误 %v", err)
-	}
+	argocli := argo.NewLazyClient(ctx, options.Argo)
 
 	// switcher 实例
 	switcher := switcher.NewMessageSwitch(ctx, db)

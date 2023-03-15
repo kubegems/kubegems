@@ -15,7 +15,7 @@
 package task
 
 import (
-	"kubegems.io/kubegems/pkg/service/handlers/application"
+	"kubegems.io/kubegems/pkg/apps/application"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
@@ -27,7 +27,7 @@ type ApplicationTasker struct {
 	*application.ApplicationProcessor
 }
 
-func MustNewApplicationTasker(db *database.Database, gitp *git.SimpleLocalProvider, argo *argo.Client, redis *redis.Client, agents *agents.ClientSet) *ApplicationTasker {
+func MustNewApplicationTasker(db *database.Database, gitp git.Provider, argo *argo.Client, redis *redis.Client, agents *agents.ClientSet) *ApplicationTasker {
 	app := application.NewApplicationProcessor(db, gitp, argo, redis, agents)
 	return &ApplicationTasker{ApplicationProcessor: app}
 }

@@ -43,7 +43,7 @@ const (
 )
 
 type ManifestProcessor struct {
-	GitProvider *git.SimpleLocalProvider
+	GitProvider git.Provider
 }
 
 func NewManifestProcessor(GitProvider *git.SimpleLocalProvider) (*ManifestProcessor, error) {

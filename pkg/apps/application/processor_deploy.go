@@ -87,7 +87,7 @@ type ApplicationProcessor struct {
 	argostatuscache *sync.Map
 }
 
-func NewApplicationProcessor(db *database.Database, gitp *git.SimpleLocalProvider, argo *argo.Client, redis *redis.Client, agents *agents.ClientSet) *ApplicationProcessor {
+func NewApplicationProcessor(db *database.Database, gitp git.Provider, argo *argo.Client, redis *redis.Client, agents *agents.ClientSet) *ApplicationProcessor {
 	p := &ApplicationProcessor{
 		Agents:   agents,
 		Argo:     argo,

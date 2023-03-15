@@ -40,6 +40,11 @@ const (
 	DefaultBranch = "_base"
 )
 
+type Provider interface {
+	Options() *Options
+	Get(context.Context, RepositoryRef) (*Repository, error)
+}
+
 type SimpleLocalProvider struct {
 	options     *Options
 	gitea       *GiteaRemote
@@ -54,6 +59,45 @@ type cacheKey struct {
 	Repo   string
 	Branch string
 }
+
+var _ Provider = &LazySimpleLocalProvider{}
+
+func NewLazyProvider(options *Options) *LazySimpleLocalProvider {
+	return &LazySimpleLocalProvider{options: options}
+}
+
+type LazySimpleLocalProvider struct {
+	inner   *SimpleLocalProvider
+	options *Options
+}
+
+func (p *LazySimpleLocalProvider) Options() *Options {
+	if p.inner == nil {
+		return &Options{}
+	}
+	return p.inner.Options()
+}
+
+func (p *LazySimpleLocalProvider) Get(ctx context.Context, ref RepositoryRef) (*Repository, error) {
+	in, err := p.provider()
+	if err != nil {
+		return nil, err
+	}
+	return in.Get(ctx, ref)
+}
+
+func (p *LazySimpleLocalProvider) provider() (*SimpleLocalProvider, error) {
+	if p.inner == nil {
+		i, err := NewProvider(p.options)
+		if err != nil {
+			return nil, err
+		}
+		p.inner = i
+	}
+	return p.inner, nil
+}
+
+var _ Provider = &SimpleLocalProvider{}
 
 func NewProvider(options *Options) (*SimpleLocalProvider, error) {
 	giteacli, err := gitea.NewClient(options.Addr, gitea.SetBasicAuth(options.Username, options.Password))

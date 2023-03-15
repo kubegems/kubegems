@@ -27,6 +27,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/errgroup"
+	"kubegems.io/kubegems/pkg/apps"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	msgbus "kubegems.io/kubegems/pkg/msgbus/client"
@@ -38,9 +39,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	alerthandler "kubegems.io/kubegems/pkg/service/handlers/alerts"
 	announcement "kubegems.io/kubegems/pkg/service/handlers/announcement"
-	applicationhandler "kubegems.io/kubegems/pkg/service/handlers/application"
 	approveHandler "kubegems.io/kubegems/pkg/service/handlers/approve"
-	appstorehandler "kubegems.io/kubegems/pkg/service/handlers/appstore"
 	auditloghandler "kubegems.io/kubegems/pkg/service/handlers/auditlog"
 	authsource "kubegems.io/kubegems/pkg/service/handlers/authsource"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
@@ -106,7 +105,7 @@ type Router struct {
 	Database      *database.Database
 	Redis         *redis.Client
 	Argo          *argo.Client
-	GitProvider   *git.SimpleLocalProvider
+	GitProvider   git.Provider
 	auditInstance *audit.DefaultAuditInstance
 	gin           *gin.Engine
 }
@@ -197,14 +196,7 @@ func (r *Router) Complete(ctx context.Context) error {
 	router.GET("/v1/version", func(c *gin.Context) { handlers.OK(c, version.Get()) })
 
 	// inner go-restful router no auth required
-	if err := r.AddRestAPI(ctx, apis.Dependencies{
-		Opts:     r.Opts,
-		Agents:   r.Agents,
-		Database: r.Database,
-		Gitp:     r.GitProvider,
-		Argo:     r.Argo,
-		Redis:    r.Redis,
-	}); err != nil {
+	if err := r.AddRestAPI(ctx, apis.Dependencies{Opts: r.Opts, Agents: r.Agents, Database: r.Database, Redis: r.Redis}); err != nil {
 		log.Errorf("add new restful error: %v", err)
 		return err
 	}
@@ -298,10 +290,6 @@ func (r *Router) Complete(ctx context.Context) error {
 	myHandler := &myinfohandler.MyHandler{BaseHandler: basehandler}
 	myHandler.RegistRouter(rg)
 
-	// 应用商店
-	appstoreHandler := &appstorehandler.AppstoreHandler{BaseHandler: basehandler, AppStoreOpt: r.Opts.Appstore}
-	appstoreHandler.RegistRouter(rg)
-
 	// 镜像仓库
 	registryHandler := &registryhandler.RegistryHandler{BaseHandler: basehandler}
 	registryHandler.RegistRouter(rg)
@@ -334,10 +322,6 @@ func (r *Router) Complete(ctx context.Context) error {
 	selHandler := &sel.SelsHandler{BaseHandler: basehandler}
 	selHandler.RegistRouter(rg)
 
-	// app handler
-	appHandler := applicationhandler.MustNewApplicationDeployHandler(r.Opts.Git, r.Argo, basehandler)
-	appHandler.RegistRouter(rg)
-
 	// authsource
 	authSourceHandler.RegistRouter(rg)
 
@@ -354,6 +338,9 @@ func (r *Router) Complete(ctx context.Context) error {
 	(&observability.ObservabilityHandler{BaseHandler: basehandler, AppStoreOpt: r.Opts.Appstore}).RegistRouter(rg)
 
 	(&announcement.AnnouncementHandler{BaseHandler: basehandler}).RegistRouter(rg)
+
+	// app center and app store
+	apps.RegistRouter(rg, r.GitProvider, r.Argo, r.Opts.Appstore, basehandler)
 
 	// workload 的反向代理
 	proxyHandler := proxyhandler.ProxyHandler{BaseHandler: basehandler}

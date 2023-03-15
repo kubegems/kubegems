@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
+	"k8s.io/client-go/rest"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -43,6 +44,7 @@ type Client interface {
 	BaseAddr() url.URL
 	APIServerAddr() url.URL
 	APIServerVersion() string
+	RestConfig() *rest.Config
 	// Deprecated: remove
 	Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error
 }
@@ -70,6 +72,7 @@ type DelegateClient struct {
 	baseaddr      *url.URL
 	apiserverAddr *url.URL
 	discovery     discovery.DiscoveryInterface
+	kubeconfig    *rest.Config
 }
 
 func (c *DelegateClient) Extend() *ExtendClient {
@@ -86,6 +89,10 @@ func (c *DelegateClient) BaseAddr() url.URL {
 
 func (c *DelegateClient) APIServerAddr() url.URL {
 	return *c.apiserverAddr
+}
+
+func (c *DelegateClient) RestConfig() *rest.Config {
+	return c.kubeconfig
 }
 
 func (c *DelegateClient) APIServerVersion() string {

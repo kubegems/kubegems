@@ -26,9 +26,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/apis/plugins"
 	"kubegems.io/kubegems/pkg/service/options"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
-	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/redis"
 )
@@ -39,8 +37,6 @@ type Dependencies struct {
 	Opts     *options.Options
 	Agents   *agents.ClientSet
 	Database *database.Database
-	Gitp     *git.SimpleLocalProvider
-	Argo     *argo.Client
 	Redis    *redis.Client
 }
 
