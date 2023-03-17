@@ -69,7 +69,7 @@ func Run(ctx context.Context, options *Options) error {
 		Client:      mgr.GetClient(),
 		EdgeClients: holder,
 	}
-	if err := r.SetupWithManager(ctx, mgr, options.MaxConcurrentReconciles); err != nil {
+	if err := r.SetupWithManager(ctx, mgr, options); err != nil {
 		log.Error(err, "unable to create controller", "controller", "EdgeTask")
 	}
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

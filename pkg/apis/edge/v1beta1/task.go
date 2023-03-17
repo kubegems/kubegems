@@ -34,6 +34,8 @@ type EdgeTask struct {
 }
 
 type EdgeTaskSpec struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
 	EdgeClusterName string `json:"edgeClusterName,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Resources []runtime.RawExtension `json:"resources,omitempty"`
@@ -59,20 +61,27 @@ type EdgeTaskResourceStatus struct {
 	Kind        string                  `json:"kind,omitempty"`
 	Name        string                  `json:"name,omitempty"`
 	Namespace   string                  `json:"namespace,omitempty"`
-	Exists      bool                    `json:"exists,omitempty"` // resource exists in edge cluster
-	Ready       bool                    `json:"ready,omitempty"`  // resource is ready in edge cluster
-	Message     string                  `json:"message,omitempty"`
 	Annotations map[string]string       `json:"annotations,omitempty"`
+	Exists      bool                    `json:"exists,omitempty"`
+	Ready       bool                    `json:"ready,omitempty"`
+	Message     string                  `json:"message,omitempty"`
 	Events      []EdgeTaskResourceEvent `json:"events,omitempty"`
+	Status      runtime.RawExtension    `json:"status,omitempty"`
+	PodsStatus  []EdgeTaskPodStatus     `json:"podsStatus,omitempty"`
+}
+
+type EdgeTaskPodStatus struct {
+	Name   string                  `json:"name,omitempty"`
+	Status corev1.PodStatus        `json:"status,omitempty"`
+	Events []EdgeTaskResourceEvent `json:"events,omitempty"` // current resource events
 }
 
 type EdgeTaskResourceEvent struct {
-	InvolvedObject corev1.ObjectReference `json:"involvedObject"`
-	Type           string                 `json:"type,omitempty"`
-	Reason         string                 `json:"reason,omitempty"`
-	Message        string                 `json:"message,omitempty"`
-	Count          int32                  `json:"count,omitempty"`
-	LastTimestamp  metav1.Time            `json:"lastTimestamp,omitempty"`
+	Type          string      `json:"type,omitempty"`
+	Reason        string      `json:"reason,omitempty"`
+	Message       string      `json:"message,omitempty"`
+	Count         int32       `json:"count,omitempty"`
+	LastTimestamp metav1.Time `json:"lastTimestamp,omitempty"`
 }
 
 const (
