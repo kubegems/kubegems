@@ -45,7 +45,7 @@ import (
 )
 
 const (
-	PluginsControllerConcurrency = 1
+	PluginsControllerConcurrency = 3
 	FinalizerName                = "plugins.kubegems.io/finalizer"
 )
 
