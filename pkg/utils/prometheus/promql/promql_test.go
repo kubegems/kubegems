@@ -24,8 +24,7 @@ import (
 
 func TestQuery_AddLabelMatchers(t *testing.T) {
 	type fields struct {
-		Expr  parser.Expr
-		round float64
+		Expr parser.Expr
 	}
 	type args struct {
 		matchers []*labels.Matcher
@@ -55,6 +54,22 @@ func TestQuery_AddLabelMatchers(t *testing.T) {
 				},
 			},
 			want: `gems_container_cpu_usage_cores{container=~"c1",pod="mypod"}`,
+		},
+		{
+			name: "empty label value",
+			fields: fields{
+				Expr: parseExpr("gems_container_cpu_usage_cores"),
+			},
+			args: args{
+				matchers: []*labels.Matcher{
+					{
+						Name:  "container",
+						Type:  labels.MatchNotEqual,
+						Value: "",
+					},
+				},
+			},
+			want: `gems_container_cpu_usage_cores{container!=""}`,
 		},
 		{
 			name: "function call",
