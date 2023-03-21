@@ -1840,10 +1840,11 @@ func (p *AlertRuleProcessor) GetK8sAlertCfg(ctx context.Context) (map[string]K8s
 
 func (h *ObservabilityHandler) syncAlertRulesWithTimeout(ctx context.Context, alertrules []*models.AlertRule, timeout time.Duration) (status map[string]bool, isTimeout bool) {
 	// sync alert rules
-	tmp := sync.Map{}
+	status = map[string]bool{}
 	wg := &sync.WaitGroup{}
+	m := sync.Mutex{}
 	for _, v := range alertrules {
-		tmp.Store(v.FullName(), false)
+		status[v.FullName()] = false
 		wg.Add(1)
 		go func(alertrule *models.AlertRule) {
 			defer wg.Done()
@@ -1853,14 +1854,12 @@ func (h *ObservabilityHandler) syncAlertRulesWithTimeout(ctx context.Context, al
 				log.Warnf("%s alert rule: %s sync failed", alertrule.AlertType, alertrule.FullName())
 				return
 			}
-			tmp.Store(alertrule.FullName(), true)
+			m.Lock()
+			status[alertrule.FullName()] = true
+			m.Unlock()
 		}(v)
 	}
-	status = map[string]bool{}
-	tmp.Range(func(key, value any) bool {
-		status[key.(string)] = value.(bool)
-		return true
-	})
+
 	isTimeout = utils.WaitGroupWithTimeout(wg, timeout)
 	if isTimeout {
 		log.Warnf("Timed out waiting for wait group")
