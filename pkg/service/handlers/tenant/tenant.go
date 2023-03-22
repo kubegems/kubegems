@@ -836,6 +836,11 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 	}
 	ctx := c.Request.Context()
 
+	if len(obj.Content) == 0 {
+		handlers.NotOK(c, i18n.Errorf(c, "content is empty"))
+		return
+	}
+
 	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&obj).Error; err != nil {
 			return err
