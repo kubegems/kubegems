@@ -53,6 +53,7 @@ const (
 	AnnotationKeyAPIserverAddress           = "edge.kubegems.io/apiserver-address"
 	AnnotationKeyNodesCount                 = "edge.kubegems.io/nodes-count"
 	AnnotationKeyDeviceID                   = "edge.kubegems.io/device-id"
+	AnnotationKeyExternalIP                 = "edge.kubegems.io/external-ip"
 
 	// temporary connection do not write to database
 	AnnotationIsTemporaryConnect = "edge.kubegems.io/temporary-connect"

@@ -20,6 +20,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -139,6 +141,7 @@ func (ea *EdgeAgent) getAnnotations(ctx context.Context) tunnel.Annotations {
 		common.AnnotationKeyAPIserverAddress:           ea.config.Host,
 		common.AnnotationKeyKubernetesVersion:          sv.String(),
 		common.AnnotationKeyNodesCount:                 strconv.Itoa(len(nodeList.Items)),
+		common.AnnotationKeyExternalIP:                 DetectExternalIP(),
 	}
 	maps.Copy(annotations, ea.manufectures)
 	ea.annotations = annotations
@@ -266,4 +269,14 @@ func ParseJSONFile(content []byte) (map[string]string, error) {
 		}
 	}
 	return ret, nil
+}
+
+func DetectExternalIP() string {
+	resp, err := http.Get("http://ip.cloudminds.com")
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	return string(body)
 }
