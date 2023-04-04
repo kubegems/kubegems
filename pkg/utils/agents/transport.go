@@ -16,58 +16,51 @@ package agents
 
 import (
 	"net/http"
-	"net/url"
 
 	"kubegems.io/kubegems/pkg/utils/httpsigs"
 )
 
-type AuthInfo struct {
-	ClientCertificate []byte `json:"clientCertificate,omitempty"`
-	ClientKey         []byte `json:"clientKey,omitempty"`
-	Token             string `json:"token,omitempty"`
-	Username          string `json:"username,omitempty"`
-	Password          string `json:"password,omitempty"`
+func (auth *Auth) IsEmpty() bool {
+	return auth.Token == "" && auth.Username == "" && auth.Password == ""
 }
 
-func (auth *AuthInfo) IsEmpty() bool {
-	return len(auth.ClientCertificate) == 0 && len(auth.ClientKey) == 0 && auth.Token == "" && auth.Username == "" && auth.Password == ""
-}
-
-func (auth *AuthInfo) Proxy(req *http.Request) (*url.URL, error) {
-	if auth.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+auth.Token)
-		return nil, nil
-	}
-	if _, _, exist := req.BasicAuth(); !exist && auth.Username != "" {
-		req.SetBasicAuth(auth.Username, auth.Password)
-		return nil, nil
-	}
-	return nil, nil
-}
-
-func httpSigner(basepath string) func(req *http.Request) (*url.URL, error) {
+func NewHTTPSigner(basepath string) func(req *http.Request) error {
 	signer := httpsigs.GetSigner()
-	return func(req *http.Request) (*url.URL, error) {
+	return func(req *http.Request) error {
 		signer.Sign(req, basepath)
-		return nil, nil
+		return nil
 	}
 }
 
-type ChainedProxy []func(*http.Request) (*url.URL, error)
-
-func (pc ChainedProxy) Proxy(req *http.Request) (*url.URL, error) {
-	var finalurl *url.URL
-	for _, p := range pc {
-		if p == nil {
-			continue
-		}
-		url, err := p(req)
-		if err != nil {
-			return nil, err
-		}
-		if url != nil {
-			finalurl = url
-		}
+func NewTokenAuth(token string) func(req *http.Request) error {
+	return func(req *http.Request) error {
+		req.Header.Set("Authorization", "Bearer "+token)
+		return nil
 	}
-	return finalurl, nil
+}
+
+func NewBasicAuth(username, password string) func(req *http.Request) error {
+	return func(req *http.Request) error {
+		req.SetBasicAuth(username, password)
+		return nil
+	}
+}
+
+type RoundTripperFunc func(req *http.Request) (*http.Response, error)
+
+func (c RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return c(req)
+}
+
+// RoundTripOf
+func RoundTripOf(cli Client) http.RoundTripper {
+	return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		return cli.DoRawRequest(req.Context(), Request{
+			Method:  req.Method,
+			Path:    req.URL.Path,
+			Query:   req.URL.Query(),
+			Headers: req.Header,
+			Body:    req.Body,
+		})
+	})
 }

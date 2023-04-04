@@ -799,10 +799,10 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// contaienr restart
 		eg.Go(func() error {
-			containerRestart, err := cli.Extend().PrometheusVector(ctx,
-				fmt.Sprintf(`sum(increase(kube_pod_container_status_restarts_total{namespace="%s"}[%s]))`, env.Namespace, dur))
+			query := fmt.Sprintf(`sum(increase(kube_pod_container_status_restarts_total{namespace="%s"}[%s]))`, env.Namespace, dur)
+			containerRestart, err := cli.Extend().PrometheusVector(ctx, query)
 			if err != nil {
-				return err
+				return fmt.Errorf("prometheus vector query [%s] : %w", query, err)
 			}
 			if containerRestart.Len() == 0 {
 				ret.ContainerRestartTotal = 0
@@ -814,10 +814,10 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// cpu
 		eg.Go(func() error {
-			cpu, err := cli.Extend().PrometheusVector(ctx,
-				fmt.Sprintf(`round(gems_namespace_cpu_usage_cores{namespace="%s"}, 0.01)`, env.Namespace))
+			query := fmt.Sprintf(`round(gems_namespace_cpu_usage_cores{namespace="%s"}, 0.01)`, env.Namespace)
+			cpu, err := cli.Extend().PrometheusVector(ctx, query)
 			if err != nil {
-				return err
+				return fmt.Errorf("prometheus vector query [%s] : %w", query, err)
 			}
 			if cpu.Len() == 0 {
 				ret.CPU = ""
@@ -829,10 +829,10 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 
 		// memory
 		eg.Go(func() error {
-			memory, err := cli.Extend().PrometheusVector(ctx,
-				fmt.Sprintf(`gems_namespace_memory_usage_bytes{namespace="%s"}`, env.Namespace))
+			query := fmt.Sprintf(`gems_namespace_memory_usage_bytes{namespace="%s"}`, env.Namespace)
+			memory, err := cli.Extend().PrometheusVector(ctx, query)
 			if err != nil {
-				return err
+				return fmt.Errorf("prometheus vector query [%s] : %w", query, err)
 			}
 			if memory.Len() == 0 {
 				ret.Memory = ""
@@ -862,20 +862,20 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 		})
 
 		eg.Go(func() error {
-			resp, err := cli.Extend().LokiQuery(ctx,
-				fmt.Sprintf(`sum(count_over_time({namespace="%s", container="event-exporter"}| json | line_format "{{.metadata_namespace}}" |= "%s" [%s]))`, gems.NamespaceEventer, env.Namespace, dur))
+			query := fmt.Sprintf(`sum(count_over_time({namespace="%s", container="event-exporter"}| json | line_format "{{.metadata_namespace}}" |= "%s" [%s]))`, gems.NamespaceEventer, env.Namespace, dur)
+			resp, err := cli.Extend().LokiQuery(ctx, query)
 			if err != nil {
-				return err
+				return fmt.Errorf("loki query [%s]: %w", query, err)
 			}
 			ret.EventCount = getLokiRespValue(resp)
 			return nil
 		})
 
 		eg.Go(func() error {
-			resp, err := cli.Extend().PrometheusVector(ctx,
-				fmt.Sprintf(`sum(sum_over_time(gems_loki_error_logs_count_last_1m{namespace="%s"}[%s]))`, env.Namespace, dur))
+			query := fmt.Sprintf(`sum(sum_over_time(gems_loki_error_logs_count_last_1m{namespace="%s"}[%s]))`, env.Namespace, dur)
+			resp, err := cli.Extend().PrometheusVector(ctx, query)
 			if err != nil {
-				return err
+				return fmt.Errorf("prometheus vector query [%s]: %w", query, err)
 			}
 			if resp.Len() > 0 {
 				ret.ErrorLogCount = int(resp[0].Value)
@@ -884,10 +884,10 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 		})
 
 		eg.Go(func() error {
-			resp, err := cli.Extend().PrometheusVector(ctx,
-				fmt.Sprintf(`sum(gems_loki_logs_count_last_1m{namespace="%s"})`, env.Namespace))
+			query := fmt.Sprintf(`sum(gems_loki_logs_count_last_1m{namespace="%s"})`, env.Namespace)
+			resp, err := cli.Extend().PrometheusVector(ctx, query)
 			if err != nil {
-				return err
+				return fmt.Errorf("prometheus vector query [%s]: %w", query, err)
 			}
 			if resp.Len() > 0 {
 				ret.LogRate = fmt.Sprintf("%d/min", int(resp[0].Value))
@@ -906,15 +906,16 @@ func (h *EnvironmentHandler) EnvironmentObservabilityDetails(c *gin.Context) {
 }
 
 func getLokiRespValue(resp loki.QueryResponseData) int {
-	if len(resp.Result) > 0 {
-		if result, ok := resp.Result[0].(map[string]interface{}); ok {
-			value := result["value"]
-			if vals, ok := value.([]interface{}); ok {
-				for _, v := range vals {
-					if count, ok := v.(string); ok {
-						ret, _ := strconv.Atoi(count)
-						return ret
-					}
+	if len(resp.Result) == 0 {
+		return 0
+	}
+	if result, ok := resp.Result[0].(map[string]interface{}); ok {
+		value := result["value"]
+		if vals, ok := value.([]interface{}); ok {
+			for _, v := range vals {
+				if count, ok := v.(string); ok {
+					ret, _ := strconv.Atoi(count)
+					return ret
 				}
 			}
 		}

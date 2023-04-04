@@ -16,8 +16,6 @@ package agents
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"net/url"
 	"sync"
@@ -52,25 +50,6 @@ func (h *ClientSet) Name() string {
 
 func NewClientSet(database *database.Database) (*ClientSet, error) {
 	return &ClientSet{database: database, tracer: otel.GetTracerProvider().Tracer("kubegems.io/kubegems")}, nil
-}
-
-func ApiServerProxyPath(namespace, schema, svcname, port string) string {
-	if namespace == "" {
-		namespace = "kubegems-local"
-	}
-	if svcname == "" {
-		svcname = "kubegems-local-agent"
-	}
-	if port == "" {
-		port = "http" // include https
-	}
-	if schema != "" {
-		template := "/api/v1/namespaces/%s/services/%s:%s:%s/proxy"
-		return fmt.Sprintf(template, namespace, schema, svcname, port)
-	} else {
-		template := "/api/v1/namespaces/%s/services/%s:%s/proxy"
-		return fmt.Sprintf(template, namespace, svcname, port)
-	}
 }
 
 func (h *ClientSet) Clusters() []string {
@@ -125,139 +104,91 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 		return nil, fmt.Errorf("invalid client type: %T", v)
 	}
 
-	meta, err := h.newClientMeta(ctx, name)
+	cli, err := h.newClientFor(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	clientset, err := kubernetes.NewForConfig(meta.ServerInfo.RestConfig)
-	if err != nil {
-		return nil, err
-	}
-	cli := newClient(*meta, clientset, h.tracer)
+
 	h.clients.Store(name, cli)
 	return cli, nil
 }
 
-func (h *ClientSet) serverInfoOf(ctx context.Context, cluster *models.Cluster) (*serverInfo, error) {
-	serverinfo := &serverInfo{}
+func (h *ClientSet) newClientFor(ctx context.Context, name string) (Client, error) {
+	clientOptions, kubeconfig, err := h.ClientOptionsFrom(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	clientset, err := kubernetes.NewForConfig(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+	apiserveraddr, _ := url.Parse(kubeconfig.Host)
+	cli := NewDelegateClientClient(clientOptions, name, apiserveraddr, clientset.Discovery(), h.tracer)
+	return cli, nil
+}
 
+func (h *ClientSet) ClientOptionsFrom(ctx context.Context, name string) (*ClientOptions, *rest.Config, error) {
+	cluster := &models.Cluster{}
+	if err := h.database.DB().WithContext(ctx).First(&cluster, "cluster_name = ?", name).Error; err != nil {
+		return nil, nil, err
+	}
 	// from origin
 	if len(cluster.KubeConfig) == 0 || cluster.AgentAddr != "" {
 		baseaddr, err := url.Parse(cluster.AgentAddr)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		serverinfo.Addr = baseaddr
-		serverinfo.CA = []byte(cluster.AgentCA)
-
-		serverinfo.AuthInfo.ClientCertificate = []byte(cluster.AgentCert)
-		serverinfo.AuthInfo.ClientKey = []byte(cluster.AgentKey)
-
-		return serverinfo, nil
+		tlscfg, err := TLSConfigFrom([]byte(cluster.AgentCA), []byte(cluster.AgentCert), []byte(cluster.AgentKey))
+		if err != nil {
+			return nil, nil, err
+		}
+		info := &ClientOptions{
+			Addr: baseaddr,
+			TLS:  tlscfg,
+		}
+		return info, nil, nil
 	}
-
 	// from kubeconfig
-	kubeconfig := []byte(cluster.KubeConfig)
-	restconfig, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	restconfig, err := clientcmd.RESTConfigFromKubeConfig([]byte(cluster.KubeConfig))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-
-	cluster.APIServer = restconfig.Host
-
-	// complete server info
-	path := ApiServerProxyPath(cluster.InstallNamespace, "https", "", "")
-	baseaddr, err := url.Parse(restconfig.Host + path)
+	// use apiserver proxy to access agent
+	baseaddr, err := url.Parse(restconfig.Host + ApiServerProxyPath(cluster.InstallNamespace, "https", "", ""))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	serverinfo.Addr = baseaddr
-	serverinfo.CA = restconfig.TLSClientConfig.CAData
-	serverinfo.RestConfig = restconfig
-
-	// complete auth info
-	if authinfo := &serverinfo.AuthInfo; authinfo.IsEmpty() {
-		transportconfig, err := restconfig.TransportConfig()
-		if err != nil {
-			return nil, err
-		}
-		switch {
-		case transportconfig.HasBasicAuth():
-			authinfo.Username = transportconfig.Username
-			authinfo.Password = transportconfig.Password
-		case transportconfig.HasTokenAuth():
-			authinfo.Token = transportconfig.BearerToken
-		case transportconfig.HasCertAuth():
-			authinfo.ClientCertificate = transportconfig.TLS.CertData
-			authinfo.ClientKey = transportconfig.TLS.KeyData
-		}
+	tlscfg, err := TLSConfigFrom(restconfig.TLSClientConfig.CAData, restconfig.TLSClientConfig.CertData, restconfig.TLSClientConfig.KeyData)
+	if err != nil {
+		return nil, nil, err
 	}
-	return serverinfo, nil
+	serverinfo := &ClientOptions{
+		Addr: baseaddr,
+		TLS:  tlscfg,
+		Auth: Auth{
+			Token:    restconfig.BearerToken,
+			Username: restconfig.Username,
+			Password: restconfig.Password,
+		},
+	}
+	return serverinfo, restconfig, nil
 }
 
-type serverInfo struct {
-	Addr       *url.URL
-	CA         []byte
-	AuthInfo   AuthInfo
-	RestConfig *rest.Config
-}
-
-func (s *serverInfo) TLSConfig() (*tls.Config, error) {
-	caCertPool, err := x509.SystemCertPool()
-	if err != nil {
-		caCertPool = x509.NewCertPool()
+func ApiServerProxyPath(namespace, schema, svcname, port string) string {
+	if namespace == "" {
+		namespace = "kubegems-local"
 	}
-	if s.CA != nil {
-		caCertPool.AppendCertsFromPEM(s.CA)
+	if svcname == "" {
+		svcname = "kubegems-local-agent"
 	}
-	tlsconfig := &tls.Config{RootCAs: caCertPool}
-	cert, key := s.AuthInfo.ClientCertificate, s.AuthInfo.ClientKey
-	if len(cert) > 0 && len(key) > 0 {
-		certificate, err := tls.X509KeyPair(cert, key)
-		if err != nil {
-			return nil, err
-		}
-		tlsconfig.Certificates = append(tlsconfig.Certificates, certificate)
+	if port == "" {
+		port = "http" // include https
 	}
-	return tlsconfig, nil
-}
-
-func (h *ClientSet) newClientMeta(ctx context.Context, name string) (*ClientMeta, error) {
-	cluster := &models.Cluster{}
-	if err := h.database.DB().WithContext(ctx).First(&cluster, "cluster_name = ?", name).Error; err != nil {
-		return nil, err
+	if schema != "" {
+		template := "/api/v1/namespaces/%s/services/%s:%s:%s/proxy"
+		return fmt.Sprintf(template, namespace, schema, svcname, port)
+	} else {
+		template := "/api/v1/namespaces/%s/services/%s:%s/proxy"
+		return fmt.Sprintf(template, namespace, svcname, port)
 	}
-
-	serverinfo, err := h.serverInfoOf(ctx, cluster)
-	if err != nil {
-		return nil, err
-	}
-	baseaddr := serverinfo.Addr
-
-	// TODO: consider replace with baseaddr
-	apiserveraddr, err := url.Parse(cluster.APIServer)
-	if err != nil {
-		return nil, err
-	}
-
-	proxy := ChainedProxy{
-		httpSigner(baseaddr.Path), // http sig
-		serverinfo.AuthInfo.Proxy, // basic auth / token auth
-	}
-
-	// tls
-	tlsconfig, err := serverinfo.TLSConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	climeta := &ClientMeta{
-		Name:          name,
-		BaseAddr:      baseaddr,
-		APIServerAddr: apiserveraddr,
-		TLSConfig:     tlsconfig,
-		ServerInfo:    *serverinfo,
-		Proxy:         proxy.Proxy,
-	}
-	return climeta, nil
 }

@@ -83,27 +83,8 @@ func (h *ProxyHandler) ReverseProxyOn(cli agents.Client) *httputil.ReverseProxy 
 		Director: func(req *http.Request) {
 			req.URL.Path = getTargetPath(cli.Name(), req)
 		},
-		Transport: RoundTripOf(cli),
+		Transport: agents.RoundTripOf(cli),
 	}
-}
-
-// RoundTripOf
-func RoundTripOf(cli agents.Client) http.RoundTripper {
-	return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-		return cli.DoRawRequest(req.Context(), agents.Request{
-			Method:  req.Method,
-			Path:    req.URL.Path,
-			Query:   req.URL.Query(),
-			Headers: req.Header,
-			Body:    req.Body,
-		})
-	})
-}
-
-type RoundTripperFunc func(req *http.Request) (*http.Response, error)
-
-func (c RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return c(req)
 }
 
 func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
