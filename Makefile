@@ -116,8 +116,13 @@ define go-build
 	@CGO_ENABLED=0 GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-edge-agent-$(1)-$(2) pkg/edge/cmd/kubegems-edge-agent/main.go
 endef
 
+define go-build-tools
+	@echo "Building tools in dir tools/${1}"
+	@pushd tools/${1} && CGO_ENABLED=0 GOOS=${2} GOARCH=$(3) go build -gcflags=all="-N -l" -o bin/${1}-$(2)-$(3) . && popd
+endef
+
 ##@ Build
-build: build-files build-binaries-all
+build: build-files build-binaries-all build-tools
 
 build-binaries-all: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
@@ -128,6 +133,12 @@ build-binaries:
 	$(call go-build,${OS},${ARCH})
 	- mkdir -p ${BIN_DIR}
 	@cp ${BIN_DIR}/kubegems-${OS}-${ARCH} ${BIN_DIR}/kubegems
+
+build-tools:
+	$(call go-build-tools,podfsmgr,linux,amd64)
+	$(call go-build-tools,podfsmgr,linux,arm64)
+	mkdir -p ${BIN_DIR}/tools
+	cp -r tools/podfsmgr/bin/* ${BIN_DIR}/tools
 
 build-files: ## Build around files
 	go run scripts/offline-plugins/main.go

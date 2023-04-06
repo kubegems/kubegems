@@ -176,6 +176,7 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 	routes.register("core", "v1", "pods", "logs", podHandler.GetContainerLogs)
 	routes.register("core", "v1", "pods", "file", podHandler.DownloadFileFromPod)
 	routes.register("core", "v1", "pods", "upfile", podHandler.UploadFileToContainer)
+	routes.register("core", "v1", "pods", "ls", podHandler.ListDir)
 
 	rolloutHandler := &RolloutHandler{cluster: cluster}
 	routes.register("apps", "v1", "daemonsets", "rollouthistory", rolloutHandler.DaemonSetHistory)
@@ -290,4 +291,10 @@ func (mu handlerMux) registerREST(cluster cluster.Interface) {
 
 	mu.r.PATCH("/v1/{group}/{version}/{resource}/{name}/actions/scale", resthandler.Scale)
 	mu.r.PATCH("/v1/{group}/{version}/namespaces/{namespace}/{resource}/{name}/actions/scale", resthandler.Scale)
+}
+
+func RunStaticFS(ctx context.Context) error {
+	r := gin.Default()
+	r.Static("tools", "tools")
+	return system.ListenAndServeContext(ctx, ":8888", nil, r)
 }

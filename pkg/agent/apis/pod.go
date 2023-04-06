@@ -16,7 +16,9 @@ package apis
 
 import (
 	"archive/tar"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime"
@@ -295,6 +297,83 @@ func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
 	}
 }
 
+// ListDir list files in the directory
+// @Tags        Agent.V1
+// @Summary     list files in the directory
+// @Description list files in the directory
+// @Param       cluster   path     string true  "cluster"
+// @Param       namespace path     string true  "namespace"
+// @Param       pod       path     string true  "pod"
+// @Param       container query    string true  "container"
+// @Param       directory  query    string true "directory"
+// @Success     200       {object} object "ok"
+// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/ls [get]
+// @Security    JWT
+func (h *PodHandler) ListDir(c *gin.Context) {
+	// NOTICE: not support windows now!
+	// for get podfsmgr binary wget or curl must exist in target container
+	ctx := c.Request.Context()
+	namespace := c.Param("namespace")
+	podname := c.Param("name")
+	arch, os := h.getPodNodeArch(ctx, namespace, podname)
+	directory := c.DefaultQuery("directory", "/")
+	targetfile := fmt.Sprintf("podfsmgr-%s-%s", os, arch)
+	targetpath := fmt.Sprintf("/tmp/%s", targetfile)
+	fileURL := "http://kubegems-local-agent.kubegems-local:8888/tools/" + targetfile
+	wgetCmd := "wget -q " + fileURL + " -P /tmp && chmod +x " + targetpath
+	curlCmd := "curl -s -o " + targetpath + " " + fileURL + " && chmod +x " + targetpath
+	echoErrorCmd := "echo '{\"msg\": \"no tools found\"}'"
+	cmd := fmt.Sprintf(
+		"if [ ! -f %s ];then if [ ! -z $(which wget) ];then %s;elif [ ! -z $(which curl) ];then %s;else %s;fi;fi\n"+targetpath+" ls "+directory,
+		targetpath,
+		wgetCmd,
+		curlCmd,
+		echoErrorCmd,
+	)
+	var stdout, stderr bytes.Buffer
+	pe := PodCmdExecutor{
+		Cluster: h.cluster,
+		Pod: client.ObjectKey{
+			Namespace: namespace,
+			Name:      podname,
+		},
+		PodExecOptions: v1.PodExecOptions{
+			Container: request.HeaderOrQuery(c.Request, "container", ""),
+			Stdin:     false,
+			Stdout:    true,
+			Stderr:    true,
+			TTY:       false,
+			Command:   []string{"/bin/sh", "-c", cmd},
+		},
+		StreamOptions: remotecommand.StreamOptions{
+			Stdin:  nil,
+			Stdout: &stdout,
+			Stderr: &stderr,
+		},
+	}
+	if e := pe.Execute(ctx); e != nil {
+		NotOK(c, e)
+		return
+	}
+	var ret []map[string]interface{}
+	msgerr := stderr.Bytes()
+	msgout := stdout.Bytes()
+	if len(msgerr) > 0 {
+		NotOK(c, fmt.Errorf("failed list dir %s", msgerr))
+		return
+	}
+	if len(msgout) == 0 {
+		OK(c, ret)
+		return
+	}
+	err := json.Unmarshal(msgout, &ret)
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	OK(c, ret)
+}
+
 // UploadFileToContainer upload files to container
 // @Tags        Agent.V1
 // @Summary     upload files to container
@@ -498,4 +577,35 @@ func RateLimitWriter(ctx context.Context, w io.Writer, speed int) io.Writer {
 		originWriter: w,
 		ratelimitor:  l,
 	}
+}
+
+const (
+	NodeArchLabelKey     = "kubernetes.io/arch"
+	NodeOSLabelKey       = "kubernetes.io/os"
+	NodeBetaArchLabelKey = "beta.kubernetes.io/arch"
+	NodeBetaOSLabelKey   = "beta.kubernetes.io/os"
+)
+
+func (h *PodHandler) getPodNodeArch(ctx context.Context, namespace, name string) (arch, os string) {
+	pod := v1.Pod{}
+	node := v1.Node{}
+	h.cluster.GetClient().Get(ctx, client.ObjectKey{
+		Name:      name,
+		Namespace: namespace,
+	}, &pod)
+
+	h.cluster.GetClient().Get(ctx, client.ObjectKey{
+		Name: pod.Spec.NodeName,
+	}, &node)
+	if v, exist := node.ObjectMeta.Labels[NodeArchLabelKey]; exist {
+		arch = v
+	} else {
+		arch = node.ObjectMeta.Labels[NodeBetaArchLabelKey]
+	}
+	if v, exist := node.ObjectMeta.Labels[NodeOSLabelKey]; exist {
+		os = v
+	} else {
+		os = node.ObjectMeta.Labels[NodeBetaOSLabelKey]
+	}
+	return
 }

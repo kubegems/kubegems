@@ -24,7 +24,6 @@ import (
 func SignerMiddleware() func(c *gin.Context) {
 	signer := httpsigs.GetSigner()
 	signer.AddWhiteList("/alert")
-	signer.AddWhiteList("/alert")
 	signer.AddWhiteList("/healthz")
 
 	return func(c *gin.Context) {
