@@ -89,9 +89,6 @@ func Run(ctx context.Context, options *Options) error {
 		return apis.Run(ctx, c, options.System, options.API, options.Kubectl, options.Otel, options.Installer)
 	})
 	eg.Go(func() error {
-		return apis.RunStaticFS(ctx)
-	})
-	eg.Go(func() error {
 		return pprof.Run(ctx)
 	})
 	eg.Go(func() error {

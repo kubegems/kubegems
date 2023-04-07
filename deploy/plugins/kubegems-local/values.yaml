@@ -398,11 +398,7 @@ agent:
     annotations: {}
     ## @param agent.service.extraPorts Extra ports to expose in agent service (normally used with the `sidecars` value)
     ##
-    extraPorts:
-    - name: http-static-file
-      port: 8888
-      protocol: TCP
-      targetPort: 8888
+    extraPorts: []
 
   ## @section Agent Metrics parameters
   ##

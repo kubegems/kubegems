@@ -292,9 +292,3 @@ func (mu handlerMux) registerREST(cluster cluster.Interface) {
 	mu.r.PATCH("/v1/{group}/{version}/{resource}/{name}/actions/scale", resthandler.Scale)
 	mu.r.PATCH("/v1/{group}/{version}/namespaces/{namespace}/{resource}/{name}/actions/scale", resthandler.Scale)
 }
-
-func RunStaticFS(ctx context.Context) error {
-	r := gin.Default()
-	r.Static("tools", "tools")
-	return system.ListenAndServeContext(ctx, ":8888", nil, r)
-}
