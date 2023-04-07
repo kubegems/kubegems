@@ -23,8 +23,8 @@ import (
 	"github.com/spf13/cobra"
 	"kubegems.io/kubegems/pkg/edge/agent"
 	"kubegems.io/kubegems/pkg/edge/hub"
-	"kubegems.io/kubegems/pkg/edge/options"
 	"kubegems.io/kubegems/pkg/edge/server"
+	"kubegems.io/kubegems/pkg/edge/task"
 	"kubegems.io/kubegems/pkg/utils/config"
 	"kubegems.io/kubegems/pkg/version"
 )
@@ -37,12 +37,13 @@ func NewEdgeCmd() *cobra.Command {
 		NewEdgeAgentCmd(),
 		NewEdgeHubCmd(),
 		NewEdgeServerCmd(),
+		NewEdgeTaskCmd(),
 	)
 	return cmd
 }
 
 func NewEdgeHubCmd() *cobra.Command {
-	options := options.NewDefaultHub()
+	options := hub.NewDefaultOptions()
 	cmd := &cobra.Command{
 		Use: "hub",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -59,7 +60,7 @@ func NewEdgeHubCmd() *cobra.Command {
 }
 
 func NewEdgeServerCmd() *cobra.Command {
-	options := options.NewDefaultServer()
+	options := server.NewDefaultOptions()
 	cmd := &cobra.Command{
 		Use: "server",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -76,7 +77,7 @@ func NewEdgeServerCmd() *cobra.Command {
 }
 
 func NewEdgeAgentCmd() *cobra.Command {
-	options := options.NewDefaultAgentOptions()
+	options := agent.NewDefaultOptions()
 	cmd := &cobra.Command{
 		Use: "agent",
 		Example: `
@@ -101,6 +102,23 @@ func NewEdgeAgentCmd() *cobra.Command {
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
 			return agent.Run(ctx, options)
+		},
+	}
+	config.AutoRegisterFlags(cmd.Flags(), "", options)
+	return cmd
+}
+
+func NewEdgeTaskCmd() *cobra.Command {
+	options := task.NewDefaultOptions()
+	cmd := &cobra.Command{
+		Use: "task",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := config.Parse(cmd.Flags()); err != nil {
+				return err
+			}
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer cancel()
+			return task.Run(ctx, options)
 		},
 	}
 	config.AutoRegisterFlags(cmd.Flags(), "", options)

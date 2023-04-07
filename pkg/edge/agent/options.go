@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package options
+package agent
 
 import "time"
 
-type AgentOptions struct {
+const (
+	ClientIDSecret           = "kubegems-edge-agent-id"
+	DefaultKeepAliveInterval = 30 * time.Minute
+)
+
+type Options struct {
 	Listen            string        `json:"listen,omitempty"`
 	DeviceID          string        `json:"deviceID,omitempty" description:"device id in kubegems edge,use random generated client-id by default"`
 	DeviceIDKey       string        `json:"deviceIDKey,omitempty" description:"use value of key as device-id in manufacture"`
@@ -32,13 +37,13 @@ type ClientTLS struct {
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
-func NewDefaultAgentOptions() *AgentOptions {
-	return &AgentOptions{
+func NewDefaultOptions() *Options {
+	return &Options{
 		EdgeHubAddr:       "127.0.0.1:8080",
 		Listen:            ":8080",
 		DeviceID:          "",
 		DeviceIDKey:       "",
-		KeepAliveInterval: 30 * time.Minute,
+		KeepAliveInterval: DefaultKeepAliveInterval,
 		ManufactureFile:   []string{"/etc/os-release"},
 		ManufactureRemap:  []string{},
 		Manufacture:       []string{},

@@ -35,8 +35,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"kubegems.io/kubegems/pkg/agent/cluster"
-	"kubegems.io/kubegems/pkg/edge/common"
-	"kubegems.io/kubegems/pkg/edge/options"
+	"kubegems.io/kubegems/pkg/apis/edge/common"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/kube"
@@ -45,8 +44,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const ClientIDSecret = "kubegems-edge-agent-id"
-
 type EdgeAgent struct {
 	config       *rest.Config
 	manufectures map[string]string
@@ -54,11 +51,11 @@ type EdgeAgent struct {
 	cluster      cluster.Interface
 	tunserver    tunnel.GrpcTunnelServer
 	httpapi      *AgentAPI
-	options      *options.AgentOptions
+	options      *Options
 	annotations  tunnel.Annotations
 }
 
-func Run(ctx context.Context, options *options.AgentOptions) error {
+func Run(ctx context.Context, options *Options) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
 
 	tlsconfig := &tls.Config{
@@ -111,7 +108,7 @@ func (ea *EdgeAgent) RunKeepAliveRouter(ctx context.Context, duration time.Durat
 	log.Info("starting refresh router")
 
 	if duration <= 0 {
-		duration = 30 * time.Second
+		duration = DefaultKeepAliveInterval
 	}
 
 	timer := time.NewTimer(duration)
@@ -150,9 +147,7 @@ func (ea *EdgeAgent) getAnnotations(ctx context.Context) tunnel.Annotations {
 
 const clientIDKey = "client-id"
 
-const two = 2
-
-func getClientID(ctx context.Context, cli client.Client, options *options.AgentOptions) (string, error) {
+func getClientID(ctx context.Context, cli client.Client, options *Options) (string, error) {
 	clientid := ""
 	// try secret
 	secret := &corev1.Secret{
@@ -179,7 +174,7 @@ func getClientID(ctx context.Context, cli client.Client, options *options.AgentO
 	return clientid, nil
 }
 
-func ReadManufacture(options *options.AgentOptions, clientID string) (map[string]string, error) {
+func ReadManufacture(options *Options, clientID string) (map[string]string, error) {
 	fullkvs := map[string]string{}
 	for _, file := range options.ManufactureFile {
 		kvs, err := ParseKV(file)
@@ -215,12 +210,12 @@ func ReadManufacture(options *options.AgentOptions, clientID string) (map[string
 }
 
 func ParseToMaps(list []string) map[string]string {
-	// remap
 	ret := map[string]string{}
 	for _, item := range list {
+		// nolint: gomnd
 		for _, kvstr := range strings.Split(item, ",") {
-			splits := strings.SplitN(kvstr, "=", two)
-			if len(splits) == two {
+			splits := strings.SplitN(kvstr, "=", 2)
+			if len(splits) == 2 {
 				key, value := splits[0], splits[1]
 				ret[key] = value
 			}

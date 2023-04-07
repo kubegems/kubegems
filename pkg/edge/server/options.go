@@ -12,27 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package options
+package server
 
 import (
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/system"
 )
 
-type ServerOptions struct {
+type Options struct {
 	Listen     string           `json:"listen,omitempty"`
 	Host       string           `json:"host,omitempty"`
 	ListenGrpc string           `json:"listenGrpc,omitempty"`
 	ServerID   string           `json:"serverID,omitempty"`
-	TLS        *TLS             `json:"tls,omitempty"`
+	TLS        *system.TLS      `json:"tls,omitempty"`
 	Database   database.Options `json:"database,omitempty"`
 }
 
-func NewDefaultServer() *ServerOptions {
-	return &ServerOptions{
+func NewDefaultOptions() *Options {
+	return &Options{
 		Listen:     ":8080",
 		ListenGrpc: ":50052",
-		TLS:        NewDefaultTLS(),
+		TLS:        system.NewDefaultTLS(),
 		ServerID:   tunnel.RandomServerID("server-"),
 	}
 }

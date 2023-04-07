@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package server
 
 import (
 	"net/http"
@@ -21,11 +21,10 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
+	"kubegems.io/kubegems/pkg/apis/edge/common"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
-
-const DefaultAgentAddress = "http://127.0.0.1:8080"
 
 func (a *EdgeClusterAPI) Proxy(req *restful.Request, resp *restful.Response) {
 	uid, path := req.PathParameter("uid"), "/"+req.PathParameter("path")
@@ -36,9 +35,9 @@ func (a *EdgeClusterAPI) Proxy(req *restful.Request, resp *restful.Response) {
 		response.BadRequest(resp, err.Error())
 		return
 	}
-	agentaddress := edgecluster.Status.Manufacture[AnnotationKeyEdgeAgentAddress]
+	agentaddress := edgecluster.Status.Manufacture[common.AnnotationKeyEdgeAgentAddress]
 	if agentaddress == "" {
-		agentaddress = DefaultAgentAddress // fallback
+		agentaddress = common.AnnotationValueDefaultEdgeAgentAddress // fallback
 	}
 	log.Info("proxy http", "uid", uid, "target", agentaddress, "path", path)
 	proxyTarget, err := url.Parse(agentaddress)

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package server
 
 import (
 	"context"
@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"kubegems.io/kubegems/pkg/apis/edge/common"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -70,8 +71,8 @@ func (s EdgeClusterK8sStore) List(ctx context.Context, options ListOptions) (int
 		return ((options.Search == "" || strings.Contains(item.GetName(), options.Search)) ||
 			(options.Search == "" ||
 				item.Status.Manufacture == nil ||
-				item.Status.Manufacture[AnnotationKeyDeviceID] == "" ||
-				strings.Contains(item.Status.Manufacture[AnnotationKeyDeviceID], options.Search))) &&
+				item.Status.Manufacture[common.AnnotationKeyDeviceID] == "" ||
+				strings.Contains(item.Status.Manufacture[common.AnnotationKeyDeviceID], options.Search))) &&
 			//  match label selector
 			(options.Manufacture == nil || options.Manufacture.Matches(labels.Set(item.Status.Manufacture)))
 	}

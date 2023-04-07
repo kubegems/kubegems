@@ -122,4 +122,6 @@ var _ = SchemeBuilder.Register(
 	&EdgeClusterList{},
 	&EdgeHub{},
 	&EdgeHubList{},
+	&EdgeTask{},
+	&EdgeTaskList{},
 )
