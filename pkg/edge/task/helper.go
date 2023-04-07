@@ -45,3 +45,15 @@ func GetEdgeTaskCondition(status *edgev1beta1.EdgeTaskStatus, conditionType edge
 	}
 	return -1, nil
 }
+
+func RemoveEdgeTaskCondition(status *edgev1beta1.EdgeTaskStatus, conditionType edgev1beta1.EdgeTaskConditionType) {
+	if status == nil {
+		return
+	}
+	for i, condition := range status.Conditions {
+		if condition.Type == conditionType {
+			status.Conditions = append(status.Conditions[:i], status.Conditions[i+1:]...)
+			return
+		}
+	}
+}

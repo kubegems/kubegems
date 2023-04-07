@@ -9,6 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/workqueue"
 	hashutil "k8s.io/kubernetes/pkg/util/hash"
@@ -30,23 +31,18 @@ const (
 
 const (
 	IndexFieldEdgeTaskStatusPhase    = "status.phase"
-	IndexFieldEdgeTaskEdgeCluster    = "spec.edgeClusterName"
 	IndexFieldEdgeClusterStatusPhase = "status.phase"
 )
 
 type Reconciler struct {
 	client.Client
-	EdgeClients       *EdgeClientsHolder
-	EdgeStatusWatcher *EdgeStatusWatcher
+	EdgeClients *EdgeClientsHolder
 }
 
 // nolint: forcetypeassert
 func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, concurrent int) error {
 	mgr.GetFieldIndexer().IndexField(ctx, &edgev1beta1.EdgeTask{}, IndexFieldEdgeTaskStatusPhase, func(rawObj client.Object) []string {
 		return []string{string(rawObj.(*edgev1beta1.EdgeTask).Status.Phase)}
-	})
-	mgr.GetFieldIndexer().IndexField(ctx, &edgev1beta1.EdgeTask{}, IndexFieldEdgeTaskEdgeCluster, func(rawObj client.Object) []string {
-		return []string{rawObj.(*edgev1beta1.EdgeTask).Spec.EdgeClusterName}
 	})
 	mgr.GetFieldIndexer().IndexField(ctx, &edgev1beta1.EdgeCluster{}, IndexFieldEdgeClusterStatusPhase, func(rawObj client.Object) []string {
 		return []string{string(rawObj.(*edgev1beta1.EdgeCluster).Status.Phase)}
@@ -55,6 +51,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, con
 		For(&edgev1beta1.EdgeTask{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: concurrent}).
 		Watches(&source.Kind{Type: &edgev1beta1.EdgeCluster{}}, EdgeClusterTrigger(ctx, mgr.GetClient())).
+		Watches(r.EdgeClients.SourceFunc(), nil). // watch edge clusters' resources change
 		Complete(r)
 }
 
@@ -161,9 +158,6 @@ func (r *Reconciler) remove(ctx context.Context, edgeTask *edgev1beta1.EdgeTask)
 	})
 	log.Info("remove edge resources succeed")
 
-	// stop resource watcher
-	r.EdgeStatusWatcher.StopWatch(edgeTask)
-
 	// remove the finalizer
 	controllerutil.RemoveFinalizer(edgeTask, edgev1beta1.EdgeTaskFinalizer)
 	log.Info("remove finalizer")
@@ -189,7 +183,7 @@ func (r *Reconciler) apply(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) 
 		return err
 	}
 	// wait for the edge task to be completed
-	return r.stageWatchResource(ctx, edgeTask)
+	return r.stageCheckResource(ctx, edgeTask)
 }
 
 func (r *Reconciler) stageRenderResources(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) ([]*unstructured.Unstructured, error) {
@@ -225,9 +219,8 @@ func (r *Reconciler) stageWaitForEdgeCluster(ctx context.Context, edgeTask *edge
 		edgeclustername = edgeTask.Name
 	}
 
-	edgeTask.Status.Phase = edgev1beta1.EdgeTaskPhaseWaiting
-
 	if err := r.Get(ctx, client.ObjectKey{Namespace: edgeTask.Namespace, Name: edgeclustername}, edgeCluster); err != nil {
+		edgeTask.Status.Phase = edgev1beta1.EdgeTaskPhaseWaiting
 		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypeOnline,
 			Status:  corev1.ConditionFalse,
@@ -237,6 +230,7 @@ func (r *Reconciler) stageWaitForEdgeCluster(ctx context.Context, edgeTask *edge
 		return fmt.Errorf("get edge cluster: %w", err)
 	}
 	if edgeCluster.Status.Phase != edgev1beta1.EdgePhaseOnline {
+		edgeTask.Status.Phase = edgev1beta1.EdgeTaskPhaseWaiting
 		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypeOnline,
 			Status:  corev1.ConditionFalse,
@@ -265,8 +259,8 @@ func (r *Reconciler) stageApplyResources(ctx context.Context, edgeTask *edgev1be
 		return nil
 	}
 
-	// stop resource watcher
-	r.EdgeStatusWatcher.StopWatch(edgeTask)
+	RemoveEdgeTaskCondition(&edgeTask.Status, edgev1beta1.EdgeTaskConditionTypeAvailable)
+
 	log.Info("hash of resources changed", "previous", previoushash, "current", resourceshash)
 	// check should update
 	if resourceStatus, err := r.applyResources(ctx, edgeTask, resources); err != nil {
@@ -341,8 +335,9 @@ func (r *Reconciler) removeResources(ctx context.Context, edgeTask *edgev1beta1.
 	return nil
 }
 
-func (r *Reconciler) stageWatchResource(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) error {
+func (r *Reconciler) stageCheckResource(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) error {
 	log := logr.FromContextOrDiscard(ctx)
+	log.Info("check resources")
 	if _, cond := GetEdgeTaskCondition(&edgeTask.Status, edgev1beta1.EdgeTaskConditionTypeAvailable); cond == nil {
 		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:   edgev1beta1.EdgeTaskConditionTypeAvailable,
@@ -350,41 +345,54 @@ func (r *Reconciler) stageWatchResource(ctx context.Context, edgeTask *edgev1bet
 			Reason: "Waiting",
 		})
 	}
-	log.Info("add edge task to watcher")
-	r.EdgeStatusWatcher.StartWatch(edgeTask, func(obj client.Object) bool {
-		return r.onManagedResourcechange(ctx, edgeTask, obj)
-	})
-	return nil
-}
-
-func (r *Reconciler) onManagedResourcechange(ctx context.Context, task *edgev1beta1.EdgeTask, obj client.Object) bool {
-	log := logr.FromContextOrDiscard(ctx).WithValues("task", task.Name,
-		"name", obj.GetName(), "namespace", obj.GetNamespace(),
-		"gvk", obj.GetObjectKind().GroupVersionKind().String())
-	log.Info("on managed resource change")
-	_, status := findStatusOf(task, obj)
-	if status == nil {
-		return false
+	cli, err := r.EdgeClients.Get(edgeTask.Name)
+	if err != nil {
+		return fmt.Errorf("get edge client: %w", err)
 	}
-	switch item := obj.(type) {
-	case *appsv1.Deployment:
-		if item.Status.ReadyReplicas != item.Status.Replicas {
-			status.Message = fmt.Sprintf("replicas not ready %d/%d", item.Status.ReadyReplicas, item.Status.Replicas)
-		} else {
-			status.Ready = true
-		}
-	}
-	allReady := allresourcesareReady(task)
-	if allReady {
-		task.Status.Phase = edgev1beta1.EdgeTaskPhaseRunning
-		r.UpdateEdgeTaskCondition(ctx, task, edgev1beta1.EdgeTaskCondition{
+	if r.checkUpdateResources(ctx, edgeTask, cli) {
+		log.Info("all resources ready")
+		edgeTask.Status.Phase = edgev1beta1.EdgeTaskPhaseRunning
+		return r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:   edgev1beta1.EdgeTaskConditionTypeAvailable,
 			Status: corev1.ConditionTrue,
 			Reason: "AllResourcesReady",
 		})
+	} else {
+		edgeTask.Status.Phase = edgev1beta1.EdgeTaskPhaseWaiting
+		return r.Client.Status().Update(ctx, edgeTask)
 	}
-	_ = r.Client.Status().Update(ctx, task)
-	return allReady
+}
+
+func (r *Reconciler) checkUpdateResources(ctx context.Context, task *edgev1beta1.EdgeTask, edgecli client.Client) bool {
+	for i := range task.Status.ResourcesStatus {
+		resource := &task.Status.ResourcesStatus[i]
+		gvk := schema.FromAPIVersionAndKind(resource.APIVersion, resource.Kind)
+		obj, err := edgecli.Scheme().New(gvk)
+		if err != nil {
+			resource.Ready = false
+			resource.Message = err.Error()
+			continue
+		}
+		// nolint: forcetypeassert
+		cliobj := obj.(client.Object)
+		if err := edgecli.Get(ctx, client.ObjectKey{Name: resource.Name, Namespace: resource.Namespace}, cliobj); err != nil {
+			resource.Ready = false
+			resource.Message = err.Error()
+		} else {
+			resource.Message = ""
+		}
+		switch typedobj := cliobj.(type) {
+		case *appsv1.Deployment:
+			if typedobj.Status.ReadyReplicas != typedobj.Status.Replicas {
+				resource.Message = fmt.Sprintf("replicas not ready: %d/%d", typedobj.Status.ReadyReplicas, typedobj.Status.Replicas)
+				resource.Ready = false
+			} else {
+				resource.Ready = true
+				resource.Message = ""
+			}
+		}
+	}
+	return allresourcesareReady(task)
 }
 
 func allresourcesareReady(task *edgev1beta1.EdgeTask) bool {

@@ -46,15 +46,14 @@ func Run(ctx context.Context, options *Options) error {
 		log.Error(err, "unable to create manager")
 		return err
 	}
-	holder, err := NewEdgeClientsHolder(options.EdgeServerAddr)
+	holder, err := NewEdgeClientsHolder(ctx, options.EdgeServerAddr)
 	if err != nil {
 		log.Error(err, "unable to create edge clients holder")
 		return err
 	}
 	r := &Reconciler{
-		Client:            mgr.GetClient(),
-		EdgeClients:       holder,
-		EdgeStatusWatcher: NewEdgeStatusWatcher(ctx, holder),
+		Client:      mgr.GetClient(),
+		EdgeClients: holder,
 	}
 	if err := r.SetupWithManager(ctx, mgr, options.MaxConcurrentReconciles); err != nil {
 		log.Error(err, "unable to create controller", "controller", "EdgeTask")
