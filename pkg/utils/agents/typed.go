@@ -66,7 +66,7 @@ func NewTypedClient(options *ClientOptions, scheme *runtime.Scheme) *TypedClient
 		HTTPClient: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: options.TLS,
-				Proxy:           OptionAuthAsProxy(&options.Auth),
+				Proxy:           OptionAuthAsProxy(options),
 			},
 		},
 		RuntimeScheme: scheme,

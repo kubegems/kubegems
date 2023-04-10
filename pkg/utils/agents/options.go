@@ -53,11 +53,12 @@ func TLSConfigFrom(ca, cert, key []byte) (*tls.Config, error) {
 	return tlsconfig, nil
 }
 
-func OptionAuthAsProxy(auth *Auth) func(*http.Request) (*url.URL, error) {
+func OptionAuthAsProxy(options *ClientOptions) func(*http.Request) (*url.URL, error) {
 	intercepters := []func(*http.Request) error{}
+	auth := options.Auth
 	// 默认开启 HTTP 签名
 	if enable := auth.EnableHttpSign; enable == nil || *enable {
-		intercepters = append(intercepters, NewHTTPSigner(auth.Token))
+		intercepters = append(intercepters, NewHTTPSigner(options.Addr.Path))
 	}
 	if auth.Token != "" {
 		intercepters = append(intercepters, NewTokenAuth(auth.Token))

@@ -45,7 +45,7 @@ func NewWebsocketClient(options *ClientOptions) *WebsocketClient {
 		dialer: &websocket.Dialer{
 			TLSClientConfig:  options.TLS,
 			HandshakeTimeout: DefaultWebSocketHandshakeTimeout,
-			Proxy:            OptionAuthAsProxy(&options.Auth),
+			Proxy:            OptionAuthAsProxy(options),
 		},
 	}
 }
