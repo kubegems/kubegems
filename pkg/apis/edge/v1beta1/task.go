@@ -41,12 +41,22 @@ type EdgeTaskStatus struct {
 }
 
 type EdgeTaskResourceStatus struct {
-	APIVersion string `json:"apiVersion,omitempty"`
-	Kind       string `json:"kind,omitempty"`
-	Name       string `json:"name,omitempty"`
-	Namespace  string `json:"namespace,omitempty"`
-	Ready      bool   `json:"ready,omitempty"`
-	Message    string `json:"message,omitempty"`
+	APIVersion string                  `json:"apiVersion,omitempty"`
+	Kind       string                  `json:"kind,omitempty"`
+	Name       string                  `json:"name,omitempty"`
+	Namespace  string                  `json:"namespace,omitempty"`
+	Ready      bool                    `json:"ready,omitempty"`
+	Message    string                  `json:"message,omitempty"`
+	Events     []EdgeTaskResourceEvent `json:"events,omitempty"`
+}
+
+type EdgeTaskResourceEvent struct {
+	InvolvedObject corev1.ObjectReference `json:"involvedObject"`
+	Type           string                 `json:"type,omitempty"`
+	Reason         string                 `json:"reason,omitempty"`
+	Message        string                 `json:"message,omitempty"`
+	Count          int32                  `json:"count,omitempty"`
+	LastTimestamp  metav1.Time            `json:"lastTimestamp,omitempty"`
 }
 
 const (

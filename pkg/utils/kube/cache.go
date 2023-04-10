@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -114,9 +115,7 @@ func NewCacheReaderFor(ctx context.Context, cli client.Client,
 			return watchcli.Watch(ctx, objlist, append(listoptions, &client.ListOptions{Raw: &options})...)
 		},
 	}
-	informer := cache.NewSharedIndexInformer(lw, example, DefaultResyncTime, cache.Indexers{
-		cache.NamespaceIndex: cache.MetaNamespaceIndexFunc,
-	})
+	informer := cache.NewSharedIndexInformer(lw, example, DefaultResyncTime, defaultIndexersOf(gvk))
 	if eventhandler != nil {
 		informer.AddEventHandler(eventhandler)
 	}
@@ -126,4 +125,25 @@ func NewCacheReaderFor(ctx context.Context, cli client.Client,
 	}
 	cacheReader := NewCacheReader(informer.GetIndexer(), gvk, meta.RESTScopeNameNamespace, false)
 	return cacheReader, nil
+}
+
+func defaultIndexersOf(gvk schema.GroupVersionKind) cache.Indexers {
+	ret := cache.Indexers{
+		cache.NamespaceIndex: cache.MetaNamespaceIndexFunc,
+	}
+	if corev1.SchemeGroupVersion.WithKind("Event") == gvk {
+		ret["field:involvedObject.uid"] = eventUIDIndexer
+	}
+	return ret
+}
+
+// "Index with name field:involvedObject.uid does not exist"
+func eventUIDIndexer(obj any) ([]string, error) {
+	event, ok := obj.(*corev1.Event)
+	if !ok {
+		return nil, fmt.Errorf("not a corev1.Event: %T", obj)
+	}
+	return []string{
+		event.Namespace + "/" + string(event.InvolvedObject.UID),
+	}, nil
 }
