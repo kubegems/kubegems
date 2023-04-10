@@ -41,13 +41,15 @@ type EdgeTaskStatus struct {
 }
 
 type EdgeTaskResourceStatus struct {
-	APIVersion string                  `json:"apiVersion,omitempty"`
-	Kind       string                  `json:"kind,omitempty"`
-	Name       string                  `json:"name,omitempty"`
-	Namespace  string                  `json:"namespace,omitempty"`
-	Ready      bool                    `json:"ready,omitempty"`
-	Message    string                  `json:"message,omitempty"`
-	Events     []EdgeTaskResourceEvent `json:"events,omitempty"`
+	APIVersion  string                  `json:"apiVersion,omitempty"`
+	Kind        string                  `json:"kind,omitempty"`
+	Name        string                  `json:"name,omitempty"`
+	Namespace   string                  `json:"namespace,omitempty"`
+	Exists      bool                    `json:"exists,omitempty"` // resource exists in edge cluster
+	Ready       bool                    `json:"ready,omitempty"`  // resource is ready in edge cluster
+	Message     string                  `json:"message,omitempty"`
+	Annotations map[string]string       `json:"annotations,omitempty"`
+	Events      []EdgeTaskResourceEvent `json:"events,omitempty"`
 }
 
 type EdgeTaskResourceEvent struct {

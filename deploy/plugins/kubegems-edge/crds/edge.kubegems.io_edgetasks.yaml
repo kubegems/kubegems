@@ -72,6 +72,10 @@ spec:
               resourcesStatus:
                 items:
                   properties:
+                    annotations:
+                      additionalProperties:
+                        type: string
+                      type: object
                     apiVersion:
                       type: string
                     events:
@@ -159,6 +163,8 @@ spec:
                         - involvedObject
                         type: object
                       type: array
+                    exists:
+                      type: boolean
                     kind:
                       type: string
                     message:

@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"golang.org/x/exp/slices"
@@ -15,6 +16,8 @@ import (
 func UpdateStatus(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatus, edgeresource client.Object, edgecli client.Client) {
 	switch typedobj := edgeresource.(type) {
 	case *appsv1.Deployment:
+		// fill images in status
+		fillImages(status, typedobj)
 		if typedobj.Status.ReadyReplicas != typedobj.Status.Replicas {
 			status.Message = fmt.Sprintf("replicas not ready: %d/%d", typedobj.Status.ReadyReplicas, typedobj.Status.Replicas)
 			status.Ready = false
@@ -22,9 +25,20 @@ func UpdateStatus(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatu
 		} else {
 			status.Ready = true
 			status.Message = ""
-			// status.Events = nil
+			// events will be remove after status is ready to avoid too many events in k8s
 		}
 	}
+}
+
+func fillImages(status *edgev1beta1.EdgeTaskResourceStatus, deployment *appsv1.Deployment) {
+	images := []string{}
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		images = append(images, container.Image)
+	}
+	if status.Annotations == nil {
+		status.Annotations = make(map[string]string)
+	}
+	status.Annotations["images"] = strings.Join(images, ",")
 }
 
 func checkDeploymentPodsReady(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatus, deployment *appsv1.Deployment, edgecli client.Client) {

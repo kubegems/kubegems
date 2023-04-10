@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/workqueue"
@@ -187,7 +188,7 @@ func (r *Reconciler) stageRenderResources(ctx context.Context, edgeTask *edgev1b
 	log := logr.FromContextOrDiscard(ctx).WithValues("edgetask", edgeTask.Name, "namespace", edgeTask.Namespace)
 	log.Info("stage render edge task resources")
 	// render edge task resources
-	resources, err := renderResources(ctx, edgeTask)
+	resources, err := ParseResources(ctx, edgeTask)
 	if err != nil {
 		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypePrepared,
@@ -284,7 +285,7 @@ func (r *Reconciler) stageApplyResources(ctx context.Context, edgeTask *edgev1be
 	return nil
 }
 
-func renderResources(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) ([]*unstructured.Unstructured, error) {
+func ParseResources(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) ([]*unstructured.Unstructured, error) {
 	unstructedlist := []*unstructured.Unstructured{}
 	for i, resource := range edgeTask.Spec.Resources {
 		list, err := utils.SplitYAML(resource.Raw)
@@ -294,6 +295,14 @@ func renderResources(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) ([]*un
 		unstructedlist = append(unstructedlist, list...)
 	}
 	return unstructedlist, nil
+}
+
+func ParseResourcesTyped(ctx context.Context, edgeTask *edgev1beta1.EdgeTask, schema *runtime.Scheme) ([]client.Object, error) {
+	objects, err := ParseResources(ctx, edgeTask)
+	if err != nil {
+		return nil, nil
+	}
+	return utils.ConvertToTypedList(objects, schema), nil
 }
 
 func HashResources(obj any) string {
@@ -352,7 +361,7 @@ func (r *Reconciler) stageCheckResource(ctx context.Context, task *edgev1beta1.E
 			Message: fmt.Sprintf("unable get edge client: %v", err),
 		})
 	}
-	allready := true
+	allReady := true
 	for i := range task.Status.ResourcesStatus {
 		status := &task.Status.ResourcesStatus[i]
 		gvk := schema.FromAPIVersionAndKind(status.APIVersion, status.Kind)
@@ -365,18 +374,20 @@ func (r *Reconciler) stageCheckResource(ctx context.Context, task *edgev1beta1.E
 		// nolint: forcetypeassert
 		cliobj := obj.(client.Object)
 		if err := edgecli.Get(ctx, client.ObjectKey{Name: status.Name, Namespace: status.Namespace}, cliobj); err != nil {
+			status.Exists = false
 			status.Ready = false
 			status.Message = err.Error()
 		} else {
+			status.Exists = true
 			status.Ready = true // assume it is ready on exist
 			status.Message = "resource exist"
 		}
 		UpdateStatus(ctx, status, cliobj, edgecli)
 		if !status.Ready {
-			allready = false
+			allReady = false
 		}
 	}
-	if allready {
+	if allReady {
 		log.Info("all resources ready")
 		task.Status.Phase = edgev1beta1.EdgeTaskPhaseRunning
 		return r.UpdateEdgeTaskCondition(ctx, task, edgev1beta1.EdgeTaskCondition{
