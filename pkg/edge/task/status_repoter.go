@@ -17,7 +17,6 @@ package task
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
@@ -87,8 +86,5 @@ func fillImages(status *edgev1beta1.EdgeTaskResourceStatus, deployment *appsv1.D
 	for _, container := range deployment.Spec.Template.Spec.Containers {
 		images = append(images, container.Image)
 	}
-	if status.Annotations == nil {
-		status.Annotations = make(map[string]string)
-	}
-	status.Annotations["images"] = strings.Join(images, ",")
+	status.Images = images
 }

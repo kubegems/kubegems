@@ -162,7 +162,7 @@ func (r *Reconciler) stageRenderResources(ctx context.Context, edgeTask *edgev1b
 	log := logr.FromContextOrDiscard(ctx).WithValues("edgetask", edgeTask.Name, "namespace", edgeTask.Namespace)
 	log.Info("stage render edge task resources")
 	// render edge task resources
-	resources, err := ParseResources(ctx, edgeTask.Spec.Resources)
+	resources, err := ParseResources(edgeTask.Spec.Resources)
 	if err != nil {
 		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypePrepared,

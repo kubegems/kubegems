@@ -57,17 +57,17 @@ type EdgeTaskStatus struct {
 }
 
 type EdgeTaskResourceStatus struct {
-	APIVersion  string                  `json:"apiVersion,omitempty"`
-	Kind        string                  `json:"kind,omitempty"`
-	Name        string                  `json:"name,omitempty"`
-	Namespace   string                  `json:"namespace,omitempty"`
-	Annotations map[string]string       `json:"annotations,omitempty"`
-	Exists      bool                    `json:"exists,omitempty"`
-	Ready       bool                    `json:"ready,omitempty"`
-	Message     string                  `json:"message,omitempty"`
-	Events      []EdgeTaskResourceEvent `json:"events,omitempty"`
-	Status      runtime.RawExtension    `json:"status,omitempty"`
-	PodsStatus  []EdgeTaskPodStatus     `json:"podsStatus,omitempty"`
+	APIVersion string                  `json:"apiVersion,omitempty"`
+	Kind       string                  `json:"kind,omitempty"`
+	Name       string                  `json:"name,omitempty"`
+	Namespace  string                  `json:"namespace,omitempty"`
+	Images     []string                `json:"images,omitempty"` // current workload images if exists
+	Exists     bool                    `json:"exists,omitempty"`
+	Ready      bool                    `json:"ready,omitempty"`
+	Message    string                  `json:"message,omitempty"`
+	Events     []EdgeTaskResourceEvent `json:"events,omitempty"`
+	Status     runtime.RawExtension    `json:"status,omitempty"`
+	PodsStatus []EdgeTaskPodStatus     `json:"podsStatus,omitempty"`
 }
 
 type EdgeTaskPodStatus struct {

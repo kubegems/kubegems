@@ -165,7 +165,7 @@ func HashResources(obj any) string {
 	return rand.SafeEncodeString(fmt.Sprint(hasher.Sum32()))
 }
 
-func ParseResources(ctx context.Context, resources []runtime.RawExtension) ([]*unstructured.Unstructured, error) {
+func ParseResources(resources []runtime.RawExtension) ([]*unstructured.Unstructured, error) {
 	unstructedlist := []*unstructured.Unstructured{}
 	for i, resource := range resources {
 		list, err := utils.SplitYAML(resource.Raw)
@@ -177,8 +177,8 @@ func ParseResources(ctx context.Context, resources []runtime.RawExtension) ([]*u
 	return unstructedlist, nil
 }
 
-func ParseResourcesTyped(ctx context.Context, resources []runtime.RawExtension, schema *runtime.Scheme) ([]client.Object, error) {
-	objects, err := ParseResources(ctx, resources)
+func ParseResourcesTyped(resources []runtime.RawExtension, schema *runtime.Scheme) ([]client.Object, error) {
+	objects, err := ParseResources(resources)
 	if err != nil {
 		return nil, nil
 	}
