@@ -73,10 +73,6 @@ spec:
               resourcesStatus:
                 items:
                   properties:
-                    annotations:
-                      additionalProperties:
-                        type: string
-                      type: object
                     apiVersion:
                       type: string
                     events:
@@ -98,6 +94,10 @@ spec:
                       type: array
                     exists:
                       type: boolean
+                    images:
+                      items:
+                        type: string
+                      type: array
                     kind:
                       type: string
                     message:
@@ -107,7 +107,6 @@ spec:
                     namespace:
                       type: string
                     podsStatus:
-                      description: SubResources []EdgeTaskResourceStatus `json:"subResources,omitempty"`
                       items:
                         properties:
                           events:

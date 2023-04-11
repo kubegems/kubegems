@@ -44,10 +44,10 @@ type EdgeTaskSpec struct {
 type EdgeTaskPhase string
 
 const (
-	EdgeTaskPhaseWaiting   EdgeTaskPhase = "Waiting"
-	EdgeTaskPhaseSucceeded EdgeTaskPhase = "Succeeded"
-	EdgeTaskPhaseRunning   EdgeTaskPhase = "Running"
-	EdgeTaskPhaseFailed    EdgeTaskPhase = "Failed"
+	EdgeTaskPhasePending EdgeTaskPhase = "Pending"
+	EdgeTaskPhaseWaiting EdgeTaskPhase = "Waiting"
+	EdgeTaskPhaseRunning EdgeTaskPhase = "Running"
+	EdgeTaskPhaseFailed  EdgeTaskPhase = "Failed"
 )
 
 type EdgeTaskStatus struct {

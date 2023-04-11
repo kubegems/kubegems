@@ -33,8 +33,10 @@ func getScheme() *runtime.Scheme {
 }
 
 type Options struct {
-	MaxConcurrentReconciles int
-	EdgeServerAddr          string
+	MaxConcurrentReconciles int    `json:"maxConcurrentReconciles,omitempty"`
+	HealthProbeBindAddress  string `json:"healthProbeBindAddress,omitempty"`
+	MetricsBindAddress      string `json:"metricsBindAddress,omitempty"`
+	EdgeServerAddr          string `json:"edgeServerAddr,omitempty"`
 }
 
 func NewDefaultOptions() *Options {
@@ -52,9 +54,11 @@ func Run(ctx context.Context, options *Options) error {
 	log = log.WithName("setup")
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:           getScheme(),
-		LeaderElectionID: edge.GroupName + "-task",
-		Logger:           log,
+		Scheme:                 getScheme(),
+		LeaderElectionID:       edge.GroupName + "-task",
+		Logger:                 log,
+		HealthProbeBindAddress: options.HealthProbeBindAddress,
+		MetricsBindAddress:     options.MetricsBindAddress,
 	})
 	if err != nil {
 		log.Error(err, "unable to create manager")

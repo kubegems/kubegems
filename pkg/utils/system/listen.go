@@ -39,8 +39,14 @@ func ListenAndServeContextGRPCAndHTTP(ctx context.Context, listen string, tls *t
 			}
 		})
 	}
-
-	s := http.Server{Handler: httphandler, Addr: listen, TLSConfig: tls}
+	s := http.Server{
+		Handler:   httphandler,
+		Addr:      listen,
+		TLSConfig: tls,
+		BaseContext: func(_ net.Listener) context.Context {
+			return ctx
+		},
+	}
 	go func() {
 		<-ctx.Done()
 		log.Info("shutting down server", "addr", listen)
