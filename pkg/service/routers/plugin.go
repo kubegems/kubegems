@@ -17,6 +17,7 @@ package routers
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	cserice "kubegems.io/configer/service"
@@ -66,7 +67,7 @@ func (p *PluginInfoGetter) NacosInfoOf(clusterName string) (addr, username, pass
 
 func (p *PluginInfoGetter) RoundTripperOf(clusterName string) (rt http.RoundTripper) {
 	cli, _ := p.GetAgents().ClientOf(context.Background(), clusterName)
-	return agents.RoundTripOf(cli)
+	return RoundTripOf(cli)
 }
 
 func (p *PluginInfoGetter) Username(c *gin.Context) string {
@@ -75,4 +76,24 @@ func (p *PluginInfoGetter) Username(c *gin.Context) string {
 		return ""
 	}
 	return u.GetUsername()
+}
+
+// 临时修复
+func RoundTripOf(cli agents.Client) http.RoundTripper {
+	return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		realPath := strings.TrimPrefix(req.URL.Path, cli.BaseAddr().Path)
+		return cli.DoRawRequest(req.Context(), agents.Request{
+			Method:  req.Method,
+			Path:    realPath,
+			Query:   req.URL.Query(),
+			Headers: req.Header,
+			Body:    req.Body,
+		})
+	})
+}
+
+type RoundTripperFunc func(req *http.Request) (*http.Response, error)
+
+func (c RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return c(req)
 }
