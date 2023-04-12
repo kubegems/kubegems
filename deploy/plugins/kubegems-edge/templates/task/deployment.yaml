@@ -76,8 +76,9 @@ spec:
           args:
             - edge
             - task
+            - --healthprobebindaddress=:{{- .Values.task.containerPorts.probe }}
             {{- if .Values.task.metrics.enabled }}
-            - --metricsaddr=:{{- .Values.task.metrics.service.port }}
+            - --metricsbindaddress=:{{- .Values.task.metrics.service.port }}
             {{- end }}
             {{- if .Values.task.extraArgs }}
             {{- include "common.tplvalues.render" (dict "value" .Values.task.extraArgs "context" $) | nindent 12 }}
@@ -108,6 +109,10 @@ spec:
           resources: {{- toYaml .Values.task.resources | nindent 12 }}
           {{- end }}
           ports:
+          ports:
+            - name: probe
+              containerPort: {{ .Values.task.containerPorts.probe }}
+              protocol: TCP
             {{- if .Values.task.metrics.enabled }}
             - name: metrics
               containerPort: {{ .Values.task.metrics.service.port }}
@@ -117,7 +122,7 @@ spec:
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.task.livenessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
               path: /healthz
-              port: http
+              port: probe
           {{- else if .Values.task.customLivenessProbe }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.task.customLivenessProbe "context" $) | nindent 12 }}
           {{- end }}
@@ -125,7 +130,7 @@ spec:
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.task.readinessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
               path: /healthz
-              port: http
+              port: probe
           {{- else if .Values.task.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.task.customReadinessProbe "context" $) | nindent 12 }}
           {{- end }}
@@ -133,7 +138,7 @@ spec:
           startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.task.startupProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
               path: /healthz
-              port: http
+              port: probe
           {{- else if .Values.task.customStartupProbe }}
           startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.task.customStartupProbe "context" $) | nindent 12 }}
           {{- end }}

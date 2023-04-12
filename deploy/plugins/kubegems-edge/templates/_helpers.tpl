@@ -113,7 +113,7 @@ Return the proper serviceAccount name
 {{- end -}}
 
 {{- define "kubegems-edge.task.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.server.image "global" .Values.global "root" .) }}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.task.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{- define "kubegems-edge.task.serviceAccountName" -}}
