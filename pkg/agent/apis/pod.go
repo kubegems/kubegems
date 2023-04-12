@@ -16,11 +16,14 @@ package apis
 
 import (
 	"archive/tar"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime"
 	"mime/multipart"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -41,6 +44,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/httputil/request"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -100,14 +104,8 @@ func (h *PodHandler) List(c *gin.Context) {
 		NotOK(c, err)
 		return
 	}
-
-	objects := podList.Items
-
-	objects = filterByNodename(c, objects)
-	pageData := NewPageDataFromContext(c, func(i int) SortAndSearchAble {
-		return &objects[i]
-	}, len(objects), objects)
-
+	objects := filterByNodename(c, podList.Items)
+	pageData := response.PageObjectFromRequest(c.Request, objects)
 	if iswatch, _ := strconv.ParseBool(c.Query("watch")); iswatch {
 		// list
 		c.SSEvent("data", pageData)
@@ -300,6 +298,59 @@ func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
 	}
 }
 
+// ListDir list files in the directory
+// @Tags        Agent.V1
+// @Summary     list files in the directory
+// @Description list files in the directory
+// @Param       cluster   path     string true  "cluster"
+// @Param       namespace path     string true  "namespace"
+// @Param       pod       path     string true  "pod"
+// @Param       container query    string true  "container"
+// @Param       directory  query    string true "directory"
+// @Success     200       {object} object "ok"
+// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/ls [get]
+// @Security    JWT
+func (h *PodHandler) ListDir(c *gin.Context) {
+	// NOTICE: not support windows now!
+	ctx := c.Request.Context()
+	namespace := c.Param("namespace")
+	podname := c.Param("name")
+	arch, os := h.getPodNodeArch(ctx, namespace, podname)
+	directory := c.DefaultQuery("directory", "/")
+	targetpath := "/tmp/podfsmgr-" + os + "-" + arch
+	localfile := "tools/podfsmgr-" + os + "-" + arch
+	toolBinExistsCmd := []string{"/bin/sh", "-c", targetpath}
+	_, _, err := execCmdOnce(ctx, h.cluster, namespace, podname, request.HeaderOrQuery(c.Request, "container", ""), toolBinExistsCmd)
+	if err != nil && err.Error() == "command terminated with exit code 127" {
+		fd := FileTransfer{
+			Cluster:   h.cluster,
+			Namespace: namespace,
+			Pod:       podname,
+			Container: paramFromHeaderOrQuery(c, "container", ""),
+		}
+		if err := fd.UploadLocal(c, localfile, "/tmp"); err != nil {
+			NotOK(c, err)
+			return
+		}
+	}
+	lscmd := []string{"/bin/sh", "-c", targetpath + " ls " + directory}
+	stdout, stderr, err := execCmdOnce(ctx, h.cluster, namespace, podname, request.HeaderOrQuery(c.Request, "container", ""), lscmd)
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	if len(stderr) > 0 {
+		NotOK(c, fmt.Errorf("failed list dir %s", stderr))
+		return
+	}
+	var ret []map[string]interface{}
+	if err := json.Unmarshal(stdout, &ret); err != nil {
+		NotOK(c, err)
+		return
+	}
+	OK(c, ret)
+}
+
 // UploadFileToContainer upload files to container
 // @Tags        Agent.V1
 // @Summary     upload files to container
@@ -394,10 +445,20 @@ func (fd *FileTransfer) Upload(c *gin.Context) error {
 	if err := c.Bind(uploadFormData); err != nil {
 		return err
 	}
-	r, w := io.Pipe()
-	go uploadFormData.convertTar(w)
+	return fd.upload(c, uploadFormData)
+}
+func (fd *FileTransfer) UploadLocal(ctx context.Context, localfile, dest string) error {
+	uploadFormData := &uploadLocalForm{
+		Dest:  dest,
+		Files: []string{localfile},
+	}
+	return fd.upload(ctx, uploadFormData)
+}
 
-	command := []string{"tar", "xf", "-", "-C", uploadFormData.Dest}
+func (fd *FileTransfer) upload(ctx context.Context, form uploadFormIface) error {
+	r, w := io.Pipe()
+	go form.convertTar(w)
+	command := []string{"tar", "xf", "-", "-C", form.destLoc()}
 	pe := PodCmdExecutor{
 		Cluster: fd.Cluster,
 		Pod: client.ObjectKey{
@@ -417,12 +478,16 @@ func (fd *FileTransfer) Upload(c *gin.Context) error {
 			Stderr: &fakeStdoutWriter{},
 		},
 	}
-	return pe.Execute(c.Request.Context())
+	return pe.Execute(ctx)
 }
 
 type uploadForm struct {
 	Dest  string                  `form:"dest" binding:"required"`
 	Files []*multipart.FileHeader `form:"files[]" binding:"required"`
+}
+
+func (uf *uploadForm) destLoc() string {
+	return uf.Dest
 }
 
 func (uf *uploadForm) convertTar(w io.WriteCloser) (err error) {
@@ -442,10 +507,48 @@ func (uf *uploadForm) convertTar(w io.WriteCloser) (err error) {
 		fd.Close()
 	}
 	if e := tw.Close(); e != nil {
-		log.Error(e, "x")
+		log.Error(e, "tar error")
 		return e
 	}
 	return w.Close()
+}
+
+type uploadLocalForm struct {
+	Dest  string
+	Files []string
+}
+
+func (uf *uploadLocalForm) destLoc() string {
+	return uf.Dest
+}
+
+func (uf *uploadLocalForm) convertTar(w io.WriteCloser) (err error) {
+	tw := tar.NewWriter(w)
+	for _, file := range uf.Files {
+		fstat, _ := os.Stat(file)
+		tw.WriteHeader(&tar.Header{
+			Name:    fstat.Name(),
+			Size:    fstat.Size(),
+			ModTime: time.Now(),
+			Mode:    int64(fstat.Mode().Perm()),
+		})
+		fd, err := os.Open(file)
+		if err != nil {
+			return err
+		}
+		io.Copy(tw, fd)
+		fd.Close()
+	}
+	if e := tw.Close(); e != nil {
+		log.Error(e, "tar error")
+		return e
+	}
+	return w.Close()
+}
+
+type uploadFormIface interface {
+	destLoc() string
+	convertTar(w io.WriteCloser) error
 }
 
 type fakeStdoutWriter struct{}
@@ -503,4 +606,60 @@ func RateLimitWriter(ctx context.Context, w io.Writer, speed int) io.Writer {
 		originWriter: w,
 		ratelimitor:  l,
 	}
+}
+
+const (
+	NodeArchLabelKey     = "kubernetes.io/arch"
+	NodeOSLabelKey       = "kubernetes.io/os"
+	NodeBetaArchLabelKey = "beta.kubernetes.io/arch"
+	NodeBetaOSLabelKey   = "beta.kubernetes.io/os"
+)
+
+func (h *PodHandler) getPodNodeArch(ctx context.Context, namespace, name string) (arch, os string) {
+	pod := v1.Pod{}
+	node := v1.Node{}
+	h.cluster.GetClient().Get(ctx, client.ObjectKey{
+		Name:      name,
+		Namespace: namespace,
+	}, &pod)
+
+	h.cluster.GetClient().Get(ctx, client.ObjectKey{
+		Name: pod.Spec.NodeName,
+	}, &node)
+	if v, exist := node.ObjectMeta.Labels[NodeArchLabelKey]; exist {
+		arch = v
+	} else {
+		arch = node.ObjectMeta.Labels[NodeBetaArchLabelKey]
+	}
+	if v, exist := node.ObjectMeta.Labels[NodeOSLabelKey]; exist {
+		os = v
+	} else {
+		os = node.ObjectMeta.Labels[NodeBetaOSLabelKey]
+	}
+	return
+}
+
+func execCmdOnce(ctx context.Context, cluster cluster.Interface, namespace, podname, container string, cmd []string) ([]byte, []byte, error) {
+	var stdout, stderr bytes.Buffer
+	pe := PodCmdExecutor{
+		Cluster: cluster,
+		Pod: client.ObjectKey{
+			Namespace: namespace,
+			Name:      podname,
+		},
+		PodExecOptions: v1.PodExecOptions{
+			Container: container,
+			Stdout:    true,
+			Stderr:    true,
+			Command:   cmd,
+		},
+		StreamOptions: remotecommand.StreamOptions{
+			Stdout: &stdout,
+			Stderr: &stderr,
+		},
+	}
+	if err := pe.Execute(ctx); err != nil {
+		return nil, nil, err
+	}
+	return stdout.Bytes(), stderr.Bytes(), nil
 }

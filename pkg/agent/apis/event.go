@@ -22,6 +22,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -59,9 +60,7 @@ func (h *EventHandler) List(c *gin.Context) {
 
 	objects := h.filterByTopKind(c, events.Items)
 
-	pageData := NewPageDataFromContext(c, func(i int) SortAndSearchAble {
-		return &objects[i]
-	}, len(objects), objects)
+	pageData := response.PageObjectFromRequest(c.Request, objects)
 	OK(c, pageData)
 }
 

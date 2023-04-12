@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package certificate
 
 import (
 	"bytes"
@@ -47,7 +47,8 @@ type CertOptions struct {
 }
 
 // nolint: gomnd,funlen
-func SignCertificate(caPEMBlock, certPEMBlock, keyPEMBlock []byte, options CertOptions) ([]byte, []byte, error) {
+// IssueCertificate issues a certificate with the given CA certificate and key.
+func IssueCertificate(caPEMBlock, certPEMBlock, keyPEMBlock []byte, options CertOptions) ([]byte, []byte, error) {
 	tlscert, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 	if err != nil {
 		return nil, nil, err

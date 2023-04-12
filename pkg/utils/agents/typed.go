@@ -57,6 +57,23 @@ func NewSimpleTypedClient(baseaddr string) (*TypedClient, error) {
 	}, nil
 }
 
+func NewTypedClient(options *ClientOptions, scheme *runtime.Scheme) *TypedClient {
+	if scheme == nil {
+		scheme = kube.GetScheme()
+	}
+	return &TypedClient{
+		BaseAddr: options.Addr,
+		HTTPClient: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: options.TLS,
+				Proxy:           OptionAuthAsProxy(options),
+			},
+		},
+		RuntimeScheme: scheme,
+		tracer:        trace.NewNoopTracerProvider().Tracer(""),
+	}
+}
+
 type TypedClient struct {
 	BaseAddr      *url.URL
 	RuntimeScheme *runtime.Scheme

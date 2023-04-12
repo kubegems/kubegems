@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package server
 
 import (
 	"context"
@@ -68,7 +68,7 @@ func (s EdgeHubK8sStore) List(ctx context.Context, options ListOptions) (int, []
 		slices.SortFunc(filtered, sortfunc)
 		return len(filtered), filtered, nil
 	} else {
-		paged := response.NewTypedPage(list.Items, options.Page, options.Size, filterfunc, sortfunc)
+		paged := response.PageFrom(list.Items, options.Page, options.Size, filterfunc, sortfunc)
 		return int(paged.Total), paged.List, nil
 	}
 }

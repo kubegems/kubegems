@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -70,8 +71,6 @@ func (h *NamespaceHandler) List(c *gin.Context) {
 			objects = append(objects, obj)
 		}
 	}
-	pageData := NewPageDataFromContext(c, func(i int) SortAndSearchAble {
-		return &objects[i]
-	}, len(objects), objects)
+	pageData := response.PageObjectFromRequest(c.Request, objects)
 	OK(c, pageData)
 }

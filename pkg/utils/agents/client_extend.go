@@ -21,7 +21,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/pkg/errors"
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prommodel "github.com/prometheus/common/model"
@@ -30,28 +29,31 @@ import (
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
 
+func NewExtendClientFrom(from *TypedClient) *ExtendClient {
+	return &ExtendClient{Inner: from}
+}
+
 type ExtendClient struct {
-	Name string
-	*TypedClient
+	Inner *TypedClient
 }
 
 // statistics.system/v1
 func (c *ExtendClient) ClusterWorkloadStatistics(ctx context.Context, ret interface{}) error {
-	return c.DoRequest(ctx, Request{
+	return c.Inner.DoRequest(ctx, Request{
 		Path: "/custom/statistics.system/v1/workloads",
 		Into: WrappedResponse(ret),
 	})
 }
 
 func (c *ExtendClient) ClusterResourceStatistics(ctx context.Context, ret interface{}) error {
-	return c.DoRequest(ctx, Request{
+	return c.Inner.DoRequest(ctx, Request{
 		Path: "/custom/statistics.system/v1/resources",
 		Into: WrappedResponse(ret),
 	})
 }
 
 func (c *ExtendClient) ClusterStatistics(ctx context.Context, ret interface{}) error {
-	return c.DoRequest(ctx, Request{
+	return c.Inner.DoRequest(ctx, Request{
 		Path: "/custom/statistics.system/v1/all",
 		Into: WrappedResponse(ret),
 	})
@@ -62,11 +64,11 @@ func (c *ExtendClient) Healthy(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	return c.DoRequest(ctx, Request{Path: "/healthz"})
+	return c.Inner.DoRequest(ctx, Request{Path: "/healthz"})
 }
 
 func (c *ExtendClient) CheckAlertmanagerConfig(ctx context.Context, data *monitoringv1alpha1.AlertmanagerConfig) error {
-	return c.DoRequest(ctx, Request{
+	return c.Inner.DoRequest(ctx, Request{
 		Method: http.MethodPost,
 		Path:   "/custom/alertmanager/v1/alerts/_/actions/check",
 		Body:   data,
@@ -75,7 +77,7 @@ func (c *ExtendClient) CheckAlertmanagerConfig(ctx context.Context, data *monito
 
 func (c *ExtendClient) GetPromeAlertRules(ctx context.Context, name string) (map[string]prometheus.RealTimeAlertRule, error) {
 	ret := map[string]prometheus.RealTimeAlertRule{}
-	if err := c.DoRequest(ctx, Request{
+	if err := c.Inner.DoRequest(ctx, Request{
 		Path: fmt.Sprintf("/custom/prometheus/v1/alertrule?name=%s", name),
 		Into: WrappedResponse(&ret),
 	}); err != nil {
@@ -86,7 +88,7 @@ func (c *ExtendClient) GetPromeAlertRules(ctx context.Context, name string) (map
 
 func (c *ExtendClient) GetLokiAlertRules(ctx context.Context) (map[string]prometheus.RealTimeAlertRule, error) {
 	ret := map[string]prometheus.RealTimeAlertRule{}
-	if err := c.DoRequest(ctx, Request{
+	if err := c.Inner.DoRequest(ctx, Request{
 		Path: "/custom/loki/v1/alertrule",
 		Into: WrappedResponse(&ret),
 	}); err != nil {
@@ -106,12 +108,12 @@ func (c *ExtendClient) GetPrometheusLabelNames(ctx context.Context, matchs []str
 	}
 	values.Add("start", start)
 	values.Add("end", end)
-	if err := c.DoRequest(ctx, Request{
+	if err := c.Inner.DoRequest(ctx, Request{
 		Path:  "/custom/prometheus/v1/labelnames",
 		Query: values,
 		Into:  WrappedResponse(&resp),
 	}); err != nil {
-		return nil, fmt.Errorf("prometheus label names failed, cluster: %s, matchs: %v, %v", c.Name, matchs, err)
+		return nil, err
 	}
 
 	return resp.Labels, nil
@@ -129,12 +131,12 @@ func (c *ExtendClient) GetPrometheusLabelValues(ctx context.Context, matchs []st
 	values.Add("label", label)
 	values.Add("start", start)
 	values.Add("end", end)
-	if err := c.DoRequest(ctx, Request{
+	if err := c.Inner.DoRequest(ctx, Request{
 		Path:  "/custom/prometheus/v1/labelvalues",
 		Query: values,
 		Into:  WrappedResponse(&resp),
 	}); err != nil {
-		return nil, fmt.Errorf("prometheus label values failed, cluster: %s, matchs: %v, label: %s, %v", c.Name, matchs, label, err)
+		return nil, err
 	}
 
 	return resp.Labels, nil
@@ -148,14 +150,13 @@ func (c *ExtendClient) PrometheusQueryRange(ctx context.Context, query, start, e
 	values.Add("start", start)
 	values.Add("end", end)
 	values.Add("step", step)
-	if err := c.DoRequest(ctx, Request{
+	if err := c.Inner.DoRequest(ctx, Request{
 		Path:  "/custom/prometheus/v1/matrix",
 		Query: values,
 		Into:  WrappedResponse(&ret),
 	}); err != nil {
-		return nil, fmt.Errorf("prometheus query range failed, cluster: %s, promql: %s, %v", c.Name, query, err)
+		return nil, err
 	}
-
 	for _, v := range ret {
 		addMetricNameLabel(v.Metric, "{}")
 	}
@@ -167,12 +168,12 @@ func (c *ExtendClient) PrometheusVector(ctx context.Context, query string) (prom
 	ret := prommodel.Vector{}
 	values := url.Values{}
 	values.Add("query", query)
-	if err := c.DoRequest(ctx, Request{
+	if err := c.Inner.DoRequest(ctx, Request{
 		Path:  "/custom/prometheus/v1/vector",
 		Query: values,
 		Into:  WrappedResponse(&ret),
 	}); err != nil {
-		return nil, fmt.Errorf("prometheus vector failed, cluster: %s, promql: %s, %v", c.Name, query, err)
+		return nil, err
 	}
 
 	for _, v := range ret {
@@ -192,12 +193,12 @@ func addMetricNameLabel(metric prommodel.Metric, name string) {
 
 func (c *ExtendClient) PrometheusTargets(ctx context.Context) (*promv1.TargetsResult, error) {
 	ret := promv1.TargetsResult{}
-	if err := c.DoRequest(ctx, Request{
+	if err := c.Inner.DoRequest(ctx, Request{
 		Path:  "/custom/prometheus/v1/targets",
 		Query: nil,
 		Into:  WrappedResponse(&ret),
 	}); err != nil {
-		return nil, errors.Wrapf(err, "get prometheus targets from cluster: %s", c.Name)
+		return nil, err
 	}
 	return &ret, nil
 }
@@ -206,12 +207,12 @@ func (c *ExtendClient) LokiQuery(ctx context.Context, logql string) (loki.QueryR
 	ret := loki.QueryResponseData{}
 	values := url.Values{}
 	values.Add("query", logql)
-	if err := c.DoRequest(ctx, Request{
+	if err := c.Inner.DoRequest(ctx, Request{
 		Path:  "/custom/loki/v1/query",
 		Query: values,
 		Into:  WrappedResponse(&ret),
 	}); err != nil {
-		return ret, fmt.Errorf("loki query failed, cluster: %s, logql: %s, %v", c.Name, logql, err)
+		return ret, err
 	}
 	return ret, nil
 }

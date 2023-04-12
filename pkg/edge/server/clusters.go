@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package server
 
 import (
 	"bytes"
@@ -28,33 +28,17 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/cli-runtime/pkg/printers"
 	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/apis/edge/common"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/certificate"
+	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	pkgcluster "sigs.k8s.io/controller-runtime/pkg/cluster"
-)
-
-const (
-	AnnotationKeyEdgeHubAddress = "edge.kubegems.io/edge-hub-address"
-	AnnotationKeyEdgeHubCert    = "edge.kubegems.io/edge-hub-key"
-	AnnotationKeyEdgeHubCA      = "edge.kubegems.io/edge-hub-ca"
-	AnnotationKeyEdgeHubKey     = "edge.kubegems.io/edge-hub-cert"
-	LabelKeIsyEdgeHub           = "edge.kubegems.io/is-edge-hub"
-
-	AnnotationKeyEdgeAgentAddress           = "edge.kubegems.io/edge-agent-address"
-	AnnotationKeyEdgeAgentKeepaliveInterval = "edge.kubegems.io/edge-agent-keepalive-interval"
-	AnnotationKeyEdgeAgentRegisterAddress   = "edge.kubegems.io/edge-agent-register-address"
-	AnnotationKeyKubernetesVersion          = "edge.kubegems.io/kubernetes-version"
-	AnnotationKeyAPIserverAddress           = "edge.kubegems.io/apiserver-address"
-	AnnotationKeyNodesCount                 = "edge.kubegems.io/nodes-count"
-	AnnotationKeyDeviceID                   = "edge.kubegems.io/device-id"
-
-	// temporary connection do not write to database
-	AnnotationIsTemporaryConnect = "edge.kubegems.io/temporary-connect"
 )
 
 type EdgeManager struct {
@@ -78,7 +62,7 @@ func NewClusterManager(ctx context.Context, namespace string, selfhost string) (
 			if !ok {
 				return nil
 			}
-			return []string{cluster.Status.Manufacture[AnnotationKeyDeviceID]}
+			return []string{cluster.Status.Manufacture[common.AnnotationKeyDeviceID]}
 		})
 	}
 	c, err := cluster.NewClusterAndStart(ctx, cfg, apply, cluster.WithInNamespace(namespace))
@@ -94,24 +78,24 @@ func NewClusterManager(ctx context.Context, namespace string, selfhost string) (
 
 func (m *EdgeManager) ListPage(
 	ctx context.Context,
-	page, size int,
-	search string, labels, manufacture labels.Selector,
-) (response.TypedPage[v1beta1.EdgeCluster], error) {
+	opts request.ListOptions,
+	labels, manufacture labels.Selector,
+) (response.Page[v1beta1.EdgeCluster], error) {
 	total, list, err := m.ClusterStore.List(ctx, ListOptions{
-		Page:        page,
-		Size:        size,
+		Page:        opts.Page,
+		Size:        opts.Size,
+		Search:      opts.Search,
 		Selector:    labels,
-		Search:      search,
 		Manufacture: manufacture,
 	})
 	if err != nil {
-		return response.TypedPage[v1beta1.EdgeCluster]{}, err
+		return response.Page[v1beta1.EdgeCluster]{}, err
 	}
-	return response.TypedPage[v1beta1.EdgeCluster]{
-		Total:       int64(total),
-		List:        list,
-		CurrentPage: int64(page),
-		CurrentSize: int64(size),
+	return response.Page[v1beta1.EdgeCluster]{
+		Total: int64(total),
+		List:  list,
+		Page:  int64(opts.Page),
+		Size:  int64(opts.Size),
 	}, nil
 }
 
@@ -183,7 +167,7 @@ func (m *EdgeManager) RenderInstallManifests(ctx context.Context, uid, token str
 	if err != nil {
 		return nil, err
 	}
-	hubaddress := hub.Status.Manufacture[AnnotationKeyEdgeHubAddress]
+	hubaddress := hub.Status.Manufacture[common.AnnotationKeyEdgeHubAddress]
 	if hubaddress == "" {
 		return nil, fmt.Errorf("edge hub %s has no address", hub.Name)
 	}
@@ -223,14 +207,14 @@ func (m *EdgeManager) RenderInstallManifests(ctx context.Context, uid, token str
 
 func (m *EdgeManager) gencert(cn string, expire *time.Time, hub *v1beta1.EdgeHub) (*v1beta1.Certs, error) {
 	hubcert := v1beta1.Certs{
-		CA:   []byte(hub.Status.Manufacture[AnnotationKeyEdgeHubCA]),
-		Cert: []byte(hub.Status.Manufacture[AnnotationKeyEdgeHubCert]),
-		Key:  []byte(hub.Status.Manufacture[AnnotationKeyEdgeHubKey]),
+		CA:   []byte(hub.Status.Manufacture[common.AnnotationKeyEdgeHubCA]),
+		Cert: []byte(hub.Status.Manufacture[common.AnnotationKeyEdgeHubCert]),
+		Key:  []byte(hub.Status.Manufacture[common.AnnotationKeyEdgeHubKey]),
 	}
 	if len(hubcert.Cert) == 0 || len(hubcert.Key) == 0 {
 		return nil, fmt.Errorf("edge hub %s dont have certificate in status manufacture", hub.Name)
 	}
-	certpem, keypem, err := SignCertificate(hubcert.CA, hubcert.Cert, hubcert.Key, CertOptions{
+	certpem, keypem, err := certificate.IssueCertificate(hubcert.CA, hubcert.Cert, hubcert.Key, certificate.CertOptions{
 		CommonName: cn,
 		ExpireAt:   expire,
 	})
@@ -241,20 +225,22 @@ func (m *EdgeManager) gencert(cn string, expire *time.Time, hub *v1beta1.EdgeHub
 	return edgecerts, nil
 }
 
+// OnTunnelConnectedStatusChange is called when tunnel connected status changed
+// nolint: funlen
 func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context,
 	connected bool, isrefresh bool,
 	fromname string, fromannotations map[string]string,
 	name string, anno map[string]string,
 ) error {
 	// is temporary connection
-	if istemp, _ := strconv.ParseBool(anno[AnnotationIsTemporaryConnect]); istemp {
+	if istemp, _ := strconv.ParseBool(anno[common.AnnotationIsTemporaryConnect]); istemp {
 		log.Info("ignore temporary connection", "from", fromname, "name", name, "annotations", anno)
 		return nil
 	}
 	now := metav1.Now()
 
 	// is edge hub
-	if address, ok := anno[AnnotationKeyEdgeHubAddress]; ok {
+	if address, ok := anno[common.AnnotationKeyEdgeHubAddress]; ok {
 		// edgehub do not update heartbeat
 		if isrefresh {
 			return nil
@@ -282,16 +268,16 @@ func (m *EdgeManager) OnTunnelConnectedStatusChange(ctx context.Context,
 
 		// set hub address from hub address
 		if !isrefresh {
-			if val := fromannotations[AnnotationKeyEdgeHubAddress]; val != "" {
-				anno[AnnotationKeyEdgeAgentRegisterAddress] = val
+			if val := fromannotations[common.AnnotationKeyEdgeHubAddress]; val != "" {
+				anno[common.AnnotationKeyEdgeAgentRegisterAddress] = val
 			}
 		}
-		if deviceid := anno[AnnotationKeyDeviceID]; deviceid != "" {
+		if deviceid := anno[common.AnnotationKeyDeviceID]; deviceid != "" {
 			if cluster.Labels == nil {
 				cluster.Labels = map[string]string{}
 			}
 			// set device id in label to select
-			cluster.Labels[AnnotationKeyDeviceID] = deviceid
+			cluster.Labels[common.AnnotationKeyDeviceID] = deviceid
 		}
 		cluster.Status.Manufacture = anno // annotations as manufacture set
 		if connected {

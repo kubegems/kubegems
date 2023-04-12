@@ -124,7 +124,7 @@ func listWrrapperFunc(r *route.Route) {
 	for i, v := range r.Responses {
 		//  if query parameters exist, response as a paged response
 		if paged {
-			r.Responses[i].Body = response.Response{Data: response.Page{List: v.Body}}
+			r.Responses[i].Body = response.Response{Data: response.Page[any]{List: []any{v.Body}}}
 		} else {
 			r.Responses[i].Body = response.Response{Data: v.Body}
 		}

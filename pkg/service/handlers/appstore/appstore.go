@@ -25,7 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
-	"kubegems.io/kubegems/pkg/utils/pagination"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
 const InternalChartRepoName = "kubegems"
@@ -83,7 +83,8 @@ func (h *AppstoreHandler) ListApps(c *gin.Context) {
 		// 取最新版本
 		ret = append(ret, convertChartVersion(v[0], ""))
 	}
-	handlers.OK(c, pagination.NewPageDataFromContextReflect(c, ret))
+	pagedata := response.PageObjectFromRequest(c.Request, ret)
+	handlers.OK(c, pagedata)
 }
 
 // @Tags        Appstore

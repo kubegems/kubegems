@@ -23,6 +23,7 @@ import (
 	"kubegems.io/kubegems/pkg/msgbus/switcher"
 	"kubegems.io/kubegems/pkg/service/aaa"
 	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 )
 
@@ -51,7 +52,7 @@ var upgrader = websocket.Upgrader{
 func (m *MessageHandler) MessageCenter(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{"Message": err.Error()})
+		response.BadRequest(c.Writer, err.Error())
 		return
 	}
 	var user *switcher.NotifyUser
@@ -96,7 +97,7 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, ms *switcher.Message
 func (m *MessageHandler) SendMessages(c *gin.Context) {
 	var msgTarget msgbus.MessageTarget
 	if err := c.Bind(&msgTarget); err != nil {
-		c.AbortWithStatusJSON(400, gin.H{"Message": err.Error()})
+		response.BadRequest(c.Writer, err.Error())
 		return
 	}
 	for _, uid := range msgTarget.Users {

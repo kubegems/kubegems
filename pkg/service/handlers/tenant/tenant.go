@@ -98,7 +98,7 @@ func (h *TenantHandler) ListTenant(c *gin.Context) {
 	pagedata := handlers.Page(total, list, int64(page), int64(size))
 	if ok, _ := strconv.ParseBool(c.Query("containAllocatedResourcequota")); ok {
 		tids := []uint{}
-		tenants := pagedata.List.([]models.Tenant)
+		tenants := pagedata.List
 		for i := range tenants {
 			tids = append(tids, tenants[i].ID)
 		}
@@ -835,6 +835,11 @@ func (h *TenantHandler) PostTenantTenantResourceQuota(c *gin.Context) {
 		return
 	}
 	ctx := c.Request.Context()
+
+	if len(obj.Content) == 0 {
+		handlers.NotOK(c, i18n.Errorf(c, "content is empty"))
+		return
+	}
 
 	if err := h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&obj).Error; err != nil {

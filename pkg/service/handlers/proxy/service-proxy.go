@@ -19,6 +19,7 @@ import (
 	"path"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	proxyutil "kubegems.io/kubegems/pkg/service/handlers/proxy/util"
 	"kubegems.io/kubegems/pkg/utils/slice"
@@ -50,11 +51,11 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 	nswhiteList := []string{"istio-system", "observability"}
 	svcwhiteList := []string{"kiali", "jaeger-query"}
 	if !slice.ContainStr(nswhiteList, namespace) {
-		handlers.Forbidden(c, "forbidden")
+		handlers.Forbidden(c, i18n.Errorf(c, "forbidden"))
 		return
 	}
 	if !slice.ContainStr(svcwhiteList, service) {
-		handlers.Forbidden(c, "forbidden")
+		handlers.Forbidden(c, i18n.Errorf(c, "forbidden"))
 		return
 	}
 

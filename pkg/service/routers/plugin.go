@@ -27,9 +27,7 @@ import (
 )
 
 func registPlugins(rg *gin.RouterGroup, basehandler base.BaseHandler) error {
-	configPlugin, err := cserice.NewPlugin(&PluginInfoGetter{
-		BaseHandler: basehandler,
-	}, basehandler.GetDB())
+	configPlugin, err := cserice.NewPlugin(&PluginInfoGetter{BaseHandler: basehandler}, basehandler.GetDB())
 	if err != nil {
 		return err
 	}
@@ -80,8 +78,7 @@ func (p *PluginInfoGetter) Username(c *gin.Context) string {
 	return u.GetUsername()
 }
 
-// TODO: merge with utils
-
+// 临时修复
 func RoundTripOf(cli agents.Client) http.RoundTripper {
 	return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		realPath := strings.TrimPrefix(req.URL.Path, cli.BaseAddr().Path)

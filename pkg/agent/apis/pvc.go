@@ -22,7 +22,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/storage"
-	"kubegems.io/kubegems/pkg/utils/pagination"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -41,7 +41,7 @@ type PvcHandler struct {
 // @Param       size      query    int                                                              false "page"
 // @Param       namespace path     string                                                           true  "namespace"
 // @Param       cluster   path     string                                                           true  "cluster"
-// @Success     200       {object} handlers.ResponseStruct{Data=pagination.PageData{List=[]object}} "PersistentVolumeClaim"
+// @Success     200       {object} handlers.ResponseStruct{Data=response.Page{List=[]object}} "PersistentVolumeClaim"
 // @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pvcs [get]
 // @Security    JWT
 func (h *PvcHandler) List(c *gin.Context) {
@@ -62,13 +62,11 @@ func (h *PvcHandler) List(c *gin.Context) {
 
 	// ignore errors
 	pvcInUse, snapClassInUse, _ := h.getMapForSnapAndPod(c, ns)
-
 	objects := pvcList.Items
 	for _, obj := range objects {
 		h.annotatePVC(c, &obj, pvcInUse, snapClassInUse)
 	}
-
-	pageData := pagination.NewTypedSearchSortPageResourceFromContext(c, objects)
+	pageData := response.PageObjectFromRequest(c.Request, objects)
 	OK(c, pageData)
 }
 

@@ -39,7 +39,6 @@ import (
 	"kubegems.io/kubegems/pkg/model/deployment"
 	storemodels "kubegems.io/kubegems/pkg/model/store/api/models"
 	"kubegems.io/kubegems/pkg/model/store/repository"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -116,11 +115,10 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 	if err := eg.Wait(); err != nil {
 		log.Error(err, "wait list model deployments")
 	}
-	listoptions := request.GetListOptions(req.Request)
 	// sort by creation timestamp desc
-	paged := response.NewPageData(retlist, listoptions.Page, listoptions.Size, nil, func(i, j int) bool {
-		return retlist[i].CreationTimestamp.After(retlist[j].CreationTimestamp.Time)
-	})
+	getname := func(i ModelDeploymentOverview) string { return i.Name }
+	gettime := func(i ModelDeploymentOverview) time.Time { return i.CreationTimestamp.Time }
+	paged := response.PageFromRequest(req.Request, retlist, getname, gettime)
 	response.OK(resp, paged)
 }
 
@@ -130,12 +128,7 @@ func (o *ModelDeploymentAPI) ListModelDeployments(req *restful.Request, resp *re
 		if err := cli.List(ctx, list, client.InNamespace(ref.Namespace)); err != nil {
 			return nil, err
 		}
-		listopt := request.GetListOptions(req.Request)
-		paged := response.NewTypedPage(list.Items, listopt.Page, listopt.Size, func(a modelsv1beta1.ModelDeployment) bool {
-			return strings.Contains(a.Name, listopt.Search)
-		}, func(a, b modelsv1beta1.ModelDeployment) bool {
-			return a.CreationTimestamp.After(b.CreationTimestamp.Time)
-		})
+		paged := response.PageObjectFromRequest(req.Request, list.Items)
 		return paged, nil
 	})
 }

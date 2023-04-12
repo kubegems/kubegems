@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"go.opentelemetry.io/otel"
@@ -34,19 +35,39 @@ import (
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
-func (c DelegateClient) DialWebsocket(ctx context.Context, rpath string, headers http.Header) (*websocket.Conn, *http.Response, error) {
+const (
+	DefaultWebSocketHandshakeTimeout = 45 * time.Second
+)
+
+func NewWebsocketClient(options *ClientOptions) *WebsocketClient {
+	return &WebsocketClient{
+		base: options.Addr,
+		dialer: &websocket.Dialer{
+			TLSClientConfig:  options.TLS,
+			HandshakeTimeout: DefaultWebSocketHandshakeTimeout,
+			Proxy:            OptionAuthAsProxy(options),
+		},
+	}
+}
+
+type WebsocketClient struct {
+	dialer *websocket.Dialer
+	base   *url.URL
+}
+
+func (c WebsocketClient) DialWebsocket(ctx context.Context, rpath string, headers http.Header) (*websocket.Conn, *http.Response, error) {
 	wsu := (&url.URL{
 		Scheme: func() string {
-			if c.BaseAddr().Scheme == "http" {
+			if c.base.Scheme == "http" {
 				return "ws"
 			} else {
 				return "wss"
 			}
 		}(),
-		Host: c.BaseAddr().Host,
-		Path: path.Join(c.BaseAddr().Path, rpath),
+		Host: c.base.Host,
+		Path: path.Join(c.base.Path, rpath),
 	}).String()
-	return c.websocket.DialContext(ctx, wsu, headers)
+	return c.dialer.DialContext(ctx, wsu, headers)
 }
 
 type Request struct {

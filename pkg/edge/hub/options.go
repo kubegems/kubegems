@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package options
+package hub
 
-type HubOptions struct {
-	Listen         string `json:"listen,omitempty"`
-	ListenGrpc     string `json:"listenGrpc,omitempty"`
-	Host           string `json:"host,omitempty" validate:"required"`
-	ServerID       string `json:"serverID,omitempty" validate:"required"`
-	TLS            *TLS   `json:"tls,omitempty"`
-	EdgeServerAddr string `json:"edgeServerAddr,omitempty"`
+import "kubegems.io/kubegems/pkg/utils/system"
+
+type Options struct {
+	Listen         string      `json:"listen,omitempty"`
+	ListenGrpc     string      `json:"listenGrpc,omitempty"`
+	Host           string      `json:"host,omitempty" validate:"required"`
+	ServerID       string      `json:"serverID,omitempty" validate:"required"`
+	TLS            *system.TLS `json:"tls,omitempty"`
+	EdgeServerAddr string      `json:"edgeServerAddr,omitempty"`
 }
 
-func NewDefaultHub() *HubOptions {
-	return &HubOptions{
+func NewDefaultOptions() *Options {
+	return &Options{
 		Listen:         ":8080",
 		ListenGrpc:     ":50051",
-		TLS:            NewDefaultTLS(),
+		TLS:            system.NewDefaultTLS(),
 		ServerID:       "",
 		EdgeServerAddr: "127.0.0.1:50052",
 	}

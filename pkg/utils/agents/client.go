@@ -16,16 +16,13 @@ package agents
 
 import (
 	"context"
-	"crypto/tls"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
-	"k8s.io/client-go/kubernetes"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -52,22 +49,27 @@ type Client interface {
 
 var _ Client = &DelegateClient{}
 
-type DelegateClient struct {
-	*ExtendClient
-	websocket     *websocket.Dialer
-	apiserverAddr *url.URL
-	kubernetes    kubernetes.Interface
-	discovery     discovery.DiscoveryInterface
+func NewDelegateClientClient(options *ClientOptions, name string, apiserver *url.URL, discovery discovery.DiscoveryInterface, tracer trace.Tracer) Client {
+	cli := NewTypedClient(options, kube.GetScheme())
+	return &DelegateClient{
+		name:            name,
+		apiserverAddr:   apiserver,
+		baseaddr:        options.Addr,
+		discovery:       memory.NewMemCacheClient(discovery),
+		TypedClient:     cli,
+		ExtendClient:    NewExtendClientFrom(cli),
+		WebsocketClient: NewWebsocketClient(options),
+	}
 }
 
-type ClientMeta struct {
-	Name      string
-	BaseAddr  *url.URL
-	TLSConfig *tls.Config
-	Proxy     func(req *http.Request) (*url.URL, error)
-
-	ServerInfo    serverInfo
-	APIServerAddr *url.URL
+type DelegateClient struct {
+	*TypedClient
+	*ExtendClient
+	*WebsocketClient
+	name          string
+	baseaddr      *url.URL
+	apiserverAddr *url.URL
+	discovery     discovery.DiscoveryInterface
 }
 
 func (c *DelegateClient) Extend() *ExtendClient {
@@ -75,11 +77,11 @@ func (c *DelegateClient) Extend() *ExtendClient {
 }
 
 func (c *DelegateClient) Name() string {
-	return c.ExtendClient.Name
+	return c.name
 }
 
 func (c *DelegateClient) BaseAddr() url.URL {
-	return *c.TypedClient.BaseAddr
+	return *c.baseaddr
 }
 
 func (c *DelegateClient) APIServerAddr() url.URL {
@@ -92,31 +94,4 @@ func (c *DelegateClient) APIServerVersion() string {
 		return ""
 	}
 	return version.String()
-}
-
-func newClient(meta ClientMeta, kubernetes kubernetes.Interface, tracer trace.Tracer) Client {
-	return &DelegateClient{
-		ExtendClient: &ExtendClient{
-			Name: meta.Name,
-			TypedClient: &TypedClient{
-				BaseAddr: meta.BaseAddr,
-				HTTPClient: &http.Client{
-					Transport: &http.Transport{
-						TLSClientConfig: meta.TLSConfig,
-						Proxy:           meta.Proxy,
-					},
-				},
-				RuntimeScheme: kube.GetScheme(),
-				tracer:        tracer,
-			},
-		},
-		websocket: &websocket.Dialer{
-			Proxy:            meta.Proxy,
-			HandshakeTimeout: 45 * time.Second,
-			TLSClientConfig:  meta.TLSConfig,
-		},
-		apiserverAddr: meta.APIServerAddr,
-		kubernetes:    kubernetes,
-		discovery:     memory.NewMemCacheClient(kubernetes.Discovery()),
-	}
 }

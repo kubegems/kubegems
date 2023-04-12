@@ -20,17 +20,17 @@ import (
 	"net/http"
 
 	"golang.org/x/sync/errgroup"
-	"kubegems.io/kubegems/pkg/edge/common"
-	"kubegems.io/kubegems/pkg/edge/options"
+	"kubegems.io/kubegems/pkg/apis/edge/common"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/certificate"
 	"kubegems.io/kubegems/pkg/utils/config"
 	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/pprof"
 	"kubegems.io/kubegems/pkg/utils/system"
 )
 
-func Run(ctx context.Context, options *options.HubOptions) error {
+func Run(ctx context.Context, options *Options) error {
 	server, err := New(options)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func Run(ctx context.Context, options *options.HubOptions) error {
 	return server.Run(ctx)
 }
 
-func New(options *options.HubOptions) (*EdgeHubServer, error) {
+func New(options *Options) (*EdgeHubServer, error) {
 	if err := config.Validate(options); err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func New(options *options.HubOptions) (*EdgeHubServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	cert, key := common.EncodeToX509Pair(tlsConfig.Certificates[0])
+	cert, key := certificate.EncodeToX509Pair(tlsConfig.Certificates[0])
 	hub := &EdgeHubServer{
 		upstreamAnnotations: map[string]string{
 			common.AnnotationKeyEdgeHubAddress: options.Host,
@@ -65,15 +65,13 @@ func New(options *options.HubOptions) (*EdgeHubServer, error) {
 type EdgeHubServer struct {
 	tunnel.GrpcTunnelServer
 	tlsConfig           *tls.Config
-	options             *options.HubOptions
+	options             *Options
 	upstreamAnnotations tunnel.Annotations
 }
 
 func (s *EdgeHubServer) Run(ctx context.Context) error {
 	ctx = log.NewContext(ctx, log.LogrLogger)
-
 	eg, ctx := errgroup.WithContext(ctx)
-
 	if s.options.Listen == s.options.ListenGrpc {
 		eg.Go(func() error {
 			return system.ListenAndServeContextGRPCAndHTTP(

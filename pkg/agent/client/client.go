@@ -34,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/proxy"
 	"kubegems.io/kubegems/pkg/utils/route"
 	"kubegems.io/kubegems/pkg/utils/stream"
@@ -100,7 +101,7 @@ const (
 	ListOptionContinue      = "continue"
 )
 
-//nolint: funlen
+// nolint: funlen
 func (h *ClientRest) List(c *gin.Context) {
 	list, gvkn := h.listObject(c)
 
@@ -466,20 +467,5 @@ func (r *ClientRest) readObject(c *gin.Context, readbody bool) (client.Object, G
 
 func (r *ClientRest) listObject(c *gin.Context) (client.ObjectList, GVKN) {
 	gvkn := r.parseGVKN(c)
-	if !strings.HasSuffix(gvkn.Kind, "List") {
-		gvkn.GroupVersionKind.Kind = gvkn.GroupVersionKind.Kind + "List"
-	}
-	// try decode using typed ObjectList first
-	runlist, err := r.Cli.Scheme().New(gvkn.GroupVersionKind)
-	if err != nil {
-		// fallback to unstructured.UnstructuredList
-		runlist = &unstructured.UnstructuredList{}
-	}
-	objlist, ok := runlist.(client.ObjectList)
-	if !ok {
-		// fallback to unstructured.UnstructuredList
-		objlist = &unstructured.UnstructuredList{}
-	}
-	objlist.GetObjectKind().SetGroupVersionKind(gvkn.GroupVersionKind)
-	return objlist, gvkn
+	return kube.NewListOf(gvkn.GroupVersionKind, r.Cli.Scheme()), gvkn
 }

@@ -255,7 +255,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.23.6
+    helm.sh/chart: kubegems-installer-1.23.8
   name: kubegems-installer
   namespace: kubegems-installer
 ---
@@ -272,7 +272,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.23.6
+    helm.sh/chart: kubegems-installer-1.23.8
     plugins.kubegems.io/is-plugin-repo: "true"
   name: plugin-repository-kubegems
   namespace: kubegems-installer
@@ -288,7 +288,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.23.6
+    helm.sh/chart: kubegems-installer-1.23.8
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-view: "true"
@@ -314,7 +314,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.23.6
+    helm.sh/chart: kubegems-installer-1.23.8
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
   name: kubegems-installer-edit
@@ -343,7 +343,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.23.6
+    helm.sh/chart: kubegems-installer-1.23.8
   name: kubegems-installer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -367,7 +367,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.23.6
+    helm.sh/chart: kubegems-installer-1.23.8
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -397,7 +397,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.23.6
+    helm.sh/chart: kubegems-installer-1.23.8
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -416,7 +416,7 @@ spec:
         app.kubernetes.io/instance: kubegems-installer
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: kubegems-installer
-        helm.sh/chart: kubegems-installer-1.23.6
+        helm.sh/chart: kubegems-installer-1.23.8
     spec:
       containers:
       - args:
@@ -426,7 +426,7 @@ spec:
         env:
         - name: LOG_LEVEL
           value: debug
-        image: docker.io/kubegems/kubegems:v1.23.6
+        image: docker.io/kubegems/kubegems:v1.23.8
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 6

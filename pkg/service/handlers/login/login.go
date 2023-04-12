@@ -139,7 +139,7 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	if cred.Source == "" {
 		state := c.Query("state")
 		if state == "" {
-			handlers.Unauthorized(c, i18n.Sprintf(c, "state not provide"))
+			handlers.Unauthorized(c, i18n.Errorf(c, "state not provide"))
 			return
 		}
 		source, err := h.AuthModule.GetNameFromState(state)
@@ -161,7 +161,7 @@ func (h *OAuthHandler) commonLogin(c *gin.Context) {
 	uinfo, err := authenticator.GetUserInfo(ctx, cred)
 	if err != nil {
 		log.Error(err, "get user info", "source", cred.Source, "username", cred.Username)
-		handlers.Unauthorized(c, err.Error())
+		handlers.Unauthorized(c, err)
 		return
 	}
 	uinternel, err := h.getOrCreateUser(ctx, uinfo)

@@ -66,7 +66,12 @@ func ParseResourceReferences(resources []byte) []v1beta1.ManagedResource {
 	ress, _ := utils.SplitYAML(resources)
 	managedResources := make([]v1beta1.ManagedResource, len(ress))
 	for i, res := range ress {
-		managedResources[i] = v1beta1.GetReference(res)
+		managedResources[i] = v1beta1.ManagedResource{
+			APIVersion: res.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+			Kind:       res.GetObjectKind().GroupVersionKind().Kind,
+			Name:       res.GetName(),
+			Namespace:  res.GetNamespace(),
+		}
 	}
 	return managedResources
 }

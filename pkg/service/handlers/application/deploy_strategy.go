@@ -27,8 +27,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/stream"
 	"kubegems.io/kubegems/pkg/utils/workflow"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -278,7 +278,7 @@ func (h *ApplicationHandler) StrategyDeploymentStatus(c *gin.Context) {
 			req := agents.Request{
 				Method: http.MethodGet,
 				Path:   path,
-				Into:   &handlers.ResponseStruct{Data: item},
+				Into:   &response.Response{Data: item},
 			}
 			if err := cli.DoRequest(ctx, req); err != nil {
 				return nil, err

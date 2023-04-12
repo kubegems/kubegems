@@ -345,7 +345,10 @@ func (h *ApplicationProcessor) deployHelmApplication(ctx context.Context, ref Pa
 			RepoURL:        form.RepoURL,
 			TargetRevision: form.ChartVersion,
 			Chart:          form.Chart,
-			Helm:           &v1alpha1.ApplicationSourceHelm{Values: string(yamlValues)},
+			Helm: &v1alpha1.ApplicationSourceHelm{
+				ReleaseName: form.Name, // argo appname will be short when too long
+				Values:      string(yamlValues),
+			},
 		}
 		app.Operation = &v1alpha1.Operation{
 			InitiatedBy: v1alpha1.OperationInitiator{

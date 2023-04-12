@@ -24,6 +24,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
 type KialiAPIRequest struct {
@@ -73,7 +74,7 @@ func (h *VirtualSpaceHandler) KialiAPI(c *gin.Context) {
 			if err := json.NewDecoder(src).Decode(&data); err != nil {
 				return err
 			}
-			return json.NewEncoder(dst).Encode(handlers.ResponseStruct{Data: data})
+			return json.NewEncoder(dst).Encode(response.Response{Data: data})
 		}
 		if err := cli.Proxy(ctx, kialisvc, 20001, c.Request, c.Writer, agents.ResponseBodyRewriter(rewirteresponsfunc)); err != nil {
 			return err

@@ -22,10 +22,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	kubeyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/yaml"
 )
 
@@ -94,22 +95,30 @@ func SplitYAMLFilterd[T runtime.Object](raw io.Reader) ([]T, error) {
 	return objs, nil
 }
 
-func ConvertToTyped(uns []*unstructured.Unstructured) []runtime.Object {
-	typedobjs := []runtime.Object{}
-	decoder := serializer.NewCodecFactory(scheme.Scheme).UniversalDeserializer()
-	for i, us := range uns {
-		raw, err := yaml.Marshal(us)
-		if err != nil {
-			return nil
-		}
-		typed, gvk, err := decoder.Decode(raw, nil, nil)
-		if err != nil {
-			// use default
-			typedobjs = append(typedobjs, uns[i])
-			continue
-		}
-		typed.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Group: gvk.Group, Version: gvk.Version, Kind: gvk.Kind})
-		typedobjs = append(typedobjs, typed)
+func ConvertToTypedList(uns []*unstructured.Unstructured, schema *runtime.Scheme) []client.Object {
+	typedobjs := make([]client.Object, 0, len(uns))
+	for _, us := range uns {
+		typedobjs = append(typedobjs, ConvertToTypedObject(us, schema))
 	}
 	return typedobjs
+}
+
+func ConvertToTypedObject(uns *unstructured.Unstructured, schema *runtime.Scheme) client.Object {
+	gvk, err := apiutil.GVKForObject(uns, schema)
+	if err != nil {
+		return uns
+	}
+	obj, err := schema.New(gvk)
+	if err != nil {
+		return uns
+	}
+	typed, ok := obj.(client.Object)
+	if !ok {
+		return uns
+	}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(uns.UnstructuredContent(), typed); err != nil {
+		return uns
+	}
+	typed.GetObjectKind().SetGroupVersionKind(gvk)
+	return typed
 }

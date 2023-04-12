@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -130,11 +131,9 @@ func (h *ManifestHandler) ListManifest(c *gin.Context) {
 		if err != nil {
 			return nil, err
 		}
-		// page
-		searchnamefunc := func(i int) bool {
-			return strings.Contains(manifestList[i].Name, c.Query("search"))
-		}
-		return handlers.NewPageDataFromContext(c, manifestList, searchnamefunc, nil), nil
+		namefunc := func(i Manifest) string { return i.Name }
+		timefunc := func(i Manifest) time.Time { return i.CreateAt.Time }
+		return handlers.NewPageDataFromContext(c, manifestList, namefunc, timefunc), nil
 	})
 }
 

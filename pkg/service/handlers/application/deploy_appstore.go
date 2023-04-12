@@ -17,6 +17,7 @@ package application
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -86,15 +87,9 @@ func (h *ApplicationHandler) ListAppstoreApp(c *gin.Context) {
 			}
 			list = append(list, deploiedhelm)
 		}
-		// 分页
-		searchnamefunc := func(i int) bool {
-			return strings.Contains(list[i].Name, c.Query("search"))
-		}
-		// 排序
-		sortbycreatfunc := func(i, j int) bool {
-			return list[i].CreateAt.After(list[j].CreateAt.Time)
-		}
-		return handlers.NewPageDataFromContext(c, list, searchnamefunc, sortbycreatfunc), nil
+		namefunc := func(i *DeploiedHelm) string { return i.Name }
+		timefunc := func(i *DeploiedHelm) time.Time { return i.CreateAt.Time }
+		return handlers.NewPageDataFromContext(c, list, namefunc, timefunc), nil
 	})
 }
 

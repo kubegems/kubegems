@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/utils"
+	"kubegems.io/kubegems/pkg/utils/generic"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -58,7 +59,7 @@ func (p *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into s
 	if ns == "" {
 		ns = bundle.Namespace
 	}
-	diffresult := utils.DiffWithDefaultNamespace(p.Cli.Client, ns, bundle.Status.Resources, resources)
+	diffresult := utils.DiffWithDefaultNamespace(p.Cli.Client, ns, convertList(bundle.Status.Resources), resources)
 	if bundle.Status.Phase == pluginsv1beta1.PhaseInstalled &&
 		bundle.Spec.Version == bundle.Status.Version &&
 		utils.EqualMapValues(bundle.Status.Values.Object, bundle.Spec.Values.Object) &&
@@ -71,7 +72,7 @@ func (p *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into s
 	if err != nil {
 		return err
 	}
-	bundle.Status.Resources = managedResources
+	bundle.Status.Resources = revertList(managedResources)
 	bundle.Status.Values = pluginsv1beta1.Values{Object: bundle.Spec.Values.Object}.FullFill()
 	bundle.Status.Phase = pluginsv1beta1.PhaseInstalled
 	bundle.Status.Version = bundle.Spec.Version
@@ -90,12 +91,24 @@ func (p *Apply) Remove(ctx context.Context, bundle *pluginsv1beta1.Plugin) error
 	if ns == "" {
 		ns = bundle.Namespace
 	}
-	managedResources, err := p.Cli.Sync(ctx, ns, bundle.Status.Resources, nil, utils.NewDefaultSyncOptions())
+	managedResources, err := p.Cli.Sync(ctx, ns, convertList(bundle.Status.Resources), nil, utils.NewDefaultSyncOptions())
 	if err != nil {
 		return err
 	}
-	bundle.Status.Resources = managedResources
+	bundle.Status.Resources = revertList(managedResources)
 	bundle.Status.Phase = pluginsv1beta1.PhaseDisabled
 	bundle.Status.Message = ""
 	return nil
+}
+
+func convertList(list []pluginsv1beta1.ManagedResource) []utils.ManagedResource {
+	return generic.MapList(list, func(item pluginsv1beta1.ManagedResource) utils.ManagedResource {
+		return utils.ManagedResource{Kind: item.Kind, APIVersion: item.APIVersion, Name: item.Name, Namespace: item.Namespace}
+	})
+}
+
+func revertList(list []utils.ManagedResource) []pluginsv1beta1.ManagedResource {
+	return generic.MapList(list, func(item utils.ManagedResource) pluginsv1beta1.ManagedResource {
+		return pluginsv1beta1.ManagedResource{Kind: item.Kind, APIVersion: item.APIVersion, Name: item.Name, Namespace: item.Namespace}
+	})
 }

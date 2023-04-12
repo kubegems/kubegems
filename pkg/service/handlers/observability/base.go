@@ -15,8 +15,6 @@
 package observability
 
 import (
-	"sync"
-
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/utils/helm"
@@ -26,7 +24,6 @@ type ObservabilityHandler struct {
 	base.BaseHandler
 	AppStoreOpt       *helm.Options
 	ChartmuseumClient *helm.ChartmuseumClient
-	m                 sync.Mutex
 }
 
 func (h *ObservabilityHandler) RegistRouter(rg *gin.RouterGroup) {

@@ -20,8 +20,6 @@ import (
 	"net/http"
 
 	"golang.org/x/sync/errgroup"
-	"kubegems.io/kubegems/pkg/edge/common"
-	"kubegems.io/kubegems/pkg/edge/options"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
@@ -29,7 +27,7 @@ import (
 	"kubegems.io/kubegems/pkg/utils/system"
 )
 
-func Run(ctx context.Context, options *options.ServerOptions) error {
+func Run(ctx context.Context, options *Options) error {
 	server, err := NewEdgeServer(ctx, options)
 	if err != nil {
 		return err
@@ -39,17 +37,17 @@ func Run(ctx context.Context, options *options.ServerOptions) error {
 
 type EdgeServer struct {
 	server    *tunnel.GrpcTunnelServer
-	clusters  *common.EdgeManager
+	clusters  *EdgeManager
 	tlsConfig *tls.Config
-	options   *options.ServerOptions
+	options   *Options
 }
 
-func NewEdgeServer(ctx context.Context, options *options.ServerOptions) (*EdgeServer, error) {
+func NewEdgeServer(ctx context.Context, options *Options) (*EdgeServer, error) {
 	tlsConfig, err := options.TLS.ToTLSConfig()
 	if err != nil {
 		return nil, err
 	}
-	edgemanager, err := common.NewClusterManager(ctx, "", options.Host)
+	edgemanager, err := NewClusterManager(ctx, "", options.Host)
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +93,9 @@ func (s *EdgeServer) Run(ctx context.Context) error {
 }
 
 func (s *EdgeServer) HTTPAPI() http.Handler {
-	edgehubapi := &common.EdgeClusterAPI{
+	edgeapi := &EdgeClusterAPI{
 		Cluster: s.clusters,
 		Tunnel:  s.server.TunnelServer,
 	}
-	return apiutil.NewRestfulAPI("v1", nil, []apiutil.RestModule{
-		edgehubapi,
-	})
+	return apiutil.NewRestfulAPI("v1", nil, []apiutil.RestModule{edgeapi})
 }

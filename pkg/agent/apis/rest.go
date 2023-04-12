@@ -35,7 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/pagination"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -144,7 +144,7 @@ func (h *REST) List(c *gin.Context) {
 		NotOK(c, err)
 		return
 	}
-	pageData := pagination.NewTypedSearchSortPageResourceFromContext(c, items)
+	pageData := response.PageObjectFromRequest(c.Request, items)
 	if iswatch, _ := strconv.ParseBool(c.Param("watch")); iswatch {
 		// list
 		c.SSEvent("data", pageData)

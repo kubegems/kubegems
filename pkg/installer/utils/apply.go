@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"kubegems.io/kubegems/pkg/apis/plugins"
-	"kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -45,7 +44,7 @@ type DiffResult struct {
 func DiffWithDefaultNamespace(
 	cli client.Client,
 	defaultnamespace string,
-	managed []v1beta1.ManagedResource,
+	managed []ManagedResource,
 	resources []*unstructured.Unstructured,
 ) DiffResult {
 	CorrectNamespaces(cli, defaultnamespace, resources)
@@ -53,14 +52,14 @@ func DiffWithDefaultNamespace(
 	return Diff(managed, resources)
 }
 
-func Diff(managed []v1beta1.ManagedResource, resources []*unstructured.Unstructured) DiffResult {
+func Diff(managed []ManagedResource, resources []*unstructured.Unstructured) DiffResult {
 	result := DiffResult{}
-	managedmap := map[v1beta1.ManagedResource]bool{}
+	managedmap := map[ManagedResource]bool{}
 	for _, item := range managed {
 		managedmap[item] = false
 	}
 	for _, item := range resources {
-		man := v1beta1.GetReference(item)
+		man := GetReference(item)
 		if _, ok := managedmap[man]; !ok {
 			result.Creats = append(result.Creats, item)
 		} else {
@@ -99,12 +98,30 @@ type Apply struct {
 	Client client.Client
 }
 
-func (a *Apply) Sync(ctx context.Context,
-	defaultnamespace string,
-	managed []v1beta1.ManagedResource,
-	resources []*unstructured.Unstructured,
+type ManagedResource struct {
+	APIVersion string `json:"apiVersion,omitempty"`
+	Kind       string `json:"kind,omitempty"`
+	Namespace  string `json:"namespace,omitempty"`
+	Name       string `json:"name,omitempty"`
+}
+
+// IsAnAPIObject allows clients to preemptively get a reference to an API object and pass it to places that
+// intend only to get a reference to that object. This simplifies the event recording interface.
+func (obj *ManagedResource) SetGroupVersionKind(gvk schema.GroupVersionKind) {
+	obj.APIVersion, obj.Kind = gvk.ToAPIVersionAndKind()
+}
+
+func (obj *ManagedResource) GroupVersionKind() schema.GroupVersionKind {
+	return schema.FromAPIVersionAndKind(obj.APIVersion, obj.Kind)
+}
+
+func (obj *ManagedResource) GetObjectKind() schema.ObjectKind { return obj }
+
+func (a *Apply) Sync(
+	ctx context.Context, defaultnamespace string,
+	managed []ManagedResource, resources []*unstructured.Unstructured,
 	options *SyncOptions,
-) ([]v1beta1.ManagedResource, error) {
+) ([]ManagedResource, error) {
 	return a.SyncDiff(
 		ctx,
 		DiffWithDefaultNamespace(
@@ -116,12 +133,11 @@ func (a *Apply) Sync(ctx context.Context,
 		options)
 }
 
-func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOptions) ([]v1beta1.ManagedResource, error) {
+// nolint: funlen
+func (a Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOptions) ([]ManagedResource, error) {
 	log := logr.FromContextOrDiscard(ctx)
-
 	errs := []string{}
-
-	managed := []v1beta1.ManagedResource{}
+	managed := []ManagedResource{}
 	// create
 	for _, item := range diff.Creats {
 		log.Info("creating resource", "resource", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
@@ -129,29 +145,26 @@ func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOpti
 			a.createNsIfNotExists(ctx, item.GetNamespace())
 		}
 		if err := ApplyResource(ctx, a.Client, item, ApplyOptions{ServerSideApply: options.ServerSideApply}); err != nil {
-			err = fmt.Errorf("%s %s/%s: %v", item.GetObjectKind().GroupVersionKind().String(), item.GetNamespace(), item.GetName(), err)
+			err = fmt.Errorf("create: %s %s/%s: %v", item.GetObjectKind().GroupVersionKind().String(), item.GetNamespace(), item.GetName(), err)
 			log.Error(err, "creating resource")
 			errs = append(errs, err.Error())
 			continue
 		}
-		managed = append(managed, v1beta1.GetReference(item)) // set managed
+		managed = append(managed, GetReference(item)) // set managed
 	}
-
 	// apply
 	for _, item := range diff.Applys {
-		managed = append(managed, v1beta1.GetReference(item)) // set managed
-
+		managed = append(managed, GetReference(item)) // set managed
 		if IsSkipedOn(item, plugins.AnnotationIgnoreOptionOnUpdate) {
 			log.Info("ignoring update", "resource", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
 			continue
 		}
-
 		log.Info("applying resource", "resource", item.GetObjectKind().GroupVersionKind().String(), "name", item.GetName(), "namespace", item.GetNamespace())
 		if options.CreateNamespace {
 			a.createNsIfNotExists(ctx, item.GetNamespace())
 		}
 		if err := ApplyResource(ctx, a.Client, item, ApplyOptions{ServerSideApply: options.ServerSideApply}); err != nil {
-			err = fmt.Errorf("%s %s/%s: %v", item.GetObjectKind().GroupVersionKind().String(), item.GetNamespace(), item.GetName(), err)
+			err = fmt.Errorf("apply: %s %s/%s: %v", item.GetObjectKind().GroupVersionKind().String(), item.GetNamespace(), item.GetName(), err)
 			log.Error(err, "applying resource")
 			errs = append(errs, err.Error())
 			continue
@@ -170,16 +183,15 @@ func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOpti
 		log.Info("deleting resource", "resource", partial.GetObjectKind().GroupVersionKind().String(), "name", partial.GetName(), "namespace", partial.GetNamespace())
 		if err := a.Client.Delete(ctx, partial, &client.DeleteOptions{}); err != nil {
 			if !apierrors.IsNotFound(err) {
-				err = fmt.Errorf("%s %s/%s: %v", partial.GetObjectKind().GroupVersionKind().String(), partial.GetNamespace(), partial.GetName(), err)
+				err = fmt.Errorf("remove: %s %s/%s: %v", partial.GetObjectKind().GroupVersionKind().String(), partial.GetNamespace(), partial.GetName(), err)
 				log.Error(err, "deleting resource")
 				errs = append(errs, err.Error())
 				// if not removed, keep in managed
-				managed = append(managed, v1beta1.GetReference(item)) // set managed
+				managed = append(managed, GetReference(item)) // set managed
 				continue
 			}
 		}
 	}
-
 	// sort manged
 	sort.Slice(managed, func(i, j int) bool {
 		return strings.Compare(managed[i].APIVersion, managed[j].APIVersion) == 1
@@ -191,7 +203,7 @@ func (a *Apply) SyncDiff(ctx context.Context, diff DiffResult, options *SyncOpti
 	}
 }
 
-func (a *Apply) createNsIfNotExists(ctx context.Context, name string) error {
+func (a Apply) createNsIfNotExists(ctx context.Context, name string) error {
 	if name == "" {
 		return nil
 	}
@@ -272,7 +284,7 @@ func CorrectNamespaces[T client.Object](cli client.Client, defaultNamespace stri
 	}
 }
 
-func CorrectNamespacesForRefrences(cli client.Client, defaultns string, list []v1beta1.ManagedResource) {
+func CorrectNamespacesForRefrences(cli client.Client, defaultns string, list []ManagedResource) {
 	for i, val := range list {
 		scopeName, err := NamespacedScopeOfGVK(cli, val.GroupVersionKind())
 		if err != nil {
@@ -302,4 +314,13 @@ func NamespacedScopeOf(cli client.Client, obj runtime.Object) (apimeta.RESTScope
 		return "", err
 	}
 	return NamespacedScopeOfGVK(cli, gvk)
+}
+
+func GetReference(obj client.Object) ManagedResource {
+	return ManagedResource{
+		APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
+		Namespace:  obj.GetNamespace(),
+		Name:       obj.GetName(),
+	}
 }

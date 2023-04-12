@@ -15,6 +15,8 @@
 package kube
 
 import (
+	"strings"
+
 	argocdv1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	rolloutsv1alpha1 "github.com/argoproj/argo-rollouts/pkg/apis/rollouts/v1alpha1"
 	loggingv1beta1 "github.com/banzaicloud/logging-operator/pkg/sdk/logging/api/v1beta1"
@@ -25,7 +27,9 @@ import (
 	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	networkingpkgv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	istiopkgv1alpha1 "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -77,4 +81,23 @@ func FillGVK(object client.Object, scheme *runtime.Scheme) error {
 	object.GetObjectKind().SetGroupVersionKind(gvk)
 	_ = unversioned
 	return nil
+}
+
+func NewListOf(gvk schema.GroupVersionKind, scheme *runtime.Scheme) client.ObjectList {
+	if !strings.HasSuffix(gvk.Kind, "List") {
+		gvk.Kind = gvk.Kind + "List"
+	}
+	// try decode using typed ObjectList first
+	list, err := scheme.New(gvk)
+	if err != nil {
+		// fallback to unstructured.UnstructuredList
+		list = &unstructured.UnstructuredList{}
+	}
+	objlist, ok := list.(client.ObjectList)
+	if !ok {
+		// fallback to unstructured.UnstructuredList
+		objlist = &unstructured.UnstructuredList{}
+	}
+	objlist.GetObjectKind().SetGroupVersionKind(gvk)
+	return objlist
 }

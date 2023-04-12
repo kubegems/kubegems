@@ -21,6 +21,7 @@ import (
 	"github.com/gin-gonic/gin"
 	v1 "k8s.io/api/batch/v1"
 	"kubegems.io/kubegems/pkg/agent/cluster"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -62,10 +63,7 @@ func (h *JobHandler) List(c *gin.Context) {
 	}
 
 	objects := h.filterJobByTopname(c, jobList.Items)
-	pageData := NewPageDataFromContext(c, func(i int) SortAndSearchAble {
-		return &objects[i]
-	}, len(objects), objects)
-
+	pageData := response.PageObjectFromRequest(c.Request, objects)
 	if iswatch, _ := strconv.ParseBool(c.Query("watch")); iswatch {
 		// list
 		c.SSEvent("data", pageData)
