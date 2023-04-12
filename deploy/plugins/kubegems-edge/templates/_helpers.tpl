@@ -108,6 +108,22 @@ Return the proper serviceAccount name
 {{- end -}}
 {{- end -}}
 
+{{- define "kubegems-edge.task.fullname" -}}
+{{- printf "%s-task" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "kubegems-edge.task.image" -}}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.server.image "global" .Values.global "root" .) }}
+{{- end -}}
+
+{{- define "kubegems-edge.task.serviceAccountName" -}}
+{{- if .Values.task.serviceAccount.create -}}
+    {{ default (include "kubegems-edge.task.fullname" .) .Values.task.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.task.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}

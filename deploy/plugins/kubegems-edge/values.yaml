@@ -980,6 +980,366 @@ server:
       ##
       relabelings: []
 
+## @param server.enabled Enable edge task component
+# @title Edge Task 配置
+task:
+  # @title 启用
+  # @order 0
+  enabled: false
+  ## KubeGems server image
+  ## ref: https://hub.docker.com/r/kubegems/kubegems/tags/
+  ## @param server.image.registry server image registry
+  ## @param server.image.repository server image repository
+  ## @param server.image.tag server image tag (immutable tags are recommended)
+  ## @param server.image.pullPolicy server image pull policy
+  ## @param server.image.pullSecrets server image pull secrets
+  ## @param server.image.debug Enable server image debug mode
+  ##
+
+  # @title 镜像配置
+  # @hidden task.enabled=false
+  image:
+    registry: docker.io
+    repository: kubegems/kubegems
+    tag: latest
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    # @title 拉取策略
+    # @schema enum=Always,IfNotPresent,None
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Enable debug mode
+    ##
+    debug: false
+
+  ## @param server.replicaCount Number of server replicas to deploy
+  ##
+  # @title 副本数
+  # @hidden server.enabled=false
+  replicaCount: 1
+  ## @param server.containerPorts.probe server probe port
+  ##
+  containerPorts:
+    probe: 8080
+
+  ## Configure extra options for server containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param server.livenessProbe.enabled Enable livenessProbe on server containers
+  ## @param server.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param server.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param server.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param server.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param server.livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    timeoutSeconds: 1
+    periodSeconds: 30
+    failureThreshold: 3
+    successThreshold: 1
+  ## @param server.readinessProbe.enabled Enable readinessProbe on server containers
+  ## @param server.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param server.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param server.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param server.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param server.readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    timeoutSeconds: 1
+    periodSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param server.startupProbe.enabled Enable startupProbe on server containers
+  ## @param server.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param server.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param server.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param server.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param server.startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 5
+    timeoutSeconds: 1
+    periodSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param server.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## @param server.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param server.customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: {}
+  ## server resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param server.resources.limits The resources limits for the server containers
+  ## @param server.resources.requests The requested resources for the server containers
+  ##
+  resources:
+    limits: {}
+    requests: {}
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param server.podSecurityContext.enabled Enabled server pods' Security Context
+  ## @param server.podSecurityContext.fsGroup Set server pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+  ## Configure Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param server.containerSecurityContext.enabled Enabled server containers' Security Context
+  ## @param server.containerSecurityContext.runAsUser Set server containers' Security Context runAsUser
+  ## @param server.containerSecurityContext.runAsNonRoot Set server containers' Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## @param server.logLevel Log level for server
+  logLevel: info
+
+  ## @param server.existingConfigmap The name of an existing ConfigMap with your custom configuration for server
+  ##
+  existingConfigmap: ""
+  ## @param server.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param server.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param server.hostAliases server pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param server.podLabels Extra labels for server pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param server.podAnnotations Annotations for server pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param server.podAffinityPreset Pod affinity preset. Ignored if `server.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param server.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `server.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node server.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param server.nodeAffinityPreset.type Node affinity preset type. Ignored if `server.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param server.nodeAffinityPreset.key Node label key to match. Ignored if `server.affinity` is set
+    ##
+    key: ""
+    ## @param server.nodeAffinityPreset.values Node label values to match. Ignored if `server.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param server.affinity Affinity for server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `server.podAffinityPreset`, `server.podAntiAffinityPreset`, and `server.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param server.nodeSelector Node labels for server pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param server.tolerations Tolerations for server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param server.updateStrategy.type server statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/servers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param server.priorityClassName server pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param server.schedulerName Name of the k8s scheduler (other than default) for server pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param server.lifecycleHooks for the server container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param server.extraEnvVars Array with extra environment variables to add to server nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param server.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for server nodes
+  ##
+  extraEnvVarsCM: {}
+  ## @param server.extraEnvVarsSecret Name of existing Secret containing extra env vars for server nodes
+  ##
+  extraEnvVarsSecret: {}
+  ## @param server.extraVolumes Optionally specify extra list of additional volumes for the server pod(s)
+  ##
+  extraVolumes: []
+  ## @param server.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the server container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param server.sidecars Add additional sidecar containers to the server pod(s)
+  ## e.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: {}
+  ## @param server.initContainers Add additional init containers to the server pod(s)
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## e.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: {}
+
+  ## @section Controller RBAC Parameters
+
+  ## RBAC configuration
+  ##
+  rbac:
+    ## @param server.rbac.create Specifies whether RBAC resources should be created
+    ## @param server.rbac.createAggregateClusterRoles create clusterrole to binding view, edit, admin clusterrole
+    ##
+    create: true
+    singleNamespace: true
+
+  ## ServiceAccount configuration
+  ##
+  serviceAccount:
+    ## @param server.serviceAccount.create Specifies whether a ServiceAccount should be created
+    ##
+    create: true
+    ## @param server.serviceAccount.name The name of the ServiceAccount to use.
+    ## If not set and create is true, a name is generated using the common.names.fullname template
+    ##
+    name: ""
+
+  ## @section Controller Metrics parameters
+  ##
+  metrics:
+    ## @param server.metrics.enabled Create a service for accessing the metrics endpoint
+    ##
+    enabled: false
+    ## Metrics service parameters
+    ##
+    service:
+      ## @param server.metrics.service.type server metrics service type
+      ##
+      type: ClusterIP
+      ## @param server.metrics.service.port server metrics service HTTP port
+      ##
+      port: 9100
+      ## Node ports to expose
+      ## @param server.metrics.service.nodePort Node port for HTTP
+      ## NOTE: choose port between <30000-32767>
+      ##
+      nodePort: ""
+      ## @param server.metrics.service.clusterIP server metrics service Cluster IP
+      ## e.g.:
+      ## clusterIP: None
+      ##
+      clusterIP: ""
+      ## @param server.metrics.service.extraPorts Extra ports to expose (normally used with the `sidecar` value)
+      ##
+      extraPorts: []
+      ## @param server.metrics.service.loadBalancerIP server metrics service Load Balancer IP
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+      ##
+      loadBalancerIP: ""
+      ## @param server.metrics.service.loadBalancerSourceRanges server metrics service Load Balancer sources
+      ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ##   - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: []
+      ## @param server.metrics.service.externalTrafficPolicy server metrics service external traffic policy
+      ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Cluster
+      ## @param server.metrics.service.annotations [object] Additional custom annotations for server metrics service
+      ##
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.server.metrics.service.port }}"
+    serviceMonitor:
+      ## @param server.metrics.serviceMonitor.enabled Specify if a servicemonitor will be deployed for prometheus-operator
+      ##
+      enabled: true
+      ## @param server.metrics.serviceMonitor.jobLabel Specify the jobLabel to use for the prometheus-operator
+      ##
+      jobLabel: app.kubernetes.io/name
+      ## @param server.metrics.serviceMonitor.honorLabels Honor metrics labels
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ##
+      honorLabels: false
+      ## @param server.metrics.serviceMonitor.selector Prometheus instance selector labels
+      ## ref: https://github.com/bitnami/charts/tree/master/bitnami/prometheus-operator#prometheus-configuration
+      ## e.g:
+      ## selector:
+      ##   prometheus: my-prometheus
+      ##
+      selector: {}
+      ## @param server.metrics.serviceMonitor.scrapeTimeout Timeout after which the scrape is ended
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ## e.g:
+      ## scrapeTimeout: 10s
+      ##
+      scrapeTimeout: ""
+      ## @param server.metrics.serviceMonitor.interval Scrape interval. If not set, the Prometheus default scrape interval is used
+      ##
+      interval: ""
+      ## @param server.metrics.serviceMonitor.additionalLabels Used to pass Labels that are required by the installed Prometheus Operator
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+      ##
+      additionalLabels: {}
+      ## @param server.metrics.serviceMonitor.metricRelabelings Specify additional relabeling of metrics
+      ##
+      metricRelabelings: []
+      ## @param server.metrics.serviceMonitor.relabelings Specify general relabeling
+      ##
+      relabelings: []
+
 ## @section Traffic Exposure Parameters
 
 ## hub ingress parameters

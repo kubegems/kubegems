@@ -37,6 +37,7 @@ type Options struct {
 	HealthProbeBindAddress  string `json:"healthProbeBindAddress,omitempty"`
 	MetricsBindAddress      string `json:"metricsBindAddress,omitempty"`
 	EdgeServerAddr          string `json:"edgeServerAddr,omitempty"`
+	EdgeNamespace           string `json:"edgeNamespace,omitempty"`
 }
 
 func NewDefaultOptions() *Options {
@@ -59,6 +60,7 @@ func Run(ctx context.Context, options *Options) error {
 		Logger:                 log,
 		HealthProbeBindAddress: options.HealthProbeBindAddress,
 		MetricsBindAddress:     options.MetricsBindAddress,
+		Namespace:              options.EdgeNamespace,
 	})
 	if err != nil {
 		log.Error(err, "unable to create manager")
