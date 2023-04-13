@@ -43,7 +43,7 @@ type Options struct {
 func NewDefaultOptions() *Options {
 	return &Options{
 		MaxConcurrentReconciles: 1,
-		EdgeServerAddr:          "http://kubegem-edge-server:8080",
+		EdgeServerAddr:          "http://kubegems-edge-server:8080",
 		EdgeNamespace:           "", // empty means all namespaces
 		HealthProbeBindAddress:  ":8080",
 		MetricsBindAddress:      ":9100",
