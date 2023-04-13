@@ -68,6 +68,9 @@ spec:
                       type: string
                   type: object
                 type: array
+              observedGeneration:
+                format: int64
+                type: integer
               phase:
                 type: string
               resourcesStatus:

@@ -44,16 +44,16 @@ type EdgeTaskSpec struct {
 type EdgeTaskPhase string
 
 const (
-	EdgeTaskPhasePending EdgeTaskPhase = "Pending"
 	EdgeTaskPhaseWaiting EdgeTaskPhase = "Waiting"
 	EdgeTaskPhaseRunning EdgeTaskPhase = "Running"
 	EdgeTaskPhaseFailed  EdgeTaskPhase = "Failed"
 )
 
 type EdgeTaskStatus struct {
-	Phase           EdgeTaskPhase            `json:"phase,omitempty"`
-	Conditions      []EdgeTaskCondition      `json:"conditions,omitempty"`
-	ResourcesStatus []EdgeTaskResourceStatus `json:"resourcesStatus,omitempty"`
+	ObservedGeneration int64                    `json:"observedGeneration,omitempty"`
+	Phase              EdgeTaskPhase            `json:"phase,omitempty"`
+	Conditions         []EdgeTaskCondition      `json:"conditions,omitempty"`
+	ResourcesStatus    []EdgeTaskResourceStatus `json:"resourcesStatus,omitempty"`
 }
 
 type EdgeTaskResourceStatus struct {

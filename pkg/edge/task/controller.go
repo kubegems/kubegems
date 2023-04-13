@@ -25,6 +25,7 @@ import (
 	edgev1beta1 "kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/utils"
 	"kubegems.io/kubegems/pkg/utils/generic"
+	"kubegems.io/kubegems/pkg/utils/kube"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -63,7 +64,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		For(&edgev1beta1.EdgeTask{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: options.MaxConcurrentReconciles}).
 		Watches(&source.Kind{Type: &edgev1beta1.EdgeCluster{}}, EdgeClusterTrigger(ctx, mgr.GetClient())).
-		Watches(r.EdgeClients.SourceFunc(mgr.GetClient()), nil). // watch edge clusters' resources change
+		Watches(r.EdgeClients.SourceFunc(ctx, mgr.GetClient()), nil). // watch edge clusters' resources change
 		Complete(r)
 }
 
@@ -74,11 +75,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	ctx = logr.NewContext(ctx, log)
+
 	log.Info("reconcile edge task")
 
 	// chceck deletion
 	if edgeTask.GetDeletionTimestamp() != nil {
-		return ctrl.Result{}, r.remove(ctx, edgeTask)
+		err := r.remove(ctx, edgeTask)
+		_ = r.Status().Update(ctx, edgeTask)
+		return ctrl.Result{}, err
 	}
 	// add finalizer if not exist
 	if !controllerutil.ContainsFinalizer(edgeTask, edgev1beta1.EdgeTaskFinalizer) {
@@ -90,12 +94,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: true}, nil
 	}
 	// sync
-	log.Info("apply edge task")
-	if err := r.apply(ctx, edgeTask); err != nil {
+	err := r.apply(ctx, edgeTask)
+	_ = r.Status().Update(ctx, edgeTask)
+	if err != nil {
 		log.Error(err, "apply edge task")
-		return ctrl.Result{}, err // err will be requeued
 	}
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, err
 }
 
 func (r *Reconciler) remove(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) error {
@@ -108,36 +112,34 @@ func (r *Reconciler) remove(ctx context.Context, edgeTask *edgev1beta1.EdgeTask)
 	}
 	// wait for the edge cluster to be online if managed resources not empty
 	if len(edgeTask.Status.ResourcesStatus) > 0 {
-		if err := r.stageWaitForEdgeCluster(ctx, edgeTask); err != nil {
+		donext, err := r.stageWaitForEdgeCluster(ctx, edgeTask)
+		if !donext {
 			return err
 		}
 		// remove the edge resources
 		if err := r.removeResources(ctx, edgeTask); err != nil {
-			_ = r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
+			UpdateEdgeTaskCondition(edgeTask, edgev1beta1.EdgeTaskCondition{
 				Type:    edgev1beta1.EdgeTaskConditionTypeCleaned,
 				Status:  corev1.ConditionFalse,
 				Reason:  "RemoveResourcesFailed",
 				Message: err.Error(),
 			})
-			log.Error(err, "remove edge task")
 			return err
 		}
 	}
-	r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
+	UpdateEdgeTaskCondition(edgeTask, edgev1beta1.EdgeTaskCondition{
 		Type:   edgev1beta1.EdgeTaskConditionTypeCleaned,
 		Status: corev1.ConditionTrue,
 		Reason: "RemoveResourcesSucceed",
 	})
 	log.Info("remove edge resources succeed")
 
+	// update the edge task status
+	_ = r.Status().Update(ctx, edgeTask)
 	// remove the finalizer
 	controllerutil.RemoveFinalizer(edgeTask, edgev1beta1.EdgeTaskFinalizer)
 	log.Info("remove finalizer")
-	if err := r.Update(ctx, edgeTask); err != nil {
-		log.Error(err, "remove finalizer")
-		return err
-	}
-	return nil
+	return r.Update(ctx, edgeTask)
 }
 
 func (r *Reconciler) apply(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) error {
@@ -147,7 +149,7 @@ func (r *Reconciler) apply(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) 
 		return err
 	}
 	// wait for the edge cluster to be online
-	if err := r.stageWaitForEdgeCluster(ctx, edgeTask); err != nil {
+	if donext, err := r.stageWaitForEdgeCluster(ctx, edgeTask); !donext {
 		return err
 	}
 	// stage apply resources
@@ -155,16 +157,19 @@ func (r *Reconciler) apply(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) 
 		return err
 	}
 	// wait for the edge task to be completed
-	return r.stageCheckResource(ctx, edgeTask)
+	if err := r.stageCheckResource(ctx, edgeTask); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *Reconciler) stageRenderResources(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) ([]*unstructured.Unstructured, bool, error) {
 	log := logr.FromContextOrDiscard(ctx).WithValues("edgetask", edgeTask.Name, "namespace", edgeTask.Namespace)
-	log.Info("stage render edge task resources")
+	log.V(5).Info("stage render edge task resources")
 	// render edge task resources
 	resources, err := ParseResources(edgeTask.Spec.Resources)
 	if err != nil {
-		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
+		UpdateEdgeTaskCondition(edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypePrepared,
 			Status:  corev1.ConditionFalse,
 			Reason:  "RenderResourcesFailed",
@@ -172,19 +177,18 @@ func (r *Reconciler) stageRenderResources(ctx context.Context, edgeTask *edgev1b
 		})
 		log.Error(err, "render edge task resources")
 		return nil, false, nil // return nil to avoid requeue
-	} else {
-		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
-			Type:   edgev1beta1.EdgeTaskConditionTypePrepared,
-			Status: corev1.ConditionTrue,
-			Reason: "RenderResourcesSucceed",
-		})
 	}
+	UpdateEdgeTaskCondition(edgeTask, edgev1beta1.EdgeTaskCondition{
+		Type:   edgev1beta1.EdgeTaskConditionTypePrepared,
+		Status: corev1.ConditionTrue,
+		Reason: "RenderResourcesSucceed",
+	})
 	return resources, true, nil
 }
 
-func (r *Reconciler) stageWaitForEdgeCluster(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) error {
+func (r *Reconciler) stageWaitForEdgeCluster(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) (bool, error) {
 	log := logr.FromContextOrDiscard(ctx).WithValues("edgetask", edgeTask.Name, "namespace", edgeTask.Namespace)
-	log.Info("stage wait for edge cluster")
+	log.V(5).Info("stage wait for edge cluster")
 	// wait for the edge cluster to be online
 	edgeclustername := edgeTask.Spec.EdgeClusterName
 	if edgeclustername == "" {
@@ -192,58 +196,50 @@ func (r *Reconciler) stageWaitForEdgeCluster(ctx context.Context, edgeTask *edge
 	}
 	edgeCluster := &edgev1beta1.EdgeCluster{}
 	if err := r.Get(ctx, client.ObjectKey{Namespace: edgeTask.Namespace, Name: edgeclustername}, edgeCluster); err != nil {
-		edgeTask.Status.Phase = edgev1beta1.EdgeTaskPhaseWaiting
-		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
+		UpdateEdgeTaskCondition(edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypeOnline,
 			Status:  corev1.ConditionFalse,
 			Reason:  "EdgeClusterNotFound",
 			Message: err.Error(),
 		})
-		return fmt.Errorf("get edge cluster: %w", err)
+		log.Error(err, "get edge cluster")
+		return false, err
 	}
 	if edgeCluster.Status.Phase != edgev1beta1.EdgePhaseOnline {
-		edgeTask.Status.Phase = edgev1beta1.EdgeTaskPhaseWaiting
-		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
+		log.Info("edge cluster is not online", "edgecluster", edgeCluster.Name, "phase", edgeCluster.Status.Phase)
+		UpdateEdgeTaskCondition(edgeTask, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypeOnline,
 			Status:  corev1.ConditionFalse,
 			Reason:  "EdgeClusterNotOnline",
 			Message: "edge cluster is not online",
 		})
-		return fmt.Errorf("edge cluster %s is not online", edgeCluster.Name)
+		return false, nil // return nil to avoid requeue,wait edge cluster online trigger reconcile
+	} else {
+		UpdateEdgeTaskCondition(edgeTask, edgev1beta1.EdgeTaskCondition{
+			Type:   edgev1beta1.EdgeTaskConditionTypeOnline,
+			Status: corev1.ConditionTrue,
+			Reason: "EdgeClusterOnline",
+		})
+		return true, nil
 	}
-	r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
-		Type:   edgev1beta1.EdgeTaskConditionTypeOnline,
-		Status: corev1.ConditionTrue,
-		Reason: "EdgeClusterOnline",
-	})
-	return nil
 }
 
-func (r *Reconciler) stageApplyResources(ctx context.Context, edgeTask *edgev1beta1.EdgeTask, resources []*unstructured.Unstructured) error {
+func (r *Reconciler) stageApplyResources(ctx context.Context, edgetask *edgev1beta1.EdgeTask, resources []*unstructured.Unstructured) error {
 	log := logr.FromContextOrDiscard(ctx)
-	if edgeTask.Annotations == nil {
-		edgeTask.Annotations = map[string]string{}
-	}
-	resourceshash := HashResources(resources)
-	previoushash := edgeTask.Annotations[AnnotationEdgeTaskResourcesHash]
-	if previoushash == resourceshash {
-		log.Info("same hash of resources, skip apply", "hash", resourceshash)
+	if edgetask.Generation == edgetask.Status.ObservedGeneration {
+		log.V(5).Info("edgetask generation not changed, skip apply resources")
 		return nil
 	}
-	// record a history
-
-	RemoveEdgeTaskCondition(&edgeTask.Status, edgev1beta1.EdgeTaskConditionTypeAvailable)
-
+	log.Info("edgetask generation changed, apply resources")
 	// inject edge task metadata to resources
 	// when those annotated reousrce changed, the corresponding edge task will be requeued
 	for _, resource := range resources {
-		InjectEdgeTask(resource, edgeTask)
+		InjectEdgeTask(resource, edgetask)
 	}
-	log.Info("hash of resources changed", "previous", previoushash, "current", resourceshash)
 	// check should update
-	if resourceStatus, err := r.applyResources(ctx, edgeTask, resources); err != nil {
-		edgeTask.Status.ResourcesStatus = resourceStatus
-		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
+	if resourceStatus, err := r.applyResources(ctx, edgetask, resources); err != nil {
+		edgetask.Status.ResourcesStatus = resourceStatus
+		UpdateEdgeTaskCondition(edgetask, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypeDistributed,
 			Status:  corev1.ConditionFalse,
 			Reason:  "ApplyResourcesFailed",
@@ -251,18 +247,15 @@ func (r *Reconciler) stageApplyResources(ctx context.Context, edgeTask *edgev1be
 		})
 		return fmt.Errorf("apply resources: %w", err)
 	} else {
-		edgeTask.Status.ResourcesStatus = resourceStatus
-		r.UpdateEdgeTaskCondition(ctx, edgeTask, edgev1beta1.EdgeTaskCondition{
+		edgetask.Status.ResourcesStatus = resourceStatus
+		edgetask.Status.ObservedGeneration = edgetask.Generation // update observed generation
+		UpdateEdgeTaskCondition(edgetask, edgev1beta1.EdgeTaskCondition{
 			Type:   edgev1beta1.EdgeTaskConditionTypeDistributed,
 			Status: corev1.ConditionTrue,
 			Reason: "ApplyResourcesSucceed",
 		})
-		edgeTask.Annotations[AnnotationEdgeTaskResourcesHash] = resourceshash
-		if err = r.Update(ctx, edgeTask); err != nil {
-			log.Error(err, "update edge task status")
-		}
+		return nil
 	}
-	return nil
 }
 
 func (r *Reconciler) applyResources(
@@ -297,62 +290,67 @@ func (r *Reconciler) removeResources(ctx context.Context, task *edgev1beta1.Edge
 
 func (r *Reconciler) stageCheckResource(ctx context.Context, task *edgev1beta1.EdgeTask) error {
 	log := logr.FromContextOrDiscard(ctx)
-	log.Info("check resources")
-	if _, cond := GetEdgeTaskCondition(&task.Status, edgev1beta1.EdgeTaskConditionTypeAvailable); cond == nil {
-		r.UpdateEdgeTaskCondition(ctx, task, edgev1beta1.EdgeTaskCondition{
-			Type:   edgev1beta1.EdgeTaskConditionTypeAvailable,
-			Status: corev1.ConditionFalse,
-			Reason: "Waiting",
-		})
-	}
+	log.V(5).Info("check resources")
 	cli, err := r.EdgeClients.Get(task.Spec.EdgeClusterName)
 	if err != nil {
-		log.Error(err, "get edge client")
-		return r.UpdateEdgeTaskCondition(ctx, task, edgev1beta1.EdgeTaskCondition{
+		UpdateEdgeTaskCondition(task, edgev1beta1.EdgeTaskCondition{
 			Type:    edgev1beta1.EdgeTaskConditionTypeAvailable,
 			Status:  corev1.ConditionUnknown,
 			Reason:  "EdgeClientNotReady",
 			Message: fmt.Sprintf("unable get edge client: %v", err),
 		})
+		log.Error(err, "get edge client")
+		return fmt.Errorf("get edge client: %w", err)
 	}
-	allReady := true
+	notreadycount := 0
 	for i := range task.Status.ResourcesStatus {
 		status := &task.Status.ResourcesStatus[i]
-		gvk := schema.FromAPIVersionAndKind(status.APIVersion, status.Kind)
-		obj, err := cli.Scheme().New(gvk)
-		if err != nil {
-			// fallback to unstructured
-			obj = &unstructured.Unstructured{}
-			obj.GetObjectKind().SetGroupVersionKind(gvk)
-		}
-		// nolint: forcetypeassert
-		cliobj := obj.(client.Object)
-		if err := cli.Get(ctx, client.ObjectKey{Name: status.Name, Namespace: status.Namespace}, cliobj); err != nil {
+		obj := newObjFrom(status)
+		if err := cli.Get(ctx, client.ObjectKey{Name: status.Name, Namespace: status.Namespace}, obj); err != nil {
 			status.Exists = false
 			status.Ready = false
 			status.Message = err.Error()
 		} else {
 			status.Exists = true
 			status.Ready = true // assume it is ready on exist
-			status.Message = "resource exist"
+			status.Message = ""
+			CheckStatus(ctx, status, obj, cli)
 		}
-		UpdateStatus(ctx, status, cliobj, cli)
 		if !status.Ready {
-			allReady = false
+			notreadycount++
 		}
 	}
-	if allReady {
+	if notreadycount == 0 {
 		log.Info("all resources ready")
 		task.Status.Phase = edgev1beta1.EdgeTaskPhaseRunning
-		return r.UpdateEdgeTaskCondition(ctx, task, edgev1beta1.EdgeTaskCondition{
+		UpdateEdgeTaskCondition(task, edgev1beta1.EdgeTaskCondition{
 			Type:   edgev1beta1.EdgeTaskConditionTypeAvailable,
 			Status: corev1.ConditionTrue,
 			Reason: "AllResourcesReady",
 		})
 	} else {
 		task.Status.Phase = edgev1beta1.EdgeTaskPhaseWaiting
-		return r.Client.Status().Update(ctx, task)
+		UpdateEdgeTaskCondition(task, edgev1beta1.EdgeTaskCondition{
+			Type:    edgev1beta1.EdgeTaskConditionTypeAvailable,
+			Status:  corev1.ConditionFalse,
+			Reason:  "Waiting",
+			Message: fmt.Sprintf("waiting for %d/%d resources ready", notreadycount, len(task.Status.ResourcesStatus)),
+		})
 	}
+	return nil // always return nil to avoid requeue
+}
+
+func newObjFrom(status *edgev1beta1.EdgeTaskResourceStatus) client.Object {
+	gvk := schema.FromAPIVersionAndKind(status.APIVersion, status.Kind)
+	obj, err := kube.GetScheme().New(gvk)
+	if err != nil {
+		// fallback to unstructured
+		obj = &unstructured.Unstructured{}
+		obj.GetObjectKind().SetGroupVersionKind(gvk)
+	}
+	// nolint: forcetypeassert
+	cliobj := obj.(client.Object)
+	return cliobj
 }
 
 func findStatusOf(task *edgev1beta1.EdgeTask, obj client.Object) (int, *edgev1beta1.EdgeTaskResourceStatus) {

@@ -113,18 +113,21 @@ func (c *EdgeClientsHolder) eventhandler(cli client.Client, cluster string) cach
 }
 
 // Start behaves like controller-runtime's source.Source interface
-func (c *EdgeClientsHolder) SourceFunc(cli client.Client) source.Func {
+func (c *EdgeClientsHolder) SourceFunc(ctx context.Context, cli client.Client) source.Func {
 	// it's a producer to reconciler
-	return func(ctx context.Context, _ handler.EventHandler, queue workqueue.RateLimitingInterface, _ ...predicate.Predicate) error {
+	return func(_ context.Context, _ handler.EventHandler, queue workqueue.RateLimitingInterface, _ ...predicate.Predicate) error {
 		go func() {
-			logr.FromContextOrDiscard(ctx).Info("edge resource event queue started")
-			defer logr.FromContextOrDiscard(ctx).Info("edge resource event queue stopped")
+			log := logr.FromContextOrDiscard(ctx)
+			log.Info("edge resource event queue started")
+			defer log.Info("edge resource event queue stopped")
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case event := <-c.events:
 					taskname, tasknamespace := event.TaskName, event.TaskNamespace
+					log.Info("trigger reconcile", "cluster", event.UID, "task", taskname, "namespace", tasknamespace)
+					// chekc task spec.edgeclustername
 					queue.Add(ctrl.Request{NamespacedName: client.ObjectKey{Name: taskname, Namespace: tasknamespace}})
 				}
 			}

@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
-	"reflect"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -38,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
-func (r *Reconciler) UpdateEdgeTaskCondition(ctx context.Context, task *edgev1beta1.EdgeTask, condition edgev1beta1.EdgeTaskCondition) error {
+func UpdateEdgeTaskCondition(task *edgev1beta1.EdgeTask, condition edgev1beta1.EdgeTaskCondition) {
 	status := &task.Status
 	index, oldcond := GetEdgeTaskCondition(status, condition.Type)
 	now := metav1.Now()
@@ -54,13 +53,6 @@ func (r *Reconciler) UpdateEdgeTaskCondition(ctx context.Context, task *edgev1be
 		}
 		status.Conditions[index] = condition
 	}
-	if !reflect.DeepEqual(oldcond, condition) {
-		if err := r.Client.Status().Update(ctx, task); err != nil {
-			logr.FromContextOrDiscard(ctx).Error(err, "update edge task condition failed")
-			return err
-		}
-	}
-	return nil
 }
 
 func EdgeClusterTrigger(ctx context.Context, cli client.Client) handler.EventHandler {
@@ -137,17 +129,17 @@ func RemoveEdgeTaskCondition(status *edgev1beta1.EdgeTaskStatus, conditionType e
 	}
 }
 
-func ExtractEdgeTask(obj client.Object) (string, string) {
+func ExtractEdgeTask(obj client.Object) (name string, namespace string) {
 	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		return "", ""
 	}
-	parts := strings.Split(annotations[AnnotationEdgeTaskNameNamespace], "/")
-	// nolint: gomnd
-	if len(parts) != 2 {
-		return "", ""
+	val := annotations[AnnotationEdgeTaskNameNamespace]
+	index := strings.IndexRune(val, '/')
+	if index > -1 {
+		return val[:index], val[index+1:]
 	}
-	return parts[0], parts[1]
+	return val, ""
 }
 
 func InjectEdgeTask(obj client.Object, edgetask *edgev1beta1.EdgeTask) {
