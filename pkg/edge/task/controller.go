@@ -302,7 +302,7 @@ func (r *Reconciler) stageCheckResource(ctx context.Context, task *edgev1beta1.E
 		log.Error(err, "get edge client")
 		return fmt.Errorf("get edge client: %w", err)
 	}
-	notreadycount := 0
+	notreadycount, totalcount := 0, len(task.Status.ResourcesStatus)
 	for i := range task.Status.ResourcesStatus {
 		status := &task.Status.ResourcesStatus[i]
 		obj := newObjFrom(status)
@@ -334,7 +334,7 @@ func (r *Reconciler) stageCheckResource(ctx context.Context, task *edgev1beta1.E
 			Type:    edgev1beta1.EdgeTaskConditionTypeAvailable,
 			Status:  corev1.ConditionFalse,
 			Reason:  "Waiting",
-			Message: fmt.Sprintf("waiting for %d/%d resources ready", notreadycount, len(task.Status.ResourcesStatus)),
+			Message: fmt.Sprintf("waiting for resources ready: %d/%d", totalcount-notreadycount, totalcount),
 		})
 	}
 	return nil // always return nil to avoid requeue

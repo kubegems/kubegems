@@ -81,15 +81,7 @@ func (c *EdgeClientsHolder) eventhandler(cli client.Client, cluster string) cach
 		if !ok {
 			return
 		}
-		ownerobj, err := FindOwnerControllerRecursively(c.basectx, cli, obj)
-		if err != nil {
-			logr.FromContextOrDiscard(c.basectx).Error(err, "failed to find owner controller",
-				"cluster", cluster,
-				"gvk", obj.GetObjectKind().GroupVersionKind().String(),
-				"name", client.ObjectKeyFromObject(obj).String(),
-			)
-			return
-		}
+		ownerobj, _ := FindOwnerControllerRecursively(c.basectx, cli, obj)
 		if ownerobj == nil {
 			return
 		}
