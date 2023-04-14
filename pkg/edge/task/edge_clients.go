@@ -40,8 +40,14 @@ type EdgeClientsHolder struct {
 	//nolint: containedctx
 	basectx context.Context
 	server  string
-	clients sync.Map
 	events  chan EdgeClusterEvent
+	clients map[string]clientWithCancel
+	mu      sync.RWMutex
+}
+
+type clientWithCancel struct {
+	cli  client.Client
+	stop context.CancelFunc
 }
 
 type EdgeClusterEvent struct {
@@ -57,22 +63,41 @@ func NewEdgeClientsHolder(ctx context.Context, server string) (*EdgeClientsHolde
 	return &EdgeClientsHolder{
 		basectx: ctx,
 		server:  server,
+		clients: map[string]clientWithCancel{},
 		events:  make(chan EdgeClusterEvent, DefaultEdgeResourceQueueSize),
 	}, nil
 }
 
+func (c *EdgeClientsHolder) Invalid(uid string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	cancelcli, ok := c.clients[uid]
+	if ok {
+		cancelcli.stop()
+		delete(c.clients, uid)
+	}
+}
+
 func (c *EdgeClientsHolder) Get(uid string) (client.Client, error) {
-	if cli, ok := c.clients.Load(uid); ok {
-		// nolint: forcetypeassert
-		return cli.(client.Client), nil
+	c.mu.RLock()
+	cancelcli, ok := c.clients[uid]
+	c.mu.RUnlock()
+	if ok {
+		return cancelcli.cli, nil
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if cli, ok := c.clients[uid]; ok {
+		return cli.cli, nil
 	}
 	cli, err := edgeclient.NewEdgeClient(c.server, uid)
 	if err != nil {
 		return nil, err
 	}
-	cli = kube.NewCachedClient(c.basectx, cli, c.eventhandler(cli, uid))
-	c.clients.Store(uid, cli)
-	return cli, nil
+	ctx, cancel := context.WithCancel(c.basectx)
+	cancelcli = clientWithCancel{cli: kube.NewCachedClient(ctx, cli, c.eventhandler(cli, uid)), stop: cancel}
+	c.clients[uid] = cancelcli
+	return cancelcli.cli, nil
 }
 
 func (c *EdgeClientsHolder) eventhandler(cli client.Client, cluster string) cache.ResourceEventHandler {

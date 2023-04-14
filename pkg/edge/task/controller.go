@@ -103,6 +103,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 }
 
 func (r *Reconciler) remove(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) error {
+	r.checkGenerationResetStatus(ctx, edgeTask)
+
 	log := logr.FromContextOrDiscard(ctx)
 	log.Info("remove edge task")
 	// check finalizer
@@ -142,7 +144,17 @@ func (r *Reconciler) remove(ctx context.Context, edgeTask *edgev1beta1.EdgeTask)
 	return r.Update(ctx, edgeTask)
 }
 
+func (r *Reconciler) checkGenerationResetStatus(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) {
+	if edgeTask.Status.ObservedGeneration != edgeTask.Generation {
+		edgeTask.Status.Phase = ""
+		edgeTask.Status.ResourcesStatus = nil
+		edgeTask.Status.ObservedGeneration = edgeTask.Generation // update observed generation
+	}
+}
+
 func (r *Reconciler) apply(ctx context.Context, edgeTask *edgev1beta1.EdgeTask) error {
+	r.checkGenerationResetStatus(ctx, edgeTask)
+
 	// render edge task resources
 	resources, donext, err := r.stageRenderResources(ctx, edgeTask)
 	if !donext {
@@ -213,6 +225,8 @@ func (r *Reconciler) stageWaitForEdgeCluster(ctx context.Context, edgeTask *edge
 			Reason:  "EdgeClusterNotOnline",
 			Message: "edge cluster is not online",
 		})
+		// invalid edge cluster cache to rebuild cache on reconnected
+		r.EdgeClients.Invalid(edgeclustername)
 		return false, nil // return nil to avoid requeue,wait edge cluster online trigger reconcile
 	} else {
 		UpdateEdgeTaskCondition(edgeTask, edgev1beta1.EdgeTaskCondition{
@@ -226,11 +240,14 @@ func (r *Reconciler) stageWaitForEdgeCluster(ctx context.Context, edgeTask *edge
 
 func (r *Reconciler) stageApplyResources(ctx context.Context, edgetask *edgev1beta1.EdgeTask, resources []*unstructured.Unstructured) error {
 	log := logr.FromContextOrDiscard(ctx)
-	if edgetask.Generation == edgetask.Status.ObservedGeneration {
-		log.V(5).Info("edgetask generation not changed, skip apply resources")
+
+	hash := HashResources(resources)
+	if edgetask.Status.ResourcesHash == hash {
+		log.V(5).Info("resources not changed, skip apply resources")
 		return nil
 	}
-	log.Info("edgetask generation changed, apply resources")
+
+	log.Info("resources changed, apply resources", "hash", hash, "previous hash", edgetask.Status.ResourcesHash)
 	// inject edge task metadata to resources
 	// when those annotated reousrce changed, the corresponding edge task will be requeued
 	for _, resource := range resources {
@@ -248,7 +265,7 @@ func (r *Reconciler) stageApplyResources(ctx context.Context, edgetask *edgev1be
 		return fmt.Errorf("apply resources: %w", err)
 	} else {
 		edgetask.Status.ResourcesStatus = resourceStatus
-		edgetask.Status.ObservedGeneration = edgetask.Generation // update observed generation
+		edgetask.Status.ResourcesHash = hash // update resources hash after apply resources correctly
 		UpdateEdgeTaskCondition(edgetask, edgev1beta1.EdgeTaskCondition{
 			Type:   edgev1beta1.EdgeTaskConditionTypeDistributed,
 			Status: corev1.ConditionTrue,
@@ -310,6 +327,8 @@ func (r *Reconciler) stageCheckResource(ctx context.Context, task *edgev1beta1.E
 			status.Exists = false
 			status.Ready = false
 			status.Message = err.Error()
+			status.PodsStatus = nil
+			status.Events = nil
 		} else {
 			status.Exists = true
 			status.Ready = true // assume it is ready on exist

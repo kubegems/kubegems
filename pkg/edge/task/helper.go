@@ -73,12 +73,11 @@ func EdgeClusterTrigger(ctx context.Context, cli client.Client) handler.EventHan
 			}
 			log.WithValues("edgecluster", current.Name, "namespace", current.Namespace)
 			// in case of the edgecluster is coming online from other status
-			// offline  || online -> online
-			if current.Status.Phase != edgev1beta1.EdgePhaseOnline || previous.Status.Phase == current.Status.Phase {
+			if previous.Status.Phase == current.Status.Phase {
 				return
 			}
 			log.Info("edgecluster status changed", "old", previous.Status.Phase, "new", current.Status.Phase)
-			log.Info("edgecluster is coming online, trigger the uncompleted tasks for it")
+			log.Info("edgecluster phase change, trigger the uncompleted tasks for it")
 			// find tasks which .spec.edgeClusterName == current.Name
 			enqueueTasksOfCluster(ctx, cli, current.Name, current.Namespace, rli)
 		},

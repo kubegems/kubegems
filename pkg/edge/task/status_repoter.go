@@ -21,6 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
 	edgev1beta1 "kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -41,16 +42,21 @@ func checkDeploymentPodsReady(ctx context.Context, status *edgev1beta1.EdgeTaskR
 		status.Message = "deployment not observed"
 		return
 	}
-	if deployment.Status.Replicas == deployment.Status.ReadyReplicas {
+	desireReplicas := pointer.Int32Deref(deployment.Spec.Replicas, 1)
+	currentReplicas := deployment.Status.AvailableReplicas
+	if desireReplicas == currentReplicas {
+		// deployment 会在 pod running 的时候就认为 ready，对于running即crashloopbackoff的pod，deployment会某一瞬间认为ready
+		// 有两种解决方案：
+		// - 为 pod 设置 readinessProbe
+		// - 为 deployment 设置 minReadySeconds
 		status.Ready = true
 		status.Message = ""
 		return
 	}
 	status.Ready = false
-	status.Message = fmt.Sprintf("replicas not ready: %d/%d", deployment.Status.ReadyReplicas, deployment.Status.Replicas)
+	status.Message = fmt.Sprintf("replicas not ready: %d/%d", currentReplicas, desireReplicas)
 	// events will be remove after status is ready to avoid too many events in k8
 	// get depevents for deployment
-
 	if false {
 		eventlist := &corev1.EventList{}
 		if err := edgecli.List(ctx, eventlist,

@@ -53,6 +53,7 @@ type EdgeTaskStatus struct {
 	ObservedGeneration int64                    `json:"observedGeneration,omitempty"`
 	Phase              EdgeTaskPhase            `json:"phase,omitempty"`
 	Conditions         []EdgeTaskCondition      `json:"conditions,omitempty"`
+	ResourcesHash      string                   `json:"resourcesHash,omitempty"` // observed resources hash
 	ResourcesStatus    []EdgeTaskResourceStatus `json:"resourcesStatus,omitempty"`
 }
 
