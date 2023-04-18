@@ -18,7 +18,6 @@ PLATFORM?=linux/amd64,linux/arm64
 
 IMAGE_REGISTRY?=docker.io,registry.cn-beijing.aliyuncs.com
 IMAGE_TAG=${GIT_VERSION}
-PUSH?=false
 
 GOPACKAGE=$(shell go list -m)
 ldflags+=-w -s
@@ -37,7 +36,7 @@ KUBEGEM_CHARTS_DIR = ${BIN_DIR}/plugins/charts.kubegems.io/kubegems
 
 ##@ All
 
-all: generate build container push helm-push## build all
+all: build ## build all
 
 ##@ General
 
@@ -122,23 +121,7 @@ define go-build-tools
 endef
 
 ##@ Build
-build: build-files build-binaries-all build-tools
-
-build-binaries-all: ## Build binaries.
-	- mkdir -p ${BIN_DIR}
-	$(call go-build,linux,amd64)
-	$(call go-build,linux,arm64)
-
-build-binaries:
-	$(call go-build,${OS},${ARCH})
-	- mkdir -p ${BIN_DIR}
-	@cp ${BIN_DIR}/kubegems-${OS}-${ARCH} ${BIN_DIR}/kubegems
-
-build-tools:
-	$(call go-build-tools,podfsmgr,linux,amd64)
-	$(call go-build-tools,podfsmgr,linux,arm64)
-	mkdir -p ${BIN_DIR}/tools
-	cp -r tools/podfsmgr/bin/* ${BIN_DIR}/tools
+build: build-files build-binaries build-tools
 
 build-files: ## Build around files
 	go run scripts/offline-plugins/main.go
@@ -147,43 +130,46 @@ build-files: ## Build around files
 	cp -f config/promql_tpl.yaml config/system_alert.yaml ${BIN_DIR}/config/
 	cp -rf config/dashboards/ ${BIN_DIR}/config/dashboards/
 
-CHARTS = kubegems kubegems-local kubegems-installer kubegems-models
-helm-generate: readme-generator
-	$(foreach file,$(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
-	readme-generator -v $(file)values.yaml -r $(file)README.md \
-	;)
+build-binaries: ## Build binaries.
+	- mkdir -p ${BIN_DIR}
+	$(call go-build,linux,amd64)
+	$(call go-build,linux,arm64)
 
+build-tools:
+	$(call go-build-tools,podfsmgr,linux,amd64)
+	$(call go-build-tools,podfsmgr,linux,arm64)
+	mkdir -p ${BIN_DIR}/tools
+	cp -r tools/podfsmgr/bin/* ${BIN_DIR}/tools
+
+CHARTS = kubegems kubegems-local kubegems-installer kubegems-models kubegems-edge
 .PHONY: helm-package
 helm-package:
 	$(foreach file, $(dir $(wildcard $(CHARTS_DIR)/*/Chart.yaml)), \
 	helm package -u -d ${KUBEGEM_CHARTS_DIR} --version ${VERSION} --app-version  ${VERSION} $(file) \
 	;)
 
-.PHONY: helm-push
-helm-push: helm-package
+.PHONY: helm-release
+helm-release: helm-package
 	$(foreach file, $(wildcard $(KUBEGEM_CHARTS_DIR)/kubegems*-$(VERSION).tgz), \
 	curl -f --data-binary "@$(file)" ${CHARTMUSEUM_ADDR}/api/charts \
 	;)
 
 comma = ,
 buildxbuild = docker buildx build --platform=${PLATFORM}
-buildxbuild += $(foreach n,$(subst $(comma), ,$(strip ${IMAGE_REGISTRY})),--tag $(n)/$1 )
-ifeq ($(PUSH),true)
-	buildxbuild += --push
-endif
+buildxbuild += $(foreach n,$(subst $(comma), ,$(strip ${IMAGE_REGISTRY})),--tag $(n)/$1 ) --push
 
-docker: kubegems-image kubegems-edge-image ## Build container image.
+release: helm-release image-release ## Make a new release.
+
+image-release: kubegems-image kubegems-edge-image 
 
 kubegems-image:
 	$(call buildxbuild,kubegems/kubegems:$(IMAGE_TAG)) -f Dockerfile ${BIN_DIR}	
 
+kubegems-edge-image:
+	$(call buildxbuild,kubegems/kubegems-edge-agent:$(IMAGE_TAG)) -f Dockerfile.edge-agent ${BIN_DIR}
+
 debug-image:
 	$(call buildxbuild,kubegems/debug-tools:latest) -f Dockerfile.debug ${BIN_DIR}
-
-kubegems-edge-image: kubegems-edge-agent-image
-
-kubegems-edge-agent-image:
-	$(call buildxbuild,kubegems/kubegems-edge-agent:$(IMAGE_TAG)) -f Dockerfile.edge-agent ${BIN_DIR}
 
 kubectl-image:
 	$(call buildxbuild,kubegems/kubectl:latest) -f Dockerfile.kubectl ${BIN_DIR}
@@ -209,15 +195,3 @@ K8S_VERSION = 1.20.0
 setup-envtest: ## setup operator test environment
 	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 	setup-envtest use ${K8S_VERSION}
-
-.PHONY: readme-generator
-readme-generator:
-ifeq (, $(shell which readme-generator))
-	@{ \
-	set -e ;\
-	echo 'installing readme-generator-for-helm' ;\
-	npm install -g readme-generator-for-helm ;\
-	}
-else
-	echo 'readme-generator-for-helm is already installed'
-endif
