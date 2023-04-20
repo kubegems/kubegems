@@ -36,12 +36,14 @@ type ModelsAPI struct {
 }
 
 func NewModelsAPI(ctx context.Context, db *mongo.Database, syncopt *SyncOptions) (*ModelsAPI, error) {
+	sources := repository.NewSourcesRepository(db)
+	models := repository.NewModelsRepository(db)
 	api := &ModelsAPI{
-		ModelRepository:   repository.NewModelsRepository(db),
+		ModelRepository:   models,
 		CommentRepository: repository.NewCommentsRepository(db),
-		SourcesRepository: repository.NewSourcesRepository(db),
+		SourcesRepository: sources,
 		authorization:     auth.NewLocalAuthorization(ctx, db),
-		SyncService:       NewSyncService(syncopt),
+		SyncService:       NewSyncService(syncopt, sources, models),
 	}
 	if err := api.InitSchemas(ctx); err != nil {
 		return nil, fmt.Errorf("init schemas: %v", err)

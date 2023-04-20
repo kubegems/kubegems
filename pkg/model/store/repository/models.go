@@ -250,6 +250,28 @@ func (m *ModelsRepository) Update(ctx context.Context, model *Model) error {
 	return nil
 }
 
+func (m *ModelsRepository) CreateOrUpdateFromSync(ctx context.Context, model *Model) error {
+	result := m.Collection.FindOneAndUpdate(ctx,
+		bson.M{"source": model.Source, "name": model.Name},
+		bson.M{
+			"$set": bson.M{
+				"versions":     model.Versions,
+				"lastModified": model.LastModified,
+				"tags":         model.Tags,
+				"framework":    model.Framework,
+				"task":         model.Task,
+				"license":      model.License,
+				"author":       model.Author,
+			},
+		},
+		options.FindOneAndUpdate().SetUpsert(true),
+	)
+	if err := result.Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *ModelsRepository) Delete(ctx context.Context, source, name string) error {
 	_, err := m.Collection.DeleteOne(ctx, bson.M{"source": source, "name": name})
 	return err

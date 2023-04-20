@@ -62,8 +62,10 @@ type Model struct {
 }
 
 type ModelFile struct {
-	Filename string `json:"filename"`
-	Content  string `json:"content"`
+	Filename string    `json:"filename"`
+	Content  string    `json:"content"`
+	Size     int64     `json:"size"`
+	ModTime  time.Time `json:"modTime,omitempty"`
 }
 
 const (
