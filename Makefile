@@ -121,14 +121,7 @@ define go-build-tools
 endef
 
 ##@ Build
-build: build-files build-binaries build-tools
-
-build-files: ## Build around files
-	go run scripts/offline-plugins/main.go
-	cp -rf deploy/*.yaml ${BIN_DIR}/plugins/
-	mkdir -p ${BIN_DIR}/config
-	cp -f config/promql_tpl.yaml config/system_alert.yaml ${BIN_DIR}/config/
-	cp -rf config/dashboards/ ${BIN_DIR}/config/dashboards/
+build: build-binaries build-tools
 
 build-binaries: ## Build binaries.
 	- mkdir -p ${BIN_DIR}
@@ -138,8 +131,6 @@ build-binaries: ## Build binaries.
 build-tools:
 	$(call go-build-tools,podfsmgr,linux,amd64)
 	$(call go-build-tools,podfsmgr,linux,arm64)
-	mkdir -p ${BIN_DIR}/tools
-	cp -r tools/podfsmgr/bin/* ${BIN_DIR}/tools
 
 CHARTS = kubegems kubegems-local kubegems-installer kubegems-models kubegems-edge
 .PHONY: helm-package
@@ -162,7 +153,16 @@ release: helm-release image-release ## Make a new release.
 
 image-release: kubegems-image kubegems-edge-image 
 
-kubegems-image:
+image-files: ## Prepare files for image build
+	go run scripts/offline-plugins/main.go
+	cp -rf deploy/*.yaml ${BIN_DIR}/plugins/
+	mkdir -p ${BIN_DIR}/config
+	cp -f config/promql_tpl.yaml config/system_alert.yaml ${BIN_DIR}/config/
+	cp -rf config/dashboards/ ${BIN_DIR}/config/dashboards/
+	mkdir -p ${BIN_DIR}/tools
+	cp -r tools/podfsmgr/bin/* ${BIN_DIR}/tools
+
+kubegems-image: image-files
 	$(call buildxbuild,kubegems/kubegems:$(IMAGE_TAG)) -f Dockerfile ${BIN_DIR}	
 
 kubegems-edge-image:
