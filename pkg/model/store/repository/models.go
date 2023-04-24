@@ -267,6 +267,10 @@ func (m *ModelsRepository) CreateOrUpdateFromSync(ctx context.Context, model *Mo
 		options.FindOneAndUpdate().SetUpsert(true),
 	)
 	if err := result.Err(); err != nil {
+		// when upsert, we will get ErrNoDocuments
+		if err == mongo.ErrNoDocuments {
+			return nil
+		}
 		return err
 	}
 	return nil
