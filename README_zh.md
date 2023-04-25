@@ -15,17 +15,19 @@
 ![license](https://img.shields.io/github/license/kubegems/kubegems)
 
 <h2>
-  <a href="https://kubegems.io/">Website</a>
+  <a href="https://kubegems.io/">首页</a>
   <span> • </span>
-  <a href="https://www.kubegems.io/docs/concepts/what-is-kubegems">Docs</a>
+  <a href="https://www.kubegems.io/docs/concepts/what-is-kubegems">文档</a>
   <span> • </span>
-  <a href="https://demo.kubegems.io/">Demo</a>
+  <a href="https://demo.kubegems.io/">演示环境</a>
   <span> • </span>
-  <a href="https://github.com/kubegems/.github/blob/master/static/image/wechat.jpg?raw=true">Wechat</a>
+  <a href="https://github.com/kubegems/.github/blob/master/static/image/wechat.jpg?raw=true">微信</a>
   <span> • </span>
   <a href="https://twitter.com/KubeGems">Twitter</a>
   <span> • </span>
   <a href="https://kubegems.slack.com">Slack</a>
+    <span> • </span>
+  <a href="./sponsors.md"赞助</a>
 </h2>
 
 🇨🇳 简体中文 🇭🇰 繁体中文 🇺🇸 英文 🇯🇵 日语
