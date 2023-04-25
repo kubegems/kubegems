@@ -57,7 +57,7 @@ https://www.paypal.com/paypalme/linkmq
 | --- | --- | --- | --- | --- |
 |2023/4/25 | Artbrain[福] |  ¥ 120 | 微信 Weixin | |
 |2023/4/25 | 庄鹏 |  ¥ 50 | 微信 Weixin | |
-|2023/4/25 | 柱星同学 |  ¥ 66。66 | 微信 Weixin | 请喝咖啡|
+|2023/4/25 | 柱星同学 |  ¥ 66.66 | 微信 Weixin | 请喝咖啡|
 
 
 ## 运营开支 Operating Expenses
