@@ -56,6 +56,7 @@ https://www.paypal.com/paypalme/linkmq
 |赞助时间 time |赞助人 Sponsor| 赞助金额 Amount|渠道 Channel |附言 P.S.|
 | --- | --- | --- | --- | --- |
 |2023/4/25 | Artbrain[福] |  ¥ 120 | 微信 Weixin | |
+|2023/4/25 | 庄鹏 |  ¥ 50 | 微信 Weixin | |
 
 
 ## 运营开支 Operating Expenses
