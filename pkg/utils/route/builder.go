@@ -115,7 +115,11 @@ func (b *Builder) BuildSchema(v reflect.Value) *spec.Schema {
 }
 
 func TypeName(t reflect.Type) string {
-	return t.String()
+	fullname := t.String()
+	if index := strings.IndexRune(fullname, '['); index != -1 {
+		return fullname[:index]
+	}
+	return fullname
 }
 
 func (b *Builder) buildPtr(v reflect.Value) *spec.Schema {
@@ -131,24 +135,27 @@ func (b *Builder) buildSlice(v reflect.Value) *spec.Schema {
 			Type: []string{"array"},
 		},
 	}
-	if v.Len() == 0 {
-		itemSchema := b.BuildSchema(reflect.New(v.Type().Elem()))
-		schema.Items = &spec.SchemaOrArray{Schema: itemSchema}
-	} else {
-		schema.Items = &spec.SchemaOrArray{Schemas: make([]spec.Schema, 0, v.Len())}
-		for i := 0; i < v.Len(); i++ {
-			if itemSchema := b.BuildSchema(v.Index(i)); itemSchema != nil {
-				schema.Items.Schemas = append(schema.Items.Schemas, *itemSchema)
-			}
+	items := []spec.Schema{}
+	for i := 0; i < v.Len(); i++ {
+		if itemSchema := b.BuildSchema(v.Index(i)); itemSchema != nil {
+			items = append(items, *itemSchema)
 		}
+	}
+	switch len(items) {
+	case 0:
+		if itemSchema := b.BuildSchema(reflect.New(v.Type().Elem())); itemSchema != nil {
+			schema.Items = &spec.SchemaOrArray{Schema: itemSchema}
+		}
+	case 1:
+		schema.Items = &spec.SchemaOrArray{Schema: &items[0]}
+	default:
+		schema.Items = &spec.SchemaOrArray{Schemas: items}
 	}
 	return &schema
 }
 
 func (b *Builder) buildInterface(v reflect.Value) *spec.Schema {
 	switch b.InterfaceBuildOption {
-	case InterfaceBuildOptionDefault:
-		return ObjectProperty()
 	case InterfaceBuildOptionMerge:
 		if innerSchema := b.BuildSchema(v.Elem()); innerSchema != nil {
 			return &spec.Schema{
@@ -160,7 +167,7 @@ func (b *Builder) buildInterface(v reflect.Value) *spec.Schema {
 				},
 			}
 		}
-	case InterfaceBuildOptionOverride:
+	case InterfaceBuildOptionOverride, InterfaceBuildOptionDefault:
 		if v.IsNil() {
 			return ObjectProperty()
 		}
@@ -202,126 +209,91 @@ func (b *Builder) buildMap(v reflect.Value) *spec.Schema {
 // return the ref of definition
 // if fields container interface value, the return ref will allof them
 func (b *Builder) buildStruct(v reflect.Value) *spec.Schema {
-	typeName := TypeName(v.Type())
-
-	schema := spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type:       []string{"object"},
-			Properties: map[string]spec.Schema{},
-		},
-	}
-
-	findOverridesOnly := false
-	// check exist
-	if exist, ok := b.Definitions[typeName]; ok {
-		findOverridesOnly = true
-		schema = exist
-	}
-
-	// add to definitions first to break recursive
 	if b.Definitions == nil {
 		b.Definitions = map[string]spec.Schema{}
 	}
-	b.Definitions[typeName] = schema
 
-	overrideProperties := map[string]spec.Schema{} // override struct interface fields
-	overrideEmbeddedProperties := []spec.Schema{}  // override embedded struct fields
+	structTypeName := TypeName(v.Type())
+	schema := *ObjectPropertyProperties(map[string]spec.Schema{})
 
-	var refs []spec.Schema // embedded struct
+	findOverridesOnly := false
+	if _, ok := b.Definitions[structTypeName]; ok {
+		findOverridesOnly = true // only find overrides fields
+	} else {
+		b.Definitions[structTypeName] = schema
+	}
+
+	overrideProperties, overrideEmbeddedProperties := map[string]spec.Schema{}, []spec.Schema{}
 	for i := 0; i < v.NumField(); i++ {
-		fieldv := v.Field(i)
-		structField := v.Type().Field(i)
-
+		fieldv, structField := v.Field(i), v.Type().Field(i)
 		if !structField.IsExported() {
 			continue
 		}
-
-		isEmbedded := structField.Anonymous
-		isIgnored := false
-
-		fieldName := structField.Name
-		{
-			// json
-			if jsonTag := structField.Tag.Get("json"); jsonTag != "" {
-				opts := strings.Split(jsonTag, ",")
-				switch val := opts[0]; val {
-				case "-":
-					isIgnored = true
-				case "":
-				default:
-					fieldName = val
-					isEmbedded = false // if field is embedded,but json tag has name,then it is not embedded
-				}
-				for _, opt := range opts[1:] {
-					if opt == "inline" {
-						isEmbedded = true
-					}
-				}
-			}
-		}
+		isEmbedded, isIgnored, fieldName := structFieldInfo(structField)
 		// skip ignored field
 		if isIgnored {
 			continue
 		}
-
-		if fieldv.Kind() == reflect.Interface && !fieldv.IsNil() {
-			if override := b.BuildSchema(fieldv.Elem()); override != nil {
-				if isEmbedded {
-					overrideEmbeddedProperties = append(overrideEmbeddedProperties, *override)
-				} else {
-					overrideProperties[fieldName] = *override
-				}
+		if IsDynamic(structField.Type) || isEmbedded {
+			fieldSchema := b.BuildSchema(fieldv)
+			if fieldSchema == nil {
+				continue
 			}
+			if isEmbedded {
+				overrideEmbeddedProperties = append(overrideEmbeddedProperties, *fieldSchema)
+			} else {
+				schema.Properties[fieldName] = *ObjectProperty()
+				overrideProperties[fieldName] = *fieldSchema
+			}
+			continue
 		}
-
+		// avoid recursive
 		if findOverridesOnly {
 			continue
 		}
-
-		var fieldSchema *spec.Schema
-		if fieldv.Kind() == reflect.Interface {
-			fieldSchema = ObjectProperty()
-		} else {
-			fieldSchema = b.BuildSchema(fieldv)
-		}
-
-		// maybe invalid
-		if fieldSchema == nil {
-			continue
-		}
-
-		// ref another schema
-		if isEmbedded {
-			refs = append(refs, *fieldSchema)
-		} else {
+		if fieldSchema := b.BuildSchema(fieldv); fieldSchema != nil {
 			schema.Properties[fieldName] = *fieldSchema
 		}
 	}
-	if len(refs) > 0 {
-		allofSchema := spec.Schema{SchemaProps: spec.SchemaProps{AllOf: refs}}
-		if len(schema.Properties) != 0 {
-			allofSchema.AllOf = append(allofSchema.AllOf, schema)
-		}
-		schema = allofSchema
-	}
-	// update definitions
-	if !findOverridesOnly {
-		b.Definitions[typeName] = schema
-	}
-
-	if len(overrideProperties) > 0 {
-		allof := []spec.Schema{*spec.RefSchema(DefinitionsRoot + typeName)}
+	if len(overrideProperties) > 0 || len(overrideEmbeddedProperties) > 0 {
+		allof := []spec.Schema{*spec.RefSchema(DefinitionsRoot + structTypeName)}
 		allof = append(allof, overrideEmbeddedProperties...)
-		allof = append(allof, spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:       []string{"object"},
-				Properties: overrideProperties,
-			},
-		})
+		if len(overrideProperties) > 0 {
+			allof = append(allof, *ObjectPropertyProperties(overrideProperties))
+		}
 		return &spec.Schema{SchemaProps: spec.SchemaProps{AllOf: allof}}
 	} else {
-		return spec.RefSchema(DefinitionsRoot + typeName)
+		return spec.RefSchema(DefinitionsRoot + structTypeName)
 	}
+}
+
+func structFieldInfo(structField reflect.StructField) (bool, bool, string) {
+	isEmbedded, isIgnored, fieldName := structField.Anonymous, false, structField.Name
+	// json
+	if jsonTag := structField.Tag.Get("json"); jsonTag != "" {
+		opts := strings.Split(jsonTag, ",")
+		switch val := opts[0]; val {
+		case "-":
+			isIgnored = true
+		case "":
+		default:
+			fieldName = val
+			isEmbedded = false // if field is embedded,but json tag has name,then it is not embedded
+		}
+		for _, opt := range opts[1:] {
+			if opt == "inline" {
+				isEmbedded = true
+			}
+		}
+	}
+	return isEmbedded, isIgnored, fieldName
+}
+
+func IsDynamic(t reflect.Type) bool {
+	for t.Kind() == reflect.Ptr || t.Kind() == reflect.Slice || t.Kind() == reflect.Array || t.Kind() == reflect.Map {
+		t = t.Elem()
+	}
+	return t.Kind() == reflect.Interface
 }
 
 // StrFmtProperty creates a property for the named string format
@@ -330,5 +302,9 @@ func IntFmtProperty(format string) *spec.Schema {
 }
 
 func ObjectProperty() *spec.Schema {
-	return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+	return ObjectPropertyProperties(nil)
+}
+
+func ObjectPropertyProperties(properties spec.SchemaProperties) *spec.Schema {
+	return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}, Properties: properties}}
 }
