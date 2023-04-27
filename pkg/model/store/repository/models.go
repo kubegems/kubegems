@@ -135,7 +135,7 @@ func (m *ModelsRepository) Get(ctx context.Context, source, name string, include
 	ret := ModelWithAddtional{}
 	if err := m.Collection.FindOne(ctx, cond).Decode(&ret); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return ret, response.NewError(http.StatusNotFound, fmt.Sprintf("model %s not found", name))
+			return ret, response.NewStatusErrorMessage(http.StatusNotFound, fmt.Sprintf("model %s not found", name))
 		}
 		return ModelWithAddtional{}, err
 	}
