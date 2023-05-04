@@ -196,11 +196,15 @@ func (a *SimpleAuditor) CompleteAuditResource(method string, path string, auditl
 			action = string(MethodActionMapSingular[method])
 		}
 	}
-	parents, resource, name := []ParentResource{}, parts[0], parts[1]
-	for i := 0; i < len(parts)/2-1; i++ {
-		parents = append(parents, ParentResource{parts[i*2], parts[i*2+1]})
+	resources := []ParentResource{}
+	for i := 0; i < len(parts); i += 2 {
+		resources = append(resources, ParentResource{parts[i], parts[i+1]})
 	}
-	auditlog.Action, auditlog.Parents, auditlog.Resource, auditlog.Name = action, parents, resource, name
+	if len(resources) > 0 {
+		parents, last := resources[:len(resources)-1], resources[len(resources)-1]
+		auditlog.Parents, auditlog.Resource, auditlog.Name = parents, last.Resource, last.Name
+	}
+	auditlog.Action = action
 }
 
 // e.g. /zoos/{id}/animals/{name}:feed -> /zoos/{id}/animals/{name},feed
