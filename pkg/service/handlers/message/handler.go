@@ -152,14 +152,16 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 			readQuery.Where("alert_message_id = ?", msgID)
 			// 返回
 			alertmsg := models.AlertMessage{}
+			alertinfo := models.AlertInfo{}
 			if err := h.GetDB().WithContext(ctx).First(&alertmsg, "id = ?", msgID).Error; err != nil {
 				handlers.NotOK(c, err)
 				return
 			}
-			if err := h.GetDB().WithContext(ctx).First(alertmsg.AlertInfo, "fingerprint = ?", alertmsg.Fingerprint).Error; err != nil {
+			if err := h.GetDB().WithContext(ctx).First(&alertinfo, "fingerprint = ?", alertmsg.Fingerprint).Error; err != nil {
 				handlers.NotOK(c, err)
 				return
 			}
+			alertmsg.AlertInfo = &alertinfo
 			labels := map[string]string{}
 			json.Unmarshal(alertmsg.AlertInfo.Labels, &labels)
 
