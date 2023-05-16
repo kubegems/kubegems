@@ -111,7 +111,7 @@ func NewTokenVerifyHandler(authc TokenVerify, next http.Handler) http.Handler {
 			response.Error(w, response.NewStatusErrorf(http.StatusUnauthorized, "invalid access token: %w", err))
 			return
 		}
-		r.WithContext(NewTokenClaimsContext(r.Context(), claims))
+		r = r.WithContext(NewTokenClaimsContext(r.Context(), claims))
 		next.ServeHTTP(w, r)
 	})
 }
