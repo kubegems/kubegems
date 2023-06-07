@@ -68,9 +68,9 @@ func (r *Router) AddRestAPI(ctx context.Context, deps apis.Dependencies) error {
 	})
 	r.gin.Any("/internal/agents/:name/*path", func(ctx *gin.Context) {
 		name := ctx.Param("name")
-		ctx.Request.URL.Path = ctx.Param("path") + "?" + ctx.Request.URL.RawQuery
-		ctx.Request.URL.RawPath = ctx.Param("path") + "?" + ctx.Request.URL.RawQuery
-		clientsproxy.HandlerToCluster(name).ServeHTTP(ctx.Writer, ctx.Request)
+		ctx.Request.URL.Path = ctx.Param("path")
+		ctx.Request.URL.RawPath = ""
+		clientsproxy.ProxyToCluster(name).ServeHTTP(ctx.Writer, ctx.Request)
 	})
 	return nil
 }

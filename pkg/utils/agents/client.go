@@ -15,83 +15,97 @@
 package agents
 
 import (
-	"context"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 
-	"github.com/gorilla/websocket"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
-	"kubegems.io/kubegems/pkg/utils/kube"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
+	agentcli "kubegems.io/kubegems/pkg/utils/agents/client"
+	"kubegems.io/kubegems/pkg/utils/agents/extend"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	AgentModeApiServer = "apiServerProxy"
-	AgentModeAHTTP     = "http"
-	AgentModeHTTPS     = "https"
 )
 
 type Client interface {
 	client.WithWatch
-	DoRequest(ctx context.Context, req Request) error
-	DoRawRequest(ctx context.Context, clientreq Request) (*http.Response, error)
-	DialWebsocket(ctx context.Context, path string, headers http.Header) (*websocket.Conn, *http.Response, error)
-	Extend() *ExtendClient
 	Name() string
-	BaseAddr() url.URL
-	APIServerAddr() url.URL
-	APIServerVersion() string
-	// Deprecated: remove
-	Proxy(ctx context.Context, obj client.Object, port int, req *http.Request, writer http.ResponseWriter, rewritefunc func(r *http.Response) error) error
+	Info() *APIServerInfoClient
+	Websocket() *agentcli.WebsocketClient
+	Extend() *extend.ExtendClient
+	// ReverseProxy return a new reverse proxy that proxy requests to the agent.
+	// if target set, proxy to target instead of agent.
+	ReverseProxy(destOverride ...*url.URL) *httputil.ReverseProxy
+	// Config return the config to build a client.
+	Config() *agentcli.Config
+	// ProxyTransport return a transport that handle requests like it happens in the agent pod.
+	ProxyTransport() http.RoundTripper
 }
 
 var _ Client = &DelegateClient{}
 
-func NewDelegateClientClient(options *ClientOptions, name string, apiserver *url.URL, discovery discovery.DiscoveryInterface, tracer trace.Tracer) Client {
-	cli := NewTypedClient(options, kube.GetScheme())
+func NewDelegateClientClient(name string, cfg *agentcli.Config, kubecfg *rest.Config, schema *runtime.Scheme, tracer trace.Tracer) (Client, error) {
+	// transport is a stateful object, h2 reuse connections cache in transport.
+	// so we may share the transport in consumers.
+	transport := agentcli.ConfigAsTransport(cfg)
 	return &DelegateClient{
-		name:            name,
-		apiserverAddr:   apiserver,
-		baseaddr:        options.Addr,
-		discovery:       memory.NewMemCacheClient(discovery),
-		TypedClient:     cli,
-		ExtendClient:    NewExtendClientFrom(cli),
-		WebsocketClient: NewWebsocketClient(options),
-	}
+		name:           name,
+		cfg:            cfg,
+		transport:      transport,
+		proxytransport: agentcli.NewProxyTransport(cfg.Addr, transport),
+		infoclli:       NewAPIServerInfoClientOrEmpty(kubecfg),
+		TypedClient:    agentcli.NewTypedClient(cfg.Addr, transport, schema),
+		extcli:         extend.NewExtendClient(cfg.Addr, transport),
+		wscli:          agentcli.NewWebsocketClient(cfg),
+	}, nil
 }
 
 type DelegateClient struct {
-	*TypedClient
-	*ExtendClient
-	*WebsocketClient
-	name          string
-	baseaddr      *url.URL
-	apiserverAddr *url.URL
-	discovery     discovery.DiscoveryInterface
+	*agentcli.TypedClient
+	name           string
+	cfg            *agentcli.Config
+	transport      http.RoundTripper
+	proxytransport http.RoundTripper
+	extcli         *extend.ExtendClient
+	wscli          *agentcli.WebsocketClient
+	infoclli       *APIServerInfoClient
 }
 
-func (c *DelegateClient) Extend() *ExtendClient {
-	return c.ExtendClient
+func (c *DelegateClient) Extend() *extend.ExtendClient {
+	return c.extcli
 }
 
 func (c *DelegateClient) Name() string {
 	return c.name
 }
 
-func (c *DelegateClient) BaseAddr() url.URL {
-	return *c.baseaddr
+func (c *DelegateClient) Config() *agentcli.Config {
+	cfg := *c.cfg
+	return &cfg
 }
 
-func (c *DelegateClient) APIServerAddr() url.URL {
-	return *c.apiserverAddr
+func (c *DelegateClient) ProxyTransport() http.RoundTripper {
+	return c.proxytransport
 }
 
-func (c *DelegateClient) APIServerVersion() string {
-	version, err := c.discovery.ServerVersion()
-	if err != nil {
-		return ""
+func (c *DelegateClient) Transport() http.RoundTripper {
+	return c.transport
+}
+
+func (c *DelegateClient) Info() *APIServerInfoClient {
+	return c.infoclli
+}
+
+func (c *DelegateClient) Websocket() *agentcli.WebsocketClient {
+	return c.wscli
+}
+
+// ReverseProxy return a http.Handler that proxy requests to the agent.
+// if target set, proxy to target instead of to agent.
+func (c *DelegateClient) ReverseProxy(dests ...*url.URL) *httputil.ReverseProxy {
+	if len(dests) == 0 {
+		return agentcli.NewReverseProxy(c.cfg.Addr, c.transport)
 	}
-	return version.String()
+	// use proxy transport to proxy to another host.
+	return agentcli.NewReverseProxy(dests[0], c.proxytransport)
 }

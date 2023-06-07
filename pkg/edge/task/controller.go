@@ -25,7 +25,7 @@ import (
 	edgev1beta1 "kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/utils"
 	"kubegems.io/kubegems/pkg/utils/generic"
-	"kubegems.io/kubegems/pkg/utils/kube"
+	kubeschema "kubegems.io/kubegems/pkg/utils/kube/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -361,7 +361,7 @@ func (r *Reconciler) stageCheckResource(ctx context.Context, task *edgev1beta1.E
 
 func newObjFrom(status *edgev1beta1.EdgeTaskResourceStatus) client.Object {
 	gvk := schema.FromAPIVersionAndKind(status.APIVersion, status.Kind)
-	obj, err := kube.GetScheme().New(gvk)
+	obj, err := kubeschema.GetScheme().New(gvk)
 	if err != nil {
 		// fallback to unstructured
 		obj = &unstructured.Unstructured{}

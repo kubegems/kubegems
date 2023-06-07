@@ -38,6 +38,7 @@ type xtermMessage struct {
 }
 
 func Transport(local, proxy *websocket.Conn, c *gin.Context, user models.CommonUserIface, auditFunc func(string)) {
+	// nolint: gomnd
 	p := WebSocketProxy{
 		RequestContext: c,
 		Source:         local,

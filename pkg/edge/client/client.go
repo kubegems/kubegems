@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/kube"
+	agentclient "kubegems.io/kubegems/pkg/utils/agents/client"
+	"kubegems.io/kubegems/pkg/utils/kube/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -33,10 +33,10 @@ func NewEdgeClient(edgeServerAddr string, uid string) (client.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	clioptions := &agents.ClientOptions{
+	clioptions := &agentclient.Config{
 		Addr: u,
 		TLS:  &tls.Config{InsecureSkipVerify: true},
 	}
-	cli := agents.NewTypedClient(clioptions, kube.GetScheme())
+	cli := agentclient.NewTypedClient(clioptions.Addr, agentclient.ConfigAsTransport(clioptions), schema.GetScheme())
 	return cli, nil
 }

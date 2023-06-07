@@ -41,7 +41,7 @@ func (t *ClusterSyncTasker) Sync(ctx context.Context) error {
 			if v.ClusterName != cli.Name() {
 				continue
 			}
-			if version := cli.APIServerVersion(); v.Version != version {
+			if version := cli.Info().APIServerVersion(); v.Version != version {
 				if err := t.DB.DB().Model(v).Update("version", version).Error; err != nil {
 					return err
 				}

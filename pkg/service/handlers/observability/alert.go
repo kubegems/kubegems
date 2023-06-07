@@ -50,6 +50,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/agents/extend"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
@@ -301,9 +302,9 @@ func listSilences(ctx context.Context, namespace string, cli agents.Client) ([]*
 	if namespace != "" {
 		url = fmt.Sprintf(`%s?filter=%s="%s"`, url, prometheus.AlertNamespaceLabel, namespace)
 	}
-	if err := cli.DoRequest(ctx, agents.Request{
+	if err := cli.Extend().DoRequest(ctx, extend.Request{
 		Path: url,
-		Into: agents.WrappedResponse(&silences),
+		Into: extend.WrappedResponse(&silences),
 	}); err != nil {
 		return nil, err
 	}
@@ -372,7 +373,7 @@ func createSilenceIfNotExist(ctx context.Context, namespace, alertName string, c
 		}
 
 		// create
-		return cli.DoRequest(ctx, agents.Request{
+		return cli.Extend().DoRequest(ctx, extend.Request{
 			Method: http.MethodPost,
 			Path:   "/custom/alertmanager/v1/silence/_/actions/create",
 			Body:   silence,
@@ -391,7 +392,7 @@ func deleteSilenceIfExist(ctx context.Context, namespace, alertName string, cli 
 		values := url.Values{}
 		values.Add("id", silence.ID)
 
-		return cli.DoRequest(ctx, agents.Request{
+		return cli.Extend().DoRequest(ctx, extend.Request{
 			Method: http.MethodDelete,
 			Path:   "/custom/alertmanager/v1/silence/_/actions/delete",
 			Query:  values,

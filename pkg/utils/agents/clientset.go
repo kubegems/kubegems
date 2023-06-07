@@ -24,28 +24,18 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"gorm.io/gorm"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"kubegems.io/kubegems/pkg/service/models"
+	"kubegems.io/kubegems/pkg/utils/agents/client"
 	"kubegems.io/kubegems/pkg/utils/database"
+	"kubegems.io/kubegems/pkg/utils/kube/schema"
 )
 
 type ClientSet struct {
 	database *database.Database
 	clients  sync.Map // name -> *Client
 	tracer   trace.Tracer
-}
-
-// Initialize for gorm plugin
-func (h *ClientSet) Initialize(db *gorm.DB) error {
-	return nil
-}
-
-// Name for gorm plugin
-func (h *ClientSet) Name() string {
-	return "agentcli"
 }
 
 func NewClientSet(database *database.Database) (*ClientSet, error) {
@@ -62,7 +52,7 @@ func (h *ClientSet) Clusters() []string {
 }
 
 // ExecuteInEachCluster Execute in each cluster concurrently
-func (h ClientSet) ExecuteInEachCluster(ctx context.Context, f func(ctx context.Context, cli Client) error) error {
+func (h *ClientSet) ExecuteInEachCluster(ctx context.Context, f func(ctx context.Context, cli Client) error) error {
 	g := errgroup.Group{}
 	for _, v := range h.Clusters() {
 		clustername := v
@@ -114,20 +104,14 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 }
 
 func (h *ClientSet) newClientFor(ctx context.Context, name string) (Client, error) {
-	clientOptions, kubeconfig, err := h.ClientOptionsFrom(ctx, name)
+	clientOptions, kubeconfig, err := h.ClientOptionsOf(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	clientset, err := kubernetes.NewForConfig(kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-	apiserveraddr, _ := url.Parse(kubeconfig.Host)
-	cli := NewDelegateClientClient(clientOptions, name, apiserveraddr, clientset.Discovery(), h.tracer)
-	return cli, nil
+	return NewDelegateClientClient(name, clientOptions, kubeconfig, schema.GetScheme(), h.tracer)
 }
 
-func (h *ClientSet) ClientOptionsFrom(ctx context.Context, name string) (*ClientOptions, *rest.Config, error) {
+func (h *ClientSet) ClientOptionsOf(ctx context.Context, name string) (*client.Config, *rest.Config, error) {
 	cluster := &models.Cluster{}
 	if err := h.database.DB().WithContext(ctx).First(&cluster, "cluster_name = ?", name).Error; err != nil {
 		return nil, nil, err
@@ -138,11 +122,11 @@ func (h *ClientSet) ClientOptionsFrom(ctx context.Context, name string) (*Client
 		if err != nil {
 			return nil, nil, err
 		}
-		tlscfg, err := TLSConfigFrom([]byte(cluster.AgentCA), []byte(cluster.AgentCert), []byte(cluster.AgentKey))
+		tlscfg, err := client.TLSConfigFrom([]byte(cluster.AgentCA), []byte(cluster.AgentCert), []byte(cluster.AgentKey))
 		if err != nil {
 			return nil, nil, err
 		}
-		info := &ClientOptions{
+		info := &client.Config{
 			Addr: baseaddr,
 			TLS:  tlscfg,
 		}
@@ -158,14 +142,14 @@ func (h *ClientSet) ClientOptionsFrom(ctx context.Context, name string) (*Client
 	if err != nil {
 		return nil, nil, err
 	}
-	tlscfg, err := TLSConfigFrom(restconfig.TLSClientConfig.CAData, restconfig.TLSClientConfig.CertData, restconfig.TLSClientConfig.KeyData)
+	tlscfg, err := client.TLSConfigFrom(restconfig.TLSClientConfig.CAData, restconfig.TLSClientConfig.CertData, restconfig.TLSClientConfig.KeyData)
 	if err != nil {
 		return nil, nil, err
 	}
-	serverinfo := &ClientOptions{
+	serverinfo := &client.Config{
 		Addr: baseaddr,
 		TLS:  tlscfg,
-		Auth: Auth{
+		Auth: client.Auth{
 			Token:    restconfig.BearerToken,
 			Username: restconfig.Username,
 			Password: restconfig.Password,

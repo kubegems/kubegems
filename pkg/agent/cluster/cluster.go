@@ -28,6 +28,7 @@ import (
 	metricsvebeta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"kubegems.io/kubegems/pkg/agent/indexer"
 	"kubegems.io/kubegems/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/utils/kube/schema"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -84,7 +85,7 @@ func WithWatchClient(o *cluster.Options) {
 }
 
 func WithDefaultScheme(o *cluster.Options) {
-	o.Scheme = kube.GetScheme()
+	o.Scheme = schema.GetScheme()
 }
 
 func WithInNamespace(ns string) func(o *cluster.Options) {

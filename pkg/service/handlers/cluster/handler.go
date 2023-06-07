@@ -147,7 +147,7 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 		if err != nil {
 			log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
 		} else {
-			obj.Version = cli.APIServerVersion()
+			obj.Version = cli.Info().APIServerVersion()
 		}
 	}
 

@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/agents/extend"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/stream"
 	"kubegems.io/kubegems/pkg/utils/workflow"
@@ -251,7 +252,7 @@ func (h *ApplicationHandler) StrategyDeploymentStatus(c *gin.Context) {
 		name := deployment.Name
 		if iswatch, _ := strconv.ParseBool(c.Query("watch")); iswatch {
 			// watch rollout info
-			resp, err := cli.DoRawRequest(ctx, agents.Request{
+			resp, err := cli.Extend().DoRawRequest(ctx, extend.Request{
 				Method: http.MethodGet,
 				Path:   fmt.Sprintf(pathtemplate, namespace, name, true),
 			})
@@ -275,12 +276,12 @@ func (h *ApplicationHandler) StrategyDeploymentStatus(c *gin.Context) {
 			path := fmt.Sprintf(pathtemplate, namespace, name)
 			item := &rollout.RolloutInfo{}
 
-			req := agents.Request{
+			req := extend.Request{
 				Method: http.MethodGet,
 				Path:   path,
 				Into:   &response.Response{Data: item},
 			}
-			if err := cli.DoRequest(ctx, req); err != nil {
+			if err := cli.Extend().DoRequest(ctx, req); err != nil {
 				return nil, err
 			}
 			return item, nil
