@@ -116,7 +116,7 @@ require (
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
 	kubegems.io/configer v1.1.6
 	kubegems.io/ingress-nginx-operator v0.2.1
-	kubegems.io/library v0.0.0-20230607060515-9d53b67928df
+	kubegems.io/library v0.0.0-20230607130156-f0328e3e24be
 	kubegems.io/modelx v0.1.5
 	sigs.k8s.io/controller-runtime v0.11.2
 	sigs.k8s.io/kustomize/api v0.11.4

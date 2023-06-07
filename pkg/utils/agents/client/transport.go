@@ -53,7 +53,10 @@ func NewBasicAuth(username, password string) func(req *http.Request) error {
 func NewReverseProxy(addr *url.URL, tp http.RoundTripper) *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{
 		Transport: tp,
-		Rewrite:   func(pr *httputil.ProxyRequest) { pr.SetURL(addr) },
+		Director: func(r *http.Request) {
+			pr := httputil.ProxyRequest{Out: r}
+			pr.SetURL(addr)
+		},
 	}
 }
 
