@@ -34,7 +34,7 @@ const (
 type Environment struct {
 	ID uint `gorm:"primarykey"`
 	// 环境名字
-	EnvironmentName string `gorm:"type:varchar(50);uniqueIndex:uniq_idx_project_env;index:environment_uniq,unique"`
+	EnvironmentName string `gorm:"type:varchar(50);uniqueIndex:uniq_idx_project_env;uniqueIndex:environment_uniq"`
 	// 环境关联的namespace
 	Namespace string `gorm:"type:varchar(50)"`
 	// 备注
