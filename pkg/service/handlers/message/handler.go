@@ -157,7 +157,7 @@ func (h *MessageHandler) ReadMessage(c *gin.Context) {
 				handlers.NotOK(c, err)
 				return
 			}
-			if err := h.GetDB().WithContext(ctx).First(&alertinfo, "fingerprint = ?", alertmsg.Fingerprint).Error; err != nil {
+			if err := h.GetDB().WithContext(ctx).First(&alertinfo, "fingerprint = ?", alertmsg.InfoFingerprint).Error; err != nil {
 				handlers.NotOK(c, err)
 				return
 			}

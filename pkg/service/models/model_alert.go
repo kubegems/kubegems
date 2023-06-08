@@ -45,8 +45,8 @@ type AlertMessage struct {
 	ID uint
 
 	// 级联删除
-	Fingerprint string     `gorm:"type:varchar(50);"`
-	AlertInfo   *AlertInfo `gorm:"foreignKey:Fingerprint;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	InfoFingerprint string     `gorm:"type:varchar(50);column:fingerprint;"`
+	AlertInfo       *AlertInfo `gorm:"foreignKey:InfoFingerprint;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 
 	Value     string
 	Message   string
@@ -72,7 +72,7 @@ func (a *AlertMessage) ColumnSlice() []string {
 func (a *AlertMessage) ValueSlice() []string {
 	return []string{
 		strconv.Itoa(int(a.ID)),
-		a.Fingerprint,
+		a.InfoFingerprint,
 		a.Value,
 		a.Message,
 		utils.FormatMysqlDumpTime(a.StartsAt),
