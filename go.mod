@@ -39,7 +39,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redsync/redsync/v4 v4.5.0
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/goharbor/harbor/src v0.0.0-20210616083956-c39345da96d8
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -99,8 +99,8 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.0.2
-	gorm.io/driver/mysql v1.4.1
-	gorm.io/gorm v1.24.5
+	gorm.io/driver/mysql v1.5.1
+	gorm.io/gorm v1.25.1
 	helm.sh/helm/v3 v3.8.2
 	istio.io/api v0.0.0-20220512212136-561ffec82582
 	istio.io/client-go v1.13.4-0.20220512212836-a717f1acbd1f
