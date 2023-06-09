@@ -16,6 +16,7 @@ package proxy
 
 import (
 	"fmt"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 
@@ -52,10 +53,18 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 		return
 	}
 	req := c.Request
-	rp := cli.ReverseProxy(&url.URL{
+
+	target := &url.URL{
 		Scheme: "http",
 		Host:   fmt.Sprintf("%s.%s:%s", service, namespace, port),
-	})
+	}
+	rp := &httputil.ReverseProxy{
+		Transport: cli.ProxyTransport(),
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.SetURL(target)
+		},
+	}
+
 	// k8s apiserver proxy will modify the html response, so we need to correct the path
 	// https://github.com/kubernetes/apimachinery/blob/7ed5d2d91a598ca4d125acac5061f2a12721bbe8/pkg/util/proxy/transport.go#L124
 	rp.Transport = &proxyutil.Transport{
