@@ -386,7 +386,6 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 		user.GetID(),
 		clusterid,
 		before15d,
-		false,
 	).Scan(&list).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
