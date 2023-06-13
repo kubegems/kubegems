@@ -40,13 +40,13 @@ func NewClientTransport() *ClientTransport {
 }
 
 func (h *ClientTransport) Register(r *route.Router) {
-	r.GET(h.servepath, func(ctx *gin.Context) {
+	r.ANY(h.servepath, func(ctx *gin.Context) {
 		h.Proxy(ctx.Writer, ctx.Request)
 	})
-	r.GET(h.servepath+"/", func(ctx *gin.Context) {
+	r.ANY(h.servepath+"/", func(ctx *gin.Context) {
 		h.Proxy(ctx.Writer, ctx.Request)
 	})
-	r.GET(h.servepath+"/{path}*", func(ctx *gin.Context) {
+	r.ANY(h.servepath+"/{path}*", func(ctx *gin.Context) {
 		h.Proxy(ctx.Writer, ctx.Request)
 	})
 }
