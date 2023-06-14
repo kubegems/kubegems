@@ -45,7 +45,7 @@ func (m *ModelsRepository) InitSchema(ctx context.Context) error {
 			Keys:    bson.D{{Key: "source", Value: 1}, {Key: "name", Value: 1}, {Key: "task", Value: 1}},
 			Options: &options.IndexOptions{Unique: pointer.Bool(true)},
 		},
-		// we used this unio index at list models page
+		// we used this uniq index at list models page
 		{Keys: bson.D{
 			{Key: "recomment", Value: -1},
 			{Key: "downloads", Value: -1},
@@ -343,4 +343,47 @@ func (r *ModelsRepository) GetVersion(ctx context.Context, source, model, versio
 		}
 	}
 	return ModelVersion{}, fmt.Errorf("version %s not found", version)
+}
+
+func (r *ModelsRepository) Upsert(ctx context.Context, model Model) (Model, error) {
+	var (
+		recomment        int
+		enabled          bool
+		recommentContent string
+	)
+	ret := r.Collection.FindOne(ctx, bson.M{"source": model.Source, "name": model.Name})
+	if ret.Err() == nil {
+		var exist Model
+		ret.Decode(&exist)
+		recomment = exist.Recomment
+		enabled = exist.Enabled
+		recommentContent = exist.RecommentContent
+	}
+
+	_, err := r.Collection.UpdateOne(ctx,
+		bson.M{"source": model.Source, "name": model.Name},
+		bson.M{
+			"$set": bson.M{
+				"versions":     model.Versions,
+				"tags":         model.Tags,
+				"author":       model.Author,
+				"license":      model.License,
+				"framework":    model.Framework,
+				"task":         model.Task,
+				"paper":        model.Paper,
+				"downloads":    model.Downloads,
+				"likes":        model.Likes,
+				"created":      model.CreateAt,
+				"updated":      model.UpdateAt,
+				"annotations":  model.Annotations,
+				"lastModified": model.LastModified,
+				"enabled":      enabled || model.Enabled,
+				// below fields will not be updated if exist
+				"recomment":        recomment,
+				"recommentContent": recommentContent,
+			},
+		},
+		options.Update().SetUpsert(true),
+	)
+	return model, err
 }
