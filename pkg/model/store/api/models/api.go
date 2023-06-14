@@ -105,6 +105,9 @@ func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 				// source models
 				route.NewGroup("/models").Tag("models").
 					AddRoutes(
+						route.PUT("").To(m.UpsertModel).
+							Parameters(route.BodyParameter("body", repository.Model{})).
+							Doc("create or update model info"),
 						route.GET("").To(m.ListModels).Paged().Doc("list models").
 							Parameters(
 								route.QueryParameter("framework", "framework name").Optional(),
