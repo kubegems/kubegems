@@ -20,7 +20,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 12h 
 - name: kubernetes-memory-pressure
   namespace: kubegems-monitoring
   alertType: monitor
@@ -42,7 +42,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 1h
+      interval: 12h
 - name: kubernetes-disk-pressure
   namespace: kubegems-monitoring
   alertType: monitor
@@ -64,7 +64,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 1h
+      interval: 12h
 - name: kubernetes-out-of-disk
   namespace: kubegems-monitoring
   alertType: monitor
@@ -86,7 +86,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 1h
+      interval: 12h
 - name: kubernetes-pod-number-too-high
   namespace: kubegems-monitoring
   alertType: monitor
@@ -101,7 +101,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 1h
+      interval: 24h
 
 # 系统namepace pod
 - name: kubernetes-pod-crash-looping
@@ -122,7 +122,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 12h
 - name: kubernetes-pod-oom-killing
   namespace: kubegems-monitoring
   alertType: monitor
@@ -144,7 +144,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 12h
 - name: kubegems-pvc-usage-too-high
   namespace: kubegems-monitoring
   alertType: monitor
@@ -167,7 +167,7 @@
   inhibitLabels: ["namespace", "persistentvolumeclaim"]
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 24h
 
 # 节点 host
 - name: host-high-cpu-load
@@ -184,7 +184,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 12h
 - name: host-high-memory-load
   namespace: kubegems-monitoring
   alertType: monitor
@@ -199,7 +199,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 12h
 - name: host-unusual-disk-read-rate
   namespace: kubegems-monitoring
   alertType: monitor
@@ -214,7 +214,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 1h
+      interval: 24h
 - name: host-unusual-disk-write-rate
   namespace: kubegems-monitoring
   alertType: monitor
@@ -229,7 +229,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 1h
+      interval: 24h
 - name: host-network-receive-errors
   namespace: kubegems-monitoring
   alertType: monitor
@@ -244,7 +244,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 24h
 - name: host-network-transmit-errors
   namespace: kubegems-monitoring
   alertType: monitor
@@ -259,7 +259,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 24h
 - name: host-high-load5
   namespace: kubegems-monitoring
   alertType: monitor
@@ -278,7 +278,7 @@
   inhibitLabels: ["node"]
   receivers:
     - alertChannelID: 1
-      interval: 1h
+      interval: 12h
 - name: node-no-container-metrics
   namespace: kubegems-monitoring
   alertType: monitor
@@ -288,7 +288,7 @@
     - severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 12h
 # 证书
 - name: cert-manager-cert-expiry-soon
   namespace: kubegems-monitoring
@@ -308,7 +308,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 12h
+      interval: 24h
 - name: cert-manager-cert-not-ready
   namespace: kubegems-monitoring
   alertType: monitor
@@ -330,7 +330,7 @@
       severity: error
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 24h
 # cluster
 - name: cluster-high-cpu-load
   namespace: kubegems-monitoring
@@ -346,7 +346,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 24h
 - name: cluster-high-memory-load
   namespace: kubegems-monitoring
   alertType: monitor
@@ -361,7 +361,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 24h
 - name: cluster-component-cert-expiry-soon
   namespace: kubegems-monitoring
   alertType: monitor
@@ -380,7 +380,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 48h
 # plugin
 - name: gems-plugin-failed
   namespace: kubegems-monitoring
@@ -400,7 +400,7 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 10m
+      interval: 12h
 # exporter
 - name: exporter-down
   namespace: kubegems-monitoring
@@ -420,4 +420,4 @@
       severity: critical
   receivers:
     - alertChannelID: 1
-      interval: 1h
+      interval: 12h
