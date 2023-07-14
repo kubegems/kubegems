@@ -417,9 +417,11 @@ func (fd *FileTransfer) Download(c *gin.Context) error {
 	c.Header(
 		"Content-Disposition",
 		mime.FormatMediaType("attachment", map[string]string{
-			"filename": path.Base(fd.Filename) + ".tgz",
+			"filename": path.Base(fd.Filename) + ".tar",
 		}),
 	)
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Transfer-Encoding", "chunked")
 	pe := PodCmdExecutor{
 		Cluster: fd.Cluster,
 		Pod: client.ObjectKey{
@@ -565,12 +567,6 @@ type rateLimitwriter struct {
 	ratelimitor  *rate.Limiter
 }
 
-func (rw *rateLimitwriter) waitUtilCanDo(n int) {
-	if !rw.ratelimitor.AllowN(time.Now(), n) {
-		rw.ratelimitor.WaitN(rw.ctx, n)
-	}
-}
-
 func (rw *rateLimitwriter) Write(p []byte) (int, error) {
 	max := rw.ratelimitor.Burst()
 	pl := len(p)
@@ -579,7 +575,9 @@ func (rw *rateLimitwriter) Write(p []byte) (int, error) {
 		page := pl / max
 		last := pl % max
 		for idx := 0; idx < page; idx++ {
-			rw.waitUtilCanDo(max)
+			if e := rw.ratelimitor.WaitN(rw.ctx, max); e != nil {
+				return writed, e
+			}
 			tmpn, err := rw.originWriter.Write(p[idx*max : idx*max+max])
 			writed += tmpn
 			if err != nil {
@@ -587,14 +585,18 @@ func (rw *rateLimitwriter) Write(p []byte) (int, error) {
 			}
 		}
 		if last != 0 {
-			rw.waitUtilCanDo(last)
+			if e := rw.ratelimitor.WaitN(rw.ctx, last); e != nil {
+				return writed, e
+			}
 			tmpn, err := rw.originWriter.Write(p[page*max : pl])
 			writed += tmpn
 			return writed, err
 		}
 		return writed, nil
 	} else {
-		rw.waitUtilCanDo(pl)
+		if e := rw.ratelimitor.WaitN(rw.ctx, pl); e != nil {
+			return 0, e
+		}
 		return rw.originWriter.Write(p)
 	}
 }
