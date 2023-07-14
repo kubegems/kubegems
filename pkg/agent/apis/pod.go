@@ -417,7 +417,7 @@ func (fd *FileTransfer) Download(c *gin.Context) error {
 	c.Header(
 		"Content-Disposition",
 		mime.FormatMediaType("attachment", map[string]string{
-			"filename": path.Base(fd.Filename) + ".tar",
+			"filename": path.Base(fd.Filename) + ".tgz",
 		}),
 	)
 	c.Header("Content-Type", "application/octet-stream")
@@ -432,10 +432,11 @@ func (fd *FileTransfer) Download(c *gin.Context) error {
 			Container: fd.Container,
 			Stdout:    true,
 			Stderr:    true,
-			Command:   []string{"tar", "cf", "-", fd.Filename},
+			Command:   []string{"tar", "czf", "-", fd.Filename},
 		},
 		StreamOptions: remotecommand.StreamOptions{
-			Stdout: RateLimitWriter(c.Request.Context(), c.Writer, 1024*1024),
+			// Stdout: RateLimitWriter(c.Request.Context(), c.Writer, 1024*1024*3),
+			Stdout: c.Writer,
 			Stderr: &fakeStdoutWriter{},
 		},
 	}
@@ -602,7 +603,7 @@ func (rw *rateLimitwriter) Write(p []byte) (int, error) {
 }
 
 func RateLimitWriter(ctx context.Context, w io.Writer, speed int) io.Writer {
-	l := rate.NewLimiter(rate.Limit(speed), speed*2)
+	l := rate.NewLimiter(rate.Limit(speed), speed*10)
 	return &rateLimitwriter{
 		ctx:          ctx,
 		originWriter: w,
