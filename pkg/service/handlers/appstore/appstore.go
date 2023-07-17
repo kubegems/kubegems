@@ -53,17 +53,17 @@ func (c Chart) GetCreationTimestamp() metav1.Time {
 	return metav1.Time{Time: c.Created}
 }
 
-// @Tags        Appstore
-// @Summary     应用商店-查询所有APP
-// @Description 应用商店
-// @Accept      json
-// @Produce     json
-// @Param       page     query    int                                                           false "page"
-// @Param       size     query    int                                                           false "size"
-// @Param       reponame query    string                                                        false "reponame"
-// @Success     200      {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]Chart}} "Apps"
-// @Router      /v1/appstore/app [get]
-// @Security    JWT
+//	@Tags			Appstore
+//	@Summary		应用商店-查询所有APP
+//	@Description	应用商店
+//	@Accept			json
+//	@Produce		json
+//	@Param			page		query		int																false	"page"
+//	@Param			size		query		int																false	"size"
+//	@Param			reponame	query		string															false	"reponame"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]Chart}}	"Apps"
+//	@Router			/v1/appstore/app [get]
+//	@Security		JWT
 func (h *AppstoreHandler) ListApps(c *gin.Context) {
 	reponame := c.Query("reponame")
 	if reponame == "" {
@@ -87,16 +87,16 @@ func (h *AppstoreHandler) ListApps(c *gin.Context) {
 	handlers.OK(c, pagedata)
 }
 
-// @Tags        Appstore
-// @Summary     APP详情
-// @Description 查看应用Chart详情
-// @Accept      json
-// @Produce     json
-// @Param       name path     string                                true  "name"
-// @Param       size query    string                                false "reponame"
-// @Success     200  {object} handlers.ResponseStruct{Data=[]Chart} "AppDetail"
-// @Router      /v1/appstore/app/{name} [get]
-// @Security    JWT
+//	@Tags			Appstore
+//	@Summary		APP详情
+//	@Description	查看应用Chart详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			name	path		string									true	"name"
+//	@Param			size	query		string									false	"reponame"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=[]Chart}	"AppDetail"
+//	@Router			/v1/appstore/app/{name} [get]
+//	@Security		JWT
 func (h *AppstoreHandler) AppDetail(c *gin.Context) {
 	reponame := c.Query("reponame")
 	name := c.Param("name")
@@ -127,17 +127,17 @@ type AppFilesResponse struct {
 	Version string            `json:"version" description:"version"`
 }
 
-// @Tags        Appstore
-// @Summary     APP Charts文件编码
-// @Description 查看App所有Charts文件编码
-// @Accept      json
-// @Produce     json
-// @Param       size    query    string                                         false "reponame"
-// @Param       name    query    string                                         true  "name"
-// @Param       version query    string                                         true  "version"
-// @Success     200     {object} handlers.ResponseStruct{Data=AppFilesResponse} "AppFiles"
-// @Router      /v1/appstore/files [get]
-// @Security    JWT
+//	@Tags			Appstore
+//	@Summary		APP Charts文件编码
+//	@Description	查看App所有Charts文件编码
+//	@Accept			json
+//	@Produce		json
+//	@Param			size	query		string											false	"reponame"
+//	@Param			name	query		string											true	"name"
+//	@Param			version	query		string											true	"version"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=AppFilesResponse}	"AppFiles"
+//	@Router			/v1/appstore/files [get]
+//	@Security		JWT
 func (h *AppstoreHandler) AppFiles(c *gin.Context) {
 	name := c.DefaultQuery("name", "")
 	version := c.DefaultQuery("version", "")

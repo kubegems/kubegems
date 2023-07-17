@@ -29,14 +29,14 @@ import (
 	"kubegems.io/kubegems/pkg/utils/helm"
 )
 
-// @Tags        Appstore
-// @Summary     列出所有的外部应用的charts仓库
-// @Description 列出所有的外部应用的charts仓库
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.ChartRepo}} "repos"
-// @Router      /v1/appstore/repo [get]
-// @Security    JWT
+//	@Tags			Appstore
+//	@Summary		列出所有的外部应用的charts仓库
+//	@Description	列出所有的外部应用的charts仓库
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.ChartRepo}}	"repos"
+//	@Router			/v1/appstore/repo [get]
+//	@Security		JWT
 func (h *AppstoreHandler) ListExternalRepo(c *gin.Context) {
 	list := []models.ChartRepo{}
 	if tx := h.GetDB().WithContext(c.Request.Context()).Find(&list); tx.Error != nil {
@@ -46,14 +46,14 @@ func (h *AppstoreHandler) ListExternalRepo(c *gin.Context) {
 	handlers.OK(c, list)
 }
 
-// @Tags        Appstore
-// @Summary     创建应用商店外部charts仓库
-// @Description 创建应用商店外部charts仓库
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=[]models.ChartRepo} "repo"
-// @Router      /v1/appstore/repo [post]
-// @Security    JWT
+//	@Tags			Appstore
+//	@Summary		创建应用商店外部charts仓库
+//	@Description	创建应用商店外部charts仓库
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=[]models.ChartRepo}	"repo"
+//	@Router			/v1/appstore/repo [post]
+//	@Security		JWT
 func (h *AppstoreHandler) PutExternalRepo(c *gin.Context) {
 	repo := &models.ChartRepo{}
 	if err := c.BindJSON(repo); err != nil {
@@ -88,15 +88,15 @@ func (h *AppstoreHandler) PutExternalRepo(c *gin.Context) {
 	}
 }
 
-// @Tags        Appstore
-// @Summary     APP 删除外部chart仓库
-// @Description 删除外部chart仓库
-// @Accept      json
-// @Produce     json
-// @Param       name query    string                                         true "repo name"
-// @Success     200  {object} handlers.ResponseStruct{Data=models.ChartRepo} "repo"
-// @Router      /v1/appstore/repo/{name} [delete]
-// @Security    JWT
+//	@Tags			Appstore
+//	@Summary		APP 删除外部chart仓库
+//	@Description	删除外部chart仓库
+//	@Accept			json
+//	@Produce		json
+//	@Param			name	query		string											true	"repo name"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=models.ChartRepo}	"repo"
+//	@Router			/v1/appstore/repo/{name} [delete]
+//	@Security		JWT
 func (h *AppstoreHandler) DeleteExternalRepo(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "delete")
 	module := i18n.Sprintf(context.TODO(), "external helm chart repo")
@@ -111,15 +111,15 @@ func (h *AppstoreHandler) DeleteExternalRepo(c *gin.Context) {
 	}
 }
 
-// @Tags        Appstore
-// @Summary     APP 同步外部chart仓库
-// @Description 手动同步外部chart仓库至本地chart museum
-// @Accept      json
-// @Produce     json
-// @Param       name query    string                                         true "repo name"
-// @Success     200  {object} handlers.ResponseStruct{Data=models.ChartRepo} "repo"
-// @Router      /v1/appstore/repo/{name}/actions/sync [post]
-// @Security    JWT
+//	@Tags			Appstore
+//	@Summary		APP 同步外部chart仓库
+//	@Description	手动同步外部chart仓库至本地chart museum
+//	@Accept			json
+//	@Produce		json
+//	@Param			name	query		string											true	"repo name"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=models.ChartRepo}	"repo"
+//	@Router			/v1/appstore/repo/{name}/actions/sync [post]
+//	@Security		JWT
 func (h *AppstoreHandler) SyncExternalRepo(c *gin.Context) {
 	reponame := c.Param("name")
 	action := i18n.Sprintf(context.TODO(), "sync")

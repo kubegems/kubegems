@@ -88,13 +88,13 @@ func NewOauthServer(opts *kjwt.Options, base base.BaseHandler, tracer trace.Trac
 	return s
 }
 
-// @Tags        Oauth
-// @Summary     检验oauth jwt token
-// @Description 检验oauth jwt token
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} object "resp"
-// @Router      /v1/oauth/validate [get]
+//	@Tags			Oauth
+//	@Summary		检验oauth jwt token
+//	@Description	检验oauth jwt token
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	object	"resp"
+//	@Router			/v1/oauth/validate [get]
 func (s *OauthServer) Validate(c *gin.Context) {
 	token, err := s.srv.ValidationBearerToken(c.Request)
 	if err != nil {
@@ -109,16 +109,16 @@ func (s *OauthServer) Validate(c *gin.Context) {
 	handlers.OK(c, data)
 }
 
-// @Tags        Oauth
-// @Summary     用户token列表
-// @Description 用户token列表
-// @Accept      json
-// @Produce     json
-// @Param       page query    int                                                                       false "page"
-// @Param       size query    int                                                                       false "size"
-// @Success     200  {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]kmodels.UserToken}} "resp"
-// @Router      /v1/oauth/token [get]
-// @Security    JWT
+//	@Tags			Oauth
+//	@Summary		用户token列表
+//	@Description	用户token列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			page	query		int																			false	"page"
+//	@Param			size	query		int																			false	"size"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]kmodels.UserToken}}	"resp"
+//	@Router			/v1/oauth/token [get]
+//	@Security		JWT
 func (s *OauthServer) ListToken(c *gin.Context) {
 	u, _ := c.Get("current_user")
 	user := u.(*kmodels.User)
@@ -137,15 +137,15 @@ func (s *OauthServer) ListToken(c *gin.Context) {
 	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, nil))
 }
 
-// @Tags        Oauth
-// @Summary     删除用户token
-// @Description 删除用户token
-// @Accept      json
-// @Produce     json
-// @Param       token_id path     int    true "token id"
-// @Success     200      {object} string "resp"
-// @Router      /v1/oauth/token/{token_id} [delete]
-// @Security    JWT
+//	@Tags			Oauth
+//	@Summary		删除用户token
+//	@Description	删除用户token
+//	@Accept			json
+//	@Produce		json
+//	@Param			token_id	path		int		true	"token id"
+//	@Success		200			{object}	string	"resp"
+//	@Router			/v1/oauth/token/{token_id} [delete]
+//	@Security		JWT
 func (s *OauthServer) DeleteToken(c *gin.Context) {
 	u, _ := c.Get("current_user")
 	user := u.(*kmodels.User)
@@ -157,17 +157,17 @@ func (s *OauthServer) DeleteToken(c *gin.Context) {
 	handlers.OK(c, "OK")
 }
 
-// @Tags        Oauth
-// @Summary     签发oauth jwt token
-// @Description 签发oauth jwt token
-// @Accept      json
-// @Produce     json
-// @Param       grant_type query    string                               true "授权方式，目前只支持client_credentials"
-// @Param       scope      query    string                               true "授权范围，目前只支持validate"
-// @Param       expire     query    int                                  true "授权时长，单位秒"
-// @Success     200        {object} handlers.ResponseStruct{Data=object} "resp"
-// @Router      /v1/oauth/token [post]
-// @Security    JWT
+//	@Tags			Oauth
+//	@Summary		签发oauth jwt token
+//	@Description	签发oauth jwt token
+//	@Accept			json
+//	@Produce		json
+//	@Param			grant_type	query		string									true	"授权方式，目前只支持client_credentials"
+//	@Param			scope		query		string									true	"授权范围，目前只支持validate"
+//	@Param			expire		query		int										true	"授权时长，单位秒"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"resp"
+//	@Router			/v1/oauth/token [post]
+//	@Security		JWT
 func (s *OauthServer) Token(c *gin.Context) {
 	u, _ := c.Get("current_user")
 	user := u.(*kmodels.User)

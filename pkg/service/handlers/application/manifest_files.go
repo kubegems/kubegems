@@ -50,19 +50,19 @@ var ResourceWhileList = []schema.GroupVersionKind{
 	{Group: rollouts.Group},                                     // argo rollouts(rollouts,analysis_template etc.)
 }
 
-// @Tags        ApplicationManifest
-// @Summary     写入文件
-// @Description 修改应用编排
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                  true "tenaut id"
-// @Param       project_id path     int                                  true "project id"
-// @Param       name       path     string                               true "name"
-// @Param       filename   path     string                               true "file name"
-// @Param       body       body     FileContent                          true "filecontent"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files/{filename} [put]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		写入文件
+//	@Description	修改应用编排
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"name"
+//	@Param			filename	path		string									true	"file name"
+//	@Param			body		body		FileContent								true	"filecontent"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files/{filename} [put]
+//	@Security		JWT
 func (h *ManifestHandler) PutFile(c *gin.Context) {
 	body := &FileContent{}
 	h.NamedRefFunc(c, body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -94,20 +94,20 @@ func (h *ManifestHandler) PutFile(c *gin.Context) {
 	})
 }
 
-// @Tags        ApplicationManifest
-// @Summary     写入多个文件
-// @Description 修改应用编排
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                  true "tenaut id"
-// @Param       project_id path     int                                  true "project id"
-// @Param       name       path     string                               true "name"
-// @Param       filename   path     string                               true "file name"
-// @Param       msg        query    string                               true "commit mesage"
-// @Param       body       body     []FileContent                        true "files"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files [put]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		写入多个文件
+//	@Description	修改应用编排
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"name"
+//	@Param			filename	path		string									true	"file name"
+//	@Param			msg			query		string									true	"commit mesage"
+//	@Param			body		body		[]FileContent							true	"files"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files [put]
+//	@Security		JWT
 func (h *ManifestHandler) PutFiles(c *gin.Context) {
 	files := []FileContent{}
 	h.NamedRefFunc(c, &files, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -130,18 +130,18 @@ func (h *ManifestHandler) PutFiles(c *gin.Context) {
 	})
 }
 
-// @Tags        ApplicationManifest
-// @Summary     删除文件
-// @Description 修改应用编排
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                  true "tenaut id"
-// @Param       project_id path     int                                  true "project id"
-// @Param       name       path     string                               true "name"
-// @Param       filename   path     string                               true "file name"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files/{filename} [delete]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		删除文件
+//	@Description	修改应用编排
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"name"
+//	@Param			filename	path		string									true	"file name"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files/{filename} [delete]
+//	@Security		JWT
 func (h *ManifestHandler) RemoveFile(c *gin.Context) {
 	body := []byte{}
 	h.NamedRefFunc(c, &body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -168,17 +168,17 @@ type FileContent struct {
 	Content string `json:"content"`
 }
 
-// @Tags        ApplicationManifest
-// @Summary     列举文件
-// @Description 应用编排内容
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                         true "tenaut id"
-// @Param       project_id path     int                                         true "project id"
-// @Param       name       path     string                                      true "name"
-// @Success     200        {object} handlers.ResponseStruct{Data=[]FileContent} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files [get]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		列举文件
+//	@Description	应用编排内容
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int											true	"tenaut id"
+//	@Param			project_id	path		int											true	"project id"
+//	@Param			name		path		string										true	"name"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]FileContent}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/files [get]
+//	@Security		JWT
 func (h *ManifestHandler) ListFiles(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		files := []FileContent{}
@@ -211,17 +211,17 @@ type GitLog struct {
 	Timestamp string `json:"timestamp,omitempty"`
 }
 
-// @Tags        ApplicationManifest
-// @Summary     应用编排文件历史
-// @Description 应用编排文件历史
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                    true "tenaut id"
-// @Param       project_id path     int                                    true "project id"
-// @Param       name       path     string                                 true "name"
-// @Success     200        {object} handlers.ResponseStruct{Data=[]GitLog} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitlog [get]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		应用编排文件历史
+//	@Description	应用编排文件历史
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"name"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]GitLog}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitlog [get]
+//	@Security		JWT
 func (h *ManifestHandler) GitLog(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		logs := []GitLog{}
@@ -245,18 +245,18 @@ func (h *ManifestHandler) GitLog(c *gin.Context) {
 	})
 }
 
-// @Tags        ApplicationManifest
-// @Summary     应用编排文件diff
-// @Description 应用编排文件diff
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                  true "tenaut id"
-// @Param       project_id path     int                                  true "project id"
-// @Param       name       path     string                               true "application name"
-// @Param       hash       query    string                               true "gitcommit hash"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitdiff [get]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		应用编排文件diff
+//	@Description	应用编排文件diff
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"application name"
+//	@Param			hash		query		string									true	"gitcommit hash"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitdiff [get]
+//	@Security		JWT
 func (h *ManifestHandler) GitDiff(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		hash := c.Query("hash")
@@ -278,18 +278,18 @@ func (h *ManifestHandler) GitDiff(c *gin.Context) {
 	})
 }
 
-// @Tags        ApplicationManifest
-// @Summary     应用编排文件回滚
-// @Description 回滚应用编排文件
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                  true "tenaut id"
-// @Param       project_id path     int                                  true "project id"
-// @Param       name       path     string                               true "application name"
-// @Param       hash       query    string                               true "gitcommit hash to rollback"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitrevert [get]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		应用编排文件回滚
+//	@Description	回滚应用编排文件
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"application name"
+//	@Param			hash		query		string									true	"gitcommit hash to rollback"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitrevert [get]
+//	@Security		JWT
 func (h *ManifestHandler) GitRevert(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		hash := c.Query("hash")
@@ -352,18 +352,18 @@ func IsPermmitedResource(obj runtime.Object) bool {
 	return false
 }
 
-// @Tags        ApplicationManifest
-// @Summary     应用编排文件刷新
-// @Description 应用编排文件刷新(git pull)
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                  true "tenaut id"
-// @Param       project_id path     int                                  true "project id"
-// @Param       name       path     string                               true "application name"
-// @Param       hash       query    string                               true "gitcommit hash"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitpull [post]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		应用编排文件刷新
+//	@Description	应用编排文件刷新(git pull)
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"application name"
+//	@Param			hash		query		string									true	"gitcommit hash"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name}/gitpull [post]
+//	@Security		JWT
 func (h *ManifestHandler) GitPull(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		if err := h.Func(ctx, ref, Pull()); err != nil {

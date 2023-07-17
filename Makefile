@@ -93,7 +93,7 @@ certs:
 	SERVER_IP=${SERVER_IP} sh scripts/generate-certs.sh
 
 swagger:
-	go install github.com/swaggo/swag/cmd/swag@v1.8.4
+	go install github.com/swaggo/swag/cmd/swag@v1.8.12
 	swag f -g cmd/main.go
 	swag i --parseDependency --parseInternal -g cmd/main.go -o docs/swagger
 

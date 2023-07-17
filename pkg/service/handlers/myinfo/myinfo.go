@@ -23,14 +23,14 @@ import (
 )
 
 // Myinfo 获取当前用户的信息
-// @Tags        User
-// @Summary     获取当前用户的信息
-// @Description 获取当前用户的信息
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=[]models.User} "用户详情"
-// @Router      /v1/my/info [get]
-// @Security    JWT
+//	@Tags			User
+//	@Summary		获取当前用户的信息
+//	@Description	获取当前用户的信息
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=[]models.User}	"用户详情"
+//	@Router			/v1/my/info [get]
+//	@Security		JWT
 func (h *MyHandler) Myinfo(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {
@@ -46,14 +46,14 @@ func (h *MyHandler) Myinfo(c *gin.Context) {
 }
 
 // MyAuthority 获取当前用户权限列表
-// @Tags        User
-// @Summary     获取当前用户权限列表
-// @Description 获取当前用户权限列表
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{} "用户权限列表"
-// @Router      /v1/my/auth [get]
-// @Security    JWT
+//	@Tags			User
+//	@Summary		获取当前用户权限列表
+//	@Description	获取当前用户权限列表
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{}	"用户权限列表"
+//	@Router			/v1/my/auth [get]
+//	@Security		JWT
 func (h *MyHandler) MyAuthority(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {
@@ -66,14 +66,14 @@ func (h *MyHandler) MyAuthority(c *gin.Context) {
 }
 
 // MyTenants 获取当前用户租户列表
-// @Tags        User
-// @Summary     获取当前用户租户列表
-// @Description 获取当前用户租户列表
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{} "用户权限列表"
-// @Router      /v1/my/tenants [get]
-// @Security    JWT
+//	@Tags			User
+//	@Summary		获取当前用户租户列表
+//	@Description	获取当前用户租户列表
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{}	"用户权限列表"
+//	@Router			/v1/my/tenants [get]
+//	@Security		JWT
 func (h *MyHandler) MyTenants(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {
@@ -88,15 +88,15 @@ func (h *MyHandler) MyTenants(c *gin.Context) {
 }
 
 // ResetPassword 重设密码
-// @Tags        User
-// @Summary     重设密码
-// @Description 重设密码
-// @Accept      json
-// @Produce     json
-// @Param       param body     resetPasswordForm         true "表单"
-// @Success     200   {object} handlers.ResponseStruct{} ""
-// @Router      /v1/my/reset_password [post]
-// @Security    JWT
+//	@Tags			User
+//	@Summary		重设密码
+//	@Description	重设密码
+//	@Accept			json
+//	@Produce		json
+//	@Param			param	body		resetPasswordForm			true	"表单"
+//	@Success		200		{object}	handlers.ResponseStruct{}	""
+//	@Router			/v1/my/reset_password [post]
+//	@Security		JWT
 func (h *MyHandler) ResetPassword(c *gin.Context) {
 	u, exist := h.GetContextUser(c)
 	if !exist {

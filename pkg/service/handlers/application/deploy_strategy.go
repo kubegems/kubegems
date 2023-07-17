@@ -40,18 +40,18 @@ type ImageDetails struct {
 	Publish string // 意为需要更新到的版本，argo更新版本会失败，所以两个版本会存在差异
 }
 
-// @Tags        StrategyDeployment
-// @Summary     获取当前的应用更新策略
-// @Description 获取部署
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id      path     int                                                        true "tenautid"
-// @Param       project_id     path     int                                                        true "proid"
-// @param       environment_id path     int                                                        true "envid"
-// @Param       name           path     string                                                     true "applicationname"
-// @Success     200            {object} handlers.ResponseStruct{Data=DeploymentStrategyWithImages} "deploy"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/strategydeploy [get]
-// @Security    JWT
+//	@Tags			StrategyDeployment
+//	@Summary		获取当前的应用更新策略
+//	@Description	获取部署
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id		path		int															true	"tenautid"
+//	@Param			project_id		path		int															true	"proid"
+//	@param			environment_id	path		int															true	"envid"
+//	@Param			name			path		string														true	"applicationname"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=DeploymentStrategyWithImages}	"deploy"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/strategydeploy [get]
+//	@Security		JWT
 // 通过 argo app 将部署策略设置至，在sync是根据策略进行修改或者 rollout创建
 func (h *ApplicationHandler) GetStrategyDeployment(c *gin.Context) {
 	h.LocalCliFunc(c, nil, func(ctx context.Context, store GitStore, ref PathRef) (interface{}, error) {
@@ -76,19 +76,19 @@ func (h *ApplicationHandler) GetStrategyDeployment(c *gin.Context) {
 	}, "")
 }
 
-// @Tags        StrategyDeployment
-// @Summary     使用更新策略更新应用
-// @Description 使用更新策略更新应用
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id      path     int                                              true "tenaut id"
-// @Param       project_id     path     int                                              true "project id"
-// @param       environment_id path     int                                              true "environment id"
-// @Param       name           path     string                                           true "applicationname"
-// @Param       body           body     DeploymentStrategyWithImages                     true "reqbody"
-// @Success     200            {object} handlers.ResponseStruct{Data=DeploymentStrategy} "-"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/strategydeploy [post]
-// @Security    JWT
+//	@Tags			StrategyDeployment
+//	@Summary		使用更新策略更新应用
+//	@Description	使用更新策略更新应用
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id		path		int													true	"tenaut id"
+//	@Param			project_id		path		int													true	"project id"
+//	@param			environment_id	path		int													true	"environment id"
+//	@Param			name			path		string												true	"applicationname"
+//	@Param			body			body		DeploymentStrategyWithImages						true	"reqbody"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=DeploymentStrategy}	"-"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/strategydeploy [post]
+//	@Security		JWT
 //
 // 开始灰度发布流程
 // 灰度发布流程目前有如下几种：
@@ -126,18 +126,18 @@ func (h *ApplicationHandler) EnableStrategyDeployment(c *gin.Context) {
 	})
 }
 
-// @Tags        StrategyDeployment
-// @Summary     切换更新策略
-// @Description 切换更新策略
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id      path     int                                              true "tenaut id"
-// @Param       project_id     path     int                                              true "project id"
-// @param       environment_id path     int                                              true "environment id"
-// @Param       name           path     string                                           true "applicationname"
-// @Success     200            {object} handlers.ResponseStruct{Data=DeploymentStrategy} "-"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/strategyswitch [post]
-// @Security    JWT
+//	@Tags			StrategyDeployment
+//	@Summary		切换更新策略
+//	@Description	切换更新策略
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id		path		int													true	"tenaut id"
+//	@Param			project_id		path		int													true	"project id"
+//	@param			environment_id	path		int													true	"environment id"
+//	@Param			name			path		string												true	"applicationname"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=DeploymentStrategy}	"-"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/strategyswitch [post]
+//	@Security		JWT
 //
 // 开始灰度发布流程
 // 灰度发布流程目前有如下几种：
@@ -192,18 +192,18 @@ type DeploymentStrategyWithDeployment struct {
 	Deployment *appsv1.Deployment
 }
 
-// @Tags        StrategyDeployment
-// @Summary     获取支持的灰度分析
-// @Description 获取支持的灰度分析
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id      path     int                                                                      true "tenaut id"
-// @Param       project_id     path     int                                                                      true "project id"
-// @Param       name           path     string                                                                   true "applicationname"
-// @param       environment_id path     int                                                                      true "environment id"
-// @Success     200            {object} handlers.ResponseStruct{Data=[]rolloutsv1alpha1.ClusterAnalysisTemplate} "-"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/analysistemplate [get]
-// @Security    JWT
+//	@Tags			StrategyDeployment
+//	@Summary		获取支持的灰度分析
+//	@Description	获取支持的灰度分析
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id		path		int																			true	"tenaut id"
+//	@Param			project_id		path		int																			true	"project id"
+//	@Param			name			path		string																		true	"applicationname"
+//	@param			environment_id	path		int																			true	"environment id"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=[]rolloutsv1alpha1.ClusterAnalysisTemplate}	"-"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name}/analysistemplate [get]
+//	@Security		JWT
 func (h *ApplicationHandler) ListAnalysisTemplate(c *gin.Context) {
 	h.RemoteCliFunc(c, nil, func(ctx context.Context, cli agents.Client, _ string, _ PathRef) (interface{}, error) {
 		analysisTemplateList := &rolloutsv1alpha1.ClusterAnalysisTemplateList{}
@@ -214,19 +214,19 @@ func (h *ApplicationHandler) ListAnalysisTemplate(c *gin.Context) {
 	})
 }
 
-// @Tags        StrategyDeployment
-// @Summary     更新过程中的实时状态
-// @Description 更新中的实时状态
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id      path     int                                               true  "tenaut id"
-// @Param       project_id     path     int                                               true  "project id"
-// @param       environment_id path     int                                               true  "environment id"
-// @Param       name           path     string                                            true  "applicationname"
-// @param       watch          query    bool                                              false "watch 则返回 ssevent"
-// @Success     200            {object} handlers.ResponseStruct{Data=rollout.RolloutInfo} "-"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/application/{name}/strategydeploystatus [get]
-// @Security    JWT
+//	@Tags			StrategyDeployment
+//	@Summary		更新过程中的实时状态
+//	@Description	更新中的实时状态
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id		path		int													true	"tenaut id"
+//	@Param			project_id		path		int													true	"project id"
+//	@param			environment_id	path		int													true	"environment id"
+//	@Param			name			path		string												true	"applicationname"
+//	@param			watch			query		bool												false	"watch 则返回 ssevent"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=rollout.RolloutInfo}	"-"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/application/{name}/strategydeploystatus [get]
+//	@Security		JWT
 func (h *ApplicationHandler) StrategyDeploymentStatus(c *gin.Context) {
 	h.LocalAndRemoteCliFunc(c, nil, func(ctx context.Context, store GitStore, cli agents.Client, namespace string, _ PathRef) (interface{}, error) {
 		deployment, err := ParseMainDeployment(ctx, store)

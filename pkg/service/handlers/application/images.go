@@ -49,17 +49,17 @@ type ImageHandler struct {
 	BaseHandler
 }
 
-// @Tags        ProjectImage
-// @Summary     镜像安全报告
-// @Description 镜像安全报告
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                       true "tenaut id"
-// @Param       project_id path     int                                       true "project id"
-// @Param       image      query    string                                    true "eg. kubegems/nginx:v1.14"
-// @Success     200        {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/images/vulnerabilities [get]
-// @Security    JWT
+//	@Tags			ProjectImage
+//	@Summary		镜像安全报告
+//	@Description	镜像安全报告
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int											true	"tenaut id"
+//	@Param			project_id	path		int											true	"project id"
+//	@Param			image		query		string										true	"eg. kubegems/nginx:v1.14"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=vuln.Report}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/images/vulnerabilities [get]
+//	@Security		JWT
 func (h *ImageHandler) Vulnerabilities(c *gin.Context) {
 	onharborfunc := func(ctx context.Context, cli *harbor.Client, image string) (interface{}, error) {
 		vulnerabilities, err := cli.GetArtifactVulnerabilities(ctx, image)
@@ -94,17 +94,17 @@ type ImageSummaryItem struct {
 	UpdatedAt        *metav1.Time   `json:"updatedAt,omitempty"` // time.Time.Format(RFC3339) 格式,若非可管理仓库则为空
 }
 
-// @Tags        ProjectImage
-// @Summary     镜像summary
-// @Description 镜像summary
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                       true "tenaut id"
-// @Param       project_id path     int                                       true "project id"
-// @Param       image      query    string                                    true "eg. kubegems/nginx:v1.14"
-// @Success     200        {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/images/summary [get]
-// @Security    JWT
+//	@Tags			ProjectImage
+//	@Summary		镜像summary
+//	@Description	镜像summary
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int											true	"tenaut id"
+//	@Param			project_id	path		int											true	"project id"
+//	@Param			image		query		string										true	"eg. kubegems/nginx:v1.14"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=vuln.Report}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/images/summary [get]
+//	@Security		JWT
 func (h *ImageHandler) Summary(c *gin.Context) {
 	onharborfunc := func(ctx context.Context, cli *harbor.Client, image string) (interface{}, error) {
 		artifacts, err := cli.ListArtifact(ctx, image, harbor.GetArtifactOptions{
@@ -158,17 +158,17 @@ func (h *ImageHandler) Summary(c *gin.Context) {
 	h.OnHarborFunc(c, onharborfunc, ocifunc)
 }
 
-// @Tags        ProjectImage
-// @Summary     镜像不可发布标记
-// @Description 镜像不可发布标记
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                       true "tenaut id"
-// @Param       project_id path     int                                       true "project id"
-// @Param       image      query    string                                    true "eg. kubegems/nginx:v1.14"
-// @Success     200        {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/images/unpublishable [get]
-// @Security    JWT
+//	@Tags			ProjectImage
+//	@Summary		镜像不可发布标记
+//	@Description	镜像不可发布标记
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int											true	"tenaut id"
+//	@Param			project_id	path		int											true	"project id"
+//	@Param			image		query		string										true	"eg. kubegems/nginx:v1.14"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=vuln.Report}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/images/unpublishable [get]
+//	@Security		JWT
 func (h *ImageHandler) Unpublishable(c *gin.Context) {
 	onharborfunc := func(ctx context.Context, cli *harbor.Client, image string) (interface{}, error) {
 		isunpublishable, _ := strconv.ParseBool(c.Query("unpublishable"))
@@ -189,17 +189,17 @@ func (h *ImageHandler) Unpublishable(c *gin.Context) {
 	h.OnHarborFunc(c, onharborfunc, ocifunc)
 }
 
-// @Tags        ProjectImage
-// @Summary     镜像扫描
-// @Description 触发镜像扫描
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                       true "tenaut id"
-// @Param       project_id path     int                                       true "project id"
-// @Param       image      query    string                                    true "eg. kubegems/nginx:v1.14"
-// @Success     200        {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/images/scan [post]
-// @Security    JWT
+//	@Tags			ProjectImage
+//	@Summary		镜像扫描
+//	@Description	触发镜像扫描
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int											true	"tenaut id"
+//	@Param			project_id	path		int											true	"project id"
+//	@Param			image		query		string										true	"eg. kubegems/nginx:v1.14"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=vuln.Report}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/images/scan [post]
+//	@Security		JWT
 func (h *ImageHandler) Scan(c *gin.Context) {
 	onharborfunc := func(ctx context.Context, cli *harbor.Client, image string) (interface{}, error) {
 		if err := cli.ScanArtifact(ctx, image); err != nil {
@@ -213,18 +213,18 @@ func (h *ImageHandler) Scan(c *gin.Context) {
 	h.OnHarborFunc(c, onharborfunc, ocifunc)
 }
 
-// @Tags        ProjectImage
-// @Summary     镜像tags
-// @Description 查询镜像tags
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id      path     int                                       true "tenaut id"
-// @Param       project_id     path     int                                       true "project id"
-// @Param       application_id path     int                                       true "application id"
-// @Param       image          query    string                                    true "eg. kubegems/nginx:v1.14"
-// @Success     200            {object} handlers.ResponseStruct{Data=vuln.Report} "ok"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/images/tags [post]
-// @Security    JWT
+//	@Tags			ProjectImage
+//	@Summary		镜像tags
+//	@Description	查询镜像tags
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id		path		int											true	"tenaut id"
+//	@Param			project_id		path		int											true	"project id"
+//	@Param			application_id	path		int											true	"application id"
+//	@Param			image			query		string										true	"eg. kubegems/nginx:v1.14"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=vuln.Report}	"ok"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/images/tags [post]
+//	@Security		JWT
 func (h *ImageHandler) ImageTags(c *gin.Context) {
 	harborfunc := func(ctx context.Context, cli *harbor.Client, image string) (interface{}, error) {
 		arts, err := cli.ListArtifact(ctx, image, harbor.GetArtifactOptions{
