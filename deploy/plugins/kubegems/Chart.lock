@@ -17,5 +17,5 @@ dependencies:
 - name: chartmuseum
   repository: https://charts.kubegems.io/kubegems
   version: 3.8.0
-digest: sha256:5dffb9d53e278c61166eb9a2bb91dd3013fc80d1fbb7e06806988635163766d8
-generated: "2023-02-27T11:12:23.734619589+08:00"
+digest: sha256:27de09d649670ed51cb85e3f247ee4d8f0d886d8f2a6177de6a2f75d9133fe98
+generated: "2023-07-24T13:23:52.942175556+08:00"

@@ -33,7 +33,6 @@ type Client interface {
 	Info() *APIServerInfoClient
 	Websocket() *agentcli.WebsocketClient
 	Extend() *extend.ExtendClient
-	RestConfig() *rest.Config
 	// ReverseProxy return a new reverse proxy that proxy requests to the agent.
 	// if target set, proxy to target instead of agent.
 	ReverseProxy(destOverride ...*url.URL) *httputil.ReverseProxy
@@ -70,7 +69,7 @@ type DelegateClient struct {
 	extcli         *extend.ExtendClient
 	wscli          *agentcli.WebsocketClient
 	infoclli       *APIServerInfoClient
-	kubeconfig    *rest.Config
+	kubeconfig     *rest.Config
 }
 
 func (c *DelegateClient) Extend() *extend.ExtendClient {
@@ -100,11 +99,6 @@ func (c *DelegateClient) Info() *APIServerInfoClient {
 
 func (c *DelegateClient) Websocket() *agentcli.WebsocketClient {
 	return c.wscli
-}
-
-
-func (c *DelegateClient) RestConfig() *rest.Config {
-	return c.kubeconfig
 }
 
 // ReverseProxy return a http.Handler that proxy requests to the agent.
