@@ -397,6 +397,52 @@
         }
       },
       "form": true
+    },
+    "task": {
+      "type": "object",
+      "title": "Edge Task 配置",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "启用",
+          "default": false,
+          "x-order": "0",
+          "form": true
+        },
+        "image": {
+          "type": "object",
+          "title": "镜像配置",
+          "properties": {
+            "pullPolicy": {
+              "type": "string",
+              "title": "拉取策略",
+              "default": "IfNotPresent",
+              "enum": [
+                "Always",
+                "IfNotPresent",
+                "None"
+              ],
+              "form": true
+            }
+          },
+          "form": true,
+          "hidden": {
+            "path": "task.enabled",
+            "value": false
+          }
+        },
+        "replicaCount": {
+          "type": "integer",
+          "title": "副本数",
+          "default": 1,
+          "form": true,
+          "hidden": {
+            "path": "server.enabled",
+            "value": false
+          }
+        }
+      },
+      "form": true
     }
   },
   "$schema": "http://json-schema.org/schema#"

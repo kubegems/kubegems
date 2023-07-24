@@ -19,7 +19,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/apis"
+	"kubegems.io/kubegems/pkg/service/apis/clients"
 	"kubegems.io/kubegems/pkg/service/apis/proxy"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
 func (r *Router) AddRestAPI(ctx context.Context, deps apis.Dependencies) error {
@@ -57,5 +59,18 @@ func (r *Router) AddRestAPI(ctx context.Context, deps apis.Dependencies) error {
 	r.gin.Any("/v1/edge-clusters/*path", edgep.Handle)
 	r.gin.Any("/v1/edge-hubs", edgep.Handle)
 	r.gin.Any("/v1/edge-hubs/*path", edgep.Handle)
+
+	// agents proxy (internal)
+	clientsproxy := clients.NewClientsProxy(deps.Agents)
+	r.gin.Any("/internal/clusters", func(ctx *gin.Context) {
+		clusters := deps.Agents.Clusters()
+		response.OK(ctx.Writer, clusters)
+	})
+	r.gin.Any("/internal/agents/:name/*path", func(ctx *gin.Context) {
+		name := ctx.Param("name")
+		ctx.Request.URL.Path = ctx.Param("path")
+		ctx.Request.URL.RawPath = ""
+		clientsproxy.ProxyToCluster(name).ServeHTTP(ctx.Writer, ctx.Request)
+	})
 	return nil
 }

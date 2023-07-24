@@ -56,19 +56,19 @@ var (
 )
 
 // ListCluster 列表 Cluster
-// @Tags        Cluster
-// @Summary     Cluster列表
-// @Description Cluster列表
-// @Accept      json
-// @Produce     json
-// @Param       ClusterName query    string                                                                 false "ClusterName"
-// @Param       preload     query    string                                                                 false "choices Environments,TenantResourceQuotas"
-// @Param       page        query    int                                                                    false "page"
-// @Param       size        query    int                                                                    false "page"
-// @Param       search      query    string                                                                 false "search in (ClusterName)"
-// @Success     200         {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Cluster}} "Cluster"
-// @Router      /v1/cluster [get]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		Cluster列表
+//	@Description	Cluster列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			ClusterName	query		string																	false	"ClusterName"
+//	@Param			preload		query		string																	false	"choices Environments,TenantResourceQuotas"
+//	@Param			page		query		int																		false	"page"
+//	@Param			size		query		int																		false	"page"
+//	@Param			search		query		string																	false	"search in (ClusterName)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Cluster}}	"Cluster"
+//	@Router			/v1/cluster [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListCluster(c *gin.Context) {
 	var list []*models.Cluster
 	query, err := handlers.GetQuery(c, nil)
@@ -90,14 +90,14 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 }
 
 // ListClusterStatus 列出集群状态
-// @Tags        Cluster
-// @Summary     列出集群状态
-// @Description 列出集群状态
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=map[string]bool} "集群状态"
-// @Router      /v1/cluster/_/status [get]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		列出集群状态
+//	@Description	列出集群状态
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=map[string]bool}	"集群状态"
+//	@Router			/v1/cluster/_/status [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 	var clusters []*models.Cluster
 	if err := h.GetDB().WithContext(c.Request.Context()).Find(&clusters).Error; err != nil {
@@ -126,15 +126,15 @@ func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 }
 
 // RetrieveCluster Cluster详情
-// @Tags        Cluster
-// @Summary     Cluster详情
-// @Description get Cluster详情
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                         true "cluster_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.Cluster} "Cluster"
-// @Router      /v1/cluster/{cluster_id} [get]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		Cluster详情
+//	@Description	get Cluster详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint											true	"cluster_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Cluster}	"Cluster"
+//	@Router			/v1/cluster/{cluster_id} [get]
+//	@Security		JWT
 func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 	var obj models.Cluster
 	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -147,7 +147,7 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 		if err != nil {
 			log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
 		} else {
-			obj.Version = cli.APIServerVersion()
+			obj.Version = cli.Info().APIServerVersion()
 		}
 	}
 
@@ -155,16 +155,16 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 }
 
 // PutCluster 修改Cluster
-// @Tags        Cluster
-// @Summary     修改Cluster
-// @Description 修改Cluster
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                         true "cluster_id"
-// @Param       param      body     models.Cluster                               true "表单"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.Cluster} "Cluster"
-// @Router      /v1/cluster/{cluster_id} [put]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		修改Cluster
+//	@Description	修改Cluster
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint											true	"cluster_id"
+//	@Param			param		body		models.Cluster									true	"表单"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Cluster}	"Cluster"
+//	@Router			/v1/cluster/{cluster_id} [put]
+//	@Security		JWT
 func (h *ClusterHandler) PutCluster(c *gin.Context) {
 	var obj models.Cluster
 	ctx := c.Request.Context()
@@ -199,16 +199,16 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 }
 
 // DeleteCluster 删除 Cluster
-// @Tags        Cluster
-// @Summary     删除 Cluster
-// @Description 删除 Cluster
-// @Accept      json
-// @Produce     json
-// @Param       record_only query    string                  false "only delete record in database"
-// @Param       cluster_id  path     uint                    true  "cluster_id"
-// @Success     204         {object} handlers.ResponseStruct "resp"
-// @Router      /v1/cluster/{cluster_id} [delete]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		删除 Cluster
+//	@Description	删除 Cluster
+//	@Accept			json
+//	@Produce		json
+//	@Param			record_only	query		string					false	"only delete record in database"
+//	@Param			cluster_id	path		uint					true	"cluster_id"
+//	@Success		204			{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/cluster/{cluster_id} [delete]
+//	@Security		JWT
 func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 	cluster := &models.Cluster{}
 	ctx := c.Request.Context()
@@ -269,19 +269,19 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 }
 
 // ListClusterEnvironment 获取属于Cluster的 Environment 列表
-// @Tags        Cluster
-// @Summary     获取属于 Cluster 的 Environment 列表
-// @Description 获取属于 Cluster 的 Environment 列表
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                                                       true  "cluster_id"
-// @Param       preload    query    string                                                                     false "choices Creator,Cluster,Project,Applications,Users"
-// @Param       page       query    int                                                                        false "page"
-// @Param       size       query    int                                                                        false "page"
-// @Param       search     query    string                                                                     false "search in (EnvironmentName)"
-// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}} "models.Environment"
-// @Router      /v1/cluster/{cluster_id}/environment [get]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		获取属于 Cluster 的 Environment 列表
+//	@Description	获取属于 Cluster 的 Environment 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint																		true	"cluster_id"
+//	@Param			preload		query		string																		false	"choices Creator,Cluster,Project,Applications,Users"
+//	@Param			page		query		int																			false	"page"
+//	@Param			size		query		int																			false	"page"
+//	@Param			search		query		string																		false	"search in (EnvironmentName)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}}	"models.Environment"
+//	@Router			/v1/cluster/{cluster_id}/environment [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 	var list []models.Environment
 	query, err := handlers.GetQuery(c, nil)
@@ -307,19 +307,19 @@ func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 }
 
 // ListClusterLogQueryHistory 获取属于Cluster的 LogQueryHistory 列表
-// @Tags        Cluster
-// @Summary     获取属于 Cluster 的 LogQueryHistory 列表
-// @Description 获取属于 Cluster 的 LogQueryHistory 列表
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                                                           true  "cluster_id"
-// @Param       preload    query    string                                                                         false "choices Cluster,Creator"
-// @Param       page       query    int                                                                            false "page"
-// @Param       size       query    int                                                                            false "page"
-// @Param       search     query    string                                                                         false "search in (LogQL)"
-// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQueryHistory}} "models.LogQueryHistory"
-// @Router      /v1/cluster/{cluster_id}/logqueryhistory [get]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		获取属于 Cluster 的 LogQueryHistory 列表
+//	@Description	获取属于 Cluster 的 LogQueryHistory 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint																			true	"cluster_id"
+//	@Param			preload		query		string																			false	"choices Cluster,Creator"
+//	@Param			page		query		int																				false	"page"
+//	@Param			size		query		int																				false	"page"
+//	@Param			search		query		string																			false	"search in (LogQL)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQueryHistory}}	"models.LogQueryHistory"
+//	@Router			/v1/cluster/{cluster_id}/logqueryhistory [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 	var (
 		list    []models.LogQueryHistory
@@ -353,14 +353,14 @@ func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 }
 
 // ListLogQueryHistory 聚合查询日志查询历史[按照当前用户的查询历史聚合]
-// @Tags        Cluster
-// @Summary     聚合查询日志查询历史, unique logql desc 按照当前用户的查询历史聚合
-// @Description 聚合查询日志查询历史 unique logql desc 按照当前用户的查询历史聚合
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=[]models.LogQueryHistoryWithCount} "LogQueryHistory"
-// @Router      /v1/cluster/{cluster_id}/logqueryhistoryv2 [get]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		聚合查询日志查询历史, unique logql desc 按照当前用户的查询历史聚合
+//	@Description	聚合查询日志查询历史 unique logql desc 按照当前用户的查询历史聚合
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=[]models.LogQueryHistoryWithCount}	"LogQueryHistory"
+//	@Router			/v1/cluster/{cluster_id}/logqueryhistoryv2 [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 	var list []models.LogQueryHistoryWithCount
 	user, _ := h.GetContextUser(c)
@@ -386,7 +386,6 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 		user.GetID(),
 		clusterid,
 		before15d,
-		false,
 	).Scan(&list).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -395,19 +394,19 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 }
 
 // ListClusterLogQuerySnapshot 获取属于Cluster的 LogQuerySnapshot 列表
-// @Tags        Cluster
-// @Summary     获取属于 Cluster 的 LogQuerySnapshot 列表
-// @Description 获取属于 Cluster 的 LogQuerySnapshot 列表
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                                                            true  "cluster_id"
-// @Param       preload    query    string                                                                          false "choices Cluster,Creator"
-// @Param       page       query    int                                                                             false "page"
-// @Param       size       query    int                                                                             false "page"
-// @Param       search     query    string                                                                          false "search in (SnapshotName)"
-// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQuerySnapshot}} "models.LogQuerySnapshot"
-// @Router      /v1/cluster/{cluster_id}/logquerysnapshot [get]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		获取属于 Cluster 的 LogQuerySnapshot 列表
+//	@Description	获取属于 Cluster 的 LogQuerySnapshot 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint																			true	"cluster_id"
+//	@Param			preload		query		string																			false	"choices Cluster,Creator"
+//	@Param			page		query		int																				false	"page"
+//	@Param			size		query		int																				false	"page"
+//	@Param			search		query		string																			false	"search in (SnapshotName)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQuerySnapshot}}	"models.LogQuerySnapshot"
+//	@Router			/v1/cluster/{cluster_id}/logquerysnapshot [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 	var (
 		list    []models.LogQuerySnapshot
@@ -440,15 +439,15 @@ func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 }
 
 // PostCluster 创建Cluster
-// @Tags        Cluster
-// @Summary     创建Cluster
-// @Description 创建Cluster
-// @Accept      json
-// @Produce     json
-// @Param       param body     models.Cluster                               true "表单"
-// @Success     200   {object} handlers.ResponseStruct{Data=models.Cluster} "Cluster"
-// @Router      /v1/cluster [post]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		创建Cluster
+//	@Description	创建Cluster
+//	@Accept			json
+//	@Produce		json
+//	@Param			param	body		models.Cluster									true	"表单"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=models.Cluster}	"Cluster"
+//	@Router			/v1/cluster [post]
+//	@Security		JWT
 func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	cluster := &models.Cluster{}
 	if err := c.BindJSON(cluster); err != nil {
@@ -516,15 +515,15 @@ type ClusterQuota struct {
 }
 
 // ClusterStatistics 集群资源状态
-// @Tags        Cluster
-// @Summary     集群资源状态
-// @Description 集群资源状态
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     int                                        true "cluster_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=ClusterQuota} "statistics"
-// @Router      /v1/cluster/{cluster_id}/quota [get]
-// @Security    JWT
+//	@Tags			Cluster
+//	@Summary		集群资源状态
+//	@Description	集群资源状态
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		int											true	"cluster_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=ClusterQuota}	"statistics"
+//	@Router			/v1/cluster/{cluster_id}/quota [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
 		statistics := statistics.ClusterStatistics{}

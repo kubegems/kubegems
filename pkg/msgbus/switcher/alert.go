@@ -56,14 +56,14 @@ func (ms *MessageSwitcher) saveFingerprintMapToDB(fingerprintMap map[string][]pr
 
 		for _, alert := range alerts {
 			alertMessages = append(alertMessages, models.AlertMessage{
-				Fingerprint: fingerprint,
-				Value:       alert.Annotations["value"],
-				Message:     alert.Annotations["message"],
-				StartsAt:    utils.TimeZeroToNull(alert.StartsAt),
-				EndsAt:      utils.TimeZeroToNull(alert.EndsAt),
-				CreatedAt:   &now,
-				Status:      alert.Status,
-				AlertInfo:   &tmpAlertInfo,
+				InfoFingerprint: fingerprint,
+				Value:           alert.Annotations["value"],
+				Message:         alert.Annotations["message"],
+				StartsAt:        utils.TimeZeroToNull(alert.StartsAt),
+				EndsAt:          utils.TimeZeroToNull(alert.EndsAt),
+				CreatedAt:       &now,
+				Status:          alert.Status,
+				AlertInfo:       &tmpAlertInfo,
 			})
 		}
 	}

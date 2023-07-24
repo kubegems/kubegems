@@ -21,11 +21,12 @@ import (
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
 	edgev1beta1 "kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func UpdateStatus(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatus, edgeresource client.Object, edgecli client.Client) {
+func CheckStatus(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatus, edgeresource client.Object, edgecli client.Client) {
 	switch typedobj := edgeresource.(type) {
 	case *appsv1.Deployment:
 		checkDeploymentPodsReady(ctx, status, typedobj, edgecli)
@@ -36,25 +37,39 @@ func checkDeploymentPodsReady(ctx context.Context, status *edgev1beta1.EdgeTaskR
 	log := logr.FromContextOrDiscard(ctx)
 	// fill images in status
 	fillImages(status, deployment)
-	if deployment.Status.ReadyReplicas == deployment.Status.Replicas {
+	if deployment.Status.ObservedGeneration != deployment.Generation {
+		status.Ready = false
+		status.Message = "deployment not observed"
+		return
+	}
+	desireReplicas := pointer.Int32Deref(deployment.Spec.Replicas, 1)
+	currentReplicas := deployment.Status.AvailableReplicas
+	if desireReplicas == currentReplicas {
+		// deployment 会在 pod running 的时候就认为 ready，对于running即crashloopbackoff的pod，deployment会某一瞬间认为ready
+		// 有两种解决方案：
+		// - 为 pod 设置 readinessProbe
+		// - 为 deployment 设置 minReadySeconds
 		status.Ready = true
 		status.Message = ""
-		// events will be remove after status is ready to avoid too many events in k8s
 		return
 	}
-	status.Message = fmt.Sprintf("replicas not ready: %d/%d", deployment.Status.ReadyReplicas, deployment.Status.Replicas)
 	status.Ready = false
-
+	status.Message = fmt.Sprintf("replicas not ready: %d/%d", currentReplicas, desireReplicas)
+	// events will be remove after status is ready to avoid too many events in k8
 	// get depevents for deployment
-	eventlist := &corev1.EventList{}
-	if err := edgecli.List(ctx, eventlist,
-		client.InNamespace(deployment.Namespace),
-		client.MatchingFields{"involvedObject.uid": string(deployment.UID)},
-	); err != nil {
-		log.Error(err, "failed to list events")
-		return
+	if false {
+		eventlist := &corev1.EventList{}
+		if err := edgecli.List(ctx, eventlist,
+			client.InNamespace(deployment.Namespace),
+			client.MatchingFields{"involvedObject.uid": string(deployment.UID)},
+		); err != nil {
+			log.Error(err, "failed to list events")
+			return
+		}
+		status.Events = EdgeTaskResourceEventsFromEvents(eventlist.Items)
+	} else {
+		status.Events = nil
 	}
-	status.Events = EdgeTaskResourceEventsFromEvents(eventlist.Items)
 
 	// found deployment pods
 	pods := &corev1.PodList{}
@@ -68,13 +83,18 @@ func checkDeploymentPodsReady(ctx context.Context, status *edgev1beta1.EdgeTaskR
 	// fill events for those pods
 	podsStatus := make([]edgev1beta1.EdgeTaskPodStatus, len(pods.Items))
 	for i, pod := range pods.Items {
-		if err := edgecli.List(ctx, eventlist, client.InNamespace(deployment.Namespace), client.MatchingFields{"involvedObject.uid": string(pod.UID)}); err != nil {
-			log.Error(err, "failed to list events")
-		}
 		val := edgev1beta1.EdgeTaskPodStatus{
 			Name:   pod.Name,
 			Status: pod.Status,
-			Events: EdgeTaskResourceEventsFromEvents(eventlist.Items),
+		}
+		if false {
+			eventlist := &corev1.EventList{}
+			if err := edgecli.List(ctx, eventlist, client.InNamespace(deployment.Namespace), client.MatchingFields{"involvedObject.uid": string(pod.UID)}); err != nil {
+				log.Error(err, "failed to list events")
+			}
+			val.Events = EdgeTaskResourceEventsFromEvents(eventlist.Items)
+		} else {
+			val.Events = nil
 		}
 		podsStatus[i] = val
 	}

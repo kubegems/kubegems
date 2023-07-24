@@ -42,26 +42,26 @@ type OAuthHandler struct {
 }
 
 // FakeLogin 实际上这个没有用的，只是为了生成swagger文档
-// @Summary     JWT登录
-// @Tags        AAAAA
-// @Description 登录JWT
-// @Accept      json
-// @Produce     json
-// @Param       param body     LoginForm true "表单"
-// @Success     200   {string} string    "登录成功"
-// @Failure     401   {string} string    "登录失败"
-// @Router      /v1/login [post]
+//	@Summary		JWT登录
+//	@Tags			AAAAA
+//	@Description	登录JWT
+//	@Accept			json
+//	@Produce		json
+//	@Param			param	body		LoginForm	true	"表单"
+//	@Success		200		{string}	string		"登录成功"
+//	@Failure		401		{string}	string		"登录失败"
+//	@Router			/v1/login [post]
 func (h *OAuthHandler) LoginHandler(c *gin.Context) {
 	h.commonLogin(c)
 }
 
-// @Summary     获取OAUTH登录地址
-// @Description 获取OAUTH登录地址
-// @Tags        AAAAA
-// @Accept      json
-// @Produce     json
-// @Success     200 {string} string "地址"
-// @Router      /v1/oauth/addr [get]
+//	@Summary		获取OAUTH登录地址
+//	@Description	获取OAUTH登录地址
+//	@Tags			AAAAA
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{string}	string	"地址"
+//	@Router			/v1/oauth/addr [get]
 func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 	source := c.Query("source")
 	if source == "" {
@@ -83,14 +83,14 @@ func (h *OAuthHandler) GetOauthAddr(c *gin.Context) {
 	handlers.OK(c, sourceUtil.LoginAddr())
 }
 
-// @Summary     OAUTH登录callback
-// @Description OAUTH登录callback
-// @Tags        AAAAA
-// @Accept      json
-// @Produce     json
-// @Success     200    {string} string "地址"
-// @Param       source path     string true "loginsource"
-// @Router      /v1/oauth/callback [get]
+//	@Summary		OAUTH登录callback
+//	@Description	OAUTH登录callback
+//	@Tags			AAAAA
+//	@Accept			json
+//	@Produce		json
+//	@Success		200		{string}	string	"地址"
+//	@Param			source	path		string	true	"loginsource"
+//	@Router			/v1/oauth/callback [get]
 func (h *OAuthHandler) GetOauthToken(c *gin.Context) {
 	h.commonLogin(c)
 }

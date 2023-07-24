@@ -36,12 +36,14 @@ type ModelsAPI struct {
 }
 
 func NewModelsAPI(ctx context.Context, db *mongo.Database, syncopt *SyncOptions) (*ModelsAPI, error) {
+	sources := repository.NewSourcesRepository(db)
+	models := repository.NewModelsRepository(db)
 	api := &ModelsAPI{
-		ModelRepository:   repository.NewModelsRepository(db),
+		ModelRepository:   models,
 		CommentRepository: repository.NewCommentsRepository(db),
-		SourcesRepository: repository.NewSourcesRepository(db),
+		SourcesRepository: sources,
 		authorization:     auth.NewLocalAuthorization(ctx, db),
-		SyncService:       NewSyncService(syncopt),
+		SyncService:       NewSyncService(syncopt, sources, models),
 	}
 	if err := api.InitSchemas(ctx); err != nil {
 		return nil, fmt.Errorf("init schemas: %v", err)
@@ -103,6 +105,9 @@ func (m *ModelsAPI) RegisterRoute(rg *route.Group) {
 				// source models
 				route.NewGroup("/models").Tag("models").
 					AddRoutes(
+						route.PUT("").To(m.UpsertModel).
+							Parameters(route.BodyParameter("body", repository.Model{})).
+							Doc("create or update model info"),
 						route.GET("").To(m.ListModels).Paged().Doc("list models").
 							Parameters(
 								route.QueryParameter("framework", "framework name").Optional(),

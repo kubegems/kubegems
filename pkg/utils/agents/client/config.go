@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package agents
+package client
 
 import (
 	"crypto/tls"
@@ -21,7 +21,7 @@ import (
 	"net/url"
 )
 
-type ClientOptions struct {
+type Config struct {
 	Addr *url.URL
 	TLS  *tls.Config
 	Auth Auth
@@ -53,7 +53,7 @@ func TLSConfigFrom(ca, cert, key []byte) (*tls.Config, error) {
 	return tlsconfig, nil
 }
 
-func OptionAuthAsProxy(options *ClientOptions) func(*http.Request) (*url.URL, error) {
+func ConfigAuthAsProxy(options *Config) func(*http.Request) (*url.URL, error) {
 	intercepters := []func(*http.Request) error{}
 	auth := options.Auth
 	// 默认开启 HTTP 签名
@@ -73,5 +73,12 @@ func OptionAuthAsProxy(options *ClientOptions) func(*http.Request) (*url.URL, er
 			}
 		}
 		return nil, nil
+	}
+}
+
+func ConfigAsTransport(options *Config) *http.Transport {
+	return &http.Transport{
+		TLSClientConfig: options.TLS,
+		Proxy:           ConfigAuthAsProxy(options),
 	}
 }

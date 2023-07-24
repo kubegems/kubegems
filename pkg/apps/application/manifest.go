@@ -44,17 +44,17 @@ type Manifest struct {
 	IstioVersion string            `json:"istioVersion"`
 }
 
-// @Tags        ApplicationManifest
-// @Summary     创建应用编排
-// @Description 只创建一个空的应用没有内容文件
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                    true "tenaut id"
-// @Param       project_id path     int                                    true "project id"
-// @Param       body       body     Manifest                               true "project meta"
-// @Success     200        {object} handlers.ResponseStruct{Data=Manifest} "Application"
-// @Router      /v1/tenant/{tenaut_id}/project/{project_id}/manifests [post]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		创建应用编排
+//	@Description	只创建一个空的应用没有内容文件
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			body		body		Manifest								true	"project meta"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=Manifest}	"Application"
+//	@Router			/v1/tenant/{tenaut_id}/project/{project_id}/manifests [post]
+//	@Security		JWT
 func (h *ManifestHandler) CreateManifest(c *gin.Context) {
 	manifest := &Manifest{}
 	h.NoNameRefFunc(c, manifest, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -73,35 +73,35 @@ func (h *ManifestHandler) CreateManifest(c *gin.Context) {
 	})
 }
 
-// @Tags        ApplicationManifest
-// @Summary     应用编排详情
-// @Description 应用编排详情
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                    true "tenaut id"
-// @Param       project_id path     int                                    true "project id"
-// @Param       name       path     string                                 true "application name"
-// @Success     200        {object} handlers.ResponseStruct{Data=Manifest} "Application"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name} [get]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		应用编排详情
+//	@Description	应用编排详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"application name"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=Manifest}	"Application"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name} [get]
+//	@Security		JWT
 func (h *ManifestHandler) GetManifest(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		return h.Get(ctx, ref)
 	})
 }
 
-// @Tags        ApplicationManifest
-// @Summary     修改应用编排描述
-// @Description 修改应用编排描述
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                    true "tenaut id"
-// @Param       project_id path     int                                    true "project id"
-// @Param       name       path     string                                 true "application name"
-// @Param       body       body     Manifest                               true "project meta"
-// @Success     200        {object} handlers.ResponseStruct{Data=Manifest} "Application"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name} [put]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		修改应用编排描述
+//	@Description	修改应用编排描述
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"application name"
+//	@Param			body		body		Manifest								true	"project meta"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=Manifest}	"Application"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name} [put]
+//	@Security		JWT
 func (h *ManifestHandler) UpdateManifest(c *gin.Context) {
 	manifest := &Manifest{}
 	h.NamedRefFunc(c, manifest, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -115,16 +115,16 @@ func (h *ManifestHandler) UpdateManifest(c *gin.Context) {
 	})
 }
 
-// @Tags        ApplicationManifest
-// @Summary     应用编排列表
-// @Description 应用编排列表
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                      true "tenaut id"
-// @Param       project_id path     int                                      true "project id"
-// @Success     200        {object} handlers.ResponseStruct{Data=[]Manifest} "Application"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests [get]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		应用编排列表
+//	@Description	应用编排列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int											true	"tenaut id"
+//	@Param			project_id	path		int											true	"project id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]Manifest}	"Application"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests [get]
+//	@Security		JWT
 func (h *ManifestHandler) ListManifest(c *gin.Context) {
 	h.NoNameRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		manifestList, err := h.ManifestProcessor.List(ctx, ref, WithImages())
@@ -137,29 +137,29 @@ func (h *ManifestHandler) ListManifest(c *gin.Context) {
 	})
 }
 
-// @Tags        ApplicationManifest
-// @Summary     admim查询所有应用编排列表
-// @Description 应用编排列表
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=[]Manifest} "Application"
-// @Router      /v1/tenant/_/project/_/manifests [get]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		admim查询所有应用编排列表
+//	@Description	应用编排列表
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=[]Manifest}	"Application"
+//	@Router			/v1/tenant/_/project/_/manifests [get]
+//	@Security		JWT
 func (h *ManifestHandler) ListManifestAdmin(c *gin.Context) {
 	handlers.NotOK(c, errors.New("dost't impl"))
 }
 
-// @Tags        ApplicationManifest
-// @Summary     删除创建应用编排
-// @Description 删除创建应用编排以及git内容
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     int                                  true "tenaut id"
-// @Param       project_id path     int                                  true "project id"
-// @Param       name       path     string                               true "name"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "Application"
-// @Router      /v1/tenant/{tenant_id}/project/{project_id}/manifests/{name} [delete]
-// @Security    JWT
+//	@Tags			ApplicationManifest
+//	@Summary		删除创建应用编排
+//	@Description	删除创建应用编排以及git内容
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int										true	"tenaut id"
+//	@Param			project_id	path		int										true	"project id"
+//	@Param			name		path		string									true	"name"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"Application"
+//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/manifests/{name} [delete]
+//	@Security		JWT
 func (h *ManifestHandler) RemoveManifest(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		// audit

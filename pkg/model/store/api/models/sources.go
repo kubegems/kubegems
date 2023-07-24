@@ -59,14 +59,14 @@ func (m *ModelsAPI) GetSource(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	// with sync status
-	syncstatus, err := m.SyncService.SyncStatus(req.Request.Context(), name)
+	syncstatus, err := m.SyncService.SyncStatus(req.Request.Context(), source)
 	if err != nil {
 		response.Error(resp, err)
 		return
 	}
 	response.OK(resp, &SourceWithSyncStatus{
 		SourceWithAddtional: *source,
-		SyncStatus:          SyncStatusFrom(syncstatus),
+		SyncStatus:          *syncstatus,
 	})
 }
 

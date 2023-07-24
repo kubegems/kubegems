@@ -558,7 +558,11 @@ func SetSchemaProp(schema *spec.Schema, k string, v string) {
 	case "type":
 		if !schema.Type.Contains(v) {
 			// use prepend
-			schema.Type = append([]string{v}, schema.Type...)
+			if v != "null" {
+				schema.Type = append([]string{v}, schema.Type...)
+			} else {
+				schema.Type = append(schema.Type, v)
+			}
 		}
 	case "items":
 		items := &spec.SchemaOrArray{}

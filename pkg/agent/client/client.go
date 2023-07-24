@@ -188,7 +188,7 @@ func OK(c *gin.Context, data interface{}) {
 }
 
 func (h *ClientRest) Create(c *gin.Context) {
-	obj, _, err := h.readObject(c, true)
+	obj, gvkn, err := h.readObject(c, true)
 	if err != nil {
 		NotOK(c, err)
 		return
@@ -198,6 +198,9 @@ func (h *ClientRest) Create(c *gin.Context) {
 		NotOK(c, err)
 		return
 	}
+	// cli.Create removed th type meta, so we need to set it again
+	// It's a bug of client-go or controller-runtime or something else
+	obj.GetObjectKind().SetGroupVersionKind(gvkn.GroupVersionKind)
 	OK(c, obj)
 }
 

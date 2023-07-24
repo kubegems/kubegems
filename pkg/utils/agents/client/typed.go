@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package agents
+package client
 
 import (
 	"bytes"
@@ -37,38 +37,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
-	"kubegems.io/kubegems/pkg/utils/kube"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 const jsonContentType = "application/json"
 
-func NewSimpleTypedClient(baseaddr string) (*TypedClient, error) {
-	agenturl, err := url.Parse(baseaddr)
-	if err != nil {
-		return nil, err
-	}
+func NewTypedClient(addr *url.URL, tp http.RoundTripper, scheme *runtime.Scheme) *TypedClient {
 	return &TypedClient{
-		BaseAddr:      agenturl,
-		RuntimeScheme: kube.GetScheme(),
-		HTTPClient:    &http.Client{},
-		tracer:        otel.Tracer("kubegems-test-tracer"),
-	}, nil
-}
-
-func NewTypedClient(options *ClientOptions, scheme *runtime.Scheme) *TypedClient {
-	if scheme == nil {
-		scheme = kube.GetScheme()
-	}
-	return &TypedClient{
-		BaseAddr: options.Addr,
-		HTTPClient: &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: options.TLS,
-				Proxy:           OptionAuthAsProxy(options),
-			},
-		},
+		BaseAddr:      addr,
+		HTTPClient:    &http.Client{Transport: tp},
 		RuntimeScheme: scheme,
 		tracer:        trace.NewNoopTracerProvider().Tracer(""),
 	}
@@ -207,6 +185,7 @@ func (c TypedClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ..
 	panic("not implemented") // TODO: Implement
 }
 
+// nolint: funlen
 func (c TypedClient) request(ctx context.Context, method, contenttype string,
 	obj runtime.Object, namespace, name string, queries map[string]string, data []byte,
 ) error {
@@ -394,6 +373,7 @@ func (c TypedClient) Watch(ctx context.Context, obj client.ObjectList, opts ...c
 		if err != nil {
 			return &unstructured.Unstructured{}
 		}
+		// nolint: forcetypeassert
 		return obj.(client.Object)
 	}
 

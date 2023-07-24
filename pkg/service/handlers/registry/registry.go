@@ -35,19 +35,19 @@ var (
 )
 
 // ListRegistry 列表 Registry
-// @Tags        Registry
-// @Summary     Registry列表
-// @Description Registry列表
-// @Accept      json
-// @Produce     json
-// @Param       RegistryName query    string                                                                  false "RegistryName"
-// @Param       preload      query    string                                                                  false "choices Creator,Project"
-// @Param       page         query    int                                                                     false "page"
-// @Param       size         query    int                                                                     false "page"
-// @Param       search       query    string                                                                  false "search in (RegistryName)"
-// @Success     200          {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Registry}} "Registry"
-// @Router      /v1/registry [get]
-// @Security    JWT
+//	@Tags			Registry
+//	@Summary		Registry列表
+//	@Description	Registry列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			RegistryName	query		string																	false	"RegistryName"
+//	@Param			preload			query		string																	false	"choices Creator,Project"
+//	@Param			page			query		int																		false	"page"
+//	@Param			size			query		int																		false	"page"
+//	@Param			search			query		string																	false	"search in (RegistryName)"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Registry}}	"Registry"
+//	@Router			/v1/registry [get]
+//	@Security		JWT
 func (h *RegistryHandler) ListRegistry(c *gin.Context) {
 	var list []models.Registry
 	query, err := handlers.GetQuery(c, nil)
@@ -69,15 +69,15 @@ func (h *RegistryHandler) ListRegistry(c *gin.Context) {
 }
 
 // RetrieveRegistry Registry详情
-// @Tags        Registry
-// @Summary     Registry详情
-// @Description get Registry详情
-// @Accept      json
-// @Produce     json
-// @Param       registry_id path     uint                                          true "registry_id"
-// @Success     200         {object} handlers.ResponseStruct{Data=models.Registry} "Registry"
-// @Router      /v1/registry/{registry_id} [get]
-// @Security    JWT
+//	@Tags			Registry
+//	@Summary		Registry详情
+//	@Description	get Registry详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			registry_id	path		uint											true	"registry_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Registry}	"Registry"
+//	@Router			/v1/registry/{registry_id} [get]
+//	@Security		JWT
 func (h *RegistryHandler) RetrieveRegistry(c *gin.Context) {
 	var obj models.Registry
 	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(ProjectKeyName)).Error; err != nil {
@@ -88,16 +88,16 @@ func (h *RegistryHandler) RetrieveRegistry(c *gin.Context) {
 }
 
 // PutRegistry 修改Registry
-// @Tags        Registry
-// @Summary     修改Registry
-// @Description 修改Registry
-// @Accept      json
-// @Produce     json
-// @Param       registry_id path     uint                                          true "registry_id"
-// @Param       param       body     models.Registry                               true "表单"
-// @Success     200         {object} handlers.ResponseStruct{Data=models.Registry} "Registry"
-// @Router      /v1/registry/{registry_id} [put]
-// @Security    JWT
+//	@Tags			Registry
+//	@Summary		修改Registry
+//	@Description	修改Registry
+//	@Accept			json
+//	@Produce		json
+//	@Param			registry_id	path		uint											true	"registry_id"
+//	@Param			param		body		models.Registry									true	"表单"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Registry}	"Registry"
+//	@Router			/v1/registry/{registry_id} [put]
+//	@Security		JWT
 func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 	var obj models.Registry
 	ctx := c.Request.Context()
@@ -151,15 +151,15 @@ func (h *RegistryHandler) PutRegistry(c *gin.Context) {
 }
 
 // DeleteRegistry 删除 Registry
-// @Tags        Registry
-// @Summary     删除 Registry
-// @Description 删除 Registry
-// @Accept      json
-// @Produce     json
-// @Param       registry_id path     uint                    true "registry_id"
-// @Success     204         {object} handlers.ResponseStruct "resp"
-// @Router      /v1/registry/{registry_id} [delete]
-// @Security    JWT
+//	@Tags			Registry
+//	@Summary		删除 Registry
+//	@Description	删除 Registry
+//	@Accept			json
+//	@Produce		json
+//	@Param			registry_id	path		uint					true	"registry_id"
+//	@Success		204			{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/registry/{registry_id} [delete]
+//	@Security		JWT
 func (h *RegistryHandler) DeleteRegistry(c *gin.Context) {
 	var obj models.Registry
 	ctx := c.Request.Context()

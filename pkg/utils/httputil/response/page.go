@@ -139,16 +139,24 @@ func sortFuncBy[T any](by string, getname func(T) string, gettime func(T) time.T
 			return nil
 		}
 		return func(a, b T) bool {
-			return gettime(a).Before(gettime(b))
+			tima, timb := gettime(a), gettime(b)
+			if tima.Equal(timb) && getname != nil {
+				return strings.Compare(getname(a), getname(b)) == -1
+			}
+			return tima.Before(timb)
 		}
 	case "createTimeDesc", "createTime", "time", "":
 		if gettime == nil {
 			return nil
 		}
 		return func(a, b T) bool {
-			return gettime(a).After(gettime(b))
+			tima, timb := gettime(a), gettime(b)
+			if tima.Equal(timb) && getname != nil {
+				return strings.Compare(getname(a), getname(b)) == -1
+			}
+			return tima.After(timb)
 		}
-	case "nameDesc":
+	case "nameDesc", "-name":
 		if getname == nil {
 			return nil
 		}

@@ -29,6 +29,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
 	"kubegems.io/kubegems/pkg/version"
 )
@@ -145,18 +146,33 @@ func downloadChart(ctx context.Context, repourl, name, version string) (string, 
 			getter.WithInsecureSkipVerifyTLS(true),
 		},
 	}
+	// nolint nestif
 	if repourl != "" {
-		chartURL, err := repo.FindChartInAuthAndTLSAndPassRepoURL(
-			repourl,
-			"", "", // username password
-			name, version,
-			"", "", "", // cert key ca
-			true, false, // insecureTLS passCredentialsAll
-			dl.Getters)
-		if err != nil {
-			return "", err
+		if registry.IsOCI(repourl) {
+			registryClient, err := registry.NewClient(
+				registry.ClientOptDebug(settings.Debug),
+				registry.ClientOptWriter(os.Stderr),
+				registry.ClientOptCredentialsFile(settings.RegistryConfig),
+			)
+			if err != nil {
+				return "", err
+			}
+			dl.RegistryClient = registryClient
+			dl.Options = append(dl.Options, getter.WithRegistryClient(registryClient))
+			name = repourl
+		} else {
+			chartURL, err := repo.FindChartInAuthAndTLSAndPassRepoURL(
+				repourl,
+				"", "", // username password
+				name, version,
+				"", "", "", // cert key ca
+				true, false, // insecureTLS passCredentialsAll
+				dl.Getters)
+			if err != nil {
+				return "", err
+			}
+			name = chartURL
 		}
-		name = chartURL
 	}
 	if err := os.MkdirAll(settings.RepositoryCache, DefaultDirectoryMode); err != nil {
 		return "", err

@@ -50,6 +50,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/agents/extend"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
@@ -62,17 +63,18 @@ import (
 )
 
 // DisableAlertRule 禁用告警规则
-// @Tags        Observability
-// @Summary     禁用告警规则
-// @Description 禁用告警规则
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                               true "cluster"
-// @Param       namespace path     string                               true "namespace"
-// @Param       name      path     string                               true "name"
-// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/disable [post]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		禁用告警规则
+//	@Description	禁用告警规则
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string									true	"cluster"
+//	@Param			namespace	path		string									true	"namespace"
+//	@Param			name		path		string									true	"name"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/disable [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) DisableAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -101,17 +103,18 @@ func (h *ObservabilityHandler) DisableAlertRule(c *gin.Context) {
 }
 
 // DisableAlertRule 启用告警规则
-// @Tags        Observability
-// @Summary     启用告警规则
-// @Description 启用告警规则
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                               true "cluster"
-// @Param       namespace path     string                               true "namespace"
-// @Param       name      path     string                               true "name"
-// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/enable [post]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		启用告警规则
+//	@Description	启用告警规则
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string									true	"cluster"
+//	@Param			namespace	path		string									true	"namespace"
+//	@Param			name		path		string									true	"name"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/enable [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -140,18 +143,19 @@ func (h *ObservabilityHandler) EnableAlertRule(c *gin.Context) {
 }
 
 // GenerateAlertMessage 生成告警规则消息
-// @Tags        Observability
-// @Summary     生成告警规则消息
-// @Description 生成告警规则消息
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                               true "cluster"
-// @Param       namespace path     string                               true "namespace"
-// @Param       name      path     string                               true "name"
-// @Param       form      body     models.AlertRule                     true "body"
-// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/message [post]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		生成告警规则消息
+//	@Description	生成告警规则消息
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string									true	"cluster"
+//	@Param			namespace	path		string									true	"namespace"
+//	@Param			name		path		string									true	"name"
+//	@Param			form		body		models.AlertRule						true	"body"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/message [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) GenerateAlertMessage(c *gin.Context) {
 	var msg string
 	if err := h.Process(func() error {
@@ -183,17 +187,18 @@ func (h *ObservabilityHandler) GenerateAlertMessage(c *gin.Context) {
 }
 
 // SyncAlertRule 同步告警规则
-// @Tags        Observability
-// @Summary     同步告警规则
-// @Description 同步告警规则
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                                          true "cluster, 支持_all"
-// @Param       namespace path     string                                          true "namespace, 支持_all"
-// @Param       name      path     string                                          true "name, 支持_all"
-// @Success     200       {object} handlers.ResponseStruct{Data=map[string]string} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/sync [post]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		同步告警规则
+//	@Description	同步告警规则
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string											true	"cluster, 支持_all"
+//	@Param			namespace	path		string											true	"namespace, 支持_all"
+//	@Param			name		path		string											true	"name, 支持_all"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=map[string]string}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/actions/sync [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) SyncAlertRule(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -247,17 +252,18 @@ func (h *ObservabilityHandler) SyncAlertRule(c *gin.Context) {
 }
 
 // ImportAlertRules 导入告警规则
-// @Tags        Observability
-// @Summary     导入告警规则
-// @Description 导入告警规则
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                               true "cluster"
-// @Param       namespace path     string                               true "namespace"
-// @Param       form      body     []models.AlertRule                   true "body"
-// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts-import [post]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		导入告警规则
+//	@Description	导入告警规则
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string									true	"cluster"
+//	@Param			namespace	path		string									true	"namespace"
+//	@Param			form		body		[]models.AlertRule						true	"body"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts-import [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) ImportAlertRules(c *gin.Context) {
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
@@ -301,9 +307,9 @@ func listSilences(ctx context.Context, namespace string, cli agents.Client) ([]*
 	if namespace != "" {
 		url = fmt.Sprintf(`%s?filter=%s="%s"`, url, prometheus.AlertNamespaceLabel, namespace)
 	}
-	if err := cli.DoRequest(ctx, agents.Request{
+	if err := cli.Extend().DoRequest(ctx, extend.Request{
 		Path: url,
-		Into: agents.WrappedResponse(&silences),
+		Into: extend.WrappedResponse(&silences),
 	}); err != nil {
 		return nil, err
 	}
@@ -372,7 +378,7 @@ func createSilenceIfNotExist(ctx context.Context, namespace, alertName string, c
 		}
 
 		// create
-		return cli.DoRequest(ctx, agents.Request{
+		return cli.Extend().DoRequest(ctx, extend.Request{
 			Method: http.MethodPost,
 			Path:   "/custom/alertmanager/v1/silence/_/actions/create",
 			Body:   silence,
@@ -391,7 +397,7 @@ func deleteSilenceIfExist(ctx context.Context, namespace, alertName string, cli 
 		values := url.Values{}
 		values.Add("id", silence.ID)
 
-		return cli.DoRequest(ctx, agents.Request{
+		return cli.Extend().DoRequest(ctx, extend.Request{
 			Method: http.MethodDelete,
 			Path:   "/custom/alertmanager/v1/silence/_/actions/delete",
 			Query:  values,
@@ -417,22 +423,23 @@ type AlertMessageGroup struct {
 }
 
 // AlertHistory 告警历史
-// @Tags        Observability
-// @Summary     告警历史
-// @Description 告警历史
-// @Accept      json
-// @Produce     json
-// @Param       cluster       path     string                                            true  "cluster"
-// @Param       namespace     path     string                                            true  "namespace"
-// @Param       name          path     string                                            true  "name"
-// @Param       status        query    string                                            false "告警状态(resolved, firing),  为空则是所有状态"
-// @Param       CreatedAt_gte query    string                                            false "CreatedAt_gte"
-// @Param       CreatedAt_lte query    string                                            false "CreatedAt_lte"
-// @Param       page          query    int                                               false "page"
-// @Param       size          query    int                                               false "size"
-// @Success     200           {object} handlers.ResponseStruct{Data=[]AlertMessageGroup} "规则"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/history [get]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		告警历史
+//	@Description	告警历史
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster			path		string												true	"cluster"
+//	@Param			namespace		path		string												true	"namespace"
+//	@Param			name			path		string												true	"name"
+//	@Param			status			query		string												false	"告警状态(resolved, firing),  为空则是所有状态"
+//	@Param			CreatedAt_gte	query		string												false	"CreatedAt_gte"
+//	@Param			CreatedAt_lte	query		string												false	"CreatedAt_lte"
+//	@Param			page			query		int													false	"page"
+//	@Param			size			query		int													false	"size"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=[]AlertMessageGroup}	"规则"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/history [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) AlertHistory(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
@@ -493,21 +500,22 @@ func (h *ObservabilityHandler) AlertHistory(c *gin.Context) {
 }
 
 // AlertHistory 重复的告警记录
-// @Tags        Observability
-// @Summary     重复的告警记录
-// @Description 重复的告警记录
-// @Accept      json
-// @Produce     json
-// @Param       cluster     path     string                                              true  "cluster"
-// @Param       namespace   path     string                                              true  "namespace"
-// @Param       name        path     string                                              true  "name"
-// @Param       fingerprint query    string                                              true  "告警指纹"
-// @Param       starts_at   query    string                                              true  "告警开始时间"
-// @Param       page        query    int                                                 false "page"
-// @Param       size        query    int                                                 false "size"
-// @Success     200         {object} handlers.ResponseStruct{Data=[]models.AlertMessage} "规则"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/repeats [get]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		重复的告警记录
+//	@Description	重复的告警记录
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string												true	"cluster"
+//	@Param			namespace	path		string												true	"namespace"
+//	@Param			name		path		string												true	"name"
+//	@Param			fingerprint	query		string												true	"告警指纹"
+//	@Param			starts_at	query		string												true	"告警开始时间"
+//	@Param			page		query		int													false	"page"
+//	@Param			size		query		int													false	"size"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.AlertMessage}	"规则"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/alerts/{name}/repeats [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) AlertRepeats(c *gin.Context) {
 	var messages []models.AlertMessage
 	query, err := handlers.GetQuery(c, nil)
@@ -570,16 +578,17 @@ type AlertCountRet struct {
 }
 
 // AlertToday 今日告警数量统计
-// @Tags        Observability
-// @Summary     今日告警数量统计
-// @Description 今日告警数量统计
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                                         true  "租户ID"
-// @Param       status    query    string                                         false "状态(firing, resolved)"
-// @Success     200       {object} handlers.ResponseStruct{Data=AlertCountStatus} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/alerts/today [get]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		今日告警数量统计
+//	@Description	今日告警数量统计
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string											true	"租户ID"
+//	@Param			status		query		string											false	"状态(firing, resolved)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=AlertCountStatus}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/alerts/today [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) AlertToday(c *gin.Context) {
 	todayBedin := utils.DayStartTime(time.Now())
 	yesterdayBegin := todayBedin.Add(-24 * time.Hour)
@@ -654,17 +663,18 @@ type AlertGraph struct {
 }
 
 // AlertGraph 告警趋势图
-// @Tags        Observability
-// @Summary     告警趋势图
-// @Description 告警趋势图
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id query    string                                     true  "租户ID"
-// @Param       start     query    string                                     false "开始时间，格式 2006-01-02T15:04:05Z07:00"
-// @Param       end       query    string                                     false "结束时间，格式 2006-01-02T15:04:05Z07:00"
-// @Success     200       {object} handlers.ResponseStruct{Data=model.Matrix} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/alerts/graph [get]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		告警趋势图
+//	@Description	告警趋势图
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string										true	"租户ID"
+//	@Param			start		query		string										false	"开始时间，格式 2006-01-02T15:04:05Z07:00"
+//	@Param			end			query		string										false	"结束时间，格式 2006-01-02T15:04:05Z07:00"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=model.Matrix}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/alerts/graph [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) AlertGraph(c *gin.Context) {
 	start, err := time.Parse(time.RFC3339, c.Query("start"))
 	if err != nil {
@@ -737,18 +747,19 @@ type TableRet struct {
 }
 
 // AlertByGroup 告警分组统计
-// @Tags        Observability
-// @Summary     告警分组统计
-// @Description 告警分组统计
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id query    string                                   true  "租户ID"
-// @Param       start     query    string                                   false "开始时间，格式 2006-01-02T15:04:05Z07:00"
-// @Param       end       query    string                                   false "结束时间，格式 2006-01-02T15:04:05Z07:00"
-// @Param       groupby   query    string                                   true  "按什么分组(project_name, alert_type)"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]TableRet} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/alerts/group [get]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		告警分组统计
+//	@Description	告警分组统计
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	query		string										true	"租户ID"
+//	@Param			start		query		string										false	"开始时间，格式 2006-01-02T15:04:05Z07:00"
+//	@Param			end			query		string										false	"结束时间，格式 2006-01-02T15:04:05Z07:00"
+//	@Param			groupby		query		string										true	"按什么分组(project_name, alert_type)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]TableRet}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/alerts/group [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 	start, err := time.Parse(time.RFC3339, c.Query("start"))
 	if err != nil {
@@ -803,28 +814,29 @@ func (h *ObservabilityHandler) AlertByGroup(c *gin.Context) {
 }
 
 // SearchAlert 搜索告警
-// @Tags        Observability
-// @Summary     搜索告警
-// @Description 搜索告警
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id   path     string                                                                      true  "租户ID，所有租户为_all"
-// @Param       project     query    string                                                                      false "项目名，默认所有"
-// @Param       environment query    string                                                                      false "环境名，默认所有"
-// @Param       cluster     query    string                                                                      false "集群名，默认所有"
-// @Param       namespace   query    string                                                                      false "命名空间，默认所有"
-// @Param       alertname   query    string                                                                      false "告警名，默认所有"
-// @Param       search      query    string                                                                      false "告警消息内容和标签，中间以空格隔开，eg. pod=mypod container=mycontainer alertcontent"
-// @Param       tpl         query    string                                                                      false "告警模板，默认所有, scope.resource.rule"
-// @Param       labelpairs  query    string                                                                      false "标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
-// @Param       start       query    string                                                                      false "开始时间"
-// @Param       end         query    string                                                                      false "结束时间"
-// @Param       status      query    string                                                                      false "状态(firing, resolved)"
-// @Param       page        query    int                                                                         false "page"
-// @Param       size        query    int                                                                         false "size"
-// @Success     200         {object} handlers.ResponseStruct{Data=pagination.PageData{List=[]AlertMessageGroup}} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/alerts/search [get]
-// @Security    JWT
+//
+//	@Tags			Observability
+//	@Summary		搜索告警
+//	@Description	搜索告警
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string																						true	"租户ID，所有租户为_all"
+//	@Param			project		query		string																						false	"项目名，默认所有"
+//	@Param			environment	query		string																						false	"环境名，默认所有"
+//	@Param			cluster		query		string																						false	"集群名，默认所有"
+//	@Param			namespace	query		string																						false	"命名空间，默认所有"
+//	@Param			alertname	query		string																						false	"告警名，默认所有"
+//	@Param			search		query		string																						false	"告警消息内容和标签，中间以空格隔开，eg. pod=mypod container=mycontainer alertcontent"
+//	@Param			tpl			query		string																						false	"告警模板，默认所有, scope.resource.rule"
+//	@Param			labelpairs	query		string																						false	"标签键值对,不支持正则 eg. labelpairs[host]=k8s-master&labelpairs[pod]=pod1"
+//	@Param			start		query		string																						false	"开始时间"
+//	@Param			end			query		string																						false	"结束时间"
+//	@Param			status		query		string																						false	"状态(firing, resolved)"
+//	@Param			page		query		int																							false	"page"
+//	@Param			size		query		int																							false	"size"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=response.Page[models.AlertMessage]{List=[]AlertMessageGroup}}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/alerts/search [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) SearchAlert(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))

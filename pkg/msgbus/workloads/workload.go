@@ -111,7 +111,7 @@ func (c *AgentMessageCollector) MessageChan(ctx context.Context, clustername str
 				log.Error(err, "get client")
 				return err
 			}
-			conn, resp, err := clusterProxy.DialWebsocket(ctx, uri, nil)
+			conn, resp, err := clusterProxy.Websocket().DialPath(ctx, uri, nil)
 			if err != nil {
 				content := ""
 				if resp != nil {

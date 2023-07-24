@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.11] - 2023-6-8
+
+### Changed
+
+- Use `kubegems.io/library/net/httpproxy` as service-proxy add proxy transport.
+
+### Fixed
+
+- Migration Faield on `alert_infos`.
+- Create too many index on `environment` migration.
+- Support hostname with port which passed to `oidc-issuer-url`.
+
 ## [1.23.8] - 2023-4-10
 
 ### Added

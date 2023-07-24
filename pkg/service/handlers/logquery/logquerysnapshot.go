@@ -25,19 +25,19 @@ import (
 )
 
 // ListLogQuerySnapshot 列表 LogQuerySnapshot
-// @Tags        LogQuerySnapshot
-// @Summary     LogQuerySnapshot列表
-// @Description LogQuerySnapshot列表
-// @Accept      json
-// @Produce     json
-// @Param       SnapshotName query    string                                                                          false "SnapshotName"
-// @Param       preload      query    string                                                                          false "choices Cluster,Creator"
-// @Param       page         query    int                                                                             false "page"
-// @Param       size         query    int                                                                             false "page"
-// @Param       search       query    string                                                                          false "search in (SnapshotName)"
-// @Success     200          {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQuerySnapshot}} "LogQuerySnapshot"
-// @Router      /v1/logquerysnapshot [get]
-// @Security    JWT
+//	@Tags			LogQuerySnapshot
+//	@Summary		LogQuerySnapshot列表
+//	@Description	LogQuerySnapshot列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			SnapshotName	query		string																			false	"SnapshotName"
+//	@Param			preload			query		string																			false	"choices Cluster,Creator"
+//	@Param			page			query		int																				false	"page"
+//	@Param			size			query		int																				false	"page"
+//	@Param			search			query		string																			false	"search in (SnapshotName)"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQuerySnapshot}}	"LogQuerySnapshot"
+//	@Router			/v1/logquerysnapshot [get]
+//	@Security		JWT
 func (h *LogQuerySnapshotHandler) ListLogQuerySnapshot(c *gin.Context) {
 	var list []models.LogQuerySnapshot
 	query, err := handlers.GetQuery(c, nil)
@@ -59,15 +59,15 @@ func (h *LogQuerySnapshotHandler) ListLogQuerySnapshot(c *gin.Context) {
 }
 
 // RetrieveLogQuerySnapshot LogQuerySnapshot详情
-// @Tags        LogQuerySnapshot
-// @Summary     LogQuerySnapshot详情
-// @Description get LogQuerySnapshot详情
-// @Accept      json
-// @Produce     json
-// @Param       logquerysnapshot_id path     uint                                                  true "logquerysnapshot_id"
-// @Success     200                 {object} handlers.ResponseStruct{Data=models.LogQuerySnapshot} "LogQuerySnapshot"
-// @Router      /v1/logquerysnapshot/{logquerysnapshot_id} [get]
-// @Security    JWT
+//	@Tags			LogQuerySnapshot
+//	@Summary		LogQuerySnapshot详情
+//	@Description	get LogQuerySnapshot详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			logquerysnapshot_id	path		uint													true	"logquerysnapshot_id"
+//	@Success		200					{object}	handlers.ResponseStruct{Data=models.LogQuerySnapshot}	"LogQuerySnapshot"
+//	@Router			/v1/logquerysnapshot/{logquerysnapshot_id} [get]
+//	@Security		JWT
 func (h *LogQuerySnapshotHandler) RetrieveLogQuerySnapshot(c *gin.Context) {
 	var obj models.LogQuerySnapshot
 	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param("logquerysnapshot_id")).Error; err != nil {
@@ -78,15 +78,15 @@ func (h *LogQuerySnapshotHandler) RetrieveLogQuerySnapshot(c *gin.Context) {
 }
 
 // DeleteLogQuerySnapshot 删除 LogQuerySnapshot
-// @Tags        LogQuerySnapshot
-// @Summary     删除 LogQuerySnapshot
-// @Description 删除 LogQuerySnapshot
-// @Accept      json
-// @Produce     json
-// @Param       logquerysnapshot_id path     uint                    true "logquerysnapshot_id"
-// @Success     204                 {object} handlers.ResponseStruct "resp"
-// @Router      /v1/logquerysnapshot/{logquerysnapshot_id} [delete]
-// @Security    JWT
+//	@Tags			LogQuerySnapshot
+//	@Summary		删除 LogQuerySnapshot
+//	@Description	删除 LogQuerySnapshot
+//	@Accept			json
+//	@Produce		json
+//	@Param			logquerysnapshot_id	path		uint					true	"logquerysnapshot_id"
+//	@Success		204					{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/logquerysnapshot/{logquerysnapshot_id} [delete]
+//	@Security		JWT
 func (h *LogQuerySnapshotHandler) DeleteLogQuerySnapshot(c *gin.Context) {
 	var obj models.LogQuerySnapshot
 	ctx := c.Request.Context()
@@ -105,15 +105,15 @@ func (h *LogQuerySnapshotHandler) DeleteLogQuerySnapshot(c *gin.Context) {
 }
 
 // PostLogQuerySnapshot 创建LogQuerySnapshot
-// @Tags        LogQuerySnapshot
-// @Summary     创建LogQuerySnapshot
-// @Description 创建LogQuerySnapshot
-// @Accept      json
-// @Produce     json
-// @Param       param body     models.LogQuerySnapshot                               true "表单"
-// @Success     200   {object} handlers.ResponseStruct{Data=models.LogQuerySnapshot} "LogQuerySnapshot"
-// @Router      /v1/logquerysnapshot [post]
-// @Security    JWT
+//	@Tags			LogQuerySnapshot
+//	@Summary		创建LogQuerySnapshot
+//	@Description	创建LogQuerySnapshot
+//	@Accept			json
+//	@Produce		json
+//	@Param			param	body		models.LogQuerySnapshot									true	"表单"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=models.LogQuerySnapshot}	"LogQuerySnapshot"
+//	@Router			/v1/logquerysnapshot [post]
+//	@Security		JWT
 func (h *LogQuerySnapshotHandler) PostLogQuerySnapshot(c *gin.Context) {
 	var obj models.LogQuerySnapshot
 	if err := c.BindJSON(&obj); err != nil {

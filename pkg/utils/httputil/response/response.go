@@ -17,42 +17,53 @@ package response
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 )
 
 type Response struct {
-	Message string      `json:"message,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   interface{} `json:"error,omitempty"`
+	Message string `json:"message,omitempty"` // user friendly message, it contains error message or success message
+	Data    any    `json:"data,omitempty"`    // data
+	Error   any    `json:"error,omitempty"`   // raw error for debug purpose only
 }
 
-func OK(w http.ResponseWriter, data interface{}) {
+func OK(w http.ResponseWriter, data any) {
 	Raw(w, http.StatusOK, Response{Data: data}, nil)
 }
 
 func NotFound(w http.ResponseWriter, message string) {
-	Error(w, NewError(http.StatusNotFound, message))
+	Error(w, NewStatusErrorMessage(http.StatusNotFound, message))
 }
 
 func BadRequest(w http.ResponseWriter, message string) {
-	Error(w, StatusError{Status: http.StatusBadRequest, Message: message})
+	Error(w, NewStatusErrorMessage(http.StatusBadRequest, message))
 }
 
-func ServerError(w http.ResponseWriter, err error) {
-	Error(w, StatusError{Status: http.StatusInternalServerError, Message: err.Error()})
+func Unauthorized(w http.ResponseWriter, message string) {
+	Error(w, NewStatusErrorMessage(http.StatusUnauthorized, message))
 }
+
+func Forbidden(w http.ResponseWriter, message string) {
+	Error(w, NewStatusErrorMessage(http.StatusForbidden, message))
+}
+
+func InternalServerError(w http.ResponseWriter, err error) {
+	Error(w, NewStatusError(http.StatusInternalServerError, err))
+}
+
+var ServerError = InternalServerError
 
 func Error(w http.ResponseWriter, err error) {
-	serr := &StatusError{}
-	if errors.As(err, &serr) {
-		Raw(w, serr.Status, Response{Message: err.Error(), Error: err}, nil)
+	statusError := &StatusError{}
+	if errors.As(err, &statusError) {
+		Raw(w, statusError.Status, Response{Message: statusError.Error(), Error: statusError.RawErr}, nil)
 	} else {
 		Raw(w, http.StatusBadRequest, Response{Message: err.Error(), Error: err}, nil)
 	}
 }
 
-func Raw(w http.ResponseWriter, status int, data interface{}, headers map[string]string) {
+func Raw(w http.ResponseWriter, status int, data any, headers map[string]string) {
 	for k, v := range headers {
 		w.Header().Set(k, v)
 	}
@@ -88,12 +99,34 @@ func setContentTypeIfNotSet(hds http.Header, val string) {
 type StatusError struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
+	RawErr  error  `json:"error,omitempty"`
 }
 
 func (e StatusError) Error() string {
-	return e.Message
+	if e.Message != "" {
+		return e.Message
+	}
+	if e.RawErr != nil {
+		return e.RawErr.Error()
+	}
+	return http.StatusText(e.Status)
 }
 
-func NewError(status int, message string) *StatusError {
+func NewStatusErrorMessage(status int, message string) *StatusError {
 	return &StatusError{Status: status, Message: message}
+}
+
+// NewStatusErrorf acts like fmt.Errorf but returns a StatusError.
+// Usage:
+//
+//	if err:=someprocess(username); err!=nil {
+//	  return NewStatusErrorf(http.StatusNotFound, "user %s not found: %w", username, err)
+//	}
+func NewStatusErrorf(status int, format string, args ...any) *StatusError {
+	err := fmt.Errorf(format, args...)
+	return &StatusError{Status: status, Message: err.Error(), RawErr: errors.Unwrap(err)}
+}
+
+func NewStatusError(status int, err error) *StatusError {
+	return &StatusError{Status: status, Message: err.Error(), RawErr: err}
 }

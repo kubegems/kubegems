@@ -262,6 +262,9 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 	clientrest := client.ClientRest{Cli: cluster.GetClient()}
 	clientrest.Register(routes.r)
 
+	clienttransport := client.NewClientTransport()
+	clienttransport.Register(routes.r)
+
 	return func(c *gin.Context) { routes.r.Match(c)(c) }, err
 }
 

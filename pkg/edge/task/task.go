@@ -37,12 +37,16 @@ type Options struct {
 	HealthProbeBindAddress  string `json:"healthProbeBindAddress,omitempty"`
 	MetricsBindAddress      string `json:"metricsBindAddress,omitempty"`
 	EdgeServerAddr          string `json:"edgeServerAddr,omitempty"`
+	EdgeNamespace           string `json:"edgeNamespace,omitempty"`
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
 		MaxConcurrentReconciles: 1,
-		EdgeServerAddr:          "http://kubegem-edge-server:8080",
+		EdgeServerAddr:          "http://kubegems-edge-server:8080",
+		EdgeNamespace:           "", // empty means all namespaces
+		HealthProbeBindAddress:  ":8080",
+		MetricsBindAddress:      ":9100",
 	}
 }
 
@@ -59,6 +63,7 @@ func Run(ctx context.Context, options *Options) error {
 		Logger:                 log,
 		HealthProbeBindAddress: options.HealthProbeBindAddress,
 		MetricsBindAddress:     options.MetricsBindAddress,
+		Namespace:              options.EdgeNamespace,
 	})
 	if err != nil {
 		log.Error(err, "unable to create manager")

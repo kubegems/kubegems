@@ -47,20 +47,20 @@ var (
 )
 
 // ListProject 列表 Project
-// @Tags        Project
-// @Summary     Project列表
-// @Description Project列表
-// @Accept      json
-// @Produce     json
-// @Param       ProjectName query    string                                                                 false "ProjectName"
-// @Param       TenantID    query    string                                                                 false "TenantID"
-// @Param       preload     query    string                                                                 false "choices Applications,Environments,Registries,Users,Tenant"
-// @Param       page        query    int                                                                    false "page"
-// @Param       size        query    int                                                                    false "page"
-// @Param       search      query    string                                                                 false "search in (ProjectName)"
-// @Success     200         {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Project}} "Project"
-// @Router      /v1/project [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		Project列表
+//	@Description	Project列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			ProjectName	query		string																	false	"ProjectName"
+//	@Param			TenantID	query		string																	false	"TenantID"
+//	@Param			preload		query		string																	false	"choices Applications,Environments,Registries,Users,Tenant"
+//	@Param			page		query		int																		false	"page"
+//	@Param			size		query		int																		false	"page"
+//	@Param			search		query		string																	false	"search in (ProjectName)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Project}}	"Project"
+//	@Router			/v1/project [get]
+//	@Security		JWT
 func (h *ProjectHandler) ListProject(c *gin.Context) {
 	var list []models.Project
 	query, err := handlers.GetQuery(c, nil)
@@ -82,15 +82,15 @@ func (h *ProjectHandler) ListProject(c *gin.Context) {
 }
 
 // RetrieveProject Project详情
-// @Tags        Project
-// @Summary     Project详情
-// @Description get Project详情
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                         true "project_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.Project} "Project"
-// @Router      /v1/project/{project_id} [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		Project详情
+//	@Description	get Project详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint											true	"project_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Project}	"Project"
+//	@Router			/v1/project/{project_id} [get]
+//	@Security		JWT
 func (h *ProjectHandler) RetrieveProject(c *gin.Context) {
 	var (
 		obj   models.Project
@@ -114,16 +114,16 @@ func (h *ProjectHandler) RetrieveProject(c *gin.Context) {
 }
 
 // PutProject 修改Project
-// @Tags        Project
-// @Summary     修改Project
-// @Description 修改Project
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                         true "project_id"
-// @Param       param      body     models.Project                               true "表单"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.Project} "Project"
-// @Router      /v1/project/{project_id} [put]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		修改Project
+//	@Description	修改Project
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint											true	"project_id"
+//	@Param			param		body		models.Project									true	"表单"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Project}	"Project"
+//	@Router			/v1/project/{project_id} [put]
+//	@Security		JWT
 func (h *ProjectHandler) PutProject(c *gin.Context) {
 	var obj models.Project
 	ctx := c.Request.Context()
@@ -154,15 +154,15 @@ func (h *ProjectHandler) PutProject(c *gin.Context) {
 }
 
 // DeleteProject 删除 Project
-// @Tags        Project
-// @Summary     删除 Project
-// @Description 删除 Project
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                    true "project_id"
-// @Success     204        {object} handlers.ResponseStruct "resp"
-// @Router      /v1/project/{project_id} [delete]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		删除 Project
+//	@Description	删除 Project
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint					true	"project_id"
+//	@Success		204			{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/project/{project_id} [delete]
+//	@Security		JWT
 func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	var obj models.Project
 	ctx := c.Request.Context()
@@ -223,19 +223,19 @@ func (h *ProjectHandler) afterProjectDelete(ctx context.Context, tx *gorm.DB, p 
 }
 
 // ListProjectUser 获取属于Project的 User 列表
-// @Tags        Project
-// @Summary     获取属于 Project 的 User 列表
-// @Description 获取属于 Project 的 User 列表
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                                                true  "project_id"
-// @Param       preload    query    string                                                              false "choices Tenants,SystemRole"
-// @Param       page       query    int                                                                 false "page"
-// @Param       size       query    int                                                                 false "page"
-// @Param       search     query    string                                                              false "search in (Username,Email)"
-// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}} "models.User"
-// @Router      /v1/project/{project_id}/user [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		获取属于 Project 的 User 列表
+//	@Description	获取属于 Project 的 User 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint																true	"project_id"
+//	@Param			preload		query		string																false	"choices Tenants,SystemRole"
+//	@Param			page		query		int																	false	"page"
+//	@Param			size		query		int																	false	"page"
+//	@Param			search		query		string																false	"search in (Username,Email)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}}	"models.User"
+//	@Router			/v1/project/{project_id}/user [get]
+//	@Security		JWT
 func (h *ProjectHandler) ListProjectUser(c *gin.Context) {
 	var list []models.User
 	query, err := handlers.GetQuery(c, nil)
@@ -260,16 +260,16 @@ func (h *ProjectHandler) ListProjectUser(c *gin.Context) {
 }
 
 // RetrieveProjectUser 获取Project 的一个 User详情
-// @Tags        Project
-// @Summary     获取Project 的一个 User详情
-// @Description 获取Project 的一个 User详情
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                      true "project_id"
-// @Param       user_id    path     uint                                      true "user_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.User} "models.User"
-// @Router      /v1/project/{project_id}/user/{user_id} [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		获取Project 的一个 User详情
+//	@Description	获取Project 的一个 User详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint										true	"project_id"
+//	@Param			user_id		path		uint										true	"user_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.User}	"models.User"
+//	@Router			/v1/project/{project_id}/user/{user_id} [get]
+//	@Security		JWT
 func (h *ProjectHandler) RetrieveProjectUser(c *gin.Context) {
 	var user models.User
 	if err := h.GetDB().WithContext(c.Request.Context()).Model(
@@ -288,16 +288,16 @@ func (h *ProjectHandler) RetrieveProjectUser(c *gin.Context) {
 }
 
 // PostProjectUser 在User和Project间添加关联关系
-// @Tags        Project
-// @Summary     在User和Project间添加关联关系
-// @Description 在User和Project间添加关联关系
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                                 true "project_id"
-// @Param       param      body     models.ProjectUserRels                               true "表单"`
-// @Success     200        {object} handlers.ResponseStruct{Data=models.ProjectUserRels} "models.User"
-// @Router      /v1/project/{project_id}/user [post]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		在User和Project间添加关联关系
+//	@Description	在User和Project间添加关联关系
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint													true	"project_id"
+//	@Param			param		body		models.ProjectUserRels									true	"表单"`
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.ProjectUserRels}	"models.User"
+//	@Router			/v1/project/{project_id}/user [post]
+//	@Security		JWT
 func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 	var rel models.ProjectUserRels
 	if err := c.BindJSON(&rel); err != nil {
@@ -339,17 +339,17 @@ func (h *ProjectHandler) PostProjectUser(c *gin.Context) {
 }
 
 // PutProjectUser 修改 User 和 Project 的关联关系
-// @Tags        Project
-// @Summary     修改 User 和 Project 的关联关系
-// @Description 修改 User 和 Project 的关联关系
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                                 true "project_id"
-// @Param       user_id    path     uint                                                 true "user_id"
-// @Param       param      body     models.ProjectUserRels                               true "表单"`
-// @Success     200        {object} handlers.ResponseStruct{Data=models.ProjectUserRels} "models.User"
-// @Router      /v1/project/{project_id}/user/{user_id} [put]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		修改 User 和 Project 的关联关系
+//	@Description	修改 User 和 Project 的关联关系
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint													true	"project_id"
+//	@Param			user_id		path		uint													true	"user_id"
+//	@Param			param		body		models.ProjectUserRels									true	"表单"`
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.ProjectUserRels}	"models.User"
+//	@Router			/v1/project/{project_id}/user/{user_id} [put]
+//	@Security		JWT
 func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
 	var (
 		tmp, rel models.ProjectUserRels
@@ -401,16 +401,16 @@ func (h *ProjectHandler) PutProjectUser(c *gin.Context) {
 }
 
 // DeleteProjectUser 删除 User 和 Project 的关系
-// @Tags        Project
-// @Summary     删除 User 和 Project 的关系
-// @Description 删除 User 和 Project 的关系
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                      true "project_id"
-// @Param       user_id    path     uint                                      true "user_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.User} "models.User"
-// @Router      /v1/project/{project_id}/user/{user_id} [delete]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		删除 User 和 Project 的关系
+//	@Description	删除 User 和 Project 的关系
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint										true	"project_id"
+//	@Param			user_id		path		uint										true	"user_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.User}	"models.User"
+//	@Router			/v1/project/{project_id}/user/{user_id} [delete]
+//	@Security		JWT
 func (h *ProjectHandler) DeleteProjectUser(c *gin.Context) {
 	var (
 		rel    models.ProjectUserRels
@@ -466,20 +466,20 @@ func (h *ProjectHandler) DeleteProjectUser(c *gin.Context) {
 }
 
 // ListProjectEnvironment 获取属于Project的 Environment 列表
-// @Tags        Project
-// @Summary     获取属于 Project 的 Environment 列表
-// @Description 获取属于 Project 的 Environment 列表
-// @Accept      json
-// @Produce     json
-// @Param       project_id      path     uint                                                                       true  "project_id"
-// @Param       preload         query    string                                                                     false "choices Creator,Cluster,Project,Applications,Users"
-// @Param       page            query    int                                                                        false "page"
-// @Param       size            query    int                                                                        false "page"
-// @Param       search          query    string                                                                     false "search in (EnvironmentName)"
-// @Param       containNSLabels query    bool                                                                       false "是否包含命名空间标签"
-// @Success     200             {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}} "models.Environment"
-// @Router      /v1/project/{project_id}/environment [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		获取属于 Project 的 Environment 列表
+//	@Description	获取属于 Project 的 Environment 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id		path		uint																		true	"project_id"
+//	@Param			preload			query		string																		false	"choices Creator,Cluster,Project,Applications,Users"
+//	@Param			page			query		int																			false	"page"
+//	@Param			size			query		int																			false	"page"
+//	@Param			search			query		string																		false	"search in (EnvironmentName)"
+//	@Param			containNSLabels	query		bool																		false	"是否包含命名空间标签"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}}	"models.Environment"
+//	@Router			/v1/project/{project_id}/environment [get]
+//	@Security		JWT
 func (h *ProjectHandler) ListProjectEnvironment(c *gin.Context) {
 	var list []models.Environment
 	query, err := handlers.GetQuery(c, nil)
@@ -529,16 +529,16 @@ func (h *ProjectHandler) ListProjectEnvironment(c *gin.Context) {
 }
 
 // RetrieveProjectEnvironment 获取Project 的一个 Environment详情
-// @Tags        Project
-// @Summary     获取Project 的一个 Environment详情
-// @Description 获取Project 的一个 Environment详情
-// @Accept      json
-// @Produce     json
-// @Param       project_id     path     uint                                             true "project_id"
-// @Param       environment_id path     uint                                             true "environment_id"
-// @Success     200            {object} handlers.ResponseStruct{Data=models.Environment} "models.Environment"
-// @Router      /v1/project/{project_id}/environment/{environment_id} [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		获取Project 的一个 Environment详情
+//	@Description	获取Project 的一个 Environment详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id		path		uint												true	"project_id"
+//	@Param			environment_id	path		uint												true	"environment_id"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=models.Environment}	"models.Environment"
+//	@Router			/v1/project/{project_id}/environment/{environment_id} [get]
+//	@Security		JWT
 func (h *ProjectHandler) RetrieveProjectEnvironment(c *gin.Context) {
 	var env models.Environment
 	if err := h.GetDB().WithContext(c.Request.Context()).First(&env, "project_id = ? and id = ?", c.Param(PrimaryKeyName), c.Param("environment_id")).Error; err != nil {
@@ -549,16 +549,16 @@ func (h *ProjectHandler) RetrieveProjectEnvironment(c *gin.Context) {
 }
 
 // GetProjectResource 获取项目资源清单
-// @Tags        ResourceList
-// @Summary     获取项目资源清单
-// @Description 获取项目资源清单
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                                       true  "project_id"
-// @Param       date       query    string                                                     false "date"
-// @Success     200        {object} handlers.ResponseStruct{Data=[]models.EnvironmentResource} "EnvironmentResource"
-// @Router      /v1/resources/project/{project_id} [get]
-// @Security    JWT
+//	@Tags			ResourceList
+//	@Summary		获取项目资源清单
+//	@Description	获取项目资源清单
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint														true	"project_id"
+//	@Param			date		query		string														false	"date"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.EnvironmentResource}	"EnvironmentResource"
+//	@Router			/v1/resources/project/{project_id} [get]
+//	@Security		JWT
 func (h *ProjectHandler) GetProjectResource(c *gin.Context) {
 	dateTime, err := time.Parse(time.RFC3339, c.Query("date"))
 	if err != nil {

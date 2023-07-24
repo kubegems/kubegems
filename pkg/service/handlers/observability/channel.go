@@ -52,18 +52,18 @@ func (h *ObservabilityHandler) getChannelReq(c *gin.Context) (*models.AlertChann
 }
 
 // ListChannels 告警渠道列表
-// @Tags        Observability
-// @Summary     告警渠道列表
-// @Description 告警渠道列表
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                                              true  "租户id, 所有租户为_all"
-// @Param       search    query    string                                              false "search in (name)"
-// @Param       page      query    int                                                 false "page"
-// @Param       size      query    int                                                 false "size"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]models.AlertChannel} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/channels [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		告警渠道列表
+//	@Description	告警渠道列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string												true	"租户id, 所有租户为_all"
+//	@Param			search		query		string												false	"search in (name)"
+//	@Param			page		query		int													false	"page"
+//	@Param			size		query		int													false	"size"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.AlertChannel}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/channels [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) ListChannels(c *gin.Context) {
 	list := []models.AlertChannel{}
 	query, err := handlers.GetQuery(c, nil)
@@ -89,16 +89,16 @@ func (h *ObservabilityHandler) ListChannels(c *gin.Context) {
 }
 
 // GetChannel 渠道列表详情
-// @Tags        Observability
-// @Summary     渠道列表详情
-// @Description 渠道列表详情
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     string                                            true "租户id, 所有租户为_all"
-// @Param       channel_id path     string                                            true "告警渠道id"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.AlertChannel} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id} [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		渠道列表详情
+//	@Description	渠道列表详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string												true	"租户id, 所有租户为_all"
+//	@Param			channel_id	path		string												true	"告警渠道id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.AlertChannel}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/channels/{channel_id} [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) GetChannel(c *gin.Context) {
 	tenantID := c.Param("tenant_id")
 	query := h.GetDB().WithContext(c.Request.Context())
@@ -115,16 +115,16 @@ func (h *ObservabilityHandler) GetChannel(c *gin.Context) {
 }
 
 // CreateChannel 创建告警渠道
-// @Tags        Observability
-// @Summary     创建告警渠道
-// @Description 创建告警渠道
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                               true "租户id, 所有租户为_all"
-// @Param       form      body     models.AlertChannel                  true "body"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/channels [post]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		创建告警渠道
+//	@Description	创建告警渠道
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string									true	"租户id, 所有租户为_all"
+//	@Param			form		body		models.AlertChannel						true	"body"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/channels [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) CreateChannel(c *gin.Context) {
 	req, err := h.getChannelReq(c)
 	if err != nil {
@@ -150,17 +150,17 @@ func (h *ObservabilityHandler) CreateChannel(c *gin.Context) {
 }
 
 // UpdateChannel 更新告警渠道
-// @Tags        Observability
-// @Summary     更新告警渠道
-// @Description 更新告警渠道
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     string                                        true "租户id, 所有租户为_all"
-// @Param       channel_id path     string                                        true "告警渠道id"
-// @Param       form       body     models.AlertChannel                           true "body"
-// @Success     200        {object} handlers.ResponseStruct{Data=map[string]bool} "告警规则-更新状态的map"
-// @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id} [put]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		更新告警渠道
+//	@Description	更新告警渠道
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string											true	"租户id, 所有租户为_all"
+//	@Param			channel_id	path		string											true	"告警渠道id"
+//	@Param			form		body		models.AlertChannel								true	"body"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=map[string]bool}	"告警规则-更新状态的map"
+//	@Router			/v1/observability/tenant/{tenant_id}/channels/{channel_id} [put]
+//	@Security		JWT
 func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 	req, err := h.getChannelReq(c)
 	if err != nil {
@@ -200,17 +200,17 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 }
 
 // DeleteChannel 删除告警渠道
-// @Tags        Observability
-// @Summary     删除告警渠道
-// @Description 删除告警渠道
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     string                               true "租户id, 所有租户为_all"
-// @Param       channel_id path     string                               true "告警渠道id"
-// @Param       form       body     models.AlertChannel                  true "body"
-// @Success     200        {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id} [delete]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		删除告警渠道
+//	@Description	删除告警渠道
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string									true	"租户id, 所有租户为_all"
+//	@Param			channel_id	path		string									true	"告警渠道id"
+//	@Param			form		body		models.AlertChannel						true	"body"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/channels/{channel_id} [delete]
+//	@Security		JWT
 func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 	ch := &models.AlertChannel{}
 	ctx := c.Request.Context()
@@ -251,16 +251,16 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 }
 
 // TestChannel 测试告警渠道
-// @Tags        Observability
-// @Summary     测试告警渠道
-// @Description 测试告警渠道
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id  path     string                               true "租户id, 所有租户为_all"
-// @Param       channel_id path     string                               true "告警渠道id"
-// @Success     200       {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/channels/{channel_id}/test [post]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		测试告警渠道
+//	@Description	测试告警渠道
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string									true	"租户id, 所有租户为_all"
+//	@Param			channel_id	path		string									true	"告警渠道id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/channels/{channel_id}/test [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) TestChannel(c *gin.Context) {
 	ch := &models.AlertChannel{}
 	if err := h.GetDB().WithContext(c.Request.Context()).First(ch, "id = ?", c.Param("channel_id")).Error; err != nil {

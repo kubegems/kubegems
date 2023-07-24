@@ -17,13 +17,11 @@ package routers
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	cserice "kubegems.io/configer/service"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/utils/agents"
 )
 
 func registPlugins(rg *gin.RouterGroup, basehandler base.BaseHandler) error {
@@ -56,18 +54,12 @@ func (p *PluginInfoGetter) ClusterNameOf(tenant, project, environment string) (c
 }
 
 func (p *PluginInfoGetter) NacosInfoOf(clusterName string) (addr, username, password string, err error) {
-	cli, err := p.GetAgents().ClientOf(context.Background(), clusterName)
-	if err != nil {
-		return "", "", "", err
-	}
-	u := cli.BaseAddr()
-	h := u.String() + "/v1/service-proxy"
-	return h, "nacos", "nacos", nil
+	return "http://nacos-client.nacos:8848", "nacos", "nacos", nil
 }
 
 func (p *PluginInfoGetter) RoundTripperOf(clusterName string) (rt http.RoundTripper) {
 	cli, _ := p.GetAgents().ClientOf(context.Background(), clusterName)
-	return RoundTripOf(cli)
+	return cli.ProxyTransport()
 }
 
 func (p *PluginInfoGetter) Username(c *gin.Context) string {
@@ -76,24 +68,4 @@ func (p *PluginInfoGetter) Username(c *gin.Context) string {
 		return ""
 	}
 	return u.GetUsername()
-}
-
-// 临时修复
-func RoundTripOf(cli agents.Client) http.RoundTripper {
-	return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-		realPath := strings.TrimPrefix(req.URL.Path, cli.BaseAddr().Path)
-		return cli.DoRawRequest(req.Context(), agents.Request{
-			Method:  req.Method,
-			Path:    realPath,
-			Query:   req.URL.Query(),
-			Headers: req.Header,
-			Body:    req.Body,
-		})
-	})
-}
-
-type RoundTripperFunc func(req *http.Request) (*http.Response, error)
-
-func (c RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return c(req)
 }

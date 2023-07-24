@@ -36,15 +36,15 @@ var (
 )
 
 // ListAnnouncement 公告列表
-// @Tags        Announcement
-// @Summary     公告列表
-// @Description 公告列表
-// @Accept      json
-// @Produce     json
-// @Param       active query    bool                                                                        true "是否为活跃中的公告"
-// @Success     200    {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Announcement}} "resp"
-// @Router      /v1/announcement [get]
-// @Security    JWT
+//	@Tags			Announcement
+//	@Summary		公告列表
+//	@Description	公告列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			active	query		bool																		true	"是否为活跃中的公告"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Announcement}}	"resp"
+//	@Router			/v1/announcement [get]
+//	@Security		JWT
 func (h *AnnouncementHandler) ListAnnouncement(c *gin.Context) {
 	active, _ := strconv.ParseBool(c.Query("active"))
 	list := []models.Announcement{}
@@ -71,15 +71,15 @@ func (h *AnnouncementHandler) ListAnnouncement(c *gin.Context) {
 }
 
 // GetAnnouncement 获取单个公告
-// @Tags        Announcement
-// @Summary     获取单个公告
-// @Description 获取单个公告
-// @Accept      json
-// @Produce     json
-// @Param       id  path     uint                                              true "公告 id"
-// @Success     200 {object} handlers.ResponseStruct{Data=models.Announcement} "resp"
-// @Router      /v1/announcement/{id} [get]
-// @Security    JWT
+//	@Tags			Announcement
+//	@Summary		获取单个公告
+//	@Description	获取单个公告
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		uint												true	"公告 id"
+//	@Success		200	{object}	handlers.ResponseStruct{Data=models.Announcement}	"resp"
+//	@Router			/v1/announcement/{id} [get]
+//	@Security		JWT
 func (h *AnnouncementHandler) GetAnnouncement(c *gin.Context) {
 	ret := models.Announcement{}
 	if err := h.GetDB().WithContext(c.Request.Context()).First(&ret, c.Param("id")).Error; err != nil {
@@ -90,15 +90,15 @@ func (h *AnnouncementHandler) GetAnnouncement(c *gin.Context) {
 }
 
 // PostAnnouncement 发布公告
-// @Tags        Announcement
-// @Summary     发布公告
-// @Description 发布公告
-// @Accept      json
-// @Produce     json
-// @Param       form body     models.Announcement                  true "公告内容"
-// @Success     200  {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/announcement [post]
-// @Security    JWT
+//	@Tags			Announcement
+//	@Summary		发布公告
+//	@Description	发布公告
+//	@Accept			json
+//	@Produce		json
+//	@Param			form	body		models.Announcement						true	"公告内容"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/announcement [post]
+//	@Security		JWT
 func (h *AnnouncementHandler) PostAnnouncement(c *gin.Context) {
 	req := models.Announcement{}
 	if err := c.Bind(&req); err != nil {
@@ -118,16 +118,16 @@ func (h *AnnouncementHandler) PostAnnouncement(c *gin.Context) {
 }
 
 // PutAnnouncement 更新公告
-// @Tags        Announcement
-// @Summary     更新公告
-// @Description 更新公告
-// @Accept      json
-// @Produce     json
-// @Param       id   path     uint                                 true "公告 id"
-// @Param       form body     models.Announcement                  true "公告内容"
-// @Success     200  {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/announcement/{id} [put]
-// @Security    JWT
+//	@Tags			Announcement
+//	@Summary		更新公告
+//	@Description	更新公告
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		uint									true	"公告 id"
+//	@Param			form	body		models.Announcement						true	"公告内容"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/announcement/{id} [put]
+//	@Security		JWT
 func (h *AnnouncementHandler) PutAnnouncement(c *gin.Context) {
 	req := models.Announcement{}
 	if err := c.Bind(&req); err != nil {
@@ -147,15 +147,15 @@ func (h *AnnouncementHandler) PutAnnouncement(c *gin.Context) {
 }
 
 // DeleteAnnouncement 删除公告
-// @Tags        Announcement
-// @Summary     删除公告
-// @Description 删除公告
-// @Accept      json
-// @Produce     json
-// @Param       id  path     uint                                 true "公告 id"
-// @Success     200 {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/announcement/{id} [delete]
-// @Security    JWT
+//	@Tags			Announcement
+//	@Summary		删除公告
+//	@Description	删除公告
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		uint									true	"公告 id"
+//	@Success		200	{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/announcement/{id} [delete]
+//	@Security		JWT
 func (h *AnnouncementHandler) DeleteAnnouncement(c *gin.Context) {
 	req := models.Announcement{}
 	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&req, c.Param("id")).Error; err != nil {

@@ -62,24 +62,24 @@ type MetricQueryReq struct {
 }
 
 // Query 监控指标查询
-// @Tags        Observability
-// @Summary     监控指标查询
-// @Description 监控指标查询
-// @Accept      json
-// @Produce     json
-// @Param       cluster    path     string                               true  "集群名"
-// @Param       namespace  path     string                               true  "命名空间，所有namespace为_all"
-// @Param       resource   query    string                               false "查询资源"
-// @Param       rule       query    string                               false "查询规则"
-// @Param       unit       query    string                               false "单位"
-// @Param       labelpairs query    string                               false "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
-// @Param       expr       query    string                               false "promql表达式"
-// @Param       start      query    string                               false "开始时间，默认现在-30m"
-// @Param       end        query    string                               false "结束时间，默认现在"
-// @Param       step       query    int                                  false "step, 单位秒，默认0"
-// @Success     200        {object} handlers.ResponseStruct{Data=object} "Metrics配置"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/queryrange [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		监控指标查询
+//	@Description	监控指标查询
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string									true	"集群名"
+//	@Param			namespace	path		string									true	"命名空间，所有namespace为_all"
+//	@Param			resource	query		string									false	"查询资源"
+//	@Param			rule		query		string									false	"查询规则"
+//	@Param			unit		query		string									false	"单位"
+//	@Param			labelpairs	query		string									false	"标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
+//	@Param			expr		query		string									false	"promql表达式"
+//	@Param			start		query		string									false	"开始时间，默认现在-30m"
+//	@Param			end			query		string									false	"结束时间，默认现在"
+//	@Param			step		query		int										false	"step, 单位秒，默认0"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"Metrics配置"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/queryrange [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) QueryRange(c *gin.Context) {
 	ret := prommodel.Matrix{}
 	req := h.getMetricQuery(c)
@@ -100,25 +100,25 @@ func (h *ObservabilityHandler) QueryRange(c *gin.Context) {
 }
 
 // Query 监控标签值
-// @Tags        Observability
-// @Summary     监控标签值
-// @Description 查询label对应的标签值
-// @Accept      json
-// @Produce     json
-// @Param       label      query    string                                 true  "要查询的标签"
-// @Param       cluster    path     string                                 true  "集群名"
-// @Param       namespace  path     string                                 true  "命名空间，所有namespace为_all"
-// @Param       resource   query    string                                 false "查询资源"
-// @Param       rule       query    string                                 false "查询规则"
-// @Param       unit       query    string                                 false "单位"
-// @Param       labelpairs query    string                                 false "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
-// @Param       expr       query    string                                 false "promql表达式"
-// @Param       start      query    string                                 false "开始时间，默认现在-30m"
-// @Param       end        query    string                                 false "结束时间，默认现在"
-// @Param       step       query    int                                    false "step, 单位秒，默认0"
-// @Success     200        {object} handlers.ResponseStruct{Data=[]string} "Metrics配置"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelvalues [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		监控标签值
+//	@Description	查询label对应的标签值
+//	@Accept			json
+//	@Produce		json
+//	@Param			label		query		string									true	"要查询的标签"
+//	@Param			cluster		path		string									true	"集群名"
+//	@Param			namespace	path		string									true	"命名空间，所有namespace为_all"
+//	@Param			resource	query		string									false	"查询资源"
+//	@Param			rule		query		string									false	"查询规则"
+//	@Param			unit		query		string									false	"单位"
+//	@Param			labelpairs	query		string									false	"标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
+//	@Param			expr		query		string									false	"promql表达式"
+//	@Param			start		query		string									false	"开始时间，默认现在-30m"
+//	@Param			end			query		string									false	"结束时间，默认现在"
+//	@Param			step		query		int										false	"step, 单位秒，默认0"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]string}	"Metrics配置"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelvalues [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 	ret := []string{}
 	req := h.getMetricQuery(c)
@@ -140,21 +140,21 @@ func (h *ObservabilityHandler) LabelValues(c *gin.Context) {
 }
 
 // LabelNames 查群prometheus label names
-// @Tags        Observability
-// @Summary     查群prometheus label names
-// @Description 查群prometheus label names
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                                 true  "集群名"
-// @Param       namespace path     string                                 true  "命名空间，所有namespace为_all"
-// @Param       resource  query    string                                 false "查询资源"
-// @Param       rule      query    string                                 false "查询规则"
-// @Param       start     query    string                                 false "开始时间，默认现在-30m"
-// @Param       end       query    string                                 false "结束时间，默认现在"
-// @Param       expr      query    string                                 true  "promql表达式"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]string} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelnames [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		查群prometheus label names
+//	@Description	查群prometheus label names
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string									true	"集群名"
+//	@Param			namespace	path		string									true	"命名空间，所有namespace为_all"
+//	@Param			resource	query		string									false	"查询资源"
+//	@Param			rule		query		string									false	"查询规则"
+//	@Param			start		query		string									false	"开始时间，默认现在-30m"
+//	@Param			end			query		string									false	"结束时间，默认现在"
+//	@Param			expr		query		string									true	"promql表达式"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]string}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/monitor/metrics/labelnames [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 	ret := []string{}
 	req := h.getMetricQuery(c)
@@ -176,19 +176,19 @@ func (h *ObservabilityHandler) LabelNames(c *gin.Context) {
 }
 
 // OtelMetricsGraphs OtelMetricsGraphs
-// @Tags        Observability
-// @Summary     OtelMetricsGraphs
-// @Description OtelMetricsGraphs
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                               true  "集群名"
-// @Param       namespace path     string                               true  "命名空间"
-// @Param       service   query    string                               false "jaeger service"
-// @Param       start     query    string                               false "开始时间，默认现在-30m"
-// @Param       end       query    string                               false "结束时间，默认现在"
-// @Success     200       {object} handlers.ResponseStruct{Data=object} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		OtelMetricsGraphs
+//	@Description	OtelMetricsGraphs
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string									true	"集群名"
+//	@Param			namespace	path		string									true	"命名空间"
+//	@Param			service		query		string									false	"jaeger service"
+//	@Param			start		query		string									false	"开始时间，默认现在-30m"
+//	@Param			end			query		string									false	"结束时间，默认现在"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/metrics/graphs [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) OtelMetricsGraphs(c *gin.Context) {
 	ns := c.Param("namespace")
 	svc := c.Query("service")
@@ -312,19 +312,19 @@ func (h *ObservabilityHandler) mutateMetricQueryReq(ctx context.Context, q *Metr
 }
 
 // ListScopes 获取promql模板一级目录scope
-// @Tags        Observability
-// @Summary     获取promql模板一级目录scope
-// @Description 获取promql模板一级目录scope
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                                                true "租户ID"
-// @Param       page        query    int                                                   false "page"
-// @Param       size        query    int                                                   false "size"
-// @Param       search    query    string                                                false "search in (name)"
-// @Param       preload   query    string                                                false "choices (Resources)"
-// @Success     200         {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/template/scopes [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		获取promql模板一级目录scope
+//	@Description	获取promql模板一级目录scope
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string													true	"租户ID"
+//	@Param			page		query		int														false	"page"
+//	@Param			size		query		int														false	"size"
+//	@Param			search		query		string													false	"search in (name)"
+//	@Param			preload		query		string													false	"choices (Resources)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.PromqlTplScope}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/template/scopes [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
 	list := []*models.PromqlTplScope{}
 	query, err := handlers.GetQuery(c, nil)
@@ -346,20 +346,20 @@ func (h *ObservabilityHandler) ListScopes(c *gin.Context) {
 }
 
 // ListResources 获取promql模板二级目录resource
-// @Tags        Observability
-// @Summary     获取promql模板二级目录resource
-// @Description 获取promql模板二级目录resource
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     int                                                   true  "租户ID"
-// @Param       scope_id  path     int                                                   true  "scope id"
-// @Param       preload   query    string                                                false "choices (Scope, Rules)"
-// @Param       search    query    string                                                false "search in (name)"
-// @Param       page      query    int                                                   false "page"
-// @Param       size      query    int                                                   false "size"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/template/scopes/{scope_id}/resources [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		获取promql模板二级目录resource
+//	@Description	获取promql模板二级目录resource
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		int														true	"租户ID"
+//	@Param			scope_id	path		int														true	"scope id"
+//	@Param			preload		query		string													false	"choices (Scope, Rules)"
+//	@Param			search		query		string													false	"search in (name)"
+//	@Param			page		query		int														false	"page"
+//	@Param			size		query		int														false	"size"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.PromqlTplScope}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/template/scopes/{scope_id}/resources [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) ListResources(c *gin.Context) {
 	list := []*models.PromqlTplResource{}
 	query, err := handlers.GetQuery(c, nil)
@@ -383,20 +383,20 @@ func (h *ObservabilityHandler) ListResources(c *gin.Context) {
 }
 
 // ListRules 获取promql模板三级目录rule
-// @Tags        Observability
-// @Summary     获取promql模板三级目录rule
-// @Description 获取promql模板三级目录rule
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id   path     string                                                true  "租户ID"
-// @Param       resource_id path     string                                                true  "resource id"
-// @Param       preload     query    string                                                false "choices (Resource, Resource.Scope)"
-// @Param       search      query    string                                                false "search in (name, show_name)"
-// @Param       page      query    int                                                   false "page"
-// @Param       size      query    int                                                   false "size"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/template/resources{resource_id}/rules [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		获取promql模板三级目录rule
+//	@Description	获取promql模板三级目录rule
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string													true	"租户ID"
+//	@Param			resource_id	path		string													true	"resource id"
+//	@Param			preload		query		string													false	"choices (Resource, Resource.Scope)"
+//	@Param			search		query		string													false	"search in (name, show_name)"
+//	@Param			page		query		int														false	"page"
+//	@Param			size		query		int														false	"size"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.PromqlTplScope}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/template/resources{resource_id}/rules [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) ListRules(c *gin.Context) {
 	list := []*models.PromqlTplRule{}
 	query, err := handlers.GetQuery(c, nil)
@@ -426,17 +426,17 @@ func (h *ObservabilityHandler) ListRules(c *gin.Context) {
 }
 
 // GetRule 获取promql模板三级目录rule
-// @Tags        Observability
-// @Summary     获取promql模板三级目录rule
-// @Description 获取promql模板三级目录rule
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                               true "租户ID"
-// @Param       rule_id   path     string                                              true  "rule ID"
-// @Param       preload   query    string                                              false "Resource, Resource.Scope"
-// @Success     200       {object} handlers.ResponseStruct{Data=models.PromqlTplScope} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		获取promql模板三级目录rule
+//	@Description	获取promql模板三级目录rule
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string												true	"租户ID"
+//	@Param			rule_id		path		string												true	"rule ID"
+//	@Param			preload		query		string												false	"Resource, Resource.Scope"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.PromqlTplScope}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) GetRule(c *gin.Context) {
 	rule := models.PromqlTplRule{}
 	tenantID := c.Param("tenant_id")
@@ -457,18 +457,18 @@ func (h *ObservabilityHandler) GetRule(c *gin.Context) {
 }
 
 // SearchTpl 由scope,resource,rule name获取tpl
-// @Tags        Observability
-// @Summary     由scope,resource,rule name获取tpl
-// @Description 由scope,resource,rule name获取tpl
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                                              true  "租户ID"
-// @Param       scope     query    string                               true "scope"
-// @Param       resource  query    string                               true "scope"
-// @Param       rule      query    string                               true "scope"
-// @Success     200       {object} handlers.ResponseStruct{Data=object} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/template/search [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		由scope,resource,rule name获取tpl
+//	@Description	由scope,resource,rule name获取tpl
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string									true	"租户ID"
+//	@Param			scope		query		string									true	"scope"
+//	@Param			resource	query		string									true	"scope"
+//	@Param			rule		query		string									true	"scope"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/template/search [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) SearchTpl(c *gin.Context) {
 	tpl, err := h.GetDataBase().FindPromqlTpl(c.Query("scope"), c.Query("resource"), c.Query("rule"))
 	if err != nil {
@@ -479,16 +479,16 @@ func (h *ObservabilityHandler) SearchTpl(c *gin.Context) {
 }
 
 // AddRules 添加promql模板三级目录rule
-// @Tags        Observability
-// @Summary     添加promql模板三级目录rule
-// @Description 添加promql模板三级目录rule
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                                                true "租户ID"
-// @Param       param     body     models.PromqlTplRule                                  true "rule"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/template/rules [post]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		添加promql模板三级目录rule
+//	@Description	添加promql模板三级目录rule
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string													true	"租户ID"
+//	@Param			param		body		models.PromqlTplRule									true	"rule"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.PromqlTplScope}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/template/rules [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 	req, err := h.getRuleReq(c)
 	if err != nil {
@@ -519,17 +519,17 @@ func (h *ObservabilityHandler) AddRules(c *gin.Context) {
 }
 
 // UpdateRules 更新promql模板三级目录rule
-// @Tags        Observability
-// @Summary     更新promql模板三级目录rule
-// @Description 更新promql模板三级目录rule
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                                                true "租户ID"
-// @Param       rule_id   path     string                                                true "rule ID"
-// @Param       param     body     models.PromqlTplRule                                  true "rule"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [put]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		更新promql模板三级目录rule
+//	@Description	更新promql模板三级目录rule
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string													true	"租户ID"
+//	@Param			rule_id		path		string													true	"rule ID"
+//	@Param			param		body		models.PromqlTplRule									true	"rule"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.PromqlTplScope}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [put]
+//	@Security		JWT
 func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
 	newRule, err := h.getRuleReq(c)
 	if err != nil {
@@ -567,16 +567,16 @@ func (h *ObservabilityHandler) UpdateRules(c *gin.Context) {
 }
 
 // DeleteRules 删除promql模板三级目录rule
-// @Tags        Observability
-// @Summary     删除promql模板三级目录rule
-// @Description 删除promql模板三级目录rule
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     string                                                true  "租户ID"
-// @Param       rule_id   path     string                                                true "rule ID"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]models.PromqlTplScope} "resp"
-// @Router      /v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [delete]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		删除promql模板三级目录rule
+//	@Description	删除promql模板三级目录rule
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		string													true	"租户ID"
+//	@Param			rule_id		path		string													true	"rule ID"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]models.PromqlTplScope}	"resp"
+//	@Router			/v1/observability/tenant/{tenant_id}/template/rules/{rule_id} [delete]
+//	@Security		JWT
 func (h *ObservabilityHandler) DeleteRules(c *gin.Context) {
 	rule := &models.PromqlTplRule{}
 	ctx := c.Request.Context()
@@ -750,21 +750,21 @@ func lessThan(a, b prommodel.SampleValue) bool {
 }
 
 // OtelServices 应用性能监控服务
-// @Tags        Observability
-// @Summary     应用性能监控服务
-// @Description 应用性能监控服务
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                                                           true  "集群名"
-// @Param       namespace path     string                                                           true  "命名空间，所有namespace为_all"
-// @Param       start     query    string                                                           false "开始时间，默认现在-30m"
-// @Param       end       query    string                                                           false "结束时间，默认现在"
-// @Param       sortby    query    string                                                           false "通过valueMap的哪个字段排序，默认根据labelvalue排序"
-// @Param       page      query    int                                                              false "page"
-// @Param       size      query    int                                                              false "size"
-// @Success     200       {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelView}} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		应用性能监控服务
+//	@Description	应用性能监控服务
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string																true	"集群名"
+//	@Param			namespace	path		string																true	"命名空间，所有namespace为_all"
+//	@Param			start		query		string																false	"开始时间，默认现在-30m"
+//	@Param			end			query		string																false	"结束时间，默认现在"
+//	@Param			sortby		query		string																false	"通过valueMap的哪个字段排序，默认根据labelvalue排序"
+//	@Param			page		query		int																	false	"page"
+//	@Param			size		query		int																	false	"size"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelView}}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) OtelServices(c *gin.Context) {
 	ns := c.Param("namespace")
 	_, _, dur := getRangeParams(c.Query("start"), c.Query("end"))
@@ -825,19 +825,19 @@ type OtelOverViewResp struct {
 }
 
 // OtelOverview 应用性能监控概览
-// @Tags        Observability
-// @Summary     应用性能监控概览
-// @Description 应用性能监控概览
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                                         true  "集群名"
-// @Param       namespace path     string                                         true  "命名空间"
-// @Param       start     query    string                                         false "开始时间，默认现在-30m"
-// @Param       end       query    string                                         false "结束时间，默认现在"
-// @Param       pick      query    string                                         false "选择什么值(max/min/avg), default max"
-// @Success     200       {object} handlers.ResponseStruct{Data=OtelOverViewResp} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/overview [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		应用性能监控概览
+//	@Description	应用性能监控概览
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string											true	"集群名"
+//	@Param			namespace	path		string											true	"命名空间"
+//	@Param			start		query		string											false	"开始时间，默认现在-30m"
+//	@Param			end			query		string											false	"结束时间，默认现在"
+//	@Param			pick		query		string											false	"选择什么值(max/min/avg), default max"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=OtelOverViewResp}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/overview [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) OtelOverview(c *gin.Context) {
 	ns := c.Param("namespace")
 	pick := c.DefaultQuery("pick", "max")
@@ -947,19 +947,19 @@ func pickVectorValue(vector prommodel.Vector, field string) []KV {
 }
 
 // OtelServiceRequests 应用请求
-// @Tags        Observability
-// @Summary     应用请求
-// @Description 应用请求
-// @Accept      json
-// @Produce     json
-// @Param       cluster      path     string                              true  "集群名"
-// @Param       namespace    path     string                              true  "命名空间"
-// @Param       service_name path     string                              true  "应用"
-// @Param       start        query    string                              false "开始时间，默认现在-30m"
-// @Param       end          query    string                              false "结束时间，默认现在"
-// @Success     200          {object} handlers.ResponseStruct{Data=gin.H} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/requests [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		应用请求
+//	@Description	应用请求
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster			path		string								true	"集群名"
+//	@Param			namespace		path		string								true	"命名空间"
+//	@Param			service_name	path		string								true	"应用"
+//	@Param			start			query		string								false	"开始时间，默认现在-30m"
+//	@Param			end				query		string								false	"结束时间，默认现在"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=gin.H}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/requests [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) OtelServiceRequests(c *gin.Context) {
 	ns := c.Param("namespace")
 	svc := c.Param("service_name")
@@ -997,22 +997,22 @@ func (h *ObservabilityHandler) OtelServiceRequests(c *gin.Context) {
 }
 
 // OtelServiceOperations 应用操作
-// @Tags        Observability
-// @Summary     应用操作
-// @Description 应用操作
-// @Accept      json
-// @Produce     json
-// @Param       cluster      path     string                                                                true  "集群名"
-// @Param       namespace    path     string                                                                true  "命名空间"
-// @Param       service_name path     string                                                                true  "应用"
-// @Param       start        query    string                                                                false "开始时间，默认现在-30m"
-// @Param       end          query    string                                                                false "结束时间，默认现在"
-// @Param       sortby       query    string                                                           false "通过valueMap的哪个字段排序，默认根据labelvalue排序"
-// @Param       page         query    int                                                              false "page"
-// @Param       size         query    int                                                              false "size"
-// @Success     200          {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelView}} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/operations [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		应用操作
+//	@Description	应用操作
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster			path		string																true	"集群名"
+//	@Param			namespace		path		string																true	"命名空间"
+//	@Param			service_name	path		string																true	"应用"
+//	@Param			start			query		string																false	"开始时间，默认现在-30m"
+//	@Param			end				query		string																false	"结束时间，默认现在"
+//	@Param			sortby			query		string																false	"通过valueMap的哪个字段排序，默认根据labelvalue排序"
+//	@Param			page			query		int																	false	"page"
+//	@Param			size			query		int																	false	"size"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]OtelView}}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/operations [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) OtelServiceOperations(c *gin.Context) {
 	ns := c.Param("namespace")
 	svc := c.Param("service_name")
@@ -1038,24 +1038,24 @@ func (h *ObservabilityHandler) OtelServiceOperations(c *gin.Context) {
 }
 
 // OtelServiceTraces 应用traces
-// @Tags        Observability
-// @Summary     应用traces
-// @Description 应用traces
-// @Accept      json
-// @Produce     json
-// @Param       cluster      path     string                                                           true  "集群名"
-// @Param       namespace    path     string                                                           true  "命名空间"
-// @Param       service_name path     string                                                           true  "应用"
-// @Param       start        query    string                                                           false "开始时间，默认现在-30m"
-// @Param       end          query    string                                                           false "结束时间，默认现在"
-// @Param       maxDuration  query    string                                                                true  "trace的maxDuration"
-// @Param       minDuration  query    string                                                                true  "trace的minDuration"
-// @Param       limit        query    int                                                                   true  "limit"
-// @Param       page         query    int                                                                   false "page"
-// @Param       size         query    int                                                                   false "size"
-// @Success     200          {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]observe.Trace}} "resp"
-// @Router      /v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/traces [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		应用traces
+//	@Description	应用traces
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster			path		string																	true	"集群名"
+//	@Param			namespace		path		string																	true	"命名空间"
+//	@Param			service_name	path		string																	true	"应用"
+//	@Param			start			query		string																	false	"开始时间，默认现在-30m"
+//	@Param			end				query		string																	false	"结束时间，默认现在"
+//	@Param			maxDuration		query		string																	true	"trace的maxDuration"
+//	@Param			minDuration		query		string																	true	"trace的minDuration"
+//	@Param			limit			query		int																		true	"limit"
+//	@Param			page			query		int																		false	"page"
+//	@Param			size			query		int																		false	"size"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]observe.Trace}}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/namespaces/{namespace}/otel/appmonitor/services/{service_name}/traces [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) OtelServiceTraces(c *gin.Context) {
 	// 前端传来的是UTC时间
 	start, end := prometheus.ParseRangeTime(c.Query("start"), c.Query("end"), time.UTC)

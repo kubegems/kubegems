@@ -35,37 +35,24 @@ import (
 )
 
 /*
-代理后修改reponse中的绝对地址
+代理后修改response中的绝对地址
 https://github1s.com/kubernetes/apimachinery/blob/master/pkg/util/proxy/transport.go
 */
 
 // Transport is a transport for text/html content that replaces URLs in html
 // content with the prefix of the proxy server
 type Transport struct {
-	Scheme        string
-	Host          string
-	AgentBaseAddr string
-	PathPrepend   string
-	AgentPrefix   string
+	Scheme      string
+	Host        string
+	PathPrepend string
+
+	TrimPrefix string
 
 	http.RoundTripper
 }
 
 // RoundTrip implements the http.RoundTripper interface
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// Add reverse proxy headers.
-	forwardedURI := path.Join(t.PathPrepend, req.URL.Path)
-	if strings.HasSuffix(req.URL.Path, "/") {
-		forwardedURI = forwardedURI + "/"
-	}
-	req.Header.Set("X-Forwarded-Uri", forwardedURI)
-	if len(t.Host) > 0 {
-		req.Header.Set("X-Forwarded-Host", t.Host)
-	}
-	if len(t.Scheme) > 0 {
-		req.Header.Set("X-Forwarded-Proto", t.Scheme)
-	}
-
 	rt := t.RoundTripper
 	if rt == nil {
 		rt = http.DefaultTransport
@@ -186,10 +173,7 @@ func (t *Transport) rewriteResponse(req *http.Request, resp *http.Response) (*ht
 	}
 
 	urlRewriter := func(targetUrl string) string {
-		targetUrl = strings.ReplaceAll(targetUrl, t.AgentBaseAddr, "")
-		if t.AgentPrefix != "" {
-			targetUrl = strings.ReplaceAll(targetUrl, t.AgentPrefix, "")
-		}
+		targetUrl = strings.ReplaceAll(targetUrl, t.TrimPrefix, "")
 		return t.rewriteURL(targetUrl, req.URL, req.Host)
 	}
 	err := rewriteHTML(reader, writer, urlRewriter)

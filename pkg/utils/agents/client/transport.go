@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package agents
+package client
 
 import (
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 
 	"kubegems.io/kubegems/pkg/utils/httpsigs"
+	"kubegems.io/library/net/httpproxy"
 )
 
 func (auth *Auth) IsEmpty() bool {
@@ -46,21 +49,23 @@ func NewBasicAuth(username, password string) func(req *http.Request) error {
 	}
 }
 
-type RoundTripperFunc func(req *http.Request) (*http.Response, error)
-
-func (c RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return c(req)
+// NewReverseProxy return a reverse proxy that proxy requests to the agent.
+func NewReverseProxy(addr *url.URL, tp http.RoundTripper) *httputil.ReverseProxy {
+	return &httputil.ReverseProxy{
+		Transport: tp,
+		Director: func(r *http.Request) {
+			pr := httputil.ProxyRequest{Out: r}
+			pr.SetURL(addr)
+		},
+	}
 }
 
-// RoundTripOf
-func RoundTripOf(cli Client) http.RoundTripper {
-	return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-		return cli.DoRawRequest(req.Context(), Request{
-			Method:  req.Method,
-			Path:    req.URL.Path,
-			Query:   req.URL.Query(),
-			Headers: req.Header,
-			Body:    req.Body,
-		})
-	})
+// NewProxyTransport return a transport that handle requests like it happens in the agent pod.
+func NewProxyTransport(server *url.URL, tp http.RoundTripper) http.RoundTripper {
+	serveraddr := *server
+	serveraddr.Path += "/internal/proxy"
+	return &httpproxy.Client{
+		Server:     &serveraddr,
+		HttpClient: &http.Client{Transport: tp},
+	}
 }

@@ -31,15 +31,15 @@ import (
 )
 
 // ListDashboard 监控dashboard列表
-// @Tags        Observability
-// @Summary     监控dashboard列表
-// @Description 监控dashboard列表
-// @Accept      json
-// @Produce     json
-// @Param       environment_id path     string                                                  true "环境ID"
-// @Success     200            {object} handlers.ResponseStruct{Data=[]models.MonitorDashboard} "监控dashboard列表"
-// @Router      /v1/observability/environment/{environment_id}/monitor/dashboard [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		监控dashboard列表
+//	@Description	监控dashboard列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			environment_id	path		string													true	"环境ID"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=[]models.MonitorDashboard}	"监控dashboard列表"
+//	@Router			/v1/observability/environment/{environment_id}/monitor/dashboard [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) ListDashboard(c *gin.Context) {
 	ret := []models.MonitorDashboard{}
 	if err := h.GetDB().WithContext(c.Request.Context()).Find(&ret, "environment_id = ?", c.Param("environment_id")).Error; err != nil {
@@ -51,16 +51,16 @@ func (h *ObservabilityHandler) ListDashboard(c *gin.Context) {
 }
 
 // DashboardDetail 监控dashboard详情
-// @Tags        Observability
-// @Summary     监控dashboard详情
-// @Description 监控dashboard详情
-// @Accept      json
-// @Produce     json
-// @Param       environment_id path     string                                                    true  "环境ID"
-// @Param       dashboard_id   path     uint                                                      true  "dashboard id"
-// @Success     200            {object} handlers.ResponseStruct{Data=models.MonitorDashboard} "监控dashboard列表"
-// @Router      /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		监控dashboard详情
+//	@Description	监控dashboard详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			environment_id	path		string													true	"环境ID"
+//	@Param			dashboard_id	path		uint													true	"dashboard id"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=models.MonitorDashboard}	"监控dashboard列表"
+//	@Router			/v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) DashboardDetail(c *gin.Context) {
 	ret := models.MonitorDashboard{}
 	if err := h.GetDB().WithContext(c.Request.Context()).Find(&ret, "id = ?", c.Param("dashboard_id")).Error; err != nil {
@@ -72,21 +72,21 @@ func (h *ObservabilityHandler) DashboardDetail(c *gin.Context) {
 }
 
 // DashboardDetail 监控dashboard panne指标查询
-// @Tags        Observability
-// @Summary     监控dashboard panne指标查询
-// @Description 监控dashboard panne指标查询
-// @Accept      json
-// @Produce     json
-// @Param       environment_id path     string                                                true "环境ID"
-// @Param       dashboard_id   path     uint                                                  true "dashboard id"
-// @Param       panel_id       query    uint                                                      true  "panel id"
-// @Param       labelpairs     query    string                                                    false "标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
-// @Param       start          query    string                                                    false "开始时间，默认现在-30m"
-// @Param       end            query    string                                                    false "结束时间，默认现在"
-// @Param       step           query    int                                                       false "step, 单位秒，默认0"
-// @Success     200            {object} handlers.ResponseStruct{Data=map[string]prommodel.Matrix} "pannel 查询结果"
-// @Router      /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id}/query [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		监控dashboard panne指标查询
+//	@Description	监控dashboard panne指标查询
+//	@Accept			json
+//	@Produce		json
+//	@Param			environment_id	path		string														true	"环境ID"
+//	@Param			dashboard_id	path		uint														true	"dashboard id"
+//	@Param			panel_id		query		uint														true	"panel id"
+//	@Param			labelpairs		query		string														false	"标签键值对(value为空或者_all表示所有，支持正则),  eg.  labelpairs[host]=k8s-master&labelpairs[pod]=_all"
+//	@Param			start			query		string														false	"开始时间，默认现在-30m"
+//	@Param			end				query		string														false	"结束时间，默认现在"
+//	@Param			step			query		int															false	"step, 单位秒，默认0"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=map[string]prommodel.Matrix}	"pannel 查询结果"
+//	@Router			/v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id}/query [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) DashboardQuery(c *gin.Context) {
 	querys, err := h.getMetricQuerysByDashboard(c)
 	if err != nil {
@@ -154,15 +154,15 @@ func (h *ObservabilityHandler) getMetricQuerysByDashboard(c *gin.Context) ([]*Me
 }
 
 // CreateDashboard 创建监控dashboad
-// @Tags        Observability
-// @Summary     创建监控dashboad
-// @Description 创建监控dashboad
-// @Accept      json
-// @Produce     json
-// @Param       environment_id path     string                               true "环境ID"
-// @Success     200            {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/environment/{environment_id}/monitor/dashboard [post]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		创建监控dashboad
+//	@Description	创建监控dashboad
+//	@Accept			json
+//	@Produce		json
+//	@Param			environment_id	path		string									true	"环境ID"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/environment/{environment_id}/monitor/dashboard [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) CreateDashboard(c *gin.Context) {
 	req, err := h.getDashboardReq(c)
 	if err != nil {
@@ -182,17 +182,17 @@ func (h *ObservabilityHandler) CreateDashboard(c *gin.Context) {
 }
 
 // UpdateDashboard 更新监控dashboad
-// @Tags        Observability
-// @Summary     更新监控dashboad
-// @Description 更新监控dashboad
-// @Accept      json
-// @Produce     json
-// @Param       environment_id path     string                               true "环境ID"
-// @Param       dashboard_id   path     uint                                 true "dashboard id"
-// @Param       from           body     models.MonitorDashboard              true "dashboad配置"
-// @Success     200            {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [put]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		更新监控dashboad
+//	@Description	更新监控dashboad
+//	@Accept			json
+//	@Produce		json
+//	@Param			environment_id	path		string									true	"环境ID"
+//	@Param			dashboard_id	path		uint									true	"dashboard id"
+//	@Param			from			body		models.MonitorDashboard					true	"dashboad配置"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [put]
+//	@Security		JWT
 func (h *ObservabilityHandler) UpdateDashboard(c *gin.Context) {
 	req, err := h.getDashboardReq(c)
 	if err != nil {
@@ -212,16 +212,16 @@ func (h *ObservabilityHandler) UpdateDashboard(c *gin.Context) {
 }
 
 // DeleteDashboard 删除监控dashboad
-// @Tags        Observability
-// @Summary     删除监控dashboad
-// @Description 删除监控dashboad
-// @Accept      json
-// @Produce     json
-// @Param       environment_id path     string                               true "环境ID"
-// @Param       dashboard_id   path     uint                                 true "dashboard id"
-// @Success     200            {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [delete]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		删除监控dashboad
+//	@Description	删除监控dashboad
+//	@Accept			json
+//	@Produce		json
+//	@Param			environment_id	path		string									true	"环境ID"
+//	@Param			dashboard_id	path		uint									true	"dashboard id"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/environment/{environment_id}/monitor/dashboard/{dashboard_id} [delete]
+//	@Security		JWT
 func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 	d := models.MonitorDashboard{}
 	if err := h.GetDB().WithContext(c.Request.Context()).First(&d, "id = ?", c.Param("dashboard_id")).Error; err != nil {
@@ -241,16 +241,16 @@ func (h *ObservabilityHandler) DeleteDashboard(c *gin.Context) {
 }
 
 // ListDashboardTemplates 监控面板模板列表
-// @Tags        Observability
-// @Summary     监控面板模板列表
-// @Description 监控面板模板列表
-// @Accept      json
-// @Produce     json
-// @Param       page query    int                                                        false "page"
-// @Param       size query    int                                                        false "size"
-// @Success     200  {object} handlers.ResponseStruct{Data=[]models.MonitorDashboardTpl} "resp"
-// @Router      /v1/observability/template/dashboard [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		监控面板模板列表
+//	@Description	监控面板模板列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			page	query		int															false	"page"
+//	@Param			size	query		int															false	"size"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=[]models.MonitorDashboardTpl}	"resp"
+//	@Router			/v1/observability/template/dashboard [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
 	tpls := []models.MonitorDashboardTpl{}
 	if err := h.GetDB().WithContext(c.Request.Context()).Find(&tpls).Error; err != nil {
@@ -261,15 +261,15 @@ func (h *ObservabilityHandler) ListDashboardTemplates(c *gin.Context) {
 }
 
 // GetDashboardTemplate 监控面板模板详情
-// @Tags        Observability
-// @Summary     监控面板模板详情
-// @Description 监控面板模板详情
-// @Accept      json
-// @Produce     json
-// @Param       name path     string                                                   true "模板名"
-// @Success     200  {object} handlers.ResponseStruct{Data=models.MonitorDashboardTpl} "resp"
-// @Router      /v1/observability/template/dashboard/{name} [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		监控面板模板详情
+//	@Description	监控面板模板详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			name	path		string														true	"模板名"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=models.MonitorDashboardTpl}	"resp"
+//	@Router			/v1/observability/template/dashboard/{name} [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) GetDashboardTemplate(c *gin.Context) {
 	tpl := models.MonitorDashboardTpl{Name: c.Param("name")}
 	if err := h.GetDB().WithContext(c.Request.Context()).First(&tpl).Error; err != nil {
@@ -280,15 +280,15 @@ func (h *ObservabilityHandler) GetDashboardTemplate(c *gin.Context) {
 }
 
 // AddDashboardTemplates 导入监控面板模板
-// @Tags        Observability
-// @Summary     导入监控面板模板
-// @Description 导入监控面板模板
-// @Accept      json
-// @Produce     json
-// @Param       form body     models.MonitorDashboardTpl           true "模板内容"
-// @Success     200  {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/template/dashboard [post]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		导入监控面板模板
+//	@Description	导入监控面板模板
+//	@Accept			json
+//	@Produce		json
+//	@Param			form	body		models.MonitorDashboardTpl				true	"模板内容"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/template/dashboard [post]
+//	@Security		JWT
 func (h *ObservabilityHandler) AddDashboardTemplates(c *gin.Context) {
 	tpl := models.MonitorDashboardTpl{}
 	if err := c.BindJSON(&tpl); err != nil {
@@ -311,15 +311,15 @@ func (h *ObservabilityHandler) AddDashboardTemplates(c *gin.Context) {
 }
 
 // UpdateDashboardTemplates 更新监控面板模板
-// @Tags        Observability
-// @Summary     更新监控面板模板
-// @Description 更新监控面板模板
-// @Accept      json
-// @Produce     json
-// @Param       form body     models.MonitorDashboardTpl           true "模板内容"
-// @Success     200  {object} handlers.ResponseStruct{Data=string} "resp"
-// @Router      /v1/observability/template/dashboard/{name} [put]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		更新监控面板模板
+//	@Description	更新监控面板模板
+//	@Accept			json
+//	@Produce		json
+//	@Param			form	body		models.MonitorDashboardTpl				true	"模板内容"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=string}	"resp"
+//	@Router			/v1/observability/template/dashboard/{name} [put]
+//	@Security		JWT
 func (h *ObservabilityHandler) UpdateDashboardTemplates(c *gin.Context) {
 	tpl := models.MonitorDashboardTpl{}
 	if err := c.BindJSON(&tpl); err != nil {
@@ -340,15 +340,15 @@ func (h *ObservabilityHandler) UpdateDashboardTemplates(c *gin.Context) {
 }
 
 // DeleteDashboardTemplate 删除监控面板模板
-// @Tags        Observability
-// @Summary     删除监控面板模板
-// @Description 删除监控面板模板
-// @Accept      json
-// @Produce     json
-// @Param       name path     string                                                   true "模板名"
-// @Success     200  {object} handlers.ResponseStruct{Data=models.MonitorDashboardTpl} "resp"
-// @Router      /v1/observability/template/dashboard/{name} [delete]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		删除监控面板模板
+//	@Description	删除监控面板模板
+//	@Accept			json
+//	@Produce		json
+//	@Param			name	path		string														true	"模板名"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=models.MonitorDashboardTpl}	"resp"
+//	@Router			/v1/observability/template/dashboard/{name} [delete]
+//	@Security		JWT
 func (h *ObservabilityHandler) DeleteDashboardTemplate(c *gin.Context) {
 	tpl := models.MonitorDashboardTpl{Name: c.Param("name")}
 	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&tpl).Error; err != nil {

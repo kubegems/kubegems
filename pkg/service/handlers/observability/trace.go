@@ -24,16 +24,16 @@ import (
 )
 
 // GetTrace GetTrace by trace_id
-// @Tags        Observability
-// @Summary     GetTrace by trace_id
-// @Description GetTrace by trace_id
-// @Accept      json
-// @Produce     json
-// @Param       cluster  path     string                                      true "集群名"
-// @Param       trace_id path     string                                      true "trace id"
-// @Success     200      {object} handlers.ResponseStruct{Data=observe.Trace} "resp"
-// @Router      /v1/observability/cluster/{cluster}/traces/{trace_id} [get]
-// @Security    JWT
+//	@Tags			Observability
+//	@Summary		GetTrace by trace_id
+//	@Description	GetTrace by trace_id
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string										true	"集群名"
+//	@Param			trace_id	path		string										true	"trace id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=observe.Trace}	"resp"
+//	@Router			/v1/observability/cluster/{cluster}/traces/{trace_id} [get]
+//	@Security		JWT
 func (h *ObservabilityHandler) GetTrace(c *gin.Context) {
 	// 前端传来的是UTC时间
 	var trace *observe.Trace

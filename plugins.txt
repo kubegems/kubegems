@@ -14,7 +14,7 @@ local-path 0.0.22
 logging 3.17.6
 metallb 0.12.1
 metrics-server 3.8.2
-monitoring 44.3.0
+monitoring 44.3.3
 nacos 2.1.1
 node-local-dns 0.2.1
 node-problem-detector 2.2.2

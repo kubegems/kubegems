@@ -8,12 +8,12 @@ on:
     # Publish semver tags as releases.
     tags: ["v*.*.*"]
     paths-ignore:
-      - '*.md'
+      - "*.md"
   pull_request:
     branches:
       - "main"
     paths-ignore:
-      - '*.md'
+      - "*.md"
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -29,25 +29,24 @@ jobs:
         with:
           go-version: "1.20"
 
-      - uses: azure/setup-helm@v3
-        if: startsWith(github.ref, 'refs/tags/v')
-
-      - name: Helm Package Push
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          HELM_REPO_PASSWORD: ${{ secrets.HELM_REPO_PASSWORD }}
-          GIT_VERSION: ${{ github.ref_name }}
-        run: make helm-push 
-
       # Cache go modules for faster builds
       # https://github.com/actions/cache/blob/main/examples.md#go---modules
-      - uses: actions/cache@v2
+      - name: Go cache
+        uses: actions/cache@v2
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-build-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-build-
+
+      - name: Plugin Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            bin/plugins
+          key: plugins-${{ hashFiles('deploy/plugins/**') }}
+          restore-keys: plugins-
 
       # Build binary
       - name: Build binaries
@@ -75,8 +74,16 @@ jobs:
           registry: ${{ secrets.SECONDARY_REGISTRY }}
           username: ${{ secrets.SECONDARY_REGISTRY_USERNAME }}
           password: ${{ secrets.SECONDARY_REGISTRY_PASSWORD }}
-      - name: Build Docker
-        env: 
+      - uses: azure/setup-helm@v3
+        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Make Helm Release on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
           GIT_VERSION: ${{ github.ref_name }}
-          PUSH: ${{ github.event_name != 'pull_request' }}
-        run: make docker
+          HELM_REPO_PASSWORD: ${{ secrets.HELM_REPO_PASSWORD }}
+        run: make helm-release
+      - name: Make Image Release
+        if: github.event_name != 'pull_request'
+        env:
+          GIT_VERSION: ${{ github.ref_name }}
+        run: make image-release

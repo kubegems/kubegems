@@ -37,17 +37,17 @@ type jaegerHandler struct {
 	Server string
 }
 
-// @Tags        Agent.V1
-// @Summary     Jaeger span count
-// @Description Jaeger span count
-// @Accept      json
-// @Produce     json
-// @Param       namespace query    string                                       true "workload namespace"
-// @Param       name      query    string                                       true "workload name"
-// @Param       app       query    string                                       true "workload app label value"
-// @Success     200       {object} handlers.ResponseStruct{Data=map[string]int} "span数"
-// @Router      /v1/proxy/cluster/{cluster}/custom/jaeger/v1/span [get]
-// @Security    JWT
+//	@Tags			Agent.V1
+//	@Summary		Jaeger span count
+//	@Description	Jaeger span count
+//	@Accept			json
+//	@Produce		json
+//	@Param			namespace	query		string											true	"workload namespace"
+//	@Param			name		query		string											true	"workload name"
+//	@Param			app			query		string											true	"workload app label value"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=map[string]int}	"span数"
+//	@Router			/v1/proxy/cluster/{cluster}/custom/jaeger/v1/span [get]
+//	@Security		JWT
 func (p *jaegerHandler) GetSpanCount(c *gin.Context) {
 	// 参考kiali实现:
 	// 1. 获取service链路

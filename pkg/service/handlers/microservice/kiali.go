@@ -15,15 +15,18 @@
 package microservice
 
 import (
+	"bytes"
+	"compress/flate"
+	"compress/gzip"
 	"encoding/json"
 	"io"
+	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/httputil/response"
 )
 
@@ -32,17 +35,17 @@ type KialiAPIRequest struct {
 	VirtualspaceId string
 }
 
-// @Tags        VirtualSpace
-// @Summary     kiali代理
-// @Description kiali api 代理
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint   true "virtualspace_id"
-// @Param       environment_id  path     uint   true "environment_id（通过环境寻找目标集群）"
-// @Param       path            path     string true "访问 kiali service 的路径"
-// @Success     200             {object} object "kiali 原始响应"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment/environment_id/kiali/{kiaklipath} [get]
-// @Security    JWT
+//	@Tags			VirtualSpace
+//	@Summary		kiali代理
+//	@Description	kiali api 代理
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint	true	"virtualspace_id"
+//	@Param			environment_id	path		uint	true	"environment_id（通过环境寻找目标集群）"
+//	@Param			path			path		string	true	"访问 kiali service 的路径"
+//	@Success		200				{object}	object	"kiali 原始响应"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment/environment_id/kiali/{kiaklipath} [get]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) KialiAPI(c *gin.Context) {
 	options := h.MicroserviceOptions
 	kialisvc, kialinamespace := options.KialiName, options.KialiNamespace
@@ -53,37 +56,68 @@ func (h *VirtualSpaceHandler) KialiAPI(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
-	cluster, namespace, kialipath := env.Cluster.ClusterName, env.Namespace, c.Param("path")
-	_ = namespace
-
-	process := func() error {
-		cli, err := h.clientOf(ctx, cluster)
-		if err != nil {
-			return err
-		}
-		// kiali svc 自带kiali前缀，我们的api也带kiali前缀，重复了
-		c.Request.URL.Path = "/kiali" + kialipath
-		if c.Request.URL.Scheme == "" {
-			c.Request.URL.Scheme = "https"
-		}
-
-		kialisvc := &v1.Service{ObjectMeta: metav1.ObjectMeta{Name: kialisvc, Namespace: kialinamespace}}
-		// 不直接使用 httputil 以方便对请求和响应进行改写，这里应该还可以改进
-		rewirteresponsfunc := func(src io.Reader, dst io.Writer) error {
-			var data interface{}
-			if err := json.NewDecoder(src).Decode(&data); err != nil {
-				return err
-			}
-			return json.NewEncoder(dst).Encode(response.Response{Data: data})
-		}
-		if err := cli.Proxy(ctx, kialisvc, 20001, c.Request, c.Writer, agents.ResponseBodyRewriter(rewirteresponsfunc)); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	if err := process(); err != nil {
+	cluster, kialipath := env.Cluster.ClusterName, c.Param("path")
+	cli, err := h.clientOf(ctx, cluster)
+	if err != nil {
 		handlers.NotOK(c, err)
 		return
+	}
+	w, r := c.Writer, c.Request
+	dest := &url.URL{
+		Scheme: "http",
+		Host:   kialisvc + "." + kialinamespace + ":20001",
+	}
+	r.URL.Path = "/kiali" + kialipath // rewrite path
+	rp := cli.ReverseProxy(dest)
+	rp.ModifyResponse = ResponseBodyRewriter(func(src io.Reader, dst io.Writer) error {
+		var data interface{}
+		if err := json.NewDecoder(src).Decode(&data); err != nil {
+			return err
+		}
+		// wrap kiakli response with our response.Rsponse
+		return json.NewEncoder(dst).Encode(response.Response{Data: data})
+	})
+	rp.ServeHTTP(w, r)
+}
+
+// ResponseBodyRewriter 会正确处理 gzip 以及 deflate 的content-encodeing 以及response 的content-length
+// 用于需要修改代理的响应体是非常有用
+func ResponseBodyRewriter(rewritefunc func(io.Reader, io.Writer) error) func(resp *http.Response) error {
+	return func(r *http.Response) error {
+		reader := r.Body
+		writer := &bytes.Buffer{}
+
+		defer func() {
+			r.Body.Close()
+			r.Body = io.NopCloser(writer)
+			r.ContentLength = int64(writer.Len())
+			r.Header.Set("Content-Length", strconv.Itoa(writer.Len()))
+		}()
+
+		switch r.Header.Get("Content-Encoding") {
+		case "gzip":
+			gzr, err := gzip.NewReader(reader)
+			if err != nil {
+				return err
+			}
+			gzw := gzip.NewWriter(writer)
+			defer func() {
+				gzw.Close()
+				gzw.Flush()
+			}()
+			return rewritefunc(gzr, gzw)
+		case "deflate":
+			flw, err := flate.NewWriter(writer, 0)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				flw.Close()
+				flw.Flush()
+			}()
+			return rewritefunc(flate.NewReader(reader), flw)
+		default:
+			return rewritefunc(reader, writer)
+		}
 	}
 }
