@@ -104,8 +104,6 @@ spec:
                   name: kubegems-mysql
                   key: mysql-root-password
           envFrom:
-            - secretRef:
-                name: kubegems-config
             {{- if .Values.store.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.store.extraEnvVarsCM "context" $) }}
