@@ -26,6 +26,8 @@
   <a href="https://twitter.com/KubeGems">Twitter</a>
   <span> • </span>
   <a href="https://kubegems.slack.com">Slack</a>
+  <span> • </span>
+  <a href="./sponsors.md">Sponsors</a>
 </h2>
 
 🇨🇳 Chinese(Simplified) 🇭🇰 Chinese(Traditional) 🇺🇸 English 🇯🇵 Japanese
