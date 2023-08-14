@@ -207,6 +207,7 @@ func (in *ServerSpec) DeepCopyInto(out *ServerSpec) {
 		}
 	}
 	in.Resources.DeepCopyInto(&out.Resources)
+	in.Metadata.DeepCopyInto(&out.Metadata)
 	if in.PodSpec != nil {
 		in, out := &in.PodSpec, &out.PodSpec
 		*out = new(v1.PodSpec)

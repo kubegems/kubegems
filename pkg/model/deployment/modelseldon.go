@@ -157,6 +157,11 @@ func (r *SeldonModelServe) convert(ctx context.Context, md *modelsv1beta1.ModelD
 					ComponentSpecs: []*machinelearningv1.SeldonPodSpec{
 						{
 							Spec: completePod(md),
+							Metadata: machinelearningv1.ObjectMeta{
+								Labels:      md.Spec.Server.Metadata.Labels,
+								Annotations: md.Spec.Server.Metadata.Annotations,
+								Finalizers:  md.Spec.Server.Metadata.Finalizers,
+							},
 						},
 					},
 				},

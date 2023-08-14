@@ -100,6 +100,10 @@ type ServerSpec struct {
 	UpgradeStrategy string `json:"upgradeStrategy,omitempty"`
 
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Metadata metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// +kubebuilder:validation:Optional
 	PodSpec *corev1.PodSpec `json:"podSpec,omitempty"`
 }
 
