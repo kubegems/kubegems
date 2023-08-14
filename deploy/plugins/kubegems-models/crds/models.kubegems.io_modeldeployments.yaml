@@ -199,6 +199,9 @@ spec:
                     type: string
                   kind:
                     type: string
+                  metadata:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   mounts:
                     items:
                       properties:
