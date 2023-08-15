@@ -29,6 +29,8 @@ import (
 
 	containerdreference "github.com/containerd/containerd/reference"
 	dockerreference "github.com/containerd/containerd/reference/docker"
+	"github.com/containers/image/v5/docker"
+	"github.com/containers/image/v5/types"
 	"github.com/goharbor/harbor/src/common"
 	harborerrors "github.com/goharbor/harbor/src/lib/errors"
 	"github.com/goharbor/harbor/src/pkg/artifact"
@@ -95,7 +97,11 @@ type Vulnerabilities map[string]vuln.Report
 // 目前大部分(所有)镜像仓库均实现了OCI Distribution 规范，可以使用 /v2 接口进行推断，
 // 如果认证成功则返回200则认为实现了OCI且认证成功
 func TryLogin(ctx context.Context, registryurl string, username, password string) error {
-	return (&OCIDistributionClient{Server: registryurl, Username: username, Password: password}).Ping(ctx)
+	// trim http/https prefix
+	registryurl = strings.TrimPrefix(registryurl, "http://")
+	registryurl = strings.TrimPrefix(registryurl, "https://")
+	sys := &types.SystemContext{}
+	return docker.CheckAuth(ctx, sys, username, password, registryurl)
 }
 
 var ErrNotHarborImage = errors.New("not a harbor suit image")

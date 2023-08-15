@@ -63,7 +63,7 @@ func (h *RegistryHandler) validate(ctx context.Context, v *models.Registry) erro
 	}
 	// validate username/password
 	if err := harbor.TryLogin(ctx, v.RegistryAddress, v.Username, v.Password); err != nil {
-		return i18n.Errorf(ctx, "validate username and password to the registry faild: %w", err)
+		return i18n.Errorf(ctx, "validate username and password to the registry faild: %s", err.Error())
 	}
 	return nil
 }
