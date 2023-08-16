@@ -15,6 +15,7 @@
 package server
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
@@ -142,7 +143,7 @@ func (a *EdgeClusterAPI) InstallAgentTemplate(req *restful.Request, resp *restfu
 		response.BadRequest(resp, err.Error())
 		return
 	}
-	response.OK(resp, rendered)
+	response.Raw(resp, http.StatusOK, rendered, nil)
 }
 
 type EdgeHubItem struct {
