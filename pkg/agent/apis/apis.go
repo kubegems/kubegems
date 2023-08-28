@@ -208,7 +208,10 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 	routes.register("alertmanager", "v1", "silence", ActionCreate, alertmanagerHandler.CreateSilence)
 	routes.register("alertmanager", "v1", "silence", ActionDelete, alertmanagerHandler.DeleteSilence)
 
-	lokiHandler := &LokiHandler{Server: options.LokiServer}
+	lokiHandler, err := NewLokiHandler(options.LokiServer)
+	if err != nil {
+		return nil, err
+	}
 	routes.register("loki", "v1", "query", ActionList, lokiHandler.Query)
 	routes.register("loki", "v1", "queryrange", ActionList, lokiHandler.QueryRange)
 	routes.register("loki", "v1", "labels", ActionList, lokiHandler.Labels)

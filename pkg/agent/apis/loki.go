@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
@@ -32,6 +33,7 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"kubegems.io/kubegems/pkg/agent/ws"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 )
@@ -72,140 +74,133 @@ func (h *LokiHandler) _http(path string, method string, params map[string]string
 
 type LokiHandler struct {
 	Server string
+	proxy  *LokiHTTPProxy
 }
 
-//	@Tags			Agent.V1
-//	@Summary		Loki Query
-//	@Description	Loki Query
-//	@Accept			json
-//	@Produce		json
-//	@Param			cluster		path		string									true	"cluster"
-//	@Param			limit		query		string									false	"The max number of entries to return"
-//	@Param			query		query		string									true	"loki query language"
-//	@Param			time		query		int										false	"The evaluation time for the query as a nanosecond Unix epoch or another supported format. Defaults to now"
-//	@Param			direction	query		string									true	"The order to all results"
-//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	""
-//	@Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/query [get]
-//	@Security		JWT
+func NewLokiHandler(server string) (*LokiHandler, error) {
+	if server == "" {
+		return &LokiHandler{}, nil
+	}
+	p, err := NewLokiHTTPProxy(server)
+	if err != nil {
+		return nil, err
+	}
+	return &LokiHandler{Server: server, proxy: p}, nil
+}
+
+type LokiHTTPProxy struct {
+	rp *httputil.ReverseProxy
+}
+
+func NewLokiHTTPProxy(server string) (*LokiHTTPProxy, error) {
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	return &LokiHTTPProxy{
+		rp: &httputil.ReverseProxy{
+			Rewrite: func(pr *httputil.ProxyRequest) {
+				pr.SetURL(serverURL)
+			},
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
+		},
+	}, nil
+}
+
+func (h *LokiHTTPProxy) to(path string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		queries := r.URL.Query()
+		logql := queries.Get("query")
+		// back compatible, some one query escaped logql in query param
+		if unescapedLogQL, _ := url.QueryUnescape(logql); unescapedLogQL != logql {
+			queries.Set("query", unescapedLogQL)
+		}
+		r.URL.RawQuery = queries.Encode()
+
+		r.URL.Path = path
+		r.URL.RawPath = "" // reset raw path
+		h.rp.ServeHTTP(w, r)
+	}
+}
+
+func (h *LokiHandler) ProxyToPath(path string) http.HandlerFunc {
+	if h.proxy == nil {
+		msg := fmt.Sprintf("loki proxy not init")
+		return func(w http.ResponseWriter, r *http.Request) {
+			response.Raw(w, http.StatusNotImplemented, msg, nil)
+		}
+	}
+	return h.proxy.to(path)
+}
+
+// @Tags			Agent.V1
+// @Summary		Loki Query
+// @Description	Loki Query
+// @Accept			json
+// @Produce		json
+// @Param			cluster		path		string									true	"cluster"
+// @Param			limit		query		string									false	"The max number of entries to return"
+// @Param			query		query		string									true	"loki query language"
+// @Param			time		query		int										false	"The evaluation time for the query as a nanosecond Unix epoch or another supported format. Defaults to now"
+// @Param			direction	query		string									true	"The order to all results"
+// @Success		200			{object}	handlers.ResponseStruct{Data=object}	""
+// @Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/query [get]
+// @Security		JWT
 func (h *LokiHandler) Query(c *gin.Context) {
-	var data loki.QueryRangeParam
-	if err := c.ShouldBindQuery(&data); err != nil {
-		NotOK(c, err)
-		return
-	}
-
-	data.Query, _ = url.QueryUnescape(data.Query)
-	body, err := h._http("/loki/api/v1/query", "GET", data.ToMap(), nil)
-	if err != nil {
-		NotOK(c, fmt.Errorf("请求错误 %v", err))
-		return
-	}
-	res := loki.QueryResponse{}
-	if err := json.Unmarshal([]byte(body), &res); err != nil {
-		NotOK(c, fmt.Errorf("解析loki数据错误 err=%v,data=%v", err.Error(), string(body)))
-		return
-	}
-	OK(c, res.Data)
+	h.ProxyToPath("/loki/api/v1/query").ServeHTTP(c.Writer, c.Request)
 }
 
-//	@Tags			Agent.V1
-//	@Summary		Loki QueryRange
-//	@Description	Loki QueryRange
-//	@Accept			json
-//	@Produce		json
-//	@Param			cluster		path		string									true	"cluster"
-//	@Param			start		query		string									true	"The start time for the query as a nanosecond Unix epoch"
-//	@Param			end			query		string									true	"The end time for the query as a nanosecond Unix epoch"
-//	@Param			direction	query		string									true	"The order to all results"
-//	@Param			limit		query		string									false	"The max number of entries to return"
-//	@Param			query		query		string									true	"loki query language"
-//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	""
-//	@Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/queryrange [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		Loki QueryRange
+// @Description	Loki QueryRange
+// @Accept			json
+// @Produce		json
+// @Param			cluster		path		string									true	"cluster"
+// @Param			start		query		string									true	"The start time for the query as a nanosecond Unix epoch"
+// @Param			end			query		string									true	"The end time for the query as a nanosecond Unix epoch"
+// @Param			direction	query		string									true	"The order to all results"
+// @Param			limit		query		string									false	"The max number of entries to return"
+// @Param			query		query		string									true	"loki query language"
+// @Success		200			{object}	handlers.ResponseStruct{Data=object}	""
+// @Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/queryrange [get]
+// @Security		JWT
 func (h *LokiHandler) QueryRange(c *gin.Context) {
-	var data loki.QueryRangeParam
-	if err := c.ShouldBindQuery(&data); err != nil {
-		NotOK(c, err)
-		return
-	}
-
-	data.Query, _ = url.QueryUnescape(data.Query)
-	body, err := h._http("/loki/api/v1/query_range", "GET", data.ToMap(), nil)
-	if err != nil {
-		NotOK(c, fmt.Errorf("请求错误 %v", err))
-		return
-	}
-	res := loki.QueryResponse{}
-	if err := json.Unmarshal([]byte(body), &res); err != nil {
-		NotOK(c, fmt.Errorf("解析loki数据错误 err=%v,data=%v", err.Error(), string(body[:20])))
-		return
-	}
-	OK(c, res.Data)
+	h.ProxyToPath("/loki/api/v1/query_range").ServeHTTP(c.Writer, c.Request)
 }
 
-//	@Tags			Agent.V1
-//	@Summary		Loki Labels
-//	@Description	Loki Labels
-//	@Accept			json
-//	@Produce		json
-//	@Param			cluster	path		string									true	"cluster"
-//	@Param			start	query		string									true	"The start time for the query as a nanosecond Unix epoch"
-//	@Param			end		query		string									true	"The end time for the query as a nanosecond Unix epoch"
-//	@Success		200		{object}	handlers.ResponseStruct{Data=object}	""
-//	@Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/labels [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		Loki Labels
+// @Description	Loki Labels
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string									true	"cluster"
+// @Param			start	query		string									true	"The start time for the query as a nanosecond Unix epoch"
+// @Param			end		query		string									true	"The end time for the query as a nanosecond Unix epoch"
+// @Success		200		{object}	handlers.ResponseStruct{Data=object}	""
+// @Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/labels [get]
+// @Security		JWT
 func (h *LokiHandler) Labels(c *gin.Context) {
-	var data loki.LabelParam
-	if err := c.ShouldBindQuery(&data); err != nil {
-		NotOK(c, err)
-		return
-	}
-
-	body, err := h._http("/loki/api/v1/labels", "GET", data.ToMap(), nil)
-	if err != nil {
-		NotOK(c, err)
-		return
-	}
-
-	res := loki.LabelResponse{}
-	if err := json.Unmarshal([]byte(body), &res); err != nil {
-		NotOK(c, fmt.Errorf("解析loki数据错误 err=%v,data=%v", err.Error(), string(body[:20])))
-		return
-	}
-	OK(c, res.Data)
+	h.ProxyToPath("/loki/api/v1/labels").ServeHTTP(c.Writer, c.Request)
 }
 
-//	@Tags			Agent.V1
-//	@Summary		Loki LabelValues
-//	@Description	Loki LabelValues
-//	@Accept			json
-//	@Produce		json
-//	@Param			cluster	path		string									true	"cluster"
-//	@Param			start	query		string									true	"The start time for the query as a nanosecond Unix epoch"
-//	@Param			end		query		string									true	"The end time for the query as a nanosecond Unix epoch"
-//	@Param			label	query		string									true	"label"
-//	@Success		200		{object}	handlers.ResponseStruct{Data=object}	""
-//	@Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/labelvalues [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		Loki LabelValues
+// @Description	Loki LabelValues
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string									true	"cluster"
+// @Param			start	query		string									true	"The start time for the query as a nanosecond Unix epoch"
+// @Param			end		query		string									true	"The end time for the query as a nanosecond Unix epoch"
+// @Param			label	query		string									true	"label"
+// @Success		200		{object}	handlers.ResponseStruct{Data=object}	""
+// @Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/labelvalues [get]
+// @Security		JWT
 func (h *LokiHandler) LabelValues(c *gin.Context) {
-	var data loki.LabelParam
-	if err := c.ShouldBindQuery(&data); err != nil {
-		NotOK(c, err)
-		return
-	}
-
-	body, err := h._http(fmt.Sprintf("/loki/api/v1/label/%s/values", data.Label), "GET", data.ToMap(), nil)
-	if err != nil {
-		NotOK(c, err)
-		return
-	}
-
-	res := loki.LabelResponse{}
-	if err := json.Unmarshal(body, &res); err != nil {
-		NotOK(c, fmt.Errorf("解析loki数据错误 err=%v,data=%v", err.Error(), string(body[:20])))
-		return
-	}
-	OK(c, res.Data)
+	h.ProxyToPath("/loki/api/v1/label/:label/values").ServeHTTP(c.Writer, c.Request)
 }
 
 func _query(params map[string]string) string {
@@ -216,52 +211,36 @@ func _query(params map[string]string) string {
 	return q.Encode()
 }
 
-//	@Tags			Agent.V1
-//	@Summary		Loki Series
-//	@Description	Loki Series
-//	@Accept			json
-//	@Produce		json
-//	@Param			cluster	path		string									true	"cluster"
-//	@Param			start	query		string									true	"The start time for the query as a nanosecond Unix epoch"
-//	@Param			end		query		string									true	"The end time for the query as a nanosecond Unix epoch"
-//	@Param			match	query		string									true	"match"
-//	@Success		200		{object}	handlers.ResponseStruct{Data=object}	""
-//	@Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/series [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		Loki Series
+// @Description	Loki Series
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string									true	"cluster"
+// @Param			start	query		string									true	"The start time for the query as a nanosecond Unix epoch"
+// @Param			end		query		string									true	"The end time for the query as a nanosecond Unix epoch"
+// @Param			match	query		string									true	"match"
+// @Success		200		{object}	handlers.ResponseStruct{Data=object}	""
+// @Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/series [get]
+// @Security		JWT
 func (h *LokiHandler) Series(c *gin.Context) {
-	var data loki.SeriesForm
-	if err := c.ShouldBindQuery(&data); err != nil {
-		NotOK(c, err)
-		return
-	}
-	body, err := h._http("/loki/api/v1/series", "GET", data.ToMap(), nil)
-	if err != nil {
-		NotOK(c, err)
-		return
-	}
-
-	res := loki.SeriesResponse{}
-	if err := json.Unmarshal(body, &res); err != nil {
-		NotOK(c, fmt.Errorf("解析loki数据错误 err=%v,data=%v", err.Error(), string(body[:20])))
-		return
-	}
-	OK(c, res.Data)
+	h.ProxyToPath("/loki/api/v1/series").ServeHTTP(c.Writer, c.Request)
 }
 
-//	@Tags			Agent.V1
-//	@Summary		Loki LabelValues
-//	@Description	Loki LabelValues
-//	@Accept			json
-//	@Produce		json
-//	@Param			cluster		path		string									true	"cluster"
-//	@Param			start		query		string									true	"The start time for the query as a nanosecond Unix epoch"
-//	@Param			limit		query		string									false	"The max number of entries to return"
-//	@Param			query		query		string									true	"loki query language"
-//	@Param			delay_for	query		string									true	"The number of seconds to delay retrieving logs to let slow loggers catch up. Defaults to 0 and cannot be larger than 5."
-//	@Param			stream		query		string									true	"must be true"
-//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	""
-//	@Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/tail [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		Loki LabelValues
+// @Description	Loki LabelValues
+// @Accept			json
+// @Produce		json
+// @Param			cluster		path		string									true	"cluster"
+// @Param			start		query		string									true	"The start time for the query as a nanosecond Unix epoch"
+// @Param			limit		query		string									false	"The max number of entries to return"
+// @Param			query		query		string									true	"loki query language"
+// @Param			delay_for	query		string									true	"The number of seconds to delay retrieving logs to let slow loggers catch up. Defaults to 0 and cannot be larger than 5."
+// @Param			stream		query		string									true	"must be true"
+// @Success		200			{object}	handlers.ResponseStruct{Data=object}	""
+// @Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/tail [get]
+// @Security		JWT
 func (h *LokiHandler) Tail(c *gin.Context) {
 	var queryParam loki.TailParam
 
@@ -321,15 +300,15 @@ func (h *LokiHandler) Tail(c *gin.Context) {
 	log.WithField("h", "tail").Info("end with handle")
 }
 
-//	@Tags			Agent.V1
-//	@Summary		Loki Alert Rule
-//	@Description	Loki Alert Rule
-//	@Accept			json
-//	@Produce		json
-//	@Param			cluster	path		string																	true	"cluster"
-//	@Success		200		{object}	handlers.ResponseStruct{Data=map[string]prometheus.RealTimeAlertRule}	""
-//	@Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/alertrule [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		Loki Alert Rule
+// @Description	Loki Alert Rule
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string																	true	"cluster"
+// @Success		200		{object}	handlers.ResponseStruct{Data=map[string]prometheus.RealTimeAlertRule}	""
+// @Router			/v1/proxy/cluster/{cluster}/custom/loki/v1/alertrule [get]
+// @Security		JWT
 func (h *LokiHandler) AlertRule(c *gin.Context) {
 	body, err := h._http("/prometheus/api/v1/rules", "GET", nil, nil)
 	if err != nil {
