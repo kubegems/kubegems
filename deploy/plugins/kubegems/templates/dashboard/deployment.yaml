@@ -86,6 +86,8 @@ spec:
             {{- if .Values.dashboard.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
+          - name: PAI_SERVER
+            value: {{ include "kubegems.pai.address" . }}
           envFrom:
             {{- if .Values.dashboard.extraEnvVarsCM }}
             - configMapRef:

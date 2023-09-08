@@ -52,6 +52,14 @@ Return the proper kubegems image name
     {{- include "kubegems.msgbus.fullname" . -}}:{{- .Values.api.service.ports.http -}}
 {{- end -}}
 
+{{- define "kubegems.pai.address" -}}
+{{- if index .Values "kubegems-pai" "enabled"  -}}
+kubegems-pai-api.kubegems-pai
+{{- else -}}
+{{- include "kubegems.api.address" . -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).

@@ -2170,3 +2170,5 @@ kubegems-apps:
   # @title 启用
   # default enable app center for backcompact
   enabled: true
+kubegems-pai:
+  enabled: false
