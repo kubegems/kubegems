@@ -33,9 +33,9 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"kubegems.io/kubegems/pkg/agent/ws"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/library/rest/response"
 )
 
 var cstZone = time.FixedZone("GMT", 8*3600)

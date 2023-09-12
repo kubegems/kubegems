@@ -39,7 +39,7 @@ import (
 	"kubegems.io/kubegems/pkg/model/deployment"
 	storemodels "kubegems.io/kubegems/pkg/model/store/api/models"
 	"kubegems.io/kubegems/pkg/model/store/repository"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

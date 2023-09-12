@@ -33,9 +33,9 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
+	"kubegems.io/library/rest/response"
 )
 
 func NewExtendClient(addr *url.URL, tp http.RoundTripper) *ExtendClient {

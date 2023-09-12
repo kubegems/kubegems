@@ -197,8 +197,8 @@ func ReadPluginFile(filename string) ([]OfflinePlugin, error) {
 
 func WritePluginFile(filename string, list []OfflinePlugin) error {
 	data := bytes.NewBuffer(nil)
-	slices.SortFunc(list, func(a, b OfflinePlugin) bool {
-		return strings.Compare(a.Name, b.Name) == -1
+	slices.SortFunc(list, func(a, b OfflinePlugin) int {
+		return strings.Compare(a.Name, b.Name)
 	})
 	for _, val := range list {
 		data.WriteString(val.Name + " " + val.Version + "\n")

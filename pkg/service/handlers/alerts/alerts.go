@@ -27,14 +27,12 @@ import (
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/observe"
 	"kubegems.io/kubegems/pkg/utils"
-	_ "kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
+	_ "kubegems.io/library/rest/response"
 )
 
-var (
-	silenceCommentPrefix = "fingerprint-"
-)
+var silenceCommentPrefix = "fingerprint-"
 
 // AlertHistory 告警黑名单
 //

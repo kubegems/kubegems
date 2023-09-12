@@ -29,8 +29,9 @@ linters:
     - structcheck # is deprecated (since v1.49.0)
     - varcheck # is deprecated (since v1.49.0)
     - nosnakecase # is deprecated (since v1.48.1)
-    - exhaustivestruct # is deprecated (since v1.46.0) 
+    - exhaustivestruct # is deprecated (since v1.46.0)
     - ifshort # is deprecated (since v1.48.0)
+    - depguard
   presets:
     - bugs
     - comment

@@ -22,8 +22,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"kubegems.io/kubegems/pkg/model/store/auth"
 	"kubegems.io/kubegems/pkg/model/store/repository"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
 	"kubegems.io/kubegems/pkg/utils/route"
+	"kubegems.io/library/rest/request"
 )
 
 type ModelsAPI struct {

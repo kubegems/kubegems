@@ -15,11 +15,9 @@
 package workloadreshandler
 
 import (
+	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
-	_ "kubegems.io/kubegems/pkg/utils/httputil/response"
-
-	"github.com/gin-gonic/gin"
 )
 
 var (

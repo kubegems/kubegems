@@ -15,15 +15,18 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
-	"kubegems.io/kubegems/pkg/utils/httputil/clientutil"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 )
 
 type ClientOptions struct {
@@ -38,7 +41,7 @@ func NewDefaultClientOptions() *ClientOptions {
 
 func NewPluginsClient(server string) (*PluginsClient, error) {
 	return &PluginsClient{
-		BaseClient: clientutil.BaseClient{
+		BaseClient: BaseClient{
 			Server: server,
 			DataDecoderWrapper: func(data any) any {
 				return &response.Response{Data: data}
@@ -53,7 +56,7 @@ func NewPluginsClient(server string) (*PluginsClient, error) {
 }
 
 type PluginsClient struct {
-	clientutil.BaseClient
+	BaseClient
 }
 
 func (c *PluginsClient) ListPlugins(ctx context.Context) (map[string]pluginmanager.Plugin, error) {
@@ -98,4 +101,69 @@ func (c *PluginsClient) Install(ctx context.Context, name string, version string
 
 func (c *PluginsClient) UnInstall(ctx context.Context, name string) error {
 	return c.BaseClient.Request(ctx, http.MethodDelete, "/v1/plugins/"+name, nil, nil, nil)
+}
+
+type BaseClient struct {
+	Server              string
+	CompleteRequestFunc func(req *http.Request)
+	ErrorDecodeFunc     func(resp *http.Response) error
+	DataDecoderWrapper  func(data any) any
+}
+
+func (c *BaseClient) Request(ctx context.Context, method string, path string, queries map[string]string, data interface{}, into interface{}) error {
+	var body io.Reader
+
+	switch typed := data.(type) {
+	case []byte:
+		body = bytes.NewReader(typed)
+	case nil:
+	default:
+		bts, err := json.Marshal(typed)
+		if err != nil {
+			return err
+		}
+		body = bytes.NewReader(bts)
+	}
+	if len(queries) != 0 {
+		vals := url.Values{}
+		for k, v := range queries {
+			vals.Set(k, v)
+		}
+		path += "?" + vals.Encode()
+	}
+	req, err := http.NewRequest(method, c.Server+path, body)
+	if err != nil {
+		return err
+	}
+	if c.CompleteRequestFunc != nil {
+		c.CompleteRequestFunc(req)
+	}
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Add("Content-Type", "application/json")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// not 200~
+	// nolint: nestif
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		if c.ErrorDecodeFunc != nil {
+			return c.ErrorDecodeFunc(resp)
+		}
+		// nolint: gomnd
+		errmsg, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return errors.New(string(errmsg))
+	}
+	if into == nil {
+		return nil
+	}
+
+	if c.DataDecoderWrapper != nil {
+		into = c.DataDecoderWrapper(into)
+	}
+	return json.NewDecoder(resp.Body).Decode(into)
 }

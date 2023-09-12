@@ -15,11 +15,12 @@
 package plugins
 
 import (
-	"github.com/emicklei/go-restful/v3"
+	"net/http"
+
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
-	"kubegems.io/kubegems/pkg/utils/route"
+	"kubegems.io/library/rest/api"
+	"kubegems.io/library/rest/response"
 )
 
 type PluginsAPI struct {
@@ -35,8 +36,8 @@ func NewPluginsAPI(cli *agents.ClientSet) (*PluginsAPI, error) {
 	return &PluginsAPI{agents: cli}, nil
 }
 
-func (p *PluginsAPI) List(req *restful.Request, resp *restful.Response) {
-	ctx := req.Request.Context()
+func (p *PluginsAPI) List(resp http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	cli, err := p.agents.ClientOfManager(ctx)
 	if err != nil {
 		response.OK(resp, []PluginsStatus{})
@@ -58,10 +59,8 @@ func (p *PluginsAPI) List(req *restful.Request, resp *restful.Response) {
 	response.OK(resp, ret)
 }
 
-func (p *PluginsAPI) RegisterRoute(rg *route.Group) {
-	rg.
-		Tag("plugins").
-		AddRoutes(
-			route.GET("/v1/plugins").To(p.List).Doc("List plugins").Response([]PluginsStatus{}),
-		)
+func (p *PluginsAPI) RegisterRoute(rg *api.Group) {
+	rg.Tag("plugins").AddRoutes(
+		api.GET("/v1/plugins").To(p.List).Doc("List plugins").Response([]PluginsStatus{}),
+	)
 }

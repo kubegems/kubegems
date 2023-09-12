@@ -23,9 +23,9 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-openapi/spec"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/route"
 	"kubegems.io/kubegems/pkg/version"
+	"kubegems.io/library/rest/response"
 )
 
 type RestModule interface {

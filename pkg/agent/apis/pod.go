@@ -43,8 +43,8 @@ import (
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -52,23 +52,23 @@ type PodHandler struct {
 	cluster cluster.Interface
 }
 
-//	@Tags			Agent.V1
-//	@Summary		获取Pod列表数据
-//	@Description	获取Pod列表数据
-//	@Accept			json
-//	@Produce		json
-//	@Param			order			query		string															false	"page"
-//	@Param			search			query		string															false	"search"
-//	@Param			page			query		int																false	"page"
-//	@Param			size			query		int																false	"page"
-//	@Param			namespace		path		string															true	"namespace"
-//	@Param			fieldSelector	query		string															false	"fieldSelector, 只支持podstatus={xxx}格式"
-//	@Param			cluster			path		string															true	"cluster"
-//	@Param			topkind			query		string															false	"topkind(Deployment,StatefulSet,DaemonSet,Job,Node)"
-//	@Param			topname			query		string															false	"topname"
-//	@Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]object}}	"Pod"
-//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		获取Pod列表数据
+// @Description	获取Pod列表数据
+// @Accept			json
+// @Produce		json
+// @Param			order			query		string															false	"page"
+// @Param			search			query		string															false	"search"
+// @Param			page			query		int																false	"page"
+// @Param			size			query		int																false	"page"
+// @Param			namespace		path		string															true	"namespace"
+// @Param			fieldSelector	query		string															false	"fieldSelector, 只支持podstatus={xxx}格式"
+// @Param			cluster			path		string															true	"cluster"
+// @Param			topkind			query		string															false	"topkind(Deployment,StatefulSet,DaemonSet,Job,Node)"
+// @Param			topname			query		string															false	"topname"
+// @Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]object}}	"Pod"
+// @Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods [get]
+// @Security		JWT
 func (h *PodHandler) List(c *gin.Context) {
 	ns := c.Param("namespace")
 	// 网关namespace必须是kubegems-gateway
@@ -190,6 +190,7 @@ func filterByNodename(c *gin.Context, pods []v1.Pod) []v1.Pod {
 }
 
 // ExecContainer 进入容器交互执行命令
+//
 //	@Tags			Agent.V1
 //	@Summary		进入容器交互执行命令(websocket)
 //	@Description	进入容器交互执行命令(websocket)
@@ -226,6 +227,7 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 }
 
 // GetContainerLogs 获取容器的stdout输出
+//
 //	@Tags			Agent.V1
 //	@Summary		实时获取日志STDOUT输出(websocket)
 //	@Description	实时获取日志STDOUT输出(websocket)
@@ -268,6 +270,7 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 }
 
 // DownloadFileFromPod 从容器下载文件
+//
 //	@Tags			Agent.V1
 //	@Summary		从容器下载文件
 //	@Description	从容器下载文件
@@ -299,6 +302,7 @@ func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
 }
 
 // ListDir list files in the directory
+//
 //	@Tags			Agent.V1
 //	@Summary		list files in the directory
 //	@Description	list files in the directory
@@ -352,6 +356,7 @@ func (h *PodHandler) ListDir(c *gin.Context) {
 }
 
 // UploadFileToContainer upload files to container
+//
 //	@Tags			Agent.V1
 //	@Summary		upload files to container
 //	@Description	upload files to container
@@ -450,6 +455,7 @@ func (fd *FileTransfer) Upload(c *gin.Context) error {
 	}
 	return fd.upload(c, uploadFormData)
 }
+
 func (fd *FileTransfer) UploadLocal(ctx context.Context, localfile, dest string) error {
 	uploadFormData := &uploadLocalForm{
 		Dest:  dest,

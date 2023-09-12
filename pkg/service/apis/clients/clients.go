@@ -18,7 +18,7 @@ import (
 	"net/http"
 
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 )
 
 type ClientsProxy struct {

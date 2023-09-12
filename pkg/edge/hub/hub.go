@@ -25,9 +25,9 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/certificate"
 	"kubegems.io/kubegems/pkg/utils/config"
-	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/pprof"
 	"kubegems.io/kubegems/pkg/utils/system"
+	"kubegems.io/library/rest/api"
 )
 
 func Run(ctx context.Context, options *Options) error {
@@ -101,5 +101,5 @@ func (s *EdgeHubServer) Run(ctx context.Context) error {
 
 func (s *EdgeHubServer) HTTPAPI() http.Handler {
 	// handler provides a health check endpoint
-	return apiutil.NewRestfulAPI("", nil, nil)
+	return api.NewAPI().HealthCheck(nil).BuildHandler()
 }

@@ -20,8 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"kubegems.io/kubegems/pkg/apis/gems"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/slice"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -40,19 +40,19 @@ var forbiddenBindNamespaces = []string{
 	gems.NamespaceGateway,
 }
 
-//	@Tags			Agent.V1
-//	@Summary		获取可以绑定的环境的namespace列表数据
-//	@Description	获取可以绑定的环境的namespace列表数据
-//	@Accept			json
-//	@Produce		json
-//	@Param			order	query		string																			false	"page"
-//	@Param			search	query		string																			false	"search"
-//	@Param			page	query		int																				false	"page"
-//	@Param			size	query		int																				false	"page"
-//	@Param			cluster	path		string																			true	"cluster"
-//	@Success		200		{object}	handlers.ResponseStruct{Data=response.Page[corev1.Namespace]{List=[]object}}	"Namespace"
-//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		获取可以绑定的环境的namespace列表数据
+// @Description	获取可以绑定的环境的namespace列表数据
+// @Accept			json
+// @Produce		json
+// @Param			order	query		string																			false	"page"
+// @Param			search	query		string																			false	"search"
+// @Param			page	query		int																				false	"page"
+// @Param			size	query		int																				false	"page"
+// @Param			cluster	path		string																			true	"cluster"
+// @Success		200		{object}	handlers.ResponseStruct{Data=response.Page[corev1.Namespace]{List=[]object}}	"Namespace"
+// @Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces [get]
+// @Security		JWT
 func (h *NamespaceHandler) List(c *gin.Context) {
 	nsList := &corev1.NamespaceList{}
 	sel := labels.NewSelector()

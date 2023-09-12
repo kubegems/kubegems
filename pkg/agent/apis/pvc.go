@@ -22,7 +22,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/storage"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -30,20 +30,20 @@ type PvcHandler struct {
 	C client.Client
 }
 
-//	@Tags			Agent.V1
-//	@Summary		获取PersistentVolumeClaim列表数据
-//	@Description	获取PersistentVolumeClaim列表数据
-//	@Accept			json
-//	@Produce		json
-//	@Param			order		query		string																					false	"page"
-//	@Param			search		query		string																					false	"search"
-//	@Param			page		query		int																						false	"page"
-//	@Param			size		query		int																						false	"page"
-//	@Param			namespace	path		string																					true	"namespace"
-//	@Param			cluster		path		string																					true	"cluster"
-//	@Success		200			{object}	handlers.ResponseStruct{Data=response.Page[v1.PersistentVolumeClaim]{List=[]object}}	"PersistentVolumeClaim"
-//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pvcs [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		获取PersistentVolumeClaim列表数据
+// @Description	获取PersistentVolumeClaim列表数据
+// @Accept			json
+// @Produce		json
+// @Param			order		query		string																					false	"page"
+// @Param			search		query		string																					false	"search"
+// @Param			page		query		int																						false	"page"
+// @Param			size		query		int																						false	"page"
+// @Param			namespace	path		string																					true	"namespace"
+// @Param			cluster		path		string																					true	"cluster"
+// @Success		200			{object}	handlers.ResponseStruct{Data=response.Page[v1.PersistentVolumeClaim]{List=[]object}}	"PersistentVolumeClaim"
+// @Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pvcs [get]
+// @Security		JWT
 func (h *PvcHandler) List(c *gin.Context) {
 	ns := c.Param("namespace")
 	if ns == "_all" || ns == "_" {
@@ -70,17 +70,17 @@ func (h *PvcHandler) List(c *gin.Context) {
 	OK(c, pageData)
 }
 
-//	@Tags			Agent.V1
-//	@Summary		获取PersistentVolumeClaim数据
-//	@Description	获取PersistentVolumeClaim数据
-//	@Accept			json
-//	@Produce		json
-//	@Param			cluster		path		string									true	"cluster"
-//	@Param			name		path		string									true	"name"
-//	@Param			namespace	path		string									true	"namespace"
-//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"counter"
-//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pvcs/{name} [get]
-//	@Security		JWT
+// @Tags			Agent.V1
+// @Summary		获取PersistentVolumeClaim数据
+// @Description	获取PersistentVolumeClaim数据
+// @Accept			json
+// @Produce		json
+// @Param			cluster		path		string									true	"cluster"
+// @Param			name		path		string									true	"name"
+// @Param			namespace	path		string									true	"namespace"
+// @Success		200			{object}	handlers.ResponseStruct{Data=object}	"counter"
+// @Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pvcs/{name} [get]
+// @Security		JWT
 func (h *PvcHandler) Get(c *gin.Context) {
 	ns := c.Param("namespace")
 	pvcName := c.Param("name")

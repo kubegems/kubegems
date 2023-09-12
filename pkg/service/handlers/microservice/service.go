@@ -35,8 +35,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/istio"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -115,14 +115,14 @@ func (h *VirtualSpaceHandler) ListServices(c *gin.Context) {
 
 		ret := response.PageFrom(sl.Services, page, size, func(i kialimodels.ServiceOverview) bool {
 			return strings.Contains(i.Name, search)
-		}, func(a, b kialimodels.ServiceOverview) bool {
+		}, func(a, b kialimodels.ServiceOverview) int {
 			switch {
 			case a.IstioSidecar && !b.IstioSidecar:
-				return true
+				return 1
 			case !a.IstioSidecar && b.IstioSidecar:
-				return false
+				return -1
 			default:
-				return strings.Compare(a.Name, b.Name) == -1
+				return strings.Compare(a.Name, b.Name)
 			}
 		})
 

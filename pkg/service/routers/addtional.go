@@ -21,7 +21,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/apis"
 	"kubegems.io/kubegems/pkg/service/apis/clients"
 	"kubegems.io/kubegems/pkg/service/apis/proxy"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 )
 
 func (r *Router) AddRestAPI(ctx context.Context, deps apis.Dependencies) error {

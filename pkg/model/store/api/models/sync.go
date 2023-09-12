@@ -30,7 +30,7 @@ import (
 	"golang.org/x/exp/slices"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/model/store/repository"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 	"kubegems.io/modelx/cmd/modelx/model"
 	"kubegems.io/modelx/pkg/client"
 	"kubegems.io/modelx/pkg/types"
@@ -379,8 +379,8 @@ func syncone(ctx context.Context, source repository.Source, repo string, target 
 	modelversions := []repository.ModelVersion{}
 	var mainConfig *model.ModelConfig
 	lastmod := time.Time{}
-	slices.SortFunc(index.Manifests, func(i, j types.Descriptor) bool {
-		return i.Modified.After(j.Modified) // sort by version creation time
+	slices.SortFunc(index.Manifests, func(i, j types.Descriptor) int {
+		return j.Modified.Compare(i.Modified)
 	})
 	for _, version := range index.Manifests {
 		manifest, err := cli.GetManifest(ctx, repo, version.Name)

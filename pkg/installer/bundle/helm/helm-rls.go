@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/go-logr/logr"
 	"golang.org/x/exp/slices"
+
+	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/kube"
@@ -125,8 +126,14 @@ func removeHistories(ctx context.Context, storage *storage.Storage, name string,
 	}
 
 	// newest to old
-	slices.SortFunc(rlss, func(a, b *release.Release) bool {
-		return a.Version > b.Version
+	slices.SortFunc(rlss, func(a, b *release.Release) int {
+		if a.Version > b.Version {
+			return 1
+		} else if a.Version < b.Version {
+			return -1
+		} else {
+			return 0
+		}
 	})
 
 	var lastDeployed *release.Release

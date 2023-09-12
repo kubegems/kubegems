@@ -32,9 +32,9 @@ import (
 	"kubegems.io/kubegems/pkg/agent/ws"
 	"kubegems.io/kubegems/pkg/apis/gems"
 
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/kube"
 	"kubegems.io/kubegems/pkg/utils/webtty"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -69,6 +69,7 @@ type KubectlHandler struct {
 }
 
 // ExecContainer 调试容器(websocket)
+//
 //	@Tags			Agent.V1
 //	@Summary		调试容器(websocket)
 //	@Description	调试容器(websocket)
@@ -102,6 +103,7 @@ func (h *KubectlHandler) DebugPod(c *gin.Context) {
 }
 
 // ExecKubectl kubectl
+//
 //	@Tags			Agent.V1
 //	@Summary		kubectl
 //	@Description	kubectl

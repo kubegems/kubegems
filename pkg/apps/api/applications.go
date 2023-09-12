@@ -20,8 +20,8 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/apps/application"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/route"
+	"kubegems.io/library/rest/response"
 )
 
 type ApplicationsAPI struct {

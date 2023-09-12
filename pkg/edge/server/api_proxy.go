@@ -20,16 +20,16 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/apis/edge/common"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 )
 
-func (a *EdgeClusterAPI) Proxy(req *restful.Request, resp *restful.Response) {
-	uid, path := req.PathParameter("uid"), "/"+req.PathParameter("path")
+func (a *EdgeClusterAPI) Proxy(resp http.ResponseWriter, req *http.Request) {
+	uid, path := request.Path(req, "uid", ""), "/"+request.Path(req, "path", "")
 	// the default agent address
-	ctx := req.Request.Context()
+	ctx := req.Context()
 	edgecluster, err := a.Cluster.ClusterStore.Get(ctx, uid)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
@@ -54,7 +54,7 @@ func (a *EdgeClusterAPI) Proxy(req *restful.Request, resp *restful.Response) {
 		},
 		Transport: a.Tunnel.TransportOnTunnel(uid),
 	}
-	proxy.ServeHTTP(resp, req.Request)
+	proxy.ServeHTTP(resp, req)
 }
 
 // in original kubegems, api proxy to agent added "/v1" prefix

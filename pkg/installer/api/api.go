@@ -20,8 +20,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
-	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
-	"kubegems.io/kubegems/pkg/utils/route"
+	"kubegems.io/library/rest/api"
+	route "kubegems.io/library/rest/api"
 )
 
 type Options struct {
@@ -41,13 +41,10 @@ func Run(ctx context.Context, options *Options, cachedir string) error {
 	if err != nil {
 		return err
 	}
-	modules := []apiutil.RestModule{
-		NewPluginsAPI(pm),
-	}
 
 	server := http.Server{
 		Addr:    options.Listen,
-		Handler: apiutil.NewRestfulAPI("v1", nil, modules),
+		Handler: api.NewAPI().Register("/v1", NewPluginsAPI(pm)).BuildHandler(),
 	}
 	go func() {
 		<-ctx.Done()

@@ -41,8 +41,8 @@ import (
 	microserviceoptions "kubegems.io/kubegems/pkg/service/handlers/microservice/options"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -564,14 +564,14 @@ func (h *VirtualSpaceHandler) ListWorkload(c *gin.Context) {
 
 		pagedlist := response.PageFrom(list, page, size, func(i WorkloadDetails) bool {
 			return strings.Contains(i.Name, search)
-		}, func(a, b WorkloadDetails) bool {
+		}, func(a, b WorkloadDetails) int {
 			switch {
 			case a.IstioInjected && !b.IstioInjected:
-				return true
+				return 1
 			case !a.IstioInjected && b.IstioInjected:
-				return false
+				return -1
 			default:
-				return strings.Compare(a.Name, b.Name) == -1
+				return strings.Compare(a.Name, b.Name)
 			}
 		})
 
