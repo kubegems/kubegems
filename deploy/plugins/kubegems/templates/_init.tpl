@@ -11,6 +11,9 @@
   {{- if .Values.init.initData }}
   - --initdata
   {{- end }}
+  {{- if index .Values "kubegems-local" "enabled" }}
+  - --globalvalues={{ .Values.global | toJson }}
+  {{- end }}
   env:
   {{- include "kubegems.database.env" . | indent 2 }}
   {{- if .Values.init.extraEnvVarsCM }}

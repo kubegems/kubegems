@@ -16,6 +16,7 @@ package agents
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/url"
 	"sync"
@@ -122,13 +123,13 @@ func (h *ClientSet) ClientOptionsOf(ctx context.Context, name string) (*client.C
 		if err != nil {
 			return nil, nil, err
 		}
-		tlscfg, err := client.TLSConfigFrom([]byte(cluster.AgentCA), []byte(cluster.AgentCert), []byte(cluster.AgentKey))
-		if err != nil {
-			return nil, nil, err
+		info := &client.Config{Addr: baseaddr}
+		if ca := cluster.AgentCA; ca != "" {
+			info.TLS = client.TLSClientConfig([]byte(ca))
 		}
-		info := &client.Config{
-			Addr: baseaddr,
-			TLS:  tlscfg,
+		// if is https and without ca, use insecure
+		if info.Addr.Scheme == "https" && info.TLS == nil {
+			info.TLS = &tls.Config{InsecureSkipVerify: true}
 		}
 		return info, nil, nil
 	}

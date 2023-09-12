@@ -79,6 +79,7 @@ type MigratOptions struct {
 	MigrateModels bool              `json:"migrateModels,omitempty" description:"migrate models"`
 	InitData      bool              `json:"initData,omitempty" description:"insert init data into database"`
 	Wait          bool              `json:"wait,omitempty" description:"wait util database server ready"`
+	GlobalValues  string            `json:"globalValues,omitempty" description:"global values json string"`
 }
 
 func newServiceMigrateCmd() *cobra.Command {
@@ -88,6 +89,7 @@ func newServiceMigrateCmd() *cobra.Command {
 		MigrateModels: false,
 		InitData:      false,
 		Wait:          true,
+		GlobalValues:  "",
 	}
 
 	cmd := &cobra.Command{
@@ -110,7 +112,7 @@ func newServiceMigrateCmd() *cobra.Command {
 						return err
 					}
 				}
-				return models.MigrateDatabaseAndInitData(ctx, options.Mysql, options.MigrateModels, options.InitData)
+				return models.MigrateDatabaseAndInitData(ctx, options.Mysql, options.MigrateModels, options.InitData, options.GlobalValues)
 			})
 			eg.Go(func() error {
 				if options.Wait {

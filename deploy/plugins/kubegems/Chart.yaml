@@ -45,4 +45,4 @@ annotations:
   plugins.kubegems.io/category: core/KubeGems
   plugins.kubegems.io/render-by: helm
   plugins.kubegems.io/required: "true"
-  plugins.kubegems.io/values-from: kubegems-apps,kubegems-pai
+  plugins.kubegems.io/values-from: kubegems-apps,kubegems-pai,kubegems-local

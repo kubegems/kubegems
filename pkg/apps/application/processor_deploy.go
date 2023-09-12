@@ -476,25 +476,36 @@ var kindPriorityMap = map[string]int{
 }
 
 // https://argoproj.github.io/argo-cd/operator-manual/declarative-setup/#clusters
-func (h *ApplicationProcessor) createArgoCluster(ctx context.Context, clustername string, kubeconfig []byte) (*v1alpha1.Cluster, error) {
+func (h *ApplicationProcessor) createArgoCluster(ctx context.Context, clustername string, kubeconfig []byte) (string, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ensure argo cluster")
 	defer span.Finish()
 
-	apiserver, cert, key, ca, err := kube.GetKubeconfigInfos(kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	cluster := &v1alpha1.Cluster{
-		Name:   GenArgoClusterName(clustername),
-		Server: apiserver,
-		Config: v1alpha1.ClusterConfig{
-			TLSClientConfig: v1alpha1.TLSClientConfig{
-				CertData: cert,
-				KeyData:  key,
-				CAData:   ca,
+	var cluster *v1alpha1.Cluster
+	if len(kubeconfig) == 0 {
+		// use in cluster config
+		cluster = &v1alpha1.Cluster{
+			Name:   GenArgoClusterName(clustername),
+			Server: "https://kubernetes.default.svc",
+			Config: v1alpha1.ClusterConfig{
+				TLSClientConfig: v1alpha1.TLSClientConfig{Insecure: true},
 			},
-		},
+		}
+	} else {
+		apiserver, cert, key, ca, err := kube.GetKubeconfigInfos(kubeconfig)
+		if err != nil {
+			return "", err
+		}
+		cluster = &v1alpha1.Cluster{
+			Name:   GenArgoClusterName(clustername),
+			Server: apiserver,
+			Config: v1alpha1.ClusterConfig{
+				TLSClientConfig: v1alpha1.TLSClientConfig{
+					CertData: cert,
+					KeyData:  key,
+					CAData:   ca,
+				},
+			},
+		}
 	}
 
 	cachekey := "cluster/" + cluster.Name
@@ -502,23 +513,23 @@ func (h *ApplicationProcessor) createArgoCluster(ctx context.Context, clusternam
 		// check kubeconfig
 		exists := val.(*v1alpha1.Cluster)
 		if string(exists.Config.CertData) == string(cluster.Config.CertData) {
-			return exists, nil
+			return exists.Name, nil
 		}
 		logr.FromContextOrDiscard(ctx).Info("cluster config changed", "cluster", clustername)
 	}
 
 	existcluster, err := h.Argo.EnsureCluster(ctx, cluster)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// cache it
 	h.argostatuscache.Store(cachekey, existcluster)
-	return existcluster, nil
+	return existcluster.Name, nil
 }
 
 func (h *ApplicationProcessor) createArgoProjectForEnvironment(
-	ctx context.Context, ref PathRef, apiserver string, namespace string,
+	ctx context.Context, ref PathRef, clusterName string, namespace string,
 ) (*v1alpha1.AppProject, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ensure argo project")
 	defer span.Finish()
@@ -537,7 +548,7 @@ func (h *ApplicationProcessor) createArgoProjectForEnvironment(
 			SourceRepos: []string{"*"},
 			Destinations: []v1alpha1.ApplicationDestination{
 				{
-					Server:    apiserver,
+					Name:      clusterName,
 					Namespace: namespace,
 				},
 			},
@@ -616,16 +627,16 @@ func (h *ApplicationProcessor) prepareArgoApplication(ctx context.Context, ref P
 		return "", "", "", err
 	}
 	// create argo cluster
-	argocluster, err := h.createArgoCluster(ctx, envdetails.ClusterName, envdetails.ClusterKubeConfig)
+	argoclustername, err := h.createArgoCluster(ctx, envdetails.ClusterName, envdetails.ClusterKubeConfig)
 	if err != nil {
 		return "", "", "", err
 	}
 	// create argo project for env
-	argoproject, err := h.createArgoProjectForEnvironment(ctx, ref, argocluster.Server, envdetails.Namespace)
+	argoproject, err := h.createArgoProjectForEnvironment(ctx, ref, argoclustername, envdetails.Namespace)
 	if err != nil {
 		return "", "", "", err
 	}
-	return argocluster.Name, argoproject.Name, envdetails.Namespace, nil
+	return argoclustername, argoproject.Name, envdetails.Namespace, nil
 }
 
 func (h *ApplicationProcessor) deployArgoApplication(

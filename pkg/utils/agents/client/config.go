@@ -34,6 +34,17 @@ type Auth struct {
 	Password       string
 }
 
+func TLSClientConfig(ca []byte) *tls.Config {
+	caCertPool, err := x509.SystemCertPool()
+	if err != nil {
+		caCertPool = x509.NewCertPool()
+	}
+	if len(ca) > 0 {
+		caCertPool.AppendCertsFromPEM(ca)
+	}
+	return &tls.Config{RootCAs: caCertPool}
+}
+
 func TLSConfigFrom(ca, cert, key []byte) (*tls.Config, error) {
 	caCertPool, err := x509.SystemCertPool()
 	if err != nil {

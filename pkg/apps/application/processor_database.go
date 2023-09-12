@@ -51,7 +51,11 @@ func (p *DatabseProcessor) GetEnvironmentWithCluster(ref PathRef) (*EnvironmentD
 	if err := p.DB.Where(env).Preload("Cluster").Take(env).Error; err != nil {
 		return nil, err
 	}
-
+	if len(env.Cluster.KubeConfig) == 0 {
+		if env.Cluster.AgentAddr != models.SelfClusterAgentAddress {
+			return nil, fmt.Errorf("cluster %s kubeconfig is empty", env.Cluster.ClusterName)
+		}
+	}
 	return &EnvironmentDetails{
 		ClusterName:       env.Cluster.ClusterName,
 		ClusterKubeConfig: env.Cluster.KubeConfig,

@@ -73,7 +73,7 @@ generate-proto:
 	pkg/edge/tunnel/proto/tunnel.proto
 
 generate-versions:
-	yq -i 'select(.metadata.name == "kubegems").spec.version="$(VERSION)" | select(.metadata.name == "global").spec.values.kubegemsVersion="$(GIT_VERSION)"' deploy/kubegems.yaml
+	yq -i 'select(.metadata.name | contains("kubegems")).spec.version="$(VERSION)"' deploy/kubegems.yaml
 
 generate-installer: helm-package
 	helm template --namespace kubegems-installer --include-crds kubegems-installer ${KUBEGEM_CHARTS_DIR}/kubegems-installer-${VERSION}.tgz \

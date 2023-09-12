@@ -83,11 +83,11 @@ spec:
             value: {{ include "kubegems.api.address" . }}
           - name: MESSAGE_SERVER
             value: {{ include "kubegems.msgbus.address" . }}
+          - name: PAI_SERVER
+            value: {{ include "kubegems.pai.address" . }}
             {{- if .Values.dashboard.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
-          - name: PAI_SERVER
-            value: {{ include "kubegems.pai.address" . }}
           envFrom:
             {{- if .Values.dashboard.extraEnvVarsCM }}
             - configMapRef:

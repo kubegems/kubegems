@@ -2172,3 +2172,6 @@ kubegems-apps:
   enabled: true
 kubegems-pai:
   enabled: false
+# inject when kubegems-local is installed
+kubegems-local:
+  enabled: false
