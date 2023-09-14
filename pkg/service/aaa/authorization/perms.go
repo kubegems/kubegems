@@ -126,13 +126,13 @@ func (defaultPermChecker *DefaultPermissionManager) canDo(userAuthority *cache.U
 			}
 		case models.ResProject:
 			// 不是项目成员->直接禁止;
-			// 项目管理员->放行;
+			// 项目管理员｜项目运维->放行;
 			// 项目普通成员->到具体环境判断
 			role := userAuthority.GetResourceRole(res.GetKind(), res.GetID())
 			if role == "" {
 				return false, role
 			}
-			if role == models.ProjectRoleAdmin {
+			if role == models.ProjectRoleAdmin || role == models.ProjectRoleOps {
 				return true, role
 			}
 			if slice.ContainStr(normalActions, action) {
