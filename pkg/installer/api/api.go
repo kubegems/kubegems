@@ -44,7 +44,7 @@ func Run(ctx context.Context, options *Options, cachedir string) error {
 
 	server := http.Server{
 		Addr:    options.Listen,
-		Handler: api.NewAPI().Register("/v1", NewPluginsAPI(pm)).BuildHandler(),
+		Handler: api.NewAPI().HealthCheck(nil).Register("/v1", NewPluginsAPI(pm)).BuildHandler(),
 	}
 	go func() {
 		<-ctx.Done()
