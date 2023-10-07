@@ -247,20 +247,23 @@ func (r *Reconciler) Sync(ctx context.Context, bundle *pluginsv1beta1.Plugin) er
 	if bundle.Spec.Disabled || bundle.DeletionTimestamp != nil {
 		// just remove
 		return r.Applier.Remove(ctx, bundle)
-	} else {
-		// check all dependencies are installed
-		if err := r.checkDepenency(ctx, bundle); err != nil {
-			return err
-		}
-		// resolve valuesRef
-		if err := r.resolveValuesRef(ctx, bundle); err != nil {
-			return err
-		}
-		if err := r.Applier.Apply(ctx, bundle); err != nil {
-			return err
-		}
-		return r.checkResourcesStatus(ctx, bundle)
 	}
+	// check all dependencies are installed
+	if err := r.checkDepenency(ctx, bundle); err != nil {
+		return err
+	}
+	// resolve valuesRef
+	if err := r.resolveValuesRef(ctx, bundle); err != nil {
+		return err
+	}
+	if err := r.Applier.Apply(ctx, bundle); err != nil {
+		return err
+	}
+	if err := r.checkResourcesStatus(ctx, bundle); err != nil {
+		return err
+	}
+	bundle.Status.ObservedGeneration = bundle.Generation
+	return nil
 }
 
 // ResourcesStatus fill resource status
