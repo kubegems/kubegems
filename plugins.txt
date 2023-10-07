@@ -28,4 +28,4 @@ seldon 1.16.0
 tke-gpu-manager 1.1.5
 tracing 2.34.1
 volume-snapshoter 5.0.1
-kubegems-pai 1.0.0-beta1
+kubegems-pai 1.0.1
