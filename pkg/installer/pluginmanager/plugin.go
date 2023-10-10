@@ -339,7 +339,7 @@ func mergeAllrepoVersions(repos map[string]Repository) map[string][]PluginVersio
 	for k, v := range pluginsmap {
 		vs := maps.Values(v)
 		slices.SortFunc(vs, func(a, b PluginVersion) int {
-			return SemVersionBiggerThan(a.Version, b.Version)
+			return SemVersionBiggerThan(b.Version, a.Version)
 		})
 		ret[k] = vs
 	}
