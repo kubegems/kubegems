@@ -64,19 +64,19 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 			pr.SetURL(target)
 		},
 	}
+	webuiPrefix := "/api" // our webui proxy path
+	prefix := webuiPrefix + strings.TrimSuffix(req.URL.Path, targetPath)
+	if proxyRequestURI, _ := url.ParseRequestURI(req.Header.Get("X-Forwarded-Uri")); proxyRequestURI != nil {
+		req.Header.Del("X-Forwarded-Uri")
+		prefix = strings.TrimSuffix(proxyRequestURI.Path, targetPath)
+	}
+	req.Header.Del("X-Forwarded-Scheme")
 
 	// k8s apiserver proxy will modify the html response, so we need to correct the path
 	// https://github.com/kubernetes/apimachinery/blob/7ed5d2d91a598ca4d125acac5061f2a12721bbe8/pkg/util/proxy/transport.go#L124
 	rp.Transport = &proxyutil.Transport{
 		// detect which uri the request from, and set the prepend path
-		PathPrepend: func() string {
-			proxyRequestURI, _ := url.ParseRequestURI(req.Header.Get("X-Forwarded-Uri"))
-			if proxyRequestURI != nil {
-				return proxyRequestURI.Path
-			}
-			webuiPrefix := "/api" // our webui proxy path
-			return webuiPrefix + strings.TrimSuffix(req.URL.Path, targetPath)
-		}(),
+		PathPrepend:  prefix,
 		TrimPrefix:   cli.Config().Addr.Path, // trim the base path
 		RoundTripper: rp.Transport,
 	}
