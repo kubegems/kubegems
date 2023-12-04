@@ -12,6 +12,9 @@ metadata:
     {{- end }}
   annotations:
     nginx.org/proxy-buffering: "false"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: 300
+    nginx.ingress.kubernetes.io/proxy-read-timeout: 300
+    nginx.ingress.kubernetes.io/proxy-send-timeout: 300
     nginx.org/websocket-services: {{ include "kubegems.dashboard.fullname" . }}
   {{- if or .Values.ingress.annotations .Values.commonAnnotations }}
     {{- if .Values.ingress.annotations }}
