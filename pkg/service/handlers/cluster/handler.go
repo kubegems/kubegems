@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"database/sql"
 	"errors"
 	"fmt"
 	"regexp"
@@ -56,6 +57,7 @@ var (
 )
 
 // ListCluster 列表 Cluster
+//
 //	@Tags			Cluster
 //	@Summary		Cluster列表
 //	@Description	Cluster列表
@@ -90,6 +92,7 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 }
 
 // ListClusterStatus 列出集群状态
+//
 //	@Tags			Cluster
 //	@Summary		列出集群状态
 //	@Description	列出集群状态
@@ -126,6 +129,7 @@ func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 }
 
 // RetrieveCluster Cluster详情
+//
 //	@Tags			Cluster
 //	@Summary		Cluster详情
 //	@Description	get Cluster详情
@@ -155,6 +159,7 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 }
 
 // PutCluster 修改Cluster
+//
 //	@Tags			Cluster
 //	@Summary		修改Cluster
 //	@Description	修改Cluster
@@ -199,6 +204,7 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 }
 
 // DeleteCluster 删除 Cluster
+//
 //	@Tags			Cluster
 //	@Summary		删除 Cluster
 //	@Description	删除 Cluster
@@ -269,6 +275,7 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 }
 
 // ListClusterEnvironment 获取属于Cluster的 Environment 列表
+//
 //	@Tags			Cluster
 //	@Summary		获取属于 Cluster 的 Environment 列表
 //	@Description	获取属于 Cluster 的 Environment 列表
@@ -307,6 +314,7 @@ func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 }
 
 // ListClusterLogQueryHistory 获取属于Cluster的 LogQueryHistory 列表
+//
 //	@Tags			Cluster
 //	@Summary		获取属于 Cluster 的 LogQueryHistory 列表
 //	@Description	获取属于 Cluster 的 LogQueryHistory 列表
@@ -353,6 +361,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 }
 
 // ListLogQueryHistory 聚合查询日志查询历史[按照当前用户的查询历史聚合]
+//
 //	@Tags			Cluster
 //	@Summary		聚合查询日志查询历史, unique logql desc 按照当前用户的查询历史聚合
 //	@Description	聚合查询日志查询历史 unique logql desc 按照当前用户的查询历史聚合
@@ -377,15 +386,15 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 		count(*) as total
 	from log_query_histories
 	where
-		creator_id = ? and cluster_id = ? and create_at > ?
+		creator_id = @creatorID and cluster_id = @clusterID and create_at > @before15d
 	group by
 		log_ql
 	order by total desc;`
 	if err := h.GetDB().WithContext(c.Request.Context()).Raw(
 		rawsql,
-		user.GetID(),
-		clusterid,
-		before15d,
+		sql.Named("creatorID", user.GetID()),
+		sql.Named("clusterID", clusterid),
+		sql.Named("before15d", before15d),
 	).Scan(&list).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -394,6 +403,7 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 }
 
 // ListClusterLogQuerySnapshot 获取属于Cluster的 LogQuerySnapshot 列表
+//
 //	@Tags			Cluster
 //	@Summary		获取属于 Cluster 的 LogQuerySnapshot 列表
 //	@Description	获取属于 Cluster 的 LogQuerySnapshot 列表
@@ -439,6 +449,7 @@ func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 }
 
 // PostCluster 创建Cluster
+//
 //	@Tags			Cluster
 //	@Summary		创建Cluster
 //	@Description	创建Cluster
@@ -515,6 +526,7 @@ type ClusterQuota struct {
 }
 
 // ClusterStatistics 集群资源状态
+//
 //	@Tags			Cluster
 //	@Summary		集群资源状态
 //	@Description	集群资源状态
