@@ -3958,8 +3958,8 @@ kubegems.io/ingress-nginx-operator v0.2.1 h1:iMBExFDkCYvlrfLqGPPjDvCZNHpN0FGb16s
 kubegems.io/ingress-nginx-operator v0.2.1/go.mod h1:gADnzt6HxjlWoRXrOfTeocUY5j/VZwPkXPqsWfIS8Z0=
 kubegems.io/library v0.0.0-20230911041405-0b02d2dbc2b4 h1:FdEPnY8C9Iue+xjdaQ4q0sYwTQFre0jSlf+FC7w+VBc=
 kubegems.io/library v0.0.0-20230911041405-0b02d2dbc2b4/go.mod h1:xZ5YvfZL3DZCdMi5X6BRAf3BYKlXn6KZGbkTigxKrWc=
-kubegems.io/modelx v0.1.8-0.20230911063110-ae43e20cddbc h1:Q1ZRJ6jrO7lXkmzcn45il0NsQd38nf82Qwkh8IXV3Tk=
-kubegems.io/modelx v0.1.8-0.20230911063110-ae43e20cddbc/go.mod h1:8njnb4WSLWiQJwICbRuIDrqPEQnUoH1q6pamWOiEEKw=
+kubegems.io/modelx v0.1.7 h1:7WlS0OterqhdumAn77ecEmWjD6trTT5Np7Q1CtPTGAI=
+kubegems.io/modelx v0.1.7/go.mod h1:bbAgI/J1hM1lmVSY0CguKMIJsIjhPtfbzZJM1LJixAw=
 modernc.org/b v1.0.0/go.mod h1:uZWcZfRj1BpYzfN9JTerzlNUnnPsV9O2ZA8JsRcubNg=
 modernc.org/cc v1.0.0/go.mod h1:1Sk4//wdnYJiUIxnW8ddKpaOJCF37yAdqYnkxUpaYxw=
 modernc.org/db v1.0.0/go.mod h1:kYD/cO29L/29RM0hXYl4i3+Q5VojL31kTUVpVJDw0s8=
