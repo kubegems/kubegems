@@ -15,31 +15,43 @@
 package agents
 
 import (
+	"context"
 	"net/url"
 
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"kubegems.io/kubegems/pkg/utils/agents/extend"
 )
 
-type APIServerInfoClient struct {
+type APIServerInfoClient interface {
+	APIServerAddr() string
+	APIServerVersion() string
+}
+
+type EmptyAPIServerInfoClient struct{}
+
+func (c EmptyAPIServerInfoClient) APIServerAddr() string    { return "" }
+func (c EmptyAPIServerInfoClient) APIServerVersion() string { return "" }
+
+type KubeConfigAPIServerInfoClient struct {
 	APIServerHost *url.URL
 	Discovery     discovery.DiscoveryInterface
 }
 
-func NewAPIServerInfoClientOrEmpty(cfg *rest.Config) *APIServerInfoClient {
+func NewAPIServerInfoClientOrEmpty(ext *extend.ExtendClient, cfg *rest.Config) APIServerInfoClient {
 	if cfg == nil {
-		return &APIServerInfoClient{}
+		return AgentAPIServerInfoClient{ExtendClient: ext}
 	}
 	infocli, err := NewAPIServerInfoClient(cfg)
 	if err != nil {
-		return &APIServerInfoClient{}
+		return EmptyAPIServerInfoClient{}
 	}
 	return infocli
 }
 
-func NewAPIServerInfoClient(cfg *rest.Config) (*APIServerInfoClient, error) {
+func NewAPIServerInfoClient(cfg *rest.Config) (*KubeConfigAPIServerInfoClient, error) {
 	apiserveraddr, err := url.Parse(cfg.Host)
 	if err != nil {
 		return nil, err
@@ -49,17 +61,17 @@ func NewAPIServerInfoClient(cfg *rest.Config) (*APIServerInfoClient, error) {
 		return nil, err
 	}
 	discovery := memory.NewMemCacheClient(clientset.Discovery())
-	return &APIServerInfoClient{APIServerHost: apiserveraddr, Discovery: discovery}, nil
+	return &KubeConfigAPIServerInfoClient{APIServerHost: apiserveraddr, Discovery: discovery}, nil
 }
 
-func (c *APIServerInfoClient) APIServerAddr() string {
+func (c *KubeConfigAPIServerInfoClient) APIServerAddr() string {
 	if c.APIServerHost == nil {
 		return ""
 	}
 	return c.APIServerHost.String()
 }
 
-func (c *APIServerInfoClient) APIServerVersion() string {
+func (c *KubeConfigAPIServerInfoClient) APIServerVersion() string {
 	if c.Discovery == nil {
 		return ""
 	}
@@ -68,4 +80,25 @@ func (c *APIServerInfoClient) APIServerVersion() string {
 		return ""
 	}
 	return version.String()
+}
+
+var _ APIServerInfoClient = AgentAPIServerInfoClient{}
+
+type AgentAPIServerInfoClient struct {
+	ExtendClient *extend.ExtendClient
+}
+
+// APIServerAddr implements APIServerInfoClient.
+func (a AgentAPIServerInfoClient) APIServerAddr() string {
+	// there is no apiserver address when connect cluster via agent.
+	return "https://kubernets.default.svc"
+}
+
+// APIServerVersion implements APIServerInfoClient.
+func (a AgentAPIServerInfoClient) APIServerVersion() string {
+	info, err := a.ExtendClient.KubernetesVersion(context.Background())
+	if err != nil {
+		return ""
+	}
+	return info.String()
 }

@@ -33,6 +33,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/version"
 	"kubegems.io/kubegems/pkg/utils/loki"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/library/rest/response"
@@ -52,6 +53,14 @@ type ExtendClient struct {
 	BaseAddr   *url.URL
 	HTTPClient *http.Client
 	tracer     trace.Tracer
+}
+
+func (c *ExtendClient) KubernetesVersion(ctx context.Context) (*version.Info, error) {
+	ret := version.Info{}
+	if err := c.DoRequest(ctx, Request{Path: "/kubernetes-version", Into: &ret}); err != nil {
+		return nil, err
+	}
+	return &ret, nil
 }
 
 // statistics.system/v1

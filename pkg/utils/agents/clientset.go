@@ -118,7 +118,7 @@ func (h *ClientSet) ClientOptionsOf(ctx context.Context, name string) (*client.C
 		return nil, nil, err
 	}
 	// from origin
-	if len(cluster.KubeConfig) == 0 || cluster.AgentAddr != "" {
+	if cluster.AgentAddr != "" {
 		baseaddr, err := url.Parse(cluster.AgentAddr)
 		if err != nil {
 			return nil, nil, err

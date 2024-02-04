@@ -146,12 +146,19 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 		return
 	}
 
+	// nolint: nestif
 	if obj.Version == "" {
 		cli, err := h.GetAgents().ClientOf(c.Request.Context(), obj.ClusterName)
 		if err != nil {
 			log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
 		} else {
 			obj.Version = cli.Info().APIServerVersion()
+		}
+		if obj.Version != "" {
+			// update version
+			if err := h.GetDB().WithContext(c.Request.Context()).Model(&obj).Update("version", obj.Version).Error; err != nil {
+				log.Error(err, "unable update version", "cluster", obj.ClusterName)
+			}
 		}
 	}
 

@@ -30,7 +30,7 @@ import (
 type Client interface {
 	client.WithWatch
 	Name() string
-	Info() *APIServerInfoClient
+	Info() APIServerInfoClient
 	Websocket() *agentcli.WebsocketClient
 	Extend() *extend.ExtendClient
 	// ReverseProxy return a new reverse proxy that proxy requests to the agent.
@@ -48,14 +48,15 @@ func NewDelegateClientClient(name string, cfg *agentcli.Config, kubecfg *rest.Co
 	// transport is a stateful object, h2 reuse connections cache in transport.
 	// so we may share the transport in consumers.
 	transport := agentcli.ConfigAsTransport(cfg)
+	extendcli := extend.NewExtendClient(cfg.Addr, transport)
 	return &DelegateClient{
 		name:           name,
 		cfg:            cfg,
 		transport:      transport,
 		proxytransport: agentcli.NewProxyTransport(cfg.Addr, transport),
-		infoclli:       NewAPIServerInfoClientOrEmpty(kubecfg),
+		infoclli:       NewAPIServerInfoClientOrEmpty(extendcli, kubecfg),
 		TypedClient:    agentcli.NewTypedClient(cfg.Addr, transport, schema),
-		extcli:         extend.NewExtendClient(cfg.Addr, transport),
+		extcli:         extendcli,
 		wscli:          agentcli.NewWebsocketClient(cfg),
 	}, nil
 }
@@ -68,7 +69,7 @@ type DelegateClient struct {
 	proxytransport http.RoundTripper
 	extcli         *extend.ExtendClient
 	wscli          *agentcli.WebsocketClient
-	infoclli       *APIServerInfoClient
+	infoclli       APIServerInfoClient
 	kubeconfig     *rest.Config
 }
 
@@ -93,7 +94,7 @@ func (c *DelegateClient) Transport() http.RoundTripper {
 	return c.transport
 }
 
-func (c *DelegateClient) Info() *APIServerInfoClient {
+func (c *DelegateClient) Info() APIServerInfoClient {
 	return c.infoclli
 }
 

@@ -144,6 +144,14 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 		c.JSON(http.StatusOK, gin.H{"healthy": "ok"})
 	})
 	routes.r.GET("/version", func(c *gin.Context) { c.JSON(http.StatusOK, version.Get()) })
+	routes.r.GET("/kubernetes-version", func(c *gin.Context) {
+		version, err := cluster.Discovery().ServerVersion()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, version)
+	})
 
 	serviceProxyHandler := ServiceProxyHandler{}
 	routes.r.ANY("/v1/service-proxy/{realpath}*", serviceProxyHandler.ServiceProxy)
