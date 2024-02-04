@@ -114,7 +114,7 @@ func readLatestPluginVersions(ctx context.Context, repo *pluginmanager.Repositor
 	ret := []OfflinePlugin{}
 	for name, versions := range repo.Plugins {
 		// do not download kubegems charts,it exists locally.
-		if strings.HasPrefix(name, "kubegems") {
+		if _, err := os.Stat(filepath.Join("deploy", "plugins", name)); err == nil {
 			continue
 		}
 		// find latest version match kubegems

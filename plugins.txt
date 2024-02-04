@@ -12,6 +12,7 @@ https://charts.kubegems.io/kubegems intel-device-operator 0.25.1
 https://charts.kubegems.io/kubegems intel-device-sgx 0.25.1
 https://charts.kubegems.io/kubegems istio 1.11.7
 https://charts.kubegems.io/kubegems knative 1.0.1
+https://charts.kubegems.io/kubegems kubegems-pai 1.0.3
 https://charts.kubegems.io/kubegems kubevela 1.3.5
 https://charts.kubegems.io/kubegems local-path 0.0.22
 https://charts.kubegems.io/kubegems logging 3.17.7
