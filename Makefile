@@ -17,6 +17,7 @@ BIN_DIR?=bin
 PLATFORM?=linux/amd64,linux/arm64
 
 IMAGE_REGISTRY?=docker.io,registry.cn-beijing.aliyuncs.com
+IMAGE_REPOSITORY?=kubegems
 IMAGE_TAG=${GIT_VERSION}
 
 GOPACKAGE=$(shell go list -m)
@@ -163,16 +164,16 @@ image-files: ## Prepare files for image build
 	cp -r tools/podfsmgr/bin/* ${BIN_DIR}/tools
 
 kubegems-image: image-files
-	$(call buildxbuild,kubegems/kubegems:$(IMAGE_TAG)) -f Dockerfile ${BIN_DIR}	
+	$(call buildxbuild,$(IMAGE_REPOSITORY)/kubegems:$(IMAGE_TAG)) -f Dockerfile ${BIN_DIR}	
 
 kubegems-edge-image:
-	$(call buildxbuild,kubegems/kubegems-edge-agent:$(IMAGE_TAG)) -f Dockerfile.edge-agent ${BIN_DIR}
+	$(call buildxbuild,$(IMAGE_REPOSITORY)/kubegems-edge-agent:$(IMAGE_TAG)) -f Dockerfile.edge-agent ${BIN_DIR}
 
 debug-image:
-	$(call buildxbuild,kubegems/debug-tools:latest) -f Dockerfile.debug ${BIN_DIR}
+	$(call buildxbuild,$(IMAGE_REPOSITORY)/debug-tools:latest) -f Dockerfile.debug ${BIN_DIR}
 
 kubectl-image:
-	$(call buildxbuild,kubegems/kubectl:latest) -f Dockerfile.kubectl ${BIN_DIR}
+	$(call buildxbuild,$(IMAGE_REPOSITORY)/kubectl:latest) -f Dockerfile.kubectl ${BIN_DIR}
 
 clean:
 	- rm -rf ${BIN_DIR}
