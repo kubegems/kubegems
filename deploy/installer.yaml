@@ -133,6 +133,22 @@ spec:
               disabled:
                 description: Disabled indicates that the bundle should not be installed.
                 type: boolean
+              fileOverrides:
+                description: FileOverrides is a list of file overrides/append to the
+                  helm chart.
+                items:
+                  properties:
+                    content:
+                      description: Content is the content of the file to override
+                      type: string
+                    name:
+                      description: Name is the name of the file to override
+                      type: string
+                  required:
+                  - content
+                  - name
+                  type: object
+                type: array
               installNamespace:
                 description: InstallNamespace is the namespace to install the bundle
                   into. If not specified, the bundle will be installed into the namespace
@@ -206,6 +222,10 @@ spec:
               namespace:
                 description: Namespace is the namespace where the bundle is installed.
                 type: string
+              observedGeneration:
+                description: The generation observed by the controller.
+                format: int64
+                type: integer
               phase:
                 description: Phase is the current state of the release
                 type: string
@@ -255,7 +275,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.0
+    helm.sh/chart: kubegems-installer-1.24.3
   name: kubegems-installer
   namespace: kubegems-installer
 ---
@@ -272,7 +292,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.0
+    helm.sh/chart: kubegems-installer-1.24.3
     plugins.kubegems.io/is-plugin-repo: "true"
   name: plugin-repository-kubegems
   namespace: kubegems-installer
@@ -288,7 +308,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.0
+    helm.sh/chart: kubegems-installer-1.24.3
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-view: "true"
@@ -314,7 +334,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.0
+    helm.sh/chart: kubegems-installer-1.24.3
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
   name: kubegems-installer-edit
@@ -343,7 +363,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.0
+    helm.sh/chart: kubegems-installer-1.24.3
   name: kubegems-installer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -367,7 +387,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.0
+    helm.sh/chart: kubegems-installer-1.24.3
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -397,7 +417,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.0
+    helm.sh/chart: kubegems-installer-1.24.3
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -416,7 +436,7 @@ spec:
         app.kubernetes.io/instance: kubegems-installer
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: kubegems-installer
-        helm.sh/chart: kubegems-installer-1.24.0
+        helm.sh/chart: kubegems-installer-1.24.3
     spec:
       containers:
       - args:
@@ -426,7 +446,7 @@ spec:
         env:
         - name: LOG_LEVEL
           value: debug
-        image: docker.io/kubegems/kubegems:v1.24.0
+        image: registry.cn-beijing.aliyuncs.com/kubegems/kubegems:v1.24.3
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 6

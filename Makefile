@@ -17,6 +17,7 @@ BIN_DIR?=bin
 PLATFORM?=linux/amd64,linux/arm64
 
 IMAGE_REGISTRY?=docker.io,registry.cn-beijing.aliyuncs.com
+DEFAULT_REGISTRY?=registry.cn-beijing.aliyuncs.com
 IMAGE_REPOSITORY?=kubegems
 IMAGE_TAG=${GIT_VERSION}
 
@@ -79,7 +80,11 @@ generate-versions:
 	yq -i 'select(.metadata.name | contains("kubegems")).spec.version="$(VERSION)"' deploy/kubegems.yaml
 
 generate-installer: helm-package
-	helm template --namespace kubegems-installer --include-crds kubegems-installer ${KUBEGEM_CHARTS_DIR}/kubegems-installer-${VERSION}.tgz \
+	helm template \
+	--namespace kubegems-installer \
+	--include-crds kubegems-installer \
+	--set global.imageRegistry=${DEFAULT_REGISTRY} \
+	${KUBEGEM_CHARTS_DIR}/kubegems-installer-${VERSION}.tgz \
 	| kubectl annotate -f -  --local  -oyaml meta.helm.sh/release-name=kubegems-installer meta.helm.sh/release-namespace=kubegems-installer \
 	> deploy/installer.yaml
 
