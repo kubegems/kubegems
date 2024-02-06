@@ -196,8 +196,8 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := OnKubeConfig(c, obj.KubeConfig, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
-		if err := CompleteCluster(ctx, &obj, config, clientSet); err != nil {
+	if err := OnAgentClient(ctx, &obj, func(ctx context.Context) error {
+		if err := CompleteCluster(ctx, &obj); err != nil {
 			return err
 		}
 		return h.GetDB().WithContext(ctx).Save(&obj).Error
@@ -258,12 +258,14 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 			return
 		}
 	} else {
-		if err := OnKubeConfig(c, cluster.KubeConfig, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		if err := OnAgentClient(ctx, cluster, func(ctx context.Context) error {
 			return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
 				}
-				return pluginmanager.Bootstrap{Config: config}.Remove(ctx)
+				// remove cluster do nothing
+				// return pluginmanager.Bootstrap{}.Remove(ctx)
+				return nil
 			})
 		}); err != nil {
 			handlers.NotOK(c, err)
@@ -481,9 +483,9 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	action, module := i18n.Sprintf(ctx, "create"), i18n.Sprintf(ctx, "cluster")
 	h.SetAuditData(c, action, module, cluster.ClusterName)
 
-	if err := OnKubeConfig(ctx, cluster.KubeConfig, func(ctx context.Context, cs *kubernetes.Clientset, cfg *rest.Config) error {
+	if err := OnAgentClient(ctx, cluster, func(ctx context.Context) error {
 		// complete cluster info
-		if err := CompleteCluster(ctx, cluster, cfg, cs); err != nil {
+		if err := CompleteCluster(ctx, cluster); err != nil {
 			return err
 		}
 		// check database
@@ -499,19 +501,26 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
-			splits := strings.Split(cluster.ImageRepo, "/")
-			if len(splits) == 1 {
-				splits = append(splits, "")
+			if len(cluster.KubeConfig) != 0 {
+				restconfig, _, err := kube.GetKubeClient(cluster.KubeConfig)
+				if err != nil {
+					return i18n.Errorf(ctx, "invalid kubeconfig: %w", err)
+				}
+				splits := strings.Split(cluster.ImageRepo, "/")
+				if len(splits) == 1 {
+					splits = append(splits, "")
+				}
+				registry, repository := splits[0], splits[1]
+				globalvalues := pluginmanager.GlobalValues{
+					ImageRegistry:   registry,
+					ImageRepository: repository,
+					ClusterName:     cluster.ClusterName,
+					StorageClass:    cluster.DefaultStorageClass,
+					Runtime:         cluster.Runtime,
+				}
+				return pluginmanager.Bootstrap{Config: restconfig}.Install(ctx, globalvalues)
 			}
-			registry, repository := splits[0], splits[1]
-			globalvalues := pluginmanager.GlobalValues{
-				ImageRegistry:   registry,
-				ImageRepository: repository,
-				ClusterName:     cluster.ClusterName,
-				StorageClass:    cluster.DefaultStorageClass,
-				Runtime:         cluster.Runtime,
-			}
-			return pluginmanager.Bootstrap{Config: cfg}.Install(ctx, globalvalues)
+			return nil
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -568,15 +577,8 @@ func (h *ClusterHandler) cluster(c *gin.Context, fun func(ctx context.Context, c
 	})(c)
 }
 
-func OnKubeConfig(ctx context.Context,
-	cfgraw []byte,
-	f func(ctx context.Context, cs *kubernetes.Clientset, cfg *rest.Config) error,
-) error {
-	cfg, cs, err := kube.GetKubeClient(cfgraw)
-	if err != nil {
-		return i18n.Errorf(ctx, "invalid kubeconfig: %w", err)
-	}
-	return f(ctx, cs, cfg)
+func OnAgentClient(ctx context.Context, c *models.Cluster, f func(ctx context.Context) error) error {
+	return f(ctx)
 }
 
 func CheckBeforeAdd(ctx context.Context, db *database.Database, cluster *models.Cluster) error {
@@ -612,7 +614,14 @@ func CheckBeforeAdd(ctx context.Context, db *database.Database, cluster *models.
 	return nil
 }
 
-func CompleteCluster(ctx context.Context, cluster *models.Cluster, restconfig *rest.Config, clientSet kubernetes.Interface) error {
+func CompleteCluster(ctx context.Context, cluster *models.Cluster) error {
+	if len(cluster.KubeConfig) == 0 {
+		return nil
+	}
+	restconfig, clientSet, err := kube.GetKubeClient(cluster.KubeConfig)
+	if err != nil {
+		return i18n.Errorf(ctx, "invalid kubeconfig: %w", err)
+	}
 	// update client config expire
 	if expire := ConfigClientCertExpire(restconfig); expire != nil {
 		cluster.ClientCertExpireAt = expire
@@ -626,7 +635,6 @@ func CompleteCluster(ctx context.Context, cluster *models.Cluster, restconfig *r
 		}
 		cluster.Runtime = criruntime
 	}
-
 	// set server addr and version
 	serverSersion, err := clientSet.Discovery().ServerVersion()
 	if err != nil {

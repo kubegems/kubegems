@@ -19,7 +19,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	agentcli "kubegems.io/kubegems/pkg/utils/agents/client"
@@ -40,11 +39,12 @@ type Client interface {
 	Config() *agentcli.Config
 	// ProxyTransport return a transport that handle requests like it happens in the agent pod.
 	ProxyTransport() http.RoundTripper
+	KubeConfig() *rest.Config
 }
 
 var _ Client = &DelegateClient{}
 
-func NewDelegateClientClient(name string, cfg *agentcli.Config, kubecfg *rest.Config, schema *runtime.Scheme, tracer trace.Tracer) (Client, error) {
+func NewDelegateClientClient(name string, cfg *agentcli.Config, kubecfg *rest.Config, schema *runtime.Scheme) (Client, error) {
 	// transport is a stateful object, h2 reuse connections cache in transport.
 	// so we may share the transport in consumers.
 	transport := agentcli.ConfigAsTransport(cfg)
@@ -58,6 +58,7 @@ func NewDelegateClientClient(name string, cfg *agentcli.Config, kubecfg *rest.Co
 		TypedClient:    agentcli.NewTypedClient(cfg.Addr, transport, schema),
 		extcli:         extendcli,
 		wscli:          agentcli.NewWebsocketClient(cfg),
+		kubeconfig:     kubecfg,
 	}, nil
 }
 
@@ -100,6 +101,10 @@ func (c *DelegateClient) Info() APIServerInfoClient {
 
 func (c *DelegateClient) Websocket() *agentcli.WebsocketClient {
 	return c.wscli
+}
+
+func (c *DelegateClient) KubeConfig() *rest.Config {
+	return c.kubeconfig
 }
 
 // ReverseProxy return a http.Handler that proxy requests to the agent.

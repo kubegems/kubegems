@@ -94,8 +94,11 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 		}
 		return nil, fmt.Errorf("invalid client type: %T", v)
 	}
-
-	cli, err := h.newClientFor(ctx, name)
+	cluster := &models.Cluster{}
+	if err := h.database.DB().WithContext(ctx).First(&cluster, "cluster_name = ?", name).Error; err != nil {
+		return nil, err
+	}
+	cli, err := NewClientFor(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -104,19 +107,15 @@ func (h *ClientSet) ClientOf(ctx context.Context, name string) (Client, error) {
 	return cli, nil
 }
 
-func (h *ClientSet) newClientFor(ctx context.Context, name string) (Client, error) {
-	clientOptions, kubeconfig, err := h.ClientOptionsOf(ctx, name)
+func NewClientFor(ctx context.Context, cluster *models.Cluster) (Client, error) {
+	clientOptions, kubeconfig, err := ClientOptionsOf(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
-	return NewDelegateClientClient(name, clientOptions, kubeconfig, schema.GetScheme(), h.tracer)
+	return NewDelegateClientClient(cluster.ClusterName, clientOptions, kubeconfig, schema.GetScheme())
 }
 
-func (h *ClientSet) ClientOptionsOf(ctx context.Context, name string) (*client.Config, *rest.Config, error) {
-	cluster := &models.Cluster{}
-	if err := h.database.DB().WithContext(ctx).First(&cluster, "cluster_name = ?", name).Error; err != nil {
-		return nil, nil, err
-	}
+func ClientOptionsOf(ctx context.Context, cluster *models.Cluster) (*client.Config, *rest.Config, error) {
 	// from origin
 	if cluster.AgentAddr != "" {
 		baseaddr, err := url.Parse(cluster.AgentAddr)
