@@ -21,6 +21,8 @@ IMAGE_REPOSITORY?=kubegems
 IMAGE_TAG=${GIT_VERSION}
 
 GOPACKAGE=$(shell go list -m)
+export GOPRIVATE="kubegems.io/*"
+export CGO_ENABLED=0
 ldflags+=-w -s
 ldflags+=-X '${GOPACKAGE}/pkg/version.gitVersion=${GIT_VERSION}'
 ldflags+=-X '${GOPACKAGE}/pkg/version.gitCommit=${GIT_COMMIT}'
@@ -112,13 +114,13 @@ collect-i18n:
 
 define go-build
 	@echo "Building ${1}/${2}"
-	@CGO_ENABLED=0 GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-$(1)-$(2) cmd/main.go
-	@CGO_ENABLED=0 GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-edge-agent-$(1)-$(2) pkg/edge/cmd/kubegems-edge-agent/main.go
+	@GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-$(1)-$(2) cmd/main.go
+	@GOOS=${1} GOARCH=$(2) go build -gcflags=all="-N -l" -ldflags="${ldflags}" -o ${BIN_DIR}/kubegems-edge-agent-$(1)-$(2) pkg/edge/cmd/kubegems-edge-agent/main.go
 endef
 
 define go-build-tools
 	@echo "Building tools in dir tools/${1}"
-	@pushd tools/${1} && CGO_ENABLED=0 GOOS=${2} GOARCH=$(3) go build -gcflags=all="-N -l" -o bin/${1}-$(2)-$(3) . && popd
+	@pushd tools/${1} && GOOS=${2} GOARCH=$(3) go build -gcflags=all="-N -l" -o bin/${1}-$(2)-$(3) . && popd
 endef
 
 ##@ Build
