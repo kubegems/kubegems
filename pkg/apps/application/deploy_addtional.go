@@ -225,10 +225,10 @@ func (h *ApplicationHandler) GetHPA(c *gin.Context) {
 		}
 		for _, metrics := range sc.Spec.Metrics {
 			if metrics.Resource.Name == v1.ResourceCPU {
-				ret.Cpu = *metrics.Resource.TargetAverageUtilization
+				ret.Cpu = *metrics.Resource.Target.AverageUtilization
 			}
 			if metrics.Resource.Name == v1.ResourceMemory {
-				ret.Memory = *metrics.Resource.TargetAverageUtilization
+				ret.Memory = *metrics.Resource.Target.AverageUtilization
 			}
 		}
 		return ret, nil

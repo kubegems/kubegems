@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
-	v2beta1 "k8s.io/api/autoscaling/v2beta1"
+	v2beta1 "k8s.io/api/autoscaling/v2beta2"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -117,8 +117,11 @@ func (p *ApplicationProcessor) SetHorizontalPodAutoscaler(ctx context.Context, r
 					metrics = append(metrics, v2beta1.MetricSpec{
 						Type: v2beta1.ResourceMetricSourceType,
 						Resource: &v2beta1.ResourceMetricSource{
-							Name:                     v1.ResourceCPU,
-							TargetAverageUtilization: &scalerMetrics.Cpu,
+							Name: v1.ResourceCPU,
+							Target: v2beta1.MetricTarget{
+								Type:               v2beta1.UtilizationMetricType,
+								AverageUtilization: &scalerMetrics.Cpu,
+							},
 						},
 					})
 				}
@@ -126,8 +129,11 @@ func (p *ApplicationProcessor) SetHorizontalPodAutoscaler(ctx context.Context, r
 					metrics = append(metrics, v2beta1.MetricSpec{
 						Type: v2beta1.ResourceMetricSourceType,
 						Resource: &v2beta1.ResourceMetricSource{
-							Name:                     v1.ResourceMemory,
-							TargetAverageUtilization: &scalerMetrics.Memory,
+							Name: v1.ResourceMemory,
+							Target: v2beta1.MetricTarget{
+								Type:               v2beta1.UtilizationMetricType,
+								AverageUtilization: &scalerMetrics.Memory,
+							},
 						},
 					})
 				}
