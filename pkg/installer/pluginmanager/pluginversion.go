@@ -291,14 +291,14 @@ func ParseRequirements(str string) []Requirement {
 	return requirements
 }
 
-func SemVersionBiggerThan(a, b string) bool {
+func SemVersionBiggerThan(a, b string) int {
 	aver, err := semver.NewVersion(a)
 	if err != nil {
-		return false
+		return -1
 	}
 	bver, err := semver.NewVersion(b)
 	if err != nil {
-		return false
+		return -1
 	}
-	return aver.GreaterThan(bver)
+	return aver.Compare(bver)
 }

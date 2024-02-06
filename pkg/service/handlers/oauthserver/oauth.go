@@ -40,12 +40,17 @@ import (
 	kjwt "kubegems.io/kubegems/pkg/utils/jwt"
 )
 
+const (
+	NeverExpireDuration = time.Duration(100 * 365 * 24 * 3600 * time.Second)
+)
+
 type OauthServer struct {
 	base.BaseHandler
 	manager     *manage.Manager
 	srv         *server.Server
 	clientStore *store.ClientStore
 	m           sync.Mutex
+	jwt         *kjwt.JWT
 }
 
 func NewOauthServer(opts *kjwt.Options, base base.BaseHandler, tracer trace.Tracer) *OauthServer {
@@ -53,6 +58,7 @@ func NewOauthServer(opts *kjwt.Options, base base.BaseHandler, tracer trace.Trac
 		BaseHandler: base,
 		manager:     manage.NewDefaultManager(),
 		clientStore: store.NewClientStore(),
+		jwt:         opts.ToJWT(),
 	}
 	s.manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 
@@ -88,13 +94,13 @@ func NewOauthServer(opts *kjwt.Options, base base.BaseHandler, tracer trace.Trac
 	return s
 }
 
-// @Tags        Oauth
-// @Summary     检验oauth jwt token
-// @Description 检验oauth jwt token
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} object "resp"
-// @Router      /v1/oauth/validate [get]
+// @Tags			Oauth
+// @Summary		检验oauth jwt token
+// @Description	检验oauth jwt token
+// @Accept			json
+// @Produce		json
+// @Success		200	{object}	object	"resp"
+// @Router			/v1/oauth/validate [get]
 func (s *OauthServer) Validate(c *gin.Context) {
 	token, err := s.srv.ValidationBearerToken(c.Request)
 	if err != nil {
@@ -109,16 +115,16 @@ func (s *OauthServer) Validate(c *gin.Context) {
 	handlers.OK(c, data)
 }
 
-// @Tags        Oauth
-// @Summary     用户token列表
-// @Description 用户token列表
-// @Accept      json
-// @Produce     json
-// @Param       page query    int                                                                       false "page"
-// @Param       size query    int                                                                       false "size"
-// @Success     200  {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]kmodels.UserToken}} "resp"
-// @Router      /v1/oauth/token [get]
-// @Security    JWT
+// @Tags			Oauth
+// @Summary		用户token列表
+// @Description	用户token列表
+// @Accept			json
+// @Produce		json
+// @Param			page	query		int																			false	"page"
+// @Param			size	query		int																			false	"size"
+// @Success		200		{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]kmodels.UserToken}}	"resp"
+// @Router			/v1/oauth/token [get]
+// @Security		JWT
 func (s *OauthServer) ListToken(c *gin.Context) {
 	u, _ := c.Get("current_user")
 	user := u.(*kmodels.User)
@@ -130,22 +136,24 @@ func (s *OauthServer) ListToken(c *gin.Context) {
 	now := time.Now()
 	for _, v := range ret {
 		v.Expired = now.After(*v.ExpireAt)
-		if v.ExpireAt.Sub(*v.CreatedAt) == utils.MaxDuration {
+		if v.ExpireAt.Sub(*v.CreatedAt) == NeverExpireDuration {
 			v.ExpireAt = nil
 		}
 	}
-	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, nil))
+	handlers.OK(c, handlers.NewPageDataFromContext(c, ret, nil, func(val *kmodels.UserToken) time.Time {
+		return *val.CreatedAt
+	}))
 }
 
-// @Tags        Oauth
-// @Summary     删除用户token
-// @Description 删除用户token
-// @Accept      json
-// @Produce     json
-// @Param       token_id path     int    true "token id"
-// @Success     200      {object} string "resp"
-// @Router      /v1/oauth/token/{token_id} [delete]
-// @Security    JWT
+// @Tags			Oauth
+// @Summary		删除用户token
+// @Description	删除用户token
+// @Accept			json
+// @Produce		json
+// @Param			token_id	path		int		true	"token id"
+// @Success		200			{object}	string	"resp"
+// @Router			/v1/oauth/token/{token_id} [delete]
+// @Security		JWT
 func (s *OauthServer) DeleteToken(c *gin.Context) {
 	u, _ := c.Get("current_user")
 	user := u.(*kmodels.User)
@@ -157,18 +165,23 @@ func (s *OauthServer) DeleteToken(c *gin.Context) {
 	handlers.OK(c, "OK")
 }
 
-// @Tags        Oauth
-// @Summary     签发oauth jwt token
-// @Description 签发oauth jwt token
-// @Accept      json
-// @Produce     json
-// @Param       grant_type query    string                               true "授权方式，目前只支持client_credentials"
-// @Param       scope      query    string                               true "授权范围，目前只支持validate"
-// @Param       expire     query    int                                  true "授权时长，单位秒"
-// @Success     200        {object} handlers.ResponseStruct{Data=object} "resp"
-// @Router      /v1/oauth/token [post]
-// @Security    JWT
+// @Tags			Oauth
+// @Summary		签发oauth jwt token
+// @Description	签发oauth jwt token
+// @Accept			json
+// @Produce		json
+// @Param			grant_type	query		string									true	"授权方式，目前只支持client_credentials"
+// @Param			scope		query		string									true	"授权范围，目前只支持validate"
+// @Param			expire		query		int										true	"授权时长，单位秒"
+// @Success		200			{object}	handlers.ResponseStruct{Data=object}	"resp"
+// @Router			/v1/oauth/token [post]
+// @Security		JWT
 func (s *OauthServer) Token(c *gin.Context) {
+	if c.Request.FormValue("grant_type") == "client_credentials" {
+		s.DirectToken(c)
+		return
+	}
+
 	u, _ := c.Get("current_user")
 	user := u.(*kmodels.User)
 	s.clientStore.Set(user.Username, &models.Client{
@@ -214,6 +227,44 @@ func (s *OauthServer) Token(c *gin.Context) {
 	}
 
 	handlers.OK(c, s.srv.GetTokenData(ti))
+}
+
+func (s *OauthServer) DirectToken(c *gin.Context) {
+	u, _ := c.Get("current_user")
+	user, ok := u.(*kmodels.User)
+	if !ok {
+		handlers.NotOK(c, fmt.Errorf("user info invalid"))
+		return
+	}
+	expireSeconds, _ := strconv.ParseInt(c.Query("expire"), 10, 64)
+	expires := time.Duration(expireSeconds) * time.Second
+	if expireSeconds == 0 {
+		expires = NeverExpireDuration
+	}
+	// assume systemroleid 1 is admin
+	token, claims, err := s.jwt.GenerateToken(user, user.Username, user.SystemRoleID == 1, expires)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	issuedAt := time.Unix(claims.IssuedAt, 0)
+	expiresAt := time.Unix(claims.ExpiresAt, 0)
+	t := kmodels.UserToken{
+		Token:     token,
+		GrantType: "default",
+		Scope:     "default",
+		ExpireAt:  &expiresAt,
+		UserID:    &user.ID,
+		CreatedAt: &issuedAt,
+	}
+	if err := s.GetDB().Create(&t).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	handlers.OK(c, map[string]interface{}{
+		"access_token": token,
+		"expires_in":   claims.ExpiresAt - claims.IssuedAt,
+	})
 }
 
 func (s *OauthServer) RegistRouter(rg *gin.RouterGroup) {

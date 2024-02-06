@@ -43,7 +43,11 @@ func (r *Apply) Template(ctx context.Context, bundle *pluginsv1beta1.Plugin, dir
 
 func (r *Apply) Apply(ctx context.Context, bundle *pluginsv1beta1.Plugin, into string) error {
 	rls := r.getPreRelease(bundle)
-	applyedRelease, err := ApplyChart(ctx, r.Config, rls.Name, rls.Namespace, into, rls.Config)
+	overrideFiles := make(map[string][]byte, len(bundle.Spec.FileOverrides))
+	for _, file := range bundle.Spec.FileOverrides {
+		overrideFiles[file.Name] = []byte(file.Content)
+	}
+	applyedRelease, err := ApplyChart(ctx, r.Config, rls.Name, rls.Namespace, into, rls.Config, overrideFiles)
 	if err != nil {
 		return err
 	}

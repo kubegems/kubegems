@@ -218,10 +218,6 @@ type ApplyOptions struct {
 }
 
 func ApplyResource(ctx context.Context, cli client.Client, obj client.Object, options ApplyOptions) error {
-	if options.FieldOwner == "" {
-		options.FieldOwner = "bundler"
-	}
-
 	exists, _ := obj.DeepCopyObject().(client.Object)
 	if err := cli.Get(ctx, client.ObjectKeyFromObject(exists), exists); err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -233,6 +229,9 @@ func ApplyResource(ctx context.Context, cli client.Client, obj client.Object, op
 	var patch client.Patch
 	var patchoptions []client.PatchOption
 	if options.ServerSideApply {
+		if options.FieldOwner == "" {
+			options.FieldOwner = "bundler"
+		}
 		obj.SetManagedFields(nil)
 		patch = client.Apply
 		patchoptions = append(patchoptions,

@@ -19,10 +19,11 @@ import (
 	"strings"
 
 	"golang.org/x/exp/slices"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -54,8 +55,8 @@ func (s EdgeHubK8sStore) List(ctx context.Context, options ListOptions) (int, []
 		return (options.Search == "" || strings.Contains(item.GetName(), options.Search)) &&
 			(options.Manufacture == nil || options.Manufacture.Matches(labels.Set(item.Status.Manufacture)))
 	}
-	sortfunc := func(a, b v1beta1.EdgeHub) bool {
-		return !a.CreationTimestamp.Before(&b.CreationTimestamp)
+	sortfunc := func(a, b v1beta1.EdgeHub) int {
+		return b.CreationTimestamp.Compare(a.CreationTimestamp.Time)
 	}
 
 	if options.Page == 0 && options.Size == 0 {

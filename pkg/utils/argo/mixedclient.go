@@ -30,25 +30,37 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-type Client struct {
-	lock      sync.Mutex
-	Ctx       context.Context
-	Options   *Options
-	ArgoCDcli apiclient.Client
-
+type clientCache struct {
+	apiclient.Client
 	// cached client
+	close   chan struct{}
 	app     application.ApplicationServiceClient
 	repo    repository.RepositoryServiceClient
 	cluster cluster.ClusterServiceClient
 	project project.ProjectServiceClient
 }
 
+type Client struct {
+	Ctx     context.Context
+	lock    sync.Mutex
+	Options *Options
+	cli     *clientCache
+}
+
+func NewLazyClient(ctx context.Context, options *Options) *Client {
+	return &Client{Ctx: ctx, Options: options}
+}
+
 func NewClient(ctx context.Context, options *Options) (*Client, error) {
-	apiclient, err := NewArgoCDCli(options)
+	cli := NewLazyClient(ctx, options)
+	// init client to validate configuration
+	_, err := Argoclifunc(cli, func(c *clientCache) (string, error) {
+		return "", nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &Client{Ctx: ctx, ArgoCDcli: apiclient, Options: options}, nil
+	return cli, nil
 }
 
 func (c *Client) ListArgoApp(ctx context.Context, selector labels.Selector) (*v1alpha1.ApplicationList, error) {
@@ -176,157 +188,117 @@ func (c *Client) RemoveResource(ctx context.Context, q ResourceRequest) error {
 }
 
 func (c *Client) EnsureCluster(ctx context.Context, in *v1alpha1.Cluster) (*v1alpha1.Cluster, error) {
-	cli, err := c.getclustercli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ret, err := cli.Create(ctx, &cluster.ClusterCreateRequest{
-		Cluster: in,
-		Upsert:  true,
+	return clusterfunc(c, ctx, func(cli cluster.ClusterServiceClient) (*v1alpha1.Cluster, error) {
+		return cli.Create(ctx, &cluster.ClusterCreateRequest{Cluster: in, Upsert: true})
 	})
-	if err != nil {
-		c.invalidCacheOnUnAuth(err)
-		return nil, err
-	}
-	return ret, nil
 }
 
 func (c *Client) EnsureArgoProject(ctx context.Context, in *v1alpha1.AppProject) (*v1alpha1.AppProject, error) {
-	cli, err := c.getprojectcli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ret, err := cli.Create(ctx, &project.ProjectCreateRequest{
-		Project: in,
-		Upsert:  true,
+	return projectfunc(c, ctx, func(cli project.ProjectServiceClient) (*v1alpha1.AppProject, error) {
+		return cli.Create(ctx, &project.ProjectCreateRequest{Project: in, Upsert: true})
 	})
-	if err != nil {
-		c.invalidCacheOnUnAuth(err)
-		return nil, err
-	}
-	return ret, nil
 }
 
 func (c *Client) EnsureRepository(ctx context.Context, repo *v1alpha1.Repository) (*v1alpha1.Repository, error) {
-	cli, err := c.getRepocli(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ret, err := cli.Create(ctx, &repository.RepoCreateRequest{Repo: repo, Upsert: true}) // create
-	if err != nil {
-		c.invalidCacheOnUnAuth(err)
-		return nil, err
-	}
-	return ret, nil
+	return repofunc(c, ctx, func(cli repository.RepositoryServiceClient) (*v1alpha1.Repository, error) {
+		return cli.Create(ctx, &repository.RepoCreateRequest{Repo: repo, Upsert: true})
+	})
 }
 
-func (c *Client) getRepocli(ctx context.Context) (repository.RepositoryServiceClient, error) {
-	// from cache
-	if c.repo != nil {
-		return c.repo, nil
-	}
-	// init application cli
-	closer, repocli, err := c.ArgoCDcli.NewRepoClient()
-	if err != nil {
-		return nil, err
-	}
-	go func() {
-		<-c.Ctx.Done()
-		_ = closer.Close()
-	}()
-	c.repo = repocli
-	return repocli, nil
-}
-
-func (c *Client) getclustercli(ctx context.Context) (cluster.ClusterServiceClient, error) {
-	// from cache
-	if c.cluster != nil {
-		return c.cluster, nil
-	}
-	// init application cli
-	closer, clustercli, err := c.ArgoCDcli.NewClusterClient()
-	if err != nil {
-		return nil, err
-	}
-	go func() {
-		<-c.Ctx.Done()
-		_ = closer.Close()
-	}()
-	c.cluster = clustercli
-	return clustercli, nil
-}
-
-func (c *Client) getprojectcli(ctx context.Context) (project.ProjectServiceClient, error) {
-	// from cache
-	if c.project != nil {
-		return c.project, nil
-	}
-	// init application cli
-	closer, projectcli, err := c.ArgoCDcli.NewProjectClient()
-	if err != nil {
-		return nil, err
-	}
-	go func() {
-		<-c.Ctx.Done()
-		_ = closer.Close()
-	}()
-	c.project = projectcli
-	return projectcli, nil
-}
-
-func appfunc[T any](cli *Client, ctx context.Context, appfunc func(cli application.ApplicationServiceClient) (T, error)) (T, error) {
-	appcli, err := cli.getAppcli()
-	if err != nil {
-		return *new(T), err
-	}
-	ret, err := appfunc(appcli)
-	if err != nil {
-		if cli.invalidCacheOnUnAuth(err) {
-			appcli, err := cli.getAppcli()
+func appfunc[T any](cli *Client, ctx context.Context, fn func(cli application.ApplicationServiceClient) (T, error)) (T, error) {
+	return Argoclifunc(cli, func(c *clientCache) (T, error) {
+		if c.app == nil {
+			closer, appcli, err := c.NewApplicationClient()
 			if err != nil {
 				return *new(T), err
 			}
-			return appfunc(appcli)
+			go func() {
+				<-c.close
+				_ = closer.Close()
+			}()
+			c.app = appcli
+		}
+		return fn(c.app)
+	})
+}
+
+func clusterfunc[T any](cli *Client, ctx context.Context, fn func(cli cluster.ClusterServiceClient) (T, error)) (T, error) {
+	return Argoclifunc(cli, func(c *clientCache) (T, error) {
+		if c.cluster == nil {
+			closer, innercli, err := c.NewClusterClient()
+			if err != nil {
+				return *new(T), err
+			}
+			go func() {
+				<-c.close
+				_ = closer.Close()
+			}()
+			c.cluster = innercli
+		}
+		return fn(c.cluster)
+	})
+}
+
+func projectfunc[T any](cli *Client, ctx context.Context, fn func(cli project.ProjectServiceClient) (T, error)) (T, error) {
+	return Argoclifunc(cli, func(c *clientCache) (T, error) {
+		if c.project == nil {
+			closer, innercli, err := c.NewProjectClient()
+			if err != nil {
+				return *new(T), err
+			}
+			go func() {
+				<-c.close
+				_ = closer.Close()
+			}()
+			c.project = innercli
+		}
+		return fn(c.project)
+	})
+}
+
+func repofunc[T any](cli *Client, ctx context.Context, fn func(cli repository.RepositoryServiceClient) (T, error)) (T, error) {
+	return Argoclifunc(cli, func(c *clientCache) (T, error) {
+		if c.repo == nil {
+			closer, innercli, err := c.NewRepoClient()
+			if err != nil {
+				return *new(T), err
+			}
+			go func() {
+				<-c.close
+				_ = closer.Close()
+			}()
+			c.repo = innercli
+		}
+		return fn(c.repo)
+	})
+}
+
+func Argoclifunc[T any](c *Client, fn func(c *clientCache) (T, error)) (T, error) {
+	if c.cli == nil {
+		c.lock.Lock()
+		defer c.lock.Unlock()
+		if c.cli == nil {
+			null := *new(T)
+			apiclient, err := NewArgoCDCli(c.Options)
+			if err != nil {
+				return null, err
+			}
+			c.cli = &clientCache{
+				close:  make(chan struct{}),
+				Client: apiclient,
+			}
+		}
+	}
+	ret, err := fn(c.cli)
+	// hook to refresh argo client cache
+	if status.Code(err) == codes.Unauthenticated {
+		// refresh cli
+		c.lock.Lock()
+		defer c.lock.Unlock()
+		if c.cli != nil {
+			close(c.cli.close)
+			c.cli = nil
 		}
 	}
 	return ret, err
-}
-
-func (c *Client) getAppcli() (application.ApplicationServiceClient, error) {
-	// from cache
-	if c.app != nil {
-		return c.app, nil
-	}
-	// init application cli
-	closer, appcli, err := c.ArgoCDcli.NewApplicationClient()
-	if err != nil {
-		return nil, err
-	}
-	go func() {
-		<-c.Ctx.Done()
-		_ = closer.Close()
-	}()
-	c.app = appcli
-	return appcli, nil
-}
-
-func (c *Client) invalidCacheOnUnAuth(err error) bool {
-	if status.Code(err) != codes.Unauthenticated {
-		return false
-	}
-	// flush cache and retry
-	apiclient, err := NewArgoCDCli(c.Options)
-	if err != nil {
-		return false
-	}
-
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	c.ArgoCDcli = apiclient
-	c.app = nil
-	c.cluster = nil
-	c.project = nil
-	c.repo = nil
-
-	return true
 }

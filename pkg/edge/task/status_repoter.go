@@ -17,31 +17,88 @@ package task
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/go-logr/logr"
-	"golang.org/x/exp/slices"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
 	edgev1beta1 "kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func UpdateStatus(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatus, edgeresource client.Object, edgecli client.Client) {
+func CheckStatus(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatus, edgeresource client.Object, edgecli client.Client) {
 	switch typedobj := edgeresource.(type) {
 	case *appsv1.Deployment:
-		// fill images in status
-		fillImages(status, typedobj)
-		if typedobj.Status.ReadyReplicas != typedobj.Status.Replicas {
-			status.Message = fmt.Sprintf("replicas not ready: %d/%d", typedobj.Status.ReadyReplicas, typedobj.Status.Replicas)
-			status.Ready = false
-			checkDeploymentPodsReady(ctx, status, typedobj, edgecli)
-		} else {
-			status.Ready = true
-			status.Message = ""
-			// events will be remove after status is ready to avoid too many events in k8s
-		}
+		checkDeploymentPodsReady(ctx, status, typedobj, edgecli)
 	}
+}
+
+func checkDeploymentPodsReady(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatus, deployment *appsv1.Deployment, edgecli client.Client) {
+	log := logr.FromContextOrDiscard(ctx)
+	// fill images in status
+	fillImages(status, deployment)
+	if deployment.Status.ObservedGeneration != deployment.Generation {
+		status.Ready = false
+		status.Message = "deployment not observed"
+		return
+	}
+	desireReplicas := pointer.Int32Deref(deployment.Spec.Replicas, 1)
+	currentReplicas := deployment.Status.AvailableReplicas
+	if desireReplicas == currentReplicas {
+		// deployment 会在 pod running 的时候就认为 ready，对于running即crashloopbackoff的pod，deployment会某一瞬间认为ready
+		// 有两种解决方案：
+		// - 为 pod 设置 readinessProbe
+		// - 为 deployment 设置 minReadySeconds
+		status.Ready = true
+		status.Message = ""
+		return
+	}
+	status.Ready = false
+	status.Message = fmt.Sprintf("replicas not ready: %d/%d", currentReplicas, desireReplicas)
+	// events will be remove after status is ready to avoid too many events in k8
+	// get depevents for deployment
+	if false {
+		eventlist := &corev1.EventList{}
+		if err := edgecli.List(ctx, eventlist,
+			client.InNamespace(deployment.Namespace),
+			client.MatchingFields{"involvedObject.uid": string(deployment.UID)},
+		); err != nil {
+			log.Error(err, "failed to list events")
+			return
+		}
+		status.Events = EdgeTaskResourceEventsFromEvents(eventlist.Items)
+	} else {
+		status.Events = nil
+	}
+
+	// found deployment pods
+	pods := &corev1.PodList{}
+	if err := edgecli.List(ctx, pods,
+		client.InNamespace(deployment.Namespace),
+		client.MatchingLabels(deployment.Spec.Selector.MatchLabels),
+	); err != nil {
+		log.Error(err, "failed to list pods")
+		return
+	}
+	// fill events for those pods
+	podsStatus := make([]edgev1beta1.EdgeTaskPodStatus, len(pods.Items))
+	for i, pod := range pods.Items {
+		val := edgev1beta1.EdgeTaskPodStatus{
+			Name:   pod.Name,
+			Status: pod.Status,
+		}
+		if false {
+			eventlist := &corev1.EventList{}
+			if err := edgecli.List(ctx, eventlist, client.InNamespace(deployment.Namespace), client.MatchingFields{"involvedObject.uid": string(pod.UID)}); err != nil {
+				log.Error(err, "failed to list events")
+			}
+			val.Events = EdgeTaskResourceEventsFromEvents(eventlist.Items)
+		} else {
+			val.Events = nil
+		}
+		podsStatus[i] = val
+	}
+	status.PodsStatus = podsStatus
 }
 
 func fillImages(status *edgev1beta1.EdgeTaskResourceStatus, deployment *appsv1.Deployment) {
@@ -49,48 +106,5 @@ func fillImages(status *edgev1beta1.EdgeTaskResourceStatus, deployment *appsv1.D
 	for _, container := range deployment.Spec.Template.Spec.Containers {
 		images = append(images, container.Image)
 	}
-	if status.Annotations == nil {
-		status.Annotations = make(map[string]string)
-	}
-	status.Annotations["images"] = strings.Join(images, ",")
-}
-
-func checkDeploymentPodsReady(ctx context.Context, status *edgev1beta1.EdgeTaskResourceStatus, deployment *appsv1.Deployment, edgecli client.Client) {
-	log := logr.FromContextOrDiscard(ctx)
-	// found deployment pods
-	pods := &corev1.PodList{}
-	if err := edgecli.List(ctx, pods, client.InNamespace(deployment.Namespace), client.MatchingLabels(deployment.Spec.Selector.MatchLabels)); err != nil {
-		log.Error(err, "failed to list pods")
-		return
-	}
-	// fill events for those pods
-	allpodevents := []edgev1beta1.EdgeTaskResourceEvent{}
-	for _, pod := range pods.Items {
-		events := &corev1.EventList{}
-		if err := edgecli.List(ctx, events, client.InNamespace(deployment.Namespace), client.MatchingFields{"involvedObject.uid": string(pod.UID)}); err != nil {
-			log.Error(err, "failed to list events")
-		}
-		items := make([]edgev1beta1.EdgeTaskResourceEvent, 0, len(events.Items))
-		for _, event := range events.Items {
-			items = append(items, edgev1beta1.EdgeTaskResourceEvent{
-				Type:          event.Type,
-				Reason:        event.Reason,
-				Message:       event.Message,
-				Count:         event.Count,
-				LastTimestamp: event.LastTimestamp,
-				InvolvedObject: corev1.ObjectReference{
-					APIVersion: event.InvolvedObject.APIVersion,
-					Namespace:  event.InvolvedObject.Namespace,
-					Name:       event.InvolvedObject.Name,
-					Kind:       event.InvolvedObject.Kind,
-				},
-			})
-		}
-		allpodevents = append(allpodevents, items...)
-	}
-	// sort events by last timestamp
-	slices.SortFunc(allpodevents, func(i, j edgev1beta1.EdgeTaskResourceEvent) bool {
-		return i.LastTimestamp.Before(&j.LastTimestamp)
-	})
-	status.Events = allpodevents
+	status.Images = images
 }

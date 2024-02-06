@@ -20,7 +20,7 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

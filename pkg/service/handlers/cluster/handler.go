@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"database/sql"
 	"errors"
 	"fmt"
 	"regexp"
@@ -56,19 +57,20 @@ var (
 )
 
 // ListCluster 列表 Cluster
-// @Tags        Cluster
-// @Summary     Cluster列表
-// @Description Cluster列表
-// @Accept      json
-// @Produce     json
-// @Param       ClusterName query    string                                                                 false "ClusterName"
-// @Param       preload     query    string                                                                 false "choices Environments,TenantResourceQuotas"
-// @Param       page        query    int                                                                    false "page"
-// @Param       size        query    int                                                                    false "page"
-// @Param       search      query    string                                                                 false "search in (ClusterName)"
-// @Success     200         {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Cluster}} "Cluster"
-// @Router      /v1/cluster [get]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		Cluster列表
+//	@Description	Cluster列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			ClusterName	query		string																	false	"ClusterName"
+//	@Param			preload		query		string																	false	"choices Environments,TenantResourceQuotas"
+//	@Param			page		query		int																		false	"page"
+//	@Param			size		query		int																		false	"page"
+//	@Param			search		query		string																	false	"search in (ClusterName)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Cluster}}	"Cluster"
+//	@Router			/v1/cluster [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListCluster(c *gin.Context) {
 	var list []*models.Cluster
 	query, err := handlers.GetQuery(c, nil)
@@ -90,14 +92,15 @@ func (h *ClusterHandler) ListCluster(c *gin.Context) {
 }
 
 // ListClusterStatus 列出集群状态
-// @Tags        Cluster
-// @Summary     列出集群状态
-// @Description 列出集群状态
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=map[string]bool} "集群状态"
-// @Router      /v1/cluster/_/status [get]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		列出集群状态
+//	@Description	列出集群状态
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=map[string]bool}	"集群状态"
+//	@Router			/v1/cluster/_/status [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 	var clusters []*models.Cluster
 	if err := h.GetDB().WithContext(c.Request.Context()).Find(&clusters).Error; err != nil {
@@ -126,15 +129,16 @@ func (h *ClusterHandler) ListClusterStatus(c *gin.Context) {
 }
 
 // RetrieveCluster Cluster详情
-// @Tags        Cluster
-// @Summary     Cluster详情
-// @Description get Cluster详情
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                         true "cluster_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.Cluster} "Cluster"
-// @Router      /v1/cluster/{cluster_id} [get]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		Cluster详情
+//	@Description	get Cluster详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint											true	"cluster_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Cluster}	"Cluster"
+//	@Router			/v1/cluster/{cluster_id} [get]
+//	@Security		JWT
 func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 	var obj models.Cluster
 	if err := h.GetDB().WithContext(c.Request.Context()).First(&obj, c.Param(PrimaryKeyName)).Error; err != nil {
@@ -142,12 +146,19 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 		return
 	}
 
+	// nolint: nestif
 	if obj.Version == "" {
 		cli, err := h.GetAgents().ClientOf(c.Request.Context(), obj.ClusterName)
 		if err != nil {
 			log.Error(err, "unable get agents client", "cluster", obj.ClusterName)
 		} else {
-			obj.Version = cli.APIServerVersion()
+			obj.Version = cli.Info().APIServerVersion()
+		}
+		if obj.Version != "" {
+			// update version
+			if err := h.GetDB().WithContext(c.Request.Context()).Model(&obj).Update("version", obj.Version).Error; err != nil {
+				log.Error(err, "unable update version", "cluster", obj.ClusterName)
+			}
 		}
 	}
 
@@ -155,16 +166,17 @@ func (h *ClusterHandler) RetrieveCluster(c *gin.Context) {
 }
 
 // PutCluster 修改Cluster
-// @Tags        Cluster
-// @Summary     修改Cluster
-// @Description 修改Cluster
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                         true "cluster_id"
-// @Param       param      body     models.Cluster                               true "表单"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.Cluster} "Cluster"
-// @Router      /v1/cluster/{cluster_id} [put]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		修改Cluster
+//	@Description	修改Cluster
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint											true	"cluster_id"
+//	@Param			param		body		models.Cluster									true	"表单"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Cluster}	"Cluster"
+//	@Router			/v1/cluster/{cluster_id} [put]
+//	@Security		JWT
 func (h *ClusterHandler) PutCluster(c *gin.Context) {
 	var obj models.Cluster
 	ctx := c.Request.Context()
@@ -184,8 +196,8 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 		handlers.NotOK(c, i18n.Errorf(c, "URL parameter mismatched with body"))
 		return
 	}
-	if err := OnKubeConfig(c, obj.KubeConfig, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
-		if err := CompleteCluster(ctx, &obj, config, clientSet); err != nil {
+	if err := OnAgentClient(ctx, &obj, func(ctx context.Context) error {
+		if err := CompleteCluster(ctx, &obj); err != nil {
 			return err
 		}
 		return h.GetDB().WithContext(ctx).Save(&obj).Error
@@ -199,16 +211,17 @@ func (h *ClusterHandler) PutCluster(c *gin.Context) {
 }
 
 // DeleteCluster 删除 Cluster
-// @Tags        Cluster
-// @Summary     删除 Cluster
-// @Description 删除 Cluster
-// @Accept      json
-// @Produce     json
-// @Param       record_only query    string                  false "only delete record in database"
-// @Param       cluster_id  path     uint                    true  "cluster_id"
-// @Success     204         {object} handlers.ResponseStruct "resp"
-// @Router      /v1/cluster/{cluster_id} [delete]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		删除 Cluster
+//	@Description	删除 Cluster
+//	@Accept			json
+//	@Produce		json
+//	@Param			record_only	query		string					false	"only delete record in database"
+//	@Param			cluster_id	path		uint					true	"cluster_id"
+//	@Success		204			{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/cluster/{cluster_id} [delete]
+//	@Security		JWT
 func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 	cluster := &models.Cluster{}
 	ctx := c.Request.Context()
@@ -245,12 +258,14 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 			return
 		}
 	} else {
-		if err := OnKubeConfig(c, cluster.KubeConfig, func(ctx context.Context, clientSet *kubernetes.Clientset, config *rest.Config) error {
+		if err := OnAgentClient(ctx, cluster, func(ctx context.Context) error {
 			return h.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 				if err := tx.Delete(cluster).Error; err != nil {
 					return err
 				}
-				return pluginmanager.Bootstrap{Config: config}.Remove(ctx)
+				// remove cluster do nothing
+				// return pluginmanager.Bootstrap{}.Remove(ctx)
+				return nil
 			})
 		}); err != nil {
 			handlers.NotOK(c, err)
@@ -269,19 +284,20 @@ func (h *ClusterHandler) DeleteCluster(c *gin.Context) {
 }
 
 // ListClusterEnvironment 获取属于Cluster的 Environment 列表
-// @Tags        Cluster
-// @Summary     获取属于 Cluster 的 Environment 列表
-// @Description 获取属于 Cluster 的 Environment 列表
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                                                       true  "cluster_id"
-// @Param       preload    query    string                                                                     false "choices Creator,Cluster,Project,Applications,Users"
-// @Param       page       query    int                                                                        false "page"
-// @Param       size       query    int                                                                        false "page"
-// @Param       search     query    string                                                                     false "search in (EnvironmentName)"
-// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}} "models.Environment"
-// @Router      /v1/cluster/{cluster_id}/environment [get]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		获取属于 Cluster 的 Environment 列表
+//	@Description	获取属于 Cluster 的 Environment 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint																		true	"cluster_id"
+//	@Param			preload		query		string																		false	"choices Creator,Cluster,Project,Applications,Users"
+//	@Param			page		query		int																			false	"page"
+//	@Param			size		query		int																			false	"page"
+//	@Param			search		query		string																		false	"search in (EnvironmentName)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}}	"models.Environment"
+//	@Router			/v1/cluster/{cluster_id}/environment [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 	var list []models.Environment
 	query, err := handlers.GetQuery(c, nil)
@@ -307,19 +323,20 @@ func (h *ClusterHandler) ListClusterEnvironment(c *gin.Context) {
 }
 
 // ListClusterLogQueryHistory 获取属于Cluster的 LogQueryHistory 列表
-// @Tags        Cluster
-// @Summary     获取属于 Cluster 的 LogQueryHistory 列表
-// @Description 获取属于 Cluster 的 LogQueryHistory 列表
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                                                           true  "cluster_id"
-// @Param       preload    query    string                                                                         false "choices Cluster,Creator"
-// @Param       page       query    int                                                                            false "page"
-// @Param       size       query    int                                                                            false "page"
-// @Param       search     query    string                                                                         false "search in (LogQL)"
-// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQueryHistory}} "models.LogQueryHistory"
-// @Router      /v1/cluster/{cluster_id}/logqueryhistory [get]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		获取属于 Cluster 的 LogQueryHistory 列表
+//	@Description	获取属于 Cluster 的 LogQueryHistory 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint																			true	"cluster_id"
+//	@Param			preload		query		string																			false	"choices Cluster,Creator"
+//	@Param			page		query		int																				false	"page"
+//	@Param			size		query		int																				false	"page"
+//	@Param			search		query		string																			false	"search in (LogQL)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQueryHistory}}	"models.LogQueryHistory"
+//	@Router			/v1/cluster/{cluster_id}/logqueryhistory [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 	var (
 		list    []models.LogQueryHistory
@@ -353,14 +370,15 @@ func (h *ClusterHandler) ListClusterLogQueryHistory(c *gin.Context) {
 }
 
 // ListLogQueryHistory 聚合查询日志查询历史[按照当前用户的查询历史聚合]
-// @Tags        Cluster
-// @Summary     聚合查询日志查询历史, unique logql desc 按照当前用户的查询历史聚合
-// @Description 聚合查询日志查询历史 unique logql desc 按照当前用户的查询历史聚合
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=[]models.LogQueryHistoryWithCount} "LogQueryHistory"
-// @Router      /v1/cluster/{cluster_id}/logqueryhistoryv2 [get]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		聚合查询日志查询历史, unique logql desc 按照当前用户的查询历史聚合
+//	@Description	聚合查询日志查询历史 unique logql desc 按照当前用户的查询历史聚合
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=[]models.LogQueryHistoryWithCount}	"LogQueryHistory"
+//	@Router			/v1/cluster/{cluster_id}/logqueryhistoryv2 [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 	var list []models.LogQueryHistoryWithCount
 	user, _ := h.GetContextUser(c)
@@ -377,16 +395,15 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 		count(*) as total
 	from log_query_histories
 	where
-		creator_id = ? and cluster_id = ? and create_at > ?
+		creator_id = @creatorID and cluster_id = @clusterID and create_at > @before15d
 	group by
 		log_ql
 	order by total desc;`
 	if err := h.GetDB().WithContext(c.Request.Context()).Raw(
 		rawsql,
-		user.GetID(),
-		clusterid,
-		before15d,
-		false,
+		sql.Named("creatorID", user.GetID()),
+		sql.Named("clusterID", clusterid),
+		sql.Named("before15d", before15d),
 	).Scan(&list).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
@@ -395,19 +412,20 @@ func (h *ClusterHandler) ListClusterLogQueryHistoryv2(c *gin.Context) {
 }
 
 // ListClusterLogQuerySnapshot 获取属于Cluster的 LogQuerySnapshot 列表
-// @Tags        Cluster
-// @Summary     获取属于 Cluster 的 LogQuerySnapshot 列表
-// @Description 获取属于 Cluster 的 LogQuerySnapshot 列表
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     uint                                                                            true  "cluster_id"
-// @Param       preload    query    string                                                                          false "choices Cluster,Creator"
-// @Param       page       query    int                                                                             false "page"
-// @Param       size       query    int                                                                             false "page"
-// @Param       search     query    string                                                                          false "search in (SnapshotName)"
-// @Success     200        {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQuerySnapshot}} "models.LogQuerySnapshot"
-// @Router      /v1/cluster/{cluster_id}/logquerysnapshot [get]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		获取属于 Cluster 的 LogQuerySnapshot 列表
+//	@Description	获取属于 Cluster 的 LogQuerySnapshot 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		uint																			true	"cluster_id"
+//	@Param			preload		query		string																			false	"choices Cluster,Creator"
+//	@Param			page		query		int																				false	"page"
+//	@Param			size		query		int																				false	"page"
+//	@Param			search		query		string																			false	"search in (SnapshotName)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.LogQuerySnapshot}}	"models.LogQuerySnapshot"
+//	@Router			/v1/cluster/{cluster_id}/logquerysnapshot [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 	var (
 		list    []models.LogQuerySnapshot
@@ -440,15 +458,16 @@ func (h *ClusterHandler) ListClusterLogQuerySnapshot(c *gin.Context) {
 }
 
 // PostCluster 创建Cluster
-// @Tags        Cluster
-// @Summary     创建Cluster
-// @Description 创建Cluster
-// @Accept      json
-// @Produce     json
-// @Param       param body     models.Cluster                               true "表单"
-// @Success     200   {object} handlers.ResponseStruct{Data=models.Cluster} "Cluster"
-// @Router      /v1/cluster [post]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		创建Cluster
+//	@Description	创建Cluster
+//	@Accept			json
+//	@Produce		json
+//	@Param			param	body		models.Cluster									true	"表单"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=models.Cluster}	"Cluster"
+//	@Router			/v1/cluster [post]
+//	@Security		JWT
 func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	cluster := &models.Cluster{}
 	if err := c.BindJSON(cluster); err != nil {
@@ -464,9 +483,9 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 	action, module := i18n.Sprintf(ctx, "create"), i18n.Sprintf(ctx, "cluster")
 	h.SetAuditData(c, action, module, cluster.ClusterName)
 
-	if err := OnKubeConfig(ctx, cluster.KubeConfig, func(ctx context.Context, cs *kubernetes.Clientset, cfg *rest.Config) error {
+	if err := OnAgentClient(ctx, cluster, func(ctx context.Context) error {
 		// complete cluster info
-		if err := CompleteCluster(ctx, cluster, cfg, cs); err != nil {
+		if err := CompleteCluster(ctx, cluster); err != nil {
 			return err
 		}
 		// check database
@@ -482,19 +501,26 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 			if err := tx.Clauses(txClause).Create(cluster).Error; err != nil {
 				return err
 			}
-			splits := strings.Split(cluster.ImageRepo, "/")
-			if len(splits) == 1 {
-				splits = append(splits, "")
+			if len(cluster.KubeConfig) != 0 {
+				restconfig, _, err := kube.GetKubeClient(cluster.KubeConfig)
+				if err != nil {
+					return i18n.Errorf(ctx, "invalid kubeconfig: %w", err)
+				}
+				splits := strings.Split(cluster.ImageRepo, "/")
+				if len(splits) == 1 {
+					splits = append(splits, "")
+				}
+				registry, repository := splits[0], splits[1]
+				globalvalues := pluginmanager.GlobalValues{
+					ImageRegistry:   registry,
+					ImageRepository: repository,
+					ClusterName:     cluster.ClusterName,
+					StorageClass:    cluster.DefaultStorageClass,
+					Runtime:         cluster.Runtime,
+				}
+				return pluginmanager.Bootstrap{Config: restconfig}.Install(ctx, globalvalues)
 			}
-			registry, repository := splits[0], splits[1]
-			globalvalues := pluginmanager.GlobalValues{
-				ImageRegistry:   registry,
-				ImageRepository: repository,
-				ClusterName:     cluster.ClusterName,
-				StorageClass:    cluster.DefaultStorageClass,
-				Runtime:         cluster.Runtime,
-			}
-			return pluginmanager.Bootstrap{Config: cfg}.Install(ctx, globalvalues)
+			return nil
 		})
 	}); err != nil {
 		handlers.NotOK(c, err)
@@ -516,15 +542,16 @@ type ClusterQuota struct {
 }
 
 // ClusterStatistics 集群资源状态
-// @Tags        Cluster
-// @Summary     集群资源状态
-// @Description 集群资源状态
-// @Accept      json
-// @Produce     json
-// @Param       cluster_id path     int                                        true "cluster_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=ClusterQuota} "statistics"
-// @Router      /v1/cluster/{cluster_id}/quota [get]
-// @Security    JWT
+//
+//	@Tags			Cluster
+//	@Summary		集群资源状态
+//	@Description	集群资源状态
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path		int											true	"cluster_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=ClusterQuota}	"statistics"
+//	@Router			/v1/cluster/{cluster_id}/quota [get]
+//	@Security		JWT
 func (h *ClusterHandler) ListClusterQuota(c *gin.Context) {
 	h.cluster(c, func(ctx context.Context, cluster models.Cluster, cli agents.Client) (interface{}, error) {
 		statistics := statistics.ClusterStatistics{}
@@ -550,15 +577,8 @@ func (h *ClusterHandler) cluster(c *gin.Context, fun func(ctx context.Context, c
 	})(c)
 }
 
-func OnKubeConfig(ctx context.Context,
-	cfgraw []byte,
-	f func(ctx context.Context, cs *kubernetes.Clientset, cfg *rest.Config) error,
-) error {
-	cfg, cs, err := kube.GetKubeClient(cfgraw)
-	if err != nil {
-		return i18n.Errorf(ctx, "invalid kubeconfig: %w", err)
-	}
-	return f(ctx, cs, cfg)
+func OnAgentClient(ctx context.Context, c *models.Cluster, f func(ctx context.Context) error) error {
+	return f(ctx)
 }
 
 func CheckBeforeAdd(ctx context.Context, db *database.Database, cluster *models.Cluster) error {
@@ -594,7 +614,14 @@ func CheckBeforeAdd(ctx context.Context, db *database.Database, cluster *models.
 	return nil
 }
 
-func CompleteCluster(ctx context.Context, cluster *models.Cluster, restconfig *rest.Config, clientSet kubernetes.Interface) error {
+func CompleteCluster(ctx context.Context, cluster *models.Cluster) error {
+	if len(cluster.KubeConfig) == 0 {
+		return nil
+	}
+	restconfig, clientSet, err := kube.GetKubeClient(cluster.KubeConfig)
+	if err != nil {
+		return i18n.Errorf(ctx, "invalid kubeconfig: %w", err)
+	}
 	// update client config expire
 	if expire := ConfigClientCertExpire(restconfig); expire != nil {
 		cluster.ClientCertExpireAt = expire
@@ -608,7 +635,6 @@ func CompleteCluster(ctx context.Context, cluster *models.Cluster, restconfig *r
 		}
 		cluster.Runtime = criruntime
 	}
-
 	// set server addr and version
 	serverSersion, err := clientSet.Discovery().ServerVersion()
 	if err != nil {

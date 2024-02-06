@@ -100,6 +100,10 @@ type ServerSpec struct {
 	UpgradeStrategy string `json:"upgradeStrategy,omitempty"`
 
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Metadata metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// +kubebuilder:validation:Optional
 	PodSpec *corev1.PodSpec `json:"podSpec,omitempty"`
 }
 
@@ -140,9 +144,10 @@ type IngressSpec struct {
 }
 
 type ModelDeploymentStatus struct {
-	URL     string `json:"url,omitempty"` // url of the model deployment serving endpoint
-	Phase   Phase  `json:"phase,omitempty"`
-	Message string `json:"message,omitempty"`
+	URL         string `json:"url,omitempty"` // url of the model deployment serving endpoint
+	GRPCAddress string `json:"grpcAddress,omitempty"`
+	Phase       Phase  `json:"phase,omitempty"`
+	Message     string `json:"message,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	RawStatus *runtime.RawExtension `json:"rawStatus,omitempty"`
 }

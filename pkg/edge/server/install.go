@@ -66,7 +66,7 @@ func RenderManifets(uid string, image string, edgehubaddress string, certs v1bet
 								Args: []string{
 									"--listen=:8080",
 									"--edgehubaddr=" + edgehubaddress,
-									"--clientid=" + uid,
+									"--deviceid=" + uid,
 								},
 								Ports: []corev1.ContainerPort{
 									{

@@ -17,7 +17,6 @@ package switcher
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -83,23 +82,23 @@ func (ms *MessageSwitcher) DispatchMessage(msg *msgbus.NotifyMessage) {
 			isMonitor,
 		)
 		toUsers := GetAlertUsers(pos, ms.DataBase)
-		now := time.Now()
+		// now := time.Now()
 		dbUserMsgs := []models.UserMessageStatus{}
 		// save之后有了ID，才能做关联
 		for i := range dbalertMsgs {
 			// 发送消息
-			for _, u := range ms.Users {
-				if toUsers.Has(u.UserID) {
-					ms.Send(u, &msgbus.NotifyMessage{
-						MessageType: msgbus.Alert,
-						Content: msgbus.MessageContent{
-							CreatedAt: now,
-							From:      dbalertMsgs[i].AlertInfo.Name,
-							Detail:    dbalertMsgs[i].Message,
-						},
-					})
-				}
-			}
+			// for _, u := range ms.Users {
+			// 	if toUsers.Has(u.UserID) {
+			// 		ms.Send(u, &msgbus.NotifyMessage{
+			// 			MessageType: msgbus.Alert,
+			// 			Content: msgbus.MessageContent{
+			// 				CreatedAt: now,
+			// 				From:      dbalertMsgs[i].AlertInfo.Name,
+			// 				Detail:    dbalertMsgs[i].Message,
+			// 			},
+			// 		})
+			// 	}
+			// }
 
 			// 存用户消息表
 			usermsgs := make([]models.UserMessageStatus, toUsers.Len())

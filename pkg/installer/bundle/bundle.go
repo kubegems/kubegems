@@ -74,10 +74,14 @@ func (b *BundleApplier) Download(ctx context.Context, bundle *pluginsv1beta1.Plu
 	if chart := bundle.Spec.Chart; chart != "" {
 		name = chart
 	}
+	version := bundle.Spec.Version
+	if version == "" {
+		version = bundle.Status.Version // use the installed version
+	}
 	return Download(ctx,
 		bundle.Spec.URL,
 		name,
-		bundle.Spec.Version,
+		version,
 		bundle.Spec.Path,
 		b.Options.CacheDir,
 	)

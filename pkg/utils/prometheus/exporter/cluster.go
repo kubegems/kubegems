@@ -64,12 +64,11 @@ func (c *ClusterCollector) Update(ch chan<- prometheus.Metric) error {
 			ishealth = false
 		}
 
-		addr := cli.APIServerAddr()
 		ch <- prometheus.MustNewConstMetric(
 			c.clusterUp,
 			prometheus.CounterValue,
 			utils.BoolToFloat64(ishealth),
-			cli.Name(), (&addr).String(), cli.APIServerVersion(),
+			cli.Name(), cli.Info().APIServerAddr(), cli.Info().APIServerVersion(),
 		)
 		return nil
 	})

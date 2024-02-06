@@ -38,8 +38,10 @@ func ReadObjectsFromFile[T runtime.Object](path string) ([]T, error) {
 	return SplitYAMLFilterd[T](bytes.NewReader(filecontent))
 }
 
+const ReadCache = 4096
+
 func SplitYAML(data []byte) ([]*unstructured.Unstructured, error) {
-	d := kubeyaml.NewYAMLOrJSONDecoder(bytes.NewReader(data), 4096)
+	d := kubeyaml.NewYAMLOrJSONDecoder(bytes.NewReader(data), ReadCache)
 	var objs []*unstructured.Unstructured
 	for {
 		u := &unstructured.Unstructured{}
@@ -59,8 +61,7 @@ func SplitYAML(data []byte) ([]*unstructured.Unstructured, error) {
 
 // SplitYAMLFilterd reurns objects has type of `t`
 func SplitYAMLFilterd[T runtime.Object](raw io.Reader) ([]T, error) {
-	const readcache = 4096
-	d := kubeyaml.NewYAMLOrJSONDecoder(raw, readcache)
+	d := kubeyaml.NewYAMLOrJSONDecoder(raw, ReadCache)
 	decoder := serializer.NewCodecFactory(scheme.Scheme).UniversalDeserializer()
 
 	var objs []T

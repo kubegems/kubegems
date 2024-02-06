@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/emicklei/go-restful/v3"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 )
 
 func (o *ModelsAPI) AddSourceAdmin(req *restful.Request, resp *restful.Response) {

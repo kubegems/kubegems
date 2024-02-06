@@ -30,6 +30,7 @@ import (
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/models"
 	modelsv1beta1 "kubegems.io/kubegems/pkg/apis/models/v1beta1"
+	"kubegems.io/kubegems/pkg/controller/webhooks"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -72,7 +73,7 @@ func DefaultOptions() *Options {
 		MetricsAddr:          "127.0.0.1:9100", // default run under kube-rbac-proxy
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
-		IngressHost:          "models.kubegems.io",
+		IngressHost:          "",
 		IngressScheme:        "http",
 	}
 }
@@ -215,15 +216,17 @@ func (r *Reconciler) Sync(ctx context.Context, md *modelsv1beta1.ModelDeployment
 
 func (r *Reconciler) Default(ctx context.Context, md *modelsv1beta1.ModelDeployment) error {
 	if md.Spec.Ingress.Host == "" {
+		domainTemplate := r.Options.IngressHost
 		// use default host from gateway
 		if gatewayName := md.Spec.Ingress.GatewayName; gatewayName != "" {
 			gateway := &gemsv1beta1.TenantGateway{}
 			if err := r.Client.Get(ctx, client.ObjectKey{Name: gatewayName}, gateway); err != nil {
 				return err
 			}
-			md.Spec.Ingress.Host = gateway.Spec.BaseDomain
-		} else {
-			md.Spec.Ingress.Host = r.Options.IngressHost
+			domainTemplate = gateway.Spec.BaseDomain
+		}
+		if domainTemplate != "" {
+			md.Spec.Ingress.Host = webhooks.RandHost(r.Options.IngressHost)
 		}
 	}
 	return nil

@@ -30,12 +30,15 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
 	"kubegems.io/kubegems/pkg/utils/redis"
 	"sigs.k8s.io/yaml"
 )
+
+const SelfClusterAgentAddress = "https://kubegems-local-agent.kubegems-local:8041"
 
 func createDatabaseIfNotExists(ctx context.Context, opts *database.Options) (exists bool, err error) {
 	log := logr.FromContextOrDiscard(ctx)
@@ -69,7 +72,9 @@ func createDatabaseIfNotExists(ctx context.Context, opts *database.Options) (exi
 	return false, nil
 }
 
-func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, migrate, initData bool) error {
+func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, migrate, initData bool, globalvalues string) error {
+	log := logr.FromContextOrDiscard(ctx)
+	log.WithValues("migrate", migrate, "initData", initData, "globalvalues", globalvalues).Info("migrate database and init data")
 	// init database schema
 	_, err := createDatabaseIfNotExists(ctx, opts)
 	if err != nil {
@@ -86,11 +91,46 @@ func MigrateDatabaseAndInitData(ctx context.Context, opts *database.Options, mig
 			return err
 		}
 	}
-
+	if err := InitClusterData(ctx, db.DB(), globalvalues); err != nil {
+		return err
+	}
 	if initData {
 		if err := InitBaseData(db.DB()); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func InitClusterData(ctx context.Context, db *gorm.DB, globalvalues string) error {
+	if globalvalues != "" {
+		values := pluginmanager.GlobalValues{}
+		if err := yaml.Unmarshal([]byte(globalvalues), &values); err != nil {
+			return fmt.Errorf("unmarshal global values: %v", err)
+		}
+		cluster := &Cluster{
+			ID:               1,
+			ClusterName:      values.ClusterName,
+			AgentAddr:        SelfClusterAgentAddress,
+			APIServer:        "https://kubernetes.default.svc",
+			Primary:          true, // is manager cluster
+			Runtime:          values.Runtime,
+			ImageRepo:        values.ImageRegistry + "/" + values.ImageRepository,
+			InstallNamespace: "kubegems-local",
+		}
+		if e := db.FirstOrCreate(&cluster, cluster.ID).Error; e != nil {
+			return e
+		}
+	}
+	admin_tenant := &Tenant{
+		ID: 1,
+		//  admin is not allowed in gitea as organization name
+		TenantName: "default",
+		IsActive:   true,
+		Remark:     "default tenant",
+	}
+	if e := db.FirstOrCreate(&admin_tenant, admin_tenant.ID).Error; e != nil {
+		return e
 	}
 	return nil
 }

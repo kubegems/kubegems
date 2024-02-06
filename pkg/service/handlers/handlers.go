@@ -36,7 +36,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/models/validate"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 )
 
 var namer = schema.NamingStrategy{}

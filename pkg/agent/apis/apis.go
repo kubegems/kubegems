@@ -144,6 +144,14 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 		c.JSON(http.StatusOK, gin.H{"healthy": "ok"})
 	})
 	routes.r.GET("/version", func(c *gin.Context) { c.JSON(http.StatusOK, version.Get()) })
+	routes.r.GET("/kubernetes-version", func(c *gin.Context) {
+		version, err := cluster.Discovery().ServerVersion()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, version)
+	})
 
 	serviceProxyHandler := ServiceProxyHandler{}
 	routes.r.ANY("/v1/service-proxy/{realpath}*", serviceProxyHandler.ServiceProxy)
@@ -208,7 +216,10 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 	routes.register("alertmanager", "v1", "silence", ActionCreate, alertmanagerHandler.CreateSilence)
 	routes.register("alertmanager", "v1", "silence", ActionDelete, alertmanagerHandler.DeleteSilence)
 
-	lokiHandler := &LokiHandler{Server: options.LokiServer}
+	lokiHandler, err := NewLokiHandler(options.LokiServer)
+	if err != nil {
+		return nil, err
+	}
 	routes.register("loki", "v1", "query", ActionList, lokiHandler.Query)
 	routes.register("loki", "v1", "queryrange", ActionList, lokiHandler.QueryRange)
 	routes.register("loki", "v1", "labels", ActionList, lokiHandler.Labels)
@@ -261,6 +272,9 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 	// service client 使用的内部 apis
 	clientrest := client.ClientRest{Cli: cluster.GetClient()}
 	clientrest.Register(routes.r)
+
+	clienttransport := client.NewClientTransport()
+	clienttransport.Register(routes.r)
 
 	return func(c *gin.Context) { routes.r.Match(c)(c) }, err
 }

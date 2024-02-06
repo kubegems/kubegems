@@ -14,18 +14,20 @@ dependencies:
     repository: https://charts.kubegems.io/bitnami
     condition: redis.enabled
     version: 16.9.11
+  # app start
   - name: gitea
     repository: https://charts.kubegems.io/kubegems
-    condition: gitea.enabled
+    condition: kubegems-apps.enabled
     version: 5.0.8
   - name: argo-cd
     repository: https://charts.kubegems.io/kubegems
-    condition: argo-cd.enabled
+    condition: kubegems-apps.enabled
     version: 3.3.5
   - name: chartmuseum
     repository: https://charts.kubegems.io/kubegems
-    condition: chartmuseum.enabled
+    condition: kubegems-apps.enabled
     version: 3.8.0
+  # app end
 description: KubeGems core service and dashboard.
 home: kubegems.io
 keywords:
@@ -43,3 +45,4 @@ annotations:
   plugins.kubegems.io/category: core/KubeGems
   plugins.kubegems.io/render-by: helm
   plugins.kubegems.io/required: "true"
+  plugins.kubegems.io/values-from: kubegems-apps,kubegems-pai,kubegems-local

@@ -20,17 +20,13 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
-	"go.opentelemetry.io/otel"
-	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/service/apis/oidc"
 	"kubegems.io/kubegems/pkg/service/apis/plugins"
 	"kubegems.io/kubegems/pkg/service/options"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
-	"kubegems.io/kubegems/pkg/utils/git"
-	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/library/rest/api"
 )
 
 type API struct{}
@@ -39,8 +35,6 @@ type Dependencies struct {
 	Opts     *options.Options
 	Agents   *agents.ClientSet
 	Database *database.Database
-	Gitp     *git.SimpleLocalProvider
-	Argo     *argo.Client
 	Redis    *redis.Client
 }
 
@@ -57,20 +51,8 @@ func InitAPI(ctx context.Context, deps Dependencies) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	modules := []apiutil.RestModule{
-		pluginsapi,
-		op,
-	}
-	middlewares := []restful.FilterFunction{
-		SkipIf(
-			[]string{
-				"/keys",
-				"/.well-known/openid-configuration",
-			},
-			auth.NewAuthMiddleware(deps.Opts.JWT, nil, otel.GetTracerProvider().Tracer("kubegems.io/kubegems")).GoRestfulMiddleware, // authc
-		),
-	}
-	return apiutil.NewRestfulAPI("", middlewares, modules), nil
+	handler := api.NewAPI().Register("", pluginsapi, op).BuildHandler()
+	return handler, nil
 }
 
 func SkipIf(list []string, fun restful.FilterFunction) restful.FilterFunction {

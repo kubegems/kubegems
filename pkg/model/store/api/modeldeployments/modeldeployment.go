@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/application"
 	"kubegems.io/kubegems/pkg/apis/models"
 	modelscommon "kubegems.io/kubegems/pkg/apis/models"
@@ -39,7 +40,7 @@ import (
 	"kubegems.io/kubegems/pkg/model/deployment"
 	storemodels "kubegems.io/kubegems/pkg/model/store/api/models"
 	"kubegems.io/kubegems/pkg/model/store/repository"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -49,6 +50,7 @@ type ModelDeploymentOverview struct {
 	ModelName         string      `json:"modelName"`
 	ModelVersion      string      `json:"modelVersion"`
 	URL               string      `json:"url"`
+	GRPCAddress       string      `json:"grpcAddress"`
 	Cluster           string      `json:"cluster"`
 	Namespace         string      `json:"namespace"`
 	Creator           string      `json:"creator"`
@@ -101,6 +103,7 @@ func (o *ModelDeploymentAPI) ListAllModelDeployments(req *restful.Request, resp 
 					ModelName:         md.Spec.Model.Name,
 					ModelVersion:      md.Spec.Model.Version,
 					URL:               md.Status.URL,
+					GRPCAddress:       md.Status.GRPCAddress,
 					Phase:             string(md.Status.Phase),
 					Cluster:           cluster,
 					Namespace:         md.Namespace,
@@ -217,15 +220,15 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 			modelsv1beta1.Parameter{Name: "pkg", Value: modeldetails.Framework},
 			modelsv1beta1.Parameter{Name: "model", Value: modeldetails.Name},
 		)
-		md.Spec.Server.Privileged = true
+		completeRootContext(ctx, md)
 	case repository.SourceKindModelx:
 		md.Spec.Server.Kind = modelsv1beta1.ServerKindModelx
 		md.Spec.Model.URL = sourcedetails.Address
-		md.Spec.Server.Privileged = true
 		md.Spec.Server.StorageInitializerImage = o.ModelxStorageInitalizer
 		if md.Spec.Server.StorageInitializerImage == "" {
 			md.Spec.Server.StorageInitializerImage = sourcedetails.InitImage
 		}
+		completeRootContext(ctx, md)
 	}
 	completeProbes(md)
 	// resource request
@@ -238,6 +241,24 @@ func (o *ModelDeploymentAPI) completeMDSpec(ctx context.Context, md *modelsv1bet
 	removeEmptyResource(md.Spec.Server.Resources.Requests)
 	removeEmptyResource(md.Spec.Server.Resources.Limits)
 	return nil
+}
+
+func completeRootContext(ctx context.Context, md *modelsv1beta1.ModelDeployment) {
+	md.Spec.Server.Privileged = false
+	getOrCreatContainer(md.Spec.Server.PodSpec, deployment.ModelContainerName).SecurityContext = &v1.SecurityContext{
+		RunAsUser:  pointer.Int64(0),
+		RunAsGroup: pointer.Int64(0),
+	}
+}
+
+func getOrCreatContainer(podspec *v1.PodSpec, name string) *v1.Container {
+	for i, c := range podspec.Containers {
+		if c.Name == name {
+			return &podspec.Containers[i]
+		}
+	}
+	podspec.Containers = append(podspec.Containers, v1.Container{Name: name})
+	return &podspec.Containers[len(podspec.Containers)-1]
 }
 
 func removeEmptyResource(list corev1.ResourceList) {

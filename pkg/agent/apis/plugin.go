@@ -22,7 +22,7 @@ import (
 	installerapi "kubegems.io/kubegems/pkg/installer/api"
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
+	"kubegems.io/library/rest/request"
 )
 
 var ErrPluginDisabled = errors.New("plugin system disabled")
@@ -60,16 +60,16 @@ type PluginStatus struct {
 
 type MainCategory map[string]map[string][]installerapi.PluginStatus
 
-// @Tags        Agent.Plugin
-// @Summary     获取Plugin列表数据
-// @Description 获取Plugin列表数据
-// @Accept      json
-// @Produce     json
-// @Param       cluster path     string                                                                 true "cluster"
-// @Param       simple  query    bool                                                                   true "simple"
-// @Success     200     {object} handlers.ResponseStruct{Data=map[string]map[string][]api.PluginStatus} "Plugins"
-// @Router      /v1/proxy/cluster/{cluster}/plugins [get]
-// @Security    JWT
+// @Tags			Agent.Plugin
+// @Summary		获取Plugin列表数据
+// @Description	获取Plugin列表数据
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string																	true	"cluster"
+// @Param			simple	query		bool																	true	"simple"
+// @Success		200		{object}	handlers.ResponseStruct{Data=map[string]map[string][]api.PluginStatus}	"Plugins"
+// @Router			/v1/proxy/cluster/{cluster}/plugins [get]
+// @Security		JWT
 func (h *PluginHandler) List(c *gin.Context) {
 	simple, _ := strconv.ParseBool(c.Query("simple"))
 	if h.PM == nil {
@@ -98,17 +98,17 @@ func (h *PluginHandler) List(c *gin.Context) {
 	OK(c, categoriedPlugins)
 }
 
-// @Tags        Agent.Plugin
-// @Summary     插件详情
-// @Description 插件详情
-// @Accept      json
-// @Produce     json
-// @Param       cluster path     string                                                    true "cluster"
-// @Param       name    path     string                                                    true "name"
-// @Param       version query    string                                                    true "version"
-// @Success     200     {object} handlers.ResponseStruct{Data=pluginmanager.PluginVersion} "Plugins"
-// @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [get]
-// @Security    JWT
+// @Tags			Agent.Plugin
+// @Summary		插件详情
+// @Description	插件详情
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string														true	"cluster"
+// @Param			name	path		string														true	"name"
+// @Param			version	query		string														true	"version"
+// @Success		200		{object}	handlers.ResponseStruct{Data=pluginmanager.PluginVersion}	"Plugins"
+// @Router			/v1/proxy/cluster/{cluster}/plugins/{name} [get]
+// @Security		JWT
 func (h *PluginHandler) Get(c *gin.Context) {
 	if h.PM == nil {
 		NotOK(c, ErrPluginDisabled)
@@ -123,17 +123,17 @@ func (h *PluginHandler) Get(c *gin.Context) {
 	OK(c, plugin)
 }
 
-// @Tags        Agent.Plugin
-// @Summary     启用插件
-// @Description 启用插件
-// @Accept      json
-// @Produce     json
-// @Param       cluster path     string                               true "cluster"
-// @Param       name    path     string                               true "name"
-// @Param       body    body     pluginmanager.PluginVersion          true "pluginVersion"
-// @Success     200     {object} handlers.ResponseStruct{Data=string} "ok"
-// @Router      /v1/proxy/cluster/{cluster}/plugins/{name} [post]
-// @Security    JWT
+// @Tags			Agent.Plugin
+// @Summary		启用插件
+// @Description	启用插件
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string									true	"cluster"
+// @Param			name	path		string									true	"name"
+// @Param			body	body		pluginmanager.PluginVersion				true	"pluginVersion"
+// @Success		200		{object}	handlers.ResponseStruct{Data=string}	"ok"
+// @Router			/v1/proxy/cluster/{cluster}/plugins/{name} [post]
+// @Security		JWT
 func (h *PluginHandler) Enable(c *gin.Context) {
 	if h.PM == nil {
 		NotOK(c, ErrPluginDisabled)
@@ -155,16 +155,16 @@ func (h *PluginHandler) Enable(c *gin.Context) {
 	OK(c, pv)
 }
 
-// @Tags        Agent.Plugin
-// @Summary     禁用插件
-// @Description 禁用插件
-// @Accept      json
-// @Produce     json
-// @Param       cluster path     string                               true "cluster"
-// @Param       name    path     string                               true "name"
-// @Success     200     {object} handlers.ResponseStruct{Data=string} "Plugins"
-// @Router      /v1/proxy/cluster/{cluster}/plugins [delete]
-// @Security    JWT
+// @Tags			Agent.Plugin
+// @Summary		禁用插件
+// @Description	禁用插件
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string									true	"cluster"
+// @Param			name	path		string									true	"name"
+// @Success		200		{object}	handlers.ResponseStruct{Data=string}	"Plugins"
+// @Router			/v1/proxy/cluster/{cluster}/plugins [delete]
+// @Security		JWT
 func (h *PluginHandler) Disable(c *gin.Context) {
 	if h.PM == nil {
 		NotOK(c, ErrPluginDisabled)
@@ -180,14 +180,14 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 	OK(c, "ok")
 }
 
-// @Tags        Agent.Plugin
-// @Summary     检查更新
-// @Description 检查更新
-// @Accept      json
-// @Produce     json
-// @Param       cluster path     string                                           true "cluster"
-// @Success     200     {object} handlers.ResponseStruct{Data=[]api.PluginStatus} "ok"
-// @Router      /v1/proxy/cluster/{cluster}/plugins:check-update [post]
+// @Tags			Agent.Plugin
+// @Summary		检查更新
+// @Description	检查更新
+// @Accept			json
+// @Produce		json
+// @Param			cluster	path		string												true	"cluster"
+// @Success		200		{object}	handlers.ResponseStruct{Data=[]api.PluginStatus}	"ok"
+// @Router			/v1/proxy/cluster/{cluster}/plugins:check-update [post]
 func (h *PluginHandler) CheckUpdate(c *gin.Context) {
 	if h.PM == nil {
 		NotOK(c, ErrPluginDisabled)

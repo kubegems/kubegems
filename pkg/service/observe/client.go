@@ -41,6 +41,7 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/agents/extend"
 	"kubegems.io/kubegems/pkg/utils/prometheus"
 	"kubegems.io/kubegems/pkg/utils/prometheus/channels"
 	"kubegems.io/kubegems/pkg/utils/prometheus/templates"
@@ -472,7 +473,7 @@ func (c *ObserveClient) CreateOrUpdateAlertEmailSecret(ctx context.Context, name
 func (c *ObserveClient) ListSilences(ctx context.Context, labels map[string]string, commentPrefix string) ([]alertmanagertypes.Silence, error) {
 	allSilences := []alertmanagertypes.Silence{}
 
-	req := agents.Request{
+	req := extend.Request{
 		Path: "/v1/service-proxy/api/v2/silences",
 		Query: func() url.Values {
 			values := url.Values{}
@@ -481,11 +482,11 @@ func (c *ObserveClient) ListSilences(ctx context.Context, labels map[string]stri
 			}
 			return values
 		}(),
-		Headers: agents.HeadersFrom(alertProxyHeader),
+		Headers: extend.HeadersFrom(alertProxyHeader),
 		Into:    &allSilences,
 	}
 
-	if err := c.DoRequest(ctx, req); err != nil {
+	if err := c.Extend().DoRequest(ctx, req); err != nil {
 		return nil, fmt.Errorf("list silence by %v, %w", labels, err)
 	}
 
@@ -545,14 +546,14 @@ func (c *ObserveClient) CreateOrUpdateSilenceIfNotExist(ctx context.Context, inf
 		return fmt.Errorf("too many silences for alert: %v", info)
 	}
 
-	agentreq := agents.Request{
+	agentreq := extend.Request{
 		Method:  http.MethodPost,
 		Path:    "/v1/service-proxy/api/v2/silences",
 		Body:    silence,
-		Headers: agents.HeadersFrom(alertProxyHeader),
+		Headers: extend.HeadersFrom(alertProxyHeader),
 	}
 
-	if err := c.DoRequest(ctx, agentreq); err != nil {
+	if err := c.Extend().DoRequest(ctx, agentreq); err != nil {
 		return fmt.Errorf("create silence:%w", err)
 	}
 	return nil
@@ -568,12 +569,12 @@ func (c *ObserveClient) DeleteSilenceIfExist(ctx context.Context, info models.Al
 	case 0:
 		return nil
 	case 1:
-		agentreq := agents.Request{
+		agentreq := extend.Request{
 			Method:  http.MethodDelete,
 			Path:    fmt.Sprintf("/v1/service-proxy/api/v2/silence/%s", silenceList[0].ID),
-			Headers: agents.HeadersFrom(alertProxyHeader),
+			Headers: extend.HeadersFrom(alertProxyHeader),
 		}
-		return c.DoRequest(ctx, agentreq)
+		return c.Extend().DoRequest(ctx, agentreq)
 	default:
 		return fmt.Errorf("too many silences for alert: %v", info)
 	}
@@ -595,14 +596,14 @@ func (c ObserveClient) SearchTrace(
 	// q.Add("limit", limit)
 
 	resp := tracesResponse{}
-	req := agents.Request{
+	req := extend.Request{
 		Method:  http.MethodGet,
 		Path:    "/v1/service-proxy/api/traces",
 		Query:   q,
-		Headers: agents.HeadersFrom(jaegerProxyHeader),
+		Headers: extend.HeadersFrom(jaegerProxyHeader),
 		Into:    &resp,
 	}
-	if err := c.DoRequest(ctx, req); err != nil {
+	if err := c.Extend().DoRequest(ctx, req); err != nil {
 		return nil, err
 	}
 	if len(resp.Errors) > 0 {
@@ -658,13 +659,13 @@ func (c ObserveClient) GetTrace(
 	traceID string,
 ) (*Trace, error) {
 	resp := tracesResponse{}
-	req := agents.Request{
+	req := extend.Request{
 		Method:  http.MethodGet,
 		Path:    "/v1/service-proxy/api/traces/" + traceID,
-		Headers: agents.HeadersFrom(jaegerProxyHeader),
+		Headers: extend.HeadersFrom(jaegerProxyHeader),
 		Into:    &resp,
 	}
-	if err := c.DoRequest(ctx, req); err != nil {
+	if err := c.Extend().DoRequest(ctx, req); err != nil {
 		return nil, err
 	}
 	if len(resp.Errors) > 0 {

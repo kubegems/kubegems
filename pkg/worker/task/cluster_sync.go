@@ -17,6 +17,7 @@ package task
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	clusterhandler "kubegems.io/kubegems/pkg/service/handlers/cluster"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
@@ -31,35 +32,43 @@ type ClusterSyncTasker struct {
 }
 
 func (t *ClusterSyncTasker) Sync(ctx context.Context) error {
+	log := logr.FromContextOrDiscard(ctx)
 	clusters := []*models.Cluster{}
 	if err := t.DB.DB().Find(&clusters).Error; err != nil {
 		return err
 	}
-	// in case of cluster upgrade
-	return t.cs.ExecuteInEachCluster(context.TODO(), func(ctx context.Context, cli agents.Client) error {
-		for _, v := range clusters {
-			if v.ClusterName != cli.Name() {
-				continue
-			}
-			if version := cli.APIServerVersion(); v.Version != version {
-				if err := t.DB.DB().Model(v).Update("version", version).Error; err != nil {
-					return err
-				}
-			}
-			cfg, err := kube.GetKubeRestConfig(v.KubeConfig)
-			if err != nil {
-				return err
-			}
-			if exp := clusterhandler.ConfigClientCertExpire(cfg); exp != nil &&
-				(v.ClientCertExpireAt == nil || !v.ClientCertExpireAt.Equal(*exp)) {
-				if err := t.DB.DB().Model(v).Update("client_cert_expire_at", exp).Error; err != nil {
-					return err
-				}
-			}
-			break
+	for _, v := range clusters {
+		cli, err := t.cs.ClientOf(ctx, v.ClusterName)
+		if err != nil {
+			log.Error(err, "get client failed", "cluster", v.ClusterName)
+			continue
 		}
-		return nil
-	})
+		if len(v.KubeConfig) != 0 {
+			if err := checkExpire(cli, *v, t.DB); err != nil {
+				log.Error(err, "check expire failed", "cluster", v.ClusterName)
+			}
+		}
+	}
+	return nil
+}
+
+func checkExpire(cli agents.Client, v models.Cluster, db *database.Database) error {
+	if version := cli.Info().APIServerVersion(); v.Version != version {
+		if err := db.DB().Model(v).Update("version", version).Error; err != nil {
+			return err
+		}
+	}
+	cfg, err := kube.GetKubeRestConfig(v.KubeConfig)
+	if err != nil {
+		return err
+	}
+	if exp := clusterhandler.ConfigClientCertExpire(cfg); exp != nil &&
+		(v.ClientCertExpireAt == nil || !v.ClientCertExpireAt.Equal(*exp)) {
+		if err := db.DB().Model(v).Update("client_cert_expire_at", exp).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 const TaskFunction_ClusterSync = "cluster-sync"

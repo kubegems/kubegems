@@ -31,6 +31,7 @@ type JWT struct {
 
 type JWTClaims struct {
 	*jwt.StandardClaims
+	Admin   bool `json:"admin,omitempty"`
 	Payload interface{}
 }
 
@@ -78,13 +79,21 @@ func (opts *Options) ToJWT() *JWT {
 }
 
 // GenerateToken Generate new jwt token
-func (t *JWT) GenerateToken(payload interface{}, sub string, expire time.Duration) (token string, expriets int64, err error) {
-	tk := jwt.New(jwt.GetSigningMethod("RS256"))
+func (t *JWT) GenerateToken(payload interface{}, sub string, isAdmin bool, expire time.Duration) (token string, claims JWTClaims, err error) {
 	now := time.Now()
-	expriets = now.Add(expire).Unix()
-	tk.Claims = wrapClaims(payload, sub, now, expriets)
+	jwtClaims := JWTClaims{
+		Payload: payload,
+		StandardClaims: &jwt.StandardClaims{
+			IssuedAt:  now.Unix(),
+			ExpiresAt: now.Add(expire).Unix(),
+			Subject:   sub,
+			Issuer:    "kubegems",
+		},
+		Admin: isAdmin,
+	}
+	tk := jwt.NewWithClaims(jwt.GetSigningMethod("RS256"), jwtClaims)
 	token, err = tk.SignedString(t.privateKey)
-	return token, expriets, err
+	return token, jwtClaims, err
 }
 
 // ParseToken Parse jwt token, return the claims
@@ -100,15 +109,4 @@ func (t *JWT) ParseToken(token string) (*JWTClaims, error) {
 		return nil, err
 	}
 	return &claims, err
-}
-
-func wrapClaims(v interface{}, sub string, now time.Time, expirets int64) *JWTClaims {
-	return &JWTClaims{
-		Payload: v,
-		StandardClaims: &jwt.StandardClaims{
-			IssuedAt:  now.Unix(),
-			ExpiresAt: expirets,
-			Subject:   sub,
-		},
-	}
 }

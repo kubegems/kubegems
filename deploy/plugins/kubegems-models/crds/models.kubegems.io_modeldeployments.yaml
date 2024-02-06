@@ -199,6 +199,9 @@ spec:
                     type: string
                   kind:
                     type: string
+                  metadata:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   mounts:
                     items:
                       properties:
@@ -7337,6 +7340,8 @@ spec:
             type: object
           status:
             properties:
+              grpcAddress:
+                type: string
               message:
                 type: string
               phase:

@@ -20,9 +20,11 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/go-logr/logr"
 	"golang.org/x/exp/slices"
+
+	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
@@ -70,12 +72,22 @@ func TemplateChart(ctx context.Context, rlsname, namespace string, chartPath str
 	return []byte(rls.Manifest), nil
 }
 
-func ApplyChart(ctx context.Context, cfg *rest.Config, rlsname, namespace string, chartPath string, values map[string]interface{}) (*release.Release, error) {
+func ApplyChart(ctx context.Context, cfg *rest.Config,
+	rlsname, namespace string, chartPath string,
+	values map[string]interface{}, files map[string][]byte,
+) (*release.Release, error) {
 	log := logr.FromContextOrDiscard(ctx).WithValues("name", rlsname, "namespace", namespace)
 	log.Info("loading chart")
 	chart, err := loader.Load(chartPath)
 	if err != nil {
 		return nil, fmt.Errorf("load chart: %w", err)
+	}
+	// apply files
+	if len(files) > 0 {
+		chart, err = LoadChartWithFileOverride(chart, files)
+		if err != nil {
+			return nil, fmt.Errorf("override files: %w", err)
+		}
 	}
 	if rlsname == "" {
 		rlsname = chart.Name()
@@ -115,6 +127,23 @@ func ApplyChart(ctx context.Context, cfg *rest.Config, rlsname, namespace string
 	return client.RunWithContext(ctx, rlsname, chart, values)
 }
 
+func LoadChartWithFileOverride(cht *chart.Chart, files map[string][]byte) (*chart.Chart, error) {
+	// override files
+	bufferdFiles := []*loader.BufferedFile{}
+	for _, f := range cht.Raw {
+		if content, ok := files[f.Name]; ok {
+			bufferdFiles = append(bufferdFiles, &loader.BufferedFile{Name: f.Name, Data: content})
+			delete(files, f.Name)
+		} else {
+			bufferdFiles = append(bufferdFiles, &loader.BufferedFile{Name: f.Name, Data: f.Data})
+		}
+	}
+	for name, content := range files {
+		bufferdFiles = append(bufferdFiles, &loader.BufferedFile{Name: name, Data: content})
+	}
+	return loader.LoadFiles(bufferdFiles)
+}
+
 func removeHistories(ctx context.Context, storage *storage.Storage, name string, max int) error {
 	rlss, err := storage.History(name)
 	if err != nil {
@@ -125,8 +154,14 @@ func removeHistories(ctx context.Context, storage *storage.Storage, name string,
 	}
 
 	// newest to old
-	slices.SortFunc(rlss, func(a, b *release.Release) bool {
-		return a.Version > b.Version
+	slices.SortFunc(rlss, func(a, b *release.Release) int {
+		if a.Version > b.Version {
+			return 1
+		} else if a.Version < b.Version {
+			return -1
+		} else {
+			return 0
+		}
 	})
 
 	var lastDeployed *release.Release

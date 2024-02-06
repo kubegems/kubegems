@@ -15,16 +15,16 @@
 package server
 
 import (
+	"net/http"
 	"strings"
 
-	"github.com/emicklei/go-restful/v3"
 	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/labels"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
-	"kubegems.io/kubegems/pkg/utils/route"
+	route "kubegems.io/library/rest/api"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 )
 
 type EdgeClusterAPI struct {
@@ -32,8 +32,8 @@ type EdgeClusterAPI struct {
 	Tunnel  *tunnel.TunnelServer
 }
 
-func (a *EdgeClusterAPI) ListEdgeClusters(req *restful.Request, resp *restful.Response) {
-	querylabels, querymanufacture := request.Query(req.Request, "labels", ""), request.Query(req.Request, "manufacture", "")
+func (a *EdgeClusterAPI) ListEdgeClusters(resp http.ResponseWriter, req *http.Request) {
+	querylabels, querymanufacture := request.Query(req, "labels", ""), request.Query(req, "manufacture", "")
 	selector, err := labels.Parse(querylabels)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
@@ -44,8 +44,8 @@ func (a *EdgeClusterAPI) ListEdgeClusters(req *restful.Request, resp *restful.Re
 		response.BadRequest(resp, err.Error())
 		return
 	}
-	listopt := request.GetListOptions(req.Request)
-	total, list, err := a.Cluster.ClusterStore.List(req.Request.Context(), ListOptions{
+	listopt := request.GetListOptions(req)
+	total, list, err := a.Cluster.ClusterStore.List(req.Context(), ListOptions{
 		Page:        listopt.Page,
 		Size:        listopt.Size,
 		Search:      listopt.Search,
@@ -73,9 +73,9 @@ type CreateClusterResponse struct {
 	ManifestAddress string `json:"manifestAddress,omitempty"`
 }
 
-func (a *EdgeClusterAPI) PreCreateEdgeCluster(req *restful.Request, resp *restful.Response) {
+func (a *EdgeClusterAPI) PreCreateEdgeCluster(resp http.ResponseWriter, req *http.Request) {
 	cluster := &v1beta1.EdgeCluster{}
-	if err := request.Body(req.Request, cluster); err != nil {
+	if err := request.Body(req, cluster); err != nil {
 		response.BadRequest(resp, err.Error())
 		return
 	}
@@ -85,7 +85,7 @@ func (a *EdgeClusterAPI) PreCreateEdgeCluster(req *restful.Request, resp *restfu
 	if cluster.Spec.Register.BootstrapToken == "" {
 		cluster.Spec.Register.BootstrapToken = strings.ReplaceAll(uuid.NewString(), "-", "")
 	}
-	created, err := a.Cluster.PreCreate(req.Request.Context(), cluster)
+	created, err := a.Cluster.PreCreate(req.Context(), cluster)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 		return
@@ -93,9 +93,9 @@ func (a *EdgeClusterAPI) PreCreateEdgeCluster(req *restful.Request, resp *restfu
 	response.OK(resp, created)
 }
 
-func (a *EdgeClusterAPI) GetEdgeCluster(req *restful.Request, resp *restful.Response) {
-	uid := req.PathParameter("uid")
-	cluster, err := a.Cluster.ClusterStore.Get(req.Request.Context(), uid)
+func (a *EdgeClusterAPI) GetEdgeCluster(resp http.ResponseWriter, req *http.Request) {
+	uid := request.Path(req, "uid", "")
+	cluster, err := a.Cluster.ClusterStore.Get(req.Context(), uid)
 	if err != nil {
 		response.Error(resp, err)
 	} else {
@@ -103,9 +103,9 @@ func (a *EdgeClusterAPI) GetEdgeCluster(req *restful.Request, resp *restful.Resp
 	}
 }
 
-func (a *EdgeClusterAPI) RemoveEdgeCluster(req *restful.Request, resp *restful.Response) {
-	uid := req.PathParameter("uid")
-	cluster, err := a.Cluster.ClusterStore.Delete(req.Request.Context(), uid)
+func (a *EdgeClusterAPI) RemoveEdgeCluster(resp http.ResponseWriter, req *http.Request) {
+	uid := request.Path(req, "uid", "")
+	cluster, err := a.Cluster.ClusterStore.Delete(req.Context(), uid)
 	if err != nil {
 		response.Error(resp, err)
 	} else {
@@ -113,14 +113,14 @@ func (a *EdgeClusterAPI) RemoveEdgeCluster(req *restful.Request, resp *restful.R
 	}
 }
 
-func (a *EdgeClusterAPI) UpdateEdgeCluster(req *restful.Request, resp *restful.Response) {
-	uid := req.PathParameter("uid")
+func (a *EdgeClusterAPI) UpdateEdgeCluster(resp http.ResponseWriter, req *http.Request) {
+	uid := request.Path(req, "uid", "")
 	update := &v1beta1.EdgeCluster{}
-	if err := request.Body(req.Request, update); err != nil {
+	if err := request.Body(req, update); err != nil {
 		response.Error(resp, err)
 		return
 	}
-	cluster, err := a.Cluster.ClusterStore.Update(req.Request.Context(), uid, func(cluster *v1beta1.EdgeCluster) error {
+	cluster, err := a.Cluster.ClusterStore.Update(req.Context(), uid, func(cluster *v1beta1.EdgeCluster) error {
 		// update spec
 		cluster.Spec = update.Spec
 		// update annotations and labels
@@ -135,14 +135,14 @@ func (a *EdgeClusterAPI) UpdateEdgeCluster(req *restful.Request, resp *restful.R
 	}
 }
 
-func (a *EdgeClusterAPI) InstallAgentTemplate(req *restful.Request, resp *restful.Response) {
-	uid, token := req.PathParameter("uid"), request.Query(req.Request, "token", "")
-	rendered, err := a.Cluster.RenderInstallManifests(req.Request.Context(), uid, token)
+func (a *EdgeClusterAPI) InstallAgentTemplate(resp http.ResponseWriter, req *http.Request) {
+	uid, token := request.Path(req, "uid", ""), request.Query(req, "token", "")
+	rendered, err := a.Cluster.RenderInstallManifests(req.Context(), uid, token)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 		return
 	}
-	response.OK(resp, rendered)
+	response.Raw(resp, http.StatusOK, rendered, nil)
 }
 
 type EdgeHubItem struct {
@@ -151,8 +151,8 @@ type EdgeHubItem struct {
 	Connected bool   `json:"connected"`
 }
 
-func (a *EdgeClusterAPI) ListEdgeHubs(req *restful.Request, resp *restful.Response) {
-	_, list, err := a.Cluster.HubStore.List(req.Request.Context(), ListOptions{})
+func (a *EdgeClusterAPI) ListEdgeHubs(resp http.ResponseWriter, req *http.Request) {
+	_, list, err := a.Cluster.HubStore.List(req.Context(), ListOptions{})
 	if err != nil {
 		response.ServerError(resp, err)
 		return
@@ -160,9 +160,9 @@ func (a *EdgeClusterAPI) ListEdgeHubs(req *restful.Request, resp *restful.Respon
 	response.OK(resp, list)
 }
 
-func (a *EdgeClusterAPI) GetEdgeHub(req *restful.Request, resp *restful.Response) {
-	uid := req.PathParameter("uid")
-	edgehub, err := a.Cluster.HubStore.Get(req.Request.Context(), uid)
+func (a *EdgeClusterAPI) GetEdgeHub(resp http.ResponseWriter, req *http.Request) {
+	uid := request.Path(req, "uid", "")
+	edgehub, err := a.Cluster.HubStore.Get(req.Context(), uid)
 	if err != nil {
 		response.BadRequest(resp, err.Error())
 		return
@@ -176,21 +176,21 @@ func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 			Parameters(route.QueryParameter("token", "bootstrap token")),
 	).AddSubGroup(
 		route.NewGroup("/edge-hubs").Tag("edge-hub").AddRoutes(
-			route.GET("").To(a.ListEdgeHubs).ShortDesc("list edge hubs").
+			route.GET("").To(a.ListEdgeHubs).Doc("list edge hubs").
 				Response([]v1beta1.EdgeHub{}),
 			route.GET("/{uid}").To(a.GetEdgeHub).Parameters(
 				route.PathParameter("uid", "uid hub name"),
 			),
 		),
 		route.NewGroup("/edge-clusters").Tag("edge-cluster").AddRoutes(
-			route.GET("/").Paged().To(a.ListEdgeClusters).
-				ShortDesc("list clusters").
+			route.GET("/").To(a.ListEdgeClusters).
+				Doc("list clusters").
 				Parameters(
 					route.QueryParameter("labels", "labels selector").Optional(),
 					route.QueryParameter("manufacture", "manufacture selector").Optional(),
 				).
 				Response([]v1beta1.EdgeCluster{}),
-			route.POST("").To(a.PreCreateEdgeCluster).ShortDesc("pre create cluster").
+			route.POST("").To(a.PreCreateEdgeCluster).Doc("pre create cluster").
 				Parameters(
 					route.BodyParameter("", v1beta1.EdgeCluster{}),
 				).
@@ -205,7 +205,7 @@ func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 				route.PathParameter("uid", "uid name"),
 			),
 		).AddSubGroup(
-			route.NewGroup("/{uid}/proxy/{path:*}").Tag("proxy").Parameters(
+			route.NewGroup("/{uid}/proxy/{path}*").Tag("proxy").Parameters(
 				route.PathParameter("uid", "uid name"),
 				route.PathParameter("path", "proxy path"),
 			).AddRoutes(

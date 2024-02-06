@@ -16,62 +16,85 @@ package oidc
 
 import (
 	"context"
-	"crypto/sha256"
-	"os"
+	"crypto/tls"
+	"net/http"
+	"net/url"
+	"strings"
 
-	"github.com/emicklei/go-restful/v3"
-	"github.com/zitadel/oidc/pkg/oidc"
-	"github.com/zitadel/oidc/pkg/op"
-	"golang.org/x/text/language"
-	"kubegems.io/kubegems/pkg/utils/route"
+	"gopkg.in/square/go-jose.v2"
+	"kubegems.io/library/rest/api"
+	"kubegems.io/library/rest/response"
 )
 
 const (
-	pathLoggedOut = "/logged-out"
+	DiscoveryEndpoint = "/.well-known/openid-configuration"
+	JWKSPath          = "/keys"
 )
 
+// nolint: tagliatelle
+type DiscoveryConfiguration struct {
+	Issuer                           string   `json:"issuer,omitempty"`
+	JwksURI                          string   `json:"jwks_uri,omitempty"`
+	IDTokenSigningAlgValuesSupported []string `json:"id_token_signing_alg_values_supported,omitempty"`
+}
+
 type OIDCProvider struct {
-	OP op.OpenIDProvider
+	issuerPrefix string
+	keys         *jose.JSONWebKeySet
+	discovery    DiscoveryConfiguration
 }
 
 func NewProvider(ctx context.Context, options *OIDCOptions) (*OIDCProvider, error) {
-	os.Setenv(op.OidcDevMode, "true") // to allow http issuer
-	config := &op.Config{
-		Issuer:    options.Issuer,
-		CryptoKey: sha256.Sum256([]byte("kubegems")),
-		// will be used if the end_session endpoint is called without a post_logout_redirect_uri
-		DefaultLogoutRedirectURI: pathLoggedOut,
-		// enables code_challenge_method S256 for PKCE (and therefore PKCE in general)
-		CodeMethodS256: true,
-		// enables additional client_id/client_secret authentication by form post (not only HTTP Basic Auth)
-		AuthMethodPost: true,
-		// enables additional authentication by using private_key_jwt
-		AuthMethodPrivateKeyJWT: true,
-		// enables refresh_token grant use
-		GrantTypeRefreshToken: true,
-		// enables use of the `request` Object parameter
-		RequestObjectSupported: true,
-		// this example has only static texts (in English), so we'll set the here accordingly
-		SupportedUILocales: []language.Tag{language.English},
-	}
-	storage, err := NewLocalStorage(ctx, options)
+	tlscert, err := tls.LoadX509KeyPair(options.CertFile, options.KeyFile)
 	if err != nil {
 		return nil, err
 	}
-	provider, err := op.NewOpenIDProvider(ctx, config, storage)
-	if err != nil {
-		return nil, err
+	keys := &jose.JSONWebKeySet{
+		Keys: []jose.JSONWebKey{
+			(&jose.JSONWebKey{Key: tlscert.PrivateKey, Algorithm: string(jose.RS256), Use: "sig"}).Public(),
+		},
 	}
-	return &OIDCProvider{OP: provider}, nil
+	return &OIDCProvider{keys: keys}, nil
 }
 
-func (m *OIDCProvider) RegisterRoute(rg *route.Group) {
-	handler := m.OP.HttpHandler()
-	wraphandler := func(req *restful.Request, resp *restful.Response) {
-		handler.ServeHTTP(resp.ResponseWriter, req.Request)
+func (m *OIDCProvider) Discovery(w http.ResponseWriter, r *http.Request) {
+	issuer := m.dynamicIssuer(r)
+	discovery := DiscoveryConfiguration{
+		Issuer:                           issuer,
+		JwksURI:                          issuer + JWKSPath,
+		IDTokenSigningAlgValuesSupported: []string{"RS256"},
 	}
-	rg.AddRoutes(
-		route.GET(m.OP.KeysEndpoint().Relative()).To(wraphandler),
-		route.GET(oidc.DiscoveryEndpoint).To(wraphandler),
+	response.Raw(w, http.StatusOK, discovery, nil)
+}
+
+func (m *OIDCProvider) JWKS(w http.ResponseWriter, r *http.Request) {
+	response.Raw(w, http.StatusOK, m.keys, nil)
+}
+
+func (m *OIDCProvider) dynamicIssuer(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	host, prefix := r.Host, m.issuerPrefix
+
+	if proxy_scheme := r.Header.Get("X-Forwarded-Proto"); proxy_scheme != "" {
+		scheme = proxy_scheme
+	}
+	if proxy_host := r.Header.Get("X-Forwarded-Host"); proxy_host != "" {
+		host = proxy_host
+	}
+	if proxy_uri := r.Header.Get("X-Forwarded-URI"); proxy_uri != "" {
+		if uri, _ := url.ParseRequestURI(proxy_uri); uri != nil {
+			prefix = strings.TrimSuffix(uri.Path, DiscoveryEndpoint)
+		}
+	}
+	return scheme + "://" + host + prefix
+}
+
+func (m *OIDCProvider) RegisterRoute(g *api.Group) {
+	g.AddRoutes(
+		api.GET(JWKSPath).To(m.JWKS),
+		api.GET(DiscoveryEndpoint).To(m.Discovery),
 	)
 }

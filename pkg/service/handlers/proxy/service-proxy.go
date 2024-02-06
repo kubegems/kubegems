@@ -16,7 +16,9 @@ package proxy
 
 import (
 	"fmt"
-	"path"
+	"net/http/httputil"
+	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/i18n"
@@ -30,22 +32,9 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 	namespace := c.Param("namespace")
 	service := c.Param("service")
 	port := c.Param("port")
-	agentcli, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
-	if err != nil {
-		handlers.NotOK(c, err)
-	}
-	action := c.Param("action")
-
-	agentPrefix := "/service-proxy"
-
-	req := c.Copy()
-	req.Request.Header.Set("namespace", namespace)
-	req.Request.Header.Set("service", service)
-	req.Request.Header.Set("port", port)
-	if action == "" || action == "/" {
-		req.Request.URL.Path = agentPrefix + "/_"
-	} else {
-		req.Request.URL.Path = path.Join(agentPrefix, action)
+	targetPath := c.Param("action")
+	if !strings.HasPrefix(targetPath, "/") {
+		targetPath = "/" + targetPath
 	}
 
 	nswhiteList := []string{"istio-system", "observability"}
@@ -58,13 +47,39 @@ func (h *ProxyHandler) ProxyService(c *gin.Context) {
 		handlers.Forbidden(c, i18n.Errorf(c, "forbidden"))
 		return
 	}
-
-	reversep := h.ReverseProxyOn(agentcli)
-	reversep.Transport = &proxyutil.Transport{
-		PathPrepend:   fmt.Sprintf("/api/v1/service-proxy/cluster/%s/namespace/%s/service/%s/port/%s/", cluster, namespace, service, port),
-		AgentPrefix:   agentPrefix,
-		RoundTripper:  reversep.Transport,
-		AgentBaseAddr: agentcli.BaseAddr().Path,
+	cli, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
 	}
-	reversep.ServeHTTP(c.Writer, req.Request)
+	req := c.Request
+
+	target := &url.URL{
+		Scheme: "http",
+		Host:   fmt.Sprintf("%s.%s:%s", service, namespace, port),
+	}
+	rp := &httputil.ReverseProxy{
+		Transport: cli.ProxyTransport(),
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.SetURL(target)
+		},
+	}
+	webuiPrefix := "/api" // our webui proxy path
+	prefix := webuiPrefix + strings.TrimSuffix(req.URL.Path, targetPath)
+	if proxyRequestURI, _ := url.ParseRequestURI(req.Header.Get("X-Forwarded-Uri")); proxyRequestURI != nil {
+		req.Header.Del("X-Forwarded-Uri")
+		prefix = strings.TrimSuffix(proxyRequestURI.Path, targetPath)
+	}
+	req.Header.Del("X-Forwarded-Scheme")
+
+	// k8s apiserver proxy will modify the html response, so we need to correct the path
+	// https://github.com/kubernetes/apimachinery/blob/7ed5d2d91a598ca4d125acac5061f2a12721bbe8/pkg/util/proxy/transport.go#L124
+	rp.Transport = &proxyutil.Transport{
+		// detect which uri the request from, and set the prepend path
+		PathPrepend:  prefix,
+		TrimPrefix:   cli.Config().Addr.Path, // trim the base path
+		RoundTripper: rp.Transport,
+	}
+	req.URL.Path = targetPath
+	rp.ServeHTTP(c.Writer, c.Request)
 }

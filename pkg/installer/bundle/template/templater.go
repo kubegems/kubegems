@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	pluginsv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
+	"kubegems.io/kubegems/pkg/installer/bundle/helm"
 	"sigs.k8s.io/yaml"
 )
 
@@ -47,10 +48,21 @@ type Templater struct {
 }
 
 // TemplatesTemplate using helm template engine to render,but allow apply to different namespaces
+// nolint funlen
 func (t Templater) Template(ctx context.Context, plugin *pluginsv1beta1.Plugin, dir string) ([]byte, error) {
 	chart, err := loader.Load(dir)
 	if err != nil {
 		return nil, err
+	}
+	if len(plugin.Spec.FileOverrides) > 0 {
+		files := map[string][]byte{}
+		for _, file := range plugin.Spec.FileOverrides {
+			files[file.Name] = []byte(file.Content)
+		}
+		chart, err = helm.LoadChartWithFileOverride(chart, files)
+		if err != nil {
+			return nil, err
+		}
 	}
 	vals := plugin.Spec.Values.Object
 	options := chartutil.ReleaseOptions{

@@ -26,14 +26,14 @@ type AlertHandler struct {
 	*Watcher
 }
 
-// @Tags        Agent.V1
-// @Summary     kubegems default alert webhook
-// @Description kubegems default alert webhook
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} handlers.ResponseStruct{Data=string} ""
-// @Router      /alert [post]
-// @Security    JWT
+//	@Tags			Agent.V1
+//	@Summary		kubegems default alert webhook
+//	@Description	kubegems default alert webhook
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	handlers.ResponseStruct{Data=string}	""
+//	@Router			/alert [post]
+//	@Security		JWT
 func (h *AlertHandler) Webhook(c *gin.Context) {
 	b, _ := io.ReadAll(c.Request.Body)
 	msg := msgbus.NotifyMessage{

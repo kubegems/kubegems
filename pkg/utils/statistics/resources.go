@@ -46,9 +46,7 @@ func GetClusterResourceStatistics(ctx context.Context, cli client.Client) Cluste
 		AddResourceList(allfree, node.Status.Allocatable)
 	}
 	// calculate used
-	allused := allcapacity.DeepCopy()
-	SubResourceList(allused, allfree)
-
+	allPodUsed, _ := GetAllPodResourceStatistics(ctx, cli)
 	allTenantAllocated, _ := GetClusterTenantResourceQuotaLimits(ctx, cli)
 
 	// back compat
@@ -63,7 +61,7 @@ func GetClusterResourceStatistics(ctx context.Context, cli client.Client) Cluste
 	// tenaut allocated has resource name with limit. prefix
 	// we add limit. prefix for capacity and used
 	allcapacity = AppendResourceNamePrefix(ResourceLimitsPrefix, allcapacity)
-	allused = AppendResourceNamePrefix(ResourceLimitsPrefix, allused)
+	allused := AppendResourceNamePrefix(ResourceLimitsPrefix, allPodUsed.Limit)
 
 	return ClusterResourceStatistics{
 		Capacity:        allcapacity,
@@ -85,8 +83,9 @@ func GetClusterTenantResourceQuotaLimits(ctx context.Context, cli client.Client)
 }
 
 type ClusterPodResourceStatistics struct {
-	Limit   corev1.ResourceList `json:"limit"`
-	Request corev1.ResourceList `json:"request"`
+	Limit   corev1.ResourceList                    `json:"limit"`
+	Request corev1.ResourceList                    `json:"request"`
+	Nodes   map[string]corev1.ResourceRequirements `json:"nodes"`
 }
 
 func GetAllPodResourceStatistics(ctx context.Context, cli client.Client) (ClusterPodResourceStatistics, error) {
@@ -96,6 +95,7 @@ func GetAllPodResourceStatistics(ctx context.Context, cli client.Client) (Cluste
 	}
 	limitResource := corev1.ResourceList{}
 	requestResource := corev1.ResourceList{}
+	nodes := map[string]corev1.ResourceRequirements{}
 	for _, pod := range podList.Items {
 		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 			continue
@@ -103,7 +103,17 @@ func GetAllPodResourceStatistics(ctx context.Context, cli client.Client) (Cluste
 		for _, container := range pod.Spec.Containers {
 			AddResourceList(limitResource, container.Resources.Limits)
 			AddResourceList(requestResource, container.Resources.Requests)
+			if node := pod.Spec.NodeName; node != "" {
+				if _, ok := nodes[node]; !ok {
+					nodes[node] = corev1.ResourceRequirements{
+						Limits:   corev1.ResourceList{},
+						Requests: corev1.ResourceList{},
+					}
+				}
+				AddResourceList(nodes[node].Limits, container.Resources.Limits)
+				AddResourceList(nodes[node].Requests, container.Resources.Requests)
+			}
 		}
 	}
-	return ClusterPodResourceStatistics{Limit: limitResource, Request: requestResource}, nil
+	return ClusterPodResourceStatistics{Limit: limitResource, Request: requestResource, Nodes: nodes}, nil
 }

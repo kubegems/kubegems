@@ -41,8 +41,8 @@ import (
 	microserviceoptions "kubegems.io/kubegems/pkg/service/handlers/microservice/options"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/utils/agents"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -61,20 +61,21 @@ var (
 )
 
 // ListVirtualSpace 列表 VirtualSpace
-// @Tags        VirtualSpace
-// @Summary     VirtualSpace列表
-// @Description VirtualSpace列表
-// @Accept      json
-// @Produce     json
-// @Param       VirtualSpaceName query    string                                                                      false "VirtualSpaceName"
-// @Param       VirtualSpaceID   query    string                                                                      false "VirtualSpaceID"
-// @Param       preload          query    string                                                                      false "choices Environments,Users"
-// @Param       page             query    int                                                                         false "page"
-// @Param       size             query    int                                                                         false "page"
-// @Param       search           query    string                                                                      false "search in (VirtualSpaceName)"
-// @Success     200              {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.VirtualSpace}} "VirtualSpace"
-// @Router      /v1/virtualspace [get]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		VirtualSpace列表
+//	@Description	VirtualSpace列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			VirtualSpaceName	query		string																		false	"VirtualSpaceName"
+//	@Param			VirtualSpaceID		query		string																		false	"VirtualSpaceID"
+//	@Param			preload				query		string																		false	"choices Environments,Users"
+//	@Param			page				query		int																			false	"page"
+//	@Param			size				query		int																			false	"page"
+//	@Param			search				query		string																		false	"search in (VirtualSpaceName)"
+//	@Success		200					{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.VirtualSpace}}	"VirtualSpace"
+//	@Router			/v1/virtualspace [get]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) ListVirtualSpace(c *gin.Context) {
 	var list []models.VirtualSpace
 	query, err := handlers.GetQuery(c, nil)
@@ -108,15 +109,16 @@ func (h *VirtualSpaceHandler) ListVirtualSpace(c *gin.Context) {
 }
 
 // GetVirtualSpace VirtualSpace详情
-// @Tags        VirtualSpace
-// @Summary     VirtualSpace详情
-// @Description get VirtualSpace详情
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                              true "virtualspace_id"
-// @Success     200             {object} handlers.ResponseStruct{Data=models.VirtualSpace} "VirtualSpace"
-// @Router      /v1/virtualspace/{virtualspace_id} [get]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		VirtualSpace详情
+//	@Description	get VirtualSpace详情
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint												true	"virtualspace_id"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=models.VirtualSpace}	"VirtualSpace"
+//	@Router			/v1/virtualspace/{virtualspace_id} [get]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) GetVirtualSpace(c *gin.Context) {
 	// get vs
 	vs := models.VirtualSpace{}
@@ -134,15 +136,16 @@ func (h *VirtualSpaceHandler) GetVirtualSpace(c *gin.Context) {
 }
 
 // PostVirtualSpace 创建VirtualSpace
-// @Tags        VirtualSpace
-// @Summary     创建VirtualSpace
-// @Description 创建VirtualSpace
-// @Accept      json
-// @Produce     json
-// @Param       param body     models.VirtualSpace                               true "表单"
-// @Success     200   {object} handlers.ResponseStruct{Data=models.VirtualSpace} "VirtualSpace"
-// @Router      /v1/virtualspace [post]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		创建VirtualSpace
+//	@Description	创建VirtualSpace
+//	@Accept			json
+//	@Produce		json
+//	@Param			param	body		models.VirtualSpace									true	"表单"
+//	@Success		200		{object}	handlers.ResponseStruct{Data=models.VirtualSpace}	"VirtualSpace"
+//	@Router			/v1/virtualspace [post]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 	var vs models.VirtualSpace
 	if err := c.BindJSON(&vs); err != nil {
@@ -178,16 +181,17 @@ func (h *VirtualSpaceHandler) PostVirtualSpace(c *gin.Context) {
 }
 
 // PutVirtualSpace 更新VirtualSpace
-// @Tags        VirtualSpace
-// @Summary     更新VirtualSpace
-// @Description 更新VirtualSpace
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                              true "virtualspace_id"
-// @Param       param           body     models.VirtualSpace                               true "表单"
-// @Success     200             {object} handlers.ResponseStruct{Data=models.VirtualSpace} "VirtualSpace"
-// @Router      /v1/virtualspace/{virtualspace_id} [put]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		更新VirtualSpace
+//	@Description	更新VirtualSpace
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint												true	"virtualspace_id"
+//	@Param			param			body		models.VirtualSpace									true	"表单"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=models.VirtualSpace}	"VirtualSpace"
+//	@Router			/v1/virtualspace/{virtualspace_id} [put]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) PutVirtualSpace(c *gin.Context) {
 	var obj models.VirtualSpace
 	ctx := c.Request.Context()
@@ -218,16 +222,17 @@ func (h *VirtualSpaceHandler) PutVirtualSpace(c *gin.Context) {
 }
 
 // EnableOrDisableVirtualSpace 激活/禁用VirtualSpace
-// @Tags        VirtualSpace
-// @Summary     激活/禁用VirtualSpace
-// @Description 激活/禁用VirtualSpace
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                              true "virtualspace_id"
-// @Param       enable          query    bool                                              true "激活/禁用镜像仓库"
-// @Success     200             {object} handlers.ResponseStruct{Data=models.VirtualSpace} "VirtualSpace"
-// @Router      /v1/virtualspace/{virtualspace_id} [patch]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		激活/禁用VirtualSpace
+//	@Description	激活/禁用VirtualSpace
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint												true	"virtualspace_id"
+//	@Param			enable			query		bool												true	"激活/禁用镜像仓库"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=models.VirtualSpace}	"VirtualSpace"
+//	@Router			/v1/virtualspace/{virtualspace_id} [patch]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) EnableOrDisableVirtualSpace(c *gin.Context) {
 	var obj models.VirtualSpace
 	ctx := c.Request.Context()
@@ -256,15 +261,16 @@ func (h *VirtualSpaceHandler) EnableOrDisableVirtualSpace(c *gin.Context) {
 }
 
 // DeleteVirtualSpace 删除 VirtualSpace
-// @Tags        VirtualSpace
-// @Summary     删除 VirtualSpace
-// @Description 删除 VirtualSpace
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                    true "virtualspace_id"
-// @Success     200             {object} handlers.ResponseStruct "resp"
-// @Router      /v1/virtualspace/{virtualspace_id} [delete]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		删除 VirtualSpace
+//	@Description	删除 VirtualSpace
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint					true	"virtualspace_id"
+//	@Success		200				{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id} [delete]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) DeleteVirtualSpace(c *gin.Context) {
 	// get vs
 	vs := models.VirtualSpace{}
@@ -308,16 +314,17 @@ func (h *VirtualSpaceHandler) DeleteVirtualSpace(c *gin.Context) {
 }
 
 // ListEnvironment 获取虚拟空间下的环境
-// @Tags        VirtualSpace
-// @Summary     获取虚拟空间下的环境
-// @Description 获取虚拟空间下的环境
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                                                       true  "virtualspace_id"
-// @Param       preload         query    string                                                                     false "choices Project,Cluster"
-// @Success     200             {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}} "resp"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment [get]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		获取虚拟空间下的环境
+//	@Description	获取虚拟空间下的环境
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint																		true	"virtualspace_id"
+//	@Param			preload			query		string																		false	"choices Project,Cluster"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.Environment}}	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment [get]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) ListEnvironment(c *gin.Context) {
 	var list []models.Environment
 	query, err := handlers.GetQuery(c, nil)
@@ -344,16 +351,17 @@ func (h *VirtualSpaceHandler) ListEnvironment(c *gin.Context) {
 }
 
 // AddEnvironment 向虚拟空间增加环境
-// @Tags        VirtualSpace
-// @Summary     向虚拟空间增加环境
-// @Description 向虚拟空间增加环境
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                    true "virtualspace_id"
-// @Param       param           body     models.Environment      true "环境"
-// @Success     200             {object} handlers.ResponseStruct "resp"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment [post]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		向虚拟空间增加环境
+//	@Description	向虚拟空间增加环境
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint					true	"virtualspace_id"
+//	@Param			param			body		models.Environment		true	"环境"
+//	@Success		200				{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment [post]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) AddEnvironment(c *gin.Context) {
 	// get and check env
 	env := models.Environment{}
@@ -397,16 +405,17 @@ func (h *VirtualSpaceHandler) AddEnvironment(c *gin.Context) {
 }
 
 // AddEnvironment 从虚拟空间删除环境
-// @Tags        VirtualSpace
-// @Summary     从虚拟空间删除环境
-// @Description 从虚拟空间删除环境
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                    true "virtualspace_id"
-// @Param       environment_id  path     uint                    true "environment_id"
-// @Success     200             {object} handlers.ResponseStruct "resp"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment/environment_id [delete]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		从虚拟空间删除环境
+//	@Description	从虚拟空间删除环境
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint					true	"virtualspace_id"
+//	@Param			environment_id	path		uint					true	"environment_id"
+//	@Success		200				{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment/environment_id [delete]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) RemoveEnvironment(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		if env.VirtualSpace == nil {
@@ -427,17 +436,18 @@ func (h *VirtualSpaceHandler) RemoveEnvironment(c *gin.Context) {
 }
 
 // GetWorkload workload详情
-// @Tags        VirtualSpace
-// @Summary     workload详情
-// @Description workload详情（带相关service）
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                     true "virtualspace_id"
-// @Param       environment_id  path     uint                                     true "environment_id"
-// @Param       kind            query    string                                   true "workload类型, Deployment, StatefulSet, DaemonSet"
-// @Success     200             {object} handlers.ResponseStruct{WorkloadDetails} "resp"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment/{environment_id}/workload/{name} [get]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		workload详情
+//	@Description	workload详情（带相关service）
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint										true	"virtualspace_id"
+//	@Param			environment_id	path		uint										true	"environment_id"
+//	@Param			kind			query		string										true	"workload类型, Deployment, StatefulSet, DaemonSet"
+//	@Success		200				{object}	handlers.ResponseStruct{WorkloadDetails}	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment/{environment_id}/workload/{name} [get]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) GetWorkload(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		// list workload
@@ -496,18 +506,19 @@ func (h *VirtualSpaceHandler) GetWorkload(c *gin.Context) {
 }
 
 // ListWorkload workload列表
-// @Tags        VirtualSpace
-// @Summary     workload列表
-// @Description workload列表
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                                                    true "virtualspace_id"
-// @Param       environment_id  path     uint                                                                    true "environment_id"
-// @Param       kind            query    string                                                                  true "workload类型, Deployment, StatefulSet, DaemonSet"
-// @Param       search          query    string                                                                  true "workload名称"
-// @Success     200             {object} handlers.ResponseStruct{Data=pagination.PageData{List=WorkloadDetails}} "resp"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment/environment_id/workload [get]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		workload列表
+//	@Description	workload列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint																				true	"virtualspace_id"
+//	@Param			environment_id	path		uint																				true	"environment_id"
+//	@Param			kind			query		string																				true	"workload类型, Deployment, StatefulSet, DaemonSet"
+//	@Param			search			query		string																				true	"workload名称"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=response.Page[WorkloadDetails]{List=WorkloadDetails}}	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment/environment_id/workload [get]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) ListWorkload(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		list := []WorkloadDetails{}
@@ -553,14 +564,14 @@ func (h *VirtualSpaceHandler) ListWorkload(c *gin.Context) {
 
 		pagedlist := response.PageFrom(list, page, size, func(i WorkloadDetails) bool {
 			return strings.Contains(i.Name, search)
-		}, func(a, b WorkloadDetails) bool {
+		}, func(a, b WorkloadDetails) int {
 			switch {
 			case a.IstioInjected && !b.IstioInjected:
-				return true
+				return 1
 			case !a.IstioInjected && b.IstioInjected:
-				return false
+				return -1
 			default:
-				return strings.Compare(a.Name, b.Name) == -1
+				return strings.Compare(a.Name, b.Name)
 			}
 		})
 
@@ -569,18 +580,19 @@ func (h *VirtualSpaceHandler) ListWorkload(c *gin.Context) {
 }
 
 // InjectIstioSidecar 注入sidecar
-// @Tags        VirtualSpace
-// @Summary     注入istio控制
-// @Description 注入istio控制
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                    true "virtualspace_id"
-// @Param       environment_id  path     uint                    true "environment_id"
-// @Param       kind            query    string                  true "workload类型, Deployment, StatefulSet, DaemonSet"
-// @Param       inject          query    bool                    true "注入(true)  or  取消注入(false)"
-// @Success     200             {object} handlers.ResponseStruct "resp"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment/environment_id/workload/{name}/istiosidecar [put]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		注入istio控制
+//	@Description	注入istio控制
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint					true	"virtualspace_id"
+//	@Param			environment_id	path		uint					true	"environment_id"
+//	@Param			kind			query		string					true	"workload类型, Deployment, StatefulSet, DaemonSet"
+//	@Param			inject			query		bool					true	"注入(true)  or  取消注入(false)"
+//	@Success		200				{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment/environment_id/workload/{name}/istiosidecar [put]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) InjectIstioSidecar(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		var obj client.Object
@@ -619,18 +631,19 @@ func (h *VirtualSpaceHandler) InjectIstioSidecar(c *gin.Context) {
 }
 
 // ListVirtualSpaceUser 获取属于VirtualSpace的 User 列表
-// @Tags        VirtualSpace
-// @Summary     获取属于 VirtualSpace 的 User 列表
-// @Description 获取属于 VirtualSpace 的 User 列表
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                                                true  "virtualspace_id"
-// @Param       page            query    int                                                                 false "page"
-// @Param       size            query    int                                                                 false "page"
-// @Param       search          query    string                                                              false "search in (Username,Email)"
-// @Success     200             {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}} "models.User"
-// @Router      /v1/virtualspace/{virtualspace_id}/user [get]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		获取属于 VirtualSpace 的 User 列表
+//	@Description	获取属于 VirtualSpace 的 User 列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint																true	"virtualspace_id"
+//	@Param			page			query		int																	false	"page"
+//	@Param			size			query		int																	false	"page"
+//	@Param			search			query		string																false	"search in (Username,Email)"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.User}}	"models.User"
+//	@Router			/v1/virtualspace/{virtualspace_id}/user [get]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) ListVirtualSpaceUser(c *gin.Context) {
 	var list []models.User
 	query, err := handlers.GetQuery(c, nil)
@@ -654,16 +667,17 @@ func (h *VirtualSpaceHandler) ListVirtualSpaceUser(c *gin.Context) {
 }
 
 // PostVirtualSpaceUser 在User和VirtualSpace间添加关联关系
-// @Tags        VirtualSpace
-// @Summary     在User和VirtualSpace间添加关联关系
-// @Description 在User和VirtualSpace间添加关联关系
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                                      true "virtualspace_id"
-// @Param       param           body     models.VirtualSpaceUserRels                               true "表单"`
-// @Success     200             {object} handlers.ResponseStruct{Data=models.VirtualSpaceUserRels} "models.User"
-// @Router      /v1/virtualspace/{virtualspace_id}/user [post]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		在User和VirtualSpace间添加关联关系
+//	@Description	在User和VirtualSpace间添加关联关系
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint														true	"virtualspace_id"
+//	@Param			param			body		models.VirtualSpaceUserRels									true	"表单"`
+//	@Success		200				{object}	handlers.ResponseStruct{Data=models.VirtualSpaceUserRels}	"models.User"
+//	@Router			/v1/virtualspace/{virtualspace_id}/user [post]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) PostVirtualSpaceUser(c *gin.Context) {
 	var rel models.VirtualSpaceUserRels
 	if err := c.BindJSON(&rel); err != nil {
@@ -689,16 +703,17 @@ func (h *VirtualSpaceHandler) PostVirtualSpaceUser(c *gin.Context) {
 }
 
 // DeleteVirtualSpaceUser 删除 User 和 VirtualSpace 的关系
-// @Tags        VirtualSpace
-// @Summary     删除 User 和 VirtualSpace 的关系
-// @Description 删除 User 和 VirtualSpace 的关系
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                    true "virtualspace_id"
-// @Param       user_id         path     uint                    true "user_id"
-// @Success     200             {object} handlers.ResponseStruct "models.User"
-// @Router      /v1/virtualspace/{virtualspace_id}/user/{user_id} [delete]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		删除 User 和 VirtualSpace 的关系
+//	@Description	删除 User 和 VirtualSpace 的关系
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint					true	"virtualspace_id"
+//	@Param			user_id			path		uint					true	"user_id"
+//	@Success		200				{object}	handlers.ResponseStruct	"models.User"
+//	@Router			/v1/virtualspace/{virtualspace_id}/user/{user_id} [delete]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) DeleteVirtualSpaceUser(c *gin.Context) {
 	var rel models.VirtualSpaceUserRels
 	ctx := c.Request.Context()
@@ -885,18 +900,19 @@ var virtualdomainInjectTemplateAnnotationPatchTemplate = string(`[
 ]`)
 
 // InjectIstioSidecar 注入虚拟域名
-// @Tags        VirtualSpace
-// @Summary     设置虚拟域名
-// @Description 设置虚拟域名
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                    true "virtualspace_id"
-// @Param       environment_id  path     uint                    true "environment_id"
-// @Param       kind            query    string                  true "workload类型, Deployment, StatefulSet, DaemonSet"
-// @Param       virtualdomain   query    string                  true "需要被设置的虚拟域名，取消时设置为空"
-// @Success     200             {object} handlers.ResponseStruct "resp"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment/environment_id/workload/{name}/sidecar [put]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		设置虚拟域名
+//	@Description	设置虚拟域名
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint					true	"virtualspace_id"
+//	@Param			environment_id	path		uint					true	"environment_id"
+//	@Param			kind			query		string					true	"workload类型, Deployment, StatefulSet, DaemonSet"
+//	@Param			virtualdomain	query		string					true	"需要被设置的虚拟域名，取消时设置为空"
+//	@Success		200				{object}	handlers.ResponseStruct	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment/environment_id/workload/{name}/sidecar [put]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) InjectVirtualDomain(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		// 为workload 设置虚拟空间会为其 *同名service* 增加annotation
@@ -963,16 +979,17 @@ type IstioResources struct {
 }
 
 // ListIstioResources 列举 istio 资源
-// @Tags        VirtualSpace
-// @Summary     列举 istio 资源
-// @Description 列举 istio 所以类型资源
-// @Accept      json
-// @Produce     json
-// @Param       virtualspace_id path     uint                                         true "virtualspace_id"
-// @Param       environment_id  path     uint                                         true "environment_id"
-// @Success     200             {object} handlers.ResponseStruct{Data=IstioResources} "resp"
-// @Router      /v1/virtualspace/{virtualspace_id}/environment/environment_id/istioresources [get]
-// @Security    JWT
+//
+//	@Tags			VirtualSpace
+//	@Summary		列举 istio 资源
+//	@Description	列举 istio 所以类型资源
+//	@Accept			json
+//	@Produce		json
+//	@Param			virtualspace_id	path		uint											true	"virtualspace_id"
+//	@Param			environment_id	path		uint											true	"environment_id"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=IstioResources}	"resp"
+//	@Router			/v1/virtualspace/{virtualspace_id}/environment/environment_id/istioresources [get]
+//	@Security		JWT
 func (h *VirtualSpaceHandler) ListIstioResources(c *gin.Context) {
 	h.environmentProcess(c, nil, func(ctx context.Context, env models.Environment) (interface{}, error) {
 		clustername := env.Cluster.ClusterName

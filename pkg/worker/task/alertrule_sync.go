@@ -241,7 +241,7 @@ func (t *AlertRuleSyncTasker) SyncSystemAlertRule(ctx context.Context) error {
 			log.Error(err, "get monitor plugin", "cluster", cli.Name())
 			return nil
 		}
-		if !plugin.Installed.Enabled {
+		if plugin.Installed == nil || !plugin.Installed.Enabled {
 			log.Errorf("monitor plugin not enabled in cluster: %s", cli.Name())
 			return nil
 		}

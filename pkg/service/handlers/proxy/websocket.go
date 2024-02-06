@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -38,6 +39,7 @@ type xtermMessage struct {
 }
 
 func Transport(local, proxy *websocket.Conn, c *gin.Context, user models.CommonUserIface, auditFunc func(string)) {
+	// nolint: gomnd
 	p := WebSocketProxy{
 		RequestContext: c,
 		Source:         local,
@@ -118,20 +120,30 @@ func (wsp *WebSocketProxy) targetRead() {
 func (wsp *WebSocketProxy) proxy() {
 	go wsp.sourceRead()
 	go wsp.targetRead()
+	// 添加一个ticker,每10秒钟发送一个ping消息
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case msg := <-wsp.SourceChan:
 			if e := wsp.Target.WriteMessage(msg.MsgType, msg.Content); e != nil {
+				log.Errorf("failed to send message to ws %v", e)
 				wsp.Done <- true
 			}
 		case msg := <-wsp.TargetChan:
 			if e := wsp.Source.WriteMessage(msg.MsgType, msg.Content); e != nil {
+				log.Errorf("failed to send message to ws %v", e)
 				wsp.Done <- true
 			}
 		case <-wsp.Done:
 			wsp.Target.Close()
 			wsp.Source.Close()
 			return
+		case <-ticker.C:
+			if e := wsp.Source.WriteMessage(websocket.PingMessage, []byte{}); e != nil {
+				log.Errorf("failed to send ping message to ws %v", e)
+				wsp.Done <- true
+			}
 		}
 	}
 }

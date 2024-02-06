@@ -42,18 +42,18 @@ type VolumeSnapshotRequest struct {
 }
 
 // Snapshot 执行对PVC的快照
-// @Tags        NOPROXY
-// @Summary     快照PVC
-// @Description 执行对PVC的快照
-// @Accept      json
-// @Produce     json
-// @Param       cluster   path     string                                          true "dev"
-// @Param       namespace path     string                                          true "default"
-// @Param       body      body     VolumeSnapshotRequest                           true "request body"
-// @Success     200       {object} handlers.ResponseStruct{Data=v1.VolumeSnapshot} "VolumeSnapshotDefinition"
-// @Failure     400       {object} handlers.ResponseStruct{}                       ""
-// @Router      /v1/noproxy/{cluster}/{namespace}/volumesnapshot [post]
-// @Security    JWT
+//	@Tags			NOPROXY
+//	@Summary		快照PVC
+//	@Description	执行对PVC的快照
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster		path		string											true	"dev"
+//	@Param			namespace	path		string											true	"default"
+//	@Param			body		body		VolumeSnapshotRequest							true	"request body"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=v1.VolumeSnapshot}	"VolumeSnapshotDefinition"
+//	@Failure		400			{object}	handlers.ResponseStruct{}						""
+//	@Router			/v1/noproxy/{cluster}/{namespace}/volumesnapshot [post]
+//	@Security		JWT
 func (vh *VolumeSnapshotHandler) Snapshot(c *gin.Context) {
 	cluster := c.Params.ByName("cluster")
 	namespace := c.Params.ByName("namespace")

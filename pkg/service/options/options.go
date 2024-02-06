@@ -31,11 +31,8 @@ import (
 
 type Options struct {
 	System       *system.Options                   `json:"system,omitempty"`
-	Appstore     *helm.Options                     `json:"appstore,omitempty"`
-	Argo         *argo.Options                     `json:"argo,omitempty"`
 	DebugMode    bool                              `json:"debugMode,omitempty"`
 	Exporter     *prometheus.ExporterOptions       `json:"exporter,omitempty"`
-	Git          *git.Options                      `json:"git,omitempty"`
 	JWT          *jwt.Options                      `json:"jwt,omitempty"`
 	LogLevel     string                            `json:"logLevel,omitempty"`
 	Msgbus       *msgbus.Options                   `json:"msgbus,omitempty"`
@@ -46,6 +43,10 @@ type Options struct {
 	Models       *ModelsOptions                    `json:"models,omitempty"`
 	Edge         *EdgeOptions                      `json:"edge,omitempty"`
 	Otel         *otel.Options                     `json:"otel,omitempty"`
+	Apps         *AppsOptions                      `json:"apps,omitempty"`
+	Appstore     *helm.Options                     `json:"appstore,omitempty"`
+	Argo         *argo.Options                     `json:"argo,omitempty"`
+	Git          *git.Options                      `json:"git,omitempty"`
 }
 
 type ModelsOptions struct {
@@ -68,13 +69,21 @@ func NewDefaultEdgeOptions() *EdgeOptions {
 	}
 }
 
+type AppsOptions struct {
+	Addr string `json:"addr,omitempty"`
+}
+
+func NewDefaultAppsOptions() *AppsOptions {
+	return &AppsOptions{
+		Addr: "http://kubegems-apps.kubegems",
+	}
+}
+
 func DefaultOptions() *Options {
 	defaultoptions := &Options{
 		Appstore:     helm.NewDefaultOptions(),
-		Argo:         argo.NewDefaultArgoOptions(),
 		DebugMode:    false,
 		Exporter:     prometheus.DefaultExporterOptions(),
-		Git:          git.NewDefaultOptions(),
 		JWT:          jwt.DefaultOptions(),
 		LogLevel:     "debug",
 		Msgbus:       msgbus.DefaultMsgbusOptions(),
@@ -86,6 +95,9 @@ func DefaultOptions() *Options {
 		Models:       NewDefaultModelsOptions(),
 		Edge:         NewDefaultEdgeOptions(),
 		Otel:         otel.NewDefaultOptions(),
+		Apps:         NewDefaultAppsOptions(),
+		Argo:         argo.NewDefaultArgoOptions(),
+		Git:          git.NewDefaultOptions(),
 	}
 	defaultoptions.System.Listen = ":8020"
 	return defaultoptions

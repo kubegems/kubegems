@@ -35,25 +35,25 @@ import (
 const LokiExportDir = "lokiExport"
 
 // QueryRange 获取loki查询结果
-// @Tags        Log
-// @Summary     获取loki查询结果
-// @Description 获取loki查询结果
-// @Accept      json
-// @Produce     json
-// @Param       cluster_name path     string                               true  "cluster_name"
-// @Param       filters[]    query    array                                false "filters[]"
-// @Param       query        query    string                               true  "query"
-// @Param       level        query    string                               false "level"
-// @Param       step         query    string                               false "step"
-// @Param       pod          query    string                               false "pod"
-// @Param       interval     query    string                               false "interval"
-// @Param       direction    query    string                               false "direction"
-// @Param       limit        query    int                                  false "limit"
-// @Param       start        query    string                               false "start"
-// @Param       end          query    string                               false "end"
-// @Success     200          {object} handlers.ResponseStruct{Data=string} "QueryRange"
-// @Router      /v1/log/{cluster_name}/queryrange [get]
-// @Security    JWT
+//	@Tags			Log
+//	@Summary		获取loki查询结果
+//	@Description	获取loki查询结果
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_name	path		string									true	"cluster_name"
+//	@Param			filters[]		query		array									false	"filters[]"
+//	@Param			query			query		string									true	"query"
+//	@Param			level			query		string									false	"level"
+//	@Param			step			query		string									false	"step"
+//	@Param			pod				query		string									false	"pod"
+//	@Param			interval		query		string									false	"interval"
+//	@Param			direction		query		string									false	"direction"
+//	@Param			limit			query		int										false	"limit"
+//	@Param			start			query		string									false	"start"
+//	@Param			end				query		string									false	"end"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"QueryRange"
+//	@Router			/v1/log/{cluster_name}/queryrange [get]
+//	@Security		JWT
 func (l *LogHandler) QueryRange(c *gin.Context) {
 	var query loki.QueryRangeParam
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -191,17 +191,17 @@ func (l *LogHandler) QueryRange(c *gin.Context) {
 }
 
 // Labels 获取loki标签
-// @Tags        Log
-// @Summary     获取loki标签
-// @Description 获取loki标签
-// @Accept      json
-// @Produce     json
-// @Param       cluster_name path     string                               true  "cluster_name"
-// @Param       start        query    string                               false "start"
-// @Param       end          query    string                               false "end"
-// @Success     200          {object} handlers.ResponseStruct{Data=string} "Labels"
-// @Router      /v1/log/{cluster_name}/labels [get]
-// @Security    JWT
+//	@Tags			Log
+//	@Summary		获取loki标签
+//	@Description	获取loki标签
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_name	path		string									true	"cluster_name"
+//	@Param			start			query		string									false	"start"
+//	@Param			end				query		string									false	"end"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"Labels"
+//	@Router			/v1/log/{cluster_name}/labels [get]
+//	@Security		JWT
 func (l *LogHandler) Labels(c *gin.Context) {
 	var query loki.LabelParam
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -219,18 +219,18 @@ func (l *LogHandler) Labels(c *gin.Context) {
 }
 
 // LabelValues 获取loki指定标签值
-// @Tags        Log
-// @Summary     获取loki指定标签值
-// @Description 获取loki指定标签值
-// @Accept      json
-// @Produce     json
-// @Param       cluster_name path     string                               true  "cluster_name"
-// @Param       label        path     string                               true  "label"
-// @Param       start        query    string                               false "start"
-// @Param       end          query    string                               false "end"
-// @Success     200          {object} handlers.ResponseStruct{Data=string} "LabelValues"
-// @Router      /v1/log/{cluster_name}/label/{label}/values [get]
-// @Security    JWT
+//	@Tags			Log
+//	@Summary		获取loki指定标签值
+//	@Description	获取loki指定标签值
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_name	path		string									true	"cluster_name"
+//	@Param			label			path		string									true	"label"
+//	@Param			start			query		string									false	"start"
+//	@Param			end				query		string									false	"end"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"LabelValues"
+//	@Router			/v1/log/{cluster_name}/label/{label}/values [get]
+//	@Security		JWT
 func (l *LogHandler) LabelValues(c *gin.Context) {
 	var query loki.LabelParam
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -248,21 +248,21 @@ func (l *LogHandler) LabelValues(c *gin.Context) {
 }
 
 // Export 导出loki查询结果
-// @Tags        Log
-// @Summary     导出loki查询结果
-// @Description 导出loki查询结果
-// @Accept      json
-// @Produce     json
-// @Param       cluster_name path     string                               true  "cluster_name"
-// @Param       query        query    string                               true  "query"
-// @Param       interval     query    string                               false "interval"
-// @Param       direction    query    string                               false "direction"
-// @Param       limit        query    int                                  false "limit"
-// @Param       start        query    string                               false "start"
-// @Param       end          query    string                               false "end"
-// @Success     200          {object} handlers.ResponseStruct{Data=string} "Export"
-// @Router      /v1/log/{cluster_name}/export [get]
-// @Security    JWT
+//	@Tags			Log
+//	@Summary		导出loki查询结果
+//	@Description	导出loki查询结果
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_name	path		string									true	"cluster_name"
+//	@Param			query			query		string									true	"query"
+//	@Param			interval		query		string									false	"interval"
+//	@Param			direction		query		string									false	"direction"
+//	@Param			limit			query		int										false	"limit"
+//	@Param			start			query		string									false	"start"
+//	@Param			end				query		string									false	"end"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"Export"
+//	@Router			/v1/log/{cluster_name}/export [get]
+//	@Security		JWT
 func (l *LogHandler) Export(c *gin.Context) {
 	var query loki.QueryRangeParam
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -364,22 +364,22 @@ func (l *LogHandler) Export(c *gin.Context) {
 }
 
 // Context 获取loki上下文
-// @Tags        Log
-// @Summary     获取loki上下文
-// @Description 获取loki上下文
-// @Accept      json
-// @Produce     json
-// @Param       cluster_name path     string                               true  "cluster_name"
-// @Param       query        query    string                               true  "query"
-// @Param       step         query    string                               false "step"
-// @Param       interval     query    string                               false "interval"
-// @Param       direction    query    string                               false "direction"
-// @Param       limit        query    int                                  false "limit"
-// @Param       start        query    string                               false "start"
-// @Param       end          query    string                               false "end"
-// @Success     200          {object} handlers.ResponseStruct{Data=string} "Context"
-// @Router      /v1/log/{cluster_name}/context [get]
-// @Security    JWT
+//	@Tags			Log
+//	@Summary		获取loki上下文
+//	@Description	获取loki上下文
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_name	path		string									true	"cluster_name"
+//	@Param			query			query		string									true	"query"
+//	@Param			step			query		string									false	"step"
+//	@Param			interval		query		string									false	"interval"
+//	@Param			direction		query		string									false	"direction"
+//	@Param			limit			query		int										false	"limit"
+//	@Param			start			query		string									false	"start"
+//	@Param			end				query		string									false	"end"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"Context"
+//	@Router			/v1/log/{cluster_name}/context [get]
+//	@Security		JWT
 func (l *LogHandler) Context(c *gin.Context) {
 	var query loki.QueryRangeParam
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -420,19 +420,19 @@ func (l *LogHandler) Context(c *gin.Context) {
 }
 
 // QueryLanguage 获取loki查询语句
-// @Tags        Log
-// @Summary     获取loki查询语句
-// @Description 获取loki查询语句
-// @Accept      json
-// @Produce     json
-// @Param       cluster_name path     string                               true  "cluster_name"
-// @Param       filters[]    query    array                                false "filters[]"
-// @Param       pod          query    string                               false "pod"
-// @Param       start        query    string                               false "start"
-// @Param       end          query    string                               false "end"
-// @Success     200          {object} handlers.ResponseStruct{Data=string} "QueryLanguage"
-// @Router      /v1/log/{cluster_name}/querylanguage [get]
-// @Security    JWT
+//	@Tags			Log
+//	@Summary		获取loki查询语句
+//	@Description	获取loki查询语句
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_name	path		string									true	"cluster_name"
+//	@Param			filters[]		query		array									false	"filters[]"
+//	@Param			pod				query		string									false	"pod"
+//	@Param			start			query		string									false	"start"
+//	@Param			end				query		string									false	"end"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"QueryLanguage"
+//	@Router			/v1/log/{cluster_name}/querylanguage [get]
+//	@Security		JWT
 func (l *LogHandler) QueryLanguage(c *gin.Context) {
 	filters := c.QueryArray("filters[]")
 	pod := c.DefaultQuery("pod", "")
@@ -465,18 +465,18 @@ func (l *LogHandler) QueryLanguage(c *gin.Context) {
 }
 
 // LabelValues 获取loki Series
-// @Tags        Log
-// @Summary     获取loki Series
-// @Description 获取loki Series
-// @Accept      json
-// @Produce     json
-// @Param       cluster_name path     string                               true  "cluster_name"
-// @Param       match        query    string                               true  "match"
-// @Param       start        query    string                               false "start"
-// @Param       end          query    string                               false "end"
-// @Success     200          {object} handlers.ResponseStruct{Data=string} "Series data"
-// @Router      /v1/log/{cluster_name}/series [get]
-// @Security    JWT
+//	@Tags			Log
+//	@Summary		获取loki Series
+//	@Description	获取loki Series
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_name	path		string									true	"cluster_name"
+//	@Param			match			query		string									true	"match"
+//	@Param			start			query		string									false	"start"
+//	@Param			end				query		string									false	"end"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"Series data"
+//	@Router			/v1/log/{cluster_name}/series [get]
+//	@Security		JWT
 func (l *LogHandler) Series(c *gin.Context) {
 	var query loki.SeriesForm
 	if err := c.ShouldBindQuery(&query); err != nil {

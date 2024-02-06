@@ -101,8 +101,6 @@ spec:
                   name: kubegems-redis
                   key: redis-password
           envFrom:
-            - secretRef:
-                name: kubegems-config
             {{- if .Values.sync.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsCM "context" $) }}
@@ -153,8 +151,6 @@ spec:
                   name: kubegems-redis
                   key: redis-password
           envFrom:
-            - secretRef:
-                name: kubegems-config
             {{- if .Values.sync.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsCM "context" $) }}
@@ -205,8 +201,6 @@ spec:
                   name: kubegems-redis
                   key: redis-password
           envFrom:
-            - secretRef:
-                name: kubegems-config
             {{- if .Values.sync.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.sync.extraEnvVarsCM "context" $) }}

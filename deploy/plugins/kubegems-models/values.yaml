@@ -184,7 +184,7 @@ controller:
 
   ## @param controller.baseDomain Models Ingress Base Domain
   # @title Ingress 基本域名
-  baseDomain: models.kubegems.io
+  baseDomain: "*.models.kubegems.io"
   ## Configure logging
   ##
   ## @param controller.logLevel Log level

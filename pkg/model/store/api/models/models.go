@@ -20,8 +20,8 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/model/store/repository"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 )
 
 func DecodeSourceModelName(req *restful.Request) (string, string) {
@@ -110,4 +110,22 @@ func (m *ModelsAPI) GetVersion(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	response.OK(resp, model)
+}
+
+func (m *ModelsAPI) UpsertModel(req *restful.Request, resp *restful.Response) {
+	var model repository.Model
+	if err := req.ReadEntity(&model); err != nil {
+		response.BadRequest(resp, err.Error())
+		return
+	}
+	if model.Name == "" || model.Source == "" || len(model.Versions) == 0 {
+		response.BadRequest(resp, "name, source and versions are required")
+		return
+	}
+	rmodel, err := m.ModelRepository.Upsert(req.Request.Context(), model)
+	if err != nil {
+		response.BadRequest(resp, err.Error())
+		return
+	}
+	response.OK(resp, rmodel)
 }

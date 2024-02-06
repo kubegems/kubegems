@@ -20,8 +20,8 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"go.mongodb.org/mongo-driver/mongo"
 	"kubegems.io/kubegems/pkg/model/store/repository"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 )
 
 func (m *ModelsAPI) ListSelectors(req *restful.Request, resp *restful.Response) {
@@ -59,14 +59,14 @@ func (m *ModelsAPI) GetSource(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	// with sync status
-	syncstatus, err := m.SyncService.SyncStatus(req.Request.Context(), name)
+	syncstatus, err := m.SyncService.SyncStatus(req.Request.Context(), source)
 	if err != nil {
 		response.Error(resp, err)
 		return
 	}
 	response.OK(resp, &SourceWithSyncStatus{
 		SourceWithAddtional: *source,
-		SyncStatus:          SyncStatusFrom(syncstatus),
+		SyncStatus:          *syncstatus,
 	})
 }
 

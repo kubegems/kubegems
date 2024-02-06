@@ -22,9 +22,9 @@ import (
 	"golang.org/x/sync/errgroup"
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
-	"kubegems.io/kubegems/pkg/utils/httputil/apiutil"
 	"kubegems.io/kubegems/pkg/utils/pprof"
 	"kubegems.io/kubegems/pkg/utils/system"
+	"kubegems.io/library/rest/api"
 )
 
 func Run(ctx context.Context, options *Options) error {
@@ -97,5 +97,5 @@ func (s *EdgeServer) HTTPAPI() http.Handler {
 		Cluster: s.clusters,
 		Tunnel:  s.server.TunnelServer,
 	}
-	return apiutil.NewRestfulAPI("v1", nil, []apiutil.RestModule{edgeapi})
+	return api.NewAPI().Register("/v1", edgeapi).BuildHandler()
 }

@@ -82,50 +82,18 @@ spec:
             {{- if .Values.api.metrics.enabled }}
             # todo: metrics args here
             {{- end }}
-            {{- if .Values.api.opentelemetry.enabled }}
-            - --otel-enable
-            {{- end }}
             {{- if .Values.api.extraArgs }}
             {{- include "common.tplvalues.render" (dict "value" .Values.api.extraArgs "context" $) | nindent 12 }}
             {{- end }}
           {{- end }}
           env:
             {{- include "kubegems.common.env" . | indent 12 }}
-            - name: KUBEGEMS_DEBUG
-              value: {{ ternary "true" "false" (or .Values.api.image.debug ) | quote }}
-            - name: LOG_LEVEL
-              value: {{ .Values.api.logLevel }}
-            {{- if .Values.api.opentelemetry.enabled }}
-            - name: OTEL_K8S_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
-            - name: OTEL_K8S_POD_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: metadata.name
-            - name: OTEL_SERVICE_NAME
-              value: kubegems-api
-            - name: OTEL_K8S_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: metadata.namespace
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: service.name=$(OTEL_SERVICE_NAME),namespace=$(OTEL_K8S_NAMESPACE),node=$(OTEL_K8S_NODE_NAME),pod=$(OTEL_K8S_POD_NAME)
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: {{ .Values.api.opentelemetry.endpoint }}
-            - name: OTEL_EXPORTER_OTLP_INSECURE
-              value: "true"
-            {{- end }}
+            {{- include "kubegems.apps.env" . | indent 12 }}
+            {{- include "kubegems.section.env" (dict "name" "kubegems-api" "root" .Values.api ) | indent 12 }}
             {{- if .Values.api.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
           envFrom:
-            - secretRef:
-                name: {{ include "kubegems.secret.fullname" . }}
             {{- if .Values.api.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVarsCM "context" $) }}

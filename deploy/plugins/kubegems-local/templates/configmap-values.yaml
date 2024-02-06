@@ -1,3 +1,4 @@
 {{ include "common.component.configmap" . }}
 data:
+  enabled: "true"
   alert.address: {{ include "alert.address" .}}

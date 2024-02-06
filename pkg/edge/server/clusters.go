@@ -34,9 +34,10 @@ import (
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/certificate"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/kube"
+	"kubegems.io/kubegems/pkg/utils/kube/schema"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	pkgcluster "sigs.k8s.io/controller-runtime/pkg/cluster"
 )
@@ -199,7 +200,7 @@ func (m *EdgeManager) RenderInstallManifests(ctx context.Context, uid, token str
 	printer := printers.YAMLPrinter{}
 	buf := bytes.NewBuffer(nil)
 	for _, obj := range objects {
-		kube.FillGVK(obj, kube.GetScheme())
+		kube.FillGVK(obj, schema.GetScheme())
 		printer.PrintObj(obj, buf)
 	}
 	return buf.Bytes(), nil

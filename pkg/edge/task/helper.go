@@ -16,14 +16,28 @@ package task
 
 import (
 	"context"
-	"reflect"
+	"fmt"
+	"hash/fnv"
+	"strings"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/util/workqueue"
+	hashutil "k8s.io/kubernetes/pkg/util/hash"
 	edgev1beta1 "kubegems.io/kubegems/pkg/apis/edge/v1beta1"
+	"kubegems.io/kubegems/pkg/installer/utils"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
-func (r *Reconciler) UpdateEdgeTaskCondition(ctx context.Context, task *edgev1beta1.EdgeTask, condition edgev1beta1.EdgeTaskCondition) error {
+func UpdateEdgeTaskCondition(task *edgev1beta1.EdgeTask, condition edgev1beta1.EdgeTaskCondition) {
 	status := &task.Status
 	index, oldcond := GetEdgeTaskCondition(status, condition.Type)
 	now := metav1.Now()
@@ -39,13 +53,55 @@ func (r *Reconciler) UpdateEdgeTaskCondition(ctx context.Context, task *edgev1be
 		}
 		status.Conditions[index] = condition
 	}
-	if !reflect.DeepEqual(oldcond, condition) {
-		if err := r.Client.Status().Update(ctx, task); err != nil {
-			logr.FromContextOrDiscard(ctx).Error(err, "update edge task condition failed")
-			return err
-		}
+}
+
+func EdgeClusterTrigger(ctx context.Context, cli client.Client) handler.EventHandler {
+	log := logr.FromContextOrDiscard(ctx)
+	return handler.Funcs{
+		UpdateFunc: func(ue event.UpdateEvent, rli workqueue.RateLimitingInterface) {
+			// once the edgecluster is coming online, we need to trigger the uncompleted tasks for it
+			if ue.ObjectNew.GetDeletionTimestamp() != nil {
+				return
+			}
+			previous, ok := ue.ObjectOld.(*edgev1beta1.EdgeCluster)
+			if !ok {
+				return
+			}
+			current, ok := ue.ObjectNew.(*edgev1beta1.EdgeCluster)
+			if !ok {
+				return
+			}
+			log.WithValues("edgecluster", current.Name, "namespace", current.Namespace)
+			// in case of the edgecluster is coming online from other status
+			if previous.Status.Phase == current.Status.Phase {
+				return
+			}
+			log.Info("edgecluster status changed", "old", previous.Status.Phase, "new", current.Status.Phase)
+			log.Info("edgecluster phase change, trigger the uncompleted tasks for it")
+			// find tasks which .spec.edgeClusterName == current.Name
+			enqueueTasksOfCluster(ctx, cli, current.Name, current.Namespace, rli)
+		},
 	}
-	return nil
+}
+
+func enqueueTasksOfCluster(ctx context.Context, cli client.Client, clustername string, namespace string, queue workqueue.Interface) {
+	log := logr.FromContextOrDiscard(ctx)
+	log.Info("trigger tasks of edge cluster", "clustername", clustername, "namespace", namespace)
+	tasks := &edgev1beta1.EdgeTaskList{}
+	if err := cli.List(ctx, tasks,
+		client.InNamespace(namespace),
+		client.MatchingFields{IndexFieldEdgeTaskSpecEdgeClusterName: clustername},
+	); err != nil {
+		log.Error(err, "list edge tasks")
+		return
+	}
+	for _, task := range tasks.Items {
+		if task.Status.Phase == edgev1beta1.EdgeTaskPhaseRunning {
+			continue
+		}
+		log.Info("trigger edge task", "name", task.Name, "namespace", task.Namespace)
+		queue.Add(ctrl.Request{NamespacedName: client.ObjectKeyFromObject(&task)})
+	}
 }
 
 func GetEdgeTaskCondition(status *edgev1beta1.EdgeTaskStatus, conditionType edgev1beta1.EdgeTaskConditionType) (int, *edgev1beta1.EdgeTaskCondition) {
@@ -70,4 +126,85 @@ func RemoveEdgeTaskCondition(status *edgev1beta1.EdgeTaskStatus, conditionType e
 			return
 		}
 	}
+}
+
+func ExtractEdgeTask(obj client.Object) (name string, namespace string) {
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		return "", ""
+	}
+	val := annotations[AnnotationEdgeTaskNameNamespace]
+	index := strings.IndexRune(val, '/')
+	if index > -1 {
+		return val[:index], val[index+1:]
+	}
+	return val, ""
+}
+
+func InjectEdgeTask(obj client.Object, edgetask *edgev1beta1.EdgeTask) {
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[AnnotationEdgeTaskNameNamespace] = edgetask.Name + "/" + edgetask.Namespace
+	obj.SetAnnotations(annotations)
+}
+
+func HashResources(obj any) string {
+	hasher := fnv.New32()
+	hashutil.DeepHashObject(hasher, obj)
+	return rand.SafeEncodeString(fmt.Sprint(hasher.Sum32()))
+}
+
+func ParseResources(resources []runtime.RawExtension) ([]*unstructured.Unstructured, error) {
+	unstructedlist := []*unstructured.Unstructured{}
+	for i, resource := range resources {
+		list, err := utils.SplitYAML(resource.Raw)
+		if err != nil {
+			return nil, fmt.Errorf("split resource on index %d : %w", i, err)
+		}
+		unstructedlist = append(unstructedlist, list...)
+	}
+	return unstructedlist, nil
+}
+
+func ParseResourcesTyped(resources []runtime.RawExtension, schema *runtime.Scheme) ([]client.Object, error) {
+	objects, err := ParseResources(resources)
+	if err != nil {
+		return nil, nil
+	}
+	return utils.ConvertToTypedList(objects, schema), nil
+}
+
+func FindOwnerControllerRecursively(ctx context.Context, cli client.Client, obj client.Object) (client.Object, error) {
+	owner := metav1.GetControllerOf(obj)
+	if owner == nil {
+		return obj, nil // no owner
+	}
+	ownerobj, err := cli.Scheme().New(schema.FromAPIVersionAndKind(owner.APIVersion, owner.Kind))
+	if err != nil {
+		return nil, err
+	}
+	ownercliobj, ok := ownerobj.(client.Object)
+	if !ok {
+		return nil, fmt.Errorf("owner object is not a client.Object")
+	}
+	if err := cli.Get(ctx, client.ObjectKey{Namespace: obj.GetNamespace(), Name: owner.Name}, ownercliobj); err != nil {
+		return nil, err
+	}
+	return FindOwnerControllerRecursively(ctx, cli, ownercliobj)
+}
+
+func EdgeTaskResourceEventsFromEvents(events []corev1.Event) []edgev1beta1.EdgeTaskResourceEvent {
+	ret := make([]edgev1beta1.EdgeTaskResourceEvent, len(events))
+	for i, event := range events {
+		ret[i] = edgev1beta1.EdgeTaskResourceEvent{
+			Reason:        event.Reason,
+			Message:       event.Message,
+			Type:          event.Type,
+			Count:         event.Count,
+			LastTimestamp: event.LastTimestamp,
+		}
+	}
+	return ret
 }

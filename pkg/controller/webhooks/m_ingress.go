@@ -73,7 +73,7 @@ func (r *ResourceMutate) MutateIngress(ctx context.Context, req admission.Reques
 
 		for i := range ingress.Spec.Rules {
 			if ingress.Spec.Rules[i].Host == "" {
-				ingress.Spec.Rules[i].Host = randHost(tgs.Items[0].Spec.BaseDomain)
+				ingress.Spec.Rules[i].Host = RandHost(tgs.Items[0].Spec.BaseDomain)
 			}
 		}
 
@@ -110,7 +110,7 @@ func (r *ResourceMutate) MutateIngress(ctx context.Context, req admission.Reques
 	}
 }
 
-func randHost(old string) string {
+func RandHost(old string) string {
 	tmp := strings.Split(old, ".")
 	for i := range tmp {
 		if tmp[i] == "*" {

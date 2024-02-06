@@ -26,7 +26,7 @@ type Cluster struct {
 	ID          uint           `gorm:"primarykey"`
 	ClusterName string         `gorm:"type:varchar(50);uniqueIndex" binding:"required,fqdn_item"`
 	APIServer   string         `gorm:"type:varchar(250);uniqueIndex"` // APIServer地址 根据kubeconfig添加后，自动填充
-	KubeConfig  datatypes.JSON `binding:"required"`
+	KubeConfig  datatypes.JSON `binding:""`                           // kubeconfig is not required when use agent rbac.
 	// Vendor 集群提供商(gke tke ack selfhosted)
 	Vendor string `gorm:"type:varchar(50);default:selfhosted" binding:"required,oneof=selfhosted gke ack tke"`
 	// ImageRepo 安装kubegems核心组件时使用的镜像仓库

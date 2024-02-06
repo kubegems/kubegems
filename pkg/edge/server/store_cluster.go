@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"kubegems.io/kubegems/pkg/apis/edge/common"
 	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -76,8 +76,8 @@ func (s EdgeClusterK8sStore) List(ctx context.Context, options ListOptions) (int
 			//  match label selector
 			(options.Manufacture == nil || options.Manufacture.Matches(labels.Set(item.Status.Manufacture)))
 	}
-	sortfunc := func(a, b v1beta1.EdgeCluster) bool {
-		return !a.CreationTimestamp.Before(&b.CreationTimestamp)
+	sortfunc := func(a, b v1beta1.EdgeCluster) int {
+		return b.CreationTimestamp.Compare(a.CreationTimestamp.Time)
 	}
 	paged := response.PageFrom(list.Items, options.Page, options.Size, searchfunc, sortfunc)
 	return int(paged.Total), paged.List, nil

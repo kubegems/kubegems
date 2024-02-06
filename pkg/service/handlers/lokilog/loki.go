@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"kubegems.io/kubegems/pkg/utils/agents"
+	"kubegems.io/kubegems/pkg/utils/agents/extend"
 	"kubegems.io/kubegems/pkg/utils/loki"
 )
 
@@ -68,9 +69,9 @@ func (c LokiCli) LokiSeries(ctx context.Context, cluster string, query map[strin
 
 func (c LokiCli) query(ctx context.Context, cluster string, path string, into interface{}) error {
 	return c.Execute(ctx, cluster, func(ctx context.Context, cli agents.Client) error {
-		return cli.DoRequest(ctx, agents.Request{
+		return cli.Extend().DoRequest(ctx, extend.Request{
 			Path: path,
-			Into: agents.WrappedResponse(into),
+			Into: extend.WrappedResponse(into),
 		})
 	})
 }

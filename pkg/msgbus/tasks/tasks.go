@@ -18,9 +18,9 @@ import (
 	"context"
 
 	"kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/apps/application"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/msgbus/switcher"
-	"kubegems.io/kubegems/pkg/service/handlers/application"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/retry"

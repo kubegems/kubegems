@@ -6,6 +6,7 @@ metadata:
   annotations:
     plugins.kubegems.io/category: core/KubeGems
     plugins.kubegems.io/description: KubeGems global values.
+    plugins.kubegems.io/required: "true"
 spec:
   kind: template
   url: https://charts.kubegems.io/kubegems
@@ -17,7 +18,6 @@ spec:
     imageRegistry: registry.cn-beijing.aliyuncs.com
     imageRepository: "kubegems"
     storageClass: local-path # change me to use a different storage class
-    kubegemsVersion: v1.23.8
 ---
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
@@ -27,12 +27,57 @@ metadata:
   annotations:
     plugins.kubegems.io/category: core/KubeGems
     plugins.kubegems.io/description: KubeGems core service and dashboard.
+    plugins.kubegems.io/required: "true"
 spec:
   kind: helm
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
-  version: 1.23.8
+  version: 1.24.3
   valuesFrom:
     - kind: ConfigMap
       name: "kubegems-global-values"
       prefix: "global."
+    - kind: ConfigMap
+      name: kubegems-kubegems-local-values
+      optional: true
+      prefix: kubegems-local.
+    - kind: ConfigMap
+      name: kubegems-kubegems-pai-values
+      optional: true
+      prefix: kubegems-pai.
+    - kind: ConfigMap
+      name: kubegems-kubegems-apps-values
+      optional: true
+      prefix: kubegems-apps.
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
+  annotations:
+    plugins.kubegems.io/category: core/KubeGems
+    plugins.kubegems.io/description: KubeGems cluster agent components
+    plugins.kubegems.io/required: "true"
+  name: kubegems-local
+  namespace: kubegems-installer
+spec:
+  installNamespace: kubegems-local
+  kind: helm
+  url: https://charts.kubegems.io/kubegems
+  version: 1.24.3
+  valuesFrom:
+    - kind: ConfigMap
+      name: kubegems-global-values
+      optional: true
+      prefix: global.
+    - kind: ConfigMap
+      name: kubegems-monitoring-values
+      optional: true
+      prefix: monitoring.
+    - kind: ConfigMap
+      name: kubegems-tracing-values
+      optional: true
+      prefix: tracing.
+    - kind: ConfigMap
+      name: kubegems-logging-values
+      optional: true
+      prefix: logging.

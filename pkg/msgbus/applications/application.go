@@ -25,9 +25,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
+	"kubegems.io/kubegems/pkg/apps/application"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/msgbus/switcher"
-	"kubegems.io/kubegems/pkg/service/handlers/application"
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
 	"kubegems.io/kubegems/pkg/utils/retry"
@@ -76,7 +76,11 @@ func (c *ApplicationMessageCollector) Run(ctx context.Context) error {
 }
 
 func (c *ApplicationMessageCollector) runOriginWay(ctx context.Context) error {
-	closer, cli, err := c.argo.ArgoCDcli.NewApplicationClient()
+	apiclient, err := argo.NewArgoCDCli(c.argo.Options)
+	if err != nil {
+		return err
+	}
+	closer, cli, err := apiclient.NewApplicationClient()
 	if err != nil {
 		return err
 	}

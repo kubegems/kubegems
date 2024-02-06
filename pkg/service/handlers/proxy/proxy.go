@@ -16,7 +16,6 @@ package proxy
 
 import (
 	"net/http"
-	"net/http/httputil"
 	"path"
 	"strconv"
 	"strings"
@@ -28,7 +27,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/service/models"
-	"kubegems.io/kubegems/pkg/utils/agents"
 )
 
 const (
@@ -70,32 +68,21 @@ func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
 			return
 		}
 	}
-	v, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
+	cli, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	h.ReverseProxyOn(v).ServeHTTP(c.Writer, c.Request)
-}
-
-func (h *ProxyHandler) ReverseProxyOn(cli agents.Client) *httputil.ReverseProxy {
-	return &httputil.ReverseProxy{
-		Director: func(req *http.Request) {
-			req.URL.Path = getTargetPath(cli.Name(), req)
-		},
-		Transport: agents.RoundTripOf(cli),
+	if !strings.HasPrefix(proxyPath, "/custom") {
+		proxyPath = path.Join("/v1", proxyPath)
 	}
+	c.Request.URL.Path = proxyPath
+	cli.ReverseProxy().ServeHTTP(c.Writer, c.Request)
 }
 
 func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 	cluster := c.Param("cluster")
 	proxyPath := c.Param("action")
-
-	v, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
 
 	proxyobj := ParseProxyObj(c, proxyPath)
 	if proxyobj.InNamespace() {
@@ -112,8 +99,12 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 	for key, values := range c.Request.URL.Query() {
 		headers.Add(key, strings.Join(values, ","))
 	}
-
-	proxyConn, _, err := v.DialWebsocket(c.Request.Context(), proxyPath, headers)
+	cli, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	proxyConn, _, err := cli.Websocket().DialPath(c.Request.Context(), proxyPath, headers)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return

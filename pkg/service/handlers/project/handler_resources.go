@@ -72,15 +72,15 @@ type ClusterAggregateData struct {
 }
 
 // ProjectNoneResourceStatistics 项目非资源类型数据统计
-// @Tags        Project
-// @Summary     项目非资源类型数据统计
-// @Description 项目非资源类型数据统计
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     int                                  true "project_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=object} "statistics"
-// @Router      /v1/project/{project_id}/none_resource_statistics [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		项目非资源类型数据统计
+//	@Description	项目非资源类型数据统计
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		int										true	"project_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"statistics"
+//	@Router			/v1/project/{project_id}/none_resource_statistics [get]
+//	@Security		JWT
 func (h *ProjectHandler) ProjectNoneResourceStatistics(c *gin.Context) {
 	var (
 		proj      models.Project
@@ -104,16 +104,16 @@ func (h *ProjectHandler) ProjectNoneResourceStatistics(c *gin.Context) {
 }
 
 // ProjectStatistics 项目资源统计
-// @Tags        Project
-// @Summary     项目资源统计
-// @Description 项目资源统计
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     int                                  true  "project_id"
-// @Param       aggregate  query    string                               false "是否聚合(yes,no;default no)"
-// @Success     200        {object} handlers.ResponseStruct{Data=object} "statistics"
-// @Router      /v1/project/{project_id}/statistics [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		项目资源统计
+//	@Description	项目资源统计
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		int										true	"project_id"
+//	@Param			aggregate	query		string									false	"是否聚合(yes,no;default no)"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"statistics"
+//	@Router			/v1/project/{project_id}/statistics [get]
+//	@Security		JWT
 func (h *ProjectHandler) ProjectStatistics(c *gin.Context) {
 	var proj models.Project
 	ctx := c.Request.Context()
@@ -160,16 +160,16 @@ func (h *ProjectHandler) ProjectStatistics(c *gin.Context) {
 }
 
 // EnvironmentStatistics 项目环境资源统计
-// @Tags        Project
-// @Summary     项目环境资源统计
-// @Description 项目环境资源统计
-// @Accept      json
-// @Produce     json
-// @Param       project_id     path     int                                  true "project_id"
-// @Param       environment_id path     int                                  true "environment_id"
-// @Success     200            {object} handlers.ResponseStruct{Data=object} "statistics"
-// @Router      /v1/project/{project_id}/environment/{environment_id}/statistics [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		项目环境资源统计
+//	@Description	项目环境资源统计
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id		path		int										true	"project_id"
+//	@Param			environment_id	path		int										true	"environment_id"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=object}	"statistics"
+//	@Router			/v1/project/{project_id}/environment/{environment_id}/statistics [get]
+//	@Security		JWT
 func (h *ProjectHandler) EnvironmentStatistics(c *gin.Context) {
 	var env models.Environment
 	ctx := c.Request.Context()
@@ -386,16 +386,16 @@ func GetNodeTotal(nodes *[]v1.Node, tquotalist *[]gemsv1beta1.TenantResourceQuot
 }
 
 // GetEnvironmentResourceQuota 单个环境下的资源统计[quota]
-// @Tags        Project
-// @Summary     单个环境下的资源统计[quota]
-// @Description 单个环境下的资源统计[quota]
-// @Accept      json
-// @Produce     json
-// @Param       project_id     path     int                                  true "project_id"
-// @Param       environment_id path     int                                  true "environment_id"
-// @Success     200            {object} handlers.ResponseStruct{Data=object} "quota"
-// @Router      /v1/project/{project_id}/environment/{environment_id}/quota [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		单个环境下的资源统计[quota]
+//	@Description	单个环境下的资源统计[quota]
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id		path		int										true	"project_id"
+//	@Param			environment_id	path		int										true	"environment_id"
+//	@Success		200				{object}	handlers.ResponseStruct{Data=object}	"quota"
+//	@Router			/v1/project/{project_id}/environment/{environment_id}/quota [get]
+//	@Security		JWT
 func (h *ProjectHandler) GetEnvironmentResourceQuota(c *gin.Context) {
 	var (
 		proj models.Project
@@ -436,15 +436,15 @@ func (h *ProjectHandler) GetEnvironmentResourceQuota(c *gin.Context) {
 }
 
 // GetEnvironmentResourceQuotas 获取项目下的环境资源统计列表[quota]
-// @Tags        Project
-// @Summary     获取项目下的环境资源统计列表[quota]
-// @Description 获取项目下的环境资源统计列表[quota]
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     int                                  true "project_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=object} "quota"
-// @Router      /v1/project/{project_id}/environment/_/quotas [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		获取项目下的环境资源统计列表[quota]
+//	@Description	获取项目下的环境资源统计列表[quota]
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		int										true	"project_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"quota"
+//	@Router			/v1/project/{project_id}/environment/_/quotas [get]
+//	@Security		JWT
 func (h *ProjectHandler) GetEnvironmentResourceQuotas(c *gin.Context) {
 	projid, err := strconv.Atoi(c.Param("project_id"))
 	if err != nil {
@@ -460,15 +460,15 @@ func (h *ProjectHandler) GetEnvironmentResourceQuotas(c *gin.Context) {
 }
 
 // GetProjectResourceQuota 获取单个项目资源统计[quota]
-// @Tags        Project
-// @Summary     获取单个项目资源统计[quota]
-// @Description 获取单个项目资源统计[quota]
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     int                                  true "project_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=object} "quota"
-// @Router      /v1/project/{project_id}/quota [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		获取单个项目资源统计[quota]
+//	@Description	获取单个项目资源统计[quota]
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		int										true	"project_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"quota"
+//	@Router			/v1/project/{project_id}/quota [get]
+//	@Security		JWT
 func (h *ProjectHandler) GetProjectResourceQuota(c *gin.Context) {
 	projid, err := strconv.Atoi(c.Param("project_id"))
 	if err != nil {
@@ -484,17 +484,17 @@ func (h *ProjectHandler) GetProjectResourceQuota(c *gin.Context) {
 }
 
 // GetProjectListResourceQuotas 获取项目资源统计列表[quota]
-// @Tags        Project
-// @Summary     获取项目资源统计列表[quota]
-// @Description 获取项目资源统计列表[quota]
-// @Accept      json
-// @Produce     json
-// @Param       TenantID query    string                                                         false "TenantID"
-// @Param       page     query    int                                                            false "page"
-// @Param       size     query    int                                                            false "page"
-// @Success     200      {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]object}} "quotas"
-// @Router      /v1/project/_/quotas [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		获取项目资源统计列表[quota]
+//	@Description	获取项目资源统计列表[quota]
+//	@Accept			json
+//	@Produce		json
+//	@Param			TenantID	query		string															false	"TenantID"
+//	@Param			page		query		int																false	"page"
+//	@Param			size		query		int																false	"page"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]object}}	"quotas"
+//	@Router			/v1/project/_/quotas [get]
+//	@Security		JWT
 func (h *ProjectHandler) GetProjectListResourceQuotas(c *gin.Context) {
 	var (
 		projects []models.Project
@@ -657,16 +657,16 @@ func (h *ProjectHandler) getProjectAggretateQuota(ctx context.Context, projectId
 }
 
 // PostProjectEnvironment 创建一个属于 Project 的Environment
-// @Tags        Project
-// @Summary     创建一个属于 Project 的Environment
-// @Description 创建一个属于 Project 的Environment
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                             true "project_id"
-// @Param       param      body     models.Environment                               true "表单"
-// @Success     200        {object} handlers.ResponseStruct{Data=models.Environment} "models.Environment"
-// @Router      /v1/project/{project_id}/environment [post]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		创建一个属于 Project 的Environment
+//	@Description	创建一个属于 Project 的Environment
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint												true	"project_id"
+//	@Param			param		body		models.Environment									true	"表单"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=models.Environment}	"models.Environment"
+//	@Router			/v1/project/{project_id}/environment [post]
+//	@Security		JWT
 func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 	var obj models.Project
 	ctx := c.Request.Context()
@@ -721,15 +721,15 @@ func (h *ProjectHandler) PostProjectEnvironment(c *gin.Context) {
 }
 
 // ProjectEnvironments 获取项目下环境列表,按照集群聚合,同时获取集群的下的租户网络策略
-// @Tags        Project
-// @Summary     获取项目下环境列表,按照集群聚合,同时获取集群的下的租户网络策略
-// @Description 获取项目下环境列表,按照集群聚合,同时获取集群的下的租户网络策略
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     int                                  true "project_id"
-// @Success     200        {object} handlers.ResponseStruct{Data=object} "object"
-// @Router      /v1/project/{project_id}/agg_environment [get]
-// @Security    JWT
+//	@Tags			Project
+//	@Summary		获取项目下环境列表,按照集群聚合,同时获取集群的下的租户网络策略
+//	@Description	获取项目下环境列表,按照集群聚合,同时获取集群的下的租户网络策略
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		int										true	"project_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=object}	"object"
+//	@Router			/v1/project/{project_id}/agg_environment [get]
+//	@Security		JWT
 func (h *ProjectHandler) ProjectEnvironments(c *gin.Context) {
 	projectid := c.Param("project_id")
 	ret := map[string]ClusterAggregateData{}
@@ -784,16 +784,16 @@ func (h *ProjectHandler) ProjectEnvironments(c *gin.Context) {
 	handlers.OK(c, ret)
 }
 
-// @Tags        NetworkIsolated
-// @Summary     项目网络隔离开关
-// @Description 项目网络隔离开关
-// @Accept      json
-// @Produce     json
-// @Param       project_id path     uint                                                  true "project_id"
-// @Param       param      body     handlers.ClusterIsolatedSwitch                        true "表单 "
-// @Success     200        {object} handlers.ResponseStruct{Data=handlers.IsolatedSwitch} "object"
-// @Router      /v1/project/{project_id}/action/networkisolate [post]
-// @Security    JWT
+//	@Tags			NetworkIsolated
+//	@Summary		项目网络隔离开关
+//	@Description	项目网络隔离开关
+//	@Accept			json
+//	@Produce		json
+//	@Param			project_id	path		uint													true	"project_id"
+//	@Param			param		body		handlers.ClusterIsolatedSwitch							true	"表单 "
+//	@Success		200			{object}	handlers.ResponseStruct{Data=handlers.IsolatedSwitch}	"object"
+//	@Router			/v1/project/{project_id}/action/networkisolate [post]
+//	@Security		JWT
 func (h *ProjectHandler) ProjectSwitch(c *gin.Context) {
 	form := &handlers.ClusterIsolatedSwitch{}
 	if err := c.BindJSON(form); err != nil {
@@ -849,15 +849,15 @@ func (h *ProjectHandler) ProjectSwitch(c *gin.Context) {
 }
 
 // TenantProjectListResourceQuotas 租户下所有项目的资源统计列表[quota]
-// @Tags        Tenant
-// @Summary     租户下所有项目的资源统计列表[quota]
-// @Description 租户下所有项目的资源统计列表[quota]
-// @Accept      json
-// @Produce     json
-// @Param       tenant_id path     uint                                   true "tenant_id"
-// @Success     200       {object} handlers.ResponseStruct{Data=[]object} "quotas"
-// @Router      /v1/tenant/{tenant_id}/projectquotas [get]
-// @Security    JWT
+//	@Tags			Tenant
+//	@Summary		租户下所有项目的资源统计列表[quota]
+//	@Description	租户下所有项目的资源统计列表[quota]
+//	@Accept			json
+//	@Produce		json
+//	@Param			tenant_id	path		uint									true	"tenant_id"
+//	@Success		200			{object}	handlers.ResponseStruct{Data=[]object}	"quotas"
+//	@Router			/v1/tenant/{tenant_id}/projectquotas [get]
+//	@Security		JWT
 func (h *ProjectHandler) TenantProjectListResourceQuotas(c *gin.Context) {
 	var (
 		projects []models.Project

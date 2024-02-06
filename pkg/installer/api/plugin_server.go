@@ -15,12 +15,12 @@
 package api
 
 import (
+	"net/http"
 	"sort"
 
-	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 )
 
 type PluginStatus struct {
@@ -39,16 +39,16 @@ type PluginStatus struct {
 	cate               string
 }
 
-func (o *PluginsAPI) ListPlugins(req *restful.Request, resp *restful.Response) {
-	if request.Query(req.Request, "check-update", false) {
-		upgradeable, err := o.PM.CheckUpdate(req.Request.Context())
+func (o *PluginsAPI) ListPlugins(resp http.ResponseWriter, req *http.Request) {
+	if request.Query(req, "check-update", false) {
+		upgradeable, err := o.PM.CheckUpdate(req.Context())
 		if err != nil {
 			response.Error(resp, err)
 			return
 		}
 		response.OK(resp, upgradeable)
 	} else {
-		plugins, err := o.PM.ListPlugins(req.Request.Context())
+		plugins, err := o.PM.ListPlugins(req.Context())
 		if err != nil {
 			response.Error(resp, err)
 			return
@@ -133,13 +133,13 @@ func withCategory[T any](list []T, getCate func(T) string) map[string][]T {
 	return ret
 }
 
-func (o *PluginsAPI) GetPlugin(req *restful.Request, resp *restful.Response) {
-	name := req.PathParameter("name")
-	version := req.QueryParameter("version")
-	withSchema := request.Query(req.Request, "schema", false)
-	healthCheck := request.Query(req.Request, "check", false)
+func (o *PluginsAPI) GetPlugin(resp http.ResponseWriter, req *http.Request) {
+	name := request.Path(req, "name", "")
+	version := request.Query(req, "version", "")
+	withSchema := request.Query(req, "schema", false)
+	healthCheck := request.Query(req, "check", false)
 
-	pv, err := o.PM.GetPluginVersion(req.Request.Context(), name, version, withSchema, healthCheck)
+	pv, err := o.PM.GetPluginVersion(req.Context(), name, version, withSchema, healthCheck)
 	if err != nil {
 		response.Error(resp, err)
 		return
@@ -147,25 +147,25 @@ func (o *PluginsAPI) GetPlugin(req *restful.Request, resp *restful.Response) {
 	response.OK(resp, pv)
 }
 
-func (o *PluginsAPI) EnablePlugin(req *restful.Request, resp *restful.Response) {
-	name := req.PathParameter("name")
-	version := req.QueryParameter("version")
+func (o *PluginsAPI) EnablePlugin(resp http.ResponseWriter, req *http.Request) {
+	name := request.Path(req, "name", "")
+	version := request.Query(req, "version", "")
 
 	pv := &pluginmanager.PluginVersion{}
-	if err := request.Body(req.Request, pv); err != nil {
+	if err := request.Body(req, pv); err != nil {
 		response.Error(resp, err)
 		return
 	}
-	if err := o.PM.Install(req.Request.Context(), name, version, pv.Values.Object); err != nil {
+	if err := o.PM.Install(req.Context(), name, version, pv.Values.Object); err != nil {
 		response.Error(resp, err)
 		return
 	}
 	response.OK(resp, pv)
 }
 
-func (o *PluginsAPI) RemovePlugin(req *restful.Request, resp *restful.Response) {
-	name := req.PathParameter("name")
-	if err := o.PM.UnInstall(req.Request.Context(), name); err != nil {
+func (o *PluginsAPI) RemovePlugin(resp http.ResponseWriter, req *http.Request) {
+	name := request.Path(req, "name", "")
+	if err := o.PM.UnInstall(req.Context(), name); err != nil {
 		response.Error(resp, err)
 		return
 	}

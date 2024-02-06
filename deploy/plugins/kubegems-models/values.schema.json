@@ -8,7 +8,7 @@
         "baseDomain": {
           "type": "string",
           "title": "Ingress 基本域名",
-          "default": "models.kubegems.io",
+          "default": "*.models.kubegems.io",
           "form": true
         }
       },

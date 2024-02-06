@@ -1,0 +1,3 @@
+{{ include "common.component.configmap" . }}
+data:
+  enabled: {{ .Values.enabled | quote }}

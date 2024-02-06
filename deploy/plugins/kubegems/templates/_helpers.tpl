@@ -12,7 +12,7 @@ Return the proper image name
 {{- if .global.kubegemsVersion }}
     {{- $tag = .global.kubegemsVersion | toString -}}
 {{- end }}
-{{- if .global.imageRegistry }}
+{{- if and .global.imageRegistry (or (eq $registryName "docker.io") (not $registryName))  -}}
     {{- $registryName = .global.imageRegistry -}}
 {{- end -}}
 {{- if $registryName }}
@@ -52,6 +52,14 @@ Return the proper kubegems image name
     {{- include "kubegems.msgbus.fullname" . -}}:{{- .Values.api.service.ports.http -}}
 {{- end -}}
 
+{{- define "kubegems.pai.address" -}}
+{{- if index .Values "kubegems-pai" "enabled"  -}}
+kubegems-pai-api.kubegems-pai
+{{- else -}}
+{{- include "kubegems.api.address" . -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
@@ -73,7 +81,7 @@ Return the proper kubegems.api image name
 {{- end -}}
 
 {{- define "kubegems.init.charts.image" -}}
-{{ include "kubegems.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global "root" .) }}
+{{ include "common.images.image" (dict "imageRoot" .Values.init.charts.image "global" .Values.global "root" .) }}
 {{- end -}}
 
 {{- define "kubegems.init.charts.fullname" -}}

@@ -16,26 +16,26 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 
-	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/installer/pluginmanager"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 )
 
 const PluginRepositoriesName = "plugin-repositories"
 
-func (o *PluginsAPI) RepoUpdate(req *restful.Request, resp *restful.Response) {
-	reponame := req.PathParameter("name")
-	if repo, err := o.PM.GetRepo(req.Request.Context(), reponame); err != nil {
+func (o *PluginsAPI) RepoUpdate(resp http.ResponseWriter, req *http.Request) {
+	reponame := request.Path(req, "name", "")
+	if repo, err := o.PM.GetRepo(req.Context(), reponame); err != nil {
 		response.Error(resp, err)
 	} else {
 		response.OK(resp, repo)
 	}
 }
 
-func (o *PluginsAPI) RepoList(req *restful.Request, resp *restful.Response) {
-	repos, err := o.PM.ListRepos(req.Request.Context())
+func (o *PluginsAPI) RepoList(resp http.ResponseWriter, req *http.Request) {
+	repos, err := o.PM.ListRepos(req.Context())
 	if err != nil {
 		response.Error(resp, err)
 		return
@@ -44,9 +44,9 @@ func (o *PluginsAPI) RepoList(req *restful.Request, resp *restful.Response) {
 	response.OK(resp, repos)
 }
 
-func (o *PluginsAPI) RepoGet(req *restful.Request, resp *restful.Response) {
-	reponame := req.PathParameter("name")
-	repos, err := o.PM.ListRepos(req.Request.Context())
+func (o *PluginsAPI) RepoGet(resp http.ResponseWriter, req *http.Request) {
+	reponame := request.Path(req, "name", "")
+	repos, err := o.PM.ListRepos(req.Context())
 	if err != nil {
 		response.Error(resp, err)
 		return
@@ -60,22 +60,22 @@ func (o *PluginsAPI) RepoGet(req *restful.Request, resp *restful.Response) {
 	response.NotFound(resp, fmt.Sprintf("repo %s not found", reponame))
 }
 
-func (o *PluginsAPI) RepoAdd(req *restful.Request, resp *restful.Response) {
+func (o *PluginsAPI) RepoAdd(resp http.ResponseWriter, req *http.Request) {
 	repo := &pluginmanager.Repository{}
-	if err := request.Body(req.Request, &repo); err != nil {
+	if err := request.Body(req, &repo); err != nil {
 		response.Error(resp, err)
 		return
 	}
-	if err := o.PM.UpdateRepo(req.Request.Context(), repo); err != nil {
+	if err := o.PM.UpdateRepo(req.Context(), repo); err != nil {
 		response.Error(resp, err)
 		return
 	}
 	response.OK(resp, repo)
 }
 
-func (o *PluginsAPI) RepoRemove(req *restful.Request, resp *restful.Response) {
-	reponame := req.PathParameter("name")
-	if err := o.PM.DeleteRepo(req.Request.Context(), reponame); err != nil {
+func (o *PluginsAPI) RepoRemove(resp http.ResponseWriter, req *http.Request) {
+	reponame := request.Path(req, "name", "")
+	if err := o.PM.DeleteRepo(req.Context(), reponame); err != nil {
 		response.Error(resp, err)
 		return
 	}

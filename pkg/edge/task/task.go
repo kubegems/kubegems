@@ -33,14 +33,20 @@ func getScheme() *runtime.Scheme {
 }
 
 type Options struct {
-	MaxConcurrentReconciles int
-	EdgeServerAddr          string
+	MaxConcurrentReconciles int    `json:"maxConcurrentReconciles,omitempty"`
+	HealthProbeBindAddress  string `json:"healthProbeBindAddress,omitempty"`
+	MetricsBindAddress      string `json:"metricsBindAddress,omitempty"`
+	EdgeServerAddr          string `json:"edgeServerAddr,omitempty"`
+	EdgeNamespace           string `json:"edgeNamespace,omitempty"`
 }
 
 func NewDefaultOptions() *Options {
 	return &Options{
 		MaxConcurrentReconciles: 1,
-		EdgeServerAddr:          "http://kubegem-edge-server:8080",
+		EdgeServerAddr:          "http://kubegems-edge-server:8080",
+		EdgeNamespace:           "", // empty means all namespaces
+		HealthProbeBindAddress:  ":8080",
+		MetricsBindAddress:      ":9100",
 	}
 }
 
@@ -52,9 +58,12 @@ func Run(ctx context.Context, options *Options) error {
 	log = log.WithName("setup")
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:           getScheme(),
-		LeaderElectionID: edge.GroupName + "-task",
-		Logger:           log,
+		Scheme:                 getScheme(),
+		LeaderElectionID:       edge.GroupName + "-task",
+		Logger:                 log,
+		HealthProbeBindAddress: options.HealthProbeBindAddress,
+		MetricsBindAddress:     options.MetricsBindAddress,
+		Namespace:              options.EdgeNamespace,
 	})
 	if err != nil {
 		log.Error(err, "unable to create manager")
@@ -69,7 +78,7 @@ func Run(ctx context.Context, options *Options) error {
 		Client:      mgr.GetClient(),
 		EdgeClients: holder,
 	}
-	if err := r.SetupWithManager(ctx, mgr, options.MaxConcurrentReconciles); err != nil {
+	if err := r.SetupWithManager(ctx, mgr, options); err != nil {
 		log.Error(err, "unable to create controller", "controller", "EdgeTask")
 	}
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

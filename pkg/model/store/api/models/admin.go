@@ -22,9 +22,9 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"kubegems.io/kubegems/pkg/model/store/repository"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
 	"kubegems.io/kubegems/pkg/utils/route"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 )
 
 func (m ModelsAPI) AdminListSources(req *restful.Request, resp *restful.Response) {

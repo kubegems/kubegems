@@ -90,6 +90,8 @@ spec:
           env:
             - name: LOG_LEVEL
               value: {{ .Values.controller.logLevel }}
+            - name: INGRESSHOST
+              value: {{ .Values.controller.baseDomain }}
             {{- if .Values.controller.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.controller.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}

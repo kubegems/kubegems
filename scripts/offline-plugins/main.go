@@ -31,6 +31,7 @@ import (
 
 	"golang.org/x/exp/slices"
 	"helm.sh/helm/v3/pkg/repo"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	plugins "kubegems.io/kubegems/pkg/apis/plugins"
 	pluginv1beta1 "kubegems.io/kubegems/pkg/apis/plugins/v1beta1"
@@ -57,54 +58,37 @@ func main() {
 }
 
 func Run(ctx context.Context, from, to string) error {
-	offline := NewOffline(plugins.KubegemsChartsRepoURL)
-	if err := offline.ReadFromFile(ctx, from); err != nil {
+	cached, err := ReadFromFileOrLatest(ctx, from)
+	if err != nil {
 		return err
 	}
-	if err := offline.Download(ctx, to); err != nil {
+	if err := Download(ctx, to, cached); err != nil {
 		return err
 	}
 	return nil
 }
 
-func NewOffline(repoaddr string) *Offline {
-	return &Offline{
-		repo:           pluginmanager.Repository{Address: repoaddr},
-		offlineplugins: map[string]*pluginmanager.PluginVersion{},
-	}
-}
-
-type Offline struct {
-	repo           pluginmanager.Repository
-	offlineplugins map[string]*pluginmanager.PluginVersion
-}
-
-func (o *Offline) ReadFromFile(ctx context.Context, filename string) error {
+func ReadFromFileOrLatest(ctx context.Context, filename string) ([]OfflinePlugin, error) {
 	caches, err := ReadPluginFile(filename)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			return err
+			return nil, err
 		}
 		// ignore not found
 	}
-	if err := o.repo.RefreshRepoIndex(ctx); err != nil {
-		return err
-	}
 	if len(caches) == 0 {
-		o.offlineplugins = readLatestVersions(ctx, &o.repo)
+		pmr := &pluginmanager.Repository{Address: plugins.KubegemsChartsRepoURL}
+		if err := pmr.RefreshRepoIndex(ctx); err != nil {
+			return nil, err
+		}
+		latestCaches := readLatestPluginVersions(ctx, pmr)
 		// writeback
-		caches := []OfflinePlugin{}
-		for _, v := range o.offlineplugins {
-			log.Printf("found latest: %s-%s", v.Name, v.Version)
-			caches = append(caches, OfflinePlugin{Name: v.Name, Version: v.Version})
+		if err := WritePluginFile(filename, latestCaches); err != nil {
+			return nil, err
 		}
-		if err := WritePluginFile(filename, caches); err != nil {
-			return err
-		}
-	} else {
-		o.offlineplugins = readCachedVersions(ctx, &o.repo, caches)
+		caches = latestCaches
 	}
-	return nil
+	return caches, nil
 }
 
 func readCachedVersions(ctx context.Context, repo *pluginmanager.Repository, cached []OfflinePlugin) map[string]*pluginmanager.PluginVersion {
@@ -126,33 +110,41 @@ func readCachedVersions(ctx context.Context, repo *pluginmanager.Repository, cac
 	return ret
 }
 
-func readLatestVersions(ctx context.Context, repo *pluginmanager.Repository) map[string]*pluginmanager.PluginVersion {
-	ret := map[string]*pluginmanager.PluginVersion{}
+func readLatestPluginVersions(ctx context.Context, repo *pluginmanager.Repository) []OfflinePlugin {
+	ret := []OfflinePlugin{}
 	for name, versions := range repo.Plugins {
 		// do not download kubegems charts,it exists locally.
-		if strings.HasPrefix(name, "kubegems") {
+		if _, err := os.Stat(filepath.Join("deploy", "plugins", name)); err == nil {
 			continue
 		}
-		var cacheVersion *pluginmanager.PluginVersion
 		// find latest version match kubegems
-		for _, item := range versions {
-			cacheVersion = &item
-			break
-		}
-		if cacheVersion == nil {
-			log.Printf("no matched version to cache on plugin %s", name)
+		if len(versions) == 0 {
+			log.Printf("no version found for plugin %s", name)
 			continue
 		}
-		ret[name] = cacheVersion
+		latest := versions[0]
+		log.Printf("found latest: %s-%s", name, latest.Version)
+		ret = append(ret, OfflinePlugin{
+			Repository: latest.Repository,
+			Name:       latest.Name,
+			Version:    latest.Version,
+		})
 	}
 	return ret
 }
 
-func (o *Offline) Download(ctx context.Context, basedir string) error {
+func Download(ctx context.Context, basedir string, list []OfflinePlugin) error {
 	applier := bundle.NewDefaultApply(nil, nil, &bundle.Options{CacheDir: basedir})
-	for _, pv := range o.offlineplugins {
-		plugin := pv.ToPlugin()
-		log.Printf("download %s-%s from %s", plugin.Name, plugin.Spec.Version, plugin.Spec.Kind)
+	for _, pv := range list {
+		plugin := &pluginv1beta1.Plugin{
+			ObjectMeta: v1.ObjectMeta{Name: pv.Name, Namespace: "default"},
+			Spec: pluginv1beta1.PluginSpec{
+				URL:     pv.Repository,
+				Version: pv.Version,
+				Kind:    pluginv1beta1.BundleKindTemplate,
+			},
+		}
+		log.Printf("template %s-%s using %s", plugin.Name, plugin.Spec.Version, plugin.Spec.Kind)
 		manifest, err := applier.Template(ctx, plugin)
 		if err != nil {
 			log.Printf("on template: %v", err)
@@ -177,7 +169,7 @@ func (o *Offline) Download(ctx context.Context, basedir string) error {
 		}
 	}
 	// build index
-	indexpath := bundle.PerRepoCacheDir(o.repo.Address, basedir)
+	indexpath := bundle.PerRepoCacheDir(plugins.KubegemsChartsRepoURL, basedir)
 	log.Printf("generating helm repo index.yaml under %s", indexpath)
 	i, err := repo.IndexDirectory(indexpath, "")
 	if err != nil {
@@ -197,18 +189,23 @@ func ReadPluginFile(filename string) ([]OfflinePlugin, error) {
 
 func WritePluginFile(filename string, list []OfflinePlugin) error {
 	data := bytes.NewBuffer(nil)
-	slices.SortFunc(list, func(a, b OfflinePlugin) bool {
-		return strings.Compare(a.Name, b.Name) == -1
+	slices.SortFunc(list, func(a, b OfflinePlugin) int {
+		return strings.Compare(a.String(), b.String())
 	})
 	for _, val := range list {
-		data.WriteString(val.Name + " " + val.Version + "\n")
+		fmt.Fprintf(data, "%s %s %s\n", val.Repository, val.Name, val.Version)
 	}
 	return os.WriteFile(filename, data.Bytes(), helm.DefaultFileMode)
 }
 
 type OfflinePlugin struct {
-	Name    string
-	Version string
+	Repository string
+	Name       string
+	Version    string
+}
+
+func (o *OfflinePlugin) String() string {
+	return fmt.Sprintf("%s/%s@%s", o.Repository, o.Name, o.Version)
 }
 
 func ParseContent(data []byte) []OfflinePlugin {
@@ -231,17 +228,20 @@ func ParseContent(data []byte) []OfflinePlugin {
 			continue
 		}
 		switch len(fields) {
-		case 0:
+		case 0, 1:
 			continue
-		case 1:
+		case 2:
 			ret = append(ret, OfflinePlugin{
-				Name: string(fields[0]),
+				Repository: string(fields[0]),
+				Name:       string(fields[0]),
 			})
 		default:
 			ret = append(ret, OfflinePlugin{
-				Name:    string(fields[0]),
-				Version: string(fields[1]),
+				Repository: string(fields[0]),
+				Name:       string(fields[1]),
+				Version:    string(fields[2]),
 			})
+
 		}
 	}
 	return ret

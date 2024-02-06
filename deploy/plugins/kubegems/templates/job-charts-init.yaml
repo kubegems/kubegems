@@ -1,3 +1,4 @@
+{{- if ne (include "kubegems.apps.enabled" .) "false" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -68,16 +69,10 @@ spec:
           {{- else}}
           args:
             - --wait
-            - --repo
-            - kubegems
-            - --server
-            - "$(APPSTORE_ADDR)"
+            - --repo=kubegems
+            - --server={{ include "kubegems.chartmuseum.address" . }}
           {{- end }}
-          env:
-            {{- include "kubegems.common.env" . | indent 12 }}
           envFrom:
-            - secretRef:
-                name: {{ template "kubegems.secret.fullname" . }}
             {{- if .Values.init.charts.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.init.charts.extraEnvVarsCM "context" $) }}
@@ -89,3 +84,5 @@ spec:
           {{- if .Values.init.charts.resources }}
           resources: {{- toYaml .Values.init.charts.resources | nindent 12 }}
           {{- end }}
+
+{{- end }}

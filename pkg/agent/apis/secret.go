@@ -22,7 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/utils/certificate"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -44,20 +44,20 @@ func (s SecretWithCertsInfo) GetCreationTimestamp() metav1.Time {
 	return s.Secret.CreationTimestamp
 }
 
-// @Tags        Agent.V1
-// @Summary     获取Secret列表数据
-// @Description 获取Secret列表数据,其中包含了对 tls 类型的secret证书详情
-// @Accept      json
-// @Produce     json
-// @Param       order     query    string                                                                        false "page"
-// @Param       search    query    string                                                                        false "search"
-// @Param       page      query    int                                                                           false "page"
-// @Param       size      query    int                                                                           false "page"
-// @Param       namespace path     string                                                                        true  "namespace"
-// @Param       cluster   path     string                                                                        true  "cluster"
-// @Success     200       {object} handlers.ResponseStruct{Data=pagination.PageData{List=[]SecretWithCertsInfo}} "Secrets"
-// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/secrets [get]
-// @Security    JWT
+// @Tags			Agent.V1
+// @Summary		获取Secret列表数据
+// @Description	获取Secret列表数据,其中包含了对 tls 类型的secret证书详情
+// @Accept			json
+// @Produce		json
+// @Param			order		query		string																					false	"page"
+// @Param			search		query		string																					false	"search"
+// @Param			page		query		int																						false	"page"
+// @Param			size		query		int																						false	"page"
+// @Param			namespace	path		string																					true	"namespace"
+// @Param			cluster		path		string																					true	"cluster"
+// @Success		200			{object}	handlers.ResponseStruct{Data=response.Page[corev1.Secret]{List=[]SecretWithCertsInfo}}	"Secrets"
+// @Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/secrets [get]
+// @Security		JWT
 func (h *SecretHandler) List(c *gin.Context) {
 	ns := c.Param("namespace")
 	if ns == "_all" || ns == "_" {

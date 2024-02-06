@@ -46,7 +46,7 @@ type PluginSpec struct {
 
 	// Dependencies is a list of bundles that this bundle depends on.
 	// The bundle will be installed after all dependencies are exists.
-	Dependencies []corev1.ObjectReference `json:"dependencies,omitempty"` // dependends on other bundle
+	Dependencies []corev1.ObjectReference `json:"dependencies,omitempty"`
 
 	// Values is a nested map of helm values.
 	// +kubebuilder:pruning:PreserveUnknownFields
@@ -57,6 +57,9 @@ type PluginSpec struct {
 	// Ref can be a configmap or secret.
 	// +kubebuilder:validation:Optional
 	ValuesFrom []ValuesFrom `json:"valuesFrom,omitempty"`
+
+	// FileOverrides is a list of file overrides/append to the helm chart.
+	FileOverrides []FileOverride `json:"fileOverrides,omitempty"`
 }
 
 const (
@@ -79,7 +82,18 @@ type ValuesFrom struct {
 	Optional bool `json:"optional,omitempty"`
 }
 
+type FileOverride struct {
+	// Name is the name of the file to override
+	Name string `json:"name"`
+	// Content is the content of the file to override
+	Content string `json:"content"`
+}
+
 type PluginStatus struct {
+	// The generation observed by the controller.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
 	// Phase is the current state of the release
 	Phase Phase `json:"phase,omitempty"`
 

@@ -34,12 +34,11 @@ import (
 )
 
 type Dependencies struct {
-	Options   *options.Options
 	Redis     *redis.Client
 	Databse   *database.Database
-	Argocli   *argo.Client
-	Git       *git.SimpleLocalProvider
 	Agentscli *agents.ClientSet
+	Argo      *argo.Client
+	Git       git.Provider
 }
 
 func prepareDependencies(ctx context.Context, opts *options.Options) (*Dependencies, error) {
@@ -70,25 +69,19 @@ func prepareDependencies(ctx context.Context, opts *options.Options) (*Dependenc
 		log.Errorf("failed to init agents: %v", err)
 		return nil, err
 	}
+
 	// git
-	gitprovider, err := git.NewProvider(opts.Git)
-	if err != nil {
-		log.Errorf("failed to init git: %v", err)
-		return nil, err
-	}
+	gitprovider := git.NewLazyProvider(opts.Git)
+
 	// argo
-	argocli, err := argo.NewClient(ctx, opts.Argo)
-	if err != nil {
-		log.Errorf("failed to init argo: %v", err)
-		return nil, err
-	}
+	argocli := argo.NewLazyClient(ctx, opts.Argo)
 
 	deps := &Dependencies{
 		Redis:     rediscli,
 		Databse:   db,
-		Argocli:   argocli,
-		Git:       gitprovider,
 		Agentscli: agentclientset,
+		Argo:      argocli,
+		Git:       gitprovider,
 	}
 	return deps, nil
 }
@@ -108,20 +101,22 @@ func Run(ctx context.Context, opts *options.Options) error {
 
 	router := &routers.Router{
 		Opts:        opts,
-		GitProvider: deps.Git,
 		Agents:      deps.Agentscli,
-		Argo:        deps.Argocli,
 		Database:    deps.Databse,
 		Redis:       deps.Redis,
+		Argo:        deps.Argo,
+		GitProvider: deps.Git,
 	}
 
-	exporterHandler := exporter.NewHandler("gems_server", map[string]exporter.Collectorfunc{
+	exporters := map[string]exporter.Collectorfunc{
 		"request":     exporter.NewRequestCollector(),
 		"cluster":     exporter.NewClusterCollector(deps.Agentscli, deps.Databse),
 		"environment": exporter.NewEnvironmentCollector(deps.Databse),
 		"user":        exporter.NewUserCollector(deps.Databse),
-		"application": exporter.NewApplicationCollector(deps.Argocli),
-	})
+	}
+	if opts.Argo.Password != "" {
+		exporters["application"] = exporter.NewApplicationCollector(deps.Argo)
+	}
 
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
@@ -133,7 +128,7 @@ func Run(ctx context.Context, opts *options.Options) error {
 	})
 	eg.Go(func() error {
 		// 启动prometheus exporter
-		return exporterHandler.Run(ctx, opts.Exporter)
+		return exporter.NewHandler("gems_server", exporters).Run(ctx, opts.Exporter)
 	})
 	return eg.Wait()
 }

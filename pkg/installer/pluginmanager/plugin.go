@@ -260,7 +260,7 @@ func (m *PluginManager) ListPlugins(ctx context.Context) (map[string]Plugin, err
 
 func FindUpgradeable(availables []PluginVersion, installed PluginVersion, allinstall map[string]PluginVersion) *PluginVersion {
 	for _, available := range availables {
-		if SemVersionBiggerThan(available.Version, installed.Version) {
+		if SemVersionBiggerThan(available.Version, installed.Version) == 1 {
 			return &available
 		}
 	}
@@ -338,8 +338,8 @@ func mergeAllrepoVersions(repos map[string]Repository) map[string][]PluginVersio
 	ret := map[string][]PluginVersion{}
 	for k, v := range pluginsmap {
 		vs := maps.Values(v)
-		slices.SortFunc(vs, func(a, b PluginVersion) bool {
-			return SemVersionBiggerThan(a.Version, b.Version)
+		slices.SortFunc(vs, func(a, b PluginVersion) int {
+			return SemVersionBiggerThan(b.Version, a.Version)
 		})
 		ret[k] = vs
 	}

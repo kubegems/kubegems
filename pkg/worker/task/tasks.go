@@ -50,12 +50,11 @@ type (
 
 func Run(ctx context.Context, rediscli *redis.Client,
 	db *database.Database,
-	gitp *git.SimpleLocalProvider,
+	gitp git.Provider,
 	argocd *argo.Client,
 	helmOptions *helm.Options,
 	agents *agents.ClientSet,
 ) error {
-
 	p := &ProcessorContext{
 		server:    workflow.NewServerFromRedisClient(rediscli.Client),
 		client:    workflow.NewClientFromRedisClient(rediscli.Client),

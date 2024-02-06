@@ -1,30 +1,40 @@
-argo-rollouts 2.14.0
-cert-manager 1.8.0
-dcgm-exporter 2.6.9
-eventer 2.1.6
-gateway 0.3.2
-global 1.0.0
-grafana 6.29.7
-intel-device-operator 0.25.1
-intel-device-sgx 0.25.1
-istio 1.11.7
-knative 1.0.1
-kubevela 1.3.5
-local-path 0.0.22
-logging 3.17.6
-metallb 0.12.1
-metrics-server 3.8.2
-monitoring 44.3.0
-nacos 2.1.1
-node-local-dns 0.2.1
-node-problem-detector 2.2.2
-nvidia-device-plugin 0.11.0
-openkruise 1.2.0
-opentelemetry 0.28.2
-profiling 0.2.86
-prometheus-cloud-dial 0.22.0
-prometheus-node-exporter 3.3.0
-seldon 1.16.0
-tke-gpu-manager 1.1.5
-tracing 2.34.1
-volume-snapshoter 5.0.1
+https://charts.kubegems.io/kubegems argo-rollouts 2.14.0
+https://charts.kubegems.io/kubegems ceph-csi-cephfs 3.7.0
+https://charts.kubegems.io/kubegems ceph-csi-rbd 3.7.0
+https://charts.kubegems.io/kubegems cert-manager 1.8.0
+https://charts.kubegems.io/kubegems dcgm-exporter 2.6.9
+https://charts.kubegems.io/kubegems eventer 2.1.6
+https://charts.kubegems.io/kubegems function-mesh-operator 0.2.13
+https://charts.kubegems.io/kubegems gateway 0.3.2
+https://charts.kubegems.io/kubegems global 1.0.0
+https://charts.kubegems.io/kubegems grafana 6.29.8
+https://charts.kubegems.io/kubegems intel-device-operator 0.25.1
+https://charts.kubegems.io/kubegems intel-device-sgx 0.25.1
+https://charts.kubegems.io/kubegems istio 1.11.7
+https://charts.kubegems.io/kubegems knative 1.0.1
+https://charts.kubegems.io/kubegems kubegems-pai 1.0.3
+https://charts.kubegems.io/kubegems juicefs-tenant 1.0.0
+https://charts.kubegems.io/kubegems kubevela 1.3.5
+https://charts.kubegems.io/kubegems local-path 0.0.22
+https://charts.kubegems.io/kubegems logging 3.17.7
+https://charts.kubegems.io/kubegems longhorn 1.4.0
+https://charts.kubegems.io/kubegems metallb 0.12.1
+https://charts.kubegems.io/kubegems metrics-server 3.8.2
+https://charts.kubegems.io/kubegems modelx 0.3.0
+https://charts.kubegems.io/kubegems monitoring 44.3.4
+https://charts.kubegems.io/kubegems nacos 2.1.1
+https://charts.kubegems.io/kubegems node-local-dns 0.2.1
+https://charts.kubegems.io/kubegems node-problem-detector 2.2.2
+https://charts.kubegems.io/kubegems nvidia-device-plugin 0.11.0
+https://charts.kubegems.io/kubegems openebs 3.3.0
+https://charts.kubegems.io/kubegems openkruise 1.2.0
+https://charts.kubegems.io/kubegems opentelemetry 0.28.3
+https://charts.kubegems.io/kubegems profiling 0.2.86
+https://charts.kubegems.io/kubegems prometheus-cloud-dial 0.22.0
+https://charts.kubegems.io/kubegems prometheus-node-exporter 3.3.0
+https://charts.kubegems.io/kubegems pulsar-operator 0.14.0
+https://charts.kubegems.io/kubegems seldon 1.16.0
+https://charts.kubegems.io/kubegems tke-gpu-manager 1.1.5
+https://charts.kubegems.io/kubegems tracing 2.34.1
+https://charts.kubegems.io/kubegems volume-snapshoter 5.0.1
+https://juicedata.github.io/charts juicefs-csi-driver 0.19.2

@@ -177,6 +177,8 @@ Return the proper redis password secret key
 {{- end -}}
 {{- end -}}
 
+
+
 {{/*
 Create a default fully qualified argocd name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
@@ -334,33 +336,131 @@ chartmuseum address
 {{/*
 Return the proper common environment variables
 */}}
-{{- define "kubegems.common.env" -}}
-{{ if (include "kubegems.database.password.secret" . ) }}
+{{- define "kubegems.common.env" }}
+- name: MICROSERVICE_GATEWAYNAMESPACE
+  value: "kubegems-gateway"
+- name: MICROSERVICE_ISTIOOPERATORNAME
+  value: "kubegems-istio"
+- name: JWT_ISSUERADDR
+  value: {{ printf "https://%s/api" .Values.ingress.hostname }}
+{{- include "kubegems.database.env" . }}
+{{- end }}
+
+{{/*
+{{ include "kubegems.database.env" . }}
+*/}}
+{{- define "kubegems.database.env" }}
+- name: MYSQL_ADDR
+  value: {{ printf "%s:%s" (include "kubegems.database.host" .) (include "kubegems.database.port" .) | quote }}
+{{- if (include "kubegems.database.username" .) }}
+- name: MYSQL_USERNAME
+  value: {{ include "kubegems.database.username" . }}
+{{- end }}
+{{- if (include "kubegems.database.database" .) }}
+- name: MYSQL_DATABASE
+  value: {{ include "kubegems.database.database" . }}
+{{- end }}
+{{- if (include "kubegems.database.password.secret" . ) }}
 - name: MYSQL_PASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ include "kubegems.database.password.secret" . }}
       key: {{ include "kubegems.database.password.secret.key" . }}
-{{- end -}}
+{{- end }}
+- name: REDIS_ADDR
+  value: {{ printf "%s:%s" (include "kubegems.redis.host" .) (include "kubegems.redis.port" .) | quote }}
 {{- if (include "kubegems.redis.password.secret" . ) }}
 - name: REDIS_PASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ include "kubegems.redis.password.secret" . }}
       key: {{ include "kubegems.redis.password.secret.key" . }}
+{{- end }}
+{{- end }}
+
+{{- define "kubegems.apps.enabled" -}}
+{{- (index .Values "kubegems-apps" "enabled") -}}
 {{- end -}}
-{{- if (include "kubegems.argocd.password.secret" . ) }}
+
+{{/*
+Return the proper apps environment variables
+{{ include "kubegems.apps.env" . }}
+*/}}
+{{- define "kubegems.apps.env" }}
+{{- if ne (include "kubegems.apps.enabled" .) "false" }}
+- name: APPSTORE_ADDR
+  value: {{ include "kubegems.chartmuseum.address" . }}
+- name: ARGO_ADDR
+  value: {{ include "kubegems.argocd.address" . }}
+- name: ARGO_USERNAME
+  value: {{ include "kubegems.argocd.username" . }}
 - name: ARGO_PASSWORD
+{{- if (include "kubegems.argocd.password.secret" . ) }}
   valueFrom:
     secretKeyRef:
       name: {{ include "kubegems.argocd.password.secret" . }}
       key: {{ include "kubegems.argocd.password.secret.key" . }}
+{{ else }}
+  value: {{ include "kubegems.argocd.password" . }}
 {{- end -}}
-{{- if (include "kubegems.git.password.secret" . ) }}
+- name: GIT_ADDR
+  value: {{ include "kubegems.git.address" . }}
+- name: GIT_USERNAME
+  value: {{ include "kubegems.git.username" . }}
 - name: GIT_PASSWORD
+{{- if (include "kubegems.git.password.secret" . ) }}
   valueFrom:
     secretKeyRef:
       name: {{ include "kubegems.git.password.secret" . }}
       key: {{ include "kubegems.git.password.secret.key" . }}
-{{- end -}}
-{{- end -}}
+{{ else }}
+  value: {{ include "kubegems.git.password" . }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the proper otel environment variables
+{{ include "kubegems.section.env" (dict "name" "kubegems-api" "root" .Values.api ) }}
+*/}}
+{{- define "kubegems.section.env" }}
+- name: KUBEGEMS_DEBUG
+  value: {{ ternary "true" "false" (or .root.image.debug ) | quote }}
+- name: LOG_LEVEL
+  value: {{ .root.logLevel }}
+{{- include "kubegems.otel.env" . }}
+{{- end }}
+
+{{/*
+Return the proper otel environment variables
+{{ include "kubegems.otel.env" (dict "name" "kubegems-api" "root" .Values.api ) }}
+*/}}
+{{- define "kubegems.otel.env" }}
+{{- if and .root.opentelemetry .root.opentelemetry.enabled }}
+- name: OTEL_ENABLE
+  value: "true"
+- name: OTEL_K8S_NODE_NAME
+  valueFrom:
+    fieldRef:
+      apiVersion: v1
+      fieldPath: spec.nodeName
+- name: OTEL_K8S_POD_NAME
+  valueFrom:
+    fieldRef:
+      apiVersion: v1
+      fieldPath: metadata.name
+- name: OTEL_SERVICE_NAME
+  value: {{ .name }}
+- name: OTEL_K8S_NAMESPACE
+  valueFrom:
+    fieldRef:
+      apiVersion: v1
+      fieldPath: metadata.namespace
+- name: OTEL_RESOURCE_ATTRIBUTES
+  value: service.name=$(OTEL_SERVICE_NAME),namespace=$(OTEL_K8S_NAMESPACE),node=$(OTEL_K8S_NODE_NAME),pod=$(OTEL_K8S_POD_NAME)
+- name: OTEL_EXPORTER_OTLP_ENDPOINT
+  value: {{ .root.opentelemetry.endpoint }}
+- name: OTEL_EXPORTER_OTLP_INSECURE
+  value: "true"
+{{- end }}
+{{- end }}

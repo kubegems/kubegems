@@ -15,10 +15,9 @@
 package workloadreshandler
 
 import (
+	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
-
-	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -30,17 +29,18 @@ var (
 )
 
 // ListWorkload 列表 Workload
-// @Tags        ResourceList
-// @Summary     Workload列表
-// @Description Workload列表
-// @Accept      json
-// @Produce     json
-// @Param       cluster      query    string                                          false "cluster"
-// @Param       namespace    query    string                                          false "namespace"
-// @Param       workloadtype query    string                                          false "workloadtype"
-// @Success     200          {object} handlers.ResponseStruct{Data=[]models.Workload} "Workload"
-// @Router      /v1/resources/workload [get]
-// @Security    JWT
+//
+//	@Tags			ResourceList
+//	@Summary		Workload列表
+//	@Description	Workload列表
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster			query		string													false	"cluster"
+//	@Param			namespace		query		string													false	"namespace"
+//	@Param			workloadtype	query		string													false	"workloadtype"
+//	@Success		200				{object}	response.Page[models.Workload]{Data=[]models.Workload}	"Workload"
+//	@Router			/v1/resources/workload [get]
+//	@Security		JWT
 func (h *WorkloadHandler) ListWorkload(c *gin.Context) {
 	cluster := c.Query("cluster")
 	namespace := c.Query("namespace")
@@ -69,15 +69,16 @@ func (h *WorkloadHandler) ListWorkload(c *gin.Context) {
 }
 
 // Delete 删除 Workload
-// @Tags        ResourceList
-// @Summary     Workload删除
-// @Description Workload删除
-// @Accept      json
-// @Produce     json
-// @Param       workload_id path     uint                    true "workload_id"
-// @Success     204         {object} handlers.ResponseStruct resp
-// @Router      /v1/resources/workload/{workload_id} [delete]
-// @Security    JWT
+//
+//	@Tags			ResourceList
+//	@Summary		Workload删除
+//	@Description	Workload删除
+//	@Accept			json
+//	@Produce		json
+//	@Param			workload_id	path		uint											true	"workload_id"
+//	@Success		204			{object}	handlers.ResponseStruct{Data=models.Workload}	"workload"
+//	@Router			/v1/resources/workload/{workload_id} [delete]
+//	@Security		JWT
 func (h *WorkloadHandler) DeleteWorkload(c *gin.Context) {
 	var obj models.Workload
 	if err := h.GetDB().WithContext(c.Request.Context()).Delete(&obj, c.Param("workload_id")).Error; err != nil {

@@ -1,0 +1,7 @@
+global:
+  imageRegistry: ""
+  storageClass: ""
+  kubegemsVersion: ""
+
+# @title 启用
+enabled: true

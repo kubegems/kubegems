@@ -12,7 +12,7 @@ Return the proper image name
 {{- if .global.kubegemsVersion }}
     {{- $tag = .global.kubegemsVersion | toString -}}
 {{- end }}
-{{- if .global.imageRegistry }}
+{{- if and .global.imageRegistry (or (eq $registryName "docker.io") (not $registryName))  -}}
     {{- $registryName = .global.imageRegistry -}}
 {{- end -}}
 {{- if $registryName }}
@@ -105,6 +105,22 @@ Return the proper serviceAccount name
     {{ default (include "kubegems-edge.server.fullname" .) .Values.server.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.server.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubegems-edge.task.fullname" -}}
+{{- printf "%s-task" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "kubegems-edge.task.image" -}}
+{{ include "kubegems.images.image" (dict "imageRoot" .Values.task.image "global" .Values.global "root" .) }}
+{{- end -}}
+
+{{- define "kubegems-edge.task.serviceAccountName" -}}
+{{- if .Values.task.serviceAccount.create -}}
+    {{ default (include "kubegems-edge.task.fullname" .) .Values.task.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.task.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
 

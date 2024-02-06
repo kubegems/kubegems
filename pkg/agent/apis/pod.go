@@ -43,8 +43,8 @@ import (
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/handlers"
-	"kubegems.io/kubegems/pkg/utils/httputil/request"
-	"kubegems.io/kubegems/pkg/utils/httputil/response"
+	"kubegems.io/library/rest/request"
+	"kubegems.io/library/rest/response"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -52,23 +52,23 @@ type PodHandler struct {
 	cluster cluster.Interface
 }
 
-// @Tags        Agent.V1
-// @Summary     获取Pod列表数据
-// @Description 获取Pod列表数据
-// @Accept      json
-// @Produce     json
-// @Param       order         query    string                                                         false "page"
-// @Param       search        query    string                                                         false "search"
-// @Param       page          query    int                                                            false "page"
-// @Param       size          query    int                                                            false "page"
-// @Param       namespace     path     string                                                         true  "namespace"
-// @Param       fieldSelector query    string                                                         false "fieldSelector, 只支持podstatus={xxx}格式"
-// @Param       cluster       path     string                                                         true  "cluster"
-// @Param       topkind       query    string                                                         false "topkind(Deployment,StatefulSet,DaemonSet,Job,Node)"
-// @Param       topname       query    string                                                         false "topname"
-// @Success     200           {object} handlers.ResponseStruct{Data=handlers.PageData{List=[]object}} "Pod"
-// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods [get]
-// @Security    JWT
+// @Tags			Agent.V1
+// @Summary		获取Pod列表数据
+// @Description	获取Pod列表数据
+// @Accept			json
+// @Produce		json
+// @Param			order			query		string															false	"page"
+// @Param			search			query		string															false	"search"
+// @Param			page			query		int																false	"page"
+// @Param			size			query		int																false	"page"
+// @Param			namespace		path		string															true	"namespace"
+// @Param			fieldSelector	query		string															false	"fieldSelector, 只支持podstatus={xxx}格式"
+// @Param			cluster			path		string															true	"cluster"
+// @Param			topkind			query		string															false	"topkind(Deployment,StatefulSet,DaemonSet,Job,Node)"
+// @Param			topname			query		string															false	"topname"
+// @Success		200				{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]object}}	"Pod"
+// @Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods [get]
+// @Security		JWT
 func (h *PodHandler) List(c *gin.Context) {
 	ns := c.Param("namespace")
 	// 网关namespace必须是kubegems-gateway
@@ -190,19 +190,20 @@ func filterByNodename(c *gin.Context, pods []v1.Pod) []v1.Pod {
 }
 
 // ExecContainer 进入容器交互执行命令
-// @Tags        Agent.V1
-// @Summary     进入容器交互执行命令(websocket)
-// @Description 进入容器交互执行命令(websocket)
-// @Param       cluster   path     string true "cluster"
-// @Param       namespace path     string true "namespace"
-// @Param       pod       path     string true "pod"
-// @Param       container query    string true "container"
-// @Param       stream    query    string true  "stream must be true"
-// @Param       token     query    string true  "token"
-// @Param       shell     query    string false "default sh, choice(bash,ash,zsh)"
-// @Success     200       {object} object "ws"
-// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/shell [get]
-// @Security    JWT
+//
+//	@Tags			Agent.V1
+//	@Summary		进入容器交互执行命令(websocket)
+//	@Description	进入容器交互执行命令(websocket)
+//	@Param			cluster		path		string	true	"cluster"
+//	@Param			namespace	path		string	true	"namespace"
+//	@Param			pod			path		string	true	"pod"
+//	@Param			container	query		string	true	"container"
+//	@Param			stream		query		string	true	"stream must be true"
+//	@Param			token		query		string	true	"token"
+//	@Param			shell		query		string	false	"default sh, choice(bash,ash,zsh)"
+//	@Success		200			{object}	object	"ws"
+//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/shell [get]
+//	@Security		JWT
 func (h *PodHandler) ExecPods(c *gin.Context) {
 	RunWebSocketStream(c.Writer, c.Request, func(ctx context.Context, stream remotecommand.StreamOptions) error {
 		pe := PodCmdExecutor{
@@ -226,19 +227,20 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 }
 
 // GetContainerLogs 获取容器的stdout输出
-// @Tags        Agent.V1
-// @Summary     实时获取日志STDOUT输出(websocket)
-// @Description 实时获取日志STDOUT输出(websocket)
-// @Param       cluster   path     string true "cluster"
-// @Param       namespace path     string true "namespace"
-// @Param       pod       path     string true "pod"
-// @Param       container query    string true "container"
-// @Param       stream    query    string true  "stream must be true"
-// @Param       follow    query    string true  "follow"
-// @Param       tail      query    int    false "tail line (default 1000)"
-// @Success     200       {object} object "ws"
-// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/logs [get]
-// @Security    JWT
+//
+//	@Tags			Agent.V1
+//	@Summary		实时获取日志STDOUT输出(websocket)
+//	@Description	实时获取日志STDOUT输出(websocket)
+//	@Param			cluster		path		string	true	"cluster"
+//	@Param			namespace	path		string	true	"namespace"
+//	@Param			pod			path		string	true	"pod"
+//	@Param			container	query		string	true	"container"
+//	@Param			stream		query		string	true	"stream must be true"
+//	@Param			follow		query		string	true	"follow"
+//	@Param			tail		query		int		false	"tail line (default 1000)"
+//	@Success		200			{object}	object	"ws"
+//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/logs [get]
+//	@Security		JWT
 func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 	ws, err := ws.Upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -268,17 +270,18 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 }
 
 // DownloadFileFromPod 从容器下载文件
-// @Tags        Agent.V1
-// @Summary     从容器下载文件
-// @Description 从容器下载文件
-// @Param       cluster   path     string true  "cluster"
-// @Param       namespace path     string true  "namespace"
-// @Param       pod       path     string true  "pod"
-// @Param       container query    string true  "container"
-// @Param       filename  query    string true "filename"
-// @Success     200       {object} object "ws"
-// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file [get]
-// @Security    JWT
+//
+//	@Tags			Agent.V1
+//	@Summary		从容器下载文件
+//	@Description	从容器下载文件
+//	@Param			cluster		path		string	true	"cluster"
+//	@Param			namespace	path		string	true	"namespace"
+//	@Param			pod			path		string	true	"pod"
+//	@Param			container	query		string	true	"container"
+//	@Param			filename	query		string	true	"filename"
+//	@Success		200			{object}	object	"ws"
+//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/file [get]
+//	@Security		JWT
 func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
 	filename := paramFromHeaderOrQuery(c, "filename", "")
 	if e := validateFilename(filename); e != nil {
@@ -299,17 +302,18 @@ func (h *PodHandler) DownloadFileFromPod(c *gin.Context) {
 }
 
 // ListDir list files in the directory
-// @Tags        Agent.V1
-// @Summary     list files in the directory
-// @Description list files in the directory
-// @Param       cluster   path     string true  "cluster"
-// @Param       namespace path     string true  "namespace"
-// @Param       pod       path     string true  "pod"
-// @Param       container query    string true  "container"
-// @Param       directory  query    string true "directory"
-// @Success     200       {object} object "ok"
-// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/ls [get]
-// @Security    JWT
+//
+//	@Tags			Agent.V1
+//	@Summary		list files in the directory
+//	@Description	list files in the directory
+//	@Param			cluster		path		string	true	"cluster"
+//	@Param			namespace	path		string	true	"namespace"
+//	@Param			pod			path		string	true	"pod"
+//	@Param			container	query		string	true	"container"
+//	@Param			directory	query		string	true	"directory"
+//	@Success		200			{object}	object	"ok"
+//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/ls [get]
+//	@Security		JWT
 func (h *PodHandler) ListDir(c *gin.Context) {
 	// NOTICE: not support windows now!
 	ctx := c.Request.Context()
@@ -352,17 +356,18 @@ func (h *PodHandler) ListDir(c *gin.Context) {
 }
 
 // UploadFileToContainer upload files to container
-// @Tags        Agent.V1
-// @Summary     upload files to container
-// @Description upload files to container
-// @Param       cluster   path     string true  "cluster"
-// @Param       namespace path     string true  "namespace"
-// @Param       pod       path     string true  "pod"
-// @Param       container query    string true  "container"
-// @Param       filename  query    string true "filename"
-// @Success     200       {object} object "ws"
-// @Router      /v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile [post]
-// @Security    JWT
+//
+//	@Tags			Agent.V1
+//	@Summary		upload files to container
+//	@Description	upload files to container
+//	@Param			cluster		path		string	true	"cluster"
+//	@Param			namespace	path		string	true	"namespace"
+//	@Param			pod			path		string	true	"pod"
+//	@Param			container	query		string	true	"container"
+//	@Param			filename	query		string	true	"filename"
+//	@Success		200			{object}	object	"ws"
+//	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/upfile [post]
+//	@Security		JWT
 func (h *PodHandler) UploadFileToContainer(c *gin.Context) {
 	fd := FileTransfer{
 		Cluster:   h.cluster,
@@ -420,6 +425,8 @@ func (fd *FileTransfer) Download(c *gin.Context) error {
 			"filename": path.Base(fd.Filename) + ".tgz",
 		}),
 	)
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Transfer-Encoding", "chunked")
 	pe := PodCmdExecutor{
 		Cluster: fd.Cluster,
 		Pod: client.ObjectKey{
@@ -430,10 +437,11 @@ func (fd *FileTransfer) Download(c *gin.Context) error {
 			Container: fd.Container,
 			Stdout:    true,
 			Stderr:    true,
-			Command:   []string{"tar", "cf", "-", fd.Filename},
+			Command:   []string{"tar", "czf", "-", fd.Filename},
 		},
 		StreamOptions: remotecommand.StreamOptions{
 			Stdout: RateLimitWriter(c.Request.Context(), c.Writer, 1024*1024),
+			// Stdout: c.Writer,
 			Stderr: &fakeStdoutWriter{},
 		},
 	}
@@ -447,6 +455,7 @@ func (fd *FileTransfer) Upload(c *gin.Context) error {
 	}
 	return fd.upload(c, uploadFormData)
 }
+
 func (fd *FileTransfer) UploadLocal(ctx context.Context, localfile, dest string) error {
 	uploadFormData := &uploadLocalForm{
 		Dest:  dest,
@@ -565,12 +574,6 @@ type rateLimitwriter struct {
 	ratelimitor  *rate.Limiter
 }
 
-func (rw *rateLimitwriter) waitUtilCanDo(n int) {
-	if !rw.ratelimitor.AllowN(time.Now(), n) {
-		rw.ratelimitor.WaitN(rw.ctx, n)
-	}
-}
-
 func (rw *rateLimitwriter) Write(p []byte) (int, error) {
 	max := rw.ratelimitor.Burst()
 	pl := len(p)
@@ -579,7 +582,9 @@ func (rw *rateLimitwriter) Write(p []byte) (int, error) {
 		page := pl / max
 		last := pl % max
 		for idx := 0; idx < page; idx++ {
-			rw.waitUtilCanDo(max)
+			if e := rw.ratelimitor.WaitN(rw.ctx, max); e != nil {
+				return writed, e
+			}
 			tmpn, err := rw.originWriter.Write(p[idx*max : idx*max+max])
 			writed += tmpn
 			if err != nil {
@@ -587,20 +592,24 @@ func (rw *rateLimitwriter) Write(p []byte) (int, error) {
 			}
 		}
 		if last != 0 {
-			rw.waitUtilCanDo(last)
+			if e := rw.ratelimitor.WaitN(rw.ctx, last); e != nil {
+				return writed, e
+			}
 			tmpn, err := rw.originWriter.Write(p[page*max : pl])
 			writed += tmpn
 			return writed, err
 		}
 		return writed, nil
 	} else {
-		rw.waitUtilCanDo(pl)
+		if e := rw.ratelimitor.WaitN(rw.ctx, pl); e != nil {
+			return 0, e
+		}
 		return rw.originWriter.Write(p)
 	}
 }
 
 func RateLimitWriter(ctx context.Context, w io.Writer, speed int) io.Writer {
-	l := rate.NewLimiter(rate.Limit(speed), speed*2)
+	l := rate.NewLimiter(rate.Limit(speed), speed*10)
 	return &rateLimitwriter{
 		ctx:          ctx,
 		originWriter: w,
