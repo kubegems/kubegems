@@ -1,6 +1,6 @@
 module kubegems.io/kubegems
 
-go 1.20
+go 1.21
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1
