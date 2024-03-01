@@ -159,6 +159,7 @@ spec:
                 - helm
                 - kustomize
                 - template
+                - native
                 type: string
               path:
                 description: Path is the path in a tarball to the chart/kustomize.

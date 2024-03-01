@@ -134,13 +134,14 @@ type ManagedResource struct {
 
 type Phase string
 
-// +kubebuilder:validation:Enum=helm;kustomize;template
+// +kubebuilder:validation:Enum=helm;kustomize;template;native
 type BundleKind string
 
 const (
 	BundleKindHelm      BundleKind = "helm"
 	BundleKindKustomize BundleKind = "kustomize"
 	BundleKindTemplate  BundleKind = "template"
+	BundleKindNative    BundleKind = "native"
 )
 
 const (
