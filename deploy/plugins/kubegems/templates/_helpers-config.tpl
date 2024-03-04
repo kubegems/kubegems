@@ -21,8 +21,6 @@ Return the proper database host
 {{- define "kubegems.database.host" -}}
 {{- if .Values.mysql.enabled -}}
     {{- printf "%s-headless" (include "kubegems.mysql.fullname" .)  | trunc 63 | trimSuffix "-" -}}
-{{- else if .Values.postgresql.enabled -}}
-    {{- include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) -}}
 {{- else if .Values.externalDatabase.enabled -}}
     {{- .Values.externalDatabase.host -}}
 {{- end -}}
