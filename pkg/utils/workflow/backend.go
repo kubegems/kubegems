@@ -83,6 +83,7 @@ func WithAutoACK(ack bool) SubOption {
 }
 
 // 队列
+// nolint: funlen,gocognit
 func (b *RedisBackend) Sub(ctx context.Context, name string, onchange OnChangeFunc, opts ...SubOption) error {
 	options := &SubOptions{Concurrency: 1}
 	for _, opt := range opts {
@@ -137,8 +138,8 @@ func (b *RedisBackend) Sub(ctx context.Context, name string, onchange OnChangeFu
 				return err
 			}
 
-			for _, msgs := range result {
-				for _, msg := range msgs.Messages {
+			for _, stream := range result {
+				for _, msg := range stream.Messages {
 					for k, v := range msg.Values {
 						val := []byte{}
 						switch data := v.(type) {
@@ -152,21 +153,19 @@ func (b *RedisBackend) Sub(ctx context.Context, name string, onchange OnChangeFu
 						case <-ctx.Done():
 							return nil
 						case concurrentchan <- struct{}{}:
-							go func(k string, v []byte) {
+							go func(stream redis.XStream, msgid string, k string, v []byte) {
 								if err := onchange(ctx, k, v); err != nil {
 									if options.AutoACK {
 										// ack
-										b.cli.XAck(ctx, msgs.Stream, consumergroup, msg.ID)
+										b.cli.XAck(ctx, stream.Stream, consumergroup, msgid)
 									}
 								} else {
 									// ack
-									b.cli.XAck(ctx, msgs.Stream, consumergroup, msg.ID)
+									b.cli.XAck(ctx, stream.Stream, consumergroup, msgid)
 								}
-
 								// put it back
 								<-concurrentchan
-							}(k, val)
-
+							}(stream, msg.ID, k, val)
 						}
 					}
 				}
@@ -207,11 +206,9 @@ func (b *RedisBackend) List(ctx context.Context, keyprefix string) (map[string][
 
 	list := map[string][]byte{}
 	for iter.Next(ctx) {
-
 		if err := iter.Err(); err != nil {
 			return nil, err
 		}
-
 		key := iter.Val()
 		val, err := b.cli.Get(ctx, key).Bytes()
 		if err != nil {
