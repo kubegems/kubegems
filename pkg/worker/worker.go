@@ -48,9 +48,15 @@ func prepareDependencies(ctx context.Context, options *Options) (*Dependencies, 
 	log.SetLevel(options.LogLevel)
 
 	// redis
-	rediscli, err := redis.NewClient(options.Redis)
-	if err != nil {
-		return nil, err
+	var rediscli *redis.Client
+	if options.Redis.Addr != "" {
+		newrediscli, err := redis.NewClient(options.Redis)
+		if err != nil {
+			return nil, err
+		}
+		rediscli = newrediscli
+	} else {
+		log.Info("redis not configured")
 	}
 	// database
 	databasecli, err := database.NewDatabase(options.Mysql)
@@ -114,7 +120,7 @@ func Run(ctx context.Context, options *Options) error {
 		return exporterHandler.Run(ctx, options.Exporter)
 	})
 	eg.Go(func() error {
-		return task.Run(ctx, deps.Redis, deps.Databse, deps.Git, deps.Argocli, options.AppStore, deps.Agentscli)
+		return task.Run(ctx, options.Listen, deps.Redis, deps.Databse, deps.Git, deps.Argocli, options.AppStore, deps.Agentscli)
 	})
 	return eg.Wait()
 }

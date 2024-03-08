@@ -20,54 +20,38 @@ import (
 	"errors"
 	"path"
 	"sort"
-	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/robfig/cron/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubegems.io/kubegems/pkg/log"
 )
 
-type Client struct {
-	backend Backend
-	crontab *cron.Cron
+type Client interface {
+	SubmitTask(ctx context.Context, task Task) error
+	ListTasks(ctx context.Context, group, name string) ([]Task, error)
+	RemoveTask(ctx context.Context, group, name string, uid string) error
+	WatchTasks(ctx context.Context, group, name string, onchange func(ctx context.Context, task *Task) error) error
 }
 
-func NewClient(options *Options) *Client {
+type DefaultClient struct {
+	backend Backend
+}
+
+func NewClient(options *Options) Client {
 	backend := NewRedisBackend(options.Addr, options.Username, options.Password)
 	return NewClientFromBackend(backend)
 }
 
-func NewClientFromRedisClient(cli *redis.Client) *Client {
+func NewClientFromRedisClient(cli *redis.Client) Client {
 	return NewClientFromBackend(NewRedisBackendFromClient(cli))
 }
 
-func NewClientFromBackend(backend Backend) *Client {
-	cli := &Client{
-		backend: backend,
-		crontab: cron.New(),
-	}
-	go cli.crontab.Run()
+func NewClientFromBackend(backend Backend) Client {
+	cli := &DefaultClient{backend: backend}
 	return cli
 }
 
-func (c *Client) SubmitCronTask(ctx context.Context, task Task, crontabexp string) error {
-	log := log.FromContextOrDiscard(ctx).WithValues("task", task, "cron", crontabexp)
-	log.Info("register cron task")
-	_, err := c.crontab.AddFunc(crontabexp, func() {
-		log.Info("trigger a cron task run", "now", time.Now())
-		if err := c.SubmitTask(ctx, task); err != nil {
-			log.Error(err, "run crontab task failed")
-		}
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Client) SubmitTask(ctx context.Context, task Task) error {
+func (c *DefaultClient) SubmitTask(ctx context.Context, task Task) error {
 	if task.Name == "" {
 		return errors.New("empty task name")
 	}
@@ -90,7 +74,7 @@ func (c *Client) SubmitTask(ctx context.Context, task Task) error {
 	return c.backend.Pub(ctx, "submit", "", content)
 }
 
-func (c *Client) ListTasks(ctx context.Context, group, name string) ([]Task, error) {
+func (c *DefaultClient) ListTasks(ctx context.Context, group, name string) ([]Task, error) {
 	keyprefix := group + "/" + name
 	if group == "" && name == "" {
 		keyprefix = ""
@@ -115,18 +99,22 @@ func (c *Client) ListTasks(ctx context.Context, group, name string) ([]Task, err
 	return list, nil
 }
 
-func (c *Client) RemoveTask(ctx context.Context, group, name string, uid string) error {
+func (c *DefaultClient) RemoveTask(ctx context.Context, group, name string, uid string) error {
 	keyprefix := path.Join(group, name, uid)
 	return c.backend.Del(ctx, keyprefix)
 }
 
-func (c *Client) WatchTasks(ctx context.Context, group, name string, onchange func(ctx context.Context, task *Task) error) error {
+func (c *DefaultClient) WatchTasks(ctx context.Context, group, name string, onchange func(ctx context.Context, task *Task) error) error {
 	keyprefix := group + "/" + name
 	if group == "" && name == "" {
 		keyprefix = ""
 	}
 
 	return c.backend.Watch(ctx, keyprefix, func(ctx context.Context, _ string, val []byte) error {
+		if len(val) == 0 {
+			// is delete
+			return nil
+		}
 		task := &Task{}
 		if err := json.Unmarshal(val, task); err != nil {
 			return err

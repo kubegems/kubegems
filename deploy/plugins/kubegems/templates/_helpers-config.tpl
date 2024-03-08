@@ -138,6 +138,12 @@ Return the proper redis port
 {{- end -}}
 {{- end -}}
 
+{{- define "kubegems.redis.address" -}}
+{{- if (include "kubegems.redis.host") -}}
+    {{- printf "%s:%s" (include "kubegems.redis.host" .) (include "kubegems.redis.port" .) -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Return the proper database password
 */}}
@@ -365,8 +371,12 @@ Return the proper common environment variables
       name: {{ include "kubegems.database.password.secret" . }}
       key: {{ include "kubegems.database.password.secret.key" . }}
 {{- end }}
+
+{{- if (include "kubegems.redis.address" .)  -}}
 - name: REDIS_ADDR
-  value: {{ printf "%s:%s" (include "kubegems.redis.host" .) (include "kubegems.redis.port" .) | quote }}
+  value: {{ include "kubegems.redis.address" . | quote }}
+{{- end }}
+
 {{- if (include "kubegems.redis.password.secret" . ) }}
 - name: REDIS_PASSWORD
   valueFrom:

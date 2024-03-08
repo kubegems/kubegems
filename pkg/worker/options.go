@@ -25,6 +25,7 @@ import (
 )
 
 type Options struct {
+	Listen   string                      `json:"listen,omitempty"`
 	AppStore *helm.Options               `json:"appStore,omitempty"`
 	Argo     *argo.Options               `json:"argo,omitempty"`
 	Dump     *dump.DumpOptions           `json:"dump,omitempty"`
@@ -37,6 +38,7 @@ type Options struct {
 
 func DefaultOptions() *Options {
 	return &Options{
+		Listen:   ":8080",
 		AppStore: helm.NewDefaultOptions(),
 		Argo:     argo.NewDefaultArgoOptions(),
 		Dump:     dump.NewDefaultDumpOptions(),

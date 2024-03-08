@@ -16,7 +16,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"path"
 
 	"kubegems.io/kubegems/pkg/utils/workflow"
@@ -27,7 +26,7 @@ const (
 )
 
 type TaskProcessor struct {
-	Workflowcli *workflow.Client
+	Workflowcli workflow.Client
 }
 
 func (p *TaskProcessor) SubmitTask(ctx context.Context, ref PathRef, typ string, steps []workflow.Step) error {
@@ -56,19 +55,9 @@ func (p *TaskProcessor) ListTasks(ctx context.Context, ref PathRef, typ string) 
 	return tasks, nil
 }
 
-func (p *TaskProcessor) GetTaskLatest(ctx context.Context, ref PathRef, typ string) (*workflow.Task, error) {
-	tasks, err := p.Workflowcli.ListTasks(ctx, TaskGroupApplication, TaskNameOf(ref, typ))
-	if err != nil {
-		return nil, err
-	}
-	if len(tasks) == 0 {
-		return nil, fmt.Errorf("no tasks found for task %s", ref.Name)
-	}
-	return &tasks[0], nil
-}
-
 func (p *TaskProcessor) WatchTasks(ctx context.Context, ref PathRef,
-	typ string, callback func(ctx context.Context, task *workflow.Task) error) error {
+	typ string, callback func(ctx context.Context, task *workflow.Task) error,
+) error {
 	return p.Workflowcli.WatchTasks(ctx, TaskGroupApplication, TaskNameOf(ref, typ), callback)
 }
 

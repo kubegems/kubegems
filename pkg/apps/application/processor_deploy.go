@@ -48,7 +48,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/git"
 	"kubegems.io/kubegems/pkg/utils/kube"
-	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/workflow"
 	"sigs.k8s.io/yaml"
 )
@@ -87,14 +86,13 @@ type ApplicationProcessor struct {
 	argostatuscache *sync.Map
 }
 
-func NewApplicationProcessor(db *database.Database, gitp git.Provider, argo *argo.Client, redis *redis.Client, agents *agents.ClientSet) *ApplicationProcessor {
+func NewApplicationProcessor(db *database.Database, gitp git.Provider, argo *argo.Client, tp *TaskProcessor, agents *agents.ClientSet) *ApplicationProcessor {
 	p := &ApplicationProcessor{
-		Agents:   agents,
-		Argo:     argo,
-		DataBase: &DatabseProcessor{DB: db.DB()},
-		Manifest: &ManifestProcessor{GitProvider: gitp},
-		Task:     &TaskProcessor{Workflowcli: workflow.NewClientFromRedisClient(redis.Client)},
-
+		Agents:          agents,
+		Argo:            argo,
+		DataBase:        &DatabseProcessor{DB: db.DB()},
+		Manifest:        &ManifestProcessor{GitProvider: gitp},
+		Task:            tp,
 		argostatuscache: &sync.Map{},
 	}
 	return p

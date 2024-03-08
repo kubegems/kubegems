@@ -42,7 +42,7 @@ func (o *Options) ToDsn(db int) string {
 
 func NewDefaultOptions() *Options {
 	return &Options{
-		Addr:     "kubegems-redis-headless:6379",
+		Addr:     "", // keep empty to avoid using redis
 		Password: "",
 	}
 }
