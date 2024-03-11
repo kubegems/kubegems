@@ -38,3 +38,5 @@ https://charts.kubegems.io/kubegems tke-gpu-manager 1.1.5
 https://charts.kubegems.io/kubegems tracing 2.34.1
 https://charts.kubegems.io/kubegems volume-snapshoter 5.0.1
 https://juicedata.github.io/charts juicefs-csi-driver 0.19.2
+https://charts.kubegems.io/kubegems tidb 1.0.0
+https://charts.pingcap.org tidb-operator v1.5.2
