@@ -22,7 +22,6 @@ import (
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/msgbus/switcher"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
-	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/retry"
 	"kubegems.io/kubegems/pkg/utils/workflow"
 )
@@ -32,11 +31,11 @@ type TaskProducer struct {
 	ApplicationTask *application.TaskProcessor
 }
 
-func RunTasksCollector(ctx context.Context, ms *switcher.MessageSwitcher, redis *redis.Client) error {
+func RunTasksCollector(ctx context.Context, ms *switcher.MessageSwitcher) error {
 	task := &TaskProducer{
 		Bus: ms,
 		ApplicationTask: &application.TaskProcessor{
-			Workflowcli: workflow.NewClientFromRedisClient(redis.Client),
+			Workflowcli: workflow.NewDefaultRemoteClient(),
 		},
 	}
 	return task.Run(ctx)

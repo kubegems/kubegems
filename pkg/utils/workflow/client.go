@@ -21,7 +21,6 @@ import (
 	"path"
 	"sort"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -35,15 +34,6 @@ type Client interface {
 
 type DefaultClient struct {
 	backend Backend
-}
-
-func NewClient(options *Options) Client {
-	backend := NewRedisBackend(options.Addr, options.Username, options.Password)
-	return NewClientFromBackend(backend)
-}
-
-func NewClientFromRedisClient(cli *redis.Client) Client {
-	return NewClientFromBackend(NewRedisBackendFromClient(cli))
 }
 
 func NewClientFromBackend(backend Backend) Client {

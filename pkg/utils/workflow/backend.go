@@ -54,11 +54,6 @@ type RedisBackend struct {
 	cli         *redis.Client
 }
 
-func NewRedisBackend(addr, username, password string) *RedisBackend {
-	cli := redis.NewClient(&redis.Options{Addr: addr, Username: username, Password: password})
-	return NewRedisBackendFromClient(cli)
-}
-
 func NewRedisBackendFromClient(c *redis.Client) *RedisBackend {
 	return &RedisBackend{
 		kvprefix:    "/workflow-store/",
