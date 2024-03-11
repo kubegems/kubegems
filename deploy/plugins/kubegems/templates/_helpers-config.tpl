@@ -139,7 +139,7 @@ Return the proper redis port
 {{- end -}}
 
 {{- define "kubegems.redis.address" -}}
-{{- if (include "kubegems.redis.host") -}}
+{{- if (include "kubegems.redis.host" .) -}}
     {{- printf "%s:%s" (include "kubegems.redis.host" .) (include "kubegems.redis.port" .) -}}
 {{- end -}}
 {{- end -}}

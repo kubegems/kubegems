@@ -48,7 +48,7 @@ spec:
   kind: helm
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
-  version: 1.24.3
+  version: 1.24.4
   values:
     mysql:
       enabled: false
@@ -88,7 +88,7 @@ spec:
   installNamespace: kubegems-local
   kind: helm
   url: https://charts.kubegems.io/kubegems
-  version: 1.24.3
+  version: 1.24.4
   valuesFrom:
     - kind: ConfigMap
       name: kubegems-global-values

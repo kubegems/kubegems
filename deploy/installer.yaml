@@ -160,6 +160,7 @@ spec:
                 - helm
                 - kustomize
                 - template
+                - native
                 type: string
               path:
                 description: Path is the path in a tarball to the chart/kustomize.
@@ -275,7 +276,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.3
+    helm.sh/chart: kubegems-installer-1.24.4
   name: kubegems-installer
   namespace: kubegems-installer
 ---
@@ -292,7 +293,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.3
+    helm.sh/chart: kubegems-installer-1.24.4
     plugins.kubegems.io/is-plugin-repo: "true"
   name: plugin-repository-kubegems
   namespace: kubegems-installer
@@ -308,7 +309,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.3
+    helm.sh/chart: kubegems-installer-1.24.4
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-view: "true"
@@ -334,7 +335,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.3
+    helm.sh/chart: kubegems-installer-1.24.4
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
   name: kubegems-installer-edit
@@ -363,7 +364,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.3
+    helm.sh/chart: kubegems-installer-1.24.4
   name: kubegems-installer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -387,7 +388,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.3
+    helm.sh/chart: kubegems-installer-1.24.4
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -417,7 +418,7 @@ metadata:
     app.kubernetes.io/instance: kubegems-installer
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: kubegems-installer
-    helm.sh/chart: kubegems-installer-1.24.3
+    helm.sh/chart: kubegems-installer-1.24.4
   name: kubegems-installer
   namespace: kubegems-installer
 spec:
@@ -436,7 +437,7 @@ spec:
         app.kubernetes.io/instance: kubegems-installer
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: kubegems-installer
-        helm.sh/chart: kubegems-installer-1.24.3
+        helm.sh/chart: kubegems-installer-1.24.4
     spec:
       containers:
       - args:
@@ -446,7 +447,7 @@ spec:
         env:
         - name: LOG_LEVEL
           value: debug
-        image: registry.cn-beijing.aliyuncs.com/kubegems/kubegems:v1.24.3
+        image: registry.cn-beijing.aliyuncs.com/kubegems/kubegems:v1.24.4
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 6
