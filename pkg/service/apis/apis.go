@@ -25,7 +25,6 @@ import (
 	"kubegems.io/kubegems/pkg/service/options"
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
-	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/library/rest/api"
 )
 
@@ -35,7 +34,6 @@ type Dependencies struct {
 	Opts     *options.Options
 	Agents   *agents.ClientSet
 	Database *database.Database
-	Redis    *redis.Client
 }
 
 func InitAPI(ctx context.Context, deps Dependencies) (http.Handler, error) {

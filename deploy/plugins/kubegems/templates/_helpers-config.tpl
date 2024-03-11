@@ -371,18 +371,20 @@ Return the proper common environment variables
       name: {{ include "kubegems.database.password.secret" . }}
       key: {{ include "kubegems.database.password.secret.key" . }}
 {{- end }}
-
+{{/* optional redis config */}}
 {{- if (include "kubegems.redis.address" .)  -}}
 - name: REDIS_ADDR
   value: {{ include "kubegems.redis.address" . | quote }}
-{{- end }}
-
 {{- if (include "kubegems.redis.password.secret" . ) }}
 - name: REDIS_PASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ include "kubegems.redis.password.secret" . }}
       key: {{ include "kubegems.redis.password.secret.key" . }}
+{{- else if (include "kubegems.redis.password" . ) }}
+- name: REDIS_PASSWORD
+  value: {{ include "kubegems.redis.password" . | quote }}
+{{- end -}}
 {{- end }}
 {{- end }}
 

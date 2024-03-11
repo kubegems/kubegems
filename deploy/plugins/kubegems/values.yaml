@@ -2008,7 +2008,7 @@ externalDatabase:
 ## @param redis.volumePermissions.image.repository  Repository override
 ## @param redis.image.repository redis repository override
 redis:
-  enabled: true
+  enabled: false
   architecture: standalone
   image:
     repository: kubegems/redis

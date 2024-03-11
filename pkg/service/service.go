@@ -46,15 +46,17 @@ func prepareDependencies(ctx context.Context, opts *options.Options) (*Dependenc
 	log.SetLevel(opts.LogLevel)
 
 	// redis
-	rediscli, err := redis.NewClient(opts.Redis)
-	if err != nil {
-		log.Errorf("failed to init redis: %v", err)
-		return nil, err
-	}
-	_, err = rediscli.Ping(ctx).Result()
-	if err != nil {
-		log.Errorf("failed to ping redis: %v", err)
-		return nil, err
+	var rediscli *redis.Client
+	if opts.Redis.Addr != "" {
+		rediscli, err := redis.NewClient(opts.Redis)
+		if err != nil {
+			log.Errorf("failed to init redis: %v", err)
+			return nil, err
+		}
+		if _, err = rediscli.Ping(ctx).Result(); err != nil {
+			log.Errorf("failed to ping redis: %v", err)
+			return nil, err
+		}
 	}
 
 	// database
@@ -103,7 +105,6 @@ func Run(ctx context.Context, opts *options.Options) error {
 		Opts:        opts,
 		Agents:      deps.Agentscli,
 		Database:    deps.Databse,
-		Redis:       deps.Redis,
 		Argo:        deps.Argo,
 		GitProvider: deps.Git,
 	}
@@ -121,7 +122,7 @@ func Run(ctx context.Context, opts *options.Options) error {
 	// run
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		return router.Run(ctx)
+		return router.Run(ctx, deps.Redis)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)

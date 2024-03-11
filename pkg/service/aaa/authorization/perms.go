@@ -55,7 +55,7 @@ type PermissionManager interface {
 }
 
 type DefaultPermissionManager struct {
-	Cache  *cache.ModelCache
+	Cache  cache.ModelCache
 	Userif aaa.ContextUserOperator
 }
 
