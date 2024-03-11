@@ -112,9 +112,7 @@ func (i *InMemoryModelCache) BuildCacheIfNotExist() error {
 
 // FindEnvironment implements ModelCache.
 func (i *InMemoryModelCache) FindEnvironment(cluster string, namespace string) CommonResourceIface {
-	i.mu.RLock()
-	defer i.mu.RUnlock()
-	return i.dataMap[envCacheKey(cluster, namespace)]
+	return i.get(envCacheKey(cluster, namespace))
 }
 
 // UpsertEnvironment implements ModelCache.
@@ -190,17 +188,25 @@ func (i *InMemoryModelCache) DelTenant(tid uint) error {
 	return nil
 }
 
+func (i *InMemoryModelCache) get(key string) CommonResourceIface {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	if val, ok := i.dataMap[key]; !ok {
+		return nil
+	} else {
+		return val
+	}
+}
+
 // FindParents implements ModelCache.
 // NOTE: find parents recursively returns all parents AND IT SELF.
 func (i *InMemoryModelCache) FindParents(kind string, id uint) []CommonResourceIface {
-	i.mu.RLock()
-	defer i.mu.RUnlock()
 	return i.findAllParents(kind, id)
 }
 
 func (i *InMemoryModelCache) findAllParents(kind string, id uint) []CommonResourceIface {
-	n, ok := i.dataMap[cacheKey(kind, id)]
-	if !ok {
+	n := i.get(cacheKey(kind, id))
+	if n == nil {
 		return nil
 	}
 	// nolint: gomnd
@@ -214,9 +220,7 @@ func (i *InMemoryModelCache) findAllParents(kind string, id uint) []CommonResour
 
 // FindResource implements ModelCache.
 func (i *InMemoryModelCache) FindResource(kind string, id uint) CommonResourceIface {
-	i.mu.RLock()
-	defer i.mu.RUnlock()
-	return i.dataMap[cacheKey(kind, id)]
+	return i.get(cacheKey(kind, id))
 }
 
 // GetUserAuthority implements ModelCache.
