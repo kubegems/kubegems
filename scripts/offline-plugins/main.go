@@ -142,6 +142,7 @@ func Download(ctx context.Context, basedir string, list []OfflinePlugin) error {
 				URL:     pv.Repository,
 				Version: pv.Version,
 				Kind:    pluginv1beta1.BundleKindTemplate,
+				Path:    pv.Path,
 			},
 		}
 		log.Printf("template %s-%s using %s", plugin.Name, plugin.Spec.Version, plugin.Spec.Kind)
@@ -202,6 +203,7 @@ type OfflinePlugin struct {
 	Repository string
 	Name       string
 	Version    string
+	Path       string
 }
 
 func (o *OfflinePlugin) String() string {
@@ -235,13 +237,19 @@ func ParseContent(data []byte) []OfflinePlugin {
 				Repository: string(fields[0]),
 				Name:       string(fields[0]),
 			})
-		default:
+		case 3:
 			ret = append(ret, OfflinePlugin{
 				Repository: string(fields[0]),
 				Name:       string(fields[1]),
 				Version:    string(fields[2]),
 			})
-
+		default:
+			ret = append(ret, OfflinePlugin{
+				Repository: string(fields[0]),
+				Name:       string(fields[1]),
+				Version:    string(fields[2]),
+				Path:       string(fields[3]),
+			})
 		}
 	}
 	return ret

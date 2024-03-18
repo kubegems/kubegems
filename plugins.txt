@@ -41,3 +41,5 @@ https://charts.kubegems.io/kubegems juicefs-tenant 1.0.0
 https://kedacore.github.io/charts keda 2.13.2
 https://charts.kubegems.io/kubegems tidb 1.0.0
 https://charts.pingcap.org tidb-operator v1.5.2
+https://helm.ngc.nvidia.com/nvidia gpu-operator v23.6.1
+https://github.com/volcano-sh/volcano/archive/refs/tags/v1.8.0.tar.gz volcano 1.8.0 volcano-1.8.0/installer/helm/chart/volcano
