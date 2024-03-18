@@ -16,6 +16,7 @@ package cache
 
 import (
 	"errors"
+	"slices"
 	"sync"
 	"time"
 
@@ -201,7 +202,10 @@ func (i *InMemoryModelCache) get(key string) CommonResourceIface {
 // FindParents implements ModelCache.
 // NOTE: find parents recursively returns all parents AND IT SELF.
 func (i *InMemoryModelCache) FindParents(kind string, id uint) []CommonResourceIface {
-	return i.findAllParents(kind, id)
+	selfAndParents := i.findAllParents(kind, id)
+	// if [project,tenant] return [tenant,project] auth check parent first.
+	slices.Reverse(selfAndParents)
+	return selfAndParents
 }
 
 func (i *InMemoryModelCache) findAllParents(kind string, id uint) []CommonResourceIface {
