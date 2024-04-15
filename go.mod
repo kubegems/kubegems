@@ -465,4 +465,5 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.23.5
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.5
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.5
+	github.com/wercker/stern => github.com/oam-dev/stern v1.13.2
 )
