@@ -17,10 +17,8 @@ package appstore
 import (
 	"encoding/base64"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/repo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/i18n"
@@ -31,18 +29,8 @@ import (
 const InternalChartRepoName = "kubegems"
 
 type Chart struct {
-	Name        string              `json:"name"`
-	Version     string              `json:"version"`
-	Description string              `json:"description"`
-	ApiVersion  string              `json:"apiVersion"`
-	AppVersion  string              `json:"appVersion"`
-	Created     time.Time           `json:"created"`
-	Digest      string              `json:"digest"`
-	Urls        []string            `json:"urls"`
-	Keywords    []string            `json:"keywords"`
-	Maintainers []*chart.Maintainer `json:"maintainers"`
-	Tags        string              `json:"tags"`
-	RepoURL     string              `json:"repoURL"` // 仓库地址
+	repo.ChartVersion
+	RepoURL string `json:"repoURL"` // 仓库地址
 }
 
 func (c Chart) GetName() string {
@@ -171,18 +159,5 @@ func (h *AppstoreHandler) AppFiles(c *gin.Context) {
 
 // 针对前端显示屏蔽部分字段
 func convertChartVersion(cv *repo.ChartVersion, repourl string) Chart {
-	return Chart{
-		Name:        cv.Name,
-		Version:     cv.Version,
-		Description: cv.Description,
-		ApiVersion:  cv.APIVersion,
-		AppVersion:  cv.AppVersion,
-		Created:     cv.Created,
-		Digest:      cv.Digest,
-		Urls:        cv.URLs,
-		Keywords:    cv.Keywords,
-		Maintainers: cv.Maintainers,
-		Tags:        cv.Tags,
-		RepoURL:     repourl,
-	}
+	return Chart{ChartVersion: *cv, RepoURL: repourl}
 }
