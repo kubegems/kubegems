@@ -439,6 +439,7 @@ replace (
 	github.com/envoyproxy/go-control-plane => github.com/envoyproxy/go-control-plane v0.10.2-0.20220119144013-5ce31a86d483
 	github.com/nginxinc/nginx-ingress-operator => github.com/kubegems/nginx-ingress-operator v0.3.2
 	github.com/prometheus/prometheus => github.com/prometheus/prometheus v1.8.2-0.20210421143221-52df5ef7a3be
+	github.com/wercker/stern => github.com/oam-dev/stern v1.13.2
 	k8s.io/api => k8s.io/api v0.23.5
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.23.5
 	k8s.io/apimachinery => k8s.io/apimachinery v0.23.5
@@ -465,5 +466,4 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.23.5
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.5
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.5
-	github.com/wercker/stern => github.com/oam-dev/stern v1.13.2
 )
