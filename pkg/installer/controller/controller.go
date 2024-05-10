@@ -26,6 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -256,6 +257,9 @@ func (r *Reconciler) Sync(ctx context.Context, bundle *pluginsv1beta1.Plugin) er
 	if err := r.resolveValuesRef(ctx, bundle); err != nil {
 		return err
 	}
+	if err := r.preProcessAnnotations(ctx, bundle); err != nil {
+		return err
+	}
 	if err := r.Applier.Apply(ctx, bundle); err != nil {
 		return err
 	}
@@ -264,6 +268,40 @@ func (r *Reconciler) Sync(ctx context.Context, bundle *pluginsv1beta1.Plugin) er
 	}
 	bundle.Status.ObservedGeneration = bundle.Generation
 	return nil
+}
+
+func (r *Reconciler) preProcessAnnotations(ctx context.Context, bundle *pluginsv1beta1.Plugin) error {
+	log := logr.FromContextOrDiscard(ctx)
+
+	if bundle.Annotations == nil {
+		bundle.Annotations = make(map[string]string)
+	}
+	namespaces := ParseListValues(bundle.Annotations[plugins.AnnotationCreateNamespaces])
+	for _, ns := range namespaces {
+		log.V(3).Info("check namespace exists", "namespace", ns)
+		if err := r.Client.Get(ctx, types.NamespacedName{Name: ns}, &corev1.Namespace{}); err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+			log.V(3).Info("create namespace", "namespace", ns)
+			if err := r.Client.Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ns}}); err != nil {
+				return err
+			}
+		}
+		log.V(3).Info("namespace exists", "namespace", ns)
+	}
+	return nil
+}
+
+func ParseListValues(annotations string) []string {
+	var list []string
+	for _, v := range strings.Split(annotations, ",") {
+		v = strings.TrimSpace(v)
+		if v != "" {
+			list = append(list, v)
+		}
+	}
+	return list
 }
 
 // ResourcesStatus fill resource status

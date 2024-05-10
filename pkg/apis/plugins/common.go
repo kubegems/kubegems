@@ -55,6 +55,10 @@ const (
 
 	// specified which engine to render this plugin
 	AnnotationRenderBy = "plugins.kubegems.io/render-by"
+
+	// AnnotationCreateNamespaces define the namespaces to create before install
+	// eg. "kubegems-local,kubegems-installer"
+	AnnotationCreateNamespaces = "plugins.kubegems.io/create-namespaces"
 )
 
 const (
