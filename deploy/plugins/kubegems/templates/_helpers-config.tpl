@@ -412,7 +412,7 @@ Return the proper apps environment variables
       key: {{ include "kubegems.argocd.password.secret.key" . }}
 {{ else }}
   value: {{ include "kubegems.argocd.password" . }}
-{{- end -}}
+{{- end }}
 - name: GIT_ADDR
   value: {{ include "kubegems.git.address" . }}
 - name: GIT_USERNAME
