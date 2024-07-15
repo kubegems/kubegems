@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubegems.io/kubegems/pkg/log"
@@ -48,10 +47,6 @@ type Server struct {
 	executerid string
 }
 
-func NewServerFromRedisClient(cli *redis.Client) *Server {
-	return NewServerFromBackend(NewRedisBackendFromClient(cli))
-}
-
 func NewServerFromBackend(backend Backend) *Server {
 	executerid, _ := os.Hostname()
 	return &Server{
@@ -61,12 +56,7 @@ func NewServerFromBackend(backend Backend) *Server {
 	}
 }
 
-func NewServer(options *Options) (*Server, error) {
-	backend := NewRedisBackend(options.Addr, options.Username, options.Password)
-	return NewServerFromBackend(backend), nil
-}
-
-func (s *Server) NewClient(ctx context.Context) *Client {
+func (s *Server) NewClient(ctx context.Context) Client {
 	return NewClientFromBackend(s.backend)
 }
 

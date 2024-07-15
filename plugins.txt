@@ -12,8 +12,6 @@ https://charts.kubegems.io/kubegems intel-device-operator 0.25.1
 https://charts.kubegems.io/kubegems intel-device-sgx 0.25.1
 https://charts.kubegems.io/kubegems istio 1.11.7
 https://charts.kubegems.io/kubegems knative 1.0.1
-https://charts.kubegems.io/kubegems kubegems-pai 1.0.3
-https://charts.kubegems.io/kubegems juicefs-tenant 1.0.0
 https://charts.kubegems.io/kubegems kubevela 1.3.5
 https://charts.kubegems.io/kubegems local-path 0.0.22
 https://charts.kubegems.io/kubegems logging 3.17.7
@@ -38,3 +36,10 @@ https://charts.kubegems.io/kubegems tke-gpu-manager 1.1.5
 https://charts.kubegems.io/kubegems tracing 2.34.1
 https://charts.kubegems.io/kubegems volume-snapshoter 5.0.1
 https://juicedata.github.io/charts juicefs-csi-driver 0.19.2
+https://charts.kubegems.io/kubegems kubegems-pai 1.0.8
+https://charts.kubegems.io/kubegems juicefs-tenant 1.0.0
+https://kedacore.github.io/charts keda 2.13.2
+https://charts.kubegems.io/kubegems tidb 1.0.0
+https://charts.pingcap.org tidb-operator v1.5.2
+https://helm.ngc.nvidia.com/nvidia gpu-operator v23.6.1
+https://github.com/volcano-sh/volcano/archive/refs/tags/v1.8.0.tar.gz volcano 1.8.0 volcano-1.8.0/installer/helm/chart/volcano

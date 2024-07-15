@@ -17,6 +17,7 @@ package appstore
 import (
 	"context"
 	"errors"
+	"io"
 	"sync"
 	"time"
 
@@ -29,14 +30,14 @@ import (
 	"kubegems.io/kubegems/pkg/utils/helm"
 )
 
-//	@Tags			Appstore
-//	@Summary		列出所有的外部应用的charts仓库
-//	@Description	列出所有的外部应用的charts仓库
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.ChartRepo}}	"repos"
-//	@Router			/v1/appstore/repo [get]
-//	@Security		JWT
+// @Tags			Appstore
+// @Summary		列出所有的外部应用的charts仓库
+// @Description	列出所有的外部应用的charts仓库
+// @Accept			json
+// @Produce		json
+// @Success		200	{object}	handlers.ResponseStruct{Data=handlers.PageData{List=[]models.ChartRepo}}	"repos"
+// @Router			/v1/appstore/repo [get]
+// @Security		JWT
 func (h *AppstoreHandler) ListExternalRepo(c *gin.Context) {
 	list := []models.ChartRepo{}
 	if tx := h.GetDB().WithContext(c.Request.Context()).Find(&list); tx.Error != nil {
@@ -46,14 +47,14 @@ func (h *AppstoreHandler) ListExternalRepo(c *gin.Context) {
 	handlers.OK(c, list)
 }
 
-//	@Tags			Appstore
-//	@Summary		创建应用商店外部charts仓库
-//	@Description	创建应用商店外部charts仓库
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{object}	handlers.ResponseStruct{Data=[]models.ChartRepo}	"repo"
-//	@Router			/v1/appstore/repo [post]
-//	@Security		JWT
+// @Tags			Appstore
+// @Summary		创建应用商店外部charts仓库
+// @Description	创建应用商店外部charts仓库
+// @Accept			json
+// @Produce		json
+// @Success		200	{object}	handlers.ResponseStruct{Data=[]models.ChartRepo}	"repo"
+// @Router			/v1/appstore/repo [post]
+// @Security		JWT
 func (h *AppstoreHandler) PutExternalRepo(c *gin.Context) {
 	repo := &models.ChartRepo{}
 	if err := c.BindJSON(repo); err != nil {
@@ -88,15 +89,15 @@ func (h *AppstoreHandler) PutExternalRepo(c *gin.Context) {
 	}
 }
 
-//	@Tags			Appstore
-//	@Summary		APP 删除外部chart仓库
-//	@Description	删除外部chart仓库
-//	@Accept			json
-//	@Produce		json
-//	@Param			name	query		string											true	"repo name"
-//	@Success		200		{object}	handlers.ResponseStruct{Data=models.ChartRepo}	"repo"
-//	@Router			/v1/appstore/repo/{name} [delete]
-//	@Security		JWT
+// @Tags			Appstore
+// @Summary		APP 删除外部chart仓库
+// @Description	删除外部chart仓库
+// @Accept			json
+// @Produce		json
+// @Param			name	query		string											true	"repo name"
+// @Success		200		{object}	handlers.ResponseStruct{Data=models.ChartRepo}	"repo"
+// @Router			/v1/appstore/repo/{name} [delete]
+// @Security		JWT
 func (h *AppstoreHandler) DeleteExternalRepo(c *gin.Context) {
 	action := i18n.Sprintf(context.TODO(), "delete")
 	module := i18n.Sprintf(context.TODO(), "external helm chart repo")
@@ -111,15 +112,15 @@ func (h *AppstoreHandler) DeleteExternalRepo(c *gin.Context) {
 	}
 }
 
-//	@Tags			Appstore
-//	@Summary		APP 同步外部chart仓库
-//	@Description	手动同步外部chart仓库至本地chart museum
-//	@Accept			json
-//	@Produce		json
-//	@Param			name	query		string											true	"repo name"
-//	@Success		200		{object}	handlers.ResponseStruct{Data=models.ChartRepo}	"repo"
-//	@Router			/v1/appstore/repo/{name}/actions/sync [post]
-//	@Security		JWT
+// @Tags			Appstore
+// @Summary		APP 同步外部chart仓库
+// @Description	手动同步外部chart仓库至本地chart museum
+// @Accept			json
+// @Produce		json
+// @Param			name	query		string											true	"repo name"
+// @Success		200		{object}	handlers.ResponseStruct{Data=models.ChartRepo}	"repo"
+// @Router			/v1/appstore/repo/{name}/actions/sync [post]
+// @Security		JWT
 func (h *AppstoreHandler) SyncExternalRepo(c *gin.Context) {
 	reponame := c.Param("name")
 	action := i18n.Sprintf(context.TODO(), "sync")
@@ -140,6 +141,30 @@ func (h *AppstoreHandler) SyncExternalRepo(c *gin.Context) {
 		SyncCharts(context.Background(), repo, helm.RepositoryConfig{URL: h.AppStoreOpt.Addr}, h.GetDB())
 	}()
 	handlers.OK(c, i18n.Sprintf(c, "repo %s started syncing on background", reponame))
+}
+
+func (h *AppstoreHandler) UploadCharts(c *gin.Context) {
+	reponame := c.Param("name")
+	localChartMuseum := helm.RepositoryConfig{URL: h.AppStoreOpt.Addr}
+
+	data := c.Request.Body
+	defer data.Close()
+
+	if err := h.uploadCharts(c.Request.Context(), localChartMuseum, reponame, data); err != nil {
+		handlers.NotOK(c, err)
+		return
+	} else {
+		handlers.OK(c, i18n.Sprintf(c, "uploaded charts to repo %s", reponame))
+		return
+	}
+}
+
+func (h *AppstoreHandler) uploadCharts(ctx context.Context, dest helm.RepositoryConfig, repo string, data io.Reader) error {
+	chartmuseum, err := helm.NewChartMuseumClient(&dest)
+	if err != nil {
+		return err
+	}
+	return chartmuseum.UploadChart(ctx, repo, data)
 }
 
 func SyncCharts(ctx context.Context, repo *models.ChartRepo, localChartMuseum helm.RepositoryConfig, db *gorm.DB) {

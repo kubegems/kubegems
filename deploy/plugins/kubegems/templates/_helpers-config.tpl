@@ -21,8 +21,6 @@ Return the proper database host
 {{- define "kubegems.database.host" -}}
 {{- if .Values.mysql.enabled -}}
     {{- printf "%s-headless" (include "kubegems.mysql.fullname" .)  | trunc 63 | trimSuffix "-" -}}
-{{- else if .Values.postgresql.enabled -}}
-    {{- include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) -}}
 {{- else if .Values.externalDatabase.enabled -}}
     {{- .Values.externalDatabase.host -}}
 {{- end -}}
@@ -137,6 +135,12 @@ Return the proper redis port
 {{- .Values.redis.master.containerPorts.redis -}}
 {{- else if and .Values.externalRedis.enabled .Values.externalRedis.port -}}
 {{- .Values.externalRedis.port -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubegems.redis.address" -}}
+{{- if (include "kubegems.redis.host" .) -}}
+    {{- printf "%s:%s" (include "kubegems.redis.host" .) (include "kubegems.redis.port" .) -}}
 {{- end -}}
 {{- end -}}
 
@@ -367,14 +371,20 @@ Return the proper common environment variables
       name: {{ include "kubegems.database.password.secret" . }}
       key: {{ include "kubegems.database.password.secret.key" . }}
 {{- end }}
+{{/* optional redis config */}}
+{{- if (include "kubegems.redis.address" .)  -}}
 - name: REDIS_ADDR
-  value: {{ printf "%s:%s" (include "kubegems.redis.host" .) (include "kubegems.redis.port" .) | quote }}
+  value: {{ include "kubegems.redis.address" . | quote }}
 {{- if (include "kubegems.redis.password.secret" . ) }}
 - name: REDIS_PASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ include "kubegems.redis.password.secret" . }}
       key: {{ include "kubegems.redis.password.secret.key" . }}
+{{- else if (include "kubegems.redis.password" . ) }}
+- name: REDIS_PASSWORD
+  value: {{ include "kubegems.redis.password" . | quote }}
+{{- end -}}
 {{- end }}
 {{- end }}
 
@@ -402,7 +412,7 @@ Return the proper apps environment variables
       key: {{ include "kubegems.argocd.password.secret.key" . }}
 {{ else }}
   value: {{ include "kubegems.argocd.password" . }}
-{{- end -}}
+{{- end }}
 - name: GIT_ADDR
   value: {{ include "kubegems.git.address" . }}
 - name: GIT_USERNAME

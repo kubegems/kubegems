@@ -65,12 +65,38 @@ const (
 	userAuthorizationDataExpireMinute = 180
 )
 
-type ModelCache struct {
+// nolint
+type ModelCache interface {
+	BuildCacheIfNotExist() error
+	UpsertTenant(tid uint, name string) error
+	DelTenant(tid uint) error
+	UpsertProject(tid, pid uint, name string) error
+	DelProject(tid, pid uint) error
+
+	UpsertEnvironment(pid, eid uint, name, cluster, namespace string) error
+	DelEnvironment(pid, eid uint, cluster, namespace string) error
+	FindEnvironment(cluster, namespace string) CommonResourceIface
+
+	UpsertVirtualSpace(vid uint, name string) error
+	DelVirtualSpace(vid uint) error
+
+	GetUserAuthority(user models.CommonUserIface) *UserAuthority
+	FlushUserAuthority(user models.CommonUserIface) *UserAuthority
+
+	FindParents(kind string, id uint) []CommonResourceIface
+	FindResource(kind string, id uint) CommonResourceIface
+}
+
+func NewRedisModelCache(db *gorm.DB, redis *redis.Client) ModelCache {
+	return RedisModelCache{DB: db, Redis: redis}
+}
+
+type RedisModelCache struct {
 	DB    *gorm.DB
 	Redis *redis.Client
 }
 
-func (t *ModelCache) BuildCacheIfNotExist() error {
+func (t RedisModelCache) BuildCacheIfNotExist() error {
 	r, err := t.Redis.Exists(context.Background(), ModelCacheKey).Result()
 	if err != nil {
 		return err
@@ -135,7 +161,7 @@ func (t *ModelCache) BuildCacheIfNotExist() error {
 	return nil
 }
 
-func (t *ModelCache) UpsertTenant(tid uint, name string) error {
+func (t RedisModelCache) UpsertTenant(tid uint, name string) error {
 	n := Entity{Name: name, Kind: models.ResTenant, ID: tid}
 	_, err := t.Redis.HSet(context.Background(), ModelCacheKey, n.toPair()).Result()
 	if err != nil {
@@ -144,7 +170,7 @@ func (t *ModelCache) UpsertTenant(tid uint, name string) error {
 	return err
 }
 
-func (t *ModelCache) DelTenant(tid uint) error {
+func (t RedisModelCache) DelTenant(tid uint) error {
 	_, err := t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResTenant, tid)).Result()
 	if err != nil {
 		log.Error(err, "cache delete tenant failed", "tenant_id", tid)
@@ -152,7 +178,7 @@ func (t *ModelCache) DelTenant(tid uint) error {
 	return err
 }
 
-func (t *ModelCache) UpsertProject(tid, pid uint, name string) error {
+func (t RedisModelCache) UpsertProject(tid, pid uint, name string) error {
 	n := Entity{Name: name, Kind: models.ResProject, ID: pid, Owner: []*Entity{{Kind: models.ResTenant, ID: tid}}}
 	_, err := t.Redis.HSet(context.Background(), ModelCacheKey, n.toPair()).Result()
 	if err != nil {
@@ -161,15 +187,15 @@ func (t *ModelCache) UpsertProject(tid, pid uint, name string) error {
 	return err
 }
 
-func (t *ModelCache) DelProject(tid, pid uint) error {
+func (t RedisModelCache) DelProject(tid, pid uint) error {
 	_, err := t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResProject, pid)).Result()
 	if err != nil {
 		log.Error(err, "cache delete project failed", "tenant_id", tid, "project_id", pid)
 	}
 	return err
-
 }
-func (t *ModelCache) UpsertEnvironment(pid, eid uint, name, cluster, namespace string) error {
+
+func (t RedisModelCache) UpsertEnvironment(pid, eid uint, name, cluster, namespace string) error {
 	n := Entity{Name: name, Kind: models.ResEnvironment, ID: eid, Namespace: namespace, Cluster: cluster, Owner: []*Entity{{Kind: models.ResProject, ID: pid}}}
 	ctx := context.Background()
 	_, err1 := t.Redis.HSet(ctx, ModelCacheKey, n.toPair()).Result()
@@ -185,7 +211,7 @@ func (t *ModelCache) UpsertEnvironment(pid, eid uint, name, cluster, namespace s
 	return nil
 }
 
-func (t *ModelCache) DelEnvironment(pid, eid uint, cluster, namespace string) error {
+func (t RedisModelCache) DelEnvironment(pid, eid uint, cluster, namespace string) error {
 	_, err := t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResEnvironment, eid)).Result()
 	if err != nil {
 		log.Error(err, "cache delete environment 1 failed", "project_id", pid, "environment_id", eid)
@@ -199,7 +225,7 @@ func (t *ModelCache) DelEnvironment(pid, eid uint, cluster, namespace string) er
 	return nil
 }
 
-func (t *ModelCache) UpsertVirtualSpace(vid uint, name string) error {
+func (t RedisModelCache) UpsertVirtualSpace(vid uint, name string) error {
 	_, err := t.Redis.HSet(context.Background(), ModelCacheKey, cacheKey(models.ResVirtualSpace, vid)).Result()
 	if err != nil {
 		log.Error(err, "cache upsert virtualspace failed", "vid", vid, "name", name)
@@ -208,17 +234,16 @@ func (t *ModelCache) UpsertVirtualSpace(vid uint, name string) error {
 	return err
 }
 
-func (t *ModelCache) DelVirtualSpace(vid uint) error {
+func (t RedisModelCache) DelVirtualSpace(vid uint) error {
 	_, err := t.Redis.HDel(context.Background(), ModelCacheKey, cacheKey(models.ResVirtualSpace, vid)).Result()
 	if err != nil {
 		log.Error(err, "cache delete virtualspace failed", "vid", vid)
 		return err
 	}
 	return err
-
 }
 
-func (c *ModelCache) FindParents(kind string, id uint) []CommonResourceIface {
+func (c RedisModelCache) FindParents(kind string, id uint) []CommonResourceIface {
 	var ret []CommonResourceIface
 	parentsRaw, err := c.Redis.Eval(context.Background(), FindParentScript, []string{ModelCacheKey, kind, strconv.FormatUint(uint64(id), 10)}).Result()
 	if err != nil {
@@ -238,7 +263,7 @@ func (c *ModelCache) FindParents(kind string, id uint) []CommonResourceIface {
 	return ret
 }
 
-func (c *ModelCache) FindResource(kind string, id uint) CommonResourceIface {
+func (c RedisModelCache) FindResource(kind string, id uint) CommonResourceIface {
 	key := cacheKey(kind, id)
 	var ret CommonResourceIface
 	var e Entity
@@ -249,7 +274,7 @@ func (c *ModelCache) FindResource(kind string, id uint) CommonResourceIface {
 	return ret
 }
 
-func (c *ModelCache) FindEnvironment(cluster, namespace string) CommonResourceIface {
+func (c RedisModelCache) FindEnvironment(cluster, namespace string) CommonResourceIface {
 	var e Entity
 	if err := c.Redis.HGet(context.Background(), ModelCacheKey, envCacheKey(cluster, namespace)).Scan(&e); err != nil {
 		return nil
@@ -261,7 +286,7 @@ func userAuthorityKey(username string) string {
 	return fmt.Sprintf("user_authority_data__%s", username)
 }
 
-func (c *ModelCache) GetUserAuthority(user models.CommonUserIface) *UserAuthority {
+func (c RedisModelCache) GetUserAuthority(user models.CommonUserIface) *UserAuthority {
 	var authinfo UserAuthority
 	err := c.Redis.Get(context.Background(), userAuthorityKey(user.GetUsername())).Scan(&authinfo)
 	if err != nil {
@@ -272,7 +297,7 @@ func (c *ModelCache) GetUserAuthority(user models.CommonUserIface) *UserAuthorit
 	return &authinfo
 }
 
-func (c *ModelCache) FlushUserAuthority(user models.CommonUserIface) *UserAuthority {
+func (c RedisModelCache) FlushUserAuthority(user models.CommonUserIface) *UserAuthority {
 	auth := new(UserAuthority)
 	sysrole := models.SystemRole{ID: user.GetSystemRoleID()}
 

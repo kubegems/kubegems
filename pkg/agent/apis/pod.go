@@ -237,6 +237,7 @@ func (h *PodHandler) ExecPods(c *gin.Context) {
 //	@Param			container	query		string	true	"container"
 //	@Param			stream		query		string	true	"stream must be true"
 //	@Param			follow		query		string	true	"follow"
+//	@Param			previous	query		string false	"previous"
 //	@Param			tail		query		int		false	"tail line (default 1000)"
 //	@Success		200			{object}	object	"ws"
 //	@Router			/v1/proxy/cluster/{cluster}/custom/core/v1/namespaces/{namespace}/pods/{name}/actions/logs [get]
@@ -254,6 +255,7 @@ func (h *PodHandler) GetContainerLogs(c *gin.Context) {
 	logopt := &v1.PodLogOptions{
 		Container: paramFromHeaderOrQuery(c, "container", ""),
 		Follow:    paramFromHeaderOrQuery(c, "follow", "true") == "true",
+		Previous:  paramFromHeaderOrQuery(c, "previous", "false") == "true",
 		TailLines: &tail,
 	}
 	req := h.cluster.Kubernetes().CoreV1().Pods(c.Param("namespace")).GetLogs(c.Param("name"), logopt)

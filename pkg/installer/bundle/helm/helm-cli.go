@@ -63,7 +63,7 @@ func Download(ctx context.Context, repo, name, version, cachedir string) (string
 		return chartPath, chart, nil
 	}
 	os.MkdirAll(filepath.Dir(intofile), DefaultDirectoryMode)
-	return intofile, chart, os.Rename(chartPath, intofile)
+	return intofile, chart, RenameFile(chartPath, intofile)
 }
 
 // name is the name of the chart

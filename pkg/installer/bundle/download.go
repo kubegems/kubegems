@@ -23,11 +23,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -68,14 +67,14 @@ func Download(ctx context.Context, repo, name, version, path, cacheDir string) (
 	}
 	// from cache
 	perRepoCacheDir := PerRepoCacheDir(repo, cacheDir)
-	if cachepath := foundInCache(ctx, perRepoCacheDir, basename); cachepath != "" {
+	if cachepath := foundInCache(perRepoCacheDir, basename); cachepath != "" {
 		log.Info("found in cache", "path", cachepath)
 		return cachepath, nil
 	}
 
 	// is file://
 	if strings.HasPrefix(repo, "file://") {
-		if cachepath := foundInCache(ctx, strings.TrimPrefix(repo, "file://"), basename); cachepath != "" {
+		if cachepath := foundInCache(strings.TrimPrefix(repo, "file://"), basename); cachepath != "" {
 			log.Info("found in file protocol", "path", cachepath)
 			return cachepath, nil
 		}
@@ -96,6 +95,10 @@ func Download(ctx context.Context, repo, name, version, path, cacheDir string) (
 	if strings.HasSuffix(repo, ".tar.gz") || strings.HasSuffix(repo, ".tgz") {
 		return cacheIn, DownloadTgz(ctx, repo, path, cacheIn)
 	}
+	// is yaml ?
+	if strings.HasSuffix(repo, ".yaml") || strings.HasSuffix(repo, ".yml") {
+		return cacheIn, DownloadFile(ctx, repo, path, cacheIn)
+	}
 	// is helm ? default helm
 	chartpath, _, err := helm.Download(ctx, repo, name, version, filepath.Dir(cacheIn))
 	if err != nil {
@@ -104,7 +107,7 @@ func Download(ctx context.Context, repo, name, version, path, cacheDir string) (
 	return chartpath, err
 }
 
-func foundInCache(ctx context.Context, cachedir, basename string) string {
+func foundInCache(cachedir, basename string) string {
 	cacheInFile := filepath.Join(cachedir, basename+".tgz")
 	if _, err := os.Stat(cacheInFile); err == nil {
 		return cacheInFile
@@ -142,7 +145,7 @@ func DownloadZip(ctx context.Context, uri, subpath, into string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	raw, err := ioutil.ReadAll(resp.Body)
+	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -204,62 +207,38 @@ func DownloadTgz(ctx context.Context, uri, subpath, into string) error {
 }
 
 func DownloadFile(ctx context.Context, src string, subpath, into string) error {
-	u, err := url.ParseRequestURI(src)
+	u, err := url.Parse(src)
 	if err != nil {
 		return err
 	}
-	if u.Host != "" && u.Host != "localhost" {
-		return fmt.Errorf("unsupported host: %s", u.Host)
+	if subpath != "" {
+		u.Path = path.Join(u.Path, subpath)
 	}
-
-	basedir := u.Path
-	if !strings.HasSuffix(basedir, "/") {
-		basedir += "/"
-	}
-
-	if err := os.MkdirAll(into, defaultDirMode); err != nil {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
 		return err
 	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return filepath.WalkDir(basedir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
+	filename := filepath.Join(into, filepath.Base(u.Path))
+
+	if _, err := os.Stat(into); os.IsNotExist(err) {
+		if err := os.MkdirAll(into, defaultDirMode); err != nil {
 			return err
 		}
+	}
+	dest, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, defaultFileMode)
+	if err != nil {
+		return err
+	}
+	defer dest.Close()
 
-		relpath := strings.TrimPrefix(path, basedir)
-
-		if !strings.HasPrefix(relpath, subpath) {
-			return nil
-		}
-
-		filename := strings.TrimPrefix(relpath, subpath)
-		filename = filepath.Join(into, filename)
-
-		fi, err := d.Info()
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			if err := os.MkdirAll(filename, fi.Mode().Perm()); err != nil {
-				return err
-			}
-			return nil
-		}
-		dest, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fi.Mode().Perm())
-		if err != nil {
-			return err
-		}
-		defer dest.Close()
-
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		_, _ = io.Copy(dest, f)
-		return nil
-	})
+	_, _ = io.Copy(dest, resp.Body)
+	return nil
 }
 
 func DownloadGit(ctx context.Context, cloneurl string, rev string, subpath, into string) error {
@@ -359,31 +338,4 @@ func UnTarGz(r io.Reader, subpath, into string) error {
 		_, _ = io.Copy(dest, tr)
 	}
 	return nil
-}
-
-func cachePath(path string, name, version string) string {
-	basename := name + "-" + version
-	tgzfile := filepath.Join(path, basename+".tgz")
-	if _, err := os.Stat(tgzfile); err == nil {
-		return tgzfile
-	}
-	cacheDir := filepath.Join(path, basename)
-	if entries, err := os.ReadDir(cacheDir); err == nil && len(entries) >= 0 {
-		return cacheDir
-	}
-	return ""
-}
-
-func isNotEmpty(path string) (string, bool) {
-	entries, err := os.ReadDir(path)
-	return path, (err == nil && len(entries) >= 0)
-}
-
-func hasTgz(path string) (string, bool) {
-	for _, p := range []string{path + ".tgz", path + ".tar.gz"} {
-		if _, err := os.Stat(p); err == nil {
-			return p, true
-		}
-	}
-	return path, false
 }

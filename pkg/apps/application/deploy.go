@@ -28,6 +28,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/git"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 )
 
 const StatusNoArgoApp = "NoArgoApp"
@@ -81,14 +82,13 @@ type ManifestDeploy struct {
 func MustNewApplicationDeployHandler(provider git.Provider, argocli *argo.Client, commonbase base.BaseHandler) *ApplicationHandler {
 	database := commonbase.GetDataBase()
 	agents := commonbase.GetAgents()
-	redis := commonbase.GetRedis()
 
 	base := BaseHandler{
 		BaseHandler: commonbase,
-
-		dbcahce: &Cache{},
+		dbcahce:     &Cache{},
 	}
 
+	tp := &TaskProcessor{Workflowcli: workflow.NewDefaultRemoteClient()}
 	h := &ApplicationHandler{
 		Agents:      commonbase.GetAgents(),
 		BaseHandler: base,
@@ -97,23 +97,23 @@ func MustNewApplicationDeployHandler(provider git.Provider, argocli *argo.Client
 			BaseHandler:       base,
 			ManifestProcessor: &ManifestProcessor{GitProvider: provider},
 		},
-		Task:                 NewTaskHandler(base),
-		ApplicationProcessor: NewApplicationProcessor(database, provider, argocli, redis, agents),
+		Task:                 NewTaskHandler(base, tp),
+		ApplicationProcessor: NewApplicationProcessor(database, provider, argocli, tp, agents),
 	}
 	return h
 }
 
-//	@Tags			Application
-//	@Summary		应用列表
-//	@Description	应用列表
-//	@Accept			json
-//	@Produce		json
-//	@Param			tenant_id		path		int													true	"tenaut id"
-//	@Param			project_id		path		int													true	"project id"
-//	@Param			environment_id	path		int													true	"environment_id"
-//	@Success		200				{object}	handlers.ResponseStruct{Data=[]DeploiedManifest}	"Application"
-//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications [get]
-//	@Security		JWT
+// @Tags			Application
+// @Summary		应用列表
+// @Description	应用列表
+// @Accept			json
+// @Produce		json
+// @Param			tenant_id		path		int													true	"tenaut id"
+// @Param			project_id		path		int													true	"project id"
+// @Param			environment_id	path		int													true	"environment_id"
+// @Success		200				{object}	handlers.ResponseStruct{Data=[]DeploiedManifest}	"Application"
+// @Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications [get]
+// @Security		JWT
 func (h *ApplicationHandler) List(c *gin.Context) {
 	h.NoNameRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		dm, err := h.ApplicationProcessor.List(ctx, ref)
@@ -132,17 +132,17 @@ func (h *ApplicationHandler) List(c *gin.Context) {
 	})
 }
 
-//	@Tags			Application
-//	@Summary		部署应用
-//	@Description	应用部署
-//	@Accept			json
-//	@Produce		json
-//	@Param			tenant_id		path		int												true	"tenaut id"
-//	@Param			project_id		path		int												true	"project id"
-//	@Param			environment_id	path		int												true	"environment_id"
-//	@Success		200				{object}	handlers.ResponseStruct{Data=DeploiedManifest}	"Application"
-//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications [post]
-//	@Security		JWT
+// @Tags			Application
+// @Summary		部署应用
+// @Description	应用部署
+// @Accept			json
+// @Produce		json
+// @Param			tenant_id		path		int												true	"tenaut id"
+// @Param			project_id		path		int												true	"project id"
+// @Param			environment_id	path		int												true	"environment_id"
+// @Success		200				{object}	handlers.ResponseStruct{Data=DeploiedManifest}	"Application"
+// @Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications [post]
+// @Security		JWT
 func (h *ApplicationHandler) Create(c *gin.Context) {
 	body := &DeploiedManifest{}
 	h.NoNameRefFunc(c, body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -159,18 +159,18 @@ func (h *ApplicationHandler) Create(c *gin.Context) {
 	})
 }
 
-//	@Tags			Application
-//	@Summary		批量部署应用
-//	@Description	批量部署应用
-//	@Accept			json
-//	@Produce		json
-//	@Param			tenant_id		path		int												true	"tenaut id"
-//	@Param			project_id		path		int												true	"project id"
-//	@Param			environment_id	path		int												true	"environment_id"
-//	@Param			body			body		[]DeploiedManifest								true	"body"
-//	@Success		200				{object}	handlers.ResponseStruct{Data=DeploiedManifest}	"Application"
-//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications-batch [post]
-//	@Security		JWT
+// @Tags			Application
+// @Summary		批量部署应用
+// @Description	批量部署应用
+// @Accept			json
+// @Produce		json
+// @Param			tenant_id		path		int												true	"tenaut id"
+// @Param			project_id		path		int												true	"project id"
+// @Param			environment_id	path		int												true	"environment_id"
+// @Param			body			body		[]DeploiedManifest								true	"body"
+// @Success		200				{object}	handlers.ResponseStruct{Data=DeploiedManifest}	"Application"
+// @Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications-batch [post]
+// @Security		JWT
 func (h *ApplicationHandler) CreateBatch(c *gin.Context) {
 	body := []DeploiedManifest{}
 	h.NoNameRefFunc(c, &body, func(ctx context.Context, ref PathRef) (interface{}, error) {
@@ -187,36 +187,36 @@ func (h *ApplicationHandler) CreateBatch(c *gin.Context) {
 	})
 }
 
-//	@Tags			Application
-//	@Summary		应用部署
-//	@Description	应用部署
-//	@Accept			json
-//	@Produce		json
-//	@Param			tenant_id		path		int												true	"tenaut id"
-//	@Param			project_id		path		int												true	"project id"
-//	@Param			environment_id	path		int												true	"environment_id"
-//	@Param			name			path		string											true	"application name"
-//	@Success		200				{object}	handlers.ResponseStruct{Data=DeploiedManifest}	"Application"
-//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name} [get]
-//	@Security		JWT
+// @Tags			Application
+// @Summary		应用部署
+// @Description	应用部署
+// @Accept			json
+// @Produce		json
+// @Param			tenant_id		path		int												true	"tenaut id"
+// @Param			project_id		path		int												true	"project id"
+// @Param			environment_id	path		int												true	"environment_id"
+// @Param			name			path		string											true	"application name"
+// @Success		200				{object}	handlers.ResponseStruct{Data=DeploiedManifest}	"Application"
+// @Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name} [get]
+// @Security		JWT
 func (h *ApplicationHandler) Get(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		return h.ApplicationProcessor.Get(ctx, ref)
 	})
 }
 
-//	@Tags			Application
-//	@Summary		删除应用
-//	@Description	删除应用
-//	@Accept			json
-//	@Produce		json
-//	@Param			tenant_id		path		int										true	"tenaut id"
-//	@Param			project_id		path		int										true	"project id"
-//	@Param			environment_id	path		int										true	"environment_id"
-//	@Param			name			path		string									true	"application name"
-//	@Success		200				{object}	handlers.ResponseStruct{Data=string}	"Application"
-//	@Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name} [delete]
-//	@Security		JWT
+// @Tags			Application
+// @Summary		删除应用
+// @Description	删除应用
+// @Accept			json
+// @Produce		json
+// @Param			tenant_id		path		int										true	"tenaut id"
+// @Param			project_id		path		int										true	"project id"
+// @Param			environment_id	path		int										true	"environment_id"
+// @Param			name			path		string									true	"application name"
+// @Success		200				{object}	handlers.ResponseStruct{Data=string}	"Application"
+// @Router			/v1/tenant/{tenant_id}/project/{project_id}/environment/{environment_id}/applications/{name} [delete]
+// @Security		JWT
 func (h *ApplicationHandler) Remove(c *gin.Context) {
 	h.NamedRefFunc(c, nil, func(ctx context.Context, ref PathRef) (interface{}, error) {
 		// audit

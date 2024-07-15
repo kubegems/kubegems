@@ -36,7 +36,7 @@ import (
 	"kubegems.io/kubegems/pkg/service/aaa/authorization"
 	appstorehandler "kubegems.io/kubegems/pkg/service/handlers/appstore"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
-	"kubegems.io/kubegems/pkg/service/models/cache"
+	modelscache "kubegems.io/kubegems/pkg/service/models/cache"
 	"kubegems.io/kubegems/pkg/service/models/validate"
 	"kubegems.io/kubegems/pkg/version"
 
@@ -140,7 +140,12 @@ func Run(ctx context.Context, opts *ApplicationsOptions) error {
 	validate.InitValidator(db.DB())
 
 	// cache
-	cache := &cache.ModelCache{DB: db.DB(), Redis: rediscli}
+	var cache modelscache.ModelCache
+	if rediscli != nil {
+		cache = modelscache.NewRedisModelCache(db.DB(), rediscli)
+	} else {
+		cache = modelscache.NewMemoryModelCache(db.DB())
+	}
 	if err := cache.BuildCacheIfNotExist(); err != nil {
 		return err
 	}
@@ -170,7 +175,6 @@ func Run(ctx context.Context, opts *ApplicationsOptions) error {
 		userif,
 		agentclientset,
 		db,
-		rediscli,
 		msgbusclient.NewMessageBusClient(db, opts.Msgbus),
 		cache,
 	))

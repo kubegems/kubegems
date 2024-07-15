@@ -20,15 +20,16 @@ import (
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/git"
-	"kubegems.io/kubegems/pkg/utils/redis"
+	"kubegems.io/kubegems/pkg/utils/workflow"
 )
 
 type ApplicationTasker struct {
 	*application.ApplicationProcessor
 }
 
-func MustNewApplicationTasker(db *database.Database, gitp git.Provider, argo *argo.Client, redis *redis.Client, agents *agents.ClientSet) *ApplicationTasker {
-	app := application.NewApplicationProcessor(db, gitp, argo, redis, agents)
+func MustNewApplicationTasker(db *database.Database, gitp git.Provider, argo *argo.Client, cli workflow.Client, agents *agents.ClientSet) *ApplicationTasker {
+	tp := &application.TaskProcessor{Workflowcli: cli}
+	app := application.NewApplicationProcessor(db, gitp, argo, tp, agents)
 	return &ApplicationTasker{ApplicationProcessor: app}
 }
 

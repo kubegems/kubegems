@@ -37,4 +37,5 @@ func (h *AppstoreHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.POST("/appstore/repo", h.CheckIsSysADMIN, h.PutExternalRepo)
 	rg.DELETE("/appstore/repo/:name", h.CheckIsSysADMIN, h.DeleteExternalRepo)
 	rg.POST("/appstore/repo/:name/actions/sync", h.CheckIsSysADMIN, h.SyncExternalRepo)
+	rg.POST("/appstore/repo/:name", h.CheckIsSysADMIN, h.UploadCharts)
 }

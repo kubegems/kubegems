@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
-	v2beta1 "k8s.io/api/autoscaling/v2beta2"
+	"k8s.io/api/autoscaling/v2beta2"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,8 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (p *ApplicationProcessor) GetHorizontalPodAutoscaler(ctx context.Context, ref PathRef) (*v2beta1.HorizontalPodAutoscaler, error) {
-	var ret *v2beta1.HorizontalPodAutoscaler
+func (p *ApplicationProcessor) GetHorizontalPodAutoscaler(ctx context.Context, ref PathRef) (*v2beta2.HorizontalPodAutoscaler, error) {
+	var ret *v2beta2.HorizontalPodAutoscaler
 
 	err := p.Manifest.StoreFunc(ctx, ref, func(ctx context.Context, store GitStore) error {
 		workload, err := ParseMainWorkload(ctx, store)
@@ -45,7 +45,7 @@ func (p *ApplicationProcessor) GetHorizontalPodAutoscaler(ctx context.Context, r
 			return fmt.Errorf("unsupported workload type %s", workload.GetObjectKind().GroupVersionKind())
 		}
 
-		sc := &v2beta1.HorizontalPodAutoscaler{
+		sc := &v2beta2.HorizontalPodAutoscaler{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      noproxy.FormatHPAName(workload.GetObjectKind().GroupVersionKind().Kind, workload.GetName()),
 				Namespace: workload.GetNamespace(),
@@ -65,7 +65,7 @@ func (p *ApplicationProcessor) GetHorizontalPodAutoscaler(ctx context.Context, r
 
 func (p *ApplicationProcessor) DeleteHorizontalPodAutoscaler(ctx context.Context, ref PathRef) error {
 	updatefun := func(ctx context.Context, store GitStore) error {
-		hpalist := &v2beta1.HorizontalPodAutoscalerList{}
+		hpalist := &v2beta2.HorizontalPodAutoscalerList{}
 		if err := store.List(ctx, hpalist); err != nil {
 			return err
 		}
@@ -97,41 +97,41 @@ func (p *ApplicationProcessor) SetHorizontalPodAutoscaler(ctx context.Context, r
 		gv := appsv1.SchemeGroupVersion
 		kind := workload.GetObjectKind().GroupVersionKind().Kind
 
-		sc := &v2beta1.HorizontalPodAutoscaler{
+		sc := &v2beta2.HorizontalPodAutoscaler{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      noproxy.FormatHPAName(kind, name),
 				Namespace: namespace,
 			},
 		}
-		scalerSpec := v2beta1.HorizontalPodAutoscalerSpec{
+		scalerSpec := v2beta2.HorizontalPodAutoscalerSpec{
 			MinReplicas: scalerMetrics.MinReplicas,
 			MaxReplicas: scalerMetrics.MaxReplicas,
-			ScaleTargetRef: v2beta1.CrossVersionObjectReference{
+			ScaleTargetRef: v2beta2.CrossVersionObjectReference{
 				Kind:       kind,
 				Name:       name,
 				APIVersion: gv.Identifier(),
 			},
-			Metrics: func() []v2beta1.MetricSpec {
-				var metrics []v2beta1.MetricSpec
+			Metrics: func() []v2beta2.MetricSpec {
+				var metrics []v2beta2.MetricSpec
 				if scalerMetrics.Cpu > 0 {
-					metrics = append(metrics, v2beta1.MetricSpec{
-						Type: v2beta1.ResourceMetricSourceType,
-						Resource: &v2beta1.ResourceMetricSource{
+					metrics = append(metrics, v2beta2.MetricSpec{
+						Type: v2beta2.ResourceMetricSourceType,
+						Resource: &v2beta2.ResourceMetricSource{
 							Name: v1.ResourceCPU,
-							Target: v2beta1.MetricTarget{
-								Type:               v2beta1.UtilizationMetricType,
+							Target: v2beta2.MetricTarget{
+								Type:               v2beta2.UtilizationMetricType,
 								AverageUtilization: &scalerMetrics.Cpu,
 							},
 						},
 					})
 				}
 				if scalerMetrics.Memory > 0 {
-					metrics = append(metrics, v2beta1.MetricSpec{
-						Type: v2beta1.ResourceMetricSourceType,
-						Resource: &v2beta1.ResourceMetricSource{
+					metrics = append(metrics, v2beta2.MetricSpec{
+						Type: v2beta2.ResourceMetricSourceType,
+						Resource: &v2beta2.ResourceMetricSource{
 							Name: v1.ResourceMemory,
-							Target: v2beta1.MetricTarget{
-								Type:               v2beta1.UtilizationMetricType,
+							Target: v2beta2.MetricTarget{
+								Type:               v2beta2.UtilizationMetricType,
 								AverageUtilization: &scalerMetrics.Memory,
 							},
 						},

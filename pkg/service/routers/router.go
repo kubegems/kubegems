@@ -64,7 +64,7 @@ import (
 	tenanthandler "kubegems.io/kubegems/pkg/service/handlers/tenant"
 	userhandler "kubegems.io/kubegems/pkg/service/handlers/users"
 	workloadreshandler "kubegems.io/kubegems/pkg/service/handlers/workloadres"
-	"kubegems.io/kubegems/pkg/service/models/cache"
+	modelscache "kubegems.io/kubegems/pkg/service/models/cache"
 	"kubegems.io/kubegems/pkg/service/models/validate"
 	"kubegems.io/kubegems/pkg/service/options"
 	"kubegems.io/kubegems/pkg/utils/agents"
@@ -103,15 +103,14 @@ type Router struct {
 	Opts          *options.Options
 	Agents        *agents.ClientSet
 	Database      *database.Database
-	Redis         *redis.Client
 	Argo          *argo.Client
 	GitProvider   git.Provider
 	auditInstance *audit.DefaultAuditInstance
 	gin           *gin.Engine
 }
 
-func (r *Router) Run(ctx context.Context) error {
-	if err := r.Complete(ctx); err != nil {
+func (r *Router) Run(ctx context.Context, rediscli *redis.Client) error {
+	if err := r.Complete(ctx, rediscli); err != nil {
 		return err
 	}
 
@@ -127,7 +126,8 @@ func (r *Router) Run(ctx context.Context) error {
 }
 
 // nolint: funlen
-func (r *Router) Complete(ctx context.Context) error {
+func (r *Router) Complete(ctx context.Context, rediscli *redis.Client) error {
+	logger := log.FromContextOrDiscard(ctx)
 	// validator
 	validate.InitValidator(r.Database.DB())
 	// oauth
@@ -135,7 +135,14 @@ func (r *Router) Complete(ctx context.Context) error {
 	// user interface
 	userif := aaa.NewUserInfoHandler()
 	// cache
-	cache := &cache.ModelCache{DB: r.Database.DB(), Redis: r.Redis}
+	var cache modelscache.ModelCache
+	if rediscli != nil {
+		logger.Info("use redis cache")
+		cache = modelscache.NewRedisModelCache(r.Database.DB(), rediscli)
+	} else {
+		logger.Info("use memory cache")
+		cache = modelscache.NewMemoryModelCache(r.Database.DB())
+	}
 	if err := cache.BuildCacheIfNotExist(); err != nil {
 		return err
 	}
@@ -149,7 +156,6 @@ func (r *Router) Complete(ctx context.Context) error {
 		userif,
 		r.Agents,
 		r.Database,
-		r.Redis,
 		msgbus.NewMessageBusClient(r.Database, r.Opts.Msgbus),
 		cache,
 	)
@@ -196,7 +202,7 @@ func (r *Router) Complete(ctx context.Context) error {
 	router.GET("/v1/version", func(c *gin.Context) { handlers.OK(c, version.Get()) })
 
 	// inner go-restful router no auth required
-	if err := r.AddRestAPI(ctx, apis.Dependencies{Opts: r.Opts, Agents: r.Agents, Database: r.Database, Redis: r.Redis}); err != nil {
+	if err := r.AddRestAPI(ctx, apis.Dependencies{Opts: r.Opts, Agents: r.Agents, Database: r.Database}); err != nil {
 		log.Errorf("add new restful error: %v", err)
 		return err
 	}

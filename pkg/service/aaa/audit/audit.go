@@ -78,12 +78,12 @@ func (p *ProxyObject) InNamespace() bool {
 
 type DefaultAuditInstance struct {
 	userinterface aaa.ContextUserOperator
-	cache         *cache.ModelCache
+	cache         cache.ModelCache
 	db            *gorm.DB
 	logQueue      chan models.AuditLog
 }
 
-func NewAuditMiddleware(db *gorm.DB, cache *cache.ModelCache, uinterface aaa.ContextUserOperator) *DefaultAuditInstance {
+func NewAuditMiddleware(db *gorm.DB, cache cache.ModelCache, uinterface aaa.ContextUserOperator) *DefaultAuditInstance {
 	audit := &DefaultAuditInstance{
 		db:            db,
 		logQueue:      make(chan models.AuditLog, 1000),

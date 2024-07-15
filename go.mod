@@ -1,6 +1,6 @@
 module kubegems.io/kubegems
 
-go 1.20
+go 1.21
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1
@@ -259,6 +259,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/iancoleman/orderedmap v0.2.0 // indirect
@@ -438,6 +439,7 @@ replace (
 	github.com/envoyproxy/go-control-plane => github.com/envoyproxy/go-control-plane v0.10.2-0.20220119144013-5ce31a86d483
 	github.com/nginxinc/nginx-ingress-operator => github.com/kubegems/nginx-ingress-operator v0.3.2
 	github.com/prometheus/prometheus => github.com/prometheus/prometheus v1.8.2-0.20210421143221-52df5ef7a3be
+	github.com/wercker/stern => github.com/oam-dev/stern v1.13.2
 	k8s.io/api => k8s.io/api v0.23.5
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.23.5
 	k8s.io/apimachinery => k8s.io/apimachinery v0.23.5

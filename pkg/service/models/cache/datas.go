@@ -52,7 +52,7 @@ func (n *Entity) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, n)
 }
 
-func (n *Entity) cacheKey() string {
+func (n Entity) cacheKey() string {
 	return fmt.Sprintf("%s_%v", n.Kind, n.ID)
 }
 
@@ -89,7 +89,6 @@ func (n *Entity) GetProjectID() uint {
 
 func (n *Entity) GetEnvironmentID() uint {
 	return n.getKindID(models.ResEnvironment)
-
 }
 
 func (n *Entity) GetVirtualSpaceID() uint {

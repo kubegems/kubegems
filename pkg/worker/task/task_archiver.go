@@ -20,23 +20,16 @@ import (
 
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/database"
-	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/workflow"
 )
 
 // 用于转移超过时间的任务记录至database
 type TaskArchiverTasker struct {
-	Databse *database.Database
-	taskcli *workflow.Client
-	Redis   *redis.Client
+	taskcli workflow.Client
 }
 
-func NewTaskArchiverTasker(databse *database.Database, redis *redis.Client) *TaskArchiverTasker {
-	return &TaskArchiverTasker{
-		taskcli: workflow.NewClientFromRedisClient(redis.Client),
-		Databse: databse,
-		Redis:   redis,
-	}
+func NewTaskArchiverTasker(databse *database.Database, cli workflow.Client) *TaskArchiverTasker {
+	return &TaskArchiverTasker{taskcli: cli}
 }
 
 func (t *TaskArchiverTasker) ArchiveOutdated(ctx context.Context) error {
@@ -54,40 +47,6 @@ func (t *TaskArchiverTasker) ArchiveOutdated(ctx context.Context) error {
 			// 删除该记录
 			if err := t.taskcli.RemoveTask(ctx, task.Group, task.Name, task.UID); err != nil {
 				log.Error(err, "remove expired task")
-			}
-		}
-	}
-	return nil
-}
-
-const RemoveConsumerDuration = 5 * time.Minute
-
-// RemoveOffline 删除长时间不活跃的worker正在处理的任务
-func (t *TaskArchiverTasker) RemoveOffline(ctx context.Context) error {
-	// 查看长时间未连接的worker
-	streamingkey := "/workflow/submit"
-
-	log := log.FromContextOrDiscard(ctx)
-
-	// https://redis.io/commands/xinfo-consumers
-	consumers, err := t.Redis.Client.XInfoConsumers(ctx, streamingkey, workflow.DefaultGroup).Result()
-	if err != nil {
-		return err
-	}
-	for _, consumer := range consumers {
-		// milliseconds
-		offlinetime := time.Duration(consumer.Idle) * time.Microsecond
-
-		log.Info("consumer status", "name", consumer.Name, "idle", offlinetime)
-
-		if offlinetime > RemoveConsumerDuration {
-			// todo: 转移任务
-
-			// 删除 consumer
-			// https://redis.io/commands/xgroup-delconsumer
-			if _, err := t.Redis.Client.XGroupDelConsumer(ctx, streamingkey, workflow.DefaultGroup, consumer.Name).Result(); err != nil {
-				log.Error(err, "remove expired consumer")
-				return err
 			}
 		}
 	}

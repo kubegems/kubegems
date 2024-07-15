@@ -54,6 +54,7 @@ func NewDefaultApply(cfg *rest.Config, cli client.Client, options *Options) *Bun
 			pluginsv1beta1.BundleKindHelm:      helm.New(cfg),
 			pluginsv1beta1.BundleKindKustomize: native.New(cli, kustomize.KustomizeBuildFunc),
 			pluginsv1beta1.BundleKindTemplate:  native.New(cli, template.NewTemplaterFunc(cfg)),
+			pluginsv1beta1.BundleKindNative:    native.New(cli, native.NewNativeFunc),
 		},
 	}
 }

@@ -30,7 +30,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/agents"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/msgbus"
-	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/set"
 )
 
@@ -41,9 +40,8 @@ type BaseHandler struct {
 	aaa.ContextUserOperator
 	agents     *agents.ClientSet
 	database   *database.Database
-	redis      *redis.Client
 	msgbuscli  *msgclient.MsgBusClient
-	modelCache *cache.ModelCache
+	modelCache cache.ModelCache
 }
 
 func NewHandler(auditi audit.AuditInterface,
@@ -51,9 +49,8 @@ func NewHandler(auditi audit.AuditInterface,
 	userif aaa.ContextUserOperator,
 	agents *agents.ClientSet,
 	database *database.Database,
-	redis *redis.Client,
 	msgbuscli *msgclient.MsgBusClient,
-	modelCache *cache.ModelCache,
+	modelCache cache.ModelCache,
 ) BaseHandler {
 	return BaseHandler{
 		AuditInterface:      auditi,
@@ -63,7 +60,6 @@ func NewHandler(auditi audit.AuditInterface,
 		msgbuscli:           msgbuscli,
 		database:            database,
 		modelCache:          modelCache,
-		redis:               redis,
 	}
 }
 
@@ -83,11 +79,7 @@ func (h *BaseHandler) GetDB() *gorm.DB {
 	return h.database.DB()
 }
 
-func (h *BaseHandler) GetRedis() *redis.Client {
-	return h.redis
-}
-
-func (h *BaseHandler) ModelCache() *cache.ModelCache {
+func (h *BaseHandler) ModelCache() cache.ModelCache {
 	return h.modelCache
 }
 

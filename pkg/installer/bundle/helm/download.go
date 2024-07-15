@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -89,7 +88,7 @@ func HTTPGet(ctx context.Context, href string) (io.ReadCloser, error) {
 }
 
 func AtomicWriteFile(filename string, reader io.Reader, mode os.FileMode) error {
-	tempFile, err := ioutil.TempFile(filepath.Split(filename))
+	tempFile, err := os.CreateTemp(filepath.Split(filename))
 	if err != nil {
 		return err
 	}
@@ -104,13 +103,13 @@ func AtomicWriteFile(filename string, reader io.Reader, mode os.FileMode) error 
 	if err := os.Chmod(tempName, mode); err != nil {
 		return fmt.Errorf("cannot chmod %s to %s: %w", tempName, mode, err)
 	}
-	if err := renameFile(tempName, filename); err != nil {
+	if err := RenameFile(tempName, filename); err != nil {
 		return fmt.Errorf("cannot rename %s to %s: %w", tempName, filename, err)
 	}
 	return nil
 }
 
-func renameFile(src, dst string) error {
+func RenameFile(src, dst string) error {
 	err := os.Rename(src, dst)
 	if err == nil {
 		return nil

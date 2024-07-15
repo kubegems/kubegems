@@ -22,6 +22,22 @@ spec:
 apiVersion: plugins.kubegems.io/v1beta1
 kind: Plugin
 metadata:
+  name: kubegems-tidb
+  namespace: kubegems-installer
+spec:
+  kind: helm
+  chart: tidb
+  url: https://charts.kubegems.io/kubegems
+  installNamespace: kubegems
+  version: 1.0.0
+  valuesFrom:
+    - kind: ConfigMap
+      name: "kubegems-global-values"
+      prefix: "global."
+---
+apiVersion: plugins.kubegems.io/v1beta1
+kind: Plugin
+metadata:
   name: kubegems
   namespace: kubegems-installer
   annotations:
@@ -33,6 +49,15 @@ spec:
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
   version: 1.24.4
+  values:
+    mysql:
+      enabled: false
+    externalDatabase:
+      enabled: true
+      host: kubegems-tidb-tidb-tidb.kubegems
+      port: 4000
+      existingSecret: kubegems-tidb-tidb-secret
+      existingSecretPasswordKey: root
   valuesFrom:
     - kind: ConfigMap
       name: "kubegems-global-values"

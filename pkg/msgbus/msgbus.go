@@ -30,7 +30,6 @@ import (
 	"kubegems.io/kubegems/pkg/utils/argo"
 	"kubegems.io/kubegems/pkg/utils/database"
 	"kubegems.io/kubegems/pkg/utils/pprof"
-	"kubegems.io/kubegems/pkg/utils/redis"
 )
 
 func Run(ctx context.Context, options *options.Options) error {
@@ -46,7 +45,7 @@ func Run(ctx context.Context, options *options.Options) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		return api.RunGinServer(ctx, options, deps.Database, deps.Redis, deps.Switcher)
+		return api.RunGinServer(ctx, options, deps.Database, deps.Switcher)
 	})
 	eg.Go(func() error {
 		return workloads.RunWorkloadCollector(ctx, deps.AgentsClientSet, deps.Switcher)
@@ -55,7 +54,7 @@ func Run(ctx context.Context, options *options.Options) error {
 		return applications.RunApplicationCollector(ctx, deps.Switcher, deps.Argo)
 	})
 	eg.Go(func() error {
-		return tasks.RunTasksCollector(ctx, deps.Switcher, deps.Redis)
+		return tasks.RunTasksCollector(ctx, deps.Switcher)
 	})
 	eg.Go(func() error {
 		return pprof.Run(ctx)
@@ -67,18 +66,11 @@ type Dependencies struct {
 	Database        *database.Database
 	Argo            *argo.Client
 	AgentsClientSet *agents.ClientSet
-	Redis           *redis.Client
 	Switcher        *switcher.MessageSwitcher
 }
 
 func prepareDependencies(ctx context.Context, options *options.Options) (*Dependencies, error) {
 	log.SetLevel(options.LogLevel)
-
-	// 初始化Redis实例
-	rediscli, err := redis.NewClient(options.Redis)
-	if err != nil {
-		return nil, err
-	}
 
 	// 初始化Mysql实例
 	db, err := database.NewDatabase(options.Mysql)
@@ -102,7 +94,6 @@ func prepareDependencies(ctx context.Context, options *options.Options) (*Depend
 		Database:        db,
 		Argo:            argocli,
 		AgentsClientSet: agentclientset,
-		Redis:           rediscli,
 		Switcher:        switcher,
 	}
 	return deps, nil

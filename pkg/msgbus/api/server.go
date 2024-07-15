@@ -24,11 +24,10 @@ import (
 	"kubegems.io/kubegems/pkg/service/aaa"
 	"kubegems.io/kubegems/pkg/service/aaa/auth"
 	"kubegems.io/kubegems/pkg/utils/database"
-	"kubegems.io/kubegems/pkg/utils/redis"
 	"kubegems.io/kubegems/pkg/utils/system"
 )
 
-func NewGinServer(opts *options.Options, database *database.Database, redis *redis.Client, ms *switcher.MessageSwitcher) (*gin.Engine, error) {
+func NewGinServer(opts *options.Options, database *database.Database, ms *switcher.MessageSwitcher) (*gin.Engine, error) {
 	r := gin.Default()
 	// 初始化需要注册的中间件
 	authMiddleware := auth.NewAuthMiddleware(opts.JWT, aaa.NewUserInfoHandler(), otel.GetTracerProvider().Tracer("kubegems.io/kubegems"))
@@ -49,8 +48,8 @@ func NewGinServer(opts *options.Options, database *database.Database, redis *red
 	return r, nil
 }
 
-func RunGinServer(ctx context.Context, options *options.Options, db *database.Database, redis *redis.Client, ms *switcher.MessageSwitcher) error {
-	r, err := NewGinServer(options, db, redis, ms)
+func RunGinServer(ctx context.Context, options *options.Options, db *database.Database, ms *switcher.MessageSwitcher) error {
+	r, err := NewGinServer(options, db, ms)
 	if err != nil {
 		return err
 	}

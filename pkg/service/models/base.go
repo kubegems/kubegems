@@ -400,6 +400,12 @@ func WaitDatabaseServer(ctx context.Context, opts *database.Options) error {
 func WaitRedis(ctx context.Context, redisopts redis.Options) error {
 	log := logr.FromContextOrDiscard(ctx)
 
+	// if redis is not enabled, return nil
+	if redisopts.Addr == "" {
+		log.Info("redis not enabled, skip waiting for redis")
+		return nil
+	}
+
 	cli, err := redis.NewClient(&redisopts)
 	if err != nil {
 		return err
