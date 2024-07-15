@@ -17,3 +17,33 @@ spec:
       - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
         paths:
           - /data
+    image:
+      # repository: rancher/local-path-provisioner
+      repository: registry.cn-beijing.aliyuncs.com/kubegems/local-path-provisioner
+      tag: v0.0.22
+      pullPolicy: IfNotPresent
+    helperImage:
+      repository: registry.cn-beijing.aliyuncs.com/kubegems/busybox
+    configmap:
+      # specify the config map name
+      name: local-path-config
+      # specify the custom script for setup and teardown
+      setup: |-
+        #!/bin/sh
+        set -eu
+        mkdir -m 0777 -p "$VOL_DIR"
+      teardown: |-
+        #!/bin/sh
+        set -eu
+        rm -rf "$VOL_DIR"
+      # specify the custom helper pod yaml
+      helperPod: |-
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: helper-pod
+        spec:
+          containers:
+          - name: helper-pod
+            image: registry.cn-beijing.aliyuncs.com/kubegems/busybox:latest
+            imagePullPolicy: IfNotPresent
