@@ -32,7 +32,7 @@ spec:
   kind: helm
   url: https://charts.kubegems.io/kubegems
   installNamespace: kubegems
-  version: 1.24.4
+  version: 1.24.5
   valuesFrom:
     - kind: ConfigMap
       name: "kubegems-global-values"
@@ -63,7 +63,7 @@ spec:
   installNamespace: kubegems-local
   kind: helm
   url: https://charts.kubegems.io/kubegems
-  version: 1.24.4
+  version: 1.24.5
   valuesFrom:
     - kind: ConfigMap
       name: kubegems-global-values
