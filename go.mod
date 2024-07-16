@@ -1,6 +1,6 @@
 module kubegems.io/kubegems
 
-go 1.21
+go 1.22
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1
@@ -86,7 +86,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.40.0
 	go.opentelemetry.io/otel/trace v1.17.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b
 	golang.org/x/mod v0.14.0
 	golang.org/x/net v0.19.0
@@ -116,7 +116,7 @@ require (
 	k8s.io/metrics v0.23.6
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
 	kubegems.io/configer v1.1.6
-	kubegems.io/ingress-nginx-operator v0.2.1
+	kubegems.io/ingress-nginx-operator v0.2.2-0.20240716043846-691739c41101
 	kubegems.io/library v0.0.0-20230911041405-0b02d2dbc2b4
 	kubegems.io/modelx v0.1.7
 	sigs.k8s.io/controller-runtime v0.11.2
@@ -136,7 +136,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.27 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.18 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.24 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
@@ -229,7 +229,7 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/gocraft/work v0.5.1 // indirect
-	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.11.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect

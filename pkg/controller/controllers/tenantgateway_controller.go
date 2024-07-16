@@ -249,8 +249,10 @@ func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gem
 		},
 		Spec: nginxv1beta1.NginxIngressControllerSpec{
 			Service: &nginxv1beta1.Service{
-				Type:        string(tg.Spec.Type),
-				ExtraLabels: tg.Spec.Service.ExtraLabels,
+				Type:             string(tg.Spec.Type),
+				ExtraLabels:      tg.Spec.Service.ExtraLabels,
+				ExtraAnnotations: tg.Spec.Service.ExtraAnnotations,
+				Ports:            tg.Spec.Service.Ports,
 			},
 			Replicas:     tg.Spec.Replicas,
 			IngressClass: tg.Spec.IngressClass,
@@ -265,7 +267,10 @@ func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gem
 	}
 }
 
-func (r *TenantGatewayReconciler) updateNginxIngressController(nic *nginxv1beta1.NginxIngressController, tg *gemsv1beta1.TenantGateway) *nginxv1beta1.NginxIngressController {
+func (r *TenantGatewayReconciler) updateNginxIngressController(
+	nic *nginxv1beta1.NginxIngressController,
+	tg *gemsv1beta1.TenantGateway,
+) *nginxv1beta1.NginxIngressController {
 	nic.SetLabels(map[string]string{
 		gemlabels.LabelTenant:      tg.Spec.Tenant,
 		gemlabels.LabelApplication: tg.Name,

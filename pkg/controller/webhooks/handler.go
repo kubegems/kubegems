@@ -164,6 +164,20 @@ func CreateDefaultTenantGateway(client client.Client, log logr.Logger) {
 		Spec: gemsv1beta1.TenantGatewaySpec{
 			Tenant:       notenant,
 			IngressClass: defaultGatewayName,
+			Service: &gemsv1beta1.Service{
+				Ports: []corev1.ServicePort{
+					{
+						Name:     "http",
+						Port:     80,
+						NodePort: 30000,
+					},
+					{
+						Name:     "https",
+						Port:     443,
+						NodePort: 30443,
+					},
+				},
+			},
 		},
 	}
 

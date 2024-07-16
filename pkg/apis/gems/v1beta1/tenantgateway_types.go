@@ -28,6 +28,11 @@ import (
 type Service struct {
 	// Specifies extra labels of the service.
 	ExtraLabels map[string]string `json:"extraLabels,omitempty"`
+
+	ExtraAnnotations map[string]string `json:"extraAnnotations,omitempty"`
+
+	// Ports specifies the ports of the service.
+	Ports []corev1.ServicePort `json:"ports"`
 }
 
 type Workload struct {
