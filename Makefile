@@ -187,7 +187,7 @@ clean:
 
 CONTROLLER_GEN = ${BIN_DIR}/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	GOBIN=$(abspath ${BIN_DIR}) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.9.0
+	GOBIN=$(abspath ${BIN_DIR}) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.15.0
 
 KUSTOMIZE = ${BIN_DIR}/kustomize
 KUSTOMIZE_VERSION = 4.4.1
