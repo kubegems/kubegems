@@ -5,7 +5,7 @@ dependencies:
     repository: https://charts.kubegems.io/bitnami
     tags:
       - bitnami-common
-    version: 1.14.1
+    version: 2.x.x
   - name: mysql
     repository: https://charts.kubegems.io/bitnami
     condition: mysql.enabled

@@ -1972,7 +1972,7 @@ mysql:
     rootPassword: "" # root password must be set in order upgradeable
     username: ""
     password: ""
-    database: "" # no database will be created if not set
+    database: "kubegems" # no database will be created if not set
   primary:
     startupProbe:
       periodSeconds: 40
@@ -2128,6 +2128,7 @@ gitea:
       database:
         DB_TYPE: "sqlite3"
     admin:
+      existingSecret: ""
       # username: ""
       # password: ""
   # to use external DB https://gitea.com/gitea/helm-chart/issues/9

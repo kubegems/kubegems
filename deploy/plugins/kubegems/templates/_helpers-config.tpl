@@ -31,7 +31,7 @@ Return the proper database port
 */}}
 {{- define "kubegems.database.port" -}}
 {{- if .Values.mysql.enabled -}}
-    {{- .Values.mysql.primary.service.port -}}
+    {{- .Values.mysql.primary.service.ports.mysql -}}
 {{- else if and .Values.externalDatabase.enabled .Values.externalDatabase.port -}}
     {{- .Values.externalDatabase.port -}}
 {{- end -}}
