@@ -9,11 +9,11 @@ dependencies:
   - name: mysql
     repository: https://charts.kubegems.io/bitnami
     condition: mysql.enabled
-    version: 8.9.6
+    version: 9.7.2
   - name: redis
     repository: https://charts.kubegems.io/bitnami
     condition: redis.enabled
-    version: 16.9.11
+    version: 19.6.2
   # app start
   - name: gitea
     repository: https://charts.kubegems.io/kubegems
