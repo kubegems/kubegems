@@ -18,14 +18,11 @@ package controllers
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/equality"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,20 +30,15 @@ import (
 	nginxv1beta1 "kubegems.io/ingress-nginx-operator/api/v1beta1"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
-	"kubegems.io/kubegems/pkg/controller/handler"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
-
-// TenantGatewayReconciler reconciles a TenantGateway object
-type TenantGatewayReconciler struct {
-	client.Client
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
-}
 
 //+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantgateways,verbs=get;list;watch;create;update;patch;delete;deletecollection
 //+kubebuilder:rbac:groups=gems.kubegems.io,resources=tenantgateways/status,verbs=get;update;patch
@@ -56,238 +48,212 @@ type TenantGatewayReconciler struct {
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 
-func (r *TenantGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	/*
-		租户网关逻辑:
-		1. 检查是否删除操作
-		2. 删除需要删除本身及对应ingress与ingressClass资源
-		3. 创建与更新需要操作对应nginxIngressController资源
-		4. 无论什么操作都需要为tenanrGateway检查并添加finalizer字段
-	*/
-	log := r.Log.WithValues("tenantgateway", req.NamespacedName)
-
-	var tg gemsv1beta1.TenantGateway
-	if err := r.Get(ctx, req.NamespacedName, &tg); err != nil {
-		log.WithName(req.Name).Error(err, "Faild to get TenantGateway")
-		return ctrl.Result{}, nil
-	}
-
-	if !tg.ObjectMeta.DeletionTimestamp.IsZero() {
-		if controllerutil.ContainsFinalizer(&tg, gemlabels.FinalizerGateway) {
-			if err := r.Delete(ctx, &networkingv1beta1.IngressClass{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: tg.Spec.IngressClass,
-				},
-			}); err != nil {
-				log.Info("Failed to delete ingressClass")
-			} else {
-				log.Info("Success to delete", "ingressClass", tg.Spec.IngressClass)
-			}
-
-			// 删除tenantGateway
-			controllerutil.RemoveFinalizer(&tg, gemlabels.FinalizerGateway)
-			// TODO 这里通过更新的方式删除tg，会再次排队，并报错找不到tg，问题不大
-			if err := r.Update(ctx, &tg); err != nil {
-				log.Error(err, "failed to delete tenantGateway")
-				return ctrl.Result{Requeue: true}, err
-			}
-			log.Info("success to delete tenantGateway")
-			return ctrl.Result{}, nil
-		}
-	}
-
-	if tg.Spec.Service == nil {
-		tg.Spec.Service = &gemsv1beta1.Service{}
-	}
-	if tg.Spec.Workload == nil {
-		tg.Spec.Workload = &gemsv1beta1.Workload{}
-	}
-
-	found := &nginxv1beta1.NginxIngressController{}
-	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: gemlabels.NamespaceGateway, // gateway资源都在这里
-		Name:      tg.Name,
-	}, found); err != nil {
-		if apierrors.IsNotFound(err) {
-			// 没有nic，执行create
-			nic := r.nginxIngressControllerForTenantGateway(&tg)
-			if err := r.Create(ctx, nic); err != nil {
-				r.Recorder.Eventf(&tg, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to create NginxIngressController %s: %v", nic.Name, err)
-				log.Info("Error create NginxIngressController")
-			}
-			r.Recorder.Eventf(&tg, corev1.EventTypeNormal, ReasonCreated, "Successfully create NginxIngressController %s", nic.Name)
-		} else {
-			r.Recorder.Eventf(found, corev1.EventTypeWarning, ReasonUnknowError, "Failed to get NginxIngressController %s: %v", found.Name, err)
-			log.Error(err, "Error get NginxIngressController")
-		}
-	} else {
-		// 找到该gateway，执行更新
-		if r.hasNginxIngressControllerChanged(found, &tg) {
-			updated := r.updateNginxIngressController(found, &tg)
-			if err := r.Update(ctx, updated); err != nil {
-				r.Recorder.Eventf(&tg, corev1.EventTypeWarning, ReasonFailedCreate, "Failed to update NginxIngressController %s: %v", found.Name, err)
-				log.Error(err, "Error update NginxIngressController")
-			} else {
-				r.Recorder.Eventf(&tg, corev1.EventTypeNormal, ReasonCreated, "Successfully update NginxIngressController %s", found.Name)
-			}
-		}
-	}
-
-	// 检查并加上finalizer
-	if !controllerutil.ContainsFinalizer(&tg, gemlabels.FinalizerGateway) {
-		controllerutil.AddFinalizer(&tg, gemlabels.FinalizerGateway)
-		if err := r.Update(ctx, &tg); err != nil {
-			log.Error(err, "failed to update tenantGateway")
-			return ctrl.Result{}, nil
-		}
-	}
-
-	// 最后处理status
-	svc := &corev1.Service{}
-	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: gemlabels.NamespaceGateway, // gateway资源都在这里
-		Name:      tg.Name,
-	}, svc); err != nil {
-		return ctrl.Result{}, nil
-	}
-	dep := &appsv1.Deployment{}
-	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: gemlabels.NamespaceGateway, // gateway资源都在这里
-		Name:      tg.Name,
-	}, dep); err != nil {
-		return ctrl.Result{}, nil
-	}
-
-	if !equality.Semantic.DeepEqual(svc.Spec.Ports, tg.Status.Ports) ||
-		dep.Status.AvailableReplicas != tg.Status.AvailableReplicas {
-		tg.Status.Ports = svc.Spec.Ports
-		tg.Status.AvailableReplicas = dep.Status.AvailableReplicas
-		if err := r.Status().Update(ctx, &tg); err != nil {
-			log.Error(err, "failed to update tenantGateway")
-			return ctrl.Result{}, nil
-		}
-		log.Info("success to update", "gateway status", tg.Status)
-	}
-	return ctrl.Result{}, nil
+// TenantGatewayReconciler reconciles a TenantGateway object
+type TenantGatewayReconciler struct {
+	client.Client
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 }
 
 func (r *TenantGatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		Watches(&source.Kind{Type: &corev1.Service{}}, handler.NewServiceHandler(r.Client, r.Log)).
-		Watches(&source.Kind{Type: &appsv1.Deployment{}}, handler.NewDepoymentHandler(r.Client, r.Log)).
+		Watches(&source.Kind{Type: &corev1.Service{}},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(r.ServeicePredicate())).
+		Watches(&source.Kind{Type: &appsv1.Deployment{}},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(r.DeploymentPredicate())).
 		For(&gemsv1beta1.TenantGateway{}).
 		Complete(r)
 }
 
-func (r *TenantGatewayReconciler) hasNginxIngressControllerChanged(nic *nginxv1beta1.NginxIngressController, tg *gemsv1beta1.TenantGateway) bool {
-	// label
-	if nic.Labels[gemlabels.LabelTenant] != tg.Spec.Tenant {
-		return true
+func (r *TenantGatewayReconciler) ServeicePredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			newSvc, okn := e.ObjectNew.(*corev1.Service)
+			oldSvc, oko := e.ObjectOld.(*corev1.Service)
+			if !okn || !oko {
+				return false
+			}
+			if newSvc.Namespace != gemlabels.NamespaceGateway {
+				return false
+			}
+			return !equality.Semantic.DeepEqual(newSvc.Spec.Ports, oldSvc.Spec.Ports)
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return false
+		},
+		GenericFunc: func(e event.GenericEvent) bool {
+			return false
+		},
 	}
-
-	// OwnerReferences
-	if len(nic.OwnerReferences) == 0 || nic.OwnerReferences[0].Name != tg.Name {
-		return true
-	}
-
-	if nic.Spec.Replicas != nil && tg.Spec.Replicas != nil && *nic.Spec.Replicas != *tg.Spec.Replicas {
-		return true
-	}
-
-	if nic.Spec.IngressClass != tg.Spec.IngressClass {
-		return true
-	}
-
-	// service
-	if nic.Spec.Service == nil {
-		nic.Spec.Service = &nginxv1beta1.Service{}
-	}
-	if tg.Spec.Service == nil {
-		tg.Spec.Service = &gemsv1beta1.Service{}
-	}
-	if nic.Spec.Service.Type != string(tg.Spec.Type) {
-		return true
-	}
-	if !reflect.DeepEqual(nic.Spec.Service.ExtraLabels, tg.Spec.Service.ExtraLabels) {
-		return true
-	}
-
-	// image
-	if !reflect.DeepEqual(nic.Spec.Image, tg.Spec.Image) {
-		return true
-	}
-
-	// workload
-	if nic.Spec.Workload == nil {
-		nic.Spec.Workload = &nginxv1beta1.Workload{}
-	}
-	if tg.Spec.Workload == nil {
-		tg.Spec.Workload = &gemsv1beta1.Workload{}
-	}
-	if HasDifferentResources(nic.Spec.Workload.Resources, tg.Spec.Workload.Resources) {
-		return true
-	}
-	if !reflect.DeepEqual(nic.Spec.Workload.ExtraLabels, tg.Spec.Workload.ExtraLabels) || !reflect.DeepEqual(nic.Spec.ConfigMapData, tg.Spec.ConfigMapData) {
-		return true
-	}
-
-	return false
 }
 
-var nginxMetricsPort uint16 = 9113
+func (r *TenantGatewayReconciler) DeploymentPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldDep, oko := e.ObjectOld.(*appsv1.Deployment)
+			newDep, okn := e.ObjectNew.(*appsv1.Deployment)
+			if !oko || !okn {
+				return false
+			}
+			if newDep.Namespace != gemlabels.NamespaceGateway {
+				return false
+			}
+			return !equality.Semantic.DeepEqual(oldDep.Status.AvailableReplicas, newDep.Status.AvailableReplicas)
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return false
+		},
+		GenericFunc: func(e event.GenericEvent) bool {
+			return false
+		},
+	}
+}
 
-func (r *TenantGatewayReconciler) nginxIngressControllerForTenantGateway(tg *gemsv1beta1.TenantGateway) *nginxv1beta1.NginxIngressController {
-	return &nginxv1beta1.NginxIngressController{
+func (r *TenantGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := r.Log.WithValues("tenantgateway", req.NamespacedName)
+
+	tg := &gemsv1beta1.TenantGateway{}
+	if err := r.Get(ctx, req.NamespacedName, tg); err != nil {
+		log.Error(err, "Faild to get TenantGateway")
+		return ctrl.Result{}, nil
+	}
+	if !tg.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(tg, gemlabels.FinalizerGateway) {
+			return ctrl.Result{}, nil
+		}
+		// 删除tenantGateway
+		if err := r.Remove(ctx, tg); err != nil {
+			log.Error(err, "failed to delete tenantGateway")
+			return ctrl.Result{}, err
+		}
+		controllerutil.RemoveFinalizer(tg, gemlabels.FinalizerGateway)
+		if err := r.Update(ctx, tg); err != nil {
+			log.Error(err, "failed to delete tenantGateway")
+			return ctrl.Result{Requeue: true}, err
+		}
+		log.Info("success to delete tenantGateway")
+		return ctrl.Result{}, nil
+	}
+	// 检查并加上finalizer
+	if !controllerutil.ContainsFinalizer(tg, gemlabels.FinalizerGateway) {
+		controllerutil.AddFinalizer(tg, gemlabels.FinalizerGateway)
+		if err := r.Update(ctx, tg); err != nil {
+			log.Error(err, "failed to update tenantGateway")
+			return ctrl.Result{}, nil
+		}
+	}
+	if err := r.Sync(ctx, tg); err != nil {
+		log.Error(err, "failed to sync tenantGateway")
+		return ctrl.Result{}, err
+	}
+	log.Info("success to sync tenantGateway")
+	return ctrl.Result{}, nil
+}
+
+func (r *TenantGatewayReconciler) Remove(ctx context.Context, tgw *gemsv1beta1.TenantGateway) error {
+	ic := &nginxv1beta1.NginxIngressController{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      tg.Name,
+			Name:      tgw.Name,
 			Namespace: gemlabels.NamespaceGateway,
-			Labels: map[string]string{
-				gemlabels.LabelTenant:      tg.Spec.Tenant,
-				gemlabels.LabelApplication: tg.Name,
-			},
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(tg, gemsv1beta1.SchemeTenantGateway)},
-		},
-		Spec: nginxv1beta1.NginxIngressControllerSpec{
-			Service: &nginxv1beta1.Service{
-				Type:             string(tg.Spec.Type),
-				ExtraLabels:      tg.Spec.Service.ExtraLabels,
-				ExtraAnnotations: tg.Spec.Service.ExtraAnnotations,
-				Ports:            tg.Spec.Service.Ports,
-			},
-			Replicas:     tg.Spec.Replicas,
-			IngressClass: tg.Spec.IngressClass,
-			Image: nginxv1beta1.Image{
-				Repository: tg.Spec.Image.Repository,
-				Tag:        tg.Spec.Image.Tag,
-				PullPolicy: corev1.PullPolicy(tg.Spec.Image.PullPolicy),
-			},
-			Workload:      (*nginxv1beta1.Workload)(tg.Spec.Workload),
-			ConfigMapData: tg.Spec.ConfigMapData,
 		},
 	}
+	return client.IgnoreNotFound(r.Delete(ctx, ic))
 }
 
-func (r *TenantGatewayReconciler) updateNginxIngressController(
-	nic *nginxv1beta1.NginxIngressController,
-	tg *gemsv1beta1.TenantGateway,
-) *nginxv1beta1.NginxIngressController {
-	nic.SetLabels(map[string]string{
-		gemlabels.LabelTenant:      tg.Spec.Tenant,
-		gemlabels.LabelApplication: tg.Name,
-	})
-	nic.SetOwnerReferences([]metav1.OwnerReference{*metav1.NewControllerRef(tg, gemsv1beta1.SchemeTenantGateway)})
-	nic.Spec.Replicas = tg.Spec.Replicas
-	nic.Spec.IngressClass = tg.Spec.IngressClass
-	nic.Spec.Service = &nginxv1beta1.Service{
-		Type:        string(tg.Spec.Type),
-		ExtraLabels: tg.Spec.Service.ExtraLabels,
+func (r *TenantGatewayReconciler) Sync(ctx context.Context, tg *gemsv1beta1.TenantGateway) error {
+	log := r.Log.WithValues("tenantgateway", tg.Name)
+
+	ic := &nginxv1beta1.NginxIngressController{
+		ObjectMeta: metav1.ObjectMeta{Namespace: gemlabels.NamespaceGateway, Name: tg.Name},
 	}
-	nic.Spec.Image = nginxv1beta1.Image{
-		Repository: tg.Spec.Image.Repository,
-		Tag:        tg.Spec.Image.Tag,
-		PullPolicy: corev1.PullPolicy(tg.Spec.Image.PullPolicy),
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ic, func() error {
+		return r.syncNginxIngressControllerForTenantGateway(tg, ic)
+	}); err != nil {
+		log.Error(err, "Error create or update NginxIngressController")
+		return err
 	}
-	nic.Spec.Workload = (*nginxv1beta1.Workload)(tg.Spec.Workload)
-	nic.Spec.ConfigMapData = tg.Spec.ConfigMapData
-	return nic
+
+	objectKey := types.NamespacedName{
+		Namespace: gemlabels.NamespaceGateway, // gateway资源都在这里
+		Name:      tg.Name,
+	}
+
+	// 最后处理status
+	svc := &corev1.Service{}
+	if err := client.IgnoreNotFound(r.Get(ctx, objectKey, svc)); err != nil {
+		return nil
+	}
+	dep := &appsv1.Deployment{}
+	if err := client.IgnoreNotFound(r.Get(ctx, objectKey, dep)); err != nil {
+		return nil
+	}
+	original := tg.DeepCopy()
+	tg.Status.Ports = svc.Spec.Ports
+	tg.Status.AvailableReplicas = dep.Status.AvailableReplicas
+	if !equality.Semantic.DeepEqual(original.Status, tg.Status) {
+		if err := r.Status().Update(ctx, tg); err != nil {
+			log.Error(err, "failed to update tenantGateway")
+			return nil
+		}
+		log.Info("success to update", "gateway status", tg.Status)
+	}
+	return nil
+}
+
+func (r *TenantGatewayReconciler) syncNginxIngressControllerForTenantGateway(tg *gemsv1beta1.TenantGateway, ic *nginxv1beta1.NginxIngressController) error {
+	ic.Labels = tg.Labels
+	ic.Annotations = tg.Annotations
+
+	if ic.Labels == nil {
+		ic.Labels = map[string]string{}
+	}
+	if ic.Annotations == nil {
+		ic.Annotations = map[string]string{}
+	}
+
+	ic.Labels[gemlabels.LabelTenant] = tg.Spec.Tenant
+	ic.Labels[gemlabels.LabelApplication] = tg.Name
+
+	if svc := tg.Spec.Service; svc != nil {
+		ic.Spec.Service = &nginxv1beta1.Service{
+			Type:             string(tg.Spec.Type),
+			ExtraLabels:      svc.ExtraLabels,
+			ExtraAnnotations: svc.ExtraAnnotations,
+			Ports:            svc.Ports,
+		}
+	}
+	if replicas := tg.Spec.Replicas; replicas != nil {
+		ic.Spec.Replicas = replicas
+	}
+	if image := tg.Spec.Image; image != nil {
+		ic.Spec.Image = nginxv1beta1.Image{
+			Repository: image.Repository,
+			Tag:        image.Tag,
+			PullPolicy: image.PullPolicy,
+		}
+	}
+	if workload := tg.Spec.Workload; workload != nil {
+		ic.Spec.Workload = &nginxv1beta1.Workload{
+			Resources:   workload.Resources,
+			ExtraLabels: workload.ExtraLabels,
+		}
+	}
+	if configMapData := tg.Spec.ConfigMapData; configMapData != nil {
+		if ic.Spec.ConfigMapData == nil {
+			ic.Spec.ConfigMapData = map[string]string{}
+		}
+		for k, v := range configMapData {
+			ic.Spec.ConfigMapData[k] = v
+		}
+	}
+	return ctrl.SetControllerReference(tg, ic, r.Scheme)
 }

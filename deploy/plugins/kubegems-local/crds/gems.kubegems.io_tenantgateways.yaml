@@ -58,10 +58,6 @@ spec:
                 properties:
                   pullPolicy:
                     description: The ImagePullPolicy of the image.
-                    enum:
-                    - Never
-                    - Always
-                    - IfNotPresent
                     type: string
                   repository:
                     description: The repository of the image.
@@ -157,8 +153,10 @@ spec:
                       - port
                       type: object
                     type: array
-                required:
-                - ports
+                    x-kubernetes-list-map-keys:
+                    - port
+                    - protocol
+                    x-kubernetes-list-type: map
                 type: object
               tenant:
                 description: Tenant 租户名
@@ -207,10 +205,7 @@ spec:
                     type: object
                 type: object
             required:
-            - ingressClass
-            - replicas
             - tenant
-            - type
             type: object
           status:
             description: TenantGatewayStatus defines the observed state of TenantGateway

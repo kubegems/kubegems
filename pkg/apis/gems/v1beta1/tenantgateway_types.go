@@ -32,7 +32,13 @@ type Service struct {
 	ExtraAnnotations map[string]string `json:"extraAnnotations,omitempty"`
 
 	// Ports specifies the ports of the service.
-	Ports []corev1.ServicePort `json:"ports"`
+	// +optional
+	// +patchMergeKey=port
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=port
+	// +listMapKey=protocol
+	Ports []corev1.ServicePort `json:"ports,omitempty" patchMergeKey:"port" patchStrategy:"merge"`
 }
 
 type Workload struct {
@@ -51,39 +57,41 @@ type Image struct {
 	// The tag (version) of the image.
 	Tag string `json:"tag"`
 	// The ImagePullPolicy of the image.
-	// +kubebuilder:validation:Enum=Never;Always;IfNotPresent
-	PullPolicy string `json:"pullPolicy"`
+	PullPolicy corev1.PullPolicy `json:"pullPolicy"`
 }
 
 // TenantGatewaySpec defines the desired state of TenantGateway
 type TenantGatewaySpec struct {
 	// Type 负载均衡类型
+	// +optional
 	Type corev1.ServiceType `json:"type"` // NodePort or LoadBalancer
 	// Replicas 负载均衡实例数
+	// +optional
 	Replicas *int32 `json:"replicas"`
 	// Tenant 租户名
 	Tenant string `json:"tenant"`
 	// IngressClass 用以区分nginx作用域
+	// +optional
 	IngressClass string `json:"ingressClass"`
 	// The image of the Ingress Controller.
-	// +kubebuilder:validation:Optional
-	Image Image `json:"image"`
+	// +optional
+	Image *Image `json:"image"`
 	// The service of the Ingress controller.
-	// +kubebuilder:validation:Optional
+	// +optional
 	// +nullable
 	Service *Service `json:"service"`
 	// The Workload of the Ingress controller.
-	// +kubebuilder:validation:Optional
+	// +optional
 	// +nullable
 	Workload *Workload `json:"workload"`
 	// Initial values of the Ingress Controller ConfigMap.
 	// Check https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/ for
 	// more information about possible values.
-	// +kubebuilder:validation:Optional
+	// +optional
 	// +nullable
 	ConfigMapData map[string]string `json:"configMapData,omitempty"`
 	// BaseDomain is a record to auto generate domain in ingress.
-	// +kubebuilder:validation:Optional
+	// +optional
 	BaseDomain string `json:"baseDomain"`
 }
 

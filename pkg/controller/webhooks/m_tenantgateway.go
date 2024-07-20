@@ -33,25 +33,6 @@ func (r *ResourceMutate) MutateTenantGateway(ctx context.Context, req admission.
 	if err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
-
-	// ingressclassgvk, err := r.Client.RESTMapper().ResourceFor(schema.GroupVersionResource{
-	// 	Group:    "networking.k8s.io",
-	// 	Resource: "ingressclasses",
-	// })
-	// if err != nil {
-	// 	return admission.Denied(fmt.Sprintf("get ingressclass gvk failed: %v", err))
-	// }
-
-	// // https://github.com/nginxinc/kubernetes-ingress/issues/1832
-	// tag := "1.11.1"
-	// if ingressclassgvk.Version == "v1" {
-	// 	// https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.0.0
-	// 	// This is the first version to support ingressclass v1
-	// 	// Don't upgrate it, or you'll get error like nginx.conf template not valid
-	// 	tag = "2.0.0"
-	// }
-	// r.Log.Info(fmt.Sprintf("use tag: %s because of ingressclass version is: %s", tag, ingressclassgvk.Version))
-
 	switch req.Operation {
 	case v1.Create, v1.Update:
 		tgDefault(tg, r.Repo, "v1.3.0")
@@ -113,6 +94,6 @@ func tgDefault(tg *gemsv1beta1.TenantGateway, repo, tag string) {
 		tg.Spec.Image.Tag = tag
 	}
 	if tg.Spec.Image.PullPolicy == "" {
-		tg.Spec.Image.PullPolicy = string(corev1.PullIfNotPresent)
+		tg.Spec.Image.PullPolicy = corev1.PullIfNotPresent
 	}
 }

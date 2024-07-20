@@ -242,7 +242,7 @@ func updateGateway(cli client.Client) {
 
 	for _, tg := range tgs.Items {
 		tg.ResourceVersion = ""
-		tg.Spec.Image = v1beta1.Image{
+		tg.Spec.Image = &v1beta1.Image{
 			Repository: "registry.cn-beijing.aliyuncs.com/kubegems/nginx-ingress",
 			Tag:        "v1.3.0",
 		}

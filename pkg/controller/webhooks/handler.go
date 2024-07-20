@@ -23,7 +23,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	nginxv1beta1 "kubegems.io/ingress-nginx-operator/api/v1beta1"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
 	gemsv1beta1 "kubegems.io/kubegems/pkg/apis/gems/v1beta1"
 	"kubegems.io/kubegems/pkg/apis/networking"
@@ -152,7 +151,7 @@ func GetValidateHandler(client *client.Client, log *logr.Logger) *webhook.Admiss
 	return &webhook.Admission{Handler: &ResourceValidate{Client: *client, Log: *log}}
 }
 
-func CreateDefaultTenantGateway(client client.Client, log logr.Logger) {
+func CreateDefaultTenantGateway(cli client.Client, log logr.Logger) {
 	tg := gemsv1beta1.TenantGateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      defaultGatewayName,
@@ -181,24 +180,12 @@ func CreateDefaultTenantGateway(client client.Client, log logr.Logger) {
 		},
 	}
 
-	execute := func() error {
-		nicList := nginxv1beta1.NginxIngressControllerList{}
-		if err := client.List(context.TODO(), &nicList); err != nil {
-			return err
-		}
-		return client.Create(context.TODO(), &tg)
-	}
-
 	for {
-		err := execute()
-		switch {
-		case err == nil:
-			log.Info("succeed to create default tenant gateway")
-			return
-		case apierrors.IsAlreadyExists(err):
-			log.Info("default tenant gateway already exist")
-			return
-		default:
+		if err := cli.Create(context.TODO(), &tg); err != nil {
+			if apierrors.IsAlreadyExists(err) {
+				log.Info("default tenant gateway already exist")
+				return
+			}
 			log.Info(fmt.Sprintf("failed to create default tenant gateway: %v, waiting to try again", err))
 			time.Sleep(10 * time.Second)
 		}

@@ -302,7 +302,11 @@ func (in *TenantGatewaySpec) DeepCopyInto(out *TenantGatewaySpec) {
 		*out = new(int32)
 		**out = **in
 	}
-	out.Image = in.Image
+	if in.Image != nil {
+		in, out := &in.Image, &out.Image
+		*out = new(Image)
+		**out = **in
+	}
 	if in.Service != nil {
 		in, out := &in.Service, &out.Service
 		*out = new(Service)
