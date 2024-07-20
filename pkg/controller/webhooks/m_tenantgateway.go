@@ -87,6 +87,9 @@ func tgDefault(tg *gemsv1beta1.TenantGateway, repo, tag string) {
 		tg.Spec.BaseDomain = "*.kubegems.io"
 	}
 
+	if tg.Spec.Image == nil {
+		tg.Spec.Image = &gemsv1beta1.Image{}
+	}
 	if tg.Spec.Image.Repository == "" {
 		tg.Spec.Image.Repository = repo
 	}
