@@ -277,9 +277,10 @@ spec:
                   - port
                   type: object
                 type: array
-            required:
-            - availableReplicas
-            - ports
+                x-kubernetes-list-map-keys:
+                - port
+                - protocol
+                x-kubernetes-list-type: map
             type: object
         type: object
     served: true

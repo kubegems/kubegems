@@ -98,9 +98,16 @@ type TenantGatewaySpec struct {
 // TenantGatewayStatus defines the observed state of TenantGateway
 type TenantGatewayStatus struct {
 	// ActAvailableReplicasive nginx deployment 正常的pod数
+	// +optional
 	AvailableReplicas int32 `json:"availableReplicas"`
 	// NodePort nginx service 占用的ports
-	Ports []corev1.ServicePort `json:"ports"`
+	// +optional
+	// +patchMergeKey=port
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=port
+	// +listMapKey=protocol
+	Ports []corev1.ServicePort `json:"ports,omitempty" patchMergeKey:"port" patchStrategy:"merge"`
 }
 
 //+genclient

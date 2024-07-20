@@ -223,6 +223,9 @@ func (r *TenantGatewayReconciler) syncNginxIngressControllerForTenantGateway(tg 
 	ic.Labels[gemlabels.LabelTenant] = tg.Spec.Tenant
 	ic.Labels[gemlabels.LabelApplication] = tg.Name
 
+	if ingressClass := tg.Spec.IngressClass; ingressClass != "" {
+		ic.Spec.IngressClass = ingressClass
+	}
 	if svc := tg.Spec.Service; svc != nil {
 		ic.Spec.Service = &nginxv1beta1.Service{
 			Type:             string(tg.Spec.Type),
