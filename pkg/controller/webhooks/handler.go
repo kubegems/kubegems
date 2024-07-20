@@ -181,7 +181,8 @@ func CreateDefaultTenantGateway(cli client.Client, log logr.Logger) {
 	}
 
 	for {
-		if err := cli.Create(context.TODO(), &tg); err != nil {
+		newobj := tg.DeepCopy()
+		if err := cli.Create(context.TODO(), newobj); err != nil {
 			if apierrors.IsAlreadyExists(err) {
 				log.Info("default tenant gateway already exist")
 				return
@@ -189,5 +190,7 @@ func CreateDefaultTenantGateway(cli client.Client, log logr.Logger) {
 			log.Info(fmt.Sprintf("failed to create default tenant gateway: %v, waiting to try again", err))
 			time.Sleep(10 * time.Second)
 		}
+		log.Info("default tenant gateway created")
+		return
 	}
 }
