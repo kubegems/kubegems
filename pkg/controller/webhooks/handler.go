@@ -189,6 +189,7 @@ func CreateDefaultTenantGateway(cli client.Client, log logr.Logger) {
 			}
 			log.Info(fmt.Sprintf("failed to create default tenant gateway: %v, waiting to try again", err))
 			time.Sleep(10 * time.Second)
+			continue
 		}
 		log.Info("default tenant gateway created")
 		return
