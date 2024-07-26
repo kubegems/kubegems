@@ -15,8 +15,10 @@
 package ws
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"io"
+	"os"
 	"unicode/utf8"
 
 	"github.com/gorilla/websocket"
@@ -27,6 +29,24 @@ import (
 type StreamHandler struct {
 	WsConn      *WsConnection
 	ResizeEvent chan *remotecommand.TerminalSize
+	outputMode  string
+}
+
+func NewStreamHandler(wsConn *WsConnection, outputMode string) *StreamHandler {
+	sh := &StreamHandler{
+		WsConn:      wsConn,
+		ResizeEvent: make(chan *remotecommand.TerminalSize),
+		outputMode:  outputMode,
+	}
+	if sh.outputMode == "" {
+		outputMode := os.Getenv("WS_OUTPUT_MODE")
+		if outputMode == "base64" || outputMode == "filtertedutf8" || outputMode == "utf8" {
+			sh.outputMode = outputMode
+		} else {
+			sh.outputMode = "utf8"
+		}
+	}
+	return sh
 }
 
 type xtermMessage struct {
@@ -73,15 +93,39 @@ func (handler *StreamHandler) Read(p []byte) (size int, err error) {
 }
 
 func (handler *StreamHandler) Write(p []byte) (size int, err error) {
-	copyData := make([]byte, len(p))
-	copy(copyData, p)
-	size = len(copyData)
-	err = handler.WsConn.WsWrite(websocket.TextMessage, validUTF8(copyData))
+	size = len(p)
+	switch handler.outputMode {
+	case "base64":
+		dst := []byte{}
+		base64.StdEncoding.Encode(dst, p)
+		err = handler.WsConn.WsWrite(websocket.TextMessage, dst)
+	case "filtertedutf8":
+		filtered := filterValidUTF8(p)
+		err = handler.WsConn.WsWrite(websocket.TextMessage, filtered)
+	case "utf8":
+		valid := validUTF8(p)
+		err = handler.WsConn.WsWrite(websocket.TextMessage, valid)
+	}
 	if err != nil {
 		log.Error(err, "write websocket")
 		handler.WsConn.WsClose()
 	}
 	return
+}
+
+func filterValidUTF8(input []byte) []byte {
+	var filtered []byte
+	i := 0
+	for i < len(input) {
+		r, size := utf8.DecodeRune(input[i:])
+		if r == utf8.RuneError && size == 1 {
+			i++
+		} else {
+			filtered = append(filtered, input[i:i+size]...)
+			i += size
+		}
+	}
+	return filtered
 }
 
 func validUTF8(arr []byte) []byte {
