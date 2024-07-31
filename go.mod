@@ -437,6 +437,7 @@ require (
 
 replace (
 	github.com/envoyproxy/go-control-plane => github.com/envoyproxy/go-control-plane v0.10.2-0.20220119144013-5ce31a86d483
+	github.com/mitchellh/osext => github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/nginxinc/nginx-ingress-operator => github.com/kubegems/nginx-ingress-operator v0.3.2
 	github.com/prometheus/prometheus => github.com/prometheus/prometheus v1.8.2-0.20210421143221-52df5ef7a3be
 	github.com/wercker/stern => github.com/oam-dev/stern v1.13.2
@@ -467,3 +468,5 @@ replace (
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.5
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.5
 )
+
+exclude github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f
