@@ -405,7 +405,7 @@ type wsWriter struct {
 }
 
 func (w *wsWriter) Write(data []byte) (int, error) {
-	err := w.conn.WriteMessage(websocket.TextMessage, data)
+	err := w.conn.WriteMessage(websocket.BinaryMessage, data)
 	if err != nil {
 		return 0, err
 	}
