@@ -20,11 +20,12 @@ import (
 	"net/http"
 
 	"golang.org/x/sync/errgroup"
+	"kubegems.io/library/rest/api"
+
 	"kubegems.io/kubegems/pkg/edge/tunnel"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/utils/pprof"
 	"kubegems.io/kubegems/pkg/utils/system"
-	"kubegems.io/library/rest/api"
 )
 
 func Run(ctx context.Context, options *Options) error {
@@ -97,5 +98,5 @@ func (s *EdgeServer) HTTPAPI() http.Handler {
 		Cluster: s.clusters,
 		Tunnel:  s.server.TunnelServer,
 	}
-	return api.NewAPI().Register("/v1", edgeapi).BuildHandler()
+	return api.NewAPI().HealthCheck(nil).Register("/v1", edgeapi).BuildHandler()
 }
