@@ -20,11 +20,12 @@ import (
 
 	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/labels"
-	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
-	"kubegems.io/kubegems/pkg/edge/tunnel"
 	route "kubegems.io/library/rest/api"
 	"kubegems.io/library/rest/request"
 	"kubegems.io/library/rest/response"
+
+	"kubegems.io/kubegems/pkg/apis/edge/v1beta1"
+	"kubegems.io/kubegems/pkg/edge/tunnel"
 )
 
 type EdgeClusterAPI struct {
@@ -183,7 +184,7 @@ func (a *EdgeClusterAPI) RegisterRoute(r *route.Group) {
 			),
 		),
 		route.NewGroup("/edge-clusters").Tag("edge-cluster").AddRoutes(
-			route.GET("/").To(a.ListEdgeClusters).
+			route.GET("").To(a.ListEdgeClusters).
 				Doc("list clusters").
 				Parameters(
 					route.QueryParameter("labels", "labels selector").Optional(),
