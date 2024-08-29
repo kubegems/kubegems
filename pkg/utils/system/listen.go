@@ -29,16 +29,6 @@ import (
 
 func ListenAndServeContextGRPCAndHTTP(ctx context.Context, listen string, tls *tls.Config, httphandler http.Handler, grpchandler http.Handler) error {
 	log := logr.FromContextOrDiscard(ctx)
-	if grpchandler != nil {
-		httphandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.ProtoMajor == 2 && strings.HasPrefix(
-				r.Header.Get("Content-Type"), "application/grpc") {
-				grpchandler.ServeHTTP(w, r)
-			} else {
-				httphandler.ServeHTTP(w, r)
-			}
-		})
-	}
 	s := http.Server{
 		Handler:   httphandler,
 		Addr:      listen,
@@ -47,6 +37,17 @@ func ListenAndServeContextGRPCAndHTTP(ctx context.Context, listen string, tls *t
 			return ctx
 		},
 	}
+	if grpchandler != nil {
+		s.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.ProtoMajor == 2 && strings.HasPrefix(
+				r.Header.Get("Content-Type"), "application/grpc") {
+				grpchandler.ServeHTTP(w, r)
+			} else {
+				httphandler.ServeHTTP(w, r)
+			}
+		})
+	}
+
 	go func() {
 		<-ctx.Done()
 		log.Info("shutting down server", "addr", listen)

@@ -20,9 +20,11 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
 	"kubegems.io/kubegems/pkg/service/aaa"
@@ -81,6 +83,7 @@ type DefaultAuditInstance struct {
 	cache         cache.ModelCache
 	db            *gorm.DB
 	logQueue      chan models.AuditLog
+	logQueueClose bool
 }
 
 func NewAuditMiddleware(db *gorm.DB, cache cache.ModelCache, uinterface aaa.ContextUserOperator) *DefaultAuditInstance {
@@ -151,6 +154,11 @@ func (audit *DefaultAuditInstance) Log(username, module, tenant, operation, name
 		Success:  success,
 		ClientIP: ip,
 	}
+
+	if audit.logQueueClose {
+		return
+	}
+
 	audit.logQueue <- auditLog
 }
 
@@ -158,14 +166,36 @@ func (audit *DefaultAuditInstance) Consumer(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Info("audit log consumer exit")
+			if len(audit.logQueue) == 0 {
+				log.Info("audit log consumer exit")
+				return nil
+			}
+
+			// stop receive new audit log
+			close(audit.logQueue)
+			audit.logQueueClose = true
+			// consume all audit log in the queue
+			wg := sync.WaitGroup{}
+			for auditLog := range audit.logQueue {
+				wg.Add(1)
+				go func(auditLog models.AuditLog) {
+					defer wg.Done()
+					audit.emit(auditLog)
+				}(auditLog)
+			}
+			wg.Wait()
+			log.Info("audit log consumer all done, exit.")
 			return nil
 		case auditLog := <-audit.logQueue:
-			if err := audit.db.Create(&auditLog).Error; err != nil {
-				o, _ := json.Marshal(auditLog)
-				log.Errorf("can't record audit log: (%s), err: %v", string(o), err)
-			}
+			go audit.emit(auditLog)
 		}
+	}
+}
+
+func (audit *DefaultAuditInstance) emit(auditLog models.AuditLog) {
+	if err := audit.db.Create(&auditLog).Error; err != nil {
+		o, _ := json.Marshal(auditLog)
+		log.Errorf("can't record audit log: (%s), err: %v", string(o), err)
 	}
 }
 
