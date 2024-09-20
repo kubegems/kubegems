@@ -174,7 +174,7 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	projUsers := h.GetDataBase().ProjectUsers(obj.ID)
 	tenantAdmins := h.GetDataBase().TenantAdmins(obj.TenantID)
 	action := i18n.Sprintf(context.TODO(), "delete")
-	module := i18n.Sprintf(context.TODO(), "porject")
+	module := i18n.Sprintf(context.TODO(), "project")
 	h.SetAuditData(c, action, module, obj.ProjectName)
 	h.SetExtraAuditData(c, models.ResProject, obj.ID)
 
