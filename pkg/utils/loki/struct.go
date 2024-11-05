@@ -16,6 +16,7 @@ package loki
 
 import (
 	"encoding/json"
+	"strconv"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
@@ -97,14 +98,33 @@ type QueryRangeParam struct {
 	Interval  string `form:"interval" json:"interval,omitempty"`
 	Query     string `form:"query" json:"query,omitempty"`
 	Direction string `form:"direction" json:"direction,omitempty"`
-	Limit     string `form:"limit" json:"limit,omitempty"`
+	Limit     int    `form:"limit" json:"limit,omitempty"`
 }
 
 func (q *QueryRangeParam) ToMap() map[string]string {
-	b, _ := json.Marshal(&q)
-	var m map[string]string
-	_ = json.Unmarshal(b, &m)
-	return m
+	ret := make(map[string]string)
+	if q.Start != "" {
+		ret["start"] = q.Start
+	}
+	if q.End != "" {
+		ret["end"] = q.End
+	}
+	if q.Step != "" {
+		ret["step"] = q.Step
+	}
+	if q.Interval != "" {
+		ret["interval"] = q.Interval
+	}
+	if q.Query != "" {
+		ret["query"] = q.Query
+	}
+	if q.Direction != "" {
+		ret["direction"] = q.Direction
+	}
+	if q.Limit != 0 {
+		ret["limit"] = strconv.Itoa(q.Limit)
+	}
+	return ret
 }
 
 type TailParam struct {

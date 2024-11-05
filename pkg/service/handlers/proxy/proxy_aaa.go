@@ -65,6 +65,7 @@ func (p *ProxyObject) InNamespace() bool {
 func ParseProxyObj(c *gin.Context, path string) *audit.ProxyObject {
 	proxyobj := audit.ProxyObject{
 		Cluster: c.Param("cluster"),
+		Path:    path,
 	}
 	tpath := path
 	if strings.HasPrefix(path, "/custom") {
@@ -98,7 +99,4 @@ func fillObjectFields(r *regexp.Regexp, obj *audit.ProxyObject, path string) {
 	obj.Version = ret["version"]
 	obj.Resource = ret["resource"]
 	obj.Action = ret["action"]
-	if len(obj.Namespace) > 0 {
-		obj.NamespacedScoped = true
-	}
 }

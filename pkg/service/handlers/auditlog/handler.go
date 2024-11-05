@@ -15,10 +15,11 @@
 package auditloghandler
 
 import (
-	"kubegems.io/kubegems/pkg/service/handlers"
-	"kubegems.io/kubegems/pkg/service/models"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"kubegems.io/kubegems/pkg/service/handlers"
+	"kubegems.io/kubegems/pkg/service/models"
 )
 
 var (
@@ -30,6 +31,7 @@ var (
 )
 
 // ListAuditLog 列表 AuditLog
+//
 //	@Tags			AuditLog
 //	@Summary		AuditLog列表
 //	@Description	AuditLog列表
@@ -63,9 +65,10 @@ func (h *AuditLogHandler) ListAuditLog(c *gin.Context) {
 	if len(end) > 0 {
 		where = append(where, handlers.Args("created_at < ?", end))
 	}
-	tenant := c.Query("Tenant")
-	if len(tenant) > 0 {
-		where = append(where, handlers.Args("tenant = ?", tenant))
+	where, err = h.checkWhereOnTenant(c, where)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
 	}
 	action := c.Query("Action")
 	if len(action) > 0 {
@@ -92,7 +95,32 @@ func (h *AuditLogHandler) ListAuditLog(c *gin.Context) {
 	handlers.OK(c, handlers.Page(total, list, page, size))
 }
 
+func (h *AuditLogHandler) checkWhereOnTenant(c *gin.Context, where []*handlers.QArgs) ([]*handlers.QArgs, error) {
+	tenant := c.Query("Tenant")
+	// nolint: nestif
+	if len(tenant) > 0 {
+		ok, err := h.HasTenantPerm(c, tenant)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("don't have permission to access tenant %s's audit log", tenant)
+		}
+		where = append(where, handlers.Args("tenant = ?", tenant))
+	} else {
+		isadmin, err := h.HasSystemAdminPerm(c)
+		if err != nil {
+			return nil, err
+		}
+		if !isadmin {
+			return nil, fmt.Errorf("don't have permission to access all tenants")
+		}
+	}
+	return where, nil
+}
+
 // RetrieveAuditLog AuditLog详情
+//
 //	@Tags			AuditLog
 //	@Summary		AuditLog详情
 //	@Description	get AuditLog详情

@@ -61,21 +61,21 @@ type AuditInterface interface {
 }
 
 type ProxyObject struct {
-	NamespacedScoped bool
-	Cluster          string
-	Namespace        string
-	Name             string
-	Group            string
-	Version          string
-	Resource         string
-	Action           string
+	Cluster   string
+	Namespace string
+	Name      string
+	Group     string
+	Version   string
+	Resource  string
+	Action    string
+	Path      string
 }
 
-func (p *ProxyObject) InNamespace() bool {
-	if !p.NamespacedScoped {
-		return false
+func (p *ProxyObject) GetNamespace() string {
+	if p.Namespace == "_" || p.Namespace == "_all" {
+		return ""
 	}
-	return p.Namespace != "" && p.Namespace != "_" && p.Namespace != "_all"
+	return p.Namespace
 }
 
 type DefaultAuditInstance struct {
@@ -104,10 +104,9 @@ func (audit *DefaultAuditInstance) AuditProxyFunc(c *gin.Context, proxyobj *Prox
 	module := proxyobj.Resource
 	name := proxyobj.Name
 	audit.SetAuditData(c, action, module, name)
-	if !proxyobj.InNamespace() {
-		return
+	if ns := proxyobj.GetNamespace(); ns != "" {
+		audit.SetExtraAuditDataByClusterNamespace(c, module, ns)
 	}
-	audit.SetExtraAuditDataByClusterNamespace(c, module, proxyobj.Namespace)
 }
 
 func (audit *DefaultAuditInstance) WebsocketAuditFunc(username string, parents []cache.CommonResourceIface, ip string, proxyobj *ProxyObject) func(cmd string) {

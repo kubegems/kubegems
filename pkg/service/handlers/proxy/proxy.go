@@ -24,6 +24,7 @@ import (
 	"github.com/gorilla/websocket"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/log"
+	"kubegems.io/kubegems/pkg/service/aaa/audit"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/handlers/base"
 	"kubegems.io/kubegems/pkg/service/models"
@@ -61,11 +62,35 @@ func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
 	// 审计
 	h.AuditProxyFunc(c, proxyobj)
 
-	// 权限
-	if proxyobj.InNamespace() {
-		h.CheckByClusterNamespace(c)
-		if c.IsAborted() {
-			return
+	ispublic, err := h.checkPublic(c, proxyobj)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	// nolint: nestif
+	if !ispublic {
+		ns := proxyobj.GetNamespace()
+		if ns == "" {
+			ok, err := h.HasSystemAdminPerm(c)
+			if err != nil {
+				handlers.NotOK(c, err)
+				return
+			}
+			if !ok {
+				handlers.Forbidden(c, i18n.Errorf(c, "no permission to access cluster scope resources"))
+				return
+			}
+		} else {
+			// 权限
+			ok, err := h.HasNamespacePerm(c, cluster, proxyobj.GetNamespace())
+			if err != nil {
+				handlers.NotOK(c, err)
+				return
+			}
+			if !ok {
+				handlers.Forbidden(c, i18n.Errorf(c, "don't have permission to access namespace %s", proxyobj.GetNamespace()))
+				return
+			}
 		}
 	}
 	cli, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
@@ -80,16 +105,64 @@ func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
 	cli.ReverseProxy().ServeHTTP(c.Writer, c.Request)
 }
 
+var PublicPath = map[string]func(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) error{
+	"/plugins": func(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) error {
+		issimple := c.Query("simple")
+		if issimple == "true" {
+			return nil
+		}
+		ok, err := h.HasSystemAdminPerm(c)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return i18n.Errorf(c, "no permission to access plugins")
+		}
+		return nil
+	},
+	"/api-resources":               nil,
+	"/custom/prometheus/v1/matrix": nil,
+	"/custom/prometheus/v1/vector": nil,
+	"/gems.kubegems.io/v1beta1/tenantresourcequotas": func(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) error {
+		ok, err := h.HasTenantPerm(c, obj.Name)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return i18n.Errorf(c, "no permission to access tenant %s", obj.Name)
+		}
+		return nil
+	},
+}
+
+func (h *ProxyHandler) checkPublic(c *gin.Context, obj *audit.ProxyObject) (bool, error) {
+	for prefix, pub := range PublicPath {
+		if strings.HasPrefix(obj.Path, prefix) {
+			if pub != nil {
+				if err := pub(h, c, obj); err != nil {
+					return false, err
+				}
+			}
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 	cluster := c.Param("cluster")
 	proxyPath := c.Param("action")
 
 	proxyobj := ParseProxyObj(c, proxyPath)
-	if proxyobj.InNamespace() {
-		h.CheckByClusterNamespace(c)
-		if c.IsAborted() {
-			return
-		}
+
+	ok, err := h.HasNamespacePerm(c, cluster, proxyobj.GetNamespace())
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	if !ok {
+		handlers.Forbidden(c, i18n.Errorf(c, "don't have permission to access namespace [%s]", proxyobj.GetNamespace()))
+		return
 	}
 
 	// NOTICE:

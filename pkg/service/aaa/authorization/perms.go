@@ -20,7 +20,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/i18n"
 	"kubegems.io/kubegems/pkg/service/aaa"
-	"kubegems.io/kubegems/pkg/service/aaa/audit"
 	"kubegems.io/kubegems/pkg/service/handlers"
 	"kubegems.io/kubegems/pkg/service/models"
 	"kubegems.io/kubegems/pkg/service/models/cache"
@@ -52,11 +51,66 @@ type PermissionManager interface {
 	CheckIsATenantAdmin(c *gin.Context)
 	// CheckCanDeployEnvironment  判断是否有对应环境的部署权限
 	CheckCanDeployEnvironment(c *gin.Context)
+
+	HasNamespacePerm(c *gin.Context, cluster, namespace string) (bool, error)
+	HasTenantPerm(c *gin.Context, tanentname string) (bool, error)
+	HasTenantAdminPerm(c *gin.Context, tenant string) (bool, error)
+	HasSystemAdminPerm(c *gin.Context) (bool, error)
 }
+
+var _ PermissionManager = &DefaultPermissionManager{}
 
 type DefaultPermissionManager struct {
 	Cache  cache.ModelCache
 	Userif aaa.ContextUserOperator
+}
+
+// HasTenantAdminPerm implements PermissionManager.
+func (defaultPermChecker *DefaultPermissionManager) HasTenantAdminPerm(c *gin.Context, tenant string) (bool, error) {
+	return defaultPermChecker.hasTenantPerm(c, tenant, true)
+}
+
+// HasTenantPerm implements PermissionManager.
+func (defaultPermChecker *DefaultPermissionManager) HasTenantPerm(c *gin.Context, tenantname string) (bool, error) {
+	return defaultPermChecker.hasTenantPerm(c, tenantname, false)
+}
+
+// HasTenantAdminPerm implements PermissionManager.
+func (defaultPermChecker *DefaultPermissionManager) hasTenantPerm(c *gin.Context, tenant string, requireAdmin bool) (bool, error) {
+	user, exist := defaultPermChecker.Userif.GetContextUser(c)
+	if !exist {
+		return false, nil
+	}
+	userAuthoriy := defaultPermChecker.Cache.GetUserAuthority(user)
+	if userAuthoriy.IsSystemAdmin() {
+		return true, nil
+	}
+	for _, ten := range userAuthoriy.Tenants {
+		if ten.Name == tenant && (ten.IsAdmin || !requireAdmin) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// HasSystemAdminPerm implements PermissionManager.
+func (defaultPermChecker *DefaultPermissionManager) HasSystemAdminPerm(c *gin.Context) (bool, error) {
+	user, exist := defaultPermChecker.Userif.GetContextUser(c)
+	if !exist {
+		return false, nil
+	}
+	userAuthoriy := defaultPermChecker.Cache.GetUserAuthority(user)
+	return userAuthoriy.IsSystemAdmin(), nil
+}
+
+// HasNamespacePerm implements PermissionManager.
+// if namespace == "" check if has cluster permission
+func (defaultPermChecker *DefaultPermissionManager) HasNamespacePerm(c *gin.Context, cluster string, namespace string) (bool, error) {
+	if namespace == "" {
+		return defaultPermChecker.HasSystemAdminPerm(c)
+	}
+	ok, _, _ := defaultPermChecker.HasEnvPerm(c, cluster, namespace)
+	return ok, nil
 }
 
 func (defaultPermChecker *DefaultPermissionManager) HasEnvPerm(c *gin.Context, cluster, namespace string) (hasPerm bool, objname string, currentrole string) {
@@ -175,13 +229,9 @@ func (defaultPermissionChecker *DefaultPermissionManager) CheckByClusterNamespac
 	cluster := c.Param("cluster")
 	namespace := c.Param("namespace")
 	if len(namespace) == 0 {
-		// 这种是处理反向代理的
-		pobj, exist := c.Get("proxyobj")
-		if !exist {
-			return
-		}
-		proxyobj := pobj.(*audit.ProxyObject)
-		namespace = proxyobj.Namespace
+		handlers.Forbidden(c, i18n.Errorf(c, "namespace is required"))
+		c.Abort()
+		return
 	}
 	hasPerm, objname, _ := defaultPermissionChecker.HasEnvPerm(c, cluster, namespace)
 	if !hasPerm {

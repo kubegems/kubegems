@@ -16,6 +16,9 @@ package registryhandler
 
 import (
 	"context"
+	"errors"
+	"net"
+	"regexp"
 	"time"
 
 	"gorm.io/gorm"
@@ -50,6 +53,10 @@ func (h *RegistryHandler) validate(ctx context.Context, v *models.Registry) erro
 	ctx, cancel := context.WithTimeout(ctx, loginTimeout)
 	defer cancel()
 
+	if err := ValidateRegistryAddress(ctx, v.RegistryAddress); err != nil {
+		return err
+	}
+
 	// check if a harbor registry when enableExtends is true
 	if v.EnableExtends {
 		harborcli := harbor.NewClient(v.RegistryAddress, v.Username, v.Password)
@@ -63,7 +70,24 @@ func (h *RegistryHandler) validate(ctx context.Context, v *models.Registry) erro
 	}
 	// validate username/password
 	if err := harbor.TryLogin(ctx, v.RegistryAddress, v.Username, v.Password); err != nil {
-		return i18n.Errorf(ctx, "validate username and password to the registry faild: %s", err.Error())
+		neterr := &net.OpError{}
+		if errors.As(err, &neterr) {
+			return i18n.Errorf(ctx, "failed to connect to the registry address: %s", err.Error())
+		}
+		return i18n.Errorf(ctx, "invalid username or password")
+	}
+	return nil
+}
+
+// domain regexp
+var domainRegexp = regexp.MustCompile(`^https?://([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$`)
+
+func ValidateRegistryAddress(ctx context.Context, address string) error {
+	if address == "" {
+		return i18n.Errorf(ctx, "registry address is required")
+	}
+	if !domainRegexp.MatchString(address) {
+		return i18n.Errorf(ctx, "invalid registry address, must be a valid domain name matching the pattern: %s", domainRegexp.String())
 	}
 	return nil
 }

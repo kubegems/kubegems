@@ -1,5 +1,5 @@
 .idea
-__debug_bin
+__debug_bin*
 .vscode
 *.code-workspace
 tmp/
