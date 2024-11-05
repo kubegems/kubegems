@@ -37,6 +37,7 @@ import (
 //	@Produce		json
 //	@Param			cluster	path		string									true	"cluster_name"
 //	@Param			query	query		string									true	"query"
+//	@Param			condition	query		string									false	"condition"
 //	@Param			tenant 	query		string									false	"tenant"
 //	@Param			limit	query		int										false	"limit"
 //	@Param			start	query		string									false	"start"
@@ -46,10 +47,11 @@ import (
 //	@Security		JWT
 func (l *EventHandler) Event(c *gin.Context) {
 	options := GetEventOptions{
-		Tenant:  c.Query("tenant"),
-		Cluster: c.Param("cluster"),
-		Start:   c.Query("start"),
-		End:     c.Query("end"),
+		Tenant:    c.Query("tenant"),
+		Cluster:   c.Param("cluster"),
+		Start:     c.Query("start"),
+		End:       c.Query("end"),
+		Condition: c.Query("condition"),
 	}
 	options.Limit, _ = strconv.Atoi(c.Query("limit"))
 
@@ -118,6 +120,7 @@ func ListAllTenantNamespaces(ctx context.Context, db *database.Database, tenantn
 
 type GetEventOptions struct {
 	Tenant     string   `json:"tenant"`
+	Condition  string   `json:"condition"`
 	Cluster    string   `json:"cluster"`
 	Namespaces []string `json:"namespaces"`
 	Start      string   `json:"start,omitempty"`
@@ -129,6 +132,9 @@ func (l *EventHandler) GetEvent(c *gin.Context, options GetEventOptions) (*loki.
 	query := `{container="event-exporter", stream="stdout"} | json | __error__=""`
 	if len(options.Namespaces) != 0 {
 		query += fmt.Sprintf(` | metadata_namespace =~ "%s"`, strings.Join(options.Namespaces, "|"))
+	}
+	if options.Condition != "" {
+		query += fmt.Sprintf(` | %s`, options.Condition)
 	}
 	lokiq := loki.QueryRangeParam{
 		Query:     query,
