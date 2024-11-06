@@ -67,7 +67,7 @@ func (l *EventHandler) Event(c *gin.Context) {
 			return
 		}
 		// get all namespaces of the tenant
-		namespaces, err := ListAllTenantNamespaces(c.Request.Context(), l.GetDataBase(), options.Tenant)
+		namespaces, err := ListAllTenantNamespaces(c.Request.Context(), l.GetDataBase(), options.Tenant, options.Cluster)
 		if err != nil {
 			handlers.NotOK(c, err)
 			return
@@ -98,19 +98,23 @@ func (l *EventHandler) Event(c *gin.Context) {
 	handlers.OK(c, queryResults)
 }
 
-func ListAllTenantNamespaces(ctx context.Context, db *database.Database, tenantname string) ([]string, error) {
+func ListAllTenantNamespaces(ctx context.Context, db *database.Database, tenantname, clustername string) ([]string, error) {
 	var list []models.Environment
 	// TODO: improve performance by using a single query
 	if err := db.
 		DB().
 		WithContext(ctx).
 		Preload("Project.Tenant").
+		Preload("Cluster").
 		Find(&list).Error; err != nil {
 		return nil, err
 	}
 	namespaces := set.NewSet[string]()
 	for _, env := range list {
 		if env.Project == nil || env.Project.Tenant == nil || env.Project.Tenant.TenantName != tenantname {
+			continue
+		}
+		if env.Cluster == nil || env.Cluster.ClusterName != clustername {
 			continue
 		}
 		namespaces.Append(env.Namespace)
