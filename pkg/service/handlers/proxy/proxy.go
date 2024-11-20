@@ -120,19 +120,25 @@ var PublicPath = map[string]func(h *ProxyHandler, c *gin.Context, obj *audit.Pro
 		}
 		return nil
 	},
-	"/api-resources":               nil,
-	"/custom/prometheus/v1/matrix": nil,
-	"/custom/prometheus/v1/vector": nil,
-	"/gems.kubegems.io/v1beta1/tenantresourcequotas": func(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) error {
-		ok, err := h.HasTenantPerm(c, obj.Name)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return i18n.Errorf(c, "no permission to access tenant %s", obj.Name)
-		}
-		return nil
-	},
+	"/api-resources":                                  nil,
+	"/custom/prometheus/v1/matrix":                    nil,
+	"/custom/prometheus/v1/vector":                    nil,
+	"/storage.k8s.io/v1/storageclasses":               nil,
+	"/networking.k8s.io/v1/ingressclasses":            nil,
+	"/gems.kubegems.io/v1beta1/tenantgateways":        nil,
+	"/gems.kubegems.io/v1beta1/tenantnetworkpolicies": checHasTenantPerm,
+	"/gems.kubegems.io/v1beta1/tenantresourcequotas":  checHasTenantPerm,
+}
+
+func checHasTenantPerm(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) error {
+	ok, err := h.HasTenantPerm(c, obj.Name)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return i18n.Errorf(c, "no permission to access tenant %s", obj.Name)
+	}
+	return nil
 }
 
 func (h *ProxyHandler) checkPublic(c *gin.Context, obj *audit.ProxyObject) (bool, error) {
