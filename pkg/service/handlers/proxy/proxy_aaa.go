@@ -66,6 +66,7 @@ func ParseProxyObj(c *gin.Context, path string) *audit.ProxyObject {
 	proxyobj := audit.ProxyObject{
 		Cluster: c.Param("cluster"),
 		Path:    path,
+		Method:  c.Request.Method,
 	}
 	tpath := path
 	if strings.HasPrefix(path, "/custom") {

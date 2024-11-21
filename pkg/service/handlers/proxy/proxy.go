@@ -15,6 +15,7 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"path"
 	"strconv"
@@ -62,14 +63,21 @@ func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
 	// 审计
 	h.AuditProxyFunc(c, proxyobj)
 
-	ispublic, err := h.checkPublic(c, proxyobj)
+	decision, err := h.checkPublic(c, proxyobj)
 	if err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
-	// nolint: nestif
-	if !ispublic {
+
+	switch decision {
+	case Allow:
+		break
+	case Deny:
+		handlers.Forbidden(c, fmt.Errorf("no permission to access %s", proxyobj.Path))
+		return
+	case NoOpinion:
 		ns := proxyobj.GetNamespace()
+		// nolint: nestif
 		if ns == "" {
 			ok, err := h.HasSystemAdminPerm(c)
 			if err != nil {
@@ -105,54 +113,67 @@ func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
 	cli.ReverseProxy().ServeHTTP(c.Writer, c.Request)
 }
 
-var PublicPath = map[string]func(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) error{
-	"/plugins": func(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) error {
-		issimple := c.Query("simple")
-		if issimple == "true" {
-			return nil
-		}
-		ok, err := h.HasSystemAdminPerm(c)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return i18n.Errorf(c, "no permission to access plugins")
-		}
-		return nil
-	},
-	"/api-resources":                                  nil,
-	"/custom/prometheus/v1/matrix":                    nil,
-	"/custom/prometheus/v1/vector":                    nil,
-	"/storage.k8s.io/v1/storageclasses":               nil,
-	"/networking.k8s.io/v1/ingressclasses":            nil,
-	"/gems.kubegems.io/v1beta1/tenantgateways":        nil,
-	"/gems.kubegems.io/v1beta1/tenantnetworkpolicies": checHasTenantPerm,
-	"/gems.kubegems.io/v1beta1/tenantresourcequotas":  checHasTenantPerm,
+type AuthorizationDecision string
+
+const (
+	Allow     AuthorizationDecision = "allow"
+	Deny      AuthorizationDecision = "deny"
+	NoOpinion AuthorizationDecision = "noOpinion"
+)
+
+var PublicPath = map[string]func(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) (AuthorizationDecision, error){
+	"/plugins":                                               allowSimplePlugin,
+	"/api-resources":                                         alwaysAllow,
+	"/custom/prometheus/v1/matrix":                           alwaysAllow,
+	"/custom/prometheus/v1/vector":                           alwaysAllow,
+	"/storage.k8s.io/v1/storageclasses":                      alwaysAllow,
+	"/networking.k8s.io/v1/ingressclasses":                   alwaysAllow,
+	"/gems.kubegems.io/v1beta1/tenantgateways":               alwaysAllow,
+	"/gems.kubegems.io/v1beta1/tenantnetworkpolicies":        checHasTenantPerm,
+	"/gems.kubegems.io/v1beta1/tenantresourcequotas":         checHasTenantPerm,
+	"/argoproj.io/v1alpha1/namespaces/kubegems/applications": allowUpdateArgoApp,
 }
 
-func checHasTenantPerm(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) error {
+func allowSimplePlugin(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) (AuthorizationDecision, error) {
+	issimple := c.Query("simple")
+	if issimple == "true" {
+		return Allow, nil
+	}
+	return NoOpinion, nil
+}
+
+func allowUpdateArgoApp(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) (AuthorizationDecision, error) {
+	if obj.Method == http.MethodPatch {
+		return Allow, nil
+	}
+	return NoOpinion, nil
+}
+
+func alwaysAllow(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) (AuthorizationDecision, error) {
+	return Allow, nil
+}
+
+func checHasTenantPerm(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) (AuthorizationDecision, error) {
 	ok, err := h.HasTenantPerm(c, obj.Name)
 	if err != nil {
-		return err
+		return Deny, err
 	}
 	if !ok {
-		return i18n.Errorf(c, "no permission to access tenant %s", obj.Name)
+		return Deny, i18n.Errorf(c, "no permission to access tenant %s", obj.Name)
 	}
-	return nil
+	return Allow, nil
 }
 
-func (h *ProxyHandler) checkPublic(c *gin.Context, obj *audit.ProxyObject) (bool, error) {
+func (h *ProxyHandler) checkPublic(c *gin.Context, obj *audit.ProxyObject) (AuthorizationDecision, error) {
 	for prefix, pub := range PublicPath {
 		if strings.HasPrefix(obj.Path, prefix) {
-			if pub != nil {
-				if err := pub(h, c, obj); err != nil {
-					return false, err
-				}
+			if pub == nil {
+				return Allow, nil
 			}
-			return true, nil
+			return pub(h, c, obj)
 		}
 	}
-	return false, nil
+	return NoOpinion, nil
 }
 
 func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {

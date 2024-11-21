@@ -69,6 +69,7 @@ type ProxyObject struct {
 	Resource  string
 	Action    string
 	Path      string
+	Method    string
 }
 
 func (p *ProxyObject) GetNamespace() string {
