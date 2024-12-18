@@ -28,7 +28,8 @@ type Registry struct {
 	// 用户名
 	Username string `gorm:"type:varchar(50)"`
 	// 密码
-	Password string `gorm:"type:varchar(512)"`
+	// 支持使用 token 作为密码，token 长度不超过 2048
+	Password string `gorm:"type:varchar(2048)"`
 	// 创建者
 	Creator *User `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:SET NULL;"`
 	// 更新时间
