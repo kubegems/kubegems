@@ -38,6 +38,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/agent/cluster"
 	"kubegems.io/kubegems/pkg/agent/ws"
 	gemlabels "kubegems.io/kubegems/pkg/apis/gems"
@@ -673,4 +674,26 @@ func execCmdOnce(ctx context.Context, cluster cluster.Interface, namespace, podn
 		return nil, nil, err
 	}
 	return stdout.Bytes(), stderr.Bytes(), nil
+}
+
+func (h *PodHandler) GetContainerLogFile(c *gin.Context) {
+	logopt := &v1.PodLogOptions{
+		Container: paramFromHeaderOrQuery(c, "container", ""),
+		Previous:  paramFromHeaderOrQuery(c, "previous", "false") == "true",
+	}
+	if tail, _ := strconv.Atoi(paramFromHeaderOrQuery(c, "tail", "0")); tail > 0 {
+		logopt.TailLines = pointer.Int64(int64(tail))
+	}
+	req := h.cluster.Kubernetes().CoreV1().Pods(c.Param("namespace")).GetLogs(c.Param("name"), logopt)
+	out, err := req.Stream(c.Request.Context())
+	if err != nil {
+		NotOK(c, err)
+		return
+	}
+	defer out.Close()
+
+	c.Header("Content-Disposition", "attachment; filename=logs.txt")
+	c.Header("Content-Type", "text/plain")
+	writer := c.Writer
+	_, _ = io.Copy(writer, out)
 }

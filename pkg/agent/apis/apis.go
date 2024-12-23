@@ -182,6 +182,7 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 	routes.register("core", "v1", "pods", "shell", podHandler.ExecPods)
 	routes.register("core", "v1", "pods", "debug", kubectlHandler.DebugPod)
 	routes.register("core", "v1", "pods", "logs", podHandler.GetContainerLogs)
+	routes.register("core", "v1", "pods", "log-file", podHandler.GetContainerLogFile)
 	routes.register("core", "v1", "pods", "file", podHandler.DownloadFileFromPod)
 	routes.register("core", "v1", "pods", "upfile", podHandler.UploadFileToContainer)
 	routes.register("core", "v1", "pods", "ls", podHandler.ListDir)
