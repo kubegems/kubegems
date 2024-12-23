@@ -25,5 +25,6 @@ type AuditLogHandler struct {
 
 func (h *AuditLogHandler) RegistRouter(rg *gin.RouterGroup) {
 	rg.GET("/auditlog", h.ListAuditLog)
+	rg.GET("/auditlog-export", h.ExportAuditLogExcel)
 	rg.GET("/auditlog/:auditlog_id", h.RetrieveAuditLog)
 }

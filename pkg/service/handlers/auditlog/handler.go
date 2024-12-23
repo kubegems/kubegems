@@ -15,7 +15,9 @@
 package auditloghandler
 
 import (
+	"encoding/csv"
 	"fmt"
+	"io"
 
 	"github.com/gin-gonic/gin"
 	"kubegems.io/kubegems/pkg/service/handlers"
@@ -137,4 +139,68 @@ func (h *AuditLogHandler) RetrieveAuditLog(c *gin.Context) {
 		return
 	}
 	handlers.OK(c, obj)
+}
+
+func (h *AuditLogHandler) ExportAuditLogExcel(c *gin.Context) {
+	where, err := h.checkWhereOnTenant(c, nil)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	queries := c.Request.URL.Query()
+	if from := queries.Get("CreatedAt_gte"); from != "" {
+		where = append(where, handlers.Args("created_at > ?", from))
+	}
+	if to := c.Query("CreatedAt_lte"); to != "" {
+		where = append(where, handlers.Args("created_at < ?", to))
+	}
+	if action := c.Query("Action"); action != "" {
+		where = append(where, handlers.Args("action = ?", action))
+	}
+	if username := c.Query("Username"); len(username) > 0 {
+		where = append(where, handlers.Args("username = ?", username))
+	}
+	if success := c.Query("Success"); success != "" {
+		where = append(where, handlers.Args("success = ?", success == "true"))
+	}
+	var list []models.AuditLog
+	if err := h.GetDB().WithContext(c.Request.Context()).Order("id DESC").Where(where).Model(&models.AuditLog{}).Find(&list).Error; err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+	c.Header("Content-Disposition", "attachment; filename=auditlog.csv")
+	c.Header("Content-Type", "text/csv")
+
+	if err := toCSV(list, c.Writer); err != nil {
+		handlers.NotOK(c, err)
+		return
+	}
+}
+
+func toCSV(list []models.AuditLog, w io.Writer) error {
+	csvWriter := csv.NewWriter(w)
+	defer csvWriter.Flush()
+
+	header := []string{"ID", "Username", "Module", "Name", "Action", "Success", "Tenant", "CreatedAt"}
+	toRecord := func(item models.AuditLog) []string {
+		return []string{
+			fmt.Sprintf("%d", item.ID),
+			item.Username,
+			item.Module,
+			item.Name,
+			item.Action,
+			fmt.Sprintf("%t", item.Success),
+			item.Tenant,
+			item.CreatedAt.Format("2006-01-02 15:04:05"),
+		}
+	}
+	if err := csvWriter.Write(header); err != nil {
+		return err
+	}
+	for _, item := range list {
+		if err := csvWriter.Write(toRecord(item)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
