@@ -163,8 +163,15 @@ func (h *AuditLogHandler) ExportAuditLogExcel(c *gin.Context) {
 	if success := c.Query("Success"); success != "" {
 		where = append(where, handlers.Args("success = ?", success == "true"))
 	}
+
+	db := h.GetDB().WithContext(c.Request.Context()).
+		Order("id DESC").Model(&models.AuditLog{})
+	for _, v := range where {
+		db = db.Where(v.Query, v.Args...)
+	}
+
 	var list []models.AuditLog
-	if err := h.GetDB().WithContext(c.Request.Context()).Order("id DESC").Where(where).Model(&models.AuditLog{}).Find(&list).Error; err != nil {
+	if err := db.Find(&list).Error; err != nil {
 		handlers.NotOK(c, err)
 		return
 	}
