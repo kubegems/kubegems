@@ -22,7 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	v1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/storage/v1beta1"
+	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"kubegems.io/kubegems/pkg/apis/storage"
@@ -42,6 +42,7 @@ type VolumeSnapshotRequest struct {
 }
 
 // Snapshot 执行对PVC的快照
+//
 //	@Tags			NOPROXY
 //	@Summary		快照PVC
 //	@Description	执行对PVC的快照
@@ -85,7 +86,7 @@ func (vh *VolumeSnapshotHandler) Snapshot(c *gin.Context) {
 			return err
 		}
 
-		storageclass := &v1beta1.StorageClass{
+		storageclass := &storagev1.StorageClass{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: *pvc.Spec.StorageClassName,
 			},
