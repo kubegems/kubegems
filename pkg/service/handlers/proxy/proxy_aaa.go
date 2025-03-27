@@ -44,25 +44,8 @@ var (
 	regs       = []*regexp.Regexp{regGVR, regGVRN, regGVRNA, regGVRNS, regGVRNSN, regGVRNSNA}
 )
 
-type ProxyObject struct {
-	NamespacedScoped bool
-	Cluster          string
-	Namespace        string
-	Name             string
-	Group            string
-	Version          string
-	Resource         string
-	Action           string
-}
-
-func (p *ProxyObject) InNamespace() bool {
-	if !p.NamespacedScoped {
-		return false
-	}
-	return p.Namespace != "" && p.Namespace != "_" && p.Namespace != "_all"
-}
-
-func ParseProxyObj(c *gin.Context, path string) *audit.ProxyObject {
+func ParseProxyObj(c *gin.Context) *audit.ProxyObject {
+	path := c.Param("action")
 	proxyobj := audit.ProxyObject{
 		Cluster: c.Param("cluster"),
 		Path:    path,

@@ -56,51 +56,15 @@ func (h *ProxyHandler) Proxy(c *gin.Context) {
 }
 
 func (h *ProxyHandler) ProxyHTTP(c *gin.Context) {
-	proxyPath := c.Param("action")
-	cluster := c.Param("cluster")
-	proxyobj := ParseProxyObj(c, proxyPath)
-
+	proxyobj := ParseProxyObj(c)
 	// 审计
 	h.AuditProxyFunc(c, proxyobj)
 
-	decision, err := h.checkPublic(c, proxyobj)
-	if err != nil {
-		handlers.NotOK(c, err)
+	if !h.checkPerm(c, proxyobj) {
 		return
 	}
+	cluster, proxyPath := proxyobj.Cluster, proxyobj.Path
 
-	switch decision {
-	case Allow:
-		break
-	case Deny:
-		handlers.Forbidden(c, fmt.Errorf("no permission to access %s", proxyobj.Path))
-		return
-	case NoOpinion:
-		ns := proxyobj.GetNamespace()
-		// nolint: nestif
-		if ns == "" {
-			ok, err := h.HasSystemAdminPerm(c)
-			if err != nil {
-				handlers.NotOK(c, err)
-				return
-			}
-			if !ok {
-				handlers.Forbidden(c, i18n.Errorf(c, "no permission to access cluster scope resources"))
-				return
-			}
-		} else {
-			// 权限
-			ok, err := h.HasNamespacePerm(c, cluster, proxyobj.GetNamespace())
-			if err != nil {
-				handlers.NotOK(c, err)
-				return
-			}
-			if !ok {
-				handlers.Forbidden(c, i18n.Errorf(c, "don't have permission to access namespace %s", proxyobj.GetNamespace()))
-				return
-			}
-		}
-	}
 	cli, err := h.GetAgents().ClientOf(c.Request.Context(), cluster)
 	if err != nil {
 		handlers.NotOK(c, err)
@@ -126,6 +90,7 @@ var PublicPath = map[string]func(h *ProxyHandler, c *gin.Context, obj *audit.Pro
 	"/api-resources":                                         alwaysAllow,
 	"/custom/prometheus/v1/matrix":                           alwaysAllow,
 	"/custom/prometheus/v1/vector":                           alwaysAllow,
+	"/custom/core/v1/namespaces/kubegems-pai/pods":           alwaysAllow, // kubegems-pai not authorized
 	"/storage.k8s.io/v1/storageclasses":                      alwaysAllow,
 	"/networking.k8s.io/v1/ingressclasses":                   alwaysAllow,
 	"/gems.kubegems.io/v1beta1/tenantgateways":               alwaysAllow,
@@ -164,6 +129,47 @@ func checHasTenantPerm(h *ProxyHandler, c *gin.Context, obj *audit.ProxyObject) 
 	return Allow, nil
 }
 
+func (h *ProxyHandler) checkPerm(c *gin.Context, proxyobj *audit.ProxyObject) bool {
+	decision, err := h.checkPublic(c, proxyobj)
+	if err != nil {
+		handlers.NotOK(c, err)
+		return false
+	}
+	switch decision {
+	case Allow:
+		return true
+	case Deny:
+		handlers.Forbidden(c, fmt.Errorf("no permission to access %s", proxyobj.Path))
+		return false
+	case NoOpinion:
+		ns := proxyobj.GetNamespace()
+		// nolint: nestif
+		if ns == "" {
+			ok, err := h.HasSystemAdminPerm(c)
+			if err != nil {
+				handlers.NotOK(c, err)
+				return false
+			}
+			if !ok {
+				handlers.Forbidden(c, i18n.Errorf(c, "no permission to access cluster scope resources"))
+				return false
+			}
+		} else {
+			// 权限
+			ok, err := h.HasNamespacePerm(c, proxyobj.Cluster, proxyobj.GetNamespace())
+			if err != nil {
+				handlers.NotOK(c, err)
+				return false
+			}
+			if !ok {
+				handlers.Forbidden(c, i18n.Errorf(c, "don't have permission to access namespace %s", proxyobj.GetNamespace()))
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (h *ProxyHandler) checkPublic(c *gin.Context, obj *audit.ProxyObject) (AuthorizationDecision, error) {
 	for prefix, pub := range PublicPath {
 		if strings.HasPrefix(obj.Path, prefix) {
@@ -177,21 +183,12 @@ func (h *ProxyHandler) checkPublic(c *gin.Context, obj *audit.ProxyObject) (Auth
 }
 
 func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
-	cluster := c.Param("cluster")
-	proxyPath := c.Param("action")
-
-	proxyobj := ParseProxyObj(c, proxyPath)
-
-	ok, err := h.HasNamespacePerm(c, cluster, proxyobj.GetNamespace())
-	if err != nil {
-		handlers.NotOK(c, err)
-		return
-	}
-	if !ok {
-		handlers.Forbidden(c, i18n.Errorf(c, "don't have permission to access namespace [%s]", proxyobj.GetNamespace()))
+	proxyobj := ParseProxyObj(c)
+	if !h.checkPerm(c, proxyobj) {
 		return
 	}
 
+	cluster, proxyPath := proxyobj.Cluster, proxyobj.Path
 	// NOTICE:
 	// why add query to headers? due the issue below, proxy params can't pass via api-server proxy
 	// https://github.com/kubernetes/kubernetes/issues/89360
@@ -230,14 +227,4 @@ func (h *ProxyHandler) ProxyWebsocket(c *gin.Context) {
 		auditFunc = h.WebsocketAuditFunc(user.GetUsername(), nil, c.ClientIP(), proxyobj)
 	}
 	Transport(localConn, proxyConn, c, user, auditFunc)
-}
-
-func getTargetPath(name string, req *http.Request) (realpath string) {
-	prefix := path.Join("/v1/proxy/cluster", name)
-	trimed := strings.TrimPrefix(req.URL.Path, prefix)
-	if strings.HasPrefix(trimed, "/custom") {
-		return trimed
-	} else {
-		return "/v1" + trimed
-	}
 }
