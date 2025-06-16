@@ -474,6 +474,8 @@ func (h *ClusterHandler) PostCluster(c *gin.Context) {
 		handlers.NotOK(c, err)
 		return
 	}
+	cluster.Primary = false // 默认不是主集群
+
 	if cluster.ClusterName == "" {
 		handlers.NotOK(c, errors.New("empty cluster name"))
 		return
