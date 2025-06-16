@@ -12,6 +12,9 @@ Return the proper image name
 {{- if .global.kubegemsVersion }}
     {{- $tag = .global.kubegemsVersion | toString -}}
 {{- end }}
+{{- if .global.imageRepository }}
+    {{- $repositoryName = printf "%s/%s" .global.imageRepository (trimPrefix "kubegems/" $repositoryName) -}}
+{{- end }}
 {{- if and .global.imageRegistry (or (eq $registryName "docker.io") (not $registryName))  -}}
     {{- $registryName = .global.imageRegistry -}}
 {{- end -}}
