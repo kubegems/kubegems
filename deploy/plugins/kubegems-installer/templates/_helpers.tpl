@@ -15,9 +15,6 @@ Return the proper image name
 {{- if and .global.imageRegistry (or (eq $registryName "docker.io") (not $registryName))  -}}
     {{- $registryName = .global.imageRegistry -}}
 {{- end -}}
-{{- if .global.imageRepository }}
-    {{- $repositoryName = regexReplaceAll "^[^/]+" $repositoryName .global.imageRepository -}}
-{{- end }}
 {{- if $registryName }}
     {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
 {{- else -}}
