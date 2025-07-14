@@ -165,6 +165,7 @@
       labels:
       - node
       - device
+      - mountpoint
       name: diskTotal
       resourceID: 16
       showName: Host Disk Total Size (bytes)
@@ -176,6 +177,7 @@
       labels:
       - node
       - device
+      - mountpoint
       name: diskUsage
       resourceID: 16
       showName: Host Disk Usage  (bytes)
@@ -187,6 +189,7 @@
       labels:
       - node
       - device
+      - mountpoint
       name: diskUsagePercent
       resourceID: 16
       showName: Host Disk Usage Ratio (%)
