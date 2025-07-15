@@ -172,7 +172,7 @@ const (
 	querySort      = "sort"
 )
 
-var pvcRatio = []string{"ratio", "ratio-", "rationDesc", "rationAsc"}
+var pvcRatio = []string{"ratio", "ratio-", "ratioDesc", "ratioAsc"}
 
 // injectPVCRatioAnnotations
 // 2025-07-15: 需求，要在前端PVC列表中支持按照使用率排序；
