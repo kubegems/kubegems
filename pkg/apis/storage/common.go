@@ -18,6 +18,9 @@ const (
 	AnnotationInUse                                            = GroupName + "/in-use"
 	AnnotationAllowSnapshot                                    = GroupName + "/allow-snapshot"
 	AnnotationVolumeSnapshotAnnotationKeyPersistentVolumeClaim = GroupName + "/persistentvolumevlaim"
+	AnnotationStorageRatio                                     = GroupName + "/pvc-ratio"
 
 	AnnotationStorageProvisioner = "volume.beta.kubernetes.io/storage-provisioner"
+
+	MetricsPVCUsagePercent = "gems_pvc_usage_percent"
 )

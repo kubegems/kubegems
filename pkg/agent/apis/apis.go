@@ -235,7 +235,7 @@ func Routes(ctx context.Context, cluster cluster.Interface,
 	eventHandler := EventHandler{C: cluster.GetClient()}
 	routes.register("core", "v1", "events", ActionList, eventHandler.List)
 
-	pvcHandler := PvcHandler{C: cluster.GetClient()}
+	pvcHandler := PvcHandler{C: cluster.GetClient(), PrometheusServer: options.PrometheusServer}
 	routes.register("core", "v1", "pvcs", ActionList, pvcHandler.List)
 	routes.register("core", "v1", "pvcs", ActionGet, pvcHandler.Get)
 

@@ -15,10 +15,16 @@
 package apis
 
 import (
+	"context"
+	"slices"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	v1snap "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
+	"github.com/prometheus/client_golang/api"
+	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"kubegems.io/kubegems/pkg/apis/storage"
@@ -27,7 +33,8 @@ import (
 )
 
 type PvcHandler struct {
-	C client.Client
+	C                client.Client
+	PrometheusServer string
 }
 
 // @Tags			Agent.V1
@@ -59,6 +66,8 @@ func (h *PvcHandler) List(c *gin.Context) {
 		NotOK(c, err)
 		return
 	}
+
+	h.injectPVCRatioAnnotations(c, pvcList)
 
 	// ignore errors
 	pvcInUse, snapClassInUse, _ := h.getMapForSnapAndPod(c, ns)
@@ -155,4 +164,59 @@ func (h *PvcHandler) getMapForSnapAndPod(c *gin.Context, ns string) (map[string]
 	}
 
 	return pvcInUse, snapClassInUse, nil
+}
+
+const (
+	labelNamespace = "namespace"
+	labelPvc       = "persistentvolumeclaim"
+	querySort      = "sort"
+)
+
+var pvcRatio = []string{"ratio", "ratio-", "rationDesc", "rationAsc"}
+
+// injectPVCRatioAnnotations
+// 2025-07-15: 需求，要在前端PVC列表中支持按照使用率排序；
+// 后端不支持直接排序，所以需要在后端获取所有PVC的使用率，附加在pvc的annotations中，在kubegems.io/library/rest/response中进行统一排序。
+func (h *PvcHandler) injectPVCRatioAnnotations(c *gin.Context, pvcList *v1.PersistentVolumeClaimList) {
+	if !slices.Contains(pvcRatio, c.Query(querySort)) {
+		return
+	}
+	promClient, err := api.NewClient(api.Config{Address: h.PrometheusServer})
+	if err != nil {
+		return
+	}
+
+	v1api := promv1.NewAPI(promClient)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	ret, _, err := v1api.Query(ctx, storage.MetricsPVCUsagePercent, time.Now())
+	if err != nil {
+		return
+	}
+	mapping := make(map[string]string)
+	if val, ok := ret.(model.Vector); ok {
+		for _, v := range val {
+			value := v.Value.String()
+			if value == "" {
+				continue
+			}
+			namespace := string(v.Metric[labelNamespace])
+			pvcName := string(v.Metric[labelPvc])
+			if namespace == "" || pvcName == "" {
+				continue
+			}
+			mapping[namespace+"/"+pvcName] = value
+		}
+	}
+	for _, pvc := range pvcList.Items {
+		if pvc.Annotations == nil {
+			pvc.Annotations = make(map[string]string)
+		}
+		if ratio, ok := mapping[pvc.Namespace+"/"+pvc.Name]; ok {
+			pvc.Annotations[storage.AnnotationStorageRatio] = ratio
+		} else {
+			pvc.Annotations[storage.AnnotationStorageRatio] = "0"
+		}
+	}
 }
