@@ -187,7 +187,7 @@ func (h *PvcHandler) injectPVCRatioAnnotations(c *gin.Context, pvcList *v1.Persi
 	}
 
 	v1api := promv1.NewAPI(promClient)
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 20*time.Second)
 	defer cancel()
 
 	ret, _, err := v1api.Query(ctx, storage.MetricsPVCUsagePercent, time.Now())
