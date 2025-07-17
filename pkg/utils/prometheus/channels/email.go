@@ -15,13 +15,10 @@
 package channels
 
 import (
-	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/smtp"
-	"net/url"
 	"strings"
 
 	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
@@ -86,74 +83,96 @@ func (e *Email) Check() error {
 func (e *Email) String() string {
 	return e.SMTPServer + e.From + e.To
 }
-func (e *Email) message(alert prometheus.WebhookAlert) []byte {
-	var b bytes.Buffer
-	fmt.Fprintf(&b, "From: %s\r\n", e.From)
-	fmt.Fprintf(&b, "To: %s\r\n", e.To)
-	fmt.Fprintf(&b, "Subject: Kubegems test email\r\n")
-	fmt.Fprintf(&b, "\r\n")
-	data, _ := json.MarshalIndent(alert, "", "    ")
-	b.Write(data)
-	return b.Bytes()
-}
 
+// SendEmail 通用的邮件发送方法
 func (e *Email) Test(alert prometheus.WebhookAlert) error {
-	if e.SMTPServer == "" {
-		return fmt.Errorf("smtp address is required")
+	// 验证必填字段
+	if e.SMTPServer == "" || e.From == "" || e.To == "" || e.AuthPassword == "" {
+		return fmt.Errorf("missing required email parameters")
 	}
-	var smtpServer = e.SMTPServer
-	if !strings.Contains(e.SMTPServer, "//") {
-		smtpServer = "smtp://" + e.SMTPServer
-		if e.RequireTLS {
-			smtpServer = "smtps://" + e.SMTPServer
-		}
+	body, _ := json.MarshalIndent(alert, "", "    ")
+	// 设置默认端口
+	host, port := splitServerAddress(e.SMTPServer)
+	// 构建邮件内容
+	message := fmt.Sprintf("From: %s\r\n", e.From) +
+		fmt.Sprintf("To: %s\r\n", e.To) +
+		"Subject: Kubegems test email\r\n" +
+		"Content-Type: text/plain; charset=UTF-8\r\n\r\n" +
+		string(body)
+
+	// 认证信息
+	auth := smtp.PlainAuth("", e.From, e.AuthPassword, host)
+	// 收件人列表
+	to := strings.Split(e.To, ",")
+	for i := range to {
+		to[i] = strings.TrimSpace(to[i])
 	}
-	u, err := url.Parse(smtpServer)
-	if err != nil {
-		return fmt.Errorf("invalid smtp address: %v", err)
-	}
-	cli, err := smtp.Dial(u.Host)
-	if err != nil {
-		return err
-	}
-	if u.Scheme == "smtps" {
-		if ok, _ := cli.Extension("STARTTLS"); !ok {
-			return fmt.Errorf("server does not support tls, but tls is required")
-		}
+	// 发送邮件
+	if e.RequireTLS {
+		// 使用TLS连接
 		tlsConfig := &tls.Config{
 			InsecureSkipVerify: true,
+			ServerName:         host,
 		}
-		if err := cli.StartTLS(tlsConfig); err != nil {
-			return err
-		}
-	}
-	host, _, err := net.SplitHostPort(u.Host)
-	if err != nil {
-		return err
-	}
-	if e.From != "" && e.AuthPassword != "" {
-		auth := smtp.PlainAuth("", e.From, e.AuthPassword, host)
-		if ok, _ := cli.Extension("AUTH"); !ok {
-			return fmt.Errorf("server does not support auth, but username and password are provided")
-		}
-		if err := cli.Auth(auth); err != nil {
-			return err
-		}
-	}
 
-	if err := cli.Mail(e.From); err != nil {
-		return err
-	}
-	for _, v := range strings.Split(e.To, ",") {
-		if err := cli.Rcpt(v); err != nil {
-			return err
+		conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%s", host, port), tlsConfig)
+		if err != nil {
+			return fmt.Errorf("failed to dial SMTP server with TLS: %v", err)
 		}
+		defer conn.Close()
+
+		client, err := smtp.NewClient(conn, host)
+		if err != nil {
+			return fmt.Errorf("failed to create SMTP client: %v", err)
+		}
+		defer client.Close()
+		if err = client.Auth(auth); err != nil {
+			return fmt.Errorf("SMTP authentication failed: %v", err)
+		}
+
+		if err = client.Mail(e.From); err != nil {
+			return fmt.Errorf("failed to set sender: %v", err)
+		}
+
+		for _, addr := range to {
+			if err = client.Rcpt(addr); err != nil {
+				return fmt.Errorf("failed to set recipient %s: %v", addr, err)
+			}
+		}
+
+		w, err := client.Data()
+		if err != nil {
+			return fmt.Errorf("failed to get data writer: %v", err)
+		}
+
+		_, err = w.Write([]byte(message))
+		if err != nil {
+			return fmt.Errorf("failed to write message: %v", err)
+		}
+
+		err = w.Close()
+		if err != nil {
+			return fmt.Errorf("failed to close data writer: %v", err)
+		}
+
+		return client.Quit()
+	} else {
+		// 普通连接
+		return smtp.SendMail(
+			fmt.Sprintf("%s:%s", host, port),
+			auth,
+			e.From,
+			to,
+			[]byte(message),
+		)
 	}
-	w, err := cli.Data()
-	if err != nil {
-		return err
+}
+
+// splitServerAddress 分离服务器地址和端口
+func splitServerAddress(server string) (host, port string) {
+	parts := strings.Split(server, ":")
+	if len(parts) == 2 {
+		return parts[0], parts[1]
 	}
-	defer w.Close()
-	_, err = w.Write(e.message(alert))
-	return err
+	return server, "25" // 默认SMTP端口
 }

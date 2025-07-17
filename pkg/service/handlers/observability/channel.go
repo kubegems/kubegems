@@ -52,6 +52,7 @@ func (h *ObservabilityHandler) getChannelReq(c *gin.Context) (*models.AlertChann
 }
 
 // ListChannels 告警渠道列表
+//
 //	@Tags			Observability
 //	@Summary		告警渠道列表
 //	@Description	告警渠道列表
@@ -89,6 +90,7 @@ func (h *ObservabilityHandler) ListChannels(c *gin.Context) {
 }
 
 // GetChannel 渠道列表详情
+//
 //	@Tags			Observability
 //	@Summary		渠道列表详情
 //	@Description	渠道列表详情
@@ -115,6 +117,7 @@ func (h *ObservabilityHandler) GetChannel(c *gin.Context) {
 }
 
 // CreateChannel 创建告警渠道
+//
 //	@Tags			Observability
 //	@Summary		创建告警渠道
 //	@Description	创建告警渠道
@@ -150,6 +153,7 @@ func (h *ObservabilityHandler) CreateChannel(c *gin.Context) {
 }
 
 // UpdateChannel 更新告警渠道
+//
 //	@Tags			Observability
 //	@Summary		更新告警渠道
 //	@Description	更新告警渠道
@@ -200,6 +204,7 @@ func (h *ObservabilityHandler) UpdateChannel(c *gin.Context) {
 }
 
 // DeleteChannel 删除告警渠道
+//
 //	@Tags			Observability
 //	@Summary		删除告警渠道
 //	@Description	删除告警渠道
@@ -251,6 +256,7 @@ func (h *ObservabilityHandler) DeleteChannel(c *gin.Context) {
 }
 
 // TestChannel 测试告警渠道
+//
 //	@Tags			Observability
 //	@Summary		测试告警渠道
 //	@Description	测试告警渠道
@@ -290,9 +296,17 @@ func (h *ObservabilityHandler) TestChannel(c *gin.Context) {
 		},
 	}
 	if err := ch.ChannelConfig.ChannelIf.Test(alertObj); err != nil {
+		if IsQQSmtpError(err) {
+			handlers.OK(c, "ok")
+			return
+		}
 		handlers.NotOK(c, err)
 		return
 	}
 
 	handlers.OK(c, "ok")
+}
+
+func IsQQSmtpError(err error) bool {
+	return strings.HasPrefix(err.Error(), "short response")
 }
