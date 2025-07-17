@@ -21,8 +21,6 @@ require (
 	github.com/containers/image/v5 v5.27.1-0.20230908144338-a9b09b31f323
 	github.com/coreos/go-oidc/v3 v3.6.0
 	github.com/creack/pty v1.1.18
-	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21
-	github.com/emersion/go-smtp v0.15.0
 	github.com/emicklei/go-restful-openapi/v2 v2.9.0
 	github.com/emicklei/go-restful/v3 v3.10.1
 	github.com/evanphx/json-patch/v5 v5.6.0
