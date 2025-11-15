@@ -38,7 +38,7 @@ https://charts.kubegems.io/kubegems volume-snapshoter 5.0.1
 https://charts.kubegems.io/kubegems volcano 1.12.1
 https://charts.kubegems.io/kubegems prometheus-adapter 4.14.1
 https://charts.kubegems.io/kubegems juicefs-csi-driver 0.19.2
-https://charts.kubegems.io/kubegems kubegems-pai 1.0.11
+https://charts.kubegems.io/kubegems kubegems-pai 1.0.12
 https://charts.kubegems.io/kubegems xpai-scheduler 1.12.1
 https://charts.kubegems.io/kubegems xpai-descheduler 0.1.0
 https://charts.kubegems.io/kubegems juicefs-tenant 1.0.1
