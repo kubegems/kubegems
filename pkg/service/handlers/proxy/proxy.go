@@ -91,6 +91,7 @@ var PublicPath = map[string]func(h *ProxyHandler, c *gin.Context, obj *audit.Pro
 	"/custom/prometheus/v1/matrix":                           alwaysAllow,
 	"/custom/prometheus/v1/vector":                           alwaysAllow,
 	"/custom/core/v1/namespaces/kubegems-pai/pods":           alwaysAllow, // kubegems-pai not authorized
+	"/custom/core/v1/namespaces/kubegems-pai/events":         alwaysAllow,
 	"/storage.k8s.io/v1/storageclasses":                      alwaysAllow,
 	"/networking.k8s.io/v1/ingressclasses":                   alwaysAllow,
 	"/gems.kubegems.io/v1beta1/tenantgateways":               alwaysAllow,
